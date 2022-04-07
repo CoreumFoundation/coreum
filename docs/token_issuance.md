@@ -4,6 +4,11 @@ Token issuance is the process of **creating new tokens** that are then **added t
 
 Token issuance may also refer to the process of tokenization, in which an asset outside of the cryptocurrency ecosystem is added to the blockchain via a specific crypto token. In such cases, token issuance becomes the process of creating a token, yet not one that belongs to a cryptocurrency, but rather a token that represents an outside asset.
 
+There are 3 moments in which tokens can be issued
+- Upon blockchain genesis
+- Inflation, at the beginning each block fees are paid to validators. These fees come out of newly minted tokens.
+- Out of thin air, through the bank keeper minting function calls.
+
 ##Cosmos SDK bank module
 The bank module is responsible for handling coin transfers between accounts, minting and handling supply. 
 
