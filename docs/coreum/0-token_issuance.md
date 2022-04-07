@@ -7,4 +7,26 @@ Alternatively, users can burn amounts of the issued token given the token is bur
 The token issuer can set a “transaction fee” and “burn fee” in percentage so that for every movement (either through trading or sending/receiving tokens) this amount is deducted from the sender and receiver gets less of these fees on the Blockchain.
 
 ##Possible implementation
-Kava has very similar implementation on their [issuance module](https://github.com/Kava-Labs/kava/tree/master/x/issuance) 
+###Messages
+####Create token message
+<!--
+order: 3
+-->
+
+# Messages
+
+The issuer can issue new tokens using a `MsgIssueTokens`
+
+```go
+// MsgIssueTokens message type used to issue tokens
+type MsgIssueTokens struct {
+  Sender   sdk.AccAddress 
+  Tokens   sdk.Coin 
+  Receiver sdk.AccAddress
+  Permission courem.PermissionSet //Burnable, mintable 
+  Fees //Burn, transaction
+}
+```
+
+
+
