@@ -1,0 +1,14 @@
+syntax = "proto3";
+package coreumfoundation.coreum.issuance;
+
+import "gogoproto/gogo.proto";
+import "issuance/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/coreumfoundation/coreum/coreum/x/issuance/types";
+
+// GenesisState defines the issuance module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  // this line is used by starport scaffolding # genesis/proto/state
+}

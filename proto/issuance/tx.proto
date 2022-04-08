@@ -1,0 +1,24 @@
+syntax = "proto3";
+package coreumfoundation.coreum.issuance;
+
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/coreumfoundation/coreum/coreum/x/issuance/types";
+
+// Msg defines the Msg service.
+service Msg {
+      rpc CreateToken(MsgCreateToken) returns (MsgCreateTokenResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgCreateToken {
+  string creator = 1;
+  string tokens = 2;
+  string sender = 3;
+  string receiver = 4;
+}
+
+message MsgCreateTokenResponse {
+}
+
+// this line is used by starport scaffolding # proto/tx/message
