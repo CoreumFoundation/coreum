@@ -1,7 +1,12 @@
 package build
 
-import "context"
+import (
+	"context"
 
-func buildNode(ctx context.Context) error {
+	"github.com/outofforest/build"
+)
+
+func buildNode(ctx context.Context, deps build.DepsFunc) error {
+	deps(ensureGo)
 	return goBuildPkg(ctx, "node/cmd", "bin/cored")
 }

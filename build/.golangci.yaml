@@ -11,7 +11,10 @@ issues:
   exclude-rules:
     # many golangci linters enforce stupid rules, so we will add more to the list soon
     - linters:
-        - stylecheck
+      - errcheck
+      text: "Error return value of `.*\\.Close` is not checked"
+    - linters:
+      - stylecheck
       text: "at least one file in a package should have a package comment"
 
 linters:
@@ -27,6 +30,13 @@ linters:
     - gochecknoglobals
     - wsl
     - goerr113
+    - gomnd
+    - varnamelen
+    - godox
+    - funlen
+    - gocognit
+    - lll
+    - cyclop
     # deprecated:
     - interfacer
     - scopelint
