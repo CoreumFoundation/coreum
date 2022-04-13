@@ -1,6 +1,6 @@
 module github.com/CoreumFoundation/coreum
 
-go 1.16
+go 1.17
 
 replace github.com/ridge/parallel => github.com/outofforest/parallel v0.1.2
 
