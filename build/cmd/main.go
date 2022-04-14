@@ -8,9 +8,9 @@ import (
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/run"
 	me "github.com/CoreumFoundation/coreum/build"
-	"github.com/CoreumFoundation/coreum/lib/must"
 )
 
 func main() {

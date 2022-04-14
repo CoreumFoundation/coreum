@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/lib/must"
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
 	"go.uber.org/zap"
 )
 
