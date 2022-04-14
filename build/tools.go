@@ -29,6 +29,15 @@ type tool struct {
 	Binaries []string
 }
 
+func installTools(ctx context.Context) error {
+	for tool := range tools {
+		if err := ensure(ctx, tool); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func ensure(ctx context.Context, tool string) error {
 	info, exists := tools[tool]
 	if !exists {
