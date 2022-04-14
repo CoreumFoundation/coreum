@@ -1,0 +1,50 @@
+run:
+  timeout: 10m
+  build-tags:
+    - codeanalysis
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  # disable some excludes that golangci-lint has by default. see https://github.com/golangci/golangci-lint
+  exclude-use-default: false
+  exclude-rules:
+    # many golangci linters enforce stupid rules, so we will add more to the list soon
+    - linters:
+      - errcheck
+      text: "Error return value of `.*\\.Close` is not checked"
+    - linters:
+      - stylecheck
+      text: "at least one file in a package should have a package comment"
+
+linters:
+  enable-all: true
+  disable:
+    # many golangci linters enforce stupid rules, so we will add more to the list soon
+    - nlreturn
+    - forbidigo
+    - wrapcheck
+    - gomoddirectives
+    - godot
+    - gosec
+    - gochecknoglobals
+    - wsl
+    - goerr113
+    - gomnd
+    - varnamelen
+    - godox
+    - funlen
+    - gocognit
+    - lll
+    - cyclop
+    - gci
+    # deprecated:
+    - interfacer
+    - scopelint
+    - golint
+    - maligned
+
+linters-settings:
+  nakedret:
+    # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
+    max-func-lines: 1
