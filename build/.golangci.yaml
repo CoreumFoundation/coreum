@@ -37,6 +37,7 @@ linters:
     - gocognit
     - lll
     - cyclop
+    - gci
     # deprecated:
     - interfacer
     - scopelint
