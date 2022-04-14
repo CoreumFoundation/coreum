@@ -25,6 +25,14 @@ PATH="$HOME/coreum/bin:$PATH"
 complete -o nospace -C core core
 ```
 
+then run:
+
+```
+$ core setup
+```
+
+to install all the tools we use.
+
 Whenever tool downloads or builds binaries it puts them inside [bin](../bin) directory so they are
 easily callable from console.
 
@@ -38,6 +46,7 @@ After doing this and restarting `bash` session you may call `core` command.
 
 Here is the list of operations supported at the moment:
 
+- `setup` - install all the tools required to develop our software
 - `lint` - runs code linter
 - `test` - runs unit tests
 - `build` - builds `cored`

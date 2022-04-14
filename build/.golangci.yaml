@@ -40,7 +40,6 @@ linters:
     - gci
     # deprecated:
     - interfacer
-    - scopelint
     - golint
     - maligned
 

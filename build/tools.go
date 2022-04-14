@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
 	"go.uber.org/zap"
@@ -27,6 +28,17 @@ type tool struct {
 	URL      string
 	Hash     string
 	Binaries []string
+}
+
+func installTools(ctx context.Context, deps build.DepsFunc) {
+	toolFns := make([]interface{}, 0, len(tools))
+	for tool := range tools {
+		tool := tool
+		toolFns = append(toolFns, func(ctx context.Context) error {
+			return ensure(ctx, tool)
+		})
+	}
+	deps(toolFns...)
 }
 
 func ensure(ctx context.Context, tool string) error {
