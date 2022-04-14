@@ -10,6 +10,7 @@ import (
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/run"
+
 	me "github.com/CoreumFoundation/coreum/build"
 )
 
