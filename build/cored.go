@@ -8,5 +8,5 @@ import (
 
 func buildNode(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "node/cmd", "bin/cored")
+	return goBuildPkg(ctx, "cored/cmd", "bin/cored")
 }
