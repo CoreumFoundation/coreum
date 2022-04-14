@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/outofforest/build"
-	"github.com/outofforest/libexec"
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/libexec"
 )
 
 func ensureGo(ctx context.Context) error {

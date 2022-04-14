@@ -5,14 +5,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/ioc"
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/run"
 	me "github.com/CoreumFoundation/coreum/build"
 	"github.com/CoreumFoundation/coreum/lib/must"
-	"github.com/outofforest/build"
-	"github.com/outofforest/ioc/v2"
-	"github.com/outofforest/run"
 )
 
 func main() {
+	logger.VerboseOff()
 	run.Tool("build", nil, func(ctx context.Context, c *ioc.Container) error {
 		exec := build.NewIoCExecutor(me.Commands, c)
 		if build.Autocomplete(exec) {

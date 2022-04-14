@@ -15,8 +15,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/lib/must"
-	"github.com/outofforest/logger"
 	"go.uber.org/zap"
 )
 
