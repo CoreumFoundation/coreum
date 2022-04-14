@@ -4,5 +4,5 @@ package build
 var Commands = map[string]interface{}{
 	"lint":  goLint,
 	"test":  goTest,
-	"build": buildNode,
+	"build": buildCored,
 }
