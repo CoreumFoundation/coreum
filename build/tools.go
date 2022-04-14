@@ -30,7 +30,7 @@ type tool struct {
 	Binaries []string
 }
 
-func installTools(ctx context.Context, deps build.DepsFunc) {
+func installTools(_ context.Context, deps build.DepsFunc) {
 	toolFns := make([]interface{}, 0, len(tools))
 	for tool := range tools {
 		tool := tool
@@ -84,7 +84,12 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error("error closing ReadCloser")
+		}
+	}(resp.Body)
 
 	hasher, expectedChecksum := hasher(info.Hash)
 	reader := io.TeeReader(resp.Body, hasher)
