@@ -30,7 +30,7 @@ type tool struct {
 	Binaries []string
 }
 
-func installTools(ctx context.Context, deps build.DepsFunc) {
+func installTools(deps build.DepsFunc) {
 	toolFns := make([]interface{}, 0, len(tools))
 	for tool := range tools {
 		tool := tool
