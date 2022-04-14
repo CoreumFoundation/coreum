@@ -38,6 +38,7 @@ After doing this and restarting `bash` session you may call `core` command.
 
 Here is the list of operations supported at the moment:
 
+- `setup` - install all the tools required to develop our software
 - `lint` - runs code linter
 - `test` - runs unit tests
 - `build` - builds `cored`
