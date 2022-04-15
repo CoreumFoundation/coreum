@@ -1,0 +1,19 @@
+name: ci
+on:
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Go version used to build core tool
+        run: go version
+      - name: ci tests
+        run: |
+          export PATH="$GITHUB_WORKSPACE/bin:$PATH"
+          core lint test build
