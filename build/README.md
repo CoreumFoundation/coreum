@@ -16,13 +16,12 @@ Moreover, we are much better go developers than bash ones.
 So here is the simple tool written in go which helps us in our daily work.
 
 ## Configuration
-
 Assuming you cloned `coreum` repository to `~/coreum` this is the configuration to put in
-your `~/.bashrc`:
+your `~/.bashrc` or `~/.zshrc` depending on which shell you use:
 
 ```
 PATH="$HOME/coreum/bin:$PATH"
-complete -o nospace -C core core
+complete -o nospace -C core core #should be ommitted for zsh 
 ```
 
 then run:
