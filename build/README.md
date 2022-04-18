@@ -16,8 +16,6 @@ Moreover, we are much better go developers than bash ones.
 So here is the simple tool written in go which helps us in our daily work.
 
 ## Configuration
-Bash
-
 Assuming you cloned `coreum` repository to `~/coreum` this is the configuration to put in
 your `~/.bashrc` or `~/.zshrc` depending on which shell you use:
 
