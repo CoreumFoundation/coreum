@@ -17,4 +17,12 @@ var tools = map[string]tool{
 			"golangci-lint-1.45.2-linux-amd64/golangci-lint",
 		},
 	},
+	"ignite": {
+		Version: "v0.20.4",
+		URL:     "https://github.com/ignite-hq/cli/releases/download/v0.20.4/ignite_0.20.4_linux_amd64.tar.gz",
+		Hash:    "sha256:6291e0e3571cfc81caa691932024519cabade44c061d4214f5f4090badb06ab2",
+		Binaries: []string{
+			"ignite",
+		},
+	},
 }
