@@ -42,5 +42,5 @@ func goTest(ctx context.Context, deps build.DepsFunc) error {
 
 func goModTidy(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return libexec.Exec(ctx, exec.Command("go", "mod", "tidy"))
+	return libexec.Exec(ctx, exec.Command("go", "mod", "tidy", "-compat", "1.17"))
 }

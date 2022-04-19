@@ -22,8 +22,12 @@ import (
 )
 
 type (
+	// Network defines a local in-process testing network
 	Network = network.Network
-	Config  = network.Config
+
+	// Config defines the necessary configuration used to bootstrap and start an
+	// in-process local testing network
+	Config = network.Config
 )
 
 // New creates instance with fully configured cosmos network.

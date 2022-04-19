@@ -38,6 +38,13 @@ linters:
     - lll
     - cyclop
     - gci
+    - gochecknoinits
+    - exhaustive
+    - exhaustivestruct
+    - ireturn
+    - thelper
+    - maintidx
+    - gofumpt
     # deprecated:
     - interfacer
     - golint

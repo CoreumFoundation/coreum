@@ -100,8 +100,11 @@ import (
 )
 
 const (
+	// AccountAddressPrefix is the prefix of addresses on the blockchain
 	AccountAddressPrefix = "cosmos"
-	Name                 = "cored"
+
+	// Name is the blockchain name
+	Name = "cored"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
