@@ -3,7 +3,7 @@ module github.com/CoreumFoundation/coreum
 go 1.17
 
 require (
-	github.com/CoreumFoundation/coreum-build-tools v0.1.2
+	github.com/CoreumFoundation/coreum-build-tools v0.1.3
 	go.uber.org/zap v1.21.0
 )
 
