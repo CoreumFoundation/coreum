@@ -31,6 +31,7 @@ type tool struct {
 }
 
 func installTools(deps build.DepsFunc) {
+	tools := newTools()
 	toolFns := make([]interface{}, 0, len(tools))
 	for tool := range tools {
 		tool := tool
@@ -42,7 +43,8 @@ func installTools(deps build.DepsFunc) {
 }
 
 func ensure(ctx context.Context, tool string) error {
-	info, exists := tools[tool]
+	info, exists := newTools()[tool]
+
 	if !exists {
 		return fmt.Errorf("tool %s is not defined", tool)
 	}
@@ -224,7 +226,7 @@ func untar(reader io.Reader, path string) error {
 }
 
 func toolDir(name string) string {
-	info, exists := tools[name]
+	info, exists := newTools()[name]
 	if !exists {
 		panic(fmt.Errorf("tool %s is not defined", name))
 	}
