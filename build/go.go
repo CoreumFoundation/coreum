@@ -26,7 +26,7 @@ func goBuildPkg(ctx context.Context, pkg, out string) error {
 
 // goLint runs golangci linter, runs go mod tidy and checks that git status is clean
 func goLint(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureGolangCI)
+	deps(ensureGo, ensureGolangCI)
 	if err := libexec.Exec(ctx, exec.Command("golangci-lint", "run", "--config", "build/.golangci.yaml")); err != nil {
 		return err
 	}
