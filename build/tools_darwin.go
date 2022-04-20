@@ -2,11 +2,12 @@ package build
 
 var tools = map[string]tool{
 	"go": {
-		Version: "1.17.9",
-		URL:     "https://go.dev/dl/go1.17.9.darwin-amd64.tar.gz",
-		Hash:    "sha256:af9f9deabd6e8a9d219b695b81c19276e2cd5bbc1215741e3bb1b18e88147990",
+		Version: "1.18.1",
+		URL:     "https://go.dev/dl/go1.18.1.darwin-amd64.tar.gz",
+		Hash:    "sha256:63e5035312a9906c98032d9c73d036b6ce54f8632b194228bd08fe3b9fe4ab01",
 		Binaries: []string{
 			"go/bin/go",
+			"go/bin/gofmt",
 		},
 	},
 	"golangci": {
