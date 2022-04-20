@@ -50,18 +50,24 @@ var tools = map[string]tool{
 			linuxAMD64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.45.2/golangci-lint-1.45.2-linux-amd64.tar.gz",
 				Hash: "sha256:595ad6c6dade4c064351bc309f411703e457f8ffbb7a1806b3d8ee713333427f",
+				Binaries: []string{
+					"golangci-lint-1.45.2-linux-amd64/golangci-lint",
+				},
 			},
 			darwinAMD64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.45.2/golangci-lint-1.45.2-darwin-amd64.tar.gz",
 				Hash: "sha256:995e509e895ca6a64ffc7395ac884d5961bdec98423cb896b17f345a9b4a19cf",
+				Binaries: []string{
+					"golangci-lint-1.45.2-darwin-amd64/golangci-lint",
+				},
 			},
 			darwinARM64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.45.2/golangci-lint-1.45.2-darwin-arm64.tar.gz",
 				Hash: "sha256:c2b9669decc1b638cf2ee9060571af4e255f6dfcbb225c293e3a7ee4bb2c7217",
+				Binaries: []string{
+					"golangci-lint-1.45.2-darwin-arm64/golangci-lint",
+				},
 			},
-		},
-		Binaries: []string{
-			"golangci-lint-1.45.2-linux-amd64/golangci-lint",
 		},
 	},
 	"ignite": {
@@ -110,8 +116,9 @@ type tool struct {
 }
 
 type source struct {
-	URL  string
-	Hash string
+	URL      string
+	Hash     string
+	Binaries []string
 }
 
 type sources map[platform]source
@@ -133,8 +140,14 @@ func ensure(ctx context.Context, tool string) error {
 		return fmt.Errorf("tool %s is not defined", tool)
 	}
 
+	platform := platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
+	source, exists := info.Sources[platform]
+	if !exists {
+		panic(fmt.Errorf("tool %s is not configured for platform %s", tool, platform))
+	}
+
 	toolDir := toolDir(tool)
-	for _, bin := range info.Binaries {
+	for _, bin := range combine(info.Binaries, source.Binaries) {
 		srcPath, err := filepath.Abs(toolDir + "/" + bin)
 		if err != nil {
 			return install(ctx, tool, info)
@@ -202,7 +215,7 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
-	for _, bin := range info.Binaries {
+	for _, bin := range combine(info.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + bin
 		dstPath := binDir + "/" + filepath.Base(bin)
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
@@ -328,4 +341,8 @@ func ensureDir(file string) error {
 		return err
 	}
 	return nil
+}
+
+func combine(a1 []string, a2 []string) []string {
+	return append(append([]string{}, a1...), a2...)
 }
