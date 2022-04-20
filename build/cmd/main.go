@@ -11,13 +11,13 @@ import (
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/run"
 
-	me "github.com/CoreumFoundation/coreum/build"
+	selfBuild "build"
 )
 
 func main() {
 	logger.VerboseOff()
 	run.Tool("build", nil, func(ctx context.Context, c *ioc.Container) error {
-		exec := build.NewIoCExecutor(me.Commands, c)
+		exec := build.NewIoCExecutor(selfBuild.Commands, c)
 		if build.Autocomplete(exec) {
 			return nil
 		}
