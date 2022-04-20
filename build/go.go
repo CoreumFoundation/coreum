@@ -4,9 +4,11 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
 )
 
 func ensureGo(ctx context.Context) error {
@@ -19,7 +21,8 @@ func ensureGolangCI(ctx context.Context) error {
 
 // goBuildPkg builds go package
 func goBuildPkg(ctx context.Context, pkg, out string) error {
-	cmd := exec.Command("go", "build", "-trimpath", "-ldflags=-w -s", "-o", out, "./"+pkg)
+	cmd := exec.Command("go", "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
+	cmd.Dir = pkg
 	cmd.Env = append([]string{"CGO_ENABLED=0"}, os.Environ()...)
 	return libexec.Exec(ctx, cmd)
 }
@@ -42,5 +45,5 @@ func goTest(ctx context.Context, deps build.DepsFunc) error {
 
 func goModTidy(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return libexec.Exec(ctx, exec.Command("go", "mod", "tidy"))
+	return libexec.Exec(ctx, exec.Command("go", "mod", "tidy", "-compat", "1.17"))
 }
