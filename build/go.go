@@ -25,7 +25,8 @@ func ensureGolangCI(ctx context.Context) error {
 // goBuildPkg builds go package
 func goBuildPkg(ctx context.Context, pkg, out string) error {
 	logger.Get(ctx).Info("Building go package", zap.String("package", pkg), zap.String("binary", out))
-	cmd := exec.Command("go", "build", "-trimpath", "-ldflags=-w -s", "-o", out, "./"+pkg)
+	cmd := exec.Command("go", "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
+	cmd.Dir = pkg
 	cmd.Env = append([]string{"CGO_ENABLED=0"}, os.Environ()...)
 	return libexec.Exec(ctx, cmd)
 }
