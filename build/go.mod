@@ -1,4 +1,4 @@
-module build
+module github.com/CoreumFoundation/coreum/build
 
 // 1.16 is used here because still not all distros deliver 1.17 or 1.18.
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
