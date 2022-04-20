@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-build-tools/pkg/run"
 
-	selfBuild "build"
+	selfBuild "github.com/CoreumFoundation/coreum/build"
 )
 
 func main() {
