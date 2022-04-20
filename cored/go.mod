@@ -1,5 +1,6 @@
 module github.com/CoreumFoundation/coreum/cored
 
+// Cosmos SDK v0.45.3 doesn't play well with anything newer than go 1.16. v0.46 should support go v1.18.x
 go 1.16
 
 replace (
