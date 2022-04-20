@@ -51,7 +51,13 @@ func goLint(ctx context.Context, deps build.DepsFunc) error {
 // goTest runs go test
 func goTest(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return libexec.Exec(ctx, exec.Command("go", "test", "-count=1", "-shuffle=on", "-race", "./..."))
+	log := logger.Get(ctx)
+	return onModule(func(path string) error {
+		log.Info("Running go tests", zap.String("path", path))
+		cmd := exec.Command("go", "test", "-count=1", "-shuffle=on", "-race", "./...")
+		cmd.Dir = path
+		return libexec.Exec(ctx, cmd)
+	})
 }
 
 func goModTidy(ctx context.Context, deps build.DepsFunc) error {

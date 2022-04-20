@@ -38,6 +38,8 @@ linters:
     - lll
     - cyclop
     - gci
+    - paralleltest
+    - testpackage
     # deprecated:
     - interfacer
     - golint
