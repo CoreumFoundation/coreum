@@ -45,6 +45,8 @@ linters:
     - thelper
     - maintidx
     - gofumpt
+    - paralleltest
+    - testpackage
     # deprecated:
     - interfacer
     - golint

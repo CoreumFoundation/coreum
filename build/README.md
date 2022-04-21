@@ -47,6 +47,7 @@ Here is the list of operations supported at the moment:
 
 - `setup` - install all the tools required to develop our software
 - `lint` - runs code linter
+- `tidy` - executes `go mod tidy`
 - `test` - runs unit tests
 - `build` - builds `cored`
 
