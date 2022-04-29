@@ -45,3 +45,32 @@ It must be checked to ensure that validators cannot make higher profits by purpo
 
 ## Not Enough CORE Tokens Getting Staked
 The more token staked by network participants the more secure a POS network will become. In the cosmos hub the inflation rate is used to control how much token is staked by token holders. In other words they manipulate inflation rate to either incentivize or discourage token holders to stake their tokens. Since our system is deflationary, we cannot use inflation and a controlling mechanism and we should be mindful about the implications of our decision.
+
+# Gas Price Proposals
+## Proposal 1
+We designate some variables defined below to utilize in gas price calculations:
+- *BlockLoad*: Is an indicator of what percentage of block capacity is used
+- *AverageBlockLoad<sub>n</sub>*: Is the average *BlockLoad* in the previous n blocks 
+- *OptimalLoad*: Is the ideal *BlockLoad* that we want the blockchain to operate at. 
+- *MaxBlockLoad*: Is the maximum *BlockLoad* blockchain can handle. 
+- *MaxDiscount*: The maximum discount applied on type of the Initial Gas Price when the network is operating within the optimal range
+
+The gas price will start at a predefined value called GP<sub>0</sub> if last *BlockLoad* is 0 and will reach to *MaxDiscount* of GP<sub>0</sub> when last *BlockLoad* reaches *AverageTPS<sub>n</sub>* it will remain at *MaxDiscount* of GP<sub>0</sub> until *OptimalTPS* of the network. After that point a fee escalation mechanism will kick in to avoid blockchain overload.
+
+Gas price will be calculated by the following formula: 
+
+IF *AverageBlockLoad<sub>n</sub>* < *BlockLoad*
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+gasPrice = GP<sub>0</sub> * (1 - maxDiscount)<sup>(*BlockLoad*/*AverageBlockLoad<sub>n</sub>*)</sup>
+
+IF *AverageBlockLoad<sub>n</sub>* >= *BlockLoad* >= *OptimalBlockLoad*  
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+gasPrice = GP<sub>0</sub> * *MaxDiscount*
+
+IF *BlockLoad* >= *OptimalBlockLoad*  
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+gasPrice = GP<sub>0</sub> * *MaxDicount* * 
+(*MaxBlockLoad* - *OptimalBlockLoad*) / (*MaxBlockLoad* - *BlockLoad*)
