@@ -44,7 +44,7 @@ These checks can occur in [**CheckTx**][CheckTx] Method from ABCI protocol.
 It must be checked to ensure that validators cannot make higher profits by purposefully including less transactions in the block. In other words validators must always be incentivized to include more transactions in the block
 
 ## Not Enough CORE Tokens Getting Staked
-The more token staked by network participants the more secure a POS network will become. In the cosmos hub the inflation rate is used to control how much token is staked by token holders. In other words they manipulate inflation rate to either incentivize or discourage token holders to stake their tokens. Since our system is deflationary, we cannot use inflation and a controlling mechanism and we should be mindful about the implications of our decision.
+The more token staked by network participants the more secure a POS network will become. In the cosmos hub the inflation rate is used to control how much token is staked by token holders. In other words they manipulate inflation rate to either incentivize or discourage token holders to stake their tokens.
 
 # Gas Price Proposals
 ## Proposal 1
@@ -82,7 +82,7 @@ At the end of each block validator rewards will be calculated and and distribute
 
 Transaction fees are already discussed and no further explanation is needed. But we will discuss minting.
 
-## Minting
+## Rewarding 
 At the end of each block some Tokens might be minted and added to block reward. The amount that will be minted will be decided by the amount that people have staked. The intent here is to encourage token holders to stake their tokens up to a certain percentage of all tokens by adding to the block rewards. It is decided to use the [Mint Module](https://docs.cosmos.network/v0.45/modules/mint/01_concepts.html) from Cosmos SDK for now.
 
 ## Reward Distribution
