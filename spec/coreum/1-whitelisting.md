@@ -1,5 +1,5 @@
 
-#Whitelisting
+# Whitelisting
 To whitelist a user, the token issuer must initiate a transaction with the address of the requester as well as a “limit” amount (Limit indicates how much of this asset the whitelisted user can hold or trade).
 
 **Example:**
@@ -18,13 +18,13 @@ It is important to note that users **can also issue tokens without the whitelist
 **Token issuance is a built-in feature of the coreum Blockchain**, this means that minting tokens are not conducted through a smart contract, but rather natively in the Blockchain.
 
 
-##Possible Implementation
+## Possible Implementation
 
-###Messages
-###Create token
+### Messages
+### Create token
 
-###Add token to user token's list
+### Add token to user token's list
 
-###Freeze tokens
+### Freeze tokens
 
-###Change limit amount
+### Change limit amount
