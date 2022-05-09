@@ -104,7 +104,7 @@ const (
 	AccountAddressPrefix = "cosmos"
 
 	// Name is the blockchain name
-	Name = "cored"
+	Name = "core"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals

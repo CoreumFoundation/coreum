@@ -1,0 +1,130 @@
+package coreznet
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+	osexec "os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+
+	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
+	"github.com/CoreumFoundation/coreum/coreznet/tests"
+)
+
+// Activate starts preconfigured bash environment
+func Activate(ctx context.Context, configF *ConfigFactory) error {
+	config := configF.Config()
+
+	exe := must.String(filepath.EvalSymlinks(must.String(os.Executable())))
+
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/start", []byte(fmt.Sprintf("#!/bin/bash\nexec %s start \"$@\"", exe)), 0o700))
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/stop", []byte(fmt.Sprintf("#!/bin/bash\nexec %s stop \"$@\"", exe)), 0o700))
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/destroy", []byte(fmt.Sprintf("#!/bin/bash\nexec %s destroy \"$@\"", exe)), 0o700))
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/tests", []byte(fmt.Sprintf("#!/bin/bash\nexec %s tests \"$@\"", exe)), 0o700))
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/spec", []byte(fmt.Sprintf("#!/bin/bash\nexec %s spec \"$@\"", exe)), 0o700))
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/logs", []byte(fmt.Sprintf("#!/bin/bash\nexec tail -f -n +0 \"%s/$1.log\"", config.LogDir)), 0o700))
+
+	bash := osexec.Command("bash")
+	bash.Env = append(os.Environ(),
+		fmt.Sprintf("PS1=%s", "("+configF.EnvName+`) [\u@\h \W]\$ `),
+		fmt.Sprintf("PATH=%s", config.WrapperDir+":/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin"),
+		fmt.Sprintf("COREZNET_ENV=%s", configF.EnvName),
+		fmt.Sprintf("COREZNET_SET=%s", configF.SetName),
+		fmt.Sprintf("COREZNET_HOME=%s", configF.HomeDir),
+		fmt.Sprintf("COREZNET_TARGET=%s", configF.Target),
+		fmt.Sprintf("COREZNET_BIN_DIR=%s", configF.BinDir),
+		fmt.Sprintf("COREZNET_NETWORK=%s", configF.Network),
+		fmt.Sprintf("COREZNET_FILTERS=%s", strings.Join(configF.TestFilters, ",")),
+		fmt.Sprintf("COREZNET_VERBOSE=%t", configF.VerboseLogging),
+	)
+	bash.Dir = config.LogDir
+	bash.Stdin = os.Stdin
+	err := libexec.Exec(ctx, bash)
+	if bash.ProcessState != nil && bash.ProcessState.ExitCode() != 0 {
+		// bash returns non-exit code if command executed in the shell failed
+		return nil
+	}
+	return err
+}
+
+// Start starts environment
+func Start(ctx context.Context, target infra.Target, set infra.Set, spec *infra.Spec) (retErr error) {
+	defer func() {
+		if err := spec.Save(); retErr == nil {
+			retErr = err
+		}
+	}()
+	return target.Deploy(ctx, set)
+}
+
+// Stop stops environment
+func Stop(ctx context.Context, target infra.Target, spec *infra.Spec) (retErr error) {
+	defer func() {
+		spec.PGID = 0
+		for _, app := range spec.Apps {
+			if app.Status == infra.AppStatusRunning {
+				app.Status = infra.AppStatusStopped
+			}
+			if err := spec.Save(); retErr == nil {
+				retErr = err
+			}
+		}
+	}()
+	return target.Stop(ctx)
+}
+
+// Destroy destroys environment
+func Destroy(ctx context.Context, config infra.Config, target infra.Target) (retErr error) {
+	if err := target.Destroy(ctx); err != nil {
+		return err
+	}
+
+	// It may happen that some files are flushed to disk even after processes are terminated
+	// so let's try to delete dir a few times
+	var err error
+	for i := 0; i < 3; i++ {
+		if err = os.RemoveAll(config.HomeDir); err == nil || errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+	return err
+}
+
+// Tests runs integration tests
+func Tests(c *ioc.Container, configF *ConfigFactory) error {
+	configF.TestingMode = true
+	configF.SetName = "tests"
+	var err error
+	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, appF *apps.Factory, spec *infra.Spec) (retErr error) {
+		defer func() {
+			if err := spec.Save(); retErr == nil {
+				retErr = err
+			}
+		}()
+
+		env, tests := tests.Tests(appF)
+		return testing.Run(ctx, target, env, tests, config.TestFilters)
+	}, &err)
+	return err
+}
+
+// Spec print specification of running environment
+func Spec(spec *infra.Spec, _ infra.Set) error {
+	fmt.Println(spec)
+	return nil
+}
