@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 )
 
 // gitStatusClean checks that there are no uncommitted files
