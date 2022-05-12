@@ -7,10 +7,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/build"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"go.uber.org/zap"
 )
 

@@ -16,9 +16,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/build"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"go.uber.org/zap"
 )
 

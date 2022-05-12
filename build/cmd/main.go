@@ -5,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/build"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/ioc"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum-build-tools/pkg/run"
+	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 
 	selfBuild "github.com/CoreumFoundation/coreum/build"
 )

@@ -6,6 +6,6 @@ module github.com/CoreumFoundation/coreum/build
 go 1.16
 
 require (
-	github.com/CoreumFoundation/coreum-build-tools v0.1.3
+	github.com/CoreumFoundation/coreum-tools v0.1.1
 	go.uber.org/zap v1.21.0
 )
