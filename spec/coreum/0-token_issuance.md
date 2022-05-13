@@ -13,7 +13,7 @@ The token issuer can set a “transaction fee” and “burn fee” in percentag
 ## Fungible vs Non fungible tokens
 Upon token issuance, users will be able to indicate whether the token will be **fungible or not**, together with the maximum supply amount.
 
-NFTs can represent ownership over digital or physical assets. 
+NFTs represent ownership over a given set of digital or physical assets.
 
 Some examples are the following:
 
