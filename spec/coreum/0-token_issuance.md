@@ -12,7 +12,14 @@ The token issuer can set a “transaction fee” and “burn fee” in percentag
 
 ## Fungible vs Non fungible tokens
 Upon token issuance, users will be able to indicate whether the token will be **fungible or not**, together with the maximum supply amount.
-[https://eips.ethereum.org/EIPS/eip-721](https://eips.ethereum.org/EIPS/eip-721)
+
+NFTs can represent ownership over digital or physical assets. 
+
+Some examples are the following:
+
+- Physical property — land, houses, artwork
+- Virtual collectables — unique monkey faces, avatars
+- Financial assets — loans, burdens and other responsibilities
 
 ## Possible implementation
 
