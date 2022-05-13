@@ -12,6 +12,7 @@ The token issuer can set a “transaction fee” and “burn fee” in percentag
 
 ## Fungible vs Non fungible tokens
 Upon token issuance, users will be able to indicate whether the token will be **fungible or not**, together with the maximum supply amount.
+[https://eips.ethereum.org/EIPS/eip-721](https://eips.ethereum.org/EIPS/eip-721)
 
 ## Possible implementation
 
