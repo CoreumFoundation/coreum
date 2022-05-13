@@ -19,7 +19,7 @@ Some examples are the following:
 
 - Physical property — land, houses, artwork
 - Virtual collectables — unique monkey faces, avatars
-- Financial assets — loans, burdens and other responsibilities
+- Financial assets — car loans, mortgages, etc
 
 ## Possible implementation
 
