@@ -30,8 +30,8 @@ but creating a market order the system will fill all the order parameters in the
 ### Stop loss
 Creating an order a user will be able to **create an additional stop loss order** connected to this order with the opposite direction.
 
-* For the “buy'' order, the stop loss order must have the price lower than the original order price.
-* For the “sell” order the stop loss must have the price higher than the original order price. A user can set the price and time limitation during which an order will exist.
+* For the "buy" order, the stop loss order must have the price lower than the original order price.
+* For the "sell" order the stop loss must have the price higher than the original order price. A user can set the price and time limitation during which an order will exist.
 * Stop loss orders can be filled with several opposite orders.
 
 When a **stop loss order is executed, the original order, take profit order and stop loss order will also be closed automatically**.
@@ -39,9 +39,9 @@ When a **stop loss order is executed, the original order, take profit order and 
 ### Trailing stop
 Creating an order a user can set the **trailing stop automanaging order**. The user has to **set the price difference between his order and trailing stop order**.
 
-**For “buy” orders trailing stop price will be lower than the original order.** After a user creates a trailing stop order in addition to the main order, if the price goes up, the trailing stop order price also will increase, keeping the price difference entered by the user. If a price goes down, the trailing stop order will not change and it will be executed when the price reaches the entered difference at prevailing market price.
+**For "buy" orders trailing stop price will be lower than the original order.** After a user creates a trailing stop order in addition to the main order, if the price goes up, the trailing stop order price also will increase, keeping the price difference entered by the user. If a price goes down, the trailing stop order will not change and it will be executed when the price reaches the entered difference at prevailing market price.
 
-**For “sell” orders trailing stop price will be lower than the original order.** After a user creates a trailing stop order in addition to the main order, if the price goes down, the trailing stop order price also will decrease, keeping the price difference entered by the user. If a price goes up, the trailing stop order will not change and it will be executed when the price reaches the entered difference at prevailing market price.
+**For "sell" orders trailing stop price will be lower than the original order.** After a user creates a trailing stop order in addition to the main order, if the price goes down, the trailing stop order price also will decrease, keeping the price difference entered by the user. If a price goes up, the trailing stop order will not change and it will be executed when the price reaches the entered difference at prevailing market price.
 When a trailing stop order is executed, the original order, stop loss order and take profit order will also be closed automatically.
 
 ### Trailing stop limit
