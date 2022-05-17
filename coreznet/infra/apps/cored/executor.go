@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	osexec "os/exec"
@@ -51,17 +50,16 @@ func (e *Executor) Home() string {
 
 // AddKey adds key to the client
 func (e *Executor) AddKey(ctx context.Context, name string) (string, error) {
-	keyData := &bytes.Buffer{}
 	addrBuf := &bytes.Buffer{}
 
 	err := libexec.Exec(ctx,
-		e.coredOut(keyData, "keys", "add", name, "--output", "json", "--keyring-backend", "test"),
+		e.cored("keys", "add", name, "--keyring-backend", "test"),
 		e.coredOut(addrBuf, "keys", "show", name, "-a", "--keyring-backend", "test"),
 	)
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSuffix(addrBuf.String(), "\n"), ioutil.WriteFile(e.homeDir+"/"+name+".json", keyData.Bytes(), 0o600)
+	return strings.TrimSuffix(addrBuf.String(), "\n"), nil
 }
 
 // PrepareNode prepares node to start
