@@ -63,10 +63,11 @@ func (g *Genesis) AddWallet(ctx context.Context, balances ...Balance) (Wallet, e
 }
 
 // NewClient creates new client for cored
-func NewClient(executor *Executor, ip net.IP) *Client {
+func NewClient(executor *Executor, ip net.IP, rpcPort int) *Client {
 	return &Client{
 		executor: executor,
 		ip:       ip,
+		rpcPort:  rpcPort,
 	}
 }
 
@@ -74,12 +75,13 @@ func NewClient(executor *Executor, ip net.IP) *Client {
 type Client struct {
 	executor *Executor
 	ip       net.IP
+	rpcPort  int
 }
 
 // QBankBalances queries for bank balances owned by wallet
 func (c *Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
 	// FIXME (wojtek): support pagination
-	out, err := c.executor.QBankBalances(ctx, wallet.Address, c.ip)
+	out, err := c.executor.QBankBalances(ctx, wallet.Address, c.ip, c.rpcPort)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +108,7 @@ func (c *Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]B
 
 // TxBankSend sends tokens from one wallet to another
 func (c *Client) TxBankSend(ctx context.Context, sender, receiver Wallet, balance Balance) (string, error) {
-	out, err := c.executor.TxBankSend(ctx, sender.Name, receiver.Address, balance, c.ip)
+	out, err := c.executor.TxBankSend(ctx, sender.Name, receiver.Address, balance, c.ip, c.rpcPort)
 	if err != nil {
 		return "", err
 	}

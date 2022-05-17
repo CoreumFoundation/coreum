@@ -9,15 +9,33 @@ import (
 // DevMode is the environment for developer
 func DevMode(af *apps.Factory) infra.Mode {
 	return infra.Mode{
-		af.Cored("cored-node"),
+		af.Cored("cored-node", apps.CoredPorts{
+			RPC:     26657,
+			P2P:     26656,
+			GRPC:    9090,
+			GRPCWeb: 9091,
+			PProf:   6060,
+		}),
 	}
 }
 
 // FullMode is the environment with all apps
 func FullMode(af *apps.Factory) infra.Mode {
 	return infra.Mode{
-		af.Cored("cored-a"),
-		af.Cored("cored-b"),
+		af.Cored("cored-a", apps.CoredPorts{
+			RPC:     16657,
+			P2P:     16656,
+			GRPC:    19090,
+			GRPCWeb: 19091,
+			PProf:   16060,
+		}),
+		af.Cored("cored-b", apps.CoredPorts{
+			RPC:     26657,
+			P2P:     26656,
+			GRPC:    29090,
+			GRPCWeb: 29091,
+			PProf:   26060,
+		}),
 	}
 }
 

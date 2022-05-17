@@ -28,7 +28,7 @@ type App interface {
 // Deployment is the app ready to deploy to the target
 type Deployment interface {
 	// Deploy deploys app to the target
-	Deploy(ctx context.Context, target AppTarget, config Config) error
+	Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error)
 }
 
 // Mode is the list of applications to deploy
@@ -40,10 +40,14 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 		if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Status == AppStatusRunning {
 			continue
 		}
-		if err := app.Deployment().Deploy(ctx, t, config); err != nil {
+		info, err := app.Deployment().Deploy(ctx, t, config)
+		if err != nil {
 			return err
 		}
-		spec.Apps[app.Name()].Status = AppStatusRunning
+		appInfo := spec.Apps[app.Name()]
+		appInfo.Status = AppStatusRunning
+		appInfo.IP = info.IP
+		appInfo.Ports = info.Ports
 	}
 	return spec.Save()
 }
@@ -52,6 +56,9 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 type DeploymentInfo struct {
 	// IP is the IP address assigned to application
 	IP net.IP
+
+	// Ports stores the named ports exposed by the application
+	Ports map[string]int
 }
 
 // Target represents target of deployment from the perspective of coreznet
@@ -113,6 +120,9 @@ type AppBase struct {
 	// Args are args passed to binary
 	Args []string
 
+	// Ports are the network ports exposed by the application
+	Ports map[string]int
+
 	// Requires is the list of health checks to be required before app can be deployed
 	Requires Prerequisites
 
@@ -152,9 +162,10 @@ func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarg
 	return nil
 }
 
-func (app AppBase) postprocess(ctx context.Context, info DeploymentInfo) error {
+func (app AppBase) postprocess(ctx context.Context, info *DeploymentInfo) error {
+	info.Ports = app.Ports
 	if app.PostFunc != nil {
-		return app.PostFunc(ctx, info)
+		return app.PostFunc(ctx, *info)
 	}
 	return nil
 }
@@ -168,16 +179,19 @@ type Binary struct {
 }
 
 // Deploy deploys binary to the target
-func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) error {
+func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
 	if err := app.AppBase.preprocess(ctx, config, target); err != nil {
-		return err
+		return DeploymentInfo{}, err
 	}
 
 	info, err := target.DeployBinary(ctx, app)
 	if err != nil {
-		return err
+		return DeploymentInfo{}, err
 	}
-	return app.AppBase.postprocess(ctx, info)
+	if err := app.AppBase.postprocess(ctx, &info); err != nil {
+		return DeploymentInfo{}, err
+	}
+	return info, nil
 }
 
 // Container represents container to be deployed
@@ -192,7 +206,7 @@ type Container struct {
 }
 
 // Deploy deploys container to the target
-func (app Container) Deploy(ctx context.Context, target AppTarget, config Config) error {
+func (app Container) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
 	panic("not implemented")
 }
 
@@ -310,20 +324,6 @@ type AppInfo struct {
 	// Status indicates the status of the application
 	Status AppStatus `json:"status"`
 
-	mu sync.Mutex
-
 	// Ports describe network ports provided by the application
 	Ports map[string]int `json:"ports,omitempty"`
-}
-
-// AddPort adds port to app description
-func (a *AppInfo) AddPort(name string, port int) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	if a.Ports == nil {
-		a.Ports = map[string]int{}
-	}
-
-	a.Ports[name] = port
 }
