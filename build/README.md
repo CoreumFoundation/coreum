@@ -21,7 +21,7 @@ your `~/.bashrc` or `~/.zshrc` depending on which shell you use:
 
 ```
 PATH="$HOME/coreum/bin:$PATH"
-complete -o nospace -C core core #should be ommitted for zsh 
+complete -o nospace -C core core #should be omitted for zsh 
 ```
 
 then run:
