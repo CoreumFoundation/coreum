@@ -7,35 +7,28 @@ import (
 	"net"
 	"os"
 	osexec "os/exec"
-	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // NewExecutor returns new executor
-func NewExecutor(name, binPath, homeDir, keyName string) Executor {
+func NewExecutor(chainID, binPath, homeDir string) Executor {
 	must.Any(os.Stat(binPath))
 
 	return Executor{
-		name:    name,
+		chainID: chainID,
 		binPath: binPath,
 		homeDir: homeDir,
-		keyName: keyName,
 	}
 }
 
 // Executor exposes methods for executing cored binary
 type Executor struct {
-	name    string
+	chainID string
 	binPath string
 	homeDir string
 	keyName string
-}
-
-// Name returns name of the chain
-func (e Executor) Name() string {
-	return e.name
 }
 
 // Bin returns path to cored binary
@@ -48,56 +41,10 @@ func (e Executor) Home() string {
 	return e.homeDir
 }
 
-// AddKey adds key to the client
-func (e Executor) AddKey(ctx context.Context, name string) (string, error) {
-	addrBuf := &bytes.Buffer{}
-
-	err := libexec.Exec(ctx,
-		e.cored("keys", "add", name, "--keyring-backend", "test"),
-		e.coredOut(addrBuf, "keys", "show", name, "-a", "--keyring-backend", "test"),
-	)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSuffix(addrBuf.String(), "\n"), nil
-}
-
-// PrepareNode prepares node to start
-func (e Executor) PrepareNode(ctx context.Context, genesis *Genesis) error {
-	addr, err := e.AddKey(ctx, e.keyName)
-	if err != nil {
-		return err
-	}
-
-	cmds := []*osexec.Cmd{
-		e.cored("init", e.name, "--chain-id", e.name, "-o"),
-		e.cored("add-genesis-account", addr, "500000000000000000000000core,990000000000000000000000000stake", "--keyring-backend", "test"),
-	}
-	for wallet, balances := range genesis.wallets {
-		if len(balances) == 0 {
-			continue
-		}
-		balancesStr := ""
-		for _, balance := range balances {
-			if balancesStr != "" {
-				balancesStr += ","
-			}
-			balancesStr += balance.Amount.String() + balance.Denom
-		}
-		cmds = append(cmds, e.cored("add-genesis-account", wallet.Address, balancesStr, "--keyring-backend", "test"))
-	}
-
-	cmds = append(cmds,
-		e.cored("gentx", e.keyName, "1000000000000000000000000stake", "--chain-id", e.name, "--keyring-backend", "test"),
-		e.cored("collect-gentxs"),
-	)
-	return libexec.Exec(ctx, cmds...)
-}
-
 // QBankBalances queries for bank balances owned by address
 func (e Executor) QBankBalances(ctx context.Context, address string, ip net.IP, rpcPort int) ([]byte, error) {
 	balances := &bytes.Buffer{}
-	if err := libexec.Exec(ctx, e.coredOut(balances, "q", "bank", "balances", address, "--chain-id", e.name, "--node", fmt.Sprintf("tcp://%s:%d", ip, rpcPort), "--output", "json")); err != nil {
+	if err := libexec.Exec(ctx, e.coredOut(balances, "q", "bank", "balances", address, "--chain-id", e.chainID, "--node", fmt.Sprintf("tcp://%s:%d", ip, rpcPort), "--output", "json")); err != nil {
 		return nil, err
 	}
 	return balances.Bytes(), nil
@@ -106,7 +53,7 @@ func (e Executor) QBankBalances(ctx context.Context, address string, ip net.IP, 
 // TxBankSend sends tokens from one address to another
 func (e Executor) TxBankSend(ctx context.Context, sender, address string, balance Balance, ip net.IP, rpcPort int) ([]byte, error) {
 	tx := &bytes.Buffer{}
-	if err := libexec.Exec(ctx, e.coredOut(tx, "tx", "bank", "send", sender, address, balance.Amount.String()+balance.Denom, "--yes", "--chain-id", e.name, "--node", fmt.Sprintf("tcp://%s:%d", ip, rpcPort), "--keyring-backend", "test", "--broadcast-mode", "block", "--output", "json")); err != nil {
+	if err := libexec.Exec(ctx, e.coredOut(tx, "tx", "bank", "send", sender, address, balance.Amount.String()+balance.Denom, "--yes", "--chain-id", e.chainID, "--node", fmt.Sprintf("tcp://%s:%d", ip, rpcPort), "--keyring-backend", "test", "--broadcast-mode", "block", "--output", "json")); err != nil {
 		return nil, err
 	}
 	return tx.Bytes(), nil

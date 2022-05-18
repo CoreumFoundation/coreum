@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"math/big"
 	"net"
-	"sync"
-
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/rnd"
 )
 
 // Wallet stores information related to wallet
@@ -27,39 +24,6 @@ type Balance struct {
 
 	// Denom is a token symbol
 	Denom string `json:"denom"`
-}
-
-// NewGenesis returns new genesis configurator
-func NewGenesis(executor Executor) *Genesis {
-	return &Genesis{
-		executor: executor,
-		wallets:  map[Wallet][]Balance{},
-	}
-}
-
-// Genesis represents configuration of genesis block
-type Genesis struct {
-	executor Executor
-
-	mu      sync.Mutex
-	wallets map[Wallet][]Balance
-}
-
-// AddWallet adds wallet with balances to the genesis
-func (g *Genesis) AddWallet(ctx context.Context, balances ...Balance) (Wallet, error) {
-	name := rnd.GetRandomName()
-	addr, err := g.executor.AddKey(ctx, name)
-	if err != nil {
-		return Wallet{}, err
-	}
-	wallet := Wallet{Name: name, Address: addr}
-
-	g.mu.Lock()
-	defer g.mu.Unlock()
-
-	g.wallets[wallet] = balances
-
-	return wallet, nil
 }
 
 // NewClient creates new client for cored

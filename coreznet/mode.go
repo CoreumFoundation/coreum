@@ -3,11 +3,13 @@ package coreznet
 import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/tests"
 )
 
 // DevMode is the environment for developer
 func DevMode(af *apps.Factory) infra.Mode {
+	genesis := cored.NewGenesis("coreddev")
 	return infra.Mode{
 		af.Cored("cored-node", apps.CoredPorts{
 			RPC:     26657,
@@ -15,12 +17,13 @@ func DevMode(af *apps.Factory) infra.Mode {
 			GRPC:    9090,
 			GRPCWeb: 9091,
 			PProf:   6060,
-		}),
+		}, genesis),
 	}
 }
 
 // FullMode is the environment with all apps
 func FullMode(af *apps.Factory) infra.Mode {
+	genesis := cored.NewGenesis("coreddev")
 	return infra.Mode{
 		af.Cored("cored-a", apps.CoredPorts{
 			RPC:     16657,
@@ -28,14 +31,14 @@ func FullMode(af *apps.Factory) infra.Mode {
 			GRPC:    19090,
 			GRPCWeb: 19091,
 			PProf:   16060,
-		}),
+		}, genesis),
 		af.Cored("cored-b", apps.CoredPorts{
 			RPC:     26657,
 			P2P:     26656,
 			GRPC:    29090,
 			GRPCWeb: 29091,
 			PProf:   26060,
-		}),
+		}, genesis),
 	}
 }
 

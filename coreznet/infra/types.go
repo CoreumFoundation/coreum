@@ -37,7 +37,7 @@ type Mode []App
 // Deploy deploys app in environment to the target
 func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
 	for _, app := range m {
-		if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Status == AppStatusRunning {
+		if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Status() == AppStatusRunning {
 			continue
 		}
 		info, err := app.Deployment().Deploy(ctx, t, config)
@@ -45,9 +45,9 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 			return err
 		}
 		appInfo := spec.Apps[app.Name()]
-		appInfo.Status = AppStatusRunning
-		appInfo.IP = info.IP
-		appInfo.Ports = info.Ports
+		appInfo.SetIP(info.IP)
+		appInfo.SetPorts(info.Ports)
+		appInfo.SetStatus(AppStatusRunning)
 	}
 	return spec.Save()
 }
@@ -152,7 +152,7 @@ func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarg
 		}
 	}
 
-	if app.Info.Status == AppStatusStopped {
+	if app.Info.Status() == AppStatusStopped {
 		return nil
 	}
 
@@ -276,14 +276,16 @@ func (s *Spec) DescribeApp(appType string, name string) *AppInfo {
 	defer s.mu.Unlock()
 
 	if app, exists := s.Apps[name]; exists {
-		if app.Type != appType {
-			panic(fmt.Sprintf("app type doesn't match for application existing in spec: %s, expected: %s, got: %s", name, app.Type, appType))
+		if app.data.Type != appType {
+			panic(fmt.Sprintf("app type doesn't match for application existing in spec: %s, expected: %s, got: %s", name, app.data.Type, appType))
 		}
 		return app
 	}
 
 	appDesc := &AppInfo{
-		Type: appType,
+		data: appInfoData{
+			Type: appType,
+		},
 	}
 	s.Apps[name] = appDesc
 	return appDesc
@@ -313,9 +315,8 @@ const (
 	AppStatusStopped AppStatus = "stopped"
 )
 
-// AppInfo describes app running in environment
-type AppInfo struct {
-	// Type is the type of app
+type appInfoData struct {
+	// appType is the type of app
 	Type string `json:"type"`
 
 	// IP is the IP reserved for this application
@@ -326,4 +327,67 @@ type AppInfo struct {
 
 	// Ports describe network ports provided by the application
 	Ports map[string]int `json:"ports,omitempty"`
+}
+
+// AppInfo describes app running in environment
+type AppInfo struct {
+	mu sync.RWMutex
+
+	data appInfoData
+}
+
+// IP returns IP
+func (ai *AppInfo) IP() net.IP {
+	ai.mu.RLock()
+	defer ai.mu.RUnlock()
+
+	return ai.data.IP
+}
+
+// SetIP sets IP
+func (ai *AppInfo) SetIP(ip net.IP) {
+	ai.mu.Lock()
+	defer ai.mu.Unlock()
+
+	ai.data.IP = ip
+}
+
+// Status returns status
+func (ai *AppInfo) Status() AppStatus {
+	ai.mu.RLock()
+	defer ai.mu.RUnlock()
+
+	return ai.data.Status
+}
+
+// SetStatus sets status
+func (ai *AppInfo) SetStatus(status AppStatus) {
+	ai.mu.Lock()
+	defer ai.mu.Unlock()
+
+	ai.data.Status = status
+}
+
+// SetPorts sets ports
+func (ai *AppInfo) SetPorts(ports map[string]int) {
+	ai.mu.Lock()
+	defer ai.mu.Unlock()
+
+	ai.data.Ports = ports
+}
+
+// MarshalJSON marshals data to JSON
+func (ai *AppInfo) MarshalJSON() ([]byte, error) {
+	ai.mu.RLock()
+	defer ai.mu.RUnlock()
+
+	return json.Marshal(ai.data)
+}
+
+// UnmarshalJSON unmarshals data from JSON
+func (ai *AppInfo) UnmarshalJSON(data []byte) error {
+	ai.mu.Lock()
+	defer ai.mu.Unlock()
+
+	return json.Unmarshal(data, &ai.data)
 }
