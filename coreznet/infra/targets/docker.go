@@ -19,7 +19,7 @@ import (
 
 const labelEnv = "com.coreum.coreznet.env"
 
-const dockerTemplate = `FROM scratch
+const dockerTemplate = `FROM alpine
 COPY . .
 ENTRYPOINT ["%s"]
 `

@@ -6,5 +6,5 @@ import (
 
 // Docker runs docker command
 func Docker(args ...string) *exec.Cmd {
-	return exec.Command("docker", args...)
+	return toolCmd("docker", args)
 }

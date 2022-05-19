@@ -27,6 +27,7 @@ func NewCored(wrapperDir string, executor *cored.Executor, spec *infra.Spec) *Co
 		executor:   executor,
 		genesis:    cored.NewGenesis(executor),
 		appInfo:    spec.DescribeApp("cored", executor.Name()),
+		mu:         &sync.RWMutex{},
 	}
 }
 
@@ -38,21 +39,21 @@ type Cored struct {
 	appInfo    *infra.AppInfo
 
 	// mu is here to protect appInfo.IP
-	mu sync.RWMutex
+	mu *sync.RWMutex
 }
 
 // ChainID returns chain ID
-func (c *Cored) ChainID() string {
+func (c Cored) ChainID() string {
 	return c.executor.Name()
 }
 
 // Name returns name of app
-func (c *Cored) Name() string {
+func (c Cored) Name() string {
 	return c.executor.Name()
 }
 
 // IP returns IP chain listens on
-func (c *Cored) IP() net.IP {
+func (c Cored) IP() net.IP {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -60,17 +61,17 @@ func (c *Cored) IP() net.IP {
 }
 
 // Genesis returns configurator of genesis block
-func (c *Cored) Genesis() *cored.Genesis {
+func (c Cored) Genesis() *cored.Genesis {
 	return c.genesis
 }
 
 // Client creates new client for cored blockchain
-func (c *Cored) Client() *cored.Client {
+func (c Cored) Client() *cored.Client {
 	return cored.NewClient(c.executor, c.IP())
 }
 
 // HealthCheck checks if cored chain is empty
-func (c *Cored) HealthCheck(ctx context.Context) error {
+func (c Cored) HealthCheck(ctx context.Context) error {
 	if c.IP() == nil {
 		return retry.Retryable(fmt.Errorf("cored chain hasn't started yet"))
 	}
@@ -114,7 +115,7 @@ func (c *Cored) HealthCheck(ctx context.Context) error {
 }
 
 // Deployment returns deployment of cored
-func (c *Cored) Deployment() infra.Deployment {
+func (c Cored) Deployment() infra.Deployment {
 	return infra.Binary{
 		Path: c.executor.Bin(),
 		AppBase: infra.AppBase{
@@ -149,7 +150,7 @@ func (c *Cored) Deployment() infra.Deployment {
 	}
 }
 
-func (c *Cored) saveClientWrapper(wrapperDir string) error {
+func (c Cored) saveClientWrapper(wrapperDir string) error {
 	// Call to this function is already protected by mutex so referencing s.appInfo.IP here is safe
 
 	client := `#!/bin/sh

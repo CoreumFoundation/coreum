@@ -1,5 +1,5 @@
 # coreznet
-`coreznet` helps you running all the applications needed for development and testing.
+`coreznet` helps you run all the applications needed for development and testing.
 
 ## Prerequisites
 To use `coreznet` you need:
