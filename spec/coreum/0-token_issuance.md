@@ -9,7 +9,7 @@ Depending on the configuration, a user can specify whether this token can have "
 Users can burn amounts of the issued token given the token is burnable. 
 
 At the time of token issuance, the user can also specify whether holding (sending/receiving) and trading of this token can be allowed by anyone or should be restricted to users who are whitelisted.
-The token issuer can set a "transaction fee" and "burn fee" in percentage so that for every movement (either through trading or sending/receiving tokens) this amount is deducted from the sender and receiver gets less of these fees on the Blockchain.
+The token issuer can set a "transaction fee" and "burn fee" in percentage so that for every movement (either through trading or sending/receiving tokens) this amount is deducted from the sender.
 
 ## Fungible vs Non-fungible tokens
 Upon token issuance, users will be able to indicate whether the token will be **fungible or not**, together with the maximum supply amount.
