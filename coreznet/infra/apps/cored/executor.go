@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 	osexec "os/exec"
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // NewExecutor returns new executor
 func NewExecutor(name, binPath, homeDir, keyName string) *Executor {
+	must.Any(os.Stat(binPath))
+
 	return &Executor{
 		name:    name,
 		binPath: binPath,
