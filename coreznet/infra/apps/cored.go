@@ -29,7 +29,7 @@ type CoredPorts struct {
 }
 
 // NewCored creates new cored app
-func NewCored(config infra.Config, executor *cored.Executor, appInfo *infra.AppInfo, ports CoredPorts) *Cored {
+func NewCored(config infra.Config, executor cored.Executor, appInfo *infra.AppInfo, ports CoredPorts) *Cored {
 	return &Cored{
 		config:   config,
 		executor:   executor,
@@ -43,7 +43,7 @@ func NewCored(config infra.Config, executor *cored.Executor, appInfo *infra.AppI
 // Cored represents cored
 type Cored struct {
 	config   infra.Config
-	executor   *cored.Executor
+	executor   cored.Executor
 	genesis    *cored.Genesis
 	appInfo    *infra.AppInfo
 	ports      CoredPorts

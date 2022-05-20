@@ -30,7 +30,7 @@ type Balance struct {
 }
 
 // NewGenesis returns new genesis configurator
-func NewGenesis(executor *Executor) *Genesis {
+func NewGenesis(executor Executor) *Genesis {
 	return &Genesis{
 		executor: executor,
 		wallets:  map[Wallet][]Balance{},
@@ -39,7 +39,7 @@ func NewGenesis(executor *Executor) *Genesis {
 
 // Genesis represents configuration of genesis block
 type Genesis struct {
-	executor *Executor
+	executor Executor
 
 	mu      sync.Mutex
 	wallets map[Wallet][]Balance
@@ -63,7 +63,7 @@ func (g *Genesis) AddWallet(ctx context.Context, balances ...Balance) (Wallet, e
 }
 
 // NewClient creates new client for cored
-func NewClient(executor *Executor, ip net.IP, rpcPort int) *Client {
+func NewClient(executor Executor, ip net.IP, rpcPort int) *Client {
 	return &Client{
 		executor: executor,
 		ip:       ip,
@@ -73,7 +73,7 @@ func NewClient(executor *Executor, ip net.IP, rpcPort int) *Client {
 
 // Client is the client for cored blockchain
 type Client struct {
-	executor *Executor
+	executor Executor
 	ip       net.IP
 	rpcPort  int
 }
