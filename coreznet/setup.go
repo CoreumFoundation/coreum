@@ -2,7 +2,6 @@ package coreznet
 
 import (
 	"errors"
-	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -86,9 +85,6 @@ type ConfigFactory struct {
 	// BinDir is the path where all binaries are present
 	BinDir string
 
-	// Network is the IP network for processes executed in tmux or direct targets
-	Network string
-
 	// TestingMode means we are in testing mode and deployment should not block execution
 	TestingMode bool
 
@@ -116,7 +112,6 @@ func (cf *ConfigFactory) Config() infra.Config {
 		LogDir:         homeDir + "/logs",
 		WrapperDir:     homeDir + "/bin",
 		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(cf.BinDir)))),
-		Network:        net.ParseIP(cf.Network),
 		TestingMode:    cf.TestingMode,
 		VerboseLogging: cf.VerboseLogging,
 	}

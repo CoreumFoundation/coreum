@@ -1,7 +1,6 @@
 package infra
 
 import (
-	"net"
 	"regexp"
 )
 
@@ -30,9 +29,6 @@ type Config struct {
 
 	// BinDir is the path where all binaries are present
 	BinDir string
-
-	// Network is the IP network for processes executed in tmux or direct targets
-	Network net.IP
 
 	// TestingMode means we are in testing mode and deployment should not block execution
 	TestingMode bool

@@ -92,7 +92,6 @@ func main() {
 
 func addFlags(cmd *cobra.Command, configF *coreznet.ConfigFactory) {
 	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("COREZNET_BIN_DIR", filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), "Path to directory where executables exist")
-	cmd.Flags().StringVar(&configF.Network, "network", defaultString("COREZNET_NETWORK", "127.1.0.0"), "Network where IPs for applications are taken from (related to 'tmux' and 'direct' targets only)")
 }
 
 func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *coreznet.ConfigFactory) {

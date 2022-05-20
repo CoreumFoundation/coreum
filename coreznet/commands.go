@@ -43,7 +43,6 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 		fmt.Sprintf("COREZNET_HOME=%s", configF.HomeDir),
 		fmt.Sprintf("COREZNET_TARGET=%s", configF.Target),
 		fmt.Sprintf("COREZNET_BIN_DIR=%s", configF.BinDir),
-		fmt.Sprintf("COREZNET_NETWORK=%s", configF.Network),
 		fmt.Sprintf("COREZNET_FILTERS=%s", strings.Join(configF.TestFilters, ",")),
 		fmt.Sprintf("COREZNET_VERBOSE=%t", configF.VerboseLogging),
 	)
