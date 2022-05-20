@@ -69,14 +69,14 @@ func main() {
 		}
 		rootCmd.AddCommand(removeCmd)
 
-		testsCmd := &cobra.Command{
-			Use:   "tests",
+		testCmd := &cobra.Command{
+			Use:   "test",
 			Short: "Runs integration tests",
-			RunE:  cmdF.Cmd(coreznet.Tests),
+			RunE:  cmdF.Cmd(coreznet.Test),
 		}
-		addFlags(testsCmd, configF)
-		addFilterFlag(testsCmd, configF)
-		rootCmd.AddCommand(testsCmd)
+		addFlags(testCmd, configF)
+		addFilterFlag(testCmd, configF)
+		rootCmd.AddCommand(testCmd)
 
 		specCmd := &cobra.Command{
 			Use:   "spec",

@@ -30,7 +30,8 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/start", []byte(fmt.Sprintf("#!/bin/bash\nexec %s start \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/stop", []byte(fmt.Sprintf("#!/bin/bash\nexec %s stop \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/remove", []byte(fmt.Sprintf("#!/bin/bash\nexec %s remove \"$@\"", exe)), 0o700))
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/tests", []byte(fmt.Sprintf("#!/bin/bash\nexec %s tests \"$@\"", exe)), 0o700))
+	// `test` can't be used here because it is a reserved keyword in bash
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/tests", []byte(fmt.Sprintf("#!/bin/bash\nexec %s test \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/spec", []byte(fmt.Sprintf("#!/bin/bash\nexec %s spec \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/logs", []byte(fmt.Sprintf("#!/bin/bash\nexec tail -f -n +0 \"%s/$1.log\"", config.LogDir)), 0o700))
 
@@ -104,10 +105,10 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 	return err
 }
 
-// Tests runs integration tests
-func Tests(c *ioc.Container, configF *ConfigFactory) error {
+// Test runs integration tests
+func Test(c *ioc.Container, configF *ConfigFactory) error {
 	configF.TestingMode = true
-	configF.ModeName = "tests"
+	configF.ModeName = "test"
 	var err error
 	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, appF *apps.Factory, spec *infra.Spec) (retErr error) {
 		defer func() {

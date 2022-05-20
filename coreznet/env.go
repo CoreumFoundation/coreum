@@ -21,8 +21,8 @@ func FullMode(af *apps.Factory) infra.Mode {
 	}
 }
 
-// TestsMode returns environment used for testing
-func TestsMode(af *apps.Factory) infra.Mode {
+// TestMode returns environment used for testing
+func TestMode(af *apps.Factory) infra.Mode {
 	env, _ := tests.Tests(af)
 	return env
 }

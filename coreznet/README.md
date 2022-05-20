@@ -134,16 +134,16 @@ Tests are defined in [tests/index.go](tests/index.go)
 You may run tests directly:
 
 ```
-$coreznet tests
+$coreznet test
 ```
 
-Tests run on top `--mode=tests` and by default use `--target=direct`
+Tests run on top `--mode=test` and by default use `--target=tmux`
 
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ coreznet --env=coreznet --mode=tests --target=direct
-(coreznet) [logs] $ tests
+$ coreznet --env=coreznet --mode=test --target=tmux
+(coreznet) [logs] $ test
 
 # Remember to clean everything
 (coreznet) [logs] $ remove
@@ -152,8 +152,8 @@ $ coreznet --env=coreznet --mode=tests --target=direct
 You may run tests using any `--target` you like so running it on top of applications deployed to `docker` is possible:
 
 ```
-$ coreznet --env=coreznet --mode=tests --target=docker
-(coreznet) [logs] $ tests
+$ coreznet --env=coreznet --mode=test --target=docker
+(coreznet) [logs] $ test
 
 # Remember to clean everything
 (coreznet) [logs] $ remove
@@ -163,8 +163,8 @@ After tests complete environment is still running so if something went wrong you
 Especially if you run them using `--target=tmux` it is possible to enter tmux console after tests completed:
 
 ```
-$ coreznet --env=coreznet --mode=tests --target=tmux
-(coreznet) [logs] $ tests
+$ coreznet --env=coreznet --mode=test --target=tmux
+(coreznet) [logs] $ test
 (coreznet) [logs] $ start
 ```
 
