@@ -1,5 +1,5 @@
 # Token Issuance
-##Background
+## Background
 Token issuance is the process of **creating new tokens** that are then **added to the total supply** of the cryptocurrency
 
 Token issuance may also refer to the process of tokenization, in which an asset outside of the cryptocurrency ecosystem is added to the blockchain via a specific crypto token. In such cases, token issuance becomes the process of creating a token, yet not one that belongs to a cryptocurrency, but rather a token that represents an outside asset.
