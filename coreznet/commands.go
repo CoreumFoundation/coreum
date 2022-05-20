@@ -37,7 +37,7 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	bash := osexec.Command("bash")
 	bash.Env = append(os.Environ(),
 		fmt.Sprintf("PS1=%s", "("+configF.EnvName+`) [\u@\h \W]\$ `),
-		fmt.Sprintf("PATH=%s", config.WrapperDir+":/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin"),
+		fmt.Sprintf("PATH=%s", config.WrapperDir+":/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin"),
 		fmt.Sprintf("COREZNET_ENV=%s", configF.EnvName),
 		fmt.Sprintf("COREZNET_MODE=%s", configF.ModeName),
 		fmt.Sprintf("COREZNET_HOME=%s", configF.HomeDir),
