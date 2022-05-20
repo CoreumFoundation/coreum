@@ -10,8 +10,8 @@ type Config struct {
 	// EnvName is the name of created environment
 	EnvName string
 
-	// SetName is the name of set
-	SetName string
+	// ModeName is the name of the mode
+	ModeName string
 
 	// Target is the deployment target
 	Target string

@@ -25,13 +25,13 @@ func IoC(c *ioc.Container) {
 		return configF.Config()
 	})
 	c.Transient(apps.NewFactory)
-	c.TransientNamed("dev", DevSet)
-	c.TransientNamed("full", FullSet)
-	c.TransientNamed("tests", TestsSet)
-	c.Transient(func(c *ioc.Container, config infra.Config) infra.Set {
-		var set infra.Set
-		c.ResolveNamed(config.SetName, &set)
-		return set
+	c.TransientNamed("dev", DevMode)
+	c.TransientNamed("full", FullMode)
+	c.TransientNamed("tests", TestsMode)
+	c.Transient(func(c *ioc.Container, config infra.Config) infra.Mode {
+		var mode infra.Mode
+		c.ResolveNamed(config.ModeName, &mode)
+		return mode
 	})
 	c.TransientNamed("direct", targets.NewDirect)
 	c.TransientNamed("tmux", targets.NewTMux)
@@ -74,8 +74,8 @@ type ConfigFactory struct {
 	// EnvName is the name of created environment
 	EnvName string
 
-	// SetName is the name of set
-	SetName string
+	// ModeName is the name of the mode
+	ModeName string
 
 	// Target is the deployment target
 	Target string
@@ -109,7 +109,7 @@ func (cf *ConfigFactory) Config() infra.Config {
 
 	config := infra.Config{
 		EnvName:        cf.EnvName,
-		SetName:        cf.SetName,
+		ModeName:       cf.ModeName,
 		Target:         cf.Target,
 		HomeDir:        homeDir,
 		AppDir:         homeDir + "/app",

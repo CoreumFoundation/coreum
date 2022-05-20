@@ -8,9 +8,9 @@ import (
 )
 
 // Tests returns testing environment and tests
-func Tests(appF *apps.Factory) (infra.Set, []*testing.T) {
+func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 	chain := appF.Cored("cored")
-	return infra.Set{
+	return infra.Mode{
 			chain,
 		},
 		[]*testing.T{

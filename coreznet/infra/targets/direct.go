@@ -34,8 +34,8 @@ type Direct struct {
 }
 
 // Deploy deploys environment to os processes
-func (d *Direct) Deploy(ctx context.Context, env infra.Set) error {
-	return env.Deploy(ctx, d, d.config, d.spec)
+func (d *Direct) Deploy(ctx context.Context, mode infra.Mode) error {
+	return mode.Deploy(ctx, d, d.config, d.spec)
 }
 
 // Stop stops running applications

@@ -46,8 +46,8 @@ func (t *TMux) Destroy(ctx context.Context) error {
 }
 
 // Deploy deploys environment to tmux target
-func (t *TMux) Deploy(ctx context.Context, env infra.Set) error {
-	if err := env.Deploy(ctx, t, t.config, t.spec); err != nil {
+func (t *TMux) Deploy(ctx context.Context, mode infra.Mode) error {
+	if err := mode.Deploy(ctx, t, t.config, t.spec); err != nil {
 		return err
 	}
 	if t.config.TestingMode {

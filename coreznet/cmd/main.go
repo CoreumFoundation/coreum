@@ -43,7 +43,7 @@ func main() {
 		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("COREZNET_HOME", must.String(os.UserCacheDir())+"/coreznet"), "Directory where all files created automatically by coreznet are stored")
 		rootCmd.PersistentFlags().BoolVarP(&configF.VerboseLogging, "verbose", "v", defaultBool("COREZNET_VERBOSE", false), "Turns on verbose logging")
 		addFlags(rootCmd, configF)
-		addSetFlag(rootCmd, c, configF)
+		addModeFlag(rootCmd, c, configF)
 		addFilterFlag(rootCmd, configF)
 
 		startCmd := &cobra.Command{
@@ -52,7 +52,7 @@ func main() {
 			RunE:  cmdF.Cmd(coreznet.Start),
 		}
 		addFlags(startCmd, configF)
-		addSetFlag(startCmd, c, configF)
+		addModeFlag(startCmd, c, configF)
 		rootCmd.AddCommand(startCmd)
 
 		stopCmd := &cobra.Command{
@@ -83,7 +83,7 @@ func main() {
 			Short: "Prints specification of running environment",
 			RunE:  cmdF.Cmd(coreznet.Spec),
 		}
-		addSetFlag(specCmd, c, configF)
+		addModeFlag(specCmd, c, configF)
 		rootCmd.AddCommand(specCmd)
 
 		return rootCmd.Execute()
@@ -95,8 +95,8 @@ func addFlags(cmd *cobra.Command, configF *coreznet.ConfigFactory) {
 	cmd.Flags().StringVar(&configF.Network, "network", defaultString("COREZNET_NETWORK", "127.1.0.0"), "Network where IPs for applications are taken from (related to 'tmux' and 'direct' targets only)")
 }
 
-func addSetFlag(cmd *cobra.Command, c *ioc.Container, configF *coreznet.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.SetName, "set", defaultString("COREZNET_SET", "dev"), "Application set to deploy: "+strings.Join(c.Names((*infra.Set)(nil)), " | "))
+func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *coreznet.ConfigFactory) {
+	cmd.Flags().StringVar(&configF.ModeName, "mode", defaultString("COREZNET_MODE", "dev"), "List of applications to deploy: "+strings.Join(c.Names((*infra.Mode)(nil)), " | "))
 }
 
 func addFilterFlag(cmd *cobra.Command, configF *coreznet.ConfigFactory) {

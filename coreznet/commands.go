@@ -39,7 +39,7 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 		fmt.Sprintf("PS1=%s", "("+configF.EnvName+`) [\u@\h \W]\$ `),
 		fmt.Sprintf("PATH=%s", config.WrapperDir+":/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin"),
 		fmt.Sprintf("COREZNET_ENV=%s", configF.EnvName),
-		fmt.Sprintf("COREZNET_SET=%s", configF.SetName),
+		fmt.Sprintf("COREZNET_MODE=%s", configF.ModeName),
 		fmt.Sprintf("COREZNET_HOME=%s", configF.HomeDir),
 		fmt.Sprintf("COREZNET_TARGET=%s", configF.Target),
 		fmt.Sprintf("COREZNET_BIN_DIR=%s", configF.BinDir),
@@ -58,13 +58,13 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 }
 
 // Start starts environment
-func Start(ctx context.Context, target infra.Target, set infra.Set, spec *infra.Spec) (retErr error) {
+func Start(ctx context.Context, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
 	defer func() {
 		if err := spec.Save(); retErr == nil {
 			retErr = err
 		}
 	}()
-	return target.Deploy(ctx, set)
+	return target.Deploy(ctx, mode)
 }
 
 // Stop stops environment
@@ -108,7 +108,7 @@ func Destroy(ctx context.Context, config infra.Config, target infra.Target) (ret
 // Tests runs integration tests
 func Tests(c *ioc.Container, configF *ConfigFactory) error {
 	configF.TestingMode = true
-	configF.SetName = "tests"
+	configF.ModeName = "tests"
 	var err error
 	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, appF *apps.Factory, spec *infra.Spec) (retErr error) {
 		defer func() {
@@ -124,7 +124,7 @@ func Tests(c *ioc.Container, configF *ConfigFactory) error {
 }
 
 // Spec print specification of running environment
-func Spec(spec *infra.Spec, _ infra.Set) error {
+func Spec(spec *infra.Spec, _ infra.Mode) error {
 	fmt.Println(spec)
 	return nil
 }

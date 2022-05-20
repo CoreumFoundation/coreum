@@ -62,7 +62,7 @@ to see what the default values are.
 You may enter the environment like this:
 
 ```
-$ coreznet --env=coreznet --set=dev --target=tmux
+$ coreznet --env=coreznet --mode=dev --target=tmux
 (coreznet) [logs] $
 ```
 
@@ -71,9 +71,9 @@ $ coreznet --env=coreznet --set=dev --target=tmux
 Defines name of the environment, it is visible in brackets on the left.
 Each environment is independent, you may create many of them and work with them in parallel.
 
-### --set
+### --mode
 
-Defines the set of applications to run. You may see their definitions in [setup.go](setup.go).
+Defines the list of applications to run. You may see their definitions in [setup.go](setup.go).
 
 ### --target
 
@@ -106,7 +106,7 @@ Basic workflow may look like this:
 
 ```
 # Enter the environment:
-$ coreznet --env=coreznet --set=dev --target=tmux
+$ coreznet --env=coreznet --mode=dev --target=tmux
 (coreznet) [logs] $
 
 # Start applications
@@ -137,12 +137,12 @@ You may run tests directly:
 $coreznet tests
 ```
 
-Tests run on top `--set=tests` and by default use `--target=direct`
+Tests run on top `--mode=tests` and by default use `--target=direct`
 
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ coreznet --env=coreznet --set=tests --target=direct
+$ coreznet --env=coreznet --mode=tests --target=direct
 (coreznet) [logs] $ tests
 
 # Remember to clean everything
@@ -152,7 +152,7 @@ $ coreznet --env=coreznet --set=tests --target=direct
 You may run tests using any `--target` you like so running it on top of applications deployed to `docker` is possible:
 
 ```
-$ coreznet --env=coreznet --set=tests --target=docker
+$ coreznet --env=coreznet --mode=tests --target=docker
 (coreznet) [logs] $ tests
 
 # Remember to clean everything
@@ -163,7 +163,7 @@ After tests complete environment is still running so if something went wrong you
 Especially if you run them using `--target=tmux` it is possible to enter tmux console after tests completed:
 
 ```
-$ coreznet --env=coreznet --set=tests --target=tmux
+$ coreznet --env=coreznet --mode=tests --target=tmux
 (coreznet) [logs] $ tests
 (coreznet) [logs] $ start
 ```

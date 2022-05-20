@@ -32,12 +32,12 @@ type Deployment interface {
 	Deploy(ctx context.Context, target AppTarget, config Config) error
 }
 
-// Set is the environment to deploy
-type Set []App
+// Mode is the list of applications to deploy
+type Mode []App
 
 // Deploy deploys app in environment to the target
-func (s Set) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
-	for _, app := range s {
+func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
+	for _, app := range m {
 		if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Status == AppStatusRunning {
 			continue
 		}
@@ -58,7 +58,7 @@ type DeploymentInfo struct {
 // Target represents target of deployment from the perspective of coreznet
 type Target interface {
 	// Deploy deploys environment to the target
-	Deploy(ctx context.Context, env Set) error
+	Deploy(ctx context.Context, mode Mode) error
 
 	// Stop stops apps in the environment
 	Stop(ctx context.Context) error
@@ -219,8 +219,8 @@ func NewSpec(config Config) *Spec {
 		if spec.Env != config.EnvName {
 			panic(fmt.Sprintf("env mismatch, spec: %s, config: %s", spec.Env, config.EnvName))
 		}
-		if spec.Set != config.SetName {
-			panic(fmt.Sprintf("set mismatch, spec: %s, config: %s", spec.Set, config.SetName))
+		if spec.Mode != config.ModeName {
+			panic(fmt.Sprintf("mode mismatch, spec: %s, config: %s", spec.Mode, config.ModeName))
 		}
 		return spec
 	case errors.Is(err, os.ErrNotExist):
@@ -231,7 +231,7 @@ func NewSpec(config Config) *Spec {
 	spec := &Spec{
 		specFile: specFile,
 		Target:   config.Target,
-		Set:      config.SetName,
+		Mode:     config.ModeName,
 		Env:      config.EnvName,
 		Apps:     map[string]*AppInfo{},
 	}
@@ -251,8 +251,8 @@ type Spec struct {
 	// Target is the name of target being used to run apps
 	Target string `json:"target"`
 
-	// Set is the name of app set
-	Set string `json:"set"`
+	// Mode is the name of mode
+	Mode string `json:"mode"`
 
 	// Env is the name of env
 	Env string `json:"env"`

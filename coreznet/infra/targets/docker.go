@@ -76,8 +76,8 @@ func (d *Docker) Environment(app infra.AppBase) infra.TargetEnvironment {
 }
 
 // Deploy deploys environment to docker target
-func (d *Docker) Deploy(ctx context.Context, env infra.Set) error {
-	return env.Deploy(ctx, d, d.config, d.spec)
+func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
+	return mode.Deploy(ctx, d, d.config, d.spec)
 }
 
 // DeployBinary builds container image out of binary file and starts it in docker
