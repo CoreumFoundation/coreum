@@ -62,12 +62,12 @@ func main() {
 		}
 		rootCmd.AddCommand(stopCmd)
 
-		destroyCmd := &cobra.Command{
-			Use:   "destroy",
-			Short: "Destroys environment",
-			RunE:  cmdF.Cmd(coreznet.Destroy),
+		removeCmd := &cobra.Command{
+			Use:   "remove",
+			Short: "Removes environment",
+			RunE:  cmdF.Cmd(coreznet.Remove),
 		}
-		rootCmd.AddCommand(destroyCmd)
+		rootCmd.AddCommand(removeCmd)
 
 		testsCmd := &cobra.Command{
 			Use:   "tests",

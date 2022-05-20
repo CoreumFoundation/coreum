@@ -81,8 +81,8 @@ func (d *Direct) Stop(ctx context.Context) error {
 	return exec.Kill(ctx, pids)
 }
 
-// Destroy destroys running applications
-func (d *Direct) Destroy(ctx context.Context) error {
+// Remove removes running applications
+func (d *Direct) Remove(ctx context.Context) error {
 	return d.Stop(ctx)
 }
 

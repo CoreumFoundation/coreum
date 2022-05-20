@@ -97,7 +97,7 @@ Each such `<command>` calls `coreznet <command>`.
 Available commands are:
 - `start` - starts applications
 - `stop` - stops applications
-- `destroy` - stops applications and removes all the resources used by the environment
+- `remove` - stops applications and removes all the resources used by the environment
 - `spec` - prints specification of the environment
 
 ## Example
@@ -122,7 +122,7 @@ $ coreznet --env=coreznet --mode=dev --target=tmux
 (coreznet) [logs] $ start
 
 # Stop everything and clean resources
-(coreznet) [logs] $ destroy
+(coreznet) [logs] $ remove
 (coreznet) [logs] $ exit
 $
 ```
@@ -146,7 +146,7 @@ $ coreznet --env=coreznet --mode=tests --target=direct
 (coreznet) [logs] $ tests
 
 # Remember to clean everything
-(coreznet) [logs] $ destroy
+(coreznet) [logs] $ remove
 ```
 
 You may run tests using any `--target` you like so running it on top of applications deployed to `docker` is possible:
@@ -156,7 +156,7 @@ $ coreznet --env=coreznet --mode=tests --target=docker
 (coreznet) [logs] $ tests
 
 # Remember to clean everything
-(coreznet) [logs] $ destroy
+(coreznet) [logs] $ remove
 ```
 
 After tests complete environment is still running so if something went wrong you may inspect it manually.

@@ -59,8 +59,8 @@ func (d *Docker) Stop(ctx context.Context) error {
 	return libexec.Exec(ctx, commands...)
 }
 
-// Destroy destroys running applications
-func (d *Docker) Destroy(ctx context.Context) error {
+// Remove removes running applications
+func (d *Docker) Remove(ctx context.Context) error {
 	if err := d.dropContainers(ctx); err != nil {
 		return err
 	}

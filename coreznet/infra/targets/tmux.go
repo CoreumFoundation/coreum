@@ -40,8 +40,8 @@ func (t *TMux) Stop(ctx context.Context) error {
 	return t.sessionKill(ctx)
 }
 
-// Destroy destroys running applications
-func (t *TMux) Destroy(ctx context.Context) error {
+// Remove removes running applications
+func (t *TMux) Remove(ctx context.Context) error {
 	return t.Stop(ctx)
 }
 

@@ -63,8 +63,8 @@ type Target interface {
 	// Stop stops apps in the environment
 	Stop(ctx context.Context) error
 
-	// Destroy destroys apps in the environment
-	Destroy(ctx context.Context) error
+	// Remove removes apps in the environment
+	Remove(ctx context.Context) error
 }
 
 // TargetEnvironment stores properties of target required to prepare app for executing
