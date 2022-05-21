@@ -73,7 +73,7 @@ Each environment is independent, you may create many of them and work with them 
 
 ### --mode
 
-Defines the list of applications to run. You may see their definitions in [setup.go](setup.go).
+Defines the list of applications to run. You may see their definitions in [mode.go](mode.go).
 
 ### --target
 
