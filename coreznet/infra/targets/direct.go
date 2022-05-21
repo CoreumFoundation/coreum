@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 
@@ -97,11 +96,6 @@ func (d *Direct) Environment(app infra.AppBase) infra.TargetEnvironment {
 // DeployBinary starts binary file inside os process
 func (d *Direct) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	cmd := osexec.Command("bash", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(app.Path, app.Args...).String(), d.config.LogDir, app.Name))
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-		Pgid:    d.spec.PGID,
-	}
-
 	if err := cmd.Start(); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
