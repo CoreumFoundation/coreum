@@ -1,7 +1,6 @@
 package infra
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,7 +9,6 @@ import (
 	"net"
 	"os"
 	"sync"
-	"text/template"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -73,32 +71,14 @@ type Target interface {
 	Remove(ctx context.Context) error
 }
 
-// TargetEnvironment stores properties of target required to prepare app for executing
-type TargetEnvironment struct {
-	// IP application should bind to
-	IP net.IP
-
-	// HomeDir is the path to home dir of the application
-	HomeDir string
-}
-
 // AppTarget represents target of deployment from the perspective of application
 type AppTarget interface {
-	// Environment returns environment properties for the application deployed to target
-	Environment(app AppBase) TargetEnvironment
-
 	// DeployBinary deploys binary to the target
 	DeployBinary(ctx context.Context, app Binary) (DeploymentInfo, error)
 
 	// DeployContainer deploys container to the target
 	DeployContainer(ctx context.Context, app Container) (DeploymentInfo, error)
 }
-
-// PreprocessFunc is the function called to preprocess app
-type PreprocessFunc func(ctx context.Context) error
-
-// PostprocessFunc is the function called after application is deployed
-type PostprocessFunc func(ctx context.Context, deployment DeploymentInfo) error
 
 // Prerequisites specifies list of other apps which have to be healthy because app may be started.
 type Prerequisites struct {
@@ -117,8 +97,8 @@ type AppBase struct {
 	// Info stores runtime information about the app
 	Info *AppInfo
 
-	// Args are args passed to binary
-	Args []string
+	// ArgsFunc is the function returning args passed to binary
+	ArgsFunc func(ip net.IP, homeDir string) []string
 
 	// Ports are the network ports exposed by the application
 	Ports map[string]int
@@ -127,22 +107,14 @@ type AppBase struct {
 	Requires Prerequisites
 
 	// PreFunc is called to preprocess app
-	PreFunc PreprocessFunc
+	PreFunc func(ctx context.Context) error
 
 	// PostFunc is called after app is deployed
-	PostFunc PostprocessFunc
+	PostFunc func(ctx context.Context, deployment DeploymentInfo) error
 }
 
 func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarget) error {
 	must.OK(os.MkdirAll(config.AppDir+"/"+app.Name, 0o700))
-
-	env := target.Environment(app)
-	for i, arg := range app.Args {
-		tpl := template.Must(template.New("").Parse(arg))
-		buf := &bytes.Buffer{}
-		must.OK(tpl.Execute(buf, env))
-		app.Args[i] = buf.String()
-	}
 
 	if len(app.Requires.Dependencies) > 0 {
 		waitCtx, waitCancel := context.WithTimeout(ctx, app.Requires.Timeout)

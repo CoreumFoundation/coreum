@@ -32,7 +32,7 @@ type CoredPorts struct {
 }
 
 // NewCored creates new cored app
-func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor cored.Executor, appInfo *infra.AppInfo, ports CoredPorts) Cored {
+func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor cored.Executor, appInfo *infra.AppInfo, ports CoredPorts, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -40,7 +40,7 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor
 
 	c := Cored{
 		name:                name,
-		config:   config,
+		config:              config,
 		executor:            executor,
 		nodeID:              cored.NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
@@ -48,8 +48,9 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor
 		genesis:             genesis,
 		appInfo:             appInfo,
 		ports:               ports,
-		walletKeys:          map[string]cored.Secp256k1PrivateKey{},
+		rootNode:            rootNode,
 		mu:                  &sync.RWMutex{},
+		walletKeys:          map[string]cored.Secp256k1PrivateKey{},
 	}
 
 	_, stakerPrivateKey := c.AddWallet("500000000000000000000000core,990000000000000000000000000stake")
@@ -61,7 +62,7 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor
 // Cored represents cored
 type Cored struct {
 	name                string
-	config   infra.Config
+	config              infra.Config
 	executor            cored.Executor
 	nodeID              string
 	nodePrivateKey      ed25519.PrivateKey
@@ -69,6 +70,7 @@ type Cored struct {
 	genesis             *cored.Genesis
 	appInfo             *infra.AppInfo
 	ports               CoredPorts
+	rootNode            *Cored
 
 	mu         *sync.RWMutex
 	walletKeys map[string]cored.Secp256k1PrivateKey
@@ -79,14 +81,19 @@ func (c Cored) Name() string {
 	return c.name
 }
 
-// ID returns ID of the node
-func (c Cored) ID() string {
-	return c.nodeID
+// PeerAddress returns a string which might be passed to other node to connect to this peer
+func (c Cored) PeerAddress() string {
+	return fmt.Sprintf("%s@%s:%d", c.nodeID, c.IP(), c.ports.P2P)
 }
 
 // IP returns IP chain listens on
 func (c Cored) IP() net.IP {
 	return c.appInfo.IP()
+}
+
+// Status returns status of application
+func (c Cored) Status() infra.AppStatus {
+	return c.appInfo.Status()
 }
 
 // AddWallet adds wallet to genesis block and local keystore
@@ -160,21 +167,30 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 
 // Deployment returns deployment of cored
 func (c Cored) Deployment() infra.Deployment {
-	return infra.Binary{
+	deployment := infra.Binary{
 		BinPathFunc: func(targetOS string) string {
 			return c.config.BinDir + "/" + targetOS + "/cored"
 		},
 		AppBase: infra.AppBase{
 			Name: c.Name(),
 			Info: c.appInfo,
-			Args: []string{
-				"start",
-				"--home", "{{ .HomeDir }}",
-				"--rpc.laddr", fmt.Sprintf("tcp://{{ .IP }}:%d", c.ports.RPC),
-				"--p2p.laddr", fmt.Sprintf("tcp://{{ .IP }}:%d", c.ports.P2P),
-				"--grpc.address", fmt.Sprintf("{{ .IP }}:%d", c.ports.GRPC),
-				"--grpc-web.address", fmt.Sprintf("{{ .IP }}:%d", c.ports.GRPCWeb),
-				"--rpc.pprof_laddr", fmt.Sprintf("{{ .IP }}:%d", c.ports.PProf),
+			ArgsFunc: func(ip net.IP, homeDir string) []string {
+				args := []string{
+					"start",
+					"--home", homeDir,
+					"--rpc.laddr", fmt.Sprintf("tcp://%s:%d", ip, c.ports.RPC),
+					"--p2p.laddr", fmt.Sprintf("tcp://%s:%d", ip, c.ports.P2P),
+					"--grpc.address", fmt.Sprintf("%s:%d", ip, c.ports.GRPC),
+					"--grpc-web.address", fmt.Sprintf("%s:%d", ip, c.ports.GRPCWeb),
+					"--rpc.pprof_laddr", fmt.Sprintf("%s:%d", ip, c.ports.PProf),
+				}
+				if c.rootNode != nil {
+					args = append(args,
+						"--p2p.persistent_peers", c.rootNode.PeerAddress(),
+					)
+				}
+
+				return args
 			},
 			Ports: portsToMap(c.ports),
 			PreFunc: func(ctx context.Context) error {
@@ -193,6 +209,15 @@ func (c Cored) Deployment() infra.Deployment {
 			},
 		},
 	}
+	if c.rootNode != nil {
+		deployment.Requires = infra.Prerequisites{
+			Timeout: 20 * time.Second,
+			Dependencies: []infra.HealthCheckCapable{
+				infra.IsRunning(*c.rootNode),
+			},
+		}
+	}
+	return deployment
 }
 
 func (c Cored) saveClientWrapper(wrapperDir string, ip net.IP) error {

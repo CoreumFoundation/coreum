@@ -67,14 +67,6 @@ func (d *Docker) Remove(ctx context.Context) error {
 	return d.dropImages(ctx)
 }
 
-// Environment returns environment properties for the application deployed to target
-func (d *Docker) Environment(app infra.AppBase) infra.TargetEnvironment {
-	return infra.TargetEnvironment{
-		IP:      net.IPv4zero,
-		HomeDir: "/",
-	}
-}
-
 // Deploy deploys environment to docker target
 func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 	return mode.Deploy(ctx, d, d.config, d.spec)
@@ -109,7 +101,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 		buildCmd.Stdin = bytes.NewBufferString(fmt.Sprintf(dockerTemplate, filepath.Base(binPath)))
 		commands = append(commands,
 			buildCmd,
-			exec.Docker(append([]string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName, image}, app.Args...)...))
+			exec.Docker(append([]string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName, image}, app.ArgsFunc(net.IPv4zero, "/")...)...))
 	}
 
 	ipBuf := &bytes.Buffer{}

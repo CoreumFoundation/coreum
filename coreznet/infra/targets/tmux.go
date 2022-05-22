@@ -57,19 +57,11 @@ func (t *TMux) Deploy(ctx context.Context, mode infra.Mode) error {
 	return t.sessionAttach(ctx)
 }
 
-// Environment returns environment properties for the application deployed to target
-func (t *TMux) Environment(app infra.AppBase) infra.TargetEnvironment {
-	return infra.TargetEnvironment{
-		IP:      net.IPv4(127, 0, 0, 1),
-		HomeDir: t.config.AppDir + "/" + app.Name,
-	}
-}
-
 // DeployBinary starts binary file inside tmux session
 func (t *TMux) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	binPath := app.BinPathFunc(runtime.GOOS)
 	must.Any(os.Stat(binPath))
-	if err := t.sessionAddApp(ctx, app.Name, append([]string{binPath}, app.Args...)...); err != nil {
+	if err := t.sessionAddApp(ctx, app.Name, append([]string{binPath}, app.ArgsFunc(net.IPv4(127, 0, 0, 1), t.config.AppDir+"/"+app.Name)...)...); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 	return infra.DeploymentInfo{IP: net.IPv4(127, 0, 0, 1)}, nil

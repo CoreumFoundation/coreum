@@ -17,7 +17,7 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 		GRPC:    9090,
 		GRPCWeb: 9091,
 		PProf:   6060,
-	}, genesis)
+	}, genesis, nil)
 	return infra.Mode{
 			chain,
 		},
