@@ -25,7 +25,6 @@ func IoC(c *ioc.Container) {
 	})
 	c.Transient(apps.NewFactory)
 	c.TransientNamed("dev", DevMode)
-	c.TransientNamed("full", FullMode)
 	c.TransientNamed("test", TestMode)
 	c.Transient(func(c *ioc.Container, config infra.Config) infra.Mode {
 		var mode infra.Mode

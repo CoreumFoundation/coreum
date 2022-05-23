@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/tendermint/tendermint/config"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
@@ -21,6 +22,12 @@ func SaveIdentityFiles(homeDir string, nodePrivateKey ed25519.PrivateKey, valida
 	}).SaveAs(homeDir + "/config/node_key.json"))
 
 	privval.NewFilePV(tmed25519.PrivKey(validatorPrivateKey), homeDir+"/config/priv_validator_key.json", homeDir+"/data/priv_validator_state.json").Save()
+
+	cfg := config.DefaultConfig()
+	// set addr_book_strict to false so nodes connecting from non-routable hosts are added to address book
+	cfg.P2P.AddrBookStrict = false
+	cfg.P2P.AllowDuplicateIP = true
+	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
 }
 
 // NodeID computes node ID from node public key

@@ -9,38 +9,17 @@ import (
 
 // DevMode is the environment for developer
 func DevMode(af *apps.Factory) infra.Mode {
-	genesis := cored.NewGenesis("coreddev")
-	return infra.Mode{
-		af.Cored("cored-node", apps.CoredPorts{
-			RPC:     26657,
-			P2P:     26656,
-			GRPC:    9090,
-			GRPCWeb: 9091,
-			PProf:   6060,
-		}, genesis, nil),
-	}
-}
-
-// FullMode is the environment with all apps
-func FullMode(af *apps.Factory) infra.Mode {
-	genesis := cored.NewGenesis("coreddev")
-	coreA := af.Cored("cored-a", apps.CoredPorts{
-		RPC:     16657,
-		P2P:     16656,
-		GRPC:    19090,
-		GRPCWeb: 19091,
-		PProf:   16060,
-	}, genesis, nil)
-	coreB := af.Cored("cored-b", apps.CoredPorts{
+	genesis := cored.NewGenesis("coredev")
+	coredNode := af.Cored("cored-node", apps.CoredPorts{
 		RPC:     26657,
 		P2P:     26656,
-		GRPC:    29090,
-		GRPCWeb: 29091,
-		PProf:   26060,
-	}, genesis, &coreA)
+		GRPC:    9090,
+		GRPCWeb: 9091,
+		PProf:   6060,
+	}, genesis, nil)
+	coredNode.AddWallet("1000000000000000core,1000000000000000stake")
 	return infra.Mode{
-		coreA,
-		coreB,
+		coredNode,
 	}
 }
 
