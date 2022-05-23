@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	osexec "os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -66,7 +67,7 @@ func (t *TMux) Environment(app infra.AppBase) infra.TargetEnvironment {
 
 // DeployBinary starts binary file inside tmux session
 func (t *TMux) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
-	if err := t.sessionAddApp(ctx, app.Name, append([]string{app.Path}, app.Args...)...); err != nil {
+	if err := t.sessionAddApp(ctx, app.Name, append([]string{app.BinPathFunc(runtime.GOOS)}, app.Args...)...); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 	return infra.DeploymentInfo{IP: net.IPv4(127, 0, 0, 1)}, nil

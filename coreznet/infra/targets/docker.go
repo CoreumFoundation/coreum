@@ -82,10 +82,16 @@ func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 
 // DeployBinary builds container image out of binary file and starts it in docker
 func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
-	image := d.config.EnvName + "/" + app.Name + ":latest"
 	contextDir := d.config.AppDir + "/" + app.Name
-	must.OK(os.MkdirAll(contextDir, 0o700))
+	contextBinDir := contextDir + "/bin/"
+	must.OK(os.MkdirAll(contextBinDir, 0o700))
 
+	binPath := app.BinPathFunc("linux")
+	if err := os.Link(binPath, contextBinDir+"/"+filepath.Base(binPath)); err != nil && !os.IsExist(err) {
+		panic(err)
+	}
+
+	image := d.config.EnvName + "/" + app.Name + ":latest"
 	name := d.config.EnvName + "-" + app.Name
 	existsBuf := &bytes.Buffer{}
 	existsCmd := exec.Docker("ps", "-aqf", "name="+name)
@@ -99,7 +105,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 		commands = append(commands, exec.Docker("start", name))
 	} else {
 		buildCmd := exec.Docker("build", "--tag", image, "--label", labelEnv+"="+d.config.EnvName, "-f-", contextDir)
-		buildCmd.Stdin = bytes.NewBufferString(fmt.Sprintf(dockerTemplate, filepath.Base(app.Path)))
+		buildCmd.Stdin = bytes.NewBufferString(fmt.Sprintf(dockerTemplate, filepath.Base(binPath)))
 		commands = append(commands,
 			buildCmd,
 			exec.Docker(append([]string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName, image}, app.Args...)...))

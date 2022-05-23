@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"path/filepath"
 	"sync"
 	"text/template"
 	"time"
@@ -164,18 +163,12 @@ func (app AppBase) postprocess(ctx context.Context, info DeploymentInfo) error {
 type Binary struct {
 	AppBase
 
-	// Path is the path to binary file
-	Path string
+	// BinPathFunc is the function returning path to binary file
+	BinPathFunc func(targetOS string) string
 }
 
 // Deploy deploys binary to the target
 func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) error {
-	contextBinDir := config.AppDir + "/" + app.Name + "/bin/"
-	must.OK(os.MkdirAll(contextBinDir, 0o700))
-	if err := os.Link(app.Path, contextBinDir+"/"+filepath.Base(app.Path)); err != nil && !os.IsExist(err) {
-		panic(err)
-	}
-
 	if err := app.AppBase.preprocess(ctx, config, target); err != nil {
 		return err
 	}

@@ -21,6 +21,6 @@ type Factory struct {
 
 // Cored creates new cored app
 func (f *Factory) Cored(name string) *Cored {
-	return NewCored(f.config.WrapperDir, cored.NewExecutor(name, f.config.BinDir+"/cored", f.config.AppDir+"/"+name,
+	return NewCored(f.config, cored.NewExecutor(name, f.config.BinDir+"/cored", f.config.AppDir+"/"+name,
 		"master"), f.spec)
 }

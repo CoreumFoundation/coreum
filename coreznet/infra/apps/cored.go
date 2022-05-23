@@ -21,22 +21,22 @@ import (
 )
 
 // NewCored creates new cored app
-func NewCored(wrapperDir string, executor *cored.Executor, spec *infra.Spec) *Cored {
+func NewCored(config infra.Config, executor *cored.Executor, spec *infra.Spec) *Cored {
 	return &Cored{
-		wrapperDir: wrapperDir,
-		executor:   executor,
-		genesis:    cored.NewGenesis(executor),
-		appInfo:    spec.DescribeApp("cored", executor.Name()),
-		mu:         &sync.RWMutex{},
+		config:   config,
+		executor: executor,
+		genesis:  cored.NewGenesis(executor),
+		appInfo:  spec.DescribeApp("cored", executor.Name()),
+		mu:       &sync.RWMutex{},
 	}
 }
 
 // Cored represents cored
 type Cored struct {
-	wrapperDir string
-	executor   *cored.Executor
-	genesis    *cored.Genesis
-	appInfo    *infra.AppInfo
+	config   infra.Config
+	executor *cored.Executor
+	genesis  *cored.Genesis
+	appInfo  *infra.AppInfo
 
 	// mu is here to protect appInfo.IP
 	mu *sync.RWMutex
@@ -117,7 +117,9 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 // Deployment returns deployment of cored
 func (c Cored) Deployment() infra.Deployment {
 	return infra.Binary{
-		Path: c.executor.Bin(),
+		BinPathFunc: func(targetOS string) string {
+			return c.config.BinDir + "/" + targetOS + "/cored"
+		},
 		AppBase: infra.AppBase{
 			Name: c.executor.Name(),
 			Info: c.appInfo,
@@ -144,7 +146,7 @@ func (c Cored) Deployment() infra.Deployment {
 				c.appInfo.AddPort("grpc-web", 9091)
 				c.appInfo.AddPort("pprof", 6060)
 
-				return c.saveClientWrapper(c.wrapperDir)
+				return c.saveClientWrapper(c.config.WrapperDir)
 			},
 		},
 	}
