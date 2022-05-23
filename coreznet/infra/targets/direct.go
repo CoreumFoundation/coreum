@@ -48,7 +48,7 @@ func (d *Direct) Stop(ctx context.Context) error {
 		return err
 	}
 	reg := regexp.MustCompile("^[0-9]+$")
-	pids := []int{}
+	var pids []int
 	for _, procH := range procs {
 		if !procH.IsDir() || !reg.MatchString(procH.Name()) {
 			continue

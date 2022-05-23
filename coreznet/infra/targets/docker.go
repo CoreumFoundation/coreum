@@ -47,7 +47,7 @@ func (d *Docker) Stop(ctx context.Context) error {
 		return err
 	}
 
-	commands := []*osexec.Cmd{}
+	var commands []*osexec.Cmd
 	for _, cID := range strings.Split(buf.String(), "\n") {
 		// last item is empty
 		if cID == "" {
@@ -101,7 +101,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 		return infra.DeploymentInfo{}, err
 	}
 
-	commands := []*osexec.Cmd{}
+	var commands []*osexec.Cmd
 	if existsBuf.String() != "" {
 		commands = append(commands, exec.Docker("start", name))
 	} else {
@@ -143,7 +143,7 @@ func (d *Docker) dropContainers(ctx context.Context) error {
 		return err
 	}
 
-	commands := []*osexec.Cmd{}
+	var commands []*osexec.Cmd
 	for _, cID := range strings.Split(buf.String(), "\n") {
 		// last item is empty
 		if cID == "" {
@@ -164,7 +164,7 @@ func (d *Docker) dropImages(ctx context.Context) error {
 		return err
 	}
 
-	commands := []*osexec.Cmd{}
+	var commands []*osexec.Cmd
 	for _, imageID := range strings.Split(buf.String(), "\n") {
 		// last item is empty
 		if imageID == "" {

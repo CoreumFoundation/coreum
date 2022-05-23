@@ -130,7 +130,7 @@ func (t *TMux) sessionPIDs(ctx context.Context) ([]int, error) {
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return nil, err
 	}
-	pids := []int{}
+	var pids []int
 	for _, pidStr := range strings.Split(buf.String(), "\n") {
 		if pidStr == "" {
 			break
