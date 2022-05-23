@@ -64,12 +64,7 @@ exec tail -f -n +0 "%s/$1.log"
 }
 
 // Start starts environment
-func Start(ctx context.Context, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
-	defer func() {
-		if err := spec.Save(); retErr == nil {
-			retErr = err
-		}
-	}()
+func Start(ctx context.Context, target infra.Target, mode infra.Mode) (retErr error) {
 	return target.Deploy(ctx, mode)
 }
 

@@ -45,7 +45,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 		}
 		spec.Apps[app.Name()].Status = AppStatusRunning
 	}
-	return nil
+	return spec.Save()
 }
 
 // DeploymentInfo contains info about deployed application
