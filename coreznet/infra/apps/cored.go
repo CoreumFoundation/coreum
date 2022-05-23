@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -164,7 +163,7 @@ if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
 fi
 
-exec ` + c.executor.Home() + "/bin/" + filepath.Base(c.executor.Bin()) + ` --home "` + c.executor.Home() + `" "$@" $OPTS
+exec ` + c.executor.Bin() + ` --home "` + c.executor.Home() + `" "$@" $OPTS
 `
 	return ioutil.WriteFile(wrapperDir+"/"+c.executor.Name(), []byte(client), 0o700)
 }
