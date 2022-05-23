@@ -85,9 +85,22 @@ Defines where applications are deployed. Possible values:
 ## Logs
 
 After entering environment the current directory in console is set to the one
-containing logs produced by all the applications.
+containing logs produced by all the applications. The real path is `~/.cache/coreznet/<env-name>/logs`.
 
 No matter what `--target` is used, logs are always dumped here, so you may analyze them using any method you like (`grep`, `cut`, `tail` etc.)
+
+After entering and starting environment:
+
+```
+$ coreznet --env=coreznet --mode=dev --target=tmux
+(coreznet) [logs] $ start
+```
+
+it is possible to use `logs` wrapper tot ail logs from an application:
+
+```
+(coreznet) [logs] $ logs cored-node
+```
 
 ## Commands
 

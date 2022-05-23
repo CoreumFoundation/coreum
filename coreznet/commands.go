@@ -33,7 +33,13 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	// `test` can't be used here because it is a reserved keyword in bash
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/tests", []byte(fmt.Sprintf("#!/bin/bash\nexec %s test \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/spec", []byte(fmt.Sprintf("#!/bin/bash\nexec %s spec \"$@\"", exe)), 0o700))
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/logs", []byte(fmt.Sprintf("#!/bin/bash\nexec tail -f -n +0 \"%s/$1.log\"", config.LogDir)), 0o700))
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/logs", []byte(fmt.Sprintf(`#!/bin/bash
+if [ "$1" == "" ]; then
+  echo "Provide the name of application"
+  exit 1
+fi
+exec tail -f -n +0 "%s/$1.log"
+`, config.LogDir)), 0o700))
 
 	bash := osexec.Command("bash")
 	bash.Env = append(os.Environ(),
