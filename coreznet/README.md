@@ -169,3 +169,11 @@ $ coreznet --env=coreznet --mode=test --target=tmux
 ```
 
 and again, all the logs are available inside current directory.
+
+## Hard reset
+
+If you want to manually remove all the data created by `coreznet` do this:
+- use `ps aux` to find all the related running processes and kill them using `kill -9 <pid>`
+- use `docker ps -a`, `docker stop <container-id>` and `docker rm <container-id>` to delete related running containers
+- use `docker images` and `docker rmi <image-id>` to remove related docker images 
+- run `rm -rf ~/.cache/coreznet` to remove all the files created by `coreznet`
