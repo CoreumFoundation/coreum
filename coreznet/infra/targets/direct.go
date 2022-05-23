@@ -96,7 +96,9 @@ func (d *Direct) Environment(app infra.AppBase) infra.TargetEnvironment {
 
 // DeployBinary starts binary file inside os process
 func (d *Direct) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
-	cmd := osexec.Command("bash", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(app.BinPathFunc(runtime.GOOS), app.Args...).String(), d.config.LogDir, app.Name))
+	binPath := app.BinPathFunc(runtime.GOOS)
+	must.Any(os.Stat(binPath))
+	cmd := osexec.Command("bash", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(binPath, app.Args...).String(), d.config.LogDir, app.Name))
 	if err := cmd.Start(); err != nil {
 		return infra.DeploymentInfo{}, err
 	}

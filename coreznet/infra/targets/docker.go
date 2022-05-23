@@ -87,6 +87,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	must.OK(os.MkdirAll(contextBinDir, 0o700))
 
 	binPath := app.BinPathFunc("linux")
+	must.Any(os.Stat(binPath))
 	if err := os.Link(binPath, contextBinDir+"/"+filepath.Base(binPath)); err != nil && !os.IsExist(err) {
 		panic(err)
 	}
