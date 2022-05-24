@@ -47,6 +47,7 @@ linters:
     - gofumpt
     - paralleltest
     - testpackage
+    - prealloc
     # deprecated:
     - interfacer
     - golint

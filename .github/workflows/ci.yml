@@ -13,7 +13,9 @@ jobs:
           persist-credentials: false
       - name: Go version used to build core tool
         run: go version
-      - name: ci tests
-        run: |
-          export PATH="$GITHUB_WORKSPACE/bin:$PATH"
-          core lint test build
+      - name: Configure the environment
+        run: echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+      - name: Lint, run unit tests and build
+        run: core lint test build
+      - name: Execute integration tests
+        run: coreznet test --target=direct
