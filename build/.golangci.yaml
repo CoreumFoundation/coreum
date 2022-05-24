@@ -48,6 +48,8 @@ linters:
     - paralleltest
     - testpackage
     - prealloc
+    - nonamedreturns
+    - exhaustruct
     # deprecated:
     - interfacer
     - golint
