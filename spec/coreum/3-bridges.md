@@ -1,5 +1,5 @@
 
-#Bridges
+# Bridges
 A user will be able to connect to the bridge by connecting his wallet in the blockchain from which he wants to transfer his assets, 
 then he has to indicate the address of his wallet in the coreum blockchain to which his funds should be transferred. 
 
