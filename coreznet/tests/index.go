@@ -22,7 +22,7 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 
 func coredNodes(chainID string, numOfNodes int, appF *apps.Factory) (infra.Mode, apps.Cored) {
 	genesis := cored.NewGenesis(chainID)
-	node0 := appF.Cored("cored-00", apps.CoredPorts{
+	node0 := appF.Cored("cored-00", cored.Ports{
 		RPC:     26657,
 		P2P:     26656,
 		GRPC:    9090,
@@ -34,7 +34,7 @@ func coredNodes(chainID string, numOfNodes int, appF *apps.Factory) (infra.Mode,
 	}
 	for i := 1; i < numOfNodes; i++ {
 		port := 10000 + 10*i
-		node := appF.Cored(fmt.Sprintf("cored-%02d", i), apps.CoredPorts{
+		node := appF.Cored(fmt.Sprintf("cored-%02d", i), cored.Ports{
 			RPC:     port + 1,
 			P2P:     port + 2,
 			GRPC:    port + 3,

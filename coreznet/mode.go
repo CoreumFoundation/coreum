@@ -11,7 +11,7 @@ import (
 func DevMode(af *apps.Factory) infra.Mode {
 	genesis := cored.NewGenesis("coredev")
 	return infra.Mode{
-		af.Cored("cored-node", apps.CoredPorts{
+		af.Cored("cored-node", cored.Ports{
 			RPC:     26657,
 			P2P:     26656,
 			GRPC:    9090,

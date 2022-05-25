@@ -31,17 +31,8 @@ var (
 	charliePrivKey = cored.Secp256k1PrivateKey{0x12, 0x9, 0x56, 0x3d, 0x40, 0x69, 0xf7, 0x57, 0xdd, 0x4c, 0x69, 0x17, 0x92, 0x7, 0xf0, 0xe6, 0x62, 0xa1, 0xcb, 0x8c, 0xfe, 0x8, 0x61, 0x68, 0x4c, 0x5e, 0xbc, 0x6b, 0x34, 0xa9, 0x5f, 0x7}
 )
 
-// CoredPorts defines ports used by cored application
-type CoredPorts struct {
-	RPC     int `json:"rpc"`
-	P2P     int `json:"p2p"`
-	GRPC    int `json:"grpc"`
-	GRPCWeb int `json:"grpcWeb"`
-	PProf   int `json:"pprof"`
-}
-
 // NewCored creates new cored app
-func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor cored.Executor, appInfo *infra.AppInfo, ports CoredPorts, rootNode *Cored) Cored {
+func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor cored.Executor, appInfo *infra.AppInfo, ports cored.Ports, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -89,7 +80,7 @@ type Cored struct {
 	validatorPrivateKey ed25519.PrivateKey
 	genesis             *cored.Genesis
 	appInfo             *infra.AppInfo
-	ports               CoredPorts
+	ports               cored.Ports
 	rootNode            *Cored
 
 	mu         *sync.RWMutex
