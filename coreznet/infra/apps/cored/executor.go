@@ -3,8 +3,6 @@ package cored
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	osexec "os/exec"

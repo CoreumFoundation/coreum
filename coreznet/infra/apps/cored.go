@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -129,7 +131,8 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://%s:%d/status", c.IP(), c.ports.RPC), nil))
+	statusURL := url.URL{Scheme: "http", Host: net.JoinHostPort(c.IP().String(), strconv.Itoa(c.ports.RPC)), Path: "/status"}
+	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -178,11 +181,11 @@ func (c Cored) Deployment() infra.Deployment {
 				args := []string{
 					"start",
 					"--home", homeDir,
-					"--rpc.laddr", fmt.Sprintf("tcp://%s:%d", ip, c.ports.RPC),
-					"--p2p.laddr", fmt.Sprintf("tcp://%s:%d", ip, c.ports.P2P),
-					"--grpc.address", fmt.Sprintf("%s:%d", ip, c.ports.GRPC),
-					"--grpc-web.address", fmt.Sprintf("%s:%d", ip, c.ports.GRPCWeb),
-					"--rpc.pprof_laddr", fmt.Sprintf("%s:%d", ip, c.ports.PProf),
+					"--rpc.laddr", "tcp://" + net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.RPC)),
+					"--p2p.laddr", "tcp://" + net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.P2P)),
+					"--grpc.address", net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.GRPC)),
+					"--grpc-web.address", net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.GRPCWeb)),
+					"--rpc.pprof_laddr", net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.PProf)),
 				}
 				if c.rootNode != nil {
 					args = append(args,
@@ -224,7 +227,7 @@ func (c Cored) saveClientWrapper(wrapperDir string, ip net.IP) error {
 	client := `#!/bin/sh
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ]; then
-	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""tcp://` + ip.String() + ":" + fmt.Sprintf("%d", c.ports.RPC) + `"""
+	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""tcp://` + net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.RPC)) + `"""
 fi
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""

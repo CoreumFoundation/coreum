@@ -16,7 +16,6 @@ import (
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -47,7 +46,7 @@ func NewGenesis(chainID string) *Genesis {
 	return &Genesis{
 		chainID:      chainID,
 		marshaler:    marshaler,
-		txConfig:     tx.NewTxConfig(marshaler, []signingtypes.SignMode{signingtypes.SignMode_SIGN_MODE_DIRECT}),
+		txConfig:     tx.NewTxConfig(marshaler, []signing.SignMode{signing.SignMode_SIGN_MODE_DIRECT}),
 		mu:           &sync.Mutex{},
 		genesisDoc:   genesisDoc,
 		appState:     appState,
