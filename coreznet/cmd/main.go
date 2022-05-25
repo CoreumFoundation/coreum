@@ -86,6 +86,14 @@ func main() {
 		addModeFlag(specCmd, c, configF)
 		rootCmd.AddCommand(specCmd)
 
+		pingPongCmd := &cobra.Command{
+			Use:   "ping-pong",
+			Short: "Sends tokens back and forth to generate transactions",
+			RunE:  cmdF.Cmd(coreznet.PingPong),
+		}
+		addModeFlag(pingPongCmd, c, configF)
+		rootCmd.AddCommand(pingPongCmd)
+
 		return rootCmd.Execute()
 	})
 }

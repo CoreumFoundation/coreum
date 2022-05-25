@@ -26,6 +26,10 @@ type Wallet struct {
 	Address string
 }
 
+func (w Wallet) String() string {
+	return fmt.Sprintf("%s@%s", w.Name, w.Address)
+}
+
 // Balance stores balance of denom
 type Balance struct {
 	// Amount is stored amount
@@ -33,6 +37,10 @@ type Balance struct {
 
 	// Denom is a token symbol
 	Denom string `json:"denom"`
+}
+
+func (b Balance) String() string {
+	return b.Amount.String() + b.Denom
 }
 
 // NewClient creates new client for cored
