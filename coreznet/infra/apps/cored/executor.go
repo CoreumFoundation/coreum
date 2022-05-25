@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	osexec "os/exec"
+	"strconv"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -28,7 +30,6 @@ type Executor struct {
 	chainID string
 	binPath string
 	homeDir string
-	keyName string
 }
 
 // Bin returns path to cored binary
@@ -44,7 +45,7 @@ func (e Executor) Home() string {
 // QBankBalances queries for bank balances owned by address
 func (e Executor) QBankBalances(ctx context.Context, address string, ip net.IP, rpcPort int) ([]byte, error) {
 	balances := &bytes.Buffer{}
-	if err := libexec.Exec(ctx, e.coredOut(balances, "q", "bank", "balances", address, "--chain-id", e.chainID, "--node", fmt.Sprintf("tcp://%s:%d", ip, rpcPort), "--output", "json")); err != nil {
+	if err := libexec.Exec(ctx, e.coredOut(balances, "q", "bank", "balances", address, "--chain-id", e.chainID, "--node", "tcp://"+net.JoinHostPort(ip.String(), strconv.Itoa(rpcPort)), "--output", "json")); err != nil {
 		return nil, err
 	}
 	return balances.Bytes(), nil
@@ -53,7 +54,7 @@ func (e Executor) QBankBalances(ctx context.Context, address string, ip net.IP, 
 // TxBankSend sends tokens from one address to another
 func (e Executor) TxBankSend(ctx context.Context, sender, address string, balance Balance, ip net.IP, rpcPort int) ([]byte, error) {
 	tx := &bytes.Buffer{}
-	if err := libexec.Exec(ctx, e.coredOut(tx, "tx", "bank", "send", sender, address, balance.Amount.String()+balance.Denom, "--yes", "--chain-id", e.chainID, "--node", fmt.Sprintf("tcp://%s:%d", ip, rpcPort), "--keyring-backend", "test", "--broadcast-mode", "block", "--output", "json")); err != nil {
+	if err := libexec.Exec(ctx, e.coredOut(tx, "tx", "bank", "send", sender, address, balance.Amount.String()+balance.Denom, "--yes", "--chain-id", e.chainID, "--node", "tcp://"+net.JoinHostPort(ip.String(), strconv.Itoa(rpcPort)), "--keyring-backend", "test", "--broadcast-mode", "block", "--output", "json")); err != nil {
 		return nil, err
 	}
 	return tx.Bytes(), nil
