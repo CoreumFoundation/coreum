@@ -125,7 +125,7 @@ func Test(c *ioc.Container, configF *ConfigFactory) error {
 }
 
 // Spec print specification of running environment
-func Spec(spec *infra.Spec, _ infra.Mode) error {
+func Spec(spec *infra.Spec) error {
 	fmt.Println(spec)
 	return nil
 }
