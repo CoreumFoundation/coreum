@@ -83,6 +83,11 @@ type Cored struct {
 	walletKeys map[string]cored.Secp256k1PrivateKey
 }
 
+// Type returns type of application
+func (c Cored) Type() infra.AppType {
+	return CoredType
+}
+
 // Name returns name of app
 func (c Cored) Name() string {
 	return c.name
