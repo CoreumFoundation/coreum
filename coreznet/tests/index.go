@@ -22,13 +22,7 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 
 func coredNodes(chainID string, numOfNodes int, appF *apps.Factory) (infra.Mode, apps.Cored) {
 	genesis := cored.NewGenesis(chainID)
-	node0 := appF.Cored("cored-00", cored.Ports{
-		RPC:     26657,
-		P2P:     26656,
-		GRPC:    9090,
-		GRPCWeb: 9091,
-		PProf:   6060,
-	}, genesis, nil)
+	node0 := appF.Cored("cored-00", cored.DefaultPorts, genesis, nil)
 	nodes := infra.Mode{
 		node0,
 	}
