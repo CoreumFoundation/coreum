@@ -47,7 +47,18 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor
 	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
-	c := Cored{
+	stakerPubKey, stakerPrivKey := cored.GenerateSecp256k1Key()
+
+	genesis.AddWallet(stakerPubKey, "100000000000000000000000core,10000000000000000000000000stake")
+	genesis.AddValidator(validatorPublicKey, stakerPrivKey)
+
+	if rootNode == nil {
+		genesis.AddWallet(alicePrivKey.PubKey(), "1000000000000000core")
+		genesis.AddWallet(bobPrivKey.PubKey(), "1000000000000000core")
+		genesis.AddWallet(charliePrivKey.PubKey(), "1000000000000000core")
+	}
+
+	return Cored{
 		name:                name,
 		config:              config,
 		executor:            executor,
@@ -60,22 +71,12 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor
 		rootNode:            rootNode,
 		mu:                  &sync.RWMutex{},
 		walletKeys: map[string]cored.Secp256k1PrivateKey{
+			"staker":  stakerPrivKey,
 			"alice":   alicePrivKey,
 			"bob":     bobPrivKey,
 			"charlie": charliePrivKey,
 		},
 	}
-
-	_, stakerPrivateKey := c.AddWallet("500000000000000000000000core,990000000000000000000000000stake")
-	genesis.AddValidator(validatorPublicKey, stakerPrivateKey)
-
-	if rootNode == nil {
-		genesis.AddWallet(alicePrivKey.PubKey(), "1000000000000000core")
-		genesis.AddWallet(bobPrivKey.PubKey(), "1000000000000000core")
-		genesis.AddWallet(charliePrivKey.PubKey(), "1000000000000000core")
-	}
-
-	return c
 }
 
 // Cored represents cored
