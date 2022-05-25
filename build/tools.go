@@ -24,19 +24,19 @@ import (
 
 var tools = map[string]tool{
 	"go": {
-		Version: "1.18.1",
+		Version: "1.18.2",
 		Sources: sources{
 			linuxAMD64: {
-				URL:  "https://go.dev/dl/go1.18.1.linux-amd64.tar.gz",
-				Hash: "sha256:b3b815f47ababac13810fc6021eb73d65478e0b2db4b09d348eefad9581a2334",
+				URL:  "https://go.dev/dl/go1.18.2.linux-amd64.tar.gz",
+				Hash: "sha256:e54bec97a1a5d230fc2f9ad0880fcbabb5888f30ed9666eca4a91c5a32e86cbc",
 			},
 			darwinAMD64: {
-				URL:  "https://go.dev/dl/go1.18.1.darwin-amd64.tar.gz",
-				Hash: "sha256:63e5035312a9906c98032d9c73d036b6ce54f8632b194228bd08fe3b9fe4ab01",
+				URL:  "https://go.dev/dl/go1.18.2.darwin-amd64.tar.gz",
+				Hash: "sha256:1f5f539ce0baa8b65f196ee219abf73a7d9cf558ba9128cc0fe4833da18b04f2",
 			},
 			darwinARM64: {
-				URL:  "https://go.dev/dl/go1.18.1.darwin-arm64.tar.gz",
-				Hash: "sha256:6d5641a06edba8cd6d425fb0adad06bad80e2afe0fa91b4aa0e5aed1bc78f58e",
+				URL:  "https://go.dev/dl/go1.18.2.darwin-arm64.tar.gz",
+				Hash: "sha256:6c7df9a2405f09aa9bab55c93c9c4ce41d3e58127d626bc1825ba5d0a0045d5c",
 			},
 		},
 		Binaries: []string{
@@ -45,45 +45,45 @@ var tools = map[string]tool{
 		},
 	},
 	"golangci": {
-		Version: "1.45.2",
+		Version: "1.46.2",
 		Sources: sources{
 			linuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.45.2/golangci-lint-1.45.2-linux-amd64.tar.gz",
-				Hash: "sha256:595ad6c6dade4c064351bc309f411703e457f8ffbb7a1806b3d8ee713333427f",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-linux-amd64.tar.gz",
+				Hash: "sha256:242cd4f2d6ac0556e315192e8555784d13da5d1874e51304711570769c4f2b9b",
 				Binaries: []string{
-					"golangci-lint-1.45.2-linux-amd64/golangci-lint",
+					"golangci-lint-1.46.2-linux-amd64/golangci-lint",
 				},
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.45.2/golangci-lint-1.45.2-darwin-amd64.tar.gz",
-				Hash: "sha256:995e509e895ca6a64ffc7395ac884d5961bdec98423cb896b17f345a9b4a19cf",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-darwin-amd64.tar.gz",
+				Hash: "sha256:658078aaaf7608693f37c4cf1380b2af418ab8b2d23fdb33e7e2d4339328590e",
 				Binaries: []string{
-					"golangci-lint-1.45.2-darwin-amd64/golangci-lint",
+					"golangci-lint-1.46.2-darwin-amd64/golangci-lint",
 				},
 			},
 			darwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.45.2/golangci-lint-1.45.2-darwin-arm64.tar.gz",
-				Hash: "sha256:c2b9669decc1b638cf2ee9060571af4e255f6dfcbb225c293e3a7ee4bb2c7217",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-darwin-arm64.tar.gz",
+				Hash: "sha256:81f9b4afd62ec5e612ef8bc3b1d612a88b56ff289874831845cdad394427385f",
 				Binaries: []string{
-					"golangci-lint-1.45.2-darwin-arm64/golangci-lint",
+					"golangci-lint-1.46.2-darwin-arm64/golangci-lint",
 				},
 			},
 		},
 	},
 	"ignite": {
-		Version: "v0.20.4",
+		Version: "v0.21.2",
 		Sources: sources{
 			linuxAMD64: {
-				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.20.4/ignite_0.20.4_linux_amd64.tar.gz",
-				Hash: "sha256:6291e0e3571cfc81caa691932024519cabade44c061d4214f5f4090badb06ab2",
+				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.21.2/ignite_0.21.2_linux_amd64.tar.gz",
+				Hash: "sha256:c79e7119a0e14881336b92a5191cba861130c80a5a21bb0f0aa8f79c4c237204",
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.20.4/ignite_0.20.4_darwin_amd64.tar.gz",
-				Hash: "sha256:2e9366168de8b8dbf743ec0de21c93430eca79c76d947c6de4d7c728c757f05e",
+				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.21.2/ignite_0.21.2_darwin_amd64.tar.gz",
+				Hash: "sha256:b9570804d1cc7023b780f50aece91c3c57cbf7f877850946642101e313cb0ec6",
 			},
 			darwinARM64: {
-				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.20.4/ignite_0.20.4_darwin_arm64.tar.gz",
-				Hash: "sha256:9543862fc1399dc1a4d40ca511af6bf8743dff5c79e2fa774632bdbe2196b779",
+				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.21.2/ignite_0.21.2_darwin_arm64.tar.gz",
+				Hash: "sha256:9455af04670b7a57d3d7320ae28fa40ee8dc331581f1029854e5697cd89e93d8",
 			},
 		},
 		Binaries: []string{
