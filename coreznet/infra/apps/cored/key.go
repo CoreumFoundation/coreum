@@ -11,6 +11,12 @@ import (
 // Secp256k1PrivateKey is a secp256k1 private key
 type Secp256k1PrivateKey []byte
 
+// PubKey returns public key for corresponding key
+func (key Secp256k1PrivateKey) PubKey() Secp256k1PublicKey {
+	privKey := cosmossecp256k1.PrivKey{Key: key}
+	return privKey.PubKey().Bytes()
+}
+
 // Address returns bech32 encoded wallet address for corresponding key
 func (key Secp256k1PrivateKey) Address() string {
 	privKey := cosmossecp256k1.PrivKey{Key: key}

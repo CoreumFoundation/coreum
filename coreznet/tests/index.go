@@ -29,7 +29,6 @@ func coredNodes(chainID string, numOfNodes int, appF *apps.Factory) (infra.Mode,
 		GRPCWeb: 9091,
 		PProf:   6060,
 	}, genesis, nil)
-	node0.AddWallet("1000000000000000core,1000000000000000stake")
 	nodes := infra.Mode{
 		node0,
 	}
@@ -42,7 +41,6 @@ func coredNodes(chainID string, numOfNodes int, appF *apps.Factory) (infra.Mode,
 			GRPCWeb: port + 4,
 			PProf:   port + 5,
 		}, genesis, &node0)
-		node.AddWallet("1000000000000000core,1000000000000000stake")
 		nodes = append(nodes, node)
 	}
 	return nodes, node0
