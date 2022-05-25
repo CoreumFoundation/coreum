@@ -50,7 +50,7 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor
 	stakerPubKey, stakerPrivKey := cored.GenerateSecp256k1Key()
 
 	genesis.AddWallet(stakerPubKey, "100000000000000000000000core,10000000000000000000000000stake")
-	genesis.AddValidator(validatorPublicKey, stakerPrivKey)
+	genesis.AddValidator(validatorPublicKey, stakerPrivKey, "100000000stake")
 
 	if rootNode == nil {
 		genesis.AddWallet(alicePrivKey.PubKey(), "1000000000000000core")

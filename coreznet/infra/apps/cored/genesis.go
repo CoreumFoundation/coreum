@@ -98,13 +98,13 @@ func (g *Genesis) AddWallet(publicKey Secp256k1PublicKey, balances string) {
 }
 
 // AddValidator adds transaction configuring validator to genesis block
-func (g *Genesis) AddValidator(validatorPublicKey ed25519.PublicKey, stakerPrivateKey Secp256k1PrivateKey) {
+func (g *Genesis) AddValidator(validatorPublicKey ed25519.PublicKey, stakerPrivateKey Secp256k1PrivateKey, stakedBalance string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	g.verifyNotFinalized()
 
-	amount, err := sdk.ParseCoinNormalized("100000000stake")
+	amount, err := sdk.ParseCoinNormalized(stakedBalance)
 	must.OK(err)
 
 	commission := stakingtypes.CommissionRates{
