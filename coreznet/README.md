@@ -112,6 +112,7 @@ Available commands are:
 - `stop` - stops applications
 - `remove` - stops applications and removes all the resources used by the environment
 - `spec` - prints specification of the environment
+- `ping-pong` - sends transactions to generate traffic on blockchain
 
 ## Example
 
@@ -199,6 +200,19 @@ $ coreznet --env=coreznet --mode=test --target=tmux
 ```
 
 and again, all the logs are available inside current directory.
+
+## Ping-pong
+
+There is `ping-pong` command available in `coreznet` sending transactions to generate some traffic on blockchain.
+To start it runs these commands:
+
+```
+$ coreznet --target=direct
+(coreznet) [logs] $ start
+(coreznet) [logs] $ ping-pong
+```
+
+You will see logs reporting that tokens are constantly transferred.
 
 ## Hard reset
 
