@@ -15,10 +15,9 @@ import (
 )
 
 // NewClient creates new client for cored
-func NewClient(executor Executor, chainID string, ip net.IP, rpcPort int) *Client {
+func NewClient(chainID string, ip net.IP, rpcPort int) *Client {
 	marshaler := NewCodec()
 	return &Client{
-		executor:         executor,
 		chainID:          chainID,
 		ip:               ip,
 		rpcPort:          rpcPort,
@@ -31,8 +30,6 @@ func NewClient(executor Executor, chainID string, ip net.IP, rpcPort int) *Clien
 
 // Client is the client for cored blockchain
 type Client struct {
-	executor Executor
-
 	chainID          string
 	ip               net.IP
 	rpcPort          int
