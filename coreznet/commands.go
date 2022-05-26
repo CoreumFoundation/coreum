@@ -138,14 +138,8 @@ func Spec(spec *infra.Spec) error {
 // PingPong connects to cored node and sends transactions back and forth from one account to another to generate
 // transactions on the blockchain
 func PingPong(ctx context.Context, mode infra.Mode) error {
-	var client *cored.Client
-	for _, app := range mode {
-		if app.Type() == apps.CoredType && app.Status() == infra.AppStatusRunning {
-			client = app.(apps.Cored).Client()
-			break
-		}
-	}
-	if client == nil {
+	client, found := coredClient(mode)
+	if !found {
 		return errors.New("haven't found any running cored node")
 	}
 
@@ -172,11 +166,20 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-func sendTokens(ctx context.Context, client *cored.Client, from, to cored.Wallet) error {
+func coredClient(mode infra.Mode) (cored.Client, bool) {
+	for _, app := range mode {
+		if app.Type() == apps.CoredType && app.Status() == infra.AppStatusRunning {
+			return app.(apps.Cored).Client(), true
+		}
+	}
+	return cored.Client{}, false
+}
+
+func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {
 	log := logger.Get(ctx)
 
 	amount := cored.Balance{Amount: big.NewInt(1), Denom: "core"}
-	txHash, err := client.TxBankSend(ctx, from, to, amount)
+	txHash, err := client.TxBankSend(from, to, amount)
 	if err != nil {
 		return err
 	}

@@ -9,7 +9,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,32 +26,27 @@ func NewGenesis(chainID string) *Genesis {
 	var appState map[string]json.RawMessage
 	must.OK(json.Unmarshal(genesisDoc.AppState, &appState))
 
-	marshaler := NewCodec()
-	authState := authtypes.GetGenesisStateFromAppState(marshaler, appState)
+	clientCtx := NewContext(chainID, nil)
+	authState := authtypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 	accountState, err := authtypes.UnpackAccounts(authState.Accounts)
 	must.OK(err)
-
 	return &Genesis{
-		chainID:      chainID,
-		marshaler:    marshaler,
-		txConfig:     NewTxConfig(marshaler),
-		txBuilder:    NewTxBuilder(chainID),
+		clientCtx:    clientCtx,
+		txManager:    NewTxManager(clientCtx),
 		mu:           &sync.Mutex{},
 		genesisDoc:   genesisDoc,
 		appState:     appState,
-		genutilState: genutiltypes.GetGenesisStateFromAppState(marshaler, appState),
+		genutilState: genutiltypes.GetGenesisStateFromAppState(clientCtx.Codec, appState),
 		authState:    authState,
 		accountState: accountState,
-		bankState:    banktypes.GetGenesisStateFromAppState(marshaler, appState),
+		bankState:    banktypes.GetGenesisStateFromAppState(clientCtx.Codec, appState),
 	}
 }
 
 // Genesis is responsible for creating genesis configuration for coreum network
 type Genesis struct {
-	chainID   string
-	marshaler *codec.ProtoCodec
-	txConfig  client.TxConfig
-	txBuilder *TxBuilder
+	clientCtx client.Context
+	txManager TxManager
 
 	mu           *sync.Mutex
 	genesisDoc   *tmtypes.GenesisDoc
@@ -66,7 +60,7 @@ type Genesis struct {
 
 // ChainID returns ID of chain
 func (g Genesis) ChainID() string {
-	return g.chainID
+	return g.clientCtx.ChainID
 }
 
 // AddWallet adds wallet with balances to the genesis
@@ -111,7 +105,7 @@ func (g *Genesis) AddValidator(validatorPublicKey ed25519.PublicKey, stakerPriva
 	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
 	must.OK(err)
 
-	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.txConfig.TxJSONEncoder()(g.txBuilder.Sign(stakerPrivateKey, 0, 0, msg))))
+	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.clientCtx.TxConfig.TxJSONEncoder()(g.txManager.Sign(stakerPrivateKey, 0, 0, msg))))
 }
 
 // Save saves genesis configuration
@@ -121,15 +115,15 @@ func (g *Genesis) Save(homeDir string) {
 
 	g.finalized = true
 
-	genutiltypes.SetGenesisStateInAppState(g.marshaler, g.appState, g.genutilState)
+	genutiltypes.SetGenesisStateInAppState(g.clientCtx.Codec, g.appState, g.genutilState)
 
 	var err error
 	g.authState.Accounts, err = authtypes.PackAccounts(authtypes.SanitizeGenesisAccounts(g.accountState))
 	must.OK(err)
-	g.appState[authtypes.ModuleName] = g.marshaler.MustMarshalJSON(&g.authState)
+	g.appState[authtypes.ModuleName] = g.clientCtx.Codec.MustMarshalJSON(&g.authState)
 
 	g.bankState.Balances = banktypes.SanitizeGenesisBalances(g.bankState.Balances)
-	g.appState[banktypes.ModuleName] = g.marshaler.MustMarshalJSON(g.bankState)
+	g.appState[banktypes.ModuleName] = g.clientCtx.Codec.MustMarshalJSON(g.bankState)
 
 	g.genesisDoc.AppState = must.Bytes(json.MarshalIndent(g.appState, "", "  "))
 

@@ -1,47 +1,37 @@
 package cored
 
 import (
+	"fmt"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 )
 
-// NewTxConfig returns new configuration required by cosmos to build, sign and encode transactions
-func NewTxConfig(marshaler *codec.ProtoCodec) client.TxConfig {
-	return tx.NewTxConfig(marshaler, []signing.SignMode{signing.SignMode_SIGN_MODE_DIRECT})
-}
-
-// NewTxBuilder creates new tx builder
-func NewTxBuilder(chainID string) *TxBuilder {
-	marshaler := NewCodec()
-	return &TxBuilder{
-		chainID:   chainID,
-		marshaler: marshaler,
-		txConfig:  NewTxConfig(marshaler),
+// NewTxManager creates new tx manager
+func NewTxManager(clientCtx client.Context) TxManager {
+	return TxManager{
+		clientCtx: clientCtx,
 	}
 }
 
-// TxBuilder builds transactions
-type TxBuilder struct {
-	chainID   string
-	marshaler *codec.ProtoCodec
-	txConfig  client.TxConfig
+// TxManager builds and broadcasts transactions
+type TxManager struct {
+	clientCtx client.Context
 }
 
 // Sign takes message, creates transaction and signs it
-func (txb *TxBuilder) Sign(signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
+func (txm TxManager) Sign(signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
 	privKey := &cosmossecp256k1.PrivKey{Key: signerKey}
-	txBuilder := txb.txConfig.NewTxBuilder()
+	txBuilder := txm.clientCtx.TxConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(200000)
 	must.OK(txBuilder.SetMsgs(msg))
 
 	signerData := authsigning.SignerData{
-		ChainID:       txb.chainID,
+		ChainID:       txm.clientCtx.ChainID,
 		AccountNumber: accNum,
 		Sequence:      accSeq,
 	}
@@ -56,7 +46,7 @@ func (txb *TxBuilder) Sign(signerKey Secp256k1PrivateKey, accNum, accSeq uint64,
 	}
 	must.OK(txBuilder.SetSignatures(sig))
 
-	bytesToSign := must.Bytes(txb.txConfig.SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, txBuilder.GetTx()))
+	bytesToSign := must.Bytes(txm.clientCtx.TxConfig.SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, txBuilder.GetTx()))
 	sigBytes, err := privKey.Sign(bytesToSign)
 	must.OK(err)
 
@@ -65,4 +55,25 @@ func (txb *TxBuilder) Sign(signerKey Secp256k1PrivateKey, accNum, accSeq uint64,
 	must.OK(txBuilder.SetSignatures(sig))
 
 	return txBuilder.GetTx()
+}
+
+// Broadcast broadcasts message and returns tx hash
+func (txm TxManager) Broadcast(signerKey Secp256k1PrivateKey, msg sdk.Msg) (string, error) {
+	signerAddress, err := sdk.AccAddressFromBech32(signerKey.Address())
+	must.OK(err)
+	accNum, accSeq, err := txm.clientCtx.AccountRetriever.GetAccountNumberSequence(txm.clientCtx, signerAddress)
+	if err != nil {
+		return "", err
+	}
+
+	// FIXME (wojciech): Find a way to exit from this function early if ctx is canceled
+	txResp, err := txm.clientCtx.BroadcastTxCommit(must.Bytes(txm.clientCtx.TxConfig.TxEncoder()(txm.Sign(signerKey, accNum, accSeq, msg))))
+	if err != nil {
+		return "", err
+	}
+
+	if txResp.Code != 0 {
+		return "", fmt.Errorf("trasaction failed: %s", txResp.RawLog)
+	}
+	return txResp.TxHash, nil
 }

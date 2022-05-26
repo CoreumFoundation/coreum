@@ -129,7 +129,7 @@ func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateK
 }
 
 // Client creates new client for cored blockchain
-func (c Cored) Client() *cored.Client {
+func (c Cored) Client() cored.Client {
 	return cored.NewClient(c.genesis.ChainID(), c.IP(), c.ports.RPC)
 }
 

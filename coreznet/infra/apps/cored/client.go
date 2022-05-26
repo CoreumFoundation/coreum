@@ -2,55 +2,36 @@ package cored
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"strconv"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // NewClient creates new client for cored
-func NewClient(chainID string, ip net.IP, rpcPort int) *Client {
-	marshaler := NewCodec()
-	return &Client{
-		chainID:          chainID,
-		ip:               ip,
-		rpcPort:          rpcPort,
-		marshaler:        marshaler,
-		txConfig:         NewTxConfig(marshaler),
-		txBuilder:        NewTxBuilder(chainID),
-		accountRetriever: authtypes.AccountRetriever{},
+func NewClient(chainID string, ip net.IP, rpcPort int) Client {
+	rpcClient, err := client.NewClientFromNode("tcp://" + net.JoinHostPort(ip.String(), strconv.Itoa(rpcPort)))
+	must.OK(err)
+	clientCtx := NewContext(chainID, rpcClient)
+	return Client{
+		txManager:       NewTxManager(clientCtx),
+		bankQueryClient: banktypes.NewQueryClient(clientCtx),
 	}
 }
 
 // Client is the client for cored blockchain
 type Client struct {
-	chainID          string
-	ip               net.IP
-	rpcPort          int
-	marshaler        *codec.ProtoCodec
-	txConfig         client.TxConfig
-	txBuilder        *TxBuilder
-	accountRetriever client.AccountRetriever
+	txManager       TxManager
+	bankQueryClient banktypes.QueryClient
 }
 
 // QBankBalances queries for bank balances owned by wallet
-func (c *Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
-	cl, err := client.NewClientFromNode("tcp://" + net.JoinHostPort(c.ip.String(), strconv.Itoa(c.rpcPort)))
-	must.OK(err)
-	clientCtx := client.Context{
-		InterfaceRegistry: c.marshaler.InterfaceRegistry(),
-		Client:            cl,
-	}
-	qClient := banktypes.NewQueryClient(clientCtx)
-
+func (c Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
 	// FIXME (wojtek): support pagination
-	resp, err := qClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
+	resp, err := c.bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
 	if err != nil {
 		return nil, err
 	}
@@ -63,37 +44,16 @@ func (c *Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]B
 }
 
 // TxBankSend sends tokens from one wallet to another
-func (c *Client) TxBankSend(ctx context.Context, sender, receiver Wallet, balance Balance) (string, error) {
+func (c Client) TxBankSend(sender, receiver Wallet, balance Balance) (string, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
 	must.OK(err)
 	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
 	must.OK(err)
-	msg := banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+
+	return c.txManager.Broadcast(sender.Key, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
 			Denom:  balance.Denom,
 			Amount: sdk.NewIntFromBigInt(balance.Amount),
 		},
-	})
-
-	cl, err := client.NewClientFromNode("tcp://" + net.JoinHostPort(c.ip.String(), strconv.Itoa(c.rpcPort)))
-	must.OK(err)
-	clientCtx := client.Context{
-		InterfaceRegistry: c.marshaler.InterfaceRegistry(),
-		Client:            cl,
-	}
-
-	accNum, accSeq, err := c.accountRetriever.GetAccountNumberSequence(clientCtx, fromAddress)
-	if err != nil {
-		return "", err
-	}
-
-	txResp, err := clientCtx.BroadcastTxCommit(must.Bytes(c.txConfig.TxEncoder()(c.txBuilder.Sign(sender.Key, accNum, accSeq, msg))))
-	if err != nil {
-		return "", err
-	}
-
-	if txResp.Code != 0 {
-		return "", fmt.Errorf("trasaction failed: %s", txResp.RawLog)
-	}
-	return txResp.TxHash, nil
+	}))
 }
