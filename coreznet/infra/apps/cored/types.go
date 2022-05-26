@@ -19,12 +19,12 @@ type Wallet struct {
 	// Name is the name of the key stored in keystore
 	Name string
 
-	// Address is the address of the wallet
-	Address string
+	// Key is the private key of the wallet
+	Key Secp256k1PrivateKey
 }
 
 func (w Wallet) String() string {
-	return fmt.Sprintf("%s@%s", w.Name, w.Address)
+	return fmt.Sprintf("%s@%s", w.Name, w.Key.Address())
 }
 
 // Balance stores balance of denom

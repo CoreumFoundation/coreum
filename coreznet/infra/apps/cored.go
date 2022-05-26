@@ -125,12 +125,12 @@ func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateK
 	}
 
 	c.walletKeys[name] = privKey
-	return cored.Wallet{Name: name, Address: privKey.Address()}, privKey
+	return cored.Wallet{Name: name, Key: privKey}, privKey
 }
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() *cored.Client {
-	return cored.NewClient(c.executor, c.IP(), c.ports.RPC)
+	return cored.NewClient(c.executor, c.genesis.ChainID(), c.IP(), c.ports.RPC)
 }
 
 // HealthCheck checks if cored chain is empty

@@ -34,7 +34,7 @@ type TxBuilder struct {
 }
 
 // Sign takes message, creates transaction and signs it
-func (txb *TxBuilder) Sign(signerKey Secp256k1PrivateKey, txSequence uint64, msg sdk.Msg) authsigning.Tx {
+func (txb *TxBuilder) Sign(signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
 	privKey := &cosmossecp256k1.PrivKey{Key: signerKey}
 	txBuilder := txb.txConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(200000)
@@ -42,8 +42,8 @@ func (txb *TxBuilder) Sign(signerKey Secp256k1PrivateKey, txSequence uint64, msg
 
 	signerData := authsigning.SignerData{
 		ChainID:       txb.chainID,
-		AccountNumber: 0,
-		Sequence:      txSequence,
+		AccountNumber: accNum,
+		Sequence:      accSeq,
 	}
 	sigData := &signing.SingleSignatureData{
 		SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
@@ -52,7 +52,7 @@ func (txb *TxBuilder) Sign(signerKey Secp256k1PrivateKey, txSequence uint64, msg
 	sig := signing.SignatureV2{
 		PubKey:   privKey.PubKey(),
 		Data:     sigData,
-		Sequence: txSequence,
+		Sequence: accSeq,
 	}
 	must.OK(txBuilder.SetSignatures(sig))
 

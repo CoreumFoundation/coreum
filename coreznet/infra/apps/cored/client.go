@@ -6,28 +6,48 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"strconv"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // NewClient creates new client for cored
-func NewClient(executor Executor, ip net.IP, rpcPort int) *Client {
+func NewClient(executor Executor, chainID string, ip net.IP, rpcPort int) *Client {
+	marshaler := NewCodec()
 	return &Client{
-		executor: executor,
-		ip:       ip,
-		rpcPort:  rpcPort,
+		executor:         executor,
+		chainID:          chainID,
+		ip:               ip,
+		rpcPort:          rpcPort,
+		marshaler:        marshaler,
+		txConfig:         NewTxConfig(marshaler),
+		txBuilder:        NewTxBuilder(chainID),
+		accountRetriever: authtypes.AccountRetriever{},
 	}
 }
 
 // Client is the client for cored blockchain
 type Client struct {
 	executor Executor
-	ip       net.IP
-	rpcPort  int
+
+	chainID          string
+	ip               net.IP
+	rpcPort          int
+	marshaler        *codec.ProtoCodec
+	txConfig         client.TxConfig
+	txBuilder        *TxBuilder
+	accountRetriever client.AccountRetriever
 }
 
 // QBankBalances queries for bank balances owned by wallet
 func (c *Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
 	// FIXME (wojtek): support pagination
-	out, err := c.executor.QBankBalances(ctx, wallet.Address, c.ip, c.rpcPort)
+	out, err := c.executor.QBankBalances(ctx, wallet.Key.Address(), c.ip, c.rpcPort)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +65,7 @@ func (c *Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]B
 	for _, b := range data.Balances {
 		amount, ok := big.NewInt(0).SetString(b.Amount, 10)
 		if !ok {
-			panic(fmt.Sprintf("invalid amount %s received for denom %s on wallet %s", b.Amount, b.Denom, wallet.Address))
+			panic(fmt.Sprintf("invalid amount %s received for denom %s on wallet %s", b.Amount, b.Denom, wallet.Key.Address()))
 		}
 		balances[b.Denom] = Balance{Amount: amount, Denom: b.Denom}
 	}
@@ -54,15 +74,36 @@ func (c *Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]B
 
 // TxBankSend sends tokens from one wallet to another
 func (c *Client) TxBankSend(ctx context.Context, sender, receiver Wallet, balance Balance) (string, error) {
-	out, err := c.executor.TxBankSend(ctx, sender.Name, receiver.Address, balance, c.ip, c.rpcPort)
+	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
+	must.OK(err)
+	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
+	must.OK(err)
+	msg := banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+		{
+			Denom:  balance.Denom,
+			Amount: sdk.NewIntFromBigInt(balance.Amount),
+		},
+	})
+
+	cl, err := client.NewClientFromNode("tcp://" + net.JoinHostPort(c.ip.String(), strconv.Itoa(c.rpcPort)))
+	must.OK(err)
+	clientCtx := client.Context{
+		InterfaceRegistry: c.marshaler.InterfaceRegistry(),
+		Client:            cl,
+	}
+
+	accNum, accSeq, err := c.accountRetriever.GetAccountNumberSequence(clientCtx, fromAddress)
 	if err != nil {
 		return "", err
 	}
-	data := struct {
-		TxHash string `json:"txhash"`
-	}{}
-	if err := json.Unmarshal(out, &data); err != nil {
+
+	txResp, err := clientCtx.BroadcastTxCommit(must.Bytes(c.txConfig.TxEncoder()(c.txBuilder.Sign(sender.Key, accNum, accSeq, msg))))
+	if err != nil {
 		return "", err
 	}
-	return data.TxHash, nil
+
+	if txResp.Code != 0 {
+		return "", fmt.Errorf("trasaction failed: %s", txResp.RawLog)
+	}
+	return txResp.TxHash, nil
 }

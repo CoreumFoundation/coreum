@@ -149,9 +149,9 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 		return errors.New("haven't found any running cored node")
 	}
 
-	alice := cored.Wallet{Name: "alice", Address: cored.AlicePrivKey.Address()}
-	bob := cored.Wallet{Name: "bob", Address: cored.BobPrivKey.Address()}
-	charlie := cored.Wallet{Name: "charlie", Address: cored.CharliePrivKey.Address()}
+	alice := cored.Wallet{Name: "alice", Key: cored.AlicePrivKey}
+	bob := cored.Wallet{Name: "bob", Key: cored.BobPrivKey}
+	charlie := cored.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
 
 	for {
 		if err := sendTokens(ctx, client, alice, bob); err != nil {

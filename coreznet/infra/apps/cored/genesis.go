@@ -111,7 +111,7 @@ func (g *Genesis) AddValidator(validatorPublicKey ed25519.PublicKey, stakerPriva
 	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
 	must.OK(err)
 
-	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.txConfig.TxJSONEncoder()(g.txBuilder.Sign(stakerPrivateKey, 0, msg))))
+	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.txConfig.TxJSONEncoder()(g.txBuilder.Sign(stakerPrivateKey, 0, 0, msg))))
 }
 
 // Save saves genesis configuration
