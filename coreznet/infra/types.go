@@ -14,6 +14,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
+// AppType represents the type of application
+type AppType string
+
 // App is the interface exposed by application
 type App interface {
 	// Name returns name of application
@@ -243,7 +246,7 @@ type Spec struct {
 }
 
 // DescribeApp adds description of running app
-func (s *Spec) DescribeApp(appType string, name string) *AppInfo {
+func (s *Spec) DescribeApp(appType AppType, name string) *AppInfo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -288,8 +291,8 @@ const (
 )
 
 type appInfoData struct {
-	// appType is the type of app
-	Type string `json:"type"`
+	// Type is the type of app
+	Type AppType `json:"type"`
 
 	// IP is the IP reserved for this application
 	IP net.IP `json:"ip,omitempty"`
