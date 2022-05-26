@@ -2,9 +2,7 @@ package cored
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"math/big"
 	"net"
 	"strconv"
 
@@ -46,28 +44,23 @@ type Client struct {
 
 // QBankBalances queries for bank balances owned by wallet
 func (c *Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
-	// FIXME (wojtek): support pagination
-	out, err := c.executor.QBankBalances(ctx, wallet.Key.Address(), c.ip, c.rpcPort)
-	if err != nil {
-		return nil, err
+	cl, err := client.NewClientFromNode("tcp://" + net.JoinHostPort(c.ip.String(), strconv.Itoa(c.rpcPort)))
+	must.OK(err)
+	clientCtx := client.Context{
+		InterfaceRegistry: c.marshaler.InterfaceRegistry(),
+		Client:            cl,
 	}
-	data := struct {
-		Balances []struct {
-			Amount string `json:"amount"`
-			Denom  string `json:"denom"`
-		} `json:"balances"`
-	}{}
-	if err := json.Unmarshal(out, &data); err != nil {
+	qClient := banktypes.NewQueryClient(clientCtx)
+
+	// FIXME (wojtek): support pagination
+	resp, err := qClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
+	if err != nil {
 		return nil, err
 	}
 
 	balances := map[string]Balance{}
-	for _, b := range data.Balances {
-		amount, ok := big.NewInt(0).SetString(b.Amount, 10)
-		if !ok {
-			panic(fmt.Sprintf("invalid amount %s received for denom %s on wallet %s", b.Amount, b.Denom, wallet.Key.Address()))
-		}
-		balances[b.Denom] = Balance{Amount: amount, Denom: b.Denom}
+	for _, b := range resp.Balances {
+		balances[b.Denom] = Balance{Amount: b.Amount.BigInt(), Denom: b.Denom}
 	}
 	return balances, nil
 }
