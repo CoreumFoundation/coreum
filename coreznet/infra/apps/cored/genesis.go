@@ -10,14 +10,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -27,26 +22,21 @@ import (
 
 // NewGenesis creates new configuration for genesis block
 func NewGenesis(chainID string) *Genesis {
-	interfaceRegistry := types.NewInterfaceRegistry()
-	cryptocodec.RegisterInterfaces(interfaceRegistry)
-	authtypes.RegisterInterfaces(interfaceRegistry)
-	interfaceRegistry.RegisterImplementations((*sdk.Msg)(nil), &stakingtypes.MsgCreateValidator{})
-	marshaler := codec.NewProtoCodec(interfaceRegistry)
-
 	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesis(chainID))
 	must.OK(err)
 	var appState map[string]json.RawMessage
 	must.OK(json.Unmarshal(genesisDoc.AppState, &appState))
 
+	marshaler := NewCodec()
 	authState := authtypes.GetGenesisStateFromAppState(marshaler, appState)
-
 	accountState, err := authtypes.UnpackAccounts(authState.Accounts)
 	must.OK(err)
 
 	return &Genesis{
 		chainID:      chainID,
 		marshaler:    marshaler,
-		txConfig:     tx.NewTxConfig(marshaler, []signing.SignMode{signing.SignMode_SIGN_MODE_DIRECT}),
+		txConfig:     NewTxConfig(marshaler),
+		txBuilder:    NewTxBuilder(chainID),
 		mu:           &sync.Mutex{},
 		genesisDoc:   genesisDoc,
 		appState:     appState,
@@ -62,6 +52,7 @@ type Genesis struct {
 	chainID   string
 	marshaler *codec.ProtoCodec
 	txConfig  client.TxConfig
+	txBuilder *TxBuilder
 
 	mu           *sync.Mutex
 	genesisDoc   *tmtypes.GenesisDoc
@@ -120,42 +111,7 @@ func (g *Genesis) AddValidator(validatorPublicKey ed25519.PublicKey, stakerPriva
 	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
 	must.OK(err)
 
-	txBuilder := g.txConfig.NewTxBuilder()
-	txBuilder.SetGasLimit(200000)
-	must.OK(txBuilder.SetMsgs(msg))
-
-	signerData := authsigning.SignerData{
-		ChainID:       g.chainID,
-		AccountNumber: 0,
-		Sequence:      0,
-	}
-	sigData := signing.SingleSignatureData{
-		SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
-		Signature: nil,
-	}
-	sig := signing.SignatureV2{
-		PubKey:   stakerPrivKey.PubKey(),
-		Data:     &sigData,
-		Sequence: 0,
-	}
-	must.OK(txBuilder.SetSignatures(sig))
-
-	bytesToSign := must.Bytes(g.txConfig.SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, txBuilder.GetTx()))
-	sigBytes, err := stakerPrivKey.Sign(bytesToSign)
-	must.OK(err)
-
-	sigData = signing.SingleSignatureData{
-		SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
-		Signature: sigBytes,
-	}
-	sig = signing.SignatureV2{
-		PubKey:   stakerPrivKey.PubKey(),
-		Data:     &sigData,
-		Sequence: 0,
-	}
-	must.OK(txBuilder.SetSignatures(sig))
-
-	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.txConfig.TxJSONEncoder()(txBuilder.GetTx())))
+	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.txConfig.TxJSONEncoder()(g.txBuilder.Sign(stakerPrivateKey, 0, msg))))
 }
 
 // Save saves genesis configuration
