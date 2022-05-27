@@ -156,7 +156,7 @@ It's also possible to enter the environment first, and run tests from there:
 
 ```
 $ coreznet --env=coreznet --mode=test --target=tmux
-(coreznet) [logs] $ test
+(coreznet) [logs] $ tests
 
 # Remember to clean everything
 (coreznet) [logs] $ remove
@@ -166,7 +166,7 @@ You may run tests using any `--target` you like so running it on top of applicat
 
 ```
 $ coreznet --env=coreznet --mode=test --target=docker
-(coreznet) [logs] $ test
+(coreznet) [logs] $ tests
 
 # Remember to clean everything
 (coreznet) [logs] $ remove
@@ -177,7 +177,7 @@ Especially if you run them using `--target=tmux` it is possible to enter tmux co
 
 ```
 $ coreznet --env=coreznet --mode=test --target=tmux
-(coreznet) [logs] $ test
+(coreznet) [logs] $ tests
 (coreznet) [logs] $ start
 ```
 
