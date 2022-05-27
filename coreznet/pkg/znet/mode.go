@@ -1,4 +1,4 @@
-package coreznet
+package znet
 
 import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra"

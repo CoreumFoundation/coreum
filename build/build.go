@@ -36,5 +36,5 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 
 func buildCoreZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "coreznet/cmd", runtime.GOOS, "bin/coreznet")
+	return goBuildPkg(ctx, "coreznet/cmd/coreznet", runtime.GOOS, "bin/coreznet")
 }

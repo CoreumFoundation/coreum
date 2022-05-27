@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/CoreumFoundation/coreum/coreznet"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/coreznet/pkg/znet"
 )
 
 func main() {
@@ -32,11 +32,11 @@ func main() {
 		logger.VerboseOff()
 	}
 
-	run.Tool("coreznet", coreznet.IoC, func(c *ioc.Container, configF *coreznet.ConfigFactory, cmdF *coreznet.CmdFactory) error {
+	run.Tool("coreznet", znet.IoC, func(c *ioc.Container, configF *znet.ConfigFactory, cmdF *znet.CmdFactory) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage: true,
 			Short:        "Creates preconfigured bash session for environment",
-			RunE:         cmdF.Cmd(coreznet.Activate),
+			RunE:         cmdF.Cmd(znet.Activate),
 		}
 		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("COREZNET_ENV", "coreznet"), "Name of the environment to run in")
 		rootCmd.PersistentFlags().StringVar(&configF.Target, "target", defaultString("COREZNET_TARGET", "tmux"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
@@ -49,7 +49,7 @@ func main() {
 		startCmd := &cobra.Command{
 			Use:   "start",
 			Short: "Starts environment",
-			RunE:  cmdF.Cmd(coreznet.Start),
+			RunE:  cmdF.Cmd(znet.Start),
 		}
 		addFlags(startCmd, configF)
 		addModeFlag(startCmd, c, configF)
@@ -58,21 +58,21 @@ func main() {
 		stopCmd := &cobra.Command{
 			Use:   "stop",
 			Short: "Stops environment",
-			RunE:  cmdF.Cmd(coreznet.Stop),
+			RunE:  cmdF.Cmd(znet.Stop),
 		}
 		rootCmd.AddCommand(stopCmd)
 
 		removeCmd := &cobra.Command{
 			Use:   "remove",
 			Short: "Removes environment",
-			RunE:  cmdF.Cmd(coreznet.Remove),
+			RunE:  cmdF.Cmd(znet.Remove),
 		}
 		rootCmd.AddCommand(removeCmd)
 
 		testCmd := &cobra.Command{
 			Use:   "test",
 			Short: "Runs integration tests",
-			RunE:  cmdF.Cmd(coreznet.Test),
+			RunE:  cmdF.Cmd(znet.Test),
 		}
 		addFlags(testCmd, configF)
 		addFilterFlag(testCmd, configF)
@@ -81,7 +81,7 @@ func main() {
 		specCmd := &cobra.Command{
 			Use:   "spec",
 			Short: "Prints specification of running environment",
-			RunE:  cmdF.Cmd(coreznet.Spec),
+			RunE:  cmdF.Cmd(znet.Spec),
 		}
 		addModeFlag(specCmd, c, configF)
 		rootCmd.AddCommand(specCmd)
@@ -89,7 +89,7 @@ func main() {
 		pingPongCmd := &cobra.Command{
 			Use:   "ping-pong",
 			Short: "Sends tokens back and forth to generate transactions",
-			RunE:  cmdF.Cmd(coreznet.PingPong),
+			RunE:  cmdF.Cmd(znet.PingPong),
 		}
 		addModeFlag(pingPongCmd, c, configF)
 		rootCmd.AddCommand(pingPongCmd)
@@ -98,15 +98,15 @@ func main() {
 	})
 }
 
-func addFlags(cmd *cobra.Command, configF *coreznet.ConfigFactory) {
+func addFlags(cmd *cobra.Command, configF *znet.ConfigFactory) {
 	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("COREZNET_BIN_DIR", filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), "Path to directory where executables exist")
 }
 
-func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *coreznet.ConfigFactory) {
+func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *znet.ConfigFactory) {
 	cmd.Flags().StringVar(&configF.ModeName, "mode", defaultString("COREZNET_MODE", "dev"), "List of applications to deploy: "+strings.Join(c.Names((*infra.Mode)(nil)), " | "))
 }
 
-func addFilterFlag(cmd *cobra.Command, configF *coreznet.ConfigFactory) {
+func addFilterFlag(cmd *cobra.Command, configF *znet.ConfigFactory) {
 	cmd.Flags().StringArrayVar(&configF.TestFilters, "filter", defaultFilters("COREZNET_FILTERS"), "Regular expression used to filter tests to run")
 }
 
