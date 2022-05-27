@@ -11,7 +11,7 @@ import (
 const dockerGOOS = "linux"
 
 func buildAll(deps build.DepsFunc) {
-	deps(buildCored, buildCoreZNet)
+	deps(buildCored, buildCoreZNet, buildCoreZStress)
 }
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
@@ -37,4 +37,9 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 func buildCoreZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
 	return goBuildPkg(ctx, "coreznet/cmd/coreznet", runtime.GOOS, "bin/coreznet")
+}
+
+func buildCoreZStress(ctx context.Context, deps build.DepsFunc) error {
+	deps(ensureGo)
+	return goBuildPkg(ctx, "coreznet/cmd/corezstress", runtime.GOOS, "bin/corezstress")
 }

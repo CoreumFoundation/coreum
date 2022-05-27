@@ -23,6 +23,7 @@ func ensureGolangCI(ctx context.Context) error {
 }
 
 // goBuildPkg builds go package
+// nolint:unparam // `targetOS` always receives `"linux"`
 func goBuildPkg(ctx context.Context, pkg, targetOS, out string) error {
 	logger.Get(ctx).Info("Building go package", zap.String("package", pkg), zap.String("binary", out), zap.String("targetOS", targetOS))
 	cmd := exec.Command("go", "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
