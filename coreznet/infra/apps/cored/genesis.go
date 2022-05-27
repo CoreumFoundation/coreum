@@ -32,7 +32,6 @@ func NewGenesis(chainID string) *Genesis {
 	must.OK(err)
 	return &Genesis{
 		clientCtx:    clientCtx,
-		txManager:    NewTxManager(clientCtx),
 		mu:           &sync.Mutex{},
 		genesisDoc:   genesisDoc,
 		appState:     appState,
@@ -46,7 +45,6 @@ func NewGenesis(chainID string) *Genesis {
 // Genesis is responsible for creating genesis configuration for coreum network
 type Genesis struct {
 	clientCtx client.Context
-	txManager TxManager
 
 	mu           *sync.Mutex
 	genesisDoc   *tmtypes.GenesisDoc
@@ -105,7 +103,7 @@ func (g *Genesis) AddValidator(validatorPublicKey ed25519.PublicKey, stakerPriva
 	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
 	must.OK(err)
 
-	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.clientCtx.TxConfig.TxJSONEncoder()(g.txManager.Sign(stakerPrivateKey, 0, 0, msg))))
+	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.clientCtx.TxConfig.TxJSONEncoder()(signTx(g.clientCtx, stakerPrivateKey, 0, 0, msg))))
 }
 
 // Save saves genesis configuration

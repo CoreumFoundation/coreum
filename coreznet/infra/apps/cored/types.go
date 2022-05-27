@@ -21,6 +21,12 @@ type Wallet struct {
 
 	// Key is the private key of the wallet
 	Key Secp256k1PrivateKey
+
+	// AccountNumber is the account number as stored on blockchain
+	AccountNumber uint64
+
+	// AccountSequence is the sequence of next transaction to sign
+	AccountSequence uint64
 }
 
 func (w Wallet) String() string {

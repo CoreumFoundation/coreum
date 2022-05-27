@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"go.uber.org/zap"
 
@@ -54,7 +55,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 
 				log := logger.Get(ctx)
 				for i := 0; i < config.NumOfTransactions; i++ {
-					if _, err := client.TxBankSend(fromWallet, toWallet, cored.Balance{Amount: big.NewInt(1), Denom: "core"}); err != nil {
+					if _, err := client.Broadcast(must.Bytes(client.TxBankSend(fromWallet, toWallet, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))); err != nil {
 						log.Error("Sending transaction failed", zap.Error(err))
 					}
 				}
