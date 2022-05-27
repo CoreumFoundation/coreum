@@ -96,7 +96,7 @@ $ coreznet --env=coreznet --mode=dev --target=tmux
 (coreznet) [logs] $ start
 ```
 
-it is possible to use `logs` wrapper tot ail logs from an application:
+it is possible to use `logs` wrapper to tail logs from an application:
 
 ```
 (coreznet) [logs] $ logs cored-node
@@ -139,6 +139,23 @@ $ coreznet --env=coreznet --mode=dev --target=tmux
 (coreznet) [logs] $ exit
 $
 ```
+
+## Playing with the blockchain manually
+
+For each `cored` instance started by `coreznet` wrapper script named after the name of the node is created so you may call the client manually.
+There are also three standard keys: `alice`, `bob` and `charlie` added to the keystore of each instance.
+
+If you started `coreznet` using `--mode=dev` there is one `cored` application called `cored-node`.
+To use the client you may use `cored-node` wrapper:
+
+```
+(coreznet) [logs] $ cored-node keys list
+(coreznet) [logs] $ cored-node query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f4
+(coreznet) [logs] $ cored-node tx bank send bob cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f4 10core
+(coreznet) [logs] $ cored-node query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f
+```
+
+Different `cored` instances might available in another `--mode`. Run `spec` command to list them.
 
 ## Integration tests
 
