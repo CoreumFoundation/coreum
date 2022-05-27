@@ -50,6 +50,8 @@ linters:
     - prealloc
     - nonamedreturns
     - exhaustruct
+    - errchkjson
+    - forcetypeassert
     # deprecated:
     - interfacer
     - golint

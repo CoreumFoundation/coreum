@@ -96,7 +96,7 @@ $ coreznet --env=coreznet --mode=dev --target=tmux
 (coreznet) [logs] $ start
 ```
 
-it is possible to use `logs` wrapper tot ail logs from an application:
+it is possible to use `logs` wrapper to tail logs from an application:
 
 ```
 (coreznet) [logs] $ logs cored-node
@@ -140,6 +140,23 @@ $ coreznet --env=coreznet --mode=dev --target=tmux
 $
 ```
 
+## Playing with the blockchain manually
+
+For each `cored` instance started by `coreznet` wrapper script named after the name of the node is created so you may call the client manually.
+There are also three standard keys: `alice`, `bob` and `charlie` added to the keystore of each instance.
+
+If you started `coreznet` using `--mode=dev` there is one `cored` application called `cored-node`.
+To use the client you may use `cored-node` wrapper:
+
+```
+(coreznet) [logs] $ cored-node keys list
+(coreznet) [logs] $ cored-node query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f4
+(coreznet) [logs] $ cored-node tx bank send bob cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f4 10core
+(coreznet) [logs] $ cored-node query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f
+```
+
+Different `cored` instances might available in another `--mode`. Run `spec` command to list them.
+
 ## Integration tests
 
 Tests are defined in [tests/index.go](tests/index.go)
@@ -156,7 +173,7 @@ It's also possible to enter the environment first, and run tests from there:
 
 ```
 $ coreznet --env=coreznet --mode=test --target=tmux
-(coreznet) [logs] $ test
+(coreznet) [logs] $ tests
 
 # Remember to clean everything
 (coreznet) [logs] $ remove
@@ -166,7 +183,7 @@ You may run tests using any `--target` you like so running it on top of applicat
 
 ```
 $ coreznet --env=coreznet --mode=test --target=docker
-(coreznet) [logs] $ test
+(coreznet) [logs] $ tests
 
 # Remember to clean everything
 (coreznet) [logs] $ remove
@@ -177,7 +194,7 @@ Especially if you run them using `--target=tmux` it is possible to enter tmux co
 
 ```
 $ coreznet --env=coreznet --mode=test --target=tmux
-(coreznet) [logs] $ test
+(coreznet) [logs] $ tests
 (coreznet) [logs] $ start
 ```
 

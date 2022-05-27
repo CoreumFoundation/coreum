@@ -73,8 +73,8 @@ func Stop(ctx context.Context, target infra.Target, spec *infra.Spec) (retErr er
 	defer func() {
 		spec.PGID = 0
 		for _, app := range spec.Apps {
-			if app.Status == infra.AppStatusRunning {
-				app.Status = infra.AppStatusStopped
+			if app.Status() == infra.AppStatusRunning {
+				app.SetStatus(infra.AppStatusStopped)
 			}
 			if err := spec.Save(); retErr == nil {
 				retErr = err

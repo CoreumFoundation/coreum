@@ -20,7 +20,7 @@ type Factory struct {
 }
 
 // Cored creates new cored app
-func (f *Factory) Cored(name string) *Cored {
-	return NewCored(f.config, cored.NewExecutor(name, f.config.BinDir+"/cored", f.config.AppDir+"/"+name,
-		"master"), f.spec)
+func (f *Factory) Cored(name string, ports cored.Ports, genesis *cored.Genesis, rootNode *Cored) Cored {
+	return NewCored(name, f.config, genesis, cored.NewExecutor(genesis.ChainID(), f.config.BinDir+"/cored", f.config.AppDir+"/"+name),
+		f.spec.DescribeApp(CoredType, name), ports, rootNode)
 }

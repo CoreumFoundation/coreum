@@ -16,7 +16,7 @@ import (
 )
 
 // VerifyInitialBalance checks that initial balance is set by genesis block
-func VerifyInitialBalance(chain *apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
+func VerifyInitialBalance(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 	var wallet cored.Wallet
 
 	// First function prepares initial well-known state
@@ -24,7 +24,7 @@ func VerifyInitialBalance(chain *apps.Cored) (testing.PrepareFunc, testing.RunFu
 			var err error
 
 			// Create new random wallet with predefined balance added to genesis block
-			wallet, err = chain.Genesis().AddWallet(ctx, cored.Balance{Denom: "core", Amount: big.NewInt(100)})
+			wallet, _ = chain.AddWallet("100core")
 
 			return err
 		},
@@ -47,7 +47,7 @@ func VerifyInitialBalance(chain *apps.Cored) (testing.PrepareFunc, testing.RunFu
 }
 
 // TransferCore checks that core is transferred correctly between wallets
-func TransferCore(chain *apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
+func TransferCore(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 	var sender, receiver cored.Wallet
 
 	// First function prepares initial well-known state
@@ -55,11 +55,11 @@ func TransferCore(chain *apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 			var err error
 
 			// Create two random wallets with predefined amounts of core
-			sender, err = chain.Genesis().AddWallet(ctx, cored.Balance{Denom: "core", Amount: big.NewInt(100)})
+			sender, _ = chain.AddWallet("100core")
 			if err != nil {
 				return err
 			}
-			receiver, err = chain.Genesis().AddWallet(ctx, cored.Balance{Denom: "core", Amount: big.NewInt(10)})
+			receiver, _ = chain.AddWallet("10core")
 			return err
 		},
 
