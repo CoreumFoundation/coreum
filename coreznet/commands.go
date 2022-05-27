@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
@@ -13,10 +14,13 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
 	"github.com/CoreumFoundation/coreum/coreznet/tests"
 )
@@ -33,6 +37,7 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	// `test` can't be used here because it is a reserved keyword in bash
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/tests", []byte(fmt.Sprintf("#!/bin/bash\nexec %s test \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/spec", []byte(fmt.Sprintf("#!/bin/bash\nexec %s spec \"$@\"", exe)), 0o700))
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/ping-pong", []byte(fmt.Sprintf("#!/bin/bash\nexec %s ping-pong \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/logs", []byte(fmt.Sprintf(`#!/bin/bash
 if [ "$1" == "" ]; then
   echo "Provide the name of application"
@@ -125,7 +130,71 @@ func Test(c *ioc.Container, configF *ConfigFactory) error {
 }
 
 // Spec print specification of running environment
-func Spec(spec *infra.Spec, _ infra.Mode) error {
+func Spec(spec *infra.Spec) error {
 	fmt.Println(spec)
+	return nil
+}
+
+// PingPong connects to cored node and sends transactions back and forth from one account to another to generate
+// transactions on the blockchain
+func PingPong(ctx context.Context, mode infra.Mode) error {
+	var client *cored.Client
+	for _, app := range mode {
+		if app.Type() == apps.CoredType && app.Status() == infra.AppStatusRunning {
+			client = app.(apps.Cored).Client()
+			break
+		}
+	}
+	if client == nil {
+		return errors.New("haven't found any running cored node")
+	}
+
+	alice := cored.Wallet{Name: "alice", Address: cored.AlicePrivKey.Address()}
+	bob := cored.Wallet{Name: "bob", Address: cored.BobPrivKey.Address()}
+	charlie := cored.Wallet{Name: "charlie", Address: cored.CharliePrivKey.Address()}
+
+	for {
+		if err := sendTokens(ctx, client, alice, bob); err != nil {
+			return err
+		}
+		if err := sendTokens(ctx, client, bob, charlie); err != nil {
+			return err
+		}
+		if err := sendTokens(ctx, client, charlie, alice); err != nil {
+			return err
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+}
+
+func sendTokens(ctx context.Context, client *cored.Client, from, to cored.Wallet) error {
+	log := logger.Get(ctx)
+
+	amount := cored.Balance{Amount: big.NewInt(1), Denom: "core"}
+	txHash, err := client.TxBankSend(ctx, from, to, amount)
+	if err != nil {
+		return err
+	}
+
+	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
+		zap.Stringer("amount", amount), zap.String("txHash", txHash))
+
+	fromBalance, err := client.QBankBalances(ctx, from)
+	if err != nil {
+		return err
+	}
+	toBalance, err := client.QBankBalances(ctx, to)
+	if err != nil {
+		return err
+	}
+
+	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance["core"]))
+	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance["core"]))
+
 	return nil
 }

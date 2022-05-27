@@ -19,6 +19,12 @@ type AppType string
 
 // App is the interface exposed by application
 type App interface {
+	// Type returns type of application
+	Type() AppType
+
+	// Status returns status of application
+	Status() AppStatus
+
 	// Name returns name of application
 	Name() string
 
