@@ -6,32 +6,17 @@ import (
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
+	"github.com/CoreumFoundation/coreum/coreznet/cmd"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/znet"
 )
 
 func main() {
-	verbose := defaultBool("COREZNET_VERBOSE", false)
-	if len(os.Args) > 1 {
-		flags := pflag.NewFlagSet("verbose", pflag.ContinueOnError)
-		flags.ParseErrorsWhitelist.UnknownFlags = true
-		flags.BoolVarP(&verbose, "verbose", "v", verbose, "Turns on verbose logging")
-		// Dummy flag to turn off printing usage of this flag set
-		flags.BoolP("help", "h", false, "")
-
-		_ = flags.Parse(os.Args[1:])
-	}
-
-	if !verbose {
-		logger.VerboseOff()
-	}
-
+	cmd.ConfigureLoggerWithCLI(defaultBool("COREZNET_VERBOSE", false))
 	run.Tool("coreznet", znet.IoC, func(c *ioc.Container, configF *znet.ConfigFactory, cmdF *znet.CmdFactory) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage: true,
