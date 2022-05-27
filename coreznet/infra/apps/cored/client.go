@@ -53,21 +53,16 @@ func (c Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Ba
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) (authsigning.Tx, error) {
-	if accNum == 0 || accSeq == 0 {
-		accNum2, accSeq2, err := c.GetNumberSequence(signerKey.Address())
+func (c Client) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
+	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
+		var err error
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(signer.Key.Address())
 		if err != nil {
 			return nil, err
 		}
-		if accNum == 0 {
-			accNum = accNum2
-		}
-		if accSeq == 0 {
-			accSeq = accSeq2
-		}
 	}
 
-	return signTx(c.clientCtx, signerKey, accNum, accSeq, msg), nil
+	return signTx(c.clientCtx, signer.Key, signer.AccountNumber, signer.AccountSequence, msg), nil
 }
 
 // Encode encodes transaction to be broadcasted
@@ -96,7 +91,7 @@ func (c Client) TxBankSend(sender, receiver Wallet, balance Balance) ([]byte, er
 	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
 	must.OK(err)
 
-	signedTx, err := c.Sign(sender.Key, sender.AccountNumber, sender.AccountSequence, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	signedTx, err := c.Sign(sender, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
 			Denom:  balance.Denom,
 			Amount: sdk.NewIntFromBigInt(balance.Amount),
