@@ -19,6 +19,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+const initialBalance = "1000000000000000core"
+
 // NewGenesis creates new configuration for genesis block
 func NewGenesis(chainID string) *Genesis {
 	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesis(chainID))
@@ -30,7 +32,7 @@ func NewGenesis(chainID string) *Genesis {
 	authState := authtypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 	accountState, err := authtypes.UnpackAccounts(authState.Accounts)
 	must.OK(err)
-	return &Genesis{
+	g := &Genesis{
 		clientCtx:    clientCtx,
 		mu:           &sync.Mutex{},
 		genesisDoc:   genesisDoc,
@@ -40,6 +42,15 @@ func NewGenesis(chainID string) *Genesis {
 		accountState: accountState,
 		bankState:    banktypes.GetGenesisStateFromAppState(clientCtx.Codec, appState),
 	}
+	g.AddWallet(AlicePrivKey.PubKey(), initialBalance)
+	g.AddWallet(BobPrivKey.PubKey(), initialBalance)
+	g.AddWallet(CharliePrivKey.PubKey(), initialBalance)
+
+	for _, key := range RandomWallets {
+		g.AddWallet(key.PubKey(), initialBalance)
+	}
+
+	return g
 }
 
 // Genesis is responsible for creating genesis configuration for coreum network

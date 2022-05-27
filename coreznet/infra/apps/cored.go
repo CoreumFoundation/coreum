@@ -39,12 +39,6 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, appInfo 
 	genesis.AddWallet(stakerPubKey, "100000000000000000000000core,10000000000000000000000000stake")
 	genesis.AddValidator(validatorPublicKey, stakerPrivKey, "100000000stake")
 
-	if rootNode == nil {
-		genesis.AddWallet(cored.AlicePrivKey.PubKey(), "1000000000000000core")
-		genesis.AddWallet(cored.BobPrivKey.PubKey(), "1000000000000000core")
-		genesis.AddWallet(cored.CharliePrivKey.PubKey(), "1000000000000000core")
-	}
-
 	return Cored{
 		name:                name,
 		homeDir:             config.AppDir + "/" + name,
