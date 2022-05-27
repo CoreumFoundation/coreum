@@ -17,6 +17,9 @@ import (
 
 // GenerateConfig contains config for generating the blockchain
 type GenerateConfig struct {
+	// ChainID is the ID of the chain to generate
+	ChainID string
+
 	// NumOfValidators is the number of validators present on the blockchain
 	NumOfValidators int
 
@@ -55,7 +58,7 @@ COPY . .
 ENTRYPOINT ["cored"]
 `), 0o600))
 
-	genesis := cored.NewGenesis(chainID)
+	genesis := cored.NewGenesis(config.ChainID)
 	for i := 0; i < config.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)

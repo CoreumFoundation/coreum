@@ -93,9 +93,19 @@ func (c Cored) Name() string {
 	return c.name
 }
 
+// ChainID returns ID of the chain
+func (c Cored) ChainID() string {
+	return c.genesis.ChainID()
+}
+
 // PeerAddress returns a string which might be passed to other node to connect to this peer
 func (c Cored) PeerAddress() string {
-	return fmt.Sprintf("%s@%s:%d", c.nodeID, c.IP(), c.ports.P2P)
+	return c.nodeID + "@" + net.JoinHostPort(c.IP().String(), strconv.Itoa(c.ports.P2P))
+}
+
+// RPCAddress returns address of RPC endpoint exposed by node
+func (c Cored) RPCAddress() string {
+	return net.JoinHostPort(c.IP().String(), strconv.Itoa(c.ports.RPC))
 }
 
 // IP returns IP chain listens on
@@ -130,7 +140,7 @@ func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateK
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() cored.Client {
-	return cored.NewClient(c.genesis.ChainID(), c.IP(), c.ports.RPC)
+	return cored.NewClient(c.genesis.ChainID(), c.RPCAddress())
 }
 
 // HealthCheck checks if cored chain is empty

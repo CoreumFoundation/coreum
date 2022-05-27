@@ -22,6 +22,7 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
+	"github.com/CoreumFoundation/coreum/coreznet/pkg/zstress"
 	"github.com/CoreumFoundation/coreum/coreznet/tests"
 )
 
@@ -38,6 +39,7 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/tests", []byte(fmt.Sprintf("#!/bin/bash\nexec %s test \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/spec", []byte(fmt.Sprintf("#!/bin/bash\nexec %s spec \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/ping-pong", []byte(fmt.Sprintf("#!/bin/bash\nexec %s ping-pong \"$@\"", exe)), 0o700))
+	must.OK(ioutil.WriteFile(config.WrapperDir+"/stress", []byte(fmt.Sprintf("#!/bin/bash\nexec %s stress \"$@\"", exe)), 0o700))
 	must.OK(ioutil.WriteFile(config.WrapperDir+"/logs", []byte(fmt.Sprintf(`#!/bin/bash
 if [ "$1" == "" ]; then
   echo "Provide the name of application"
@@ -138,10 +140,11 @@ func Spec(spec *infra.Spec) error {
 // PingPong connects to cored node and sends transactions back and forth from one account to another to generate
 // transactions on the blockchain
 func PingPong(ctx context.Context, mode infra.Mode) error {
-	client, found := coredClient(mode)
-	if !found {
-		return errors.New("haven't found any running cored node")
+	coredNode, err := coredNode(mode)
+	if err != nil {
+		return err
 	}
+	client := coredNode.Client()
 
 	alice := cored.Wallet{Name: "alice", Key: cored.AlicePrivKey}
 	bob := cored.Wallet{Name: "bob", Key: cored.BobPrivKey}
@@ -166,13 +169,32 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-func coredClient(mode infra.Mode) (cored.Client, bool) {
+// Stress runs benchmark implemented by `corezstress` on top of network deployed by `coreznet`
+func Stress(ctx context.Context, mode infra.Mode) error {
+	coredNode, err := coredNode(mode)
+	if err != nil {
+		return err
+	}
+	return zstress.Stress(ctx, zstress.StressConfig{
+		ChainID:     coredNode.ChainID(),
+		NodeAddress: coredNode.RPCAddress(),
+		Accounts: []cored.Secp256k1PrivateKey{
+			cored.AlicePrivKey,
+			cored.BobPrivKey,
+			cored.CharliePrivKey,
+		},
+		NumOfAccounts:     3,
+		NumOfTransactions: 10,
+	})
+}
+
+func coredNode(mode infra.Mode) (apps.Cored, error) {
 	for _, app := range mode {
 		if app.Type() == apps.CoredType && app.Status() == infra.AppStatusRunning {
-			return app.(apps.Cored).Client(), true
+			return app.(apps.Cored), nil
 		}
 	}
-	return cored.Client{}, false
+	return apps.Cored{}, errors.New("haven't found any running cored node")
 }
 
 func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {

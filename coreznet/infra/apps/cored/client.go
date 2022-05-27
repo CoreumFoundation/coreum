@@ -2,8 +2,6 @@ package cored
 
 import (
 	"context"
-	"net"
-	"strconv"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -12,8 +10,8 @@ import (
 )
 
 // NewClient creates new client for cored
-func NewClient(chainID string, ip net.IP, rpcPort int) Client {
-	rpcClient, err := client.NewClientFromNode("tcp://" + net.JoinHostPort(ip.String(), strconv.Itoa(rpcPort)))
+func NewClient(chainID string, addr string) Client {
+	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
 	clientCtx := NewContext(chainID, rpcClient)
 	return Client{

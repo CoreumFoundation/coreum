@@ -79,6 +79,14 @@ func main() {
 		addModeFlag(pingPongCmd, c, configF)
 		rootCmd.AddCommand(pingPongCmd)
 
+		stressCmd := &cobra.Command{
+			Use:   "stress",
+			Short: "Runs the logic used by corezstress to test benchmarking",
+			RunE:  cmdF.Cmd(znet.Stress),
+		}
+		addModeFlag(stressCmd, c, configF)
+		rootCmd.AddCommand(stressCmd)
+
 		return rootCmd.Execute()
 	})
 }
