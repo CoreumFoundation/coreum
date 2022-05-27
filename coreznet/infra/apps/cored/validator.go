@@ -27,6 +27,7 @@ func SaveIdentityFiles(homeDir string, nodePrivateKey ed25519.PrivateKey, valida
 	// set addr_book_strict to false so nodes connecting from non-routable hosts are added to address book
 	cfg.P2P.AddrBookStrict = false
 	cfg.P2P.AllowDuplicateIP = true
+	cfg.RPC.MaxSubscriptionClients = 1000
 	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
 }
 
