@@ -59,19 +59,22 @@ ENTRYPOINT ["cored"]
 `), 0o600))
 
 	genesis := cored.NewGenesis(config.ChainID)
+	nodeIDs := make([]string, 0, config.NumOfValidators)
 	for i := 0; i < config.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
-		nodeID := cored.NodeID(nodePublicKey)
+		nodeIDs = append(nodeIDs, cored.NodeID(nodePublicKey))
 		validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 		stakerPublicKey, stakerPrivateKey := cored.GenerateSecp256k1Key()
 
-		valDir := dir + "/validators/" + nodeID
+		valDir := fmt.Sprintf("%s/validators/%d", dir, i)
 		cored.SaveIdentityFiles(valDir, nodePrivateKey, validatorPrivateKey)
 		genesis.AddWallet(stakerPublicKey, "100000000000000000000000core,10000000000000000000000000stake")
 		genesis.AddValidator(validatorPublicKey, stakerPrivateKey, "100000000stake")
 	}
+	must.OK(ioutil.WriteFile(dir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
+
 	for i := 0; i < config.NumOfInstances; i++ {
 		accounts := make([]cored.Secp256k1PrivateKey, 0, config.NumOfAccountsPerInstance)
 		for j := 0; j < config.NumOfAccountsPerInstance; j++ {
