@@ -1,13 +1,13 @@
 package coreznet
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"regexp"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"

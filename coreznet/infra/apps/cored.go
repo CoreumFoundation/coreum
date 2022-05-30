@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,6 +16,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
@@ -136,7 +136,7 @@ func (c Cored) Client() *cored.Client {
 // HealthCheck checks if cored chain is empty
 func (c Cored) HealthCheck(ctx context.Context) error {
 	if c.appInfo.Status() != infra.AppStatusRunning {
-		return retry.Retryable(fmt.Errorf("cored chain hasn't started yet"))
+		return retry.Retryable(errors.Errorf("cored chain hasn't started yet"))
 	}
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
@@ -156,7 +156,7 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return retry.Retryable(fmt.Errorf("health check failed, status code: %d, response: %s", resp.StatusCode, body))
+		return retry.Retryable(errors.Errorf("health check failed, status code: %d, response: %s", resp.StatusCode, body))
 	}
 
 	data := struct {

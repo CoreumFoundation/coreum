@@ -3,11 +3,11 @@ package build
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"os/exec"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/pkg/errors"
 )
 
 // gitStatusClean checks that there are no uncommitted files
