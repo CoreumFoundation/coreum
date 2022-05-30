@@ -10,38 +10,22 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/CoreumFoundation/coreum/coreznet"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 )
 
 func main() {
-	verbose := defaultBool("COREZNET_VERBOSE", false)
-	if len(os.Args) > 1 {
-		flags := pflag.NewFlagSet("verbose", pflag.ContinueOnError)
-		flags.ParseErrorsWhitelist.UnknownFlags = true
-		flags.BoolVarP(&verbose, "verbose", "v", verbose, "Turns on verbose logging")
-		// Dummy flag to turn off printing usage of this flag set
-		flags.BoolP("help", "h", false, "")
-
-		_ = flags.Parse(os.Args[1:])
-	}
-
-	if !verbose {
-		logger.VerboseOff()
-	}
-
 	run.Tool("coreznet", coreznet.IoC, func(c *ioc.Container, configF *coreznet.ConfigFactory, cmdF *coreznet.CmdFactory) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage: true,
 			Short:        "Creates preconfigured bash session for environment",
 			RunE:         cmdF.Cmd(coreznet.Activate),
 		}
+		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
 		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("COREZNET_ENV", "coreznet"), "Name of the environment to run in")
 		rootCmd.PersistentFlags().StringVar(&configF.Target, "target", defaultString("COREZNET_TARGET", "tmux"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
 		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("COREZNET_HOME", must.String(os.UserCacheDir())+"/coreznet"), "Directory where all files created automatically by coreznet are stored")
-		rootCmd.PersistentFlags().BoolVarP(&configF.VerboseLogging, "verbose", "v", defaultBool("COREZNET_VERBOSE", false), "Turns on verbose logging")
 		addFlags(rootCmd, configF)
 		addModeFlag(rootCmd, c, configF)
 		addFilterFlag(rootCmd, configF)
@@ -116,17 +100,6 @@ func defaultString(env, def string) string {
 		val = def
 	}
 	return val
-}
-
-func defaultBool(env string, def bool) bool {
-	switch os.Getenv(env) {
-	case "1", "true", "True", "TRUE":
-		return true
-	case "0", "false", "False", "FALSE":
-		return false
-	default:
-		return def
-	}
 }
 
 func defaultFilters(env string) []string {

@@ -15,15 +15,18 @@ import (
 )
 
 func main() {
-	logger.VerboseOff()
 	run.Tool("build", nil, func(ctx context.Context, c *ioc.Container) error {
+		flags := logger.Flags(logger.ToolDefaultConfig, "build")
+		if err := flags.Parse(os.Args[1:]); err != nil {
+			return err
+		}
 		exec := build.NewIoCExecutor(selfBuild.Commands, c)
 		if build.Autocomplete(exec) {
 			return nil
 		}
 
 		changeWorkingDir()
-		return build.Do(ctx, "coreum", exec)
+		return build.Do(ctx, "coreum", flags.Args(), exec)
 	})
 }
 

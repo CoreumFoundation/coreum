@@ -56,7 +56,6 @@ exec tail -f -n +0 "%s/$1.log"
 		fmt.Sprintf("COREZNET_TARGET=%s", configF.Target),
 		fmt.Sprintf("COREZNET_BIN_DIR=%s", configF.BinDir),
 		fmt.Sprintf("COREZNET_FILTERS=%s", strings.Join(configF.TestFilters, ",")),
-		fmt.Sprintf("COREZNET_VERBOSE=%t", configF.VerboseLogging),
 	)
 	bash.Dir = config.LogDir
 	bash.Stdin = os.Stdin
