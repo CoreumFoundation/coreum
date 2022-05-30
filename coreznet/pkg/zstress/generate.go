@@ -80,7 +80,7 @@ ENTRYPOINT ["cored"]
 			genesis.AddWallet(accountPublicKey, "10000000000000000000000000000core")
 		}
 
-		instanceDir := fmt.Sprintf("%s/instances/%03d", dir, i)
+		instanceDir := fmt.Sprintf("%s/instances/%d", dir, i)
 		must.OK(os.MkdirAll(instanceDir, 0o700))
 		must.OK(ioutil.WriteFile(instanceDir+"/accounts.json", must.Bytes(json.Marshal(accounts)), 0o600))
 	}
