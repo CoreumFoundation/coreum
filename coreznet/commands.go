@@ -25,26 +25,20 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/tests"
 )
 
+var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
+
 // Activate starts preconfigured bash environment
 func Activate(ctx context.Context, configF *ConfigFactory) error {
 	config := configF.Config()
 
-	exe := must.String(filepath.EvalSymlinks(must.String(os.Executable())))
-
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/start", []byte(fmt.Sprintf("#!/bin/bash\nexec %s start \"$@\"", exe)), 0o700))
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/stop", []byte(fmt.Sprintf("#!/bin/bash\nexec %s stop \"$@\"", exe)), 0o700))
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/remove", []byte(fmt.Sprintf("#!/bin/bash\nexec %s remove \"$@\"", exe)), 0o700))
+	saveWrapper(config.WrapperDir, "start", "start")
+	saveWrapper(config.WrapperDir, "stop", "stop")
+	saveWrapper(config.WrapperDir, "remove", "remove")
 	// `test` can't be used here because it is a reserved keyword in bash
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/tests", []byte(fmt.Sprintf("#!/bin/bash\nexec %s test \"$@\"", exe)), 0o700))
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/spec", []byte(fmt.Sprintf("#!/bin/bash\nexec %s spec \"$@\"", exe)), 0o700))
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/ping-pong", []byte(fmt.Sprintf("#!/bin/bash\nexec %s ping-pong \"$@\"", exe)), 0o700))
-	must.OK(ioutil.WriteFile(config.WrapperDir+"/logs", []byte(fmt.Sprintf(`#!/bin/bash
-if [ "$1" == "" ]; then
-  echo "Provide the name of application"
-  exit 1
-fi
-exec tail -f -n +0 "%s/$1.log"
-`, config.LogDir)), 0o700))
+	saveWrapper(config.WrapperDir, "tests", "test")
+	saveWrapper(config.WrapperDir, "spec", "spec")
+	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
+	saveLogsWrapper(config.WrapperDir, config.LogDir, "logs")
 
 	bash := osexec.Command("bash")
 	bash.Env = append(os.Environ(),
@@ -197,4 +191,20 @@ func sendTokens(ctx context.Context, client *cored.Client, from, to cored.Wallet
 	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance["core"]))
 
 	return nil
+}
+
+func saveWrapper(dir, file, command string) {
+	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/sh
+exec "`+exe+`" "`+command+`" "$@"
+`), 0o700))
+}
+
+func saveLogsWrapper(dir, logDir, file string) {
+	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/sh
+if [ "$1" == "" ]; then
+  echo "Provide the name of application"
+  exit 1
+fi
+exec tail -f -n +0 "`+logDir+`/$1.log"
+`), 0o700))
 }
