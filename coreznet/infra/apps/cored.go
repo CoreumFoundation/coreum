@@ -210,11 +210,17 @@ func (c Cored) Deployment() infra.Deployment {
 				return args
 			},
 			Ports: portsToMap(c.ports),
-			PreFunc: func(ctx context.Context) error {
+			PreFunc: func(ip net.IP) error {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				cored.SaveIdentityFiles(c.homeDir, c.nodePrivateKey, c.validatorPrivateKey)
+				cored.ValidatorConfig{
+					Name:           c.name,
+					IP:             ip,
+					PrometheusPort: c.ports.Prometheus,
+					NodeKey:        c.nodePrivateKey,
+					ValidatorKey:   c.validatorPrivateKey,
+				}.Save(c.homeDir)
 
 				cored.AddKeysToStore(c.homeDir, c.walletKeys)
 

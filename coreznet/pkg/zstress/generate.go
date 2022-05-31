@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -69,7 +70,15 @@ ENTRYPOINT ["cored"]
 		stakerPublicKey, stakerPrivateKey := cored.GenerateSecp256k1Key()
 
 		valDir := fmt.Sprintf("%s/validators/%d", dir, i)
-		cored.SaveIdentityFiles(valDir, nodePrivateKey, validatorPrivateKey)
+
+		cored.ValidatorConfig{
+			Name:           fmt.Sprintf("validator-%d", i),
+			IP:             net.IPv4zero,
+			PrometheusPort: cored.DefaultPorts.Prometheus,
+			NodeKey:        nodePrivateKey,
+			ValidatorKey:   validatorPrivateKey,
+		}.Save(valDir)
+
 		genesis.AddWallet(stakerPublicKey, "100000000000000000000000core,10000000000000000000000000stake")
 		genesis.AddValidator(validatorPublicKey, stakerPrivateKey, "100000000stake")
 	}

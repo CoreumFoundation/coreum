@@ -7,11 +7,12 @@ import (
 
 // Ports defines ports used by cored application
 type Ports struct {
-	RPC     int `json:"rpc"`
-	P2P     int `json:"p2p"`
-	GRPC    int `json:"grpc"`
-	GRPCWeb int `json:"grpcWeb"`
-	PProf   int `json:"pprof"`
+	RPC        int `json:"rpc"`
+	P2P        int `json:"p2p"`
+	GRPC       int `json:"grpc"`
+	GRPCWeb    int `json:"grpcWeb"`
+	PProf      int `json:"pprof"`
+	Prometheus int `json:"prometheus"`
 }
 
 // Wallet stores information related to wallet

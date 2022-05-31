@@ -38,6 +38,11 @@ type Docker struct {
 	spec   *infra.Spec
 }
 
+// BindIP returns the IP application should bind to inside the target
+func (d *Docker) BindIP() net.IP {
+	return net.IPv4zero
+}
+
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
 	buf := &bytes.Buffer{}
@@ -101,7 +106,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 		buildCmd.Stdin = bytes.NewBufferString(fmt.Sprintf(dockerTemplate, filepath.Base(binPath)))
 		commands = append(commands,
 			buildCmd,
-			exec.Docker(append([]string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName, image}, app.ArgsFunc(net.IPv4zero, "/")...)...))
+			exec.Docker(append([]string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName, image}, app.ArgsFunc(d.BindIP(), "/")...)...))
 	}
 
 	ipBuf := &bytes.Buffer{}

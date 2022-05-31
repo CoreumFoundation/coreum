@@ -33,6 +33,11 @@ type Direct struct {
 	spec   *infra.Spec
 }
 
+// BindIP returns the IP application should bind to inside the target
+func (d *Direct) BindIP() net.IP {
+	return net.IPv4(127, 0, 0, 1)
+}
+
 // Deploy deploys environment to os processes
 func (d *Direct) Deploy(ctx context.Context, mode infra.Mode) error {
 	return mode.Deploy(ctx, d, d.config, d.spec)
@@ -90,11 +95,11 @@ func (d *Direct) Remove(ctx context.Context) error {
 func (d *Direct) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	binPath := app.BinPathFunc(runtime.GOOS)
 	must.Any(os.Stat(binPath))
-	cmd := osexec.Command("bash", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(binPath, app.ArgsFunc(net.IPv4(127, 0, 0, 1), d.config.AppDir+"/"+app.Name)...).String(), d.config.LogDir, app.Name))
+	cmd := osexec.Command("bash", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(binPath, app.ArgsFunc(d.BindIP(), d.config.AppDir+"/"+app.Name)...).String(), d.config.LogDir, app.Name))
 	if err := cmd.Start(); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	return infra.DeploymentInfo{IP: net.IPv4(127, 0, 0, 1)}, nil
+	return infra.DeploymentInfo{IP: d.BindIP()}, nil
 }
 
 // DeployContainer starts container
