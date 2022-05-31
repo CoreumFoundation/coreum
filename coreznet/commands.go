@@ -9,6 +9,7 @@ import (
 	"os"
 	osexec "os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -28,7 +29,7 @@ import (
 
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
 
-// Activate starts preconfigured bash environment
+// Activate starts preconfigured shell environment
 func Activate(ctx context.Context, configF *ConfigFactory) error {
 	config := configF.Config()
 
@@ -41,9 +42,12 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
 	saveLogsWrapper(config.WrapperDir, config.LogDir, "logs")
 
-	bash := osexec.Command("bash")
-	bash.Env = append(os.Environ(),
-		"PS1=("+configF.EnvName+`) [\u@\h \W]\$ `,
+	shell, promptVar, err := shellConfig(config.EnvName)
+	if err != nil {
+		return err
+	}
+	shellCmd := osexec.Command(shell)
+	shellCmd.Env = append(os.Environ(),
 		"PATH="+config.WrapperDir+":/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin",
 		"COREZNET_ENV="+configF.EnvName,
 		"COREZNET_MODE="+configF.ModeName,
@@ -53,11 +57,14 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 		"COREZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
 		"COREZNET_VERBOSE="+strconv.FormatBool(configF.VerboseLogging),
 	)
-	bash.Dir = config.LogDir
-	bash.Stdin = os.Stdin
-	err := libexec.Exec(ctx, bash)
-	if bash.ProcessState != nil && bash.ProcessState.ExitCode() != 0 {
-		// bash returns non-exit code if command executed in the shell failed
+	if promptVar != "" {
+		shellCmd.Env = append(shellCmd.Env, promptVar)
+	}
+	shellCmd.Dir = config.LogDir
+	shellCmd.Stdin = os.Stdin
+	err = libexec.Exec(ctx, shellCmd)
+	if shellCmd.ProcessState != nil && shellCmd.ProcessState.ExitCode() != 0 {
+		// shell returns non-exit code if command executed in the shell failed
 		return nil
 	}
 	return err
@@ -208,4 +215,41 @@ if [ "$1" == "" ]; then
 fi
 exec tail -f -n +0 "`+logDir+`/$1.log"
 `), 0o700))
+}
+
+var supportedShells = map[string]func(envName string) string{
+	"bash": func(envName string) string {
+		return "PS1=(" + envName + `) [\u@\h \W]\$ `
+	},
+	"zsh": func(envName string) string {
+		return "PROMPT=(" + envName + `) [%n@%m %1~]%# `
+	},
+}
+
+func shellConfig(envName string) (string, string, error) {
+	shell := os.Getenv("SHELL")
+	if _, exists := supportedShells[filepath.Base(shell)]; !exists {
+		var shells []string
+		switch runtime.GOOS {
+		case "darwin":
+			shells = []string{"zsh", "bash"}
+		default:
+			shells = []string{"bash", "zsh"}
+		}
+		for _, s := range shells {
+			if shell2, err := osexec.LookPath(s); err == nil {
+				shell = shell2
+				break
+			}
+		}
+	}
+	if shell == "" {
+		return "", "", errors.New("custom shell not defined and supported shell not found")
+	}
+
+	var promptVar string
+	if promptVarFn, exists := supportedShells[filepath.Base(shell)]; exists {
+		promptVar = promptVarFn(envName)
+	}
+	return shell, promptVar, nil
 }
