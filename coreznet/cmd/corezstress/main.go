@@ -7,11 +7,11 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/coreznet/cmd"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/zstress"
 )
 
@@ -21,7 +21,6 @@ const (
 )
 
 func main() {
-	cmd.ConfigureLoggerWithCLI(false)
 	run.Tool("corezstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
 		var accountFile string
@@ -40,8 +39,7 @@ func main() {
 				return zstress.Stress(ctx, stressConfig)
 			},
 		}
-		// dummy flag to match the one added by logger configurator
-		rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Turns on verbose logging")
+		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
 		rootCmd.Flags().StringVar(&stressConfig.ChainID, "chain-id", defaultChainID, "ID of the chain to connect to")
 		rootCmd.Flags().StringVar(&stressConfig.NodeAddress, "node-addr", "localhost:26657", "Address of a cored node RPC endpoint, in the form of host:port, to connect to")
 		rootCmd.Flags().StringVar(&accountFile, "account-file", "", "Path to a JSON file containing private keys of accounts funded on blockchain")

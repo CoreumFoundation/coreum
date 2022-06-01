@@ -11,7 +11,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/coreznet/cmd"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/znet"
 )
