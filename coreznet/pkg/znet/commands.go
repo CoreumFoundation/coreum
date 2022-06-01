@@ -109,7 +109,7 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 		case <-time.After(time.Second):
 		}
 	}
-	return err
+	return errors.WithStack(err)
 }
 
 // Test runs integration tests

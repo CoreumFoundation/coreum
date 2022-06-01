@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/pkg/errors"
 )
 
 // NewClient creates new client for cored
@@ -79,7 +80,7 @@ func (c Client) Broadcast(encodedTx []byte) (string, error) {
 	}
 
 	if txResp.Code != 0 {
-		return "", fmt.Errorf("trasaction failed: %s", txResp.RawLog)
+		return "", errors.WithStack(fmt.Errorf("trasaction failed: %s", txResp.RawLog))
 	}
 	return txResp.TxHash, nil
 }

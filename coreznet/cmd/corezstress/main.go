@@ -10,6 +10,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/zstress"
@@ -30,11 +31,11 @@ func main() {
 			RunE: func(cmd *cobra.Command, args []string) error {
 				keysRaw, err := ioutil.ReadFile(accountFile)
 				if err != nil {
-					return fmt.Errorf("reading account file failed: %w", err)
+					return errors.WithStack(fmt.Errorf("reading account file failed: %w", err))
 				}
 
 				if err := json.Unmarshal(keysRaw, &stressConfig.Accounts); err != nil {
-					return fmt.Errorf("parsing account file failed: %w", err)
+					return errors.WithStack(fmt.Errorf("parsing account file failed: %w", err))
 				}
 				return zstress.Stress(ctx, stressConfig)
 			},

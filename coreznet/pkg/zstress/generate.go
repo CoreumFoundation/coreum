@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 )
@@ -38,7 +39,7 @@ type GenerateConfig struct {
 func Generate(config GenerateConfig) error {
 	coredPath, err := exec.LookPath("cored")
 	if err != nil {
-		return fmt.Errorf(`can't find cored binary, run "core build/cored" to build it: %w`, err)
+		return errors.WithStack(fmt.Errorf(`can't find cored binary, run "core build/cored" to build it: %w`, err))
 	}
 	coredPath = filepath.Dir(coredPath) + "/linux/cored"
 
@@ -51,7 +52,7 @@ func Generate(config GenerateConfig) error {
 	dockerDirBin := dockerDir + "/bin"
 	must.OK(os.MkdirAll(dockerDirBin, 0o700))
 	if err := os.Link(coredPath, dockerDirBin+"/cored"); err != nil {
-		return fmt.Errorf(`can't find cored linux binary, run "core build/cored" to build it: %w`, err)
+		return errors.WithStack(fmt.Errorf(`can't find cored linux binary, run "core build/cored" to build it: %w`, err))
 	}
 
 	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM scratch
