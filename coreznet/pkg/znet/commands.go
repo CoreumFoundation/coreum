@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"net"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -184,7 +186,7 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 
 	return zstress.Stress(ctx, zstress.StressConfig{
 		ChainID:           coredNode.ChainID(),
-		NodeAddress:       coredNode.RPCAddress(),
+		NodeAddress:       net.JoinHostPort(coredNode.IPSource().FromHostIP().String(), strconv.Itoa(coredNode.Ports().RPC)),
 		Accounts:          cored.RandomWallets[:10],
 		NumOfTransactions: 100,
 	})

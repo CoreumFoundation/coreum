@@ -144,7 +144,7 @@ type AppBase struct {
 	Requires Prerequisites
 
 	// PreFunc is called to preprocess app
-	PreFunc func(ip net.IP) error
+	PreFunc func(bindIP net.IP) error
 
 	// PostFunc is called after app is deployed
 	PostFunc func(ctx context.Context, deployment DeploymentInfo) error
