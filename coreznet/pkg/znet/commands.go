@@ -175,6 +175,13 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 	if err != nil {
 		return err
 	}
+
+	healthyCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+	if err := infra.WaitUntilHealthy(healthyCtx, coredNode); err != nil {
+		return err
+	}
+
 	return zstress.Stress(ctx, zstress.StressConfig{
 		ChainID:           coredNode.ChainID(),
 		NodeAddress:       coredNode.RPCAddress(),
