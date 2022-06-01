@@ -41,7 +41,9 @@ func (vc ValidatorConfig) Save(homeDir string) {
 	cfg.P2P.AllowDuplicateIP = true
 	cfg.P2P.MaxNumOutboundPeers = 100
 	cfg.P2P.MaxNumInboundPeers = 100
-	cfg.RPC.MaxSubscriptionClients = 1000
+	cfg.RPC.MaxSubscriptionClients = 10000
+	cfg.RPC.MaxOpenConnections = 10000
+	cfg.RPC.MaxSubscriptionsPerClient = 10000
 	cfg.Instrumentation.Prometheus = true
 	cfg.Instrumentation.PrometheusListenAddr = net.JoinHostPort(vc.IP.String(), strconv.Itoa(vc.PrometheusPort))
 	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
