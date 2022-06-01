@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	osexec "os/exec"
 	"regexp"
@@ -90,11 +89,11 @@ func (d *Direct) Remove(ctx context.Context) error {
 func (d *Direct) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	binPath := app.BinPathFunc(runtime.GOOS)
 	must.Any(os.Stat(binPath))
-	cmd := osexec.Command("/bin/sh", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(binPath, app.ArgsFunc(net.IPv4(127, 0, 0, 1), d.config.AppDir+"/"+app.Name)...).String(), d.config.LogDir, app.Name))
+	cmd := osexec.Command("/bin/sh", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(binPath, app.ArgsFunc(ipLocalhost, d.config.AppDir+"/"+app.Name, hostIPResolver{})...).String(), d.config.LogDir, app.Name))
 	if err := cmd.Start(); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	return infra.DeploymentInfo{IP: net.IPv4(127, 0, 0, 1)}, nil
+	return infra.DeploymentInfo{FromHostIP: ipLocalhost, FromContainerIP: ipLocalhost}, nil
 }
 
 // DeployContainer starts container

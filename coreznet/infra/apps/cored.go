@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -93,14 +92,19 @@ func (c Cored) Name() string {
 	return c.name
 }
 
-// PeerAddress returns a string which might be passed to other node to connect to this peer
-func (c Cored) PeerAddress() string {
-	return fmt.Sprintf("%s@%s:%d", c.nodeID, c.IP(), c.ports.P2P)
+// NodeID returns node ID
+func (c Cored) NodeID() string {
+	return c.nodeID
 }
 
-// IP returns IP chain listens on
-func (c Cored) IP() net.IP {
-	return c.appInfo.IP()
+// Ports returns ports used by the application
+func (c Cored) Ports() cored.Ports {
+	return c.ports
+}
+
+// IPSource returns the source of addresses chain listens on
+func (c Cored) IPSource() infra.IPSource {
+	return c.appInfo
 }
 
 // Status returns status of application
@@ -130,7 +134,7 @@ func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateK
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() *cored.Client {
-	return cored.NewClient(c.executor, c.IP(), c.ports.RPC)
+	return cored.NewClient(c.executor, c.IPSource().FromHostIP(), c.ports.RPC)
 }
 
 // HealthCheck checks if cored chain is empty
@@ -141,7 +145,7 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	statusURL := url.URL{Scheme: "http", Host: net.JoinHostPort(c.IP().String(), strconv.Itoa(c.ports.RPC)), Path: "/status"}
+	statusURL := url.URL{Scheme: "http", Host: net.JoinHostPort(c.IPSource().FromHostIP().String(), strconv.Itoa(c.ports.RPC)), Path: "/status"}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
@@ -187,19 +191,20 @@ func (c Cored) Deployment() infra.Deployment {
 		AppBase: infra.AppBase{
 			Name: c.Name(),
 			Info: c.appInfo,
-			ArgsFunc: func(ip net.IP, homeDir string) []string {
+			ArgsFunc: func(bindIP net.IP, homeDir string, ipResolver infra.IPResolver) []string {
+				bindIPStr := bindIP.String()
 				args := []string{
 					"start",
 					"--home", homeDir,
-					"--rpc.laddr", "tcp://" + net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.RPC)),
-					"--p2p.laddr", "tcp://" + net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.P2P)),
-					"--grpc.address", net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.GRPC)),
-					"--grpc-web.address", net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.GRPCWeb)),
-					"--rpc.pprof_laddr", net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.PProf)),
+					"--rpc.laddr", "tcp://" + net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.RPC)),
+					"--p2p.laddr", "tcp://" + net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.P2P)),
+					"--grpc.address", net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.GRPC)),
+					"--grpc-web.address", net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.GRPCWeb)),
+					"--rpc.pprof_laddr", net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.PProf)),
 				}
 				if c.rootNode != nil {
 					args = append(args,
-						"--p2p.persistent_peers", c.rootNode.PeerAddress(),
+						"--p2p.persistent_peers", c.rootNode.NodeID()+"@"+net.JoinHostPort(ipResolver.IPOf(c.rootNode).String(), strconv.Itoa(c.rootNode.Ports().P2P)),
 					)
 				}
 
@@ -218,7 +223,7 @@ func (c Cored) Deployment() infra.Deployment {
 				return nil
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				return c.saveClientWrapper(c.config.WrapperDir, deployment.IP)
+				return c.saveClientWrapper(c.config.WrapperDir, deployment.FromHostIP)
 			},
 		},
 	}

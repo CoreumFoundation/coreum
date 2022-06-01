@@ -8,6 +8,7 @@ import (
 	"os"
 	osexec "os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -97,11 +98,17 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	if existsBuf.String() != "" {
 		commands = append(commands, exec.Docker("start", name))
 	} else {
+		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName}
+		for _, port := range app.Ports {
+			portStr := strconv.Itoa(port)
+			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
+		}
+		runArgs = append(runArgs, image)
+		runArgs = append(runArgs, app.ArgsFunc(net.IPv4zero, "/", containerIPResolver{})...)
+
 		buildCmd := exec.Docker("build", "--tag", image, "--label", labelEnv+"="+d.config.EnvName, "-f-", contextDir)
 		buildCmd.Stdin = bytes.NewBufferString(fmt.Sprintf(dockerTemplate, filepath.Base(binPath)))
-		commands = append(commands,
-			buildCmd,
-			exec.Docker(append([]string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName, image}, app.ArgsFunc(net.IPv4zero, "/")...)...))
+		commands = append(commands, buildCmd, exec.Docker(runArgs...))
 	}
 
 	ipBuf := &bytes.Buffer{}
@@ -119,7 +126,9 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	return infra.DeploymentInfo{IP: net.ParseIP(strings.TrimSuffix(ipBuf.String(), "\n"))}, nil
+
+	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
+	return infra.DeploymentInfo{FromHostIP: ipLocalhost, FromContainerIP: net.ParseIP(strings.TrimSuffix(ipBuf.String(), "\n"))}, nil
 }
 
 // DeployContainer starts container in docker
