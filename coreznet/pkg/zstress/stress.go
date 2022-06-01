@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"math/big"
 	"runtime"
+	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/pkg/errors"
+	"github.com/xlab/pace"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
@@ -42,9 +44,16 @@ type tx struct {
 func Stress(ctx context.Context, config StressConfig) error {
 	numOfAccounts := len(config.Accounts)
 	log := logger.Get(ctx)
+	startTs := time.Now()
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
-	log.Info("Preparing signed transactions...")
+	signedTxPace := pace.New("signed tx", 10*time.Second, zapPaceReporter(log))
+
+	log.Info(
+		"Preparing signed transactions...",
+		zap.Int("amount", numOfAccounts*config.NumOfTransactions),
+	)
+
 	var signedTxs [][][]byte
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		queue := make(chan tx)
@@ -103,6 +112,11 @@ func Stress(ctx context.Context, config StressConfig) error {
 		})
 		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
 			signedTxs = make([][][]byte, numOfAccounts)
+
+			defer func() {
+				signedTxPace.Pause()
+			}()
+
 			for i := 0; i < numOfAccounts; i++ {
 				signedTxs[i] = make([][]byte, config.NumOfTransactions)
 			}
@@ -113,6 +127,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 						return ctx.Err()
 					case result := <-results:
 						signedTxs[result.AccountIndex][result.TxIndex] = result.TxBytes
+						signedTxPace.StepN(1)
 					}
 				}
 			}
@@ -124,6 +139,8 @@ func Stress(ctx context.Context, config StressConfig) error {
 		return err
 	}
 	log.Info("Transactions prepared")
+
+	broadcastTxPace := pace.New("sent tx", 10*time.Second, zapPaceReporter(log))
 
 	log.Info("Broadcasting transactions...")
 	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
@@ -139,9 +156,14 @@ func Stress(ctx context.Context, config StressConfig) error {
 					tx := accountTxs[j]
 					res, err := client.Broadcast(ctx, tx)
 					if err != nil {
+						// TODO(xlab): make sure we're abort there, as broadcasting the tx queue for an acconut
+						// makes no sense if one nonce slot has been skipped.
 						log.Error("Sending transaction failed", zap.Error(err))
 						continue
 					}
+
+					broadcastTxPace.Step(1)
+
 					log.Debug("Transaction broadcasted", zap.String("txHash", res.TxHash))
 
 					j++
@@ -156,6 +178,13 @@ func Stress(ctx context.Context, config StressConfig) error {
 	if err != nil {
 		return err
 	}
-	log.Info("Benchmark finished")
+
+	broadcastTxPace.Pause()
+
+	log.Info(
+		"Benchmark finished",
+		zap.Duration("dur", time.Since(startTs)),
+	)
+
 	return nil
 }
