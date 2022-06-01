@@ -35,7 +35,7 @@ to install all the tools we use.
 Whenever tool downloads or builds binaries it puts them inside [bin](../bin) directory so they are
 easily callable from console.
 
-After doing this and restarting `bash` session you may call `core` command.
+After doing this and restarting a shell session you may call `core` command.
 
 ## `core` command
 
