@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net"
 	"os"
 	osexec "os/exec"
 	"runtime"
@@ -61,10 +60,10 @@ func (t *TMux) Deploy(ctx context.Context, mode infra.Mode) error {
 func (t *TMux) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	binPath := app.BinPathFunc(runtime.GOOS)
 	must.Any(os.Stat(binPath))
-	if err := t.sessionAddApp(ctx, app.Name, append([]string{binPath}, app.ArgsFunc(net.IPv4(127, 0, 0, 1), t.config.AppDir+"/"+app.Name)...)...); err != nil {
+	if err := t.sessionAddApp(ctx, app.Name, append([]string{binPath}, app.ArgsFunc(ipLocalhost, t.config.AppDir+"/"+app.Name, hostIPResolver{})...)...); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	return infra.DeploymentInfo{IP: net.IPv4(127, 0, 0, 1)}, nil
+	return infra.DeploymentInfo{FromHostIP: ipLocalhost, FromContainerIP: ipLocalhost}, nil
 }
 
 // DeployContainer starts container inside tmux session

@@ -28,7 +28,7 @@ type App interface {
 	// Name returns name of application
 	Name() string
 
-	// DeploymentInfo returns app ready to deploy
+	// Deployment returns app ready to deploy
 	Deployment() Deployment
 }
 
@@ -52,7 +52,8 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 			return err
 		}
 		appInfo := spec.Apps[app.Name()]
-		appInfo.SetIP(info.IP)
+		appInfo.SetFromHostIP(info.FromHostIP)
+		appInfo.SetFromContainerIP(info.FromContainerIP)
 		appInfo.SetPorts(info.Ports)
 		appInfo.SetStatus(AppStatusRunning)
 	}
@@ -61,8 +62,11 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 
 // DeploymentInfo contains info about deployed application
 type DeploymentInfo struct {
-	// IP is the IP address assigned to application
-	IP net.IP
+	// FromHostIP is the IP address used to reach application from processes running on host
+	FromHostIP net.IP
+
+	// FromContainerIP is the IP address used to reach application from other containers
+	FromContainerIP net.IP
 
 	// Ports stores the named ports exposed by the application
 	Ports map[string]int
@@ -98,6 +102,27 @@ type Prerequisites struct {
 	Dependencies []HealthCheckCapable
 }
 
+// IPSource allows to get information about IPs used by the application
+type IPSource interface {
+	// FromHostIP returns IP used by the application on host network
+	FromHostIP() net.IP
+
+	// FromContainerIP returns IP used by the application's container
+	FromContainerIP() net.IP
+}
+
+// IPProvider provides the IP source of the application
+type IPProvider interface {
+	// IPSource provides the IP source
+	IPSource() IPSource
+}
+
+// IPResolver resolves the IP of the application
+type IPResolver interface {
+	// IPOf returns the IP of the application
+	IPOf(app IPProvider) net.IP
+}
+
 // AppBase contain properties common to all types of app
 type AppBase struct {
 	// Name of the application
@@ -107,7 +132,7 @@ type AppBase struct {
 	Info *AppInfo
 
 	// ArgsFunc is the function returning args passed to binary
-	ArgsFunc func(ip net.IP, homeDir string) []string
+	ArgsFunc func(bindIP net.IP, homeDir string, ipResolver IPResolver) []string
 
 	// Ports are the network ports exposed by the application
 	Ports map[string]int
@@ -300,8 +325,11 @@ type appInfoData struct {
 	// Type is the type of app
 	Type AppType `json:"type"`
 
-	// IP is the IP reserved for this application
-	IP net.IP `json:"ip,omitempty"`
+	// FromHostIP is the host's IP application binds to
+	FromHostIP net.IP `json:"fromHostIP,omitempty"` // nolint:tagliatelle // it wants fromHostIp
+
+	// FromContainerIP is the IP of the container application is running in
+	FromContainerIP net.IP `json:"fromContainerIP,omitempty"` // nolint:tagliatelle // it wants fromContainerIp
 
 	// Status indicates the status of the application
 	Status AppStatus `json:"status"`
@@ -317,20 +345,36 @@ type AppInfo struct {
 	data appInfoData
 }
 
-// IP returns IP
-func (ai *AppInfo) IP() net.IP {
+// FromHostIP returns IP of the host
+func (ai *AppInfo) FromHostIP() net.IP {
 	ai.mu.RLock()
 	defer ai.mu.RUnlock()
 
-	return ai.data.IP
+	return ai.data.FromHostIP
 }
 
-// SetIP sets IP
-func (ai *AppInfo) SetIP(ip net.IP) {
+// SetFromHostIP sets IP of the host
+func (ai *AppInfo) SetFromHostIP(ip net.IP) {
 	ai.mu.Lock()
 	defer ai.mu.Unlock()
 
-	ai.data.IP = ip
+	ai.data.FromHostIP = ip
+}
+
+// FromContainerIP returns IP of the container
+func (ai *AppInfo) FromContainerIP() net.IP {
+	ai.mu.RLock()
+	defer ai.mu.RUnlock()
+
+	return ai.data.FromContainerIP
+}
+
+// SetFromContainerIP sets IP of the container
+func (ai *AppInfo) SetFromContainerIP(ip net.IP) {
+	ai.mu.Lock()
+	defer ai.mu.Unlock()
+
+	ai.data.FromContainerIP = ip
 }
 
 // Status returns status
