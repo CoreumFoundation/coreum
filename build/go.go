@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -28,7 +29,10 @@ func goBuildPkg(ctx context.Context, pkg, targetOS, out string) error {
 	cmd := exec.Command("go", "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
 	cmd.Dir = pkg
 	cmd.Env = append([]string{"CGO_ENABLED=0", "GOOS=" + targetOS}, os.Environ()...)
-	return libexec.Exec(ctx, cmd)
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return fmt.Errorf("building go package '%s' failed: %w", pkg, err)
+	}
+	return nil
 }
 
 // goLint runs golangci linter, runs go mod tidy and checks that git status is clean
@@ -40,7 +44,10 @@ func goLint(ctx context.Context, deps build.DepsFunc) error {
 		log.Info("Running linter", zap.String("path", path))
 		cmd := exec.Command("golangci-lint", "run", "--config", config)
 		cmd.Dir = path
-		return libexec.Exec(ctx, cmd)
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return fmt.Errorf("linter errors found in module '%s': %w", path, err)
+		}
+		return nil
 	})
 	if err != nil {
 		return err
@@ -57,7 +64,10 @@ func goTest(ctx context.Context, deps build.DepsFunc) error {
 		log.Info("Running go tests", zap.String("path", path))
 		cmd := exec.Command("go", "test", "-count=1", "-shuffle=on", "-race", "./...")
 		cmd.Dir = path
-		return libexec.Exec(ctx, cmd)
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return fmt.Errorf("unit tests failed in module '%s': %w", path, err)
+		}
+		return nil
 	})
 }
 
@@ -68,7 +78,10 @@ func goModTidy(ctx context.Context, deps build.DepsFunc) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
 		cmd := exec.Command("go", "mod", "tidy")
 		cmd.Dir = path
-		return libexec.Exec(ctx, cmd)
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return fmt.Errorf("'go mod tidy' failed in module '%s': %w", path, err)
+		}
+		return nil
 	})
 }
 
