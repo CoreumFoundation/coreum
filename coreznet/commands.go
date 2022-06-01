@@ -2,7 +2,6 @@ package coreznet
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -16,6 +15,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
@@ -56,7 +56,6 @@ exec tail -f -n +0 "%s/$1.log"
 		fmt.Sprintf("COREZNET_TARGET=%s", configF.Target),
 		fmt.Sprintf("COREZNET_BIN_DIR=%s", configF.BinDir),
 		fmt.Sprintf("COREZNET_FILTERS=%s", strings.Join(configF.TestFilters, ",")),
-		fmt.Sprintf("COREZNET_VERBOSE=%t", configF.VerboseLogging),
 	)
 	bash.Dir = config.LogDir
 	bash.Stdin = os.Stdin

@@ -3,7 +3,6 @@ package infra
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 )
 
 // AppType represents the type of application
