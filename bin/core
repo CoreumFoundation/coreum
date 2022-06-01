@@ -10,6 +10,6 @@ cd ../build
 # Chicken and egg problem, to build tool which downloads all the other ones (including go) we need go
 # Assuming for now, that new developer entering the team will just install any go version available in the distro
 # and than build tool will install the right one required by us
-go build -o ../bin/core-build ./cmd
+go build -trimpath -o ../bin/core-build ./cmd
 
 ../bin/core-build "$@"
