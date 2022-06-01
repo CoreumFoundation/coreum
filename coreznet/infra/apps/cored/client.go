@@ -23,8 +23,11 @@ func NewClient(chainID string, addr string) Client {
 	clientCtx := NewContext(chainID, rpcClient)
 
 	return &coreClient{
-		clientCtx:    clientCtx,
-		clientConfig: DefaultClientConfig(),
+		clientCtx: clientCtx,
+		clientConfig: ClientConfig{
+			BroadcastTimeout:    20 * time.Second,
+			BroadcastStatusPoll: 250 * time.Millisecond,
+		},
 
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
 	}
@@ -36,20 +39,13 @@ type Client interface {
 	QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error)
 	Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error)
 	Encode(signedTx authsigning.Tx) []byte
-	Broadcast(encodedTx []byte, await bool) (*sdk.TxResponse, error)
+	Broadcast(ctx context.Context, encodedTx []byte) (*sdk.TxResponse, error)
 	TxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error)
 }
 
 type ClientConfig struct {
 	BroadcastTimeout    time.Duration
 	BroadcastStatusPoll time.Duration
-}
-
-func DefaultClientConfig() ClientConfig {
-	return ClientConfig{
-		BroadcastTimeout:    20 * time.Second,
-		BroadcastStatusPoll: 250 * time.Millisecond,
-	}
 }
 
 type coreClient struct {
@@ -99,16 +95,16 @@ func (c *coreClient) Encode(signedTx authsigning.Tx) []byte {
 	return must.Bytes(c.clientCtx.TxConfig.TxEncoder()(signedTx))
 }
 
-var ErrTimedOut = errors.New("tx timed out")
+var ErrTxTimedOut = errors.New("transaction broadcast timed out")
 
 // Broadcast broadcasts encoded transaction and returns tx hash
-func (c *coreClient) Broadcast(encodedTx []byte, await bool) (*sdk.TxResponse, error) {
+func (c *coreClient) Broadcast(ctx context.Context, encodedTx []byte) (*sdk.TxResponse, error) {
 	res, err := c.clientCtx.BroadcastTxSync(encodedTx)
-	if !await || err != nil {
+	if err != nil {
 		return res, err
 	}
 
-	awaitCtx, cancelFn := context.WithTimeout(context.Background(), c.clientConfig.BroadcastTimeout)
+	awaitCtx, cancelFn := context.WithTimeout(ctx, c.clientConfig.BroadcastTimeout)
 	defer cancelFn()
 
 	txHash, _ := hex.DecodeString(res.TxHash)
@@ -117,7 +113,7 @@ func (c *coreClient) Broadcast(encodedTx []byte, await bool) (*sdk.TxResponse, e
 	for {
 		select {
 		case <-awaitCtx.Done():
-			err := errors.Wrapf(ErrTimedOut, "%s", res.TxHash)
+			err := errors.Wrapf(ErrTxTimedOut, "%s", res.TxHash)
 			t.Stop()
 			return nil, err
 		case <-t.C:

@@ -137,7 +137,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 						return err
 					}
 					tx := accountTxs[j]
-					res, err := client.Broadcast(tx, true)
+					res, err := client.Broadcast(ctx, tx)
 					if err != nil {
 						log.Error("Sending transaction failed", zap.Error(err))
 						continue
