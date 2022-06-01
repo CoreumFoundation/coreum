@@ -80,7 +80,7 @@ func (c Client) Broadcast(encodedTx []byte) (string, error) {
 	}
 
 	if txResp.Code != 0 {
-		return "", errors.WithStack(fmt.Errorf("trasaction failed: %s", txResp.RawLog))
+		return "", errors.WithStack(fmt.Errorf("transaction failed: %s", txResp.RawLog))
 	}
 	return txResp.TxHash, nil
 }
