@@ -16,7 +16,7 @@ func gitStatusClean(ctx context.Context) error {
 	cmd := exec.Command("git", "status", "-s")
 	cmd.Stdout = buf
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return err
+		return fmt.Errorf("git command failed: %w", err)
 	}
 	if buf.Len() > 0 {
 		fmt.Println("git status:")

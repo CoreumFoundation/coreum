@@ -19,7 +19,7 @@ func main() {
 	run.Tool("coreznet", coreznet.IoC, func(c *ioc.Container, configF *coreznet.ConfigFactory, cmdF *coreznet.CmdFactory) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage: true,
-			Short:        "Creates preconfigured bash session for environment",
+			Short:        "Creates preconfigured session for environment",
 			RunE:         cmdF.Cmd(coreznet.Activate),
 		}
 		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
