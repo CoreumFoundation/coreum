@@ -199,13 +199,13 @@ func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet)
 	if err != nil {
 		return err
 	}
-	txHash, err := client.Broadcast(txBytes)
+	res, err := client.Broadcast(txBytes, true)
 	if err != nil {
 		return err
 	}
 
 	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
-		zap.Stringer("amount", amount), zap.String("txHash", txHash))
+		zap.Stringer("amount", amount), zap.String("txHash", res.TxHash))
 
 	fromBalance, err := client.QBankBalances(ctx, from)
 	if err != nil {

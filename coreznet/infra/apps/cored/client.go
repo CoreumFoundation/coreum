@@ -2,7 +2,8 @@ package cored
 
 import (
 	"context"
-	"fmt"
+	"encoding/hex"
+	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -18,28 +19,55 @@ import (
 func NewClient(chainID string, addr string) Client {
 	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
+
 	clientCtx := NewContext(chainID, rpcClient)
-	return Client{
-		clientCtx:       clientCtx,
+
+	return &coreClient{
+		clientCtx:    clientCtx,
+		clientConfig: DefaultClientConfig(),
+
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
 	}
 }
 
-// Client is the client for cored blockchain
-type Client struct {
-	clientCtx       client.Context
+// Client is the client interface for cored blockchain
+type Client interface {
+	GetNumberSequence(address string) (uint64, uint64, error)
+	QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error)
+	Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error)
+	Encode(signedTx authsigning.Tx) []byte
+	Broadcast(encodedTx []byte, await bool) (*sdk.TxResponse, error)
+	TxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error)
+}
+
+type ClientConfig struct {
+	BroadcastTimeout    time.Duration
+	BroadcastStatusPoll time.Duration
+}
+
+func DefaultClientConfig() ClientConfig {
+	return ClientConfig{
+		BroadcastTimeout:    20 * time.Second,
+		BroadcastStatusPoll: 250 * time.Millisecond,
+	}
+}
+
+type coreClient struct {
+	clientCtx    client.Context
+	clientConfig ClientConfig
+
 	bankQueryClient banktypes.QueryClient
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
-func (c Client) GetNumberSequence(address string) (uint64, uint64, error) {
+func (c *coreClient) GetNumberSequence(address string) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(address)
 	must.OK(err)
 	return c.clientCtx.AccountRetriever.GetAccountNumberSequence(c.clientCtx, addr)
 }
 
 // QBankBalances queries for bank balances owned by wallet
-func (c Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
+func (c *coreClient) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
 	// FIXME (wojtek): support pagination
 	resp, err := c.bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
 	if err != nil {
@@ -54,7 +82,7 @@ func (c Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Ba
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
+func (c *coreClient) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(signer.Key.Address())
@@ -67,26 +95,54 @@ func (c Client) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
 }
 
 // Encode encodes transaction to be broadcasted
-func (c Client) Encode(signedTx authsigning.Tx) []byte {
+func (c *coreClient) Encode(signedTx authsigning.Tx) []byte {
 	return must.Bytes(c.clientCtx.TxConfig.TxEncoder()(signedTx))
 }
 
+var ErrTimedOut = errors.New("tx timed out")
+
 // Broadcast broadcasts encoded transaction and returns tx hash
-func (c Client) Broadcast(encodedTx []byte) (string, error) {
-	// FIXME (wojciech): Find a way to exit from this function early if ctx is canceled
-	txResp, err := c.clientCtx.BroadcastTxCommit(encodedTx)
-	if err != nil {
-		return "", err
+func (c *coreClient) Broadcast(encodedTx []byte, await bool) (*sdk.TxResponse, error) {
+	res, err := c.clientCtx.BroadcastTxSync(encodedTx)
+	if !await || err != nil {
+		return res, err
 	}
 
-	if txResp.Code != 0 {
-		return "", errors.WithStack(fmt.Errorf("transaction failed: %s", txResp.RawLog))
+	awaitCtx, cancelFn := context.WithTimeout(context.Background(), c.clientConfig.BroadcastTimeout)
+	defer cancelFn()
+
+	txHash, _ := hex.DecodeString(res.TxHash)
+	t := time.NewTimer(c.clientConfig.BroadcastStatusPoll)
+
+	for {
+		select {
+		case <-awaitCtx.Done():
+			err := errors.Wrapf(ErrTimedOut, "%s", res.TxHash)
+			t.Stop()
+			return nil, err
+		case <-t.C:
+			resultTx, err := c.clientCtx.Client.Tx(awaitCtx, txHash, false)
+			if err != nil {
+				if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+					return errRes, err
+				}
+
+				t.Reset(c.clientConfig.BroadcastStatusPoll)
+				continue
+
+			} else if resultTx.Height > 0 {
+				res = sdk.NewResponseResultTx(resultTx, res.Tx, res.Timestamp)
+				t.Stop()
+				return res, err
+			}
+
+			t.Reset(c.clientConfig.BroadcastStatusPoll)
+		}
 	}
-	return txResp.TxHash, nil
 }
 
 // TxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) TxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error) {
+func (c *coreClient) TxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
 	must.OK(err)
 	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())

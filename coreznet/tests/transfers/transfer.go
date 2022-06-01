@@ -66,10 +66,10 @@ func TransferCore(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 			// Transfer 10 cores from sender to receiver
 			txBytes, err := client.TxBankSend(sender, receiver, cored.Balance{Denom: "core", Amount: big.NewInt(10)})
 			require.NoError(t, err)
-			txHash, err := client.Broadcast(txBytes)
+			res, err := client.Broadcast(txBytes, true)
 			require.NoError(t, err)
 
-			logger.Get(ctx).Info("Transfer executed", zap.String("txHash", txHash))
+			logger.Get(ctx).Info("Transfer executed", zap.String("txHash", res.TxHash))
 
 			// Query wallets for current balance
 			balancesSender, err := client.QBankBalances(ctx, sender)
