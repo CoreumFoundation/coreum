@@ -25,18 +25,27 @@ func main() {
 	run.Tool("corezstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
 		var accountFile string
+		var numOfAccounts int
 		rootCmd := &cobra.Command{
 			SilenceUsage: true,
 			Short:        "Run benchmark test",
 			RunE: func(cmd *cobra.Command, args []string) error {
+				if numOfAccounts <= 0 {
+					return errors.New("number of accounts must be greater than 0")
+				}
+
 				keysRaw, err := ioutil.ReadFile(accountFile)
 				if err != nil {
 					return errors.WithStack(fmt.Errorf("reading account file failed: %w", err))
 				}
-
 				if err := json.Unmarshal(keysRaw, &stressConfig.Accounts); err != nil {
 					return errors.WithStack(fmt.Errorf("parsing account file failed: %w", err))
 				}
+
+				if numOfAccounts > len(stressConfig.Accounts) {
+					return errors.New("number of accounts is greater than the number of provided private keys")
+				}
+				stressConfig.Accounts = stressConfig.Accounts[:numOfAccounts]
 				return zstress.Stress(ctx, stressConfig)
 			},
 		}
@@ -44,7 +53,7 @@ func main() {
 		rootCmd.Flags().StringVar(&stressConfig.ChainID, "chain-id", defaultChainID, "ID of the chain to connect to")
 		rootCmd.Flags().StringVar(&stressConfig.NodeAddress, "node-addr", "localhost:26657", "Address of a cored node RPC endpoint, in the form of host:port, to connect to")
 		rootCmd.Flags().StringVar(&accountFile, "account-file", "", "Path to a JSON file containing private keys of accounts funded on blockchain")
-		rootCmd.Flags().IntVar(&stressConfig.NumOfAccounts, "accounts", defaultNumOfAccounts, "Number of accounts used to benchmark the node in parallel, must not be greater than the number of keys available in account file")
+		rootCmd.Flags().IntVar(&numOfAccounts, "accounts", defaultNumOfAccounts, "Number of accounts used to benchmark the node in parallel, must not be greater than the number of keys available in account file")
 		rootCmd.Flags().IntVar(&stressConfig.NumOfTransactions, "transactions", 1000, "Number of transactions to send from each account")
 
 		var generateConfig zstress.GenerateConfig

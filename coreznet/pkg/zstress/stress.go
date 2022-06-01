@@ -26,9 +26,6 @@ type StressConfig struct {
 	// Accounts is the list of private keys used to send transactions during benchmark
 	Accounts []cored.Secp256k1PrivateKey
 
-	// NumOfAccounts is the number of accounts used to benchmark the node in parallel
-	NumOfAccounts int
-
 	// NumOfTransactions to send from each account
 	NumOfTransactions int
 }
@@ -43,13 +40,7 @@ type tx struct {
 
 // Stress runs a benchmark test
 func Stress(ctx context.Context, config StressConfig) error {
-	if config.NumOfAccounts <= 0 {
-		return errors.New("number of accounts must be greater than 0")
-	}
-	if config.NumOfAccounts > len(config.Accounts) {
-		return errors.New("number of accounts is greater than the number of provided private keys")
-	}
-
+	numOfAccounts := len(config.Accounts)
 	log := logger.Get(ctx)
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
@@ -79,10 +70,10 @@ func Stress(ctx context.Context, config StressConfig) error {
 			})
 		}
 		spawn("enqueue", parallel.Continue, func(ctx context.Context) error {
-			for i := 0; i < config.NumOfAccounts; i++ {
+			for i := 0; i < numOfAccounts; i++ {
 				fromPrivateKey := config.Accounts[i]
 				toPrivateKeyIndex := i + 1
-				if toPrivateKeyIndex >= config.NumOfAccounts {
+				if toPrivateKeyIndex >= numOfAccounts {
 					toPrivateKeyIndex = 0
 				}
 				toPrivateKey := config.Accounts[toPrivateKeyIndex]
@@ -111,11 +102,11 @@ func Stress(ctx context.Context, config StressConfig) error {
 			return nil
 		})
 		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
-			signedTxs = make([][][]byte, config.NumOfAccounts)
-			for i := 0; i < config.NumOfAccounts; i++ {
+			signedTxs = make([][][]byte, numOfAccounts)
+			for i := 0; i < numOfAccounts; i++ {
 				signedTxs[i] = make([][]byte, config.NumOfTransactions)
 			}
-			for i := 0; i < config.NumOfAccounts; i++ {
+			for i := 0; i < numOfAccounts; i++ {
 				for j := 0; j < config.NumOfTransactions; j++ {
 					select {
 					case <-ctx.Done():

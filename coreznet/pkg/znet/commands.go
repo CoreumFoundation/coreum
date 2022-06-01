@@ -177,8 +177,7 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 	return zstress.Stress(ctx, zstress.StressConfig{
 		ChainID:           coredNode.ChainID(),
 		NodeAddress:       coredNode.RPCAddress(),
-		Accounts:          cored.RandomWallets,
-		NumOfAccounts:     len(cored.RandomWallets),
+		Accounts:          cored.RandomWallets[:10],
 		NumOfTransactions: 100,
 	})
 }
