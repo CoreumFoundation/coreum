@@ -2,12 +2,12 @@ package testing
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"runtime/debug"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"

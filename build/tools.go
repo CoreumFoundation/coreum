@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -19,6 +18,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -137,13 +137,13 @@ func installTools(deps build.DepsFunc) {
 func ensure(ctx context.Context, tool string) error {
 	info, exists := tools[tool]
 	if !exists {
-		return fmt.Errorf("tool %s is not defined", tool)
+		return errors.Errorf("tool %s is not defined", tool)
 	}
 
 	platform := platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
 	source, exists := info.Sources[platform]
 	if !exists {
-		panic(fmt.Errorf("tool %s is not configured for platform %s", tool, platform))
+		panic(errors.Errorf("tool %s is not configured for platform %s", tool, platform))
 	}
 
 	toolDir := toolDir(tool)
@@ -166,7 +166,7 @@ func ensure(ctx context.Context, tool string) error {
 
 		binPath, err := exec.LookPath(binName)
 		if err != nil || binPath != dstPath {
-			return fmt.Errorf("binary %s can't be resolved from PATH, add %s to your PATH",
+			return errors.Errorf("binary %s can't be resolved from PATH, add %s to your PATH",
 				binName, must.String(filepath.Abs(binDir)))
 		}
 	}
@@ -177,7 +177,7 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 	platform := platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
 	source, exists := info.Sources[platform]
 	if !exists {
-		panic(fmt.Errorf("tool %s is not configured for platform %s", name, platform))
+		panic(errors.Errorf("tool %s is not configured for platform %s", name, platform))
 	}
 	ctx = logger.With(ctx, zap.String("name", name), zap.String("version", info.Version),
 		zap.String("url", source.URL))
@@ -186,7 +186,7 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 
 	resp, err := http.DefaultClient.Do(must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, source.URL, nil)))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 
@@ -211,7 +211,7 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 
 	actualChecksum := fmt.Sprintf("%02x", hasher.Sum(nil))
 	if actualChecksum != expectedChecksum {
-		return fmt.Errorf("checksum does not match for tool %s, expected: %s, actual: %s, url: %s", name,
+		return errors.Errorf("checksum does not match for tool %s, expected: %s, actual: %s, url: %s", name,
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
@@ -232,7 +232,7 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 func hasher(hashStr string) (hash.Hash, string) {
 	parts := strings.SplitN(hashStr, ":", 2)
 	if len(parts) != 2 {
-		panic(fmt.Errorf("incorrect checksum format: %s", hashStr))
+		panic(errors.Errorf("incorrect checksum format: %s", hashStr))
 	}
 	hashAlgorithm := parts[0]
 	checksum := parts[1]
@@ -242,7 +242,7 @@ func hasher(hashStr string) (hash.Hash, string) {
 	case "sha256":
 		hasher = sha256.New()
 	default:
-		panic(fmt.Errorf("unsupported hashing algorithm: %s", hashAlgorithm))
+		panic(errors.Errorf("unsupported hashing algorithm: %s", hashAlgorithm))
 	}
 
 	return hasher, strings.ToLower(checksum)
@@ -254,11 +254,11 @@ func extract(url string, reader io.Reader, path string) error {
 		var err error
 		reader, err = gzip.NewReader(reader)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		return untar(reader, path)
 	default:
-		panic(fmt.Errorf("unsupported compression algorithm for url: %s", url))
+		panic(errors.Errorf("unsupported compression algorithm for url: %s", url))
 	}
 }
 
@@ -270,7 +270,7 @@ func untar(reader io.Reader, path string) error {
 		case errors.Is(err, io.EOF):
 			return nil
 		case err != nil:
-			return err
+			return errors.WithStack(err)
 		case header == nil:
 			continue
 		}
@@ -283,7 +283,7 @@ func untar(reader io.Reader, path string) error {
 		switch {
 		case header.Typeflag == tar.TypeDir:
 			if err := os.MkdirAll(header.Name, mode); err != nil && !os.IsExist(err) {
-				return err
+				return errors.WithStack(err)
 			}
 		case header.Typeflag == tar.TypeReg:
 			if err := ensureDir(header.Name); err != nil {
@@ -291,19 +291,19 @@ func untar(reader io.Reader, path string) error {
 			}
 			f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_WRONLY, mode)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			_, err = io.Copy(f, tr)
 			_ = f.Close()
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		case header.Typeflag == tar.TypeSymlink:
 			if err := ensureDir(header.Name); err != nil {
 				return err
 			}
 			if err := os.Symlink(header.Linkname, header.Name); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		case header.Typeflag == tar.TypeLink:
 			if err := ensureDir(header.Name); err != nil {
@@ -313,16 +313,16 @@ func untar(reader io.Reader, path string) error {
 			f, err := os.OpenFile(header.Linkname, os.O_CREATE|os.O_EXCL, mode)
 			if err != nil {
 				if !os.IsExist(err) {
-					return err
+					return errors.WithStack(err)
 				}
 			} else {
 				_ = f.Close()
 			}
 			if err := os.Link(header.Linkname, header.Name); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		default:
-			return fmt.Errorf("unsupported file type: %d", header.Typeflag)
+			return errors.Errorf("unsupported file type: %d", header.Typeflag)
 		}
 	}
 }
@@ -330,7 +330,7 @@ func untar(reader io.Reader, path string) error {
 func toolDir(name string) string {
 	info, exists := tools[name]
 	if !exists {
-		panic(fmt.Errorf("tool %s is not defined", name))
+		panic(errors.Errorf("tool %s is not defined", name))
 	}
 
 	return must.String(os.UserCacheDir()) + "/coreum/" + name + "-" + info.Version
@@ -338,7 +338,7 @@ func toolDir(name string) string {
 
 func ensureDir(file string) error {
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); !os.IsExist(err) {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }

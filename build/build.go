@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/pkg/errors"
 )
 
 const dockerGOOS = "linux"
@@ -19,13 +20,13 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	out := "bin/" + runtime.GOOS + "/cored"
 	link := "bin/cored"
 	if err := os.Remove(link); err != nil && !os.IsNotExist(err) {
-		return err
+		return errors.WithStack(err)
 	}
 	if err := goBuildPkg(ctx, "cored/cmd", runtime.GOOS, out); err != nil {
 		return err
 	}
 	if err := os.Link(out, link); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	if runtime.GOOS != dockerGOOS {
 		// required to build docker images

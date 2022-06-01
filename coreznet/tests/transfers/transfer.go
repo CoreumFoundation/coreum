@@ -21,12 +21,9 @@ func VerifyInitialBalance(chain apps.Cored) (testing.PrepareFunc, testing.RunFun
 
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
-			var err error
-
 			// Create new random wallet with predefined balance added to genesis block
 			wallet, _ = chain.AddWallet("100core")
-
-			return err
+			return nil
 		},
 
 		// Second function runs test
@@ -52,15 +49,10 @@ func TransferCore(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
-			var err error
-
 			// Create two random wallets with predefined amounts of core
 			sender, _ = chain.AddWallet("100core")
-			if err != nil {
-				return err
-			}
 			receiver, _ = chain.AddWallet("10core")
-			return err
+			return nil
 		},
 
 		// Second function runs test

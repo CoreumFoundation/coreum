@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/spf13/cobra"
@@ -16,17 +17,16 @@ import (
 )
 
 func main() {
-	cmd.ConfigureLoggerWithCLI(defaultBool("COREZNET_VERBOSE", false))
 	run.Tool("coreznet", znet.IoC, func(c *ioc.Container, configF *znet.ConfigFactory, cmdF *znet.CmdFactory) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage: true,
 			Short:        "Creates preconfigured bash session for environment",
 			RunE:         cmdF.Cmd(znet.Activate),
 		}
+		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
 		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("COREZNET_ENV", "coreznet"), "Name of the environment to run in")
 		rootCmd.PersistentFlags().StringVar(&configF.Target, "target", defaultString("COREZNET_TARGET", "tmux"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
 		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("COREZNET_HOME", must.String(os.UserCacheDir())+"/coreznet"), "Directory where all files created automatically by coreznet are stored")
-		rootCmd.PersistentFlags().BoolVarP(&configF.VerboseLogging, "verbose", "v", defaultBool("COREZNET_VERBOSE", false), "Turns on verbose logging")
 		addFlags(rootCmd, configF)
 		addModeFlag(rootCmd, c, configF)
 		addFilterFlag(rootCmd, configF)
@@ -109,17 +109,6 @@ func defaultString(env, def string) string {
 		val = def
 	}
 	return val
-}
-
-func defaultBool(env string, def bool) bool {
-	switch os.Getenv(env) {
-	case "1", "true", "True", "TRUE":
-		return true
-	case "0", "false", "False", "FALSE":
-		return false
-	default:
-		return def
-	}
 }
 
 func defaultFilters(env string) []string {

@@ -2,7 +2,6 @@ package exec
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	"github.com/pkg/errors"
 )
 
 func toolCmd(tool string, args []string) *exec.Cmd {
@@ -19,7 +19,7 @@ func toolCmd(tool string, args []string) *exec.Cmd {
 
 func verifyTool(tool string) {
 	if _, err := exec.LookPath(tool); err != nil {
-		panic(fmt.Errorf("%s is not available, please install it", tool))
+		panic(errors.Errorf("%s is not available, please install it", tool))
 	}
 }
 
@@ -32,7 +32,7 @@ func Kill(ctx context.Context, pids []int) error {
 				return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 					proc, err := os.FindProcess(pid)
 					if err != nil {
-						return err
+						return errors.WithStack(err)
 					}
 					spawn("waiter", parallel.Exit, func(ctx context.Context) error {
 						_, _ = proc.Wait()
@@ -40,7 +40,7 @@ func Kill(ctx context.Context, pids []int) error {
 					})
 					spawn("killer", parallel.Continue, func(ctx context.Context) error {
 						if err := proc.Signal(syscall.SIGTERM); err != nil && !errors.Is(err, os.ErrProcessDone) {
-							return err
+							return errors.WithStack(err)
 						}
 						select {
 						case <-ctx.Done():
@@ -48,7 +48,7 @@ func Kill(ctx context.Context, pids []int) error {
 						case <-time.After(20 * time.Second):
 						}
 						if err := proc.Signal(syscall.SIGKILL); err != nil && !errors.Is(err, os.ErrProcessDone) {
-							return err
+							return errors.WithStack(err)
 						}
 						return nil
 					})
