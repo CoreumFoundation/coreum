@@ -2,7 +2,6 @@ package targets
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -14,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/coreznet/exec"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
@@ -45,7 +45,7 @@ func (d *Direct) Stop(ctx context.Context) error {
 	}
 	procs, err := ioutil.ReadDir("/proc")
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	reg := regexp.MustCompile("^[0-9]+$")
 	var pids []int
@@ -59,12 +59,12 @@ func (d *Direct) Stop(ctx context.Context) error {
 			if errors.Is(err, os.ErrNotExist) {
 				continue
 			}
-			return err
+			return errors.WithStack(err)
 		}
 		properties := strings.Split(string(statRaw), " ")
 		pgID, err := strconv.ParseInt(properties[4], 10, 32)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		if pgID != int64(d.spec.PGID) {
 			continue

@@ -2,10 +2,11 @@ package testing
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"regexp"
 	"runtime"
+
+	"github.com/pkg/errors"
 )
 
 // PrepareFunc defines function which is executed before environment is deployed
@@ -27,7 +28,7 @@ type T struct {
 // Errorf stores test error and mark test as failed
 func (t *T) Errorf(format string, args ...interface{}) {
 	t.failed = true
-	t.errors = append(t.errors, fmt.Errorf(format, args...))
+	t.errors = append(t.errors, errors.Errorf(format, args...))
 }
 
 // FailNow marks test as failed and breaks immediately

@@ -3,7 +3,6 @@ package targets
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/coreznet/exec"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"

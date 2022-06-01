@@ -2,7 +2,6 @@ package coreznet
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -18,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
@@ -55,7 +55,6 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 		"COREZNET_TARGET="+configF.Target,
 		"COREZNET_BIN_DIR="+configF.BinDir,
 		"COREZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
-		"COREZNET_VERBOSE="+strconv.FormatBool(configF.VerboseLogging),
 	)
 	if promptVar != "" {
 		shellCmd.Env = append(shellCmd.Env, promptVar)
