@@ -17,22 +17,7 @@ func buildAll(deps build.DepsFunc) {
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	out := "bin/" + runtime.GOOS + "/cored"
-	link := "bin/cored"
-	if err := os.Remove(link); err != nil && !os.IsNotExist(err) {
-		return errors.WithStack(err)
-	}
-	if err := goBuildPkg(ctx, "cored/cmd", runtime.GOOS, out); err != nil {
-		return err
-	}
-	if err := os.Link(out, link); err != nil {
-		return errors.WithStack(err)
-	}
-	if runtime.GOOS != dockerGOOS {
-		// required to build docker images
-		return goBuildPkg(ctx, "cored/cmd", dockerGOOS, "bin/"+dockerGOOS+"/cored")
-	}
-	return nil
+	return buildNativeAndDocker(ctx, "cored/cmd", "cored")
 }
 
 func buildCoreZNet(ctx context.Context, deps build.DepsFunc) error {
@@ -42,5 +27,24 @@ func buildCoreZNet(ctx context.Context, deps build.DepsFunc) error {
 
 func buildCoreZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "coreznet/cmd/corezstress", runtime.GOOS, "bin/corezstress")
+	return buildNativeAndDocker(ctx, "coreznet/cmd/corezstress", "corezstress")
+}
+
+func buildNativeAndDocker(ctx context.Context, pkg, exeName string) error {
+	out := "bin/" + runtime.GOOS + "/" + exeName
+	link := "bin/" + exeName
+	if err := os.Remove(link); err != nil && !os.IsNotExist(err) {
+		return errors.WithStack(err)
+	}
+	if err := goBuildPkg(ctx, pkg, runtime.GOOS, out); err != nil {
+		return err
+	}
+	if err := os.Link(out, link); err != nil {
+		return errors.WithStack(err)
+	}
+	if runtime.GOOS != dockerGOOS {
+		// required to build docker images
+		return goBuildPkg(ctx, pkg, dockerGOOS, "bin/"+dockerGOOS+"/"+exeName)
+	}
+	return nil
 }
