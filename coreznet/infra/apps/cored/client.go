@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -87,8 +88,14 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	err = retry.Do(timeoutCtx, 250*time.Millisecond, func() error {
 		resultTx, err := c.clientCtx.Client.Tx(timeoutCtx, res.Hash, false)
 		if err != nil {
-			if client.CheckTendermintError(err, encodedTx) != nil {
-				return err
+			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+				if errRes.Codespace == cosmoserrors.ErrTxInMempoolCache.Codespace() &&
+					errRes.Code == cosmoserrors.ErrTxInMempoolCache.ABCICode() {
+					// this error means that transaction is in mempool, I don't know why cosmos-sdk returns it as an error while
+					// it is quite normal situation
+					return retry.Retryable(errors.WithStack(err))
+				}
+				return errors.WithStack(err)
 			}
 			return retry.Retryable(errors.WithStack(err))
 		}
