@@ -59,7 +59,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 						if !ok {
 							return nil
 						}
-						tx.TxBytes = must.Bytes(client.TxBankSend(tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
+						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
 						select {
 						case <-ctx.Done():
 							return ctx.Err()

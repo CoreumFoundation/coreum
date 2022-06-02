@@ -205,7 +205,7 @@ func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet)
 	log := logger.Get(ctx)
 
 	amount := cored.Balance{Amount: big.NewInt(1), Denom: "core"}
-	txBytes, err := client.TxBankSend(from, to, amount)
+	txBytes, err := client.PrepareTxBankSend(from, to, amount)
 	if err != nil {
 		return err
 	}
@@ -217,11 +217,11 @@ func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet)
 	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
 		zap.Stringer("amount", amount), zap.String("txHash", txHash))
 
-	fromBalance, err := client.QBankBalances(ctx, from)
+	fromBalance, err := client.QueryBankBalances(ctx, from)
 	if err != nil {
 		return err
 	}
-	toBalance, err := client.QBankBalances(ctx, to)
+	toBalance, err := client.QueryBankBalances(ctx, to)
 	if err != nil {
 		return err
 	}

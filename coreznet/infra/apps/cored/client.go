@@ -38,8 +38,8 @@ func (c Client) GetNumberSequence(address string) (uint64, uint64, error) {
 	return c.clientCtx.AccountRetriever.GetAccountNumberSequence(c.clientCtx, addr)
 }
 
-// QBankBalances queries for bank balances owned by wallet
-func (c Client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
+// QueryBankBalances queries for bank balances owned by wallet
+func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
 	// FIXME (wojtek): support pagination
 	resp, err := c.bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
 	if err != nil {
@@ -85,8 +85,8 @@ func (c Client) Broadcast(encodedTx []byte) (string, error) {
 	return txResp.TxHash, nil
 }
 
-// TxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) TxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error) {
+// PrepareTxBankSend creates a transaction sending tokens from one wallet to another
+func (c Client) PrepareTxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
 	must.OK(err)
 	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
