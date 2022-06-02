@@ -78,7 +78,7 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 // Broadcast broadcasts encoded transaction and returns tx hash
 func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error) {
 	res, err := c.clientCtx.Client.BroadcastTxSync(ctx, encodedTx)
-	if err != nil {
+	if err != nil && !isTxInMempool(client.CheckTendermintError(err, encodedTx)) {
 		return "", errors.WithStack(err)
 	}
 
@@ -90,10 +90,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 		resultTx, err := c.clientCtx.Client.Tx(timeoutCtx, res.Hash, false)
 		if err != nil {
 			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
-				if errRes.Codespace == cosmoserrors.ErrTxInMempoolCache.Codespace() &&
-					errRes.Code == cosmoserrors.ErrTxInMempoolCache.ABCICode() {
-					// this error means that transaction is in mempool, I don't know why cosmos-sdk returns it as an error while
-					// it is quite normal situation
+				if isTxInMempool(errRes) {
 					return retry.Retryable(errors.WithStack(err))
 				}
 				return errors.WithStack(err)
@@ -129,6 +126,14 @@ func (c Client) PrepareTxBankSend(sender, receiver Wallet, balance Balance) ([]b
 	}
 
 	return c.Encode(signedTx), nil
+}
+
+func isTxInMempool(errRes *sdk.TxResponse) bool {
+	if errRes == nil {
+		return false
+	}
+	return errRes.Codespace == cosmoserrors.ErrTxInMempoolCache.Codespace() &&
+		errRes.Code == cosmoserrors.ErrTxInMempoolCache.ABCICode()
 }
 
 func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
