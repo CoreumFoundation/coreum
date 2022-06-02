@@ -78,7 +78,7 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error) {
 	res, err := c.clientCtx.Client.BroadcastTxSync(ctx, encodedTx)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	txHash := res.Hash.String()
