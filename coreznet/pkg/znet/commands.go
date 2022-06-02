@@ -209,7 +209,7 @@ func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet)
 	if err != nil {
 		return err
 	}
-	txHash, err := client.Broadcast(txBytes)
+	txHash, err := client.Broadcast(ctx, txBytes)
 	if err != nil {
 		return err
 	}

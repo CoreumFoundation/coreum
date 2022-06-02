@@ -2,7 +2,7 @@ package cored
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -12,6 +12,8 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
 // NewClient creates new client for cored
@@ -72,17 +74,33 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 }
 
 // Broadcast broadcasts encoded transaction and returns tx hash
-func (c Client) Broadcast(encodedTx []byte) (string, error) {
-	// FIXME (wojciech): Find a way to exit from this function early if ctx is canceled
-	txResp, err := c.clientCtx.BroadcastTxCommit(encodedTx)
+func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error) {
+	res, err := c.clientCtx.Client.BroadcastTxSync(ctx, encodedTx)
 	if err != nil {
 		return "", err
 	}
 
-	if txResp.Code != 0 {
-		return "", errors.WithStack(fmt.Errorf("transaction failed: %s", txResp.RawLog))
+	txHash := res.Hash.String()
+	timeoutCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+
+	err = retry.Do(timeoutCtx, 250*time.Millisecond, func() error {
+		resultTx, err := c.clientCtx.Client.Tx(timeoutCtx, res.Hash, false)
+		if err != nil {
+			if client.CheckTendermintError(err, encodedTx) != nil {
+				return err
+			}
+			return retry.Retryable(errors.WithStack(err))
+		}
+		if resultTx.Height == 0 {
+			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
 	}
-	return txResp.TxHash, nil
+	return txHash, nil
 }
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another

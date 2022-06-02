@@ -48,7 +48,7 @@ func Do(ctx context.Context, retryAfter time.Duration, fn func() error) error {
 
 		newMessage := r.err.Error()
 		if lastMessage != newMessage {
-			log.Info(fmt.Sprintf("Will retry: %s", newMessage), zap.Error(r.err))
+			log.Debug(fmt.Sprintf("Will retry: %s", newMessage), zap.Error(r.err))
 			lastMessage = newMessage
 		}
 
