@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/cosmos/cosmos-sdk/client"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -17,14 +17,14 @@ import (
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
-	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
+	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
 
 	clientCtx := NewContext(chainID, rpcClient)
 
-	return &coreClient{
+	return &client{
 		clientCtx: clientCtx,
-		clientConfig: ClientConfig{
+		config: ClientConfig{
 			BroadcastTimeout:    20 * time.Second,
 			BroadcastStatusPoll: 250 * time.Millisecond,
 		},
@@ -48,22 +48,22 @@ type ClientConfig struct {
 	BroadcastStatusPoll time.Duration
 }
 
-type coreClient struct {
-	clientCtx    client.Context
-	clientConfig ClientConfig
+type client struct {
+	clientCtx cosmosclient.Context
+	config    ClientConfig
 
 	bankQueryClient banktypes.QueryClient
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
-func (c *coreClient) GetNumberSequence(address string) (uint64, uint64, error) {
+func (c *client) GetNumberSequence(address string) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(address)
 	must.OK(err)
 	return c.clientCtx.AccountRetriever.GetAccountNumberSequence(c.clientCtx, addr)
 }
 
 // QBankBalances queries for bank balances owned by wallet
-func (c *coreClient) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
+func (c *client) QBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
 	// FIXME (wojtek): support pagination
 	resp, err := c.bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
 	if err != nil {
@@ -78,7 +78,7 @@ func (c *coreClient) QBankBalances(ctx context.Context, wallet Wallet) (map[stri
 }
 
 // Sign takes message, creates transaction and signs it
-func (c *coreClient) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
+func (c *client) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(signer.Key.Address())
@@ -91,39 +91,39 @@ func (c *coreClient) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
 }
 
 // Encode encodes transaction to be broadcasted
-func (c *coreClient) Encode(signedTx authsigning.Tx) []byte {
+func (c *client) Encode(signedTx authsigning.Tx) []byte {
 	return must.Bytes(c.clientCtx.TxConfig.TxEncoder()(signedTx))
 }
 
 var ErrTxTimedOut = errors.New("transaction broadcast timed out")
 
 // Broadcast broadcasts encoded transaction and returns tx hash
-func (c *coreClient) Broadcast(ctx context.Context, encodedTx []byte) (*sdk.TxResponse, error) {
-	res, err := c.clientCtx.BroadcastTxSync(encodedTx)
+func (c *client) Broadcast(ctx context.Context, encodedTx []byte) (*sdk.TxResponse, error) {
+	res, err := c.broadcastTxSync(ctx, encodedTx)
 	if err != nil {
 		return res, err
 	}
 
-	awaitCtx, cancelFn := context.WithTimeout(ctx, c.clientConfig.BroadcastTimeout)
+	timeoutCtx, cancelFn := context.WithTimeout(ctx, c.config.BroadcastTimeout)
 	defer cancelFn()
 
 	txHash, _ := hex.DecodeString(res.TxHash)
-	t := time.NewTimer(c.clientConfig.BroadcastStatusPoll)
+	t := time.NewTimer(c.config.BroadcastStatusPoll)
 
 	for {
 		select {
-		case <-awaitCtx.Done():
+		case <-timeoutCtx.Done():
 			err := errors.Wrapf(ErrTxTimedOut, "%s", res.TxHash)
 			t.Stop()
 			return nil, err
 		case <-t.C:
-			resultTx, err := c.clientCtx.Client.Tx(awaitCtx, txHash, false)
+			resultTx, err := c.clientCtx.Client.Tx(timeoutCtx, txHash, false)
 			if err != nil {
-				if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+				if errRes := cosmosclient.CheckTendermintError(err, encodedTx); errRes != nil {
 					return errRes, err
 				}
 
-				t.Reset(c.clientConfig.BroadcastStatusPoll)
+				t.Reset(c.config.BroadcastStatusPoll)
 				continue
 
 			} else if resultTx.Height > 0 {
@@ -132,13 +132,31 @@ func (c *coreClient) Broadcast(ctx context.Context, encodedTx []byte) (*sdk.TxRe
 				return res, err
 			}
 
-			t.Reset(c.clientConfig.BroadcastStatusPoll)
+			t.Reset(c.config.BroadcastStatusPoll)
 		}
 	}
 }
 
+// broadcastTxSync broadcasts transaction bytes to a Tendermint node
+// synchronously (i.e. returns after CheckTx execution). Supports ctx cancellation.
+//
+// This is a copy of (ctx cosmosclient.Context) BroadcastTxSync.
+func (c *client) broadcastTxSync(ctx context.Context, encodedTx []byte) (*sdk.TxResponse, error) {
+	node, err := c.clientCtx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := node.BroadcastTxSync(ctx, encodedTx)
+	if errRes := cosmosclient.CheckTendermintError(err, encodedTx); errRes != nil {
+		return errRes, nil
+	}
+
+	return sdk.NewResponseFormatBroadcastTx(res), err
+}
+
 // TxBankSend creates a transaction sending tokens from one wallet to another
-func (c *coreClient) TxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error) {
+func (c *client) TxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
 	must.OK(err)
 	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
@@ -157,7 +175,7 @@ func (c *coreClient) TxBankSend(sender, receiver Wallet, balance Balance) ([]byt
 	return c.Encode(signedTx), nil
 }
 
-func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
+func signTx(clientCtx cosmosclient.Context, signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
 	privKey := &cosmossecp256k1.PrivKey{Key: signerKey}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(200000)

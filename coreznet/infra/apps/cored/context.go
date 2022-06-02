@@ -1,7 +1,7 @@
 package cored
 
 import (
-	"github.com/cosmos/cosmos-sdk/client"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -14,7 +14,7 @@ import (
 )
 
 // NewContext creates a context required by other cosmos-sdk types
-func NewContext(chainID string, rpcClient rpcclient.Client) client.Context {
+func NewContext(chainID string, rpcClient rpcclient.Client) cosmosclient.Context {
 	interfaceRegistry := types.NewInterfaceRegistry()
 	cryptocodec.RegisterInterfaces(interfaceRegistry)
 	authtypes.RegisterInterfaces(interfaceRegistry)
@@ -22,7 +22,7 @@ func NewContext(chainID string, rpcClient rpcclient.Client) client.Context {
 	stakingtypes.RegisterInterfaces(interfaceRegistry)
 
 	codec := codec.NewProtoCodec(interfaceRegistry)
-	return client.Context{
+	return cosmosclient.Context{
 		ChainID:           chainID,
 		Codec:             codec,
 		InterfaceRegistry: interfaceRegistry,

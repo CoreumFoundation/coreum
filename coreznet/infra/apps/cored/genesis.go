@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/cosmos/cosmos-sdk/client"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -55,7 +55,7 @@ func NewGenesis(chainID string) *Genesis {
 
 // Genesis is responsible for creating genesis configuration for coreum network
 type Genesis struct {
-	clientCtx client.Context
+	clientCtx cosmosclient.Context
 
 	mu           *sync.Mutex
 	genesisDoc   *tmtypes.GenesisDoc
