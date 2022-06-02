@@ -40,28 +40,17 @@ type GenerateConfig struct {
 
 // Generate generates all the files required to deploy blockchain used for benchmarking
 func Generate(config GenerateConfig) error {
-	coredPath, err := exec.LookPath("cored")
-	if err != nil {
-		return errors.WithStack(fmt.Errorf(`can't find cored binary, run "core build/cored" to build it: %w`, err))
-	}
-	coredPath = filepath.Dir(coredPath) + "/linux/cored"
-
 	dir := config.OutDirectory + "/corezstress-deployment"
 	if err := os.RemoveAll(dir); err != nil && !os.IsNotExist(err) {
 		panic(err)
 	}
 
-	dockerDir := dir + "/docker"
-	dockerDirBin := dockerDir + "/bin"
-	must.OK(os.MkdirAll(dockerDirBin, 0o700))
-	if err := os.Link(coredPath, dockerDirBin+"/cored"); err != nil {
-		return errors.WithStack(fmt.Errorf(`can't find cored linux binary, run "core build/cored" to build it: %w`, err))
+	if err := generateDocker(dir, "cored"); err != nil {
+		return err
 	}
-
-	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM scratch
-COPY . .
-ENTRYPOINT ["cored"]
-`), 0o600))
+	if err := generateDocker(dir, "corezstress"); err != nil {
+		return err
+	}
 
 	genesis := cored.NewGenesis(config.ChainID)
 	nodeIDs := make([]string, 0, config.NumOfValidators)
@@ -117,6 +106,28 @@ ENTRYPOINT ["cored"]
 		must.OK(os.MkdirAll(instanceDir, 0o700))
 		must.OK(ioutil.WriteFile(instanceDir+"/accounts.json", must.Bytes(json.Marshal(accounts)), 0o600))
 	}
-	genesis.Save(dockerDir)
+	genesis.Save(dir + "/docker-cored")
+	return nil
+}
+
+func generateDocker(dir, tool string) error {
+	toolPath, err := exec.LookPath(tool)
+	if err != nil {
+		return errors.Wrapf(err, `can't find %[1]s binary, run "core build/%[1]s" to build it`, tool)
+	}
+	toolPath = filepath.Dir(toolPath) + "/linux/" + tool
+
+	dockerDir := dir + "/docker-" + tool
+	dockerDirBin := dockerDir + "/bin"
+	must.OK(os.MkdirAll(dockerDirBin, 0o700))
+	if err := os.Link(toolPath, dockerDirBin+"/"+tool); err != nil {
+		return errors.Wrapf(err, `can't find %[1]s binary, run "core build/%[1]s" to build it`, tool)
+	}
+
+	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM scratch
+COPY . .
+ENTRYPOINT ["`+tool+`"]
+`), 0o600))
+
 	return nil
 }
