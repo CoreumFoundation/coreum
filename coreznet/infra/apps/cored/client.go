@@ -38,7 +38,8 @@ type Client struct {
 func (c Client) GetNumberSequence(address string) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(address)
 	must.OK(err)
-	return c.clientCtx.AccountRetriever.GetAccountNumberSequence(c.clientCtx, addr)
+	accNum, accSeq, err := c.clientCtx.AccountRetriever.GetAccountNumberSequence(c.clientCtx, addr)
+	return accNum, accSeq, errors.WithStack(err)
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
@@ -46,7 +47,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 	// FIXME (wojtek): support pagination
 	resp, err := c.bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	balances := map[string]Balance{}
