@@ -214,7 +214,7 @@ func (c Cored) Deployment() infra.Deployment {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				cored.ValidatorConfig{
+				cored.NodeConfig{
 					Name:           c.name,
 					IP:             ip,
 					PrometheusPort: c.ports.Prometheus,

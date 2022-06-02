@@ -66,6 +66,7 @@ func main() {
 		}
 		generateCmd.Flags().StringVar(&generateConfig.ChainID, "chain-id", defaultChainID, "ID of the chain to generate")
 		generateCmd.Flags().IntVar(&generateConfig.NumOfValidators, "validators", 16, "Number of validators present on the blockchain")
+		generateCmd.Flags().IntVar(&generateConfig.NumOfSentryNodes, "sentry-nodes", 16, "Number of sentry nodes to generate config for")
 		generateCmd.Flags().IntVar(&generateConfig.NumOfInstances, "instances", 32, "The maximum number of application instances used in the future during benchmarking")
 		generateCmd.Flags().IntVar(&generateConfig.NumOfAccountsPerInstance, "accounts", defaultNumOfAccounts, "The maximum number of funded accounts per each instance used in the future during benchmarking")
 		generateCmd.Flags().StringVar(&generateConfig.OutDirectory, "out", must.String(os.Getwd()), "Path to the directory where generated files are stored")

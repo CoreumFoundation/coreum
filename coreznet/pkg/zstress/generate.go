@@ -25,6 +25,9 @@ type GenerateConfig struct {
 	// NumOfValidators is the number of validators present on the blockchain
 	NumOfValidators int
 
+	// NumOfSentryNodes is the number of sentry nodes to generate config for
+	NumOfSentryNodes int
+
 	// NumOfInstances is the maximum number of application instances used in the future during benchmarking
 	NumOfInstances int
 
@@ -72,7 +75,7 @@ ENTRYPOINT ["cored"]
 
 		valDir := fmt.Sprintf("%s/validators/%d", dir, i)
 
-		cored.ValidatorConfig{
+		cored.NodeConfig{
 			Name:           fmt.Sprintf("validator-%d", i),
 			IP:             net.IPv4zero,
 			PrometheusPort: cored.DefaultPorts.Prometheus,
@@ -84,6 +87,23 @@ ENTRYPOINT ["cored"]
 		genesis.AddValidator(validatorPublicKey, stakerPrivateKey, "100000000stake")
 	}
 	must.OK(ioutil.WriteFile(dir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
+
+	nodeIDs = make([]string, 0, config.NumOfSentryNodes)
+	for i := 0; i < config.NumOfSentryNodes; i++ {
+		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
+		must.OK(err)
+		nodeIDs = append(nodeIDs, cored.NodeID(nodePublicKey))
+
+		nodeDir := fmt.Sprintf("%s/sentry-nodes/%d", dir, i)
+
+		cored.NodeConfig{
+			Name:           fmt.Sprintf("sentry-node-%d", i),
+			IP:             net.IPv4zero,
+			PrometheusPort: cored.DefaultPorts.Prometheus,
+			NodeKey:        nodePrivateKey,
+		}.Save(nodeDir)
+	}
+	must.OK(ioutil.WriteFile(dir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 
 	for i := 0; i < config.NumOfInstances; i++ {
 		accounts := make([]cored.Secp256k1PrivateKey, 0, config.NumOfAccountsPerInstance)

@@ -14,8 +14,8 @@ import (
 	"github.com/tendermint/tendermint/privval"
 )
 
-// ValidatorConfig saves files with private keys and config required by validator
-type ValidatorConfig struct {
+// NodeConfig saves files with private keys and config required by node
+type NodeConfig struct {
 	Name           string
 	IP             net.IP
 	PrometheusPort int
@@ -24,15 +24,17 @@ type ValidatorConfig struct {
 }
 
 // Save saves files required by validator
-func (vc ValidatorConfig) Save(homeDir string) {
+func (vc NodeConfig) Save(homeDir string) {
 	must.OK(os.MkdirAll(homeDir+"/config", 0o700))
-	must.OK(os.MkdirAll(homeDir+"/data", 0o700))
 
 	must.OK((&p2p.NodeKey{
 		PrivKey: tmed25519.PrivKey(vc.NodeKey),
 	}).SaveAs(homeDir + "/config/node_key.json"))
 
-	privval.NewFilePV(tmed25519.PrivKey(vc.ValidatorKey), homeDir+"/config/priv_validator_key.json", homeDir+"/data/priv_validator_state.json").Save()
+	if vc.ValidatorKey != nil {
+		must.OK(os.MkdirAll(homeDir+"/data", 0o700))
+		privval.NewFilePV(tmed25519.PrivKey(vc.ValidatorKey), homeDir+"/config/priv_validator_key.json", homeDir+"/data/priv_validator_state.json").Save()
+	}
 
 	cfg := config.DefaultConfig()
 	cfg.Moniker = vc.Name
