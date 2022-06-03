@@ -77,12 +77,18 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 
 // Broadcast broadcasts encoded transaction and returns tx hash
 func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error) {
+	var txHash string
 	res, err := c.clientCtx.Client.BroadcastTxSync(ctx, encodedTx)
-	if err != nil && !isTxInMempool(client.CheckTendermintError(err, encodedTx)) {
-		return "", errors.WithStack(err)
+	if err != nil {
+		errRes := client.CheckTendermintError(err, encodedTx)
+		if !isTxInMempool(errRes) {
+			return "", errors.WithStack(err)
+		}
+		txHash = errRes.TxHash
+	} else {
+		txHash = res.Hash.String()
 	}
 
-	txHash := res.Hash.String()
 	timeoutCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
