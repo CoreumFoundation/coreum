@@ -150,11 +150,11 @@ func Stress(ctx context.Context, config StressConfig) error {
 func broadcastTx(ctx context.Context, client cored.Client, tx []byte) error {
 	log := logger.Get(ctx)
 	for {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
 		txHash, err := client.Broadcast(ctx, tx)
 		if err != nil {
+			if errors.Is(err, ctx.Err()) {
+				return err
+			}
 			log.Error("Sending transaction failed", zap.Error(err))
 			continue
 		}
