@@ -51,7 +51,6 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	}
 	shellCmd := osexec.Command(shell)
 	shellCmd.Env = append(os.Environ(),
-		"PATH="+config.WrapperDir+":/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin",
 		"COREZNET_ENV="+configF.EnvName,
 		"COREZNET_MODE="+configF.ModeName,
 		"COREZNET_HOME="+configF.HomeDir,
