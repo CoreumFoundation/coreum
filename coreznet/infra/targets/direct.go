@@ -89,7 +89,7 @@ func (d *Direct) Remove(ctx context.Context) error {
 func (d *Direct) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	binPath := app.BinPathFunc(runtime.GOOS)
 	must.Any(os.Stat(binPath))
-	cmd := osexec.Command("/bin/sh", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(binPath, app.ArgsFunc(ipLocalhost, d.config.AppDir+"/"+app.Name, hostIPResolver{})...).String(), d.config.LogDir, app.Name))
+	cmd := osexec.Command("/bin/bash", "-ce", fmt.Sprintf(`exec %s >> "%s/%s.log" 2>&1`, osexec.Command(binPath, app.ArgsFunc(ipLocalhost, d.config.AppDir+"/"+app.Name, hostIPResolver{})...).String(), d.config.LogDir, app.Name))
 	if err := cmd.Start(); err != nil {
 		return infra.DeploymentInfo{}, err
 	}

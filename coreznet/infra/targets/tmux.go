@@ -80,7 +80,7 @@ func (t *TMux) sessionAddApp(ctx context.Context, name string, args ...string) e
 		return err
 	}
 	cmd := []string{
-		"/bin/sh", "-ce",
+		"/bin/bash", "-ce",
 		fmt.Sprintf(`exec %s > >(tee -a "%s/%s.log") 2>&1`, osexec.Command("", args...).String(), t.config.LogDir, name),
 	}
 	if hasSession {
