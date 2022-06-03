@@ -130,30 +130,12 @@ func Stress(ctx context.Context, config StressConfig) error {
 		for i, accountTxs := range signedTxs {
 			accountTxs := accountTxs
 			spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
-				log := logger.Get(ctx)
-
-				// simple `for j:= 0; j < config.NumOfTransactions; j++`
-				// can't be used here because transactions are presigned, each containing unique, monotonic
-				// `account sequence` number. So if one transaction is skipped then all the next following ones will fail.
-				// That's why failed transaction is broadcasted again, to not break the sequence.
-				j := 0
-				for {
-					if err := ctx.Err(); err != nil {
+				for _, tx := range accountTxs {
+					if err := broadcastTx(ctx, client, tx); err != nil {
 						return err
 					}
-					tx := accountTxs[j]
-					txHash, err := client.Broadcast(ctx, tx)
-					if err != nil {
-						log.Error("Sending transaction failed", zap.Error(err))
-						continue
-					}
-					log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
-
-					j++
-					if j >= config.NumOfTransactions {
-						return nil
-					}
 				}
+				return nil
 			})
 		}
 		return nil
@@ -163,4 +145,20 @@ func Stress(ctx context.Context, config StressConfig) error {
 	}
 	log.Info("Benchmark finished")
 	return nil
+}
+
+func broadcastTx(ctx context.Context, client cored.Client, tx []byte) error {
+	log := logger.Get(ctx)
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		txHash, err := client.Broadcast(ctx, tx)
+		if err != nil {
+			log.Error("Sending transaction failed", zap.Error(err))
+			continue
+		}
+		log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
+		return nil
+	}
 }
