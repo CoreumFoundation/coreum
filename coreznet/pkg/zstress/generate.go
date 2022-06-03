@@ -77,6 +77,23 @@ func Generate(config GenerateConfig) error {
 	}
 	must.OK(ioutil.WriteFile(dir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 
+	for i := 0; i < config.NumOfInstances; i++ {
+		accounts := make([]cored.Secp256k1PrivateKey, 0, config.NumOfAccountsPerInstance)
+		for j := 0; j < config.NumOfAccountsPerInstance; j++ {
+			accountPublicKey, accountPrivateKey := cored.GenerateSecp256k1Key()
+			accounts = append(accounts, accountPrivateKey)
+			genesis.AddWallet(accountPublicKey, "10000000000000000000000000000core")
+		}
+
+		instanceDir := fmt.Sprintf("%s/instances/%d", dir, i)
+		must.OK(os.MkdirAll(instanceDir, 0o700))
+		must.OK(ioutil.WriteFile(instanceDir+"/accounts.json", must.Bytes(json.Marshal(accounts)), 0o600))
+	}
+
+	for i := 0; i < config.NumOfValidators; i++ {
+		genesis.Save(fmt.Sprintf("%s/validators/%d", dir, i))
+	}
+
 	nodeIDs = make([]string, 0, config.NumOfSentryNodes)
 	for i := 0; i < config.NumOfSentryNodes; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -91,22 +108,10 @@ func Generate(config GenerateConfig) error {
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
 		}.Save(nodeDir)
+
+		genesis.Save(nodeDir)
 	}
 	must.OK(ioutil.WriteFile(dir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
-
-	for i := 0; i < config.NumOfInstances; i++ {
-		accounts := make([]cored.Secp256k1PrivateKey, 0, config.NumOfAccountsPerInstance)
-		for j := 0; j < config.NumOfAccountsPerInstance; j++ {
-			accountPublicKey, accountPrivateKey := cored.GenerateSecp256k1Key()
-			accounts = append(accounts, accountPrivateKey)
-			genesis.AddWallet(accountPublicKey, "10000000000000000000000000000core")
-		}
-
-		instanceDir := fmt.Sprintf("%s/instances/%d", dir, i)
-		must.OK(os.MkdirAll(instanceDir, 0o700))
-		must.OK(ioutil.WriteFile(instanceDir+"/accounts.json", must.Bytes(json.Marshal(accounts)), 0o600))
-	}
-	genesis.Save(dir + "/docker-cored")
 	return nil
 }
 
