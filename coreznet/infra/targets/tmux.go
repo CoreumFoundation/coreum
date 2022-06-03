@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net"
 	"os"
 	osexec "os/exec"
 	"runtime"
@@ -33,6 +34,11 @@ type TMux struct {
 	spec   *infra.Spec
 
 	mu sync.Mutex // to protect tmux session
+}
+
+// BindIP returns the IP application should bind to inside the target
+func (t *TMux) BindIP() net.IP {
+	return ipLocalhost
 }
 
 // Stop stops running applications

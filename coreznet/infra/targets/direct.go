@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	osexec "os/exec"
 	"regexp"
@@ -30,6 +31,11 @@ func NewDirect(config infra.Config, spec *infra.Spec) infra.Target {
 type Direct struct {
 	config infra.Config
 	spec   *infra.Spec
+}
+
+// BindIP returns the IP application should bind to inside the target
+func (d *Direct) BindIP() net.IP {
+	return ipLocalhost
 }
 
 // Deploy deploys environment to os processes

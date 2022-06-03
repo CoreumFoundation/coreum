@@ -29,11 +29,12 @@ func coredNodes(chainID string, numOfNodes int, appF *apps.Factory) (infra.Mode,
 	for i := 1; i < numOfNodes; i++ {
 		port := 10000 + 10*i
 		node := appF.Cored(fmt.Sprintf("cored-%02d", i), cored.Ports{
-			RPC:     port + 1,
-			P2P:     port + 2,
-			GRPC:    port + 3,
-			GRPCWeb: port + 4,
-			PProf:   port + 5,
+			RPC:        port + 1,
+			P2P:        port + 2,
+			GRPC:       port + 3,
+			GRPCWeb:    port + 4,
+			PProf:      port + 5,
+			Prometheus: port + 6,
 		}, genesis, &node0)
 		nodes = append(nodes, node)
 	}

@@ -39,6 +39,11 @@ type Docker struct {
 	spec   *infra.Spec
 }
 
+// BindIP returns the IP application should bind to inside the target
+func (d *Docker) BindIP() net.IP {
+	return net.IPv4zero
+}
+
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
 	buf := &bytes.Buffer{}

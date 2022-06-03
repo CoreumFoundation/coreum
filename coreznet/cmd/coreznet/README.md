@@ -10,7 +10,7 @@ Install them manually before continuing.
 
 ## Building
 
-Build `coreznet` using our [building system](../build).
+Build `coreznet` using our [building system](../../../build).
 To build `coreznet` use this command:
 
 ```
@@ -29,7 +29,7 @@ You may build all the binaries at the same time by executing:
 $ core build
 ```
 
-After doing this `coreznet` binary is available in [bin](../bin).
+After doing this `coreznet` binary is available in [bin](../../../bin).
 
 ## Executing `coreznet`
 
@@ -73,7 +73,7 @@ Each environment is independent, you may create many of them and work with them 
 
 ### --mode
 
-Defines the list of applications to run. You may see their definitions in [mode.go](mode.go).
+Defines the list of applications to run. You may see their definitions in [pkg/znet/mode.go](pkg/znet/mode.go).
 
 ### --target
 
@@ -113,6 +113,7 @@ Available commands are:
 - `remove` - stops applications and removes all the resources used by the environment
 - `spec` - prints specification of the environment
 - `ping-pong` - sends transactions to generate traffic on blockchain
+- `stress` - tests the benchmarking logic of `corezstress`
 
 ## Example
 

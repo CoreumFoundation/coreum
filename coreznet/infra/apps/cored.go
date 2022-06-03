@@ -27,7 +27,7 @@ import (
 const CoredType infra.AppType = "cored"
 
 // NewCored creates new cored app
-func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor cored.Executor, appInfo *infra.AppInfo, ports cored.Ports, rootNode *Cored) Cored {
+func NewCored(name string, config infra.Config, genesis *cored.Genesis, appInfo *infra.AppInfo, ports cored.Ports, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -38,16 +38,10 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor
 	genesis.AddWallet(stakerPubKey, "100000000000000000000000core,10000000000000000000000000stake")
 	genesis.AddValidator(validatorPublicKey, stakerPrivKey, "100000000stake")
 
-	if rootNode == nil {
-		genesis.AddWallet(cored.AlicePrivKey.PubKey(), "1000000000000000core")
-		genesis.AddWallet(cored.BobPrivKey.PubKey(), "1000000000000000core")
-		genesis.AddWallet(cored.CharliePrivKey.PubKey(), "1000000000000000core")
-	}
-
 	return Cored{
 		name:                name,
+		homeDir:             config.AppDir + "/" + name,
 		config:              config,
-		executor:            executor,
 		nodeID:              cored.NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
@@ -68,8 +62,8 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, executor
 // Cored represents cored
 type Cored struct {
 	name                string
+	homeDir             string
 	config              infra.Config
-	executor            cored.Executor
 	nodeID              string
 	nodePrivateKey      ed25519.PrivateKey
 	validatorPrivateKey ed25519.PrivateKey
@@ -102,6 +96,11 @@ func (c Cored) Ports() cored.Ports {
 	return c.ports
 }
 
+// ChainID returns ID of the chain
+func (c Cored) ChainID() string {
+	return c.genesis.ChainID()
+}
+
 // IPSource returns the source of addresses chain listens on
 func (c Cored) IPSource() infra.IPSource {
 	return c.appInfo
@@ -129,12 +128,12 @@ func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateK
 	}
 
 	c.walletKeys[name] = privKey
-	return cored.Wallet{Name: name, Address: privKey.Address()}, privKey
+	return cored.Wallet{Name: name, Key: privKey}, privKey
 }
 
 // Client creates new client for cored blockchain
-func (c Cored) Client() *cored.Client {
-	return cored.NewClient(c.executor, c.IPSource().FromHostIP(), c.ports.RPC)
+func (c Cored) Client() cored.Client {
+	return cored.NewClient(c.genesis.ChainID(), net.JoinHostPort(c.IPSource().FromHostIP().String(), strconv.Itoa(c.Ports().RPC)))
 }
 
 // HealthCheck checks if cored chain is empty
@@ -211,15 +210,21 @@ func (c Cored) Deployment() infra.Deployment {
 				return args
 			},
 			Ports: portsToMap(c.ports),
-			PreFunc: func(ctx context.Context) error {
+			PreFunc: func(ip net.IP) error {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				cored.SaveIdentityFiles(c.executor.Home(), c.nodePrivateKey, c.validatorPrivateKey)
+				cored.NodeConfig{
+					Name:           c.name,
+					IP:             ip,
+					PrometheusPort: c.ports.Prometheus,
+					NodeKey:        c.nodePrivateKey,
+					ValidatorKey:   c.validatorPrivateKey,
+				}.Save(c.homeDir)
 
-				cored.AddKeysToStore(c.executor.Home(), c.walletKeys)
+				cored.AddKeysToStore(c.homeDir, c.walletKeys)
 
-				c.genesis.Save(c.executor.Home())
+				c.genesis.Save(c.homeDir)
 				return nil
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
@@ -248,7 +253,7 @@ if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
 fi
 
-exec ` + c.executor.Bin() + ` --home "` + c.executor.Home() + `" "$@" $OPTS
+exec "` + c.config.BinDir + `/cored" --home "` + c.homeDir + `" "$@" $OPTS
 `
 	return ioutil.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700)
 }

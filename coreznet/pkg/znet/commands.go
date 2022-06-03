@@ -1,14 +1,16 @@
-package coreznet
+package znet
 
 import (
 	"context"
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"net"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +25,7 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
+	"github.com/CoreumFoundation/coreum/coreznet/pkg/zstress"
 	"github.com/CoreumFoundation/coreum/coreznet/tests"
 )
 
@@ -39,6 +42,7 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	saveWrapper(config.WrapperDir, "tests", "test")
 	saveWrapper(config.WrapperDir, "spec", "spec")
 	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
+	saveWrapper(config.WrapperDir, "stress", "stress")
 	saveLogsWrapper(config.WrapperDir, config.LogDir, "logs")
 
 	shell, promptVar, err := shellConfig(config.EnvName)
@@ -108,7 +112,7 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 		case <-time.After(time.Second):
 		}
 	}
-	return err
+	return errors.WithStack(err)
 }
 
 // Test runs integration tests
@@ -138,20 +142,15 @@ func Spec(spec *infra.Spec) error {
 // PingPong connects to cored node and sends transactions back and forth from one account to another to generate
 // transactions on the blockchain
 func PingPong(ctx context.Context, mode infra.Mode) error {
-	var client *cored.Client
-	for _, app := range mode {
-		if app.Type() == apps.CoredType && app.Status() == infra.AppStatusRunning {
-			client = app.(apps.Cored).Client()
-			break
-		}
+	coredNode, err := coredNode(mode)
+	if err != nil {
+		return err
 	}
-	if client == nil {
-		return errors.New("haven't found any running cored node")
-	}
+	client := coredNode.Client()
 
-	alice := cored.Wallet{Name: "alice", Address: cored.AlicePrivKey.Address()}
-	bob := cored.Wallet{Name: "bob", Address: cored.BobPrivKey.Address()}
-	charlie := cored.Wallet{Name: "charlie", Address: cored.CharliePrivKey.Address()}
+	alice := cored.Wallet{Name: "alice", Key: cored.AlicePrivKey}
+	bob := cored.Wallet{Name: "bob", Key: cored.BobPrivKey}
+	charlie := cored.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
 
 	for {
 		if err := sendTokens(ctx, client, alice, bob); err != nil {
@@ -172,11 +171,45 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-func sendTokens(ctx context.Context, client *cored.Client, from, to cored.Wallet) error {
+// Stress runs benchmark implemented by `corezstress` on top of network deployed by `coreznet`
+func Stress(ctx context.Context, mode infra.Mode) error {
+	coredNode, err := coredNode(mode)
+	if err != nil {
+		return err
+	}
+
+	healthyCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+	if err := infra.WaitUntilHealthy(healthyCtx, coredNode); err != nil {
+		return err
+	}
+
+	return zstress.Stress(ctx, zstress.StressConfig{
+		ChainID:           coredNode.ChainID(),
+		NodeAddress:       net.JoinHostPort(coredNode.IPSource().FromHostIP().String(), strconv.Itoa(coredNode.Ports().RPC)),
+		Accounts:          cored.RandomWallets[:10],
+		NumOfTransactions: 100,
+	})
+}
+
+func coredNode(mode infra.Mode) (apps.Cored, error) {
+	for _, app := range mode {
+		if app.Type() == apps.CoredType && app.Status() == infra.AppStatusRunning {
+			return app.(apps.Cored), nil
+		}
+	}
+	return apps.Cored{}, errors.New("haven't found any running cored node")
+}
+
+func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {
 	log := logger.Get(ctx)
 
 	amount := cored.Balance{Amount: big.NewInt(1), Denom: "core"}
-	txHash, err := client.TxBankSend(ctx, from, to, amount)
+	txBytes, err := client.PrepareTxBankSend(from, to, amount)
+	if err != nil {
+		return err
+	}
+	txHash, err := client.Broadcast(ctx, txBytes)
 	if err != nil {
 		return err
 	}
@@ -184,11 +217,11 @@ func sendTokens(ctx context.Context, client *cored.Client, from, to cored.Wallet
 	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
 		zap.Stringer("amount", amount), zap.String("txHash", txHash))
 
-	fromBalance, err := client.QBankBalances(ctx, from)
+	fromBalance, err := client.QueryBankBalances(ctx, from)
 	if err != nil {
 		return err
 	}
-	toBalance, err := client.QBankBalances(ctx, to)
+	toBalance, err := client.QueryBankBalances(ctx, to)
 	if err != nil {
 		return err
 	}

@@ -86,6 +86,9 @@ type Target interface {
 
 // AppTarget represents target of deployment from the perspective of application
 type AppTarget interface {
+	// BindIP returns the IP application should bind to inside the target
+	BindIP() net.IP
+
 	// DeployBinary deploys binary to the target
 	DeployBinary(ctx context.Context, app Binary) (DeploymentInfo, error)
 
@@ -141,7 +144,7 @@ type AppBase struct {
 	Requires Prerequisites
 
 	// PreFunc is called to preprocess app
-	PreFunc func(ctx context.Context) error
+	PreFunc func(bindIP net.IP) error
 
 	// PostFunc is called after app is deployed
 	PostFunc func(ctx context.Context, deployment DeploymentInfo) error
@@ -163,7 +166,7 @@ func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarg
 	}
 
 	if app.PreFunc != nil {
-		return app.PreFunc(ctx)
+		return app.PreFunc(target.BindIP())
 	}
 	return nil
 }
