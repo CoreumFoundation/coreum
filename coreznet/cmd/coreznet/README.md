@@ -10,7 +10,7 @@ Install them manually before continuing.
 
 ## Building
 
-Build `coreznet` using our [building system](../build).
+Build `coreznet` using our [building system](../../../build).
 To build `coreznet` use this command:
 
 ```
@@ -29,7 +29,7 @@ You may build all the binaries at the same time by executing:
 $ core build
 ```
 
-After doing this `coreznet` binary is available in [bin](../bin).
+After doing this `coreznet` binary is available in [bin](../../../bin).
 
 ## Executing `coreznet`
 
