@@ -35,7 +35,7 @@ This is how the infrastructure for testing is going to look like:
 
 ## Generation
 
-`corezstress generate` command prepares all the files required by our DevOp department to create the infrastructure
+`corezstress generate` command prepares all the files required by our DevOps department to create the infrastructure
 described above, including:
 - genesis configuration for validators and sentry nodes
 - private keys and configuration for validators and sentry nodes
