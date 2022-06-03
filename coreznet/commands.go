@@ -200,13 +200,13 @@ func sendTokens(ctx context.Context, client *cored.Client, from, to cored.Wallet
 }
 
 func saveWrapper(dir, file, command string) {
-	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/sh
+	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
 exec "`+exe+`" "`+command+`" "$@"
 `), 0o700))
 }
 
 func saveLogsWrapper(dir, logDir, file string) {
-	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/sh
+	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
 if [ "$1" == "" ]; then
   echo "Provide the name of application"
   exit 1

@@ -239,7 +239,7 @@ func (c Cored) Deployment() infra.Deployment {
 }
 
 func (c Cored) saveClientWrapper(wrapperDir string, ip net.IP) error {
-	client := `#!/bin/sh
+	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
 	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""tcp://` + net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.RPC)) + `"""
