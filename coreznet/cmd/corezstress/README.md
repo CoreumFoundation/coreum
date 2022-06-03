@@ -77,6 +77,10 @@ This means that each goroutine spends most of the time on waiting for transactio
 That's why it safe to run many times more accounts on each instance than the number of CPU cores available on the server.
 The exact number must be determined by practice.
 
+The process of signing the transaction is the most time-consuming element of broadcasting. To generate maximum throughput
+during the test, all the transactions are generated and presigned first and only then all the concurrent accounts start
+broadcasting them.
+
 ## Gathering results
 
 Each validator and sentry node exposes prometheus endpoint on port `26660` so it's possible to collect them and inspect easily
