@@ -2,6 +2,7 @@ package cored
 
 import (
 	"context"
+	"encoding/hex"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -89,11 +90,16 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 		txHash = res.Hash.String()
 	}
 
+	txHashBytes, err := hex.DecodeString(txHash)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
 	timeoutCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
 	err = retry.Do(timeoutCtx, 250*time.Millisecond, func() error {
-		resultTx, err := c.clientCtx.Client.Tx(timeoutCtx, res.Hash, false)
+		resultTx, err := c.clientCtx.Client.Tx(timeoutCtx, txHashBytes, false)
 		if err != nil {
 			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
 				if isTxInMempool(errRes) {
