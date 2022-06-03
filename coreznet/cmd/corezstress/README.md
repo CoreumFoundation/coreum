@@ -65,7 +65,7 @@ Accepted CLI config options are:
 - `--node-addr` - address of a `cored` node RPC endpoint, in the form of host:port, to connect to
 - `--account-file` - path to a JSON file containing private keys of accounts funded on blockchain, this is one of `accounts.json` files under `instances` directory generated in previous step
 - `--accounts` - number of accounts used to benchmark the node in parallel, must not be greater than the number of keys available in account file
-- `--transactions` - number of transactions to send from each account (default 1000)
+- `--transactions` - number of transactions to send from each account
 
 Keep in mind that number of transactions specified by `--transactions` is executed concurrently by each account, so if you
 execute `corezstress --accounts=1000 --transactions=1000` then the total number of 1 million transactions is executed.
