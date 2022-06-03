@@ -10,9 +10,20 @@ To build `corezstress` use this command:
 $ core build/corezstress
 ```
 
-After doing this `coreznet` binary is available in [bin](../../../bin).
+Also `cored` is required. Build it using this command:
 
-If you work on macOS, linux binary is also created in [bin/linux](../../../bin/linux) which might be used to build
+```
+$ core build/cored
+```
+
+You may also build everything at once:
+
+```
+$ core build
+```
+
+After doing this binaries are available in [bin](../../../bin).
+If you work on macOS, linux binaries are also created in [bin/linux](../../../bin/linux) which might be used to build
 docker images.
 
 ## Infrastructure for benchmarking
