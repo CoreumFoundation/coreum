@@ -131,6 +131,11 @@ func Stress(ctx context.Context, config StressConfig) error {
 			accountTxs := accountTxs
 			spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
 				log := logger.Get(ctx)
+
+				// simple `for j:= 0; j < config.NumOfTransactions; j++`
+				// can't be used here because transactions are presigned, each containing unique, monotonic
+				// `account sequence` number. So if one transaction is skipped then all the next following ones will fail.
+				// That's why failed transaction is broadcasted again, to not break the sequence.
 				j := 0
 				for {
 					if err := ctx.Err(); err != nil {
