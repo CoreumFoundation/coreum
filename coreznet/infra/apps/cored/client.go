@@ -88,6 +88,11 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 		txHash = errRes.TxHash
 	} else {
 		txHash = res.Hash.String()
+
+		if res.Code != 0 {
+			err = errors.Errorf("error %d (%s): %s", res.Code, res.Codespace, res.Log)
+			return txHash, err
+		}
 	}
 
 	txHashBytes, err := hex.DecodeString(txHash)
