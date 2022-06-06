@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"math/big"
 	"runtime"
+	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/pace"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -42,9 +44,16 @@ type tx struct {
 func Stress(ctx context.Context, config StressConfig) error {
 	numOfAccounts := len(config.Accounts)
 	log := logger.Get(ctx)
+	startTs := time.Now()
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
-	log.Info("Preparing signed transactions...")
+	signedTxPace := pace.New("signed tx", 10*time.Second, pace.ZapReporter(log))
+
+	log.Info(
+		"Preparing signed transactions...",
+		zap.Int("num", numOfAccounts*config.NumOfTransactions),
+	)
+
 	var signedTxs [][][]byte
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		queue := make(chan tx)
@@ -102,6 +111,10 @@ func Stress(ctx context.Context, config StressConfig) error {
 			return nil
 		})
 		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
+			defer func() {
+				signedTxPace.Pause()
+			}()
+
 			signedTxs = make([][][]byte, numOfAccounts)
 			for i := 0; i < numOfAccounts; i++ {
 				signedTxs[i] = make([][]byte, config.NumOfTransactions)
@@ -113,6 +126,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 						return ctx.Err()
 					case result := <-results:
 						signedTxs[result.AccountIndex][result.TxIndex] = result.TxBytes
+						signedTxPace.Step(1)
 					}
 				}
 			}
@@ -125,13 +139,15 @@ func Stress(ctx context.Context, config StressConfig) error {
 	}
 	log.Info("Transactions prepared")
 
+	broadcastTxPace := pace.New("sent tx", 10*time.Second, pace.ZapReporter(log))
+
 	log.Info("Broadcasting transactions...")
 	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		for i, accountTxs := range signedTxs {
 			accountTxs := accountTxs
 			spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
 				for _, tx := range accountTxs {
-					if err := broadcastTx(ctx, client, tx); err != nil {
+					if err := broadcastTx(ctx, broadcastTxPace, client, tx); err != nil {
 						return err
 					}
 				}
@@ -143,11 +159,22 @@ func Stress(ctx context.Context, config StressConfig) error {
 	if err != nil {
 		return err
 	}
-	log.Info("Benchmark finished")
+
+	broadcastTxPace.Pause()
+	log.Info(
+		"Benchmark finished",
+		zap.Duration("dur", time.Since(startTs)),
+	)
+
 	return nil
 }
 
-func broadcastTx(ctx context.Context, client cored.Client, tx []byte) error {
+func broadcastTx(
+	ctx context.Context,
+	broadcastTxPace pace.Pace,
+	client cored.Client,
+	tx []byte,
+) error {
 	log := logger.Get(ctx)
 	for {
 		txHash, err := client.Broadcast(ctx, tx)
@@ -155,9 +182,13 @@ func broadcastTx(ctx context.Context, client cored.Client, tx []byte) error {
 			if errors.Is(err, ctx.Err()) {
 				return err
 			}
+
+			// TODO(xlab): consider backoff retry instead of for-loop
 			log.Error("Sending transaction failed", zap.Error(err))
 			continue
 		}
+
+		broadcastTxPace.Step(1)
 		log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
 		return nil
 	}
