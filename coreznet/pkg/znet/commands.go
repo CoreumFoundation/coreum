@@ -80,14 +80,11 @@ func Start(ctx context.Context, target infra.Target, mode infra.Mode) (retErr er
 // Stop stops environment
 func Stop(ctx context.Context, target infra.Target, spec *infra.Spec) (retErr error) {
 	defer func() {
-		spec.PGID = 0
 		for _, app := range spec.Apps {
-			if app.Status() == infra.AppStatusRunning {
-				app.SetStatus(infra.AppStatusStopped)
-			}
-			if err := spec.Save(); retErr == nil {
-				retErr = err
-			}
+			app.SetInfo(infra.DeploymentInfo{Status: infra.AppStatusStopped})
+		}
+		if err := spec.Save(); retErr == nil {
+			retErr = err
 		}
 	}()
 	return target.Stop(ctx)
@@ -186,7 +183,7 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 
 	return zstress.Stress(ctx, zstress.StressConfig{
 		ChainID:           coredNode.ChainID(),
-		NodeAddress:       net.JoinHostPort(coredNode.IPSource().FromHostIP().String(), strconv.Itoa(coredNode.Ports().RPC)),
+		NodeAddress:       net.JoinHostPort(coredNode.Info().FromHostIP.String(), strconv.Itoa(coredNode.Ports().RPC)),
 		Accounts:          cored.RandomWallets[:10],
 		NumOfTransactions: 100,
 	})
@@ -194,7 +191,7 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 
 func coredNode(mode infra.Mode) (apps.Cored, error) {
 	for _, app := range mode {
-		if app.Type() == apps.CoredType && app.Status() == infra.AppStatusRunning {
+		if app.Type() == apps.CoredType && app.Info().Status == infra.AppStatusRunning {
 			return app.(apps.Cored), nil
 		}
 	}
