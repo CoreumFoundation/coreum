@@ -101,14 +101,9 @@ func (c Cored) ChainID() string {
 	return c.genesis.ChainID()
 }
 
-// IPSource returns the source of addresses chain listens on
-func (c Cored) IPSource() infra.IPSource {
-	return c.appInfo
-}
-
-// Status returns status of application
-func (c Cored) Status() infra.AppStatus {
-	return c.appInfo.Status()
+// Info returns deployment info
+func (c Cored) Info() infra.DeploymentInfo {
+	return c.appInfo.Info()
 }
 
 // AddWallet adds wallet to genesis block and local keystore
@@ -133,18 +128,18 @@ func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateK
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() cored.Client {
-	return cored.NewClient(c.genesis.ChainID(), net.JoinHostPort(c.IPSource().FromHostIP().String(), strconv.Itoa(c.Ports().RPC)))
+	return cored.NewClient(c.genesis.ChainID(), net.JoinHostPort(c.Info().FromHostIP.String(), strconv.Itoa(c.Ports().RPC)))
 }
 
 // HealthCheck checks if cored chain is empty
 func (c Cored) HealthCheck(ctx context.Context) error {
-	if c.appInfo.Status() != infra.AppStatusRunning {
+	if c.appInfo.Info().Status != infra.AppStatusRunning {
 		return retry.Retryable(errors.Errorf("cored chain hasn't started yet"))
 	}
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	statusURL := url.URL{Scheme: "http", Host: net.JoinHostPort(c.IPSource().FromHostIP().String(), strconv.Itoa(c.ports.RPC)), Path: "/status"}
+	statusURL := url.URL{Scheme: "http", Host: net.JoinHostPort(c.Info().FromHostIP.String(), strconv.Itoa(c.ports.RPC)), Path: "/status"}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)

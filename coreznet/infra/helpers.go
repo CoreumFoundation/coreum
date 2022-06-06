@@ -34,22 +34,22 @@ func WaitUntilHealthy(ctx context.Context, apps ...HealthCheckCapable) error {
 	return nil
 }
 
-// AppWithStatus represents application which is able to return it's status
-type AppWithStatus interface {
+// AppWithInfo represents application which is able to return information about its deployment
+type AppWithInfo interface {
 	// Name returns name of app
 	Name() string
 
-	// Status returns status of application
-	Status() AppStatus
+	// Info returns information about application's deployment
+	Info() DeploymentInfo
 }
 
 // IsRunning returns a health check which succeeds if application is running
-func IsRunning(app AppWithStatus) HealthCheckCapable {
+func IsRunning(app AppWithInfo) HealthCheckCapable {
 	return isRunningHealthCheck{app: app}
 }
 
 type isRunningHealthCheck struct {
-	app AppWithStatus
+	app AppWithInfo
 }
 
 // Name returns name of app
@@ -59,8 +59,8 @@ func (hc isRunningHealthCheck) Name() string {
 
 // HealthCheck runs single health check
 func (hc isRunningHealthCheck) HealthCheck(ctx context.Context) error {
-	if hc.app.Status() == AppStatusRunning {
+	if hc.app.Info().Status == AppStatusRunning {
 		return nil
 	}
-	return retry.Retryable(errors.New("genesis block hasn't been mined yet"))
+	return retry.Retryable(errors.New("application hasn't been started yet"))
 }
