@@ -15,16 +15,39 @@ Moreover, we are much better go developers than bash ones.
 
 So here is the simple tool written in go which helps us in our daily work.
 
-## Configuration
-Assuming you cloned `coreum` repository to `~/coreum` this is the configuration to put in
-your `~/.bashrc` or `~/.zshrc` depending on which shell you use:
+## Shell configuration
+It is assumed here that cloned `coreum` repository exists in `$HOME/coreum`.
+If you store it elsewhere, adjust paths accordingly.
+
+Configuration for two shells is provided: `bash` and `zsh`.
+
+Once configuration is done log out from your session and log in again to apply changes.
+
+### Bash
+Add this line at the end of `~/.bash_profile` file:
 
 ```
 PATH="$HOME/coreum/bin:$PATH"
-complete -o nospace -C core core #should be omitted for zsh 
 ```
 
-then run:
+If you want to use autocompletion feature of `core` add this line at the end of `~/.bashrc` file:
+
+```
+complete -o nospace -C core core 
+```
+
+### ZSH
+
+Add this line at the end of `~/.zprofile` file:
+
+```
+PATH="$HOME/coreum/bin:$PATH"
+```
+
+
+## Installing tools
+
+Run
 
 ```
 $ core setup
@@ -34,8 +57,6 @@ to install all the tools we use.
 
 Whenever tool downloads or builds binaries it puts them inside [bin](../bin) directory so they are
 easily callable from console.
-
-After doing this and restarting a shell session you may call `core` command.
 
 ## `core` command
 
