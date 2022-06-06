@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 	"runtime"
+	"sync/atomic"
+	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -127,17 +129,36 @@ func Stress(ctx context.Context, config StressConfig) error {
 
 	log.Info("Broadcasting transactions...")
 	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		for i, accountTxs := range signedTxs {
-			accountTxs := accountTxs
-			spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
-				for _, tx := range accountTxs {
-					if err := broadcastTx(ctx, client, tx); err != nil {
-						return err
-					}
+		const period = 10
+		var txNum uint32
+		spawn("monitoring", parallel.Fail, func(ctx context.Context) error {
+			log := logger.Get(ctx)
+			for {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-time.After(period * time.Second):
+					log.Info("Transaction rate [txs/s]", zap.Float32("rate", float32(atomic.SwapUint32(&txNum, 0))/period))
+				}
+			}
+		})
+		spawn("accounts", parallel.Exit, func(ctx context.Context) error {
+			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+				for i, accountTxs := range signedTxs {
+					accountTxs := accountTxs
+					spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
+						for _, tx := range accountTxs {
+							if err := broadcastTx(ctx, client, tx); err != nil {
+								return err
+							}
+							atomic.AddUint32(&txNum, 1)
+						}
+						return nil
+					})
 				}
 				return nil
 			})
-		}
+		})
 		return nil
 	})
 	if err != nil {
