@@ -13,12 +13,12 @@ type containerIPResolver struct {
 
 func (ipr containerIPResolver) IPOf(app infra.IPProvider) net.IP {
 	// FIXME (wojciech): if this returns 127.0.0.1 it means that container wants to connect to app running on host so host.docker.internal should be returned instead
-	return app.IPSource().FromContainerIP()
+	return app.Info().FromContainerIP
 }
 
 type hostIPResolver struct {
 }
 
 func (ipr hostIPResolver) IPOf(app infra.IPProvider) net.IP {
-	return app.IPSource().FromHostIP()
+	return app.Info().FromHostIP
 }

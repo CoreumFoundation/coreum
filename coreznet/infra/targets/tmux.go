@@ -69,7 +69,12 @@ func (t *TMux) DeployBinary(ctx context.Context, app infra.Binary) (infra.Deploy
 	if err := t.sessionAddApp(ctx, app.Name, append([]string{binPath}, app.ArgsFunc(ipLocalhost, t.config.AppDir+"/"+app.Name, hostIPResolver{})...)...); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	return infra.DeploymentInfo{FromHostIP: ipLocalhost, FromContainerIP: ipLocalhost}, nil
+	return infra.DeploymentInfo{
+		Status:          infra.AppStatusRunning,
+		FromHostIP:      ipLocalhost,
+		FromContainerIP: ipLocalhost,
+		Ports:           app.Ports,
+	}, nil
 }
 
 // DeployContainer starts container inside tmux session
@@ -97,9 +102,7 @@ func (t *TMux) sessionAddApp(ctx context.Context, name string, args ...string) e
 
 func (t *TMux) sessionAttach(ctx context.Context) error {
 	cmd := exec.TMux("attach-session", "-t", t.config.EnvName)
-	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
 	return libexec.Exec(ctx, cmd)
 }
 
