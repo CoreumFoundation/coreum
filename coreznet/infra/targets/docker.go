@@ -133,7 +133,12 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	}
 
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
-	return infra.DeploymentInfo{FromHostIP: ipLocalhost, FromContainerIP: net.ParseIP(strings.TrimSuffix(ipBuf.String(), "\n"))}, nil
+	return infra.DeploymentInfo{
+		Status:          infra.AppStatusRunning,
+		FromHostIP:      ipLocalhost,
+		FromContainerIP: net.ParseIP(strings.TrimSuffix(ipBuf.String(), "\n")),
+		Ports:           app.Ports,
+	}, nil
 }
 
 // DeployContainer starts container in docker

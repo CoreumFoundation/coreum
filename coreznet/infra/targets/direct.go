@@ -3,17 +3,12 @@ package targets
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	osexec "os/exec"
-	"regexp"
 	"runtime"
-	"strconv"
-	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/coreznet/exec"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
@@ -45,45 +40,18 @@ func (d *Direct) Deploy(ctx context.Context, mode infra.Mode) error {
 
 // Stop stops running applications
 func (d *Direct) Stop(ctx context.Context) error {
-	if d.spec.PGID == 0 {
+	pIDs := make([]int, 0, len(d.spec.Apps))
+	for _, app := range d.spec.Apps {
+		pID := app.Info().ProcessID
+		if pID == 0 {
+			continue
+		}
+		pIDs = append(pIDs, pID)
+	}
+	if len(pIDs) == 0 {
 		return nil
 	}
-	procs, err := ioutil.ReadDir("/proc")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	reg := regexp.MustCompile("^[0-9]+$")
-	var pids []int
-	for _, procH := range procs {
-		if !procH.IsDir() || !reg.MatchString(procH.Name()) {
-			continue
-		}
-		statPath := "/proc/" + procH.Name() + "/stat"
-		statRaw, err := ioutil.ReadFile(statPath)
-		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				continue
-			}
-			return errors.WithStack(err)
-		}
-		properties := strings.Split(string(statRaw), " ")
-		pgID, err := strconv.ParseInt(properties[4], 10, 32)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		if pgID != int64(d.spec.PGID) {
-			continue
-		}
-		pID := int(must.Int64(strconv.ParseInt(procH.Name(), 10, 32)))
-		if pID == os.Getpid() {
-			continue
-		}
-		pids = append(pids, pID)
-	}
-	if len(pids) == 0 {
-		return nil
-	}
-	return exec.Kill(ctx, pids)
+	return exec.Kill(ctx, pIDs)
 }
 
 // Remove removes running applications
@@ -99,7 +67,12 @@ func (d *Direct) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	if err := cmd.Start(); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	return infra.DeploymentInfo{FromHostIP: ipLocalhost, FromContainerIP: ipLocalhost}, nil
+	return infra.DeploymentInfo{
+		Status:          infra.AppStatusRunning,
+		ProcessID:       cmd.Process.Pid,
+		FromHostIP:      ipLocalhost,
+		FromContainerIP: ipLocalhost,
+		Ports:           app.Ports}, nil
 }
 
 // DeployContainer starts container

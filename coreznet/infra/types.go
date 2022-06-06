@@ -22,8 +22,8 @@ type App interface {
 	// Type returns type of application
 	Type() AppType
 
-	// Status returns status of application
-	Status() AppStatus
+	// Info returns deployment info
+	Info() DeploymentInfo
 
 	// Name returns name of application
 	Name() string
@@ -44,7 +44,7 @@ type Mode []App
 // Deploy deploys app in environment to the target
 func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
 	for _, app := range m {
-		if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Status() == AppStatusRunning {
+		if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Info().Status == AppStatusRunning {
 			continue
 		}
 		info, err := app.Deployment().Deploy(ctx, t, config)
@@ -52,24 +52,30 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 			return err
 		}
 		appInfo := spec.Apps[app.Name()]
-		appInfo.SetFromHostIP(info.FromHostIP)
-		appInfo.SetFromContainerIP(info.FromContainerIP)
-		appInfo.SetPorts(info.Ports)
-		appInfo.SetStatus(AppStatusRunning)
+		appInfo.SetInfo(info)
 	}
 	return spec.Save()
 }
 
 // DeploymentInfo contains info about deployed application
 type DeploymentInfo struct {
-	// FromHostIP is the IP address used to reach application from processes running on host
-	FromHostIP net.IP
+	// ProcessID stores process ID used to run the app - used only by direct target
+	ProcessID int `json:"processID,omitempty"` // nolint:tagliatelle // it wants processId
 
-	// FromContainerIP is the IP address used to reach application from other containers
-	FromContainerIP net.IP
+	// Type is the type of app
+	Type AppType `json:"type"`
 
-	// Ports stores the named ports exposed by the application
-	Ports map[string]int
+	// FromHostIP is the host's IP application binds to
+	FromHostIP net.IP `json:"fromHostIP,omitempty"` // nolint:tagliatelle // it wants fromHostIp
+
+	// FromContainerIP is the IP of the container application is running in
+	FromContainerIP net.IP `json:"fromContainerIP,omitempty"` // nolint:tagliatelle // it wants fromContainerIp
+
+	// Status indicates the status of the application
+	Status AppStatus `json:"status"`
+
+	// Ports describe network ports provided by the application
+	Ports map[string]int `json:"ports,omitempty"`
 }
 
 // Target represents target of deployment from the perspective of coreznet
@@ -105,19 +111,10 @@ type Prerequisites struct {
 	Dependencies []HealthCheckCapable
 }
 
-// IPSource allows to get information about IPs used by the application
-type IPSource interface {
-	// FromHostIP returns IP used by the application on host network
-	FromHostIP() net.IP
-
-	// FromContainerIP returns IP used by the application's container
-	FromContainerIP() net.IP
-}
-
 // IPProvider provides the IP source of the application
 type IPProvider interface {
-	// IPSource provides the IP source
-	IPSource() IPSource
+	// Info returns information about deployment
+	Info() DeploymentInfo
 }
 
 // IPResolver resolves the IP of the application
@@ -161,7 +158,7 @@ func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarg
 		}
 	}
 
-	if app.Info.Status() == AppStatusStopped {
+	if app.Info.Info().Status == AppStatusStopped {
 		return nil
 	}
 
@@ -171,10 +168,9 @@ func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarg
 	return nil
 }
 
-func (app AppBase) postprocess(ctx context.Context, info *DeploymentInfo) error {
-	info.Ports = app.Ports
+func (app AppBase) postprocess(ctx context.Context, info DeploymentInfo) error {
 	if app.PostFunc != nil {
-		return app.PostFunc(ctx, *info)
+		return app.PostFunc(ctx, info)
 	}
 	return nil
 }
@@ -197,7 +193,7 @@ func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) (
 	if err != nil {
 		return DeploymentInfo{}, err
 	}
-	if err := app.AppBase.postprocess(ctx, &info); err != nil {
+	if err := app.AppBase.postprocess(ctx, info); err != nil {
 		return DeploymentInfo{}, err
 	}
 	return info, nil
@@ -251,18 +247,12 @@ func NewSpec(config Config) *Spec {
 		Env:      config.EnvName,
 		Apps:     map[string]*AppInfo{},
 	}
-	if config.Target == "direct" {
-		spec.PGID = os.Getpid()
-	}
 	return spec
 }
 
 // Spec describes running environment
 type Spec struct {
 	specFile string
-
-	// PGID stores process group ID used to run apps - used only by direct target
-	PGID int `json:"pgid,omitempty"`
 
 	// Target is the name of target being used to run apps
 	Target string `json:"target"`
@@ -328,17 +318,8 @@ type appInfoData struct {
 	// Type is the type of app
 	Type AppType `json:"type"`
 
-	// FromHostIP is the host's IP application binds to
-	FromHostIP net.IP `json:"fromHostIP,omitempty"` // nolint:tagliatelle // it wants fromHostIp
-
-	// FromContainerIP is the IP of the container application is running in
-	FromContainerIP net.IP `json:"fromContainerIP,omitempty"` // nolint:tagliatelle // it wants fromContainerIp
-
-	// Status indicates the status of the application
-	Status AppStatus `json:"status"`
-
-	// Ports describe network ports provided by the application
-	Ports map[string]int `json:"ports,omitempty"`
+	// Info stores app deployment information
+	Info DeploymentInfo `json:"info"`
 }
 
 // AppInfo describes app running in environment
@@ -348,60 +329,20 @@ type AppInfo struct {
 	data appInfoData
 }
 
-// FromHostIP returns IP of the host
-func (ai *AppInfo) FromHostIP() net.IP {
+// SetInfo sets fields based on deployment info
+func (ai *AppInfo) SetInfo(info DeploymentInfo) {
+	ai.mu.Lock()
+	defer ai.mu.Unlock()
+
+	ai.data.Info = info
+}
+
+// Info returns deployment info
+func (ai *AppInfo) Info() DeploymentInfo {
 	ai.mu.RLock()
 	defer ai.mu.RUnlock()
 
-	return ai.data.FromHostIP
-}
-
-// SetFromHostIP sets IP of the host
-func (ai *AppInfo) SetFromHostIP(ip net.IP) {
-	ai.mu.Lock()
-	defer ai.mu.Unlock()
-
-	ai.data.FromHostIP = ip
-}
-
-// FromContainerIP returns IP of the container
-func (ai *AppInfo) FromContainerIP() net.IP {
-	ai.mu.RLock()
-	defer ai.mu.RUnlock()
-
-	return ai.data.FromContainerIP
-}
-
-// SetFromContainerIP sets IP of the container
-func (ai *AppInfo) SetFromContainerIP(ip net.IP) {
-	ai.mu.Lock()
-	defer ai.mu.Unlock()
-
-	ai.data.FromContainerIP = ip
-}
-
-// Status returns status
-func (ai *AppInfo) Status() AppStatus {
-	ai.mu.RLock()
-	defer ai.mu.RUnlock()
-
-	return ai.data.Status
-}
-
-// SetStatus sets status
-func (ai *AppInfo) SetStatus(status AppStatus) {
-	ai.mu.Lock()
-	defer ai.mu.Unlock()
-
-	ai.data.Status = status
-}
-
-// SetPorts sets ports
-func (ai *AppInfo) SetPorts(ports map[string]int) {
-	ai.mu.Lock()
-	defer ai.mu.Unlock()
-
-	ai.data.Ports = ports
+	return ai.data.Info
 }
 
 // MarshalJSON marshals data to JSON
