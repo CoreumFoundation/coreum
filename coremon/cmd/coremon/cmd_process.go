@@ -48,7 +48,7 @@ func processCmd(c *cli.Cmd) {
 			*tendermintRPC,
 			protoCodec,
 			*parallelBlockFetchJobs,
-			coremon.NewBlockHandlerWithMetrics(rootCtx),
+			coremon.NewBlockHandlerWithMetrics(rootCtx, *chainID),
 		)
 		must.OK(err)
 

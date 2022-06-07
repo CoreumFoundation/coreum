@@ -5,6 +5,7 @@ import (
 	"time"
 
 	cli "github.com/jawher/mow.cli"
+	"go.uber.org/zap"
 
 	closer "github.com/CoreumFoundation/coreum-tools/pkg/closer"
 	statsd_metrics "github.com/CoreumFoundation/coreum/coremon/pkg/statsd_metrics"
@@ -12,21 +13,20 @@ import (
 
 func initMetrics(c *cli.Cmd) {
 	var (
-		statsdPrefix   *string
-		statsdAddr     *string
-		statsdDisabled *string
+		statsdPrefix  *string
+		statsdAddr    *string
+		statsdEnabled *string
 	)
 
 	initStatsdOptions(
 		c,
 		&statsdPrefix,
 		&statsdAddr,
-		&statsdDisabled,
+		&statsdEnabled,
 	)
 
-	if toBool(*statsdDisabled) {
-		statsd_metrics.Disable()
-	} else {
+	if toBool(*statsdEnabled) {
+		appLogger.Info("statsd reporter is enabled", zap.String("target", *statsdAddr))
 		go func() {
 			for {
 				hostname, _ := os.Hostname()
@@ -36,6 +36,7 @@ func initMetrics(c *cli.Cmd) {
 				})
 
 				if err != nil {
+					appLogger.With(zap.Error(err)).Warn("failed to init statsd reporter")
 					time.Sleep(time.Minute)
 					continue
 				}
@@ -47,6 +48,8 @@ func initMetrics(c *cli.Cmd) {
 				statsd_metrics.Close()
 			})
 		}()
+	} else {
+		statsd_metrics.Disable()
 	}
 
 }
