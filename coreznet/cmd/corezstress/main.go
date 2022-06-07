@@ -27,8 +27,9 @@ func main() {
 		var accountFile string
 		var numOfAccounts int
 		rootCmd := &cobra.Command{
-			SilenceUsage: true,
-			Short:        "Run benchmark test",
+			SilenceUsage:  true,
+			SilenceErrors: true,
+			Short:         "Run benchmark test",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if numOfAccounts <= 0 {
 					return errors.New("number of accounts must be greater than 0")
