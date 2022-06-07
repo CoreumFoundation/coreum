@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"runtime"
-	"sync/atomic"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -15,6 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/coreznet/pkg/reporter"
 )
 
 // StressConfig contains config for benchmarking the blockchain
@@ -43,6 +43,7 @@ type tx struct {
 // Stress runs a benchmark test
 func Stress(ctx context.Context, config StressConfig) error {
 	numOfAccounts := len(config.Accounts)
+	txTotal := uint32(len(config.Accounts)) * uint32(config.NumOfTransactions)
 	log := logger.Get(ctx)
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
@@ -103,6 +104,11 @@ func Stress(ctx context.Context, config StressConfig) error {
 			}
 			return nil
 		})
+
+		reporter := reporter.New("Signature throughput", 10*time.Second)
+		signatureCounter := reporter.UInt32("signatures", txTotal)
+
+		spawn("reporter", parallel.Fail, reporter.Run)
 		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
 			signedTxs = make([][][]byte, numOfAccounts)
 			for i := 0; i < numOfAccounts; i++ {
@@ -115,6 +121,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 						return ctx.Err()
 					case result := <-results:
 						signedTxs[result.AccountIndex][result.TxIndex] = result.TxBytes
+						signatureCounter(1)
 					}
 				}
 			}
@@ -129,19 +136,10 @@ func Stress(ctx context.Context, config StressConfig) error {
 
 	log.Info("Broadcasting transactions...")
 	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		const period = 10
-		var txNum uint32
-		spawn("monitoring", parallel.Fail, func(ctx context.Context) error {
-			log := logger.Get(ctx)
-			for {
-				select {
-				case <-ctx.Done():
-					return ctx.Err()
-				case <-time.After(period * time.Second):
-					log.Info("Transaction rate [txs/s]", zap.Float32("rate", float32(atomic.SwapUint32(&txNum, 0))/period))
-				}
-			}
-		})
+		reporter := reporter.New("Transaction throughput", 10*time.Second)
+		txCounter := reporter.UInt32("txs", txTotal)
+
+		spawn("reporter", parallel.Fail, reporter.Run)
 		spawn("accounts", parallel.Exit, func(ctx context.Context) error {
 			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 				for i, accountTxs := range signedTxs {
@@ -151,7 +149,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 							if err := broadcastTx(ctx, client, tx); err != nil {
 								return err
 							}
-							atomic.AddUint32(&txNum, 1)
+							txCounter(1)
 						}
 						return nil
 					})
