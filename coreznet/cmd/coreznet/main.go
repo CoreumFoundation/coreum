@@ -18,9 +18,10 @@ import (
 func main() {
 	run.Tool("coreznet", znet.IoC, func(c *ioc.Container, configF *znet.ConfigFactory, cmdF *znet.CmdFactory) error {
 		rootCmd := &cobra.Command{
-			SilenceUsage: true,
-			Short:        "Creates preconfigured session for environment",
-			RunE:         cmdF.Cmd(znet.Activate),
+			SilenceUsage:  true,
+			SilenceErrors: true,
+			Short:         "Creates preconfigured session for environment",
+			RunE:          cmdF.Cmd(znet.Activate),
 		}
 		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
 		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("COREZNET_ENV", "coreznet"), "Name of the environment to run in")
