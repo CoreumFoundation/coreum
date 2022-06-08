@@ -105,10 +105,10 @@ func Stress(ctx context.Context, config StressConfig) error {
 			return nil
 		})
 
-		reporter := reporter.New("Signature throughput", 10*time.Second)
-		signatureCounter := reporter.UInt32("signatures", txTotal)
+		metrics := reporter.New("Signature throughput", 10*time.Second)
+		signatureCounterF := metrics.UInt32("signatures", txTotal)
 
-		spawn("reporter", parallel.Fail, reporter.Run)
+		spawn("metrics", parallel.Fail, metrics.Run)
 		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
 			signedTxs = make([][][]byte, numOfAccounts)
 			for i := 0; i < numOfAccounts; i++ {
@@ -121,7 +121,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 						return ctx.Err()
 					case result := <-results:
 						signedTxs[result.AccountIndex][result.TxIndex] = result.TxBytes
-						signatureCounter(1)
+						signatureCounterF(1)
 					}
 				}
 			}
@@ -136,10 +136,10 @@ func Stress(ctx context.Context, config StressConfig) error {
 
 	log.Info("Broadcasting transactions...")
 	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		reporter := reporter.New("Transaction throughput", 10*time.Second)
-		txCounter := reporter.UInt32("txs", txTotal)
+		metrics := reporter.New("Transaction throughput", 10*time.Second)
+		txCounterF := metrics.UInt32("txs", txTotal)
 
-		spawn("reporter", parallel.Fail, reporter.Run)
+		spawn("metrics", parallel.Fail, metrics.Run)
 		spawn("accounts", parallel.Exit, func(ctx context.Context) error {
 			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 				for i, accountTxs := range signedTxs {
@@ -149,7 +149,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 							if err := broadcastTx(ctx, client, tx); err != nil {
 								return err
 							}
-							txCounter(1)
+							txCounterF(1)
 						}
 						return nil
 					})
