@@ -17,13 +17,13 @@ func New(title string, reportingPeriod time.Duration) *Reporter {
 	}
 }
 
-type counterFn func(scale float64) zap.Field
+type reportingFn func(scale float64) zap.Field
 
 // Reporter creates a metrics and reports them every period
 type Reporter struct {
-	title    string
-	period   time.Duration
-	counters []counterFn
+	title     string
+	period    time.Duration
+	reporters []reportingFn
 }
 
 // Run is the code to be run in a goroutine, it periodically reports the metrics
@@ -37,8 +37,8 @@ func (r *Reporter) Run(ctx context.Context) error {
 		case <-time.After(r.period):
 		}
 
-		fields := make([]zap.Field, 0, len(r.counters))
-		for _, c := range r.counters {
+		fields := make([]zap.Field, 0, len(r.reporters))
+		for _, c := range r.reporters {
 			fields = append(fields, c(scale))
 		}
 		log.Info(r.title, fields...)
@@ -72,6 +72,6 @@ func (r *Reporter) Progress(label string, total uint64) func(step uint64) {
 	}
 }
 
-func (r *Reporter) add(counterF counterFn) {
-	r.counters = append(r.counters, counterF)
+func (r *Reporter) add(reportingF reportingFn) {
+	r.reporters = append(r.reporters, reportingF)
 }
