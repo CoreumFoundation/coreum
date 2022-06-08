@@ -17,11 +17,13 @@ func New(title string, reportingPeriod time.Duration) *Reporter {
 	}
 }
 
+type counterFn func(scale float64) zap.Field
+
 // Reporter creates a metrics and reports them every period
 type Reporter struct {
 	title    string
 	period   time.Duration
-	counters []func(scale float64) zap.Field
+	counters []counterFn
 }
 
 // Run is the code to be run in a goroutine, it periodically reports the metrics
@@ -47,7 +49,7 @@ func (r *Reporter) Run(ctx context.Context) error {
 func (r *Reporter) Throughput(label string) func(step uint64) {
 	var counter uint64
 
-	r.counters = append(r.counters, func(scale float64) zap.Field {
+	r.add(func(scale float64) zap.Field {
 		return zap.Float64(label, float64(atomic.SwapUint64(&counter, 0))/scale)
 	})
 
@@ -61,11 +63,15 @@ func (r *Reporter) Progress(label string, total uint64) func(step uint64) {
 	totalFloat := float64(total)
 	var all uint64
 
-	r.counters = append(r.counters, func(scale float64) zap.Field {
+	r.add(func(scale float64) zap.Field {
 		return zap.Float64(label, 100.*float64(atomic.LoadUint64(&all))/totalFloat)
 	})
 
 	return func(step uint64) {
 		atomic.AddUint64(&all, step)
 	}
+}
+
+func (r *Reporter) add(counterF counterFn) {
+	r.counters = append(r.counters, counterF)
 }
