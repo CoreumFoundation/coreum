@@ -62,7 +62,7 @@ func (r *Reporter) Progress(label string, total uint64) func(step uint64) {
 	var all uint64
 
 	r.counters = append(r.counters, func(scale float64) zap.Field {
-		return zap.Float64(label, 100.*float64(all)/totalFloat)
+		return zap.Float64(label, 100.*float64(atomic.LoadUint64(&all))/totalFloat)
 	})
 
 	return func(step uint64) {
