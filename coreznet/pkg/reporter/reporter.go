@@ -2,7 +2,6 @@ package reporter
 
 import (
 	"context"
-	"math"
 	"sync/atomic"
 	"time"
 
@@ -44,22 +43,29 @@ func (r *Reporter) Run(ctx context.Context) error {
 	}
 }
 
-// UInt32 creates metric of type uint32
-func (r *Reporter) UInt32(label string, total uint32) func(step uint32) {
-	progressLabel := label + "Progress"
-	totalFloat := float64(total)
-	var duringPeriod uint32
-	var value, all float64
+// Throughput reports the actual number of items per second being processed
+func (r *Reporter) Throughput(label string) func(step uint64) {
+	var counter uint64
 
 	r.counters = append(r.counters, func(scale float64) zap.Field {
-		value = float64(atomic.SwapUint32(&duringPeriod, 0))
-		return zap.Float64(label, value/scale)
-	}, func(scale float64) zap.Field {
-		all += value
-		return zap.Float64(progressLabel, math.Round(100*all/totalFloat))
+		return zap.Float64(label, float64(atomic.SwapUint64(&counter, 0))/scale)
 	})
 
-	return func(step uint32) {
-		atomic.AddUint32(&duringPeriod, step)
+	return func(step uint64) {
+		atomic.AddUint64(&counter, step)
+	}
+}
+
+// Progress reports the percentage of items processed so far
+func (r *Reporter) Progress(label string, total uint64) func(step uint64) {
+	totalFloat := float64(total)
+	var all uint64
+
+	r.counters = append(r.counters, func(scale float64) zap.Field {
+		return zap.Float64(label, 100.*float64(all)/totalFloat)
+	})
+
+	return func(step uint64) {
+		atomic.AddUint64(&all, step)
 	}
 }

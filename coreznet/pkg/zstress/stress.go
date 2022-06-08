@@ -43,7 +43,7 @@ type tx struct {
 // Stress runs a benchmark test
 func Stress(ctx context.Context, config StressConfig) error {
 	numOfAccounts := len(config.Accounts)
-	txTotal := uint32(len(config.Accounts)) * uint32(config.NumOfTransactions)
+	txTotal := uint64(len(config.Accounts)) * uint64(config.NumOfTransactions)
 	log := logger.Get(ctx)
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
@@ -106,7 +106,8 @@ func Stress(ctx context.Context, config StressConfig) error {
 		})
 
 		metrics := reporter.New("Signature throughput", 10*time.Second)
-		signatureCounterF := metrics.UInt32("signatures", txTotal)
+		signingThroughputF := metrics.Throughput("throughput")
+		signingProgressF := metrics.Progress("progress", txTotal)
 
 		spawn("metrics", parallel.Fail, metrics.Run)
 		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
@@ -121,7 +122,8 @@ func Stress(ctx context.Context, config StressConfig) error {
 						return ctx.Err()
 					case result := <-results:
 						signedTxs[result.AccountIndex][result.TxIndex] = result.TxBytes
-						signatureCounterF(1)
+						signingThroughputF(1)
+						signingProgressF(1)
 					}
 				}
 			}
@@ -137,7 +139,8 @@ func Stress(ctx context.Context, config StressConfig) error {
 	log.Info("Broadcasting transactions...")
 	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		metrics := reporter.New("Transaction throughput", 10*time.Second)
-		txCounterF := metrics.UInt32("txs", txTotal)
+		txThroughputF := metrics.Throughput("throughput")
+		txProgressF := metrics.Progress("progress", txTotal)
 
 		spawn("metrics", parallel.Fail, metrics.Run)
 		spawn("accounts", parallel.Exit, func(ctx context.Context) error {
@@ -149,7 +152,8 @@ func Stress(ctx context.Context, config StressConfig) error {
 							if err := broadcastTx(ctx, client, tx); err != nil {
 								return err
 							}
-							txCounterF(1)
+							txThroughputF(1)
+							txProgressF(1)
 						}
 						return nil
 					})
