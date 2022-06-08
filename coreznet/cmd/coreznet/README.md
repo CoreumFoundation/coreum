@@ -73,7 +73,7 @@ Each environment is independent, you may create many of them and work with them 
 
 ### --mode
 
-Defines the list of applications to run. You may see their definitions in [pkg/znet/mode.go](pkg/znet/mode.go).
+Defines the list of applications to run. You may see their definitions in [pkg/znet/mode.go](../../pkg/znet/mode.go).
 
 ### --target
 
@@ -161,7 +161,7 @@ Different `cored` instances might available in another `--mode`. Run `spec` comm
 
 ## Integration tests
 
-Tests are defined in [tests/index.go](tests/index.go)
+Tests are defined in [tests/index.go](../../tests/index.go)
 
 You may run tests directly:
 
