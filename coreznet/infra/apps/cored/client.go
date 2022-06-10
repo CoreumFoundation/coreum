@@ -18,6 +18,9 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
+const requestTimeout = 10 * time.Second
+const txTimeout = 30 * time.Second
+
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
 	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
@@ -39,14 +42,22 @@ type Client struct {
 func (c Client) GetNumberSequence(address string) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(address)
 	must.OK(err)
+
+	// FIXME (wojciech): Find a way to pass `ctx` to the logic of `GetAccountNumberSequence` to support timeouts
 	accNum, accSeq, err := c.clientCtx.AccountRetriever.GetAccountNumberSequence(c.clientCtx, addr)
-	return accNum, accSeq, errors.WithStack(err)
+	if err != nil {
+		return 0, 0, err
+	}
+	return accNum, accSeq, nil
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
 func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
+	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
 	// FIXME (wojtek): support pagination
-	resp, err := c.bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
+	resp, err := c.bankQueryClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -79,8 +90,15 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 // Broadcast broadcasts encoded transaction and returns tx hash
 func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error) {
 	var txHash string
-	res, err := c.clientCtx.Client.BroadcastTxSync(ctx, encodedTx)
+	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
+	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
 	if err != nil {
+		if errors.Is(err, requestCtx.Err()) {
+			return "", errors.WithStack(err)
+		}
+
 		errRes := client.CheckTendermintError(err, encodedTx)
 		if !isTxInMempool(errRes) {
 			return "", errors.WithStack(err)
@@ -99,12 +117,18 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 		return "", errors.WithStack(err)
 	}
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
 	defer cancel()
 
 	err = retry.Do(timeoutCtx, 250*time.Millisecond, func() error {
-		resultTx, err := c.clientCtx.Client.Tx(timeoutCtx, txHashBytes, false)
+		requestCtx, cancel := context.WithTimeout(timeoutCtx, requestTimeout)
+		defer cancel()
+
+		resultTx, err := c.clientCtx.Client.Tx(requestCtx, txHashBytes, false)
 		if err != nil {
+			if errors.Is(err, requestCtx.Err()) {
+				return retry.Retryable(errors.WithStack(err))
+			}
 			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
 				if isTxInMempool(errRes) {
 					return retry.Retryable(errors.WithStack(err))
