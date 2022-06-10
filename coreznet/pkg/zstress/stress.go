@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
 // StressConfig contains config for benchmarking the blockchain
@@ -48,6 +49,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 
 	log.Info("Preparing signed transactions...")
 	var signedTxs [][][]byte
+	var initialAccountSequences []uint64
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		queue := make(chan tx)
 		results := make(chan tx)
@@ -72,6 +74,8 @@ func Stress(ctx context.Context, config StressConfig) error {
 			})
 		}
 		spawn("enqueue", parallel.Continue, func(ctx context.Context) error {
+			initialAccountSequences = make([]uint64, 0, numOfAccounts)
+
 			for i := 0; i < numOfAccounts; i++ {
 				fromPrivateKey := config.Accounts[i]
 				toPrivateKeyIndex := i + 1
@@ -80,10 +84,11 @@ func Stress(ctx context.Context, config StressConfig) error {
 				}
 				toPrivateKey := config.Accounts[toPrivateKeyIndex]
 
-				accNum, accSeq, err := client.GetNumberSequence(fromPrivateKey.Address())
+				accNum, accSeq, err := getAccountNumberSequence(ctx, client, fromPrivateKey.Address())
 				if err != nil {
 					return errors.WithStack(fmt.Errorf("fetching account number and sequence failed: %w", err))
 				}
+				initialAccountSequences = append(initialAccountSequences, accSeq)
 
 				tx := tx{
 					AccountIndex: i,
@@ -146,11 +151,35 @@ func Stress(ctx context.Context, config StressConfig) error {
 			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 				for i, accountTxs := range signedTxs {
 					accountTxs := accountTxs
+					accountAddress := config.Accounts[i].Address()
+					initialSequence := initialAccountSequences[i]
 					spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
-						for _, tx := range accountTxs {
-							if err := broadcastTx(ctx, client, tx); err != nil {
-								return err
+						for txIndex := 0; txIndex < config.NumOfTransactions; {
+							tx := accountTxs[txIndex]
+							txHash, err := client.Broadcast(ctx, tx)
+							if err != nil {
+								if errors.Is(err, ctx.Err()) {
+									return err
+								}
+
+								// In case of error two situations are possible:
+								// - error happened after tx was accepted by the node - next tx should be broadcasted
+								// - error happened before tx was accepted by the node - same transaction should be broadcasted again
+								// Because we don't know, blockchain must be queried to check what is the next expected sequence number
+
+								_, accSeq, errSeq := getAccountNumberSequence(ctx, client, accountAddress)
+								if errSeq != nil {
+									return errSeq
+								}
+
+								log.Warn("Broadcasting failed, retrying with fresh account sequence", zap.Error(err),
+									zap.Uint64("accountSequence", accSeq))
+								txIndex = int(accSeq - initialSequence)
+								continue
 							}
+							log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
+							txIndex++
+
 							atomic.AddUint32(&txNum, 1)
 						}
 						return nil
@@ -168,18 +197,18 @@ func Stress(ctx context.Context, config StressConfig) error {
 	return nil
 }
 
-func broadcastTx(ctx context.Context, client cored.Client, tx []byte) error {
-	log := logger.Get(ctx)
-	for {
-		txHash, err := client.Broadcast(ctx, tx)
+func getAccountNumberSequence(ctx context.Context, client cored.Client, accountAddress string) (uint64, uint64, error) {
+	var accNum, accSeq uint64
+	err := retry.Do(ctx, 250*time.Millisecond, func() error {
+		var err error
+		accNum, accSeq, err = client.GetNumberSequence(accountAddress)
 		if err != nil {
-			if errors.Is(err, ctx.Err()) {
-				return err
-			}
-			log.Error("Sending transaction failed", zap.Error(err))
-			continue
+			return retry.Retryable(errors.Wrap(err, "querying for account data failed"))
 		}
-		log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
 		return nil
+	})
+	if err != nil {
+		return 0, 0, err
 	}
+	return accNum, accSeq, nil
 }
