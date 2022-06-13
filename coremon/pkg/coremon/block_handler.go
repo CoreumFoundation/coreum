@@ -7,7 +7,6 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	influxdb2api "github.com/influxdata/influxdb-client-go/v2/api"
 	influxwrite "github.com/influxdata/influxdb-client-go/v2/api/write"
-	"github.com/tendermint/tendermint/proto/tendermint/types"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
