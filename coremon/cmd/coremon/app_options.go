@@ -93,3 +93,48 @@ func initStatsdOptions(
 		Value:  "true",
 	})
 }
+
+// initInfluxOptions sets options for direct InfluxDB measurement exporter.
+func initInfluxOptions(
+	c *cli.Cmd,
+	influxEnabled **bool,
+	influxEndpoint **string,
+	influxDBName **string,
+	influxUser **string,
+	influxPassword **string,
+) {
+	*influxEnabled = c.Bool(cli.BoolOpt{
+		Name:   "influx-enabled",
+		Desc:   "Enables InfluxDB adapter and reporting",
+		EnvVar: "COREMON_DB_INFLUX_ENABLED",
+		Value:  true,
+	})
+
+	*influxEndpoint = c.String(cli.StringOpt{
+		Name:   "influx-endpoint",
+		Desc:   "Specify InfluxDB endpoint.",
+		EnvVar: "COREMON_DB_INFLUX_ENDPOINT",
+		Value:  "https://influx.docker.direct",
+	})
+
+	*influxDBName = c.String(cli.StringOpt{
+		Name:   "influx-db-name",
+		Desc:   "Specify InfluxDB database name.",
+		EnvVar: "COREMON_DB_INFLUX_DBNAME",
+		Value:  "telegraf",
+	})
+
+	*influxUser = c.String(cli.StringOpt{
+		Name:   "influx-user",
+		Desc:   "Specify InfluxDB user name.",
+		EnvVar: "COREMON_DB_INFLUX_USERNAME",
+		Value:  "coremon_user",
+	})
+
+	*influxPassword = c.String(cli.StringOpt{
+		Name:   "influx-password",
+		Desc:   "Specify InfluxDB database password.",
+		EnvVar: "COREMON_DB_INFLUX_PASSWORD",
+		Value:  "",
+	})
+}

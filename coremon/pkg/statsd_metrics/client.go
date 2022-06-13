@@ -32,6 +32,19 @@ func (m *StatterConfig) BaseTags() []string {
 	return baseTags
 }
 
+func (m *StatterConfig) BaseTagsMap() map[string]string {
+	baseTags := make(map[string]string, 2)
+
+	if len(config.EnvName) > 0 {
+		baseTags["env"] = config.EnvName
+	}
+	if len(config.HostName) > 0 {
+		baseTags["machine"] = config.HostName
+	}
+
+	return baseTags
+}
+
 type Statter interface {
 	Count(name string, value interface{}, tags []string) error
 	Incr(name string, tags []string) error

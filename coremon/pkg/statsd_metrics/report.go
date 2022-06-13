@@ -28,6 +28,23 @@ func (t Tags) With(k, v string) Tags {
 	return t
 }
 
+// WithBaseTags allows to inject metrics BaseTags into custom tag set. Useful when
+// tags are used outside of StatsD reporting. For example, within InfluxDB points.
+func (t Tags) WithBaseTags() Tags {
+	baseTags := config.BaseTagsMap()
+	allTags := make(Tags, len(baseTags)+len(t))
+
+	for k, v := range baseTags {
+		allTags[k] = v
+	}
+
+	for k, v := range t {
+		allTags[k] = v
+	}
+
+	return allTags
+}
+
 // JoinTags joins the tags for the receiving agent.
 func JoinTags(tags ...Tags) []string {
 	if len(tags) == 0 {

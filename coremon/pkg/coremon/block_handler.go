@@ -4,6 +4,10 @@ import (
 	"context"
 	"time"
 
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	influxdb2api "github.com/influxdata/influxdb-client-go/v2/api"
+	influxwrite "github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/tendermint/tendermint/proto/tendermint/types"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -14,6 +18,7 @@ import (
 func NewBlockHandlerWithMetrics(
 	ctx context.Context,
 	chainID string,
+	influxWriteAPI influxdb2api.WriteAPI,
 ) NewBlockHandlerFn {
 	log := logger.Get(ctx)
 
@@ -32,7 +37,7 @@ func NewBlockHandlerWithMetrics(
 		throughputReal := float64(value) / (float64(timeframe) / float64(time.Second))
 
 		statsd_metrics.Report(func(s statsd_metrics.Statter, tagSpec []string) {
-			s.Gauge("block_reports.tx_tp_real", throughputReal, tagSpec)
+			s.Gauge("report.observed_txs_throughput", throughputReal, tagSpec)
 		}, metricTags)
 	})
 
@@ -41,7 +46,7 @@ func NewBlockHandlerWithMetrics(
 		blocksPace := float64(value) / (float64(timeframe) / float64(time.Second))
 
 		statsd_metrics.Report(func(s statsd_metrics.Statter, tagSpec []string) {
-			s.Gauge("block_reports.blocks_pace", blocksPace, tagSpec)
+			s.Gauge("report.observed_blocks_pace", blocksPace, tagSpec)
 		}, metricTags)
 	})
 
@@ -77,23 +82,59 @@ func NewBlockHandlerWithMetrics(
 		txThroughputReporting.Step(txsInBlock)
 
 		statsd_metrics.Report(func(s statsd_metrics.Statter, tagSpec []string) {
-			s.Gauge("block_reports.height", blockNumber, tagSpec)
-			s.Timing("block_reports.ingest_latency", latency, tagSpec)
+			s.Timing("report.ingest_latency", latency, tagSpec)
+			s.Gauge("report.observed_height", blockNumber, tagSpec)
 
 			if txsInBlock > 0 {
-				s.Gauge("block_reports.tx_per_block", txsInBlock, tagSpec)
-				s.Count("block_reports.tx_total", txsInBlock, tagSpec)
-			}
-
-			if blockTimeDiff > 0 {
-				s.Timing("block_reports.blocktime_diff", blockTimeDiff, tagSpec)
-
-				if txTroughputAbs > 0 {
-					s.Gauge("block_reports.tx_tp_abs", txTroughputAbs, tagSpec)
-				}
+				s.Count("report.observed_txs_total", txsInBlock, tagSpec)
 			}
 		}, metricTags)
 
+		pointsToWrite := make([]*influxwrite.Point, 0, 1)
+		{
+			// assemble 'coremon_block_report' measurement point with all fields about particular block
+
+			p := influxdb2.NewPointWithMeasurement("coremon_block_report")
+			p = p.SetTime(data.Block.Time)
+			p = p.AddField("height", data.Block.Height)
+
+			if txsInBlock > 0 {
+				p = p.AddField("txs", txsInBlock)
+			}
+
+			if blockTimeDiff > 0 {
+				p = p.AddField("time_diff", float64(blockTimeDiff)/float64(time.Millisecond))
+
+				if txTroughputAbs > 0 {
+					p = p.AddField("txs_throughput", txTroughputAbs)
+				}
+			}
+
+			allTags := metricTags.WithBaseTags()
+			for k, v := range allTags {
+				p = p.AddTag(k, v)
+			}
+
+			pointsToWrite = append(pointsToWrite, p)
+		}
+
+		if len(pointsToWrite) > 0 {
+			writeInfluxPoints(influxWriteAPI, pointsToWrite)
+		}
+
 		return nil
+	}
+}
+
+func writeInfluxPoints(
+	writeAPI influxdb2api.WriteAPI,
+	points []*influxwrite.Point,
+) {
+	defer func() {
+		writeAPI.Flush()
+	}()
+
+	for _, point := range points {
+		writeAPI.WritePoint(point)
 	}
 }
