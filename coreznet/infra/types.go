@@ -65,9 +65,6 @@ type DeploymentInfo struct {
 	// Container stores the name of the docker container where app is running - present only for apps running in docker
 	Container string `json:"container,omitempty"`
 
-	// Type is the type of app
-	Type AppType `json:"type"`
-
 	// FromHostIP is the host's IP application binds to
 	FromHostIP net.IP `json:"fromHostIP,omitempty"` // nolint:tagliatelle // it wants fromHostIp
 
