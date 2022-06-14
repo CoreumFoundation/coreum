@@ -126,8 +126,6 @@ func (t *TMux) sessionKill(ctx context.Context) error {
 	// When using just `tmux kill-session` tmux sends SIGHUP to process, but we need SIGTERM.
 	// After sending it to all apps, session is terminated automatically.
 
-	// FIXME (wojciech): Yaroslav reports that on macOS tmux session is still there
-
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
