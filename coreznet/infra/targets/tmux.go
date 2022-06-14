@@ -87,7 +87,15 @@ func (t *TMux) DeployBinary(ctx context.Context, app infra.Binary) (infra.Deploy
 
 // DeployContainer starts container inside tmux session
 func (t *TMux) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
-	return t.docker.DeployContainer(ctx, app)
+	info, err := t.docker.DeployContainer(ctx, app)
+	if err != nil {
+		return infra.DeploymentInfo{}, err
+	}
+	name := t.config.EnvName + "-" + app.Name
+	if err := t.sessionAddApp(ctx, app.Name, "docker", "logs", "-f", name); err != nil {
+		return infra.DeploymentInfo{}, err
+	}
+	return info, nil
 }
 
 func (t *TMux) sessionAddApp(ctx context.Context, name string, args ...string) error {
