@@ -8,5 +8,5 @@ const (
 	User = "postgres"
 
 	// DB is the name of database
-	DB = "postgers"
+	DB = "db"
 )

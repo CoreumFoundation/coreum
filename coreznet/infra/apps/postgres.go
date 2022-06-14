@@ -4,8 +4,12 @@ import (
 	"context"
 	"net"
 	"strconv"
+	"time"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
@@ -15,20 +19,25 @@ import (
 // PostgresType is the type of postgres application
 const PostgresType infra.AppType = "postgres"
 
+// SchemaLoader is the function receiving sql client and loading schema there
+type SchemaLoader func(ctx context.Context, db *pgx.Conn) error
+
 // NewPostgres creates new postgres app
-func NewPostgres(name string, appInfo *infra.AppInfo, port int) Postgres {
+func NewPostgres(name string, appInfo *infra.AppInfo, port int, schemaLoader SchemaLoader) Postgres {
 	return Postgres{
-		name:    name,
-		appInfo: appInfo,
-		port:    port,
+		name:         name,
+		appInfo:      appInfo,
+		port:         port,
+		schemaLoader: schemaLoader,
 	}
 }
 
 // Postgres represents postgres
 type Postgres struct {
-	name    string
-	appInfo *infra.AppInfo
-	port    int
+	name         string
+	appInfo      *infra.AppInfo
+	port         int
+	schemaLoader SchemaLoader
 }
 
 // Type returns type of application
@@ -95,7 +104,62 @@ func (p Postgres) Deployment() infra.Deployment {
 				"sql": p.port,
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				// FIXME (wojciech): load initial sql here
+				if p.schemaLoader == nil {
+					return nil
+				}
+
+				log := logger.Get(ctx)
+
+				var db *pgx.Conn
+
+				connStr := "postgres://" + postgres.User + "@" + net.JoinHostPort(deployment.FromHostIP.String(), strconv.Itoa(p.port)) + "/" + postgres.DB
+
+				log.Info("Connecting to the database server", zap.String("connectionString", connStr))
+
+				retryCtx, cancel1 := context.WithTimeout(ctx, 20*time.Second)
+				defer cancel1()
+				err := retry.Do(retryCtx, 2*time.Second, func() error {
+					connCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+					defer cancel()
+
+					var err error
+					db, err = pgx.Connect(connCtx, connStr)
+					return retry.Retryable(errors.WithStack(err))
+				})
+				if err != nil {
+					return err
+				}
+				defer db.Close(ctx)
+
+				log.Info("Waiting for database to be created", zap.String("db", postgres.DB))
+
+				retryCtx, cancel2 := context.WithTimeout(ctx, 20*time.Second)
+				defer cancel2()
+				err = retry.Do(retryCtx, time.Second, func() error {
+					queryCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+					defer cancel()
+
+					row := db.QueryRow(queryCtx, "select 1 as result from pg_database where datname=$1", postgres.DB)
+					var dummy int
+					if err := row.Scan(&dummy); err != nil {
+						if errors.Is(err, pgx.ErrNoRows) {
+							return retry.Retryable(errors.New("database hasn't been created yet"))
+						}
+						return retry.Retryable(errors.Wrap(err, "verifying database readiness failed"))
+					}
+					return nil
+				})
+				if err != nil {
+					return err
+				}
+
+				log.Info("Loading schema into the database")
+
+				if err := p.schemaLoader(ctx, db); err != nil {
+					return errors.Wrap(err, "loading schema failed")
+				}
+
+				log.Info("Database ready")
 				return nil
 			},
 		},
