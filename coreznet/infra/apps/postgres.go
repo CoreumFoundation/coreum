@@ -27,7 +27,6 @@ func NewPostgres(name string, appInfo *infra.AppInfo, port int) Postgres {
 // Postgres represents postgres
 type Postgres struct {
 	name    string
-	config  infra.Config
 	appInfo *infra.AppInfo
 	port    int
 }
