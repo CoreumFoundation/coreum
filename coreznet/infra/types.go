@@ -199,6 +199,12 @@ func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) (
 	return info, nil
 }
 
+// EnvVar is used to define environment variable for docker container
+type EnvVar struct {
+	Name  string
+	Value string
+}
+
 // Container represents container to be deployed
 type Container struct {
 	AppBase
@@ -208,6 +214,9 @@ type Container struct {
 
 	// Tag is the tag of the image
 	Tag string
+
+	// EnvVars define environment variables for docker container
+	EnvVars []EnvVar
 }
 
 // Deploy deploys container to the target
