@@ -35,8 +35,8 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, appInfo 
 
 	stakerPubKey, stakerPrivKey := cored.GenerateSecp256k1Key()
 
-	genesis.AddWallet(stakerPubKey, "100000000000000000000000core,10000000000000000000000000stake")
-	genesis.AddValidator(validatorPublicKey, stakerPrivKey, "100000000stake")
+	genesis.AddWallet(stakerPubKey, "100000000000000000000000core")
+	genesis.AddValidator(validatorPublicKey, stakerPrivKey, "100000000core")
 
 	return Cored{
 		name:                name,
