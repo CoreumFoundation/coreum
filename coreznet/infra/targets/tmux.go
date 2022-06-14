@@ -21,10 +21,11 @@ import (
 )
 
 // NewTMux creates new tmux target
-func NewTMux(config infra.Config, spec *infra.Spec) infra.Target {
+func NewTMux(config infra.Config, spec *infra.Spec, docker *Docker) infra.Target {
 	return &TMux{
 		config: config,
 		spec:   spec,
+		docker: docker,
 	}
 }
 
@@ -32,6 +33,7 @@ func NewTMux(config infra.Config, spec *infra.Spec) infra.Target {
 type TMux struct {
 	config infra.Config
 	spec   *infra.Spec
+	docker *Docker
 
 	mu sync.Mutex // to protect tmux session
 }
@@ -43,12 +45,18 @@ func (t *TMux) BindIP() net.IP {
 
 // Stop stops running applications
 func (t *TMux) Stop(ctx context.Context) error {
-	return t.sessionKill(ctx)
+	if err := t.sessionKill(ctx); err != nil {
+		return err
+	}
+	return t.docker.Stop(ctx)
 }
 
 // Remove removes running applications
 func (t *TMux) Remove(ctx context.Context) error {
-	return t.Stop(ctx)
+	if err := t.sessionKill(ctx); err != nil {
+		return err
+	}
+	return t.docker.Remove(ctx)
 }
 
 // Deploy deploys environment to tmux target
@@ -79,7 +87,7 @@ func (t *TMux) DeployBinary(ctx context.Context, app infra.Binary) (infra.Deploy
 
 // DeployContainer starts container inside tmux session
 func (t *TMux) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
-	panic("not implemented yet")
+	return t.docker.DeployContainer(ctx, app)
 }
 
 func (t *TMux) sessionAddApp(ctx context.Context, name string, args ...string) error {

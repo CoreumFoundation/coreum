@@ -31,9 +31,12 @@ func IoC(c *ioc.Container) {
 		c.ResolveNamed(config.ModeName, &mode)
 		return mode
 	})
+	c.Transient(targets.NewDocker)
 	c.TransientNamed("direct", targets.NewDirect)
 	c.TransientNamed("tmux", targets.NewTMux)
-	c.TransientNamed("docker", targets.NewDocker)
+	c.TransientNamed("docker", func(docker *targets.Docker) infra.Target {
+		return docker
+	})
 	c.Transient(func(c *ioc.Container, config infra.Config) infra.Target {
 		var target infra.Target
 		c.ResolveNamed(config.Target, &target)

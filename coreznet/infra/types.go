@@ -221,7 +221,18 @@ type Container struct {
 
 // Deploy deploys container to the target
 func (app Container) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
-	panic("not implemented")
+	if err := app.AppBase.preprocess(ctx, config, target); err != nil {
+		return DeploymentInfo{}, err
+	}
+
+	info, err := target.DeployContainer(ctx, app)
+	if err != nil {
+		return DeploymentInfo{}, err
+	}
+	if err := app.AppBase.postprocess(ctx, info); err != nil {
+		return DeploymentInfo{}, err
+	}
+	return info, nil
 }
 
 // NewSpec returns new spec
