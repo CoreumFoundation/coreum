@@ -91,8 +91,7 @@ func (t *TMux) DeployContainer(ctx context.Context, app infra.Container) (infra.
 	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	name := t.config.EnvName + "-" + app.Name
-	if err := t.sessionAddApp(ctx, app.Name, "docker", "logs", "-f", name); err != nil {
+	if err := t.sessionAddApp(ctx, app.Name, "docker", "logs", "-f", info.Container); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 	return info, nil
