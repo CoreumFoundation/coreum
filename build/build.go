@@ -12,7 +12,7 @@ import (
 const dockerGOOS = "linux"
 
 // FIXME (wojciech): This assumes that repositories are public which is not true at the moment but will be soon
-const coreumRepo = "https://github.com/CoreumFoundation/coreum.git"
+const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
 
 func buildAll(deps build.DepsFunc) {
 	deps(buildCored, buildCoreZNet, buildCoreZStress)
@@ -38,7 +38,7 @@ func ensureAllRepos(deps build.DepsFunc) {
 }
 
 func ensureCoreumRepo(ctx context.Context) error {
-	return ensureRepo(ctx, coreumRepo)
+	return ensureRepo(ctx, coreumRepoURL)
 }
 
 func buildNativeAndDocker(ctx context.Context, pkg, exeName string) error {
