@@ -2,7 +2,6 @@ package build
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -12,8 +11,14 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
+
+var repositories = []string{"../coreum"}
+
+// FIXME (wojciech): Replace above with the code below once migration to `core` repository is done
+// var repositories = []string{"../core", "../coreum"}
 
 func ensureGo(ctx context.Context) error {
 	return ensure(ctx, "go")
@@ -30,14 +35,14 @@ func goBuildPkg(ctx context.Context, pkg, targetOS, out string) error {
 	cmd.Dir = pkg
 	cmd.Env = append([]string{"CGO_ENABLED=0", "GOOS=" + targetOS}, os.Environ()...)
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return fmt.Errorf("building go package '%s' failed: %w", pkg, err)
+		return errors.Wrapf(err, "building go package '%s' failed", pkg)
 	}
 	return nil
 }
 
 // goLint runs golangci linter, runs go mod tidy and checks that git status is clean
 func goLint(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureGo, ensureGolangCI)
+	deps(ensureGo, ensureGolangCI, ensureAllRepos)
 	log := logger.Get(ctx)
 	config := must.String(filepath.Abs("build/.golangci.yaml"))
 	err := onModule(func(path string) error {
@@ -45,7 +50,7 @@ func goLint(ctx context.Context, deps build.DepsFunc) error {
 		cmd := exec.Command("golangci-lint", "run", "--config", config)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
-			return fmt.Errorf("linter errors found in module '%s': %w", path, err)
+			return errors.Wrapf(err, "linter errors found in module '%s'", path)
 		}
 		return nil
 	})
@@ -58,38 +63,44 @@ func goLint(ctx context.Context, deps build.DepsFunc) error {
 
 // goTest runs go test
 func goTest(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureGo)
+	deps(ensureGo, ensureAllRepos)
 	log := logger.Get(ctx)
 	return onModule(func(path string) error {
 		log.Info("Running go tests", zap.String("path", path))
 		cmd := exec.Command("go", "test", "-count=1", "-shuffle=on", "-race", "./...")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
-			return fmt.Errorf("unit tests failed in module '%s': %w", path, err)
+			return errors.Wrapf(err, "unit tests failed in module '%s'", path)
 		}
 		return nil
 	})
 }
 
 func goModTidy(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureGo)
+	deps(ensureGo, ensureAllRepos)
 	log := logger.Get(ctx)
 	return onModule(func(path string) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
 		cmd := exec.Command("go", "mod", "tidy")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
-			return fmt.Errorf("'go mod tidy' failed in module '%s': %w", path, err)
+			return errors.Wrapf(err, "'go mod tidy' failed in module '%s'", path)
 		}
 		return nil
 	})
 }
 
 func onModule(fn func(path string) error) error {
-	return filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() || d.Name() != "go.mod" {
-			return nil
+	for _, repoPath := range repositories {
+		err := filepath.WalkDir(repoPath, func(path string, d fs.DirEntry, err error) error {
+			if d.IsDir() || d.Name() != "go.mod" {
+				return nil
+			}
+			return fn(filepath.Dir(path))
+		})
+		if err != nil {
+			return err
 		}
-		return fn(filepath.Dir(path))
-	})
+	}
+	return nil
 }
