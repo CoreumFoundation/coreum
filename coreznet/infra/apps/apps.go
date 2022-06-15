@@ -50,8 +50,12 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 // BlockExplorer returns set of applications required to run block explorer
 func (f *Factory) BlockExplorer(name string) infra.Mode {
 	namePostgres := name + "-postgres"
+	nameHasura := name + "-hasura"
+
+	postgres := NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema)
 	return infra.Mode{
-		NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema),
+		postgres,
+		NewHasura(nameHasura, f.spec.DescribeApp(HasuraType, nameHasura), blockexplorer.DefaultPorts.Hasura, postgres),
 		// FIXME (wojciech): more apps coming soon
 	}
 }

@@ -86,11 +86,10 @@ func (p Postgres) Deployment() infra.Deployment {
 			Name: p.Name(),
 			Info: p.appInfo,
 			ArgsFunc: func(bindIP net.IP, homeDir string, ipResolver infra.IPResolver) []string {
-				args := []string{
+				return []string{
 					"-h", bindIP.String(),
 					"-p", strconv.Itoa(p.port),
 				}
-				return args
 			},
 			Ports: map[string]int{
 				"sql": p.port,
