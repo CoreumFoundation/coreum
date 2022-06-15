@@ -60,14 +60,6 @@ func (p Postgres) Info() infra.DeploymentInfo {
 	return p.appInfo.Info()
 }
 
-// HealthCheck checks if postgres is configured and running
-func (p Postgres) HealthCheck(ctx context.Context) error {
-	if p.appInfo.Info().Status != infra.AppStatusRunning {
-		return retry.Retryable(errors.Errorf("postgres hasn't started yet"))
-	}
-	return nil
-}
-
 // Deployment returns deployment of postgres
 func (p Postgres) Deployment() infra.Deployment {
 	return infra.Container{
