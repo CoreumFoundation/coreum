@@ -7,11 +7,15 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 // AppType represents the type of application
@@ -34,6 +38,9 @@ type App interface {
 
 // Deployment is the app ready to deploy to the target
 type Deployment interface {
+	// Dependencies returns the list of applications which must be running before the current deployment may be started
+	Dependencies() []HealthCheckCapable
+
 	// Deploy deploys app to the target
 	Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error)
 }
@@ -43,16 +50,72 @@ type Mode []App
 
 // Deploy deploys app in environment to the target
 func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
-	for _, app := range m {
-		if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Info().Status == AppStatusRunning {
-			continue
+	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		workingSlots := make(chan struct{}, runtime.NumCPU())
+		for i := 0; i < cap(workingSlots); i++ {
+			workingSlots <- struct{}{}
 		}
-		info, err := app.Deployment().Deploy(ctx, t, config)
-		if err != nil {
-			return err
+
+		readyApps := map[string]chan struct{}{}
+		for _, app := range m {
+			readyApps[app.Name()] = make(chan struct{})
 		}
-		appInfo := spec.Apps[app.Name()]
-		appInfo.SetInfo(info)
+		for _, app := range m {
+			if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Info().Status == AppStatusRunning {
+				close(readyApps[app.Name()])
+				continue
+			}
+
+			appInfo := spec.Apps[app.Name()]
+			app := app
+			spawn("deploy."+app.Name(), parallel.Continue, func(ctx context.Context) error {
+				log := logger.Get(ctx)
+				deployment := app.Deployment()
+
+				log.Info("Deployment initialized")
+
+				if dependencies := deployment.Dependencies(); len(dependencies) > 0 {
+					names := make([]string, 0, len(dependencies))
+					for _, d := range dependencies {
+						names = append(names, d.Name())
+					}
+					log.Info("Waiting for dependencies", zap.Strings("dependencies", names))
+					for _, name := range names {
+						select {
+						case <-ctx.Done():
+							return errors.WithStack(ctx.Err())
+						case <-readyApps[name]:
+						}
+					}
+					log.Info("Dependencies are running now")
+				}
+
+				log.Info("Waiting for free slot")
+				select {
+				case <-ctx.Done():
+					return errors.WithStack(ctx.Err())
+				case <-workingSlots:
+				}
+
+				log.Info("Deployment started")
+
+				info, err := deployment.Deploy(ctx, t, config)
+				if err != nil {
+					return err
+				}
+				appInfo.SetInfo(info)
+
+				log.Info("Deployment succeeded")
+
+				close(readyApps[app.Name()])
+				workingSlots <- struct{}{}
+				return nil
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 	return spec.Save()
 }
@@ -102,7 +165,7 @@ type AppTarget interface {
 	DeployContainer(ctx context.Context, app Container) (DeploymentInfo, error)
 }
 
-// Prerequisites specifies list of other apps which have to be healthy because app may be started.
+// Prerequisites specifies list of other apps which have to be healthy before app may be started.
 type Prerequisites struct {
 	// Timeout tells how long we should wait for prerequisite to become healthy
 	Timeout time.Duration
@@ -183,6 +246,11 @@ type Binary struct {
 	BinPathFunc func(targetOS string) string
 }
 
+// Dependencies returns the list of applications which must be running before the current deployment may be started
+func (app Binary) Dependencies() []HealthCheckCapable {
+	return app.Requires.Dependencies
+}
+
 // Deploy deploys binary to the target
 func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
 	if err := app.AppBase.preprocess(ctx, config, target); err != nil {
@@ -208,6 +276,11 @@ type Container struct {
 
 	// Tag is the tag of the image
 	Tag string
+}
+
+// Dependencies returns the list of applications which must be running before the current deployment may be started
+func (app Container) Dependencies() []HealthCheckCapable {
+	return app.Requires.Dependencies
 }
 
 // Deploy deploys container to the target
