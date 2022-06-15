@@ -96,7 +96,7 @@ func (p Postgres) Deployment() infra.Deployment {
 				"sql": p.port,
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				if p.schemaLoader == nil {
+				if p.schemaLoader == nil || p.Info().Status != infra.AppStatusNotDeployed {
 					return nil
 				}
 
