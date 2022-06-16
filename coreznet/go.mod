@@ -9,7 +9,7 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum-tools v0.1.5
+	github.com/CoreumFoundation/coreum-tools v0.1.4-0.20220616190030-5c623c5e1ef9
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
@@ -24,6 +24,7 @@ require (
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
 	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
+	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect

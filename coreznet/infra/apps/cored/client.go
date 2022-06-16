@@ -14,12 +14,11 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
-
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
 const requestTimeout = 10 * time.Second
 const txTimeout = 30 * time.Second
+const defaultBroadcastStatusPoll = 250 * time.Millisecond
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
@@ -95,14 +94,12 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 
 	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
 	if err != nil {
-		if errors.Is(err, requestCtx.Err()) {
-			return "", errors.WithStack(err)
-		}
-
 		errRes := client.CheckTendermintError(err, encodedTx)
 		if !isTxInMempool(errRes) {
 			return "", errors.WithStack(err)
 		}
+
+		// tx in mempool - all is ok
 		txHash = errRes.TxHash
 	} else {
 		txHash = res.Hash.String()
@@ -114,37 +111,46 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 
 	txHashBytes, err := hex.DecodeString(txHash)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", errors.Wrap(err, "failed to decode tx hash as hex")
 	}
+
+	t := time.NewTimer(defaultBroadcastStatusPoll)
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
 	defer cancel()
 
-	err = retry.Do(timeoutCtx, 250*time.Millisecond, func() error {
-		requestCtx, cancel := context.WithTimeout(timeoutCtx, requestTimeout)
-		defer cancel()
+	for {
+		select {
+		case <-timeoutCtx.Done():
+			err := errors.Errorf("transaction timed out while await until included in the block %s", txHash)
+			t.Stop()
+			return txHash, err
 
-		resultTx, err := c.clientCtx.Client.Tx(requestCtx, txHashBytes, false)
-		if err != nil {
-			if errors.Is(err, requestCtx.Err()) {
-				return retry.Retryable(errors.WithStack(err))
-			}
-			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
-				if isTxInMempool(errRes) {
-					return retry.Retryable(errors.WithStack(err))
+		case <-t.C:
+			resultTx, err := c.clientCtx.Client.Tx(timeoutCtx, txHashBytes, false)
+			if err != nil {
+				if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+					return "", errors.Wrap(err, "got tendermint error")
 				}
-				return errors.WithStack(err)
+
+				t.Reset(defaultBroadcastStatusPoll)
+				continue
+
+			} else if resultTx.TxResult.Code != 0 {
+				res := resultTx.TxResult
+
+				return txHash, errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
+					txHash, res.Code, res.Codespace, res.Log)
+			} else if resultTx.Height > 0 {
+				t.Stop()
+
+				return txHash, nil
 			}
-			return retry.Retryable(errors.WithStack(err))
+
+			t.Reset(defaultBroadcastStatusPoll)
 		}
-		if resultTx.Height == 0 {
-			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
 	}
+
 	return txHash, nil
 }
 
