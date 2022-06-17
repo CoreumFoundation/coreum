@@ -34,11 +34,6 @@ type Docker struct {
 	spec   *infra.Spec
 }
 
-// BindIP returns the IP application should bind to inside the target
-func (d *Docker) BindIP() net.IP {
-	return net.IPv4zero
-}
-
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
 	buf := &bytes.Buffer{}
@@ -99,21 +94,19 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	if exists {
 		startCmd = exec.Docker("start", name)
 	} else {
-		const internalHomeDir = "/app"
 		appHomeDir := d.config.AppDir + "/" + app.Name
-		binPath := app.BinPathFunc("linux")
-		must.Any(os.Stat(binPath))
-		internalBinPath := "/bin/" + filepath.Base(binPath)
+		must.Any(os.Stat(app.BinPath))
+		internalBinPath := "/bin/" + filepath.Base(app.BinPath)
 
 		runArgs := []string{"run", "--name", name, "-d", "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-			"--label", labelEnv + "=" + d.config.EnvName, "-v", appHomeDir + ":" + internalHomeDir, "-v",
-			binPath + ":" + internalBinPath}
+			"--label", labelEnv + "=" + d.config.EnvName, "-v", appHomeDir + ":/app", "-v",
+			app.BinPath + ":" + internalBinPath}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
 		}
 		runArgs = append(runArgs, "alpine:3.16.0", internalBinPath)
-		runArgs = append(runArgs, app.ArgsFunc(net.IPv4zero, internalHomeDir, containerIPResolver{})...)
+		runArgs = append(runArgs, app.ArgsFunc()...)
 
 		startCmd = exec.Docker(runArgs...)
 	}
@@ -164,7 +157,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 			runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
 		}
 		runArgs = append(runArgs, app.Image+":"+app.Tag)
-		runArgs = append(runArgs, app.ArgsFunc(net.IPv4zero, "/", containerIPResolver{})...)
+		runArgs = append(runArgs, app.ArgsFunc()...)
 
 		startCmd = exec.Docker(runArgs...)
 	}

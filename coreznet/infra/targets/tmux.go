@@ -3,11 +3,7 @@ package targets
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"net"
 	"os"
-	osexec "os/exec"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -36,11 +32,6 @@ type TMux struct {
 	docker *Docker
 
 	mu sync.Mutex // to protect tmux session
-}
-
-// BindIP returns the IP application should bind to inside the target
-func (t *TMux) BindIP() net.IP {
-	return ipLocalhost
 }
 
 // Stop stops running applications
@@ -72,17 +63,14 @@ func (t *TMux) Deploy(ctx context.Context, mode infra.Mode) error {
 
 // DeployBinary starts binary file inside tmux session
 func (t *TMux) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
-	binPath := app.BinPathFunc(runtime.GOOS)
-	must.Any(os.Stat(binPath))
-	if err := t.sessionAddApp(ctx, app.Name, append([]string{binPath}, app.ArgsFunc(ipLocalhost, t.config.AppDir+"/"+app.Name, hostIPResolver{})...)...); err != nil {
+	info, err := t.docker.DeployBinary(ctx, app)
+	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	return infra.DeploymentInfo{
-		Status:          infra.AppStatusRunning,
-		FromHostIP:      ipLocalhost,
-		FromContainerIP: ipLocalhost,
-		Ports:           app.Ports,
-	}, nil
+	if err := t.sessionShowContainerLogs(ctx, app.Name, info.Container); err != nil {
+		return infra.DeploymentInfo{}, err
+	}
+	return info, nil
 }
 
 // DeployContainer starts container inside tmux session
@@ -91,13 +79,13 @@ func (t *TMux) DeployContainer(ctx context.Context, app infra.Container) (infra.
 	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
-	if err := t.sessionAddApp(ctx, app.Name, "docker", "logs", "-f", info.Container); err != nil {
+	if err := t.sessionShowContainerLogs(ctx, app.Name, info.Container); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 	return info, nil
 }
 
-func (t *TMux) sessionAddApp(ctx context.Context, name string, args ...string) error {
+func (t *TMux) sessionShowContainerLogs(ctx context.Context, name string, container string) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -105,10 +93,8 @@ func (t *TMux) sessionAddApp(ctx context.Context, name string, args ...string) e
 	if err != nil {
 		return err
 	}
-	cmd := []string{
-		"/bin/bash", "-ce",
-		fmt.Sprintf(`exec %s > >(tee -a "%s/%s.log") 2>&1`, osexec.Command("", args...).String(), t.config.LogDir, name),
-	}
+
+	cmd := []string{"docker", "logs", "-f", container}
 	if hasSession {
 		return libexec.Exec(ctx, exec.TMux(append([]string{"new-window", "-d", "-n", name, "-t", t.config.EnvName + ":"}, cmd...)...))
 	}
