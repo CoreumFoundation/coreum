@@ -27,10 +27,10 @@ func (f *Factory) Cored(name string, ports cored.Ports, genesis *cored.Genesis, 
 }
 
 // BlockExplorer returns set of applications required to run block explorer
-func (f *Factory) BlockExplorer(name string, ports blockexplorer.Ports) infra.Mode {
+func (f *Factory) BlockExplorer(name string) infra.Mode {
 	namePostgres := name + "-postgres"
 	return infra.Mode{
-		NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), ports.Postgres, postgres.LoadSchema),
+		NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema),
 		// FIXME (wojciech): more apps coming soon
 	}
 }

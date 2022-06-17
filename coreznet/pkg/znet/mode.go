@@ -3,7 +3,6 @@ package znet
 import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/tests"
 )
@@ -12,7 +11,7 @@ import (
 func DevMode(af *apps.Factory) infra.Mode {
 	return append(infra.Mode{
 		af.Cored("cored-node", cored.DefaultPorts, cored.NewGenesis("coredev"), nil),
-	}, af.BlockExplorer("explorer", blockexplorer.DefaultPorts)...)
+	}, af.BlockExplorer("explorer")...)
 }
 
 // TestMode returns environment used for testing
