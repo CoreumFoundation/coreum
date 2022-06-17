@@ -28,7 +28,7 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 	var node0 *Cored
 	for i := 0; i < numOfNodes; i++ {
 		name := name + fmt.Sprintf("-%02d", i)
-		portDelta := i * 1000
+		portDelta := i * 100
 		node := NewCored(name, f.config, genesis, f.spec.DescribeApp(CoredType, name), cored.Ports{
 			RPC:        cored.DefaultPorts.RPC + portDelta,
 			P2P:        cored.DefaultPorts.P2P + portDelta,
