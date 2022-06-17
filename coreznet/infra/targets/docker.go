@@ -13,12 +13,15 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 
 	"github.com/CoreumFoundation/coreum/coreznet/exec"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 )
 
 const labelEnv = "com.coreum.coreznet.env"
+
+// FIXME (wojciech): Entire logic here could be easily implemented by using docker API instead of binary execution
 
 // NewDocker creates new docker target
 func NewDocker(config infra.Config, spec *infra.Spec) *Docker {
@@ -36,45 +39,19 @@ type Docker struct {
 
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
-	buf := &bytes.Buffer{}
-	listCmd := exec.Docker("ps", "-q", "--filter", "label="+labelEnv+"="+d.config.EnvName)
-	listCmd.Stdout = buf
-	if err := libexec.Exec(ctx, listCmd); err != nil {
-		return err
-	}
-
-	var commands []*osexec.Cmd
-	for _, cID := range strings.Split(buf.String(), "\n") {
-		// last item is empty
-		if cID == "" {
-			break
-		}
-		commands = append(commands, exec.Docker("stop", "--time", "60", cID))
-	}
-	// FIXME (wojtek): parallelize this
-	return libexec.Exec(ctx, commands...)
+	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, id string) error {
+		return libexec.Exec(ctx, exec.Docker("stop", "--time", "60", id))
+	})
 }
 
 // Remove removes running applications
 func (d *Docker) Remove(ctx context.Context) error {
-	buf := &bytes.Buffer{}
-	listCmd := exec.Docker("ps", "-q", "-a", "--filter", "label="+labelEnv+"="+d.config.EnvName)
-	listCmd.Stdout = buf
-	if err := libexec.Exec(ctx, listCmd); err != nil {
-		return err
-	}
-
-	var commands []*osexec.Cmd
-	for _, cID := range strings.Split(buf.String(), "\n") {
-		// last item is empty
-		if cID == "" {
-			break
-		}
-		commands = append(commands, exec.Docker("stop", "--time", "60", cID))
-		commands = append(commands, exec.Docker("rm", cID))
-	}
-	// FIXME (wojtek): parallelize this
-	return libexec.Exec(ctx, commands...)
+	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, id string) error {
+		return libexec.Exec(ctx,
+			exec.Docker("stop", "--time", "60", id),
+			exec.Docker("rm", id),
+		)
+	})
 }
 
 // Deploy deploys environment to docker target
@@ -194,4 +171,27 @@ func containerExists(ctx context.Context, name string) (bool, error) {
 		return false, err
 	}
 	return existsBuf.Len() > 0, nil
+}
+
+func forContainer(ctx context.Context, envName string, fn func(ctx context.Context, id string) error) error {
+	buf := &bytes.Buffer{}
+	listCmd := exec.Docker("ps", "-aq", "--filter", "label="+labelEnv+"="+envName)
+	listCmd.Stdout = buf
+	if err := libexec.Exec(ctx, listCmd); err != nil {
+		return err
+	}
+
+	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		for _, cID := range strings.Split(buf.String(), "\n") {
+			// last item is empty
+			if cID == "" {
+				break
+			}
+			cID := cID
+			spawn("container."+cID, parallel.Continue, func(ctx context.Context) error {
+				return fn(ctx, cID)
+			})
+		}
+		return nil
+	})
 }
