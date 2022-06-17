@@ -102,46 +102,13 @@ func (p Postgres) Deployment() infra.Deployment {
 
 				log := logger.Get(ctx)
 
-				var db *pgx.Conn
-
-				connStr := "postgres://" + postgres.User + "@" + net.JoinHostPort(deployment.FromHostIP.String(), strconv.Itoa(p.port)) + "/" + postgres.DB
-
-				log.Info("Connecting to the database server", zap.String("connectionString", connStr))
-
-				retryCtx, cancel1 := context.WithTimeout(ctx, 20*time.Second)
-				defer cancel1()
-				err := retry.Do(retryCtx, 2*time.Second, func() error {
-					connCtx, cancel := context.WithTimeout(retryCtx, time.Second)
-					defer cancel()
-
-					var err error
-					db, err = pgx.Connect(connCtx, connStr)
-					return retry.Retryable(errors.WithStack(err))
-				})
+				db, err := p.dbConnection(ctx, deployment.FromHostIP)
 				if err != nil {
 					return err
 				}
 				defer db.Close(ctx)
 
-				log.Info("Waiting for database to be created", zap.String("db", postgres.DB))
-
-				retryCtx, cancel2 := context.WithTimeout(ctx, 20*time.Second)
-				defer cancel2()
-				err = retry.Do(retryCtx, time.Second, func() error {
-					queryCtx, cancel := context.WithTimeout(retryCtx, time.Second)
-					defer cancel()
-
-					row := db.QueryRow(queryCtx, "select 1 as result from pg_database where datname=$1", postgres.DB)
-					var dummy int
-					if err := row.Scan(&dummy); err != nil {
-						if errors.Is(err, pgx.ErrNoRows) {
-							return retry.Retryable(errors.New("database hasn't been created yet"))
-						}
-						return retry.Retryable(errors.Wrap(err, "verifying database readiness failed"))
-					}
-					return nil
-				})
-				if err != nil {
+				if err := waitDBReady(ctx, db); err != nil {
 					return err
 				}
 
@@ -156,4 +123,49 @@ func (p Postgres) Deployment() infra.Deployment {
 			},
 		},
 	}
+}
+
+func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn, error) {
+	connStr := "postgres://" + postgres.User + "@" + net.JoinHostPort(serverIP.String(), strconv.Itoa(p.port)) + "/" + postgres.DB
+	logger.Get(ctx).Info("Connecting to the database server", zap.String("connectionString", connStr))
+
+	var db *pgx.Conn
+
+	retryCtx, cancel1 := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel1()
+	err := retry.Do(retryCtx, 2*time.Second, func() error {
+		connCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+		defer cancel()
+
+		var err error
+		db, err = pgx.Connect(connCtx, connStr)
+		return retry.Retryable(errors.WithStack(err))
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func waitDBReady(ctx context.Context, db *pgx.Conn) error {
+	logger.Get(ctx).Info("Waiting for database to be created", zap.String("db", postgres.DB))
+
+	retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+
+	return retry.Do(retryCtx, time.Second, func() error {
+		queryCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+		defer cancel()
+
+		row := db.QueryRow(queryCtx, "select 1 as result from pg_database where datname=$1", postgres.DB)
+		var dummy int
+		if err := row.Scan(&dummy); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return retry.Retryable(errors.New("database hasn't been created yet"))
+			}
+			return retry.Retryable(errors.Wrap(err, "verifying database readiness failed"))
+		}
+		return nil
+	})
 }
