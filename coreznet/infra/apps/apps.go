@@ -27,15 +27,15 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 	nodes := make(infra.Mode, 0, numOfNodes)
 	var node0 *Cored
 	for i := 0; i < numOfNodes; i++ {
-		port := 10000 + 10*i
 		name := name + fmt.Sprintf("-%02d", i)
+		portDelta := i * 1000
 		node := NewCored(name, f.config, genesis, f.spec.DescribeApp(CoredType, name), cored.Ports{
-			RPC:        port + 1,
-			P2P:        port + 2,
-			GRPC:       port + 3,
-			GRPCWeb:    port + 4,
-			PProf:      port + 5,
-			Prometheus: port + 6,
+			RPC:        cored.DefaultPorts.RPC + portDelta,
+			P2P:        cored.DefaultPorts.P2P + portDelta,
+			GRPC:       cored.DefaultPorts.GRPC + portDelta,
+			GRPCWeb:    cored.DefaultPorts.GRPCWeb + portDelta,
+			PProf:      cored.DefaultPorts.PProf + portDelta,
+			Prometheus: cored.DefaultPorts.Prometheus + portDelta,
 		}, node0)
 		if node0 == nil {
 			node0 = &node
