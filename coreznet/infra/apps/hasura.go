@@ -55,7 +55,7 @@ func (h Hasura) Info() infra.DeploymentInfo {
 func (h Hasura) Deployment() infra.Deployment {
 	return infra.Container{
 		Image: "hasura/graphql-engine",
-		Tag:   "latest",
+		Tag:   "v2.8.0",
 		AppBase: infra.AppBase{
 			Name: h.Name(),
 			Info: h.appInfo,
