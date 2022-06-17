@@ -19,25 +19,25 @@ import (
 // PostgresType is the type of postgres application
 const PostgresType infra.AppType = "postgres"
 
-// SchemaLoader is the function receiving sql client and loading schema there
-type SchemaLoader func(ctx context.Context, db *pgx.Conn) error
+// SchemaLoaderFunc is the function receiving sql client and loading schema there
+type SchemaLoaderFunc func(ctx context.Context, db *pgx.Conn) error
 
 // NewPostgres creates new postgres app
-func NewPostgres(name string, appInfo *infra.AppInfo, port int, schemaLoader SchemaLoader) Postgres {
+func NewPostgres(name string, appInfo *infra.AppInfo, port int, schemaLoaderFunc SchemaLoaderFunc) Postgres {
 	return Postgres{
-		name:         name,
-		appInfo:      appInfo,
-		port:         port,
-		schemaLoader: schemaLoader,
+		name:             name,
+		appInfo:          appInfo,
+		port:             port,
+		schemaLoaderFunc: schemaLoaderFunc,
 	}
 }
 
 // Postgres represents postgres
 type Postgres struct {
-	name         string
-	appInfo      *infra.AppInfo
-	port         int
-	schemaLoader SchemaLoader
+	name             string
+	appInfo          *infra.AppInfo
+	port             int
+	schemaLoaderFunc SchemaLoaderFunc
 }
 
 // Type returns type of application
@@ -96,7 +96,7 @@ func (p Postgres) Deployment() infra.Deployment {
 				"sql": p.port,
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				if p.schemaLoader == nil || p.Info().Status != infra.AppStatusNotDeployed {
+				if p.schemaLoaderFunc == nil || p.Info().Status != infra.AppStatusNotDeployed {
 					return nil
 				}
 
@@ -147,7 +147,7 @@ func (p Postgres) Deployment() infra.Deployment {
 
 				log.Info("Loading schema into the database")
 
-				if err := p.schemaLoader(ctx, db); err != nil {
+				if err := p.schemaLoaderFunc(ctx, db); err != nil {
 					return errors.Wrap(err, "loading schema failed")
 				}
 
