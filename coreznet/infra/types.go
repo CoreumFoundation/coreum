@@ -125,8 +125,8 @@ type DeploymentInfo struct {
 	// ProcessID stores process ID used to run the app - used only by direct target
 	ProcessID int `json:"processID,omitempty"` // nolint:tagliatelle // it wants processId
 
-	// Type is the type of app
-	Type AppType `json:"type"`
+	// Container stores the name of the docker container where app is running - present only for apps running in docker
+	Container string `json:"container,omitempty"`
 
 	// FromHostIP is the host's IP application binds to
 	FromHostIP net.IP `json:"fromHostIP,omitempty"` // nolint:tagliatelle // it wants fromHostIp
@@ -267,6 +267,12 @@ func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) (
 	return info, nil
 }
 
+// EnvVar is used to define environment variable for docker container
+type EnvVar struct {
+	Name  string
+	Value string
+}
+
 // Container represents container to be deployed
 type Container struct {
 	AppBase
@@ -276,6 +282,9 @@ type Container struct {
 
 	// Tag is the tag of the image
 	Tag string
+
+	// EnvVars define environment variables for docker container
+	EnvVars []EnvVar
 }
 
 // Dependencies returns the list of applications which must be running before the current deployment may be started
@@ -285,7 +294,18 @@ func (app Container) Dependencies() []HealthCheckCapable {
 
 // Deploy deploys container to the target
 func (app Container) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
-	panic("not implemented")
+	if err := app.AppBase.preprocess(ctx, config, target); err != nil {
+		return DeploymentInfo{}, err
+	}
+
+	info, err := target.DeployContainer(ctx, app)
+	if err != nil {
+		return DeploymentInfo{}, err
+	}
+	if err := app.AppBase.postprocess(ctx, info); err != nil {
+		return DeploymentInfo{}, err
+	}
+	return info, nil
 }
 
 // NewSpec returns new spec

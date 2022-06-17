@@ -131,7 +131,7 @@ func (c Cored) Client() cored.Client {
 	return cored.NewClient(c.genesis.ChainID(), net.JoinHostPort(c.Info().FromHostIP.String(), strconv.Itoa(c.Ports().RPC)))
 }
 
-// HealthCheck checks if cored chain is empty
+// HealthCheck checks if cored chain is ready to accept transactions
 func (c Cored) HealthCheck(ctx context.Context) error {
 	if c.appInfo.Info().Status != infra.AppStatusRunning {
 		return retry.Retryable(errors.Errorf("cored chain hasn't started yet"))

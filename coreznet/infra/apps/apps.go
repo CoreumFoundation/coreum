@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/postgres"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 )
 
@@ -43,4 +45,13 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 		nodes = append(nodes, node)
 	}
 	return nodes
+}
+
+// BlockExplorer returns set of applications required to run block explorer
+func (f *Factory) BlockExplorer(name string) infra.Mode {
+	namePostgres := name + "-postgres"
+	return infra.Mode{
+		NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema),
+		// FIXME (wojciech): more apps coming soon
+	}
 }

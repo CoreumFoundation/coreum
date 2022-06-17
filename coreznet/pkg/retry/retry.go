@@ -54,7 +54,7 @@ func Do(ctx context.Context, retryAfter time.Duration, fn func() error) error {
 
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return errors.WithStack(ctx.Err())
 		case <-time.After(retryAfter):
 		}
 	}

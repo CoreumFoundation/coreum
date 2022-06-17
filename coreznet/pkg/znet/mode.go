@@ -8,11 +8,14 @@ import (
 
 // DevMode is the environment for developer
 func DevMode(appF *apps.Factory) infra.Mode {
-	return appF.CoredNetwork("coredev", 1)
+	var mode infra.Mode
+	mode = append(mode, appF.CoredNetwork("coredev", 1)...)
+	mode = append(mode, appF.BlockExplorer("explorer")...)
+	return mode
 }
 
 // TestMode returns environment used for testing
 func TestMode(appF *apps.Factory) infra.Mode {
-	env, _ := tests.Tests(appF)
-	return env
+	mode, _ := tests.Tests(appF)
+	return mode
 }
