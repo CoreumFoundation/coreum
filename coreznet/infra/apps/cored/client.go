@@ -16,8 +16,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-const requestTimeout = 10 * time.Second
-const txTimeout = 30 * time.Second
+const requestTimeout = 1 * time.Minute
+const txTimeout = 10 * time.Minute
 const defaultBroadcastStatusPoll = 250 * time.Millisecond
 
 // NewClient creates new client for cored
