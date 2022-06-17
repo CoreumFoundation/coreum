@@ -189,7 +189,7 @@ func genesis(chainID string) []byte {
 			},
 			"crisis": o{
 				"constant_fee": o{
-					"denom":  "stake",
+					"denom":  "core",
 					"amount": "1000",
 				},
 			},
@@ -206,7 +206,7 @@ func genesis(chainID string) []byte {
 				"deposit_params": o{
 					"min_deposit": a{
 						o{
-							"denom":  "stake",
+							"denom":  "core",
 							"amount": "10000000",
 						},
 					},
@@ -248,7 +248,7 @@ func genesis(chainID string) []byte {
 					"annual_provisions": "0.000000000000000000",
 				},
 				"params": o{
-					"mint_denom":            "stake",
+					"mint_denom":            "core",
 					"inflation_rate_change": "0.130000000000000000",
 					"inflation_max":         "0.200000000000000000",
 					"inflation_min":         "0.070000000000000000",
@@ -280,7 +280,7 @@ func genesis(chainID string) []byte {
 					"max_validators":     100,
 					"max_entries":        7,
 					"historical_entries": 10000,
-					"bond_denom":         "stake",
+					"bond_denom":         "core",
 				},
 				"last_total_power": "0",
 			},

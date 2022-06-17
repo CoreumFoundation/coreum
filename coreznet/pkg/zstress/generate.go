@@ -72,8 +72,8 @@ func Generate(config GenerateConfig) error {
 			ValidatorKey:   validatorPrivateKey,
 		}.Save(valDir)
 
-		genesis.AddWallet(stakerPublicKey, "100000000000000000000000core,10000000000000000000000000stake")
-		genesis.AddValidator(validatorPublicKey, stakerPrivateKey, "100000000stake")
+		genesis.AddWallet(stakerPublicKey, "100000000000000000000000core")
+		genesis.AddValidator(validatorPublicKey, stakerPrivateKey, "100000000core")
 	}
 	must.OK(ioutil.WriteFile(dir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 
