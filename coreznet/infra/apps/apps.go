@@ -3,6 +3,7 @@ package apps
 import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/postgres"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 )
 
@@ -29,7 +30,7 @@ func (f *Factory) Cored(name string, ports cored.Ports, genesis *cored.Genesis, 
 func (f *Factory) BlockExplorer(name string, ports blockexplorer.Ports) infra.Mode {
 	namePostgres := name + "-postgres"
 	return infra.Mode{
-		NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), ports.Postgres, blockexplorer.LoadSchema),
+		NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), ports.Postgres, postgres.LoadSchema),
 		// FIXME (wojciech): more apps coming soon
 	}
 }
