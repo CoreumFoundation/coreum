@@ -33,7 +33,6 @@ linters:
     - gomnd
     - varnamelen
     - godox
-    - funlen
     - gocognit
     - lll
     - cyclop
@@ -61,3 +60,13 @@ linters-settings:
   nakedret:
     # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
     max-func-lines: 1
+
+  funlen:
+    # Checks the number of lines in a function.
+    # If lower than 0, disable the check.
+    # Default: 60
+    lines: 100
+    # Checks the number of statements in a function.
+    # If lower than 0, disable the check.
+    # Default: 40
+    statements: -1
