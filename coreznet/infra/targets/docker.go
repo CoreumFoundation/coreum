@@ -20,11 +20,6 @@ import (
 
 const labelEnv = "com.coreum.coreznet.env"
 
-const dockerTemplate = `FROM alpine
-COPY . .
-ENTRYPOINT ["%s"]
-`
-
 // NewDocker creates new docker target
 func NewDocker(config infra.Config, spec *infra.Spec) *Docker {
 	return &Docker{
@@ -67,10 +62,24 @@ func (d *Docker) Stop(ctx context.Context) error {
 
 // Remove removes running applications
 func (d *Docker) Remove(ctx context.Context) error {
-	if err := d.dropContainers(ctx); err != nil {
+	buf := &bytes.Buffer{}
+	listCmd := exec.Docker("ps", "-q", "-a", "--filter", "label="+labelEnv+"="+d.config.EnvName)
+	listCmd.Stdout = buf
+	if err := libexec.Exec(ctx, listCmd); err != nil {
 		return err
 	}
-	return d.dropImages(ctx)
+
+	var commands []*osexec.Cmd
+	for _, cID := range strings.Split(buf.String(), "\n") {
+		// last item is empty
+		if cID == "" {
+			break
+		}
+		commands = append(commands, exec.Docker("stop", "--time", "60", cID))
+		commands = append(commands, exec.Docker("rm", cID))
+	}
+	// FIXME (wojtek): parallelize this
+	return libexec.Exec(ctx, commands...)
 }
 
 // Deploy deploys environment to docker target
@@ -80,48 +89,40 @@ func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 
 // DeployBinary builds container image out of binary file and starts it in docker
 func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
-	contextDir := d.config.AppDir + "/" + app.Name
-	contextBinDir := contextDir + "/bin/"
-	must.OK(os.MkdirAll(contextBinDir, 0o700))
-
-	binPath := app.BinPathFunc("linux")
-	must.Any(os.Stat(binPath))
-	if err := os.Link(binPath, contextBinDir+"/"+filepath.Base(binPath)); err != nil && !os.IsExist(err) {
-		panic(err)
-	}
-
-	image := d.config.EnvName + "/" + app.Name + ":latest"
 	name := d.config.EnvName + "-" + app.Name
-	existsBuf := &bytes.Buffer{}
-	existsCmd := exec.Docker("ps", "-aqf", "name="+name)
-	existsCmd.Stdout = existsBuf
-	if err := libexec.Exec(ctx, existsCmd); err != nil {
+	exists, err := containerExists(ctx, name)
+	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
-	var commands []*osexec.Cmd
-	if existsBuf.String() != "" {
-		commands = append(commands, exec.Docker("start", name))
+	var startCmd *osexec.Cmd
+	if exists {
+		startCmd = exec.Docker("start", name)
 	} else {
-		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName}
+		const internalHomeDir = "/app"
+		appHomeDir := d.config.AppDir + "/" + app.Name
+		binPath := app.BinPathFunc("linux")
+		must.Any(os.Stat(binPath))
+		internalBinPath := "/bin/" + filepath.Base(binPath)
+
+		runArgs := []string{"run", "--name", name, "-d", "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
+			"--label", labelEnv + "=" + d.config.EnvName, "-v", appHomeDir + ":" + internalHomeDir, "-v",
+			binPath + ":" + internalBinPath}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
 		}
-		runArgs = append(runArgs, image)
-		runArgs = append(runArgs, app.ArgsFunc(net.IPv4zero, "/", containerIPResolver{})...)
+		runArgs = append(runArgs, "alpine:3.16.0", internalBinPath)
+		runArgs = append(runArgs, app.ArgsFunc(net.IPv4zero, internalHomeDir, containerIPResolver{})...)
 
-		buildCmd := exec.Docker("build", "--tag", image, "--label", labelEnv+"="+d.config.EnvName, "-f-", contextDir)
-		buildCmd.Stdin = bytes.NewBufferString(fmt.Sprintf(dockerTemplate, filepath.Base(binPath)))
-		commands = append(commands, buildCmd, exec.Docker(runArgs...))
+		startCmd = exec.Docker(runArgs...)
 	}
 
 	ipBuf := &bytes.Buffer{}
 	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
 	ipCmd.Stdout = ipBuf
-	commands = append(commands, ipCmd)
-	err := libexec.Exec(ctx, commands...)
-	if err != nil {
+
+	if err := libexec.Exec(ctx, startCmd, ipCmd); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
@@ -145,16 +146,14 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 // DeployContainer starts container in docker
 func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
 	name := d.config.EnvName + "-" + app.Name
-	existsBuf := &bytes.Buffer{}
-	existsCmd := exec.Docker("ps", "-aqf", "name="+name)
-	existsCmd.Stdout = existsBuf
-	if err := libexec.Exec(ctx, existsCmd); err != nil {
+	exists, err := containerExists(ctx, name)
+	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
-	var commands []*osexec.Cmd
-	if existsBuf.String() != "" {
-		commands = []*osexec.Cmd{exec.Docker("start", name)}
+	var startCmd *osexec.Cmd
+	if exists {
+		startCmd = exec.Docker("start", name)
 	} else {
 		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName}
 		for _, port := range app.Ports {
@@ -166,15 +165,14 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 		}
 		runArgs = append(runArgs, app.Image+":"+app.Tag)
 		runArgs = append(runArgs, app.ArgsFunc(net.IPv4zero, "/", containerIPResolver{})...)
-		commands = []*osexec.Cmd{exec.Docker(runArgs...)}
+
+		startCmd = exec.Docker(runArgs...)
 	}
 
 	ipBuf := &bytes.Buffer{}
 	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
 	ipCmd.Stdout = ipBuf
-	commands = append(commands, ipCmd)
-	err := libexec.Exec(ctx, commands...)
-	if err != nil {
+	if err := libexec.Exec(ctx, startCmd, ipCmd); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
@@ -195,43 +193,12 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	}, nil
 }
 
-func (d *Docker) dropContainers(ctx context.Context) error {
-	buf := &bytes.Buffer{}
-	listCmd := exec.Docker("ps", "-q", "-a", "--filter", "label="+labelEnv+"="+d.config.EnvName)
-	listCmd.Stdout = buf
-	if err := libexec.Exec(ctx, listCmd); err != nil {
-		return err
+func containerExists(ctx context.Context, name string) (bool, error) {
+	existsBuf := &bytes.Buffer{}
+	existsCmd := exec.Docker("ps", "-aqf", "name="+name)
+	existsCmd.Stdout = existsBuf
+	if err := libexec.Exec(ctx, existsCmd); err != nil {
+		return false, err
 	}
-
-	var commands []*osexec.Cmd
-	for _, cID := range strings.Split(buf.String(), "\n") {
-		// last item is empty
-		if cID == "" {
-			break
-		}
-		commands = append(commands, exec.Docker("stop", "--time", "60", cID))
-		commands = append(commands, exec.Docker("rm", cID))
-	}
-	// FIXME (wojtek): parallelize this
-	return libexec.Exec(ctx, commands...)
-}
-
-func (d *Docker) dropImages(ctx context.Context) error {
-	buf := &bytes.Buffer{}
-	listCmd := exec.Docker("images", "-q", "--filter", "label="+labelEnv+"="+d.config.EnvName)
-	listCmd.Stdout = buf
-	if err := libexec.Exec(ctx, listCmd); err != nil {
-		return err
-	}
-
-	var commands []*osexec.Cmd
-	for _, imageID := range strings.Split(buf.String(), "\n") {
-		// last item is empty
-		if imageID == "" {
-			break
-		}
-		commands = append(commands, exec.Docker("rmi", "-f", imageID))
-	}
-	// FIXME (wojtek): parallelize this
-	return libexec.Exec(ctx, commands...)
+	return existsBuf.Len() > 0, nil
 }
