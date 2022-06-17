@@ -101,7 +101,10 @@ We suggest that you set these limits (inspired by [Sample config for 2 million w
 ```bash
 #!/bin/sh
 
+# Set the maximum number of file-handles that the Linux kernel will allocate.
 sysctl -w fs.file-max=12000500
+
+# Increase maximum number of file-handles a process can allocate.
 sysctl -w fs.nr_open=20000500
 
 # Set the maximum number of open file descriptors
@@ -110,7 +113,7 @@ ulimit -n 20000000
 # Set the memory size for TCP with minimum, default and maximum thresholds
 sysctl -w net.ipv4.tcp_mem='10000000 10000000 10000000'
 
-# Set the receive buffer for each TCP connection with minumum, default and maximum thresholds
+# Set the receive buffer for each TCP connection with minimum, default and maximum thresholds
 sysctl -w net.ipv4.tcp_rmem='1024 4096 16384'
 
 # Set the TCP send buffer space with minumum, default and maximum thresholds
@@ -122,6 +125,15 @@ sysctl -w net.core.rmem_max=16384
 # The maximum socket send buffer size
 sysctl -w net.core.wmem_max=16384
 ```
+
+For clients only, and in case `corezstress` connects to a remote RPC host:
+
+```bash
+# enabled tcp_tw_reuse on remote connections
+sysctl -w net.ipv4.tcp_tw_reuse=1
+```
+
+Additional documentation on those values can be consulted at [sysctl-explorer.net](https://sysctl-explorer.net).
 
 ## Gathering results
 
