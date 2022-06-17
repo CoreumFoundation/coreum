@@ -16,6 +16,6 @@ func DevMode(appF *apps.Factory) infra.Mode {
 
 // TestMode returns environment used for testing
 func TestMode(appF *apps.Factory) infra.Mode {
-	env, _ := tests.Tests(appF)
-	return env
+	mode, _ := tests.Tests(appF)
+	return mode
 }
