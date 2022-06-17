@@ -1,15 +1,11 @@
 package targets
 
 import (
-	"bytes"
 	"context"
 	"os"
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/coreznet/exec"
@@ -36,17 +32,11 @@ type TMux struct {
 
 // Stop stops running applications
 func (t *TMux) Stop(ctx context.Context) error {
-	if err := t.sessionKill(ctx); err != nil {
-		return err
-	}
 	return t.docker.Stop(ctx)
 }
 
 // Remove removes running applications
 func (t *TMux) Remove(ctx context.Context) error {
-	if err := t.sessionKill(ctx); err != nil {
-		return err
-	}
 	return t.docker.Remove(ctx)
 }
 
@@ -105,40 +95,6 @@ func (t *TMux) sessionAttach(ctx context.Context) error {
 	cmd := exec.TMux("attach-session", "-t", t.config.EnvName)
 	cmd.Stdin = os.Stdin
 	return libexec.Exec(ctx, cmd)
-}
-
-func (t *TMux) sessionKill(ctx context.Context) error {
-	// When using just `tmux kill-session` tmux sends SIGHUP to process, but we need SIGTERM.
-	// After sending it to all apps, session is terminated automatically.
-
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if hasSession, err := t.sessionExists(ctx); err != nil || !hasSession {
-		return err
-	}
-	pids, err := t.sessionPIDs(ctx)
-	if err != nil || len(pids) == 0 {
-		return err
-	}
-	return exec.Kill(ctx, pids)
-}
-
-func (t *TMux) sessionPIDs(ctx context.Context) ([]int, error) {
-	buf := &bytes.Buffer{}
-	cmd := exec.TMux("list-windows", "-t", t.config.EnvName, "-F", "#{pane_pid}")
-	cmd.Stdout = buf
-	if err := libexec.Exec(ctx, cmd); err != nil {
-		return nil, err
-	}
-	var pids []int
-	for _, pidStr := range strings.Split(buf.String(), "\n") {
-		if pidStr == "" {
-			break
-		}
-		pids = append(pids, int(must.Int64(strconv.ParseInt(pidStr, 10, 32))))
-	}
-	return pids, nil
 }
 
 func (t *TMux) sessionExists(ctx context.Context) (bool, error) {
