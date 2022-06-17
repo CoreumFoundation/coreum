@@ -122,9 +122,6 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 
 // DeploymentInfo contains info about deployed application
 type DeploymentInfo struct {
-	// ProcessID stores process ID used to run the app - used only by direct target
-	ProcessID int `json:"processID,omitempty"` // nolint:tagliatelle // it wants processId
-
 	// Container stores the name of the docker container where app is running - present only for apps running in docker
 	Container string `json:"container,omitempty"`
 

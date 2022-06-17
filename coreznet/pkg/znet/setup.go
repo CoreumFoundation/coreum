@@ -32,7 +32,6 @@ func IoC(c *ioc.Container) {
 		return mode
 	})
 	c.Transient(targets.NewDocker)
-	c.TransientNamed("direct", targets.NewDirect)
 	c.TransientNamed("tmux", targets.NewTMux)
 	c.TransientNamed("docker", func(docker *targets.Docker) infra.Target {
 		return docker
