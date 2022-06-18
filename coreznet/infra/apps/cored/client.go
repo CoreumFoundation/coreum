@@ -3,6 +3,8 @@ package cored
 import (
 	"context"
 	"encoding/hex"
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -23,6 +25,8 @@ const (
 	txTimeout            = time.Minute
 	txStatusPollInterval = 500 * time.Millisecond
 )
+
+var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
@@ -110,6 +114,9 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	} else {
 		txHash = res.Hash.String()
 		if res.Code != 0 {
+			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
+				return "", err
+			}
 			return "", errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
 				txHash, res.Code, res.Codespace, res.Log)
 		}
@@ -141,8 +148,12 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 			return retry.Retryable(errors.WithStack(err))
 		}
 		if resultTx.TxResult.Code != 0 {
+			res := resultTx.TxResult
+			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
+				return err
+			}
 			return errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
-				txHash, resultTx.TxResult.Code, resultTx.TxResult.Codespace, resultTx.TxResult.Log)
+				txHash, res.Code, res.Codespace, res.Log)
 		}
 		if resultTx.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
@@ -179,8 +190,12 @@ func isTxInMempool(errRes *sdk.TxResponse) bool {
 	if errRes == nil {
 		return false
 	}
-	return errRes.Codespace == cosmoserrors.ErrTxInMempoolCache.Codespace() &&
-		errRes.Code == cosmoserrors.ErrTxInMempoolCache.ABCICode()
+	return isSDKErrorResult(errRes.Codespace, errRes.Code, cosmoserrors.ErrTxInMempoolCache)
+}
+
+func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error) bool {
+	return codespace == sdkErr.Codespace() &&
+		code == sdkErr.ABCICode()
 }
 
 func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
@@ -214,4 +229,40 @@ func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, acc
 	must.OK(txBuilder.SetSignatures(sig))
 
 	return txBuilder.GetTx()
+}
+
+type sequenceError struct {
+	expectedSequence uint64
+	message          string
+}
+
+func (e sequenceError) Error() string {
+	return e.message
+}
+
+func checkSequence(codespace string, code uint32, log string) error {
+	// Cosmos SDK doesn't return expected sequence number as a parameter from RPC call,
+	// so we must parse the error message in a hacky way.
+
+	if !isSDKErrorResult(codespace, code, cosmoserrors.ErrWrongSequence) {
+		return nil
+	}
+	matches := expectedSequenceRegExp.FindStringSubmatch(log)
+	if len(matches) != 2 {
+		return errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
+	}
+	expectedSequence, err := strconv.ParseUint(matches[1], 10, 64)
+	if err != nil {
+		return errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
+	}
+	return errors.WithStack(sequenceError{message: log, expectedSequence: expectedSequence})
+}
+
+// IsSequenceError checks if error is related to account sequence mismatch, and returns expected account sequence
+func IsSequenceError(err error) (uint64, bool) {
+	var seqErr sequenceError
+	if errors.As(err, &seqErr) {
+		return seqErr.expectedSequence, true
+	}
+	return 0, false
 }

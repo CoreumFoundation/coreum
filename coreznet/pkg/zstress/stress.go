@@ -151,7 +151,6 @@ func Stress(ctx context.Context, config StressConfig) error {
 			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 				for i, accountTxs := range signedTxs {
 					accountTxs := accountTxs
-					accountAddress := config.Accounts[i].Address()
 					initialSequence := initialAccountSequences[i]
 					spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
 						for txIndex := 0; txIndex < config.NumOfTransactions; {
@@ -161,20 +160,13 @@ func Stress(ctx context.Context, config StressConfig) error {
 								if errors.Is(err, ctx.Err()) {
 									return err
 								}
-
-								// In case of error two situations are possible:
-								// - error happened after tx was accepted by the node - next tx should be broadcasted
-								// - error happened before tx was accepted by the node - same transaction should be broadcasted again
-								// Because we don't know, blockchain must be queried to check what is the next expected sequence number
-
-								_, accSeq, errSeq := getAccountNumberSequence(ctx, client, accountAddress)
-								if errSeq != nil {
-									return errSeq
+								if expectedAccSeq, ok := cored.IsSequenceError(err); ok {
+									log.Warn("Broadcasting failed, retrying with fresh account sequence...", zap.Error(err),
+										zap.Uint64("accountSequence", expectedAccSeq))
+									txIndex = int(expectedAccSeq - initialSequence)
+								} else {
+									log.Warn("Broadcasting failed, retrying...", zap.Error(err))
 								}
-
-								log.Warn("Broadcasting failed, retrying with fresh account sequence", zap.Error(err),
-									zap.Uint64("accountSequence", accSeq))
-								txIndex = int(accSeq - initialSequence)
 								continue
 							}
 							log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
