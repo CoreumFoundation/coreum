@@ -18,8 +18,11 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
-const requestTimeout = 10 * time.Second
-const txTimeout = 30 * time.Second
+const (
+	requestTimeout       = 10 * time.Second
+	txTimeout            = time.Minute
+	txStatusPollInterval = 500 * time.Millisecond
+)
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
@@ -120,7 +123,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
 	defer cancel()
 
-	err = retry.Do(timeoutCtx, 250*time.Millisecond, func() error {
+	err = retry.Do(timeoutCtx, txStatusPollInterval, func() error {
 		requestCtx, cancel := context.WithTimeout(timeoutCtx, requestTimeout)
 		defer cancel()
 
@@ -136,6 +139,10 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 				return errors.WithStack(err)
 			}
 			return retry.Retryable(errors.WithStack(err))
+		}
+		if resultTx.TxResult.Code != 0 {
+			return errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
+				txHash, resultTx.TxResult.Code, resultTx.TxResult.Codespace, resultTx.TxResult.Log)
 		}
 		if resultTx.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))

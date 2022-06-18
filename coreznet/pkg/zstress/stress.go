@@ -199,11 +199,11 @@ func Stress(ctx context.Context, config StressConfig) error {
 
 func getAccountNumberSequence(ctx context.Context, client cored.Client, accountAddress string) (uint64, uint64, error) {
 	var accNum, accSeq uint64
-	err := retry.Do(ctx, 250*time.Millisecond, func() error {
+	err := retry.Do(ctx, time.Second, func() error {
 		var err error
 		accNum, accSeq, err = client.GetNumberSequence(accountAddress)
 		if err != nil {
-			return retry.Retryable(errors.Wrap(err, "querying for account data failed"))
+			return retry.Retryable(errors.Wrap(err, "querying for account number and sequence failed"))
 		}
 		return nil
 	})
