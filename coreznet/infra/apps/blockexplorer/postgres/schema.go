@@ -46,7 +46,7 @@ var (
 	schema11FeeGrant string
 )
 
-// LoadSchema loads schema required by blocke xplorer into postgres database
+// LoadSchema loads schema required by block explorer into postgres database
 func LoadSchema(ctx context.Context, db *pgx.Conn) error {
 	for _, cmds := range []string{
 		schema00Cosmos,

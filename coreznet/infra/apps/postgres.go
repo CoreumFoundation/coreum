@@ -130,8 +130,8 @@ func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn,
 
 	var db *pgx.Conn
 
-	retryCtx, cancel1 := context.WithTimeout(ctx, 20*time.Second)
-	defer cancel1()
+	retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
 	err := retry.Do(retryCtx, 2*time.Second, func() error {
 		connCtx, cancel := context.WithTimeout(retryCtx, time.Second)
 		defer cancel()

@@ -1,24 +1,35 @@
 package apps
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"net"
+	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/pkg/errors"
+
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
+	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
 // HasuraType is the type of hasura application
 const HasuraType infra.AppType = "hasura"
 
 // NewHasura creates new hasura app
-func NewHasura(name string, appInfo *infra.AppInfo, port int, postgres Postgres) Hasura {
+func NewHasura(name string, appInfo *infra.AppInfo, port int, metadata []byte, postgres Postgres) Hasura {
 	return Hasura{
 		name:     name,
 		appInfo:  appInfo,
 		port:     port,
+		metadata: metadata,
 		postgres: postgres,
 	}
 }
@@ -28,6 +39,7 @@ type Hasura struct {
 	name     string
 	appInfo  *infra.AppInfo
 	port     int
+	metadata []byte
 	postgres Postgres
 }
 
@@ -84,7 +96,52 @@ func (h Hasura) Deployment() infra.Deployment {
 				},
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				// FIXME (wojciech): Load metadata
+				reqData := struct {
+					Type    string          `json:"type"`
+					Version uint            `json:"version"`
+					Args    json.RawMessage `json:"args"`
+				}{
+					Type:    "replace_metadata",
+					Version: 2,
+					Args:    h.metadata,
+				}
+
+				metadata := must.Bytes(json.Marshal(reqData))
+				metaURL := url.URL{Scheme: "http", Host: net.JoinHostPort(deployment.FromHostIP.String(), strconv.Itoa(h.port)), Path: "/v1/metadata"}
+
+				log := logger.Get(ctx)
+				log.Info("Loading metadata")
+
+				retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+				defer cancel()
+				err := retry.Do(retryCtx, 2*time.Second, func() error {
+					requestCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+					defer cancel()
+
+					req, err := http.NewRequestWithContext(requestCtx, http.MethodPost, metaURL.String(), bytes.NewReader(metadata))
+					must.OK(err)
+					req.Header.Add("Content-Type", "application/json")
+					req.Header.Add("X-Hasura-Role", "admin")
+
+					resp, err := http.DefaultClient.Do(req)
+					if err != nil {
+						return retry.Retryable(errors.Wrap(err, "request to store hasura metadata failed"))
+					}
+					defer resp.Body.Close()
+
+					if resp.StatusCode == http.StatusOK {
+						return nil
+					}
+					body, err := io.ReadAll(resp.Body)
+					if err != nil {
+						return retry.Retryable(errors.Wrapf(err, "reading body failed"))
+					}
+					return errors.Errorf("request to store hasura metadata failed with status code %d, body: %s", resp.StatusCode, body)
+				})
+				if err != nil {
+					return err
+				}
+				log.Info("Metadata loaded")
 				return nil
 			},
 		},

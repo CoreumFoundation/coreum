@@ -5,6 +5,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/hasura"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/postgres"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 )
@@ -53,7 +54,7 @@ func (f *Factory) BlockExplorer(name string) infra.Mode {
 	nameHasura := name + "-hasura"
 
 	postgres := NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema)
-	hasura := NewHasura(nameHasura, f.spec.DescribeApp(HasuraType, nameHasura), blockexplorer.DefaultPorts.Hasura, postgres)
+	hasura := NewHasura(nameHasura, f.spec.DescribeApp(HasuraType, nameHasura), blockexplorer.DefaultPorts.Hasura, hasura.Metadata, postgres)
 	return infra.Mode{
 		postgres,
 		hasura,
