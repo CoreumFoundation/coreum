@@ -53,6 +53,7 @@ linters:
     - exhaustruct
     - errchkjson
     - forcetypeassert
+    - nestif
     # deprecated:
     - interfacer
     - golint
