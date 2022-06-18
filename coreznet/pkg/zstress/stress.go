@@ -63,7 +63,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 						if !ok {
 							return nil
 						}
-						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
+						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
 						select {
 						case <-ctx.Done():
 							return ctx.Err()
@@ -193,7 +193,7 @@ func getAccountNumberSequence(ctx context.Context, client cored.Client, accountA
 	var accNum, accSeq uint64
 	err := retry.Do(ctx, time.Second, func() error {
 		var err error
-		accNum, accSeq, err = client.GetNumberSequence(accountAddress)
+		accNum, accSeq, err = client.GetNumberSequence(ctx, accountAddress)
 		if err != nil {
 			return retry.Retryable(errors.Wrap(err, "querying for account number and sequence failed"))
 		}

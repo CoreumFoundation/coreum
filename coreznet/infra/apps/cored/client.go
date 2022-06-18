@@ -14,8 +14,11 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
@@ -35,6 +38,7 @@ func NewClient(chainID string, addr string) Client {
 	clientCtx := NewContext(chainID, rpcClient)
 	return Client{
 		clientCtx:       clientCtx,
+		authQueryClient: authtypes.NewQueryClient(clientCtx),
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
 	}
 }
@@ -42,20 +46,30 @@ func NewClient(chainID string, addr string) Client {
 // Client is the client for cored blockchain
 type Client struct {
 	clientCtx       client.Context
+	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
-func (c Client) GetNumberSequence(address string) (uint64, uint64, error) {
+func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(address)
 	must.OK(err)
 
-	// FIXME (wojciech): Find a way to pass `ctx` to the logic of `GetAccountNumberSequence` to support timeouts
-	accNum, accSeq, err := c.clientCtx.AccountRetriever.GetAccountNumberSequence(c.clientCtx, addr)
+	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
+	var header metadata.MD
+	res, err := c.authQueryClient.Account(requestCtx, &authtypes.QueryAccountRequest{Address: addr.String()}, grpc.Header(&header))
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, errors.WithStack(err)
 	}
-	return accNum, accSeq, nil
+
+	var acc authtypes.AccountI
+	if err := c.clientCtx.InterfaceRegistry.UnpackAny(res.Account, &acc); err != nil {
+		return 0, 0, errors.WithStack(err)
+	}
+
+	return acc.GetAccountNumber(), acc.GetSequence(), nil
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
@@ -77,10 +91,10 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
-		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(signer.Key.Address())
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
 		if err != nil {
 			return nil, err
 		}
@@ -167,13 +181,13 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 }
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) PrepareTxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error) {
+func (c Client) PrepareTxBankSend(ctx context.Context, sender, receiver Wallet, balance Balance) ([]byte, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
 	must.OK(err)
 	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
 	must.OK(err)
 
-	signedTx, err := c.Sign(sender, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	signedTx, err := c.Sign(ctx, sender, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
 			Denom:  balance.Denom,
 			Amount: sdk.NewIntFromBigInt(balance.Amount),
