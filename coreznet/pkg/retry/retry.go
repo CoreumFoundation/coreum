@@ -39,12 +39,17 @@ func Do(ctx context.Context, retryAfter time.Duration, fn func() error) error {
 	var lastMessage string
 	var r RetryableError
 	for {
-		if err := fn(); !errors.As(err, &r) {
+		var r2 RetryableError
+		if err := fn(); !errors.As(err, &r2) {
 			return err
 		}
-		if errors.Is(r.err, ctx.Err()) {
-			return r.err
+		if errors.Is(r2.err, ctx.Err()) {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) && r.err != nil {
+				return r.err
+			}
+			return r2.err
 		}
+		r = r2
 
 		newMessage := r.err.Error()
 		if lastMessage != newMessage {
@@ -54,6 +59,9 @@ func Do(ctx context.Context, retryAfter time.Duration, fn func() error) error {
 
 		select {
 		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return r.err
+			}
 			return errors.WithStack(ctx.Err())
 		case <-time.After(retryAfter):
 		}
