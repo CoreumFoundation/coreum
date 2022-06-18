@@ -19,7 +19,13 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 )
 
-const labelEnv = "com.coreum.coreznet.env"
+const (
+	// AppHomeDir is the path inide container where application's home directory is mounted
+	AppHomeDir = "/app"
+
+	labelEnv          = "com.coreum.coreznet.env"
+	binaryDockerImage = "alpine:3.16.0"
+)
 
 // FIXME (wojciech): Entire logic here could be easily implemented by using docker API instead of binary execution
 
@@ -76,13 +82,13 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 		internalBinPath := "/bin/" + filepath.Base(app.BinPath)
 
 		runArgs := []string{"run", "--name", name, "-d", "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-			"--label", labelEnv + "=" + d.config.EnvName, "-v", appHomeDir + ":/app", "-v",
+			"--label", labelEnv + "=" + d.config.EnvName, "-v", appHomeDir + ":" + AppHomeDir, "-v",
 			app.BinPath + ":" + internalBinPath}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
 		}
-		runArgs = append(runArgs, "alpine:3.16.0", internalBinPath)
+		runArgs = append(runArgs, binaryDockerImage, internalBinPath)
 		runArgs = append(runArgs, app.ArgsFunc()...)
 
 		startCmd = exec.Docker(runArgs...)

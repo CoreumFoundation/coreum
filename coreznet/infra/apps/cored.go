@@ -18,6 +18,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/targets"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/rnd"
 )
@@ -185,7 +186,7 @@ func (c Cored) Deployment() infra.Deployment {
 			ArgsFunc: func() []string {
 				args := []string{
 					"start",
-					"--home", "/app",
+					"--home", targets.AppHomeDir,
 					"--rpc.laddr", infra.JoinProtoIPPort("tcp", net.IPv4zero, c.ports.RPC),
 					"--p2p.laddr", infra.JoinProtoIPPort("tcp", net.IPv4zero, c.ports.P2P),
 					"--grpc.address", infra.JoinProtoIPPort("", net.IPv4zero, c.ports.GRPC),
