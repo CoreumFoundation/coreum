@@ -64,7 +64,7 @@ func TransferCore(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 			client := chain.Client()
 
 			// Transfer 10 cores from sender to receiver
-			txBytes, err := client.PrepareTxBankSend(sender, receiver, cored.Balance{Denom: "core", Amount: big.NewInt(10)})
+			txBytes, err := client.PrepareTxBankSend(ctx, sender, receiver, cored.Balance{Denom: "core", Amount: big.NewInt(10)})
 			require.NoError(t, err)
 			txHash, err := client.Broadcast(ctx, txBytes)
 			require.NoError(t, err)
