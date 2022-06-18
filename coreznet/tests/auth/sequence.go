@@ -18,7 +18,7 @@ func UnexpectedSequenceNumber(chain apps.Cored) (testing.PrepareFunc, testing.Ru
 	var sender cored.Wallet
 
 	return func(ctx context.Context) error {
-			sender, _ = chain.AddWallet("10core")
+			sender = chain.AddWallet("10core")
 			return nil
 		},
 		func(ctx context.Context, t *testing.T) {
