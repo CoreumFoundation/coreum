@@ -3,6 +3,8 @@ package cored
 import (
 	"context"
 	"encoding/hex"
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -104,6 +106,10 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	} else {
 		txHash = res.Hash.String()
 		if res.Code != 0 {
+			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
+				return "", err
+			}
+
 			return "", errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
 				txHash, res.Code, res.Codespace, res.Log)
 		}
@@ -138,6 +144,10 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 
 			} else if resultTx.TxResult.Code != 0 {
 				res := resultTx.TxResult
+
+				if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
+					return "", err
+				}
 
 				return txHash, errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
 					txHash, res.Code, res.Codespace, res.Log)
@@ -213,4 +223,47 @@ func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, acc
 	must.OK(txBuilder.SetSignatures(sig))
 
 	return txBuilder.GetTx()
+}
+
+type sequenceError struct {
+	expectedSequence uint64
+	message          string
+}
+
+func (e sequenceError) Error() string {
+	return e.message
+}
+
+var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
+
+func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error) bool {
+	return codespace == sdkErr.Codespace() &&
+		code == sdkErr.ABCICode()
+}
+
+func checkSequence(codespace string, code uint32, log string) error {
+	// Cosmos SDK doesn't return expected sequence number as a parameter from RPC call,
+	// so we must parse the error message in a hacky way.
+
+	if !isSDKErrorResult(codespace, code, cosmoserrors.ErrWrongSequence) {
+		return nil
+	}
+	matches := expectedSequenceRegExp.FindStringSubmatch(log)
+	if len(matches) != 2 {
+		return errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
+	}
+	expectedSequence, err := strconv.ParseUint(matches[1], 10, 64)
+	if err != nil {
+		return errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
+	}
+	return errors.WithStack(sequenceError{message: log, expectedSequence: expectedSequence})
+}
+
+// IsSequenceError checks if error is related to account sequence mismatch, and returns expected account sequence
+func IsSequenceError(err error) (uint64, bool) {
+	var seqErr sequenceError
+	if errors.As(err, &seqErr) {
+		return seqErr.expectedSequence, true
+	}
+	return 0, false
 }

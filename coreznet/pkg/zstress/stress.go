@@ -159,6 +159,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 				for i, accountTxs := range signedTxs {
 					accountTxs := accountTxs
+					initialSequence := initialAccountSequences[i]
 
 					accountClient := cored.NewClient(config.ChainID, config.NodeAddress)
 
@@ -167,6 +168,13 @@ func Stress(ctx context.Context, config StressConfig) error {
 							tx := accountTxs[txIndex]
 							txHash, err := accountClient.Broadcast(ctx, tx)
 							if err != nil {
+								if expectedAccSeq, ok := cored.IsSequenceError(err); ok {
+									log.Warn("Broadcasting failed, retrying with fresh account sequence...", zap.Error(err),
+										zap.Uint64("accountSequence", expectedAccSeq))
+									txIndex = int(expectedAccSeq - initialSequence)
+									continue
+								}
+
 								return err
 							}
 
