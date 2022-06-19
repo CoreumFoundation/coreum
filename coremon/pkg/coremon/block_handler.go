@@ -67,12 +67,28 @@ func NewBlockHandlerWithMetrics(
 			// txTroughputAbs is the absolute throughput, based on num of transactions
 			// included in the block that was finalized in blockTimeDiff.
 			txTroughputAbs float64
+
+			// txBytes is the cummulative size of all txns in the block
+			txBytes int
+
+			// txGas is the cummulative gas spent on all txns in the block
+			txGas int64
 		)
 
 		blockTimestamps[blockNumber] = data.Block.Time
 		if prevBlockTimestamp, ok := blockTimestamps[blockNumber-1]; ok {
 			blockTimeDiff = data.Block.Time.Sub(prevBlockTimestamp)
 			txTroughputAbs = float64(txsInBlock) / (float64(blockTimeDiff) / float64(time.Second))
+		}
+
+		if txsInBlock > 0 {
+			for _, tx := range data.Block.Txs {
+				txBytes += len(tx)
+			}
+
+			for _, txResult := range data.BlockResults.TxsResults {
+				txGas += txResult.GasUsed
+			}
 		}
 
 		newBlockHandlerPace.Step(1)
@@ -99,6 +115,9 @@ func NewBlockHandlerWithMetrics(
 
 			if txsInBlock > 0 {
 				p = p.AddField("txs", txsInBlock)
+
+				p = p.AddField("txs_bytes", txBytes)
+				p = p.AddField("txs_gas", txGas)
 			}
 
 			if blockTimeDiff > 0 {
