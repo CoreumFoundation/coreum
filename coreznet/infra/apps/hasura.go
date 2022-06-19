@@ -115,7 +115,7 @@ func (h Hasura) Deployment() infra.Deployment {
 				retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 				defer cancel()
 				err := retry.Do(retryCtx, 2*time.Second, func() error {
-					requestCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+					requestCtx, cancel := context.WithTimeout(ctx, time.Second)
 					defer cancel()
 
 					req, err := http.NewRequestWithContext(requestCtx, http.MethodPost, metaURL.String(), bytes.NewReader(metadata))
