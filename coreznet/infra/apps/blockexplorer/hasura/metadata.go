@@ -6,4 +6,4 @@ import (
 
 // Metadata contains hasura metadata
 //go:embed metadata/metadata.json
-var Metadata []byte
+var Metadata string

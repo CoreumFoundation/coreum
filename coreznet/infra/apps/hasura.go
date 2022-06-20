@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"text/template"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -24,7 +25,7 @@ import (
 const HasuraType infra.AppType = "hasura"
 
 // NewHasura creates new hasura app
-func NewHasura(name string, appInfo *infra.AppInfo, port int, metadata []byte, postgres Postgres) Hasura {
+func NewHasura(name string, appInfo *infra.AppInfo, port int, metadata string, postgres Postgres) Hasura {
 	return Hasura{
 		name:     name,
 		appInfo:  appInfo,
@@ -39,7 +40,7 @@ type Hasura struct {
 	name     string
 	appInfo  *infra.AppInfo
 	port     int
-	metadata []byte
+	metadata string
 	postgres Postgres
 }
 
@@ -96,6 +97,12 @@ func (h Hasura) Deployment() infra.Deployment {
 				},
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
+				metadataBuf := &bytes.Buffer{}
+				must.OK(template.Must(template.New("metadata").Parse(h.metadata)).Execute(metadataBuf, struct {
+					DatabaseURL string
+				}{
+					DatabaseURL: "postgresql://" + postgres.User + "@" + net.JoinHostPort(h.postgres.Info().FromContainerIP.String(), strconv.Itoa(h.postgres.Port())) + "/" + postgres.DB,
+				}))
 				reqData := struct {
 					Type    string          `json:"type"`
 					Version uint            `json:"version"`
@@ -103,7 +110,7 @@ func (h Hasura) Deployment() infra.Deployment {
 				}{
 					Type:    "replace_metadata",
 					Version: 2,
-					Args:    h.metadata,
+					Args:    metadataBuf.Bytes(),
 				}
 
 				metadata := must.Bytes(json.Marshal(reqData))
