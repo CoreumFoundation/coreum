@@ -2,6 +2,8 @@ package infra
 
 import (
 	"context"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -63,4 +65,12 @@ func (hc isRunningHealthCheck) HealthCheck(ctx context.Context) error {
 		return nil
 	}
 	return retry.Retryable(errors.New("application hasn't been started yet"))
+}
+
+// JoinProtoIPPort joins protocol, ip and port
+func JoinProtoIPPort(proto string, ip net.IP, port int) string {
+	if proto != "" {
+		proto += "://"
+	}
+	return proto + net.JoinHostPort(ip.String(), strconv.Itoa(port))
 }

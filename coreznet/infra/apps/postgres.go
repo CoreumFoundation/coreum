@@ -85,9 +85,9 @@ func (p Postgres) Deployment() infra.Deployment {
 		AppBase: infra.AppBase{
 			Name: p.Name(),
 			Info: p.appInfo,
-			ArgsFunc: func(bindIP net.IP, homeDir string, ipResolver infra.IPResolver) []string {
+			ArgsFunc: func() []string {
 				return []string{
-					"-h", bindIP.String(),
+					"-h", net.IPv4zero.String(),
 					"-p", strconv.Itoa(p.port),
 				}
 			},
@@ -125,7 +125,7 @@ func (p Postgres) Deployment() infra.Deployment {
 }
 
 func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn, error) {
-	connStr := "postgres://" + postgres.User + "@" + net.JoinHostPort(serverIP.String(), strconv.Itoa(p.port)) + "/" + postgres.DB
+	connStr := "postgres://" + postgres.User + "@" + infra.JoinProtoIPPort("", serverIP, p.port) + "/" + postgres.DB
 	logger.Get(ctx).Info("Connecting to the database server", zap.String("connectionString", connStr))
 
 	var db *pgx.Conn
@@ -133,7 +133,7 @@ func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn,
 	retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 	err := retry.Do(retryCtx, 2*time.Second, func() error {
-		connCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+		connCtx, cancel := context.WithTimeout(ctx, time.Second)
 		defer cancel()
 
 		var err error
@@ -154,7 +154,7 @@ func waitDBReady(ctx context.Context, db *pgx.Conn) error {
 	defer cancel()
 
 	return retry.Do(retryCtx, time.Second, func() error {
-		queryCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+		queryCtx, cancel := context.WithTimeout(ctx, time.Second)
 		defer cancel()
 
 		row := db.QueryRow(queryCtx, "select 1 as result from pg_database where datname=$1", postgres.DB)
