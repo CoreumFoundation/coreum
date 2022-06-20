@@ -14,8 +14,8 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 	node := mode[0].(apps.Cored)
 	return mode,
 		[]*testing.T{
-			testing.New(auth.UnexpectedSequenceNumber(node)),
-			testing.New(bank.VerifyInitialBalance(node)),
-			testing.New(bank.TransferCore(node)),
+			testing.New(auth.TestUnexpectedSequenceNumber(node)),
+			testing.New(bank.TestInitialBalance(node)),
+			testing.New(bank.TestCoreTransfer(node)),
 		}
 }

@@ -12,9 +12,9 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
 )
 
-// UnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
+// TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
 // used to sign transaction
-func UnexpectedSequenceNumber(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
+func TestUnexpectedSequenceNumber(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 	var sender cored.Wallet
 
 	return func(ctx context.Context) error {

@@ -15,8 +15,8 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
 )
 
-// VerifyInitialBalance checks that initial balance is set by genesis block
-func VerifyInitialBalance(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
+// TestInitialBalance checks that initial balance is set by genesis block
+func TestInitialBalance(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 	var wallet cored.Wallet
 
 	// First function prepares initial well-known state
@@ -43,8 +43,8 @@ func VerifyInitialBalance(chain apps.Cored) (testing.PrepareFunc, testing.RunFun
 		}
 }
 
-// TransferCore checks that core is transferred correctly between wallets
-func TransferCore(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
+// TestCoreTransfer checks that core is transferred correctly between wallets
+func TestCoreTransfer(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
 	var sender, receiver cored.Wallet
 
 	// First function prepares initial well-known state
