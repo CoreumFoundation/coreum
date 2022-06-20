@@ -134,7 +134,7 @@ func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn,
 	retryCtx, cancel1 := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel1()
 	err := retry.Do(retryCtx, 2*time.Second, func() error {
-		connCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+		connCtx, cancel := context.WithTimeout(ctx, time.Second)
 		defer cancel()
 
 		var err error
@@ -155,7 +155,7 @@ func waitDBReady(ctx context.Context, db *pgx.Conn) error {
 	defer cancel()
 
 	return retry.Do(retryCtx, time.Second, func() error {
-		queryCtx, cancel := context.WithTimeout(retryCtx, time.Second)
+		queryCtx, cancel := context.WithTimeout(ctx, time.Second)
 		defer cancel()
 
 		row := db.QueryRow(queryCtx, "select 1 as result from pg_database where datname=$1", postgres.DB)

@@ -146,7 +146,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	defer cancel()
 
 	err = retry.Do(timeoutCtx, txStatusPollInterval, func() error {
-		requestCtx, cancel := context.WithTimeout(timeoutCtx, requestTimeout)
+		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 		defer cancel()
 
 		resultTx, err := c.clientCtx.Client.Tx(requestCtx, txHashBytes, false)
