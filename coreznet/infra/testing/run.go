@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"runtime"
 	"runtime/debug"
+	"strconv"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/pkg/errors"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
@@ -43,12 +47,54 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, tests []*T, 
 		return err
 	}
 
-	failed := false
-	for _, t := range toRun {
-		runTest(logger.With(ctx, zap.String("test", t.name)), t)
-		failed = failed || t.failed
+	failed := atomic.NewBool(false)
+	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		// The tests themselves are not computationally expensive, most of the time they spend waiting for
+		// transactions to be included in blocks so it should be safe to run more tests in parallel than we have CPus
+		// available.
+		runners := 2 * runtime.NumCPU()
+		if runners > len(toRun) {
+			runners = len(toRun)
+		}
+
+		queue := make(chan *T)
+		for i := 0; i < runners; i++ {
+			spawn("runner."+strconv.Itoa(i), parallel.Continue, func(ctx context.Context) error {
+				for {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case t, ok := <-queue:
+						if !ok {
+							return nil
+						}
+						runTest(logger.With(ctx, zap.String("test", t.name)), t)
+						if t.failed {
+							failed.Store(true)
+						}
+					}
+				}
+			})
+		}
+		spawn("enqueue", parallel.Continue, func(ctx context.Context) error {
+			defer close(queue)
+
+			for _, t := range toRun {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case queue <- t:
+				}
+			}
+			return nil
+		})
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
-	if failed {
+	if failed.Load() {
 		return errors.New("tests failed")
 	}
 	logger.Get(ctx).Info("All tests succeeded")
