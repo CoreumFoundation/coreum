@@ -5,19 +5,19 @@ import (
 	"encoding/hex"
 	"net"
 	"os"
-	"strconv"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/tendermint/tendermint/config"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
+
+	"github.com/CoreumFoundation/coreum/coreznet/infra"
 )
 
 // NodeConfig saves files with private keys and config required by node
 type NodeConfig struct {
 	Name           string
-	IP             net.IP
 	PrometheusPort int
 	NodeKey        ed25519.PrivateKey
 	ValidatorKey   ed25519.PrivateKey
@@ -50,7 +50,7 @@ func (vc NodeConfig) Save(homeDir string) {
 	cfg.Mempool.Size = 50000
 	cfg.Mempool.MaxTxsBytes = 5368709120
 	cfg.Instrumentation.Prometheus = true
-	cfg.Instrumentation.PrometheusListenAddr = net.JoinHostPort(vc.IP.String(), strconv.Itoa(vc.PrometheusPort))
+	cfg.Instrumentation.PrometheusListenAddr = infra.JoinProtoIPPort("", net.IPv4zero, vc.PrometheusPort)
 	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
 }
 
