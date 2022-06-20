@@ -15,10 +15,11 @@ import (
 )
 
 // NewDirect creates new direct target
-func NewDirect(config infra.Config, spec *infra.Spec) infra.Target {
+func NewDirect(config infra.Config, spec *infra.Spec, docker *Docker) infra.Target {
 	return &Direct{
 		config: config,
 		spec:   spec,
+		docker: docker,
 	}
 }
 
@@ -26,6 +27,7 @@ func NewDirect(config infra.Config, spec *infra.Spec) infra.Target {
 type Direct struct {
 	config infra.Config
 	spec   *infra.Spec
+	docker *Docker
 }
 
 // BindIP returns the IP application should bind to inside the target
@@ -40,23 +42,18 @@ func (d *Direct) Deploy(ctx context.Context, mode infra.Mode) error {
 
 // Stop stops running applications
 func (d *Direct) Stop(ctx context.Context) error {
-	pIDs := make([]int, 0, len(d.spec.Apps))
-	for _, app := range d.spec.Apps {
-		pID := app.Info().ProcessID
-		if pID == 0 {
-			continue
-		}
-		pIDs = append(pIDs, pID)
+	if err := d.stopProcesses(ctx); err != nil {
+		return err
 	}
-	if len(pIDs) == 0 {
-		return nil
-	}
-	return exec.Kill(ctx, pIDs)
+	return d.docker.Stop(ctx)
 }
 
 // Remove removes running applications
 func (d *Direct) Remove(ctx context.Context) error {
-	return d.Stop(ctx)
+	if err := d.stopProcesses(ctx); err != nil {
+		return err
+	}
+	return d.docker.Remove(ctx)
 }
 
 // DeployBinary starts binary file inside os process
@@ -77,5 +74,20 @@ func (d *Direct) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 
 // DeployContainer starts container
 func (d *Direct) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
-	panic("not implemented yet")
+	return d.docker.DeployContainer(ctx, app)
+}
+
+func (d *Direct) stopProcesses(ctx context.Context) error {
+	pIDs := make([]int, 0, len(d.spec.Apps))
+	for _, app := range d.spec.Apps {
+		pID := app.Info().ProcessID
+		if pID == 0 {
+			continue
+		}
+		pIDs = append(pIDs, pID)
+	}
+	if len(pIDs) == 0 {
+		return nil
+	}
+	return exec.Kill(ctx, pIDs)
 }

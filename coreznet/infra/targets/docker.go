@@ -26,7 +26,7 @@ ENTRYPOINT ["%s"]
 `
 
 // NewDocker creates new docker target
-func NewDocker(config infra.Config, spec *infra.Spec) infra.Target {
+func NewDocker(config infra.Config, spec *infra.Spec) *Docker {
 	return &Docker{
 		config: config,
 		spec:   spec,
@@ -134,6 +134,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
 	return infra.DeploymentInfo{
+		Container:       name,
 		Status:          infra.AppStatusRunning,
 		FromHostIP:      ipLocalhost,
 		FromContainerIP: net.ParseIP(strings.TrimSuffix(ipBuf.String(), "\n")),
@@ -143,7 +144,55 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 
 // DeployContainer starts container in docker
 func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
-	panic("not implemented yet")
+	name := d.config.EnvName + "-" + app.Name
+	existsBuf := &bytes.Buffer{}
+	existsCmd := exec.Docker("ps", "-aqf", "name="+name)
+	existsCmd.Stdout = existsBuf
+	if err := libexec.Exec(ctx, existsCmd); err != nil {
+		return infra.DeploymentInfo{}, err
+	}
+
+	var commands []*osexec.Cmd
+	if existsBuf.String() != "" {
+		commands = []*osexec.Cmd{exec.Docker("start", name)}
+	} else {
+		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName}
+		for _, port := range app.Ports {
+			portStr := strconv.Itoa(port)
+			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
+		}
+		for _, env := range app.EnvVars {
+			runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
+		}
+		runArgs = append(runArgs, app.Image+":"+app.Tag)
+		runArgs = append(runArgs, app.ArgsFunc(net.IPv4zero, "/", containerIPResolver{})...)
+		commands = []*osexec.Cmd{exec.Docker(runArgs...)}
+	}
+
+	ipBuf := &bytes.Buffer{}
+	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
+	ipCmd.Stdout = ipBuf
+	commands = append(commands, ipCmd)
+	err := libexec.Exec(ctx, commands...)
+	if err != nil {
+		return infra.DeploymentInfo{}, err
+	}
+
+	err = osexec.Command("/bin/bash", "-ce",
+		fmt.Sprintf("%s >> \"%s/%s.log\" 2>&1", exec.Docker("logs", "-f", name).String(),
+			d.config.LogDir, app.Name)).Start()
+	if err != nil {
+		return infra.DeploymentInfo{}, err
+	}
+
+	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
+	return infra.DeploymentInfo{
+		Container:       name,
+		Status:          infra.AppStatusRunning,
+		FromHostIP:      ipLocalhost,
+		FromContainerIP: net.ParseIP(strings.TrimSuffix(ipBuf.String(), "\n")),
+		Ports:           app.Ports,
+	}, nil
 }
 
 func (d *Docker) dropContainers(ctx context.Context) error {
