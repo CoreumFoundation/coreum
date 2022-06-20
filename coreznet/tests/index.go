@@ -8,6 +8,8 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/tests/bank"
 )
 
+// TODO (ysv): check if we can adapt our tests to run standard go testing framework
+
 // Tests returns testing environment and tests
 func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 	mode := appF.CoredNetwork("coretest", 3)
