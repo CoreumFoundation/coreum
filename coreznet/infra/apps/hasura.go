@@ -72,15 +72,15 @@ func (h Hasura) Deployment() infra.Deployment {
 		AppBase: infra.AppBase{
 			Name: h.Name(),
 			Info: h.appInfo,
-			ArgsFunc: func(bindIP net.IP, homeDir string, ipResolver infra.IPResolver) []string {
+			ArgsFunc: func() []string {
 				return []string{
 					"graphql-engine",
-					"--host", ipResolver.IPOf(h.postgres).String(),
+					"--host", h.postgres.Info().FromContainerIP.String(),
 					"--port", strconv.Itoa(h.postgres.Port()),
 					"--user", postgres.User,
 					"--dbname", postgres.DB,
 					"serve",
-					"--server-host", bindIP.String(),
+					"--server-host", net.IPv4zero.String(),
 					"--server-port", strconv.Itoa(h.port),
 					"--enable-console",
 					"--dev-mode",
@@ -101,7 +101,7 @@ func (h Hasura) Deployment() infra.Deployment {
 				must.OK(template.Must(template.New("metadata").Parse(h.metadata)).Execute(metadataBuf, struct {
 					DatabaseURL string
 				}{
-					DatabaseURL: "postgresql://" + postgres.User + "@" + net.JoinHostPort(h.postgres.Info().FromContainerIP.String(), strconv.Itoa(h.postgres.Port())) + "/" + postgres.DB,
+					DatabaseURL: "postgresql://" + postgres.User + "@" + infra.JoinProtoIPPort("", h.postgres.Info().FromContainerIP, h.postgres.Port()) + "/" + postgres.DB,
 				}))
 				reqData := struct {
 					Type    string          `json:"type"`
@@ -114,7 +114,7 @@ func (h Hasura) Deployment() infra.Deployment {
 				}
 
 				metadata := must.Bytes(json.Marshal(reqData))
-				metaURL := url.URL{Scheme: "http", Host: net.JoinHostPort(deployment.FromHostIP.String(), strconv.Itoa(h.port)), Path: "/v1/metadata"}
+				metaURL := url.URL{Scheme: "http", Host: infra.JoinProtoIPPort("", deployment.FromHostIP, h.port), Path: "/v1/metadata"}
 
 				log := logger.Get(ctx)
 				log.Info("Loading metadata")
