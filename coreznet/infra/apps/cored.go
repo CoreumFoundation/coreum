@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strconv"
 	"sync"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/targets"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/rnd"
 )
@@ -128,7 +128,7 @@ func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateK
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() cored.Client {
-	return cored.NewClient(c.genesis.ChainID(), net.JoinHostPort(c.Info().FromHostIP.String(), strconv.Itoa(c.Ports().RPC)))
+	return cored.NewClient(c.genesis.ChainID(), infra.JoinProtoIPPort("", c.Info().FromHostIP, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -139,7 +139,7 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	statusURL := url.URL{Scheme: "http", Host: net.JoinHostPort(c.Info().FromHostIP.String(), strconv.Itoa(c.ports.RPC)), Path: "/status"}
+	statusURL := url.URL{Scheme: "http", Host: infra.JoinProtoIPPort("", c.Info().FromHostIP, c.ports.RPC), Path: "/status"}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
@@ -179,39 +179,35 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 // Deployment returns deployment of cored
 func (c Cored) Deployment() infra.Deployment {
 	deployment := infra.Binary{
-		BinPathFunc: func(targetOS string) string {
-			return c.config.BinDir + "/" + targetOS + "/cored"
-		},
+		BinPath: c.config.BinDir + "/linux/cored",
 		AppBase: infra.AppBase{
 			Name: c.Name(),
 			Info: c.appInfo,
-			ArgsFunc: func(bindIP net.IP, homeDir string, ipResolver infra.IPResolver) []string {
-				bindIPStr := bindIP.String()
+			ArgsFunc: func() []string {
 				args := []string{
 					"start",
-					"--home", homeDir,
-					"--rpc.laddr", "tcp://" + net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.RPC)),
-					"--p2p.laddr", "tcp://" + net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.P2P)),
-					"--grpc.address", net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.GRPC)),
-					"--grpc-web.address", net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.GRPCWeb)),
-					"--rpc.pprof_laddr", net.JoinHostPort(bindIPStr, strconv.Itoa(c.ports.PProf)),
+					"--home", targets.AppHomeDir,
+					"--rpc.laddr", infra.JoinProtoIPPort("tcp", net.IPv4zero, c.ports.RPC),
+					"--p2p.laddr", infra.JoinProtoIPPort("tcp", net.IPv4zero, c.ports.P2P),
+					"--grpc.address", infra.JoinProtoIPPort("", net.IPv4zero, c.ports.GRPC),
+					"--grpc-web.address", infra.JoinProtoIPPort("", net.IPv4zero, c.ports.GRPCWeb),
+					"--rpc.pprof_laddr", infra.JoinProtoIPPort("", net.IPv4zero, c.ports.PProf),
 				}
 				if c.rootNode != nil {
 					args = append(args,
-						"--p2p.persistent_peers", c.rootNode.NodeID()+"@"+net.JoinHostPort(ipResolver.IPOf(c.rootNode).String(), strconv.Itoa(c.rootNode.Ports().P2P)),
+						"--p2p.persistent_peers", c.rootNode.NodeID()+"@"+infra.JoinProtoIPPort("", c.rootNode.Info().FromContainerIP, c.rootNode.Ports().P2P),
 					)
 				}
 
 				return args
 			},
 			Ports: portsToMap(c.ports),
-			PreFunc: func(ip net.IP) error {
+			PreFunc: func() error {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
 				cored.NodeConfig{
 					Name:           c.name,
-					IP:             ip,
 					PrometheusPort: c.ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,
 					ValidatorKey:   c.validatorPrivateKey,
@@ -242,7 +238,7 @@ func (c Cored) saveClientWrapper(wrapperDir string, ip net.IP) error {
 	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
-	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""tcp://` + net.JoinHostPort(ip.String(), strconv.Itoa(c.ports.RPC)) + `"""
+	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""` + infra.JoinProtoIPPort("tcp", ip, c.ports.RPC) + `"""
 fi
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""

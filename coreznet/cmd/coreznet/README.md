@@ -78,9 +78,8 @@ Defines the list of applications to run. You may see their definitions in [pkg/z
 ### --target
 
 Defines where applications are deployed. Possible values:
-- `tmux` - applications are started as OS processes and their logs are presented in tmux console
+- `tmux` - applications are started as docker containers ant their logs are presented in tmux console
 - `docker` - applications are started as docker containers
-- `direct` - applications are started as OS processes
 
 ## Logs
 
@@ -208,7 +207,7 @@ There is `ping-pong` command available in `coreznet` sending transactions to gen
 To start it runs these commands:
 
 ```
-$ coreznet --target=direct
+$ coreznet --target=docker
 (coreznet) [logs] $ start
 (coreznet) [logs] $ ping-pong
 ```
@@ -218,7 +217,5 @@ You will see logs reporting that tokens are constantly transferred.
 ## Hard reset
 
 If you want to manually remove all the data created by `coreznet` do this:
-- use `ps aux` to find all the related running processes and kill them using `kill -9 <pid>`
 - use `docker ps -a`, `docker stop <container-id>` and `docker rm <container-id>` to delete related running containers
-- use `docker images` and `docker rmi <image-id>` to remove related docker images 
 - run `rm -rf ~/.cache/coreznet` to remove all the files created by `coreznet`
