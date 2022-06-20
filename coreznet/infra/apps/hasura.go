@@ -97,60 +97,68 @@ func (h Hasura) Deployment() infra.Deployment {
 				},
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				metadataBuf := &bytes.Buffer{}
-				must.OK(template.Must(template.New("metadata").Parse(h.metadata)).Execute(metadataBuf, struct {
-					DatabaseURL string
-				}{
-					DatabaseURL: "postgresql://" + postgres.User + "@" + infra.JoinProtoIPPort("", h.postgres.Info().FromContainerIP, h.postgres.Port()) + "/" + postgres.DB,
-				}))
-				reqData := struct {
-					Type    string          `json:"type"`
-					Version uint            `json:"version"`
-					Args    json.RawMessage `json:"args"`
-				}{
-					Type:    "replace_metadata",
-					Version: 2,
-					Args:    metadataBuf.Bytes(),
-				}
-
-				metadata := must.Bytes(json.Marshal(reqData))
+				metadata := h.prepareMetadata()
 				metaURL := url.URL{Scheme: "http", Host: infra.JoinProtoIPPort("", deployment.FromHostIP, h.port), Path: "/v1/metadata"}
 
 				log := logger.Get(ctx)
 				log.Info("Loading metadata")
 
-				retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
-				defer cancel()
-				err := retry.Do(retryCtx, 2*time.Second, func() error {
-					requestCtx, cancel := context.WithTimeout(ctx, time.Second)
-					defer cancel()
-
-					req, err := http.NewRequestWithContext(requestCtx, http.MethodPost, metaURL.String(), bytes.NewReader(metadata))
-					must.OK(err)
-					req.Header.Add("Content-Type", "application/json")
-					req.Header.Add("X-Hasura-Role", "admin")
-
-					resp, err := http.DefaultClient.Do(req)
-					if err != nil {
-						return retry.Retryable(errors.Wrap(err, "request to store hasura metadata failed"))
-					}
-					defer resp.Body.Close()
-
-					if resp.StatusCode == http.StatusOK {
-						return nil
-					}
-					body, err := io.ReadAll(resp.Body)
-					if err != nil {
-						return retry.Retryable(errors.Wrapf(err, "reading body failed"))
-					}
-					return errors.Errorf("request to store hasura metadata failed with status code %d, body: %s", resp.StatusCode, body)
-				})
-				if err != nil {
+				if err := postMetadata(ctx, metadata, metaURL.String()); err != nil {
 					return err
 				}
+
 				log.Info("Metadata loaded")
 				return nil
 			},
 		},
 	}
+}
+
+func (h Hasura) prepareMetadata() []byte {
+	metadataBuf := &bytes.Buffer{}
+	must.OK(template.Must(template.New("metadata").Parse(h.metadata)).Execute(metadataBuf, struct {
+		DatabaseURL string
+	}{
+		DatabaseURL: "postgresql://" + postgres.User + "@" + infra.JoinProtoIPPort("", h.postgres.Info().FromContainerIP, h.postgres.Port()) + "/" + postgres.DB,
+	}))
+	reqData := struct {
+		Type    string          `json:"type"`
+		Version uint            `json:"version"`
+		Args    json.RawMessage `json:"args"`
+	}{
+		Type:    "replace_metadata",
+		Version: 2,
+		Args:    metadataBuf.Bytes(),
+	}
+
+	return must.Bytes(json.Marshal(reqData))
+}
+
+func postMetadata(ctx context.Context, metadata []byte, url string) error {
+	retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+	return retry.Do(retryCtx, 2*time.Second, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, time.Second)
+		defer cancel()
+
+		req, err := http.NewRequestWithContext(requestCtx, http.MethodPost, url, bytes.NewReader(metadata))
+		must.OK(err)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("X-Hasura-Role", "admin")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return retry.Retryable(errors.Wrap(err, "request to store hasura metadata failed"))
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			return nil
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return retry.Retryable(errors.Wrapf(err, "reading body failed"))
+		}
+		return errors.Errorf("request to store hasura metadata failed with status code %d, body: %s", resp.StatusCode, body)
+	})
 }
