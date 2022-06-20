@@ -131,7 +131,9 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	if exists {
 		startCmd = exec.Docker("start", name)
 	} else {
-		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName}
+		appHomeDir := d.config.AppDir + "/" + app.Name
+		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
+			"-v", appHomeDir + ":" + AppHomeDir}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")

@@ -5,6 +5,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/bdjuno"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/postgres"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 )
@@ -48,10 +49,15 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 }
 
 // BlockExplorer returns set of applications required to run block explorer
-func (f *Factory) BlockExplorer(name string) infra.Mode {
+func (f *Factory) BlockExplorer(name string, cored Cored) infra.Mode {
 	namePostgres := name + "-postgres"
+	nameBDJuno := name + "-bdjuno"
+
+	postgres := NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema)
+	bdjuno := NewBDJuno(nameBDJuno, f.config, f.spec.DescribeApp(BDJunoType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, bdjuno.Config, cored, postgres)
 	return infra.Mode{
-		NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema),
+		postgres,
+		bdjuno,
 		// FIXME (wojciech): more apps coming soon
 	}
 }
