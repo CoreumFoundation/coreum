@@ -85,9 +85,9 @@ func (p Postgres) Deployment() infra.Deployment {
 		AppBase: infra.AppBase{
 			Name: p.Name(),
 			Info: p.appInfo,
-			ArgsFunc: func(bindIP net.IP, homeDir string, ipResolver infra.IPResolver) []string {
+			ArgsFunc: func() []string {
 				args := []string{
-					"-h", bindIP.String(),
+					"-h", net.IPv4zero.String(),
 					"-p", strconv.Itoa(p.port),
 				}
 				return args
@@ -126,7 +126,7 @@ func (p Postgres) Deployment() infra.Deployment {
 }
 
 func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn, error) {
-	connStr := "postgres://" + postgres.User + "@" + net.JoinHostPort(serverIP.String(), strconv.Itoa(p.port)) + "/" + postgres.DB
+	connStr := "postgres://" + postgres.User + "@" + infra.JoinProtoIPPort("", serverIP, p.port) + "/" + postgres.DB
 	logger.Get(ctx).Info("Connecting to the database server", zap.String("connectionString", connStr))
 
 	var db *pgx.Conn

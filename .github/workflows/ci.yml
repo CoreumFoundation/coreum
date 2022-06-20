@@ -18,4 +18,4 @@ jobs:
       - name: Lint, run unit tests and build
         run: core lint test build --log-format=yaml
       - name: Execute integration tests
-        run: coreznet test --target=direct --log-format=yaml
+        run: coreznet test --target=docker --log-format=yaml

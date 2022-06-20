@@ -122,9 +122,6 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 
 // DeploymentInfo contains info about deployed application
 type DeploymentInfo struct {
-	// ProcessID stores process ID used to run the app - used only by direct target
-	ProcessID int `json:"processID,omitempty"` // nolint:tagliatelle // it wants processId
-
 	// Container stores the name of the docker container where app is running - present only for apps running in docker
 	Container string `json:"container,omitempty"`
 
@@ -155,9 +152,6 @@ type Target interface {
 
 // AppTarget represents target of deployment from the perspective of application
 type AppTarget interface {
-	// BindIP returns the IP application should bind to inside the target
-	BindIP() net.IP
-
 	// DeployBinary deploys binary to the target
 	DeployBinary(ctx context.Context, app Binary) (DeploymentInfo, error)
 
@@ -174,18 +168,6 @@ type Prerequisites struct {
 	Dependencies []HealthCheckCapable
 }
 
-// IPProvider provides the IP source of the application
-type IPProvider interface {
-	// Info returns information about deployment
-	Info() DeploymentInfo
-}
-
-// IPResolver resolves the IP of the application
-type IPResolver interface {
-	// IPOf returns the IP of the application
-	IPOf(app IPProvider) net.IP
-}
-
 // AppBase contain properties common to all types of app
 type AppBase struct {
 	// Name of the application
@@ -195,7 +177,7 @@ type AppBase struct {
 	Info *AppInfo
 
 	// ArgsFunc is the function returning args passed to binary
-	ArgsFunc func(bindIP net.IP, homeDir string, ipResolver IPResolver) []string
+	ArgsFunc func() []string
 
 	// Ports are the network ports exposed by the application
 	Ports map[string]int
@@ -204,7 +186,7 @@ type AppBase struct {
 	Requires Prerequisites
 
 	// PreFunc is called to preprocess app
-	PreFunc func(bindIP net.IP) error
+	PreFunc func() error
 
 	// PostFunc is called after app is deployed
 	PostFunc func(ctx context.Context, deployment DeploymentInfo) error
@@ -226,7 +208,7 @@ func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarg
 	}
 
 	if app.PreFunc != nil {
-		return app.PreFunc(target.BindIP())
+		return app.PreFunc()
 	}
 	return nil
 }
@@ -242,8 +224,8 @@ func (app AppBase) postprocess(ctx context.Context, info DeploymentInfo) error {
 type Binary struct {
 	AppBase
 
-	// BinPathFunc is the function returning path to binary file
-	BinPathFunc func(targetOS string) string
+	// BinPath is the path to linux binary file
+	BinPath string
 }
 
 // Dependencies returns the list of applications which must be running before the current deployment may be started
