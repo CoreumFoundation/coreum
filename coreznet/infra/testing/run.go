@@ -50,7 +50,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, tests []*T, 
 	failed := atomic.NewBool(false)
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for
-		// transactions to be included in blocks so it should be saf to run more tests in parallel than we have CPus
+		// transactions to be included in blocks so it should be safe to run more tests in parallel than we have CPus
 		// available.
 		runners := 2 * runtime.NumCPU()
 		if runners > len(toRun) {
