@@ -39,7 +39,7 @@ func UnexpectedSequenceNumber(chain apps.Cored) (testing.PrepareFunc, testing.Ru
 			require.Error(t, err) // We expect error
 
 			// We expect that we get an error saying what the correct sequence number should be
-			expectedSeq, ok := cored.IsSequenceError(err)
+			expectedSeq, ok := cored.FetchSequenceFromError(err)
 			if !ok {
 				require.Fail(t, "Unexpected error", err.Error())
 			}

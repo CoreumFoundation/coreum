@@ -160,7 +160,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 								if errors.Is(err, ctx.Err()) {
 									return err
 								}
-								if expectedAccSeq, ok := cored.IsSequenceError(err); ok {
+								if expectedAccSeq, ok := cored.FetchSequenceFromError(err); ok {
 									log.Warn("Broadcasting failed, retrying with fresh account sequence...", zap.Error(err),
 										zap.Uint64("accountSequence", expectedAccSeq))
 									txIndex = int(expectedAccSeq - initialSequence)

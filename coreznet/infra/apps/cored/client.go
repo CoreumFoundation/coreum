@@ -115,6 +115,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	defer cancel()
 
 	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
+	// nolint:nestif // This code is still easy to understand
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return "", errors.WithStack(err)
@@ -272,8 +273,8 @@ func checkSequence(codespace string, code uint32, log string) error {
 	return errors.WithStack(sequenceError{message: log, expectedSequence: expectedSequence})
 }
 
-// IsSequenceError checks if error is related to account sequence mismatch, and returns expected account sequence
-func IsSequenceError(err error) (uint64, bool) {
+// FetchSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
+func FetchSequenceFromError(err error) (uint64, bool) {
 	var seqErr sequenceError
 	if errors.As(err, &seqErr) {
 		return seqErr.expectedSequence, true
