@@ -5,5 +5,5 @@ import (
 )
 
 // ConfigTemplate contains bdjuno configuration template
-//go:embed config/config.yaml
+//go:embed config/config.tpl.yaml
 var ConfigTemplate string
