@@ -61,21 +61,30 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 			workingSlots <- struct{}{}
 		}
 
-		readyApps := map[string]chan struct{}{}
+		deployments := map[string]struct {
+			Deployment Deployment
+			ReadyCh    chan struct{}
+		}{}
 		for _, app := range m {
-			readyApps[app.Name()] = make(chan struct{})
+			deployments[app.Name()] = struct {
+				Deployment Deployment
+				ReadyCh    chan struct{}
+			}{
+				Deployment: app.Deployment(),
+				ReadyCh:    make(chan struct{}),
+			}
 		}
-		for _, app := range m {
-			if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Info().Status == AppStatusRunning {
-				close(readyApps[app.Name()])
+		for name, toDeploy := range deployments {
+			if appSpec, exists := spec.Apps[name]; exists && appSpec.Info().Status == AppStatusRunning {
+				close(toDeploy.ReadyCh)
 				continue
 			}
 
-			appInfo := spec.Apps[app.Name()]
-			app := app
-			spawn("deploy."+app.Name(), parallel.Continue, func(ctx context.Context) error {
+			appInfo := spec.Apps[name]
+			toDeploy := toDeploy
+			spawn("deploy."+name, parallel.Continue, func(ctx context.Context) error {
 				log := logger.Get(ctx)
-				deployment := app.Deployment()
+				deployment := toDeploy.Deployment
 
 				log.Info("Deployment initialized")
 
@@ -89,7 +98,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 						select {
 						case <-ctx.Done():
 							return errors.WithStack(ctx.Err())
-						case <-readyApps[name]:
+						case <-deployments[name].ReadyCh:
 						}
 					}
 					log.Info("Dependencies are running now")
@@ -112,7 +121,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 
 				log.Info("Deployment succeeded")
 
-				close(readyApps[app.Name()])
+				close(toDeploy.ReadyCh)
 				workingSlots <- struct{}{}
 				return nil
 			})
