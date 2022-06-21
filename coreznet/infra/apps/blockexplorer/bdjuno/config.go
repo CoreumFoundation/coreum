@@ -4,6 +4,6 @@ import (
 	_ "embed"
 )
 
-// Config contains bdjuno configuration
+// ConfigTemplate contains bdjuno configuration template
 //go:embed config/config.yaml
-var Config string
+var ConfigTemplate string

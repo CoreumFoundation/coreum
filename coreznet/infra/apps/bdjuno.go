@@ -18,27 +18,27 @@ import (
 const BDJunoType infra.AppType = "bdjuno"
 
 // NewBDJuno creates new bdjuno app
-func NewBDJuno(name string, config infra.Config, appInfo *infra.AppInfo, port int, bdJunoConfig string, cored Cored, postgres Postgres) BDJuno {
+func NewBDJuno(name string, config infra.Config, appInfo *infra.AppInfo, port int, configTemplate string, cored Cored, postgres Postgres) BDJuno {
 	return BDJuno{
-		name:         name,
-		homeDir:      config.AppDir + "/" + name,
-		appInfo:      appInfo,
-		port:         port,
-		bdJunoConfig: bdJunoConfig,
-		cored:        cored,
-		postgres:     postgres,
+		name:           name,
+		homeDir:        config.AppDir + "/" + name,
+		appInfo:        appInfo,
+		port:           port,
+		configTemplate: configTemplate,
+		cored:          cored,
+		postgres:       postgres,
 	}
 }
 
 // BDJuno represents bdjuno
 type BDJuno struct {
-	name         string
-	homeDir      string
-	appInfo      *infra.AppInfo
-	port         int
-	bdJunoConfig string
-	cored        Cored
-	postgres     Postgres
+	name           string
+	homeDir        string
+	appInfo        *infra.AppInfo
+	port           int
+	configTemplate string
+	cored          Cored
+	postgres       Postgres
 }
 
 // Type returns type of application
@@ -94,7 +94,7 @@ func (j BDJuno) Deployment() infra.Deployment {
 
 func (j BDJuno) prepareConfig() []byte {
 	configBuf := &bytes.Buffer{}
-	must.OK(template.Must(template.New("config").Parse(j.bdJunoConfig)).Execute(configBuf, struct {
+	must.OK(template.Must(template.New("config").Parse(j.configTemplate)).Execute(configBuf, struct {
 		Port  int
 		Cored struct {
 			Host          string

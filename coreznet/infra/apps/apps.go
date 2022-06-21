@@ -54,7 +54,7 @@ func (f *Factory) BlockExplorer(name string, cored Cored) infra.Mode {
 	nameBDJuno := name + "-bdjuno"
 
 	postgres := NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema)
-	bdjuno := NewBDJuno(nameBDJuno, f.config, f.spec.DescribeApp(BDJunoType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, bdjuno.Config, cored, postgres)
+	bdjuno := NewBDJuno(nameBDJuno, f.config, f.spec.DescribeApp(BDJunoType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, bdjuno.ConfigTemplate, cored, postgres)
 	return infra.Mode{
 		postgres,
 		bdjuno,
