@@ -19,8 +19,8 @@ import (
 )
 
 const requestTimeout = 1 * time.Minute
-const txTimeout = 10 * time.Minute
-const defaultBroadcastStatusPoll = 250 * time.Millisecond
+const txTimeout = 30 * time.Minute
+const defaultBroadcastStatusPoll = 1 * time.Second
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
