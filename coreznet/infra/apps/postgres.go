@@ -63,8 +63,7 @@ func (p Postgres) Info() infra.DeploymentInfo {
 // Deployment returns deployment of postgres
 func (p Postgres) Deployment() infra.Deployment {
 	return infra.Container{
-		Image: "postgres",
-		Tag:   "alpine",
+		Image: "postgres:14.3-alpine",
 		EnvVars: []infra.EnvVar{
 			{
 				Name:  "POSTGRES_USER",

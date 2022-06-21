@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,12 +12,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/CoreumFoundation/coreum/coreznet/exec"
 )
+
+const binaryDockerImage = "alpine:3.16.0"
 
 // AppType represents the type of application
 type AppType string
@@ -41,6 +47,9 @@ type Deployment interface {
 	// Dependencies returns the list of applications which must be running before the current deployment may be started
 	Dependencies() []HealthCheckCapable
 
+	// DockerImage returns the docker image used by the deployment
+	DockerImage() string
+
 	// Deploy deploys app to the target
 	Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error)
 }
@@ -51,28 +60,55 @@ type Mode []App
 // Deploy deploys app in environment to the target
 func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		workingSlots := make(chan struct{}, runtime.NumCPU())
-		for i := 0; i < cap(workingSlots); i++ {
-			workingSlots <- struct{}{}
+		deploymentSlots := make(chan struct{}, runtime.NumCPU())
+		for i := 0; i < cap(deploymentSlots); i++ {
+			deploymentSlots <- struct{}{}
+		}
+		imagePullSlots := make(chan struct{}, 3)
+		for i := 0; i < cap(imagePullSlots); i++ {
+			imagePullSlots <- struct{}{}
 		}
 
-		readyApps := map[string]chan struct{}{}
+		deployments := map[string]struct {
+			Deployment   Deployment
+			ImageReadyCh chan struct{}
+			ReadyCh      chan struct{}
+		}{}
+		images := map[string]chan struct{}{}
 		for _, app := range m {
-			readyApps[app.Name()] = make(chan struct{})
+			deployment := app.Deployment()
+			if _, exists := images[deployment.DockerImage()]; !exists {
+				ch := make(chan struct{}, 1)
+				ch <- struct{}{}
+				images[deployment.DockerImage()] = ch
+			}
+			deployments[app.Name()] = struct {
+				Deployment   Deployment
+				ImageReadyCh chan struct{}
+				ReadyCh      chan struct{}
+			}{
+				Deployment:   deployment,
+				ImageReadyCh: images[deployment.DockerImage()],
+				ReadyCh:      make(chan struct{}),
+			}
 		}
-		for _, app := range m {
-			if appSpec, exists := spec.Apps[app.Name()]; exists && appSpec.Info().Status == AppStatusRunning {
-				close(readyApps[app.Name()])
+		for name, toDeploy := range deployments {
+			if appSpec, exists := spec.Apps[name]; exists && appSpec.Info().Status == AppStatusRunning {
+				close(toDeploy.ReadyCh)
 				continue
 			}
 
-			appInfo := spec.Apps[app.Name()]
-			app := app
-			spawn("deploy."+app.Name(), parallel.Continue, func(ctx context.Context) error {
+			appInfo := spec.Apps[name]
+			toDeploy := toDeploy
+			spawn("deploy."+name, parallel.Continue, func(ctx context.Context) error {
 				log := logger.Get(ctx)
-				deployment := app.Deployment()
+				deployment := toDeploy.Deployment
 
 				log.Info("Deployment initialized")
+
+				if err := ensureDockerImage(ctx, deployment.DockerImage(), imagePullSlots, toDeploy.ImageReadyCh); err != nil {
+					return err
+				}
 
 				if dependencies := deployment.Dependencies(); len(dependencies) > 0 {
 					names := make([]string, 0, len(dependencies))
@@ -84,17 +120,17 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 						select {
 						case <-ctx.Done():
 							return errors.WithStack(ctx.Err())
-						case <-readyApps[name]:
+						case <-deployments[name].ReadyCh:
 						}
 					}
 					log.Info("Dependencies are running now")
 				}
 
-				log.Info("Waiting for free slot")
+				log.Info("Waiting for free slot for deploying the application")
 				select {
 				case <-ctx.Done():
 					return errors.WithStack(ctx.Err())
-				case <-workingSlots:
+				case <-deploymentSlots:
 				}
 
 				log.Info("Deployment started")
@@ -107,8 +143,8 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 
 				log.Info("Deployment succeeded")
 
-				close(readyApps[app.Name()])
-				workingSlots <- struct{}{}
+				close(toDeploy.ReadyCh)
+				deploymentSlots <- struct{}{}
 				return nil
 			})
 		}
@@ -118,6 +154,52 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 		return err
 	}
 	return spec.Save()
+}
+
+func ensureDockerImage(ctx context.Context, image string, slots chan struct{}, readyCh chan struct{}) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case _, ok := <-readyCh:
+		// If <-imageReadyCh blocks it means another goroutine is pulling the image
+		if !ok {
+			// Channel is closed, image has been already pulled, we are ready to go
+			return nil
+		}
+	}
+
+	log := logger.Get(ctx).With(zap.String("image", image))
+
+	imageBuf := &bytes.Buffer{}
+	imageCmd := exec.Docker("images", "-q", image)
+	imageCmd.Stdout = imageBuf
+	if err := libexec.Exec(ctx, imageCmd); err != nil {
+		return errors.Wrapf(err, "failed to list image '%s'", image)
+	}
+	if imageBuf.Len() > 0 {
+		log.Info("Docker image exists")
+		close(readyCh)
+		return nil
+	}
+
+	log.Info("Waiting for free slot for pulling the docker image")
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-slots:
+	}
+
+	log.Info("Pulling docker image")
+
+	if err := libexec.Exec(ctx, exec.Docker("pull", image)); err != nil {
+		return errors.Wrapf(err, "failed to pull docker image '%s'", image)
+	}
+
+	log.Info("Image pulled")
+	close(readyCh)
+	slots <- struct{}{}
+	return nil
 }
 
 // DeploymentInfo contains info about deployed application
@@ -228,6 +310,11 @@ type Binary struct {
 	BinPath string
 }
 
+// DockerImage returns the docker image used by the deployment
+func (app Binary) DockerImage() string {
+	return binaryDockerImage
+}
+
 // Dependencies returns the list of applications which must be running before the current deployment may be started
 func (app Binary) Dependencies() []HealthCheckCapable {
 	return app.Requires.Dependencies
@@ -262,11 +349,13 @@ type Container struct {
 	// Image is the url of the container image
 	Image string
 
-	// Tag is the tag of the image
-	Tag string
-
 	// EnvVars define environment variables for docker container
 	EnvVars []EnvVar
+}
+
+// DockerImage returns the docker image used by the deployment
+func (app Container) DockerImage() string {
+	return app.Image
 }
 
 // Dependencies returns the list of applications which must be running before the current deployment may be started
