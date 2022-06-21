@@ -5,5 +5,5 @@ import (
 )
 
 // MetadataTemplate contains hasura metadata template
-//go:embed metadata/metadata.json
+//go:embed metadata/metadata.tpl.json
 var MetadataTemplate string
