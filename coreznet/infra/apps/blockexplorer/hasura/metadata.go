@@ -4,6 +4,6 @@ import (
 	_ "embed"
 )
 
-// Metadata contains hasura metadata
+// MetadataTemplate contains hasura metadata template
 //go:embed metadata/metadata.json
-var Metadata string
+var MetadataTemplate string

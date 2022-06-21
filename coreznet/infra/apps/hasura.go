@@ -25,23 +25,23 @@ import (
 const HasuraType infra.AppType = "hasura"
 
 // NewHasura creates new hasura app
-func NewHasura(name string, appInfo *infra.AppInfo, port int, metadata string, postgres Postgres) Hasura {
+func NewHasura(name string, appInfo *infra.AppInfo, port int, metadataTemplate string, postgres Postgres) Hasura {
 	return Hasura{
-		name:     name,
-		appInfo:  appInfo,
-		port:     port,
-		metadata: metadata,
-		postgres: postgres,
+		name:             name,
+		appInfo:          appInfo,
+		port:             port,
+		metadataTemplate: metadataTemplate,
+		postgres:         postgres,
 	}
 }
 
 // Hasura represents hasura
 type Hasura struct {
-	name     string
-	appInfo  *infra.AppInfo
-	port     int
-	metadata string
-	postgres Postgres
+	name             string
+	appInfo          *infra.AppInfo
+	port             int
+	metadataTemplate string
+	postgres         Postgres
 }
 
 // Type returns type of application
@@ -116,7 +116,7 @@ func (h Hasura) Deployment() infra.Deployment {
 
 func (h Hasura) prepareMetadata() []byte {
 	metadataBuf := &bytes.Buffer{}
-	must.OK(template.Must(template.New("metadata").Parse(h.metadata)).Execute(metadataBuf, struct {
+	must.OK(template.Must(template.New("metadata").Parse(h.metadataTemplate)).Execute(metadataBuf, struct {
 		DatabaseURL string
 	}{
 		DatabaseURL: "postgresql://" + postgres.User + "@" + infra.JoinProtoIPPort("", h.postgres.Info().FromContainerIP, h.postgres.Port()) + "/" + postgres.DB,

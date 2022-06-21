@@ -54,7 +54,7 @@ func (f *Factory) BlockExplorer(name string) infra.Mode {
 	nameHasura := name + "-hasura"
 
 	postgres := NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema)
-	hasura := NewHasura(nameHasura, f.spec.DescribeApp(HasuraType, nameHasura), blockexplorer.DefaultPorts.Hasura, hasura.Metadata, postgres)
+	hasura := NewHasura(nameHasura, f.spec.DescribeApp(HasuraType, nameHasura), blockexplorer.DefaultPorts.Hasura, hasura.MetadataTemplate, postgres)
 	return infra.Mode{
 		postgres,
 		hasura,
