@@ -18,6 +18,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const binaryDockerImage = "alpine:3.16.0"
+
 // AppType represents the type of application
 type AppType string
 
@@ -40,6 +42,9 @@ type App interface {
 type Deployment interface {
 	// Dependencies returns the list of applications which must be running before the current deployment may be started
 	Dependencies() []HealthCheckCapable
+
+	// DockerImage returns the docker image used by the deployment
+	DockerImage() string
 
 	// Deploy deploys app to the target
 	Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error)
@@ -228,6 +233,11 @@ type Binary struct {
 	BinPath string
 }
 
+// DockerImage returns the docker image used by the deployment
+func (app Binary) DockerImage() string {
+	return binaryDockerImage
+}
+
 // Dependencies returns the list of applications which must be running before the current deployment may be started
 func (app Binary) Dependencies() []HealthCheckCapable {
 	return app.Requires.Dependencies
@@ -264,6 +274,11 @@ type Container struct {
 
 	// EnvVars define environment variables for docker container
 	EnvVars []EnvVar
+}
+
+// DockerImage returns the docker image used by the deployment
+func (app Container) DockerImage() string {
+	return app.Image
 }
 
 // Dependencies returns the list of applications which must be running before the current deployment may be started
