@@ -96,6 +96,9 @@ func (h Hasura) Deployment() infra.Deployment {
 				},
 			},
 			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
+				if h.Info().Status != infra.AppStatusNotDeployed {
+					return nil
+				}
 				metadata := h.prepareMetadata()
 				metaURL := url.URL{Scheme: "http", Host: infra.JoinProtoIPPort("", deployment.FromHostIP, h.port), Path: "/v1/metadata"}
 
