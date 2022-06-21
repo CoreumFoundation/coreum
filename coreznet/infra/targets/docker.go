@@ -139,7 +139,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 		for _, env := range app.EnvVars {
 			runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
 		}
-		runArgs = append(runArgs, app.Image+":"+app.Tag)
+		runArgs = append(runArgs, app.Image)
 		runArgs = append(runArgs, app.ArgsFunc()...)
 
 		startCmd = exec.Docker(runArgs...)

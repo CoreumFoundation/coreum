@@ -262,9 +262,6 @@ type Container struct {
 	// Image is the url of the container image
 	Image string
 
-	// Tag is the tag of the image
-	Tag string
-
 	// EnvVars define environment variables for docker container
 	EnvVars []EnvVar
 }
