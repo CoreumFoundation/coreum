@@ -73,14 +73,14 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	log := logger.Get(ctx).With(zap.String("name", name))
 	log.Info("Starting container")
 
-	exists, err := containerExists(ctx, name)
+	id, err := containerExists(ctx, name)
 	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
 	var startCmd *osexec.Cmd
-	if exists {
-		startCmd = exec.Docker("start", name)
+	if id != "" {
+		startCmd = exec.Docker("start", id)
 	} else {
 		appHomeDir := d.config.AppDir + "/" + app.Name
 		must.Any(os.Stat(app.BinPath))
@@ -135,14 +135,14 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	log := logger.Get(ctx).With(zap.String("name", name))
 	log.Info("Starting container")
 
-	exists, err := containerExists(ctx, name)
+	id, err := containerExists(ctx, name)
 	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
 	var startCmd *osexec.Cmd
-	if exists {
-		startCmd = exec.Docker("start", name)
+	if id != "" {
+		startCmd = exec.Docker("start", id)
 	} else {
 		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName}
 		for _, port := range app.Ports {
@@ -186,14 +186,14 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	}, nil
 }
 
-func containerExists(ctx context.Context, name string) (bool, error) {
-	existsBuf := &bytes.Buffer{}
-	existsCmd := exec.Docker("ps", "-aqf", "name="+name)
-	existsCmd.Stdout = existsBuf
+func containerExists(ctx context.Context, name string) (string, error) {
+	idBuf := &bytes.Buffer{}
+	existsCmd := exec.Docker("ps", "-aq", "--no-trunc", "-f", "name="+name)
+	existsCmd.Stdout = idBuf
 	if err := libexec.Exec(ctx, existsCmd); err != nil {
-		return false, err
+		return "", err
 	}
-	return existsBuf.Len() > 0, nil
+	return strings.TrimSuffix(idBuf.String(), "\n"), nil
 }
 
 func forContainer(ctx context.Context, envName string, fn func(ctx context.Context, id string) error) error {
