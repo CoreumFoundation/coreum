@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	osexec "os/exec"
@@ -47,17 +48,24 @@ type Docker struct {
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
 	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, id string) error {
-		return libexec.Exec(ctx, exec.Docker("stop", "--time", "60", id))
+		logger.Get(ctx).Info("Stopping container", zap.String("id", id))
+		stopCmd := exec.Docker("stop", "--time", "60", id)
+		stopCmd.Stdout = io.Discard
+		return libexec.Exec(ctx, stopCmd)
 	})
 }
 
 // Remove removes running applications
 func (d *Docker) Remove(ctx context.Context) error {
 	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, id string) error {
-		return libexec.Exec(ctx,
-			exec.Docker("stop", "--time", "60", id),
-			exec.Docker("rm", id),
-		)
+		logger.Get(ctx).Info("Deleting container", zap.String("id", id))
+
+		// FIXME (wojciech): convert to `kill` - it requires a check if container is running
+		stopCmd := exec.Docker("stop", id)
+		stopCmd.Stdout = io.Discard
+		rmCmd := exec.Docker("rm", id)
+		rmCmd.Stdout = io.Discard
+		return libexec.Exec(ctx, stopCmd, rmCmd)
 	})
 }
 
@@ -188,7 +196,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 
 func containerExists(ctx context.Context, name string) (string, error) {
 	idBuf := &bytes.Buffer{}
-	existsCmd := exec.Docker("ps", "-aq", "--no-trunc", "-f", "name="+name)
+	existsCmd := exec.Docker("ps", "-aq", "--no-trunc", "--filter", "name="+name)
 	existsCmd.Stdout = idBuf
 	if err := libexec.Exec(ctx, existsCmd); err != nil {
 		return "", err
@@ -198,7 +206,7 @@ func containerExists(ctx context.Context, name string) (string, error) {
 
 func forContainer(ctx context.Context, envName string, fn func(ctx context.Context, id string) error) error {
 	buf := &bytes.Buffer{}
-	listCmd := exec.Docker("ps", "-aq", "--filter", "label="+labelEnv+"="+envName)
+	listCmd := exec.Docker("ps", "-aq", "--no-trunc", "--filter", "label="+labelEnv+"="+envName)
 	listCmd.Stdout = buf
 	if err := libexec.Exec(ctx, listCmd); err != nil {
 		return err
