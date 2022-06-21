@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,11 +12,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/CoreumFoundation/coreum/coreznet/exec"
 )
 
 const binaryDockerImage = "alpine:3.16.0"
@@ -56,22 +60,36 @@ type Mode []App
 // Deploy deploys app in environment to the target
 func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		workingSlots := make(chan struct{}, runtime.NumCPU())
-		for i := 0; i < cap(workingSlots); i++ {
-			workingSlots <- struct{}{}
+		deploymentSlots := make(chan struct{}, runtime.NumCPU())
+		for i := 0; i < cap(deploymentSlots); i++ {
+			deploymentSlots <- struct{}{}
+		}
+		imagePullSlots := make(chan struct{}, 3)
+		for i := 0; i < cap(imagePullSlots); i++ {
+			imagePullSlots <- struct{}{}
 		}
 
 		deployments := map[string]struct {
-			Deployment Deployment
-			ReadyCh    chan struct{}
+			Deployment   Deployment
+			ImageReadyCh chan struct{}
+			ReadyCh      chan struct{}
 		}{}
+		images := map[string]chan struct{}{}
 		for _, app := range m {
+			deployment := app.Deployment()
+			if _, exists := images[deployment.DockerImage()]; !exists {
+				ch := make(chan struct{}, 1)
+				ch <- struct{}{}
+				images[deployment.DockerImage()] = ch
+			}
 			deployments[app.Name()] = struct {
-				Deployment Deployment
-				ReadyCh    chan struct{}
+				Deployment   Deployment
+				ImageReadyCh chan struct{}
+				ReadyCh      chan struct{}
 			}{
-				Deployment: app.Deployment(),
-				ReadyCh:    make(chan struct{}),
+				Deployment:   deployment,
+				ImageReadyCh: images[deployment.DockerImage()],
+				ReadyCh:      make(chan struct{}),
 			}
 		}
 		for name, toDeploy := range deployments {
@@ -87,6 +105,10 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 				deployment := toDeploy.Deployment
 
 				log.Info("Deployment initialized")
+
+				if err := ensureDockerImage(ctx, deployment.DockerImage(), imagePullSlots, toDeploy.ImageReadyCh); err != nil {
+					return err
+				}
 
 				if dependencies := deployment.Dependencies(); len(dependencies) > 0 {
 					names := make([]string, 0, len(dependencies))
@@ -104,11 +126,11 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 					log.Info("Dependencies are running now")
 				}
 
-				log.Info("Waiting for free slot")
+				log.Info("Waiting for free slot for deploying the application")
 				select {
 				case <-ctx.Done():
 					return errors.WithStack(ctx.Err())
-				case <-workingSlots:
+				case <-deploymentSlots:
 				}
 
 				log.Info("Deployment started")
@@ -122,7 +144,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 				log.Info("Deployment succeeded")
 
 				close(toDeploy.ReadyCh)
-				workingSlots <- struct{}{}
+				deploymentSlots <- struct{}{}
 				return nil
 			})
 		}
@@ -132,6 +154,52 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 		return err
 	}
 	return spec.Save()
+}
+
+func ensureDockerImage(ctx context.Context, image string, slots chan struct{}, readyCh chan struct{}) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case _, ok := <-readyCh:
+		// If <-imageReadyCh blocks it means another goroutine is pulling the image
+		if !ok {
+			// Channel is closed, image has been already pulled, we are ready to go
+			return nil
+		}
+	}
+
+	log := logger.Get(ctx).With(zap.String("image", image))
+
+	imageBuf := &bytes.Buffer{}
+	imageCmd := exec.Docker("images", "-q", image)
+	imageCmd.Stdout = imageBuf
+	if err := libexec.Exec(ctx, imageCmd); err != nil {
+		return errors.Wrapf(err, "failed to list image '%s'", image)
+	}
+	if imageBuf.Len() > 0 {
+		log.Info("Docker image exists")
+		close(readyCh)
+		return nil
+	}
+
+	log.Info("Waiting for free slot for pulling the docker image")
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-slots:
+	}
+
+	log.Info("Pulling docker image")
+
+	if err := libexec.Exec(ctx, exec.Docker("pull", image)); err != nil {
+		return errors.Wrapf(err, "failed to pull docker image '%s'", image)
+	}
+
+	log.Info("Image pulled")
+	close(readyCh)
+	slots <- struct{}{}
+	return nil
 }
 
 // DeploymentInfo contains info about deployed application
