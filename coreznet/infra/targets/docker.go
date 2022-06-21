@@ -12,8 +12,10 @@ import (
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/exec"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
@@ -67,6 +69,10 @@ func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 // DeployBinary builds container image out of binary file and starts it in docker
 func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	name := d.config.EnvName + "-" + app.Name
+
+	log := logger.Get(ctx).With(zap.String("name", name))
+	log.Info("Starting container")
+
 	exists, err := containerExists(ctx, name)
 	if err != nil {
 		return infra.DeploymentInfo{}, err
@@ -92,6 +98,8 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 
 		startCmd = exec.Docker(runArgs...)
 	}
+	idBuf := &bytes.Buffer{}
+	startCmd.Stdout = idBuf
 
 	ipBuf := &bytes.Buffer{}
 	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
@@ -108,6 +116,8 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 		return infra.DeploymentInfo{}, err
 	}
 
+	log.Info("Container started", zap.String("id", strings.TrimSuffix(idBuf.String(), "\n")))
+
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
 	return infra.DeploymentInfo{
 		Container:       name,
@@ -121,6 +131,10 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 // DeployContainer starts container in docker
 func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
 	name := d.config.EnvName + "-" + app.Name
+
+	log := logger.Get(ctx).With(zap.String("name", name))
+	log.Info("Starting container")
+
 	exists, err := containerExists(ctx, name)
 	if err != nil {
 		return infra.DeploymentInfo{}, err
@@ -143,6 +157,8 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 
 		startCmd = exec.Docker(runArgs...)
 	}
+	idBuf := &bytes.Buffer{}
+	startCmd.Stdout = idBuf
 
 	ipBuf := &bytes.Buffer{}
 	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
@@ -157,6 +173,8 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
+
+	log.Info("Container started", zap.String("id", strings.TrimSuffix(idBuf.String(), "\n")))
 
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
 	return infra.DeploymentInfo{
