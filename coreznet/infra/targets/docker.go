@@ -3,7 +3,9 @@ package targets
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	osexec "os/exec"
@@ -12,8 +14,11 @@ import (
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/exec"
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
@@ -44,18 +49,30 @@ type Docker struct {
 
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
-	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, id string) error {
-		return libexec.Exec(ctx, exec.Docker("stop", "--time", "60", id))
+	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
+		logger.Get(ctx).Info("Stopping container", zap.String("id", info.ID), zap.String("name", info.Name))
+		stopCmd := exec.Docker("stop", "--time", "60", info.ID)
+		stopCmd.Stdout = io.Discard
+		return libexec.Exec(ctx, stopCmd)
 	})
 }
 
 // Remove removes running applications
 func (d *Docker) Remove(ctx context.Context) error {
-	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, id string) error {
-		return libexec.Exec(ctx,
-			exec.Docker("stop", "--time", "60", id),
-			exec.Docker("rm", id),
-		)
+	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
+		logger.Get(ctx).Info("Deleting container", zap.String("id", info.ID), zap.String("name", info.Name))
+
+		cmds := []*osexec.Cmd{}
+		if info.Running {
+			// Everything will be removed, so we don't care about graceful shutdown
+			killCmd := exec.Docker("kill", info.ID)
+			killCmd.Stdout = io.Discard
+			cmds = append(cmds, killCmd)
+		}
+		rmCmd := exec.Docker("rm", info.ID)
+		rmCmd.Stdout = io.Discard
+		cmds = append(cmds, rmCmd)
+		return libexec.Exec(ctx, cmds...)
 	})
 }
 
@@ -67,14 +84,18 @@ func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 // DeployBinary builds container image out of binary file and starts it in docker
 func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	name := d.config.EnvName + "-" + app.Name
-	exists, err := containerExists(ctx, name)
+
+	log := logger.Get(ctx).With(zap.String("name", name))
+	log.Info("Starting container")
+
+	id, err := containerExists(ctx, name)
 	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
 	var startCmd *osexec.Cmd
-	if exists {
-		startCmd = exec.Docker("start", name)
+	if id != "" {
+		startCmd = exec.Docker("start", id)
 	} else {
 		appHomeDir := d.config.AppDir + "/" + app.Name
 		must.Any(os.Stat(app.BinPath))
@@ -92,6 +113,8 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 
 		startCmd = exec.Docker(runArgs...)
 	}
+	idBuf := &bytes.Buffer{}
+	startCmd.Stdout = idBuf
 
 	ipBuf := &bytes.Buffer{}
 	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
@@ -100,6 +123,8 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	if err := libexec.Exec(ctx, startCmd, ipCmd); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
+
+	log.Info("Container started", zap.String("id", strings.TrimSuffix(idBuf.String(), "\n")))
 
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
 	return infra.DeploymentInfo{
@@ -114,14 +139,18 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 // DeployContainer starts container in docker
 func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
 	name := d.config.EnvName + "-" + app.Name
-	exists, err := containerExists(ctx, name)
+
+	log := logger.Get(ctx).With(zap.String("name", name))
+	log.Info("Starting container")
+
+	id, err := containerExists(ctx, name)
 	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
 	var startCmd *osexec.Cmd
-	if exists {
-		startCmd = exec.Docker("start", name)
+	if id != "" {
+		startCmd = exec.Docker("start", id)
 	} else {
 		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName}
 		for _, port := range app.Ports {
@@ -136,6 +165,8 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 
 		startCmd = exec.Docker(runArgs...)
 	}
+	idBuf := &bytes.Buffer{}
+	startCmd.Stdout = idBuf
 
 	ipBuf := &bytes.Buffer{}
 	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
@@ -143,6 +174,8 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	if err := libexec.Exec(ctx, startCmd, ipCmd); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
+
+	log.Info("Container started", zap.String("id", strings.TrimSuffix(idBuf.String(), "\n")))
 
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
 	return infra.DeploymentInfo{
@@ -154,33 +187,64 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	}, nil
 }
 
-func containerExists(ctx context.Context, name string) (bool, error) {
-	existsBuf := &bytes.Buffer{}
-	existsCmd := exec.Docker("ps", "-aqf", "name="+name)
-	existsCmd.Stdout = existsBuf
+func containerExists(ctx context.Context, name string) (string, error) {
+	idBuf := &bytes.Buffer{}
+	existsCmd := exec.Docker("ps", "-aq", "--no-trunc", "--filter", "name="+name)
+	existsCmd.Stdout = idBuf
 	if err := libexec.Exec(ctx, existsCmd); err != nil {
-		return false, err
+		return "", err
 	}
-	return existsBuf.Len() > 0, nil
+	return strings.TrimSuffix(idBuf.String(), "\n"), nil
 }
 
-func forContainer(ctx context.Context, envName string, fn func(ctx context.Context, id string) error) error {
-	buf := &bytes.Buffer{}
-	listCmd := exec.Docker("ps", "-aq", "--filter", "label="+labelEnv+"="+envName)
-	listCmd.Stdout = buf
+type container struct {
+	ID      string
+	Name    string
+	Running bool
+}
+
+func forContainer(ctx context.Context, envName string, fn func(ctx context.Context, info container) error) error {
+	listBuf := &bytes.Buffer{}
+	listCmd := exec.Docker("ps", "-aq", "--no-trunc", "--filter", "label="+labelEnv+"="+envName)
+	listCmd.Stdout = listBuf
 	if err := libexec.Exec(ctx, listCmd); err != nil {
 		return err
 	}
 
+	listStr := strings.TrimSuffix(listBuf.String(), "\n")
+	if listStr == "" {
+		return nil
+	}
+
+	inspectBuf := &bytes.Buffer{}
+	inspectCmd := exec.Docker(append([]string{"inspect"}, strings.Split(listStr, "\n")...)...)
+	inspectCmd.Stdout = inspectBuf
+
+	if err := libexec.Exec(ctx, inspectCmd); err != nil {
+		return err
+	}
+
+	var info []struct {
+		ID    string `json:"Id"` // nolint:tagliatelle // `Id` is defined by docker
+		Name  string
+		State struct {
+			Running bool
+		}
+	}
+
+	if err := json.Unmarshal(inspectBuf.Bytes(), &info); err != nil {
+		return errors.Wrap(err, "unmarshalling container properties failed")
+	}
+
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		for _, cID := range strings.Split(buf.String(), "\n") {
-			// last item is empty
-			if cID == "" {
-				break
-			}
-			cID := cID
-			spawn("container."+cID, parallel.Continue, func(ctx context.Context) error {
-				return fn(ctx, cID)
+		for _, cInfo := range info {
+			cInfo := cInfo
+			spawn("container."+cInfo.ID, parallel.Continue, func(ctx context.Context) error {
+				return fn(ctx, container{
+					ID:      cInfo.ID,
+					Name:    strings.TrimPrefix(cInfo.Name, "/"),
+					Running: cInfo.State.Running,
+				})
 			})
 		}
 		return nil
