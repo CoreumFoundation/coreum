@@ -3,6 +3,7 @@ package targets
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -16,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/exec"
@@ -47,9 +49,9 @@ type Docker struct {
 
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
-	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, id string) error {
-		logger.Get(ctx).Info("Stopping container", zap.String("id", id))
-		stopCmd := exec.Docker("stop", "--time", "60", id)
+	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
+		logger.Get(ctx).Info("Stopping container", zap.String("id", info.ID), zap.String("name", info.Name))
+		stopCmd := exec.Docker("stop", "--time", "60", info.ID)
 		stopCmd.Stdout = io.Discard
 		return libexec.Exec(ctx, stopCmd)
 	})
@@ -57,15 +59,20 @@ func (d *Docker) Stop(ctx context.Context) error {
 
 // Remove removes running applications
 func (d *Docker) Remove(ctx context.Context) error {
-	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, id string) error {
-		logger.Get(ctx).Info("Deleting container", zap.String("id", id))
+	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
+		logger.Get(ctx).Info("Deleting container", zap.String("id", info.ID), zap.String("name", info.Name))
 
-		// FIXME (wojciech): convert to `kill` - it requires a check if container is running
-		stopCmd := exec.Docker("stop", id)
-		stopCmd.Stdout = io.Discard
-		rmCmd := exec.Docker("rm", id)
+		cmds := []*osexec.Cmd{}
+		if info.Running {
+			// Everything will be removed, so we don't care about graceful shutdown
+			killCmd := exec.Docker("kill", info.ID)
+			killCmd.Stdout = io.Discard
+			cmds = append(cmds, killCmd)
+		}
+		rmCmd := exec.Docker("rm", info.ID)
 		rmCmd.Stdout = io.Discard
-		return libexec.Exec(ctx, stopCmd, rmCmd)
+		cmds = append(cmds, rmCmd)
+		return libexec.Exec(ctx, cmds...)
 	})
 }
 
@@ -204,23 +211,54 @@ func containerExists(ctx context.Context, name string) (string, error) {
 	return strings.TrimSuffix(idBuf.String(), "\n"), nil
 }
 
-func forContainer(ctx context.Context, envName string, fn func(ctx context.Context, id string) error) error {
-	buf := &bytes.Buffer{}
+type container struct {
+	ID      string
+	Name    string
+	Running bool
+}
+
+func forContainer(ctx context.Context, envName string, fn func(ctx context.Context, info container) error) error {
+	listBuf := &bytes.Buffer{}
 	listCmd := exec.Docker("ps", "-aq", "--no-trunc", "--filter", "label="+labelEnv+"="+envName)
-	listCmd.Stdout = buf
+	listCmd.Stdout = listBuf
 	if err := libexec.Exec(ctx, listCmd); err != nil {
 		return err
 	}
 
+	listStr := strings.TrimSuffix(listBuf.String(), "\n")
+	if listStr == "" {
+		return nil
+	}
+
+	inspectBuf := &bytes.Buffer{}
+	inspectCmd := exec.Docker(append([]string{"inspect"}, strings.Split(listStr, "\n")...)...)
+	inspectCmd.Stdout = inspectBuf
+
+	if err := libexec.Exec(ctx, inspectCmd); err != nil {
+		return err
+	}
+
+	info := []struct {
+		Id    string
+		Name  string
+		State struct {
+			Running bool
+		}
+	}{}
+
+	if err := json.Unmarshal(inspectBuf.Bytes(), &info); err != nil {
+		return errors.Wrap(err, "unmarshalling container properties failed")
+	}
+
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		for _, cID := range strings.Split(buf.String(), "\n") {
-			// last item is empty
-			if cID == "" {
-				break
-			}
-			cID := cID
-			spawn("container."+cID, parallel.Continue, func(ctx context.Context) error {
-				return fn(ctx, cID)
+		for _, cInfo := range info {
+			cInfo := cInfo
+			spawn("container."+cInfo.Id, parallel.Continue, func(ctx context.Context) error {
+				return fn(ctx, container{
+					ID:      cInfo.Id,
+					Name:    strings.TrimPrefix(cInfo.Name, "/"),
+					Running: cInfo.State.Running,
+				})
 			})
 		}
 		return nil
