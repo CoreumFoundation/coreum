@@ -19,6 +19,7 @@ require (
 	github.com/tendermint/tendermint v0.34.19
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
+	google.golang.org/grpc v1.45.0
 )
 
 require (
@@ -113,7 +114,6 @@ require (
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb // indirect
-	google.golang.org/grpc v1.45.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

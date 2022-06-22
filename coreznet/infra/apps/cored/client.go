@@ -3,6 +3,8 @@ package cored
 import (
 	"context"
 	"encoding/hex"
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -12,14 +14,22 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
-const requestTimeout = 10 * time.Second
-const txTimeout = 30 * time.Second
+const (
+	requestTimeout       = 10 * time.Second
+	txTimeout            = time.Minute
+	txStatusPollInterval = 500 * time.Millisecond
+)
+
+var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
@@ -28,6 +38,7 @@ func NewClient(chainID string, addr string) Client {
 	clientCtx := NewContext(chainID, rpcClient)
 	return Client{
 		clientCtx:       clientCtx,
+		authQueryClient: authtypes.NewQueryClient(clientCtx),
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
 	}
 }
@@ -35,20 +46,30 @@ func NewClient(chainID string, addr string) Client {
 // Client is the client for cored blockchain
 type Client struct {
 	clientCtx       client.Context
+	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
-func (c Client) GetNumberSequence(address string) (uint64, uint64, error) {
+func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(address)
 	must.OK(err)
 
-	// FIXME (wojciech): Find a way to pass `ctx` to the logic of `GetAccountNumberSequence` to support timeouts
-	accNum, accSeq, err := c.clientCtx.AccountRetriever.GetAccountNumberSequence(c.clientCtx, addr)
+	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
+	var header metadata.MD
+	res, err := c.authQueryClient.Account(requestCtx, &authtypes.QueryAccountRequest{Address: addr.String()}, grpc.Header(&header))
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, errors.WithStack(err)
 	}
-	return accNum, accSeq, nil
+
+	var acc authtypes.AccountI
+	if err := c.clientCtx.InterfaceRegistry.UnpackAny(res.Account, &acc); err != nil {
+		return 0, 0, errors.WithStack(err)
+	}
+
+	return acc.GetAccountNumber(), acc.GetSequence(), nil
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
@@ -70,10 +91,10 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
-		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(signer.Key.Address())
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
 		if err != nil {
 			return nil, err
 		}
@@ -94,6 +115,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	defer cancel()
 
 	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
+	// nolint:nestif // This code is still easy to understand
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return "", errors.WithStack(err)
@@ -107,6 +129,9 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	} else {
 		txHash = res.Hash.String()
 		if res.Code != 0 {
+			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
+				return "", err
+			}
 			return "", errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
 				txHash, res.Code, res.Codespace, res.Log)
 		}
@@ -120,7 +145,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
 	defer cancel()
 
-	err = retry.Do(timeoutCtx, 250*time.Millisecond, func() error {
+	err = retry.Do(timeoutCtx, txStatusPollInterval, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 		defer cancel()
 
@@ -137,6 +162,14 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 			}
 			return retry.Retryable(errors.WithStack(err))
 		}
+		if resultTx.TxResult.Code != 0 {
+			res := resultTx.TxResult
+			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
+				return err
+			}
+			return errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
+				txHash, res.Code, res.Codespace, res.Log)
+		}
 		if resultTx.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
 		}
@@ -149,13 +182,13 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 }
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) PrepareTxBankSend(sender, receiver Wallet, balance Balance) ([]byte, error) {
+func (c Client) PrepareTxBankSend(ctx context.Context, sender, receiver Wallet, balance Balance) ([]byte, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
 	must.OK(err)
 	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
 	must.OK(err)
 
-	signedTx, err := c.Sign(sender, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	signedTx, err := c.Sign(ctx, sender, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
 			Denom:  balance.Denom,
 			Amount: sdk.NewIntFromBigInt(balance.Amount),
@@ -172,8 +205,12 @@ func isTxInMempool(errRes *sdk.TxResponse) bool {
 	if errRes == nil {
 		return false
 	}
-	return errRes.Codespace == cosmoserrors.ErrTxInMempoolCache.Codespace() &&
-		errRes.Code == cosmoserrors.ErrTxInMempoolCache.ABCICode()
+	return isSDKErrorResult(errRes.Codespace, errRes.Code, cosmoserrors.ErrTxInMempoolCache)
+}
+
+func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error) bool {
+	return codespace == sdkErr.Codespace() &&
+		code == sdkErr.ABCICode()
 }
 
 func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
@@ -207,4 +244,40 @@ func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, acc
 	must.OK(txBuilder.SetSignatures(sig))
 
 	return txBuilder.GetTx()
+}
+
+type sequenceError struct {
+	expectedSequence uint64
+	message          string
+}
+
+func (e sequenceError) Error() string {
+	return e.message
+}
+
+func checkSequence(codespace string, code uint32, log string) error {
+	// Cosmos SDK doesn't return expected sequence number as a parameter from RPC call,
+	// so we must parse the error message in a hacky way.
+
+	if !isSDKErrorResult(codespace, code, cosmoserrors.ErrWrongSequence) {
+		return nil
+	}
+	matches := expectedSequenceRegExp.FindStringSubmatch(log)
+	if len(matches) != 2 {
+		return errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
+	}
+	expectedSequence, err := strconv.ParseUint(matches[1], 10, 64)
+	if err != nil {
+		return errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
+	}
+	return errors.WithStack(sequenceError{message: log, expectedSequence: expectedSequence})
+}
+
+// FetchSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
+func FetchSequenceFromError(err error) (uint64, bool) {
+	var seqErr sequenceError
+	if errors.As(err, &seqErr) {
+		return seqErr.expectedSequence, true
+	}
+	return 0, false
 }

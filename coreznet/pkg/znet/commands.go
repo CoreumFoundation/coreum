@@ -246,7 +246,7 @@ func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet)
 	log := logger.Get(ctx)
 
 	amount := cored.Balance{Amount: big.NewInt(1), Denom: "core"}
-	txBytes, err := client.PrepareTxBankSend(from, to, amount)
+	txBytes, err := client.PrepareTxBankSend(ctx, from, to, amount)
 	if err != nil {
 		return err
 	}
