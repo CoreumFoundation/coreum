@@ -18,16 +18,12 @@ import (
 	tmrand "github.com/tendermint/tendermint/libs/rand"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/CoreumFoundation/coreum/cored/app"
+	"github.com/CoreumFoundation/coreum/core/app"
 )
 
 type (
-	// Network defines a local in-process testing network
 	Network = network.Network
-
-	// Config defines the necessary configuration used to bootstrap and start an
-	// in-process local testing network
-	Config = network.Config
+	Config  = network.Config
 )
 
 // New creates instance with fully configured cosmos network.
