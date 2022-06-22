@@ -21,9 +21,6 @@ type Config struct {
 	// AppDir is the path where app data are stored
 	AppDir string
 
-	// LogDir is the path where logs are stored
-	LogDir string
-
 	// WrapperDir is the path where wrappers are stored
 	WrapperDir string
 
