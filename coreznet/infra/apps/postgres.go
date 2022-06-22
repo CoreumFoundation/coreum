@@ -107,10 +107,6 @@ func (p Postgres) Deployment() infra.Deployment {
 				}
 				defer db.Close(ctx)
 
-				if err := waitDBReady(ctx, db); err != nil {
-					return err
-				}
-
 				log.Info("Loading schema into the database")
 
 				if err := p.schemaLoaderFunc(ctx, db); err != nil {
@@ -130,9 +126,9 @@ func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn,
 
 	var db *pgx.Conn
 
-	retryCtx, cancel1 := context.WithTimeout(ctx, 20*time.Second)
-	defer cancel1()
-	err := retry.Do(retryCtx, 2*time.Second, func() error {
+	retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+	err := retry.Do(retryCtx, time.Second, func() error {
 		connCtx, cancel := context.WithTimeout(ctx, time.Second)
 		defer cancel()
 
@@ -145,26 +141,4 @@ func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn,
 	}
 
 	return db, nil
-}
-
-func waitDBReady(ctx context.Context, db *pgx.Conn) error {
-	logger.Get(ctx).Info("Waiting for database to be created", zap.String("db", postgres.DB))
-
-	retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
-	defer cancel()
-
-	return retry.Do(retryCtx, time.Second, func() error {
-		queryCtx, cancel := context.WithTimeout(ctx, time.Second)
-		defer cancel()
-
-		row := db.QueryRow(queryCtx, "select 1 as result from pg_database where datname=$1", postgres.DB)
-		var dummy int
-		if err := row.Scan(&dummy); err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return retry.Retryable(errors.New("database hasn't been created yet"))
-			}
-			return retry.Retryable(errors.Wrap(err, "verifying database readiness failed"))
-		}
-		return nil
-	})
 }
