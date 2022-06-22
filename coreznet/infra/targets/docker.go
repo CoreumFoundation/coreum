@@ -101,13 +101,6 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 		return infra.DeploymentInfo{}, err
 	}
 
-	err = osexec.Command("/bin/bash", "-ce",
-		fmt.Sprintf("%s >> \"%s/%s.log\" 2>&1", exec.Docker("logs", "-f", name).String(),
-			d.config.LogDir, app.Name)).Start()
-	if err != nil {
-		return infra.DeploymentInfo{}, err
-	}
-
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
 	return infra.DeploymentInfo{
 		Container:       name,
@@ -148,13 +141,6 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
 	ipCmd.Stdout = ipBuf
 	if err := libexec.Exec(ctx, startCmd, ipCmd); err != nil {
-		return infra.DeploymentInfo{}, err
-	}
-
-	err = osexec.Command("/bin/bash", "-ce",
-		fmt.Sprintf("%s >> \"%s/%s.log\" 2>&1", exec.Docker("logs", "-f", name).String(),
-			d.config.LogDir, app.Name)).Start()
-	if err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
