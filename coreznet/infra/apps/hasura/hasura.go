@@ -1,4 +1,4 @@
-package apps
+package hasura
 
 import (
 	"bytes"
@@ -21,11 +21,16 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
-// HasuraType is the type of hasura application
-const HasuraType infra.AppType = "hasura"
+const (
+	// AppType is the type of hasura application
+	AppType infra.AppType = "hasura"
 
-// NewHasura creates new hasura app
-func NewHasura(name string, appInfo *infra.AppInfo, port int, metadataTemplate string, postgres Postgres) Hasura {
+	// DefaultPort is the default port hasura listens on for client connections
+	DefaultPort = 8080
+)
+
+// New creates new hasura app
+func New(name string, appInfo *infra.AppInfo, port int, metadataTemplate string, postgres postgres.Postgres) Hasura {
 	return Hasura{
 		name:             name,
 		appInfo:          appInfo,
@@ -41,12 +46,12 @@ type Hasura struct {
 	appInfo          *infra.AppInfo
 	port             int
 	metadataTemplate string
-	postgres         Postgres
+	postgres         postgres.Postgres
 }
 
 // Type returns type of application
 func (h Hasura) Type() infra.AppType {
-	return HasuraType
+	return AppType
 }
 
 // Name returns name of app
