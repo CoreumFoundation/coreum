@@ -107,7 +107,7 @@ func (c Cored) Info() infra.DeploymentInfo {
 }
 
 // AddWallet adds wallet to genesis block and local keystore
-func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateKey) {
+func (c Cored) AddWallet(balances string) cored.Wallet {
 	pubKey, privKey := cored.GenerateSecp256k1Key()
 	c.genesis.AddWallet(pubKey, balances)
 
@@ -123,7 +123,7 @@ func (c Cored) AddWallet(balances string) (cored.Wallet, cored.Secp256k1PrivateK
 	}
 
 	c.walletKeys[name] = privKey
-	return cored.Wallet{Name: name, Key: privKey}, privKey
+	return cored.Wallet{Name: name, Key: privKey}
 }
 
 // Client creates new client for cored blockchain
