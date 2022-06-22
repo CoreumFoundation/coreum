@@ -95,7 +95,8 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 				case <-ctx.Done():
 					return ctx.Err()
 				case event := <-watcher.Events:
-					if event.Op&fsnotify.Remove == 0 {
+					// Rename is here because on some OSes removing is done by moving file to trash
+					if event.Op&(fsnotify.Remove|fsnotify.Rename) == 0 {
 						continue
 					}
 					if _, err := os.Stat(config.HomeDir); err != nil {
