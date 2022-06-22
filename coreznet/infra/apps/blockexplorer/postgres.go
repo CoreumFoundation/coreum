@@ -1,4 +1,4 @@
-package postgres
+package blockexplorer
 
 import (
 	"context"
@@ -9,45 +9,45 @@ import (
 )
 
 var (
-	//go:embed schema/00-cosmos.sql
+	//go:embed postgres/schema/00-cosmos.sql
 	schema00Cosmos string
 
-	//go:embed schema/01-auth.sql
+	//go:embed postgres/schema/01-auth.sql
 	schema01Auth string
 
-	//go:embed schema/02-bank.sql
+	//go:embed postgres/schema/02-bank.sql
 	schema02Bank string
 
-	//go:embed schema/03-staking.sql
+	//go:embed postgres/schema/03-staking.sql
 	schema03Staking string
 
-	//go:embed schema/04-consensus.sql
+	//go:embed postgres/schema/04-consensus.sql
 	schema04Consensus string
 
-	//go:embed schema/05-mint.sql
+	//go:embed postgres/schema/05-mint.sql
 	schema05Mint string
 
-	//go:embed schema/06-distribution.sql
+	//go:embed postgres/schema/06-distribution.sql
 	schema06Distribution string
 
-	//go:embed schema/07-pricefeed.sql
+	//go:embed postgres/schema/07-pricefeed.sql
 	schema07PriceFeed string
 
-	//go:embed schema/08-gov.sql
+	//go:embed postgres/schema/08-gov.sql
 	schema08Gov string
 
-	//go:embed schema/09-modules.sql
+	//go:embed postgres/schema/09-modules.sql
 	schema09Modules string
 
-	//go:embed schema/10-slashing.sql
+	//go:embed postgres/schema/10-slashing.sql
 	schema10Slashing string
 
-	//go:embed schema/11-feegrant.sql
+	//go:embed postgres/schema/11-feegrant.sql
 	schema11FeeGrant string
 )
 
-// LoadSchema loads schema required by blocke xplorer into postgres database
-func LoadSchema(ctx context.Context, db *pgx.Conn) error {
+// LoadPostgresSchema loads schema required by block explorer into postgres database
+func LoadPostgresSchema(ctx context.Context, db *pgx.Conn) error {
 	for _, cmds := range []string{
 		schema00Cosmos,
 		schema01Auth,

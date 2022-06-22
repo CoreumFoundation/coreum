@@ -1,4 +1,4 @@
-package apps
+package postgres
 
 import (
 	"context"
@@ -12,18 +12,28 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 )
 
-// PostgresType is the type of postgres application
-const PostgresType infra.AppType = "postgres"
+const (
+	// AppType is the type of postgres application
+	AppType infra.AppType = "postgres"
+
+	// DefaultPort is the default port postgres listens on for client connections
+	DefaultPort = 5432
+
+	// User contains the login of superuser
+	User = "postgres"
+
+	// DB is the name of database
+	DB = "db"
+)
 
 // SchemaLoaderFunc is the function receiving sql client and loading schema there
 type SchemaLoaderFunc func(ctx context.Context, db *pgx.Conn) error
 
-// NewPostgres creates new postgres app
-func NewPostgres(name string, appInfo *infra.AppInfo, port int, schemaLoaderFunc SchemaLoaderFunc) Postgres {
+// New creates new postgres app
+func New(name string, appInfo *infra.AppInfo, port int, schemaLoaderFunc SchemaLoaderFunc) Postgres {
 	return Postgres{
 		name:             name,
 		appInfo:          appInfo,
@@ -42,7 +52,7 @@ type Postgres struct {
 
 // Type returns type of application
 func (p Postgres) Type() infra.AppType {
-	return PostgresType
+	return AppType
 }
 
 // Name returns name of app
@@ -67,11 +77,11 @@ func (p Postgres) Deployment() infra.Deployment {
 		EnvVars: []infra.EnvVar{
 			{
 				Name:  "POSTGRES_USER",
-				Value: postgres.User,
+				Value: User,
 			},
 			{
 				Name:  "POSTGRES_DB",
-				Value: postgres.DB,
+				Value: DB,
 			},
 
 			// This allows to log in using any existing user (even superuser) without providing a password.
@@ -85,11 +95,10 @@ func (p Postgres) Deployment() infra.Deployment {
 			Name: p.Name(),
 			Info: p.appInfo,
 			ArgsFunc: func() []string {
-				args := []string{
+				return []string{
 					"-h", net.IPv4zero.String(),
 					"-p", strconv.Itoa(p.port),
 				}
-				return args
 			},
 			Ports: map[string]int{
 				"sql": p.port,
@@ -121,12 +130,12 @@ func (p Postgres) Deployment() infra.Deployment {
 }
 
 func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn, error) {
-	connStr := "postgres://" + postgres.User + "@" + infra.JoinProtoIPPort("", serverIP, p.port) + "/" + postgres.DB
+	connStr := "postgres://" + User + "@" + infra.JoinProtoIPPort("", serverIP, p.port) + "/" + DB
 	logger.Get(ctx).Info("Connecting to the database server", zap.String("connectionString", connStr))
 
 	var db *pgx.Conn
 
-	retryCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	retryCtx, cancel := context.WithTimeout(ctx, 40*time.Second)
 	defer cancel()
 	err := retry.Do(retryCtx, time.Second, func() error {
 		connCtx, cancel := context.WithTimeout(ctx, time.Second)

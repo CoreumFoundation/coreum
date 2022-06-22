@@ -5,8 +5,9 @@ import (
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/postgres"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/hasura"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
 )
 
 // NewFactory creates new app factory
@@ -27,11 +28,11 @@ type Factory struct {
 func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 	genesis := cored.NewGenesis(name)
 	nodes := make(infra.Mode, 0, numOfNodes)
-	var node0 *Cored
+	var node0 *cored.Cored
 	for i := 0; i < numOfNodes; i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
-		node := NewCored(name, f.config, genesis, f.spec.DescribeApp(CoredType, name), cored.Ports{
+		node := cored.New(name, f.config, genesis, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
 			RPC:        cored.DefaultPorts.RPC + portDelta,
 			P2P:        cored.DefaultPorts.P2P + portDelta,
 			GRPC:       cored.DefaultPorts.GRPC + portDelta,
@@ -50,8 +51,13 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 // BlockExplorer returns set of applications required to run block explorer
 func (f *Factory) BlockExplorer(name string) infra.Mode {
 	namePostgres := name + "-postgres"
+	nameHasura := name + "-hasura"
+
+	postgresApp := postgres.New(namePostgres, f.spec.DescribeApp(postgres.AppType, namePostgres), blockexplorer.DefaultPorts.Postgres, blockexplorer.LoadPostgresSchema)
+	hasuraApp := hasura.New(nameHasura, f.spec.DescribeApp(hasura.AppType, nameHasura), blockexplorer.DefaultPorts.Hasura, blockexplorer.HasuraMetadataTemplate, postgresApp)
 	return infra.Mode{
-		NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema),
+		postgresApp,
+		hasuraApp,
 		// FIXME (wojciech): more apps coming soon
 	}
 }

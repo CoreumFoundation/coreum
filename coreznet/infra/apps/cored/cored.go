@@ -1,4 +1,4 @@
-package apps
+package cored
 
 import (
 	"context"
@@ -17,23 +17,22 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/targets"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
 	"github.com/CoreumFoundation/coreum/coreznet/pkg/rnd"
 )
 
-// CoredType is the type of cored application
-const CoredType infra.AppType = "cored"
+// AppType is the type of cored application
+const AppType infra.AppType = "cored"
 
-// NewCored creates new cored app
-func NewCored(name string, config infra.Config, genesis *cored.Genesis, appInfo *infra.AppInfo, ports cored.Ports, rootNode *Cored) Cored {
+// New creates new cored app
+func New(name string, config infra.Config, genesis *Genesis, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
-	stakerPubKey, stakerPrivKey := cored.GenerateSecp256k1Key()
+	stakerPubKey, stakerPrivKey := GenerateSecp256k1Key()
 
 	genesis.AddWallet(stakerPubKey, "100000000000000000000000core")
 	genesis.AddValidator(validatorPublicKey, stakerPrivKey, "100000000core")
@@ -42,7 +41,7 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, appInfo 
 		name:                name,
 		homeDir:             config.AppDir + "/" + name,
 		config:              config,
-		nodeID:              cored.NodeID(nodePublicKey),
+		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
 		genesis:             genesis,
@@ -50,11 +49,11 @@ func NewCored(name string, config infra.Config, genesis *cored.Genesis, appInfo 
 		ports:               ports,
 		rootNode:            rootNode,
 		mu:                  &sync.RWMutex{},
-		walletKeys: map[string]cored.Secp256k1PrivateKey{
+		walletKeys: map[string]Secp256k1PrivateKey{
 			"staker":  stakerPrivKey,
-			"alice":   cored.AlicePrivKey,
-			"bob":     cored.BobPrivKey,
-			"charlie": cored.CharliePrivKey,
+			"alice":   AlicePrivKey,
+			"bob":     BobPrivKey,
+			"charlie": CharliePrivKey,
 		},
 	}
 }
@@ -67,18 +66,18 @@ type Cored struct {
 	nodeID              string
 	nodePrivateKey      ed25519.PrivateKey
 	validatorPrivateKey ed25519.PrivateKey
-	genesis             *cored.Genesis
+	genesis             *Genesis
 	appInfo             *infra.AppInfo
-	ports               cored.Ports
+	ports               Ports
 	rootNode            *Cored
 
 	mu         *sync.RWMutex
-	walletKeys map[string]cored.Secp256k1PrivateKey
+	walletKeys map[string]Secp256k1PrivateKey
 }
 
 // Type returns type of application
 func (c Cored) Type() infra.AppType {
-	return CoredType
+	return AppType
 }
 
 // Name returns name of app
@@ -92,7 +91,7 @@ func (c Cored) NodeID() string {
 }
 
 // Ports returns ports used by the application
-func (c Cored) Ports() cored.Ports {
+func (c Cored) Ports() Ports {
 	return c.ports
 }
 
@@ -107,8 +106,8 @@ func (c Cored) Info() infra.DeploymentInfo {
 }
 
 // AddWallet adds wallet to genesis block and local keystore
-func (c Cored) AddWallet(balances string) cored.Wallet {
-	pubKey, privKey := cored.GenerateSecp256k1Key()
+func (c Cored) AddWallet(balances string) Wallet {
+	pubKey, privKey := GenerateSecp256k1Key()
 	c.genesis.AddWallet(pubKey, balances)
 
 	c.mu.Lock()
@@ -123,12 +122,12 @@ func (c Cored) AddWallet(balances string) cored.Wallet {
 	}
 
 	c.walletKeys[name] = privKey
-	return cored.Wallet{Name: name, Key: privKey}
+	return Wallet{Name: name, Key: privKey}
 }
 
 // Client creates new client for cored blockchain
-func (c Cored) Client() cored.Client {
-	return cored.NewClient(c.genesis.ChainID(), infra.JoinProtoIPPort("", c.Info().FromHostIP, c.Ports().RPC))
+func (c Cored) Client() Client {
+	return NewClient(c.genesis.ChainID(), infra.JoinProtoIPPort("", c.Info().FromHostIP, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -201,19 +200,19 @@ func (c Cored) Deployment() infra.Deployment {
 
 				return args
 			},
-			Ports: portsToMap(c.ports),
+			Ports: infra.PortsToMap(c.ports),
 			PreFunc: func() error {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				cored.NodeConfig{
+				NodeConfig{
 					Name:           c.name,
 					PrometheusPort: c.ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,
 					ValidatorKey:   c.validatorPrivateKey,
 				}.Save(c.homeDir)
 
-				cored.AddKeysToStore(c.homeDir, c.walletKeys)
+				AddKeysToStore(c.homeDir, c.walletKeys)
 
 				c.genesis.Save(c.homeDir)
 				return nil

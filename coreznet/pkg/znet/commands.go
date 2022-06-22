@@ -233,13 +233,13 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 	})
 }
 
-func coredNode(mode infra.Mode) (apps.Cored, error) {
+func coredNode(mode infra.Mode) (cored.Cored, error) {
 	for _, app := range mode {
-		if app.Type() == apps.CoredType && app.Info().Status == infra.AppStatusRunning {
-			return app.(apps.Cored), nil
+		if app.Type() == cored.AppType && app.Info().Status == infra.AppStatusRunning {
+			return app.(cored.Cored), nil
 		}
 	}
-	return apps.Cored{}, errors.New("haven't found any running cored node")
+	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
 func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {
