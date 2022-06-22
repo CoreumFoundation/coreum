@@ -204,3 +204,5 @@ func getAccountNumberSequence(ctx context.Context, client cored.Client, accountA
 	}
 	return accNum, accSeq, nil
 }
+
+func broadcastAccountTxs()
