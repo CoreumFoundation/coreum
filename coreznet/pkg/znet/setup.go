@@ -110,7 +110,6 @@ func (cf *ConfigFactory) Config() infra.Config {
 		Target:         cf.Target,
 		HomeDir:        homeDir,
 		AppDir:         homeDir + "/app",
-		LogDir:         homeDir + "/logs",
 		WrapperDir:     homeDir + "/bin",
 		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(cf.BinDir)))),
 		TestingMode:    cf.TestingMode,
@@ -129,5 +128,4 @@ func (cf *ConfigFactory) Config() infra.Config {
 func createDirs(config infra.Config) {
 	must.OK(os.MkdirAll(config.AppDir, 0o700))
 	must.OK(os.MkdirAll(config.WrapperDir, 0o700))
-	must.OK(os.MkdirAll(config.LogDir, 0o700))
 }
