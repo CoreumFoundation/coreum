@@ -87,6 +87,8 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 		spawn("fsnotify", parallel.Exit, func(ctx context.Context) error {
 			defer func() {
 				if shellCmd.Process != nil {
+					// Shell exits only if SIGHUP is received. All the other signals are caught and passed to process
+					// running inside the shell.
 					_ = shellCmd.Process.Signal(syscall.SIGHUP)
 				}
 			}()
