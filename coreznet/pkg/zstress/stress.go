@@ -63,7 +63,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 						if !ok {
 							return nil
 						}
-						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
+						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
 						select {
 						case <-ctx.Done():
 							return ctx.Err()
@@ -151,7 +151,6 @@ func Stress(ctx context.Context, config StressConfig) error {
 			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 				for i, accountTxs := range signedTxs {
 					accountTxs := accountTxs
-					accountAddress := config.Accounts[i].Address()
 					initialSequence := initialAccountSequences[i]
 					spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
 						for txIndex := 0; txIndex < config.NumOfTransactions; {
@@ -161,20 +160,13 @@ func Stress(ctx context.Context, config StressConfig) error {
 								if errors.Is(err, ctx.Err()) {
 									return err
 								}
-
-								// In case of error two situations are possible:
-								// - error happened after tx was accepted by the node - next tx should be broadcasted
-								// - error happened before tx was accepted by the node - same transaction should be broadcasted again
-								// Because we don't know, blockchain must be queried to check what is the next expected sequence number
-
-								_, accSeq, errSeq := getAccountNumberSequence(ctx, client, accountAddress)
-								if errSeq != nil {
-									return errSeq
+								if expectedAccSeq, ok := cored.FetchSequenceFromError(err); ok {
+									log.Warn("Broadcasting failed, retrying with fresh account sequence...", zap.Error(err),
+										zap.Uint64("accountSequence", expectedAccSeq))
+									txIndex = int(expectedAccSeq - initialSequence)
+								} else {
+									log.Warn("Broadcasting failed, retrying...", zap.Error(err))
 								}
-
-								log.Warn("Broadcasting failed, retrying with fresh account sequence", zap.Error(err),
-									zap.Uint64("accountSequence", accSeq))
-								txIndex = int(accSeq - initialSequence)
 								continue
 							}
 							log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
@@ -199,11 +191,11 @@ func Stress(ctx context.Context, config StressConfig) error {
 
 func getAccountNumberSequence(ctx context.Context, client cored.Client, accountAddress string) (uint64, uint64, error) {
 	var accNum, accSeq uint64
-	err := retry.Do(ctx, 250*time.Millisecond, func() error {
+	err := retry.Do(ctx, time.Second, func() error {
 		var err error
-		accNum, accSeq, err = client.GetNumberSequence(accountAddress)
+		accNum, accSeq, err = client.GetNumberSequence(ctx, accountAddress)
 		if err != nil {
-			return retry.Retryable(errors.Wrap(err, "querying for account data failed"))
+			return retry.Retryable(errors.Wrap(err, "querying for account number and sequence failed"))
 		}
 		return nil
 	})

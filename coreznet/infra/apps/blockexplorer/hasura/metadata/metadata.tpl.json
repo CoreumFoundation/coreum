@@ -1,0 +1,686 @@
+{
+  "metadata": {
+    "version": 3,
+    "sources": [
+      {
+        "name": "default",
+        "kind": "postgres",
+        "tables": [
+          {
+            "table": {
+              "schema": "public",
+              "name": "account"
+            },
+            "array_relationships": [
+              {
+                "name": "feeGrantAllowancesByGranterAddress",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "granter_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "fee_grant_allowance"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "fee_grant_allowances",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "grantee_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "fee_grant_allowance"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "validator_infos",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "self_delegate_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "validator_info"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "vesting_accounts",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "address",
+                    "table": {
+                      "schema": "public",
+                      "name": "vesting_account"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "average_block_time_from_genesis"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "average_block_time_per_day"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "average_block_time_per_hour"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "average_block_time_per_minute"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "block"
+            },
+            "object_relationships": [
+              {
+                "name": "validator",
+                "using": {
+                  "foreign_key_constraint_on": "proposer_address"
+                }
+              }
+            ],
+            "array_relationships": [
+              {
+                "name": "transactions",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "height",
+                    "table": {
+                      "schema": "public",
+                      "name": "transaction"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "validator_voting_powers",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "height",
+                    "table": {
+                      "schema": "public",
+                      "name": "validator_voting_power"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "community_pool"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "distribution_params"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "double_sign_evidence"
+            },
+            "object_relationships": [
+              {
+                "name": "doubleSignVoteByVoteBId",
+                "using": {
+                  "foreign_key_constraint_on": "vote_b_id"
+                }
+              },
+              {
+                "name": "double_sign_vote",
+                "using": {
+                  "foreign_key_constraint_on": "vote_a_id"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "double_sign_vote"
+            },
+            "object_relationships": [
+              {
+                "name": "validator",
+                "using": {
+                  "foreign_key_constraint_on": "validator_address"
+                }
+              }
+            ],
+            "array_relationships": [
+              {
+                "name": "doubleSignEvidencesByVoteBId",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "vote_b_id",
+                    "table": {
+                      "schema": "public",
+                      "name": "double_sign_evidence"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "double_sign_evidences",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "vote_a_id",
+                    "table": {
+                      "schema": "public",
+                      "name": "double_sign_evidence"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "fee_grant_allowance"
+            },
+            "object_relationships": [
+              {
+                "name": "account",
+                "using": {
+                  "foreign_key_constraint_on": "grantee_address"
+                }
+              },
+              {
+                "name": "accountByGranterAddress",
+                "using": {
+                  "foreign_key_constraint_on": "granter_address"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "genesis"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "inflation"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "message"
+            },
+            "object_relationships": [
+              {
+                "name": "transaction",
+                "using": {
+                  "manual_configuration": {
+                    "remote_table": {
+                      "schema": "public",
+                      "name": "transaction"
+                    },
+                    "insertion_order": null,
+                    "column_mapping": {
+                      "transaction_hash": "hash",
+                      "partition_id": "partition_id"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "mint_params"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "modules"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "pre_commit"
+            },
+            "object_relationships": [
+              {
+                "name": "validator",
+                "using": {
+                  "foreign_key_constraint_on": "validator_address"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "pruning"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "slashing_params"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "staking_params"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "staking_pool"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "supply"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "token"
+            },
+            "array_relationships": [
+              {
+                "name": "token_units",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "token_name",
+                    "table": {
+                      "schema": "public",
+                      "name": "token_unit"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "token_price"
+            },
+            "object_relationships": [
+              {
+                "name": "token_unit",
+                "using": {
+                  "foreign_key_constraint_on": "unit_name"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "token_price_history"
+            },
+            "object_relationships": [
+              {
+                "name": "token_unit",
+                "using": {
+                  "foreign_key_constraint_on": "unit_name"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "token_unit"
+            },
+            "object_relationships": [
+              {
+                "name": "token",
+                "using": {
+                  "foreign_key_constraint_on": "token_name"
+                }
+              },
+              {
+                "name": "token_price",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "unit_name",
+                    "table": {
+                      "schema": "public",
+                      "name": "token_price"
+                    }
+                  }
+                }
+              }
+            ],
+            "array_relationships": [
+              {
+                "name": "token_price_histories",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "unit_name",
+                    "table": {
+                      "schema": "public",
+                      "name": "token_price_history"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "transaction"
+            },
+            "object_relationships": [
+              {
+                "name": "block",
+                "using": {
+                  "foreign_key_constraint_on": "height"
+                }
+              }
+            ],
+            "array_relationships": [
+              {
+                "name": "messagesByPartitionIdTransactionHash",
+                "using": {
+                  "manual_configuration": {
+                    "remote_table": {
+                      "schema": "public",
+                      "name": "message"
+                    },
+                    "insertion_order": null,
+                    "column_mapping": {
+                      "hash": "transaction_hash",
+                      "partition_id": "partition_id"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "validator"
+            },
+            "object_relationships": [
+              {
+                "name": "validator_commission",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "validator_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "validator_commission"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "validator_description",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "validator_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "validator_description"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "validator_info",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "consensus_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "validator_info"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "validator_status",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "validator_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "validator_status"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "validator_voting_power",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "validator_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "validator_voting_power"
+                    }
+                  }
+                }
+              }
+            ],
+            "array_relationships": [
+              {
+                "name": "blocks",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "proposer_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "block"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "double_sign_votes",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "validator_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "double_sign_vote"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "pre_commits",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "validator_address",
+                    "table": {
+                      "schema": "public",
+                      "name": "pre_commit"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "validator_commission"
+            },
+            "object_relationships": [
+              {
+                "name": "validator",
+                "using": {
+                  "foreign_key_constraint_on": "validator_address"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "validator_description"
+            },
+            "object_relationships": [
+              {
+                "name": "validator",
+                "using": {
+                  "foreign_key_constraint_on": "validator_address"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "validator_info"
+            },
+            "object_relationships": [
+              {
+                "name": "account",
+                "using": {
+                  "foreign_key_constraint_on": "self_delegate_address"
+                }
+              },
+              {
+                "name": "validator",
+                "using": {
+                  "foreign_key_constraint_on": "consensus_address"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "validator_signing_info"
+            }
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "validator_status"
+            },
+            "object_relationships": [
+              {
+                "name": "validator",
+                "using": {
+                  "foreign_key_constraint_on": "validator_address"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "validator_voting_power"
+            },
+            "object_relationships": [
+              {
+                "name": "block",
+                "using": {
+                  "foreign_key_constraint_on": "height"
+                }
+              },
+              {
+                "name": "validator",
+                "using": {
+                  "foreign_key_constraint_on": "validator_address"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "vesting_account"
+            },
+            "object_relationships": [
+              {
+                "name": "account",
+                "using": {
+                  "foreign_key_constraint_on": "address"
+                }
+              }
+            ],
+            "array_relationships": [
+              {
+                "name": "vesting_periods",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "vesting_account_id",
+                    "table": {
+                      "schema": "public",
+                      "name": "vesting_period"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "schema": "public",
+              "name": "vesting_period"
+            },
+            "object_relationships": [
+              {
+                "name": "vesting_account",
+                "using": {
+                  "foreign_key_constraint_on": "vesting_account_id"
+                }
+              }
+            ]
+          }
+        ],
+        "configuration": {
+          "connection_info": {
+            "use_prepared_statements": true,
+            "database_url": "{{ .DatabaseURL }}",
+            "isolation_level": "read-committed",
+            "pool_settings": {
+              "connection_lifetime": 600,
+              "retries": 1,
+              "idle_timeout": 180,
+              "max_connections": 50
+            }
+          }
+        }
+      }
+    ]
+  }
+}

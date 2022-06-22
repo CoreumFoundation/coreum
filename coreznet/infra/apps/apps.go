@@ -6,8 +6,9 @@ import (
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/bdjuno"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/postgres"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/hasura"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
 )
 
 // NewFactory creates new app factory
@@ -28,11 +29,11 @@ type Factory struct {
 func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 	genesis := cored.NewGenesis(name)
 	nodes := make(infra.Mode, 0, numOfNodes)
-	var node0 *Cored
+	var node0 *cored.Cored
 	for i := 0; i < numOfNodes; i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
-		node := NewCored(name, f.config, genesis, f.spec.DescribeApp(CoredType, name), cored.Ports{
+		node := cored.New(name, f.config, genesis, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
 			RPC:        cored.DefaultPorts.RPC + portDelta,
 			P2P:        cored.DefaultPorts.P2P + portDelta,
 			GRPC:       cored.DefaultPorts.GRPC + portDelta,
@@ -49,15 +50,18 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 }
 
 // BlockExplorer returns set of applications required to run block explorer
-func (f *Factory) BlockExplorer(name string, cored Cored) infra.Mode {
+func (f *Factory) BlockExplorer(name string, cored cored.Cored) infra.Mode {
 	namePostgres := name + "-postgres"
+	nameHasura := name + "-hasura"
 	nameBDJuno := name + "-bdjuno"
 
-	postgres := NewPostgres(namePostgres, f.spec.DescribeApp(PostgresType, namePostgres), blockexplorer.DefaultPorts.Postgres, postgres.LoadSchema)
-	bdjuno := NewBDJuno(nameBDJuno, f.config, f.spec.DescribeApp(BDJunoType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, bdjuno.ConfigTemplate, cored, postgres)
+	postgresApp := postgres.New(namePostgres, f.spec.DescribeApp(postgres.AppType, namePostgres), blockexplorer.DefaultPorts.Postgres, blockexplorer.LoadPostgresSchema)
+	hasuraApp := hasura.New(nameHasura, f.spec.DescribeApp(hasura.AppType, nameHasura), blockexplorer.DefaultPorts.Hasura, blockexplorer.HasuraMetadataTemplate, postgresApp)
+	bdjunoApp := NewBDJuno(nameBDJuno, f.config, f.spec.DescribeApp(BDJunoType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, bdjuno.ConfigTemplate, cored, postgres)
 	return infra.Mode{
-		postgres,
-		bdjuno,
+		postgresApp,
+		hasuraApp,
+		bdjunoApp,
 		// FIXME (wojciech): more apps coming soon
 	}
 }
