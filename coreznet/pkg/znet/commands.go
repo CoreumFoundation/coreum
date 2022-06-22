@@ -41,7 +41,7 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	saveWrapper(config.WrapperDir, "spec", "spec")
 	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
 	saveWrapper(config.WrapperDir, "stress", "stress")
-	saveLogsWrapper(config.WrapperDir, config.LogDir, "logs")
+	saveLogsWrapper(config.WrapperDir, config.EnvName, "logs")
 
 	shell, promptVar, err := shellConfig(config.EnvName)
 	if err != nil {
@@ -60,7 +60,7 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	if promptVar != "" {
 		shellCmd.Env = append(shellCmd.Env, promptVar)
 	}
-	shellCmd.Dir = config.LogDir
+	shellCmd.Dir = config.HomeDir
 	shellCmd.Stdin = os.Stdin
 	err = libexec.Exec(ctx, shellCmd)
 	if shellCmd.ProcessState != nil && shellCmd.ProcessState.ExitCode() != 0 {
@@ -233,13 +233,13 @@ exec "`+exe+`" "`+command+`" "$@"
 `), 0o700))
 }
 
-func saveLogsWrapper(dir, logDir, file string) {
+func saveLogsWrapper(dir, envName, file string) {
 	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
 if [ "$1" == "" ]; then
   echo "Provide the name of application"
   exit 1
 fi
-exec tail -f -n +0 "`+logDir+`/$1.log"
+exec docker logs -f "`+envName+`-$1"
 `), 0o700))
 }
 
