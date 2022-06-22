@@ -1,4 +1,4 @@
-package apps
+package bdjuno
 
 import (
 	"bytes"
@@ -10,15 +10,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/targets"
 )
 
-// BDJunoType is the type of bdjuno application
-const BDJunoType infra.AppType = "bdjuno"
+const (
+	// AppType is the type of bdjuno application
+	AppType infra.AppType = "bdjuno"
 
-// NewBDJuno creates new bdjuno app
-func NewBDJuno(name string, config infra.Config, appInfo *infra.AppInfo, port int, configTemplate string, cored Cored, postgres Postgres) BDJuno {
+	// DefaultPort is the default port bdjuno listens on for client connections
+	DefaultPort = 3030
+)
+
+// New creates new bdjuno app
+func New(name string, config infra.Config, appInfo *infra.AppInfo, port int, configTemplate string, cored cored.Cored, postgres postgres.Postgres) BDJuno {
 	return BDJuno{
 		name:           name,
 		homeDir:        config.AppDir + "/" + name,
@@ -37,13 +43,13 @@ type BDJuno struct {
 	appInfo        *infra.AppInfo
 	port           int
 	configTemplate string
-	cored          Cored
-	postgres       Postgres
+	cored          cored.Cored
+	postgres       postgres.Postgres
 }
 
 // Type returns type of application
 func (j BDJuno) Type() infra.AppType {
-	return BDJunoType
+	return AppType
 }
 
 // Name returns name of app

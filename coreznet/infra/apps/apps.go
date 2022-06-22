@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer/bdjuno"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/hasura"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
@@ -50,14 +50,14 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 }
 
 // BlockExplorer returns set of applications required to run block explorer
-func (f *Factory) BlockExplorer(name string, cored cored.Cored) infra.Mode {
+func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 	namePostgres := name + "-postgres"
 	nameHasura := name + "-hasura"
 	nameBDJuno := name + "-bdjuno"
 
 	postgresApp := postgres.New(namePostgres, f.spec.DescribeApp(postgres.AppType, namePostgres), blockexplorer.DefaultPorts.Postgres, blockexplorer.LoadPostgresSchema)
 	hasuraApp := hasura.New(nameHasura, f.spec.DescribeApp(hasura.AppType, nameHasura), blockexplorer.DefaultPorts.Hasura, blockexplorer.HasuraMetadataTemplate, postgresApp)
-	bdjunoApp := NewBDJuno(nameBDJuno, f.config, f.spec.DescribeApp(BDJunoType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, bdjuno.ConfigTemplate, cored, postgres)
+	bdjunoApp := bdjuno.New(nameBDJuno, f.config, f.spec.DescribeApp(bdjuno.AppType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, blockexplorer.BDJunoConfigTemplate, coredApp, postgresApp)
 	return infra.Mode{
 		postgresApp,
 		hasuraApp,
