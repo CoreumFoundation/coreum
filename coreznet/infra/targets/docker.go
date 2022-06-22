@@ -238,13 +238,13 @@ func forContainer(ctx context.Context, envName string, fn func(ctx context.Conte
 		return err
 	}
 
-	info := []struct {
-		Id    string
+	var info []struct {
+		ID    string `json:"Id"` // nolint:tagliatelle // `Id` is defined by docker
 		Name  string
 		State struct {
 			Running bool
 		}
-	}{}
+	}
 
 	if err := json.Unmarshal(inspectBuf.Bytes(), &info); err != nil {
 		return errors.Wrap(err, "unmarshalling container properties failed")
@@ -253,9 +253,9 @@ func forContainer(ctx context.Context, envName string, fn func(ctx context.Conte
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		for _, cInfo := range info {
 			cInfo := cInfo
-			spawn("container."+cInfo.Id, parallel.Continue, func(ctx context.Context) error {
+			spawn("container."+cInfo.ID, parallel.Continue, func(ctx context.Context) error {
 				return fn(ctx, container{
-					ID:      cInfo.Id,
+					ID:      cInfo.ID,
 					Name:    strings.TrimPrefix(cInfo.Name, "/"),
 					Running: cInfo.State.Running,
 				})
