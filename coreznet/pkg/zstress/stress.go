@@ -42,6 +42,7 @@ type tx struct {
 }
 
 // Stress runs a benchmark test
+// nolint:funlen // TODO(wojtek/ysv) refactor this func into smaller parts
 func Stress(ctx context.Context, config StressConfig) error {
 	numOfAccounts := len(config.Accounts)
 	log := logger.Get(ctx)
@@ -204,5 +205,3 @@ func getAccountNumberSequence(ctx context.Context, client cored.Client, accountA
 	}
 	return accNum, accSeq, nil
 }
-
-func broadcastAccountTxs()
