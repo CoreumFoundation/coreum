@@ -10,12 +10,15 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -32,6 +35,15 @@ var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
 // Activate starts preconfigured shell environment
 func Activate(ctx context.Context, configF *ConfigFactory) error {
 	config := configF.Config()
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer watcher.Close()
+
+	if err := watcher.Add(config.HomeDir); err != nil {
+		return errors.WithStack(err)
+	}
 
 	saveWrapper(config.WrapperDir, "start", "start")
 	saveWrapper(config.WrapperDir, "stop", "stop")
@@ -62,12 +74,46 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	}
 	shellCmd.Dir = config.HomeDir
 	shellCmd.Stdin = os.Stdin
-	err = libexec.Exec(ctx, shellCmd)
-	if shellCmd.ProcessState != nil && shellCmd.ProcessState.ExitCode() != 0 {
-		// shell returns non-exit code if command executed in the shell failed
+
+	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		spawn("session", parallel.Exit, func(ctx context.Context) error {
+			err = libexec.Exec(ctx, shellCmd)
+			if shellCmd.ProcessState != nil && shellCmd.ProcessState.ExitCode() != 0 {
+				// shell returns non-exit code if command executed in the shell failed
+				return nil
+			}
+			return err
+		})
+		spawn("fsnotify", parallel.Exit, func(ctx context.Context) error {
+			defer func() {
+				if shellCmd.Process != nil {
+					// Shell exits only if SIGHUP is received. All the other signals are caught and passed to process
+					// running inside the shell.
+					_ = shellCmd.Process.Signal(syscall.SIGHUP)
+				}
+			}()
+			for {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case event := <-watcher.Events:
+					// Rename is here because on some OSes removing is done by moving file to trash
+					if event.Op&(fsnotify.Remove|fsnotify.Rename) == 0 {
+						continue
+					}
+					if _, err := os.Stat(config.HomeDir); err != nil {
+						if os.IsNotExist(err) {
+							return nil
+						}
+						return errors.WithStack(err)
+					}
+				case err := <-watcher.Errors:
+					return errors.WithStack(err)
+				}
+			}
+		})
 		return nil
-	}
-	return err
+	})
 }
 
 // Start starts environment
