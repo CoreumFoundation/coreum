@@ -201,7 +201,7 @@ func (c Cored) Deployment() infra.Deployment {
 				return args
 			},
 			Ports: infra.PortsToMap(c.ports),
-			PreFunc: func() error {
+			PrepareFunc: func() error {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
@@ -217,7 +217,7 @@ func (c Cored) Deployment() infra.Deployment {
 				c.genesis.Save(c.homeDir)
 				return nil
 			},
-			PostFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
+			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 				return c.saveClientWrapper(c.config.WrapperDir, deployment.FromHostIP)
 			},
 		},
