@@ -150,7 +150,7 @@ func (g *Genesis) verifyNotFinalized() {
 }
 
 // MetadataTemplate contains hasura metadata template
-//go:embed genesis/genesis.json.tmpl
+//go:embed genesis/genesis.tmpl.json
 var genesisTemplate string
 
 func genesis(chainID string) []byte {
