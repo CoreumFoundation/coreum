@@ -39,7 +39,7 @@ type GenerateConfig struct {
 
 // Generate generates all the files required to deploy blockchain used for benchmarking
 func Generate(config GenerateConfig) error {
-	dir := config.OutDirectory + "/corezstress-deployment"
+	dir := config.OutDirectory + "/crustzstress-deployment"
 	if err := os.RemoveAll(dir); err != nil && !os.IsNotExist(err) {
 		panic(err)
 	}
@@ -47,7 +47,7 @@ func Generate(config GenerateConfig) error {
 	if err := generateDocker(dir, "cored"); err != nil {
 		return err
 	}
-	if err := generateDocker(dir, "corezstress"); err != nil {
+	if err := generateDocker(dir, "crustzstress"); err != nil {
 		return err
 	}
 
