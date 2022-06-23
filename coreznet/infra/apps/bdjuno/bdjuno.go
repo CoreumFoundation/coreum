@@ -90,7 +90,7 @@ func (j BDJuno) Deployment() infra.Deployment {
 					infra.IsRunning(j.postgres),
 				},
 			},
-			PreFunc: func() error {
+			PrepareFunc: func() error {
 				return ioutil.WriteFile(j.homeDir+"/config.yaml", j.prepareConfig(), 0o644)
 			},
 		},
