@@ -41,7 +41,8 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	}
 	defer watcher.Close()
 
-	if err := watcher.Add(config.HomeDir); err != nil {
+	// To be notified about directory being removed we must observe parent directory
+	if err := watcher.Add(filepath.Dir(config.HomeDir)); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -98,14 +99,8 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 					return ctx.Err()
 				case event := <-watcher.Events:
 					// Rename is here because on some OSes removing is done by moving file to trash
-					if event.Op&(fsnotify.Remove|fsnotify.Rename) == 0 {
-						continue
-					}
-					if _, err := os.Stat(config.HomeDir); err != nil {
-						if os.IsNotExist(err) {
-							return nil
-						}
-						return errors.WithStack(err)
+					if event.Op&(fsnotify.Remove|fsnotify.Rename) != 0 && event.Name == config.HomeDir {
+						return nil
 					}
 				case err := <-watcher.Errors:
 					return errors.WithStack(err)
@@ -233,13 +228,13 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 	})
 }
 
-func coredNode(mode infra.Mode) (apps.Cored, error) {
+func coredNode(mode infra.Mode) (cored.Cored, error) {
 	for _, app := range mode {
-		if app.Type() == apps.CoredType && app.Info().Status == infra.AppStatusRunning {
-			return app.(apps.Cored), nil
+		if app.Type() == cored.AppType && app.Info().Status == infra.AppStatusRunning {
+			return app.(cored.Cored), nil
 		}
 	}
-	return apps.Cored{}, errors.New("haven't found any running cored node")
+	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
 func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {

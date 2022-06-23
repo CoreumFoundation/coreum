@@ -10,13 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
 )
 
 // TestInitialBalance checks that initial balance is set by genesis block
-func TestInitialBalance(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
+func TestInitialBalance(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
 	var wallet cored.Wallet
 
 	// First function prepares initial well-known state
@@ -44,7 +43,7 @@ func TestInitialBalance(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc)
 }
 
 // TestCoreTransfer checks that core is transferred correctly between wallets
-func TestCoreTransfer(chain apps.Cored) (testing.PrepareFunc, testing.RunFunc) {
+func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
 	var sender, receiver cored.Wallet
 
 	// First function prepares initial well-known state
