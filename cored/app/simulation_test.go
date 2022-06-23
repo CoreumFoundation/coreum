@@ -1,6 +1,9 @@
 package app_test
 
 import (
+	"os"
+	"testing"
+
 	"github.com/CoreumFoundation/coreum/cored/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,8 +15,6 @@ import (
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"os"
-	"testing"
 )
 
 func init() {
