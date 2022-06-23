@@ -267,11 +267,13 @@ type AppBase struct {
 	// Requires is the list of health checks to be required before app can be deployed
 	Requires Prerequisites
 
-	// PreFunc is called to preprocess app
-	PreFunc func() error
+	// PrepareFunc is the function called before application is deployed for the first time.
+	// It is a good place to prepare configuration files and other things which must or might be done before application runs.
+	PrepareFunc func() error
 
-	// PostFunc is called after app is deployed
-	PostFunc func(ctx context.Context, deployment DeploymentInfo) error
+	// ConfigureFunc is the function called after application is deployed for the first time.
+	// It is a good place to connect to the application to configure it because at this stage the app's IP address is known.
+	ConfigureFunc func(ctx context.Context, deployment DeploymentInfo) error
 }
 
 func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarget) error {
@@ -289,15 +291,18 @@ func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarg
 		return nil
 	}
 
-	if app.PreFunc != nil {
-		return app.PreFunc()
+	if app.PrepareFunc != nil {
+		return app.PrepareFunc()
 	}
 	return nil
 }
 
 func (app AppBase) postprocess(ctx context.Context, info DeploymentInfo) error {
-	if app.PostFunc != nil {
-		return app.PostFunc(ctx, info)
+	if app.Info.Info().Status == AppStatusStopped {
+		return nil
+	}
+	if app.ConfigureFunc != nil {
+		return app.ConfigureFunc(ctx, info)
 	}
 	return nil
 }
