@@ -53,6 +53,18 @@ func (d *Docker) Stop(ctx context.Context) error {
 	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
 		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name),
 			zap.String("appName", info.AppName))
+
+		if _, exists := d.spec.Apps[info.AppName]; !exists {
+			log.Info("Unexpected container found, deleting it")
+
+			if err := removeContainer(ctx, info); err != nil {
+				return err
+			}
+
+			log.Info("Container deleted")
+			return nil
+		}
+
 		log.Info("Stopping container")
 
 		if err := libexec.Exec(ctx, noStdout(exec.Docker("stop", "--time", "60", info.ID))); err != nil {
@@ -71,13 +83,8 @@ func (d *Docker) Remove(ctx context.Context) error {
 			zap.String("appName", info.AppName))
 		log.Info("Deleting container")
 
-		cmds := []*osexec.Cmd{}
-		if info.Running {
-			// Everything will be removed, so we don't care about graceful shutdown
-			cmds = append(cmds, noStdout(exec.Docker("kill", info.ID)))
-		}
-		if err := libexec.Exec(ctx, append(cmds, noStdout(exec.Docker("rm", info.ID)))...); err != nil {
-			return errors.Wrapf(err, "deleting container `%s` failed", info.Name)
+		if err := removeContainer(ctx, info); err != nil {
+			return err
 		}
 
 		log.Info("Container deleted")
@@ -269,4 +276,16 @@ func forContainer(ctx context.Context, envName string, fn func(ctx context.Conte
 func noStdout(cmd *osexec.Cmd) *osexec.Cmd {
 	cmd.Stdout = io.Discard
 	return cmd
+}
+
+func removeContainer(ctx context.Context, info container) error {
+	cmds := []*osexec.Cmd{}
+	if info.Running {
+		// Everything will be removed, so we don't care about graceful shutdown
+		cmds = append(cmds, noStdout(exec.Docker("kill", info.ID)))
+	}
+	if err := libexec.Exec(ctx, append(cmds, noStdout(exec.Docker("rm", info.ID)))...); err != nil {
+		return errors.Wrapf(err, "deleting container `%s` failed", info.Name)
+	}
+	return nil
 }
