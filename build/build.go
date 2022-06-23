@@ -20,7 +20,7 @@ func buildAll(deps build.DepsFunc) {
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo, ensureCoreumRepo)
-	return buildNativeAndDocker(ctx, "../coreum/cored/cmd", "cored")
+	return buildNativeAndDocker(ctx, "../coreum/cored/cmd/cored", "cored")
 }
 
 func buildCoreZNet(ctx context.Context, deps build.DepsFunc) error {
