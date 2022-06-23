@@ -35,9 +35,10 @@ const (
 // FIXME (wojciech): Entire logic here could be easily implemented by using docker API instead of binary execution
 
 // NewDocker creates new docker target
-func NewDocker(config infra.Config, spec *infra.Spec) *Docker {
+func NewDocker(config infra.Config, mode infra.Mode, spec *infra.Spec) *Docker {
 	return &Docker{
 		config: config,
+		mode:   mode,
 		spec:   spec,
 	}
 }
@@ -45,11 +46,23 @@ func NewDocker(config infra.Config, spec *infra.Spec) *Docker {
 // Docker is the target deploying apps to docker
 type Docker struct {
 	config infra.Config
+	mode   infra.Mode
 	spec   *infra.Spec
 }
 
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
+	dependencies := map[string][]chan struct{}{}
+	readyChs := map[string]chan struct{}{}
+	for _, app := range d.mode {
+		readyCh := make(chan struct{})
+		readyChs[app.Name()] = readyCh
+
+		for _, dep := range app.Deployment().Dependencies() {
+			dependencies[dep.Name()] = append(dependencies[dep.Name()], readyCh)
+		}
+	}
+
 	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
 		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name),
 			zap.String("appName", info.AppName))
@@ -65,6 +78,17 @@ func (d *Docker) Stop(ctx context.Context) error {
 			return nil
 		}
 
+		if deps := dependencies[info.AppName]; len(deps) > 0 {
+			log.Info("Waiting for dependencies to be stopped")
+			for _, depCh := range deps {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-depCh:
+				}
+			}
+		}
+
 		log.Info("Stopping container")
 
 		if err := libexec.Exec(ctx, noStdout(exec.Docker("stop", "--time", "60", info.ID))); err != nil {
@@ -72,6 +96,7 @@ func (d *Docker) Stop(ctx context.Context) error {
 		}
 
 		log.Info("Container stopped")
+		close(readyChs[info.AppName])
 		return nil
 	})
 }
