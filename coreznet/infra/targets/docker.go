@@ -29,14 +29,16 @@ const (
 	AppHomeDir = "/app"
 
 	labelEnv = "com.coreum.coreznet.env"
+	labelApp = "com.coreum.coreznet.app"
 )
 
 // FIXME (wojciech): Entire logic here could be easily implemented by using docker API instead of binary execution
 
 // NewDocker creates new docker target
-func NewDocker(config infra.Config, spec *infra.Spec) *Docker {
+func NewDocker(config infra.Config, mode infra.Mode, spec *infra.Spec) *Docker {
 	return &Docker{
 		config: config,
+		mode:   mode,
 		spec:   spec,
 	}
 }
@@ -44,35 +46,74 @@ func NewDocker(config infra.Config, spec *infra.Spec) *Docker {
 // Docker is the target deploying apps to docker
 type Docker struct {
 	config infra.Config
+	mode   infra.Mode
 	spec   *infra.Spec
 }
 
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
+	dependencies := map[string][]chan struct{}{}
+	readyChs := map[string]chan struct{}{}
+	for _, app := range d.mode {
+		readyCh := make(chan struct{})
+		readyChs[app.Name()] = readyCh
+
+		for _, dep := range app.Deployment().Dependencies() {
+			dependencies[dep.Name()] = append(dependencies[dep.Name()], readyCh)
+		}
+	}
+
 	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
-		logger.Get(ctx).Info("Stopping container", zap.String("id", info.ID), zap.String("name", info.Name))
-		stopCmd := exec.Docker("stop", "--time", "60", info.ID)
-		stopCmd.Stdout = io.Discard
-		return libexec.Exec(ctx, stopCmd)
+		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name),
+			zap.String("appName", info.AppName))
+
+		if _, exists := d.spec.Apps[info.AppName]; !exists {
+			log.Info("Unexpected container found, deleting it")
+
+			if err := removeContainer(ctx, info); err != nil {
+				return err
+			}
+
+			log.Info("Container deleted")
+			return nil
+		}
+
+		if deps := dependencies[info.AppName]; len(deps) > 0 {
+			log.Info("Waiting for dependencies to be stopped")
+			for _, depCh := range deps {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-depCh:
+				}
+			}
+		}
+
+		log.Info("Stopping container")
+
+		if err := libexec.Exec(ctx, noStdout(exec.Docker("stop", "--time", "60", info.ID))); err != nil {
+			return errors.Wrapf(err, "stopping container `%s` failed", info.Name)
+		}
+
+		log.Info("Container stopped")
+		close(readyChs[info.AppName])
+		return nil
 	})
 }
 
 // Remove removes running applications
 func (d *Docker) Remove(ctx context.Context) error {
 	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
-		logger.Get(ctx).Info("Deleting container", zap.String("id", info.ID), zap.String("name", info.Name))
+		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name),
+			zap.String("appName", info.AppName))
+		log.Info("Deleting container")
 
-		cmds := []*osexec.Cmd{}
-		if info.Running {
-			// Everything will be removed, so we don't care about graceful shutdown
-			killCmd := exec.Docker("kill", info.ID)
-			killCmd.Stdout = io.Discard
-			cmds = append(cmds, killCmd)
+		if err := removeContainer(ctx, info); err != nil {
+			return err
 		}
-		rmCmd := exec.Docker("rm", info.ID)
-		rmCmd.Stdout = io.Discard
-		cmds = append(cmds, rmCmd)
-		return libexec.Exec(ctx, cmds...)
+
+		log.Info("Container deleted")
+		return nil
 	})
 }
 
@@ -85,7 +126,7 @@ func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	name := d.config.EnvName + "-" + app.Name
 
-	log := logger.Get(ctx).With(zap.String("name", name))
+	log := logger.Get(ctx).With(zap.String("name", name), zap.String("appName", app.Name))
 	log.Info("Starting container")
 
 	id, err := containerExists(ctx, name)
@@ -102,8 +143,8 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 		internalBinPath := "/bin/" + filepath.Base(app.BinPath)
 
 		runArgs := []string{"run", "--name", name, "-d", "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-			"--label", labelEnv + "=" + d.config.EnvName, "-v", appHomeDir + ":" + AppHomeDir, "-v",
-			app.BinPath + ":" + internalBinPath}
+			"--label", labelEnv + "=" + d.config.EnvName, "--label", labelApp + "=" + app.Name,
+			"-v", appHomeDir + ":" + AppHomeDir, "-v", app.BinPath + ":" + internalBinPath}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
@@ -140,7 +181,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
 	name := d.config.EnvName + "-" + app.Name
 
-	log := logger.Get(ctx).With(zap.String("name", name))
+	log := logger.Get(ctx).With(zap.String("name", name), zap.String("appName", app.Name))
 	log.Info("Starting container")
 
 	id, err := containerExists(ctx, name)
@@ -152,7 +193,8 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	if id != "" {
 		startCmd = exec.Docker("start", id)
 	} else {
-		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName}
+		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
+			"--label", labelApp + "=" + app.Name}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
@@ -200,6 +242,7 @@ func containerExists(ctx context.Context, name string) (string, error) {
 type container struct {
 	ID      string
 	Name    string
+	AppName string
 	Running bool
 }
 
@@ -230,6 +273,9 @@ func forContainer(ctx context.Context, envName string, fn func(ctx context.Conte
 		State struct {
 			Running bool
 		}
+		Config struct {
+			Labels map[string]string
+		}
 	}
 
 	if err := json.Unmarshal(inspectBuf.Bytes(), &info); err != nil {
@@ -243,10 +289,28 @@ func forContainer(ctx context.Context, envName string, fn func(ctx context.Conte
 				return fn(ctx, container{
 					ID:      cInfo.ID,
 					Name:    strings.TrimPrefix(cInfo.Name, "/"),
+					AppName: cInfo.Config.Labels[labelApp],
 					Running: cInfo.State.Running,
 				})
 			})
 		}
 		return nil
 	})
+}
+
+func noStdout(cmd *osexec.Cmd) *osexec.Cmd {
+	cmd.Stdout = io.Discard
+	return cmd
+}
+
+func removeContainer(ctx context.Context, info container) error {
+	cmds := []*osexec.Cmd{}
+	if info.Running {
+		// Everything will be removed, so we don't care about graceful shutdown
+		cmds = append(cmds, noStdout(exec.Docker("kill", info.ID)))
+	}
+	if err := libexec.Exec(ctx, append(cmds, noStdout(exec.Docker("rm", info.ID)))...); err != nil {
+		return errors.Wrapf(err, "deleting container `%s` failed", info.Name)
+	}
+	return nil
 }
