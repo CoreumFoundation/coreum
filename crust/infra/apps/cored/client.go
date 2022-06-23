@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
+	"github.com/CoreumFoundation/coreum/crust/pkg/retry"
 )
 
 const (

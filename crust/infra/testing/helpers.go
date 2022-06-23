@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra"
 )
 
 // WaitUntilHealthy waits until all apps are healthy or context expires

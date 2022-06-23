@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/crust/infra/testing"
 )
 
 // TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number

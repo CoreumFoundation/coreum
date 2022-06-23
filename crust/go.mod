@@ -1,4 +1,4 @@
-module github.com/CoreumFoundation/coreum/coreznet
+module github.com/CoreumFoundation/coreum/crust
 
 go 1.18
 

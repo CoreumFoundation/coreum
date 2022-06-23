@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/crust/pkg/retry"
 )
 
 // StressConfig contains config for benchmarking the blockchain

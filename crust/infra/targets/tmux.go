@@ -8,8 +8,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/coreznet/exec"
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/crust/exec"
+	"github.com/CoreumFoundation/coreum/crust/infra"
 )
 
 // NewTMux creates new tmux target

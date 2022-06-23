@@ -3,11 +3,11 @@ package apps
 import (
 	"fmt"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/blockexplorer"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/hasura"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
+	"github.com/CoreumFoundation/coreum/crust/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/blockexplorer"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/hasura"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/postgres"
 )
 
 // NewFactory creates new app factory

@@ -20,15 +20,15 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/coreznet/exec"
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/crust/exec"
+	"github.com/CoreumFoundation/coreum/crust/infra"
 )
 
 const (
 	// AppHomeDir is the path inide container where application's home directory is mounted
 	AppHomeDir = "/app"
 
-	labelEnv = "com.coreum.coreznet.env"
+	labelEnv = "com.coreum.crustznet.env"
 )
 
 // FIXME (wojciech): Entire logic here could be easily implemented by using docker API instead of binary execution

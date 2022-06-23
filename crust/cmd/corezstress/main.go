@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/zstress"
+	"github.com/CoreumFoundation/coreum/crust/pkg/zstress"
 )
 
 const (

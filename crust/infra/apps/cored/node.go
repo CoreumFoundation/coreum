@@ -12,7 +12,7 @@ import (
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra"
 )
 
 // NodeConfig saves files with private keys and config required by node

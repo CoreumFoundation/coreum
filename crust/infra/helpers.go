@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
+	"github.com/CoreumFoundation/coreum/crust/pkg/retry"
 )
 
 // HealthCheckCapable represents application exposing health check endpoint

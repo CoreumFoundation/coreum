@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/crust/infra/testing"
 )
 
 // TestInitialBalance checks that initial balance is set by genesis block

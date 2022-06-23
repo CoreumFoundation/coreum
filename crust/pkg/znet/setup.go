@@ -10,9 +10,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/targets"
+	"github.com/CoreumFoundation/coreum/crust/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps"
+	"github.com/CoreumFoundation/coreum/crust/infra/targets"
 )
 
 // IoC configures IoC container

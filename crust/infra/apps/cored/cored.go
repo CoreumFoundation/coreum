@@ -16,10 +16,10 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/targets"
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/rnd"
+	"github.com/CoreumFoundation/coreum/crust/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra/targets"
+	"github.com/CoreumFoundation/coreum/crust/pkg/retry"
+	"github.com/CoreumFoundation/coreum/crust/pkg/rnd"
 )
 
 // AppType is the type of cored application

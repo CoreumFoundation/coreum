@@ -16,9 +16,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/postgres"
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/retry"
+	"github.com/CoreumFoundation/coreum/crust/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/postgres"
+	"github.com/CoreumFoundation/coreum/crust/pkg/retry"
 )
 
 const (

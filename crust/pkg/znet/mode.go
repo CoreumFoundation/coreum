@@ -1,9 +1,9 @@
 package znet
 
 import (
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
-	"github.com/CoreumFoundation/coreum/coreznet/tests"
+	"github.com/CoreumFoundation/coreum/crust/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps"
+	"github.com/CoreumFoundation/coreum/crust/tests"
 )
 
 // DevMode is the environment for developer

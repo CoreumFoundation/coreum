@@ -11,12 +11,12 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/znet"
+	"github.com/CoreumFoundation/coreum/crust/infra"
+	"github.com/CoreumFoundation/coreum/crust/pkg/znet"
 )
 
 func main() {
-	run.Tool("coreznet", znet.IoC, func(c *ioc.Container, configF *znet.ConfigFactory, cmdF *znet.CmdFactory) error {
+	run.Tool("crustznet", znet.IoC, func(c *ioc.Container, configF *znet.ConfigFactory, cmdF *znet.CmdFactory) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage:  true,
 			SilenceErrors: true,
@@ -24,9 +24,9 @@ func main() {
 			RunE:          cmdF.Cmd(znet.Activate),
 		}
 		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
-		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("COREZNET_ENV", "coreznet"), "Name of the environment to run in")
-		rootCmd.PersistentFlags().StringVar(&configF.Target, "target", defaultString("COREZNET_TARGET", "tmux"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
-		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("COREZNET_HOME", must.String(os.UserCacheDir())+"/coreznet"), "Directory where all files created automatically by coreznet are stored")
+		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("CRUSTZNET_ENV", "crustznet"), "Name of the environment to run in")
+		rootCmd.PersistentFlags().StringVar(&configF.Target, "target", defaultString("CRUSTZNET_TARGET", "tmux"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
+		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("CRUSTZNET_HOME", must.String(os.UserCacheDir())+"/crustznet"), "Directory where all files created automatically by crustznet are stored")
 		addFlags(rootCmd, configF)
 		addModeFlag(rootCmd, c, configF)
 		addFilterFlag(rootCmd, configF)
@@ -92,15 +92,15 @@ func main() {
 }
 
 func addFlags(cmd *cobra.Command, configF *znet.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("COREZNET_BIN_DIR", filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), "Path to directory where executables exist")
+	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUSTZNET_BIN_DIR", filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), "Path to directory where executables exist")
 }
 
 func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *znet.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.ModeName, "mode", defaultString("COREZNET_MODE", "dev"), "List of applications to deploy: "+strings.Join(c.Names((*infra.Mode)(nil)), " | "))
+	cmd.Flags().StringVar(&configF.ModeName, "mode", defaultString("CRUSTZNET_MODE", "dev"), "List of applications to deploy: "+strings.Join(c.Names((*infra.Mode)(nil)), " | "))
 }
 
 func addFilterFlag(cmd *cobra.Command, configF *znet.ConfigFactory) {
-	cmd.Flags().StringArrayVar(&configF.TestFilters, "filter", defaultFilters("COREZNET_FILTERS"), "Regular expression used to filter tests to run")
+	cmd.Flags().StringArrayVar(&configF.TestFilters, "filter", defaultFilters("CRUSTZNET_FILTERS"), "Regular expression used to filter tests to run")
 }
 
 func defaultString(env, def string) string {

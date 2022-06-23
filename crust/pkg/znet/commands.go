@@ -22,12 +22,12 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
-	"github.com/CoreumFoundation/coreum/coreznet/pkg/zstress"
-	"github.com/CoreumFoundation/coreum/coreznet/tests"
+	"github.com/CoreumFoundation/coreum/crust/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/crust/infra/testing"
+	"github.com/CoreumFoundation/coreum/crust/pkg/zstress"
+	"github.com/CoreumFoundation/coreum/crust/tests"
 )
 
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
@@ -62,12 +62,12 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	shellCmd := osexec.Command(shell)
 	shellCmd.Env = append(os.Environ(),
 		"PATH="+config.WrapperDir+":"+os.Getenv("PATH"),
-		"COREZNET_ENV="+configF.EnvName,
-		"COREZNET_MODE="+configF.ModeName,
-		"COREZNET_HOME="+configF.HomeDir,
-		"COREZNET_TARGET="+configF.Target,
-		"COREZNET_BIN_DIR="+configF.BinDir,
-		"COREZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
+		"CRUSTZNET_ENV="+configF.EnvName,
+		"CRUSTZNET_MODE="+configF.ModeName,
+		"CRUSTZNET_HOME="+configF.HomeDir,
+		"CRUSTZNET_TARGET="+configF.Target,
+		"CRUSTZNET_BIN_DIR="+configF.BinDir,
+		"CRUSTZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
 	)
 	if promptVar != "" {
 		shellCmd.Env = append(shellCmd.Env, promptVar)
@@ -212,7 +212,7 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-// Stress runs benchmark implemented by `corezstress` on top of network deployed by `coreznet`
+// Stress runs benchmark implemented by `corezstress` on top of network deployed by `crustznet`
 func Stress(ctx context.Context, mode infra.Mode) error {
 	coredNode, err := coredNode(mode)
 	if err != nil {

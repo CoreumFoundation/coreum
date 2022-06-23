@@ -1,12 +1,12 @@
 package tests
 
 import (
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
-	"github.com/CoreumFoundation/coreum/coreznet/infra/testing"
-	"github.com/CoreumFoundation/coreum/coreznet/tests/auth"
-	"github.com/CoreumFoundation/coreum/coreznet/tests/bank"
+	"github.com/CoreumFoundation/coreum/crust/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/crust/infra/testing"
+	"github.com/CoreumFoundation/coreum/crust/tests/auth"
+	"github.com/CoreumFoundation/coreum/crust/tests/bank"
 )
 
 // TODO (ysv): check if we can adapt our tests to run standard go testing framework

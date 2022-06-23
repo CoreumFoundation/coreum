@@ -13,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra/apps/cored"
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/cored"
 )
 
 // GenerateConfig contains config for generating the blockchain
@@ -115,7 +115,7 @@ func Generate(config GenerateConfig) error {
 func generateDocker(dir, tool string) error {
 	toolPath, err := exec.LookPath(tool)
 	if err != nil {
-		return errors.Wrapf(err, `can't find %[1]s binary, run "core build/%[1]s" to build it`, tool)
+		return errors.Wrapf(err, `can't find %[1]s binary, run "crust build/%[1]s" to build it`, tool)
 	}
 	toolPath = filepath.Dir(toolPath) + "/linux/" + tool
 
@@ -123,7 +123,7 @@ func generateDocker(dir, tool string) error {
 	dockerDirBin := dockerDir + "/bin"
 	must.OK(os.MkdirAll(dockerDirBin, 0o700))
 	if err := os.Link(toolPath, dockerDirBin+"/"+tool); err != nil {
-		return errors.Wrapf(err, `can't find %[1]s binary, run "core build/%[1]s" to build it`, tool)
+		return errors.Wrapf(err, `can't find %[1]s binary, run "crust build/%[1]s" to build it`, tool)
 	}
 
 	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM scratch

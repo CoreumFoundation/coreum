@@ -19,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/coreznet/exec"
+	"github.com/CoreumFoundation/coreum/crust/exec"
 )
 
 const binaryDockerImage = "alpine:3.16.0"
@@ -220,7 +220,7 @@ type DeploymentInfo struct {
 	Ports map[string]int `json:"ports,omitempty"`
 }
 
-// Target represents target of deployment from the perspective of coreznet
+// Target represents target of deployment from the perspective of crustznet
 type Target interface {
 	// Deploy deploys environment to the target
 	Deploy(ctx context.Context, mode Mode) error

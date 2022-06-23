@@ -14,7 +14,7 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/coreznet/infra"
+	"github.com/CoreumFoundation/coreum/crust/infra"
 )
 
 type panicError struct {
