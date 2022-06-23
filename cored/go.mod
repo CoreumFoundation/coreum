@@ -1,6 +1,5 @@
 module github.com/CoreumFoundation/coreum/cored
 
-// Cosmos SDK v0.45.3 doesn't play well with anything newer than go 1.16. v0.46 should support go v1.18.x
 go 1.16
 
 replace (
@@ -11,11 +10,11 @@ replace (
 
 require (
 	github.com/cosmos/cosmos-sdk v0.45.4
-	github.com/cosmos/ibc-go/v2 v2.0.3
-	github.com/ignite-hq/cli v0.20.3
+	github.com/cosmos/ibc-go/v3 v3.0.0
+	github.com/ignite-hq/cli v0.22.0
 	github.com/spf13/cast v1.4.1
 	github.com/stretchr/testify v1.7.1
-	github.com/tendermint/spn v0.1.1-0.20220407154406-5cfd1bf28150
+	github.com/tendermint/spn v0.2.1-0.20220609194312-7833ecf4454a
 	github.com/tendermint/tendermint v0.34.19
-	github.com/tendermint/tm-db v0.6.6
+	github.com/tendermint/tm-db v0.6.7
 )
