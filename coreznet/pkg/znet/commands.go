@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
-	"net"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -34,6 +35,16 @@ var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
 // Activate starts preconfigured shell environment
 func Activate(ctx context.Context, configF *ConfigFactory) error {
 	config := configF.Config()
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer watcher.Close()
+
+	// To be notified about directory being removed we must observe parent directory
+	if err := watcher.Add(filepath.Dir(config.HomeDir)); err != nil {
+		return errors.WithStack(err)
+	}
 
 	saveWrapper(config.WrapperDir, "start", "start")
 	saveWrapper(config.WrapperDir, "stop", "stop")
@@ -43,7 +54,7 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	saveWrapper(config.WrapperDir, "spec", "spec")
 	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
 	saveWrapper(config.WrapperDir, "stress", "stress")
-	saveLogsWrapper(config.WrapperDir, config.LogDir, "logs")
+	saveLogsWrapper(config.WrapperDir, config.EnvName, "logs")
 
 	shell, promptVar, err := shellConfig(config.EnvName)
 	if err != nil {
@@ -62,14 +73,42 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	if promptVar != "" {
 		shellCmd.Env = append(shellCmd.Env, promptVar)
 	}
-	shellCmd.Dir = config.LogDir
+	shellCmd.Dir = config.HomeDir
 	shellCmd.Stdin = os.Stdin
-	err = libexec.Exec(ctx, shellCmd)
-	if shellCmd.ProcessState != nil && shellCmd.ProcessState.ExitCode() != 0 {
-		// shell returns non-exit code if command executed in the shell failed
+
+	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		spawn("session", parallel.Exit, func(ctx context.Context) error {
+			err = libexec.Exec(ctx, shellCmd)
+			if shellCmd.ProcessState != nil && shellCmd.ProcessState.ExitCode() != 0 {
+				// shell returns non-exit code if command executed in the shell failed
+				return nil
+			}
+			return err
+		})
+		spawn("fsnotify", parallel.Exit, func(ctx context.Context) error {
+			defer func() {
+				if shellCmd.Process != nil {
+					// Shell exits only if SIGHUP is received. All the other signals are caught and passed to process
+					// running inside the shell.
+					_ = shellCmd.Process.Signal(syscall.SIGHUP)
+				}
+			}()
+			for {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case event := <-watcher.Events:
+					// Rename is here because on some OSes removing is done by moving file to trash
+					if event.Op&(fsnotify.Remove|fsnotify.Rename) != 0 && event.Name == config.HomeDir {
+						return nil
+					}
+				case err := <-watcher.Errors:
+					return errors.WithStack(err)
+				}
+			}
+		})
 		return nil
-	}
-	return err
+	})
 }
 
 // Start starts environment
@@ -183,26 +222,26 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 
 	return zstress.Stress(ctx, zstress.StressConfig{
 		ChainID:           coredNode.ChainID(),
-		NodeAddress:       net.JoinHostPort(coredNode.Info().FromHostIP.String(), strconv.Itoa(coredNode.Ports().RPC)),
+		NodeAddress:       infra.JoinProtoIPPort("", coredNode.Info().FromHostIP, coredNode.Ports().RPC),
 		Accounts:          cored.RandomWallets[:10],
 		NumOfTransactions: 100,
 	})
 }
 
-func coredNode(mode infra.Mode) (apps.Cored, error) {
+func coredNode(mode infra.Mode) (cored.Cored, error) {
 	for _, app := range mode {
-		if app.Type() == apps.CoredType && app.Info().Status == infra.AppStatusRunning {
-			return app.(apps.Cored), nil
+		if app.Type() == cored.AppType && app.Info().Status == infra.AppStatusRunning {
+			return app.(cored.Cored), nil
 		}
 	}
-	return apps.Cored{}, errors.New("haven't found any running cored node")
+	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
 func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {
 	log := logger.Get(ctx)
 
 	amount := cored.Balance{Amount: big.NewInt(1), Denom: "core"}
-	txBytes, err := client.PrepareTxBankSend(from, to, amount)
+	txBytes, err := client.PrepareTxBankSend(ctx, from, to, amount)
 	if err != nil {
 		return err
 	}
@@ -235,13 +274,13 @@ exec "`+exe+`" "`+command+`" "$@"
 `), 0o700))
 }
 
-func saveLogsWrapper(dir, logDir, file string) {
+func saveLogsWrapper(dir, envName, file string) {
 	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
 if [ "$1" == "" ]; then
   echo "Provide the name of application"
   exit 1
 fi
-exec tail -f -n +0 "`+logDir+`/$1.log"
+exec docker logs -f "`+envName+`-$1"
 `), 0o700))
 }
 

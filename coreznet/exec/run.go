@@ -1,14 +1,8 @@
 package exec
 
 import (
-	"context"
-	"fmt"
-	"os"
 	"os/exec"
-	"syscall"
-	"time"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/pkg/errors"
 )
 
@@ -21,41 +15,4 @@ func verifyTool(tool string) {
 	if _, err := exec.LookPath(tool); err != nil {
 		panic(errors.Errorf("%s is not available, please install it", tool))
 	}
-}
-
-// Kill tries to terminate processes gracefully, after timeout it kills them
-func Kill(ctx context.Context, pids []int) error {
-	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		for _, pid := range pids {
-			pid := pid
-			spawn(fmt.Sprintf("%d", pid), parallel.Continue, func(ctx context.Context) error {
-				return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-					proc, err := os.FindProcess(pid)
-					if err != nil {
-						return errors.WithStack(err)
-					}
-					spawn("waiter", parallel.Exit, func(ctx context.Context) error {
-						_, _ = proc.Wait()
-						return nil
-					})
-					spawn("killer", parallel.Continue, func(ctx context.Context) error {
-						if err := proc.Signal(syscall.SIGTERM); err != nil && !errors.Is(err, os.ErrProcessDone) {
-							return errors.WithStack(err)
-						}
-						select {
-						case <-ctx.Done():
-							return ctx.Err()
-						case <-time.After(20 * time.Second):
-						}
-						if err := proc.Signal(syscall.SIGKILL); err != nil && !errors.Is(err, os.ErrProcessDone) {
-							return errors.WithStack(err)
-						}
-						return nil
-					})
-					return nil
-				})
-			})
-		}
-		return nil
-	})
 }

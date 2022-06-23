@@ -26,7 +26,6 @@ func NewContext(chainID string, rpcClient rpcclient.Client) client.Context {
 		ChainID:           chainID,
 		Codec:             codec,
 		InterfaceRegistry: interfaceRegistry,
-		AccountRetriever:  authtypes.AccountRetriever{},
 		Client:            rpcClient,
 		TxConfig:          tx.NewTxConfig(codec, []signing.SignMode{signing.SignMode_SIGN_MODE_DIRECT}),
 	}

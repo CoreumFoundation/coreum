@@ -2,9 +2,13 @@ package infra
 
 import (
 	"context"
+	"encoding/json"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -63,4 +67,24 @@ func (hc isRunningHealthCheck) HealthCheck(ctx context.Context) error {
 		return nil
 	}
 	return retry.Retryable(errors.New("application hasn't been started yet"))
+}
+
+// JoinProtoIPPort joins protocol, ip and port
+func JoinProtoIPPort(proto string, ip net.IP, port int) string {
+	if proto != "" {
+		proto += "://"
+	}
+	return proto + net.JoinHostPort(ip.String(), strconv.Itoa(port))
+}
+
+// PortsToMap converts structure containing port numbers to a map
+func PortsToMap(ports interface{}) map[string]int {
+	unmarshaled := map[string]interface{}{}
+	must.OK(json.Unmarshal(must.Bytes(json.Marshal(ports)), &unmarshaled))
+
+	res := map[string]int{}
+	for k, v := range unmarshaled {
+		res[k] = int(v.(float64))
+	}
+	return res
 }

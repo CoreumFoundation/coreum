@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -162,12 +161,6 @@ func ensure(ctx context.Context, tool string) error {
 		realPath, err := filepath.EvalSymlinks(dstPath)
 		if err != nil || realPath != srcPath {
 			return install(ctx, tool, info)
-		}
-
-		binPath, err := exec.LookPath(binName)
-		if err != nil || binPath != dstPath {
-			return errors.Errorf("binary %s can't be resolved from PATH, add %s to your PATH",
-				binName, must.String(filepath.Abs(binDir)))
 		}
 	}
 	return nil
@@ -345,4 +338,8 @@ func ensureDir(file string) error {
 
 func combine(a1 []string, a2 []string) []string {
 	return append(append([]string{}, a1...), a2...)
+}
+
+func toolBin(tool string) string {
+	return must.String(filepath.Abs("bin/" + tool))
 }

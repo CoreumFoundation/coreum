@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -66,7 +65,6 @@ func Generate(config GenerateConfig) error {
 
 		cored.NodeConfig{
 			Name:           fmt.Sprintf("validator-%d", i),
-			IP:             net.IPv4zero,
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
 			ValidatorKey:   validatorPrivateKey,
@@ -104,7 +102,6 @@ func Generate(config GenerateConfig) error {
 
 		cored.NodeConfig{
 			Name:           fmt.Sprintf("sentry-node-%d", i),
-			IP:             net.IPv4zero,
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
 		}.Save(nodeDir)

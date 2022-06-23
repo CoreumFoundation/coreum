@@ -1,10 +1,13 @@
 package cored
 
 import (
+	"bytes"
 	"crypto/ed25519"
+	_ "embed"
 	"encoding/json"
 	"os"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -146,151 +149,20 @@ func (g *Genesis) verifyNotFinalized() {
 	}
 }
 
-type a = []interface{}
-type o = map[string]interface{}
+// MetadataTemplate contains hasura metadata template
+//go:embed genesis/genesis.tmpl.json
+var genesisTemplate string
 
 func genesis(chainID string) []byte {
-	return must.Bytes(json.Marshal(o{
-		"genesis_time":   time.Now().UTC(),
-		"chain_id":       chainID,
-		"initial_height": "1",
-		"consensus_params": o{
-			"block": o{
-				"max_bytes":    "22020096",
-				"max_gas":      "-1",
-				"time_iota_ms": "1000",
-			},
-			"evidence": o{
-				"max_age_num_blocks": "100000",
-				"max_age_duration":   "172800000000000",
-				"max_bytes":          "1048576",
-			},
-			"validator": o{
-				"pub_key_types": a{"ed25519"},
-			},
-		},
-		"app_state": o{
-			"auth": o{
-				"params": o{
-					"max_memo_characters":       "256",
-					"tx_sig_limit":              "7",
-					"tx_size_cost_per_byte":     "10",
-					"sig_verify_cost_ed25519":   "590",
-					"sig_verify_cost_secp256k1": "1000",
-				},
-			},
-			"bank": o{
-				"params": o{
-					"default_send_enabled": true,
-				},
-			},
-			"capability": o{
-				"index": "1",
-			},
-			"crisis": o{
-				"constant_fee": o{
-					"denom":  "core",
-					"amount": "1000",
-				},
-			},
-			"distribution": o{
-				"params": o{
-					"community_tax":         "0.020000000000000000",
-					"base_proposer_reward":  "0.010000000000000000",
-					"bonus_proposer_reward": "0.040000000000000000",
-					"withdraw_addr_enabled": true,
-				},
-			},
-			"gov": o{
-				"starting_proposal_id": "1",
-				"deposit_params": o{
-					"min_deposit": a{
-						o{
-							"denom":  "core",
-							"amount": "10000000",
-						},
-					},
-					"max_deposit_period": "172800s",
-				},
-				"voting_params": o{
-					"voting_period": "172800s",
-				},
-				"tally_params": o{
-					"quorum":         "0.334000000000000000",
-					"threshold":      "0.500000000000000000",
-					"veto_threshold": "0.334000000000000000",
-				},
-			},
-			"ibc": o{
-				"client_genesis": o{
-					"params": o{
-						"allowed_clients": a{
-							"06-solomachine",
-							"07-tendermint",
-						},
-					},
-					"create_localhost":     false,
-					"next_client_sequence": "0",
-				},
-				"connection_genesis": o{
-					"next_connection_sequence": "0",
-					"params": o{
-						"max_expected_time_per_block": "30000000000",
-					},
-				},
-				"channel_genesis": o{
-					"next_channel_sequence": "0",
-				},
-			},
-			"mint": o{
-				"minter": o{
-					"inflation":         "0.130000000000000000",
-					"annual_provisions": "0.000000000000000000",
-				},
-				"params": o{
-					"mint_denom":            "core",
-					"inflation_rate_change": "0.130000000000000000",
-					"inflation_max":         "0.200000000000000000",
-					"inflation_min":         "0.070000000000000000",
-					"goal_bonded":           "0.670000000000000000",
-					"blocks_per_year":       "6311520",
-				},
-			},
-			"monitoringp": o{
-				"port_id": "monitoring",
-				"params": o{
-					"lastBlockHeight":         "1",
-					"consumerChainID":         "spn-1",
-					"consumerUnbondingPeriod": "1814400",
-					"consumerRevisionHeight":  "1",
-				},
-			},
-			"slashing": o{
-				"params": o{
-					"signed_blocks_window":       "100",
-					"min_signed_per_window":      "0.500000000000000000",
-					"downtime_jail_duration":     "600s",
-					"slash_fraction_double_sign": "0.050000000000000000",
-					"slash_fraction_downtime":    "0.010000000000000000",
-				},
-			},
-			"staking": o{
-				"params": o{
-					"unbonding_time":     "1814400s",
-					"max_validators":     100,
-					"max_entries":        7,
-					"historical_entries": 10000,
-					"bond_denom":         "core",
-				},
-				"last_total_power": "0",
-			},
-			"transfer": o{
-				"port_id": "transfer",
-				"params": o{
-					"send_enabled":    true,
-					"receive_enabled": true,
-				},
-			},
-		},
+	genesisBuf := new(bytes.Buffer)
+
+	must.OK(template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
+		GenesisTimeUTC string
+		ChainID        string
+	}{
+		GenesisTimeUTC: time.Now().UTC().Format(time.RFC3339),
+		ChainID:        chainID,
 	}))
+
+	return genesisBuf.Bytes()
 }

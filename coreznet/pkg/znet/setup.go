@@ -31,9 +31,11 @@ func IoC(c *ioc.Container) {
 		c.ResolveNamed(config.ModeName, &mode)
 		return mode
 	})
-	c.TransientNamed("direct", targets.NewDirect)
+	c.Transient(targets.NewDocker)
 	c.TransientNamed("tmux", targets.NewTMux)
-	c.TransientNamed("docker", targets.NewDocker)
+	c.TransientNamed("docker", func(docker *targets.Docker) infra.Target {
+		return docker
+	})
 	c.Transient(func(c *ioc.Container, config infra.Config) infra.Target {
 		var target infra.Target
 		c.ResolveNamed(config.Target, &target)
@@ -108,7 +110,6 @@ func (cf *ConfigFactory) Config() infra.Config {
 		Target:         cf.Target,
 		HomeDir:        homeDir,
 		AppDir:         homeDir + "/app",
-		LogDir:         homeDir + "/logs",
 		WrapperDir:     homeDir + "/bin",
 		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(cf.BinDir)))),
 		TestingMode:    cf.TestingMode,
@@ -127,5 +128,4 @@ func (cf *ConfigFactory) Config() infra.Config {
 func createDirs(config infra.Config) {
 	must.OK(os.MkdirAll(config.AppDir, 0o700))
 	must.OK(os.MkdirAll(config.WrapperDir, 0o700))
-	must.OK(os.MkdirAll(config.LogDir, 0o700))
 }

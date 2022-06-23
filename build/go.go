@@ -31,7 +31,7 @@ func ensureGolangCI(ctx context.Context) error {
 // goBuildPkg builds go package
 func goBuildPkg(ctx context.Context, pkg, targetOS, out string) error {
 	logger.Get(ctx).Info("Building go package", zap.String("package", pkg), zap.String("binary", out), zap.String("targetOS", targetOS))
-	cmd := exec.Command("go", "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
+	cmd := exec.Command(toolBin("go"), "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
 	cmd.Dir = pkg
 	cmd.Env = append([]string{"CGO_ENABLED=0", "GOOS=" + targetOS}, os.Environ()...)
 	if err := libexec.Exec(ctx, cmd); err != nil {
@@ -47,7 +47,7 @@ func goLint(ctx context.Context, deps build.DepsFunc) error {
 	config := must.String(filepath.Abs("build/.golangci.yaml"))
 	err := onModule(func(path string) error {
 		log.Info("Running linter", zap.String("path", path))
-		cmd := exec.Command("golangci-lint", "run", "--config", config)
+		cmd := exec.Command(toolBin("golangci-lint"), "run", "--config", config)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "linter errors found in module '%s'", path)
@@ -67,7 +67,7 @@ func goTest(ctx context.Context, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	return onModule(func(path string) error {
 		log.Info("Running go tests", zap.String("path", path))
-		cmd := exec.Command("go", "test", "-count=1", "-shuffle=on", "-race", "./...")
+		cmd := exec.Command(toolBin("go"), "test", "-count=1", "-shuffle=on", "-race", "./...")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "unit tests failed in module '%s'", path)
@@ -81,7 +81,7 @@ func goModTidy(ctx context.Context, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	return onModule(func(path string) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
-		cmd := exec.Command("go", "mod", "tidy")
+		cmd := exec.Command(toolBin("go"), "mod", "tidy")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "'go mod tidy' failed in module '%s'", path)
