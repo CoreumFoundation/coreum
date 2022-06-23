@@ -41,7 +41,8 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	}
 	defer watcher.Close()
 
-	if err := watcher.Add(config.HomeDir); err != nil {
+	// To be notified about directory being removed we must observe parent directory
+	if err := watcher.Add(filepath.Dir(config.HomeDir)); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -98,14 +99,8 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 					return ctx.Err()
 				case event := <-watcher.Events:
 					// Rename is here because on some OSes removing is done by moving file to trash
-					if event.Op&(fsnotify.Remove|fsnotify.Rename) == 0 {
-						continue
-					}
-					if _, err := os.Stat(config.HomeDir); err != nil {
-						if os.IsNotExist(err) {
-							return nil
-						}
-						return errors.WithStack(err)
+					if event.Op&(fsnotify.Remove|fsnotify.Rename) != 0 && event.Name == config.HomeDir {
+						return nil
 					}
 				case err := <-watcher.Errors:
 					return errors.WithStack(err)
