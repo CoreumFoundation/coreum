@@ -50,17 +50,25 @@ type Docker struct {
 // Stop stops running applications
 func (d *Docker) Stop(ctx context.Context) error {
 	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
-		logger.Get(ctx).Info("Stopping container", zap.String("id", info.ID), zap.String("name", info.Name))
+		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name))
+		log.Info("Stopping container")
+
 		stopCmd := exec.Docker("stop", "--time", "60", info.ID)
 		stopCmd.Stdout = io.Discard
-		return libexec.Exec(ctx, stopCmd)
+		if err := libexec.Exec(ctx, stopCmd); err != nil {
+			return errors.Wrapf(err, "stopping container `%s` failed", info.Name)
+		}
+
+		log.Info("Container stopped")
+		return nil
 	})
 }
 
 // Remove removes running applications
 func (d *Docker) Remove(ctx context.Context) error {
 	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
-		logger.Get(ctx).Info("Deleting container", zap.String("id", info.ID), zap.String("name", info.Name))
+		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name))
+		log.Info("Deleting container")
 
 		cmds := []*osexec.Cmd{}
 		if info.Running {
@@ -72,7 +80,12 @@ func (d *Docker) Remove(ctx context.Context) error {
 		rmCmd := exec.Docker("rm", info.ID)
 		rmCmd.Stdout = io.Discard
 		cmds = append(cmds, rmCmd)
-		return libexec.Exec(ctx, cmds...)
+		if err := libexec.Exec(ctx, cmds...); err != nil {
+			return errors.Wrapf(err, "deleting container `%s` failed", info.Name)
+		}
+
+		log.Info("Container deleted")
+		return nil
 	})
 }
 
