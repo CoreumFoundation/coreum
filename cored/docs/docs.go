@@ -2,5 +2,6 @@ package docs
 
 import "embed"
 
-// Docs go:embed static
+// Docs embeds openapi doc
+//go:embed static
 var Docs embed.FS
