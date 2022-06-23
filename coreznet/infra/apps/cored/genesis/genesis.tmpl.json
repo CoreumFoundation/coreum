@@ -77,68 +77,68 @@
           "allowed_clients": [
             "06-solomachine",
             "07-tendermint"
-          ],
-          "create_localhost": false,
-          "next_client_sequence": "0"
+          ]
         },
-        "connection_genesis": {
-          "next_connection_sequence": "0",
-          "params": {
-            "max_expected_time_per_block": "30000000000"
-          }
-        },
-        "channel_genesis": {
-          "next_channel_sequence": "0"
+        "create_localhost": false,
+        "next_client_sequence": "0"
+      },
+      "connection_genesis": {
+        "next_connection_sequence": "0",
+        "params": {
+          "max_expected_time_per_block": "30000000000"
         }
       },
-      "mint": {
-        "minter": {
-          "inflation": "0.130000000000000000",
-          "annual_provisions": "0.000000000000000000"
-        },
-        "params": {
-          "mint_denom": "core",
-          "inflation_rate_change": "0.130000000000000000",
-          "inflation_max": "0.200000000000000000",
-          "inflation_min": "0.070000000000000000",
-          "goal_bonded": "0.670000000000000000",
-          "blocks_per_year": "6311520"
-        }
+      "channel_genesis": {
+        "next_channel_sequence": "0"
+      }
+    },
+    "mint": {
+      "minter": {
+        "inflation": "0.130000000000000000",
+        "annual_provisions": "0.000000000000000000"
       },
-      "monitoringp": {
-        "port_id": "monitoring",
-        "params": {
-          "lastBlockHeight": "1",
-          "consumerChainID": "spn-1",
-          "consumerUnbondingPeriod": "1814400",
-          "consumerRevisionHeight": "1"
-        }
+      "params": {
+        "mint_denom": "core",
+        "inflation_rate_change": "0.130000000000000000",
+        "inflation_max": "0.200000000000000000",
+        "inflation_min": "0.070000000000000000",
+        "goal_bonded": "0.670000000000000000",
+        "blocks_per_year": "6311520"
+      }
+    },
+    "monitoringp": {
+      "port_id": "monitoring",
+      "params": {
+        "lastBlockHeight": "1",
+        "consumerChainID": "spn-1",
+        "consumerUnbondingPeriod": "1814400",
+        "consumerRevisionHeight": "1"
+      }
+    },
+    "slashing": {
+      "params": {
+        "signed_blocks_window": "100",
+        "min_signed_per_window": "0.500000000000000000",
+        "downtime_jail_duration": "600s",
+        "slash_fraction_double_sign": "0.050000000000000000",
+        "slash_fraction_downtime": "0.010000000000000000"
+      }
+    },
+    "staking": {
+      "params": {
+        "unbonding_time": "1814400s",
+        "max_validators": 100,
+        "max_entries": 7,
+        "historical_entries": 10000,
+        "bond_denom": "core"
       },
-      "slashing": {
-        "params": {
-          "signed_blocks_window": "100",
-          "min_signed_per_window": "0.500000000000000000",
-          "downtime_jail_duration": "600s",
-          "slash_fraction_double_sign": "0.050000000000000000",
-          "slash_fraction_downtime": "0.010000000000000000"
-        }
-      },
-      "staking": {
-        "params": {
-          "unbonding_time": "1814400s",
-          "max_validators": 100,
-          "max_entries": 7,
-          "historical_entries": 10000,
-          "bond_denom": "core"
-        },
-        "last_total_power": "0"
-      },
-      "transfer": {
-        "port_id": "transfer",
-        "params": {
-          "send_enabled": true,
-          "receive_enabled": true
-        }
+      "last_total_power": "0"
+    },
+    "transfer": {
+      "port_id": "transfer",
+      "params": {
+        "send_enabled": true,
+        "receive_enabled": true
       }
     }
   }
