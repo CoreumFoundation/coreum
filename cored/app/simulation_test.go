@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/core/app"
+	"github.com/CoreumFoundation/coreum/cored/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
