@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cast"
 )
 
+// GetEnabledProposals get enabled proposals
 func GetEnabledProposals() []wasm.ProposalType {
 	return wasm.EnableAllProposals
 }
