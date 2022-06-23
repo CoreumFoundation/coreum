@@ -55,7 +55,6 @@ linters:
     - interfacer
     - golint
     - maligned
-    - scopelint
 
 linters-settings:
   nakedret:
