@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
@@ -147,7 +146,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 			"-v", appHomeDir + ":" + AppHomeDir, "-v", app.BinPath + ":" + internalBinPath}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
-			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
+			runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
 		}
 		runArgs = append(runArgs, app.DockerImage(), internalBinPath)
 		runArgs = append(runArgs, app.ArgsFunc()...)
@@ -157,11 +156,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 	idBuf := &bytes.Buffer{}
 	startCmd.Stdout = idBuf
 
-	ipBuf := &bytes.Buffer{}
-	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
-	ipCmd.Stdout = ipBuf
-
-	if err := libexec.Exec(ctx, startCmd, ipCmd); err != nil {
+	if err := libexec.Exec(ctx, startCmd); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
@@ -169,11 +164,11 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
 	return infra.DeploymentInfo{
-		Container:       name,
-		Status:          infra.AppStatusRunning,
-		FromHostIP:      ipLocalhost,
-		FromContainerIP: net.ParseIP(strings.TrimSuffix(ipBuf.String(), "\n")),
-		Ports:           app.Ports,
+		Container:         name,
+		Status:            infra.AppStatusRunning,
+		HostFromHost:      "localhost",
+		HostFromContainer: name,
+		Ports:             app.Ports,
 	}, nil
 }
 
@@ -198,7 +193,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 			"--label", labelApp + "=" + app.Name, "-v", appHomeDir + ":" + AppHomeDir}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
-			runArgs = append(runArgs, "-p", ipLocalhost.String()+":"+portStr+":"+portStr+"/tcp")
+			runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
 		}
 		for _, env := range app.EnvVars {
 			runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
@@ -211,10 +206,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	idBuf := &bytes.Buffer{}
 	startCmd.Stdout = idBuf
 
-	ipBuf := &bytes.Buffer{}
-	ipCmd := exec.Docker("inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name)
-	ipCmd.Stdout = ipBuf
-	if err := libexec.Exec(ctx, startCmd, ipCmd); err != nil {
+	if err := libexec.Exec(ctx, startCmd); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
@@ -222,11 +214,11 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 
 	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
 	return infra.DeploymentInfo{
-		Container:       name,
-		Status:          infra.AppStatusRunning,
-		FromHostIP:      ipLocalhost,
-		FromContainerIP: net.ParseIP(strings.TrimSuffix(ipBuf.String(), "\n")),
-		Ports:           app.Ports,
+		Container:         name,
+		Status:            infra.AppStatusRunning,
+		HostFromHost:      "localhost",
+		HostFromContainer: name,
+		Ports:             app.Ports,
 	}, nil
 }
 

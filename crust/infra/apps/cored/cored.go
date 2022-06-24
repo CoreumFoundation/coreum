@@ -127,7 +127,7 @@ func (c Cored) AddWallet(balances string) Wallet {
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() Client {
-	return NewClient(c.genesis.ChainID(), infra.JoinProtoIPPort("", c.Info().FromHostIP, c.Ports().RPC))
+	return NewClient(c.genesis.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -138,7 +138,7 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinProtoIPPort("", c.Info().FromHostIP, c.ports.RPC), Path: "/status"}
+	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", c.Info().HostFromHost, c.ports.RPC), Path: "/status"}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
@@ -186,15 +186,15 @@ func (c Cored) Deployment() infra.Deployment {
 				args := []string{
 					"start",
 					"--home", targets.AppHomeDir,
-					"--rpc.laddr", infra.JoinProtoIPPort("tcp", net.IPv4zero, c.ports.RPC),
-					"--p2p.laddr", infra.JoinProtoIPPort("tcp", net.IPv4zero, c.ports.P2P),
-					"--grpc.address", infra.JoinProtoIPPort("", net.IPv4zero, c.ports.GRPC),
-					"--grpc-web.address", infra.JoinProtoIPPort("", net.IPv4zero, c.ports.GRPCWeb),
-					"--rpc.pprof_laddr", infra.JoinProtoIPPort("", net.IPv4zero, c.ports.PProf),
+					"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.ports.RPC),
+					"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.ports.P2P),
+					"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.GRPC),
+					"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.GRPCWeb),
+					"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.PProf),
 				}
 				if c.rootNode != nil {
 					args = append(args,
-						"--p2p.persistent_peers", c.rootNode.NodeID()+"@"+infra.JoinProtoIPPort("", c.rootNode.Info().FromContainerIP, c.rootNode.Ports().P2P),
+						"--p2p.persistent_peers", c.rootNode.NodeID()+"@"+infra.JoinNetAddr("", c.rootNode.Info().HostFromContainer, c.rootNode.Ports().P2P),
 					)
 				}
 
@@ -218,7 +218,7 @@ func (c Cored) Deployment() infra.Deployment {
 				return nil
 			},
 			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				return c.saveClientWrapper(c.config.WrapperDir, deployment.FromHostIP)
+				return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
 			},
 		},
 	}
@@ -233,11 +233,11 @@ func (c Cored) Deployment() infra.Deployment {
 	return deployment
 }
 
-func (c Cored) saveClientWrapper(wrapperDir string, ip net.IP) error {
+func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
 	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
-	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""` + infra.JoinProtoIPPort("tcp", ip, c.ports.RPC) + `"""
+	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
 fi
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""

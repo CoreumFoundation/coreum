@@ -79,7 +79,7 @@ func (p Postgres) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	connStr := "postgres://" + User + "@" + infra.JoinProtoIPPort("", p.appInfo.Info().FromHostIP, p.port) + "/" + DB
+	connStr := "postgres://" + User + "@" + infra.JoinNetAddr("", p.appInfo.Info().HostFromHost, p.port) + "/" + DB
 	db, err := pgx.Connect(ctx, connStr)
 	if err != nil {
 		return retry.Retryable(errors.WithStack(err))
@@ -134,7 +134,7 @@ func (p Postgres) Deployment() infra.Deployment {
 
 				log := logger.Get(ctx)
 
-				db, err := p.dbConnection(ctx, deployment.FromHostIP)
+				db, err := p.dbConnection(ctx, deployment.HostFromHost)
 				if err != nil {
 					return err
 				}
@@ -153,8 +153,8 @@ func (p Postgres) Deployment() infra.Deployment {
 	}
 }
 
-func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn, error) {
-	connStr := "postgres://" + User + "@" + infra.JoinProtoIPPort("", serverIP, p.port) + "/" + DB
+func (p Postgres) dbConnection(ctx context.Context, hostname string) (*pgx.Conn, error) {
+	connStr := "postgres://" + User + "@" + infra.JoinNetAddr("", hostname, p.port) + "/" + DB
 	logger.Get(ctx).Info("Connecting to the database server", zap.String("connectionString", connStr))
 
 	var db *pgx.Conn

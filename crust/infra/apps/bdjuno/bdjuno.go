@@ -121,7 +121,7 @@ func (j BDJuno) prepareConfig() []byte {
 			PortGRPC      int
 			AddressPrefix string
 		}{
-			Host:          j.cored.Info().FromContainerIP.String(),
+			Host:          j.cored.Info().HostFromContainer,
 			PortRPC:       j.cored.Ports().RPC,
 			PortGRPC:      j.cored.Ports().GRPC,
 			AddressPrefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
@@ -132,7 +132,7 @@ func (j BDJuno) prepareConfig() []byte {
 			User string
 			DB   string
 		}{
-			Host: j.postgres.Info().FromContainerIP.String(),
+			Host: j.postgres.Info().HostFromContainer,
 			Port: j.postgres.Port(),
 			User: postgres.User,
 			DB:   postgres.DB,
