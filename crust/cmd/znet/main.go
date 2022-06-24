@@ -25,7 +25,7 @@ func main() {
 		}
 		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
 		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("CRUST_ZNET_ENV", "znet"), "Name of the environment to run in")
-		rootCmd.PersistentFlags().StringVar(&configF.Target, "target", defaultString("CRUST_ZNET_TARGET", "tmux"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
+		rootCmd.PersistentFlags().StringVar(&configF.Target, "target", defaultString("CRUST_ZNET_TARGET", "docker"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
 		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("CRUST_ZNET_HOME", must.String(os.UserCacheDir())+"/crust/znet"), "Directory where all files created automatically by znet are stored")
 		addFlags(rootCmd, configF)
 		addModeFlag(rootCmd, c, configF)
