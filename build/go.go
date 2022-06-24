@@ -17,8 +17,8 @@ import (
 
 var repositories = []string{"../coreum"}
 
-// FIXME (wojciech): Replace above with the code below once migration to `core` repository is done
-// var repositories = []string{"../core", "../coreum"}
+// FIXME (wojciech): Replace above with the code below once migration to `crust` repository is done
+// var repositories = []string{"../crust", "../coreum"}
 
 func ensureGo(ctx context.Context) error {
 	return ensure(ctx, "go")
