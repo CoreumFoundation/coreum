@@ -70,6 +70,30 @@ func (p Postgres) Info() infra.DeploymentInfo {
 	return p.appInfo.Info()
 }
 
+// HealthCheck checks if cored chain is ready to accept transactions
+func (p Postgres) HealthCheck(ctx context.Context) error {
+	if p.appInfo.Info().Status != infra.AppStatusRunning {
+		return retry.Retryable(errors.Errorf("postgres hasn't started yet"))
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	connStr := "postgres://" + User + "@" + infra.JoinProtoIPPort("", p.appInfo.Info().FromHostIP, p.port) + "/" + DB
+	db, err := pgx.Connect(ctx, connStr)
+	if err != nil {
+		return retry.Retryable(errors.WithStack(err))
+	}
+
+	if err := db.Ping(ctx); err != nil {
+		return errors.WithStack(err)
+	}
+
+	time.Sleep(10 * time.Second)
+
+	return retry.Retryable(errors.WithStack(db.Close(ctx)))
+}
+
 // Deployment returns deployment of postgres
 func (p Postgres) Deployment() infra.Deployment {
 	return infra.Container{

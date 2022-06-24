@@ -87,7 +87,7 @@ func (j BDJuno) Deployment() infra.Deployment {
 				Timeout: 20 * time.Second,
 				Dependencies: []infra.HealthCheckCapable{
 					j.cored,
-					infra.IsRunning(j.postgres),
+					j.postgres,
 				},
 			},
 			PrepareFunc: func() error {

@@ -97,7 +97,7 @@ func (h Hasura) Deployment() infra.Deployment {
 			Requires: infra.Prerequisites{
 				Timeout: 20 * time.Second,
 				Dependencies: []infra.HealthCheckCapable{
-					infra.IsRunning(h.postgres),
+					h.postgres,
 				},
 			},
 			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
