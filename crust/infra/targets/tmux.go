@@ -13,9 +13,10 @@ import (
 )
 
 // NewTMux creates new tmux target
-func NewTMux(config infra.Config, spec *infra.Spec, docker *Docker) infra.Target {
+func NewTMux(config infra.Config, mode infra.Mode, spec *infra.Spec, docker *Docker) infra.Target {
 	return &TMux{
 		config: config,
+		mode:   mode,
 		spec:   spec,
 		docker: docker,
 	}
@@ -24,6 +25,7 @@ func NewTMux(config infra.Config, spec *infra.Spec, docker *Docker) infra.Target
 // TMux is the target deploying apps to tmux session
 type TMux struct {
 	config infra.Config
+	mode   infra.Mode
 	spec   *infra.Spec
 	docker *Docker
 
@@ -41,8 +43,8 @@ func (t *TMux) Remove(ctx context.Context) error {
 }
 
 // Deploy deploys environment to tmux target
-func (t *TMux) Deploy(ctx context.Context, mode infra.Mode) error {
-	if err := mode.Deploy(ctx, t, t.config, t.spec); err != nil {
+func (t *TMux) Deploy(ctx context.Context) error {
+	if err := t.mode.Deploy(ctx, t, t.config, t.spec); err != nil {
 		return err
 	}
 	if t.config.TestingMode {

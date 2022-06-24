@@ -27,7 +27,7 @@ func (err panicError) Error() string {
 }
 
 // Run deploys testing environment and runs tests there
-func Run(ctx context.Context, target infra.Target, mode infra.Mode, tests []*T, filters []*regexp.Regexp) error {
+func Run(ctx context.Context, target infra.Target, tests []*T, filters []*regexp.Regexp) error {
 	toRun := make([]*T, 0, len(tests))
 	for _, t := range tests {
 		if !matchesAny(t.name, filters) {
@@ -43,7 +43,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, tests []*T, 
 		return errors.New("there are no tests to run")
 	}
 
-	if err := target.Deploy(ctx, mode); err != nil {
+	if err := target.Deploy(ctx); err != nil {
 		return err
 	}
 

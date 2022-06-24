@@ -11,14 +11,17 @@ import (
 
 // TODO (ysv): check if we can adapt our tests to run standard go testing framework
 
+// Mode returns mode used by integration tests
+func Mode(appF *apps.Factory) infra.Mode {
+	return appF.CoredNetwork("coretest", 3)
+}
+
 // Tests returns testing environment and tests
-func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
-	mode := appF.CoredNetwork("coretest", 3)
+func Tests(mode infra.Mode) []*testing.T {
 	node := mode[0].(cored.Cored)
-	return mode,
-		[]*testing.T{
-			testing.New(auth.TestUnexpectedSequenceNumber(node)),
-			testing.New(bank.TestInitialBalance(node)),
-			testing.New(bank.TestCoreTransfer(node)),
-		}
+	return []*testing.T{
+		testing.New(auth.TestUnexpectedSequenceNumber(node)),
+		testing.New(bank.TestInitialBalance(node)),
+		testing.New(bank.TestCoreTransfer(node)),
+	}
 }

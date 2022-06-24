@@ -13,20 +13,19 @@ import (
 	"github.com/CoreumFoundation/coreum/crust/infra"
 	"github.com/CoreumFoundation/coreum/crust/infra/apps"
 	"github.com/CoreumFoundation/coreum/crust/infra/targets"
+	"github.com/CoreumFoundation/coreum/crust/tests"
 )
 
 // IoC configures IoC container
 func IoC(c *ioc.Container) {
 	c.Singleton(NewCmdFactory)
-	c.Singleton(NewConfigFactory)
+	c.Singleton(infra.NewConfigFactory)
 	c.Singleton(infra.NewSpec)
-	c.Transient(func(configF *ConfigFactory) infra.Config {
-		return configF.Config()
-	})
+	c.Transient(NewConfig)
 	c.Transient(apps.NewFactory)
 	c.TransientNamed("dev", DevMode)
-	c.TransientNamed("test", TestMode)
-	c.Transient(func(c *ioc.Container, config infra.Config) infra.Mode {
+	c.TransientNamed("test", tests.Mode)
+	c.Singleton(func(c *ioc.Container, config infra.Config) infra.Mode {
 		var mode infra.Mode
 		c.ResolveNamed(config.ModeName, &mode)
 		return mode
@@ -64,59 +63,27 @@ func (f *CmdFactory) Cmd(cmdFunc interface{}) func(cmd *cobra.Command, args []st
 	}
 }
 
-// NewConfigFactory creates new ConfigFactory
-func NewConfigFactory() *ConfigFactory {
-	return &ConfigFactory{}
-}
-
-// ConfigFactory collects config from CLI and produces real config
-type ConfigFactory struct {
-	// EnvName is the name of created environment
-	EnvName string
-
-	// ModeName is the name of the mode
-	ModeName string
-
-	// Target is the deployment target
-	Target string
-
-	// HomeDir is the path where all the files are kept
-	HomeDir string
-
-	// BinDir is the path where all binaries are present
-	BinDir string
-
-	// TestingMode means we are in testing mode and deployment should not block execution
-	TestingMode bool
-
-	// TestFilters are regular expressions used to filter tests to run
-	TestFilters []string
-
-	// VerboseLogging turns on verbose logging
-	VerboseLogging bool
-}
-
-// Config produces final config
-func (cf *ConfigFactory) Config() infra.Config {
-	must.OK(os.MkdirAll(cf.HomeDir, 0o700))
-	homeDir := must.String(filepath.Abs(must.String(filepath.EvalSymlinks(cf.HomeDir)))) + "/" + cf.EnvName
+// NewConfig produces final config
+func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
+	must.OK(os.MkdirAll(configF.HomeDir, 0o700))
+	homeDir := must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.HomeDir)))) + "/" + configF.EnvName
 	if err := os.Mkdir(homeDir, 0o700); err != nil && !errors.Is(err, os.ErrExist) {
 		panic(err)
 	}
 
 	config := infra.Config{
-		EnvName:        cf.EnvName,
-		ModeName:       cf.ModeName,
-		Target:         cf.Target,
+		EnvName:        configF.EnvName,
+		ModeName:       spec.Mode,
+		Target:         spec.Target,
 		HomeDir:        homeDir,
 		AppDir:         homeDir + "/app",
 		WrapperDir:     homeDir + "/bin",
-		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(cf.BinDir)))),
-		TestingMode:    cf.TestingMode,
-		VerboseLogging: cf.VerboseLogging,
+		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.BinDir)))),
+		TestingMode:    configF.TestingMode,
+		VerboseLogging: configF.VerboseLogging,
 	}
 
-	for _, v := range cf.TestFilters {
+	for _, v := range configF.TestFilters {
 		config.TestFilters = append(config.TestFilters, regexp.MustCompile(v))
 	}
 
