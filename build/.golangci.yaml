@@ -20,8 +20,6 @@ issues:
 linters:
   enable-all: true
   disable:
-    # FIXME (wojciech): Enable funlen in separate PR because it requires changes in cored
-    - funlen
     # many golangci linters enforce stupid rules, so we will add more to the list soon
     - nlreturn
     - forbidigo

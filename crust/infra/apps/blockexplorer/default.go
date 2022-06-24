@@ -1,6 +1,7 @@
 package blockexplorer
 
 import (
+	"github.com/CoreumFoundation/coreum/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/coreum/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/coreum/crust/infra/apps/postgres"
 )
@@ -9,4 +10,5 @@ import (
 var DefaultPorts = Ports{
 	Postgres: postgres.DefaultPort,
 	Hasura:   hasura.DefaultPort,
+	BDJuno:   bdjuno.DefaultPort,
 }
