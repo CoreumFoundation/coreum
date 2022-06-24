@@ -90,7 +90,7 @@ func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 }
 
 func addTargetFlag(cmd *cobra.Command, c *ioc.Container, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.Target, "target", defaultString("CRUSTZNET_TARGET", "tmux"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
+	cmd.Flags().StringVar(&configF.Target, "target", defaultString("CRUSTZNET_TARGET", "docker"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
 }
 
 func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *infra.ConfigFactory) {
