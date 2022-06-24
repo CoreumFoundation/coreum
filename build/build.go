@@ -36,7 +36,7 @@ func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return buildNativeAndDocker(ctx, "crust/cmd/crustzstress", "bin/.cache/zstress")
+	return buildNativeAndDocker(ctx, "crust/cmd/zstress", "bin/.cache/zstress")
 }
 
 func ensureAllRepos(deps build.DepsFunc) {

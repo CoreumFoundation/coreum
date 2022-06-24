@@ -23,7 +23,7 @@ const (
 )
 
 func main() {
-	run.Tool("crustzstress", nil, func(ctx context.Context) error {
+	run.Tool("zstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
 		var accountFile string
 		var numOfAccounts int

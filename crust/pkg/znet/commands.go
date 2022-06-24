@@ -207,7 +207,7 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-// Stress runs benchmark implemented by `crustzstress` on top of network deployed by `znet`
+// Stress runs benchmark implemented by `zstress` on top of network deployed by `znet`
 func Stress(ctx context.Context, mode infra.Mode) error {
 	coredNode, err := coredNode(mode)
 	if err != nil {

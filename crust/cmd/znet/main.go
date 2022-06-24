@@ -81,7 +81,7 @@ func main() {
 
 		stressCmd := &cobra.Command{
 			Use:   "stress",
-			Short: "Runs the logic used by crustzstress to test benchmarking",
+			Short: "Runs the logic used by zstress to test benchmarking",
 			RunE:  cmdF.Cmd(znet.Stress),
 		}
 		addModeFlag(stressCmd, c, configF)

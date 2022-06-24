@@ -92,7 +92,7 @@ Available commands are:
 - `remove` - stops applications and removes all the resources used by the environment
 - `spec` - prints specification of the environment
 - `ping-pong` - sends transactions to generate traffic on blockchain
-- `stress` - tests the benchmarking logic of `crustzstress`
+- `stress` - tests the benchmarking logic of `zstress`
 
 ## Example
 
