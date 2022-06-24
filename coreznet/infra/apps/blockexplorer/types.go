@@ -4,4 +4,5 @@ package blockexplorer
 type Ports struct {
 	Postgres int
 	Hasura   int
+	BDJuno   int
 }
