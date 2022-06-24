@@ -63,12 +63,12 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 	shellCmd := osexec.Command(shell)
 	shellCmd.Env = append(os.Environ(),
 		"PATH="+config.WrapperDir+":"+os.Getenv("PATH"),
-		"CRUSTZNET_ENV="+configF.EnvName,
-		"CRUSTZNET_MODE="+configF.ModeName,
-		"CRUSTZNET_HOME="+configF.HomeDir,
-		"CRUSTZNET_TARGET="+configF.Target,
-		"CRUSTZNET_BIN_DIR="+configF.BinDir,
-		"CRUSTZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
+		"CRUST_ZNET_ENV="+configF.EnvName,
+		"CRUST_ZNET_MODE="+configF.ModeName,
+		"CRUST_ZNET_HOME="+configF.HomeDir,
+		"CRUST_ZNET_TARGET="+configF.Target,
+		"CRUST_ZNET_BIN_DIR="+configF.BinDir,
+		"CRUST_ZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
 	)
 	if promptVar != "" {
 		shellCmd.Env = append(shellCmd.Env, promptVar)
@@ -207,7 +207,7 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-// Stress runs benchmark implemented by `crustzstress` on top of network deployed by `crustznet`
+// Stress runs benchmark implemented by `crustzstress` on top of network deployed by `znet`
 func Stress(ctx context.Context, mode infra.Mode) error {
 	coredNode, err := coredNode(mode)
 	if err != nil {

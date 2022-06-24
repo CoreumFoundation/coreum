@@ -31,7 +31,7 @@ func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "crust/cmd/crustznet", runtime.GOOS, "bin/.cache/znet")
+	return goBuildPkg(ctx, "crust/cmd/znet", runtime.GOOS, "bin/.cache/znet")
 }
 
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
