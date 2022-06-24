@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -47,6 +48,9 @@ type Docker struct {
 	config infra.Config
 	mode   infra.Mode
 	spec   *infra.Spec
+
+	mu            sync.Mutex
+	networkExists bool
 }
 
 // Stop stops running applications
@@ -102,7 +106,7 @@ func (d *Docker) Stop(ctx context.Context) error {
 
 // Remove removes running applications
 func (d *Docker) Remove(ctx context.Context) error {
-	return forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
+	err := forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
 		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name),
 			zap.String("appName", info.AppName))
 		log.Info("Deleting container")
@@ -114,6 +118,10 @@ func (d *Docker) Remove(ctx context.Context) error {
 		log.Info("Container deleted")
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+	return d.deleteNetwork(ctx, d.config.EnvName)
 }
 
 // Deploy deploys environment to docker target
@@ -123,6 +131,10 @@ func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 
 // DeployBinary builds container image out of binary file and starts it in docker
 func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
+	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
+		return infra.DeploymentInfo{}, nil
+	}
+
 	name := d.config.EnvName + "-" + app.Name
 
 	log := logger.Get(ctx).With(zap.String("name", name), zap.String("appName", app.Name))
@@ -143,7 +155,8 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 
 		runArgs := []string{"run", "--name", name, "-d", "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 			"--label", labelEnv + "=" + d.config.EnvName, "--label", labelApp + "=" + app.Name,
-			"-v", appHomeDir + ":" + AppHomeDir, "-v", app.BinPath + ":" + internalBinPath}
+			"-v", appHomeDir + ":" + AppHomeDir, "-v", app.BinPath + ":" + internalBinPath,
+			"--network", d.config.EnvName}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
@@ -174,6 +187,10 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 
 // DeployContainer starts container in docker
 func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
+	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
+		return infra.DeploymentInfo{}, nil
+	}
+
 	name := d.config.EnvName + "-" + app.Name
 
 	log := logger.Get(ctx).With(zap.String("name", name), zap.String("appName", app.Name))
@@ -190,7 +207,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 	} else {
 		appHomeDir := d.config.AppDir + "/" + app.Name
 		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
-			"--label", labelApp + "=" + app.Name, "-v", appHomeDir + ":" + AppHomeDir}
+			"--label", labelApp + "=" + app.Name, "-v", appHomeDir + ":" + AppHomeDir, "--network", d.config.EnvName}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
@@ -220,6 +237,57 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 		HostFromContainer: name,
 		Ports:             app.Ports,
 	}, nil
+}
+
+func (d *Docker) ensureNetwork(ctx context.Context, network string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.networkExists {
+		return nil
+	}
+
+	log := logger.Get(ctx).With(zap.String("network", network))
+
+	var err error
+	d.networkExists, err = networkExists(ctx, network)
+	if err != nil {
+		return err
+	}
+	if d.networkExists {
+		log.Info("Docker network exists")
+		return nil
+	}
+
+	log.Info("Creating docker network")
+
+	if err := libexec.Exec(ctx, noStdout(exec.Docker("network", "create", network))); err != nil {
+		return errors.Wrapf(err, "creating network '%s' failed", network)
+	}
+
+	d.networkExists = true
+	log.Info("Docker network created")
+	return nil
+}
+
+func (d *Docker) deleteNetwork(ctx context.Context, network string) error {
+	exists, err := networkExists(ctx, network)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+
+	log := logger.Get(ctx).With(zap.String("network", network))
+	log.Info("Deleting docker network")
+
+	if err := libexec.Exec(ctx, noStdout(exec.Docker("network", "rm", network))); err != nil {
+		return errors.Wrapf(err, "deleting network '%s' failed", network)
+	}
+
+	log.Info("Docker network deleted")
+	return nil
 }
 
 func containerExists(ctx context.Context, name string) (string, error) {
@@ -306,4 +374,14 @@ func removeContainer(ctx context.Context, info container) error {
 		return errors.Wrapf(err, "deleting container `%s` failed", info.Name)
 	}
 	return nil
+}
+
+func networkExists(ctx context.Context, network string) (bool, error) {
+	buf := &bytes.Buffer{}
+	cmd := exec.Docker("network", "ls", "-q", "--no-trunc", "--filter", "name="+network)
+	cmd.Stdout = buf
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return false, err
+	}
+	return strings.TrimSuffix(buf.String(), "\n") != "", nil
 }
