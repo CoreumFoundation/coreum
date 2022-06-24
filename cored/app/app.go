@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum/cored/app/wasmconfig"
 	"github.com/CosmWasm/wasmd/x/wasm"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -97,11 +96,13 @@ import (
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/ignite-hq/cli/ignite/pkg/openapiconsole"
 
-	"github.com/CoreumFoundation/coreum/cored/docs"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	monitoringp "github.com/tendermint/spn/x/monitoringp"
 	monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 	monitoringptypes "github.com/tendermint/spn/x/monitoringp/types"
+
+	"github.com/CoreumFoundation/coreum/cored/app/wasmconfig"
+	"github.com/CoreumFoundation/coreum/cored/docs"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
