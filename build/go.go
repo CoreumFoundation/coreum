@@ -29,6 +29,7 @@ func ensureGolangCI(ctx context.Context) error {
 }
 
 // goBuildPkg builds go package
+// nolint:unparam // linter does not take into account that `targetOS` is different on every platform
 func goBuildPkg(ctx context.Context, pkg, targetOS, out string) error {
 	logger.Get(ctx).Info("Building go package", zap.String("package", pkg), zap.String("binary", out), zap.String("targetOS", targetOS))
 	cmd := exec.Command(toolBin("go"), "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")

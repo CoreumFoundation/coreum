@@ -92,7 +92,7 @@ func main() {
 }
 
 func addFlags(cmd *cobra.Command, configF *znet.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUSTZNET_BIN_DIR", filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), "Path to directory where executables exist")
+	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUSTZNET_BIN_DIR", filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable())))))), "Path to directory where executables exist")
 }
 
 func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *znet.ConfigFactory) {
