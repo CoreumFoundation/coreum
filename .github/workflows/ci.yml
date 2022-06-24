@@ -16,6 +16,6 @@ jobs:
       - name: Configure the environment
         run: echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
       - name: Lint, run unit tests and build
-        run: core lint test build --log-format=yaml
+        run: crust lint test build --log-format=yaml
       - name: Execute integration tests
-        run: coreznet test --target=docker --log-format=yaml
+        run: crustznet test --target=docker --log-format=yaml
