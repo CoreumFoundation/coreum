@@ -15,7 +15,7 @@ const dockerGOOS = "linux"
 const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
 
 func buildAll(deps build.DepsFunc) {
-	deps(buildCored, buildCoreZNet, buildCoreZStress)
+	deps(buildCored, buildCrustZNet, buildCrustZStress)
 }
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
@@ -23,14 +23,14 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	return buildNativeAndDocker(ctx, "../coreum/cored/cmd/cored", "cored")
 }
 
-func buildCoreZNet(ctx context.Context, deps build.DepsFunc) error {
+func buildCrustZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "coreznet/cmd/coreznet", runtime.GOOS, "bin/coreznet")
+	return goBuildPkg(ctx, "crust/cmd/crustznet", runtime.GOOS, "bin/crustznet")
 }
 
-func buildCoreZStress(ctx context.Context, deps build.DepsFunc) error {
+func buildCrustZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return buildNativeAndDocker(ctx, "coreznet/cmd/corezstress", "corezstress")
+	return buildNativeAndDocker(ctx, "crust/cmd/crustzstress", "crustzstress")
 }
 
 func ensureAllRepos(deps build.DepsFunc) {
