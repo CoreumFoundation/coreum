@@ -24,9 +24,6 @@ type Config struct {
 	// BinDir is the path where all binaries are present
 	BinDir string
 
-	// TestingMode means we are in testing mode and deployment should not block execution
-	TestingMode bool
-
 	// TestFilters are regular expressions used to filter tests to run
 	TestFilters []*regexp.Regexp
 

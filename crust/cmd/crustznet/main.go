@@ -67,6 +67,12 @@ func main() {
 		})
 
 		rootCmd.AddCommand(&cobra.Command{
+			Use:   "console",
+			Short: "Starts tmux console on top of running environment",
+			RunE:  cmdF.Cmd(znet.Console),
+		})
+
+		rootCmd.AddCommand(&cobra.Command{
 			Use:   "ping-pong",
 			Short: "Sends tokens back and forth to generate transactions",
 			RunE:  cmdF.Cmd(znet.PingPong),
