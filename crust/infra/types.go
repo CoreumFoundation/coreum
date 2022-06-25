@@ -110,13 +110,14 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 					return err
 				}
 
+				var depNames []string
 				if dependencies := deployment.Dependencies(); len(dependencies) > 0 {
-					names := make([]string, 0, len(dependencies))
+					depNames = make([]string, 0, len(dependencies))
 					for _, d := range dependencies {
-						names = append(names, d.Name())
+						depNames = append(depNames, d.Name())
 					}
-					log.Info("Waiting for dependencies", zap.Strings("dependencies", names))
-					for _, name := range names {
+					log.Info("Waiting for dependencies", zap.Strings("dependencies", depNames))
+					for _, name := range depNames {
 						select {
 						case <-ctx.Done():
 							return errors.WithStack(ctx.Err())
@@ -139,6 +140,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 				if err != nil {
 					return err
 				}
+				info.DependsOn = depNames
 				appInfo.SetInfo(info)
 
 				log.Info("Deployment succeeded")
@@ -215,6 +217,9 @@ type DeploymentInfo struct {
 
 	// Status indicates the status of the application
 	Status AppStatus `json:"status"`
+
+	// DependsOn is the list of other application which must be started before this one or stopped after this one
+	DependsOn []string `json:"dependsOn,omitempty"`
 
 	// Ports describe network ports provided by the application
 	Ports map[string]int `json:"ports,omitempty"`
@@ -498,7 +503,7 @@ type AppInfo struct {
 	data appInfoData
 }
 
-// SetInfo sets fields based on deployment info
+// SetInfo sets deployment info
 func (ai *AppInfo) SetInfo(info DeploymentInfo) {
 	ai.mu.Lock()
 	defer ai.mu.Unlock()
