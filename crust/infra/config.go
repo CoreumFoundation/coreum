@@ -12,9 +12,6 @@ type Config struct {
 	// ModeName is the name of the mode
 	ModeName string
 
-	// Target is the deployment target
-	Target string
-
 	// HomeDir is the path where all the files are kept
 	HomeDir string
 

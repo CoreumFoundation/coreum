@@ -65,7 +65,6 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 		"CRUSTZNET_ENV="+configF.EnvName,
 		"CRUSTZNET_MODE="+configF.ModeName,
 		"CRUSTZNET_HOME="+configF.HomeDir,
-		"CRUSTZNET_TARGET="+configF.Target,
 		"CRUSTZNET_BIN_DIR="+configF.BinDir,
 		"CRUSTZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
 	)

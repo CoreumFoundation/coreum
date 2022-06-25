@@ -402,9 +402,6 @@ type ConfigFactory struct {
 	// ModeName is the name of the mode
 	ModeName string
 
-	// Target is the deployment target
-	Target string
-
 	// HomeDir is the path where all the files are kept
 	HomeDir string
 
@@ -442,10 +439,9 @@ func NewSpec(configF *ConfigFactory) *Spec {
 		specFile: specFile,
 		configF:  configF,
 
-		Target: configF.Target,
-		Mode:   configF.ModeName,
-		Env:    configF.EnvName,
-		Apps:   map[string]*AppInfo{},
+		Mode: configF.ModeName,
+		Env:  configF.EnvName,
+		Apps: map[string]*AppInfo{},
 	}
 	return spec
 }
@@ -454,9 +450,6 @@ func NewSpec(configF *ConfigFactory) *Spec {
 type Spec struct {
 	specFile string
 	configF  *ConfigFactory
-
-	// Target is the name of target being used to run apps
-	Target string `json:"target"`
 
 	// Mode is the name of mode
 	Mode string `json:"mode"`
@@ -474,9 +467,6 @@ type Spec struct {
 func (s *Spec) Verify() error {
 	if s.Env != s.configF.EnvName {
 		return errors.Errorf("env mismatch, spec: %s, config: %s", s.Env, s.configF.EnvName)
-	}
-	if s.Target != s.configF.Target {
-		return errors.Errorf("target mismatch, spec: %s, config: %s", s.Target, s.configF.Target)
 	}
 	if s.Mode != s.configF.ModeName {
 		return errors.Errorf("mode mismatch, spec: %s, config: %s", s.Mode, s.configF.ModeName)

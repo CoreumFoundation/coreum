@@ -13,7 +13,7 @@ import (
 )
 
 // NewTMux creates new tmux target
-func NewTMux(config infra.Config, spec *infra.Spec, docker *Docker) infra.Target {
+func NewTMux(config infra.Config, spec *infra.Spec, docker Docker) infra.Target {
 	return &TMux{
 		config: config,
 		spec:   spec,
@@ -25,7 +25,7 @@ func NewTMux(config infra.Config, spec *infra.Spec, docker *Docker) infra.Target
 type TMux struct {
 	config infra.Config
 	spec   *infra.Spec
-	docker *Docker
+	docker Docker
 
 	mu sync.Mutex // to protect tmux session
 }
