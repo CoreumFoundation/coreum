@@ -33,8 +33,7 @@ import (
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
 
 // Activate starts preconfigured shell environment
-func Activate(ctx context.Context, configF *ConfigFactory) error {
-	config := configF.Config()
+func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Config) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return errors.WithStack(err)
@@ -112,7 +111,10 @@ func Activate(ctx context.Context, configF *ConfigFactory) error {
 }
 
 // Start starts environment
-func Start(ctx context.Context, target infra.Target, mode infra.Mode) (retErr error) {
+func Start(ctx context.Context, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
+	if err := spec.Verify(); err != nil {
+		return err
+	}
 	return target.Deploy(ctx, mode)
 }
 
@@ -152,16 +154,19 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 }
 
 // Test runs integration tests
-func Test(c *ioc.Container, configF *ConfigFactory) error {
+func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 	configF.TestingMode = true
 	configF.ModeName = "test"
 	var err error
 	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, appF *apps.Factory, spec *infra.Spec) (retErr error) {
-		defer func() {
-			if err := spec.Save(); retErr == nil {
-				retErr = err
+		if err := spec.Verify(); err != nil {
+			return err
+		}
+		for _, app := range spec.Apps {
+			if app.Info().Status != infra.AppStatusNotDeployed {
+				return errors.New("tests can't be executed on top of existing environment, remove it first")
 			}
-		}()
+		}
 
 		env, tests := tests.Tests(appF)
 		return testing.Run(ctx, target, env, tests, config.TestFilters)
