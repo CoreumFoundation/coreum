@@ -20,7 +20,18 @@ func buildAll(deps build.DepsFunc) {
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo, ensureCoreumRepo)
-	return buildNativeAndDocker(ctx, "../coreum/cored/cmd/cored", "cored")
+
+	pkg := "../coreum/cmd/cored"
+
+	// FIXME (wojciech): Remove this code once `cored` package is moved to root directory of the repository after migration
+	if _, err := os.Stat(pkg); err != nil {
+		if !os.IsNotExist(err) {
+			return errors.WithStack(err)
+		}
+		pkg = "../coreum/cored/cmd/cored"
+	}
+
+	return buildNativeAndDocker(ctx, pkg, "cored")
 }
 
 func buildCrustZNet(ctx context.Context, deps build.DepsFunc) error {
