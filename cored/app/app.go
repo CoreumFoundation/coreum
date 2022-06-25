@@ -377,7 +377,7 @@ func New(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
-	wasmDir := filepath.Join(homePath, "data")
+	wasmDir := filepath.Join(homePath, "wasm-data")
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
