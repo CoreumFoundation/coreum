@@ -35,10 +35,9 @@ const (
 // FIXME (wojciech): Entire logic here could be easily implemented by using docker API instead of binary execution
 
 // NewDocker creates new docker target
-func NewDocker(config infra.Config, mode infra.Mode, spec *infra.Spec) *Docker {
+func NewDocker(config infra.Config, spec *infra.Spec) *Docker {
 	return &Docker{
 		config: config,
-		mode:   mode,
 		spec:   spec,
 	}
 }
@@ -46,7 +45,6 @@ func NewDocker(config infra.Config, mode infra.Mode, spec *infra.Spec) *Docker {
 // Docker is the target deploying apps to docker
 type Docker struct {
 	config infra.Config
-	mode   infra.Mode
 	spec   *infra.Spec
 }
 
@@ -54,12 +52,12 @@ type Docker struct {
 func (d *Docker) Stop(ctx context.Context) error {
 	dependencies := map[string][]chan struct{}{}
 	readyChs := map[string]chan struct{}{}
-	for _, app := range d.mode {
+	for appName, app := range d.spec.Apps {
 		readyCh := make(chan struct{})
-		readyChs[app.Name()] = readyCh
+		readyChs[appName] = readyCh
 
-		for _, dep := range app.Deployment().Dependencies() {
-			dependencies[dep.Name()] = append(dependencies[dep.Name()], readyCh)
+		for _, depName := range app.Info().DependsOn {
+			dependencies[depName] = append(dependencies[depName], readyCh)
 		}
 	}
 
