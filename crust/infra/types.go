@@ -227,13 +227,13 @@ type DeploymentInfo struct {
 
 // Target represents target of deployment from the perspective of crustznet
 type Target interface {
-	// Deploy deploys environment to the target
+	// Deploy deploys mode to the target
 	Deploy(ctx context.Context, mode Mode) error
 
-	// Stop stops apps in the environment
+	// Stop stops apps in the mode
 	Stop(ctx context.Context) error
 
-	// Remove removes apps in the environment
+	// Remove removes apps in the mode
 	Remove(ctx context.Context) error
 }
 
@@ -389,25 +389,49 @@ func (app Container) Deploy(ctx context.Context, target AppTarget, config Config
 	return info, nil
 }
 
+// NewConfigFactory creates new ConfigFactory
+func NewConfigFactory() *ConfigFactory {
+	return &ConfigFactory{}
+}
+
+// ConfigFactory collects config from CLI and produces real config
+type ConfigFactory struct {
+	// EnvName is the name of created environment
+	EnvName string
+
+	// ModeName is the name of the mode
+	ModeName string
+
+	// Target is the deployment target
+	Target string
+
+	// HomeDir is the path where all the files are kept
+	HomeDir string
+
+	// BinDir is the path where all binaries are present
+	BinDir string
+
+	// TestingMode means we are in testing mode and deployment should not block execution
+	TestingMode bool
+
+	// TestFilters are regular expressions used to filter tests to run
+	TestFilters []string
+
+	// VerboseLogging turns on verbose logging
+	VerboseLogging bool
+}
+
 // NewSpec returns new spec
-func NewSpec(config Config) *Spec {
-	specFile := config.HomeDir + "/spec.json"
+func NewSpec(configF *ConfigFactory) *Spec {
+	specFile := configF.HomeDir + "/" + configF.EnvName + "/spec.json"
 	specRaw, err := ioutil.ReadFile(specFile)
 	switch {
 	case err == nil:
 		spec := &Spec{
 			specFile: specFile,
+			configF:  configF,
 		}
 		must.OK(json.Unmarshal(specRaw, spec))
-		if spec.Target != config.Target {
-			panic(fmt.Sprintf("target mismatch, spec: %s, config: %s", spec.Target, config.Target))
-		}
-		if spec.Env != config.EnvName {
-			panic(fmt.Sprintf("env mismatch, spec: %s, config: %s", spec.Env, config.EnvName))
-		}
-		if spec.Mode != config.ModeName {
-			panic(fmt.Sprintf("mode mismatch, spec: %s, config: %s", spec.Mode, config.ModeName))
-		}
 		return spec
 	case errors.Is(err, os.ErrNotExist):
 	default:
@@ -416,10 +440,12 @@ func NewSpec(config Config) *Spec {
 
 	spec := &Spec{
 		specFile: specFile,
-		Target:   config.Target,
-		Mode:     config.ModeName,
-		Env:      config.EnvName,
-		Apps:     map[string]*AppInfo{},
+		configF:  configF,
+
+		Target: configF.Target,
+		Mode:   configF.ModeName,
+		Env:    configF.EnvName,
+		Apps:   map[string]*AppInfo{},
 	}
 	return spec
 }
@@ -427,6 +453,7 @@ func NewSpec(config Config) *Spec {
 // Spec describes running environment
 type Spec struct {
 	specFile string
+	configF  *ConfigFactory
 
 	// Target is the name of target being used to run apps
 	Target string `json:"target"`
@@ -441,6 +468,20 @@ type Spec struct {
 
 	// Apps is the description of running apps
 	Apps map[string]*AppInfo `json:"apps"`
+}
+
+// Verify verifies that env and mode in config matches the ones in spec
+func (s *Spec) Verify() error {
+	if s.Env != s.configF.EnvName {
+		return errors.Errorf("env mismatch, spec: %s, config: %s", s.Env, s.configF.EnvName)
+	}
+	if s.Target != s.configF.Target {
+		return errors.Errorf("target mismatch, spec: %s, config: %s", s.Target, s.configF.Target)
+	}
+	if s.Mode != s.configF.ModeName {
+		return errors.Errorf("mode mismatch, spec: %s, config: %s", s.Mode, s.configF.ModeName)
+	}
+	return nil
 }
 
 // DescribeApp adds description of running app
