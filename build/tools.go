@@ -70,19 +70,19 @@ var tools = map[string]tool{
 		},
 	},
 	"ignite": {
-		Version: "v0.21.2",
+		Version: "v0.22.2",
 		Sources: sources{
 			linuxAMD64: {
-				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.21.2/ignite_0.21.2_linux_amd64.tar.gz",
-				Hash: "sha256:c79e7119a0e14881336b92a5191cba861130c80a5a21bb0f0aa8f79c4c237204",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_linux_amd64.tar.gz",
+				Hash: "sha256:c73654403ce7c27a8a8d2845a45beb284120c83d854c4312955658125764c296",
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.21.2/ignite_0.21.2_darwin_amd64.tar.gz",
-				Hash: "sha256:b9570804d1cc7023b780f50aece91c3c57cbf7f877850946642101e313cb0ec6",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_darwin_amd64.tar.gz",
+				Hash: "sha256:25cfb61c6c5d26ab303153211097d357f3c1bce63351276a870b7b6b4420b8b5",
 			},
 			darwinARM64: {
-				URL:  "https://github.com/ignite-hq/cli/releases/download/v0.21.2/ignite_0.21.2_darwin_arm64.tar.gz",
-				Hash: "sha256:9455af04670b7a57d3d7320ae28fa40ee8dc331581f1029854e5697cd89e93d8",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_darwin_arm64.tar.gz",
+				Hash: "sha256:19757865d00e0d08c36a83a3cb9035a76ee0b542c20efed00f48a01eb12fb879",
 			},
 		},
 		Binaries: []string{
