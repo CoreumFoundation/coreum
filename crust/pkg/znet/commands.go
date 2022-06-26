@@ -9,6 +9,7 @@ import (
 	osexec "os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"github.com/CoreumFoundation/coreum/crust/infra/apps"
 	"github.com/CoreumFoundation/coreum/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/coreum/crust/infra/testing"
+	"github.com/CoreumFoundation/coreum/crust/pkg/znet/tmux"
 	"github.com/CoreumFoundation/coreum/crust/pkg/zstress"
 	"github.com/CoreumFoundation/coreum/crust/tests"
 )
@@ -51,6 +53,7 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 	// `test` can't be used here because it is a reserved keyword in bash
 	saveWrapper(config.WrapperDir, "tests", "test")
 	saveWrapper(config.WrapperDir, "spec", "spec")
+	saveWrapper(config.WrapperDir, "console", "console")
 	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
 	saveWrapper(config.WrapperDir, "stress", "stress")
 	saveLogsWrapper(config.WrapperDir, config.EnvName, "logs")
@@ -65,7 +68,6 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 		"CRUSTZNET_ENV="+configF.EnvName,
 		"CRUSTZNET_MODE="+configF.ModeName,
 		"CRUSTZNET_HOME="+configF.HomeDir,
-		"CRUSTZNET_TARGET="+configF.Target,
 		"CRUSTZNET_BIN_DIR="+configF.BinDir,
 		"CRUSTZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
 	)
@@ -155,7 +157,6 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 
 // Test runs integration tests
 func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
-	configF.TestingMode = true
 	configF.ModeName = "test"
 	var err error
 	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, appF *apps.Factory, spec *infra.Spec) (retErr error) {
@@ -174,10 +175,44 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 	return err
 }
 
-// Spec print specification of running environment
+// Spec prints specification of running environment
 func Spec(spec *infra.Spec) error {
 	fmt.Println(spec)
 	return nil
+}
+
+// Console starts tmux session on top of running environment
+func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+	if err := tmux.Kill(ctx, config.EnvName); err != nil {
+		return err
+	}
+
+	containers := map[string]string{}
+	for appName, app := range spec.Apps {
+		if app.Info().Status == infra.AppStatusRunning {
+			containers[appName] = app.Info().Container
+		}
+	}
+	if len(containers) == 0 {
+		logger.Get(ctx).Info("There are no running applications to show in tmux console")
+		return nil
+	}
+
+	appNames := make([]string, 0, len(containers))
+	for appName := range containers {
+		appNames = append(appNames, appName)
+	}
+	sort.Strings(appNames)
+
+	for _, appName := range appNames {
+		if err := tmux.ShowContainerLogs(ctx, config.EnvName, appName, containers[appName]); err != nil {
+			return err
+		}
+	}
+	if err := tmux.Attach(ctx, config.EnvName); err != nil {
+		return err
+	}
+	return tmux.Kill(ctx, config.EnvName)
 }
 
 // PingPong connects to cored node and sends transactions back and forth from one account to another to generate

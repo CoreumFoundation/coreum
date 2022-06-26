@@ -62,7 +62,7 @@ to see what the default values are.
 You may enter the environment like this:
 
 ```
-$ crustznet --env=crustznet --mode=dev --target=tmux
+$ crustznet --env=crustznet --mode=dev
 (crustznet) [logs] $
 ```
 
@@ -75,30 +75,19 @@ Each environment is independent, you may create many of them and work with them 
 
 Defines the list of applications to run. You may see their definitions in [pkg/znet/mode.go](../../pkg/znet/mode.go).
 
-### --target
-
-Defines where applications are deployed. Possible values:
-- `tmux` - applications are started as docker containers ant their logs are presented in tmux console
-- `docker` - applications are started as docker containers
-
 ## Logs
-
-After entering environment the current directory in console is set to the one
-containing logs produced by all the applications. The real path is `~/.cache/crustznet/<env-name>/logs`.
-
-No matter what `--target` is used, logs are always dumped here, so you may analyze them using any method you like (`grep`, `cut`, `tail` etc.)
 
 After entering and starting environment:
 
 ```
-$ crustznet --env=crustznet --mode=dev --target=tmux
-(crustznet) [logs] $ start
+$ crust znet --env=znet --mode=dev
+(znet) [znet] $ start
 ```
 
 it is possible to use `logs` wrapper to tail logs from an application:
 
 ```
-(crustznet) [logs] $ logs coredev-00
+(znet) [znet] $ logs coredev-00
 ```
 
 ## Commands
@@ -111,6 +100,7 @@ Available commands are:
 - `stop` - stops applications
 - `remove` - stops applications and removes all the resources used by the environment
 - `spec` - prints specification of the environment
+- `console` - starts `tmux` session containing logs of all the running applications
 - `ping-pong` - sends transactions to generate traffic on blockchain
 - `stress` - tests the benchmarking logic of `crustzstress`
 
@@ -120,7 +110,7 @@ Basic workflow may look like this:
 
 ```
 # Enter the environment:
-$ crustznet --env=crustznet --mode=dev --target=tmux
+$ crustznet --env=crustznet --mode=dev
 (crustznet) [logs] $
 
 # Start applications
@@ -128,6 +118,9 @@ $ crustznet --env=crustznet --mode=dev --target=tmux
 
 # Print spec
 (crustznet) [logs] $ spec
+
+# Start tmux session containing all the logs
+(crustznet) [logs] $ console
 
 # Stop applications
 (crustznet) [logs] $ stop
@@ -167,22 +160,12 @@ You may run tests directly:
 $crustznet test
 ```
 
-Tests run on top `--mode=test` and by default use `--target=tmux`
+Tests run on top `--mode=test`.
 
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ crustznet --env=crustznet --mode=test --target=tmux
-(crustznet) [logs] $ tests
-
-# Remember to clean everything
-(crustznet) [logs] $ remove
-```
-
-You may run tests using any `--target` you like so running it on top of applications deployed to `docker` is possible:
-
-```
-$ crustznet --env=crustznet --mode=test --target=docker
+$ crustznet --env=crustznet --mode=test
 (crustznet) [logs] $ tests
 
 # Remember to clean everything
@@ -190,15 +173,6 @@ $ crustznet --env=crustznet --mode=test --target=docker
 ```
 
 After tests complete environment is still running so if something went wrong you may inspect it manually.
-Especially if you run them using `--target=tmux` it is possible to enter tmux console after tests completed:
-
-```
-$ crustznet --env=crustznet --mode=test --target=tmux
-(crustznet) [logs] $ tests
-(crustznet) [logs] $ start
-```
-
-and again, all the logs are available inside current directory.
 
 ## Ping-pong
 
@@ -206,7 +180,7 @@ There is `ping-pong` command available in `crustznet` sending transactions to ge
 To start it runs these commands:
 
 ```
-$ crustznet --target=docker
+$ crustznet
 (crustznet) [logs] $ start
 (crustznet) [logs] $ ping-pong
 ```

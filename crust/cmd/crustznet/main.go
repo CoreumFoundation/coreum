@@ -27,7 +27,6 @@ func main() {
 		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("CRUSTZNET_ENV", "crustznet"), "Name of the environment to run in")
 		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("CRUSTZNET_HOME", must.String(os.UserCacheDir())+"/crustznet"), "Directory where all files created automatically by crustznet are stored")
 		addBinDirFlag(rootCmd, configF)
-		addTargetFlag(rootCmd, c, configF)
 		addModeFlag(rootCmd, c, configF)
 		addFilterFlag(rootCmd, configF)
 
@@ -37,7 +36,6 @@ func main() {
 			RunE:  cmdF.Cmd(znet.Start),
 		}
 		addBinDirFlag(startCmd, configF)
-		addTargetFlag(startCmd, c, configF)
 		addModeFlag(startCmd, c, configF)
 		rootCmd.AddCommand(startCmd)
 
@@ -59,7 +57,6 @@ func main() {
 			RunE:  cmdF.Cmd(znet.Test),
 		}
 		addBinDirFlag(testCmd, configF)
-		addTargetFlag(testCmd, c, configF)
 		addFilterFlag(testCmd, configF)
 		rootCmd.AddCommand(testCmd)
 
@@ -67,6 +64,12 @@ func main() {
 			Use:   "spec",
 			Short: "Prints specification of running environment",
 			RunE:  cmdF.Cmd(znet.Spec),
+		})
+
+		rootCmd.AddCommand(&cobra.Command{
+			Use:   "console",
+			Short: "Starts tmux console on top of running environment",
+			RunE:  cmdF.Cmd(znet.Console),
 		})
 
 		rootCmd.AddCommand(&cobra.Command{
@@ -87,10 +90,6 @@ func main() {
 
 func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUSTZNET_BIN_DIR", filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), "Path to directory where executables exist")
-}
-
-func addTargetFlag(cmd *cobra.Command, c *ioc.Container, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.Target, "target", defaultString("CRUSTZNET_TARGET", "docker"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
 }
 
 func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *infra.ConfigFactory) {
