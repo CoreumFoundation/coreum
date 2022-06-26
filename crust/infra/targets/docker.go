@@ -35,10 +35,9 @@ const (
 // FIXME (wojciech): Entire logic here could be easily implemented by using docker API instead of binary execution
 
 // NewDocker creates new docker target
-func NewDocker(config infra.Config, mode infra.Mode, spec *infra.Spec) *Docker {
-	return &Docker{
+func NewDocker(config infra.Config, spec *infra.Spec) infra.Target {
+	return Docker{
 		config: config,
-		mode:   mode,
 		spec:   spec,
 	}
 }
@@ -46,7 +45,6 @@ func NewDocker(config infra.Config, mode infra.Mode, spec *infra.Spec) *Docker {
 // Docker is the target deploying apps to docker
 type Docker struct {
 	config infra.Config
-	mode   infra.Mode
 	spec   *infra.Spec
 
 	mu            sync.Mutex
@@ -54,15 +52,15 @@ type Docker struct {
 }
 
 // Stop stops running applications
-func (d *Docker) Stop(ctx context.Context) error {
+func (d Docker) Stop(ctx context.Context) error {
 	dependencies := map[string][]chan struct{}{}
 	readyChs := map[string]chan struct{}{}
-	for _, app := range d.mode {
+	for appName, app := range d.spec.Apps {
 		readyCh := make(chan struct{})
-		readyChs[app.Name()] = readyCh
+		readyChs[appName] = readyCh
 
-		for _, dep := range app.Deployment().Dependencies() {
-			dependencies[dep.Name()] = append(dependencies[dep.Name()], readyCh)
+		for _, depName := range app.Info().DependsOn {
+			dependencies[depName] = append(dependencies[depName], readyCh)
 		}
 	}
 
@@ -105,7 +103,7 @@ func (d *Docker) Stop(ctx context.Context) error {
 }
 
 // Remove removes running applications
-func (d *Docker) Remove(ctx context.Context) error {
+func (d Docker) Remove(ctx context.Context) error {
 	err := forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
 		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name),
 			zap.String("appName", info.AppName))
@@ -125,12 +123,12 @@ func (d *Docker) Remove(ctx context.Context) error {
 }
 
 // Deploy deploys environment to docker target
-func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
+func (d Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 	return mode.Deploy(ctx, d, d.config, d.spec)
 }
 
 // DeployBinary builds container image out of binary file and starts it in docker
-func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
+func (d Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
 		return infra.DeploymentInfo{}, nil
 	}
@@ -186,7 +184,7 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 }
 
 // DeployContainer starts container in docker
-func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
+func (d Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
 	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
 		return infra.DeploymentInfo{}, nil
 	}

@@ -109,13 +109,14 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 					return err
 				}
 
+				var depNames []string
 				if dependencies := deployment.Dependencies(); len(dependencies) > 0 {
-					names := make([]string, 0, len(dependencies))
+					depNames = make([]string, 0, len(dependencies))
 					for _, d := range dependencies {
-						names = append(names, d.Name())
+						depNames = append(depNames, d.Name())
 					}
-					log.Info("Waiting for dependencies", zap.Strings("dependencies", names))
-					for _, name := range names {
+					log.Info("Waiting for dependencies", zap.Strings("dependencies", depNames))
+					for _, name := range depNames {
 						select {
 						case <-ctx.Done():
 							return errors.WithStack(ctx.Err())
@@ -138,6 +139,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 				if err != nil {
 					return err
 				}
+				info.DependsOn = depNames
 				appInfo.SetInfo(info)
 
 				log.Info("Deployment succeeded")
@@ -215,19 +217,22 @@ type DeploymentInfo struct {
 	// Status indicates the status of the application
 	Status AppStatus `json:"status"`
 
+	// DependsOn is the list of other application which must be started before this one or stopped after this one
+	DependsOn []string `json:"dependsOn,omitempty"`
+
 	// Ports describe network ports provided by the application
 	Ports map[string]int `json:"ports,omitempty"`
 }
 
 // Target represents target of deployment from the perspective of crustznet
 type Target interface {
-	// Deploy deploys environment to the target
+	// Deploy deploys mode to the target
 	Deploy(ctx context.Context, mode Mode) error
 
-	// Stop stops apps in the environment
+	// Stop stops apps in the mode
 	Stop(ctx context.Context) error
 
-	// Remove removes apps in the environment
+	// Remove removes apps in the mode
 	Remove(ctx context.Context) error
 }
 
@@ -383,25 +388,43 @@ func (app Container) Deploy(ctx context.Context, target AppTarget, config Config
 	return info, nil
 }
 
+// NewConfigFactory creates new ConfigFactory
+func NewConfigFactory() *ConfigFactory {
+	return &ConfigFactory{}
+}
+
+// ConfigFactory collects config from CLI and produces real config
+type ConfigFactory struct {
+	// EnvName is the name of created environment
+	EnvName string
+
+	// ModeName is the name of the mode
+	ModeName string
+
+	// HomeDir is the path where all the files are kept
+	HomeDir string
+
+	// BinDir is the path where all binaries are present
+	BinDir string
+
+	// TestFilters are regular expressions used to filter tests to run
+	TestFilters []string
+
+	// VerboseLogging turns on verbose logging
+	VerboseLogging bool
+}
+
 // NewSpec returns new spec
-func NewSpec(config Config) *Spec {
-	specFile := config.HomeDir + "/spec.json"
+func NewSpec(configF *ConfigFactory) *Spec {
+	specFile := configF.HomeDir + "/" + configF.EnvName + "/spec.json"
 	specRaw, err := ioutil.ReadFile(specFile)
 	switch {
 	case err == nil:
 		spec := &Spec{
 			specFile: specFile,
+			configF:  configF,
 		}
 		must.OK(json.Unmarshal(specRaw, spec))
-		if spec.Target != config.Target {
-			panic(fmt.Sprintf("target mismatch, spec: %s, config: %s", spec.Target, config.Target))
-		}
-		if spec.Env != config.EnvName {
-			panic(fmt.Sprintf("env mismatch, spec: %s, config: %s", spec.Env, config.EnvName))
-		}
-		if spec.Mode != config.ModeName {
-			panic(fmt.Sprintf("mode mismatch, spec: %s, config: %s", spec.Mode, config.ModeName))
-		}
 		return spec
 	case errors.Is(err, os.ErrNotExist):
 	default:
@@ -410,10 +433,11 @@ func NewSpec(config Config) *Spec {
 
 	spec := &Spec{
 		specFile: specFile,
-		Target:   config.Target,
-		Mode:     config.ModeName,
-		Env:      config.EnvName,
-		Apps:     map[string]*AppInfo{},
+		configF:  configF,
+
+		Mode: configF.ModeName,
+		Env:  configF.EnvName,
+		Apps: map[string]*AppInfo{},
 	}
 	return spec
 }
@@ -421,9 +445,7 @@ func NewSpec(config Config) *Spec {
 // Spec describes running environment
 type Spec struct {
 	specFile string
-
-	// Target is the name of target being used to run apps
-	Target string `json:"target"`
+	configF  *ConfigFactory
 
 	// Mode is the name of mode
 	Mode string `json:"mode"`
@@ -435,6 +457,17 @@ type Spec struct {
 
 	// Apps is the description of running apps
 	Apps map[string]*AppInfo `json:"apps"`
+}
+
+// Verify verifies that env and mode in config matches the ones in spec
+func (s *Spec) Verify() error {
+	if s.Env != s.configF.EnvName {
+		return errors.Errorf("env mismatch, spec: %s, config: %s", s.Env, s.configF.EnvName)
+	}
+	if s.Mode != s.configF.ModeName {
+		return errors.Errorf("mode mismatch, spec: %s, config: %s", s.Mode, s.configF.ModeName)
+	}
+	return nil
 }
 
 // DescribeApp adds description of running app
@@ -497,7 +530,7 @@ type AppInfo struct {
 	data appInfoData
 }
 
-// SetInfo sets fields based on deployment info
+// SetInfo sets deployment info
 func (ai *AppInfo) SetInfo(info DeploymentInfo) {
 	ai.mu.Lock()
 	defer ai.mu.Unlock()
