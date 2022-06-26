@@ -47,7 +47,7 @@ to see what the default values are.
 You may enter the environment like this:
 
 ```
-$ crust znet --env=znet --mode=dev --target=tmux
+$ crust znet --env=znet --mode=dev
 (znet) [znet] $
 ```
 
@@ -60,18 +60,12 @@ Each environment is independent, you may create many of them and work with them 
 
 Defines the list of applications to run. You may see their definitions in [pkg/znet/mode.go](../../pkg/znet/mode.go).
 
-### --target
-
-Defines where applications are deployed. Possible values:
-- `tmux` - applications are started as docker containers and their logs are presented in tmux console
-- `docker` - applications are started as docker containers
-
 ## Logs
 
 After entering and starting environment:
 
 ```
-$ crust znet --env=znet --mode=dev --target=tmux
+$ crust znet --env=znet --mode=dev
 (znet) [znet] $ start
 ```
 
@@ -91,6 +85,7 @@ Available commands are:
 - `stop` - stops applications
 - `remove` - stops applications and removes all the resources used by the environment
 - `spec` - prints specification of the environment
+- `console` - starts `tmux` session containing logs of all the running applications
 - `ping-pong` - sends transactions to generate traffic on blockchain
 - `stress` - tests the benchmarking logic of `zstress`
 
@@ -100,7 +95,7 @@ Basic workflow may look like this:
 
 ```
 # Enter the environment:
-$ crust znet --env=znet --mode=dev --target=tmux
+$ crust znet --env=znet --mode=dev
 (znet) [znet] $
 
 # Start applications
@@ -147,36 +142,19 @@ You may run tests directly:
 $crust znet test
 ```
 
-Tests run on top `--mode=test` and by default use `--target=tmux`
+Tests run on top `--mode=test`.
 
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ crust znet --env=znet --mode=test --target=tmux
+$ crust znet --env=znet --mode=test
 (znet) [znet] $ tests
 
 # Remember to clean everything
-(znet) [znet] $ remove
-```
-
-You may run tests using any `--target` you like so running it on top of applications deployed to `docker` is possible:
-
-```
-$ crust znet --env=znet --mode=test --target=docker
-(znet) [znet] $ tests
-
-# Remember to clean everything
-(znet) [znet] $ remove
+(crustznet) [logs] $ remove
 ```
 
 After tests complete environment is still running so if something went wrong you may inspect it manually.
-Especially if you run them using `--target=tmux` it is possible to enter tmux console after tests completed:
-
-```
-$ crust znet --env=znet --mode=test --target=tmux
-(znet) [znet] $ tests
-(znet) [znet] $ start
-```
 
 ## Ping-pong
 
@@ -184,7 +162,7 @@ There is `ping-pong` command available in `znet` sending transactions to generat
 To start it runs these commands:
 
 ```
-$ crust znet --target=docker
+$ crust znet
 (znet) [znet] $ start
 (znet) [znet] $ ping-pong
 ```
