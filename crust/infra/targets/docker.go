@@ -36,7 +36,7 @@ const (
 
 // NewDocker creates new docker target
 func NewDocker(config infra.Config, spec *infra.Spec) infra.Target {
-	return Docker{
+	return &Docker{
 		config: config,
 		spec:   spec,
 	}
@@ -52,7 +52,7 @@ type Docker struct {
 }
 
 // Stop stops running applications
-func (d Docker) Stop(ctx context.Context) error {
+func (d *Docker) Stop(ctx context.Context) error {
 	dependencies := map[string][]chan struct{}{}
 	readyChs := map[string]chan struct{}{}
 	for appName, app := range d.spec.Apps {
@@ -103,7 +103,7 @@ func (d Docker) Stop(ctx context.Context) error {
 }
 
 // Remove removes running applications
-func (d Docker) Remove(ctx context.Context) error {
+func (d *Docker) Remove(ctx context.Context) error {
 	err := forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
 		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name),
 			zap.String("appName", info.AppName))
@@ -123,12 +123,12 @@ func (d Docker) Remove(ctx context.Context) error {
 }
 
 // Deploy deploys environment to docker target
-func (d Docker) Deploy(ctx context.Context, mode infra.Mode) error {
+func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 	return mode.Deploy(ctx, d, d.config, d.spec)
 }
 
 // DeployBinary builds container image out of binary file and starts it in docker
-func (d Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
+func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
 	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
 		return infra.DeploymentInfo{}, nil
 	}
@@ -184,7 +184,7 @@ func (d Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Deplo
 }
 
 // DeployContainer starts container in docker
-func (d Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
+func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
 	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
 		return infra.DeploymentInfo{}, nil
 	}
