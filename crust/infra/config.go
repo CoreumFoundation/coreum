@@ -12,9 +12,6 @@ type Config struct {
 	// ModeName is the name of the mode
 	ModeName string
 
-	// Target is the deployment target
-	Target string
-
 	// HomeDir is the path where all the files are kept
 	HomeDir string
 
@@ -26,9 +23,6 @@ type Config struct {
 
 	// BinDir is the path where all binaries are present
 	BinDir string
-
-	// TestingMode means we are in testing mode and deployment should not block execution
-	TestingMode bool
 
 	// TestFilters are regular expressions used to filter tests to run
 	TestFilters []*regexp.Regexp

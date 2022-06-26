@@ -30,15 +30,6 @@ func IoC(c *ioc.Container) {
 		return mode
 	})
 	c.Transient(targets.NewDocker)
-	c.TransientNamed("tmux", targets.NewTMux)
-	c.TransientNamed("docker", func(docker *targets.Docker) infra.Target {
-		return docker
-	})
-	c.Transient(func(c *ioc.Container, config infra.Config) infra.Target {
-		var target infra.Target
-		c.ResolveNamed(config.Target, &target)
-		return target
-	})
 }
 
 // NewCmdFactory returns new CmdFactory
@@ -73,12 +64,10 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 	config := infra.Config{
 		EnvName:        configF.EnvName,
 		ModeName:       spec.Mode,
-		Target:         configF.Target,
 		HomeDir:        homeDir,
 		AppDir:         homeDir + "/app",
 		WrapperDir:     homeDir + "/bin",
 		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.BinDir)))),
-		TestingMode:    configF.TestingMode,
 		VerboseLogging: configF.VerboseLogging,
 	}
 
