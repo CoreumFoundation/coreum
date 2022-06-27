@@ -3,6 +3,7 @@ package build
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
@@ -15,7 +16,7 @@ const dockerGOOS = "linux"
 const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
 
 func buildAll(deps build.DepsFunc) {
-	deps(buildCored, buildCrustZNet, buildCrustZStress)
+	deps(buildCored, buildZNet, buildZStress)
 }
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
@@ -31,17 +32,22 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 		pkg = "../coreum/cored/cmd/cored"
 	}
 
-	return buildNativeAndDocker(ctx, pkg, "cored")
+	return buildNativeAndDocker(ctx, pkg, "bin/cored")
 }
 
-func buildCrustZNet(ctx context.Context, deps build.DepsFunc) error {
+func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "crust/cmd/crustznet", runtime.GOOS, "bin/crustznet")
+	return goBuildPkg(ctx, "build/cmd", runtime.GOOS, "bin/.cache/crust")
 }
 
-func buildCrustZStress(ctx context.Context, deps build.DepsFunc) error {
+func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return buildNativeAndDocker(ctx, "crust/cmd/crustzstress", "crustzstress")
+	return goBuildPkg(ctx, "crust/cmd/znet", runtime.GOOS, "bin/.cache/znet")
+}
+
+func buildZStress(ctx context.Context, deps build.DepsFunc) error {
+	deps(ensureGo)
+	return buildNativeAndDocker(ctx, "crust/cmd/zstress", "bin/.cache/zstress")
 }
 
 func ensureAllRepos(deps build.DepsFunc) {
@@ -52,21 +58,21 @@ func ensureCoreumRepo(ctx context.Context) error {
 	return ensureRepo(ctx, coreumRepoURL)
 }
 
-func buildNativeAndDocker(ctx context.Context, pkg, exeName string) error {
-	out := "bin/" + runtime.GOOS + "/" + exeName
-	link := "bin/" + exeName
-	if err := os.Remove(link); err != nil && !os.IsNotExist(err) {
+func buildNativeAndDocker(ctx context.Context, pkg, out string) error {
+	outPath := filepath.Dir(out) + "/" + runtime.GOOS + "/" + filepath.Base(out)
+
+	if err := os.Remove(out); err != nil && !os.IsNotExist(err) {
 		return errors.WithStack(err)
 	}
-	if err := goBuildPkg(ctx, pkg, runtime.GOOS, out); err != nil {
+	if err := goBuildPkg(ctx, pkg, runtime.GOOS, outPath); err != nil {
 		return err
 	}
-	if err := os.Link(out, link); err != nil {
+	if err := os.Link(outPath, out); err != nil {
 		return errors.WithStack(err)
 	}
 	if runtime.GOOS != dockerGOOS {
 		// required to build docker images
-		return goBuildPkg(ctx, pkg, dockerGOOS, "bin/"+dockerGOOS+"/"+exeName)
+		return goBuildPkg(ctx, pkg, dockerGOOS, "bin/"+dockerGOOS+"/"+out)
 	}
 	return nil
 }

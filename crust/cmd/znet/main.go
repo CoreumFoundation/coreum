@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	run.Tool("crustznet", znet.IoC, func(c *ioc.Container, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) error {
+	run.Tool("znet", znet.IoC, func(c *ioc.Container, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage:  true,
 			SilenceErrors: true,
@@ -24,10 +24,9 @@ func main() {
 			RunE:          cmdF.Cmd(znet.Activate),
 		}
 		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
-		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("CRUSTZNET_ENV", "crustznet"), "Name of the environment to run in")
-		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("CRUSTZNET_HOME", must.String(os.UserCacheDir())+"/crustznet"), "Directory where all files created automatically by crustznet are stored")
+		rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("CRUST_ZNET_ENV", "znet"), "Name of the environment to run in")
+		rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("CRUST_ZNET_HOME", must.String(os.UserCacheDir())+"/crust/znet"), "Directory where all files created automatically by znet are stored")
 		addBinDirFlag(rootCmd, configF)
-		addTargetFlag(rootCmd, c, configF)
 		addModeFlag(rootCmd, c, configF)
 		addFilterFlag(rootCmd, configF)
 
@@ -37,7 +36,6 @@ func main() {
 			RunE:  cmdF.Cmd(znet.Start),
 		}
 		addBinDirFlag(startCmd, configF)
-		addTargetFlag(startCmd, c, configF)
 		addModeFlag(startCmd, c, configF)
 		rootCmd.AddCommand(startCmd)
 
@@ -59,7 +57,6 @@ func main() {
 			RunE:  cmdF.Cmd(znet.Test),
 		}
 		addBinDirFlag(testCmd, configF)
-		addTargetFlag(testCmd, c, configF)
 		addFilterFlag(testCmd, configF)
 		rootCmd.AddCommand(testCmd)
 
@@ -70,6 +67,12 @@ func main() {
 		})
 
 		rootCmd.AddCommand(&cobra.Command{
+			Use:   "console",
+			Short: "Starts tmux console on top of running environment",
+			RunE:  cmdF.Cmd(znet.Console),
+		})
+
+		rootCmd.AddCommand(&cobra.Command{
 			Use:   "ping-pong",
 			Short: "Sends tokens back and forth to generate transactions",
 			RunE:  cmdF.Cmd(znet.PingPong),
@@ -77,7 +80,7 @@ func main() {
 
 		rootCmd.AddCommand(&cobra.Command{
 			Use:   "stress",
-			Short: "Runs the logic used by crustzstress to test benchmarking",
+			Short: "Runs the logic used by zstress to test benchmarking",
 			RunE:  cmdF.Cmd(znet.Stress),
 		})
 
@@ -86,19 +89,15 @@ func main() {
 }
 
 func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUSTZNET_BIN_DIR", filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), "Path to directory where executables exist")
-}
-
-func addTargetFlag(cmd *cobra.Command, c *ioc.Container, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.Target, "target", defaultString("CRUSTZNET_TARGET", "docker"), "Target of the deployment: "+strings.Join(c.Names((*infra.Target)(nil)), " | "))
+	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUST_ZNET_BIN_DIR", filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable())))))), "Path to directory where executables exist")
 }
 
 func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.ModeName, "mode", defaultString("CRUSTZNET_MODE", "dev"), "List of applications to deploy: "+strings.Join(c.Names((*infra.Mode)(nil)), " | "))
+	cmd.Flags().StringVar(&configF.ModeName, "mode", defaultString("CRUST_ZNET_MODE", "dev"), "List of applications to deploy: "+strings.Join(c.Names((*infra.Mode)(nil)), " | "))
 }
 
 func addFilterFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringArrayVar(&configF.TestFilters, "filter", defaultFilters("CRUSTZNET_FILTERS"), "Regular expression used to filter tests to run")
+	cmd.Flags().StringArrayVar(&configF.TestFilters, "filter", defaultFilters("CRUST_ZNET_FILTERS"), "Regular expression used to filter tests to run")
 }
 
 func defaultString(env, def string) string {

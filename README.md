@@ -33,18 +33,15 @@ $ export PATH="$HOME/crust/bin:$PATH"
 $ $HOME/crust/bin/crust build
 ```
 
-After the command completes you may find new executables in the `$HOME/crust/bin` directory:
-- `cored`: blockchain node and client binary
-- `crustznet`: tool used to spin up local blockchain and tools
-- `crustzstress`: tool used to benchmark the blockchain network
+After the command completes you may find executable `$HOME/crust/bin/cored`, being both blockchain node and client.
 
 ### Start local chain
 
 To start local Coreum blockchain execute:
 
 ```
-$ $HOME/crust/bin/crustznet
-(crustznet) start
+$ $HOME/crust/bin/crust znet
+(znet) [znet] $ start
 ```
 
 After a while applications will be deployed to your docker:
@@ -54,33 +51,33 @@ After a while applications will be deployed to your docker:
 To stop and purge the testing environment run:
 
 ```
-$ $HOME/crust/bin/crustznet remove
+$ $HOME/crust/bin/crust znet remove
 ```
 
-To get all the details on how `crustznet` tool might be used, go to the [crust repository](https://github.com/CoreumFoundation/crust).
+To get all the details on how `znet` tool might be used, go to the [crust repository](https://github.com/CoreumFoundation/crust).
 
 ### Interact with the chain
 
-After entering `crustznet` console by executing:
+After entering `znet` console by executing:
 
 ```
-$ $HOME/crust/bin/crustznet
-(crustznet) $ start
+$ $HOME/crust/bin/crust znet
+(znet) [znet] $ start
 ```
 you may use client to interact with the chain:
 1. List pregenerated wallets:
 ```
-(crustznet) $ coredev-00 keys list
+(znet) [znet] $ coredev-00 keys list
 ```
 You may use those wallets to issue transactions and queries
 
 2. Query balances:
 ```
-(crustznet) $ coredev-00 q bank balances core1x645ym2yz4gckqjtpwr8yddqzkkzdpkt4dfrcc
+(znet) [znet] $ coredev-00 q bank balances core1x645ym2yz4gckqjtpwr8yddqzkkzdpkt4dfrcc
 ```
 Remember to replace address with the one existing in your keystore.
 
 3. Send tokens from one account to another:
 ```
-(crustznet) $ coredev-00 tx bank send alice core1cjs7qela0trw2qyyfxw5e5e7cvwzprkj0643h8 10core
+(znet) [znet] $ coredev-00 tx bank send alice core1cjs7qela0trw2qyyfxw5e5e7cvwzprkj0643h8 10core
 ```

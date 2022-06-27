@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	run.Tool("build", nil, func(ctx context.Context, c *ioc.Container) error {
+	run.Tool("crust", nil, func(ctx context.Context, c *ioc.Container) error {
 		flags := logger.Flags(logger.ToolDefaultConfig, "build")
 		if err := flags.Parse(os.Args[1:]); err != nil {
 			return err
@@ -26,11 +26,11 @@ func main() {
 		}
 
 		changeWorkingDir()
-		return build.Do(ctx, "coreum", flags.Args(), exec)
+		return build.Do(ctx, "crust", flags.Args(), exec)
 	})
 }
 
 // changeWorkingDir sets working dir to the root directory of repository
 func changeWorkingDir() {
-	must.OK(os.Chdir(filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable())))))))
+	must.OK(os.Chdir(filepath.Dir(filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))))))
 }
