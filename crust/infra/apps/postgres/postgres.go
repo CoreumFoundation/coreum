@@ -70,7 +70,7 @@ func (p Postgres) Info() infra.DeploymentInfo {
 	return p.appInfo.Info()
 }
 
-// HealthCheck checks if cored chain is ready to accept transactions
+// HealthCheck checks if postgres is ready to accept connections
 func (p Postgres) HealthCheck(ctx context.Context) error {
 	if p.appInfo.Info().Status != infra.AppStatusRunning {
 		return retry.Retryable(errors.Errorf("postgres hasn't started yet"))
