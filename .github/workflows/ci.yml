@@ -23,4 +23,4 @@ jobs:
       - name: Lint, run unit tests and build
         run: crust lint test build --log-format=yaml
       - name: Execute integration tests
-        run: crustznet test --log-format=yaml
+        run: crust znet test --log-format=yaml

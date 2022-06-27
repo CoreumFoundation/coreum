@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -33,21 +32,24 @@ type GenerateConfig struct {
 	// NumOfAccountsPerInstance is the maximum number of funded accounts per each instance used in the future during benchmarking
 	NumOfAccountsPerInstance int
 
+	// BinDirectory is the path to the directory where binaries exist
+	BinDirectory string
+
 	// OutDirectory is the path to the directory where generated files are stored
 	OutDirectory string
 }
 
 // Generate generates all the files required to deploy blockchain used for benchmarking
 func Generate(config GenerateConfig) error {
-	dir := config.OutDirectory + "/crustzstress-deployment"
-	if err := os.RemoveAll(dir); err != nil && !os.IsNotExist(err) {
+	outDir := config.OutDirectory + "/zstress-deployment"
+	if err := os.RemoveAll(outDir); err != nil && !os.IsNotExist(err) {
 		panic(err)
 	}
 
-	if err := generateDocker(dir, "cored"); err != nil {
+	if err := generateDocker(outDir, config.BinDirectory+"/linux/cored"); err != nil {
 		return err
 	}
-	if err := generateDocker(dir, "crustzstress"); err != nil {
+	if err := generateDocker(outDir, config.BinDirectory+"/.cache/linux/zstress"); err != nil {
 		return err
 	}
 
@@ -61,7 +63,7 @@ func Generate(config GenerateConfig) error {
 		must.OK(err)
 		stakerPublicKey, stakerPrivateKey := cored.GenerateSecp256k1Key()
 
-		valDir := fmt.Sprintf("%s/validators/%d", dir, i)
+		valDir := fmt.Sprintf("%s/validators/%d", outDir, i)
 
 		cored.NodeConfig{
 			Name:           fmt.Sprintf("validator-%d", i),
@@ -73,7 +75,7 @@ func Generate(config GenerateConfig) error {
 		genesis.AddWallet(stakerPublicKey, "100000000000000000000000core")
 		genesis.AddValidator(validatorPublicKey, stakerPrivateKey, "100000000core")
 	}
-	must.OK(ioutil.WriteFile(dir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
+	must.OK(ioutil.WriteFile(outDir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 
 	for i := 0; i < config.NumOfInstances; i++ {
 		accounts := make([]cored.Secp256k1PrivateKey, 0, config.NumOfAccountsPerInstance)
@@ -83,13 +85,13 @@ func Generate(config GenerateConfig) error {
 			genesis.AddWallet(accountPublicKey, "10000000000000000000000000000core")
 		}
 
-		instanceDir := fmt.Sprintf("%s/instances/%d", dir, i)
+		instanceDir := fmt.Sprintf("%s/instances/%d", outDir, i)
 		must.OK(os.MkdirAll(instanceDir, 0o700))
 		must.OK(ioutil.WriteFile(instanceDir+"/accounts.json", must.Bytes(json.Marshal(accounts)), 0o600))
 	}
 
 	for i := 0; i < config.NumOfValidators; i++ {
-		genesis.Save(fmt.Sprintf("%s/validators/%d", dir, i))
+		genesis.Save(fmt.Sprintf("%s/validators/%d", outDir, i))
 	}
 
 	nodeIDs = make([]string, 0, config.NumOfSentryNodes)
@@ -98,7 +100,7 @@ func Generate(config GenerateConfig) error {
 		must.OK(err)
 		nodeIDs = append(nodeIDs, cored.NodeID(nodePublicKey))
 
-		nodeDir := fmt.Sprintf("%s/sentry-nodes/%d", dir, i)
+		nodeDir := fmt.Sprintf("%s/sentry-nodes/%d", outDir, i)
 
 		cored.NodeConfig{
 			Name:           fmt.Sprintf("sentry-node-%d", i),
@@ -108,27 +110,22 @@ func Generate(config GenerateConfig) error {
 
 		genesis.Save(nodeDir)
 	}
-	must.OK(ioutil.WriteFile(dir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
+	must.OK(ioutil.WriteFile(outDir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 	return nil
 }
 
-func generateDocker(dir, tool string) error {
-	toolPath, err := exec.LookPath(tool)
-	if err != nil {
-		return errors.Wrapf(err, `can't find %[1]s binary, run "crust build/%[1]s" to build it`, tool)
-	}
-	toolPath = filepath.Dir(toolPath) + "/linux/" + tool
-
-	dockerDir := dir + "/docker-" + tool
+func generateDocker(outDir, toolPath string) error {
+	toolName := filepath.Base(toolPath)
+	dockerDir := outDir + "/docker-" + toolName
 	dockerDirBin := dockerDir + "/bin"
 	must.OK(os.MkdirAll(dockerDirBin, 0o700))
-	if err := os.Link(toolPath, dockerDirBin+"/"+tool); err != nil {
-		return errors.Wrapf(err, `can't find %[1]s binary, run "crust build/%[1]s" to build it`, tool)
+	if err := os.Link(toolPath, dockerDirBin+"/"+toolName); err != nil {
+		return errors.Wrapf(err, `can't find %[1]s binary, run "crust build/%[1]s" to build it`, toolName)
 	}
 
 	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM scratch
 COPY . .
-ENTRYPOINT ["`+tool+`"]
+ENTRYPOINT ["`+toolName+`"]
 `), 0o600))
 
 	return nil

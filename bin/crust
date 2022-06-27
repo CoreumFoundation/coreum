@@ -2,14 +2,41 @@
 
 set -e
 
-# set current working dir to "build"
-cd "$(dirname "${BASH_SOURCE[0]}")" || exit
-cd ../build
+# go to root dir of repository
+pushd "$(dirname "${BASH_SOURCE[0]}")/.." > /dev/null
+if [ ! -f ./bin/.cache/crust ]; then
+  pushd build > /dev/null
+  go build -trimpath -o ../bin/.cache/crust-tmp ./cmd
+  popd > /dev/null
 
-# FIXME (wojciech): add hashing mechanism to build library so code is not compiled if nothing has been changed
-# Chicken and egg problem, to build tool which downloads all the other ones (including go) we need go
-# Assuming for now, that new developer entering the team will just install any go version available in the distro
-# and than build tool will install the right one required by us
-go build -trimpath -o ../bin/crust-build ./cmd
+  ./bin/.cache/crust-tmp build/crust
+  rm -f ./bin/.cache/crust-tmp
+fi
 
-exec ../bin/crust-build "$@"
+REPO=$(pwd)
+popd > /dev/null
+
+case "$1" in
+
+   "znet")
+      if [ ! -f "$REPO/bin/.cache/znet" ]; then
+        "$REPO/bin/.cache/crust" build/znet
+      fi
+
+      shift 1
+      exec "$REPO/bin/.cache/znet" "$@"
+      ;;
+
+   "zstress")
+     if [ ! -f "$REPO/bin/.cache/zstress" ]; then
+       "$REPO/bin/.cache/crust" build/zstress
+     fi
+
+     shift 1
+     exec "$REPO/bin/.cache/zstress" "$@"
+     ;;
+
+   *)
+     exec "$REPO/bin/.cache/crust" "$@"
+     ;;
+esac
