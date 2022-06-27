@@ -225,7 +225,7 @@ type DeploymentInfo struct {
 	Ports map[string]int `json:"ports,omitempty"`
 }
 
-// Target represents target of deployment from the perspective of crustznet
+// Target represents target of deployment from the perspective of znet
 type Target interface {
 	// Deploy deploys mode to the target
 	Deploy(ctx context.Context, mode Mode) error

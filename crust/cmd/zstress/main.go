@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -18,11 +19,11 @@ import (
 
 const (
 	defaultChainID       = "corestress"
-	defaultNumOfAccounts = 1000
+	defaultNumOfAccounts = 100
 )
 
 func main() {
-	run.Tool("crustzstress", nil, func(ctx context.Context) error {
+	run.Tool("zstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
 		var accountFile string
 		var numOfAccounts int
@@ -66,11 +67,12 @@ func main() {
 			},
 		}
 		generateCmd.Flags().StringVar(&generateConfig.ChainID, "chain-id", defaultChainID, "ID of the chain to generate")
-		generateCmd.Flags().IntVar(&generateConfig.NumOfValidators, "validators", 16, "Number of validators present on the blockchain")
-		generateCmd.Flags().IntVar(&generateConfig.NumOfSentryNodes, "sentry-nodes", 16, "Number of sentry nodes to generate config for")
-		generateCmd.Flags().IntVar(&generateConfig.NumOfInstances, "instances", 32, "The maximum number of application instances used in the future during benchmarking")
+		generateCmd.Flags().IntVar(&generateConfig.NumOfValidators, "validators", 32, "Number of validators present on the blockchain")
+		generateCmd.Flags().IntVar(&generateConfig.NumOfSentryNodes, "sentry-nodes", 4, "Number of sentry nodes to generate config for")
+		generateCmd.Flags().IntVar(&generateConfig.NumOfInstances, "instances", 8, "The maximum number of application instances used in the future during benchmarking")
 		generateCmd.Flags().IntVar(&generateConfig.NumOfAccountsPerInstance, "accounts", defaultNumOfAccounts, "The maximum number of funded accounts per each instance used in the future during benchmarking")
-		generateCmd.Flags().StringVar(&generateConfig.OutDirectory, "out", must.String(os.Getwd()), "Path to the directory where generated files are stored")
+		generateCmd.Flags().StringVar(&generateConfig.BinDirectory, "bin-dir", filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), "Path to the directory where binaries exist")
+		generateCmd.Flags().StringVar(&generateConfig.OutDirectory, "out-dir", must.String(os.Getwd()), "Path to the directory where generated files are stored")
 		rootCmd.AddCommand(generateCmd)
 
 		return rootCmd.Execute()

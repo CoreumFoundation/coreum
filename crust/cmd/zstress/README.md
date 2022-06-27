@@ -1,59 +1,43 @@
-# crustzstress
-`crustzstress` is used to generate infrastructure for and run benchmarks to test the performance of the network of validators and sentry nodes.
+# zstress
+`zstress` is used to generate infrastructure for and run benchmarks to test the performance of the network of validators and sentry nodes.
 
 ## Building
 
-Build `crustzstress` using our [building system](../../../build).
-To build `crustzstress` use this command:
-
-```
-$ crust build/crustzstress
-```
-
-Also `cored` is required. Build it using this command:
+To use `zstress`, `cored` binary is required. If you haven't built it earlier do it by running:
 
 ```
 $ crust build/cored
 ```
-
-You may also build everything at once:
-
-```
-$ crust build
-```
-
-After doing this binaries are available in [bin](../../../bin).
-If you work on macOS, linux binaries are also created in [bin/linux](../../../bin/linux) which might be used to build
-docker images.
 
 ## Infrastructure for benchmarking
 
 This is how the infrastructure for testing is going to look like:
 - number of validators in different data centers, running `cored` docker containers
 - number of sentry nodes in different data centers, running `cored` docker containers
-- number of instances used to broadcast tons of transactions to sentry nodes in parallel, running `crustzstress` docker containers
+- number of instances used to broadcast tons of transactions to sentry nodes in parallel, running `zstress` docker containers
 
 ## Generation
 
-`crustzstress generate` command prepares all the files required by our DevOps department to create the infrastructure
+`crust zstress generate` command prepares all the files required by our DevOps department to create the infrastructure
 described above, including:
 - genesis configuration for validators and sentry nodes
 - private keys and configuration for validators and sentry nodes
 - files containing node IDs of validators and sentry nodes
 - private keys of wallets used to generate transactions on each instance
 - files to generate docker image of `cored`
-- files to generate docker image of `crustzstress`
+- files to generate docker image of `zstress`
 
-These are the CLI flags accepted by `crustzstress generate` command:
+These are the CLI flags accepted by `crust zstress generate` command:
 
-- `--out` - path to the directory where generated files are stored
+- `--out-dir` - path to the directory where generated files are stored
+- `--bin-dir` - path to the `bin` directory of repository where built binaries exist
 - `--chain-id` - ID of the chain to generate
 - `--accounts` - maximum number of funded accounts per each instance used in the future during benchmarking
 - `--validators` - number of validators present on the blockchain
 - `--sentry-nodes` - number of sentry nodes to generate config for
 - `--instances` - maximum number of application instances used in the future during benchmarking
 
-After running the command directory `crustzstress-deployment` is created under the path defined by `--out` option.
+After running the command, directory `zstress-deployment` is created under the path defined by `--out-dir` option.
 
 This is how its content looks like:
 - `validators` - contains configuration for each validator
@@ -63,13 +47,13 @@ This is how its content looks like:
 - `sentry-nodes` - contains configuration for each sentry node
 - `sentry-nodes/x/config` - should be mounted to `/config` inside `cored` docker container
 - `sentry-nodes/ids.json` - contains node IDs of sentry-nodes
-- `instances/x/accounts.json` - contains private keys of wallets funded in genesis block to be used by the instance broadcasting transactions, two instances must not (!!!) use the same file, file must be mounted inside `crustzstress` docker container
+- `instances/x/accounts.json` - contains private keys of wallets funded in genesis block to be used by the instance broadcasting transactions, two instances must not (!!!) use the same file, file must be mounted inside `zstress` docker container
 - `docker-cored` - files used to build `cored` docker container
-- `docker-crustzstress` - files used to build `crustzstress` docker container
+- `docker-zstress` - files used to build `zstress` docker container
 
 ## Benchmarking
 
-During benchmarks `crustzstress` command deployed to instances is used to broadcast transactions.
+During benchmarks `zstress` command deployed to instances is used to broadcast transactions.
 
 Accepted CLI config options are:
 - `--chain-id` - ID of the chain to connect to, this must match the chain ID used during generation
@@ -79,7 +63,7 @@ Accepted CLI config options are:
 - `--transactions` - number of transactions to send from each account
 
 Keep in mind that number of transactions specified by `--transactions` is executed concurrently by each account, so if you
-execute `crustzstress --accounts=1000 --transactions=1000` then the total number of 1 million transactions is executed.
+execute `zstress --accounts=1000 --transactions=1000` then the total number of 1 million transactions is executed.
 If you use 16 instances to run the benchmark then 16 millions of transactions is broadcasted to the blockchain all together.
 
 Accounts send transactions in parallel, so if you run an instance with 16 accounts then there are 16 goroutines,
