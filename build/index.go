@@ -7,7 +7,7 @@ var Commands = map[string]interface{}{
 	"build/cored":   buildCored,
 	"build/znet":    buildZNet,
 	"build/zstress": buildZStress,
-	"lint":          goLint,
+	"lint":          lint,
 	"setup":         installTools,
 	"test":          goTest,
 	"tidy":          goModTidy,
