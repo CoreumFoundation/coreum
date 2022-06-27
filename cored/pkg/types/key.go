@@ -1,18 +1,12 @@
 package types
 
 import (
-	"encoding/hex"
-
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Secp256k1PrivateKey is a secp256k1 private key
 type Secp256k1PrivateKey []byte
-
-func (s Secp256k1PrivateKey) ToHexString() string {
-	return hex.EncodeToString(s)
-}
 
 // PubKey returns public key for corresponding key
 func (key Secp256k1PrivateKey) PubKey() Secp256k1PublicKey {

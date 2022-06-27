@@ -18,17 +18,20 @@ import (
 )
 
 var (
+	// ErrChainIDNotDefined chain-id is not a predefined id
 	ErrChainIDNotDefined = errors.New("chain-id not defined")
 )
 
 type chainID string
 
+// Predefined chainIDs
 const (
 	Mainnet chainID = "coreum-mainnet"
 	Testnet chainID = "coreum-testnet"
 	Devnet  chainID = "coreum-devnet"
 )
 
+// Known TokenSymbols
 const (
 	TokenSymbol     string = "acore"
 	TokenSymbolTest string = "tacore"
@@ -86,6 +89,7 @@ var networks = map[chainID]Network{
 	},
 }
 
+// Network holds all the configuration for different predefined networks
 type Network struct {
 	ChainID             chainID
 	AddressPrefix       string
@@ -102,10 +106,15 @@ func (n Network) SetupPrefixes() {
 	cosmoscmd.SetPrefixes(n.AddressPrefix)
 }
 
+// GetGenesis creates the genesis file for the given network config
 func (n Network) GetGenesis() (*Genesis, error) {
 	interfaceRegistry := cdctypes.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
 	genesis, err := genesis(n.ChainID)
+	if err != nil {
+		return nil, err
+	}
+
 	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesis)
 	if err != nil {
 		return nil, err
@@ -132,7 +141,10 @@ func (n Network) GetGenesis() (*Genesis, error) {
 	}
 
 	for _, fundedAccount := range n.FundedAccounts {
-		g.FundAccount(fundedAccount.PubKey, fundedAccount.Balance)
+		err = g.FundAccount(fundedAccount.PubKey, fundedAccount.Balance)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return g, nil
