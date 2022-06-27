@@ -11,12 +11,12 @@ import (
 )
 
 func main() {
-	network, _ := config.GetNetworkByChainID(string(config.Devnet))
+	network, _ := config.GetNetworkByChainID(string(config.Mainnet))
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
 		network.AddressPrefix,
 		app.DefaultNodeHome,
-		string(network.ChainID),
+		app.Name,
 		app.ModuleBasics,
 		app.New,
 		// this line is used by starport scaffolding # root/arguments
