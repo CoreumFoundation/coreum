@@ -23,16 +23,16 @@ const initialBalance = "1000000000000000core"
 
 // Genesis is responsible for creating genesis configuration for coreum network
 type Genesis struct {
-	// clientCtx client.Context
-	codec        *codec.ProtoCodec
+	codec *codec.ProtoCodec
+
 	mu           *sync.Mutex
 	genesisDoc   *tmtypes.GenesisDoc
 	appState     map[string]json.RawMessage
-	genutilState *genutiltypes.GenesisState
-	authState    authtypes.GenesisState
+	finalized    bool
 	accountState authtypes.GenesisAccounts
 	bankState    *banktypes.GenesisState
-	finalized    bool
+	genutilState *genutiltypes.GenesisState
+	authState    authtypes.GenesisState
 }
 
 // ChainID returns ID of chain
@@ -113,19 +113,20 @@ func (g *Genesis) verifyNotFinalized() {
 	}
 }
 
-// MetadataTemplate contains hasura metadata template
 //go:embed genesis/genesis.tmpl.json
 var genesisTemplate string
 
-func genesis(id chainID) ([]byte, error) {
+func genesis(n network) ([]byte, error) {
 	genesisBuf := new(bytes.Buffer)
 
 	err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
 		GenesisTimeUTC string
-		ChainID        string
+		ChainID        chainID
+		TokenSymbol    string
 	}{
 		GenesisTimeUTC: time.Now().UTC().Format(time.RFC3339),
-		ChainID:        string(id),
+		ChainID:        n.ChainID,
+		TokenSymbol:    n.TokenSymbol,
 	})
 
 	return genesisBuf.Bytes(), err

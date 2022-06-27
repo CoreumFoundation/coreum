@@ -2,11 +2,11 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"sync"
+	"time"
 
 	"github.com/CoreumFoundation/coreum/cored/pkg/types"
+	"github.com/pkg/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -27,90 +27,59 @@ type chainID string
 // Predefined chainIDs
 const (
 	Mainnet chainID = "coreum-mainnet"
-	Testnet chainID = "coreum-testnet"
 	Devnet  chainID = "coreum-devnet"
 )
 
 // Known TokenSymbols
 const (
-	TokenSymbol     string = "acore"
+	// TODO (milad): rename TokenSymbol to acore or attocore
+	TokenSymbolMain string = "core"
 	TokenSymbolTest string = "tacore"
 )
 
-var networks = map[chainID]Network{
+var networks = map[chainID]network{
 	Mainnet: {
-		ChainID:       Mainnet,
-		AddressPrefix: "core",
-		TokenSymbol:   "acore",
+		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+		ChainID:        Mainnet,
+		AddressPrefix:  "core",
+		TokenSymbol:    TokenSymbolMain,
+		FundedAccounts: []FundedAccount{},
 	},
-	Testnet: {
-		ChainID:       Testnet,
-		AddressPrefix: "tcore",
-		TokenSymbol:   "tacore",
-		FundedAccounts: []struct {
-			PubKey  types.Secp256k1PublicKey
-			Balance string
-		}{
-			{
-				PubKey:  AlicePrivKey.PubKey(),
-				Balance: initialBalance,
-			},
-			{
-				PubKey:  BobPrivKey.PubKey(),
-				Balance: initialBalance,
-			},
-			{
-				PubKey:  CharliePrivKey.PubKey(),
-				Balance: initialBalance,
-			},
-		},
-	},
+
 	Devnet: {
-		ChainID:       Devnet,
-		AddressPrefix: "tcore",
-		TokenSymbol:   "tacore",
-		FundedAccounts: []struct {
-			PubKey  types.Secp256k1PublicKey
-			Balance string
-		}{
-			{
-				PubKey:  AlicePrivKey.PubKey(),
-				Balance: initialBalance,
-			},
-			{
-				PubKey:  BobPrivKey.PubKey(),
-				Balance: initialBalance,
-			},
-			{
-				PubKey:  CharliePrivKey.PubKey(),
-				Balance: initialBalance,
-			},
-		},
+		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+		ChainID:        Devnet,
+		AddressPrefix:  "tcore",
+		TokenSymbol:    TokenSymbolTest,
+		FundedAccounts: []FundedAccount{},
 	},
 }
 
-// Network holds all the configuration for different predefined networks
-type Network struct {
+// network holds all the configuration for different predefined networks
+type network struct {
+	GenesisTime         time.Time
 	ChainID             chainID
 	AddressPrefix       string
 	TokenSymbol         string
 	GenesisTransactions []json.RawMessage
-	FundedAccounts      []struct {
-		PubKey  types.Secp256k1PublicKey
-		Balance string
-	}
+	FundedAccounts      []FundedAccount
+}
+
+type FundedAccount struct {
+	PubKey  types.Secp256k1PublicKey
+	Balance string
 }
 
 // SetupPrefixes sets the global account prefixes config for cosmos sdk.
-func (n Network) SetupPrefixes() {
+func (n network) SetupPrefixes() {
 	cosmoscmd.SetPrefixes(n.AddressPrefix)
 }
 
 // GetGenesis creates the genesis file for the given network config
-func (n Network) GetGenesis() (*Genesis, error) {
+func (n network) GetGenesis() (*Genesis, error) {
 	interfaceRegistry := cdctypes.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
-	genesis, err := genesis(n.ChainID)
+	genesis, err := genesis(n)
 	if err != nil {
 		return nil, err
 	}
@@ -131,6 +100,7 @@ func (n Network) GetGenesis() (*Genesis, error) {
 		return nil, err
 	}
 	g := &Genesis{
+		codec:        codec,
 		mu:           &sync.Mutex{},
 		genesisDoc:   genesisDoc,
 		appState:     appState,
@@ -150,13 +120,13 @@ func (n Network) GetGenesis() (*Genesis, error) {
 	return g, nil
 }
 
-// GetNetworkByChainID returns config for a predefined config.
-// predefined networks are "coreum-mainnet", "coreum-testnet" and "coreum-devnet".
-func GetNetworkByChainID(id string) (Network, error) {
-	network, found := networks[chainID(id)]
+// NetworkByChainID returns config for a predefined config.
+// predefined networks are "coreum-mainnet" and "coreum-devnet".
+func NetworkByChainID(id string) (network, error) {
+	nw, found := networks[chainID(id)]
 	if !found {
-		return Network{}, fmt.Errorf("chain-id: %s, err: %w", id, ErrChainIDNotDefined)
+		return network{}, errors.Wrapf(ErrChainIDNotDefined, "chain-id: %s", id)
 	}
 
-	return network, nil
+	return nw, nil
 }

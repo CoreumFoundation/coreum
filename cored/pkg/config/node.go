@@ -63,16 +63,9 @@ func (nc NodeConfig) Save(homeDir string) error {
 	cfg.Mempool.Size = 50000
 	cfg.Mempool.MaxTxsBytes = 5368709120
 	cfg.Instrumentation.Prometheus = true
-	cfg.Instrumentation.PrometheusListenAddr = joinProtoIPPort("", net.IPv4zero, nc.PrometheusPort)
+	cfg.Instrumentation.PrometheusListenAddr = net.JoinHostPort(net.IPv4zero.String(), strconv.Itoa(nc.PrometheusPort))
 	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
 	return nil
-}
-
-func joinProtoIPPort(proto string, ip net.IP, port int) string {
-	if proto != "" {
-		proto += "://"
-	}
-	return proto + net.JoinHostPort(ip.String(), strconv.Itoa(port))
 }
 
 // NodeID computes node ID from node public key

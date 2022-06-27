@@ -11,10 +11,13 @@ import (
 )
 
 func main() {
-	network, _ := config.GetNetworkByChainID(string(config.Mainnet))
+	net, err := config.NetworkByChainID(string(config.Mainnet))
+	if err != nil {
+		panic(err)
+	}
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
-		network.AddressPrefix,
+		net.AddressPrefix,
 		app.DefaultNodeHome,
 		app.Name,
 		app.ModuleBasics,
