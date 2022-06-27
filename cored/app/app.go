@@ -397,7 +397,7 @@ func New(
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
-		wasmconfig.DefaultConfig().ToWasmConfig(),
+		wasmconfig.DefaultWASMConfig(),
 		supportedFeatures,
 		GetWasmOpts(appOpts)...,
 	)
