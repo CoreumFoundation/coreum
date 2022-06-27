@@ -50,7 +50,7 @@ func (vc NodeConfig) Save(homeDir string) {
 	cfg.Mempool.Size = 50000
 	cfg.Mempool.MaxTxsBytes = 5368709120
 	cfg.Instrumentation.Prometheus = true
-	cfg.Instrumentation.PrometheusListenAddr = infra.JoinProtoIPPort("", net.IPv4zero, vc.PrometheusPort)
+	cfg.Instrumentation.PrometheusListenAddr = infra.JoinNetAddrIP("", net.IPv4zero, vc.PrometheusPort)
 	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
 }
 

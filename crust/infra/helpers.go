@@ -69,12 +69,17 @@ func (hc isRunningHealthCheck) HealthCheck(ctx context.Context) error {
 	return retry.Retryable(errors.New("application hasn't been started yet"))
 }
 
-// JoinProtoIPPort joins protocol, ip and port
-func JoinProtoIPPort(proto string, ip net.IP, port int) string {
+// JoinNetAddr joins protocol, hostname and port
+func JoinNetAddr(proto, hostname string, port int) string {
 	if proto != "" {
 		proto += "://"
 	}
-	return proto + net.JoinHostPort(ip.String(), strconv.Itoa(port))
+	return proto + net.JoinHostPort(hostname, strconv.Itoa(port))
+}
+
+// JoinNetAddrIP joins protocol, IP and port
+func JoinNetAddrIP(proto string, ip net.IP, port int) string {
+	return JoinNetAddr(proto, ip.String(), port)
 }
 
 // PortsToMap converts structure containing port numbers to a map

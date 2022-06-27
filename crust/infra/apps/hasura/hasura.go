@@ -79,7 +79,7 @@ func (h Hasura) Deployment() infra.Deployment {
 			ArgsFunc: func() []string {
 				return []string{
 					"graphql-engine",
-					"--host", h.postgres.Info().FromContainerIP.String(),
+					"--host", h.postgres.Info().HostFromContainer,
 					"--port", strconv.Itoa(h.postgres.Port()),
 					"--user", postgres.User,
 					"--dbname", postgres.DB,
@@ -97,12 +97,12 @@ func (h Hasura) Deployment() infra.Deployment {
 			Requires: infra.Prerequisites{
 				Timeout: 20 * time.Second,
 				Dependencies: []infra.HealthCheckCapable{
-					infra.IsRunning(h.postgres),
+					h.postgres,
 				},
 			},
 			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 				metadata := h.prepareMetadata()
-				metaURL := url.URL{Scheme: "http", Host: infra.JoinProtoIPPort("", deployment.FromHostIP, h.port), Path: "/v1/metadata"}
+				metaURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", deployment.HostFromHost, h.port), Path: "/v1/metadata"}
 
 				log := logger.Get(ctx)
 				log.Info("Loading metadata")
@@ -123,7 +123,7 @@ func (h Hasura) prepareMetadata() []byte {
 	must.OK(template.Must(template.New("metadata").Parse(h.metadataTemplate)).Execute(metadataBuf, struct {
 		DatabaseURL string
 	}{
-		DatabaseURL: "postgresql://" + postgres.User + "@" + infra.JoinProtoIPPort("", h.postgres.Info().FromContainerIP, h.postgres.Port()) + "/" + postgres.DB,
+		DatabaseURL: "postgresql://" + postgres.User + "@" + infra.JoinNetAddr("", h.postgres.Info().HostFromContainer, h.postgres.Port()) + "/" + postgres.DB,
 	}))
 	reqData := struct {
 		Type    string          `json:"type"`

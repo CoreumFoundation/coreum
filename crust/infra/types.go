@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"runtime"
 	"sync"
@@ -209,11 +208,11 @@ type DeploymentInfo struct {
 	// Container stores the name of the docker container where app is running - present only for apps running in docker
 	Container string `json:"container,omitempty"`
 
-	// FromHostIP is the host's IP application binds to
-	FromHostIP net.IP `json:"fromHostIP,omitempty"` // nolint:tagliatelle // it wants fromHostIp
+	// HostFromHost is the host's hostname application binds to
+	HostFromHost string `json:"hostFromHost,omitempty"`
 
-	// FromContainerIP is the IP of the container application is running in
-	FromContainerIP net.IP `json:"fromContainerIP,omitempty"` // nolint:tagliatelle // it wants fromContainerIp
+	// HostFromContainer is the container's hostname application is listening on
+	HostFromContainer string `json:"hostFromContainer,omitempty"`
 
 	// Status indicates the status of the application
 	Status AppStatus `json:"status"`

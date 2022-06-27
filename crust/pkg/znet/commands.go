@@ -262,7 +262,7 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 
 	return zstress.Stress(ctx, zstress.StressConfig{
 		ChainID:           coredNode.ChainID(),
-		NodeAddress:       infra.JoinProtoIPPort("", coredNode.Info().FromHostIP, coredNode.Ports().RPC),
+		NodeAddress:       infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
 		Accounts:          cored.RandomWallets[:10],
 		NumOfTransactions: 100,
 	})

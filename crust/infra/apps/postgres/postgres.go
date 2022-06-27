@@ -70,6 +70,30 @@ func (p Postgres) Info() infra.DeploymentInfo {
 	return p.appInfo.Info()
 }
 
+// HealthCheck checks if postgres is ready to accept connections
+func (p Postgres) HealthCheck(ctx context.Context) error {
+	if p.appInfo.Info().Status != infra.AppStatusRunning {
+		return retry.Retryable(errors.Errorf("postgres hasn't started yet"))
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	connStr := "postgres://" + User + "@" + infra.JoinNetAddr("", p.appInfo.Info().HostFromHost, p.port) + "/" + DB
+	db, err := pgx.Connect(ctx, connStr)
+	if err != nil {
+		return retry.Retryable(errors.WithStack(err))
+	}
+
+	if err := db.Ping(ctx); err != nil {
+		return errors.WithStack(err)
+	}
+
+	time.Sleep(10 * time.Second)
+
+	return retry.Retryable(errors.WithStack(db.Close(ctx)))
+}
+
 // Deployment returns deployment of postgres
 func (p Postgres) Deployment() infra.Deployment {
 	return infra.Container{
@@ -110,7 +134,7 @@ func (p Postgres) Deployment() infra.Deployment {
 
 				log := logger.Get(ctx)
 
-				db, err := p.dbConnection(ctx, deployment.FromHostIP)
+				db, err := p.dbConnection(ctx, deployment.HostFromHost)
 				if err != nil {
 					return err
 				}
@@ -129,8 +153,8 @@ func (p Postgres) Deployment() infra.Deployment {
 	}
 }
 
-func (p Postgres) dbConnection(ctx context.Context, serverIP net.IP) (*pgx.Conn, error) {
-	connStr := "postgres://" + User + "@" + infra.JoinProtoIPPort("", serverIP, p.port) + "/" + DB
+func (p Postgres) dbConnection(ctx context.Context, hostname string) (*pgx.Conn, error) {
+	connStr := "postgres://" + User + "@" + infra.JoinNetAddr("", hostname, p.port) + "/" + DB
 	logger.Get(ctx).Info("Connecting to the database server", zap.String("connectionString", connStr))
 
 	var db *pgx.Conn
