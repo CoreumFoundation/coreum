@@ -7,14 +7,16 @@ import (
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/cored/pkg/config"
 )
 
 func main() {
+	network, _ := config.GetNetworkByChainID(string(config.Devnet))
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
-		app.AccountAddressPrefix,
+		network.AddressPrefix,
 		app.DefaultNodeHome,
-		app.Name,
+		string(network.ChainID),
 		app.ModuleBasics,
 		app.New,
 		// this line is used by starport scaffolding # root/arguments

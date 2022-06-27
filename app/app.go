@@ -103,9 +103,6 @@ import (
 )
 
 const (
-	// AccountAddressPrefix is the prefix of addresses on the blockchain
-	AccountAddressPrefix = "core"
-
 	// Name is the blockchain name
 	Name = "core"
 )
