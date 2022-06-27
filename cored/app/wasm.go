@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cast"
 )
 
-// GetEnabledProposals get enabled proposals
-func GetEnabledProposals() []wasm.ProposalType {
+// GetWASMEnabledProposals get enabled proposals
+func GetWASMEnabledProposals() []wasm.ProposalType {
 	return wasm.EnableAllProposals
 }
 
