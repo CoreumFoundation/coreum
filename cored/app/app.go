@@ -399,7 +399,6 @@ func New(
 		wasmDir,
 		wasmconfig.DefaultWASMConfig(),
 		supportedFeatures,
-		GetWasmOpts(appOpts)...,
 	)
 
 	// register wasm gov proposal types
