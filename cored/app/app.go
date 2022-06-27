@@ -401,7 +401,6 @@ func New(
 		supportedFeatures,
 	)
 
-	// register wasm gov proposal types
 	enabledProposals := wasm.EnableAllProposals
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WASMKeeper, enabledProposals))
