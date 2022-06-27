@@ -43,7 +43,7 @@ var networks = map[chainID]network{
 		ChainID:        Mainnet,
 		AddressPrefix:  "core",
 		TokenSymbol:    TokenSymbolMain,
-		FundedAccounts: []FundedAccount{},
+		FundedAccounts: []fundedAccount{},
 	},
 
 	Devnet: {
@@ -51,7 +51,7 @@ var networks = map[chainID]network{
 		ChainID:        Devnet,
 		AddressPrefix:  "tcore",
 		TokenSymbol:    TokenSymbolTest,
-		FundedAccounts: []FundedAccount{},
+		FundedAccounts: []fundedAccount{},
 	},
 }
 
@@ -62,10 +62,10 @@ type network struct {
 	AddressPrefix       string
 	TokenSymbol         string
 	GenesisTransactions []json.RawMessage
-	FundedAccounts      []FundedAccount
+	FundedAccounts      []fundedAccount
 }
 
-type FundedAccount struct {
+type fundedAccount struct {
 	PubKey  types.Secp256k1PublicKey
 	Balance string
 }
@@ -75,8 +75,8 @@ func (n network) SetupPrefixes() {
 	cosmoscmd.SetPrefixes(n.AddressPrefix)
 }
 
-// GetGenesis creates the genesis file for the given network config
-func (n network) GetGenesis() (*Genesis, error) {
+// Genesis creates the genesis file for the given network config
+func (n network) Genesis() (*Genesis, error) {
 	interfaceRegistry := cdctypes.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
 	genesis, err := genesis(n)
