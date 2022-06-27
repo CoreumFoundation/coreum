@@ -58,7 +58,6 @@ func goLint(ctx context.Context, deps build.DepsFunc) error {
 	if err != nil {
 		return err
 	}
-	deps(goModTidy, gitStatusClean)
 	return nil
 }
 
@@ -94,6 +93,9 @@ func goModTidy(ctx context.Context, deps build.DepsFunc) error {
 func onModule(fn func(path string) error) error {
 	for _, repoPath := range repositories {
 		err := filepath.WalkDir(repoPath, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
 			if d.IsDir() || d.Name() != "go.mod" {
 				return nil
 			}
