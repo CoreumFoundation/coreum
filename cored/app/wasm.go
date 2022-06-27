@@ -8,11 +8,6 @@ import (
 	"github.com/spf13/cast"
 )
 
-// GetWASMEnabledProposals get enabled proposals
-func GetWASMEnabledProposals() []wasm.ProposalType {
-	return wasm.EnableAllProposals
-}
-
 // GetWasmOpts build wasm options
 func GetWasmOpts(appOpts servertypes.AppOptions) []wasm.Option {
 	var wasmOpts []wasm.Option
