@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -17,17 +18,12 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-var (
-	// ErrChainIDNotDefined chain-id is not a predefined id
-	ErrChainIDNotDefined = errors.New("chain-id not defined")
-)
-
-type chainID string
+type ChainID string
 
 // Predefined chainIDs
 const (
-	Mainnet chainID = "coreum-mainnet"
-	Devnet  chainID = "coreum-devnet"
+	Mainnet ChainID = "coreum-mainnet"
+	Devnet  ChainID = "coreum-devnet"
 )
 
 // Known TokenSymbols
@@ -37,7 +33,7 @@ const (
 	TokenSymbolDev  string = "dacore"
 )
 
-var networks = map[chainID]network{
+var networks = map[ChainID]Network{
 	Mainnet: {
 		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		ChainID:        Mainnet,
@@ -55,10 +51,10 @@ var networks = map[chainID]network{
 	},
 }
 
-// network holds all the configuration for different predefined networks
-type network struct {
+// Network holds all the configuration for different predefined networks
+type Network struct {
 	GenesisTime         time.Time
-	ChainID             chainID
+	ChainID             ChainID
 	AddressPrefix       string
 	TokenSymbol         string
 	GenesisTransactions []json.RawMessage
@@ -71,12 +67,12 @@ type fundedAccount struct {
 }
 
 // SetupPrefixes sets the global account prefixes config for cosmos sdk.
-func (n network) SetupPrefixes() {
+func (n Network) SetupPrefixes() {
 	cosmoscmd.SetPrefixes(n.AddressPrefix)
 }
 
 // Genesis creates the genesis file for the given network config
-func (n network) Genesis() (*Genesis, error) {
+func (n Network) Genesis() (*Genesis, error) {
 	interfaceRegistry := cdctypes.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
 	genesis, err := genesis(n)
@@ -122,10 +118,10 @@ func (n network) Genesis() (*Genesis, error) {
 
 // NetworkByChainID returns config for a predefined config.
 // predefined networks are "coreum-mainnet" and "coreum-devnet".
-func NetworkByChainID(id string) (network, error) {
-	nw, found := networks[chainID(id)]
+func NetworkByChainID(id string) (Network, error) {
+	nw, found := networks[ChainID(id)]
 	if !found {
-		return network{}, errors.Wrapf(ErrChainIDNotDefined, "chain-id: %s", id)
+		return Network{}, errors.New(fmt.Sprintf("chainID %s not found", nw.ChainID))
 	}
 
 	return nw, nil

@@ -7,24 +7,25 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func TestGenesisValidation(t *testing.T) {
 	assert := assert.New(t)
+	require := require.New(t)
 	dirPath, err := ioutil.TempDir("", "genesis_test")
 	defer os.RemoveAll(dirPath)
 
 	n, err := NetworkByChainID(string(Devnet))
-	assert.NoError(err)
+	require.NoError(err)
 
 	gen, err := n.Genesis()
-	assert.NoError(err)
-	err = gen.Save(dirPath)
-	assert.NoError(err)
+	require.NoError(err)
+	require.NoError(gen.Save(dirPath))
 
 	parsedGenesisDoc, err := tmtypes.GenesisDocFromFile(dirPath + "/config/genesis.json")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.EqualValues(parsedGenesisDoc.ChainID, gen.genesisDoc.ChainID)
 	assert.EqualValues(parsedGenesisDoc.ConsensusParams, gen.genesisDoc.ConsensusParams)
 	assert.EqualValues(parsedGenesisDoc.GenesisTime, gen.genesisDoc.GenesisTime)

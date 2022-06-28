@@ -116,12 +116,12 @@ func (g *Genesis) verifyNotFinalized() {
 //go:embed genesis/genesis.tmpl.json
 var genesisTemplate string
 
-func genesis(n network) ([]byte, error) {
+func genesis(n Network) ([]byte, error) {
 	genesisBuf := new(bytes.Buffer)
 
 	err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
 		GenesisTimeUTC string
-		ChainID        chainID
+		ChainID        ChainID
 		TokenSymbol    string
 	}{
 		GenesisTimeUTC: n.GenesisTime.UTC().Format(time.RFC3339),
