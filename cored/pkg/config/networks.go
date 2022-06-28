@@ -29,6 +29,7 @@ const (
 // Known TokenSymbols
 const (
 	// TODO (milad): rename TokenSymbol to acore or attocore
+	// naming is coming from https://en.wikipedia.org/wiki/Metric_prefix
 	TokenSymbolMain string = "core"
 	TokenSymbolDev  string = "dacore"
 )
