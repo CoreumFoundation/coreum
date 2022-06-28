@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+// ChainID represents predefined chain-ids
 type ChainID string
 
 // Predefined chainIDs
@@ -121,7 +121,7 @@ func (n Network) Genesis() (*Genesis, error) {
 func NetworkByChainID(id string) (Network, error) {
 	nw, found := networks[ChainID(id)]
 	if !found {
-		return Network{}, errors.New(fmt.Sprintf("chainID %s not found", nw.ChainID))
+		return Network{}, errors.Errorf("chainID %s not found", nw.ChainID)
 	}
 
 	return nw, nil

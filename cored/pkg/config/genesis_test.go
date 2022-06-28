@@ -15,7 +15,8 @@ func TestGenesisValidation(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	dirPath, err := ioutil.TempDir("", "genesis_test")
-	defer os.RemoveAll(dirPath)
+	require.NoError(err)
+	defer require.NoError(os.RemoveAll(dirPath))
 
 	n, err := NetworkByChainID(string(Devnet))
 	require.NoError(err)
