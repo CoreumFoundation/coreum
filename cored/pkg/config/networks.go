@@ -34,7 +34,7 @@ const (
 const (
 	// TODO (milad): rename TokenSymbol to acore or attocore
 	TokenSymbolMain string = "core"
-	TokenSymbolTest string = "tacore"
+	TokenSymbolDev  string = "dacore"
 )
 
 var networks = map[chainID]network{
@@ -49,8 +49,8 @@ var networks = map[chainID]network{
 	Devnet: {
 		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		ChainID:        Devnet,
-		AddressPrefix:  "tcore",
-		TokenSymbol:    TokenSymbolTest,
+		AddressPrefix:  "devcore",
+		TokenSymbol:    TokenSymbolDev,
 		FundedAccounts: []fundedAccount{},
 	},
 }

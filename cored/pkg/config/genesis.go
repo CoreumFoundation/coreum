@@ -23,10 +23,10 @@ const initialBalance = "1000000000000000core"
 
 // Genesis is responsible for creating genesis configuration for coreum network
 type Genesis struct {
-	codec *codec.ProtoCodec
+	codec      *codec.ProtoCodec
+	genesisDoc *tmtypes.GenesisDoc
 
 	mu           *sync.Mutex
-	genesisDoc   *tmtypes.GenesisDoc
 	appState     map[string]json.RawMessage
 	finalized    bool
 	accountState authtypes.GenesisAccounts
@@ -124,7 +124,7 @@ func genesis(n network) ([]byte, error) {
 		ChainID        chainID
 		TokenSymbol    string
 	}{
-		GenesisTimeUTC: time.Now().UTC().Format(time.RFC3339),
+		GenesisTimeUTC: n.GenesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.ChainID,
 		TokenSymbol:    n.TokenSymbol,
 	})
