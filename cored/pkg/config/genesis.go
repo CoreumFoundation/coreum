@@ -19,8 +19,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-const initialBalance = "1000000000000000core"
-
 // Genesis is responsible for creating genesis configuration for coreum network
 type Genesis struct {
 	codec      *codec.ProtoCodec
