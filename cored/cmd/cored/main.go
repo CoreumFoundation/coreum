@@ -6,12 +6,18 @@ import (
 	"github.com/CoreumFoundation/coreum/cored/app"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
+
+	"github.com/CoreumFoundation/coreum/cored/pkg/config"
 )
 
 func main() {
+	net, err := config.NetworkByChainID(string(config.Mainnet))
+	if err != nil {
+		panic(err)
+	}
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
-		app.AccountAddressPrefix,
+		net.AddressPrefix,
 		app.DefaultNodeHome,
 		app.Name,
 		app.ModuleBasics,
