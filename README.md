@@ -5,7 +5,7 @@ Coreum’s unique approach is to provide built-in, on-chain solutions to process
 
 The chain is designed to solve real-world problems at scale by providing native token management systems, Decentralized Exchange (DEX), while being fully decentralized. In addition to the built-on-chain solutions, Coreum uses WebAssembly (WASM) to process smart contracts, and utilizes the Tendermint Byzantine Fault Tolerance (BFT) consensus mechanism and Cosmos SDK’s proven Bonded Proof of Stake (BPoS).    
 
-Read more on [our website](https://www.coreum.com).
+Read more on [our website](https://www.coreum.com) and [documentation portal](https://docs.coreum.dev).
 
 ## Build and Play
 
