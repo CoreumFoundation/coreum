@@ -1,4 +1,4 @@
-module github.com/CoreumFoundation/coreum/cored
+module github.com/CoreumFoundation/coreum
 
 go 1.16
 

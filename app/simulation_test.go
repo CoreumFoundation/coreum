@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/CoreumFoundation/coreum/cored/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -15,6 +14,8 @@ import (
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/CoreumFoundation/coreum/app"
 )
 
 func init() {
