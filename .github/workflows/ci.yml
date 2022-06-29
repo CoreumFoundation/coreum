@@ -18,9 +18,7 @@ jobs:
       - name: Set up crust
         run: |
           cd ..
-          test -d ./coreum || ln -s ./crust ./coreum # remove once coreum repo is public
-          test -d ./crust || ln -s ./coreum ./crust # remove once crust repo is public
-          test -d ./crust || git clone https://github.com/CoreumFoundation/crust.git 
+          git clone https://github.com/CoreumFoundation/crust.git 
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint, run unit tests and build
         run: crust lint test build --log-format=yaml
