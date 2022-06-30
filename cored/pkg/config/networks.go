@@ -5,11 +5,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CoreumFoundation/coreum/cored/app"
 	"github.com/CoreumFoundation/coreum/cored/pkg/types"
 	"github.com/pkg/errors"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -22,8 +21,8 @@ type ChainID string
 
 // Predefined chainIDs
 const (
-	Mainnet ChainID = "coreum-mainnet"
-	Devnet  ChainID = "coreum-devnet"
+	Mainnet ChainID = "coreum-mainnet-1"
+	Devnet  ChainID = "coreum-devnet-1"
 )
 
 // Known TokenSymbols
@@ -74,8 +73,8 @@ func (n Network) SetupPrefixes() {
 
 // Genesis creates the genesis file for the given network config
 func (n Network) Genesis() (*Genesis, error) {
-	interfaceRegistry := cdctypes.NewInterfaceRegistry()
-	codec := codec.NewProtoCodec(interfaceRegistry)
+	encCfg := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+	codec := encCfg.Marshaler
 	genesis, err := genesis(n)
 	if err != nil {
 		return nil, err
@@ -119,7 +118,7 @@ func (n Network) Genesis() (*Genesis, error) {
 
 // NetworkByChainID returns config for a predefined config.
 // predefined networks are "coreum-mainnet" and "coreum-devnet".
-func NetworkByChainID(id string) (Network, error) {
+func NetworkByChainID(id ChainID) (Network, error) {
 	nw, found := networks[ChainID(id)]
 	if !found {
 		return Network{}, errors.Errorf("chainID %s not found", nw.ChainID)

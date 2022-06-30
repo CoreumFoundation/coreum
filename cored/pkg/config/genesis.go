@@ -10,18 +10,21 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum/cored/pkg/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	tmjson "github.com/tendermint/tendermint/libs/json"
+	tmos "github.com/tendermint/tendermint/libs/os"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // Genesis is responsible for creating genesis configuration for coreum network
 type Genesis struct {
-	codec      *codec.ProtoCodec
+	codec      codec.Codec
 	genesisDoc *tmtypes.GenesisDoc
 
 	mu           *sync.Mutex
@@ -69,18 +72,16 @@ func (g *Genesis) AddGenesisTx(signedTx json.RawMessage) {
 }
 
 // Save saves genesis configuration
-func (g *Genesis) Save(homeDir string) error {
+func (g *Genesis) EncodeAsJSON() ([]byte, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-
-	g.finalized = true
 
 	genutiltypes.SetGenesisStateInAppState(g.codec, g.appState, g.genutilState)
 
 	var err error
 	g.authState.Accounts, err = authtypes.PackAccounts(authtypes.SanitizeGenesisAccounts(g.accountState))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	g.appState[authtypes.ModuleName] = g.codec.MustMarshalJSON(&g.authState)
 
@@ -88,6 +89,21 @@ func (g *Genesis) Save(homeDir string) error {
 	g.appState[banktypes.ModuleName] = g.codec.MustMarshalJSON(g.bankState)
 
 	g.genesisDoc.AppState, err = json.MarshalIndent(g.appState, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	return tmjson.MarshalIndent(g.genesisDoc, "", "  ")
+}
+
+// Save saves genesis configuration
+func (g *Genesis) Save(homeDir string) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	g.finalized = true
+
+	genDocBytes, err := g.EncodeAsJSON()
 	if err != nil {
 		return err
 	}
@@ -97,12 +113,7 @@ func (g *Genesis) Save(homeDir string) error {
 		return err
 	}
 
-	err = g.genesisDoc.SaveAs(homeDir + "/config/genesis.json")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return tmos.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
 }
 
 func (g *Genesis) verifyNotFinalized() {

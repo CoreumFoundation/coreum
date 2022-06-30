@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	net, err := config.NetworkByChainID(string(config.Mainnet))
+	net, err := config.NetworkByChainID(config.Mainnet)
 	if err != nil {
 		panic(err)
 	}
