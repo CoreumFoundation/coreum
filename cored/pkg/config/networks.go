@@ -119,7 +119,7 @@ func (n Network) Genesis() (*Genesis, error) {
 // NetworkByChainID returns config for a predefined config.
 // predefined networks are "coreum-mainnet" and "coreum-devnet".
 func NetworkByChainID(id ChainID) (Network, error) {
-	nw, found := networks[ChainID(id)]
+	nw, found := networks[id]
 	if !found {
 		return Network{}, errors.Errorf("chainID %s not found", nw.ChainID)
 	}

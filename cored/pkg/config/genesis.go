@@ -71,7 +71,7 @@ func (g *Genesis) AddGenesisTx(signedTx json.RawMessage) {
 	g.genutilState.GenTxs = append(g.genutilState.GenTxs, signedTx)
 }
 
-// Save saves genesis configuration
+// EncodeAsJSON returns json encoded representation
 func (g *Genesis) EncodeAsJSON() ([]byte, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()

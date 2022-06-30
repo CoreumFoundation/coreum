@@ -72,14 +72,16 @@ func TestAddFundsToGenesis(t *testing.T) {
 	requireT.NoError(err)
 
 	pubKey, _ := types.GenerateSecp256k1Key()
-	gen.FundAccount(pubKey, "1000someTestToken")
+	requireT.NoError(gen.FundAccount(pubKey, "1000someTestToken"))
 
 	secp256k1 := cosmossecp256k1.PubKey{Key: pubKey}
 	accountAddress := sdk.AccAddress(secp256k1.Address())
 
 	genDocBytes, err := gen.EncodeAsJSON()
+	requireT.NoError(err)
 
 	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
+	requireT.NoError(err)
 
 	type balance struct {
 		Address string `json:"address"`
