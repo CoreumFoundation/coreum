@@ -5,12 +5,12 @@ Coreum’s unique approach is to provide built-in, on-chain solutions to process
 
 The chain is designed to solve real-world problems at scale by providing native token management systems, Decentralized Exchange (DEX), while being fully decentralized. In addition to the built-on-chain solutions, Coreum uses WebAssembly (WASM) to process smart contracts, and utilizes the Tendermint Byzantine Fault Tolerance (BFT) consensus mechanism and Cosmos SDK’s proven Bonded Proof of Stake (BPoS).    
 
-Read more on [our website](https://www.coreum.com).
+Read more on [our website](https://www.coreum.com) and [documentation portal](https://docs.coreum.dev).
 
 ## Build and Play
 
 Coreum blockchain is under development and all the features are going to be added progressively over time.
-No official devnet exists at the moment but everyone is encouraged to run a chain locally for development and testing purposes.
+Everyone is encouraged to run a chain locally for development and testing purposes.
 
 Entire process of running local chain is automated by our tooling. The only prerequisites are:
 - `docker` and `tmux` installed from your favorite package manager
@@ -81,3 +81,13 @@ Remember to replace address with the one existing in your keystore.
 ```
 (znet) [znet] $ coredev-00 tx bank send alice core1cjs7qela0trw2qyyfxw5e5e7cvwzprkj0643h8 10core
 ```
+
+## Devnet
+
+You may connect to Coreum devnet network by connecting to host `35.223.81.227` on port `26657`:
+
+```
+$ cored status --node=tcp://35.223.81.227:26657
+```
+
+Block explorer for devnet is available at [https://explorer.coreum.com](https://explorer.coreum.com)
