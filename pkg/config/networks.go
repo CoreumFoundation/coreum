@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/cored/app"
-	"github.com/CoreumFoundation/coreum/cored/pkg/types"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

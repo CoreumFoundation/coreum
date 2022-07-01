@@ -7,7 +7,7 @@ import (
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/cored/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 func main() {

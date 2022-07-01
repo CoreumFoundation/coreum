@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/cored/pkg/types"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
