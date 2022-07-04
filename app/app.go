@@ -101,8 +101,7 @@ import (
 	monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 	monitoringptypes "github.com/tendermint/spn/x/monitoringp/types"
 
-	"github.com/CoreumFoundation/coreum/cored/app/wasmconfig"
-	"github.com/CoreumFoundation/coreum/cored/docs"
+	"github.com/CoreumFoundation/coreum/app/wasmconfig"
 	"github.com/CoreumFoundation/coreum/docs"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
