@@ -15,7 +15,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	network.SetupPrefixes()
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
 		network.AddressPrefix(),

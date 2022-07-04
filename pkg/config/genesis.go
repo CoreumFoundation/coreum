@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
@@ -32,6 +33,7 @@ import (
 type Genesis struct {
 	codec        codec.Codec
 	genesisDoc   *tmtypes.GenesisDoc
+	mu           *sync.Mutex
 	appState     map[string]json.RawMessage
 	accountState authtypes.GenesisAccounts
 	bankState    *banktypes.GenesisState
@@ -46,6 +48,8 @@ func (g Genesis) ChainID() string {
 
 // FundAccount funds address with balances at genesis
 func (g *Genesis) FundAccount(publicKey types.Secp256k1PublicKey, balances string) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
 	pubKey := cosmossecp256k1.PubKey{Key: publicKey}
 	accountAddress := sdk.AccAddress(pubKey.Address())
 	g.accountState = append(g.accountState, authtypes.NewBaseAccount(accountAddress, nil, 0, 0))
@@ -61,11 +65,15 @@ func (g *Genesis) FundAccount(publicKey types.Secp256k1PublicKey, balances strin
 
 // AddGenesisTx adds transaction to the genesis file
 func (g *Genesis) AddGenesisTx(signedTx json.RawMessage) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
 	g.genutilState.GenTxs = append(g.genutilState.GenTxs, signedTx)
 }
 
 // EncodeAsJSON returns json encoded representation
 func (g *Genesis) EncodeAsJSON() ([]byte, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
 	genutiltypes.SetGenesisStateInAppState(g.codec, g.appState, g.genutilState)
 	var err error
 	g.authState.Accounts, err = authtypes.PackAccounts(authtypes.SanitizeGenesisAccounts(g.accountState))
@@ -107,7 +115,6 @@ func (g *Genesis) Save(homeDir string) error {
 
 // GenerateAddValidatorTx generates transaction of type MsgCreateValidator
 func GenerateAddValidatorTx(
-	g *Genesis,
 	clientCtx client.Context,
 	validatorPublicKey ed25519.PublicKey,
 	stakerPrivateKey types.Secp256k1PrivateKey,

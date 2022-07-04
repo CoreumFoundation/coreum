@@ -84,15 +84,20 @@ func TestAddFundsToGenesis(t *testing.T) {
 
 	n, err := NetworkByChainID(Devnet)
 	requireT.NoError(err)
+	n.SetupPrefixes()
 
 	gen, err := n.Genesis()
 	requireT.NoError(err)
 
 	pubKey, _ := types.GenerateSecp256k1Key()
 	requireT.NoError(gen.FundAccount(pubKey, "1000someTestToken"))
+	key1 := cosmossecp256k1.PubKey{Key: pubKey}
+	accountAddress := sdk.AccAddress(key1.Address())
 
-	secp256k1 := cosmossecp256k1.PubKey{Key: pubKey}
-	accountAddress := sdk.AccAddress(secp256k1.Address())
+	pubKey2, _ := types.GenerateSecp256k1Key()
+	requireT.NoError(gen.FundAccount(pubKey2, "2000someTestToken"))
+	key2 := cosmossecp256k1.PubKey{Key: pubKey2}
+	accountAddress2 := sdk.AccAddress(key2.Address())
 
 	genDocBytes, err := gen.EncodeAsJSON()
 	requireT.NoError(err)
@@ -100,30 +105,54 @@ func TestAddFundsToGenesis(t *testing.T) {
 	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
 	requireT.NoError(err)
 
+	type coin struct {
+		Denom  string `json:"denom"`
+		Amount string `json:"amount"`
+	}
 	type balance struct {
 		Address string `json:"address"`
-		Coins   []struct {
-			Denom  string `json:"denom"`
-			Amount string `json:"amount"`
-		} `json:"coins"`
+		Coins   []coin `json:"coins"`
+	}
+	type account struct {
+		Address string `json:"address"`
 	}
 	var state struct {
 		Bank struct {
 			Balances []balance `json:"balances"`
+			Supply   []coin    `json:"supply"`
 		} `json:"bank"`
+		Auth struct {
+			Accounts []account `json:"accounts"`
+		} `json:"auth"`
 	}
 
 	err = json.Unmarshal(parsedGenesisDoc.AppState, &state)
 	requireT.NoError(err)
 
-	assertT.Contains(state.Bank.Balances, balance{
-		Address: accountAddress.String(),
-		Coins: []struct {
-			Denom  string "json:\"denom\""
-			Amount string "json:\"amount\""
-		}{
-			{Denom: "someTestToken", Amount: "1000"},
+	assertT.ElementsMatch(state.Bank.Balances, []balance{
+		{
+			Address: accountAddress.String(),
+			Coins: []coin{
+				{Denom: "someTestToken", Amount: "1000"},
+			},
 		},
+		{
+			Address: accountAddress2.String(),
+			Coins: []coin{
+				{Denom: "someTestToken", Amount: "2000"},
+			},
+		},
+	})
+
+	assertT.Contains(
+		state.Bank.Supply,
+		coin{Denom: "someTestToken", Amount: "3000"},
+	)
+	requireT.Len(state.Auth.Accounts, 2)
+	assertT.EqualValues(state.Auth.Accounts[0].Address, accountAddress.String())
+	assertT.ElementsMatch(state.Auth.Accounts, []account{
+		{Address: accountAddress.String()},
+		{Address: accountAddress2.String()},
 	})
 }
 
@@ -147,7 +176,7 @@ func TestAddGenTx(t *testing.T) {
 		WithLegacyAmino(encodingConfig.Amino).
 		WithInput(os.Stdin).
 		WithBroadcastMode(flags.BroadcastBlock)
-	tx, err := GenerateAddValidatorTx(gen, clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	tx, err := GenerateAddValidatorTx(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	gen.AddGenesisTx(tx)
 
