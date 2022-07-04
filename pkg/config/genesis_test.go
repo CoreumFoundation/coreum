@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -18,6 +19,18 @@ import (
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
+
+func TestAddressPrefixIsSet(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	n, err := NetworkByChainID(Devnet)
+	requireT.NoError(err)
+	n.SetupPrefixes()
+	pubKey, _ := types.GenerateSecp256k1Key()
+	secp256k1 := cosmossecp256k1.PubKey{Key: pubKey}
+	accountAddress := sdk.AccAddress(secp256k1.Address())
+	assertT.True(strings.HasPrefix(accountAddress.String(), n.addressPrefix))
+}
 
 func TestGenesisValidation(t *testing.T) {
 	assertT := assert.New(t)
@@ -134,7 +147,7 @@ func TestAddGenTx(t *testing.T) {
 		WithLegacyAmino(encodingConfig.Amino).
 		WithInput(os.Stdin).
 		WithBroadcastMode(flags.BroadcastBlock)
-	tx, err := gen.GenerateAddValidatorTx(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	tx, err := GenerateAddValidatorTx(gen, clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	gen.AddGenesisTx(tx)
 

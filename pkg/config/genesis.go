@@ -6,8 +6,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"html/template"
+	"io/ioutil"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
@@ -25,7 +25,6 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmos "github.com/tendermint/tendermint/libs/os"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -103,11 +102,12 @@ func (g *Genesis) Save(homeDir string) error {
 		return errors.Wrap(err, "unable to make config directory")
 	}
 
-	err = tmos.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
+	err = ioutil.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
 	return errors.Wrap(err, "unable to write genesis bytes to file")
 }
 
-func (g *Genesis) GenerateAddValidatorTx(
+func GenerateAddValidatorTx(
+	g *Genesis,
 	clientCtx client.Context,
 	validatorPublicKey ed25519.PublicKey,
 	stakerPrivateKey types.Secp256k1PrivateKey,
@@ -144,52 +144,24 @@ func (g *Genesis) GenerateAddValidatorTx(
 	return encodedTx, nil
 }
 
-func (g *Genesis) AddValidator(
-	clientCtx client.Context,
-	validatorPublicKey ed25519.PublicKey,
-	stakerPrivateKey types.Secp256k1PrivateKey,
-	stakedBalance string,
-) error {
-	tx, err := g.GenerateAddValidatorTx(
-		clientCtx,
-		validatorPublicKey,
-		stakerPrivateKey,
-		stakedBalance,
-	)
-	if err != nil {
-		return errors.Wrap(err, "error calling GenerateAddValidatorTx")
-	}
-
-	g.AddGenesisTx(tx)
-	return nil
-}
-
 //go:embed genesis/genesis.tmpl.json
 var genesisTemplate string
 
-var genesisParsedBytes []byte
-
-var genesisSync sync.Once
-
-func genesis(n Network) []byte {
-	genesisSync.Do(func() {
-		genesisBuf := new(bytes.Buffer)
-		err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
-			GenesisTimeUTC string
-			ChainID        ChainID
-			TokenSymbol    string
-		}{
-			GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
-			ChainID:        n.chainID,
-			TokenSymbol:    n.tokenSymbol,
-		})
-		if err != nil {
-			panic(err)
-		}
-		genesisParsedBytes = genesisBuf.Bytes()
+func genesis(n Network) ([]byte, error) {
+	genesisBuf := new(bytes.Buffer)
+	err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
+		GenesisTimeUTC string
+		ChainID        ChainID
+		TokenSymbol    string
+	}{
+		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
+		ChainID:        n.chainID,
+		TokenSymbol:    n.tokenSymbol,
 	})
-
-	return genesisParsedBytes
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to template genesis file")
+	}
+	return genesisBuf.Bytes(), nil
 }
 
 func signTx(clientCtx client.Context, signerKey types.Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) (authsigning.Tx, error) {

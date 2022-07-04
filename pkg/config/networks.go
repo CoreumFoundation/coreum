@@ -86,7 +86,10 @@ func (n Network) AddressPrefix() string {
 func (n Network) Genesis() (*Genesis, error) {
 	encCfg := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
 	codec := encCfg.Marshaler
-	genesis := genesis(n)
+	genesis, err := genesis(n)
+	if err != nil {
+		return nil, errors.Wrap(err, "not able get genesis")
+	}
 
 	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesis)
 	if err != nil {
