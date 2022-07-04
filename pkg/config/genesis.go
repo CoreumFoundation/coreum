@@ -88,7 +88,6 @@ func (g *Genesis) EncodeAsJSON() ([]byte, error) {
 	}
 
 	return bs, nil
-
 }
 
 // Save saves genesis configuration
@@ -106,6 +105,7 @@ func (g *Genesis) Save(homeDir string) error {
 	return errors.Wrap(err, "unable to write genesis bytes to file")
 }
 
+// GenerateAddValidatorTx generates transaction of type MsgCreateValidator
 func GenerateAddValidatorTx(
 	g *Genesis,
 	clientCtx client.Context,

@@ -159,11 +159,11 @@ func TestAddGenTx(t *testing.T) {
 
 	var state struct {
 		GenUtil struct {
-			GenTx []json.RawMessage `json:"gen_txs"`
+			GenTxs []json.RawMessage `json:"gen_txs"` //nolint:tagliatelle
 		} `json:"genutil"`
 	}
 
 	err = json.Unmarshal(parsedGenesisDoc.AppState, &state)
 	requireT.NoError(err)
-	assertT.Len(state.GenUtil.GenTx, 1)
+	assertT.Len(state.GenUtil.GenTxs, 1)
 }

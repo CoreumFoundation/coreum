@@ -59,12 +59,11 @@ var networks = map[ChainID]Network{}
 
 // Network holds all the configuration for different predefined networks
 type Network struct {
-	genesisTime         time.Time
-	chainID             ChainID
-	addressPrefix       string
-	tokenSymbol         string
-	genesisTransactions []json.RawMessage
-	fundedAccounts      []fundedAccount
+	genesisTime    time.Time
+	chainID        ChainID
+	addressPrefix  string
+	tokenSymbol    string
+	fundedAccounts []fundedAccount
 }
 
 type fundedAccount struct {
