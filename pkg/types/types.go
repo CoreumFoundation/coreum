@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"math/big"
 )
 
@@ -21,7 +20,7 @@ type Wallet struct {
 }
 
 func (w Wallet) String() string {
-	return fmt.Sprintf("%s@%s", w.Name, w.Key.Address())
+	return w.Name + "@" + w.Key.Address()
 }
 
 // Balance stores balance of denom

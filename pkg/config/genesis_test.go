@@ -1,11 +1,15 @@
 package config
 
 import (
+	"crypto/ed25519"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
@@ -44,15 +48,15 @@ func TestGenesisValidation(t *testing.T) {
 	// because comparing json.RawMessage may give false negatives.
 	appStateMap := map[string]interface{}{}
 	err = json.Unmarshal(gen.genesisDoc.AppState, &appStateMap)
-	assertT.NoError(err)
+	requireT.NoError(err)
 	parsedAppStateMap := map[string]interface{}{}
 	err = json.Unmarshal(parsedGenesisDoc.AppState, &parsedAppStateMap)
-	assertT.NoError(err)
+	requireT.NoError(err)
 	assertT.EqualValues(appStateMap, parsedAppStateMap)
 
 	var appStateMapJSONRawMessage map[string]json.RawMessage
 	err = json.Unmarshal(gen.genesisDoc.AppState, &appStateMapJSONRawMessage)
-	assertT.NoError(err)
+	requireT.NoError(err)
 	requireT.NoError(
 		app.ModuleBasics.ValidateGenesis(
 			encCfg.Marshaler,
@@ -108,4 +112,45 @@ func TestAddFundsToGenesis(t *testing.T) {
 			{Denom: "someTestToken", Amount: "1000"},
 		},
 	})
+}
+
+func TestAddGenTx(t *testing.T) {
+	assertT := assert.New(t)
+	requireT := require.New(t)
+
+	n, err := NetworkByChainID(Devnet)
+	requireT.NoError(err)
+
+	gen, err := n.Genesis()
+	requireT.NoError(err)
+
+	pubKey, privKey := types.GenerateSecp256k1Key()
+
+	encodingConfig := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+	clientCtx := client.Context{}.
+		WithCodec(encodingConfig.Marshaler).
+		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+		WithTxConfig(encodingConfig.TxConfig).
+		WithLegacyAmino(encodingConfig.Amino).
+		WithInput(os.Stdin).
+		WithBroadcastMode(flags.BroadcastBlock)
+	tx, err := gen.GenerateAddValidatorTx(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	requireT.NoError(err)
+	gen.AddGenesisTx(tx)
+
+	genDocBytes, err := gen.EncodeAsJSON()
+	requireT.NoError(err)
+
+	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
+	requireT.NoError(err)
+
+	var state struct {
+		GenUtil struct {
+			GenTx []json.RawMessage `json:"gen_txs"`
+		} `json:"genutil"`
+	}
+
+	err = json.Unmarshal(parsedGenesisDoc.AppState, &state)
+	requireT.NoError(err)
+	assertT.Len(state.GenUtil.GenTx, 1)
 }

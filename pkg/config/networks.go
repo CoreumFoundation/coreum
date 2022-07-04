@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"sync"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -16,10 +15,10 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-// ChainID represents predefined chain-ids
+// ChainID represents predefined chain ID
 type ChainID string
 
-// Predefined chainIDs
+// Predefined chain IDs
 const (
 	Mainnet ChainID = "coreum-mainnet-1"
 	Devnet  ChainID = "coreum-devnet-1"
@@ -33,32 +32,39 @@ const (
 	TokenSymbolDev  string = "dacore"
 )
 
-var networks = map[ChainID]Network{
-	Mainnet: {
-		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-		ChainID:        Mainnet,
-		AddressPrefix:  "core",
-		TokenSymbol:    TokenSymbolMain,
-		FundedAccounts: []fundedAccount{},
-	},
+func init() {
+	networksList := []Network{
+		{
+			chainID:        Mainnet,
+			genesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+			addressPrefix:  "core",
+			tokenSymbol:    TokenSymbolMain,
+			fundedAccounts: []fundedAccount{},
+		},
+		{
+			chainID:        Devnet,
+			genesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+			addressPrefix:  "devcore",
+			tokenSymbol:    TokenSymbolDev,
+			fundedAccounts: []fundedAccount{},
+		},
+	}
 
-	Devnet: {
-		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-		ChainID:        Devnet,
-		AddressPrefix:  "devcore",
-		TokenSymbol:    TokenSymbolDev,
-		FundedAccounts: []fundedAccount{},
-	},
+	for _, elem := range networksList {
+		networks[elem.chainID] = elem
+	}
 }
+
+var networks = map[ChainID]Network{}
 
 // Network holds all the configuration for different predefined networks
 type Network struct {
-	GenesisTime         time.Time
-	ChainID             ChainID
-	AddressPrefix       string
-	TokenSymbol         string
-	GenesisTransactions []json.RawMessage
-	FundedAccounts      []fundedAccount
+	genesisTime         time.Time
+	chainID             ChainID
+	addressPrefix       string
+	tokenSymbol         string
+	genesisTransactions []json.RawMessage
+	fundedAccounts      []fundedAccount
 }
 
 type fundedAccount struct {
@@ -68,36 +74,37 @@ type fundedAccount struct {
 
 // SetupPrefixes sets the global account prefixes config for cosmos sdk.
 func (n Network) SetupPrefixes() {
-	cosmoscmd.SetPrefixes(n.AddressPrefix)
+	cosmoscmd.SetPrefixes(n.addressPrefix)
+}
+
+// AddressPrefix returns the address prefix to be used in network config
+func (n Network) AddressPrefix() string {
+	return n.addressPrefix
 }
 
 // Genesis creates the genesis file for the given network config
 func (n Network) Genesis() (*Genesis, error) {
 	encCfg := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
 	codec := encCfg.Marshaler
-	genesis, err := genesis(n)
-	if err != nil {
-		return nil, err
-	}
+	genesis := genesis(n)
 
 	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesis)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "not able to parse genesis json bytes")
 	}
 	var appState map[string]json.RawMessage
-	err = json.Unmarshal(genesisDoc.AppState, &appState)
-	if err != nil {
-		return nil, err
+
+	if err = json.Unmarshal(genesisDoc.AppState, &appState); err != nil {
+		return nil, errors.Wrap(err, "not able to parse genesis app state")
 	}
 
 	authState := authtypes.GetGenesisStateFromAppState(codec, appState)
 	accountState, err := authtypes.UnpackAccounts(authState.Accounts)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "not able to unpack auth accounts")
 	}
 	g := &Genesis{
 		codec:        codec,
-		mu:           &sync.Mutex{},
 		genesisDoc:   genesisDoc,
 		appState:     appState,
 		genutilState: genutiltypes.GetGenesisStateFromAppState(codec, appState),
@@ -106,10 +113,9 @@ func (n Network) Genesis() (*Genesis, error) {
 		bankState:    banktypes.GetGenesisStateFromAppState(codec, appState),
 	}
 
-	for _, fundedAccount := range n.FundedAccounts {
-		err = g.FundAccount(fundedAccount.PubKey, fundedAccount.Balance)
-		if err != nil {
-			return nil, err
+	for _, fundedAccount := range n.fundedAccounts {
+		if err = g.FundAccount(fundedAccount.PubKey, fundedAccount.Balance); err != nil {
+			return nil, errors.Wrap(err, "not able to fund account")
 		}
 	}
 
@@ -121,7 +127,7 @@ func (n Network) Genesis() (*Genesis, error) {
 func NetworkByChainID(id ChainID) (Network, error) {
 	nw, found := networks[id]
 	if !found {
-		return Network{}, errors.Errorf("chainID %s not found", nw.ChainID)
+		return Network{}, errors.Errorf("chainID %s not found", nw.chainID)
 	}
 
 	return nw, nil

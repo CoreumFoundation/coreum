@@ -2,7 +2,6 @@ package config
 
 import (
 	"crypto/ed25519"
-	"encoding/hex"
 	"net"
 	"os"
 	"strconv"
@@ -66,9 +65,4 @@ func (nc NodeConfig) Save(homeDir string) error {
 	cfg.Instrumentation.PrometheusListenAddr = net.JoinHostPort(net.IPv4zero.String(), strconv.Itoa(nc.PrometheusPort))
 	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
 	return nil
-}
-
-// NodeID computes node ID from node public key
-func NodeID(pubKey ed25519.PublicKey) string {
-	return hex.EncodeToString(tmed25519.PubKey(pubKey).Address())
 }
