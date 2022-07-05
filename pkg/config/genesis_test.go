@@ -20,12 +20,20 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+func init() {
+	n, err := NetworkByChainID(Devnet)
+	if err != nil {
+		panic(err)
+	}
+
+	n.SetupPrefixes()
+}
+
 func TestAddressPrefixIsSet(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	n, err := NetworkByChainID(Devnet)
 	requireT.NoError(err)
-	n.SetupPrefixes()
 	pubKey, _ := types.GenerateSecp256k1Key()
 	secp256k1 := cosmossecp256k1.PubKey{Key: pubKey}
 	accountAddress := sdk.AccAddress(secp256k1.Address())
@@ -84,7 +92,6 @@ func TestAddFundsToGenesis(t *testing.T) {
 
 	n, err := NetworkByChainID(Devnet)
 	requireT.NoError(err)
-	n.SetupPrefixes()
 
 	gen, err := n.Genesis()
 	requireT.NoError(err)
