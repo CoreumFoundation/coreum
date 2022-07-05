@@ -5,7 +5,8 @@ import (
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
-func NewClientContext(opts ...option) client.Context {
+// NewClientContext returns a new cosmos client context
+func NewClientContext(opts ...Option) client.Context {
 	encodingConfig := NewEncodingConfig()
 	ctx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).
@@ -20,22 +21,19 @@ func NewClientContext(opts ...option) client.Context {
 	return ctx
 }
 
-type option func(client.Context) client.Context
+// Option type allows to modify client context
+type Option func(client.Context) client.Context
 
-func WithRPCClient(cli rpcclient.Client) option {
+// WithRPCClient option sets rpc client
+func WithRPCClient(cli rpcclient.Client) Option {
 	return func(ctx client.Context) client.Context {
 		return ctx.WithClient(cli)
 	}
 }
 
-func WithChainID(chainID string) option {
+// WithChainID option sets chainID
+func WithChainID(chainID string) Option {
 	return func(ctx client.Context) client.Context {
 		return ctx.WithChainID(chainID)
-	}
-}
-
-func WithBroadcastMode(mode string) option {
-	return func(ctx client.Context) client.Context {
-		return ctx.WithBroadcastMode(mode)
 	}
 }

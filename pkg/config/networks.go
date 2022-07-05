@@ -28,7 +28,7 @@ const (
 const (
 	// TODO (milad): rename TokenSymbol to acore or attocore
 	// naming is coming from https://en.wikipedia.org/wiki/Metric_prefix
-	TokenSymbolMain string = "attocore"
+	TokenSymbolMain string = "core"
 	TokenSymbolDev  string = "dacore"
 )
 
@@ -81,7 +81,8 @@ func (n Network) AddressPrefix() string {
 	return n.addressPrefix
 }
 
-// AddressPrefix returns the address prefix to be used in network config
+// TokenSymbol returns the governance token symbol. This is different
+// for each network(i.e mainnet, testnet, etc)
 func (n Network) TokenSymbol() string {
 	return n.tokenSymbol
 }
