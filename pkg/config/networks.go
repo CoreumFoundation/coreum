@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
 
@@ -28,7 +28,7 @@ const (
 const (
 	// TODO (milad): rename TokenSymbol to acore or attocore
 	// naming is coming from https://en.wikipedia.org/wiki/Metric_prefix
-	TokenSymbolMain string = "core"
+	TokenSymbolMain string = "attocore"
 	TokenSymbolDev  string = "dacore"
 )
 
@@ -81,9 +81,14 @@ func (n Network) AddressPrefix() string {
 	return n.addressPrefix
 }
 
+// AddressPrefix returns the address prefix to be used in network config
+func (n Network) TokenSymbol() string {
+	return n.tokenSymbol
+}
+
 // Genesis creates the genesis file for the given network config
 func (n Network) Genesis() (*Genesis, error) {
-	encCfg := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+	encCfg := client.NewEncodingConfig()
 	codec := encCfg.Marshaler
 	genesis, err := genesis(n)
 	if err != nil {
@@ -107,6 +112,7 @@ func (n Network) Genesis() (*Genesis, error) {
 	}
 	g := &Genesis{
 		codec:        codec,
+		tokenSymbol:  n.tokenSymbol,
 		genesisDoc:   genesisDoc,
 		appState:     appState,
 		genutilState: genutiltypes.GetGenesisStateFromAppState(codec, appState),

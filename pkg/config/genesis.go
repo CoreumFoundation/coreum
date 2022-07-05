@@ -31,6 +31,7 @@ import (
 
 // Genesis is responsible for creating genesis configuration for coreum network
 type Genesis struct {
+	tokenSymbol  string
 	codec        codec.Codec
 	genesisDoc   *tmtypes.GenesisDoc
 	mu           sync.Mutex
@@ -44,6 +45,12 @@ type Genesis struct {
 // ChainID returns ID of chain
 func (g *Genesis) ChainID() string {
 	return g.genesisDoc.ChainID
+}
+
+// TokenSymbol returns the governance token symbol. This is different
+// for each network(i.e mainnet, testnet, etc)
+func (g *Genesis) TokenSymbol() string {
+	return g.tokenSymbol
 }
 
 // FundAccount funds address with balances at genesis

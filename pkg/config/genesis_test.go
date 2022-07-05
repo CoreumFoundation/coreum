@@ -3,14 +3,12 @@ package config
 import (
 	"crypto/ed25519"
 	"encoding/json"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
@@ -174,14 +172,7 @@ func TestAddGenTx(t *testing.T) {
 
 	pubKey, privKey := types.GenerateSecp256k1Key()
 
-	encodingConfig := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
-	clientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
-		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
-		WithTxConfig(encodingConfig.TxConfig).
-		WithLegacyAmino(encodingConfig.Amino).
-		WithInput(os.Stdin).
-		WithBroadcastMode(flags.BroadcastBlock)
+	clientCtx := client.NewClientContext()
 	tx, err := GenerateAddValidatorTx(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	gen.AddGenesisTx(tx)
