@@ -156,7 +156,6 @@ func TestAddFundsToGenesis(t *testing.T) {
 		coin{Denom: "someTestToken", Amount: "3000"},
 	)
 	requireT.Len(state.Auth.Accounts, 2)
-	assertT.EqualValues(state.Auth.Accounts[0].Address, accountAddress.String())
 	assertT.ElementsMatch(state.Auth.Accounts, []account{
 		{Address: accountAddress.String()},
 		{Address: accountAddress2.String()},

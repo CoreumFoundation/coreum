@@ -33,7 +33,7 @@ import (
 type Genesis struct {
 	codec        codec.Codec
 	genesisDoc   *tmtypes.GenesisDoc
-	mu           *sync.Mutex
+	mu           sync.Mutex
 	appState     map[string]json.RawMessage
 	accountState authtypes.GenesisAccounts
 	bankState    *banktypes.GenesisState
@@ -42,7 +42,7 @@ type Genesis struct {
 }
 
 // ChainID returns ID of chain
-func (g Genesis) ChainID() string {
+func (g *Genesis) ChainID() string {
 	return g.genesisDoc.ChainID
 }
 

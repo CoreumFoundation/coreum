@@ -108,7 +108,7 @@ func (n Network) Genesis() (*Genesis, error) {
 	}
 	g := &Genesis{
 		codec:        codec,
-		mu:           &sync.Mutex{},
+		mu:           sync.Mutex{},
 		genesisDoc:   genesisDoc,
 		appState:     appState,
 		genutilState: genutiltypes.GetGenesisStateFromAppState(codec, appState),
