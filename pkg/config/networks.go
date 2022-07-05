@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"sync"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -108,7 +107,6 @@ func (n Network) Genesis() (*Genesis, error) {
 	}
 	g := &Genesis{
 		codec:        codec,
-		mu:           sync.Mutex{},
 		genesisDoc:   genesisDoc,
 		appState:     appState,
 		genutilState: genutiltypes.GetGenesisStateFromAppState(codec, appState),
