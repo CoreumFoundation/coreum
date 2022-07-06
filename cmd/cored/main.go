@@ -7,12 +7,17 @@ import (
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 func main() {
+	network, err := config.NetworkByChainID(config.Mainnet)
+	if err != nil {
+		panic(err)
+	}
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
-		app.AccountAddressPrefix,
+		network.AddressPrefix(),
 		app.DefaultNodeHome,
 		app.Name,
 		app.ModuleBasics,
