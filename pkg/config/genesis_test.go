@@ -172,7 +172,7 @@ func TestAddGenTx(t *testing.T) {
 
 	pubKey, privKey := types.GenerateSecp256k1Key()
 
-	clientCtx := client.NewClientContext()
+	clientCtx := client.NewDefaultClientContext()
 	tx, err := GenerateAddValidatorTx(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	gen.AddGenesisTx(tx)

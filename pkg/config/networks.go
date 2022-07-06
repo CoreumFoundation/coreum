@@ -89,8 +89,7 @@ func (n Network) TokenSymbol() string {
 
 // Genesis creates the genesis file for the given network config
 func (n Network) Genesis() (*Genesis, error) {
-	encCfg := client.NewEncodingConfig()
-	codec := encCfg.Marshaler
+	codec := client.NewEncodingConfig().Marshaler
 	genesis, err := genesis(n)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
