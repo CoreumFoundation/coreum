@@ -5,8 +5,9 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
-	"github.com/CoreumFoundation/crust/tests/auth"
-	"github.com/CoreumFoundation/crust/tests/bank"
+
+	"github.com/CoreumFoundation/coreum/tests/auth"
+	"github.com/CoreumFoundation/coreum/tests/bank"
 )
 
 // TODO (ysv): check if we can adapt our tests to run standard go testing framework
