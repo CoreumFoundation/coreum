@@ -2,7 +2,6 @@ package tests
 
 import (
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 
@@ -12,14 +11,14 @@ import (
 
 // TODO (ysv): check if we can adapt our tests to run standard go testing framework
 
-// Tests returns testing environment and tests
-func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
-	mode := appF.CoredNetwork("coretest", 3, 0)
+// Tests returns integration tests
+func Tests(mode infra.Mode) []*testing.T {
+	// FIXME (wojciech): Find a better name of getting `cored` instance from `mode`
 	node := mode[0].(cored.Cored)
-	return mode,
-		[]*testing.T{
-			testing.New(auth.TestUnexpectedSequenceNumber(node)),
-			testing.New(bank.TestInitialBalance(node)),
-			testing.New(bank.TestCoreTransfer(node)),
-		}
+
+	return []*testing.T{
+		testing.New(auth.TestUnexpectedSequenceNumber(node)),
+		testing.New(bank.TestInitialBalance(node)),
+		testing.New(bank.TestCoreTransfer(node)),
+	}
 }
