@@ -45,28 +45,25 @@ func TestGenesisValidation(t *testing.T) {
 	n, err := NetworkByChainID(Devnet)
 	requireT.NoError(err)
 
-	gen, err := n.Genesis()
+	genesisJSON, err := n.EncodeGenesis()
 	requireT.NoError(err)
-
+	gen, err := tmtypes.GenesisDocFromJSON(genesisJSON)
+	requireT.NoError(err)
 	encCfg := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
-	requireT.NoError(app.ModuleBasics.ValidateGenesis(encCfg.Marshaler, encCfg.TxConfig, gen.appState))
 
-	genDocBytes, err := gen.EncodeAsJSON()
+	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
 
 	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
 	requireT.NoError(err)
 
-	assertT.EqualValues(parsedGenesisDoc.ChainID, gen.genesisDoc.ChainID)
-	assertT.EqualValues(parsedGenesisDoc.ConsensusParams, gen.genesisDoc.ConsensusParams)
-	assertT.EqualValues(parsedGenesisDoc.GenesisTime, gen.genesisDoc.GenesisTime)
-	assertT.EqualValues(parsedGenesisDoc.InitialHeight, gen.genesisDoc.InitialHeight)
-	assertT.EqualValues(parsedGenesisDoc.Validators, gen.genesisDoc.Validators)
+	assertT.EqualValues(parsedGenesisDoc.ChainID, n.chainID)
+	assertT.EqualValues(parsedGenesisDoc.GenesisTime, n.genesisTime)
 
 	// In order to compare app state, we need to unmarshal it first
 	// because comparing json.RawMessage may give false negatives.
 	appStateMap := map[string]interface{}{}
-	err = json.Unmarshal(gen.genesisDoc.AppState, &appStateMap)
+	err = json.Unmarshal(gen.AppState, &appStateMap)
 	requireT.NoError(err)
 	parsedAppStateMap := map[string]interface{}{}
 	err = json.Unmarshal(parsedGenesisDoc.AppState, &parsedAppStateMap)
@@ -74,7 +71,7 @@ func TestGenesisValidation(t *testing.T) {
 	assertT.EqualValues(appStateMap, parsedAppStateMap)
 
 	var appStateMapJSONRawMessage map[string]json.RawMessage
-	err = json.Unmarshal(gen.genesisDoc.AppState, &appStateMapJSONRawMessage)
+	err = json.Unmarshal(gen.AppState, &appStateMapJSONRawMessage)
 	requireT.NoError(err)
 	requireT.NoError(
 		app.ModuleBasics.ValidateGenesis(
@@ -91,20 +88,19 @@ func TestAddFundsToGenesis(t *testing.T) {
 	n, err := NetworkByChainID(Devnet)
 	requireT.NoError(err)
 
-	gen, err := n.Genesis()
-	requireT.NoError(err)
-
 	pubKey, _ := types.GenerateSecp256k1Key()
-	requireT.NoError(gen.FundAccount(pubKey, "1000someTestToken"))
+	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
 	key1 := cosmossecp256k1.PubKey{Key: pubKey}
 	accountAddress := sdk.AccAddress(key1.Address())
 
 	pubKey2, _ := types.GenerateSecp256k1Key()
-	requireT.NoError(gen.FundAccount(pubKey2, "2000someTestToken"))
+	requireT.NoError(n.FundAccount(pubKey2, "2000someTestToken"))
 	key2 := cosmossecp256k1.PubKey{Key: pubKey2}
 	accountAddress2 := sdk.AccAddress(key2.Address())
 
-	genDocBytes, err := gen.EncodeAsJSON()
+	requireT.Len(n.fundedAccounts, 2)
+
+	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
 
 	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
@@ -166,18 +162,13 @@ func TestAddGenTx(t *testing.T) {
 
 	n, err := NetworkByChainID(Devnet)
 	requireT.NoError(err)
-
-	gen, err := n.Genesis()
-	requireT.NoError(err)
-
 	pubKey, privKey := types.GenerateSecp256k1Key()
-
 	clientCtx := client.NewDefaultClientContext()
 	tx, err := GenerateAddValidatorTx(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
-	gen.AddGenesisTx(tx)
+	n.AddGenesisTx(tx)
 
-	genDocBytes, err := gen.EncodeAsJSON()
+	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
 
 	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
@@ -192,4 +183,21 @@ func TestAddGenTx(t *testing.T) {
 	err = json.Unmarshal(parsedGenesisDoc.AppState, &state)
 	requireT.NoError(err)
 	assertT.Len(state.GenUtil.GenTxs, 1)
+}
+
+func TestNetworkFundedAccountsNotMutable(t *testing.T) {
+	assertT := assert.New(t)
+	requireT := require.New(t)
+
+	n, err := NetworkByChainID(Devnet)
+	requireT.NoError(err)
+
+	pubKey, _ := types.GenerateSecp256k1Key()
+	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
+
+	assertT.Len(n.fundedAccounts, 1)
+
+	n, err = NetworkByChainID(Devnet)
+	requireT.NoError(err)
+	assertT.Len(n.fundedAccounts, 0)
 }
