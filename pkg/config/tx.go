@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GenerateAddValidatorTx generates transaction of type MsgCreateValidator
-func GenerateAddValidatorTx(
+// PrepareTxStakingCreateValidator generates transaction of type MsgCreateValidator
+func PrepareTxStakingCreateValidator(
 	clientCtx client.Context,
 	validatorPublicKey ed25519.PublicKey,
 	stakerPrivateKey types.Secp256k1PrivateKey,

@@ -40,22 +40,18 @@ const (
 
 func init() {
 	networksList := []Network{
-		New(
-			Mainnet,
-			time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-			"core",
-			TokenSymbolMain,
-			[]FundedAccount{},
-			[]json.RawMessage{},
-		),
-		New(
-			Devnet,
-			time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-			"devcore",
-			TokenSymbolDev,
-			[]FundedAccount{},
-			[]json.RawMessage{},
-		),
+		New(NetworkConfig{
+			ChainID:       Mainnet,
+			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+			AddressPrefix: "core",
+			TokenSymbol:   TokenSymbolMain,
+		}),
+		New(NetworkConfig{
+			ChainID:       Devnet,
+			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+			AddressPrefix: "devcore",
+			TokenSymbol:   TokenSymbolDev,
+		}),
 	}
 
 	for _, elem := range networksList {
@@ -65,33 +61,37 @@ func init() {
 
 var networks = map[ChainID]Network{}
 
+type NetworkConfig struct {
+	ChainID        ChainID
+	GenesisTime    time.Time
+	AddressPrefix  string
+	TokenSymbol    string
+	FundedAccounts []FundedAccount
+	GenTxs         []json.RawMessage
+}
+
 // Network holds all the configuration for different predefined networks
 type Network struct {
 	chainID        ChainID
 	genesisTime    time.Time
 	addressPrefix  string
 	tokenSymbol    string
+	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
 	genTxs         []json.RawMessage
-	mu             *sync.Mutex
 }
 
 // New returns a new instance of Network
 func New(
-	chainID ChainID,
-	genesisTime time.Time,
-	addressPrefix string,
-	tokenSymbol string,
-	fundedAccounts []FundedAccount,
-	genTxs []json.RawMessage,
+	c NetworkConfig,
 ) Network {
 	return Network{
-		genesisTime:    genesisTime,
-		chainID:        chainID,
-		addressPrefix:  addressPrefix,
-		tokenSymbol:    tokenSymbol,
-		fundedAccounts: fundedAccounts,
-		genTxs:         genTxs,
+		genesisTime:    c.GenesisTime,
+		chainID:        c.ChainID,
+		addressPrefix:  c.AddressPrefix,
+		tokenSymbol:    c.TokenSymbol,
+		fundedAccounts: c.FundedAccounts,
+		genTxs:         c.GenTxs,
 		mu:             &sync.Mutex{},
 	}
 }
@@ -128,8 +128,6 @@ func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 
 // EncodeGenesis returns the json encoded representation of the genesis file
 func (n Network) EncodeGenesis() ([]byte, error) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
 	codec := client.NewEncodingConfig().Marshaler
 	genesisJSON, err := genesis(n)
 	if err != nil {
@@ -155,6 +153,8 @@ func (n Network) EncodeGenesis() ([]byte, error) {
 	genutilState := genutiltypes.GetGenesisStateFromAppState(codec, appState)
 	bankState := banktypes.GetGenesisStateFromAppState(codec, appState)
 
+	n.mu.Lock()
+	defer n.mu.Unlock()
 	for _, fundedAcc := range n.fundedAccounts {
 		pubKey := cosmossecp256k1.PubKey{Key: fundedAcc.PublicKey}
 		accountAddress := sdk.AccAddress(pubKey.Address())
@@ -222,8 +222,8 @@ func (n Network) AddressPrefix() string {
 }
 
 // ChainID returns the chain ID used in network config
-func (n Network) ChainID() string {
-	return string(n.chainID)
+func (n Network) ChainID() ChainID {
+	return n.chainID
 }
 
 // TokenSymbol returns the governance token symbol. This is different

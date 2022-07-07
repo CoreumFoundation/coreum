@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
@@ -27,11 +28,18 @@ func init() {
 	n.SetupPrefixes()
 }
 
+func testNetwork() Network {
+	return New(NetworkConfig{
+		ChainID:       ChainID("test-network"),
+		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+		AddressPrefix: "core",
+		TokenSymbol:   TokenSymbolMain,
+	})
+}
+
 func TestAddressPrefixIsSet(t *testing.T) {
-	requireT := require.New(t)
 	assertT := assert.New(t)
-	n, err := NetworkByChainID(Devnet)
-	requireT.NoError(err)
+	n := testNetwork()
 	pubKey, _ := types.GenerateSecp256k1Key()
 	secp256k1 := cosmossecp256k1.PubKey{Key: pubKey}
 	accountAddress := sdk.AccAddress(secp256k1.Address())
@@ -42,8 +50,7 @@ func TestGenesisValidation(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	n, err := NetworkByChainID(Devnet)
-	requireT.NoError(err)
+	n := testNetwork()
 
 	genesisJSON, err := n.EncodeGenesis()
 	requireT.NoError(err)
@@ -85,8 +92,7 @@ func TestAddFundsToGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	n, err := NetworkByChainID(Devnet)
-	requireT.NoError(err)
+	n := testNetwork()
 
 	pubKey, _ := types.GenerateSecp256k1Key()
 	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
@@ -160,11 +166,10 @@ func TestAddGenTx(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	n, err := NetworkByChainID(Devnet)
-	requireT.NoError(err)
+	n := testNetwork()
 	pubKey, privKey := types.GenerateSecp256k1Key()
 	clientCtx := client.NewDefaultClientContext()
-	tx, err := GenerateAddValidatorTx(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	tx, err := PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	n.AddGenesisTx(tx)
 
@@ -185,7 +190,7 @@ func TestAddGenTx(t *testing.T) {
 	assertT.Len(state.GenUtil.GenTxs, 1)
 }
 
-func TestNetworkFundedAccountsNotMutable(t *testing.T) {
+func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
@@ -194,10 +199,13 @@ func TestNetworkFundedAccountsNotMutable(t *testing.T) {
 
 	pubKey, _ := types.GenerateSecp256k1Key()
 	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
+	n.AddGenesisTx([]byte("test string"))
 
 	assertT.Len(n.fundedAccounts, 1)
+	assertT.Len(n.genTxs, 1)
 
 	n, err = NetworkByChainID(Devnet)
 	requireT.NoError(err)
 	assertT.Len(n.fundedAccounts, 0)
+	assertT.Len(n.genTxs, 0)
 }
