@@ -11,10 +11,14 @@ import (
 // Note this only applies when ctx.CheckTx = true
 // If fee is high enough or not CheckTx, then call next AnteHandler
 // CONTRACT: Tx must implement FeeTx to use MempoolFeeDecorator
-type MempoolFeeDecorator struct{}
+type MempoolFeeDecorator struct {
+	minGasPrice sdk.Coin
+}
 
-func NewMempoolFeeDecorator() MempoolFeeDecorator {
-	return MempoolFeeDecorator{}
+func NewMempoolFeeDecorator(minGasPrice sdk.Coin) MempoolFeeDecorator {
+	return MempoolFeeDecorator{
+		minGasPrice: minGasPrice,
+	}
 }
 
 func (mfd MempoolFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
@@ -23,28 +27,23 @@ func (mfd MempoolFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate b
 		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
 	}
 
-	feeCoins := feeTx.GetFee()
-	gas := feeTx.GetGas()
+	fees := feeTx.GetFee()
+	for _, coin := range fees {
+		if coin.GetDenom() != mfd.minGasPrice.Denom {
+			return ctx, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "fee must be paid in '%s' coin, but '%s' was offered instead", mfd.minGasPrice.Denom, coin.Denom)
+		}
+	}
 
 	// Ensure that the provided fees meet a minimum threshold for the validator,
 	// if this is a CheckTx. This is only for local mempool purposes, and thus
 	// is only ran on check tx.
 	if ctx.IsCheckTx() && !simulate {
-		minGasPrices := ctx.MinGasPrices()
-		if !minGasPrices.IsZero() {
-			requiredFees := make(sdk.Coins, len(minGasPrices))
+		gasDeclared := sdk.NewInt(int64(feeTx.GetGas()))
+		feeOffered := sdk.NewCoin(mfd.minGasPrice.Denom, fees.AmountOf(mfd.minGasPrice.Denom))
+		feeRequired := sdk.NewCoin(mfd.minGasPrice.Denom, gasDeclared.Mul(mfd.minGasPrice.Amount))
 
-			// Determine the required fees by multiplying each required minimum gas
-			// price by the gas limit, where fee = ceil(minGasPrice * gasLimit).
-			glDec := sdk.NewDec(int64(gas))
-			for i, gp := range minGasPrices {
-				fee := gp.Amount.Mul(glDec)
-				requiredFees[i] = sdk.NewCoin(gp.Denom, fee.Ceil().RoundInt())
-			}
-
-			if !feeCoins.IsAnyGTE(requiredFees) {
-				return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeCoins, requiredFees)
-			}
+		if feeOffered.IsLT(feeRequired) {
+			return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeOffered, feeRequired)
 		}
 	}
 

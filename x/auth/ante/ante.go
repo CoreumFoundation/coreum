@@ -16,6 +16,7 @@ type HandlerOptions struct {
 	FeegrantKeeper  authante.FeegrantKeeper
 	SignModeHandler authsigning.SignModeHandler
 	SigGasConsumer  func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
+	MinGasPrice     sdk.Coin
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -34,15 +35,14 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "sign mode handler is required for ante builder")
 	}
 
-	var sigGasConsumer = options.SigGasConsumer
-	if sigGasConsumer == nil {
-		sigGasConsumer = authante.DefaultSigVerificationGasConsumer
+	if options.SigGasConsumer == nil {
+		options.SigGasConsumer = authante.DefaultSigVerificationGasConsumer
 	}
 
 	anteDecorators := []sdk.AnteDecorator{
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		authante.NewRejectExtensionOptionsDecorator(),
-		NewMempoolFeeDecorator(),
+		NewMempoolFeeDecorator(options.MinGasPrice),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
@@ -50,7 +50,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		authante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
-		authante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
+		authante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
 	}

@@ -5,13 +5,15 @@ import (
 	_ "embed"
 	"encoding/json"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"sync"
 	"text/template"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,6 +42,10 @@ const (
 	TokenSymbolDev  string = "dacore"
 )
 
+// DefaultNetwork is the network cored is configured to connect to
+// FIXME (milad): Remove this hack once app loads appropriate network config based on CLI flag
+var DefaultNetwork Network
+
 func init() {
 	list := []NetworkConfig{
 		{
@@ -47,17 +53,25 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
+			MinGasPrice:   big.NewInt(1000),
 		},
 		{
 			ChainID:       Devnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
+			MinGasPrice:   big.NewInt(1000),
 		},
 	}
 
 	for _, elem := range list {
 		networks[elem.ChainID] = elem
+	}
+
+	var err error
+	DefaultNetwork, err = NetworkByChainID(Mainnet)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -69,6 +83,7 @@ type NetworkConfig struct {
 	GenesisTime    time.Time
 	AddressPrefix  string
 	TokenSymbol    string
+	MinGasPrice    *big.Int
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 }
@@ -79,6 +94,7 @@ type Network struct {
 	genesisTime   time.Time
 	addressPrefix string
 	tokenSymbol   string
+	minGasPrice   *big.Int
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -92,6 +108,7 @@ func NewNetwork(c NetworkConfig) Network {
 		chainID:        c.ChainID,
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
+		minGasPrice:    big.NewInt(0).Set(c.MinGasPrice),
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -249,6 +266,10 @@ func (n Network) ChainID() ChainID {
 // for each network(i.e mainnet, testnet, etc)
 func (n Network) TokenSymbol() string {
 	return n.tokenSymbol
+}
+
+func (n Network) MinGasPrice() *big.Int {
+	return big.NewInt(0).Set(n.minGasPrice)
 }
 
 // NetworkByChainID returns config for a predefined config.
