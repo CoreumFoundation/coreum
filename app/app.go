@@ -117,7 +117,7 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 	var govProposalHandlers []govclient.ProposalHandler
 	// this line is used by starport scaffolding # stargate/app/govProposalHandlers
 
-	copy(govProposalHandlers, wasmclient.ProposalHandlers)
+	govProposalHandlers = append(govProposalHandlers, wasmclient.ProposalHandlers...)
 
 	govProposalHandlers = append(govProposalHandlers,
 		paramsclient.ProposalHandler,
