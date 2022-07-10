@@ -396,10 +396,7 @@ func New(
 		supportedFeatures,
 	)
 
-	enabledProposals := wasm.EnableAllProposals
-	if len(enabledProposals) != 0 {
-		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WASMKeeper, enabledProposals))
-	}
+	govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WASMKeeper, wasm.EnableAllProposals))
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
