@@ -300,8 +300,6 @@ func New(
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/scopedKeeper
 
-	scopedWASMKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
-
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
@@ -389,7 +387,7 @@ func New(
 		app.DistrKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
-		scopedWASMKeeper,
+		app.CapabilityKeeper.ScopeToModule(wasm.ModuleName),
 		app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
