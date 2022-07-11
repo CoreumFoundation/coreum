@@ -39,27 +39,27 @@ const (
 )
 
 func init() {
-	networksList := []Network{
-		New(NetworkConfig{
+	list := []NetworkConfig{
+		NetworkConfig{
 			ChainID:       Mainnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
-		}),
-		New(NetworkConfig{
+		},
+		NetworkConfig{
 			ChainID:       Devnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
-		}),
+		},
 	}
 
-	for _, elem := range networksList {
-		networks[elem.chainID] = elem
+	for _, elem := range list {
+		networks[elem.ChainID] = elem
 	}
 }
 
-var networks = map[ChainID]Network{}
+var networks = map[ChainID]NetworkConfig{}
 
 type NetworkConfig struct {
 	ChainID        ChainID
@@ -72,28 +72,29 @@ type NetworkConfig struct {
 
 // Network holds all the configuration for different predefined networks
 type Network struct {
-	chainID        ChainID
-	genesisTime    time.Time
-	addressPrefix  string
-	tokenSymbol    string
+	chainID       ChainID
+	genesisTime   time.Time
+	addressPrefix string
+	tokenSymbol   string
+
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
 	genTxs         []json.RawMessage
 }
 
 // New returns a new instance of Network
-func New(
-	c NetworkConfig,
-) Network {
-	return Network{
-		genesisTime:    c.GenesisTime,
-		chainID:        c.ChainID,
-		addressPrefix:  c.AddressPrefix,
-		tokenSymbol:    c.TokenSymbol,
-		fundedAccounts: c.FundedAccounts,
-		genTxs:         c.GenTxs,
-		mu:             &sync.Mutex{},
+func New(c NetworkConfig) Network {
+	n := Network{
+		genesisTime:   c.GenesisTime,
+		chainID:       c.ChainID,
+		addressPrefix: c.AddressPrefix,
+		tokenSymbol:   c.TokenSymbol,
+		mu:            &sync.Mutex{},
 	}
+	n.fundedAccounts = append(n.fundedAccounts, c.FundedAccounts...)
+	n.genTxs = append(n.genTxs, c.GenTxs...)
+
+	return n
 }
 
 // FundedAccount is used to provide information about pre funded
@@ -112,6 +113,7 @@ func (n *Network) FundAccount(publicKey types.Secp256k1PublicKey, balances strin
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
+
 	n.fundedAccounts = append(n.fundedAccounts, FundedAccount{
 		PublicKey: publicKey,
 		Balances:  balances,
@@ -123,7 +125,29 @@ func (n *Network) FundAccount(publicKey types.Secp256k1PublicKey, balances strin
 func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
+
 	n.genTxs = append(n.genTxs, signedTx)
+}
+
+func applyFundedAccountToGenesis(
+	fa FundedAccount,
+	accountState authtypes.GenesisAccounts,
+	bankState banktypes.GenesisState,
+) error {
+	pubKey := cosmossecp256k1.PubKey{Key: fa.PublicKey}
+	accountAddress := sdk.AccAddress(pubKey.Address())
+	accountState = append(accountState, authtypes.NewBaseAccount(accountAddress, nil, 0, 0))
+	coins, err := sdk.ParseCoinsNormalized(fa.Balances)
+	if err != nil {
+		return errors.Wrapf(err, "not able to parse balances %s", fa.Balances)
+	}
+
+	bankState.Balances = append(
+		bankState.Balances,
+		banktypes.Balance{Address: accountAddress.String(), Coins: coins},
+	)
+	bankState.Supply = bankState.Supply.Add(coins...)
+	return nil
 }
 
 // EncodeGenesis returns the json encoded representation of the genesis file
@@ -155,20 +179,12 @@ func (n Network) EncodeGenesis() ([]byte, error) {
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	for _, fundedAcc := range n.fundedAccounts {
-		pubKey := cosmossecp256k1.PubKey{Key: fundedAcc.PublicKey}
-		accountAddress := sdk.AccAddress(pubKey.Address())
-		accountState = append(accountState, authtypes.NewBaseAccount(accountAddress, nil, 0, 0))
-		coins, err := sdk.ParseCoinsNormalized(fundedAcc.Balances)
-		if err != nil {
-			return nil, errors.Wrapf(err, "not able to parse balances %s", fundedAcc.Balances)
-		}
 
-		bankState.Balances = append(
-			bankState.Balances,
-			banktypes.Balance{Address: accountAddress.String(), Coins: coins},
-		)
-		bankState.Supply = bankState.Supply.Add(coins...)
+	for _, fundedAcc := range n.fundedAccounts {
+		err = applyFundedAccountToGenesis(fundedAcc, accountState, *bankState)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	genutilState.GenTxs = append(genutilState.GenTxs, n.genTxs...)
@@ -237,8 +253,8 @@ func (n Network) TokenSymbol() string {
 func NetworkByChainID(id ChainID) (Network, error) {
 	nw, found := networks[id]
 	if !found {
-		return Network{}, errors.Errorf("chainID %s not found", nw.chainID)
+		return Network{}, errors.Errorf("chainID %s not found", id)
 	}
 
-	return nw, nil
+	return New(nw), nil
 }

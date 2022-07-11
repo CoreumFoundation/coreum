@@ -12,7 +12,6 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,20 +19,27 @@ import (
 )
 
 func init() {
-	n, err := NetworkByChainID(Devnet)
-	if err != nil {
-		panic(err)
-	}
-
+	n := testNetwork()
 	n.SetupPrefixes()
 }
 
 func testNetwork() Network {
+	pubKey, privKey := types.GenerateSecp256k1Key()
+	clientCtx := client.NewDefaultClientContext()
+	tx, err := PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	if err != nil {
+		panic(err)
+	}
 	return New(NetworkConfig{
 		ChainID:       ChainID("test-network"),
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
+		FundedAccounts: []FundedAccount{{
+			PublicKey: pubKey,
+			Balances:  "1000some-test-token",
+		}},
+		GenTxs: []json.RawMessage{tx},
 	})
 }
 
@@ -56,7 +62,7 @@ func TestGenesisValidation(t *testing.T) {
 	requireT.NoError(err)
 	gen, err := tmtypes.GenesisDocFromJSON(genesisJSON)
 	requireT.NoError(err)
-	encCfg := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+	encCfg := client.NewEncodingConfig()
 
 	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
@@ -104,7 +110,7 @@ func TestAddFundsToGenesis(t *testing.T) {
 	key2 := cosmossecp256k1.PubKey{Key: pubKey2}
 	accountAddress2 := sdk.AccAddress(key2.Address())
 
-	requireT.Len(n.fundedAccounts, 2)
+	requireT.Len(n.fundedAccounts, 3)
 
 	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
@@ -136,7 +142,7 @@ func TestAddFundsToGenesis(t *testing.T) {
 	err = json.Unmarshal(parsedGenesisDoc.AppState, &state)
 	requireT.NoError(err)
 
-	assertT.ElementsMatch(state.Bank.Balances, []balance{
+	assertT.Subset(state.Bank.Balances, []balance{
 		{
 			Address: accountAddress.String(),
 			Coins: []coin{
@@ -155,8 +161,8 @@ func TestAddFundsToGenesis(t *testing.T) {
 		state.Bank.Supply,
 		coin{Denom: "someTestToken", Amount: "3000"},
 	)
-	requireT.Len(state.Auth.Accounts, 2)
-	assertT.ElementsMatch(state.Auth.Accounts, []account{
+	requireT.Len(state.Auth.Accounts, 3)
+	assertT.Subset(state.Auth.Accounts, []account{
 		{Address: accountAddress.String()},
 		{Address: accountAddress2.String()},
 	})
@@ -208,4 +214,28 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	requireT.NoError(err)
 	assertT.Len(n.fundedAccounts, 0)
 	assertT.Len(n.genTxs, 0)
+}
+
+func TestNetworkConfigNotMutable(t *testing.T) {
+	assertT := assert.New(t)
+	// requireT := require.New(t)
+
+	pubKey, _ := types.GenerateSecp256k1Key()
+	cfg := NetworkConfig{
+		ChainID:        ChainID("test-network"),
+		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+		AddressPrefix:  "core",
+		TokenSymbol:    TokenSymbolMain,
+		FundedAccounts: []FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
+		GenTxs:         []json.RawMessage{[]byte("tx1")},
+	}
+
+	n1 := New(cfg)
+
+	cfg.FundedAccounts[0] = FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
+	cfg.GenTxs[0] = []byte("tx2")
+
+	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
+	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
+
 }
