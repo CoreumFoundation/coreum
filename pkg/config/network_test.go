@@ -237,5 +237,4 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
-
 }

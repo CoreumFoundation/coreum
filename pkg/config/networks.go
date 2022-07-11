@@ -40,13 +40,13 @@ const (
 
 func init() {
 	list := []NetworkConfig{
-		NetworkConfig{
+		{
 			ChainID:       Mainnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
 		},
-		NetworkConfig{
+		{
 			ChainID:       Devnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
@@ -61,6 +61,7 @@ func init() {
 
 var networks = map[ChainID]NetworkConfig{}
 
+// NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID        ChainID
 	GenesisTime    time.Time
@@ -132,14 +133,14 @@ func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 func applyFundedAccountToGenesis(
 	fa FundedAccount,
 	accountState authtypes.GenesisAccounts,
-	bankState banktypes.GenesisState,
-) error {
+	bankState *banktypes.GenesisState,
+) (authtypes.GenesisAccounts, *banktypes.GenesisState, error) {
 	pubKey := cosmossecp256k1.PubKey{Key: fa.PublicKey}
 	accountAddress := sdk.AccAddress(pubKey.Address())
 	accountState = append(accountState, authtypes.NewBaseAccount(accountAddress, nil, 0, 0))
 	coins, err := sdk.ParseCoinsNormalized(fa.Balances)
 	if err != nil {
-		return errors.Wrapf(err, "not able to parse balances %s", fa.Balances)
+		return nil, nil, errors.Wrapf(err, "not able to parse balances %s", fa.Balances)
 	}
 
 	bankState.Balances = append(
@@ -147,7 +148,7 @@ func applyFundedAccountToGenesis(
 		banktypes.Balance{Address: accountAddress.String(), Coins: coins},
 	)
 	bankState.Supply = bankState.Supply.Add(coins...)
-	return nil
+	return accountState, bankState, nil
 }
 
 // EncodeGenesis returns the json encoded representation of the genesis file
@@ -181,7 +182,7 @@ func (n Network) EncodeGenesis() ([]byte, error) {
 	defer n.mu.Unlock()
 
 	for _, fundedAcc := range n.fundedAccounts {
-		err = applyFundedAccountToGenesis(fundedAcc, accountState, *bankState)
+		accountState, bankState, err = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
 		if err != nil {
 			return nil, err
 		}
