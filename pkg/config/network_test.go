@@ -193,7 +193,7 @@ func TestAddGenTx(t *testing.T) {
 
 	err = json.Unmarshal(parsedGenesisDoc.AppState, &state)
 	requireT.NoError(err)
-	assertT.Len(state.GenUtil.GenTxs, 1)
+	assertT.Len(state.GenUtil.GenTxs, 2)
 }
 
 func TestNetworkSlicesNotMutable(t *testing.T) {
