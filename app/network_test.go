@@ -1,4 +1,4 @@
-package config
+package app
 
 import (
 	"crypto/ed25519"
@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -25,12 +24,12 @@ func init() {
 
 func testNetwork() Network {
 	pubKey, privKey := types.GenerateSecp256k1Key()
-	clientCtx := client.NewDefaultClientContext()
-	tx, err := PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	clientCtx := NewDefaultClientContext()
+	tx, err := client.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	if err != nil {
 		panic(err)
 	}
-	return New(NetworkConfig{
+	return NewNetwork(NetworkConfig{
 		ChainID:       ChainID("test-network"),
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
@@ -62,7 +61,7 @@ func TestGenesisValidation(t *testing.T) {
 	requireT.NoError(err)
 	gen, err := tmtypes.GenesisDocFromJSON(genesisJSON)
 	requireT.NoError(err)
-	encCfg := client.NewEncodingConfig()
+	encCfg := NewEncodingConfig()
 
 	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
@@ -87,7 +86,7 @@ func TestGenesisValidation(t *testing.T) {
 	err = json.Unmarshal(gen.AppState, &appStateMapJSONRawMessage)
 	requireT.NoError(err)
 	requireT.NoError(
-		app.ModuleBasics.ValidateGenesis(
+		ModuleBasics.ValidateGenesis(
 			encCfg.Marshaler,
 			encCfg.TxConfig,
 			appStateMapJSONRawMessage,
@@ -174,8 +173,8 @@ func TestAddGenTx(t *testing.T) {
 
 	n := testNetwork()
 	pubKey, privKey := types.GenerateSecp256k1Key()
-	clientCtx := client.NewDefaultClientContext()
-	tx, err := PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	clientCtx := NewDefaultClientContext()
+	tx, err := client.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	n.AddGenesisTx(tx)
 
@@ -229,7 +228,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
 	}
 
-	n1 := New(cfg)
+	n1 := NewNetwork(cfg)
 
 	cfg.FundedAccounts[0] = FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
 	cfg.GenTxs[0] = []byte("tx2")

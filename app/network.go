@@ -1,13 +1,15 @@
-package config
+package app
 
 import (
+	"bytes"
+	_ "embed"
 	"encoding/json"
+	"html/template"
 	"io/ioutil"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
 
@@ -83,8 +85,8 @@ type Network struct {
 	genTxs         []json.RawMessage
 }
 
-// New returns a new instance of Network
-func New(c NetworkConfig) Network {
+// NewNetwork returns a new instance of Network
+func NewNetwork(c NetworkConfig) Network {
 	n := Network{
 		genesisTime:    c.GenesisTime,
 		chainID:        c.ChainID,
@@ -153,7 +155,7 @@ func applyFundedAccountToGenesis(
 
 // EncodeGenesis returns the json encoded representation of the genesis file
 func (n Network) EncodeGenesis() ([]byte, error) {
-	codec := client.NewEncodingConfig().Marshaler
+	codec := NewEncodingConfig().Marshaler
 	genesisJSON, err := genesis(n)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
@@ -257,5 +259,25 @@ func NetworkByChainID(id ChainID) (Network, error) {
 		return Network{}, errors.Errorf("chainID %s not found", id)
 	}
 
-	return New(nw), nil
+	return NewNetwork(nw), nil
+}
+
+//go:embed genesis/genesis.tmpl.json
+var genesisTemplate string
+
+func genesis(n Network) ([]byte, error) {
+	genesisBuf := new(bytes.Buffer)
+	err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
+		GenesisTimeUTC string
+		ChainID        ChainID
+		TokenSymbol    string
+	}{
+		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
+		ChainID:        n.chainID,
+		TokenSymbol:    n.tokenSymbol,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to template genesis file")
+	}
+	return genesisBuf.Bytes(), nil
 }
