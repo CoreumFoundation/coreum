@@ -1,5 +1,3 @@
-// COPIED FROM https://github.com/ignite/cli/tree/e6a5efdaa2210fb72e33382d442268cdd466ae2d/ignite/pkg/cosmoscmd
-// UNDER APACHE2.0 LICENSE
 package cosmoscmd
 
 import (
