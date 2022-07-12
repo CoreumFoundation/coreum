@@ -1,5 +1,3 @@
-// COPIED FROM https://github.com/ignite/cli/tree/e6a5efdaa2210fb72e33382d442268cdd466ae2d/ignite/pkg/cosmoscmd
-// UNDER APACHE2.0 LICENSE
 package cosmoscmd
 
 import (
@@ -17,6 +15,7 @@ import (
 	"github.com/ignite/cli/ignite/services/network/networkchain"
 )
 
+//nolint:revive
 const TunnelRerunDelay = 5 * time.Second
 
 // startProxyForTunneledPeers hooks the `appd start` command to start an HTTP proxy server and HTTP proxy clients
@@ -49,6 +48,7 @@ func startProxyForTunneledPeers(clientCtx client.Context, cmd *cobra.Command) {
 		if peer.Name == networkchain.HTTPTunnelChisel {
 			peer := peer
 			go func() {
+				//nolint:errcheck
 				ctxticker.DoNow(ctx, TunnelRerunDelay, func() error {
 					serverCtx.Logger.Info("Starting chisel client", "tunnelAddress", peer.Address, "localPort", peer.LocalPort)
 					err := xchisel.StartClient(ctx, peer.Address, peer.LocalPort, "26656")
@@ -67,6 +67,7 @@ func startProxyForTunneledPeers(clientCtx client.Context, cmd *cobra.Command) {
 
 	if gitpod.IsOnGitpod() {
 		go func() {
+			//nolint:errcheck
 			ctxticker.DoNow(ctx, TunnelRerunDelay, func() error {
 				serverCtx.Logger.Info("Starting chisel server", "port", xchisel.DefaultServerPort)
 				err := xchisel.StartServer(ctx, xchisel.DefaultServerPort)

@@ -1,5 +1,6 @@
-// COPIED FROM https://github.com/ignite/cli/tree/e6a5efdaa2210fb72e33382d442268cdd466ae2d/ignite/pkg/cosmoscmd
-// UNDER APACHE2.0 LICENSE
+// Package cosmoscmd contains cmd command lines. Copied from
+// https://github.com/ignite/cli/tree/e6a5efdaa2210fb72e33382d442268cdd466ae2d/ignite/pkg/cosmoscmd
+// under APACHE2.0 LICENSE
 package cosmoscmd
 
 import (
@@ -166,7 +167,6 @@ func NewRootCmd(
 
 			if err := server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig); err != nil {
 				return err
-
 			}
 
 			startProxyForTunneledPeers(initClientCtx, cmd)
@@ -310,7 +310,7 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 	set := func(s *pflag.FlagSet, key, val string) {
 		if f := s.Lookup(key); f != nil {
 			f.DefValue = val
-			f.Value.Set(val)
+			f.Value.Set(val) //nolint:errcheck
 		}
 	}
 	for key, val := range defaults {
@@ -389,7 +389,6 @@ func (a appCreator) appExport(
 	jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions,
 ) (servertypes.ExportedApp, error) {
-
 	var exportableApp ExportableApp
 
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
