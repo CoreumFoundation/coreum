@@ -208,6 +208,15 @@
       }
     },
     "upgrade": {},
-    "vesting": {}
+    "vesting": {},
+    "wasm": {
+      "params": {
+        "instantiate_default_permission": 1,
+        "code_upload_access": {
+          "permission": 1,
+          "address": ""
+        }
+      }
+    }
   }
 }
