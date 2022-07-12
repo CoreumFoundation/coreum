@@ -218,7 +218,6 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 
 func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT := assert.New(t)
-	// requireT := require.New(t)
 
 	pubKey, _ := types.GenerateSecp256k1Key()
 	cfg := NetworkConfig{

@@ -86,14 +86,14 @@ type Network struct {
 // New returns a new instance of Network
 func New(c NetworkConfig) Network {
 	n := Network{
-		genesisTime:   c.GenesisTime,
-		chainID:       c.ChainID,
-		addressPrefix: c.AddressPrefix,
-		tokenSymbol:   c.TokenSymbol,
-		mu:            &sync.Mutex{},
+		genesisTime:    c.GenesisTime,
+		chainID:        c.ChainID,
+		addressPrefix:  c.AddressPrefix,
+		tokenSymbol:    c.TokenSymbol,
+		mu:             &sync.Mutex{},
+		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
+		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
 	}
-	n.fundedAccounts = append(n.fundedAccounts, c.FundedAccounts...)
-	n.genTxs = append(n.genTxs, c.GenTxs...)
 
 	return n
 }
@@ -134,13 +134,13 @@ func applyFundedAccountToGenesis(
 	fa FundedAccount,
 	accountState authtypes.GenesisAccounts,
 	bankState *banktypes.GenesisState,
-) (authtypes.GenesisAccounts, *banktypes.GenesisState, error) {
+) (authtypes.GenesisAccounts, error) {
 	pubKey := cosmossecp256k1.PubKey{Key: fa.PublicKey}
 	accountAddress := sdk.AccAddress(pubKey.Address())
 	accountState = append(accountState, authtypes.NewBaseAccount(accountAddress, nil, 0, 0))
 	coins, err := sdk.ParseCoinsNormalized(fa.Balances)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "not able to parse balances %s", fa.Balances)
+		return nil, errors.Wrapf(err, "not able to parse balances %s", fa.Balances)
 	}
 
 	bankState.Balances = append(
@@ -148,7 +148,7 @@ func applyFundedAccountToGenesis(
 		banktypes.Balance{Address: accountAddress.String(), Coins: coins},
 	)
 	bankState.Supply = bankState.Supply.Add(coins...)
-	return accountState, bankState, nil
+	return accountState, nil
 }
 
 // EncodeGenesis returns the json encoded representation of the genesis file
@@ -182,7 +182,7 @@ func (n Network) EncodeGenesis() ([]byte, error) {
 	defer n.mu.Unlock()
 
 	for _, fundedAcc := range n.fundedAccounts {
-		accountState, bankState, err = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
+		accountState, err = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
 		if err != nil {
 			return nil, err
 		}
