@@ -211,9 +211,9 @@
     "vesting": {},
     "wasm": {
       "params": {
-        "instantiate_default_permission": 1,
+        "instantiate_default_permission": "Everybody",
         "code_upload_access": {
-          "permission": 1,
+          "permission": "Everybody",
           "address": ""
         }
       }
