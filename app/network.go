@@ -4,10 +4,10 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"html/template"
 	"io/ioutil"
 	"os"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
