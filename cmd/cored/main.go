@@ -7,11 +7,10 @@ import (
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 func main() {
-	network, err := config.NetworkByChainID(config.Mainnet)
+	network, err := app.NetworkByChainID(app.Mainnet)
 	if err != nil {
 		panic(err)
 	}
