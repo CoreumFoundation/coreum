@@ -15,12 +15,14 @@ type MempoolFeeDecorator struct {
 	minGasPrice sdk.Coin
 }
 
+// NewMempoolFeeDecorator creates ante decorator refusing transactions which does not offer minimum gas price
 func NewMempoolFeeDecorator(minGasPrice sdk.Coin) MempoolFeeDecorator {
 	return MempoolFeeDecorator{
 		minGasPrice: minGasPrice,
 	}
 }
 
+// AnteHandle handles transaction in ante decorator
 func (mfd MempoolFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
