@@ -742,6 +742,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
+	paramsKeeper.Subspace(wasm.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
