@@ -53,10 +53,12 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
-			Fees: FeeConfig{
+			Fee: FeeConfig{
 				InitialGasPrice:       big.NewInt(1500),
 				MinDiscountedGasPrice: big.NewInt(1000),
-				TxBankSendGas:         120000,
+				DeterministicGas: DeterministicGasConfig{
+					BankSend: 120000,
+				},
 			},
 		},
 		{
@@ -64,10 +66,12 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
-			Fees: FeeConfig{
+			Fee: FeeConfig{
 				InitialGasPrice:       big.NewInt(1500),
 				MinDiscountedGasPrice: big.NewInt(1000),
-				TxBankSendGas:         120000,
+				DeterministicGas: DeterministicGasConfig{
+					BankSend: 120000,
+				},
 			},
 		},
 	}
@@ -85,11 +89,16 @@ func init() {
 
 var networks = map[ChainID]NetworkConfig{}
 
+// DeterministicGasConfig keeps config about deterministic gas for some message types
+type DeterministicGasConfig struct {
+	BankSend uint64
+}
+
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
 	InitialGasPrice       *big.Int
 	MinDiscountedGasPrice *big.Int
-	TxBankSendGas         uint64
+	DeterministicGas      DeterministicGasConfig
 }
 
 // NetworkConfig helps initialize Network instance
@@ -98,20 +107,18 @@ type NetworkConfig struct {
 	GenesisTime    time.Time
 	AddressPrefix  string
 	TokenSymbol    string
-	Fees           FeeConfig
+	Fee            FeeConfig
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 }
 
 // Network holds all the configuration for different predefined networks
 type Network struct {
-	chainID               ChainID
-	genesisTime           time.Time
-	addressPrefix         string
-	tokenSymbol           string
-	initialGasPrice       *big.Int
-	minDiscountedGasPrice *big.Int
-	txBankSendGas         uint64
+	chainID       ChainID
+	genesisTime   time.Time
+	addressPrefix string
+	tokenSymbol   string
+	fee           FeeConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -120,17 +127,18 @@ type Network struct {
 
 // NewNetwork returns a new instance of Network
 func NewNetwork(c NetworkConfig) Network {
+	fee := c.Fee
+	fee.InitialGasPrice = big.NewInt(0).Set(c.Fee.InitialGasPrice)
+	fee.MinDiscountedGasPrice = big.NewInt(0).Set(c.Fee.MinDiscountedGasPrice)
 	n := Network{
-		genesisTime:           c.GenesisTime,
-		chainID:               c.ChainID,
-		addressPrefix:         c.AddressPrefix,
-		tokenSymbol:           c.TokenSymbol,
-		initialGasPrice:       big.NewInt(0).Set(c.Fees.InitialGasPrice),
-		minDiscountedGasPrice: big.NewInt(0).Set(c.Fees.MinDiscountedGasPrice),
-		txBankSendGas:         c.Fees.TxBankSendGas,
-		mu:                    &sync.Mutex{},
-		fundedAccounts:        append([]FundedAccount{}, c.FundedAccounts...),
-		genTxs:                append([]json.RawMessage{}, c.GenTxs...),
+		genesisTime:    c.GenesisTime,
+		chainID:        c.ChainID,
+		addressPrefix:  c.AddressPrefix,
+		tokenSymbol:    c.TokenSymbol,
+		fee:            fee,
+		mu:             &sync.Mutex{},
+		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
+		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
 	}
 
 	return n
@@ -289,17 +297,17 @@ func (n Network) TokenSymbol() string {
 
 // InitialGasPrice returns initial gas price used by the first block
 func (n Network) InitialGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.initialGasPrice)
+	return big.NewInt(0).Set(n.fee.InitialGasPrice)
 }
 
 // MinDiscountedGasPrice returns minimum gas price after giving maximum discount
 func (n Network) MinDiscountedGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.minDiscountedGasPrice)
+	return big.NewInt(0).Set(n.fee.MinDiscountedGasPrice)
 }
 
-// TxBankSendGas returns gas required by tx bank send
-func (n Network) TxBankSendGas() uint64 {
-	return n.txBankSendGas
+// DeterministicGas returns deterministic gas amounts required by some message types
+func (n Network) DeterministicGas() DeterministicGasConfig {
+	return n.fee.DeterministicGas
 }
 
 // NetworkByChainID returns config for a predefined config.

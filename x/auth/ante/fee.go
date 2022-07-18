@@ -1,3 +1,6 @@
+// This content was copied and modified based on github.com/cosmos/cosmos-sdk/x/auth/ante/fee.go
+// Original content: https://github.com/cosmos/cosmos-sdk/blob/ad9e5620fb3445c716e9de45cfcdb56e8f1745bf/x/auth/ante/fee.go
+
 package ante
 
 import (
