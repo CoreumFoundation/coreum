@@ -204,6 +204,12 @@ func TestAddGenTx(t *testing.T) {
 	assertT.Len(state.GenUtil.GenTxs, 2)
 }
 
+func TestDeterministicGas(t *testing.T) {
+	assert.Equal(t, DeterministicGasConfig{
+		BankSend: 10,
+	}, testNetwork().DeterministicGas())
+}
+
 func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
