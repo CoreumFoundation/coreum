@@ -543,7 +543,7 @@ func New(
 			BankKeeper:      app.BankKeeper,
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			FeegrantKeeper:  app.FeeGrantKeeper,
-			MinGasPrice:     sdk.NewCoin(DefaultNetwork.TokenSymbol(), sdk.NewIntFromBigInt(DefaultNetwork.MinGasPrice())),
+			MinGasPrice:     sdk.NewCoin(DefaultNetwork.TokenSymbol(), sdk.NewIntFromBigInt(DefaultNetwork.MinDiscountedGasPrice())),
 		},
 	)
 	if err != nil {

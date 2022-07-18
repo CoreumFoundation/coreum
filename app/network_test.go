@@ -37,9 +37,9 @@ func testNetwork() Network {
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
 		Fees: FeeConfig{
-			InitialGasPrice: big.NewInt(2),
-			MinGasPrice:     big.NewInt(1),
-			TxBankSendGas:   10,
+			InitialGasPrice:       big.NewInt(2),
+			MinDiscountedGasPrice: big.NewInt(1),
+			TxBankSendGas:         10,
 		},
 		FundedAccounts: []FundedAccount{{
 			PublicKey: pubKey,
@@ -232,9 +232,9 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
 		Fees: FeeConfig{
-			InitialGasPrice: big.NewInt(2),
-			MinGasPrice:     big.NewInt(1),
-			TxBankSendGas:   10,
+			InitialGasPrice:       big.NewInt(2),
+			MinDiscountedGasPrice: big.NewInt(1),
+			TxBankSendGas:         10,
 		},
 		FundedAccounts: []FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
@@ -243,12 +243,12 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	n1 := NewNetwork(cfg)
 
 	cfg.Fees.InitialGasPrice.Set(big.NewInt(150))
-	cfg.Fees.MinGasPrice.Set(big.NewInt(100))
+	cfg.Fees.MinDiscountedGasPrice.Set(big.NewInt(100))
 	cfg.FundedAccounts[0] = FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
 	cfg.GenTxs[0] = []byte("tx2")
 
 	assertT.Equal("2", n1.InitialGasPrice().String())
-	assertT.Equal("1", n1.MinGasPrice().String())
+	assertT.Equal("1", n1.MinDiscountedGasPrice().String())
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
 }
@@ -262,19 +262,19 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
 		Fees: FeeConfig{
-			InitialGasPrice: big.NewInt(2),
-			MinGasPrice:     big.NewInt(1),
-			TxBankSendGas:   10,
+			InitialGasPrice:       big.NewInt(2),
+			MinDiscountedGasPrice: big.NewInt(1),
+			TxBankSendGas:         10,
 		},
 	}
 
 	n1 := NewNetwork(cfg)
 
 	n1.InitialGasPrice().Set(big.NewInt(150))
-	n1.MinGasPrice().Set(big.NewInt(100))
+	n1.MinDiscountedGasPrice().Set(big.NewInt(100))
 
 	assertT.Equal("2", n1.InitialGasPrice().String())
-	assertT.Equal("1", n1.MinGasPrice().String())
+	assertT.Equal("1", n1.MinDiscountedGasPrice().String())
 }
 
 func TestNetworkConfigConditions(t *testing.T) {
@@ -282,10 +282,10 @@ func TestNetworkConfigConditions(t *testing.T) {
 	assertT := assert.New(t)
 	for _, cfg := range networks {
 		requireT.NotNil(cfg.Fees.InitialGasPrice)
-		requireT.NotNil(cfg.Fees.MinGasPrice)
+		requireT.NotNil(cfg.Fees.MinDiscountedGasPrice)
 		assertT.True(cfg.Fees.InitialGasPrice.Sign() == 1)
-		assertT.True(cfg.Fees.MinGasPrice.Sign() == 1)
-		assertT.True(cfg.Fees.InitialGasPrice.Cmp(cfg.Fees.MinGasPrice) >= 0)
+		assertT.True(cfg.Fees.MinDiscountedGasPrice.Sign() == 1)
+		assertT.True(cfg.Fees.InitialGasPrice.Cmp(cfg.Fees.MinDiscountedGasPrice) >= 0)
 
 		assertT.Greater(cfg.Fees.TxBankSendGas, uint64(0))
 	}

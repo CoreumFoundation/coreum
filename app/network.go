@@ -54,9 +54,9 @@ func init() {
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
 			Fees: FeeConfig{
-				InitialGasPrice: big.NewInt(1500),
-				MinGasPrice:     big.NewInt(1000),
-				TxBankSendGas:   120000,
+				InitialGasPrice:       big.NewInt(1500),
+				MinDiscountedGasPrice: big.NewInt(1000),
+				TxBankSendGas:         120000,
 			},
 		},
 		{
@@ -65,9 +65,9 @@ func init() {
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
 			Fees: FeeConfig{
-				InitialGasPrice: big.NewInt(1500),
-				MinGasPrice:     big.NewInt(1000),
-				TxBankSendGas:   120000,
+				InitialGasPrice:       big.NewInt(1500),
+				MinDiscountedGasPrice: big.NewInt(1000),
+				TxBankSendGas:         120000,
 			},
 		},
 	}
@@ -87,9 +87,9 @@ var networks = map[ChainID]NetworkConfig{}
 
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
-	InitialGasPrice *big.Int
-	MinGasPrice     *big.Int
-	TxBankSendGas   uint64
+	InitialGasPrice       *big.Int
+	MinDiscountedGasPrice *big.Int
+	TxBankSendGas         uint64
 }
 
 // NetworkConfig helps initialize Network instance
@@ -105,13 +105,13 @@ type NetworkConfig struct {
 
 // Network holds all the configuration for different predefined networks
 type Network struct {
-	chainID         ChainID
-	genesisTime     time.Time
-	addressPrefix   string
-	tokenSymbol     string
-	initialGasPrice *big.Int
-	minGasPrice     *big.Int
-	txBankSendGas   uint64
+	chainID               ChainID
+	genesisTime           time.Time
+	addressPrefix         string
+	tokenSymbol           string
+	initialGasPrice       *big.Int
+	minDiscountedGasPrice *big.Int
+	txBankSendGas         uint64
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -121,16 +121,16 @@ type Network struct {
 // NewNetwork returns a new instance of Network
 func NewNetwork(c NetworkConfig) Network {
 	n := Network{
-		genesisTime:     c.GenesisTime,
-		chainID:         c.ChainID,
-		addressPrefix:   c.AddressPrefix,
-		tokenSymbol:     c.TokenSymbol,
-		initialGasPrice: big.NewInt(0).Set(c.Fees.InitialGasPrice),
-		minGasPrice:     big.NewInt(0).Set(c.Fees.MinGasPrice),
-		txBankSendGas:   c.Fees.TxBankSendGas,
-		mu:              &sync.Mutex{},
-		fundedAccounts:  append([]FundedAccount{}, c.FundedAccounts...),
-		genTxs:          append([]json.RawMessage{}, c.GenTxs...),
+		genesisTime:           c.GenesisTime,
+		chainID:               c.ChainID,
+		addressPrefix:         c.AddressPrefix,
+		tokenSymbol:           c.TokenSymbol,
+		initialGasPrice:       big.NewInt(0).Set(c.Fees.InitialGasPrice),
+		minDiscountedGasPrice: big.NewInt(0).Set(c.Fees.MinDiscountedGasPrice),
+		txBankSendGas:         c.Fees.TxBankSendGas,
+		mu:                    &sync.Mutex{},
+		fundedAccounts:        append([]FundedAccount{}, c.FundedAccounts...),
+		genTxs:                append([]json.RawMessage{}, c.GenTxs...),
 	}
 
 	return n
@@ -292,9 +292,9 @@ func (n Network) InitialGasPrice() *big.Int {
 	return big.NewInt(0).Set(n.initialGasPrice)
 }
 
-// MinGasPrice returns minimum gas price after giving maximum discount
-func (n Network) MinGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.minGasPrice)
+// MinDiscountedGasPrice returns minimum gas price after giving maximum discount
+func (n Network) MinDiscountedGasPrice() *big.Int {
+	return big.NewInt(0).Set(n.minDiscountedGasPrice)
 }
 
 // TxBankSendGas returns gas required by tx bank send
