@@ -544,6 +544,9 @@ func New(
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			FeegrantKeeper:  app.FeeGrantKeeper,
 			MinGasPrice:     sdk.NewCoin(DefaultNetwork.TokenSymbol(), sdk.NewIntFromBigInt(DefaultNetwork.MinDiscountedGasPrice())),
+			GasRequirements: ante.DeterministicGasRequirements{
+				BankSend: DefaultNetwork.DeterministicGas().BankSend,
+			},
 		},
 	)
 	if err != nil {
