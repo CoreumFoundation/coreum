@@ -12,7 +12,7 @@ const (
 	DefaultContractMemoryCacheSize    = uint32(2048)
 )
 
-// DefaultWASMConfig Returns WASM config
+// DefaultWASMConfig returns WASM config
 func DefaultWASMConfig() wasmtypes.WasmConfig {
 	defaultContractSimulationGasLimit := DefaultContractSimulationGasLimit
 
