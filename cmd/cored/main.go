@@ -12,7 +12,7 @@ import (
 func main() {
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
-		app.DefaultNetwork.AddressPrefix(),
+		"devcore",
 		app.DefaultNodeHome,
 		app.Name,
 		app.ModuleBasics,
