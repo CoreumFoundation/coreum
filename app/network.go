@@ -55,7 +55,6 @@ var (
 	coreumDevnet1Validator3 json.RawMessage
 )
 
-// nolint
 func init() {
 	list := []NetworkConfig{
 		{
