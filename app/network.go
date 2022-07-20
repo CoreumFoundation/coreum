@@ -5,13 +5,15 @@ import (
 	_ "embed"
 	"encoding/json"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"sync"
 	"text/template"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,6 +42,10 @@ const (
 	TokenSymbolDev  string = "dacore"
 )
 
+// DefaultNetwork is the network cored is configured to connect to
+// FIXME (milad): Remove this hack once app loads appropriate network config based on CLI flag
+var DefaultNetwork Network
+
 func init() {
 	list := []NetworkConfig{
 		{
@@ -47,21 +53,53 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
+			Fee: FeeConfig{
+				InitialGasPrice:       big.NewInt(1500),
+				MinDiscountedGasPrice: big.NewInt(1000),
+				DeterministicGas: DeterministicGasConfig{
+					BankSend: 120000,
+				},
+			},
 		},
 		{
 			ChainID:       Devnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
+			Fee: FeeConfig{
+				InitialGasPrice:       big.NewInt(1500),
+				MinDiscountedGasPrice: big.NewInt(1000),
+				DeterministicGas: DeterministicGasConfig{
+					BankSend: 120000,
+				},
+			},
 		},
 	}
 
 	for _, elem := range list {
 		networks[elem.ChainID] = elem
 	}
+
+	var err error
+	DefaultNetwork, err = NetworkByChainID(Mainnet)
+	if err != nil {
+		panic(err)
+	}
 }
 
 var networks = map[ChainID]NetworkConfig{}
+
+// DeterministicGasConfig keeps config about deterministic gas for some message types
+type DeterministicGasConfig struct {
+	BankSend uint64
+}
+
+// FeeConfig is the part of network config defining parameters of our fee model
+type FeeConfig struct {
+	InitialGasPrice       *big.Int
+	MinDiscountedGasPrice *big.Int
+	DeterministicGas      DeterministicGasConfig
+}
 
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
@@ -69,6 +107,7 @@ type NetworkConfig struct {
 	GenesisTime    time.Time
 	AddressPrefix  string
 	TokenSymbol    string
+	Fee            FeeConfig
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 }
@@ -79,6 +118,7 @@ type Network struct {
 	genesisTime   time.Time
 	addressPrefix string
 	tokenSymbol   string
+	fee           FeeConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -87,11 +127,15 @@ type Network struct {
 
 // NewNetwork returns a new instance of Network
 func NewNetwork(c NetworkConfig) Network {
+	fee := c.Fee
+	fee.InitialGasPrice = big.NewInt(0).Set(c.Fee.InitialGasPrice)
+	fee.MinDiscountedGasPrice = big.NewInt(0).Set(c.Fee.MinDiscountedGasPrice)
 	n := Network{
 		genesisTime:    c.GenesisTime,
 		chainID:        c.ChainID,
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
+		fee:            fee,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -249,6 +293,21 @@ func (n Network) ChainID() ChainID {
 // for each network(i.e mainnet, testnet, etc)
 func (n Network) TokenSymbol() string {
 	return n.tokenSymbol
+}
+
+// InitialGasPrice returns initial gas price used by the first block
+func (n Network) InitialGasPrice() *big.Int {
+	return big.NewInt(0).Set(n.fee.InitialGasPrice)
+}
+
+// MinDiscountedGasPrice returns minimum gas price after giving maximum discount
+func (n Network) MinDiscountedGasPrice() *big.Int {
+	return big.NewInt(0).Set(n.fee.MinDiscountedGasPrice)
+}
+
+// DeterministicGas returns deterministic gas amounts required by some message types
+func (n Network) DeterministicGas() DeterministicGasConfig {
+	return n.fee.DeterministicGas
 }
 
 // NetworkByChainID returns config for a predefined config.

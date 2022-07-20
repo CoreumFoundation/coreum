@@ -3,14 +3,16 @@ package app
 import (
 	"crypto/ed25519"
 	"encoding/json"
+	"math/big"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,6 +36,13 @@ func testNetwork() Network {
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
+		Fee: FeeConfig{
+			InitialGasPrice:       big.NewInt(2),
+			MinDiscountedGasPrice: big.NewInt(1),
+			DeterministicGas: DeterministicGasConfig{
+				BankSend: 10,
+			},
+		},
 		FundedAccounts: []FundedAccount{{
 			PublicKey: pubKey,
 			Balances:  "1000some-test-token",
@@ -220,19 +229,70 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 
 	pubKey, _ := types.GenerateSecp256k1Key()
 	cfg := NetworkConfig{
-		ChainID:        ChainID("test-network"),
-		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-		AddressPrefix:  "core",
-		TokenSymbol:    TokenSymbolMain,
+		ChainID:       ChainID("test-network"),
+		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+		AddressPrefix: "core",
+		TokenSymbol:   TokenSymbolMain,
+		Fee: FeeConfig{
+			InitialGasPrice:       big.NewInt(2),
+			MinDiscountedGasPrice: big.NewInt(1),
+			DeterministicGas: DeterministicGasConfig{
+				BankSend: 10,
+			},
+		},
 		FundedAccounts: []FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
 	}
 
 	n1 := NewNetwork(cfg)
 
+	cfg.Fee.InitialGasPrice.Set(big.NewInt(150))
+	cfg.Fee.MinDiscountedGasPrice.Set(big.NewInt(100))
 	cfg.FundedAccounts[0] = FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
 	cfg.GenTxs[0] = []byte("tx2")
 
+	assertT.True(n1.InitialGasPrice().Cmp(big.NewInt(2)) == 0)
+	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
+}
+
+func TestNetworkFeesNotMutable(t *testing.T) {
+	assertT := assert.New(t)
+
+	cfg := NetworkConfig{
+		ChainID:       ChainID("test-network"),
+		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+		AddressPrefix: "core",
+		TokenSymbol:   TokenSymbolMain,
+		Fee: FeeConfig{
+			InitialGasPrice:       big.NewInt(2),
+			MinDiscountedGasPrice: big.NewInt(1),
+			DeterministicGas: DeterministicGasConfig{
+				BankSend: 10,
+			},
+		},
+	}
+
+	n1 := NewNetwork(cfg)
+
+	n1.InitialGasPrice().Set(big.NewInt(150))
+	n1.MinDiscountedGasPrice().Set(big.NewInt(100))
+
+	assertT.True(n1.InitialGasPrice().Cmp(big.NewInt(2)) == 0)
+	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
+}
+
+func TestNetworkConfigConditions(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	for _, cfg := range networks {
+		requireT.NotNil(cfg.Fee.InitialGasPrice)
+		requireT.NotNil(cfg.Fee.MinDiscountedGasPrice)
+		assertT.True(cfg.Fee.InitialGasPrice.Sign() == 1)
+		assertT.True(cfg.Fee.MinDiscountedGasPrice.Sign() == 1)
+		assertT.True(cfg.Fee.InitialGasPrice.Cmp(cfg.Fee.MinDiscountedGasPrice) >= 0)
+
+		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
+	}
 }
