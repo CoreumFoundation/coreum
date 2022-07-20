@@ -10,8 +10,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -53,6 +54,291 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
+			FundedAccounts: []FundedAccount{
+				// Staker of validator 0
+				{
+					PublicKey: types.Secp256k1PublicKey{0x2, 0x4d, 0x37, 0x41, 0xe3, 0xee, 0x24, 0xdf, 0xb1, 0x7b, 0xdb, 0xff, 0xcd, 0xc3, 0x51, 0xdc, 0x9f, 0xd1, 0x43, 0x19, 0x53, 0x4d, 0x7c, 0x33, 0x35, 0x5d, 0xf9, 0x8, 0x42, 0x58, 0xcb, 0x45, 0x59},
+					Balances:  "100000000" + TokenSymbolDev,
+				},
+
+				// Staker of validator 1
+				{
+					PublicKey: types.Secp256k1PublicKey{0x2, 0xc1, 0x77, 0xad, 0xdf, 0xf4, 0x91, 0x13, 0x9f, 0xa8, 0xc0, 0x50, 0xd0, 0xba, 0x43, 0xce, 0xa5, 0x10, 0x3a, 0xd, 0xd0, 0xe7, 0x6e, 0xd8, 0x76, 0x94, 0x7f, 0xc0, 0x15, 0xe, 0xb4, 0x93, 0x56},
+					Balances:  "100000000" + TokenSymbolDev,
+				},
+
+				// Staker of validator 2
+				{
+					PublicKey: types.Secp256k1PublicKey{0x3, 0x3e, 0x21, 0x76, 0x29, 0xba, 0x55, 0xd4, 0xad, 0xfe, 0x35, 0xf4, 0xcc, 0xcb, 0x96, 0x8e, 0x7f, 0x50, 0x53, 0xc0, 0x17, 0x15, 0x16, 0xab, 0x7c, 0x11, 0xd8, 0x44, 0x7a, 0xde, 0xdf, 0xd, 0x52},
+					Balances:  "100000000" + TokenSymbolDev,
+				},
+
+				// Staker of validator 3
+				{
+					PublicKey: types.Secp256k1PublicKey{0x2, 0xbb, 0xfb, 0xad, 0xa6, 0xd, 0x8c, 0xfd, 0x9f, 0x6a, 0x24, 0xc4, 0xb8, 0xd0, 0x2c, 0x84, 0xb4, 0x57, 0x4b, 0xd8, 0xc1, 0x8b, 0xda, 0xf9, 0x18, 0x21, 0x63, 0xde, 0x7b, 0xfd, 0x5d, 0xf5, 0xe7},
+					Balances:  "100000000" + TokenSymbolDev,
+				},
+
+				// Faucet's account storing the rest of total supply
+				// FIXME (wojciech): generate new key once faucet is done
+				{
+					PublicKey: types.Secp256k1PublicKey{0x2, 0xf4, 0x17, 0xba, 0x2d, 0x78, 0x39, 0x29, 0xe3, 0x15, 0xd1, 0x71, 0xac, 0x79, 0x32, 0xe6, 0x8, 0xb1, 0xf6, 0x90, 0x34, 0xc5, 0x8c, 0xcf, 0xed, 0x55, 0x2e, 0xd6, 0x79, 0x2d, 0x40, 0xc6, 0xe9},
+					Balances:  "499999999999999999600000000" + TokenSymbolDev,
+				},
+			},
+			GenTxs: []json.RawMessage{
+				// validator 0
+				json.RawMessage(`{
+				  "body": {
+					"messages": [
+					  {
+						"@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+						"description": {
+						  "moniker": "devcore10krrrqxxy948n5p9xvwgq6krgy9hg5g8svaz62",
+						  "identity": "",
+						  "website": "",
+						  "security_contact": "",
+						  "details": ""
+						},
+						"commission": {
+						  "rate": "0.100000000000000000",
+						  "max_rate": "0.200000000000000000",
+						  "max_change_rate": "0.010000000000000000"
+						},
+						"min_self_delegation": "1",
+						"delegator_address": "devcore10krrrqxxy948n5p9xvwgq6krgy9hg5g8svaz62",
+						"validator_address": "devcorevaloper10krrrqxxy948n5p9xvwgq6krgy9hg5g8fnr84l",
+						"pubkey": {
+						  "@type": "/cosmos.crypto.ed25519.PubKey",
+						  "key": "lMMi0GqO68wCsWUQc8GwNBazv7z6lpQSMUJW+qVLGdk="
+						},
+						"value": {
+						  "denom": "dacore",
+						  "amount": "100000000"
+						}
+					  }
+					],
+					"memo": "",
+					"timeout_height": "0",
+					"extension_options": [],
+					"non_critical_extension_options": []
+				  },
+				  "auth_info": {
+					"signer_infos": [
+					  {
+						"public_key": {
+						  "@type": "/cosmos.crypto.secp256k1.PubKey",
+						  "key": "Ak03QePuJN+xe9v/zcNR3J/RQxlTTXwzNV35CEJYy0VZ"
+						},
+						"mode_info": {
+						  "single": {
+							"mode": "SIGN_MODE_DIRECT"
+						  }
+						},
+						"sequence": "0"
+					  }
+					],
+					"fee": {
+					  "amount": [],
+					  "gas_limit": "200000",
+					  "payer": "",
+					  "granter": ""
+					}
+				  },
+				  "signatures": [
+					"P3/EMiLx2mwX1HqVFFFIrl60nvq/V5bVlrUBqLMOLq11uKTrNM/D+NJYGsbXSvekbS2OadVA0o1zs2OUwg5fGA=="
+				  ]
+				}`),
+
+				// validator 1
+				json.RawMessage(`{
+				  "body": {
+					"messages": [
+					  {
+						"@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+						"description": {
+						  "moniker": "devcore1fvnwq8605fgex6qyr96enlhpgsnzwge62hs7er",
+						  "identity": "",
+						  "website": "",
+						  "security_contact": "",
+						  "details": ""
+						},
+						"commission": {
+						  "rate": "0.100000000000000000",
+						  "max_rate": "0.200000000000000000",
+						  "max_change_rate": "0.010000000000000000"
+						},
+						"min_self_delegation": "1",
+						"delegator_address": "devcore1fvnwq8605fgex6qyr96enlhpgsnzwge62hs7er",
+						"validator_address": "devcorevaloper1fvnwq8605fgex6qyr96enlhpgsnzwge6ngwmkk",
+						"pubkey": {
+						  "@type": "/cosmos.crypto.ed25519.PubKey",
+						  "key": "z9YAf63ZM+kDOEeGPNv2X2LcsyRX3V+++qLiP1xjQbw="
+						},
+						"value": {
+						  "denom": "dacore",
+						  "amount": "100000000"
+						}
+					  }
+					],
+					"memo": "",
+					"timeout_height": "0",
+					"extension_options": [],
+					"non_critical_extension_options": []
+				  },
+				  "auth_info": {
+					"signer_infos": [
+					  {
+						"public_key": {
+						  "@type": "/cosmos.crypto.secp256k1.PubKey",
+						  "key": "AsF3rd/0kROfqMBQ0LpDzqUQOg3Q527YdpR/wBUOtJNW"
+						},
+						"mode_info": {
+						  "single": {
+							"mode": "SIGN_MODE_DIRECT"
+						  }
+						},
+						"sequence": "0"
+					  }
+					],
+					"fee": {
+					  "amount": [],
+					  "gas_limit": "200000",
+					  "payer": "",
+					  "granter": ""
+					}
+				  },
+				  "signatures": [
+					"tBjqZTA4m1yvrdszHZVK69k+xYtQbbhxNEjZsagzOFlo72ZpdYuUjEmeq4Vi3MuvGrr4igLxwf0x/kL1iaPxUQ=="
+				  ]
+				}`),
+
+				// validator 2
+				json.RawMessage(`{
+				  "body": {
+					"messages": [
+					  {
+						"@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+						"description": {
+						  "moniker": "devcore15pwm9e2jkp5e0knudj0np6mf4dd30g0uych2ug",
+						  "identity": "",
+						  "website": "",
+						  "security_contact": "",
+						  "details": ""
+						},
+						"commission": {
+						  "rate": "0.100000000000000000",
+						  "max_rate": "0.200000000000000000",
+						  "max_change_rate": "0.010000000000000000"
+						},
+						"min_self_delegation": "1",
+						"delegator_address": "devcore15pwm9e2jkp5e0knudj0np6mf4dd30g0uych2ug",
+						"validator_address": "devcorevaloper15pwm9e2jkp5e0knudj0np6mf4dd30g0ua8f0na",
+						"pubkey": {
+						  "@type": "/cosmos.crypto.ed25519.PubKey",
+						  "key": "4sT/QxjkUPfNx6cNlhSelryF3AEzJ3unn7rRewFNyx0="
+						},
+						"value": {
+						  "denom": "dacore",
+						  "amount": "100000000"
+						}
+					  }
+					],
+					"memo": "",
+					"timeout_height": "0",
+					"extension_options": [],
+					"non_critical_extension_options": []
+				  },
+				  "auth_info": {
+					"signer_infos": [
+					  {
+						"public_key": {
+						  "@type": "/cosmos.crypto.secp256k1.PubKey",
+						  "key": "Az4hdim6VdSt/jX0zMuWjn9QU8AXFRarfBHYRHre3w1S"
+						},
+						"mode_info": {
+						  "single": {
+							"mode": "SIGN_MODE_DIRECT"
+						  }
+						},
+						"sequence": "0"
+					  }
+					],
+					"fee": {
+					  "amount": [],
+					  "gas_limit": "200000",
+					  "payer": "",
+					  "granter": ""
+					}
+				  },
+				  "signatures": [
+					"zmPq2tjbtKMcNfEpmbgM7Agxykwg1pkSquq4325nm25O2tHCgwkmnomWBnZ7Vc5ODUUc+UOAZkFKGlJPh2iiAQ=="
+				  ]
+				}`),
+
+				// validator 3
+				json.RawMessage(`{
+				  "body": {
+					"messages": [
+					  {
+						"@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+						"description": {
+						  "moniker": "devcore1dawh59rtggwpxe4pevtaklu0l3z322reg86qyd",
+						  "identity": "",
+						  "website": "",
+						  "security_contact": "",
+						  "details": ""
+						},
+						"commission": {
+						  "rate": "0.100000000000000000",
+						  "max_rate": "0.200000000000000000",
+						  "max_change_rate": "0.010000000000000000"
+						},
+						"min_self_delegation": "1",
+						"delegator_address": "devcore1dawh59rtggwpxe4pevtaklu0l3z322reg86qyd",
+						"validator_address": "devcorevaloper1dawh59rtggwpxe4pevtaklu0l3z322re3cy9tc",
+						"pubkey": {
+						  "@type": "/cosmos.crypto.ed25519.PubKey",
+						  "key": "hVFxUbrNW/KoiqQFQYYncQWLx4o884hdeV/mOOakaqQ="
+						},
+						"value": {
+						  "denom": "dacore",
+						  "amount": "100000000"
+						}
+					  }
+					],
+					"memo": "",
+					"timeout_height": "0",
+					"extension_options": [],
+					"non_critical_extension_options": []
+				  },
+				  "auth_info": {
+					"signer_infos": [
+					  {
+						"public_key": {
+						  "@type": "/cosmos.crypto.secp256k1.PubKey",
+						  "key": "Arv7raYNjP2faiTEuNAshLRXS9jBi9r5GCFj3nv9XfXn"
+						},
+						"mode_info": {
+						  "single": {
+							"mode": "SIGN_MODE_DIRECT"
+						  }
+						},
+						"sequence": "0"
+					  }
+					],
+					"fee": {
+					  "amount": [],
+					  "gas_limit": "200000",
+					  "payer": "",
+					  "granter": ""
+					}
+				  },
+				  "signatures": [
+					"MxT5CHJiurOyYkTa5jOw+EbfJiruNPJe4zB70G1sZaBKrmdX9t66ZElMol853oz4uIQJ/hFrBpGe/W0C0rbfAQ=="
+				  ]
+				}`),
+			},
 		},
 	}
 
