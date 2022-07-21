@@ -215,13 +215,13 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
 	n.AddGenesisTx([]byte("test string"))
 
-	assertT.Len(n.fundedAccounts, 1)
-	assertT.Len(n.genTxs, 1)
+	assertT.Len(n.fundedAccounts, 6)
+	assertT.Len(n.genTxs, 5)
 
 	n, err = NetworkByChainID(Devnet)
 	requireT.NoError(err)
-	assertT.Len(n.fundedAccounts, 0)
-	assertT.Len(n.genTxs, 0)
+	assertT.Len(n.fundedAccounts, 5)
+	assertT.Len(n.genTxs, 4)
 }
 
 func TestNetworkConfigNotMutable(t *testing.T) {
@@ -255,6 +255,37 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
+}
+
+func TestValidateAllGenesis(t *testing.T) {
+	assertT := assert.New(t)
+	encCfg := NewEncodingConfig()
+
+	for chainID, cfg := range networks {
+		n := NewNetwork(cfg)
+		genesisJSON, err := n.EncodeGenesis()
+		if !assertT.NoError(err) {
+			continue
+		}
+
+		gen, err := tmtypes.GenesisDocFromJSON(genesisJSON)
+		if !assertT.NoError(err) {
+			continue
+		}
+
+		var appStateMapJSONRawMessage map[string]json.RawMessage
+		err = json.Unmarshal(gen.AppState, &appStateMapJSONRawMessage)
+		if !assertT.NoError(err) {
+			continue
+		}
+
+		assertT.NoErrorf(
+			ModuleBasics.ValidateGenesis(
+				encCfg.Marshaler,
+				encCfg.TxConfig,
+				appStateMapJSONRawMessage,
+			), "genesis for network '%s' is invalid", chainID)
+	}
 }
 
 func TestNetworkFeesNotMutable(t *testing.T) {
