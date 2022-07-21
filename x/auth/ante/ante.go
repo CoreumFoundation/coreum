@@ -49,8 +49,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		NewMempoolFeeDecorator(options.MinGasPrice),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
-		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		NewDeterministicGasDecorator(options.GasRequirements),
+		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		authante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
