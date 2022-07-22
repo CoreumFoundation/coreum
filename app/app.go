@@ -83,7 +83,6 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/ignite-hq/cli/ignite/pkg/openapiconsole"
 	"github.com/spf13/cast"
 	monitoringp "github.com/tendermint/spn/x/monitoringp"
@@ -95,6 +94,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -103,6 +103,9 @@ import (
 const (
 	// Name is the blockchain name
 	Name = "core"
+
+	// Default chain ID
+	DefaultChainID = Mainnet
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
