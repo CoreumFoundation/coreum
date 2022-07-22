@@ -405,7 +405,7 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	feeModule := fee.NewAppModule(appCodec, app.FeeKeeper)
+	feeModule := fee.NewAppModule(appCodec, app.FeeKeeper, DefaultNetwork.NumOfBlocksForAverageGasUsage())
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

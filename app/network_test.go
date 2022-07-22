@@ -37,8 +37,9 @@ func testNetwork() Network {
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
 		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
+			InitialGasPrice:               big.NewInt(2),
+			MinDiscountedGasPrice:         big.NewInt(1),
+			NumOfBlocksForAverageGasUsage: 3,
 			DeterministicGas: DeterministicGasConfig{
 				BankSend: 10,
 			},
@@ -240,8 +241,9 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
 		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
+			InitialGasPrice:               big.NewInt(2),
+			MinDiscountedGasPrice:         big.NewInt(1),
+			NumOfBlocksForAverageGasUsage: 3,
 			DeterministicGas: DeterministicGasConfig{
 				BankSend: 10,
 			},
@@ -259,6 +261,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 
 	assertT.True(n1.InitialGasPrice().Cmp(big.NewInt(2)) == 0)
 	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
+	assertT.Equal(uint(3), n1.NumOfBlocksForAverageGasUsage())
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
 }
@@ -303,8 +306,9 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
 		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
+			InitialGasPrice:               big.NewInt(2),
+			MinDiscountedGasPrice:         big.NewInt(1),
+			NumOfBlocksForAverageGasUsage: 3,
 			DeterministicGas: DeterministicGasConfig{
 				BankSend: 10,
 			},
@@ -318,6 +322,7 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 
 	assertT.True(n1.InitialGasPrice().Cmp(big.NewInt(2)) == 0)
 	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
+	assertT.Equal(uint(3), n1.NumOfBlocksForAverageGasUsage())
 }
 
 func TestNetworkConfigConditions(t *testing.T) {
@@ -329,6 +334,7 @@ func TestNetworkConfigConditions(t *testing.T) {
 		assertT.True(cfg.Fee.InitialGasPrice.Sign() == 1)
 		assertT.True(cfg.Fee.MinDiscountedGasPrice.Sign() == 1)
 		assertT.True(cfg.Fee.InitialGasPrice.Cmp(cfg.Fee.MinDiscountedGasPrice) >= 0)
+		assertT.Greater(cfg.Fee.NumOfBlocksForAverageGasUsage, uint(0))
 
 		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
 	}

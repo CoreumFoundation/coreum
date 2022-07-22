@@ -72,17 +72,19 @@ func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) 
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper                        keeper.Keeper
+	numOfBlocksForAverageGasUsage uint64
 }
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {}
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
+func NewAppModule(cdc codec.Codec, keeper keeper.Keeper, numOfBlocksForAverageGasUsage uint) AppModule {
 	return AppModule{
-		AppModuleBasic: AppModuleBasic{cdc: cdc},
-		keeper:         keeper,
+		AppModuleBasic:                AppModuleBasic{cdc: cdc},
+		keeper:                        keeper,
+		numOfBlocksForAverageGasUsage: uint64(numOfBlocksForAverageGasUsage),
 	}
 }
 
@@ -123,7 +125,15 @@ func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock returns the end blocker for the fee module. It returns no validator
 // updates.
-func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	previousAverage := uint64(am.keeper.GetAverageGas(ctx))
+	currentGasUsage := uint64(am.keeper.TrackedGas(ctx))
+
+	currentAverage := ((am.numOfBlocksForAverageGasUsage-1)*previousAverage + currentGasUsage) / am.numOfBlocksForAverageGasUsage
+	am.keeper.SetAverageGas(ctx, int64(currentAverage))
+
+	ctx.Logger().Info("=== Average gas", "gas", currentAverage)
+
 	return []abci.ValidatorUpdate{}
 }
 

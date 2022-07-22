@@ -68,8 +68,9 @@ func init() {
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
 			Fee: FeeConfig{
-				InitialGasPrice:       big.NewInt(1500),
-				MinDiscountedGasPrice: big.NewInt(1000),
+				InitialGasPrice:               big.NewInt(1500),
+				MinDiscountedGasPrice:         big.NewInt(1000),
+				NumOfBlocksForAverageGasUsage: 10,
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 120000,
 				},
@@ -81,8 +82,9 @@ func init() {
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
 			Fee: FeeConfig{
-				InitialGasPrice:       big.NewInt(1500),
-				MinDiscountedGasPrice: big.NewInt(1000),
+				InitialGasPrice:               big.NewInt(1500),
+				MinDiscountedGasPrice:         big.NewInt(1000),
+				NumOfBlocksForAverageGasUsage: 10,
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 120000,
 				},
@@ -148,9 +150,10 @@ type DeterministicGasConfig struct {
 
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
-	InitialGasPrice       *big.Int
-	MinDiscountedGasPrice *big.Int
-	DeterministicGas      DeterministicGasConfig
+	InitialGasPrice               *big.Int
+	MinDiscountedGasPrice         *big.Int
+	NumOfBlocksForAverageGasUsage uint
+	DeterministicGas              DeterministicGasConfig
 }
 
 // NetworkConfig helps initialize Network instance
@@ -355,6 +358,11 @@ func (n Network) InitialGasPrice() *big.Int {
 // MinDiscountedGasPrice returns minimum gas price after giving maximum discount
 func (n Network) MinDiscountedGasPrice() *big.Int {
 	return big.NewInt(0).Set(n.fee.MinDiscountedGasPrice)
+}
+
+// NumOfBlocksForAverageGasUsage returns number of blocks used for calculating average gas usage per block
+func (n Network) NumOfBlocksForAverageGasUsage() uint {
+	return n.fee.NumOfBlocksForAverageGasUsage
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types
