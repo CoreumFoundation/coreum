@@ -14,13 +14,14 @@ import (
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	AccountKeeper   authante.AccountKeeper
-	BankKeeper      types.BankKeeper
-	FeegrantKeeper  authante.FeegrantKeeper
-	SignModeHandler authsigning.SignModeHandler
-	SigGasConsumer  func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
-	MinGasPrice     sdk.Coin
-	GasRequirements DeterministicGasRequirements
+	AccountKeeper                     authante.AccountKeeper
+	BankKeeper                        types.BankKeeper
+	FeegrantKeeper                    authante.FeegrantKeeper
+	SignModeHandler                   authsigning.SignModeHandler
+	SigGasConsumer                    func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
+	MinGasPrice                       sdk.Coin
+	GasRequirements                   DeterministicGasRequirements
+	FeeModelGasCollectorAnteDecorator sdk.AnteDecorator
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -39,6 +40,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "sign mode handler is required for ante builder")
 	}
 
+	if options.FeeModelGasCollectorAnteDecorator == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "ante decorator of fee model gas collector is not set")
+	}
+
 	if options.SigGasConsumer == nil {
 		options.SigGasConsumer = authante.DefaultSigVerificationGasConsumer
 	}
@@ -50,6 +55,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
 		NewDeterministicGasDecorator(options.GasRequirements),
+		options.FeeModelGasCollectorAnteDecorator,
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
@@ -61,4 +67,24 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil
+}
+
+// AnteDecoratorFunc represents function implementing ante decorator
+type AnteDecoratorFunc func(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error)
+
+// NewFuncAnteDecorator returns adapter converting ante decorator function to ante decorator object
+func NewFuncAnteDecorator(anteDecoratorFunc AnteDecoratorFunc) FuncAnteDecorator {
+	return FuncAnteDecorator{
+		anteDecoraorFunc: anteDecoratorFunc,
+	}
+}
+
+// FuncAnteDecorator is the adapter converting ante decorator function to object implementing sdk.AnteDecorator interface
+type FuncAnteDecorator struct {
+	anteDecoraorFunc AnteDecoratorFunc
+}
+
+// AnteHandle is calls ante decorator handler function
+func (fad FuncAnteDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+	return fad.anteDecoraorFunc(ctx, tx, simulate, next)
 }

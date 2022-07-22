@@ -269,7 +269,7 @@ func New(
 		feetypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feetypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	app := &App{
@@ -335,7 +335,7 @@ func New(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
-	app.FeeKeeper = feekeeper.NewBaseKeeper(keys[feetypes.StoreKey])
+	app.FeeKeeper = feekeeper.NewBaseKeeper(keys[feetypes.StoreKey], tkeys[feetypes.TransientStoreKey])
 
 	// ... other modules keepers
 
@@ -405,6 +405,8 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
+	feeModule := fee.NewAppModule(appCodec, app.FeeKeeper)
+
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
@@ -431,7 +433,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		monitoringModule,
-		fee.NewAppModule(appCodec, app.FeeKeeper),
+		feeModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -560,6 +562,7 @@ func New(
 			GasRequirements: ante.DeterministicGasRequirements{
 				BankSend: DefaultNetwork.DeterministicGas().BankSend,
 			},
+			FeeModelGasCollectorAnteDecorator: ante.NewFuncAnteDecorator(feeModule.GasCollectorAnteDecorator),
 		},
 	)
 	if err != nil {

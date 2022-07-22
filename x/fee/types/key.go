@@ -7,4 +7,7 @@ const (
 
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName
+
+	// TransientStoreKey defines the transient module store key
+	TransientStoreKey = "transient_" + ModuleName
 )

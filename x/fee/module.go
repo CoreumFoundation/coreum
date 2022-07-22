@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/rand"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -147,4 +148,18 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
+}
+
+// GasCollectorAnteDecorator is the decorator installed inside ante handler. It collects total gas declared by all the transaction executed in the block
+// so the end blocker
+// CONTRACT: Tx must implement FeeTx to use GasCollectorAnteDecorator
+func (am AppModule) GasCollectorAnteDecorator(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+	feeTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+	}
+
+	am.keeper.TrackGas(ctx, int64(feeTx.GetGas()))
+
+	return next(ctx, tx, simulate)
 }
