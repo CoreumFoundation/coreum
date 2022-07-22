@@ -95,6 +95,10 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CoreumFoundation/coreum/x/fee"
+	feekeeper "github.com/CoreumFoundation/coreum/x/fee/keeper"
+	feetypes "github.com/CoreumFoundation/coreum/x/fee/types"
+
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -151,6 +155,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
+		fee.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -217,6 +222,7 @@ type App struct {
 	TransferKeeper   ibctransferkeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	MonitoringKeeper monitoringpkeeper.Keeper
+	FeeKeeper        feekeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper        capabilitykeeper.ScopedKeeper
@@ -260,6 +266,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
+		feetypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -327,6 +334,8 @@ func New(
 	app.StakingKeeper = *stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
+
+	app.FeeKeeper = feekeeper.NewBaseKeeper(keys[feetypes.StoreKey])
 
 	// ... other modules keepers
 
@@ -422,6 +431,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		monitoringModule,
+		fee.NewAppModule(appCodec, app.FeeKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -449,6 +459,7 @@ func New(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		monitoringptypes.ModuleName,
+		feetypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -472,6 +483,7 @@ func New(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		monitoringptypes.ModuleName,
+		feetypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -500,6 +512,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		feegrant.ModuleName,
 		monitoringptypes.ModuleName,
+		feetypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
