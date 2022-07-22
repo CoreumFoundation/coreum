@@ -83,7 +83,7 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	"github.com/ignite-hq/cli/ignite/pkg/openapiconsole"
+	"github.com/ignite/cli/ignite/pkg/openapiconsole"
 	"github.com/spf13/cast"
 	monitoringp "github.com/tendermint/spn/x/monitoringp"
 	monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
@@ -95,6 +95,10 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
+	"github.com/CoreumFoundation/coreum/x/fee"
+	feekeeper "github.com/CoreumFoundation/coreum/x/fee/keeper"
+	feetypes "github.com/CoreumFoundation/coreum/x/fee/types"
+
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -160,6 +164,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
+		fee.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -226,6 +231,7 @@ type App struct {
 	TransferKeeper   ibctransferkeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	MonitoringKeeper monitoringpkeeper.Keeper
+	FeeKeeper        feekeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper        capabilitykeeper.ScopedKeeper
@@ -269,9 +275,10 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
+		feetypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feetypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	app := &App{
@@ -336,6 +343,8 @@ func New(
 	app.StakingKeeper = *stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
+
+	app.FeeKeeper = feekeeper.NewBaseKeeper(ChosenNetwork.TokenSymbol(), keys[feetypes.StoreKey], tkeys[feetypes.TransientStoreKey])
 
 	// ... other modules keepers
 
@@ -405,6 +414,18 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
+	feeModel := ChosenNetwork.FeeModel()
+	feeModule := fee.NewAppModule(appCodec, app.FeeKeeper,
+		fee.Model{
+			FeeDenom:                             ChosenNetwork.TokenSymbol(),
+			InitialGasPrice:                      sdk.NewIntFromBigInt(feeModel.InitialGasPrice),
+			MaxDiscount:                          feeModel.MaxDiscount,
+			OptimalBlockGas:                      feeModel.OptimalBlockGas,
+			MaxBlockGas:                          feeModel.MaxBlockGas,
+			NumOfBlocksForCurrentAverageBlockGas: feeModel.NumOfBlocksForCurrentAverageBlockGas,
+			NumOfBlocksForAverageBlockGas:        feeModel.NumOfBlocksForAverageBlockGas,
+		})
+
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
@@ -431,6 +452,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		monitoringModule,
+		feeModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -458,6 +480,7 @@ func New(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		monitoringptypes.ModuleName,
+		feetypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -481,6 +504,7 @@ func New(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		monitoringptypes.ModuleName,
+		feetypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -509,6 +533,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		feegrant.ModuleName,
 		monitoringptypes.ModuleName,
+		feetypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -548,11 +573,12 @@ func New(
 
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
-			AccountKeeper:   app.AccountKeeper,
-			BankKeeper:      app.BankKeeper,
-			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-			FeegrantKeeper:  app.FeeGrantKeeper,
-			MinGasPrice:     sdk.NewCoin(ChosenNetwork.TokenSymbol(), sdk.NewIntFromBigInt(ChosenNetwork.MinDiscountedGasPrice())),
+			AccountKeeper:      app.AccountKeeper,
+			BankKeeper:         app.BankKeeper,
+			SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
+			FeegrantKeeper:     app.FeeGrantKeeper,
+			GasPriceKeeper:     app.FeeKeeper,
+			GasCollectorKeeper: app.FeeKeeper,
 			GasRequirements: ante.DeterministicGasRequirements{
 				BankSend: ChosenNetwork.DeterministicGas().BankSend,
 			},

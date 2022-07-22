@@ -18,7 +18,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
+	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -63,10 +63,16 @@ func init() {
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
 			Fee: FeeConfig{
-				InitialGasPrice:       big.NewInt(1500),
-				MinDiscountedGasPrice: big.NewInt(1000),
+				FeeModel: FeeModel{
+					InitialGasPrice:                      big.NewInt(1500),
+					MaxDiscount:                          0.15,
+					OptimalBlockGas:                      43750000, // 350 * BankSend transactions
+					MaxBlockGas:                          50000000, // 400 * BankSend transactions
+					NumOfBlocksForCurrentAverageBlockGas: 10,
+					NumOfBlocksForAverageBlockGas:        1000,
+				},
 				DeterministicGas: DeterministicGasConfig{
-					BankSend: 120000,
+					BankSend: 125000,
 				},
 			},
 		},
@@ -77,10 +83,16 @@ func init() {
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
 			Fee: FeeConfig{
-				InitialGasPrice:       big.NewInt(1500),
-				MinDiscountedGasPrice: big.NewInt(1000),
+				FeeModel: FeeModel{
+					InitialGasPrice:                      big.NewInt(1500),
+					MaxDiscount:                          0.15,
+					OptimalBlockGas:                      43750000, // 350 * BankSend transactions
+					MaxBlockGas:                          50000000, // 400 * BankSend transactions
+					NumOfBlocksForCurrentAverageBlockGas: 10,
+					NumOfBlocksForAverageBlockGas:        1000,
+				},
 				DeterministicGas: DeterministicGasConfig{
-					BankSend: 120000,
+					BankSend: 125000,
 				},
 			},
 			NodeConfig: NodeConfig{
@@ -134,6 +146,22 @@ func init() {
 
 var networks = map[ChainID]NetworkConfig{}
 
+// FeeModel stores parameters defining fee model of coreum blockchain
+type FeeModel struct {
+	InitialGasPrice                      *big.Int
+	MaxDiscount                          float64
+	OptimalBlockGas                      int64
+	MaxBlockGas                          int64
+	NumOfBlocksForCurrentAverageBlockGas uint
+	NumOfBlocksForAverageBlockGas        uint
+}
+
+// Clone creates a copy of FeeModel
+func (fm FeeModel) Clone() FeeModel {
+	fm.InitialGasPrice = new(big.Int).Set(fm.InitialGasPrice)
+	return fm
+}
+
 // DeterministicGasConfig keeps config about deterministic gas for some message types
 type DeterministicGasConfig struct {
 	BankSend uint64
@@ -141,20 +169,14 @@ type DeterministicGasConfig struct {
 
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
-	InitialGasPrice       *big.Int
-	MinDiscountedGasPrice *big.Int
-	DeterministicGas      DeterministicGasConfig
+	FeeModel         FeeModel
+	DeterministicGas DeterministicGasConfig
 }
 
-// Clone creates a copy of FeeConfig to allow to pass by reference
-func (f FeeConfig) Clone() FeeConfig {
-	return FeeConfig{
-		InitialGasPrice:       big.NewInt(0).Set(f.InitialGasPrice),
-		MinDiscountedGasPrice: big.NewInt(0).Set(f.MinDiscountedGasPrice),
-		DeterministicGas: DeterministicGasConfig{
-			BankSend: f.DeterministicGas.BankSend,
-		},
-	}
+// Clone creates a copy of FeeConfig to allow to pass by value
+func (fc FeeConfig) Clone() FeeConfig {
+	fc.FeeModel = fc.FeeModel.Clone()
+	return fc
 }
 
 // NetworkConfig helps initialize Network instance
@@ -369,14 +391,9 @@ func (n Network) TokenSymbol() string {
 	return n.tokenSymbol
 }
 
-// InitialGasPrice returns initial gas price used by the first block
-func (n Network) InitialGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.fee.InitialGasPrice)
-}
-
-// MinDiscountedGasPrice returns minimum gas price after giving maximum discount
-func (n Network) MinDiscountedGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.fee.MinDiscountedGasPrice)
+// FeeModel returns fee model configuration
+func (n Network) FeeModel() FeeModel {
+	return n.fee.FeeModel.Clone()
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types

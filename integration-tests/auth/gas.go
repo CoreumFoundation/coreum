@@ -19,7 +19,7 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 
 	return func(ctx context.Context) error {
 			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.InitialGasPrice(),
+				chain.Network.FeeModel().InitialGasPrice,
 				chain.Network.DeterministicGas().BankSend,
 				1,
 				big.NewInt(100),
@@ -32,7 +32,11 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
 
-			gasPrice := big.NewInt(0).Sub(chain.Network.MinDiscountedGasPrice(), big.NewInt(1))
+			minDiscountedGasPriceFloat := new(big.Float).SetInt(chain.Network.FeeModel().InitialGasPrice)
+			minDiscountedGasPriceFloat.Mul(minDiscountedGasPriceFloat, big.NewFloat(1.-chain.Network.FeeModel().MaxDiscount))
+			minDiscountedGasPrice, _ := minDiscountedGasPriceFloat.Int(nil)
+
+			gasPrice := new(big.Int).Sub(minDiscountedGasPrice, big.NewInt(1))
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,

@@ -31,7 +31,7 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		}
 
 		fees := testing.ComputeNeededBalance(
-			chain.Network.InitialGasPrice(),
+			chain.Network.FeeModel().InitialGasPrice,
 			chain.Network.DeterministicGas().BankSend,
 			numOfTransactions,
 			big.NewInt(0),
@@ -90,7 +90,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 
 	return func(ctx context.Context) error {
 			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.InitialGasPrice(),
+				chain.Network.FeeModel().InitialGasPrice,
 				chain.Network.DeterministicGas().BankSend,
 				1,
 				big.NewInt(10),
@@ -114,7 +114,7 @@ func sendAndReturnGasUsed(ctx context.Context, coredClient client.Client, sender
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: gasLimit,
-			GasPrice: types.Coin{Amount: network.InitialGasPrice(), Denom: network.TokenSymbol()},
+			GasPrice: types.Coin{Amount: network.FeeModel().InitialGasPrice, Denom: network.TokenSymbol()},
 			Memo:     maxMemo, // memo is set to max length here to charge as much gas as possible
 		},
 		Sender:   sender,

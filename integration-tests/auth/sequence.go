@@ -19,7 +19,7 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 
 	return func(ctx context.Context) error {
 			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.InitialGasPrice(),
+				chain.Network.FeeModel().InitialGasPrice,
 				chain.Network.DeterministicGas().BankSend,
 				1,
 				big.NewInt(10),
@@ -43,7 +43,7 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: chain.Network.InitialGasPrice(), Denom: chain.Network.TokenSymbol()},
+					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice, Denom: chain.Network.TokenSymbol()},
 				},
 				Sender:   sender,
 				Receiver: sender,

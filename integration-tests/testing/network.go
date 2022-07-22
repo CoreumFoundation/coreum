@@ -15,10 +15,16 @@ var NetworkConfig = app.NetworkConfig{
 	AddressPrefix: "devcore",
 	TokenSymbol:   app.TokenSymbolDev,
 	Fee: app.FeeConfig{
-		InitialGasPrice:       big.NewInt(1500),
-		MinDiscountedGasPrice: big.NewInt(1000),
+		FeeModel: app.FeeModel{
+			InitialGasPrice:                      big.NewInt(1500),
+			MaxDiscount:                          0.15,
+			OptimalBlockGas:                      43750000, // 350 * BankSend transactions
+			MaxBlockGas:                          50000000, // 400 * BankSend transactions
+			NumOfBlocksForCurrentAverageBlockGas: 10,
+			NumOfBlocksForAverageBlockGas:        1000,
+		},
 		DeterministicGas: app.DeterministicGasConfig{
-			BankSend: 120000,
+			BankSend: 125000,
 		},
 	},
 }

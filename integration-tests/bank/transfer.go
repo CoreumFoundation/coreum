@@ -50,7 +50,7 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 	return func(ctx context.Context) error {
 			// Fund wallets
 			senderInitialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.InitialGasPrice(),
+				chain.Network.FeeModel().InitialGasPrice,
 				chain.Network.DeterministicGas().BankSend,
 				1,
 				big.NewInt(100),
@@ -80,7 +80,7 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: chain.Network.InitialGasPrice(), Denom: chain.Network.TokenSymbol()},
+					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice, Denom: chain.Network.TokenSymbol()},
 				},
 				Sender:   sender,
 				Receiver: receiver,
