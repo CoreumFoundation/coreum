@@ -5,13 +5,15 @@ import (
 	_ "embed"
 	"encoding/json"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"sync"
 	"text/template"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,6 +42,24 @@ const (
 	TokenSymbolDev  string = "dacore"
 )
 
+var (
+	//go:embed networks/coreum-devnet-1/validator-0.json
+	coreumDevnet1Validator0 json.RawMessage
+
+	//go:embed networks/coreum-devnet-1/validator-1.json
+	coreumDevnet1Validator1 json.RawMessage
+
+	//go:embed networks/coreum-devnet-1/validator-2.json
+	coreumDevnet1Validator2 json.RawMessage
+
+	//go:embed networks/coreum-devnet-1/validator-3.json
+	coreumDevnet1Validator3 json.RawMessage
+)
+
+// DefaultNetwork is the network cored is configured to connect to
+// FIXME (milad): Remove this hack once app loads appropriate network config based on CLI flag
+var DefaultNetwork Network
+
 func init() {
 	list := []NetworkConfig{
 		{
@@ -47,21 +67,91 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
+			Fee: FeeConfig{
+				InitialGasPrice:       big.NewInt(1500),
+				MinDiscountedGasPrice: big.NewInt(1000),
+				DeterministicGas: DeterministicGasConfig{
+					BankSend: 120000,
+				},
+			},
 		},
 		{
 			ChainID:       Devnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
+			Fee: FeeConfig{
+				InitialGasPrice:       big.NewInt(1500),
+				MinDiscountedGasPrice: big.NewInt(1000),
+				DeterministicGas: DeterministicGasConfig{
+					BankSend: 120000,
+				},
+			},
+			FundedAccounts: []FundedAccount{
+				// Staker of validator 0
+				{
+					PublicKey: types.Secp256k1PublicKey{0x2, 0x4d, 0x37, 0x41, 0xe3, 0xee, 0x24, 0xdf, 0xb1, 0x7b, 0xdb, 0xff, 0xcd, 0xc3, 0x51, 0xdc, 0x9f, 0xd1, 0x43, 0x19, 0x53, 0x4d, 0x7c, 0x33, 0x35, 0x5d, 0xf9, 0x8, 0x42, 0x58, 0xcb, 0x45, 0x59},
+					Balances:  "100000000" + TokenSymbolDev,
+				},
+
+				// Staker of validator 1
+				{
+					PublicKey: types.Secp256k1PublicKey{0x2, 0xc1, 0x77, 0xad, 0xdf, 0xf4, 0x91, 0x13, 0x9f, 0xa8, 0xc0, 0x50, 0xd0, 0xba, 0x43, 0xce, 0xa5, 0x10, 0x3a, 0xd, 0xd0, 0xe7, 0x6e, 0xd8, 0x76, 0x94, 0x7f, 0xc0, 0x15, 0xe, 0xb4, 0x93, 0x56},
+					Balances:  "100000000" + TokenSymbolDev,
+				},
+
+				// Staker of validator 2
+				{
+					PublicKey: types.Secp256k1PublicKey{0x3, 0x3e, 0x21, 0x76, 0x29, 0xba, 0x55, 0xd4, 0xad, 0xfe, 0x35, 0xf4, 0xcc, 0xcb, 0x96, 0x8e, 0x7f, 0x50, 0x53, 0xc0, 0x17, 0x15, 0x16, 0xab, 0x7c, 0x11, 0xd8, 0x44, 0x7a, 0xde, 0xdf, 0xd, 0x52},
+					Balances:  "100000000" + TokenSymbolDev,
+				},
+
+				// Staker of validator 3
+				{
+					PublicKey: types.Secp256k1PublicKey{0x2, 0xbb, 0xfb, 0xad, 0xa6, 0xd, 0x8c, 0xfd, 0x9f, 0x6a, 0x24, 0xc4, 0xb8, 0xd0, 0x2c, 0x84, 0xb4, 0x57, 0x4b, 0xd8, 0xc1, 0x8b, 0xda, 0xf9, 0x18, 0x21, 0x63, 0xde, 0x7b, 0xfd, 0x5d, 0xf5, 0xe7},
+					Balances:  "100000000" + TokenSymbolDev,
+				},
+
+				// Faucet's account storing the rest of total supply
+				// FIXME (wojciech): generate new key once faucet is done
+				{
+					PublicKey: types.Secp256k1PublicKey{0x2, 0xf4, 0x17, 0xba, 0x2d, 0x78, 0x39, 0x29, 0xe3, 0x15, 0xd1, 0x71, 0xac, 0x79, 0x32, 0xe6, 0x8, 0xb1, 0xf6, 0x90, 0x34, 0xc5, 0x8c, 0xcf, 0xed, 0x55, 0x2e, 0xd6, 0x79, 0x2d, 0x40, 0xc6, 0xe9},
+					Balances:  "499999999999999999600000000" + TokenSymbolDev,
+				},
+			},
+			GenTxs: []json.RawMessage{
+				coreumDevnet1Validator0,
+				coreumDevnet1Validator1,
+				coreumDevnet1Validator2,
+				coreumDevnet1Validator3,
+			},
 		},
 	}
 
 	for _, elem := range list {
 		networks[elem.ChainID] = elem
 	}
+
+	var err error
+	DefaultNetwork, err = NetworkByChainID(Mainnet)
+	if err != nil {
+		panic(err)
+	}
 }
 
 var networks = map[ChainID]NetworkConfig{}
+
+// DeterministicGasConfig keeps config about deterministic gas for some message types
+type DeterministicGasConfig struct {
+	BankSend uint64
+}
+
+// FeeConfig is the part of network config defining parameters of our fee model
+type FeeConfig struct {
+	InitialGasPrice       *big.Int
+	MinDiscountedGasPrice *big.Int
+	DeterministicGas      DeterministicGasConfig
+}
 
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
@@ -69,6 +159,7 @@ type NetworkConfig struct {
 	GenesisTime    time.Time
 	AddressPrefix  string
 	TokenSymbol    string
+	Fee            FeeConfig
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 }
@@ -79,6 +170,7 @@ type Network struct {
 	genesisTime   time.Time
 	addressPrefix string
 	tokenSymbol   string
+	fee           FeeConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -87,11 +179,15 @@ type Network struct {
 
 // NewNetwork returns a new instance of Network
 func NewNetwork(c NetworkConfig) Network {
+	fee := c.Fee
+	fee.InitialGasPrice = big.NewInt(0).Set(c.Fee.InitialGasPrice)
+	fee.MinDiscountedGasPrice = big.NewInt(0).Set(c.Fee.MinDiscountedGasPrice)
 	n := Network{
 		genesisTime:    c.GenesisTime,
 		chainID:        c.ChainID,
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
+		fee:            fee,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -249,6 +345,21 @@ func (n Network) ChainID() ChainID {
 // for each network(i.e mainnet, testnet, etc)
 func (n Network) TokenSymbol() string {
 	return n.tokenSymbol
+}
+
+// InitialGasPrice returns initial gas price used by the first block
+func (n Network) InitialGasPrice() *big.Int {
+	return big.NewInt(0).Set(n.fee.InitialGasPrice)
+}
+
+// MinDiscountedGasPrice returns minimum gas price after giving maximum discount
+func (n Network) MinDiscountedGasPrice() *big.Int {
+	return big.NewInt(0).Set(n.fee.MinDiscountedGasPrice)
+}
+
+// DeterministicGas returns deterministic gas amounts required by some message types
+func (n Network) DeterministicGas() DeterministicGasConfig {
+	return n.fee.DeterministicGas
 }
 
 // NetworkByChainID returns config for a predefined config.
