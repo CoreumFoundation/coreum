@@ -1,8 +1,9 @@
 package types
 
 import (
-	"errors"
 	"math/big"
+
+	"github.com/pkg/errors"
 )
 
 // Wallet stores information related to wallet
