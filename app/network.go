@@ -235,6 +235,7 @@ func (n *Network) NodeConfig() *NodeConfig {
 	return &nodeConfig
 }
 
+// Enabled shows whether a network is enabled or not
 func (n *Network) Enabled() bool {
 	return n.enabled
 }
