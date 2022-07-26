@@ -1,8 +1,10 @@
 package app
 
 import (
+	"crypto/ed25519"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -12,13 +14,33 @@ import (
 	"github.com/tendermint/tendermint/privval"
 )
 
+// DefaultNodeConfigPath is the default path there the config.toml is saved
+var DefaultNodeConfigPath = filepath.Join("config", "config.toml")
+
 // NodeConfig saves files with private keys and config required by node
 type NodeConfig struct {
 	Name           string
 	PrometheusPort int
-	NodeKey        tmed25519.PrivKey
-	ValidatorKey   tmed25519.PrivKey
+	NodeKey        ed25519.PrivateKey
+	ValidatorKey   ed25519.PrivateKey
 	SeedPeers      []string
+}
+
+// Clone creates a copy of the NodeConfig so that mutable fields like slices
+// are copied as immutable.
+func (nc NodeConfig) Clone() NodeConfig {
+	copied := NodeConfig{
+		Name:           nc.Name,
+		PrometheusPort: nc.PrometheusPort,
+		NodeKey:        []byte{},
+		ValidatorKey:   []byte{},
+		SeedPeers:      []string{},
+	}
+
+	copied.NodeKey = append(copied.NodeKey, nc.NodeKey...)
+	copied.ValidatorKey = append(copied.ValidatorKey, nc.ValidatorKey...)
+	copied.SeedPeers = append(copied.SeedPeers, nc.SeedPeers...)
+	return copied
 }
 
 // SavePrivateKeys saves private keys to files
@@ -29,7 +51,7 @@ func (nc NodeConfig) SavePrivateKeys(homeDir string) error {
 	}
 
 	err = (&p2p.NodeKey{
-		PrivKey: nc.NodeKey,
+		PrivKey: tmed25519.PrivKey(nc.NodeKey),
 	}).SaveAs(homeDir + "/config/node_key.json")
 	if err != nil {
 		return err
@@ -43,7 +65,7 @@ func (nc NodeConfig) SavePrivateKeys(homeDir string) error {
 
 		privval.
 			NewFilePV(
-				nc.ValidatorKey,
+				tmed25519.PrivKey(nc.ValidatorKey),
 				homeDir+"/config/priv_validator_key.json",
 				homeDir+"/data/priv_validator_state.json").
 			Save()
@@ -53,30 +75,26 @@ func (nc NodeConfig) SavePrivateKeys(homeDir string) error {
 
 // TendermintNodeConfig applies node's tendermint config
 func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
-	cfg.Moniker = nc.Name
-	// set addr_book_strict to false so nodes connecting from non-routable hosts are added to address book
-	cfg.P2P.AddrBookStrict = false
-	cfg.P2P.AllowDuplicateIP = true
-	cfg.P2P.MaxNumOutboundPeers = 100
-	cfg.P2P.MaxNumInboundPeers = 100
-	cfg.RPC.MaxSubscriptionClients = 10000
-	cfg.RPC.MaxOpenConnections = 10000
-	cfg.RPC.GRPCMaxOpenConnections = 10000
-	cfg.RPC.MaxSubscriptionsPerClient = 10000
-	cfg.Mempool.Size = 50000
-	cfg.Mempool.MaxTxsBytes = 5368709120
+	if cfg == nil {
+		cfg = config.DefaultConfig()
+	}
+
+	if nc.Name != "" {
+		cfg.Moniker = nc.Name
+	}
+
 	if nc.PrometheusPort > 0 {
 		cfg.Instrumentation.Prometheus = true
 		cfg.Instrumentation.PrometheusListenAddr = net.JoinHostPort(net.IPv4zero.String(), strconv.Itoa(nc.PrometheusPort))
 	}
-	cfg.P2P.Seeds = strings.Join(nc.SeedPeers, ",")
+
+	if len(nc.SeedPeers) > 0 {
+		cfg.P2P.Seeds = strings.Join(nc.SeedPeers, ",")
+	}
 	return cfg
 }
 
-// SaveConfig saves tendermint config to file
-func (nc NodeConfig) SaveConfig(homeDir string) error {
-	cfg := config.DefaultConfig()
-	cfg = nc.TendermintNodeConfig(cfg)
-	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
-	return nil
+// WriteTendermintConfigToFile saves tendermint config to file
+func WriteTendermintConfigToFile(filePath string, cfg *config.Config) {
+	config.WriteConfigFile(filePath, cfg)
 }

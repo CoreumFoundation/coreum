@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -14,7 +13,6 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/cli"
 	tmos "github.com/tendermint/tendermint/libs/os"
 )
@@ -24,7 +22,7 @@ const (
 	// FlagOverwrite defines a flag to overwrite an existing genesis JSON file.
 	FlagOverwrite = "overwrite"
 
-	// FlagSeed defines a flag to initialize the private validator key from a specific seed.
+	// FlagRecover defines a flag which determines whether to init private keys from mnemonic or generate new ones.
 	FlagRecover = "recover"
 )
 
@@ -47,8 +45,8 @@ func initCmd(defaultNodeHome string) *cobra.Command {
 
 			// Get bip39 mnemonic
 			var mnemonic string
-			recoverFlg, _ := cmd.Flags().GetBool(FlagRecover)
-			if recoverFlg {
+			isRecover, _ := cmd.Flags().GetBool(FlagRecover)
+			if isRecover {
 				inBuf := bufio.NewReader(cmd.InOrStdin())
 				value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
 				if err != nil {
@@ -65,7 +63,7 @@ func initCmd(defaultNodeHome string) *cobra.Command {
 			overwrite, _ := cmd.Flags().GetBool(FlagOverwrite)
 
 			if !overwrite && tmos.FileExists(genFile) {
-				return fmt.Errorf("genesis.json file already exists: %v", genFile)
+				return errors.Errorf("genesis.json file already exists: %v", genFile)
 			}
 
 			network, err := app.NetworkByChainID(app.ChainID(chainID))
@@ -87,14 +85,17 @@ func initCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+			app.WriteTendermintConfigToFile(
+				filepath.Join(config.RootDir, app.DefaultNodeConfigPath),
+				config,
+			)
 
 			return nil
 		},
 	}
 
 	cmd.Flags().String(cli.HomeFlag, defaultNodeHome, "node's home directory")
-	cmd.Flags().String(flags.FlagChainID, string(app.Mainnet), "genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().String(flags.FlagChainID, string(app.DefaultChainID), "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().Bool(FlagRecover, false, "provide seed phrase to recover existing key instead of creating")
 
