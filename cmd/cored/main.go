@@ -49,6 +49,8 @@ func main() {
 }
 
 func isStringInList(str string, list ...string) bool {
+	// @TODO replace this function with
+	// https://github.com/samber/lo after we migrate to go1.18
 	for _, l := range list {
 		if str == l {
 			return true
@@ -61,7 +63,7 @@ func checkChainIDNotMain(cmd *cobra.Command, args []string) error {
 	chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
 	network, err := app.NetworkByChainID(app.ChainID(chainID))
 	if err != nil {
-		return errors.Errorf("error processing chain-id=%s", chainID)
+		return errors.Wrapf(err, "error processing chain-id=%s", chainID)
 	}
 
 	if !network.Enabled() {

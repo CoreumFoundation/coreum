@@ -48,6 +48,11 @@ func NewCoin(amount *big.Int, denom string) (Coin, error) {
 	return c, nil
 }
 
+// String returns string representation of coin
+func (c Coin) String() string {
+	return c.Amount.String() + c.Denom
+}
+
 // Validate validates data inside coin
 func (c Coin) Validate() error {
 	if c.Denom == "" {
@@ -60,9 +65,4 @@ func (c Coin) Validate() error {
 		return errors.New("amount is negative")
 	}
 	return nil
-}
-
-// String returns string representation of coin
-func (c Coin) String() string {
-	return c.Amount.String() + c.Denom
 }

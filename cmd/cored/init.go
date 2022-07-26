@@ -33,7 +33,10 @@ func initCmd(defaultNodeHome string) *cobra.Command {
 		Long:  `Initialize validators's and node's configuration files.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
+			chainID, err := cmd.Flags().GetString(flags.FlagChainID)
+			if err != nil {
+				return errors.Wrapf(err, "got error getting chain-id flag")
+			}
 			if chainID == "" {
 				return errors.New("chain id not provided")
 			}
@@ -45,7 +48,10 @@ func initCmd(defaultNodeHome string) *cobra.Command {
 
 			// Get bip39 mnemonic
 			var mnemonic string
-			isRecover, _ := cmd.Flags().GetBool(FlagRecover)
+			isRecover, err := cmd.Flags().GetBool(FlagRecover)
+			if err != nil {
+				return errors.Wrapf(err, "got error parsing recover flag")
+			}
 			if isRecover {
 				inBuf := bufio.NewReader(cmd.InOrStdin())
 				value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
