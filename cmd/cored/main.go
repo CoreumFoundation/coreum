@@ -16,9 +16,9 @@ import (
 
 func main() {
 	logger := server.ZeroLogWrapper{Logger: log.Logger}
-	network, err := preProcessChainIDFlag()
+	network, err := preProcessFlags()
 	if err != nil {
-		logger.Error("error processing chain id flag", "err", err)
+		logger.Error("Error processing chain id flag", "err", err)
 		os.Exit(1)
 	}
 	rootCmd, _ := cosmoscmd.NewRootCmd(
@@ -59,8 +59,13 @@ func isStringInList(str string, list ...string) bool {
 
 func checkChainIDNotMain(cmd *cobra.Command, args []string) error {
 	chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
-	if chainID == string(app.Mainnet) {
-		return errors.Errorf("mainnet is not yet ready, use --chain-id=%s for devnet", string(app.Devnet))
+	network, err := app.NetworkByChainID(app.ChainID(chainID))
+	if err != nil {
+		return errors.Errorf("error processing chain-id=%s", chainID)
+	}
+
+	if !network.Enabled() {
+		return errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", chainID, string(app.Devnet))
 	}
 
 	return nil

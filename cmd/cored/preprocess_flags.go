@@ -12,29 +12,29 @@ import (
 	"github.com/spf13/pflag"
 )
 
-func preProcessChainIDFlag() (app.Network, error) {
+func preProcessFlags() (app.Network, error) {
 	// define flags
-	flagSet := pflag.NewFlagSet("pre-process", pflag.ContinueOnError)
-	flagSet.String(flags.FlagHome, app.DefaultNodeHome, "directory for config and data")
-	chainIDFlag := flagSet.String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
-	flagSet.Parse(os.Args[1:]) //nolint:errcheck
+	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)
+	flagSet.ParseErrorsWhitelist.UnknownFlags = true
+	flagSet.String(flags.FlagHome, app.DefaultNodeHome, "Directory for config and data")
+	chainID := flagSet.String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
+	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here
+	flagSet.Parse(os.Args[1:])
 
 	// get chain config
-	network, err := app.NetworkByChainID(app.ChainID(*chainIDFlag))
+	network, err := app.NetworkByChainID(app.ChainID(*chainID))
 	if err != nil {
 		return app.Network{}, err
 	}
 
-	chainID := string(network.ChainID())
-
 	// overwrite home flag
 	if flagSet.Changed(flags.FlagHome) {
-		err = appendStringFlag(os.Args, flags.FlagHome, chainID)
+		err = appendStringFlag(os.Args, flags.FlagHome, *chainID)
 		if err != nil {
 			return app.Network{}, err
 		}
 	} else {
-		appendedHome := filepath.Join(app.DefaultNodeHome, chainID)
+		appendedHome := filepath.Join(app.DefaultNodeHome, *chainID)
 		os.Args = append(os.Args, fmt.Sprintf("--%s=%s", flags.FlagHome, appendedHome))
 	}
 
@@ -43,7 +43,7 @@ func preProcessChainIDFlag() (app.Network, error) {
 
 func appendStringFlag(args []string, flag string, newVal string) error {
 	for pos, arg := range args {
-		if !strings.HasPrefix(arg, "--"+flag) {
+		if !(arg == "--"+flag || strings.HasPrefix(arg, "--"+flag+"=")) {
 			continue
 		}
 

@@ -76,6 +76,7 @@ func init() {
 		},
 		{
 			ChainID:       Devnet,
+			Enabled:       true,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
@@ -165,6 +166,7 @@ type NetworkConfig struct {
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 	NodeConfig     NodeConfig
+	Enabled        bool
 }
 
 // Network holds all the configuration for different predefined networks
@@ -175,6 +177,7 @@ type Network struct {
 	tokenSymbol   string
 	fee           FeeConfig
 	nodeConfig    NodeConfig
+	enabled       bool
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -191,11 +194,12 @@ func NewNetwork(c NetworkConfig) Network {
 		chainID:        c.ChainID,
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
-		nodeConfig:     c.NodeConfig,
+		nodeConfig:     c.NodeConfig.Clone(),
 		fee:            fee,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
+		enabled:        c.Enabled,
 	}
 
 	return n
@@ -227,7 +231,12 @@ func (n *Network) FundAccount(publicKey types.Secp256k1PublicKey, balances strin
 
 // NodeConfig returns NodeConfig
 func (n *Network) NodeConfig() *NodeConfig {
-	return &n.nodeConfig
+	nodeConfig := n.nodeConfig.Clone()
+	return &nodeConfig
+}
+
+func (n *Network) Enabled() bool {
+	return n.enabled
 }
 
 // AddGenesisTx adds transaction to the genesis file
@@ -259,8 +268,8 @@ func applyFundedAccountToGenesis(
 	return accountState, nil
 }
 
-// GenesisDoc returns the genesis doc of the network
-func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
+// genesisDoc returns the genesis doc of the network
+func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
 	codec := NewEncodingConfig().Marshaler
 	genesisJSON, err := genesis(n)
 	if err != nil {
@@ -309,12 +318,16 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	appState[banktypes.ModuleName] = codec.MustMarshalJSON(bankState)
 
 	genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
-	return genesisDoc, err
+	if err != nil {
+		return nil, err
+	}
+
+	return genesisDoc, nil
 }
 
 // EncodeGenesis returns the json encoded representation of the genesis file
 func (n Network) EncodeGenesis() ([]byte, error) {
-	genesisDoc, err := n.GenesisDoc()
+	genesisDoc, err := n.genesisDoc()
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to get genesis doc")
 	}

@@ -104,7 +104,7 @@ const (
 	// Name is the blockchain name
 	Name = "core"
 
-	// Default chain ID
+	// DefaultChainID is the default chain id of the network
 	DefaultChainID = Mainnet
 )
 
