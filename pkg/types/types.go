@@ -26,30 +26,35 @@ func (w Wallet) String() string {
 	return w.Name + "@" + w.Key.Address()
 }
 
+// NewCoin returns a new instance of coin type
+func NewCoin(amount *big.Int, denom string) (Coin, error) {
+	c := Coin{
+		Amt: amount,
+		Dnm: denom,
+	}
+	if c.Dnm == "" {
+		return Coin{}, errors.New("denom is empty")
+	}
+	if c.Amt == nil {
+		return Coin{}, errors.New("amount is nil")
+	}
+	if c.Amt.Cmp(big.NewInt(0)) == -1 {
+		return Coin{}, errors.New("amount is negative")
+	}
+
+	return c, nil
+}
+
 // Coin stores amount and denom of token
 type Coin struct {
 	// Amount is stored amount
-	Amount *big.Int `json:"amount"`
+	Amt *big.Int `json:"amount"`
 
 	// Denom is a token symbol
-	Denom string `json:"denom"`
+	Dnm string `json:"denom"`
 }
 
 // String returns string representation of coin
 func (c Coin) String() string {
-	return c.Amount.String() + c.Denom
-}
-
-// Validate validates data inside coin
-func (c Coin) Validate() error {
-	if c.Denom == "" {
-		return errors.New("denom is empty")
-	}
-	if c.Amount == nil {
-		return errors.New("amount is nil")
-	}
-	if c.Amount.Cmp(big.NewInt(0)) == -1 {
-		return errors.New("amount is negative")
-	}
-	return nil
+	return c.Amt.String() + c.Dnm
 }
