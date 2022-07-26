@@ -37,9 +37,12 @@ func (nc NodeConfig) Clone() NodeConfig {
 		SeedPeers:      []string{},
 	}
 
-	copied.NodeKey = append(copied.NodeKey, nc.NodeKey...)
-	copied.ValidatorKey = append(copied.ValidatorKey, nc.ValidatorKey...)
-	copied.SeedPeers = append(copied.SeedPeers, nc.SeedPeers...)
+	copied.NodeKey = make([]byte, len(nc.NodeKey))
+	copy(copied.NodeKey, nc.NodeKey)
+	copied.ValidatorKey = make([]byte, len(nc.ValidatorKey))
+	copy(copied.ValidatorKey, nc.ValidatorKey)
+	copied.SeedPeers = make([]string, len(nc.SeedPeers))
+	copy(copied.SeedPeers, nc.SeedPeers)
 	return copied
 }
 
