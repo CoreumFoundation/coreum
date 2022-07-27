@@ -29,7 +29,7 @@ func (w Wallet) String() string {
 // NewCoin returns a new instance of coin type
 func NewCoin(amount *big.Int, denom string) (Coin, error) {
 	c := Coin{
-		Amt: amount,
+		Amt: big.NewInt(0).Set(amount),
 		Dnm: denom,
 	}
 	if c.Dnm == "" {
