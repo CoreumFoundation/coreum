@@ -9,6 +9,7 @@ replace (
 )
 
 require (
+	github.com/CosmWasm/wasmd v0.27.0
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/ibc-go/v3 v3.0.0
 	github.com/ignite-hq/cli v0.22.0
