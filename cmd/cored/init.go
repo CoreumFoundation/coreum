@@ -77,6 +77,10 @@ func initCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
+			if !network.Enabled() {
+				return errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", chainID, string(app.Devnet))
+			}
+
 			err = network.SaveGenesis(clientCtx.HomeDir)
 			if err != nil {
 				return err
@@ -91,12 +95,10 @@ func initCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			app.WriteTendermintConfigToFile(
+			return app.WriteTendermintConfigToFile(
 				filepath.Join(config.RootDir, app.DefaultNodeConfigPath),
 				config,
 			)
-
-			return nil
 		},
 	}
 
