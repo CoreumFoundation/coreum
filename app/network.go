@@ -11,8 +11,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -21,6 +19,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
+	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -77,6 +76,7 @@ func init() {
 		},
 		{
 			ChainID:       Devnet,
+			Enabled:       true,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
@@ -86,6 +86,9 @@ func init() {
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 120000,
 				},
+			},
+			NodeConfig: NodeConfig{
+				SeedPeers: []string{"4ae4593aff8dd5ececd217f273195549503e2df8@35.223.81.227:26656"},
 			},
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
@@ -162,6 +165,8 @@ type NetworkConfig struct {
 	Fee            FeeConfig
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
+	NodeConfig     NodeConfig
+	Enabled        bool
 }
 
 // Network holds all the configuration for different predefined networks
@@ -171,6 +176,8 @@ type Network struct {
 	addressPrefix string
 	tokenSymbol   string
 	fee           FeeConfig
+	nodeConfig    NodeConfig
+	enabled       bool
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -187,10 +194,12 @@ func NewNetwork(c NetworkConfig) Network {
 		chainID:        c.ChainID,
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
+		nodeConfig:     c.NodeConfig.Clone(),
 		fee:            fee,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
+		enabled:        c.Enabled,
 	}
 
 	return n
@@ -218,6 +227,17 @@ func (n *Network) FundAccount(publicKey types.Secp256k1PublicKey, balances strin
 		Balances:  balances,
 	})
 	return nil
+}
+
+// NodeConfig returns NodeConfig
+func (n *Network) NodeConfig() *NodeConfig {
+	nodeConfig := n.nodeConfig.Clone()
+	return &nodeConfig
+}
+
+// Enabled shows whether a network is enabled or not
+func (n *Network) Enabled() bool {
+	return n.enabled
 }
 
 // AddGenesisTx adds transaction to the genesis file
@@ -249,8 +269,8 @@ func applyFundedAccountToGenesis(
 	return accountState, nil
 }
 
-// EncodeGenesis returns the json encoded representation of the genesis file
-func (n Network) EncodeGenesis() ([]byte, error) {
+// genesisDoc returns the genesis doc of the network
+func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
 	codec := NewEncodingConfig().Marshaler
 	genesisJSON, err := genesis(n)
 	if err != nil {
@@ -300,7 +320,17 @@ func (n Network) EncodeGenesis() ([]byte, error) {
 
 	genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
 	if err != nil {
-		return nil, errors.Wrap(err, "not able to marshal app state")
+		return nil, err
+	}
+
+	return genesisDoc, nil
+}
+
+// EncodeGenesis returns the json encoded representation of the genesis file
+func (n Network) EncodeGenesis() ([]byte, error) {
+	genesisDoc, err := n.genesisDoc()
+	if err != nil {
+		return nil, errors.Wrap(err, "not able to get genesis doc")
 	}
 
 	bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
