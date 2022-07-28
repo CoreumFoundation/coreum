@@ -34,29 +34,16 @@ func main() {
 	rootCmd.AddCommand(initCmd(app.DefaultNodeHome))
 
 	for _, cmd := range rootCmd.Commands() {
-		if isStringInList(cmd.Name(), "start", "collect-gentxs") {
+		if cmd.Name() == "start" {
 			cmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
-		}
 
-		// error out if the start command tries to connect to Mainnet, since it is not yet ready.
-		if isStringInList(cmd.Name(), "start", "init") {
+			// error out if the start command tries to connect to Mainnet, since it is not yet ready.
 			cmd.PreRunE = chainCobraRunE(checkChainIDNotMain, cmd.PreRunE)
 		}
 	}
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}
-}
-
-func isStringInList(str string, list ...string) bool {
-	// @TODO replace this function with
-	// https://github.com/samber/lo after we migrate to go1.18
-	for _, l := range list {
-		if str == l {
-			return true
-		}
-	}
-	return false
 }
 
 func checkChainIDNotMain(cmd *cobra.Command, args []string) error {

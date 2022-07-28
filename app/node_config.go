@@ -32,17 +32,15 @@ func (nc NodeConfig) Clone() NodeConfig {
 	copied := NodeConfig{
 		Name:           nc.Name,
 		PrometheusPort: nc.PrometheusPort,
-		NodeKey:        []byte{},
-		ValidatorKey:   []byte{},
-		SeedPeers:      []string{},
+		NodeKey:        make([]byte, len(nc.NodeKey)),
+		ValidatorKey:   make([]byte, len(nc.ValidatorKey)),
+		SeedPeers:      make([]string, len(nc.SeedPeers)),
 	}
 
-	copied.NodeKey = make([]byte, len(nc.NodeKey))
 	copy(copied.NodeKey, nc.NodeKey)
-	copied.ValidatorKey = make([]byte, len(nc.ValidatorKey))
 	copy(copied.ValidatorKey, nc.ValidatorKey)
-	copied.SeedPeers = make([]string, len(nc.SeedPeers))
 	copy(copied.SeedPeers, nc.SeedPeers)
+
 	return copied
 }
 
@@ -98,6 +96,14 @@ func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
 }
 
 // WriteTendermintConfigToFile saves tendermint config to file
-func WriteTendermintConfigToFile(filePath string, cfg *config.Config) {
+func WriteTendermintConfigToFile(filePath string, cfg *config.Config) error {
+	dir := filepath.Dir(filePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0o700)
+		if err != nil {
+			return err
+		}
+	}
 	config.WriteConfigFile(filePath, cfg)
+	return nil
 }
