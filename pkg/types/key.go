@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/base64"
+
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -22,6 +24,22 @@ func (key Secp256k1PrivateKey) Address() string {
 
 // Secp256k1PublicKey is a secp256k1 public key
 type Secp256k1PublicKey []byte
+
+// EncodeBase64 returns base64 encoded string representation
+func (s *Secp256k1PublicKey) EncodeBase64() string {
+	return base64.RawStdEncoding.EncodeToString(*s)
+}
+
+// DecodeBase64 gets a base64 string representation of the key and sets as the value
+func (s *Secp256k1PublicKey) DecodeBase64(str string) error {
+	decoded, err := base64.RawStdEncoding.DecodeString(str)
+	if err != nil {
+		return err
+	}
+
+	*s = decoded
+	return nil
+}
 
 // GenerateSecp256k1Key generates random secp256k1 key pair
 func GenerateSecp256k1Key() (Secp256k1PublicKey, Secp256k1PrivateKey) {
