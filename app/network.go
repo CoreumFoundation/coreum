@@ -55,10 +55,6 @@ var (
 	coreumDevnet1Validator3 json.RawMessage
 )
 
-// DefaultNetwork is the network cored is configured to connect to
-// FIXME (milad): Remove this hack once app loads appropriate network config based on CLI flag
-var DefaultNetwork Network
-
 func init() {
 	list := []NetworkConfig{
 		{
@@ -133,12 +129,6 @@ func init() {
 
 	for _, elem := range list {
 		networks[elem.ChainID] = elem
-	}
-
-	var err error
-	DefaultNetwork, err = NetworkByChainID(Mainnet)
-	if err != nil {
-		panic(err)
 	}
 }
 
@@ -246,6 +236,14 @@ func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 	defer n.mu.Unlock()
 
 	n.genTxs = append(n.genTxs, signedTx)
+}
+
+// ResetGenesisTxs resets genesis list to empty
+func (n *Network) ResetGenesisTxs() {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	n.genTxs = nil
 }
 
 func applyFundedAccountToGenesis(
