@@ -77,10 +77,6 @@ func initCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			if !network.Enabled() {
-				return errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", chainID, string(app.Devnet))
-			}
-
 			err = network.SaveGenesis(clientCtx.HomeDir)
 			if err != nil {
 				return err

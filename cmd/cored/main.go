@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
@@ -38,7 +37,7 @@ func main() {
 			cmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 
 			// error out if the start command tries to connect to Mainnet, since it is not yet ready.
-			cmd.PreRunE = chainCobraRunE(checkChainIDNotMain, cmd.PreRunE)
+			cmd.PreRunE = chainCobraRunE(checkChainIDValid, cmd.PreRunE)
 		}
 	}
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
@@ -46,15 +45,11 @@ func main() {
 	}
 }
 
-func checkChainIDNotMain(cmd *cobra.Command, args []string) error {
+func checkChainIDValid(cmd *cobra.Command, args []string) error {
 	chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
-	network, err := app.NetworkByChainID(app.ChainID(chainID))
+	_, err := app.NetworkByChainID(app.ChainID(chainID))
 	if err != nil {
-		return errors.Wrapf(err, "error processing chain-id=%s", chainID)
-	}
-
-	if !network.Enabled() {
-		return errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", chainID, string(app.Devnet))
+		return err
 	}
 
 	return nil
