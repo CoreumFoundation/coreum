@@ -167,7 +167,8 @@ type NetworkConfig struct {
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 	NodeConfig     NodeConfig
-	Enabled        bool
+	// TODO: remove this field once all preconfigured networks are enabled
+	Enabled bool
 }
 
 // Network holds all the configuration for different predefined networks
@@ -391,6 +392,7 @@ func NetworkByChainID(id ChainID) (Network, error) {
 		return Network{}, errors.Errorf("chainID %s not found", id)
 	}
 
+	// TODO: remove this check once all preconfigured networks are enabled
 	if !nw.Enabled {
 		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(Devnet))
 	}

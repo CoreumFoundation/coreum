@@ -99,9 +99,7 @@ func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
 func WriteTendermintConfigToFile(filePath string, cfg *config.Config) error {
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
-		if err != nil {
-			return err
-		}
+		return err
 	}
 	config.WriteConfigFile(filePath, cfg)
 	return nil
