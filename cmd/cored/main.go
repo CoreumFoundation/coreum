@@ -48,11 +48,7 @@ func main() {
 func checkChainIDValid(cmd *cobra.Command, args []string) error {
 	chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
 	_, err := app.NetworkByChainID(app.ChainID(chainID))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func chainCobraRunE(list ...func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
