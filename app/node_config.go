@@ -98,8 +98,7 @@ func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
 // WriteTendermintConfigToFile saves tendermint config to file
 func WriteTendermintConfigToFile(filePath string, cfg *config.Config) error {
 	dir := filepath.Dir(filePath)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.MkdirAll(dir, 0o700)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		if err != nil {
 			return err
 		}

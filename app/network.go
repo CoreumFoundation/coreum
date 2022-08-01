@@ -146,6 +146,17 @@ type FeeConfig struct {
 	DeterministicGas      DeterministicGasConfig
 }
 
+// Clone creates a copy of FeeConfig to allow to pass by reference
+func (f FeeConfig) Clone() FeeConfig {
+	return FeeConfig{
+		InitialGasPrice:       big.NewInt(0).Set(f.InitialGasPrice),
+		MinDiscountedGasPrice: big.NewInt(0).Set(f.MinDiscountedGasPrice),
+		DeterministicGas: DeterministicGasConfig{
+			BankSend: f.DeterministicGas.BankSend,
+		},
+	}
+}
+
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID        ChainID
@@ -167,7 +178,6 @@ type Network struct {
 	tokenSymbol   string
 	fee           FeeConfig
 	nodeConfig    NodeConfig
-	enabled       bool
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -176,20 +186,16 @@ type Network struct {
 
 // NewNetwork returns a new instance of Network
 func NewNetwork(c NetworkConfig) Network {
-	fee := c.Fee
-	fee.InitialGasPrice = big.NewInt(0).Set(c.Fee.InitialGasPrice)
-	fee.MinDiscountedGasPrice = big.NewInt(0).Set(c.Fee.MinDiscountedGasPrice)
 	n := Network{
 		genesisTime:    c.GenesisTime,
 		chainID:        c.ChainID,
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
 		nodeConfig:     c.NodeConfig.Clone(),
-		fee:            fee,
+		fee:            c.Fee.Clone(),
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
-		enabled:        c.Enabled,
 	}
 
 	return n
@@ -225,25 +231,12 @@ func (n *Network) NodeConfig() *NodeConfig {
 	return &nodeConfig
 }
 
-// Enabled shows whether a network is enabled or not
-func (n *Network) Enabled() bool {
-	return n.enabled
-}
-
 // AddGenesisTx adds transaction to the genesis file
 func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
 	n.genTxs = append(n.genTxs, signedTx)
-}
-
-// ResetGenesisTxs resets genesis list to empty
-func (n *Network) ResetGenesisTxs() {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	n.genTxs = nil
 }
 
 func applyFundedAccountToGenesis(
@@ -396,6 +389,10 @@ func NetworkByChainID(id ChainID) (Network, error) {
 	nw, found := networks[id]
 	if !found {
 		return Network{}, errors.Errorf("chainID %s not found", id)
+	}
+
+	if !nw.Enabled {
+		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(Devnet))
 	}
 
 	return NewNetwork(nw), nil
