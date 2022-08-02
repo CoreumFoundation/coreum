@@ -11,8 +11,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -21,6 +19,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
+	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -56,10 +55,6 @@ var (
 	coreumDevnet1Validator3 json.RawMessage
 )
 
-// DefaultNetwork is the network cored is configured to connect to
-// FIXME (milad): Remove this hack once app loads appropriate network config based on CLI flag
-var DefaultNetwork Network
-
 func init() {
 	list := []NetworkConfig{
 		{
@@ -74,9 +69,12 @@ func init() {
 					BankSend: 120000,
 				},
 			},
+			// TODO: make mainnet disabled after crust implements chain id concept
+			Enabled: true,
 		},
 		{
 			ChainID:       Devnet,
+			Enabled:       true,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
@@ -86,6 +84,9 @@ func init() {
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 120000,
 				},
+			},
+			NodeConfig: NodeConfig{
+				SeedPeers: []string{"4ae4593aff8dd5ececd217f273195549503e2df8@35.223.81.227:26656"},
 			},
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
@@ -131,12 +132,6 @@ func init() {
 	for _, elem := range list {
 		networks[elem.ChainID] = elem
 	}
-
-	var err error
-	DefaultNetwork, err = NetworkByChainID(Mainnet)
-	if err != nil {
-		panic(err)
-	}
 }
 
 var networks = map[ChainID]NetworkConfig{}
@@ -153,6 +148,17 @@ type FeeConfig struct {
 	DeterministicGas      DeterministicGasConfig
 }
 
+// Clone creates a copy of FeeConfig to allow to pass by reference
+func (f FeeConfig) Clone() FeeConfig {
+	return FeeConfig{
+		InitialGasPrice:       big.NewInt(0).Set(f.InitialGasPrice),
+		MinDiscountedGasPrice: big.NewInt(0).Set(f.MinDiscountedGasPrice),
+		DeterministicGas: DeterministicGasConfig{
+			BankSend: f.DeterministicGas.BankSend,
+		},
+	}
+}
+
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID        ChainID
@@ -162,6 +168,9 @@ type NetworkConfig struct {
 	Fee            FeeConfig
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
+	NodeConfig     NodeConfig
+	// TODO: remove this field once all preconfigured networks are enabled
+	Enabled bool
 }
 
 // Network holds all the configuration for different predefined networks
@@ -171,6 +180,7 @@ type Network struct {
 	addressPrefix string
 	tokenSymbol   string
 	fee           FeeConfig
+	nodeConfig    NodeConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -179,15 +189,13 @@ type Network struct {
 
 // NewNetwork returns a new instance of Network
 func NewNetwork(c NetworkConfig) Network {
-	fee := c.Fee
-	fee.InitialGasPrice = big.NewInt(0).Set(c.Fee.InitialGasPrice)
-	fee.MinDiscountedGasPrice = big.NewInt(0).Set(c.Fee.MinDiscountedGasPrice)
 	n := Network{
 		genesisTime:    c.GenesisTime,
 		chainID:        c.ChainID,
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
-		fee:            fee,
+		nodeConfig:     c.NodeConfig.Clone(),
+		fee:            c.Fee.Clone(),
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -220,6 +228,12 @@ func (n *Network) FundAccount(publicKey types.Secp256k1PublicKey, balances strin
 	return nil
 }
 
+// NodeConfig returns NodeConfig
+func (n *Network) NodeConfig() *NodeConfig {
+	nodeConfig := n.nodeConfig.Clone()
+	return &nodeConfig
+}
+
 // AddGenesisTx adds transaction to the genesis file
 func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 	n.mu.Lock()
@@ -249,8 +263,8 @@ func applyFundedAccountToGenesis(
 	return accountState, nil
 }
 
-// EncodeGenesis returns the json encoded representation of the genesis file
-func (n Network) EncodeGenesis() ([]byte, error) {
+// genesisDoc returns the genesis doc of the network
+func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
 	codec := NewEncodingConfig().Marshaler
 	genesisJSON, err := genesis(n)
 	if err != nil {
@@ -300,7 +314,17 @@ func (n Network) EncodeGenesis() ([]byte, error) {
 
 	genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
 	if err != nil {
-		return nil, errors.Wrap(err, "not able to marshal app state")
+		return nil, err
+	}
+
+	return genesisDoc, nil
+}
+
+// EncodeGenesis returns the json encoded representation of the genesis file
+func (n Network) EncodeGenesis() ([]byte, error) {
+	genesisDoc, err := n.genesisDoc()
+	if err != nil {
+		return nil, errors.Wrap(err, "not able to get genesis doc")
 	}
 
 	bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
@@ -368,6 +392,11 @@ func NetworkByChainID(id ChainID) (Network, error) {
 	nw, found := networks[id]
 	if !found {
 		return Network{}, errors.Errorf("chainID %s not found", id)
+	}
+
+	// TODO: remove this check once all preconfigured networks are enabled
+	if !nw.Enabled {
+		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(Devnet))
 	}
 
 	return NewNetwork(nw), nil
