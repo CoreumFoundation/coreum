@@ -392,10 +392,11 @@ func NetworkByChainID(id ChainID) (Network, error) {
 		return Network{}, errors.Errorf("chainID %s not found", id)
 	}
 
+	// TODO: uncomment these lines after chain id is implemented in crust
 	// TODO: remove this check once all preconfigured networks are enabled
-	if !nw.Enabled {
-		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(Devnet))
-	}
+	// if !nw.Enabled {
+	// 	return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(Devnet))
+	// }
 
 	return NewNetwork(nw), nil
 }

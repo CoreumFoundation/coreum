@@ -108,6 +108,12 @@ const (
 	DefaultChainID = Mainnet
 )
 
+// ChosenNetwork is a hacky solution to pass network config
+// from cmd package to app.
+// FIXME remove this global field hack and pass network to the New function.
+// This can be implemented once we separate network config into its own package.
+var ChosenNetwork Network
+
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
 
 func getGovProposalHandlers() []govclient.ProposalHandler {
@@ -540,20 +546,15 @@ func New(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
-	//FIXME: remove this line and use network pass down to the New method.
-	// It is safe to use now because only devnet is an enabled network
-	// It will be implemented one we separate network config into its own package.
-	network, _ := NetworkByChainID(Devnet)
-
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
 			AccountKeeper:   app.AccountKeeper,
 			BankKeeper:      app.BankKeeper,
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			FeegrantKeeper:  app.FeeGrantKeeper,
-			MinGasPrice:     sdk.NewCoin(network.TokenSymbol(), sdk.NewIntFromBigInt(network.MinDiscountedGasPrice())),
+			MinGasPrice:     sdk.NewCoin(ChosenNetwork.TokenSymbol(), sdk.NewIntFromBigInt(ChosenNetwork.MinDiscountedGasPrice())),
 			GasRequirements: ante.DeterministicGasRequirements{
-				BankSend: network.DeterministicGas().BankSend,
+				BankSend: ChosenNetwork.DeterministicGas().BankSend,
 			},
 		},
 	)

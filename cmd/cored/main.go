@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
@@ -35,32 +34,9 @@ func main() {
 	for _, cmd := range rootCmd.Commands() {
 		if cmd.Name() == "start" {
 			cmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
-
-			// error out if the start command tries to connect to Mainnet, since it is not yet ready.
-			cmd.PreRunE = chainCobraRunE(checkChainIDValid, cmd.PreRunE)
 		}
 	}
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
-	}
-}
-
-func checkChainIDValid(cmd *cobra.Command, args []string) error {
-	chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
-	_, err := app.NetworkByChainID(app.ChainID(chainID))
-	return err
-}
-
-func chainCobraRunE(list ...func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		for _, fn := range list {
-			if fn != nil {
-				err := fn(cmd, args)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		return nil
 	}
 }
