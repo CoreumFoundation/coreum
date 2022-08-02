@@ -10,12 +10,17 @@ replace (
 
 require (
 	github.com/cosmos/cosmos-sdk v0.45.4
+	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/ibc-go/v3 v3.0.0
-	github.com/ignite-hq/cli v0.22.0
+	github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7
+	github.com/ignite/cli v0.22.2
 	github.com/pkg/errors v0.9.1
+	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cast v1.4.1
+	github.com/spf13/cobra v1.4.0
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.1
-	github.com/tendermint/spn v0.2.1-0.20220609194312-7833ecf4454a
+	github.com/tendermint/spn v0.2.1-0.20220610090138-44b136f042c4
 	github.com/tendermint/tendermint v0.34.19
 	github.com/tendermint/tm-db v0.6.7
 )
