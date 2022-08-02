@@ -27,9 +27,9 @@ func preProcessFlags() (app.Network, error) {
 		return app.Network{}, err
 	}
 
+	app.ChosenNetwork = network
 	// FIXME remove this hack once crust implements the chain id concept
 	if !flagSet.Changed(flags.FlagChainID) && *chainID == string(app.DefaultChainID) {
-		app.ChosenNetwork = network
 		return network, nil
 	}
 
