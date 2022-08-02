@@ -61,8 +61,3 @@ func (c Coin) Validate() error {
 	}
 	return nil
 }
-
-// String returns string representation of coin
-func (c Coin) String() string {
-	return c.Amount.String() + c.Denom
-}

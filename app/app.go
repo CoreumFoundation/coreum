@@ -83,7 +83,6 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/ignite-hq/cli/ignite/pkg/openapiconsole"
 	"github.com/spf13/cast"
 	monitoringp "github.com/tendermint/spn/x/monitoringp"
@@ -95,6 +94,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -103,6 +103,9 @@ import (
 const (
 	// Name is the blockchain name
 	Name = "core"
+
+	// DefaultChainID is the default chain id of the network
+	DefaultChainID = Mainnet
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
@@ -537,15 +540,20 @@ func New(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
+	//FIXME: remove this line and use network pass down to the New method.
+	// It is safe to use now because only devnet is an enabled network
+	// It will be implemented one we separate network config into its own package.
+	network, _ := NetworkByChainID(Devnet)
+
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
 			AccountKeeper:   app.AccountKeeper,
 			BankKeeper:      app.BankKeeper,
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			FeegrantKeeper:  app.FeeGrantKeeper,
-			MinGasPrice:     sdk.NewCoin(DefaultNetwork.TokenSymbol(), sdk.NewIntFromBigInt(DefaultNetwork.MinDiscountedGasPrice())),
+			MinGasPrice:     sdk.NewCoin(network.TokenSymbol(), sdk.NewIntFromBigInt(network.MinDiscountedGasPrice())),
 			GasRequirements: ante.DeterministicGasRequirements{
-				BankSend: DefaultNetwork.DeterministicGas().BankSend,
+				BankSend: network.DeterministicGas().BankSend,
 			},
 		},
 	)
