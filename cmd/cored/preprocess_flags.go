@@ -28,10 +28,6 @@ func preProcessFlags() (app.Network, error) {
 	}
 
 	app.ChosenNetwork = network
-	// FIXME remove this hack once crust implements the chain id concept
-	if !flagSet.Changed(flags.FlagChainID) {
-		return network, nil
-	}
 
 	// overwrite home flag
 	if flagSet.Changed(flags.FlagHome) {
