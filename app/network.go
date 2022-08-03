@@ -69,8 +69,6 @@ func init() {
 					BankSend: 120000,
 				},
 			},
-			// TODO: make mainnet disabled after crust implements chain id concept
-			Enabled: true,
 		},
 		{
 			ChainID:       Devnet,
