@@ -9,7 +9,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -35,7 +35,7 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) Client {
-	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + addr)
+	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
 	clientCtx := app.
 		NewDefaultClientContext().
@@ -50,7 +50,7 @@ func New(chainID app.ChainID, addr string) Client {
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx       cosmosclient.Context
+	clientCtx       client.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
 }
@@ -138,7 +138,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			return BroadcastResult{}, errors.WithStack(err)
 		}
 
-		errRes := cosmosclient.CheckTendermintError(err, encodedTx)
+		errRes := client.CheckTendermintError(err, encodedTx)
 		if !isTxInMempool(errRes) {
 			return BroadcastResult{}, errors.WithStack(err)
 		}
@@ -170,7 +170,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
 			}
-			if errRes := cosmosclient.CheckTendermintError(err, encodedTx); errRes != nil {
+			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
 				if isTxInMempool(errRes) {
 					return retry.Retryable(errors.WithStack(err))
 				}
