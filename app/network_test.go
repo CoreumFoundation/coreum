@@ -11,7 +11,7 @@ import (
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	"github.com/stretchr/testify/assert"
@@ -27,7 +27,7 @@ func init() {
 func testNetwork() Network {
 	pubKey, privKey := types.GenerateSecp256k1Key()
 	clientCtx := NewDefaultClientContext()
-	tx, err := client.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	if err != nil {
 		panic(err)
 	}
@@ -183,7 +183,7 @@ func TestAddGenTx(t *testing.T) {
 	n := testNetwork()
 	pubKey, privKey := types.GenerateSecp256k1Key()
 	clientCtx := NewDefaultClientContext()
-	tx, err := client.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	n.AddGenesisTx(tx)
 
