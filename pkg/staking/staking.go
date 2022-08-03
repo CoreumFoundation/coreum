@@ -1,4 +1,4 @@
-package client
+package staking
 
 import (
 	"crypto/ed25519"
@@ -10,6 +10,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
@@ -40,11 +41,11 @@ func PrepareTxStakingCreateValidator(
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
 	}
 
-	tx, err := signTx(clientCtx, BaseInput{Signer: types.Wallet{Key: stakerPrivateKey}}, msg)
+	signedTx, err := tx.Sign(clientCtx, tx.BaseInput{Signer: types.Wallet{Key: stakerPrivateKey}}, msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to sign transaction")
 	}
-	encodedTx, err := clientCtx.TxConfig.TxJSONEncoder()(tx)
+	encodedTx, err := clientCtx.TxConfig.TxJSONEncoder()(signedTx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to encode transaction")
 	}

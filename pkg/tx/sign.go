@@ -1,4 +1,4 @@
-package client
+package tx
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
@@ -9,7 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+// Sign signs transaction
+func Sign(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
 	privKey := &cosmossecp256k1.PrivKey{Key: input.Signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(200000)

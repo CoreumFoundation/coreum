@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
@@ -99,7 +100,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, input tx.BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
@@ -111,7 +112,7 @@ func (c Client) Sign(ctx context.Context, input BaseInput, msg sdk.Msg) (authsig
 		input.Signer = signer
 	}
 
-	return signTx(c.clientCtx, input, msg)
+	return tx.Sign(c.clientCtx, input, msg)
 }
 
 // Encode encodes transaction to be broadcasted
@@ -195,21 +196,13 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
-// BaseInput holds input data common to every transaction
-type BaseInput struct {
-	Signer   types.Wallet
-	GasLimit uint64
-	GasPrice types.Coin
-	Memo     string
-}
-
 // TxBankSendInput holds input data for PrepareTxBankSend
 type TxBankSendInput struct {
 	Sender   types.Wallet
 	Receiver types.Wallet
 	Amount   types.Coin
 
-	Base BaseInput
+	Base tx.BaseInput
 }
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
