@@ -4,7 +4,9 @@ import (
 	"crypto/ed25519"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/tendermint/tendermint/config"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
@@ -12,16 +14,38 @@ import (
 	"github.com/tendermint/tendermint/privval"
 )
 
+// DefaultNodeConfigPath is the default path there the config.toml is saved
+var DefaultNodeConfigPath = filepath.Join("config", "config.toml")
+
 // NodeConfig saves files with private keys and config required by node
 type NodeConfig struct {
 	Name           string
 	PrometheusPort int
 	NodeKey        ed25519.PrivateKey
 	ValidatorKey   ed25519.PrivateKey
+	SeedPeers      []string
 }
 
-// Save saves files required by validator
-func (nc NodeConfig) Save(homeDir string) error {
+// Clone creates a copy of the NodeConfig so that mutable fields like slices
+// are copied as immutable.
+func (nc NodeConfig) Clone() NodeConfig {
+	copied := NodeConfig{
+		Name:           nc.Name,
+		PrometheusPort: nc.PrometheusPort,
+		NodeKey:        make([]byte, len(nc.NodeKey)),
+		ValidatorKey:   make([]byte, len(nc.ValidatorKey)),
+		SeedPeers:      make([]string, len(nc.SeedPeers)),
+	}
+
+	copy(copied.NodeKey, nc.NodeKey)
+	copy(copied.ValidatorKey, nc.ValidatorKey)
+	copy(copied.SeedPeers, nc.SeedPeers)
+
+	return copied
+}
+
+// SavePrivateKeys saves private keys to files
+func (nc NodeConfig) SavePrivateKeys(homeDir string) error {
 	err := os.MkdirAll(homeDir+"/config", 0o700)
 	if err != nil {
 		return err
@@ -47,22 +71,36 @@ func (nc NodeConfig) Save(homeDir string) error {
 				homeDir+"/data/priv_validator_state.json").
 			Save()
 	}
+	return nil
+}
 
-	cfg := config.DefaultConfig()
-	cfg.Moniker = nc.Name
-	// set addr_book_strict to false so nodes connecting from non-routable hosts are added to address book
-	cfg.P2P.AddrBookStrict = false
-	cfg.P2P.AllowDuplicateIP = true
-	cfg.P2P.MaxNumOutboundPeers = 100
-	cfg.P2P.MaxNumInboundPeers = 100
-	cfg.RPC.MaxSubscriptionClients = 10000
-	cfg.RPC.MaxOpenConnections = 10000
-	cfg.RPC.GRPCMaxOpenConnections = 10000
-	cfg.RPC.MaxSubscriptionsPerClient = 10000
-	cfg.Mempool.Size = 50000
-	cfg.Mempool.MaxTxsBytes = 5368709120
-	cfg.Instrumentation.Prometheus = true
-	cfg.Instrumentation.PrometheusListenAddr = net.JoinHostPort(net.IPv4zero.String(), strconv.Itoa(nc.PrometheusPort))
-	config.WriteConfigFile(homeDir+"/config/config.toml", cfg)
+// TendermintNodeConfig applies node's tendermint config
+func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
+	if cfg == nil {
+		cfg = config.DefaultConfig()
+	}
+
+	if nc.Name != "" {
+		cfg.Moniker = nc.Name
+	}
+
+	if nc.PrometheusPort > 0 {
+		cfg.Instrumentation.Prometheus = true
+		cfg.Instrumentation.PrometheusListenAddr = net.JoinHostPort(net.IPv4zero.String(), strconv.Itoa(nc.PrometheusPort))
+	}
+
+	if len(nc.SeedPeers) > 0 {
+		cfg.P2P.Seeds = strings.Join(nc.SeedPeers, ",")
+	}
+	return cfg
+}
+
+// WriteTendermintConfigToFile saves tendermint config to file
+func WriteTendermintConfigToFile(filePath string, cfg *config.Config) error {
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	config.WriteConfigFile(filePath, cfg)
 	return nil
 }

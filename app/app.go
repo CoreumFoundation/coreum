@@ -85,7 +85,6 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/ignite-hq/cli/ignite/pkg/openapiconsole"
 	"github.com/spf13/cast"
 	monitoringp "github.com/tendermint/spn/x/monitoringp"
@@ -98,6 +97,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/app/wasmconfig"
+	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -106,7 +106,16 @@ import (
 const (
 	// Name is the blockchain name
 	Name = "core"
+
+	// DefaultChainID is the default chain id of the network
+	DefaultChainID = Mainnet
 )
+
+// ChosenNetwork is a hacky solution to pass network config
+// from cmd package to app.
+// FIXME remove this global field hack and pass network to the New function.
+// This can be implemented once we separate network config into its own package.
+var ChosenNetwork Network
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
 
@@ -585,7 +594,10 @@ func New(
 			BankKeeper:      app.BankKeeper,
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			FeegrantKeeper:  app.FeeGrantKeeper,
-			MinGasPrice:     sdk.NewCoin(DefaultNetwork.TokenSymbol(), sdk.NewIntFromBigInt(DefaultNetwork.MinDiscountedGasPrice())),
+			MinGasPrice:     sdk.NewCoin(ChosenNetwork.TokenSymbol(), sdk.NewIntFromBigInt(ChosenNetwork.MinDiscountedGasPrice())),
+			GasRequirements: ante.DeterministicGasRequirements{
+				BankSend: ChosenNetwork.DeterministicGas().BankSend,
+			},
 		},
 	)
 	if err != nil {
