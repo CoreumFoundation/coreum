@@ -11,18 +11,32 @@ import (
 
 // Sign signs transaction
 func Sign(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
-	privKey := &cosmossecp256k1.PrivKey{Key: input.Signer.Key}
+	signer := input.Signer
+
+	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
-	txBuilder.SetGasLimit(200000)
 	err := txBuilder.SetMsgs(msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to set message on tx builder")
 	}
+	txBuilder.SetGasLimit(input.GasLimit)
+	txBuilder.SetMemo(input.Memo)
+
+	if input.GasPrice.Amount != nil {
+		if err := input.GasPrice.Validate(); err != nil {
+			return nil, errors.Wrap(err, "gas price is invalid")
+		}
+
+		gasLimit := sdk.NewInt(int64(input.GasLimit))
+		gasPrice := sdk.NewIntFromBigInt(input.GasPrice.Amount)
+		fee := sdk.NewCoin(input.GasPrice.Denom, gasLimit.Mul(gasPrice))
+		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
+	}
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
-		AccountNumber: input.Signer.AccountNumber,
-		Sequence:      input.Signer.AccountSequence,
+		AccountNumber: signer.AccountNumber,
+		Sequence:      signer.AccountSequence,
 	}
 	sigData := &signing.SingleSignatureData{
 		//nolint:nosnakecase // MixedCap can't be forced on imported constants
@@ -32,7 +46,7 @@ func Sign(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.T
 	sig := signing.SignatureV2{
 		PubKey:   privKey.PubKey(),
 		Data:     sigData,
-		Sequence: input.Signer.AccountSequence,
+		Sequence: signer.AccountSequence,
 	}
 	err = txBuilder.SetSignatures(sig)
 	if err != nil {
