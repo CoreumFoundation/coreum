@@ -3,13 +3,14 @@ package client
 import (
 	"crypto/ed25519"
 
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // PrepareTxStakingCreateValidator generates transaction of type MsgCreateValidator
@@ -39,7 +40,7 @@ func PrepareTxStakingCreateValidator(
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
 	}
 
-	tx, err := signTx(clientCtx, stakerPrivateKey, 0, 0, msg)
+	tx, err := signTx(clientCtx, BaseInput{Signer: types.Wallet{Key: stakerPrivateKey}}, msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to sign transaction")
 	}

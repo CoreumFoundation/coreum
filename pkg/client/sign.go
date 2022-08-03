@@ -7,12 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/pkg/errors"
-
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-func signTx(clientCtx client.Context, signerKey types.Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) (authsigning.Tx, error) {
-	privKey := &cosmossecp256k1.PrivKey{Key: signerKey}
+func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+	privKey := &cosmossecp256k1.PrivKey{Key: input.Signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(200000)
 	err := txBuilder.SetMsgs(msg)
@@ -22,8 +20,8 @@ func signTx(clientCtx client.Context, signerKey types.Secp256k1PrivateKey, accNu
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
-		AccountNumber: accNum,
-		Sequence:      accSeq,
+		AccountNumber: input.Signer.AccountNumber,
+		Sequence:      input.Signer.AccountSequence,
 	}
 	sigData := &signing.SingleSignatureData{
 		//nolint:nosnakecase // MixedCap can't be forced on imported constants
@@ -33,7 +31,7 @@ func signTx(clientCtx client.Context, signerKey types.Secp256k1PrivateKey, accNu
 	sig := signing.SignatureV2{
 		PubKey:   privKey.PubKey(),
 		Data:     sigData,
-		Sequence: accSeq,
+		Sequence: input.Signer.AccountSequence,
 	}
 	err = txBuilder.SetSignatures(sig)
 	if err != nil {
