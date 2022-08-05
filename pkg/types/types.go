@@ -31,6 +31,7 @@ func (w Wallet) String() string {
 	return w.Name + "@" + w.Key.Address()
 }
 
+// Address returns cosmos acc address from the pub key of the wallet.
 func (w Wallet) Address() sdk.AccAddress {
 	privKey := cosmossecp256k1.PrivKey{Key: w.Key}
 	return sdk.AccAddress(privKey.PubKey().Address())

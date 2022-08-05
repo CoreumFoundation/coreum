@@ -36,42 +36,7 @@ func NewCosmosKeyring(opts ...ConfigOpt) (cosmtypes.AccAddress, keyring.Keyring,
 			err := errors.New("cannot combine ledger and privkey options")
 			return emptyCosmosAddress, nil, err
 		}
-
-		pkBytes, err := hexToBytes(config.PrivKeyHex)
-		if err != nil {
-			err = errors.Wrap(err, "failed to hex-decode cosmos account privkey")
-			return emptyCosmosAddress, nil, err
-		}
-
-		cosmosAccPk := &cosmossecp256k1.PrivKey{
-			Key: pkBytes,
-		}
-
-		addressFromPk := cosmtypes.AccAddress(cosmosAccPk.PubKey().Address().Bytes())
-
-		var keyName string
-
-		// check that if cosmos 'From' specified separately, it must match the provided privkey,
-		if len(config.KeyFrom) > 0 {
-			addressFrom, err := cosmtypes.AccAddressFromBech32(config.KeyFrom)
-			if err == nil {
-				if !bytes.Equal(addressFrom.Bytes(), addressFromPk.Bytes()) {
-					err = errors.Errorf("expected account address %s but got %s from the private key", addressFrom.String(), addressFromPk.String())
-					return emptyCosmosAddress, nil, err
-				}
-			} else {
-				// use it as a name then
-				keyName = config.KeyFrom
-			}
-		}
-
-		if len(keyName) == 0 {
-			keyName = defaultKeyringKeyName
-		}
-
-		// wrap a PK into a Keyring
-		kb, err := KeyringForPrivKey(keyName, cosmosAccPk)
-		return addressFromPk, kb, err
+		return privkeyFromHex(config, config.PrivKeyHex)
 
 	case len(config.KeyFrom) > 0:
 		var fromIsAddress bool
@@ -145,6 +110,51 @@ func NewCosmosKeyring(opts ...ConfigOpt) (cosmtypes.AccAddress, keyring.Keyring,
 	}
 }
 
+func privkeyFromHex(
+	config *cosmosKeyringConfig,
+	privkeyHex string,
+) (cosmtypes.AccAddress, keyring.Keyring, error) {
+	pkBytes, err := hexToBytes(privkeyHex)
+	if err != nil {
+		err = errors.Wrap(err, "failed to hex-decode cosmos account privkey")
+		return emptyCosmosAddress, nil, err
+	}
+
+	cosmosAccPk := &cosmossecp256k1.PrivKey{
+		Key: pkBytes,
+	}
+
+	addressFromPk := cosmtypes.AccAddress(cosmosAccPk.PubKey().Address().Bytes())
+
+	var keyName string
+
+	// check that if cosmos 'From' specified separately, it must match the provided privkey,
+	if len(config.KeyFrom) > 0 {
+		addressFrom, err := cosmtypes.AccAddressFromBech32(config.KeyFrom)
+		if err == nil {
+			if !bytes.Equal(addressFrom.Bytes(), addressFromPk.Bytes()) {
+				err = errors.Errorf(
+					"expected account address %s but got %s from the private key",
+					addressFrom.String(), addressFromPk.String(),
+				)
+
+				return emptyCosmosAddress, nil, err
+			}
+		} else {
+			// use it as a name then
+			keyName = config.KeyFrom
+		}
+	}
+
+	if len(keyName) == 0 {
+		keyName = defaultKeyringKeyName
+	}
+
+	// wrap a PK into a Keyring
+	kb, err := NewFromPrivKey(keyName, cosmosAccPk)
+	return addressFromPk, kb, err
+}
+
 func newPassReader(pass string) io.Reader {
 	return &passReader{
 		pass: pass,
@@ -167,12 +177,12 @@ func (r *passReader) Read(p []byte) (n int, err error) {
 		n, err = r.buf.Read(p)
 	}
 
-	return
+	return n, err
 }
 
-// KeyringForPrivKey creates a temporary in-mem keyring for a PrivKey.
+// NewFromPrivKey creates a temporary in-mem keyring for a PrivKey.
 // Allows to init Context when the key has been provided in plaintext and parsed.
-func KeyringForPrivKey(name string, privKey cryptotypes.PrivKey) (keyring.Keyring, error) {
+func NewFromPrivKey(name string, privKey cryptotypes.PrivKey) (keyring.Keyring, error) {
 	kb := keyring.NewInMemory()
 	tmpPhrase := randPhrase(64)
 	armored := cosmcrypto.EncryptArmorPrivKey(privKey, tmpPhrase, privKey.Type())
@@ -186,11 +196,7 @@ func KeyringForPrivKey(name string, privKey cryptotypes.PrivKey) (keyring.Keyrin
 }
 
 func hexToBytes(str string) ([]byte, error) {
-	if strings.HasPrefix(str, "0x") {
-		str = str[2:]
-	}
-
-	data, err := hex.DecodeString(str)
+	data, err := hex.DecodeString(strings.TrimPrefix(str, "0x"))
 	if err != nil {
 		return nil, err
 	}

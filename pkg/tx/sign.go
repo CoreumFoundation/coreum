@@ -84,7 +84,7 @@ func BuildSimTx(clientCtx client.Context, base BaseInput, msgs ...sdk.Msg) ([]by
 		WithChainID(clientCtx.ChainID).
 		WithGasPrices(base.GasPrice.String()).
 		WithMemo(base.Memo).
-		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
+		WithSignMode(1) // SignMode_SIGN_MODE_DIRECT
 
 	txb, err := factory.BuildUnsignedTx(msgs...)
 	if err != nil {

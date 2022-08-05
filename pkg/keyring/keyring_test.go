@@ -33,7 +33,7 @@ func TestKeyFrom(t *testing.T) {
 	requireT.Equal(cosmkeyring.TypeLocal, info.GetType())
 	requireT.Equal(hd.Secp256k1Type, info.GetAlgo())
 
-	// showPrivkey(kb, accAddr)
+	showPrivkey(kb, accAddr)
 
 	res, pubkey, err := kb.SignByAddress(accAddr, []byte("test"))
 	requireT.NoError(err)
@@ -59,7 +59,7 @@ func TestKeyringFile(t *testing.T) {
 	requireT.Equal(hd.Secp256k1Type, info.GetAlgo())
 	requireT.Equal("test", info.GetName())
 
-	// showPrivkey(kb, accAddr)
+	showPrivkey(kb, accAddr)
 
 	res, pubkey, err := kb.SignByAddress(accAddr, []byte("test"))
 	requireT.NoError(err)
