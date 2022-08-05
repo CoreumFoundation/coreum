@@ -3,21 +3,22 @@ package testing
 import (
 	"context"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
-// T is an interface wrapper around *testing.T
+// T is an interface representing test, accepted by `assert.*` and `require.*` packages
 type T interface {
-	Errorf(format string, args ...interface{})
-	FailNow()
+	require.TestingT
 }
 
 // PrepareFunc defines function which is executed before environment is deployed
-type PrepareFunc func(ctx context.Context) error
+type PrepareFunc = func(ctx context.Context) error
 
 // RunFunc defines function which is responsible for running the test
-type RunFunc func(ctx context.Context, t T)
+type RunFunc = func(ctx context.Context, t T)
 
 // Chain holds network and client for the blockchain
 type Chain struct {

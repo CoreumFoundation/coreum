@@ -16,7 +16,7 @@ func TestInitialBalance(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 	// Create new random wallet
 	wallet := testing.RandomWallet()
 
-	// First returned value is the slice of objects representing prerequisites for the test
+	// First returned function prepares initial well-known state
 	return func(ctx context.Context) error {
 			initialBalance, err := types.NewCoin(big.NewInt(100), chain.Network.TokenSymbol())
 			if err != nil {
@@ -25,7 +25,7 @@ func TestInitialBalance(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 			return chain.Network.FundAccount(wallet.Key.PubKey(), initialBalance.String())
 		},
 
-		// Second returned value is the function running test
+		// Second returned function runs test
 		func(ctx context.Context, t testing.T) {
 			// Query for current balance available on the wallet
 			balances, err := chain.Client.QueryBankBalances(ctx, wallet)
