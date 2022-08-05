@@ -552,7 +552,7 @@ func New(
 			BankKeeper:      app.BankKeeper,
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			FeegrantKeeper:  app.FeeGrantKeeper,
-			MinGasPrice:     sdk.NewCoin(ChosenNetwork.TokenSymbol(), sdk.NewIntFromBigInt(ChosenNetwork.MinDiscountedGasPrice())),
+			MinGasPrice:     sdk.NewCoin(ChosenNetwork.TokenSymbol(), sdk.NewIntFromBigInt(ChosenNetwork.MinDiscountedGasPrice().BigInt())),
 			GasRequirements: ante.DeterministicGasRequirements{
 				BankSend: ChosenNetwork.DeterministicGas().BankSend,
 			},

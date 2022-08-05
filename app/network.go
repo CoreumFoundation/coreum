@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"io/ioutil"
-	"math/big"
 	"os"
 	"sync"
 	"text/template"
@@ -63,8 +62,8 @@ func init() {
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
 			Fee: FeeConfig{
-				InitialGasPrice:       big.NewInt(1500),
-				MinDiscountedGasPrice: big.NewInt(1000),
+				InitialGasPrice:       types.NewInt(1500),
+				MinDiscountedGasPrice: types.NewInt(1000),
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 120000,
 				},
@@ -77,8 +76,8 @@ func init() {
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
 			Fee: FeeConfig{
-				InitialGasPrice:       big.NewInt(1500),
-				MinDiscountedGasPrice: big.NewInt(1000),
+				InitialGasPrice:       types.NewInt(1500),
+				MinDiscountedGasPrice: types.NewInt(1000),
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 120000,
 				},
@@ -141,20 +140,9 @@ type DeterministicGasConfig struct {
 
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
-	InitialGasPrice       *big.Int
-	MinDiscountedGasPrice *big.Int
+	InitialGasPrice       types.Int
+	MinDiscountedGasPrice types.Int
 	DeterministicGas      DeterministicGasConfig
-}
-
-// Clone creates a copy of FeeConfig to allow to pass by reference
-func (f FeeConfig) Clone() FeeConfig {
-	return FeeConfig{
-		InitialGasPrice:       big.NewInt(0).Set(f.InitialGasPrice),
-		MinDiscountedGasPrice: big.NewInt(0).Set(f.MinDiscountedGasPrice),
-		DeterministicGas: DeterministicGasConfig{
-			BankSend: f.DeterministicGas.BankSend,
-		},
-	}
 }
 
 // NetworkConfig helps initialize Network instance
@@ -193,7 +181,7 @@ func NewNetwork(c NetworkConfig) Network {
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
 		nodeConfig:     c.NodeConfig.Clone(),
-		fee:            c.Fee.Clone(),
+		fee:            c.Fee,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -370,13 +358,13 @@ func (n Network) TokenSymbol() string {
 }
 
 // InitialGasPrice returns initial gas price used by the first block
-func (n Network) InitialGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.fee.InitialGasPrice)
+func (n Network) InitialGasPrice() types.Int {
+	return n.fee.InitialGasPrice
 }
 
 // MinDiscountedGasPrice returns minimum gas price after giving maximum discount
-func (n Network) MinDiscountedGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.fee.MinDiscountedGasPrice)
+func (n Network) MinDiscountedGasPrice() types.Int {
+	return n.fee.MinDiscountedGasPrice
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types

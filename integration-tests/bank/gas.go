@@ -2,7 +2,6 @@ package bank
 
 import (
 	"context"
-	"math/big"
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -25,23 +24,23 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		const margin = 1.5
 		maxGasAssumed := chain.Network.DeterministicGas().BankSend // set it to 50%+ higher than maximum observed value
 
-		amount, ok := big.NewInt(0).SetString("100000000000000000000000000000000000", 10)
-		if !ok {
-			panic("invalid amount")
+		amount, err := types.NewIntFromString("100000000000000000000000000000000000")
+		if err != nil {
+			panic(err)
 		}
 
 		// FIXME (wojciech): Compute fee based on Network once Milad integrates it into crust
-		fees, ok := big.NewInt(0).SetString("180000000", 10)
-		if !ok {
-			panic("invalid amount")
+		fees, err := types.NewIntFromString("180000000")
+		if err != nil {
+			panic(err)
 		}
-		fees.Mul(fees, big.NewInt(int64(numOfTransactions)))
+		fees = fees.Mul(types.NewInt(int64(numOfTransactions)))
 
 		wallet1 := testing.RandomWallet()
 		wallet2 := testing.RandomWallet()
 
 		return func(ctx context.Context) error {
-				wallet1InitialBalance, err := types.NewCoin(big.NewInt(0).Add(fees, amount), chain.Network.TokenSymbol())
+				wallet1InitialBalance, err := types.NewCoin(fees.Add(amount), chain.Network.TokenSymbol())
 				if err != nil {
 					return err
 				}
@@ -89,7 +88,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(big.NewInt(180000010), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin(types.NewInt(180000010), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -97,7 +96,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 		},
 		func(ctx context.Context, t testing.T) {
 			_, err := sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
-				types.Coin{Amount: big.NewInt(1), Denom: chain.Network.TokenSymbol()},
+				types.Coin{Amount: types.NewInt(1), Denom: chain.Network.TokenSymbol()},
 				// declaring gas limit as maxGasAssumed-1 means that tx must fail
 				maxGasAssumed-1, *chain.Network)
 			assert.True(t, client.IsInsufficientFeeError(err))

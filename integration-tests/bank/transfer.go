@@ -2,7 +2,6 @@ package bank
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ func TestInitialBalance(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 
 	// First returned function prepares initial well-known state
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(big.NewInt(100), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin(types.NewInt(100), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -49,12 +48,12 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Fund wallets
-			senderInitialBalance, err := types.NewCoin(big.NewInt(180000100), chain.Network.TokenSymbol())
+			senderInitialBalance, err := types.NewCoin(types.NewInt(180000100), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
 
-			receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.Network.TokenSymbol())
+			receiverInitialBalance, err := types.NewCoin(types.NewInt(10), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -79,7 +78,7 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 				},
 				Sender:   sender,
 				Receiver: receiver,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
+				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: types.NewInt(10)},
 			})
 			require.NoError(t, err)
 			result, err := coredClient.Broadcast(ctx, txBytes)

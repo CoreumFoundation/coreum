@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/stretchr/testify/require"
 
@@ -18,7 +17,7 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(big.NewInt(180000010), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin(types.NewInt(180000010), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -33,16 +32,22 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 			sender.AccountNumber = accNum
 			sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
 
+			gasPrice, err := types.NewCoin(chain.Network.InitialGasPrice(), chain.Network.TokenSymbol())
+			require.NoError(t, err)
+
+			amount, err := types.NewCoin(types.NewInt(1), chain.Network.TokenSymbol())
+			require.NoError(t, err)
+
 			// Broadcast a transaction using incorrect sequence number
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: chain.Network.InitialGasPrice(), Denom: chain.Network.TokenSymbol()},
+					GasPrice: gasPrice,
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(1)},
+				Amount:   amount,
 			})
 			require.NoError(t, err)
 			_, err = coredClient.Broadcast(ctx, txBytes)

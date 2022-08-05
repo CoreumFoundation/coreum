@@ -7,6 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // Sign signs transaction
@@ -22,15 +24,15 @@ func Sign(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.T
 	txBuilder.SetGasLimit(input.GasLimit)
 	txBuilder.SetMemo(input.Memo)
 
-	if input.GasPrice.Amount != nil {
+	if !input.GasPrice.Amount.IsDefault() {
 		if err := input.GasPrice.Validate(); err != nil {
 			return nil, errors.Wrap(err, "gas price is invalid")
 		}
 
-		gasLimit := sdk.NewInt(int64(input.GasLimit))
-		gasPrice := sdk.NewIntFromBigInt(input.GasPrice.Amount)
-		fee := sdk.NewCoin(input.GasPrice.Denom, gasLimit.Mul(gasPrice))
-		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
+		gasLimit := types.NewInt(int64(input.GasLimit))
+		fee := gasLimit.Mul(input.GasPrice.Amount)
+		feeCoin := sdk.NewCoin(input.GasPrice.Denom, sdk.NewIntFromBigInt(fee.BigInt()))
+		txBuilder.SetFeeAmount(sdk.NewCoins(feeCoin))
 	}
 
 	signerData := authsigning.SignerData{

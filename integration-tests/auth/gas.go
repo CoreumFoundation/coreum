@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/stretchr/testify/require"
 
@@ -18,7 +17,7 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(big.NewInt(180000100), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin(types.NewInt(180000100), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -27,7 +26,10 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
 
-			gasPrice := big.NewInt(0).Sub(chain.Network.MinDiscountedGasPrice(), big.NewInt(1))
+			amount, err := types.NewCoin(types.NewInt(10), chain.Network.TokenSymbol())
+			require.NoError(t, err)
+
+			gasPrice := chain.Network.MinDiscountedGasPrice().Sub(types.NewInt(1))
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
@@ -36,7 +38,7 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
+				Amount:   amount,
 			})
 			require.NoError(t, err)
 

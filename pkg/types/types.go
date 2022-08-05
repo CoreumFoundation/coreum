@@ -1,8 +1,6 @@
 package types
 
 import (
-	"math/big"
-
 	"github.com/pkg/errors"
 )
 
@@ -29,16 +27,16 @@ func (w Wallet) String() string {
 // Coin stores amount and denom of token
 type Coin struct {
 	// Amount is stored amount
-	Amount *big.Int `json:"amount"`
+	Amount Int `json:"amount"`
 
 	// Denom is a token symbol
 	Denom string `json:"denom"`
 }
 
 // NewCoin returns a new instance of coin type
-func NewCoin(amount *big.Int, denom string) (Coin, error) {
+func NewCoin(amount Int, denom string) (Coin, error) {
 	c := Coin{
-		Amount: big.NewInt(0).Set(amount),
+		Amount: amount,
 		Denom:  denom,
 	}
 	if err := c.Validate(); err != nil {
@@ -53,10 +51,7 @@ func (c Coin) Validate() error {
 	if c.Denom == "" {
 		return errors.New("denom is empty")
 	}
-	if c.Amount == nil {
-		return errors.New("amount is nil")
-	}
-	if c.Amount.Cmp(big.NewInt(0)) == -1 {
+	if c.Amount.LT(NewInt(0)) {
 		return errors.New("amount is negative")
 	}
 	return nil

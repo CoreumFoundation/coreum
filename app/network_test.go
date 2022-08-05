@@ -3,7 +3,6 @@ package app
 import (
 	"crypto/ed25519"
 	"encoding/json"
-	"math/big"
 	"strings"
 	"testing"
 	"time"
@@ -37,8 +36,8 @@ func testNetwork() Network {
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
 		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
+			InitialGasPrice:       types.NewInt(2),
+			MinDiscountedGasPrice: types.NewInt(1),
 			DeterministicGas: DeterministicGasConfig{
 				BankSend: 10,
 			},
@@ -240,8 +239,8 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
 		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
+			InitialGasPrice:       types.NewInt(2),
+			MinDiscountedGasPrice: types.NewInt(1),
 			DeterministicGas: DeterministicGasConfig{
 				BankSend: 10,
 			},
@@ -252,13 +251,9 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 
 	n1 := NewNetwork(cfg)
 
-	cfg.Fee.InitialGasPrice.Set(big.NewInt(150))
-	cfg.Fee.MinDiscountedGasPrice.Set(big.NewInt(100))
 	cfg.FundedAccounts[0] = FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
 	cfg.GenTxs[0] = []byte("tx2")
 
-	assertT.True(n1.InitialGasPrice().Cmp(big.NewInt(2)) == 0)
-	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
 }
@@ -294,41 +289,14 @@ func TestValidateAllGenesis(t *testing.T) {
 	}
 }
 
-func TestNetworkFeesNotMutable(t *testing.T) {
-	assertT := assert.New(t)
-
-	cfg := NetworkConfig{
-		ChainID:       ChainID("test-network"),
-		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-		AddressPrefix: "core",
-		TokenSymbol:   TokenSymbolMain,
-		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
-			DeterministicGas: DeterministicGasConfig{
-				BankSend: 10,
-			},
-		},
-	}
-
-	n1 := NewNetwork(cfg)
-
-	n1.InitialGasPrice().Set(big.NewInt(150))
-	n1.MinDiscountedGasPrice().Set(big.NewInt(100))
-
-	assertT.True(n1.InitialGasPrice().Cmp(big.NewInt(2)) == 0)
-	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
-}
-
 func TestNetworkConfigConditions(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	for _, cfg := range networks {
-		requireT.NotNil(cfg.Fee.InitialGasPrice)
-		requireT.NotNil(cfg.Fee.MinDiscountedGasPrice)
-		assertT.True(cfg.Fee.InitialGasPrice.Sign() == 1)
-		assertT.True(cfg.Fee.MinDiscountedGasPrice.Sign() == 1)
-		assertT.True(cfg.Fee.InitialGasPrice.Cmp(cfg.Fee.MinDiscountedGasPrice) >= 0)
+		requireT.False(cfg.Fee.InitialGasPrice.IsDefault())
+		requireT.False(cfg.Fee.MinDiscountedGasPrice.IsDefault())
+		assertT.True(cfg.Fee.MinDiscountedGasPrice.GT(types.NewInt(0)))
+		assertT.True(cfg.Fee.InitialGasPrice.GT(cfg.Fee.MinDiscountedGasPrice))
 
 		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
 	}
