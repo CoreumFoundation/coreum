@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/CoreumFoundation/coreum/tests/testing"
 )
 
 // TestInitialBalance checks that initial balance is set by genesis block
@@ -18,8 +18,11 @@ func TestInitialBalance(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 
 	// First returned value is the slice of objects representing prerequisites for the test
 	return func(ctx context.Context) error {
-			return chain.Network.FundAccount(wallet.Key.PubKey(),
-				testing.MustCoin(types.NewCoin(big.NewInt(100), chain.Network.TokenSymbol())).String())
+			initialBalance, err := types.NewCoin(big.NewInt(100), chain.Network.TokenSymbol())
+			if err != nil {
+				return err
+			}
+			return chain.Network.FundAccount(wallet.Key.PubKey(), initialBalance.String())
 		},
 
 		// Second returned value is the function running test

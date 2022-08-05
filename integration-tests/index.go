@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"github.com/CoreumFoundation/coreum/tests/bank"
-	"github.com/CoreumFoundation/coreum/tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests/bank"
+	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 )
 
 // Tests returns testing environment and tests
