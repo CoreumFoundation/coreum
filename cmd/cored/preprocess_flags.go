@@ -23,8 +23,8 @@ func preProcessFlags() (app.Network, error) {
 	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here
 	flagSet.Parse(os.Args[1:])
 
-	// skip checking network chain id if the issued command has help flag. this is introduced only
-	// because the the default chain-id is disabled.
+	// skip checking network chain id if the issued command has help flag or no commands.
+	// this is introduced only because the the default chain-id is disabled.
 	// TODO: remove this check after default chain-id (mainnet) is enabled.
 	if flagSet.Changed(flagHelp) || len(os.Args) == 1 {
 		return app.Network{}, nil
