@@ -232,8 +232,11 @@ func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk
 		return 0, err
 	}
 
+	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
 	txSvcClient := txtypes.NewServiceClient(c.clientCtx)
-	simRes, err := txSvcClient.Simulate(ctx, &txtypes.SimulateRequest{
+	simRes, err := txSvcClient.Simulate(requestCtx, &txtypes.SimulateRequest{
 		TxBytes: simTxBytes,
 	})
 	if err != nil {
@@ -241,7 +244,7 @@ func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk
 		return 0, err
 	}
 
-	// usually gas has to be multiplied by some adjustment coeff: e.g. *1,5
+	// usually gas has to be multiplied by some adjustment coefficient: e.g. *1.5
 	// but in this case we return unadjusted, so every module can decide the adjustment value
 	unadjustedGas := simRes.GasInfo.GasUsed
 
