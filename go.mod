@@ -3,6 +3,7 @@ module github.com/CoreumFoundation/coreum
 go 1.18
 
 replace (
+	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
@@ -10,7 +11,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.2.1
-	github.com/CoreumFoundation/crust/pkg/contracts v0.0.0-20220808164008-383739ac4b22
+	github.com/CoreumFoundation/crust/pkg/contracts v0.0.0-20220808170449-f658d0e8b653
 	github.com/CosmWasm/wasmd v0.27.0
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/go-bip39 v1.0.0
