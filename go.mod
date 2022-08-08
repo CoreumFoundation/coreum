@@ -24,5 +24,6 @@ require (
 	github.com/tendermint/spn v0.2.1-0.20220610090138-44b136f042c4
 	github.com/tendermint/tendermint v0.34.19
 	github.com/tendermint/tm-db v0.6.7
+	go.uber.org/zap v1.21.0
 	google.golang.org/grpc v1.46.2
 )
