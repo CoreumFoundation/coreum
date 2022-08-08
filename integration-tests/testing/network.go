@@ -7,8 +7,8 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 )
 
-// ZNetNetworkConfig is the network config used by znet
-var ZNetNetworkConfig = app.NetworkConfig{
+// NetworkConfig is the network config used by integration tests
+var NetworkConfig = app.NetworkConfig{
 	ChainID:       app.Devnet,
 	Enabled:       true,
 	GenesisTime:   time.Now(),
