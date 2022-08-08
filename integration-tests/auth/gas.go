@@ -17,7 +17,7 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(types.NewInt(180000100), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin2(types.NewInt(180000100), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -26,7 +26,7 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
 
-			amount, err := types.NewCoin(types.NewInt(10), chain.Network.TokenSymbol())
+			amount, err := types.NewCoin2(types.NewInt(10), chain.Network.TokenSymbol())
 			require.NoError(t, err)
 
 			gasPrice := chain.Network.MinDiscountedGasPrice().Sub(types.NewInt(1))

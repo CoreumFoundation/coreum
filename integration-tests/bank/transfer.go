@@ -21,7 +21,7 @@ func TestInitialBalance(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 
 	// First returned function prepares initial well-known state
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(types.NewInt(100), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin2(types.NewInt(100), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -48,12 +48,12 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Fund wallets
-			senderInitialBalance, err := types.NewCoin(types.NewInt(180000100), chain.Network.TokenSymbol())
+			senderInitialBalance, err := types.NewCoin2(types.NewInt(180000100), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
 
-			receiverInitialBalance, err := types.NewCoin(types.NewInt(10), chain.Network.TokenSymbol())
+			receiverInitialBalance, err := types.NewCoin2(types.NewInt(10), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -74,7 +74,7 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: chain.Network.InitialGasPrice(), Denom: chain.Network.TokenSymbol()},
+					GasPrice: types.Coin{Amount: chain.Network.InitialGasPrice2(), Denom: chain.Network.TokenSymbol()},
 				},
 				Sender:   sender,
 				Receiver: receiver,

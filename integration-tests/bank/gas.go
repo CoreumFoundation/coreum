@@ -40,11 +40,11 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		wallet2 := testing.RandomWallet()
 
 		return func(ctx context.Context) error {
-				wallet1InitialBalance, err := types.NewCoin(fees.Add(amount), chain.Network.TokenSymbol())
+				wallet1InitialBalance, err := types.NewCoin2(fees.Add(amount), chain.Network.TokenSymbol())
 				if err != nil {
 					return err
 				}
-				wallet2InitialBalance, err := types.NewCoin(fees, chain.Network.TokenSymbol())
+				wallet2InitialBalance, err := types.NewCoin2(fees, chain.Network.TokenSymbol())
 				if err != nil {
 					return err
 				}
@@ -88,7 +88,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(types.NewInt(180000010), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin2(types.NewInt(180000010), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -108,7 +108,7 @@ func sendAndReturnGasUsed(ctx context.Context, coredClient client.Client, sender
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: gasLimit,
-			GasPrice: types.Coin{Amount: network.InitialGasPrice(), Denom: network.TokenSymbol()},
+			GasPrice: types.Coin{Amount: network.InitialGasPrice2(), Denom: network.TokenSymbol()},
 			Memo:     maxMemo, // memo is set to max length here to charge as much gas as possible
 		},
 		Sender:   sender,

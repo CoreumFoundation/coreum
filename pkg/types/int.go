@@ -33,6 +33,12 @@ func NewIntFromSDK(number sdk.Int) Int {
 	return Int{i: new(big.Int).Set(number.BigInt())}
 }
 
+// BigInt returns internal *big.Int value
+// FIXME (wojtek): Remove once crust uses Int type
+func (i1 Int) BigInt() *big.Int {
+	return i1.i
+}
+
 // Add returns i1+i2
 func (i1 Int) Add(i2 Int) Int {
 	return Int{i: new(big.Int).Add(i1.i, i2.i)}

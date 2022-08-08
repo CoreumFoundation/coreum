@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"sync"
 	"text/template"
@@ -358,7 +359,14 @@ func (n Network) TokenSymbol() string {
 }
 
 // InitialGasPrice returns initial gas price used by the first block
-func (n Network) InitialGasPrice() types.Int {
+// FIXME (wojtek): Remove once crust uses Int
+func (n Network) InitialGasPrice() *big.Int {
+	return n.fee.InitialGasPrice.BigInt()
+}
+
+// InitialGasPrice2 returns initial gas price used by the first block
+// FIXME (wojtek): Rename to InitialGasPrice once crust uses Int
+func (n Network) InitialGasPrice2() types.Int {
 	return n.fee.InitialGasPrice
 }
 

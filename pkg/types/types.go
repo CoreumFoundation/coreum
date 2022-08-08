@@ -1,6 +1,8 @@
 package types
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 )
@@ -35,7 +37,22 @@ type Coin struct {
 }
 
 // NewCoin returns a new instance of coin type
-func NewCoin(amount Int, denom string) (Coin, error) {
+// FIXME (wojtek): Remove once crust is converted to use Int
+func NewCoin(amount *big.Int, denom string) (Coin, error) {
+	c := Coin{
+		Amount: Int{i: amount},
+		Denom:  denom,
+	}
+	if err := c.Validate(); err != nil {
+		return Coin{}, err
+	}
+
+	return c, nil
+}
+
+// NewCoin2 returns a new instance of coin type
+// FIXME (wojtek): Rename to New once crust is convertet to use Int
+func NewCoin2(amount Int, denom string) (Coin, error) {
 	c := Coin{
 		Amount: amount,
 		Denom:  denom,
@@ -49,7 +66,7 @@ func NewCoin(amount Int, denom string) (Coin, error) {
 
 // NewCoinFromSDK converts sdk.Coin to Coin
 func NewCoinFromSDK(coin sdk.Coin) (Coin, error) {
-	return NewCoin(NewIntFromSDK(coin.Amount), coin.Denom)
+	return NewCoin2(NewIntFromSDK(coin.Amount), coin.Denom)
 }
 
 // Validate validates data inside coin

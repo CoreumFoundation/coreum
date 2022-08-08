@@ -17,7 +17,7 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(types.NewInt(180000010), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin2(types.NewInt(180000010), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -32,10 +32,10 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 			sender.AccountNumber = accNum
 			sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
 
-			gasPrice, err := types.NewCoin(chain.Network.InitialGasPrice(), chain.Network.TokenSymbol())
+			gasPrice, err := types.NewCoin2(chain.Network.InitialGasPrice2(), chain.Network.TokenSymbol())
 			require.NoError(t, err)
 
-			amount, err := types.NewCoin(types.NewInt(1), chain.Network.TokenSymbol())
+			amount, err := types.NewCoin2(types.NewInt(1), chain.Network.TokenSymbol())
 			require.NoError(t, err)
 
 			// Broadcast a transaction using incorrect sequence number
