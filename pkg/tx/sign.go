@@ -31,7 +31,7 @@ func Sign(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.T
 
 		gasLimit := types.NewInt(int64(input.GasLimit))
 		fee := gasLimit.Mul(input.GasPrice.Amount)
-		feeCoin := sdk.NewCoin(input.GasPrice.Denom, sdk.NewIntFromBigInt(fee.BigInt()))
+		feeCoin := sdk.NewCoin(input.GasPrice.Denom, types.IntToSDK(fee))
 		txBuilder.SetFeeAmount(sdk.NewCoins(feeCoin))
 	}
 

@@ -90,7 +90,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map
 
 	balances := map[string]types.Coin{}
 	for _, b := range resp.Balances {
-		coin, err := types.NewCoin(types.NewIntFromBigInt(b.Amount.BigInt()), b.Denom)
+		coin, err := types.NewCoinFromSDK(b)
 		if err != nil {
 			return nil, err
 		}
@@ -217,10 +217,7 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	}
 
 	signedTx, err := c.Sign(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
-		{
-			Denom:  input.Amount.Denom,
-			Amount: sdk.NewIntFromBigInt(input.Amount.Amount.BigInt()),
-		},
+		types.CoinToSDK(input.Amount),
 	}))
 	if err != nil {
 		return nil, err

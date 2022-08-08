@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/big"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 )
 
@@ -27,9 +28,9 @@ func NewIntFromString(number string) (Int, error) {
 	return Int{i: i}, nil
 }
 
-// NewIntFromBigInt creates new Int from big.Int
-func NewIntFromBigInt(number *big.Int) Int {
-	return Int{i: new(big.Int).Set(number)}
+// NewIntFromSDK converts sdk.Int to Int
+func NewIntFromSDK(number sdk.Int) Int {
+	return Int{i: new(big.Int).Set(number.BigInt())}
 }
 
 // Add returns i1+i2
@@ -83,11 +84,6 @@ func (i1 Int) String() string {
 	return i1.i.String()
 }
 
-// BigInt returns big.Int representation of the number
-func (i1 Int) BigInt() *big.Int {
-	return new(big.Int).Set(i1.i)
-}
-
 // MarshalJSON defines custom encoding scheme
 func (i1 Int) MarshalJSON() ([]byte, error) {
 	if i1.i == nil {
@@ -115,4 +111,9 @@ func (i1 *Int) UnmarshalJSON(bz []byte) error {
 	}
 
 	return errors.WithStack(i1.i.UnmarshalText([]byte(text)))
+}
+
+// IntToSDK converts Int to sdk.Int
+func IntToSDK(number Int) sdk.Int {
+	return sdk.NewIntFromBigInt(number.i)
 }

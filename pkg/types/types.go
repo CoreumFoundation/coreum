@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 )
 
@@ -46,6 +47,11 @@ func NewCoin(amount Int, denom string) (Coin, error) {
 	return c, nil
 }
 
+// NewCoinFromSDK converts sdk.Coin to Coin
+func NewCoinFromSDK(coin sdk.Coin) (Coin, error) {
+	return NewCoin(NewIntFromSDK(coin.Amount), coin.Denom)
+}
+
 // Validate validates data inside coin
 func (c Coin) Validate() error {
 	if c.Denom == "" {
@@ -60,4 +66,9 @@ func (c Coin) Validate() error {
 // String returns string representation of coin
 func (c Coin) String() string {
 	return c.Amount.String() + c.Denom
+}
+
+// CoinToSDK converts Coin to sdk.Coin
+func CoinToSDK(coin Coin) sdk.Coin {
+	return sdk.NewCoin(coin.Denom, IntToSDK(coin.Amount))
 }
