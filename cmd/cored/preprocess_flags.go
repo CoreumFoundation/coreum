@@ -14,12 +14,21 @@ import (
 
 func preProcessFlags() (app.Network, error) {
 	// define flags
+	flagHelp := "help"
 	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)
 	flagSet.ParseErrorsWhitelist.UnknownFlags = true
 	flagSet.String(flags.FlagHome, app.DefaultNodeHome, "Directory for config and data")
+	flagSet.BoolP(flagHelp, "h", false, "")
 	chainID := flagSet.String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here
 	flagSet.Parse(os.Args[1:])
+
+	// skip checking network chain id if the issued command has help flag. this is introduced only
+	// because the the default chain-id is disabled.
+	// TODO: remove this check after default chain-id (mainnet) is enabled.
+	if flagSet.Changed(flagHelp) || len(os.Args) == 1 {
+		return app.Network{}, nil
+	}
 
 	// get chain config
 	network, err := app.NetworkByChainID(app.ChainID(*chainID))
