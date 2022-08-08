@@ -25,10 +25,12 @@ var (
 // TestBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to dispurse the native coins.
 func TestBankSendContract(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
-	var adminWallet types.Wallet = testing.RandomWallet()
-	var testWallet types.Wallet = testing.RandomWallet()
-	var networkConfig contracts.ChainConfig
-	var stagedContractPath string
+	var (
+		adminWallet        = testing.RandomWallet()
+		testWallet         = testing.RandomWallet()
+		networkConfig      contracts.ChainConfig
+		stagedContractPath string
+	)
 
 	minGasPrice := chain.Network.InitialGasPrice()
 	nativeDenom := chain.Network.TokenSymbol()
@@ -37,8 +39,8 @@ func TestBankSendContract(chain testing.Chain) (testing.PrepareFunc, testing.Run
 	}
 
 	initTestState := func(ctx context.Context) error {
-		chain.Network.FundAccount(adminWallet.Key.PubKey(), nativeTokens("100000000000000000000000000000000000"))
-		chain.Network.FundAccount(testWallet.Key.PubKey(), nativeTokens("0"))
+		orPanic(chain.Network.FundAccount(adminWallet.Key.PubKey(), nativeTokens("100000000000000000000000000000000000")))
+		orPanic(chain.Network.FundAccount(testWallet.Key.PubKey(), nativeTokens("0")))
 
 		networkConfig = contracts.ChainConfig{
 			ChainID:     string(chain.Network.ChainID()),
@@ -174,5 +176,11 @@ func testBankSendContract(
 		expect.Equal("5000", testWalletBalance.Balance.Amount.String())
 
 		// bank send invoked by the contract code succeeded! 〠
+	}
+}
+
+func orPanic(err error) {
+	if err != nil {
+		panic(err)
 	}
 }

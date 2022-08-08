@@ -24,9 +24,11 @@ var (
 // TestSimpleStateContract runs a contract deployment flow and tries to modify the state after deployment.
 // This is a E2E check for the WASM integration, to ensure it works for a simple state contract (Counter).
 func TestSimpleStateContract(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
-	var adminWallet types.Wallet = testing.RandomWallet()
-	var networkConfig contracts.ChainConfig
-	var stagedContractPath string
+	var (
+		adminWallet        = testing.RandomWallet()
+		networkConfig      contracts.ChainConfig
+		stagedContractPath string
+	)
 
 	minGasPrice := chain.Network.InitialGasPrice()
 	nativeDenom := chain.Network.TokenSymbol()
@@ -35,7 +37,7 @@ func TestSimpleStateContract(chain testing.Chain) (testing.PrepareFunc, testing.
 	}
 
 	initTestState := func(ctx context.Context) error {
-		chain.Network.FundAccount(adminWallet.Key.PubKey(), nativeTokens("100000000000000000000000000000000000"))
+		orPanic(chain.Network.FundAccount(adminWallet.Key.PubKey(), nativeTokens("100000000000000000000000000000000000")))
 		networkConfig = contracts.ChainConfig{
 			ChainID: string(chain.Network.ChainID()),
 			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
@@ -62,6 +64,22 @@ func TestSimpleStateContract(chain testing.Chain) (testing.PrepareFunc, testing.
 	}
 
 	runTestFunc := func(ctx context.Context, t testing.T) {
+		testSimpleStateContract(
+			adminWallet,
+			networkConfig,
+			stagedContractPath,
+		)(ctx, t)
+	}
+
+	return initTestState, runTestFunc
+}
+
+func testSimpleStateContract(
+	adminWallet types.Wallet,
+	networkConfig contracts.ChainConfig,
+	stagedContractPath string,
+) func(context.Context, testing.T) {
+	return func(ctx context.Context, t testing.T) {
 		expect := require.New(t)
 
 		// Store the contract code on the chain, instantiation will be done in later step
@@ -132,8 +150,6 @@ func TestSimpleStateContract(chain testing.Chain) (testing.PrepareFunc, testing.
 		expect.NoError(err)
 		expect.Equal(1338, response.Count)
 	}
-
-	return initTestState, runTestFunc
 }
 
 type simpleStateQueryResponse struct {
