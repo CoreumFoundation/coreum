@@ -89,7 +89,7 @@ func BuildSimTx(clientCtx client.Context, base BaseInput, msgs ...sdk.Msg) ([]by
 
 	txb, err := factory.BuildUnsignedTx(msgs...)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	// TODO: once keyring is introduced in the client, better to get the pubkey from keyring,
@@ -109,7 +109,7 @@ func BuildSimTx(clientCtx client.Context, base BaseInput, msgs ...sdk.Msg) ([]by
 		Sequence: base.Signer.AccountSequence,
 	}
 	if err := txb.SetSignatures(sig); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return clientCtx.TxConfig.TxEncoder()(txb.GetTx())
