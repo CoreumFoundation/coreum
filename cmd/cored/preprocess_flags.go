@@ -14,10 +14,11 @@ import (
 
 func preProcessFlags() (app.Network, error) {
 	// define flags
-	flagHelp := "help"
+	const flagHelp = "help"
 	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)
 	flagSet.ParseErrorsWhitelist.UnknownFlags = true
 	flagSet.String(flags.FlagHome, app.DefaultNodeHome, "Directory for config and data")
+	// Dummy flag to turn off printing usage of this flag set
 	flagSet.BoolP(flagHelp, "h", false, "")
 	chainID := flagSet.String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here

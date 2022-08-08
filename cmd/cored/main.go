@@ -29,6 +29,7 @@ func main() {
 		// this line is used by starport scaffolding # root/arguments
 	)
 
+	rootCmd.AddCommand(initCmd(app.DefaultNodeHome))
 	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
