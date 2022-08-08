@@ -24,6 +24,7 @@ type RunFunc = func(ctx context.Context, t T)
 type Chain struct {
 	Network *app.Network
 	Client  client.Client
+	RPCAddr string
 }
 
 // SingleChainSignature is the signature of test function accepting a chain
