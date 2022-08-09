@@ -83,7 +83,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map
 	defer cancel()
 
 	// FIXME (wojtek): support pagination
-	resp, err := c.bankQueryClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
+	resp, err := c.bankQueryClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{Address: string(wallet.Key.Address())})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -104,7 +104,7 @@ func (c Client) Sign(ctx context.Context, input tx.BaseInput, msg sdk.Msg) (auth
 	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
-		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, string(signer.Key.Address()))
 		if err != nil {
 			return nil, err
 		}
@@ -207,9 +207,9 @@ type TxBankSendInput struct {
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
 func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(input.Sender.Key.Address())
+	fromAddress, err := sdk.AccAddressFromBech32(string(input.Sender.Key.Address()))
 	must.OK(err)
-	toAddress, err := sdk.AccAddressFromBech32(input.Receiver.Key.Address())
+	toAddress, err := sdk.AccAddressFromBech32(string(input.Receiver.Key.Address()))
 	must.OK(err)
 
 	if err := input.Amount.Validate(); err != nil {

@@ -59,9 +59,9 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 				client := chain.Client
 
 				var err error
-				wallet1.AccountNumber, wallet1.AccountSequence, err = client.GetNumberSequence(ctx, wallet1.Key.Address())
+				wallet1.AccountNumber, wallet1.AccountSequence, err = client.GetNumberSequence(ctx, string(wallet1.Key.Address()))
 				require.NoError(t, err)
-				wallet2.AccountNumber, wallet2.AccountSequence, err = client.GetNumberSequence(ctx, wallet2.Key.Address())
+				wallet2.AccountNumber, wallet2.AccountSequence, err = client.GetNumberSequence(ctx, string(wallet2.Key.Address()))
 				require.NoError(t, err)
 
 				var maxGasUsed int64

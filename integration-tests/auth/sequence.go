@@ -32,7 +32,7 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
 
-			accNum, accSeq, err := coredClient.GetNumberSequence(ctx, sender.Key.Address())
+			accNum, accSeq, err := coredClient.GetNumberSequence(ctx, string(sender.Key.Address()))
 			require.NoError(t, err)
 
 			sender.AccountNumber = accNum

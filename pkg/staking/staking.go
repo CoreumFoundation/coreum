@@ -10,11 +10,12 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/tx2"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // PrepareTxStakingCreateValidator generates transaction of type MsgCreateValidator
+// FIXME (milad): once types are removed from `app` package use `client.Client.PrepareTxStakingCreateValidator` instead of this function
 func PrepareTxStakingCreateValidator(
 	clientCtx client.Context,
 	validatorPublicKey ed25519.PublicKey,
@@ -41,7 +42,13 @@ func PrepareTxStakingCreateValidator(
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
 	}
 
-	signedTx, err := tx.Sign(clientCtx, tx.BaseInput{Signer: types.Wallet{Key: stakerPrivateKey}}, msg)
+	signedTx, err := tx2.Sign(clientCtx, tx2.BaseInput{
+		Signer: tx2.Signer{
+			PublicKey:  stakerPrivateKey.PubKey(),
+			PrivateKey: stakerPrivateKey,
+			Account:    &tx2.AccountInfo{},
+		},
+	}, msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to sign transaction")
 	}

@@ -6,6 +6,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Address is an account address encoded using bech32 format
+type Address string
+
 // Wallet stores information related to wallet
 type Wallet struct {
 	// Name is the name of the key stored in keystore
@@ -23,7 +26,7 @@ type Wallet struct {
 
 // String returns string representation of the wallet
 func (w Wallet) String() string {
-	return w.Name + "@" + w.Key.Address()
+	return w.Name + "@" + string(w.Key.Address())
 }
 
 // Coin stores amount and denom of token

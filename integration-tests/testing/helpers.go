@@ -9,7 +9,7 @@ import (
 // RandomWallet generates wallet with random name and private key
 func RandomWallet() types.Wallet {
 	_, privKey := types.GenerateSecp256k1Key()
-	return types.Wallet{Name: privKey.Address(), Key: privKey}
+	return types.Wallet{Name: string(privKey.Address()), Key: privKey}
 }
 
 // ComputeNeededBalance computes the required balance for sending `numOfMessages` number of messages plus some extra amount.

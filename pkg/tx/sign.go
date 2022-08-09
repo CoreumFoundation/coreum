@@ -10,6 +10,8 @@ import (
 )
 
 // Sign signs transaction
+// FIXME (milad): once types are removed from `app` package it should be possible to integrate this function into `client.Client.prepareTx`.
+// It is needed here only because `staking.PrepareTxStakingCreateValidator` calls it.
 func Sign(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 

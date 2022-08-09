@@ -2,6 +2,7 @@ package tx2
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -9,65 +10,67 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Sign signs transaction
-func Sign(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+// Sign signs transaction for being broadcasted
+func Sign(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
-	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
-	txBuilder := clientCtx.TxConfig.NewTxBuilder()
-	err := txBuilder.SetMsgs(msg)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to set message on tx builder")
-	}
-	txBuilder.SetGasLimit(input.GasLimit)
-	txBuilder.SetMemo(input.Memo)
+	factory := new(tx.Factory).
+		WithTxConfig(clientCtx.TxConfig).
+		WithChainID(clientCtx.ChainID).
+		WithGas(input.GasLimit).
+		WithMemo(input.Memo).
+		//nolint:nosnakecase // MixedCap can't be forced on imported constants
+		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 
 	if input.GasPrice.Amount != nil {
 		if err := input.GasPrice.Validate(); err != nil {
 			return nil, errors.Wrap(err, "gas price is invalid")
 		}
-
-		gasLimit := sdk.NewInt(int64(input.GasLimit))
-		gasPrice := sdk.NewIntFromBigInt(input.GasPrice.Amount)
-		fee := sdk.NewCoin(input.GasPrice.Denom, gasLimit.Mul(gasPrice))
-		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
+		factory = factory.WithGasPrices(input.GasPrice.String())
 	}
+
+	txBuilder, err := factory.BuildUnsignedTx(msgs...)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	privKey := &cosmossecp256k1.PrivKey{Key: signer.PrivateKey}
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
-		AccountNumber: signer.AccountNumber,
-		Sequence:      signer.AccountSequence,
+		AccountNumber: signer.Account.Number,
+		Sequence:      signer.Account.Sequence,
 	}
 	sigData := &signing.SingleSignatureData{
-		//nolint:nosnakecase // MixedCap can't be forced on imported constants
-		SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+		SignMode:  factory.SignMode(),
 		Signature: nil,
 	}
 	sig := signing.SignatureV2{
 		PubKey:   privKey.PubKey(),
 		Data:     sigData,
-		Sequence: signer.AccountSequence,
+		Sequence: signer.Account.Sequence,
 	}
-	err = txBuilder.SetSignatures(sig)
-	if err != nil {
+
+	if err := txBuilder.SetSignatures(sig); err != nil {
 		return nil, errors.Wrap(err, "unable to set signature on tx builder")
 	}
 
-	//nolint:nosnakecase // MixedCap can't be forced on imported constants
-	bytesToSign, err := clientCtx.TxConfig.SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, txBuilder.GetTx())
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to encode bytes to sign")
-	}
-	sigBytes, err := privKey.Sign(bytesToSign)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to sign")
-	}
+	// If private key is empty it means transaction is "signed" only for simulation
+	if signer.PrivateKey != nil {
+		bytesToSign, err := clientCtx.TxConfig.SignModeHandler().GetSignBytes(factory.SignMode(), signerData, txBuilder.GetTx())
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to encode bytes to sign")
+		}
+		sigBytes, err := privKey.Sign(bytesToSign)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to sign")
+		}
 
-	sigData.Signature = sigBytes
+		sigData.Signature = sigBytes
 
-	err = txBuilder.SetSignatures(sig)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to set signature on tx builder")
+		if err := txBuilder.SetSignatures(sig); err != nil {
+			return nil, errors.Wrap(err, "unable to set signature on tx builder")
+		}
 	}
 
 	return txBuilder.GetTx(), nil
