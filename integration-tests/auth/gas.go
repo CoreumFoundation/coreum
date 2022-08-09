@@ -18,7 +18,12 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(big.NewInt(180000100), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+				chain.Network.InitialGasPrice(),
+				chain.Network.DeterministicGas().BankSend,
+				1,
+				big.NewInt(100),
+			), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}

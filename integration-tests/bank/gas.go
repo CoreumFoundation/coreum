@@ -30,18 +30,18 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 			panic("invalid amount")
 		}
 
-		// FIXME (wojciech): Compute fee based on Network once Milad integrates it into crust
-		fees, ok := big.NewInt(0).SetString("180000000", 10)
-		if !ok {
-			panic("invalid amount")
-		}
-		fees.Mul(fees, big.NewInt(int64(numOfTransactions)))
+		fees := testing.ComputeNeededBalance(
+			chain.Network.InitialGasPrice(),
+			chain.Network.DeterministicGas().BankSend,
+			numOfTransactions,
+			big.NewInt(0),
+		)
 
 		wallet1 := testing.RandomWallet()
 		wallet2 := testing.RandomWallet()
 
 		return func(ctx context.Context) error {
-				wallet1InitialBalance, err := types.NewCoin(big.NewInt(0).Add(fees, amount), chain.Network.TokenSymbol())
+				wallet1InitialBalance, err := types.NewCoin(new(big.Int).Add(fees, amount), chain.Network.TokenSymbol())
 				if err != nil {
 					return err
 				}
@@ -89,7 +89,12 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(big.NewInt(180000010), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+				chain.Network.InitialGasPrice(),
+				chain.Network.DeterministicGas().BankSend,
+				1,
+				big.NewInt(10),
+			), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}

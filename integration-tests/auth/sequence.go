@@ -18,7 +18,12 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(big.NewInt(180000010), chain.Network.TokenSymbol())
+			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+				chain.Network.InitialGasPrice(),
+				chain.Network.DeterministicGas().BankSend,
+				1,
+				big.NewInt(10),
+			), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
