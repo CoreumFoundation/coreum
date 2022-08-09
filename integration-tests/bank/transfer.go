@@ -49,7 +49,7 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Fund wallets
-			senderInitialBalance, err := types.NewCoin(testing.ComputeInitialBalance(
+			senderInitialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
 				chain.Network.InitialGasPrice(),
 				chain.Network.DeterministicGas().BankSend,
 				1,

@@ -30,7 +30,7 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 			panic("invalid amount")
 		}
 
-		fees := testing.ComputeInitialBalance(
+		fees := testing.ComputeNeededBalance(
 			chain.Network.InitialGasPrice(),
 			chain.Network.DeterministicGas().BankSend,
 			numOfTransactions,
@@ -89,7 +89,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 	sender := testing.RandomWallet()
 
 	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(testing.ComputeInitialBalance(
+			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
 				chain.Network.InitialGasPrice(),
 				chain.Network.DeterministicGas().BankSend,
 				1,
