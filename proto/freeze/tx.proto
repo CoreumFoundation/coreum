@@ -1,0 +1,33 @@
+syntax = "proto3";
+package CoreumFoundation.coreum.freeze;
+
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/CoreumFoundation/coreum/x/freeze/types";
+
+// Msg defines the Msg service.
+service Msg {
+      rpc FreezeCoin(MsgFreezeCoin) returns (MsgFreezeCoinResponse);
+  rpc UnfreezeCoin(MsgUnfreezeCoin) returns (MsgUnfreezeCoinResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgFreezeCoin {
+  string creator = 1;
+  string address = 2;
+  string denom = 3;
+}
+
+message MsgFreezeCoinResponse {
+}
+
+message MsgUnfreezeCoin {
+  string creator = 1;
+  string address = 2;
+  string denom = 3;
+}
+
+message MsgUnfreezeCoinResponse {
+}
+
+// this line is used by starport scaffolding # proto/tx/message
