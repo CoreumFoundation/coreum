@@ -24,6 +24,11 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+// errors returned by network
+var (
+	ErrDisableNetwork = errors.New("network is disabled")
+)
+
 // ChainID represents predefined chain ID
 type ChainID string
 
@@ -394,7 +399,7 @@ func NetworkByChainID(id ChainID) (Network, error) {
 
 	// TODO: remove this check once all preconfigured networks are enabled
 	if !nw.Enabled {
-		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(Devnet))
+		return Network{}, errors.Wrapf(ErrDisableNetwork, "%s is not yet ready, use --chain-id=%s for devnet", id, string(Devnet))
 	}
 
 	return NewNetwork(nw), nil
