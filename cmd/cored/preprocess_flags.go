@@ -25,8 +25,7 @@ func preProcessFlags() (app.Network, error) {
 	flagSet.Parse(os.Args[1:])
 	// we consider the issued command to be a help command if no args are provided.
 	// in that case we will not check the chain-id and will return
-	// TODO: remove this check after all chains are enabled.
-	if len(os.Args) == 1 && *help {
+	if len(os.Args) == 1 || *help {
 		return app.Network{}, nil
 	}
 
