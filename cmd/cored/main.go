@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
@@ -30,13 +31,19 @@ func main() {
 	)
 
 	rootCmd.AddCommand(initCmd(app.DefaultNodeHome))
-
-	for _, cmd := range rootCmd.Commands() {
-		if cmd.Name() == "start" {
-			cmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
-		}
-	}
+	overwriteDefaultChainIDFlags(rootCmd)
+	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
+	}
+}
+
+func overwriteDefaultChainIDFlags(parentCmd *cobra.Command) {
+	for _, cmd := range parentCmd.Commands() {
+		if flag := cmd.LocalFlags().Lookup(flags.FlagChainID); flag != nil {
+			flag.DefValue = string(app.DefaultChainID)
+		}
+
+		overwriteDefaultChainIDFlags(cmd)
 	}
 }
