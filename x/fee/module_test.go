@@ -23,7 +23,7 @@ var (
 	}
 )
 
-func TestKeyPoints(t *testing.T) {
+func TestCalculateNextGasPriceKeyPoints(t *testing.T) {
 	// at point 0 it should be initial price
 
 	nextGasPrice := calculateNextGasPrice(feeModel, 0, 100).Int64()
@@ -51,14 +51,14 @@ func TestKeyPoints(t *testing.T) {
 }
 
 func TestAverageGasBeyondEscalationStartBlockGas(t *testing.T) {
-	// There is a special case when average block gas is higher than escalation start block gas.
+	// There is a special case when long average block gas is higher than escalation start block gas.
 	// The question is if in such scenario we should offer discounted gas price or escalation should be applied instead.
 	// It seems obvious that price should be escalated.
 
 	nextGasPrice := calculateNextGasPrice(feeModel, feeModel.EscalationStartBlockGas+150, feeModel.EscalationStartBlockGas+100).Int64()
 	assert.Greater(t, nextGasPrice, minDiscountedGasPrice)
 
-	// Next gas price should be the same as for average block gas being below optimal block gas.
+	// Next gas price should be the same as for long average block gas being below optimal block gas.
 	// It means that escalation was turned on.
 
 	nextGasPrice2 := calculateNextGasPrice(feeModel, feeModel.EscalationStartBlockGas+150, feeModel.EscalationStartBlockGas-100).Int64()
@@ -111,7 +111,7 @@ func TestEscalationInertia(t *testing.T) {
 
 	feeModel1 := feeModel
 	feeModel2 := feeModel
-	feeModel2.EscalationInertia += 1
+	feeModel2.EscalationInertia++
 
 	for i := feeModel.EscalationStartBlockGas + 1; i < feeModel.MaxBlockGas; i++ {
 		nextPrice1 := calculateNextGasPrice(feeModel1, i, averageBlockGas).Int64()

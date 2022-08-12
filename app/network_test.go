@@ -38,14 +38,14 @@ func testNetwork() Network {
 		TokenSymbol:   TokenSymbolMain,
 		Fee: FeeConfig{
 			FeeModel: FeeModel{
-				InitialGasPrice:                      big.NewInt(2),
-				MaxGasPrice:                          big.NewInt(4),
-				MaxDiscount:                          0.4,
-				EscalationStartBlockGas:              10,
-				MaxBlockGas:                          20,
-				EscalationInertia:                    1.5,
-				NumOfBlocksForCurrentAverageBlockGas: 3,
-				NumOfBlocksForAverageBlockGas:        5,
+				InitialGasPrice:                    big.NewInt(2),
+				MaxGasPrice:                        big.NewInt(4),
+				MaxDiscount:                        0.4,
+				EscalationStartBlockGas:            10,
+				MaxBlockGas:                        20,
+				EscalationInertia:                  1.5,
+				NumOfBlocksForShortAverageBlockGas: 3,
+				NumOfBlocksForLongAverageBlockGas:  5,
 			},
 			DeterministicGas: DeterministicGasConfig{
 				BankSend: 10,
@@ -249,14 +249,14 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		TokenSymbol:   TokenSymbolMain,
 		Fee: FeeConfig{
 			FeeModel: FeeModel{
-				InitialGasPrice:                      big.NewInt(2),
-				MaxGasPrice:                          big.NewInt(4),
-				MaxDiscount:                          0.4,
-				EscalationStartBlockGas:              10,
-				MaxBlockGas:                          20,
-				EscalationInertia:                    1.5,
-				NumOfBlocksForCurrentAverageBlockGas: 3,
-				NumOfBlocksForAverageBlockGas:        5,
+				InitialGasPrice:                    big.NewInt(2),
+				MaxGasPrice:                        big.NewInt(4),
+				MaxDiscount:                        0.4,
+				EscalationStartBlockGas:            10,
+				MaxBlockGas:                        20,
+				EscalationInertia:                  1.5,
+				NumOfBlocksForShortAverageBlockGas: 3,
+				NumOfBlocksForLongAverageBlockGas:  5,
 			},
 			DeterministicGas: DeterministicGasConfig{
 				BankSend: 10,
@@ -279,8 +279,8 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT.Equal(int64(10), n1.FeeModel().EscalationStartBlockGas)
 	assertT.Equal(int64(20), n1.FeeModel().MaxBlockGas)
 	assertT.Equal(1.5, n1.FeeModel().EscalationInertia)
-	assertT.Equal(uint(3), n1.FeeModel().NumOfBlocksForCurrentAverageBlockGas)
-	assertT.Equal(uint(5), n1.FeeModel().NumOfBlocksForAverageBlockGas)
+	assertT.Equal(uint(3), n1.FeeModel().NumOfBlocksForShortAverageBlockGas)
+	assertT.Equal(uint(5), n1.FeeModel().NumOfBlocksForLongAverageBlockGas)
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
 }
@@ -326,14 +326,14 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 		TokenSymbol:   TokenSymbolMain,
 		Fee: FeeConfig{
 			FeeModel: FeeModel{
-				InitialGasPrice:                      big.NewInt(2),
-				MaxGasPrice:                          big.NewInt(4),
-				MaxDiscount:                          0.4,
-				EscalationStartBlockGas:              10,
-				MaxBlockGas:                          20,
-				EscalationInertia:                    1.5,
-				NumOfBlocksForCurrentAverageBlockGas: 3,
-				NumOfBlocksForAverageBlockGas:        5,
+				InitialGasPrice:                    big.NewInt(2),
+				MaxGasPrice:                        big.NewInt(4),
+				MaxDiscount:                        0.4,
+				EscalationStartBlockGas:            10,
+				MaxBlockGas:                        20,
+				EscalationInertia:                  1.5,
+				NumOfBlocksForShortAverageBlockGas: 3,
+				NumOfBlocksForLongAverageBlockGas:  5,
 			},
 			DeterministicGas: DeterministicGasConfig{
 				BankSend: 10,
@@ -368,8 +368,8 @@ func TestNetworkConfigConditions(t *testing.T) {
 
 		assertT.GreaterOrEqual(cfg.Fee.FeeModel.EscalationInertia, 0.)
 
-		assertT.Greater(cfg.Fee.FeeModel.NumOfBlocksForCurrentAverageBlockGas, uint(0))
-		assertT.Greater(cfg.Fee.FeeModel.NumOfBlocksForAverageBlockGas, cfg.Fee.FeeModel.NumOfBlocksForCurrentAverageBlockGas)
+		assertT.Greater(cfg.Fee.FeeModel.NumOfBlocksForShortAverageBlockGas, uint(0))
+		assertT.Greater(cfg.Fee.FeeModel.NumOfBlocksForLongAverageBlockGas, cfg.Fee.FeeModel.NumOfBlocksForShortAverageBlockGas)
 
 		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
 	}

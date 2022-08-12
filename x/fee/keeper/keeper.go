@@ -12,10 +12,10 @@ var _ Keeper = (*BaseKeeper)(nil)
 type Keeper interface {
 	TrackedGas(ctx sdk.Context) int64
 	TrackGas(ctx sdk.Context, gas int64)
-	GetCurrentAverageGas(ctx sdk.Context) int64
-	SetCurrentAverageGas(ctx sdk.Context, averageGas int64)
-	GetAverageGas(ctx sdk.Context) int64
-	SetAverageGas(ctx sdk.Context, averageGas int64)
+	GetShortAverageGas(ctx sdk.Context) int64
+	SetShortAverageGas(ctx sdk.Context, averageGas int64)
+	GetLongAverageGas(ctx sdk.Context) int64
+	SetLongAverageGas(ctx sdk.Context, averageGas int64)
 	GetMinGasPrice(ctx sdk.Context) sdk.Coin
 	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
 }
@@ -78,8 +78,8 @@ func (k BaseKeeper) TrackGas(ctx sdk.Context, gas int64) {
 	tStore.Set(gasTrackingKey, bz)
 }
 
-// GetCurrentAverageGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block
-func (k BaseKeeper) GetCurrentAverageGas(ctx sdk.Context) int64 {
+// GetShortAverageGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block
+func (k BaseKeeper) GetShortAverageGas(ctx sdk.Context) int64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(currentAverageGasKey)
 
@@ -94,8 +94,8 @@ func (k BaseKeeper) GetCurrentAverageGas(ctx sdk.Context) int64 {
 	return currentAverageGas.Int64()
 }
 
-// SetCurrentAverageGas sets average gas used by previous blocks, used as a representation of smoothed gas used by latest block
-func (k BaseKeeper) SetCurrentAverageGas(ctx sdk.Context, currentAverageGas int64) {
+// SetShortAverageGas sets average gas used by previous blocks, used as a representation of smoothed gas used by latest block
+func (k BaseKeeper) SetShortAverageGas(ctx sdk.Context, currentAverageGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
 	bz, err := sdk.NewInt(currentAverageGas).Marshal()
@@ -106,8 +106,8 @@ func (k BaseKeeper) SetCurrentAverageGas(ctx sdk.Context, currentAverageGas int6
 	store.Set(currentAverageGasKey, bz)
 }
 
-// GetAverageGas retrieves average gas used by previous blocks, used for determining average block load where maximum discount is applied
-func (k BaseKeeper) GetAverageGas(ctx sdk.Context) int64 {
+// GetLongAverageGas retrieves long average gas used by previous blocks, used for determining average block load where maximum discount is applied
+func (k BaseKeeper) GetLongAverageGas(ctx sdk.Context) int64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(averageGasKey)
 
@@ -122,8 +122,8 @@ func (k BaseKeeper) GetAverageGas(ctx sdk.Context) int64 {
 	return averageGas.Int64()
 }
 
-// SetAverageGas sets average gas used by previous blocks, used for determining average block load where maximum discount is applied
-func (k BaseKeeper) SetAverageGas(ctx sdk.Context, averageGas int64) {
+// SetLongAverageGas sets long average gas used by previous blocks, used for determining average block load where maximum discount is applied
+func (k BaseKeeper) SetLongAverageGas(ctx sdk.Context, averageGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
 	bz, err := sdk.NewInt(averageGas).Marshal()

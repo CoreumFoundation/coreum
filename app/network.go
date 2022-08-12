@@ -64,14 +64,14 @@ func init() {
 			TokenSymbol:   TokenSymbolMain,
 			Fee: FeeConfig{
 				FeeModel: FeeModel{
-					InitialGasPrice:                      big.NewInt(1500),
-					MaxGasPrice:                          big.NewInt(15000),
-					MaxDiscount:                          0.5,
-					EscalationStartBlockGas:              37500000, // 300 * BankSend message
-					MaxBlockGas:                          50000000, // 400 * BankSend message
-					EscalationInertia:                    2.5,
-					NumOfBlocksForCurrentAverageBlockGas: 10,
-					NumOfBlocksForAverageBlockGas:        1000,
+					InitialGasPrice:                    big.NewInt(1500),
+					MaxGasPrice:                        big.NewInt(15000),
+					MaxDiscount:                        0.5,
+					EscalationStartBlockGas:            37500000, // 300 * BankSend message
+					MaxBlockGas:                        50000000, // 400 * BankSend message
+					EscalationInertia:                  2.5,
+					NumOfBlocksForShortAverageBlockGas: 10,
+					NumOfBlocksForLongAverageBlockGas:  1000,
 				},
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 125000,
@@ -86,14 +86,14 @@ func init() {
 			TokenSymbol:   TokenSymbolDev,
 			Fee: FeeConfig{
 				FeeModel: FeeModel{
-					InitialGasPrice:                      big.NewInt(1500),
-					MaxGasPrice:                          big.NewInt(15000),
-					MaxDiscount:                          0.5,
-					EscalationStartBlockGas:              37500000, // 300 * BankSend message
-					MaxBlockGas:                          50000000, // 400 * BankSend message
-					EscalationInertia:                    2.5,
-					NumOfBlocksForCurrentAverageBlockGas: 10,
-					NumOfBlocksForAverageBlockGas:        1000,
+					InitialGasPrice:                    big.NewInt(1500),
+					MaxGasPrice:                        big.NewInt(15000),
+					MaxDiscount:                        0.5,
+					EscalationStartBlockGas:            37500000, // 300 * BankSend message
+					MaxBlockGas:                        50000000, // 400 * BankSend message
+					EscalationInertia:                  2.5,
+					NumOfBlocksForShortAverageBlockGas: 10,
+					NumOfBlocksForLongAverageBlockGas:  1000,
 				},
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 125000,
@@ -152,14 +152,29 @@ var networks = map[ChainID]NetworkConfig{}
 
 // FeeModel stores parameters defining fee model of coreum blockchain
 type FeeModel struct {
-	InitialGasPrice                      *big.Int
-	MaxGasPrice                          *big.Int
-	MaxDiscount                          float64
-	EscalationStartBlockGas              int64
-	MaxBlockGas                          int64
-	EscalationInertia                    float64
-	NumOfBlocksForCurrentAverageBlockGas uint
-	NumOfBlocksForAverageBlockGas        uint
+	// InitialGasPrice is required if short average block gas is 0
+	InitialGasPrice *big.Int
+
+	//MaxGasPrice is required if short average block gas is greater than or equal to max block gas
+	MaxGasPrice *big.Int
+
+	// MaxDiscount is th maximum discount we offer on top of gas price if short average block gas is between long average block gas and escalation start block gas
+	MaxDiscount float64
+
+	// EscalationStartBlockGas defines block gas usage where gas price escalation starts if short average block gas is higher than this value
+	EscalationStartBlockGas int64
+
+	// MaxBlockGas sets the maximum capacity of block
+	MaxBlockGas int64
+
+	// EscalationInertia defines how slow gas price goes up after triggering escalation algorithm (the lower the inertia, the faster price goes up)
+	EscalationInertia float64
+
+	// NumOfBlocksForShortAverageBlockGas defines how many blocks are taken into account when short average block gas is calculated
+	NumOfBlocksForShortAverageBlockGas uint
+
+	// NumOfBlocksForLongAverageBlockGas defines how many blocks are taken into account when long average block gas is calculated
+	NumOfBlocksForLongAverageBlockGas uint
 }
 
 // Clone creates a copy of FeeModel

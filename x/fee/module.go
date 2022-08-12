@@ -135,7 +135,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 2 }
+func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock performs a no-op.
 func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
@@ -143,8 +143,8 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock returns the end blocker for the fee module. It returns no validator
 // updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	previousCurrentAverage := uint64(am.keeper.GetCurrentAverageGas(ctx))
-	previousAverage := uint64(am.keeper.GetAverageGas(ctx))
+	previousCurrentAverage := uint64(am.keeper.GetShortAverageGas(ctx))
+	previousAverage := uint64(am.keeper.GetLongAverageGas(ctx))
 	currentGasUsage := uint64(am.keeper.TrackedGas(ctx))
 
 	newCurrentAverage := int64((uint64(am.feeModel.NumOfBlocksForCurrentAverageBlockGas-1)*previousCurrentAverage + currentGasUsage) / uint64(am.feeModel.NumOfBlocksForCurrentAverageBlockGas))
@@ -152,8 +152,8 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 
 	minGasPrice := calculateNextGasPrice(am.feeModel, newCurrentAverage, newAverage)
 
-	am.keeper.SetCurrentAverageGas(ctx, newCurrentAverage)
-	am.keeper.SetAverageGas(ctx, newAverage)
+	am.keeper.SetShortAverageGas(ctx, newCurrentAverage)
+	am.keeper.SetLongAverageGas(ctx, newAverage)
 	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(am.feeModel.FeeDenom, sdk.NewIntFromBigInt(minGasPrice)))
 
 	return []abci.ValidatorUpdate{}

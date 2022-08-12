@@ -38,10 +38,11 @@ func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, nex
 
 	fees := feeTx.GetFee()
 	minGasPrice := fd.gasPriceKeeper.GetMinGasPrice(ctx)
-	for _, coin := range fees {
-		if coin.GetDenom() != minGasPrice.Denom {
-			return ctx, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "fee must be paid in '%s' coin, but '%s' was offered instead", minGasPrice.Denom, coin.Denom)
-		}
+	if len(fees) == 0 {
+		return ctx, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "no fee declared for transaction")
+	}
+	if fees[0].Denom != minGasPrice.Denom {
+		return ctx, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "fee must be paid in '%s' coin only", minGasPrice.Denom)
 	}
 
 	gasDeclared := sdk.NewInt(int64(feeTx.GetGas()))

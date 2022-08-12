@@ -95,12 +95,11 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
+	"github.com/CoreumFoundation/coreum/docs"
+	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	"github.com/CoreumFoundation/coreum/x/fee"
 	feekeeper "github.com/CoreumFoundation/coreum/x/fee/keeper"
 	feetypes "github.com/CoreumFoundation/coreum/x/fee/types"
-
-	"github.com/CoreumFoundation/coreum/docs"
-	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -424,8 +423,8 @@ func New(
 			EscalationStartBlockGas:              feeModel.EscalationStartBlockGas,
 			MaxBlockGas:                          feeModel.MaxBlockGas,
 			EscalationInertia:                    feeModel.EscalationInertia,
-			NumOfBlocksForCurrentAverageBlockGas: feeModel.NumOfBlocksForCurrentAverageBlockGas,
-			NumOfBlocksForAverageBlockGas:        feeModel.NumOfBlocksForAverageBlockGas,
+			NumOfBlocksForCurrentAverageBlockGas: feeModel.NumOfBlocksForShortAverageBlockGas,
+			NumOfBlocksForAverageBlockGas:        feeModel.NumOfBlocksForLongAverageBlockGas,
 		})
 
 	// NOTE: Any module instantiated in the module manager that is later modified
