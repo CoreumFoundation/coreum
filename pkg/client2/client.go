@@ -38,20 +38,44 @@ const (
 
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
+// Client is the client for cored blockchain
+type Client interface {
+	QueryClients
+
+	PrepareTx(ctx context.Context, input tx2.BaseInput, msgs ...sdk.Msg) ([]byte, error)
+	GetNumberSequence(ctx context.Context, address types.Address) (uint64, uint64, error)
+	EstimateGas(ctx context.Context, encodedTx []byte) (int64, error)
+	Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResult, error)
+	AwaitTx(ctx context.Context, encodedTx []byte) (BroadcastResult, error)
+}
+
+// QueryClients provides clientCtx-enabled query clients for chain modules
+type QueryClients interface {
+	AuthQueryClient() authtypes.QueryClient
+	BankQueryClient() banktypes.QueryClient
+}
+
+// TestingClient includes some high-level methods for simplifying testing transactions creation
+type TestingClient interface {
+	QueryBankBalances(ctx context.Context, address types.Address) (map[string]types.Coin, error)
+	PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error)
+	PrepareTxStakingCreateValidator(ctx context.Context, input TxStakingCreateValidatorInput) ([]byte, error)
+}
+
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) (Client, error) {
 	parsedURL, err := url.Parse(addr)
 	if err != nil {
-		return Client{}, errors.WithStack(err)
+		return coreClient{}, errors.WithStack(err)
 	}
 	switch parsedURL.Scheme {
 	case "tcp", "http", "https":
 	default:
-		return Client{}, errors.Errorf("unknown scheme '%s' in address", parsedURL.Scheme)
+		return coreClient{}, errors.Errorf("unknown scheme '%s' in address", parsedURL.Scheme)
 	}
 	rpcClient, err := client.NewClientFromNode(addr)
 	if err != nil {
-		return Client{}, errors.WithStack(err)
+		return coreClient{}, errors.WithStack(err)
 	}
 
 	clientCtx := app.
@@ -59,7 +83,7 @@ func New(chainID app.ChainID, addr string) (Client, error) {
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 
-	return Client{
+	return coreClient{
 		clientCtx:       clientCtx,
 		txServiceClient: txtypes.NewServiceClient(clientCtx),
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
@@ -67,8 +91,7 @@ func New(chainID app.ChainID, addr string) (Client, error) {
 	}, nil
 }
 
-// Client is the client for cored blockchain
-type Client struct {
+type coreClient struct {
 	clientCtx       client.Context
 	txServiceClient txtypes.ServiceClient
 	authQueryClient authtypes.QueryClient
@@ -76,7 +99,7 @@ type Client struct {
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
-func (c Client) GetNumberSequence(ctx context.Context, address types.Address) (uint64, uint64, error) {
+func (c coreClient) GetNumberSequence(ctx context.Context, address types.Address) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(string(address))
 	if err != nil {
 		return 0, 0, errors.WithStack(err)
@@ -100,7 +123,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address types.Address) (u
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, address types.Address) (map[string]types.Coin, error) {
+func (c coreClient) QueryBankBalances(ctx context.Context, address types.Address) (map[string]types.Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -129,7 +152,7 @@ type BroadcastResult struct {
 
 // EstimateGas runs the transaction cost estimation and returns new suggested gas limit,
 // in contrast with the default Cosmos SDK gas estimation logic, this method returns unadjusted gas used.
-func (c Client) EstimateGas(ctx context.Context, encodedTx []byte) (int64, error) {
+func (c coreClient) EstimateGas(ctx context.Context, encodedTx []byte) (int64, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -145,8 +168,8 @@ func (c Client) EstimateGas(ctx context.Context, encodedTx []byte) (int64, error
 	return int64(simRes.GasInfo.GasUsed), nil
 }
 
-// BroadcastSync broadcasts encoded transaction, waits until it is included in a block and returns tx hash
-func (c Client) BroadcastSync(ctx context.Context, encodedTx []byte) (BroadcastResult, error) {
+// Broadcast sends transaction to chain, ensuring it passeses CheckTx. Doesn't await until Tx is uncluded in block.
+func (c coreClient) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResult, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -166,33 +189,13 @@ func (c Client) BroadcastSync(ctx context.Context, encodedTx []byte) (BroadcastR
 			"transaction '%s' failed", txHash)
 	}
 
-	return c.AwaitTx(ctx, encodedTx)
-}
-
-// BroadcastAsync broadcasts encoded transaction and returns tx hash immediately,
-// it doesn't even wait for CheckTx being run for transaction for maximum throughput
-func (c Client) BroadcastAsync(ctx context.Context, encodedTx []byte) (BroadcastResult, error) {
-	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
-	defer cancel()
-
-	res, err := c.clientCtx.Client.BroadcastTxAsync(requestCtx, encodedTx)
-	if err != nil {
-		return BroadcastResult{}, errors.WithStack(err)
-	}
-
-	txHash := fmt.Sprintf("%X", tmtypes.Tx(encodedTx).Hash())
-	if res.Code != 0 {
-		return BroadcastResult{}, errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log),
-			"transaction '%s' failed", txHash)
-	}
-
 	return BroadcastResult{
-		TxHash: txHash,
+		TxHash: res.Hash.String(),
 	}, nil
 }
 
-// AwaitTx waits until transaction is included in a block
-func (c Client) AwaitTx(ctx context.Context, encodedTx []byte) (BroadcastResult, error) {
+// AwaitTx awaits until a signed transaction is included in a block
+func (c coreClient) AwaitTx(ctx context.Context, encodedTx []byte) (BroadcastResult, error) {
 	txHashBytes := tmtypes.Tx(encodedTx).Hash()
 	txHash := fmt.Sprintf("%X", txHashBytes)
 
@@ -246,7 +249,7 @@ type TxBankSendInput struct {
 }
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
+func (c coreClient) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(string(input.Sender))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -261,7 +264,7 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 		return nil, errors.Wrap(err, "amount to send is invalid")
 	}
 
-	encodedTx, err := c.prepareTx(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	encodedTx, err := c.PrepareTx(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
 			Denom:  input.Amount.Denom,
 			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
@@ -283,7 +286,7 @@ type TxStakingCreateValidatorInput struct {
 }
 
 // PrepareTxStakingCreateValidator creates a transaction adding validator
-func (c Client) PrepareTxStakingCreateValidator(ctx context.Context, input TxStakingCreateValidatorInput) ([]byte, error) {
+func (c coreClient) PrepareTxStakingCreateValidator(ctx context.Context, input TxStakingCreateValidatorInput) ([]byte, error) {
 	amount, err := sdk.ParseCoinNormalized(input.StakedBalance.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "not able to parse stake balances %s", input.StakedBalance)
@@ -304,7 +307,7 @@ func (c Client) PrepareTxStakingCreateValidator(ctx context.Context, input TxSta
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
 	}
 
-	encodedTx, err := c.prepareTx(ctx, input.Base, msg)
+	encodedTx, err := c.PrepareTx(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -312,8 +315,8 @@ func (c Client) PrepareTxStakingCreateValidator(ctx context.Context, input TxSta
 	return encodedTx, err
 }
 
-// prepareTx includes messages in a new transaction then signs and encodes it
-func (c Client) prepareTx(ctx context.Context, input tx2.BaseInput, msgs ...sdk.Msg) ([]byte, error) {
+// PrepareTx encodes messages in a new transaction then signs and encodes it
+func (c coreClient) PrepareTx(ctx context.Context, input tx2.BaseInput, msgs ...sdk.Msg) ([]byte, error) {
 	if input.Signer.Account == nil {
 		var err error
 		account := &tx2.AccountInfo{}
@@ -335,6 +338,16 @@ func (c Client) prepareTx(ctx context.Context, input tx2.BaseInput, msgs ...sdk.
 		return nil, errors.WithStack(err)
 	}
 	return signedBytes, err
+}
+
+// AuthQueryClient returns auth query client.
+func (c coreClient) AuthQueryClient() authtypes.QueryClient {
+	return c.authQueryClient
+}
+
+// BankQueryClient returns bank module query client.
+func (c coreClient) BankQueryClient() banktypes.QueryClient {
+	return c.bankQueryClient
 }
 
 func isTxInMempool(errRes *sdk.TxResponse) bool {

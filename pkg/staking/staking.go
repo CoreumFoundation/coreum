@@ -15,7 +15,6 @@ import (
 )
 
 // PrepareTxStakingCreateValidator generates transaction of type MsgCreateValidator
-// FIXME (milad): once types are removed from `app` package use `client.Client.PrepareTxStakingCreateValidator` instead of this function
 func PrepareTxStakingCreateValidator(
 	clientCtx client.Context,
 	validatorPublicKey ed25519.PublicKey,
