@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+
+	"github.com/CoreumFoundation/coreum/app"
 )
 
 func preProcessFlags() (app.Network, error) {
