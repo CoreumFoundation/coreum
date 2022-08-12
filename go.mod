@@ -15,8 +15,12 @@ require (
 	github.com/cosmos/ibc-go/v3 v3.0.0
 	github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7
 	github.com/ignite/cli v0.22.2
+	github.com/kr/pretty v0.3.0 // indirect
+	github.com/moby/sys/mountinfo v0.6.2 // indirect
+	github.com/opencontainers/runc v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.26.1
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
@@ -25,5 +29,8 @@ require (
 	github.com/tendermint/tendermint v0.34.19
 	github.com/tendermint/tm-db v0.6.7
 	go.uber.org/zap v1.21.0
+	golang.org/x/net v0.0.0-20220811182439-13a9a731de15 // indirect
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	google.golang.org/grpc v1.46.2
+	google.golang.org/protobuf v1.28.1 // indirect
 )
