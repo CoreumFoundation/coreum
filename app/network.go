@@ -11,8 +11,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/CoreumFoundation/coreum/pkg/types"
-
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -22,6 +20,8 @@ import (
 	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // ChainID represents predefined chain ID
