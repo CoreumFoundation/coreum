@@ -17,9 +17,11 @@ var NetworkConfig = app.NetworkConfig{
 	Fee: app.FeeConfig{
 		FeeModel: app.FeeModel{
 			InitialGasPrice:                      big.NewInt(1500),
-			MaxDiscount:                          0.15,
-			OptimalBlockGas:                      43750000, // 350 * BankSend transactions
-			MaxBlockGas:                          50000000, // 400 * BankSend transactions
+			MaxGasPrice:                          big.NewInt(15000),
+			MaxDiscount:                          0.5,
+			EscalationStartBlockGas:              37500000, // 300 * BankSend message
+			MaxBlockGas:                          50000000, // 400 * BankSend message
+			EscalationInertia:                    2.5,
 			NumOfBlocksForCurrentAverageBlockGas: 10,
 			NumOfBlocksForAverageBlockGas:        1000,
 		},

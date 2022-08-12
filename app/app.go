@@ -419,9 +419,11 @@ func New(
 		fee.Model{
 			FeeDenom:                             ChosenNetwork.TokenSymbol(),
 			InitialGasPrice:                      sdk.NewIntFromBigInt(feeModel.InitialGasPrice),
+			MaxGasPrice:                          sdk.NewIntFromBigInt(feeModel.MaxGasPrice),
 			MaxDiscount:                          feeModel.MaxDiscount,
-			OptimalBlockGas:                      feeModel.OptimalBlockGas,
+			EscalationStartBlockGas:              feeModel.EscalationStartBlockGas,
 			MaxBlockGas:                          feeModel.MaxBlockGas,
+			EscalationInertia:                    feeModel.EscalationInertia,
 			NumOfBlocksForCurrentAverageBlockGas: feeModel.NumOfBlocksForCurrentAverageBlockGas,
 			NumOfBlocksForAverageBlockGas:        feeModel.NumOfBlocksForAverageBlockGas,
 		})

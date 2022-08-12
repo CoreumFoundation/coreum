@@ -39,9 +39,11 @@ func testNetwork() Network {
 		Fee: FeeConfig{
 			FeeModel: FeeModel{
 				InitialGasPrice:                      big.NewInt(2),
+				MaxGasPrice:                          big.NewInt(4),
 				MaxDiscount:                          0.4,
-				OptimalBlockGas:                      10,
-				MaxBlockGas:                          15,
+				EscalationStartBlockGas:              10,
+				MaxBlockGas:                          20,
+				EscalationInertia:                    1.5,
 				NumOfBlocksForCurrentAverageBlockGas: 3,
 				NumOfBlocksForAverageBlockGas:        5,
 			},
@@ -248,9 +250,11 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		Fee: FeeConfig{
 			FeeModel: FeeModel{
 				InitialGasPrice:                      big.NewInt(2),
+				MaxGasPrice:                          big.NewInt(4),
 				MaxDiscount:                          0.4,
-				OptimalBlockGas:                      10,
-				MaxBlockGas:                          15,
+				EscalationStartBlockGas:              10,
+				MaxBlockGas:                          20,
+				EscalationInertia:                    1.5,
 				NumOfBlocksForCurrentAverageBlockGas: 3,
 				NumOfBlocksForAverageBlockGas:        5,
 			},
@@ -265,13 +269,16 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	n1 := NewNetwork(cfg)
 
 	cfg.Fee.FeeModel.InitialGasPrice.Set(big.NewInt(150))
+	cfg.Fee.FeeModel.MaxGasPrice.Set(big.NewInt(200))
 	cfg.FundedAccounts[0] = FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
 	cfg.GenTxs[0] = []byte("tx2")
 
 	assertT.True(n1.FeeModel().InitialGasPrice.Cmp(big.NewInt(2)) == 0)
-	assertT.Equal(float64(0.4), n1.FeeModel().MaxDiscount)
-	assertT.Equal(int64(10), n1.FeeModel().OptimalBlockGas)
-	assertT.Equal(int64(15), n1.FeeModel().MaxBlockGas)
+	assertT.True(n1.FeeModel().MaxGasPrice.Cmp(big.NewInt(4)) == 0)
+	assertT.Equal(0.4, n1.FeeModel().MaxDiscount)
+	assertT.Equal(int64(10), n1.FeeModel().EscalationStartBlockGas)
+	assertT.Equal(int64(20), n1.FeeModel().MaxBlockGas)
+	assertT.Equal(1.5, n1.FeeModel().EscalationInertia)
 	assertT.Equal(uint(3), n1.FeeModel().NumOfBlocksForCurrentAverageBlockGas)
 	assertT.Equal(uint(5), n1.FeeModel().NumOfBlocksForAverageBlockGas)
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
@@ -320,9 +327,11 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 		Fee: FeeConfig{
 			FeeModel: FeeModel{
 				InitialGasPrice:                      big.NewInt(2),
+				MaxGasPrice:                          big.NewInt(4),
 				MaxDiscount:                          0.4,
-				OptimalBlockGas:                      10,
-				MaxBlockGas:                          15,
+				EscalationStartBlockGas:              10,
+				MaxBlockGas:                          20,
+				EscalationInertia:                    1.5,
 				NumOfBlocksForCurrentAverageBlockGas: 3,
 				NumOfBlocksForAverageBlockGas:        5,
 			},
@@ -335,8 +344,10 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 	n1 := NewNetwork(cfg)
 
 	n1.FeeModel().InitialGasPrice.Set(big.NewInt(150))
+	n1.FeeModel().MaxGasPrice.Set(big.NewInt(200))
 
 	assertT.True(n1.FeeModel().InitialGasPrice.Cmp(big.NewInt(2)) == 0)
+	assertT.True(n1.FeeModel().MaxGasPrice.Cmp(big.NewInt(4)) == 0)
 }
 
 func TestNetworkConfigConditions(t *testing.T) {
@@ -345,11 +356,17 @@ func TestNetworkConfigConditions(t *testing.T) {
 	for _, cfg := range networks {
 		requireT.NotNil(cfg.Fee.FeeModel.InitialGasPrice)
 		assertT.True(cfg.Fee.FeeModel.InitialGasPrice.Sign() == 1)
-		assertT.Greater(cfg.Fee.FeeModel.MaxDiscount, float64(0))
-		assertT.Less(cfg.Fee.FeeModel.MaxDiscount, float64(1))
+		requireT.NotNil(cfg.Fee.FeeModel.MaxGasPrice)
+		assertT.True(cfg.Fee.FeeModel.MaxGasPrice.Sign() == 1)
+		assertT.True(cfg.Fee.FeeModel.MaxGasPrice.Cmp(cfg.Fee.FeeModel.InitialGasPrice) == 1)
 
-		assertT.Greater(cfg.Fee.FeeModel.OptimalBlockGas, int64(0))
-		assertT.Greater(cfg.Fee.FeeModel.MaxBlockGas, cfg.Fee.FeeModel.OptimalBlockGas)
+		assertT.Greater(cfg.Fee.FeeModel.MaxDiscount, 0.)
+		assertT.Less(cfg.Fee.FeeModel.MaxDiscount, 1.)
+
+		assertT.Greater(cfg.Fee.FeeModel.EscalationStartBlockGas, int64(0))
+		assertT.Greater(cfg.Fee.FeeModel.MaxBlockGas, cfg.Fee.FeeModel.EscalationStartBlockGas)
+
+		assertT.GreaterOrEqual(cfg.Fee.FeeModel.EscalationInertia, 0.)
 
 		assertT.Greater(cfg.Fee.FeeModel.NumOfBlocksForCurrentAverageBlockGas, uint(0))
 		assertT.Greater(cfg.Fee.FeeModel.NumOfBlocksForAverageBlockGas, cfg.Fee.FeeModel.NumOfBlocksForCurrentAverageBlockGas)

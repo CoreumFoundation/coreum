@@ -26,9 +26,11 @@ import (
 type Model struct {
 	FeeDenom                             string
 	InitialGasPrice                      sdk.Int
+	MaxGasPrice                          sdk.Int
 	MaxDiscount                          float64
-	OptimalBlockGas                      int64
+	EscalationStartBlockGas              int64
 	MaxBlockGas                          int64
+	EscalationInertia                    float64
 	NumOfBlocksForCurrentAverageBlockGas uint
 	NumOfBlocksForAverageBlockGas        uint
 }
@@ -181,22 +183,40 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 }
 
 func calculateNextGasPrice(feeModel Model, currentAverageGas int64, averageGas int64) *big.Int {
-	priceFactor := 1. - feeModel.MaxDiscount
 	switch {
 	case currentAverageGas >= feeModel.MaxBlockGas:
-		priceFactor *= float64(feeModel.MaxBlockGas - feeModel.OptimalBlockGas)
-	case currentAverageGas > feeModel.OptimalBlockGas:
-		priceFactor *= float64(feeModel.MaxBlockGas-feeModel.OptimalBlockGas) / float64(feeModel.MaxBlockGas-currentAverageGas)
+		return feeModel.MaxGasPrice.BigInt()
+	case currentAverageGas > feeModel.EscalationStartBlockGas:
+		maxDiscountedGasPrice := computeMaxDiscountedGasPrice(feeModel.InitialGasPrice.BigInt(), feeModel.MaxDiscount)
+
+		height := new(big.Int).Sub(feeModel.MaxGasPrice.BigInt(), maxDiscountedGasPrice)
+		width := float64(feeModel.MaxBlockGas - feeModel.EscalationStartBlockGas)
+		x := float64(currentAverageGas - feeModel.EscalationStartBlockGas)
+
+		escalationOffsetFloat := new(big.Float).SetInt(height)
+		escalationOffsetFloat.Mul(escalationOffsetFloat, new(big.Float).SetFloat64(math.Pow(x/width, feeModel.EscalationInertia)))
+		escalationOffset, _ := escalationOffsetFloat.Int(nil)
+
+		return maxDiscountedGasPrice.Add(maxDiscountedGasPrice, escalationOffset)
 	case currentAverageGas >= averageGas:
+		return computeMaxDiscountedGasPrice(feeModel.InitialGasPrice.BigInt(), feeModel.MaxDiscount)
 	case averageGas > 0:
-		priceFactor = math.Pow(priceFactor, float64(currentAverageGas)/float64(averageGas))
+		discountFactor := math.Pow(1.-feeModel.MaxDiscount, float64(currentAverageGas)/float64(averageGas))
+
+		gasPriceFloat := big.NewFloat(0).SetInt(feeModel.InitialGasPrice.BigInt())
+		gasPriceFloat.Mul(gasPriceFloat, big.NewFloat(discountFactor))
+		minGasPrice, _ := gasPriceFloat.Int(nil)
+
+		return minGasPrice
 	default:
-		priceFactor = 1.
+		return feeModel.InitialGasPrice.BigInt()
 	}
+}
 
-	minGasPriceFloat := big.NewFloat(0).SetInt(feeModel.InitialGasPrice.BigInt())
-	minGasPriceFloat.Mul(minGasPriceFloat, big.NewFloat(priceFactor))
+func computeMaxDiscountedGasPrice(initialGasPrice *big.Int, maxDiscount float64) *big.Int {
+	maxDiscountedGasPriceFloat := big.NewFloat(0).SetInt(initialGasPrice)
+	maxDiscountedGasPriceFloat.Mul(maxDiscountedGasPriceFloat, big.NewFloat(1.-maxDiscount))
+	maxDiscountedGasPrice, _ := maxDiscountedGasPriceFloat.Int(nil)
 
-	minGasPrice, _ := minGasPriceFloat.Int(nil)
-	return minGasPrice
+	return maxDiscountedGasPrice
 }

@@ -65,9 +65,11 @@ func init() {
 			Fee: FeeConfig{
 				FeeModel: FeeModel{
 					InitialGasPrice:                      big.NewInt(1500),
-					MaxDiscount:                          0.15,
-					OptimalBlockGas:                      43750000, // 350 * BankSend transactions
-					MaxBlockGas:                          50000000, // 400 * BankSend transactions
+					MaxGasPrice:                          big.NewInt(15000),
+					MaxDiscount:                          0.5,
+					EscalationStartBlockGas:              37500000, // 300 * BankSend message
+					MaxBlockGas:                          50000000, // 400 * BankSend message
+					EscalationInertia:                    2.5,
 					NumOfBlocksForCurrentAverageBlockGas: 10,
 					NumOfBlocksForAverageBlockGas:        1000,
 				},
@@ -85,9 +87,11 @@ func init() {
 			Fee: FeeConfig{
 				FeeModel: FeeModel{
 					InitialGasPrice:                      big.NewInt(1500),
-					MaxDiscount:                          0.15,
-					OptimalBlockGas:                      43750000, // 350 * BankSend transactions
-					MaxBlockGas:                          50000000, // 400 * BankSend transactions
+					MaxGasPrice:                          big.NewInt(15000),
+					MaxDiscount:                          0.5,
+					EscalationStartBlockGas:              37500000, // 300 * BankSend message
+					MaxBlockGas:                          50000000, // 400 * BankSend message
+					EscalationInertia:                    2.5,
 					NumOfBlocksForCurrentAverageBlockGas: 10,
 					NumOfBlocksForAverageBlockGas:        1000,
 				},
@@ -149,9 +153,11 @@ var networks = map[ChainID]NetworkConfig{}
 // FeeModel stores parameters defining fee model of coreum blockchain
 type FeeModel struct {
 	InitialGasPrice                      *big.Int
+	MaxGasPrice                          *big.Int
 	MaxDiscount                          float64
-	OptimalBlockGas                      int64
+	EscalationStartBlockGas              int64
 	MaxBlockGas                          int64
+	EscalationInertia                    float64
 	NumOfBlocksForCurrentAverageBlockGas uint
 	NumOfBlocksForAverageBlockGas        uint
 }
@@ -159,6 +165,7 @@ type FeeModel struct {
 // Clone creates a copy of FeeModel
 func (fm FeeModel) Clone() FeeModel {
 	fm.InitialGasPrice = new(big.Int).Set(fm.InitialGasPrice)
+	fm.MaxGasPrice = new(big.Int).Set(fm.MaxGasPrice)
 	return fm
 }
 
