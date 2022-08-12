@@ -14,12 +14,20 @@ import (
 
 func preProcessFlags() (app.Network, error) {
 	// define flags
+	const flagHelp = "help"
 	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)
 	flagSet.ParseErrorsWhitelist.UnknownFlags = true
 	flagSet.String(flags.FlagHome, app.DefaultNodeHome, "Directory for config and data")
+	// Dummy flag to turn off printing usage of this flag set
+	help := flagSet.BoolP(flagHelp, "h", false, "")
 	chainID := flagSet.String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here
 	flagSet.Parse(os.Args[1:])
+	// we consider the issued command to be a help command if no args are provided.
+	// in that case we will not check the chain-id and will return
+	if len(os.Args) == 1 || *help {
+		return app.Network{}, nil
+	}
 
 	// get chain config
 	network, err := app.NetworkByChainID(app.ChainID(*chainID))
