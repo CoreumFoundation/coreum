@@ -27,6 +27,7 @@ body:
         - Full OS version: [e.g. macOS 12.0.1]
         - Docker version: (you can get it by executing `docker version`)
         - Coreum & crust git commit sha: (you can get it by executing `git rev-parse --short HEAD` in an appropriate repo)
+        - Other (if applicable)
     validations:
       required: true
 
@@ -37,10 +38,10 @@ body:
       description: If applicable, copy and paste all necessary logs from your console.
       value: |
         <details>
-        
+
         ```console
         ```
-        
+
         </details>
 
   - type: textarea
@@ -50,6 +51,7 @@ body:
       description: If applicable, add screenshots to help explain your problem.
       value: |
         <details>
+
         </details>
 
   - type: textarea
@@ -59,4 +61,5 @@ body:
       description: Add any other context about the problem here.
       value: |
         <details>
+
         </details>
