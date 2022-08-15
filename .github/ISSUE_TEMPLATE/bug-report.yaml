@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report a bug encountered while using coreum ecosystem (cored, crust etc)
-labels: ""
+labels: []
 body:
   - type: textarea
     id: problem
