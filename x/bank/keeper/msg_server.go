@@ -39,8 +39,13 @@ func (k msgServer) Send(goCtx context.Context, msg *types.MsgSend) (*types.MsgSe
 	if err != nil {
 		return nil, err
 	}
+
 	to, err := sdk.AccAddressFromBech32(msg.ToAddress)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = k.isFrozenCoins(ctx, from, msg.Amount...); err != nil {
 		return nil, err
 	}
 
@@ -85,11 +90,23 @@ func (k msgServer) MultiSend(goCtx context.Context, msg *types.MsgMultiSend) (*t
 		}
 	}
 
+	for _, out := range msg.Inputs {
+		accAddr, err := sdk.AccAddressFromBech32(out.Address)
+		if err != nil {
+			panic(err)
+		}
+
+		if err = k.isFrozenCoins(ctx, accAddr, out.Coins...); err != nil {
+			return nil, err
+		}
+	}
+
 	for _, out := range msg.Outputs {
 		accAddr, err := sdk.AccAddressFromBech32(out.Address)
 		if err != nil {
 			panic(err)
 		}
+
 		if k.BlockedAddr(accAddr) {
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive transactions", out.Address)
 		}
@@ -108,4 +125,14 @@ func (k msgServer) MultiSend(goCtx context.Context, msg *types.MsgMultiSend) (*t
 	)
 
 	return &types.MsgMultiSendResponse{}, nil
+}
+
+// IsFrozenCoins checks if the given coins are frozen and returns error if they are
+func (k msgServer) isFrozenCoins(ctx sdk.Context, fromAddr sdk.AccAddress, coins ...sdk.Coin) error {
+	for _, coin := range coins {
+		if !k.freezeKeeper.IsFrozenCoin(ctx, fromAddr, coin.Denom) {
+			return sdkerrors.Wrapf(types.ErrSendDisabled, "%s transfers are currently frozen", coin.Denom)
+		}
+	}
+	return nil
 }
