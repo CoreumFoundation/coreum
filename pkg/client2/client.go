@@ -2,32 +2,26 @@ package client2
 
 import (
 	"context"
-	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/cosmos/cosmos-sdk/client"
-	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
+	"github.com/tendermint/tendermint/mempool"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/tx2"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 const (
@@ -40,26 +34,18 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // Client is the client for cored blockchain
 type Client interface {
-	QueryClients
-
-	PrepareTx(ctx context.Context, input tx2.BaseInput, msgs ...sdk.Msg) ([]byte, error)
-	GetNumberSequence(ctx context.Context, address types.Address) (uint64, uint64, error)
-	EstimateGas(ctx context.Context, encodedTx []byte) (int64, error)
-	Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResult, error)
-	AwaitTx(ctx context.Context, encodedTx []byte) (BroadcastResult, error)
+	ClientContext() client.Context
+	GetNumberSequence(ctx context.Context, address sdk.AccAddress) (uint64, uint64, error)
+	EstimateGas(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (int64, error)
+	BroadcastAsync(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (string, error)
+	BroadcastSync(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (*TxResult, error)
+	TxResult(ctx context.Context, txHash string) (*TxResult, error)
 }
 
-// QueryClients provides clientCtx-enabled query clients for chain modules
-type QueryClients interface {
-	AuthQueryClient() authtypes.QueryClient
-	BankQueryClient() banktypes.QueryClient
-}
-
-// TestingClient includes some high-level methods for simplifying testing transactions creation
-type TestingClient interface {
-	QueryBankBalances(ctx context.Context, address types.Address) (map[string]types.Coin, error)
-	PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error)
-	PrepareTxStakingCreateValidator(ctx context.Context, input TxStakingCreateValidatorInput) ([]byte, error)
+// TxResult contains results of transaction broadcast
+type TxResult struct {
+	TxHash  string
+	GasUsed int64
 }
 
 // New creates new client for cored
@@ -85,21 +71,26 @@ func New(chainID app.ChainID, addr string) (Client, error) {
 
 	return coreClient{
 		clientCtx:       clientCtx,
-		txServiceClient: txtypes.NewServiceClient(clientCtx),
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
-		bankQueryClient: banktypes.NewQueryClient(clientCtx),
+		txServiceClient: txtypes.NewServiceClient(clientCtx),
 	}, nil
 }
 
 type coreClient struct {
 	clientCtx       client.Context
-	txServiceClient txtypes.ServiceClient
 	authQueryClient authtypes.QueryClient
-	bankQueryClient banktypes.QueryClient
+	txServiceClient txtypes.ServiceClient
+}
+
+func (c coreClient) ClientContext() client.Context {
+	return c.clientCtx
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
-func (c coreClient) GetNumberSequence(ctx context.Context, address types.Address) (uint64, uint64, error) {
+func (c coreClient) GetNumberSequence(
+	ctx context.Context,
+	address sdk.AccAddress,
+) (num uint64, seq uint64, err error) {
 	addr, err := sdk.AccAddressFromBech32(string(address))
 	if err != nil {
 		return 0, 0, errors.WithStack(err)
@@ -108,8 +99,10 @@ func (c coreClient) GetNumberSequence(ctx context.Context, address types.Address
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	var header metadata.MD
-	res, err := c.authQueryClient.Account(requestCtx, &authtypes.QueryAccountRequest{Address: addr.String()}, grpc.Header(&header))
+	req := &authtypes.QueryAccountRequest{
+		Address: addr.String(),
+	}
+	res, err := c.authQueryClient.Account(requestCtx, req)
 	if err != nil {
 		return 0, 0, errors.WithStack(err)
 	}
@@ -122,39 +115,17 @@ func (c coreClient) GetNumberSequence(ctx context.Context, address types.Address
 	return acc.GetAccountNumber(), acc.GetSequence(), nil
 }
 
-// QueryBankBalances queries for bank balances owned by wallet
-func (c coreClient) QueryBankBalances(ctx context.Context, address types.Address) (map[string]types.Coin, error) {
-	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
-	defer cancel()
-
-	// FIXME (wojtek): support pagination
-	resp, err := c.bankQueryClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{Address: string(address)})
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	balances := map[string]types.Coin{}
-	for _, b := range resp.Balances {
-		coin, err := types.NewCoin(b.Amount.BigInt(), b.Denom)
-		if err != nil {
-			return nil, err
-		}
-		balances[b.Denom] = coin
-	}
-	return balances, nil
-}
-
-// BroadcastResult contains results of transaction broadcast
-type BroadcastResult struct {
-	TxHash  string
-	GasUsed int64
-}
-
 // EstimateGas runs the transaction cost estimation and returns new suggested gas limit,
 // in contrast with the default Cosmos SDK gas estimation logic, this method returns unadjusted gas used.
-func (c coreClient) EstimateGas(ctx context.Context, encodedTx []byte) (int64, error) {
+func (c coreClient) EstimateGas(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (int64, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
+
+	encodedTx, err := buildSimTx(c.clientCtx, config, msgs...)
+	if err != nil {
+		err = errors.Wrap(err, "failed to build Tx for simulation")
+		return 0, err
+	}
 
 	simRes, err := c.txServiceClient.Simulate(requestCtx, &txtypes.SimulateRequest{
 		TxBytes: encodedTx,
@@ -168,42 +139,51 @@ func (c coreClient) EstimateGas(ctx context.Context, encodedTx []byte) (int64, e
 	return int64(simRes.GasInfo.GasUsed), nil
 }
 
-// Broadcast sends transaction to chain, ensuring it passeses CheckTx. Doesn't await until Tx is uncluded in block.
-func (c coreClient) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResult, error) {
+// BroadcastAsync sends transaction to chain, ensuring it passeses CheckTx.
+// Doesn't await for Tx being included in a block.
+func (c coreClient) BroadcastAsync(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (txHash string, err error) {
+	encodedTx, err := c.prepareTx(ctx, config, msgs...)
+	if err != nil {
+		return "", err
+	}
+
+	txHash = fmt.Sprintf("%X", tmtypes.Tx(encodedTx).Hash())
+
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
 	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
-			return BroadcastResult{}, errors.WithStack(err)
+			return txHash, errors.WithStack(err)
 		}
 
-		errRes := client.CheckTendermintError(err, encodedTx)
+		errRes := checkTendermintError(err, txHash)
 		if !isTxInMempool(errRes) {
-			return BroadcastResult{}, errors.WithStack(err)
+			return txHash, errors.WithStack(err)
 		}
 	} else if res.Code != 0 {
-		txHash := fmt.Sprintf("%X", tmtypes.Tx(encodedTx).Hash())
-		return BroadcastResult{}, errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log),
+		err := errors.Wrapf(sdkerrors.New(res.Codespace, res.Code, res.Log),
 			"transaction '%s' failed", txHash)
+		return txHash, err
 	}
 
-	return BroadcastResult{
-		TxHash: res.Hash.String(),
-	}, nil
+	return res.Hash.String(), nil
 }
 
-// AwaitTx awaits until a signed transaction is included in a block
-func (c coreClient) AwaitTx(ctx context.Context, encodedTx []byte) (BroadcastResult, error) {
-	txHashBytes := tmtypes.Tx(encodedTx).Hash()
-	txHash := fmt.Sprintf("%X", txHashBytes)
+// TxResult awaits until a signed transaction is included in a block, returing the TxResult.
+func (c coreClient) TxResult(ctx context.Context, txHash string) (*TxResult, error) {
+	txHashBytes, err := hex.DecodeString(txHash)
+	if err != nil {
+		err = errors.Wrap(err, "tx hash is not a valid hex")
+		return nil, err
+	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
 	defer cancel()
 
 	var resultTx *coretypes.ResultTx
-	err := retry.Do(timeoutCtx, txStatusPollInterval, func() error {
+	if err = retry.Do(timeoutCtx, txStatusPollInterval, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 		defer cancel()
 
@@ -213,122 +193,71 @@ func (c coreClient) AwaitTx(ctx context.Context, encodedTx []byte) (BroadcastRes
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
 			}
-			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+
+			if errRes := checkTendermintError(err, txHash); errRes != nil {
 				if isTxInMempool(errRes) {
 					return retry.Retryable(errors.WithStack(err))
 				}
 				return errors.WithStack(err)
 			}
+
 			return retry.Retryable(errors.WithStack(err))
 		}
+
 		if resultTx.TxResult.Code != 0 {
 			res := resultTx.TxResult
-			return errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
+			return errors.Wrapf(sdkerrors.New(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
 		}
+
 		if resultTx.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
 		}
+
 		return nil
-	})
-	if err != nil {
-		return BroadcastResult{}, err
+	}); err != nil {
+		return nil, err
 	}
-	return BroadcastResult{
+
+	txResult := &TxResult{
 		TxHash:  txHash,
 		GasUsed: resultTx.TxResult.GasUsed,
-	}, nil
+	}
+
+	return txResult, nil
 }
 
-// TxBankSendInput holds input data for PrepareTxBankSend
-type TxBankSendInput struct {
-	Sender   types.Address
-	Receiver types.Address
-	Amount   types.Coin
-
-	Base tx2.BaseInput
-}
-
-// PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c coreClient) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(string(input.Sender))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	toAddress, err := sdk.AccAddressFromBech32(string(input.Receiver))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	if err := input.Amount.Validate(); err != nil {
-		return nil, errors.Wrap(err, "amount to send is invalid")
-	}
-
-	encodedTx, err := c.PrepareTx(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
-		{
-			Denom:  input.Amount.Denom,
-			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
-		},
-	}))
+// BroadcastSync is a shortcut for broadcasting the Tx and awaiting for inclusion in a block.
+func (c coreClient) BroadcastSync(
+	ctx context.Context,
+	config TxConfig,
+	msgs ...sdk.Msg,
+) (txResult *TxResult, err error) {
+	txHash, err := c.BroadcastAsync(ctx, config, msgs...)
 	if err != nil {
 		return nil, err
 	}
 
-	return encodedTx, err
+	return c.TxResult(ctx, txHash)
 }
 
-// TxStakingCreateValidatorInput holds input data for PrepareTxStakingCreateValidator
-type TxStakingCreateValidatorInput struct {
-	ValidatorPublicKey ed25519.PublicKey
-	StakedBalance      types.Coin
-
-	Base tx2.BaseInput
-}
-
-// PrepareTxStakingCreateValidator creates a transaction adding validator
-func (c coreClient) PrepareTxStakingCreateValidator(ctx context.Context, input TxStakingCreateValidatorInput) ([]byte, error) {
-	amount, err := sdk.ParseCoinNormalized(input.StakedBalance.String())
-	if err != nil {
-		return nil, errors.Wrapf(err, "not able to parse stake balances %s", input.StakedBalance)
-	}
-
-	commission := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
-	}
-
-	valPubKey := &cosmosed25519.PubKey{Key: input.ValidatorPublicKey}
-	stakerPubKey := &cosmossecp256k1.PubKey{Key: input.Base.Signer.PublicKey}
-	stakerAddress := sdk.AccAddress(stakerPubKey.Address())
-
-	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
-	}
-
-	encodedTx, err := c.PrepareTx(ctx, input.Base, msg)
-	if err != nil {
+// prepareTx encodes messages in a new transaction then signs and encodes it
+func (c coreClient) prepareTx(ctx context.Context, config TxConfig, msgs ...sdk.Msg) ([]byte, error) {
+	if config.Keyring == nil {
+		err := errors.New("prepareTx is required but no keyring provided")
 		return nil, err
 	}
 
-	return encodedTx, err
-}
-
-// PrepareTx encodes messages in a new transaction then signs and encodes it
-func (c coreClient) PrepareTx(ctx context.Context, input tx2.BaseInput, msgs ...sdk.Msg) ([]byte, error) {
-	if input.Signer.Account == nil {
-		var err error
-		account := &tx2.AccountInfo{}
-		account.Number, account.Sequence, err = c.GetNumberSequence(ctx, input.Signer.PublicKey.Address())
+	if config.FromAccount == nil {
+		num, seq, err := c.GetNumberSequence(ctx, config.From)
 		if err != nil {
 			return nil, err
 		}
 
-		input.Signer.Account = account
+		config.SetAccountNumber(num)
+		config.SetAccountSequence(seq)
 	}
 
-	signedTx, err := tx2.Sign(c.clientCtx, input, msgs...)
+	signedTx, err := signTx(c.clientCtx, config, msgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -337,33 +266,24 @@ func (c coreClient) PrepareTx(ctx context.Context, input tx2.BaseInput, msgs ...
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
 	return signedBytes, err
-}
-
-// AuthQueryClient returns auth query client.
-func (c coreClient) AuthQueryClient() authtypes.QueryClient {
-	return c.authQueryClient
-}
-
-// BankQueryClient returns bank module query client.
-func (c coreClient) BankQueryClient() banktypes.QueryClient {
-	return c.bankQueryClient
 }
 
 func isTxInMempool(errRes *sdk.TxResponse) bool {
 	if errRes == nil {
 		return false
 	}
-	return isSDKErrorResult(errRes.Codespace, errRes.Code, cosmoserrors.ErrTxInMempoolCache)
+	return isSDKErrorResult(errRes.Codespace, errRes.Code, sdkerrors.ErrTxInMempoolCache)
 }
 
-func isSDKErrorResult(codespace string, code uint32, expectedSDKError *cosmoserrors.Error) bool {
+func isSDKErrorResult(codespace string, code uint32, expectedSDKError *sdkerrors.Error) bool {
 	return codespace == expectedSDKError.Codespace() &&
 		code == expectedSDKError.ABCICode()
 }
 
-func asSDKError(err error, expectedSDKErr *cosmoserrors.Error) *cosmoserrors.Error {
-	var sdkErr *cosmoserrors.Error
+func asSDKError(err error, expectedSDKErr *sdkerrors.Error) *sdkerrors.Error {
+	var sdkErr *sdkerrors.Error
 	if !errors.As(err, &sdkErr) || !isSDKErrorResult(sdkErr.Codespace(), sdkErr.ABCICode(), expectedSDKErr) {
 		return nil
 	}
@@ -372,7 +292,7 @@ func asSDKError(err error, expectedSDKErr *cosmoserrors.Error) *cosmoserrors.Err
 
 // ExpectedSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
 func ExpectedSequenceFromError(err error) (uint64, bool, error) {
-	sdkErr := asSDKError(err, cosmoserrors.ErrWrongSequence)
+	sdkErr := asSDKError(err, sdkerrors.ErrWrongSequence)
 	if sdkErr == nil {
 		return 0, false, nil
 	}
@@ -391,5 +311,45 @@ func ExpectedSequenceFromError(err error) (uint64, bool, error) {
 
 // IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction
 func IsInsufficientFeeError(err error) bool {
-	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
+	return asSDKError(err, sdkerrors.ErrInsufficientFee) != nil
+}
+
+// checkTendermintError checks if the error returned from BroadcastTx is a
+// Tendermint error that is returned before the tx is submitted due to
+// precondition checks that failed. If an Tendermint error is detected, this
+// function returns the correct code back in TxResponse.
+//
+// NOTE: Copypasta from Cosmos SDK! To avoid hassle getting the tx hash.
+func checkTendermintError(err error, txHash string) *sdk.TxResponse {
+	if err == nil {
+		return nil
+	}
+
+	errStr := strings.ToLower(err.Error())
+
+	switch {
+	case strings.Contains(errStr, strings.ToLower(mempool.ErrTxInCache.Error())):
+		return &sdk.TxResponse{
+			Code:      sdkerrors.ErrTxInMempoolCache.ABCICode(),
+			Codespace: sdkerrors.ErrTxInMempoolCache.Codespace(),
+			TxHash:    txHash,
+		}
+
+	case strings.Contains(errStr, "mempool is full"):
+		return &sdk.TxResponse{
+			Code:      sdkerrors.ErrMempoolIsFull.ABCICode(),
+			Codespace: sdkerrors.ErrMempoolIsFull.Codespace(),
+			TxHash:    txHash,
+		}
+
+	case strings.Contains(errStr, "tx too large"):
+		return &sdk.TxResponse{
+			Code:      sdkerrors.ErrTxTooLarge.ABCICode(),
+			Codespace: sdkerrors.ErrTxTooLarge.Codespace(),
+			TxHash:    txHash,
+		}
+
+	default:
+		return nil
+	}
 }
