@@ -12,6 +12,8 @@ func Tests() testing.TestSet {
 		SingleChain: []testing.SingleChainSignature{
 			auth.TestUnexpectedSequenceNumber,
 			auth.TestTooLowGasPrice,
+			auth.TestGasLimitHigherThanMaxBlockGas,
+			auth.TestGasLimitEqualToMaxBlockGas,
 			bank.TestInitialBalance,
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
