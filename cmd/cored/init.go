@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -15,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 	tmos "github.com/tendermint/tendermint/libs/os"
+
+	"github.com/CoreumFoundation/coreum/app"
 )
 
 // used flags
