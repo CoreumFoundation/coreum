@@ -153,7 +153,7 @@ type FeeModel struct {
 	// InitialGasPrice is required if short average block gas is 0
 	InitialGasPrice *big.Int
 
-	//MaxGasPrice is required if short average block gas is greater than or equal to max block gas
+	// MaxGasPrice is required if short average block gas is greater than or equal to max block gas
 	MaxGasPrice *big.Int
 
 	// MaxDiscount is th maximum discount we offer on top of gas price if short average block gas is between long average block gas and escalation start block gas
@@ -443,10 +443,12 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC string
 		ChainID        ChainID
 		TokenSymbol    string
+		MaxBlockGas    int64
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
+		MaxBlockGas:    n.fee.FeeModel.MaxBlockGas,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
