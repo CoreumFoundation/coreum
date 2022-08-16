@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"sync"
@@ -344,7 +343,7 @@ func (n Network) SaveGenesis(homeDir string) error {
 		return errors.Wrap(err, "unable to make config directory")
 	}
 
-	err = ioutil.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
+	err = os.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
 	return errors.Wrap(err, "unable to write genesis bytes to file")
 }
 
