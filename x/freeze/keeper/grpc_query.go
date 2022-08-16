@@ -4,4 +4,4 @@ import (
 	"github.com/CoreumFoundation/coreum/x/freeze/types"
 )
 
-var _ types.QueryServer = Keeper{}
+var _ types.QueryServer = BaseKeeper{}

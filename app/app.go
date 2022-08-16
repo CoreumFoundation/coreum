@@ -30,9 +30,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -97,10 +94,13 @@ import (
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
+	"github.com/CoreumFoundation/coreum/x/bank"
+	bankkeeper "github.com/CoreumFoundation/coreum/x/bank/keeper"
 	freezemodule "github.com/CoreumFoundation/coreum/x/freeze"
-		freezemodulekeeper "github.com/CoreumFoundation/coreum/x/freeze/keeper"
-		freezemoduletypes "github.com/CoreumFoundation/coreum/x/freeze/types"
-// this line is used by starport scaffolding # stargate/app/moduleImport
+	freezemodulekeeper "github.com/CoreumFoundation/coreum/x/freeze/keeper"
+	freezemoduletypes "github.com/CoreumFoundation/coreum/x/freeze/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
 const (
@@ -164,7 +164,7 @@ var (
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
 		freezemodule.AppModuleBasic{},
-// this line is used by starport scaffolding # stargate/app/moduleBasic
+		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
@@ -236,9 +236,8 @@ type App struct {
 	ScopedTransferKeeper   capabilitykeeper.ScopedKeeper
 	ScopedMonitoringKeeper capabilitykeeper.ScopedKeeper
 
-	
-		FreezeKeeper freezemodulekeeper.Keeper
-// this line is used by starport scaffolding # stargate/app/keeperDeclaration
+	FreezeKeeper freezemodulekeeper.Keeper
+	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
 	mm *module.Manager
@@ -276,7 +275,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
 		freezemoduletypes.StoreKey,
-// this line is used by starport scaffolding # stargate/app/storeKey
+		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -397,17 +396,15 @@ func New(
 	)
 	monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
-	
-		app.FreezeKeeper = *freezemodulekeeper.NewKeeper(
-			appCodec,
-			keys[freezemoduletypes.StoreKey],
-			keys[freezemoduletypes.MemStoreKey],
-			app.GetSubspace(freezemoduletypes.ModuleName),
-			
-			)
-		freezeModule := freezemodule.NewAppModule(appCodec, app.FreezeKeeper, app.AccountKeeper, app.BankKeeper)
+	app.FreezeKeeper = freezemodulekeeper.NewKeeper(
+		appCodec,
+		keys[freezemoduletypes.StoreKey],
+		keys[freezemoduletypes.MemStoreKey],
+		app.GetSubspace(freezemoduletypes.ModuleName),
+	)
+	freezeModule := freezemodule.NewAppModule(appCodec, app.FreezeKeeper, app.AccountKeeper, app.BankKeeper)
 
-		// this line is used by starport scaffolding # stargate/app/keeperDefinition
+	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
@@ -433,7 +430,7 @@ func New(
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.FreezeKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants),
@@ -449,7 +446,7 @@ func New(
 		transferModule,
 		monitoringModule,
 		freezeModule,
-// this line is used by starport scaffolding # stargate/app/appModule
+		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -477,7 +474,7 @@ func New(
 		paramstypes.ModuleName,
 		monitoringptypes.ModuleName,
 		freezemoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/beginBlockers
+		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -501,7 +498,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		monitoringptypes.ModuleName,
 		freezemoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/endBlockers
+		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -530,7 +527,7 @@ func New(
 		feegrant.ModuleName,
 		monitoringptypes.ModuleName,
 		freezemoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/initGenesis
+		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -541,7 +538,7 @@ func New(
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.FreezeKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
@@ -555,7 +552,7 @@ func New(
 		transferModule,
 		monitoringModule,
 		freezeModule,
-// this line is used by starport scaffolding # stargate/app/appModule
+		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -748,7 +745,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(freezemoduletypes.ModuleName)
-// this line is used by starport scaffolding # stargate/app/paramSubspace
+	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
 }
