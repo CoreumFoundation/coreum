@@ -422,7 +422,6 @@ func New(
 			MaxDiscount:                          feeModel.MaxDiscount,
 			EscalationStartBlockGas:              feeModel.EscalationStartBlockGas,
 			MaxBlockGas:                          feeModel.MaxBlockGas,
-			EscalationInertia:                    feeModel.EscalationInertia,
 			NumOfBlocksForCurrentAverageBlockGas: feeModel.NumOfBlocksForShortAverageBlockGas,
 			NumOfBlocksForAverageBlockGas:        feeModel.NumOfBlocksForLongAverageBlockGas,
 		})

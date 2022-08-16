@@ -15,7 +15,6 @@ type Model struct {
 	MaxDiscount                          float64
 	EscalationStartBlockGas              int64
 	MaxBlockGas                          int64
-	EscalationInertia                    float64
 	NumOfBlocksForCurrentAverageBlockGas uint
 	NumOfBlocksForAverageBlockGas        uint
 }
@@ -27,12 +26,15 @@ func calculateNextGasPrice(feeModel Model, currentAverageGas int64, averageGas i
 	case currentAverageGas > feeModel.EscalationStartBlockGas:
 		maxDiscountedGasPrice := computeMaxDiscountedGasPrice(feeModel.InitialGasPrice.BigInt(), feeModel.MaxDiscount)
 
+		// inertia defines how slow gas price goes up after triggering escalation algorithm (the lower the inertia,
+		// the faster price goes up)
+		const inertia = 2.
 		height := new(big.Int).Sub(feeModel.MaxGasPrice.BigInt(), maxDiscountedGasPrice)
 		width := float64(feeModel.MaxBlockGas - feeModel.EscalationStartBlockGas)
 		x := float64(currentAverageGas - feeModel.EscalationStartBlockGas)
 
 		escalationOffsetFloat := new(big.Float).SetInt(height)
-		escalationOffsetFloat.Mul(escalationOffsetFloat, new(big.Float).SetFloat64(math.Pow(x/width, feeModel.EscalationInertia)))
+		escalationOffsetFloat.Mul(escalationOffsetFloat, new(big.Float).SetFloat64(math.Pow(x/width, inertia)))
 		escalationOffset, _ := escalationOffsetFloat.Int(nil)
 
 		return maxDiscountedGasPrice.Add(maxDiscountedGasPrice, escalationOffset)

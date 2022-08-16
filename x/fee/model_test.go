@@ -19,7 +19,6 @@ var (
 		MaxDiscount:             maxDiscount,
 		EscalationStartBlockGas: 700,
 		MaxBlockGas:             1000,
-		EscalationInertia:       3,
 	}
 )
 
@@ -103,20 +102,5 @@ func TestShapeInEscalationRegion(t *testing.T) {
 		assert.Greater(t, nextPrice, lastPrice)
 
 		lastPrice = nextPrice
-	}
-}
-
-func TestEscalationInertia(t *testing.T) {
-	const averageBlockGas = 100
-
-	feeModel1 := feeModel
-	feeModel2 := feeModel
-	feeModel2.EscalationInertia++
-
-	for i := feeModel.EscalationStartBlockGas + 1; i < feeModel.MaxBlockGas; i++ {
-		nextPrice1 := calculateNextGasPrice(feeModel1, i, averageBlockGas).Int64()
-		nextPrice2 := calculateNextGasPrice(feeModel2, i, averageBlockGas).Int64()
-
-		assert.Greater(t, nextPrice1, nextPrice2)
 	}
 }

@@ -43,7 +43,6 @@ func testNetwork() Network {
 				MaxDiscount:                        0.4,
 				EscalationStartBlockGas:            10,
 				MaxBlockGas:                        20,
-				EscalationInertia:                  1.5,
 				NumOfBlocksForShortAverageBlockGas: 3,
 				NumOfBlocksForLongAverageBlockGas:  5,
 			},
@@ -254,7 +253,6 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 				MaxDiscount:                        0.4,
 				EscalationStartBlockGas:            10,
 				MaxBlockGas:                        20,
-				EscalationInertia:                  1.5,
 				NumOfBlocksForShortAverageBlockGas: 3,
 				NumOfBlocksForLongAverageBlockGas:  5,
 			},
@@ -278,7 +276,6 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT.Equal(0.4, n1.FeeModel().MaxDiscount)
 	assertT.Equal(int64(10), n1.FeeModel().EscalationStartBlockGas)
 	assertT.Equal(int64(20), n1.FeeModel().MaxBlockGas)
-	assertT.Equal(1.5, n1.FeeModel().EscalationInertia)
 	assertT.Equal(uint(3), n1.FeeModel().NumOfBlocksForShortAverageBlockGas)
 	assertT.Equal(uint(5), n1.FeeModel().NumOfBlocksForLongAverageBlockGas)
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
@@ -331,7 +328,6 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 				MaxDiscount:                        0.4,
 				EscalationStartBlockGas:            10,
 				MaxBlockGas:                        20,
-				EscalationInertia:                  1.5,
 				NumOfBlocksForShortAverageBlockGas: 3,
 				NumOfBlocksForLongAverageBlockGas:  5,
 			},
@@ -365,8 +361,6 @@ func TestNetworkConfigConditions(t *testing.T) {
 
 		assertT.Greater(cfg.Fee.FeeModel.EscalationStartBlockGas, int64(0))
 		assertT.Greater(cfg.Fee.FeeModel.MaxBlockGas, cfg.Fee.FeeModel.EscalationStartBlockGas)
-
-		assertT.GreaterOrEqual(cfg.Fee.FeeModel.EscalationInertia, 0.)
 
 		assertT.Greater(cfg.Fee.FeeModel.NumOfBlocksForShortAverageBlockGas, uint(0))
 		assertT.Greater(cfg.Fee.FeeModel.NumOfBlocksForLongAverageBlockGas, cfg.Fee.FeeModel.NumOfBlocksForShortAverageBlockGas)

@@ -69,7 +69,6 @@ func init() {
 					MaxDiscount:                        0.5,
 					EscalationStartBlockGas:            37500000, // 300 * BankSend message
 					MaxBlockGas:                        50000000, // 400 * BankSend message
-					EscalationInertia:                  2.5,
 					NumOfBlocksForShortAverageBlockGas: 10,
 					NumOfBlocksForLongAverageBlockGas:  1000,
 				},
@@ -91,7 +90,6 @@ func init() {
 					MaxDiscount:                        0.5,
 					EscalationStartBlockGas:            37500000, // 300 * BankSend message
 					MaxBlockGas:                        50000000, // 400 * BankSend message
-					EscalationInertia:                  2.5,
 					NumOfBlocksForShortAverageBlockGas: 10,
 					NumOfBlocksForLongAverageBlockGas:  1000,
 				},
@@ -166,9 +164,6 @@ type FeeModel struct {
 
 	// MaxBlockGas sets the maximum capacity of block
 	MaxBlockGas int64
-
-	// EscalationInertia defines how slow gas price goes up after triggering escalation algorithm (the lower the inertia, the faster price goes up)
-	EscalationInertia float64
 
 	// NumOfBlocksForShortAverageBlockGas defines how many blocks are taken into account when short average block gas is calculated
 	NumOfBlocksForShortAverageBlockGas uint

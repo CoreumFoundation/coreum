@@ -21,7 +21,6 @@ var NetworkConfig = app.NetworkConfig{
 			MaxDiscount:                        0.5,
 			EscalationStartBlockGas:            37500000, // 300 * BankSend message
 			MaxBlockGas:                        50000000, // 400 * BankSend message
-			EscalationInertia:                  2.5,
 			NumOfBlocksForShortAverageBlockGas: 10,
 			NumOfBlocksForLongAverageBlockGas:  1000,
 		},
