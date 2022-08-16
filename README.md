@@ -73,13 +73,13 @@ You may use those wallets to issue transactions and queries
 
 2. Query balances:
 ```
-(znet) [znet] $ coredev-00 q bank balances core1x645ym2yz4gckqjtpwr8yddqzkkzdpkt4dfrcc
+(znet) [znet] $ coredev-00 q bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
 ```
 Remember to replace address with the one existing in your keystore.
 
 3. Send tokens from one account to another:
 ```
-(znet) [znet] $ coredev-00 tx bank send alice core1cjs7qela0trw2qyyfxw5e5e7cvwzprkj0643h8 10core
+(znet) [znet] $ coredev-00 tx bank send alice devcore1cjs7qela0trw2qyyfxw5e5e7cvwzprkjaycnem 10core
 ```
 
 ## Devnet
@@ -87,7 +87,7 @@ Remember to replace address with the one existing in your keystore.
 You may connect to Coreum devnet network by connecting to host `35.223.81.227` on port `26657`:
 
 ```
-$ cored status --node=tcp://35.223.81.227:26657
+$ cored status --chain-id=coreum-devnet-1 --node=tcp://35.223.81.227:26657
 ```
 
 Block explorer for devnet is available at [https://explorer.coreum.com](https://explorer.coreum.com)
