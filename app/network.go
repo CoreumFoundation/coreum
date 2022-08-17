@@ -4,14 +4,11 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"sync"
 	"text/template"
 	"time"
-
-	"github.com/CoreumFoundation/coreum/pkg/types"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,6 +19,8 @@ import (
 	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // ChainID represents predefined chain ID
@@ -344,7 +343,7 @@ func (n Network) SaveGenesis(homeDir string) error {
 		return errors.Wrap(err, "unable to make config directory")
 	}
 
-	err = ioutil.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
+	err = os.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
 	return errors.Wrap(err, "unable to write genesis bytes to file")
 }
 

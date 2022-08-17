@@ -4,11 +4,11 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -49,7 +49,12 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Fund wallets
-			senderInitialBalance, err := types.NewCoin(big.NewInt(180000100), chain.Network.TokenSymbol())
+			senderInitialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+				chain.Network.InitialGasPrice(),
+				chain.Network.DeterministicGas().BankSend,
+				1,
+				big.NewInt(100),
+			), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
