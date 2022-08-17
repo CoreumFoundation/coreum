@@ -26,6 +26,12 @@ func TestInitialBalance(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 			if err != nil {
 				return err
 			}
+
+			// FIXME (wojtek): Temporary code for transition
+			if chain.Fund != nil {
+				chain.Fund(wallet, initialBalance)
+			}
+
 			return chain.Network.FundAccount(wallet.Key.PubKey(), initialBalance.String())
 		},
 
@@ -62,6 +68,12 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 			receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
+			}
+
+			// FIXME (wojtek): Temporary code for transition
+			if chain.Fund != nil {
+				chain.Fund(sender, senderInitialBalance)
+				chain.Fund(receiver, receiverInitialBalance)
 			}
 
 			if err := chain.Network.FundAccount(sender.Key.PubKey(), senderInitialBalance.String()); err != nil {

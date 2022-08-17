@@ -7,6 +7,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // T is an interface representing test, accepted by `assert.*` and `require.*` packages
@@ -24,6 +25,8 @@ type RunFunc = func(ctx context.Context, t T)
 type Chain struct {
 	Network *app.Network
 	Client  client.Client
+	// FIXME (wojtek): Temporary solution to be removed after transition period
+	Fund func(wallet types.Wallet, amount types.Coin)
 }
 
 // SingleChainSignature is the signature of test function accepting a chain

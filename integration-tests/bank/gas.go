@@ -50,6 +50,12 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 					return err
 				}
 
+				// FIXME (wojtek): Temporary code for transition
+				if chain.Fund != nil {
+					chain.Fund(wallet1, wallet1InitialBalance)
+					chain.Fund(wallet2, wallet2InitialBalance)
+				}
+
 				if err := chain.Network.FundAccount(wallet1.Key.PubKey(), wallet1InitialBalance.String()); err != nil {
 					return err
 				}
@@ -98,6 +104,12 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 			if err != nil {
 				return err
 			}
+
+			// FIXME (wojtek): Temporary code for transition
+			if chain.Fund != nil {
+				chain.Fund(sender, initialBalance)
+			}
+
 			return chain.Network.FundAccount(sender.Key.PubKey(), initialBalance.String())
 		},
 		func(ctx context.Context, t testing.T) {
