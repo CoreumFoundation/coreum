@@ -10,7 +10,7 @@ import (
 var (
 	initialGasPrice       int64 = 100000000
 	maxGasPrice           int64 = 200000000
-	maxDiscount                 = 0.2
+	maxDiscount                 = 0.5
 	minDiscountedGasPrice       = int64((1. - maxDiscount) * float64(initialGasPrice))
 
 	feeModel = Model{
@@ -73,11 +73,11 @@ func TestZeroAverageGas(t *testing.T) {
 }
 
 func TestShapeInDecreasingRegion(t *testing.T) {
-	const averageBlockGas = 100
+	const longAverageBlockGas = 100
 
 	lastPrice := initialGasPrice
-	for i := int64(1); i <= averageBlockGas; i++ {
-		nextPrice := calculateNextGasPrice(feeModel, i, averageBlockGas).Int64()
+	for i := int64(1); i <= longAverageBlockGas; i++ {
+		nextPrice := calculateNextGasPrice(feeModel, i, longAverageBlockGas).Int64()
 		assert.Less(t, nextPrice, lastPrice)
 
 		lastPrice = nextPrice
@@ -85,20 +85,20 @@ func TestShapeInDecreasingRegion(t *testing.T) {
 }
 
 func TestShapeInFlatRegion(t *testing.T) {
-	const averageBlockGas = 100
+	const longAverageBlockGas = 100
 
-	for i := int64(averageBlockGas); i <= feeModel.EscalationStartBlockGas; i++ {
-		nextPrice := calculateNextGasPrice(feeModel, i, averageBlockGas).Int64()
+	for i := int64(longAverageBlockGas); i <= feeModel.EscalationStartBlockGas; i++ {
+		nextPrice := calculateNextGasPrice(feeModel, i, longAverageBlockGas).Int64()
 		assert.Equal(t, minDiscountedGasPrice, nextPrice)
 	}
 }
 
 func TestShapeInEscalationRegion(t *testing.T) {
-	const averageBlockGas = 100
+	const longAverageBlockGas = 100
 
 	lastPrice := minDiscountedGasPrice
 	for i := feeModel.EscalationStartBlockGas + 1; i <= feeModel.MaxBlockGas; i++ {
-		nextPrice := calculateNextGasPrice(feeModel, i, averageBlockGas).Int64()
+		nextPrice := calculateNextGasPrice(feeModel, i, longAverageBlockGas).Int64()
 		assert.Greater(t, nextPrice, lastPrice)
 
 		lastPrice = nextPrice

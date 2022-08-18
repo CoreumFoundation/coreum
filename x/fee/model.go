@@ -23,11 +23,11 @@ func calculateMovingAverage(previousAverage, newValue int64, numOfBlocks uint) i
 	return int64((uint64(numOfBlocks-1)*uint64(previousAverage) + uint64(newValue)) / uint64(numOfBlocks))
 }
 
-func calculateNextGasPrice(feeModel Model, currentAverageGas int64, averageGas int64) *big.Int {
+func calculateNextGasPrice(feeModel Model, shortAverageGas int64, longAverageGas int64) *big.Int {
 	switch {
-	case currentAverageGas >= feeModel.MaxBlockGas:
+	case shortAverageGas >= feeModel.MaxBlockGas:
 		return feeModel.MaxGasPrice.BigInt()
-	case currentAverageGas > feeModel.EscalationStartBlockGas:
+	case shortAverageGas > feeModel.EscalationStartBlockGas:
 		maxDiscountedGasPrice := computeMaxDiscountedGasPrice(feeModel.InitialGasPrice.BigInt(), feeModel.MaxDiscount)
 
 		// inertia defines how slow gas price goes up after triggering escalation algorithm (the lower the inertia,
@@ -35,17 +35,17 @@ func calculateNextGasPrice(feeModel Model, currentAverageGas int64, averageGas i
 		const inertia = 2.
 		height := new(big.Int).Sub(feeModel.MaxGasPrice.BigInt(), maxDiscountedGasPrice)
 		width := float64(feeModel.MaxBlockGas - feeModel.EscalationStartBlockGas)
-		x := float64(currentAverageGas - feeModel.EscalationStartBlockGas)
+		x := float64(shortAverageGas - feeModel.EscalationStartBlockGas)
 
 		escalationOffsetFloat := new(big.Float).SetInt(height)
 		escalationOffsetFloat.Mul(escalationOffsetFloat, new(big.Float).SetFloat64(math.Pow(x/width, inertia)))
 		escalationOffset, _ := escalationOffsetFloat.Int(nil)
 
 		return maxDiscountedGasPrice.Add(maxDiscountedGasPrice, escalationOffset)
-	case currentAverageGas >= averageGas:
+	case shortAverageGas >= longAverageGas:
 		return computeMaxDiscountedGasPrice(feeModel.InitialGasPrice.BigInt(), feeModel.MaxDiscount)
-	case averageGas > 0:
-		discountFactor := math.Pow(1.-feeModel.MaxDiscount, float64(currentAverageGas)/float64(averageGas))
+	case longAverageGas > 0:
+		discountFactor := math.Pow(1.-feeModel.MaxDiscount, float64(shortAverageGas)/float64(longAverageGas))
 
 		gasPriceFloat := big.NewFloat(0).SetInt(feeModel.InitialGasPrice.BigInt())
 		gasPriceFloat.Mul(gasPriceFloat, big.NewFloat(discountFactor))
