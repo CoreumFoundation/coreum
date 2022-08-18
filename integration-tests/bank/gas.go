@@ -25,7 +25,7 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		const margin = 1.5
 		maxGasAssumed := chain.Network.DeterministicGas().BankSend // set it to 50%+ higher than maximum observed value
 
-		amount, ok := big.NewInt(0).SetString("100000000000000000000000000000000000", 10)
+		amount, ok := big.NewInt(0).SetString("1000000000000", 10)
 		if !ok {
 			panic("invalid amount")
 		}

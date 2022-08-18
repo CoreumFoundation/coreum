@@ -23,18 +23,68 @@ import (
 )
 
 func Test(t *testing.T) {
-	var (
-		coredAddress        = "localhost:26657"
-		hornOfPlentyPrivKey = types.Secp256k1PrivateKey{0x86, 0x2f, 0x17, 0xc3, 0x51, 0x83, 0xbe, 0x2a, 0x2b, 0x5d, 0x5b, 0x5b, 0xb5, 0x53, 0x86, 0xd8, 0xad, 0xc8, 0xde, 0x51, 0xa9, 0x73, 0x3f, 0xb7, 0x7d, 0x72, 0xb9, 0x29, 0x91, 0xb7, 0x2c, 0x60}
-	)
+	cfg := configFromCLI()
 
-	loggerConfig := logger.ToolDefaultConfig
-	loggerConfig.Format = logger.FormatYAML
-	integrationTests := tests.Tests()
+	testSet := tests.Tests()
 
 	network := app.NewNetwork(coreumtesting.NetworkConfig)
 	network.SetupPrefixes()
-	coredClient := client.New(network.ChainID(), coredAddress)
+	coredClient := client.New(network.ChainID(), cfg.CoredAddress)
+
+	ctx := newContext(t, cfg)
+	testCases, err := prepareTestCases(ctx, cfg.FundingPrivKey, coredClient, network, testSet)
+	require.NoError(t, err)
+
+	runTests(t, ctx, testCases)
+}
+
+type config struct {
+	CoredAddress   string
+	FundingPrivKey types.Secp256k1PrivateKey
+	LogFormat      logger.Format
+	LogVerbose     bool
+}
+
+func configFromCLI() config {
+	// TODO: really read this from CLI
+	return config{
+		CoredAddress:   "localhost:26657",
+		FundingPrivKey: types.Secp256k1PrivateKey{0x2c, 0xf2, 0xf, 0x71, 0x40, 0xd5, 0xa6, 0x9f, 0x2, 0x9f, 0xff, 0xe0, 0xf9, 0x83, 0x27, 0xb4, 0x6b, 0x6c, 0xf8, 0x37, 0xc3, 0x6d, 0xdd, 0xa0, 0x29, 0x37, 0x20, 0x52, 0xa, 0x92, 0x2d, 0xf6},
+	}
+}
+
+func newContext(t *testing.T, cfg config) context.Context {
+	loggerConfig := logger.Config{
+		Format:  cfg.LogFormat,
+		Verbose: cfg.LogVerbose,
+	}
+
+	ctx, cancel := context.WithCancel(logger.WithLogger(context.Background(), logger.New(loggerConfig)))
+	t.Cleanup(cancel)
+
+	return ctx
+}
+
+type walletToFund struct {
+	Wallet types.Wallet
+	Amount types.Coin
+}
+
+type testCase struct {
+	Name        string
+	PrepareFunc coreumtesting.PrepareFunc
+	RunFunc     coreumtesting.RunFunc
+}
+
+func prepareTestCases(
+	ctx context.Context,
+	fundingPrivKey types.Secp256k1PrivateKey,
+	coredClient client.Client,
+	network app.Network,
+	testSet coreumtesting.TestSet,
+) ([]testCase, error) {
+	// FIXME (wojtek): A lot of logic happens in this function due to how `walletsToFund` slice is built
+	// once `crust` is switched to new framework it will be redone.
 
 	var walletsToFund []walletToFund
 	chain := coreumtesting.Chain{
@@ -45,61 +95,70 @@ func Test(t *testing.T) {
 		},
 	}
 
-	var testList []test
-	for _, testFunc := range integrationTests.SingleChain {
+	var testCases []testCase
+	for _, testFunc := range testSet.SingleChain {
 		prepFunc, runFunc := testFunc(chain)
-		testList = append(testList, test{
+		testCases = append(testCases, testCase{
 			Name:        funcToName(testFunc),
 			PrepareFunc: prepFunc,
 			RunFunc:     runFunc,
 		})
-
 	}
 
-	ctx, cancel := context.WithCancel(logger.WithLogger(context.Background(), logger.New(loggerConfig)))
-	t.Cleanup(cancel)
-
-	for _, test := range testList {
-		ctx := logger.With(ctx, zap.String("test", test.Name))
-		require.NoError(t, test.PrepareFunc(ctx))
+	for _, tc := range testCases {
+		ctx := logger.With(ctx, zap.String("test", tc.Name))
+		if err := tc.PrepareFunc(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	var err error
-	hornOfPlentyWallet := types.Wallet{Key: hornOfPlentyPrivKey}
-	hornOfPlentyWallet.AccountNumber, hornOfPlentyWallet.AccountSequence, err = coredClient.GetNumberSequence(ctx, hornOfPlentyPrivKey.Address())
-	require.NoError(t, err)
+	fundingWallet := types.Wallet{Key: fundingPrivKey}
+	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = coredClient.GetNumberSequence(ctx, fundingPrivKey.Address())
+	if err != nil {
+		return nil, err
+	}
 
 	gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, toFund := range walletsToFund {
 		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
 		encodedTx, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 			Base: tx.BaseInput{
-				Signer:   hornOfPlentyWallet,
+				Signer:   fundingWallet,
 				GasLimit: network.DeterministicGas().BankSend,
 				GasPrice: gasPrice,
 			},
-			Sender:   hornOfPlentyWallet,
+			Sender:   fundingWallet,
 			Receiver: toFund.Wallet,
 			Amount:   toFund.Amount,
 		})
-		require.NoError(t, err)
-		_, err = coredClient.Broadcast(ctx, encodedTx)
-		require.NoError(t, err)
-		hornOfPlentyWallet.AccountSequence++
+		if err != nil {
+			return nil, err
+		}
+		if _, err := coredClient.Broadcast(ctx, encodedTx); err != nil {
+			return nil, err
+		}
+		fundingWallet.AccountSequence++
 	}
+	return testCases, nil
+}
 
-	for _, test := range testList {
-		test := test
-		t.Run(test.Name, func(t *testing.T) {
+func runTests(t *testing.T, ctx context.Context, testCases []testCase) {
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithCancel(logger.With(ctx, zap.String("test", test.Name)))
+			ctx, cancel := context.WithCancel(logger.With(ctx, zap.String("test", tc.Name)))
 			t.Cleanup(cancel)
 
 			log := logger.Get(ctx)
 			log.Info("Test started")
-			test.RunFunc(ctx, t)
+			tc.RunFunc(ctx, t)
 			if t.Failed() {
 				log.Error("Test failed")
 			} else {
@@ -115,15 +174,4 @@ func funcToName(f interface{}) string {
 	funcName := strings.TrimSuffix(parts[len(parts)-1], ".func1")
 
 	return repoName + "." + funcName
-}
-
-type walletToFund struct {
-	Wallet types.Wallet
-	Amount types.Coin
-}
-
-type test struct {
-	Name        string
-	PrepareFunc coreumtesting.PrepareFunc
-	RunFunc     coreumtesting.RunFunc
 }
