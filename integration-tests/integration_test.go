@@ -9,6 +9,7 @@ import (
 	"flag"
 	"os"
 	"reflect"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -28,15 +29,17 @@ import (
 var cfg config
 
 func TestMain(m *testing.M) {
-	var fundingPrivKey, logFormat string
+	var coredAddress, fundingPrivKey, logFormat, filter string
 
-	flag.StringVar(&cfg.CoredAddress, "cored-address", "localhost:26657", "Address of cored node started by znet")
+	flag.StringVar(&coredAddress, "cored-address", "localhost:26657", "Address of cored node started by znet")
 	flag.StringVar(&fundingPrivKey, "priv-key", "LPIPcUDVpp8Cn__g-YMntGts-DfDbd2gKTcgUgqSLfY", "Base64-encoded private key used to fund accounts required by tests")
-	flag.StringVar(&cfg.Filter, "filter", "", "Regular expression used to run only a subset of tests")
+	flag.StringVar(&filter, "filter", "", "Regular expression used to run only a subset of tests")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.Parse()
 
-	cfg.LogFormat = logger.Format(logFormat)
+	cfg.Network = app.NewNetwork(coreumtesting.NetworkConfig)
+	cfg.Network.SetupPrefixes()
+	cfg.CoredClient = client.New(cfg.Network.ChainID(), coredAddress)
 
 	var err error
 	cfg.FundingPrivKey, err = base64.RawURLEncoding.DecodeString(fundingPrivKey)
@@ -44,6 +47,8 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	cfg.Filter = regexp.MustCompile(filter)
+	cfg.LogFormat = logger.Format(logFormat)
 	for _, flag := range os.Args[1:] {
 		if flag == "-test.v=true" {
 			cfg.LogVerbose = true
@@ -56,21 +61,18 @@ func TestMain(m *testing.M) {
 func Test(t *testing.T) {
 	testSet := tests.Tests()
 
-	network := app.NewNetwork(coreumtesting.NetworkConfig)
-	network.SetupPrefixes()
-	coredClient := client.New(network.ChainID(), cfg.CoredAddress)
-
 	ctx := newContext(t, cfg)
-	testCases, err := prepareTestCases(ctx, cfg.FundingPrivKey, coredClient, network, testSet)
+	testCases, err := prepareTestCases(ctx, cfg, testSet)
 	require.NoError(t, err)
 
 	runTests(t, ctx, testCases)
 }
 
 type config struct {
-	CoredAddress   string
+	CoredClient    client.Client
+	Network        app.Network
 	FundingPrivKey types.Secp256k1PrivateKey
-	Filter         string
+	Filter         *regexp.Regexp
 	LogFormat      logger.Format
 	LogVerbose     bool
 }
@@ -100,9 +102,7 @@ type testCase struct {
 
 func prepareTestCases(
 	ctx context.Context,
-	fundingPrivKey types.Secp256k1PrivateKey,
-	coredClient client.Client,
-	network app.Network,
+	cfg config,
 	testSet coreumtesting.TestSet,
 ) ([]testCase, error) {
 	// FIXME (wojtek): A lot of logic happens in this function due to how `walletsToFund` slice is built
@@ -110,8 +110,8 @@ func prepareTestCases(
 
 	var walletsToFund []walletToFund
 	chain := coreumtesting.Chain{
-		Network: &network,
-		Client:  coredClient,
+		Network: &cfg.Network,
+		Client:  cfg.CoredClient,
 		Fund: func(wallet types.Wallet, amount types.Coin) {
 			walletsToFund = append(walletsToFund, walletToFund{Wallet: wallet, Amount: amount})
 		},
@@ -119,9 +119,14 @@ func prepareTestCases(
 
 	var testCases []testCase
 	for _, testFunc := range testSet.SingleChain {
+		name := funcToName(testFunc)
+		if !cfg.Filter.MatchString(name) {
+			continue
+		}
+
 		prepFunc, runFunc := testFunc(chain)
 		testCases = append(testCases, testCase{
-			Name:        funcToName(testFunc),
+			Name:        name,
 			PrepareFunc: prepFunc,
 			RunFunc:     runFunc,
 		})
@@ -135,23 +140,23 @@ func prepareTestCases(
 	}
 
 	var err error
-	fundingWallet := types.Wallet{Key: fundingPrivKey}
-	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = coredClient.GetNumberSequence(ctx, fundingPrivKey.Address())
+	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
+	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = cfg.CoredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
 	if err != nil {
 		return nil, err
 	}
 
-	gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
+	gasPrice, err := types.NewCoin(cfg.Network.InitialGasPrice(), cfg.Network.TokenSymbol())
 	if err != nil {
 		return nil, err
 	}
 
 	for _, toFund := range walletsToFund {
 		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
-		encodedTx, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		encodedTx, err := cfg.CoredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 			Base: tx.BaseInput{
 				Signer:   fundingWallet,
-				GasLimit: network.DeterministicGas().BankSend,
+				GasLimit: cfg.Network.DeterministicGas().BankSend,
 				GasPrice: gasPrice,
 			},
 			Sender:   fundingWallet,
@@ -161,7 +166,7 @@ func prepareTestCases(
 		if err != nil {
 			return nil, err
 		}
-		if _, err := coredClient.Broadcast(ctx, encodedTx); err != nil {
+		if _, err := cfg.CoredClient.Broadcast(ctx, encodedTx); err != nil {
 			return nil, err
 		}
 		fundingWallet.AccountSequence++
