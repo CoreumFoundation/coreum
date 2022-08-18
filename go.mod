@@ -10,9 +10,14 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.2.1
+	github.com/armon/go-metrics v0.3.10
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/ibc-go/v3 v3.0.0
+	github.com/gogo/protobuf v1.3.3
+	github.com/golang/protobuf v1.5.2
+	github.com/gorilla/mux v1.8.0
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7
 	github.com/ignite/cli v0.22.2
 	github.com/kr/pretty v0.3.0 // indirect
@@ -31,6 +36,8 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220811182439-13a9a731de15 // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
+	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.28.1 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 )
