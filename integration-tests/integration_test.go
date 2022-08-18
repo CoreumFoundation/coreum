@@ -5,6 +5,9 @@ package tests_test
 
 import (
 	"context"
+	"encoding/base64"
+	"flag"
+	"os"
 	"reflect"
 	"runtime"
 	"strings"
@@ -22,9 +25,35 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-func Test(t *testing.T) {
-	cfg := configFromCLI()
+var cfg config
 
+func TestMain(m *testing.M) {
+	var fundingPrivKey, logFormat string
+
+	flag.StringVar(&cfg.CoredAddress, "cored-address", "localhost:26657", "Address of cored node started by znet")
+	flag.StringVar(&fundingPrivKey, "priv-key", "LPIPcUDVpp8Cn__g-YMntGts-DfDbd2gKTcgUgqSLfY", "Base64-encoded private key used to fund accounts required by tests")
+	flag.StringVar(&cfg.Filter, "filter", "", "Regular expression used to run only a subset of tests")
+	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
+	flag.Parse()
+
+	cfg.LogFormat = logger.Format(logFormat)
+
+	var err error
+	cfg.FundingPrivKey, err = base64.RawURLEncoding.DecodeString(fundingPrivKey)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, flag := range os.Args[1:] {
+		if flag == "-test.v=true" {
+			cfg.LogVerbose = true
+			break
+		}
+	}
+	m.Run()
+}
+
+func Test(t *testing.T) {
 	testSet := tests.Tests()
 
 	network := app.NewNetwork(coreumtesting.NetworkConfig)
@@ -41,17 +70,9 @@ func Test(t *testing.T) {
 type config struct {
 	CoredAddress   string
 	FundingPrivKey types.Secp256k1PrivateKey
+	Filter         string
 	LogFormat      logger.Format
 	LogVerbose     bool
-}
-
-func configFromCLI() config {
-	// TODO: really read this from CLI
-	return config{
-		CoredAddress:   "localhost:26657",
-		FundingPrivKey: types.Secp256k1PrivateKey{0x2c, 0xf2, 0xf, 0x71, 0x40, 0xd5, 0xa6, 0x9f, 0x2, 0x9f, 0xff, 0xe0, 0xf9, 0x83, 0x27, 0xb4, 0x6b, 0x6c, 0xf8, 0x37, 0xc3, 0x6d, 0xdd, 0xa0, 0x29, 0x37, 0x20, 0x52, 0xa, 0x92, 0x2d, 0xf6},
-		LogFormat:      logger.FormatYAML,
-	}
 }
 
 func newContext(t *testing.T, cfg config) context.Context {
