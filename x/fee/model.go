@@ -19,6 +19,10 @@ type Model struct {
 	NumOfBlocksForLongAverageBlockGas  uint
 }
 
+func calculateMovingAverage(previousAverage, newValue int64, numOfBlocks uint) int64 {
+	return int64((uint64(numOfBlocks-1)*uint64(previousAverage) + uint64(newValue)) / uint64(numOfBlocks))
+}
+
 func calculateNextGasPrice(feeModel Model, currentAverageGas int64, averageGas int64) *big.Int {
 	switch {
 	case currentAverageGas >= feeModel.MaxBlockGas:
