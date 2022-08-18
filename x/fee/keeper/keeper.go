@@ -5,40 +5,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ Keeper = (*BaseKeeper)(nil)
-
-// Keeper defines a module interface that facilitates the transfer of coins
-// between accounts.
-type Keeper interface {
-	TrackedGas(ctx sdk.Context) int64
-	TrackGas(ctx sdk.Context, gas int64)
-	GetShortAverageGas(ctx sdk.Context) int64
-	SetShortAverageGas(ctx sdk.Context, averageGas int64)
-	GetLongAverageGas(ctx sdk.Context) int64
-	SetLongAverageGas(ctx sdk.Context, averageGas int64)
-	GetMinGasPrice(ctx sdk.Context) sdk.Coin
-	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
-}
-
-// BaseKeeper manages transfers between accounts. It implements the Keeper interface.
-type BaseKeeper struct {
+// Keeper manages transfers between accounts. It implements the Keeper interface.
+type Keeper struct {
 	feeDenom          string
 	storeKey          sdk.StoreKey
 	transientStoreKey sdk.StoreKey
 }
 
-// NewBaseKeeper returns a new BaseKeeper object with a given codec, dedicated
-// store key, an AccountKeeper implementation, and a parameter Subspace used to
-// store and fetch module parameters. The BaseKeeper also accepts a
-// blocklist map. This blocklist describes the set of addresses that are not allowed
-// to receive funds through direct and explicit actions, for example, by using a MsgSend or
-// by using a SendCoinsFromModuleToAccount execution.
-func NewBaseKeeper(
+// NewKeeper returns a new keeper object providing storage options required by fee model.
+func NewKeeper(
 	feeDenom string,
 	storeKey sdk.StoreKey,
 	transientStoreKey sdk.StoreKey,
-) BaseKeeper {
-	return BaseKeeper{
+) Keeper {
+	return Keeper{
 		feeDenom:          feeDenom,
 		storeKey:          storeKey,
 		transientStoreKey: transientStoreKey,
@@ -53,7 +33,7 @@ var (
 )
 
 // TrackedGas returns gas limits declared by transactions executed so far in current block
-func (k BaseKeeper) TrackedGas(ctx sdk.Context) int64 {
+func (k Keeper) TrackedGas(ctx sdk.Context) int64 {
 	tStore := ctx.TransientStore(k.transientStoreKey)
 
 	gasUsed := sdk.NewInt(0)
@@ -69,7 +49,7 @@ func (k BaseKeeper) TrackedGas(ctx sdk.Context) int64 {
 }
 
 // TrackGas increments gas tracked for current block
-func (k BaseKeeper) TrackGas(ctx sdk.Context, gas int64) {
+func (k Keeper) TrackGas(ctx sdk.Context, gas int64) {
 	tStore := ctx.TransientStore(k.transientStoreKey)
 	bz, err := sdk.NewInt(k.TrackedGas(ctx) + gas).Marshal()
 	if err != nil {
@@ -79,7 +59,7 @@ func (k BaseKeeper) TrackGas(ctx sdk.Context, gas int64) {
 }
 
 // GetShortAverageGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block
-func (k BaseKeeper) GetShortAverageGas(ctx sdk.Context) int64 {
+func (k Keeper) GetShortAverageGas(ctx sdk.Context) int64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(currentAverageGasKey)
 
@@ -95,7 +75,7 @@ func (k BaseKeeper) GetShortAverageGas(ctx sdk.Context) int64 {
 }
 
 // SetShortAverageGas sets average gas used by previous blocks, used as a representation of smoothed gas used by latest block
-func (k BaseKeeper) SetShortAverageGas(ctx sdk.Context, currentAverageGas int64) {
+func (k Keeper) SetShortAverageGas(ctx sdk.Context, currentAverageGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
 	bz, err := sdk.NewInt(currentAverageGas).Marshal()
@@ -107,7 +87,7 @@ func (k BaseKeeper) SetShortAverageGas(ctx sdk.Context, currentAverageGas int64)
 }
 
 // GetLongAverageGas retrieves long average gas used by previous blocks, used for determining average block load where maximum discount is applied
-func (k BaseKeeper) GetLongAverageGas(ctx sdk.Context) int64 {
+func (k Keeper) GetLongAverageGas(ctx sdk.Context) int64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(averageGasKey)
 
@@ -123,7 +103,7 @@ func (k BaseKeeper) GetLongAverageGas(ctx sdk.Context) int64 {
 }
 
 // SetLongAverageGas sets long average gas used by previous blocks, used for determining average block load where maximum discount is applied
-func (k BaseKeeper) SetLongAverageGas(ctx sdk.Context, averageGas int64) {
+func (k Keeper) SetLongAverageGas(ctx sdk.Context, averageGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
 	bz, err := sdk.NewInt(averageGas).Marshal()
@@ -135,7 +115,7 @@ func (k BaseKeeper) SetLongAverageGas(ctx sdk.Context, averageGas int64) {
 }
 
 // GetMinGasPrice returns current minimum gas price required by the network
-func (k BaseKeeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
+func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(gasPriceKey)
 	if bz == nil {
@@ -149,7 +129,7 @@ func (k BaseKeeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
 }
 
 // SetMinGasPrice sets minimum gas price required by the network on current block
-func (k BaseKeeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin) {
+func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin) {
 	store := ctx.KVStore(k.storeKey)
 	bz, err := minGasPrice.Marshal()
 	if err != nil {

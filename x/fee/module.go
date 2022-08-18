@@ -4,19 +4,17 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	"github.com/gorilla/mux"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/gorilla/mux"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cobra"
+	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/fee/keeper"
 	"github.com/CoreumFoundation/coreum/x/fee/types"
 )
 
@@ -25,6 +23,16 @@ var (
 	_ module.AppModuleBasic      = AppModuleBasic{}
 	_ module.AppModuleSimulation = AppModule{}
 )
+
+// Keeper defines an interface of keeper required by fee module
+type Keeper interface {
+	TrackedGas(ctx sdk.Context) int64
+	GetShortAverageGas(ctx sdk.Context) int64
+	SetShortAverageGas(ctx sdk.Context, averageGas int64)
+	GetLongAverageGas(ctx sdk.Context) int64
+	SetLongAverageGas(ctx sdk.Context, averageGas int64)
+	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
+}
 
 // AppModuleBasic defines the basic application module used by the fee module.
 type AppModuleBasic struct {
@@ -71,7 +79,7 @@ func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) 
 type AppModule struct {
 	AppModuleBasic
 
-	keeper   keeper.Keeper
+	keeper   Keeper
 	feeModel Model
 }
 
@@ -80,7 +88,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {}
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(cdc codec.Codec,
-	keeper keeper.Keeper,
+	keeper Keeper,
 	feeModel Model) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
