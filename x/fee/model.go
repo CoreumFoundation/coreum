@@ -9,14 +9,14 @@ import (
 
 // Model stores parameters defining fee model of coreum blockchain
 type Model struct {
-	FeeDenom                             string
-	InitialGasPrice                      sdk.Int
-	MaxGasPrice                          sdk.Int
-	MaxDiscount                          float64
-	EscalationStartBlockGas              int64
-	MaxBlockGas                          int64
-	NumOfBlocksForCurrentAverageBlockGas uint
-	NumOfBlocksForAverageBlockGas        uint
+	FeeDenom                           string
+	InitialGasPrice                    sdk.Int
+	MaxGasPrice                        sdk.Int
+	MaxDiscount                        float64
+	EscalationStartBlockGas            int64
+	MaxBlockGas                        int64
+	NumOfBlocksForShortAverageBlockGas uint
+	NumOfBlocksForLongAverageBlockGas  uint
 }
 
 func calculateNextGasPrice(feeModel Model, currentAverageGas int64, averageGas int64) *big.Int {

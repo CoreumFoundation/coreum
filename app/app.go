@@ -417,14 +417,14 @@ func New(
 	feeModel := ChosenNetwork.FeeModel()
 	feeModule := fee.NewAppModule(appCodec, app.FeeKeeper,
 		fee.Model{
-			FeeDenom:                             ChosenNetwork.TokenSymbol(),
-			InitialGasPrice:                      sdk.NewIntFromBigInt(feeModel.InitialGasPrice),
-			MaxGasPrice:                          sdk.NewIntFromBigInt(feeModel.MaxGasPrice),
-			MaxDiscount:                          feeModel.MaxDiscount,
-			EscalationStartBlockGas:              feeModel.EscalationStartBlockGas,
-			MaxBlockGas:                          feeModel.MaxBlockGas,
-			NumOfBlocksForCurrentAverageBlockGas: feeModel.NumOfBlocksForShortAverageBlockGas,
-			NumOfBlocksForAverageBlockGas:        feeModel.NumOfBlocksForLongAverageBlockGas,
+			FeeDenom:                           ChosenNetwork.TokenSymbol(),
+			InitialGasPrice:                    sdk.NewIntFromBigInt(feeModel.InitialGasPrice),
+			MaxGasPrice:                        sdk.NewIntFromBigInt(feeModel.MaxGasPrice),
+			MaxDiscount:                        feeModel.MaxDiscount,
+			EscalationStartBlockGas:            feeModel.EscalationStartBlockGas,
+			MaxBlockGas:                        feeModel.MaxBlockGas,
+			NumOfBlocksForShortAverageBlockGas: feeModel.NumOfBlocksForShortAverageBlockGas,
+			NumOfBlocksForLongAverageBlockGas:  feeModel.NumOfBlocksForLongAverageBlockGas,
 		})
 
 	// NOTE: Any module instantiated in the module manager that is later modified

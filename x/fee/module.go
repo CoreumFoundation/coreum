@@ -136,17 +136,17 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock returns the end blocker for the fee module. It returns no validator
 // updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	previousCurrentAverage := uint64(am.keeper.GetShortAverageGas(ctx))
-	previousAverage := uint64(am.keeper.GetLongAverageGas(ctx))
+	previousShortAverage := uint64(am.keeper.GetShortAverageGas(ctx))
+	previousLongAverage := uint64(am.keeper.GetLongAverageGas(ctx))
 	currentGasUsage := uint64(am.keeper.TrackedGas(ctx))
 
-	newCurrentAverage := int64((uint64(am.feeModel.NumOfBlocksForCurrentAverageBlockGas-1)*previousCurrentAverage + currentGasUsage) / uint64(am.feeModel.NumOfBlocksForCurrentAverageBlockGas))
-	newAverage := int64((uint64(am.feeModel.NumOfBlocksForAverageBlockGas-1)*previousAverage + currentGasUsage) / uint64(am.feeModel.NumOfBlocksForAverageBlockGas))
+	newShortAverage := int64((uint64(am.feeModel.NumOfBlocksForShortAverageBlockGas-1)*previousShortAverage + currentGasUsage) / uint64(am.feeModel.NumOfBlocksForShortAverageBlockGas))
+	newLongAverage := int64((uint64(am.feeModel.NumOfBlocksForLongAverageBlockGas-1)*previousLongAverage + currentGasUsage) / uint64(am.feeModel.NumOfBlocksForLongAverageBlockGas))
 
-	minGasPrice := calculateNextGasPrice(am.feeModel, newCurrentAverage, newAverage)
+	minGasPrice := calculateNextGasPrice(am.feeModel, newShortAverage, newLongAverage)
 
-	am.keeper.SetShortAverageGas(ctx, newCurrentAverage)
-	am.keeper.SetLongAverageGas(ctx, newAverage)
+	am.keeper.SetShortAverageGas(ctx, newShortAverage)
+	am.keeper.SetLongAverageGas(ctx, newLongAverage)
 	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(am.feeModel.FeeDenom, sdk.NewIntFromBigInt(minGasPrice)))
 
 	return []abci.ValidatorUpdate{}
