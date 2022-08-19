@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
-      - name: Go version used to build core tool
+      - name: Go version used to build crust tool
         run: go version
       - name: Set up crust
         run: |
