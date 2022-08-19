@@ -4,9 +4,11 @@ import (
 	"crypto/ed25519"
 	"encoding/json"
 	"math/big"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
+	"unsafe"
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,7 +33,7 @@ func testNetwork() Network {
 		panic(err)
 	}
 	return NewNetwork(NetworkConfig{
-		ChainID:       ChainID("test-network"),
+		ChainID:       "test-network",
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
@@ -95,7 +97,7 @@ func TestGenesisValidation(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(
 		ModuleBasics.ValidateGenesis(
-			encCfg.Marshaler,
+			encCfg.Codec,
 			encCfg.TxConfig,
 			appStateMapJSONRawMessage,
 		))
@@ -268,6 +270,9 @@ func TestValidateAllGenesis(t *testing.T) {
 
 	for chainID, cfg := range networks {
 		n := NewNetwork(cfg)
+		unsealSdkConfig()
+		SetPrefixes(n.addressPrefix)
+
 		genesisJSON, err := n.EncodeGenesis()
 		if !assertT.NoError(err) {
 			continue
@@ -286,11 +291,17 @@ func TestValidateAllGenesis(t *testing.T) {
 
 		assertT.NoErrorf(
 			ModuleBasics.ValidateGenesis(
-				encCfg.Marshaler,
+				encCfg.Codec,
 				encCfg.TxConfig,
 				appStateMapJSONRawMessage,
 			), "genesis for network '%s' is invalid", chainID)
 	}
+
+	// the hint to restore the default state, the hint is a bit tricky and unsafe in some point
+	// we hope tp update together with the tests updates
+	unsealSdkConfig()
+	n := testNetwork()
+	n.SetupPrefixes()
 }
 
 func TestNetworkFeesNotMutable(t *testing.T) {
@@ -331,4 +342,21 @@ func TestNetworkConfigConditions(t *testing.T) {
 
 		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
 	}
+}
+
+func unsealSdkConfig() {
+	// rests config seal protection
+	// this is the temp hint to replace the prefixes for tests
+	config := sdk.GetConfig()
+	setField(config, "sealed", false)
+	setField(config, "sealedch", make(chan struct{}))
+}
+
+func setField(object interface{}, fieldName string, value interface{}) {
+	rs := reflect.ValueOf(object).Elem()
+	field := rs.FieldByName(fieldName)
+	// rf can't be read or set.
+	reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).
+		Elem().
+		Set(reflect.ValueOf(value))
 }
