@@ -3,8 +3,6 @@ package client
 import (
 	"context"
 	"encoding/hex"
-	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -30,8 +28,6 @@ const (
 	txTimeout            = time.Minute
 	txStatusPollInterval = 500 * time.Millisecond
 )
-
-var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) Client {
@@ -146,7 +142,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	} else {
 		txHash = res.Hash.String()
 		if res.Code != 0 {
-			return BroadcastResult{}, errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log),
+			return BroadcastResult{}, errors.Wrapf(cosmoserrors.ABCIError(res.Codespace, res.Code, res.Log),
 				"transaction '%s' failed", txHash)
 		}
 	}
@@ -180,7 +176,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		}
 		if resultTx.TxResult.Code != 0 {
 			res := resultTx.TxResult
-			return errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
+			return errors.Wrapf(cosmoserrors.ABCIError(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
 		}
 		if resultTx.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
@@ -236,36 +232,17 @@ func isTxInMempool(errRes *sdk.TxResponse) bool {
 	return isSDKErrorResult(errRes.Codespace, errRes.Code, cosmoserrors.ErrTxInMempoolCache)
 }
 
-func isSDKErrorResult(codespace string, code uint32, expectedSDKError *cosmoserrors.Error) bool {
+func isSDKErrorResult(codespace string, code uint32, expectedSDKError *cosmoserrors.Error) bool { //nolint:staticcheck // the client is deprecated as well
 	return codespace == expectedSDKError.Codespace() &&
 		code == expectedSDKError.ABCICode()
 }
 
-func asSDKError(err error, expectedSDKErr *cosmoserrors.Error) *cosmoserrors.Error {
-	var sdkErr *cosmoserrors.Error
+func asSDKError(err error, expectedSDKErr *cosmoserrors.Error) *cosmoserrors.Error { //nolint:staticcheck // the client is deprecated as well
+	var sdkErr *cosmoserrors.Error //nolint:staticcheck // the client is deprecated as well
 	if !errors.As(err, &sdkErr) || !isSDKErrorResult(sdkErr.Codespace(), sdkErr.ABCICode(), expectedSDKErr) {
 		return nil
 	}
 	return sdkErr
-}
-
-// ExpectedSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
-func ExpectedSequenceFromError(err error) (uint64, bool, error) {
-	sdkErr := asSDKError(err, cosmoserrors.ErrWrongSequence)
-	if sdkErr == nil {
-		return 0, false, nil
-	}
-
-	log := sdkErr.Error()
-	matches := expectedSequenceRegExp.FindStringSubmatch(log)
-	if len(matches) != 2 {
-		return 0, false, errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
-	}
-	expectedSequence, err := strconv.ParseUint(matches[1], 10, 64)
-	if err != nil {
-		return 0, false, errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
-	}
-	return expectedSequence, true, nil
 }
 
 // IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction

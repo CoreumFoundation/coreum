@@ -18,7 +18,7 @@ var NetworkConfig = app.NetworkConfig{
 		InitialGasPrice:       big.NewInt(1500),
 		MinDiscountedGasPrice: big.NewInt(1000),
 		DeterministicGas: app.DeterministicGasConfig{
-			BankSend: 120000,
+			BankSend: 140000,
 		},
 	},
 }

@@ -138,6 +138,25 @@
         "next_channel_sequence": "0"
       }
     },
+    "interchainaccounts": {
+      "controller_genesis_state": {
+        "active_channels": [],
+        "interchain_accounts": [],
+        "ports": [],
+        "params": {
+          "controller_enabled": true
+        }
+      },
+      "host_genesis_state": {
+        "active_channels": [],
+        "interchain_accounts": [],
+        "port": "icahost",
+        "params": {
+          "host_enabled": true,
+          "allow_messages": []
+        }
+      }
+    },
     "mint": {
       "minter": {
         "inflation": "0.130000000000000000",
@@ -152,23 +171,9 @@
         "blocks_per_year": "6311520"
       }
     },
-    "monitoringp": {
-      "port_id": "monitoringp",
-      "consumerClientID": null,
-      "connectionChannelID": null,
-      "monitoringInfo": null,
+    "packetfowardmiddleware": {
       "params": {
-        "lastBlockHeight": "1",
-        "consumerChainID": "spn-1",
-        "consumerConsensusState": {
-          "nextValidatorsHash": "",
-          "timestamp": "",
-          "root": {
-            "hash": ""
-          }
-        },
-        "consumerUnbondingPeriod": "1814400",
-        "consumerRevisionHeight": "1"
+        "fee_percentage": "0.000000000000000000"
       }
     },
     "params": null,
@@ -189,7 +194,8 @@
         "max_validators": 100,
         "max_entries": 7,
         "historical_entries": 10000,
-        "bond_denom": "{{ .TokenSymbol }}"
+        "bond_denom": "{{ .TokenSymbol }}",
+        "min_commission_rate": "0.000000000000000000"
       },
       "last_total_power": "0",
       "last_validator_powers": [],

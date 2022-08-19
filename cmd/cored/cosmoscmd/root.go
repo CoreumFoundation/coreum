@@ -1,6 +1,7 @@
 // Package cosmoscmd contains cmd command lines. Copied from
 // https://github.com/ignite/cli/tree/e6a5efdaa2210fb72e33382d442268cdd466ae2d/ignite/pkg/cosmoscmd
 // under APACHE2.0 LICENSE
+// And coreum extended commands.
 package cosmoscmd
 
 import (
@@ -19,7 +20,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simdcmd "github.com/cosmos/cosmos-sdk/simapp/simd/cmd"
 	"github.com/cosmos/cosmos-sdk/snapshots"
+	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -31,9 +34,12 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	tmcfg "github.com/tendermint/tendermint/config"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/CoreumFoundation/coreum/app"
 )
 
 type (
@@ -46,29 +52,14 @@ type (
 		skipUpgradeHeights map[int64]bool,
 		homePath string,
 		invCheckPeriod uint,
-		encodingConfig EncodingConfig,
+		encodingConfig app.EncodingConfig,
 		appOpts servertypes.AppOptions,
 		baseAppOptions ...func(*baseapp.BaseApp),
-	) App
-
-	// App represents a Cosmos SDK application that can be run as a server and with an exportable state
-	App interface {
-		servertypes.Application
-		ExportableApp
-	}
-
-	// ExportableApp represents an app with an exportable state
-	ExportableApp interface {
-		ExportAppStateAndValidators(
-			forZeroHeight bool,
-			jailAllowedAddrs []string,
-		) (servertypes.ExportedApp, error)
-		LoadHeight(height int64) error
-	}
+	) *app.App
 
 	// appCreator is an app creator
 	appCreator struct {
-		encodingConfig EncodingConfig
+		encodingConfig app.EncodingConfig
 		buildApp       AppBuilder
 	}
 )
@@ -125,15 +116,15 @@ func NewRootCmd(
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
 	options ...Option,
-) (*cobra.Command, EncodingConfig) {
+) (*cobra.Command, app.EncodingConfig) {
 	rootOptions := newRootOptions(options...)
 
 	// Set config for prefixes
-	SetPrefixes(accountAddressPrefix)
+	app.SetPrefixes(accountAddressPrefix)
 
-	encodingConfig := MakeEncodingConfig(moduleBasics)
+	encodingConfig := app.NewModuleEncodingConfig(moduleBasics)
 	initClientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
@@ -163,13 +154,10 @@ func NewRootCmd(
 				return err
 			}
 
-			customAppTemplate, customAppConfig := initAppConfig()
-
-			if err := server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig); err != nil {
+			addTemplate, appConfig, tendermintConfgig := initAppConfig()
+			if err := server.InterceptConfigsPreRunHandler(cmd, addTemplate, appConfig, tendermintConfgig); err != nil {
 				return err
 			}
-
-			startProxyForTunneledPeers(initClientCtx, cmd)
 
 			return nil
 		},
@@ -193,7 +181,7 @@ func NewRootCmd(
 
 func initRootCmd(
 	rootCmd *cobra.Command,
-	encodingConfig EncodingConfig,
+	encodingConfig app.EncodingConfig,
 	defaultNodeHome string,
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
@@ -209,7 +197,7 @@ func initRootCmd(
 			defaultNodeHome,
 		),
 		genutilcli.ValidateGenesisCmd(moduleBasics),
-		AddGenesisAccountCmd(defaultNodeHome),
+		simdcmd.AddGenesisAccountCmd(defaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
 		config.Cmd(),
@@ -345,7 +333,7 @@ func (a appCreator) newApp(
 	}
 
 	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "snapshots")
-	snapshotDB, err := sdk.NewLevelDB("metadata", snapshotDir)
+	snapshotDB, err := dbm.NewDB("metadata", server.GetAppDBBackend(appOpts), snapshotDir)
 	if err != nil {
 		panic(err)
 	}
@@ -353,6 +341,10 @@ func (a appCreator) newApp(
 	if err != nil {
 		panic(err)
 	}
+	snapshotOptions := snapshottypes.NewSnapshotOptions(
+		cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval)),
+		cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent)),
+	)
 
 	return a.buildApp(
 		logger,
@@ -372,9 +364,7 @@ func (a appCreator) newApp(
 		baseapp.SetInterBlockCache(cache),
 		baseapp.SetTrace(cast.ToBool(appOpts.Get(server.FlagTrace))),
 		baseapp.SetIndexEvents(cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents))),
-		baseapp.SetSnapshotStore(snapshotStore),
-		baseapp.SetSnapshotInterval(cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval))),
-		baseapp.SetSnapshotKeepRecent(cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent))),
+		baseapp.SetSnapshot(snapshotStore, snapshotOptions),
 	)
 }
 
@@ -388,14 +378,12 @@ func (a appCreator) appExport(
 	jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions,
 ) (servertypes.ExportedApp, error) {
-	var exportableApp ExportableApp
-
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	exportableApp = a.buildApp(
+	exportableApp := a.buildApp(
 		logger,
 		db,
 		traceStore,
@@ -418,7 +406,7 @@ func (a appCreator) appExport(
 
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
-func initAppConfig() (string, interface{}) {
+func initAppConfig() (string, interface{}, *tmcfg.Config) {
 	// The following code snippet is just for reference.
 
 	// WASMConfig defines configuration for the wasm module.
@@ -469,5 +457,8 @@ query_gas_limit = 300000
 # Warning: this is currently unstable and may lead to crashes, best to keep for 0 unless testing locally
 lru_size = 0`
 
-	return customAppTemplate, customAppConfig
+	// the tmd default config can be updated later to adjust the consensus options for the nodes by default
+	tmConfig := tmcfg.DefaultConfig()
+
+	return customAppTemplate, customAppConfig, tmConfig
 }
