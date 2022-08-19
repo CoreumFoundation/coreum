@@ -15,7 +15,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -65,7 +64,7 @@ func init() {
 				InitialGasPrice:       big.NewInt(1500),
 				MinDiscountedGasPrice: big.NewInt(1000),
 				DeterministicGas: DeterministicGasConfig{
-					BankSend: 120000,
+					BankSend: 140000,
 				},
 			},
 		},
@@ -79,7 +78,7 @@ func init() {
 				InitialGasPrice:       big.NewInt(1500),
 				MinDiscountedGasPrice: big.NewInt(1000),
 				DeterministicGas: DeterministicGasConfig{
-					BankSend: 120000,
+					BankSend: 140000,
 				},
 			},
 			NodeConfig: NodeConfig{
@@ -262,7 +261,7 @@ func applyFundedAccountToGenesis(
 
 // genesisDoc returns the genesis doc of the network
 func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
-	codec := NewEncodingConfig().Marshaler
+	codec := NewEncodingConfig().Codec
 	genesisJSON, err := genesis(n)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
@@ -349,7 +348,7 @@ func (n Network) SaveGenesis(homeDir string) error {
 
 // SetupPrefixes sets the global account prefixes config for cosmos sdk.
 func (n Network) SetupPrefixes() {
-	cosmoscmd.SetPrefixes(n.addressPrefix)
+	SetPrefixes(n.addressPrefix)
 }
 
 // AddressPrefix returns the address prefix to be used in network config

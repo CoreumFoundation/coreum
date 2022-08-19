@@ -1,5 +1,6 @@
 // This content was copied and modified based on github.com/cosmos/cosmos-sdk/x/auth/ante/fee.go
 // Original content: https://github.com/cosmos/cosmos-sdk/blob/ad9e5620fb3445c716e9de45cfcdb56e8f1745bf/x/auth/ante/fee.go
+// The current cosmos v0.46 version is: https://github.com/cosmos/cosmos-sdk/blob/6a08830840fb7d9728f473e192e151af869c3710/x/auth/ante/fee.go
 
 package ante
 
