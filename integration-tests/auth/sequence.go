@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -51,14 +52,6 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 			})
 			require.NoError(t, err)
 			_, err = coredClient.Broadcast(ctx, txBytes)
-			require.Error(t, err) // We expect error
-
-			// We expect that we get an error saying what the correct sequence number should be
-			expectedSeq, ok, err2 := client.ExpectedSequenceFromError(err)
-			require.NoError(t, err2)
-			if !ok {
-				require.Fail(t, "Unexpected error", err.Error())
-			}
-			require.Equal(t, accSeq, expectedSeq)
+			require.ErrorIs(t, err, cosmoserrors.ErrWrongSequence)
 		}
 }
