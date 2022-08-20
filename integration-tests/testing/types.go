@@ -7,7 +7,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/client2"
 )
 
 // T is an interface representing test, accepted by `assert.*` and `require.*` packages
@@ -25,8 +24,9 @@ type RunFunc = func(ctx context.Context, t T)
 type Chain struct {
 	Network *app.Network
 	// FIXME (wojtek): Remove once crust is updated
-	Client  client.Client
-	Client2 client2.Client
+	Client client.Client
+
+	RPCAddr string
 }
 
 // SingleChainSignature is the signature of test function accepting a chain

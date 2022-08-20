@@ -1,4 +1,4 @@
-package client2
+package tx
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
@@ -11,20 +11,49 @@ import (
 	"github.com/pkg/errors"
 )
 
-// signTx signs transaction with provided keyring and config.
-func signTx(
+// TxConfig holds values common to every transaction
+type TxConfig struct {
+	From     sdk.AccAddress
+	PrivKey  cryptotypes.PrivKey
+	GasLimit uint64
+	GasPrice *sdk.Coin
+	Memo     string
+
+	fromAccount *accountInfo
+}
+
+// SetAccountNumber allows to set account number explicitly
+func (c *TxConfig) SetAccountNumber(n uint64) {
+	if c.fromAccount == nil {
+		c.fromAccount = &accountInfo{}
+	}
+
+	c.fromAccount.Number = n
+}
+
+// SetAccountSequence allows to set account sequence explicitly
+func (c *TxConfig) SetAccountSequence(seq uint64) {
+	if c.fromAccount == nil {
+		c.fromAccount = &accountInfo{}
+	}
+
+	c.fromAccount.Sequence = seq
+}
+
+// accountInfo stores account number and sequence
+type accountInfo struct {
+	Number   uint64
+	Sequence uint64
+}
+
+// Sign signs transaction with provided priv key and config.
+func Sign(
 	clientCtx client.Context,
 	config TxConfig,
 	msgs ...sdk.Msg,
 ) (authsigning.Tx, error) {
-	if config.Keyring == nil {
-		err := errors.New("sign is required but no keyring provided")
-		return nil, err
-	}
-
-	keyInfo, err := config.Keyring.KeyByAddress(config.From)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to get key info from %s", config.From.String())
+	if config.PrivKey == nil {
+		err := errors.New("sign is required but no privkey provided")
 		return nil, err
 	}
 
@@ -50,17 +79,17 @@ func signTx(
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
-		AccountNumber: config.FromAccount.Number,
-		Sequence:      config.FromAccount.Sequence,
+		AccountNumber: config.fromAccount.Number,
+		Sequence:      config.fromAccount.Sequence,
 	}
 	sigData := &signing.SingleSignatureData{
 		SignMode:  factory.SignMode(),
 		Signature: nil,
 	}
 	sig := signing.SignatureV2{
-		PubKey:   keyInfo.GetPubKey(),
+		PubKey:   config.PrivKey.PubKey(),
 		Data:     sigData,
-		Sequence: config.FromAccount.Sequence,
+		Sequence: config.fromAccount.Sequence,
 	}
 	if err := txBuilder.SetSignatures(sig); err != nil {
 		return nil, errors.Wrap(err, "unable to set signature on tx builder")
@@ -75,9 +104,9 @@ func signTx(
 		return nil, errors.Wrap(err, "unable to encode bytes to sign")
 	}
 
-	sigBytes, _, err := config.Keyring.SignByAddress(config.From, bytesToSign)
+	sigBytes, err := config.PrivKey.Sign(bytesToSign)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to sign using keyring")
+		return nil, errors.Wrap(err, "unable to sign using priv key")
 	}
 
 	sigData.Signature = sigBytes
@@ -120,7 +149,7 @@ func buildSimTx(
 			SignMode: factory.SignMode(),
 		},
 
-		Sequence: config.FromAccount.Sequence,
+		Sequence: config.fromAccount.Sequence,
 	}
 	if err := txb.SetSignatures(sig); err != nil {
 		return nil, err

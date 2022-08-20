@@ -8,13 +8,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/pkg/staking"
+	tx "github.com/CoreumFoundation/coreum/pkg/tx2"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
@@ -26,7 +30,7 @@ func init() {
 func testNetwork() Network {
 	pubKey, privKey := types.GenerateSecp256k1Key()
 	clientCtx := NewDefaultClientContext()
-	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	tx, err := prepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	if err != nil {
 		panic(err)
 	}
@@ -182,7 +186,7 @@ func TestAddGenTx(t *testing.T) {
 	n := testNetwork()
 	pubKey, privKey := types.GenerateSecp256k1Key()
 	clientCtx := NewDefaultClientContext()
-	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	tx, err := prepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	n.AddGenesisTx(tx)
 
@@ -331,4 +335,45 @@ func TestNetworkConfigConditions(t *testing.T) {
 
 		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
 	}
+}
+
+// prepareTxStakingCreateValidator generates transaction of type MsgCreateValidator
+func prepareTxStakingCreateValidator(
+	clientCtx client.Context,
+	validatorPublicKey ed25519.PublicKey,
+	stakerPrivateKey types.Secp256k1PrivateKey,
+	stakedBalance string,
+) ([]byte, error) {
+	amount, err := sdk.ParseCoinNormalized(stakedBalance)
+	if err != nil {
+		return nil, errors.Wrapf(err, "not able to parse stake balances %s", stakedBalance)
+	}
+
+	commission := stakingtypes.CommissionRates{
+		Rate:          sdk.MustNewDecFromStr("0.1"),
+		MaxRate:       sdk.MustNewDecFromStr("0.2"),
+		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+	}
+
+	valPubKey := &cosmosed25519.PubKey{Key: validatorPublicKey}
+	stakerPrivKey := &cosmossecp256k1.PrivKey{Key: stakerPrivateKey}
+	stakerAddress := sdk.AccAddress(stakerPrivKey.PubKey().Address())
+
+	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
+	if err != nil {
+		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
+	}
+
+	signedTx, err := tx.Sign(clientCtx, tx.TxConfig{
+		From:    sdk.AccAddress(stakerPrivateKey.PubKey().Address()),
+		PrivKey: stakerPrivKey,
+	}, msg)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to sign transaction")
+	}
+	encodedTx, err := clientCtx.TxConfig.TxJSONEncoder()(signedTx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to encode transaction")
+	}
+	return encodedTx, nil
 }

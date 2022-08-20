@@ -1,4 +1,4 @@
-package client2
+package tx
 
 import (
 	"context"
@@ -32,63 +32,37 @@ const (
 
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
-// Client is the client for cored blockchain
-type Client interface {
-	ClientContext() client.Context
-	GetNumberSequence(ctx context.Context, address sdk.AccAddress) (uint64, uint64, error)
-	EstimateGas(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (int64, error)
-	BroadcastAsync(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (string, error)
-	BroadcastSync(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (*TxResult, error)
-	TxResult(ctx context.Context, txHash string) (*TxResult, error)
-}
-
-// TxResult contains results of transaction broadcast
-type TxResult struct {
-	TxHash  string
-	GasUsed int64
-}
-
-// New creates new client for cored
-func New(chainID app.ChainID, addr string) (Client, error) {
-	parsedURL, err := url.Parse(addr)
+// NewClientContext creates and initialized a new Cosmos client context,
+// for the specified chain ID and Tendermint RPC endpoint.
+func NewClientContext(chainID app.ChainID, rpcAddr string) (clientCtx client.Context, err error) {
+	parsedURL, err := url.Parse(rpcAddr)
 	if err != nil {
-		return coreClient{}, errors.WithStack(err)
+		return client.Context{}, errors.WithStack(err)
 	}
+
 	switch parsedURL.Scheme {
 	case "tcp", "http", "https":
 	default:
-		return coreClient{}, errors.Errorf("unknown scheme '%s' in address", parsedURL.Scheme)
-	}
-	rpcClient, err := client.NewClientFromNode(addr)
-	if err != nil {
-		return coreClient{}, errors.WithStack(err)
+		return client.Context{}, errors.Errorf("unknown scheme '%s' in address", parsedURL.Scheme)
 	}
 
-	clientCtx := app.
+	rpcClient, err := client.NewClientFromNode(rpcAddr)
+	if err != nil {
+		return client.Context{}, errors.WithStack(err)
+	}
+
+	clientCtx = app.
 		NewDefaultClientContext().
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 
-	return coreClient{
-		clientCtx:       clientCtx,
-		authQueryClient: authtypes.NewQueryClient(clientCtx),
-		txServiceClient: txtypes.NewServiceClient(clientCtx),
-	}, nil
-}
-
-type coreClient struct {
-	clientCtx       client.Context
-	authQueryClient authtypes.QueryClient
-	txServiceClient txtypes.ServiceClient
-}
-
-func (c coreClient) ClientContext() client.Context {
-	return c.clientCtx
+	return clientCtx, nil
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
-func (c coreClient) GetNumberSequence(
+func GetNumberSequence(
 	ctx context.Context,
+	clientCtx client.Context,
 	address sdk.AccAddress,
 ) (num uint64, seq uint64, err error) {
 	addr, err := sdk.AccAddressFromBech32(string(address))
@@ -102,7 +76,9 @@ func (c coreClient) GetNumberSequence(
 	req := &authtypes.QueryAccountRequest{
 		Address: addr.String(),
 	}
-	res, err := c.authQueryClient.Account(requestCtx, req)
+
+	authQueryClient := authtypes.NewQueryClient(clientCtx)
+	res, err := authQueryClient.Account(requestCtx, req)
 	if err != nil {
 		return 0, 0, errors.WithStack(err)
 	}
@@ -117,17 +93,23 @@ func (c coreClient) GetNumberSequence(
 
 // EstimateGas runs the transaction cost estimation and returns new suggested gas limit,
 // in contrast with the default Cosmos SDK gas estimation logic, this method returns unadjusted gas used.
-func (c coreClient) EstimateGas(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (int64, error) {
+func EstimateGas(
+	ctx context.Context,
+	clientCtx client.Context,
+	config TxConfig,
+	msgs ...sdk.Msg,
+) (int64, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	encodedTx, err := buildSimTx(c.clientCtx, config, msgs...)
+	encodedTx, err := buildSimTx(clientCtx, config, msgs...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to build Tx for simulation")
 		return 0, err
 	}
 
-	simRes, err := c.txServiceClient.Simulate(requestCtx, &txtypes.SimulateRequest{
+	txServiceClient := txtypes.NewServiceClient(clientCtx)
+	simRes, err := txServiceClient.Simulate(requestCtx, &txtypes.SimulateRequest{
 		TxBytes: encodedTx,
 	})
 	if err != nil {
@@ -141,8 +123,13 @@ func (c coreClient) EstimateGas(ctx context.Context, config TxConfig, msgs ...sd
 
 // BroadcastAsync sends transaction to chain, ensuring it passeses CheckTx.
 // Doesn't await for Tx being included in a block.
-func (c coreClient) BroadcastAsync(ctx context.Context, config TxConfig, msgs ...sdk.Msg) (txHash string, err error) {
-	encodedTx, err := c.prepareTx(ctx, config, msgs...)
+func BroadcastAsync(
+	ctx context.Context,
+	clientCtx client.Context,
+	config TxConfig,
+	msgs ...sdk.Msg,
+) (txHash string, err error) {
+	encodedTx, err := prepareTx(ctx, clientCtx, config, msgs...)
 	if err != nil {
 		return "", err
 	}
@@ -152,7 +139,7 @@ func (c coreClient) BroadcastAsync(ctx context.Context, config TxConfig, msgs ..
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
+	res, err := clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return txHash, errors.WithStack(err)
@@ -171,8 +158,12 @@ func (c coreClient) BroadcastAsync(ctx context.Context, config TxConfig, msgs ..
 	return res.Hash.String(), nil
 }
 
-// TxResult awaits until a signed transaction is included in a block, returing the TxResult.
-func (c coreClient) TxResult(ctx context.Context, txHash string) (*TxResult, error) {
+// AwaitTx awaits until a signed transaction is included in a block, returing the TxResult.
+func AwaitTx(
+	ctx context.Context,
+	clientCtx client.Context,
+	txHash string,
+) (resultTx *coretypes.ResultTx, err error) {
 	txHashBytes, err := hex.DecodeString(txHash)
 	if err != nil {
 		err = errors.Wrap(err, "tx hash is not a valid hex")
@@ -182,13 +173,12 @@ func (c coreClient) TxResult(ctx context.Context, txHash string) (*TxResult, err
 	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
 	defer cancel()
 
-	var resultTx *coretypes.ResultTx
 	if err = retry.Do(timeoutCtx, txStatusPollInterval, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 		defer cancel()
 
 		var err error
-		resultTx, err = c.clientCtx.Client.Tx(requestCtx, txHashBytes, false)
+		resultTx, err = clientCtx.Client.Tx(requestCtx, txHashBytes, false)
 		if err != nil {
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
@@ -218,37 +208,38 @@ func (c coreClient) TxResult(ctx context.Context, txHash string) (*TxResult, err
 		return nil, err
 	}
 
-	txResult := &TxResult{
-		TxHash:  txHash,
-		GasUsed: resultTx.TxResult.GasUsed,
-	}
-
-	return txResult, nil
+	return resultTx, nil
 }
 
 // BroadcastSync is a shortcut for broadcasting the Tx and awaiting for inclusion in a block.
-func (c coreClient) BroadcastSync(
+func BroadcastSync(
 	ctx context.Context,
+	clientCtx client.Context,
 	config TxConfig,
 	msgs ...sdk.Msg,
-) (txResult *TxResult, err error) {
-	txHash, err := c.BroadcastAsync(ctx, config, msgs...)
+) (resultTx *coretypes.ResultTx, err error) {
+	txHash, err := BroadcastAsync(ctx, clientCtx, config, msgs...)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.TxResult(ctx, txHash)
+	return AwaitTx(ctx, clientCtx, txHash)
 }
 
 // prepareTx encodes messages in a new transaction then signs and encodes it
-func (c coreClient) prepareTx(ctx context.Context, config TxConfig, msgs ...sdk.Msg) ([]byte, error) {
+func prepareTx(
+	ctx context.Context,
+	clientCtx client.Context,
+	config TxConfig,
+	msgs ...sdk.Msg,
+) ([]byte, error) {
 	if config.Keyring == nil {
 		err := errors.New("prepareTx is required but no keyring provided")
 		return nil, err
 	}
 
 	if config.FromAccount == nil {
-		num, seq, err := c.GetNumberSequence(ctx, config.From)
+		num, seq, err := GetNumberSequence(ctx, clientCtx, config.From)
 		if err != nil {
 			return nil, err
 		}
@@ -257,12 +248,12 @@ func (c coreClient) prepareTx(ctx context.Context, config TxConfig, msgs ...sdk.
 		config.SetAccountSequence(seq)
 	}
 
-	signedTx, err := signTx(c.clientCtx, config, msgs...)
+	signedTx, err := Sign(clientCtx, config, msgs...)
 	if err != nil {
 		return nil, err
 	}
 
-	signedBytes, err := c.clientCtx.TxConfig.TxEncoder()(signedTx)
+	signedBytes, err := clientCtx.TxConfig.TxEncoder()(signedTx)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
