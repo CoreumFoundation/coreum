@@ -25,7 +25,7 @@ func ExampleGasPricePerBlockGas() {
 	const longAverageBlockGas = 5000000
 
 	for i := int64(0); i <= feeModelSim.MaxBlockGas+5000000; i += 10000 {
-		fmt.Println(calculateNextGasPrice(feeModelSim, i, longAverageBlockGas).Int64())
+		fmt.Printf("%d\t%d\n", i, calculateNextGasPrice(feeModelSim, i, longAverageBlockGas).Int64())
 	}
 	// Output: list of gas prices for each gas usage
 	// https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=0
