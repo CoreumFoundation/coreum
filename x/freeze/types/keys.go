@@ -15,6 +15,9 @@ const (
 
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_freeze"
+
+	// FrozenCoinKey is the key prefix for freezing-related records
+	FrozenCoinKey = "frozen_coin"
 )
 
 func KeyPrefix(p string) []byte {

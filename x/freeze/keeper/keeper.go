@@ -60,7 +60,8 @@ func (k BaseKeeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k *BaseKeeper) FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk.Coin) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), holder.Bytes())
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
+	store = prefix.NewStore(store, holder.Bytes())
 
 	key := []byte(coin.Denom)
 
@@ -73,7 +74,8 @@ func (k *BaseKeeper) FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk
 }
 
 func (k *BaseKeeper) UnfreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk.Coin) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), holder.Bytes())
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
+	store = prefix.NewStore(store, holder.Bytes())
 
 	key := []byte(coin.Denom)
 
@@ -94,7 +96,8 @@ func (k *BaseKeeper) UnfreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin s
 }
 
 func (k *BaseKeeper) GetFrozenCoin(ctx sdk.Context, holder sdk.AccAddress, denom string) sdk.Coin {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), holder.Bytes())
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
+	store = prefix.NewStore(store, holder.Bytes())
 
 	key := []byte(denom)
 
@@ -107,7 +110,8 @@ func (k *BaseKeeper) GetFrozenCoin(ctx sdk.Context, holder sdk.AccAddress, denom
 }
 
 func (k *BaseKeeper) ListAccountFrozenCoins(ctx sdk.Context, holder sdk.AccAddress) (sdk.Coins, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), holder.Bytes())
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
+	store = prefix.NewStore(store, holder.Bytes())
 
 	coinIter := store.Iterator(nil, nil)
 	defer coinIter.Close()
@@ -127,14 +131,16 @@ func (k *BaseKeeper) ListAccountFrozenCoins(ctx sdk.Context, holder sdk.AccAddre
 }
 
 func (k *BaseKeeper) ListFrozenCoins(ctx sdk.Context) (map[string]sdk.Coins, error) {
+	baseStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
+
 	frozenCoins := make(map[string]sdk.Coins)
 
-	accIter := ctx.KVStore(k.storeKey).Iterator(nil, nil)
+	accIter := baseStore.Iterator(nil, nil)
 	defer accIter.Close()
 
 	for ; accIter.Valid(); accIter.Next() {
 		acc := accIter.Key()
-		store := prefix.NewStore(ctx.KVStore(k.storeKey), acc)
+		store := prefix.NewStore(baseStore, acc)
 
 		coinIter := store.Iterator(nil, nil)
 		defer coinIter.Close()
