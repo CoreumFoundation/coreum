@@ -23,12 +23,6 @@ func (key Secp256k1PrivateKey) Address() string {
 // Secp256k1PublicKey is a secp256k1 public key
 type Secp256k1PublicKey []byte
 
-// Address returns bech32 encoded wallet address for corresponding key
-func (key Secp256k1PublicKey) Address() string {
-	privKey := cosmossecp256k1.PubKey{Key: key}
-	return sdk.AccAddress(privKey.Address()).String()
-}
-
 // GenerateSecp256k1Key generates random secp256k1 key pair
 func GenerateSecp256k1Key() (Secp256k1PublicKey, Secp256k1PrivateKey) {
 	privKey := cosmossecp256k1.GenPrivKey()
