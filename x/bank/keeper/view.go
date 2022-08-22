@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	freezekeeper "github.com/CoreumFoundation/coreum/x/freeze/keeper"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,17 +34,19 @@ type ViewKeeper interface {
 
 // BaseViewKeeper implements a read only keeper implementation of ViewKeeper.
 type BaseViewKeeper struct {
-	cdc      codec.BinaryCodec
-	storeKey sdk.StoreKey
-	ak       types.AccountKeeper
+	cdc          codec.BinaryCodec
+	storeKey     sdk.StoreKey
+	ak           types.AccountKeeper
+	freezeKeeper freezekeeper.Keeper
 }
 
 // NewBaseViewKeeper returns a new BaseViewKeeper.
-func NewBaseViewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, ak types.AccountKeeper) BaseViewKeeper {
+func NewBaseViewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, ak types.AccountKeeper, freezeKeeper freezekeeper.Keeper) BaseViewKeeper {
 	return BaseViewKeeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		ak:       ak,
+		cdc:          cdc,
+		storeKey:     storeKey,
+		ak:           ak,
+		freezeKeeper: freezeKeeper,
 	}
 }
 
@@ -161,15 +165,24 @@ func (k BaseViewKeeper) IterateAllBalances(ctx sdk.Context, cb func(sdk.AccAddre
 // For vesting accounts, LockedCoins is delegated to the concrete vesting account
 // type.
 func (k BaseViewKeeper) LockedCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+	lockedCoins := sdk.NewCoins()
+
 	acc := k.ak.GetAccount(ctx, addr)
 	if acc != nil {
 		vacc, ok := acc.(vestexported.VestingAccount)
 		if ok {
-			return vacc.LockedCoins(ctx.BlockTime())
+			lockedCoins.Add(vacc.LockedCoins(ctx.BlockTime())...)
 		}
 	}
 
-	return sdk.NewCoins()
+	// Fetch frozen coins
+	frozenCoins, err := k.freezeKeeper.ListAccountFrozenCoins(ctx, addr)
+	if err != nil {
+		panic(err) // TODO: Don't panic in runtime
+	}
+	lockedCoins = lockedCoins.Add(frozenCoins...)
+
+	return lockedCoins
 }
 
 // SpendableCoins returns the total balances of spendable coins for an account

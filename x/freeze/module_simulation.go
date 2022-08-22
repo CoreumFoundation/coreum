@@ -24,7 +24,7 @@ var (
 )
 
 const (
-    opWeightMsgFreezeCoin = "op_weight_msg_freeze_coin"
+	opWeightMsgFreezeCoin = "op_weight_msg_freeze_coin"
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgFreezeCoin int = 100
 
@@ -42,7 +42,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 		accs[i] = acc.Address.String()
 	}
 	freezeGenesis := types.GenesisState{
-		Params:	types.DefaultParams(),
+		Params: types.DefaultParams(),
 		// this line is used by starport scaffolding # simapp/module/genesisState
 	}
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&freezeGenesis)
@@ -55,9 +55,8 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 
 // RandomizedParams creates randomized  param changes for the simulator
 func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
-	
-	return []simtypes.ParamChange{
-	}
+
+	return []simtypes.ParamChange{}
 }
 
 // RegisterStoreDecoder registers a decoder

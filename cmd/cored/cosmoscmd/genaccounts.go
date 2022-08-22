@@ -26,6 +26,7 @@ const (
 )
 
 // AddGenesisAccountCmd returns add-genesis-account cobra Command.
+//
 //nolint:funlen,gofmt,goimports // gofmt and goimports are crazy about this place without reason
 func AddGenesisAccountCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{

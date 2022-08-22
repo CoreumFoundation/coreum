@@ -9,11 +9,11 @@ const TypeMsgFreezeCoin = "freeze_coin"
 
 var _ sdk.Msg = &MsgFreezeCoin{}
 
-func NewMsgFreezeCoin(creator string, address string, denom string) *MsgFreezeCoin {
+func NewMsgFreezeCoin(creator string, address string, coin sdk.Coin) *MsgFreezeCoin {
 	return &MsgFreezeCoin{
 		Creator: creator,
 		Address: address,
-		Denom:   denom,
+		Coin:    coin,
 	}
 }
 

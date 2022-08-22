@@ -8,21 +8,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	freezekeeper "github.com/CoreumFoundation/coreum/x/freeze/keeper"
 )
 
 type msgServer struct {
 	Keeper
-	freezeKeeper freezekeeper.Keeper
 }
 
 // NewMsgServerImpl returns an implementation of the bank MsgServer interface
 // for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper, freezeKeeper freezekeeper.Keeper) types.MsgServer {
+func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{
-		Keeper:       keeper,
-		freezeKeeper: freezeKeeper,
+		Keeper: keeper,
 	}
 }
 
@@ -42,10 +38,6 @@ func (k msgServer) Send(goCtx context.Context, msg *types.MsgSend) (*types.MsgSe
 
 	to, err := sdk.AccAddressFromBech32(msg.ToAddress)
 	if err != nil {
-		return nil, err
-	}
-
-	if err = k.isFrozenCoins(ctx, from, msg.Amount...); err != nil {
 		return nil, err
 	}
 
@@ -90,17 +82,6 @@ func (k msgServer) MultiSend(goCtx context.Context, msg *types.MsgMultiSend) (*t
 		}
 	}
 
-	for _, out := range msg.Inputs {
-		accAddr, err := sdk.AccAddressFromBech32(out.Address)
-		if err != nil {
-			panic(err)
-		}
-
-		if err = k.isFrozenCoins(ctx, accAddr, out.Coins...); err != nil {
-			return nil, err
-		}
-	}
-
 	for _, out := range msg.Outputs {
 		accAddr, err := sdk.AccAddressFromBech32(out.Address)
 		if err != nil {
@@ -125,14 +106,4 @@ func (k msgServer) MultiSend(goCtx context.Context, msg *types.MsgMultiSend) (*t
 	)
 
 	return &types.MsgMultiSendResponse{}, nil
-}
-
-// IsFrozenCoins checks if the given coins are frozen and returns error if they are
-func (k msgServer) isFrozenCoins(ctx sdk.Context, fromAddr sdk.AccAddress, coins ...sdk.Coin) error {
-	for _, coin := range coins {
-		if !k.freezeKeeper.IsFrozenCoin(ctx, fromAddr, coin.Denom) {
-			return sdkerrors.Wrapf(types.ErrSendDisabled, "%s transfers are currently frozen", coin.Denom)
-		}
-	}
-	return nil
 }

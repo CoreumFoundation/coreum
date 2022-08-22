@@ -22,7 +22,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/bank/client/cli"
 	"github.com/CoreumFoundation/coreum/x/bank/client/rest"
 	"github.com/CoreumFoundation/coreum/x/bank/keeper"
-	freezekeeper "github.com/CoreumFoundation/coreum/x/freeze/keeper"
 	v040 "github.com/cosmos/cosmos-sdk/x/bank/legacy/v040"
 	"github.com/cosmos/cosmos-sdk/x/bank/simulation"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -96,13 +95,12 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper        keeper.Keeper
-	freezeKeeper  freezekeeper.Keeper
 	accountKeeper types.AccountKeeper
 }
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper, am.freezeKeeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
 	m := keeper.NewMigrator(am.keeper.(keeper.BaseKeeper))
@@ -113,13 +111,11 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	freezeKeeper freezekeeper.Keeper,
 	accountKeeper types.AccountKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
 		keeper:         keeper,
-		freezeKeeper:   freezeKeeper,
 		accountKeeper:  accountKeeper,
 	}
 }
@@ -134,7 +130,7 @@ func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 
 // Route returns the message routing key for the bank module.
 func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper, am.freezeKeeper))
+	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper))
 }
 
 // QuerierRoute returns the bank module's querier route name.

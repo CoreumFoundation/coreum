@@ -3,9 +3,9 @@ package types
 import (
 	"testing"
 
+	"github.com/CoreumFoundation/coreum/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
-	"github.com/CoreumFoundation/coreum/testutil/sample"
 )
 
 func TestMsgUnfreezeCoin_ValidateBasic(t *testing.T) {

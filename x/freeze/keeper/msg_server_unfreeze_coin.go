@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -20,13 +19,8 @@ func (k msgServer) UnfreezeCoin(goCtx context.Context, msg *types.MsgUnfreezeCoi
 
 	// TODO: Make sure the transaction sender can unfreeze the given token
 
-	// Check if the token is already frozen
-	if !k.Keeper.IsFrozenCoin(ctx, holderAddr, msg.Denom) {
-		return nil, fmt.Errorf("coin %s is not frozen", msg.Denom)
-	}
-
 	// Unfreeze coin
-	if err = k.Keeper.UnfreezeCoin(ctx, holderAddr, msg.Denom); err != nil {
+	if err = k.Keeper.UnfreezeCoin(ctx, holderAddr, msg.Coin); err != nil {
 		return nil, err
 	}
 

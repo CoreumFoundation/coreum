@@ -3,10 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	testkeeper "github.com/CoreumFoundation/coreum/testutil/keeper"
+	"github.com/CoreumFoundation/coreum/x/freeze/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	testkeeper 	"github.com/CoreumFoundation/coreum/testutil/keeper"
-	"github.com/CoreumFoundation/coreum/x/freeze/types"
 )
 
 func TestParamsQuery(t *testing.T) {

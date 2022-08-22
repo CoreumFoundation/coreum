@@ -20,7 +20,7 @@ import (
 )
 
 func TestInvalidMsg(t *testing.T) {
-	h := bank.NewHandler(nil, nil)
+	h := bank.NewHandler(nil)
 
 	res, err := h(sdk.NewContext(nil, tmproto.Header{}, false, nil), testdata.NewTestMsg())
 	require.Error(t, err)
@@ -71,9 +71,9 @@ func TestSendToModuleAccount(t *testing.T) {
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		app.AppCodec(), app.GetKey(types.StoreKey), app.AccountKeeper, app.GetSubspace(types.ModuleName), map[string]bool{
 			moduleAccAddr.String(): true,
-		},
+		}, nil,
 	)
-	handler := bank.NewHandler(app.BankKeeper, nil)
+	handler := bank.NewHandler(app.BankKeeper)
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

@@ -2,32 +2,34 @@ syntax = "proto3";
 package CoreumFoundation.coreum.freeze;
 
 // this line is used by starport scaffolding # proto/tx/import
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/freeze/types";
 
 // Msg defines the Msg service.
 service Msg {
-      rpc FreezeCoin(MsgFreezeCoin) returns (MsgFreezeCoinResponse);
-  rpc UnfreezeCoin(MsgUnfreezeCoin) returns (MsgUnfreezeCoinResponse);
+      rpc UnfreezeCoin(MsgUnfreezeCoin) returns (MsgUnfreezeCoinResponse);
+  rpc FreezeCoin(MsgFreezeCoin) returns (MsgFreezeCoinResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
-}
-
-message MsgFreezeCoin {
-  string creator = 1;
-  string address = 2;
-  string denom = 3;
-}
-
-message MsgFreezeCoinResponse {
 }
 
 message MsgUnfreezeCoin {
   string creator = 1;
   string address = 2;
-  string denom = 3;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgUnfreezeCoinResponse {
+}
+
+message MsgFreezeCoin {
+  string creator = 1;
+  string address = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgFreezeCoinResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

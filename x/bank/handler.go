@@ -6,12 +6,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/x/bank/keeper"
-	freezekeeper "github.com/CoreumFoundation/coreum/x/freeze/keeper"
 )
 
 // NewHandler returns a handler for "bank" type messages.
-func NewHandler(k keeper.Keeper, fk freezekeeper.Keeper) sdk.Handler {
-	msgServer := keeper.NewMsgServerImpl(k, fk)
+func NewHandler(k keeper.Keeper) sdk.Handler {
+	msgServer := keeper.NewMsgServerImpl(k)
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())

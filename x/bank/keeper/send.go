@@ -8,6 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	freezekeeper "github.com/CoreumFoundation/coreum/x/freeze/keeper"
 )
 
 // SendKeeper defines a module interface that facilitates the transfer of coins
@@ -44,11 +46,16 @@ type BaseSendKeeper struct {
 }
 
 func NewBaseSendKeeper(
-	cdc codec.BinaryCodec, storeKey sdk.StoreKey, ak types.AccountKeeper, paramSpace paramtypes.Subspace, blockedAddrs map[string]bool,
+	cdc codec.BinaryCodec,
+	storeKey sdk.StoreKey,
+	ak types.AccountKeeper,
+	paramSpace paramtypes.Subspace,
+	blockedAddrs map[string]bool,
+	freezeKeeper freezekeeper.Keeper,
 ) BaseSendKeeper {
 
 	return BaseSendKeeper{
-		BaseViewKeeper: NewBaseViewKeeper(cdc, storeKey, ak),
+		BaseViewKeeper: NewBaseViewKeeper(cdc, storeKey, ak, freezeKeeper),
 		cdc:            cdc,
 		ak:             ak,
 		storeKey:       storeKey,
