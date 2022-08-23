@@ -344,7 +344,8 @@ func New(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
-	app.FeeKeeper = feekeeper.NewKeeper(ChosenNetwork.TokenSymbol(), keys[feetypes.StoreKey], tkeys[feetypes.TransientStoreKey])
+	app.FeeKeeper = feekeeper.NewKeeper(sdk.NewCoin(ChosenNetwork.TokenSymbol(), ChosenNetwork.FeeModel().InitialGasPrice),
+		keys[feetypes.StoreKey], tkeys[feetypes.TransientStoreKey])
 
 	// ... other modules keepers
 
@@ -574,12 +575,11 @@ func New(
 
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
-			AccountKeeper:      app.AccountKeeper,
-			BankKeeper:         app.BankKeeper,
-			SignModeHandler:    encodingConfig.TxConfig.SignModeHandler(),
-			FeegrantKeeper:     app.FeeGrantKeeper,
-			GasPriceKeeper:     app.FeeKeeper,
-			GasCollectorKeeper: app.FeeKeeper,
+			AccountKeeper:   app.AccountKeeper,
+			BankKeeper:      app.BankKeeper,
+			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
+			FeegrantKeeper:  app.FeeGrantKeeper,
+			FeeKeeper:       app.FeeKeeper,
 			GasRequirements: ante.DeterministicGasRequirements{
 				BankSend: ChosenNetwork.DeterministicGas().BankSend,
 			},

@@ -2,24 +2,23 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/pkg/errors"
 )
 
 // Keeper manages transfers between accounts. It implements the Keeper interface.
 type Keeper struct {
-	feeDenom          string
+	initialGasPrice   sdk.Coin
 	storeKey          sdk.StoreKey
 	transientStoreKey sdk.StoreKey
 }
 
 // NewKeeper returns a new keeper object providing storage options required by fee model.
 func NewKeeper(
-	feeDenom string,
+	initialGasPrice sdk.Coin,
 	storeKey sdk.StoreKey,
 	transientStoreKey sdk.StoreKey,
 ) Keeper {
 	return Keeper{
-		feeDenom:          feeDenom,
+		initialGasPrice:   initialGasPrice,
 		storeKey:          storeKey,
 		transientStoreKey: transientStoreKey,
 	}
@@ -112,7 +111,7 @@ func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(gasPriceKey)
 	if bz == nil {
-		panic(errors.New("minimum gas price is not set"))
+		return k.initialGasPrice
 	}
 	var minGasPrice sdk.Coin
 	if err := minGasPrice.Unmarshal(bz); err != nil {

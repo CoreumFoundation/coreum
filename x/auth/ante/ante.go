@@ -16,14 +16,13 @@ import (
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	AccountKeeper      authante.AccountKeeper
-	BankKeeper         types.BankKeeper
-	FeegrantKeeper     authante.FeegrantKeeper
-	GasPriceKeeper     feeante.GasPriceKeeper
-	GasCollectorKeeper feeante.GasCollectorKeeper
-	SignModeHandler    authsigning.SignModeHandler
-	SigGasConsumer     func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
-	GasRequirements    DeterministicGasRequirements
+	AccountKeeper   authante.AccountKeeper
+	BankKeeper      types.BankKeeper
+	FeegrantKeeper  authante.FeegrantKeeper
+	FeeKeeper       feeante.Keeper
+	SignModeHandler authsigning.SignModeHandler
+	SigGasConsumer  func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
+	GasRequirements DeterministicGasRequirements
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -38,12 +37,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "bank keeper is required for ante builder")
 	}
 
-	if options.GasPriceKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "gas price keeper is required for ante builder")
-	}
-
-	if options.GasCollectorKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "gas collector keeper is required for ante builder")
+	if options.FeeKeeper == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "fee mdoel keeper keeper is required for ante builder")
 	}
 
 	if options.SignModeHandler == nil {
@@ -61,8 +56,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewTxTimeoutHeightDecorator(),
 		NewDeterministicGasDecorator(options.GasRequirements),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
-		feeante.NewFeeDecorator(options.GasPriceKeeper),
-		feeante.NewCollectGasDecorator(options.GasCollectorKeeper),
+		feeante.NewFeeDecorator(options.FeeKeeper),
 		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		authante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
