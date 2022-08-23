@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -92,6 +91,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
+	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"github.com/strangelove-ventures/packet-forward-middleware/v2/router"
 	routerkeeper "github.com/strangelove-ventures/packet-forward-middleware/v2/router/keeper"
@@ -181,7 +181,7 @@ var (
 func init() {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
-		panic(fmt.Sprintf("Failed to get home dir %s", err.Error()))
+		panic(errors.Wrap(err, "Failed to get home dir"))
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
