@@ -62,8 +62,9 @@ func init() {
 			TokenSymbol:   TokenSymbolMain,
 			Fee: FeeConfig{
 				FeeModel: FeeModel{
+					// TODO: Find good parameters before lunching mainnet
 					InitialGasPrice:         sdk.NewInt(1500),
-					MaxGasPrice:             sdk.NewInt(15000),
+					MaxGasPrice:             sdk.NewInt(1500000),
 					MaxDiscount:             0.5,
 					EscalationStartBlockGas: 37500000, // 300 * BankSend message
 					MaxBlockGas:             50000000, // 400 * BankSend message
@@ -84,7 +85,7 @@ func init() {
 			Fee: FeeConfig{
 				FeeModel: FeeModel{
 					InitialGasPrice:         sdk.NewInt(1500),
-					MaxGasPrice:             sdk.NewInt(15000),
+					MaxGasPrice:             sdk.NewInt(1500000),
 					MaxDiscount:             0.5,
 					EscalationStartBlockGas: 37500000, // 300 * BankSend message
 					MaxBlockGas:             50000000, // 400 * BankSend message

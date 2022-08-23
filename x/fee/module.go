@@ -136,6 +136,7 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock returns the end blocker for the fee module. It returns no validator
 // updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	// TODO (wojtek): add simulation tests
 	currentGasUsage := am.keeper.TrackedGas(ctx)
 
 	newShortAverage := calculateMovingAverage(am.keeper.GetShortAverageGas(ctx), currentGasUsage,

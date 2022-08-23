@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	initialGasPrice       int64 = 100000000
-	maxGasPrice           int64 = 200000000
-	maxDiscount                 = 0.5
-	minDiscountedGasPrice       = int64((1. - maxDiscount) * float64(initialGasPrice))
+	initialGasPrice         int64 = 100000000
+	maxGasPrice             int64 = 200000000
+	maxDiscount                   = 0.5
+	gasPriceWithMaxDiscount       = int64((1. - maxDiscount) * float64(initialGasPrice))
 
 	feeModel = Model{
 		InitialGasPrice:         sdk.NewInt(initialGasPrice),
@@ -28,15 +28,15 @@ func TestCalculateNextGasPriceKeyPoints(t *testing.T) {
 	nextGasPrice := feeModel.CalculateNextGasPrice(0, 100).Int64()
 	assert.Equal(t, initialGasPrice, nextGasPrice)
 
-	// if current average gas is equal to average gas it should be minDiscountedGasPrice
+	// if current average gas is equal to average gas it should be gasPriceWithMaxDiscount
 
 	nextGasPrice = feeModel.CalculateNextGasPrice(100, 100).Int64()
-	assert.Equal(t, minDiscountedGasPrice, nextGasPrice)
+	assert.Equal(t, gasPriceWithMaxDiscount, nextGasPrice)
 
-	// if current average gas equals escalation start block gas it still should be minDiscountedGasPrice
+	// if current average gas equals escalation start block gas it still should be gasPriceWithMaxDiscount
 
 	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.EscalationStartBlockGas, 100).Int64()
-	assert.Equal(t, minDiscountedGasPrice, nextGasPrice)
+	assert.Equal(t, gasPriceWithMaxDiscount, nextGasPrice)
 
 	// if current average gas is equal to MaxBlockGas it should be max gas price number
 
@@ -55,7 +55,7 @@ func TestAverageGasBeyondEscalationStartBlockGas(t *testing.T) {
 	// It seems obvious that price should be escalated.
 
 	nextGasPrice := feeModel.CalculateNextGasPrice(feeModel.EscalationStartBlockGas+150, feeModel.EscalationStartBlockGas+100).Int64()
-	assert.Greater(t, nextGasPrice, minDiscountedGasPrice)
+	assert.Greater(t, nextGasPrice, gasPriceWithMaxDiscount)
 
 	// Next gas price should be the same as for long average block gas being below optimal block gas.
 	// It means that escalation was turned on.
@@ -66,10 +66,10 @@ func TestAverageGasBeyondEscalationStartBlockGas(t *testing.T) {
 
 func TestZeroAverageGas(t *testing.T) {
 	nextGasPrice := feeModel.CalculateNextGasPrice(0, 0).Int64()
-	assert.Equal(t, nextGasPrice, minDiscountedGasPrice)
+	assert.Equal(t, nextGasPrice, gasPriceWithMaxDiscount)
 
 	nextGasPrice = feeModel.CalculateNextGasPrice(1, 0).Int64()
-	assert.Equal(t, nextGasPrice, minDiscountedGasPrice)
+	assert.Equal(t, nextGasPrice, gasPriceWithMaxDiscount)
 }
 
 func TestShapeInDecreasingRegion(t *testing.T) {
@@ -89,14 +89,14 @@ func TestShapeInFlatRegion(t *testing.T) {
 
 	for i := int64(longAverageBlockGas); i <= feeModel.EscalationStartBlockGas; i++ {
 		nextPrice := feeModel.CalculateNextGasPrice(i, longAverageBlockGas).Int64()
-		assert.Equal(t, minDiscountedGasPrice, nextPrice)
+		assert.Equal(t, gasPriceWithMaxDiscount, nextPrice)
 	}
 }
 
 func TestShapeInEscalationRegion(t *testing.T) {
 	const longAverageBlockGas = 100
 
-	lastPrice := minDiscountedGasPrice
+	lastPrice := gasPriceWithMaxDiscount
 	for i := feeModel.EscalationStartBlockGas + 1; i <= feeModel.MaxBlockGas; i++ {
 		nextPrice := feeModel.CalculateNextGasPrice(i, longAverageBlockGas).Int64()
 		assert.Greater(t, nextPrice, lastPrice)

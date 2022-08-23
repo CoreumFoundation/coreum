@@ -10,6 +10,8 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	feeante "github.com/CoreumFoundation/coreum/x/fee/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
@@ -17,8 +19,8 @@ type HandlerOptions struct {
 	AccountKeeper      authante.AccountKeeper
 	BankKeeper         types.BankKeeper
 	FeegrantKeeper     authante.FeegrantKeeper
-	GasPriceKeeper     GasPriceKeeper
-	GasCollectorKeeper GasCollectorKeeper
+	GasPriceKeeper     feeante.GasPriceKeeper
+	GasCollectorKeeper feeante.GasCollectorKeeper
 	SignModeHandler    authsigning.SignModeHandler
 	SigGasConsumer     func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
 	GasRequirements    DeterministicGasRequirements
@@ -59,8 +61,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewTxTimeoutHeightDecorator(),
 		NewDeterministicGasDecorator(options.GasRequirements),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
-		NewFeeDecorator(options.GasPriceKeeper),
-		NewCollectGasDecorator(options.GasCollectorKeeper),
+		feeante.NewFeeDecorator(options.GasPriceKeeper),
+		feeante.NewCollectGasDecorator(options.GasCollectorKeeper),
 		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		authante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators

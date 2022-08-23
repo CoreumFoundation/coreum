@@ -18,7 +18,7 @@ var NetworkConfig = app.NetworkConfig{
 	Fee: app.FeeConfig{
 		FeeModel: app.FeeModel{
 			InitialGasPrice:         sdk.NewInt(1500),
-			MaxGasPrice:             sdk.NewInt(15000),
+			MaxGasPrice:             sdk.NewInt(1500000),
 			MaxDiscount:             0.5,
 			EscalationStartBlockGas: 37500000, // 300 * BankSend message
 			MaxBlockGas:             50000000, // 400 * BankSend message

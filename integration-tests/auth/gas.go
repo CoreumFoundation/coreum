@@ -33,11 +33,11 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
 
-			minDiscountedGasPriceFloat := new(big.Float).SetInt(chain.Network.FeeModel().InitialGasPrice.BigInt())
-			minDiscountedGasPriceFloat.Mul(minDiscountedGasPriceFloat, big.NewFloat(1.-chain.Network.FeeModel().MaxDiscount))
-			minDiscountedGasPrice, _ := minDiscountedGasPriceFloat.Int(nil)
+			gasPriceWithMaxDiscountFloat := new(big.Float).SetInt(chain.Network.FeeModel().InitialGasPrice.BigInt())
+			gasPriceWithMaxDiscountFloat.Mul(gasPriceWithMaxDiscountFloat, big.NewFloat(1.-chain.Network.FeeModel().MaxDiscount))
+			gasPriceWithMaxDiscount, _ := gasPriceWithMaxDiscountFloat.Int(nil)
 
-			gasPrice := new(big.Int).Sub(minDiscountedGasPrice, big.NewInt(1))
+			gasPrice := new(big.Int).Sub(gasPriceWithMaxDiscount, big.NewInt(1))
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,

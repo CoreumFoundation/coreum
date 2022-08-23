@@ -28,7 +28,7 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 	case shortEMA > m.EscalationStartBlockGas:
 		return m.calculateNextGasPriceInEscalationRegion(shortEMA)
 	case shortEMA >= longEMA:
-		return m.computeMaxDiscountedGasPrice()
+		return m.computeMGasPriceWithMaxDiscount()
 	case longEMA > 0:
 		return m.calculateNextGasPriceInDiscountRegion(shortEMA, longEMA)
 	default:
@@ -37,12 +37,12 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 }
 
 func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
-	maxDiscountedGasPrice := m.computeMaxDiscountedGasPrice()
+	gasPriceWithMaxDiscount := m.computeMGasPriceWithMaxDiscount()
 
 	// inertia defines how slow gas price goes up after triggering escalation algorithm (the lower the inertia,
 	// the faster price goes up)
 	const inertia = 2.0
-	height := m.MaxGasPrice.Sub(maxDiscountedGasPrice)
+	height := m.MaxGasPrice.Sub(gasPriceWithMaxDiscount)
 	width := float64(m.MaxBlockGas - m.EscalationStartBlockGas)
 	x := float64(shortEMA - m.EscalationStartBlockGas)
 
@@ -50,7 +50,7 @@ func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
 	escalationOffsetFloat.Mul(escalationOffsetFloat, big.NewFloat(math.Pow(x/width, inertia)))
 	escalationOffset, _ := escalationOffsetFloat.Int(nil)
 
-	return maxDiscountedGasPrice.Add(sdk.NewIntFromBigInt(escalationOffset))
+	return gasPriceWithMaxDiscount.Add(sdk.NewIntFromBigInt(escalationOffset))
 }
 
 func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int64) sdk.Int {
@@ -63,11 +63,11 @@ func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int
 	return sdk.NewIntFromBigInt(minGasPrice)
 }
 
-func (m Model) computeMaxDiscountedGasPrice() sdk.Int {
-	maxDiscountedGasPriceFloat := big.NewFloat(0).SetInt(m.InitialGasPrice.BigInt())
-	maxDiscountedGasPriceFloat.Mul(maxDiscountedGasPriceFloat, big.NewFloat(1.-m.MaxDiscount))
-	maxDiscountedGasPrice, _ := maxDiscountedGasPriceFloat.Int(nil)
-	return sdk.NewIntFromBigInt(maxDiscountedGasPrice)
+func (m Model) computeMGasPriceWithMaxDiscount() sdk.Int {
+	gasPriceWithMaxDiscountFloat := big.NewFloat(0).SetInt(m.InitialGasPrice.BigInt())
+	gasPriceWithMaxDiscountFloat.Mul(gasPriceWithMaxDiscountFloat, big.NewFloat(1.-m.MaxDiscount))
+	gasPriceWithMaxDiscount, _ := gasPriceWithMaxDiscountFloat.Int(nil)
+	return sdk.NewIntFromBigInt(gasPriceWithMaxDiscount)
 }
 
 func calculateMovingAverage(previousAverage, newValue int64, numOfBlocks uint) int64 {
