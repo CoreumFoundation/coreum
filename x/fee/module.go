@@ -139,15 +139,15 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	currentGasUsage := am.keeper.TrackedGas(ctx)
 
 	newShortAverage := calculateMovingAverage(am.keeper.GetShortAverageGas(ctx), currentGasUsage,
-		am.feeModel.NumOfBlocksForShortAverageBlockGas)
+		am.feeModel.ShortAverageInertia)
 	newLongAverage := calculateMovingAverage(am.keeper.GetLongAverageGas(ctx), currentGasUsage,
-		am.feeModel.NumOfBlocksForLongAverageBlockGas)
+		am.feeModel.LongAverageInertia)
 
-	minGasPrice := calculateNextGasPrice(am.feeModel, newShortAverage, newLongAverage)
+	minGasPrice := am.feeModel.CalculateNextGasPrice(newShortAverage, newLongAverage)
 
 	am.keeper.SetShortAverageGas(ctx, newShortAverage)
 	am.keeper.SetLongAverageGas(ctx, newLongAverage)
-	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(am.feeModel.FeeDenom, sdk.NewIntFromBigInt(minGasPrice)))
+	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(am.feeModel.FeeDenom, minGasPrice))
 
 	return []abci.ValidatorUpdate{}
 }

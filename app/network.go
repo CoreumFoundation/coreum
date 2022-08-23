@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"math/big"
 	"os"
 	"sync"
 	"text/template"
@@ -63,13 +62,13 @@ func init() {
 			TokenSymbol:   TokenSymbolMain,
 			Fee: FeeConfig{
 				FeeModel: FeeModel{
-					InitialGasPrice:                    big.NewInt(1500),
-					MaxGasPrice:                        big.NewInt(15000),
-					MaxDiscount:                        0.5,
-					EscalationStartBlockGas:            37500000, // 300 * BankSend message
-					MaxBlockGas:                        50000000, // 400 * BankSend message
-					NumOfBlocksForShortAverageBlockGas: 10,
-					NumOfBlocksForLongAverageBlockGas:  1000,
+					InitialGasPrice:         sdk.NewInt(1500),
+					MaxGasPrice:             sdk.NewInt(15000),
+					MaxDiscount:             0.5,
+					EscalationStartBlockGas: 37500000, // 300 * BankSend message
+					MaxBlockGas:             50000000, // 400 * BankSend message
+					ShortAverageInertia:     10,
+					LongAverageInertia:      1000,
 				},
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 125000,
@@ -84,13 +83,13 @@ func init() {
 			TokenSymbol:   TokenSymbolDev,
 			Fee: FeeConfig{
 				FeeModel: FeeModel{
-					InitialGasPrice:                    big.NewInt(1500),
-					MaxGasPrice:                        big.NewInt(15000),
-					MaxDiscount:                        0.5,
-					EscalationStartBlockGas:            37500000, // 300 * BankSend message
-					MaxBlockGas:                        50000000, // 400 * BankSend message
-					NumOfBlocksForShortAverageBlockGas: 10,
-					NumOfBlocksForLongAverageBlockGas:  1000,
+					InitialGasPrice:         sdk.NewInt(1500),
+					MaxGasPrice:             sdk.NewInt(15000),
+					MaxDiscount:             0.5,
+					EscalationStartBlockGas: 37500000, // 300 * BankSend message
+					MaxBlockGas:             50000000, // 400 * BankSend message
+					ShortAverageInertia:     10,
+					LongAverageInertia:      1000,
 				},
 				DeterministicGas: DeterministicGasConfig{
 					BankSend: 125000,
@@ -148,34 +147,39 @@ func init() {
 var networks = map[ChainID]NetworkConfig{}
 
 // FeeModel stores parameters defining fee model of coreum blockchain
+// There are four regions on the fee model curve
+// - between 0 and "long average block gas" where gas price goes down from InitialGasPrice to minimum discounted gas price (InitialGasPrice * (1 -MaxDiscount))
+// - between "long average block gas" and EscalationStartBlockGas where we offer minimum discounted gas price all the time
+// - between EscalationStartBlockGas and MaxBlockGas where price goes up rapidly from minimum discounted gas price to MaxGasPrice
+// - above MaxBlockGas (if it happens for any reason) where price is equal to MaxGasPrice
+//
+// Chart presenting an example is available at https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=0
+//
+// The input (x value) for that function is calculated by taking short block gas average.
+// Price (y value) being an output of the fee model is used as the minimum gas price for next block.
 type FeeModel struct {
-	// InitialGasPrice is required if short average block gas is 0
-	InitialGasPrice *big.Int
+	// InitialGasPrice is used when block gas short average is 0. It happens when there are no transactions being broadcasted. This value is also used to initialize gas price on brand-new chain.
+	InitialGasPrice sdk.Int
 
-	// MaxGasPrice is required if short average block gas is greater than or equal to max block gas
-	MaxGasPrice *big.Int
+	// MaxGasPrice is used when block gas short average is greater than or equal to MaxBlockGas. This value is used to limit gas price escalation to avoid having possible infinity GasPrice value otherwise.
+	MaxGasPrice sdk.Int
 
-	// MaxDiscount is th maximum discount we offer on top of gas price if short average block gas is between long average block gas and escalation start block gas
+	// MaxDiscount is th maximum discount we offer on top of initial gas price if short average block gas is between long average block gas and escalation start block gas.
 	MaxDiscount float64
 
-	// EscalationStartBlockGas defines block gas usage where gas price escalation starts if short average block gas is higher than this value
+	// EscalationStartBlockGas defines block gas usage where gas price escalation starts if short average block gas is higher than this value.
 	EscalationStartBlockGas int64
 
-	// MaxBlockGas sets the maximum capacity of block
+	// MaxBlockGas sets the maximum capacity of block. This is enforced on tendermint level in genesis configuration. Once short average block gas goes above this value, gas price is a flat line equal to MaxGasPrice.
 	MaxBlockGas int64
 
-	// NumOfBlocksForShortAverageBlockGas defines how many blocks are taken into account when short average block gas is calculated
-	NumOfBlocksForShortAverageBlockGas uint
+	// ShortAverageInertia defines inertia for short average long gas in EMA model. The equation is: NewAverage = ((ShortAverageInertia - 1)*PreviousAverage + GasUsedByCurrentBlock) / ShortAverageInertia
+	// The value might be interpreted as the number of blocks which are taken to calculate the average. It would be exactly like that in SMA model, in EMA this is an approximation.
+	ShortAverageInertia uint
 
-	// NumOfBlocksForLongAverageBlockGas defines how many blocks are taken into account when long average block gas is calculated
-	NumOfBlocksForLongAverageBlockGas uint
-}
-
-// Clone creates a copy of FeeModel
-func (fm FeeModel) Clone() FeeModel {
-	fm.InitialGasPrice = new(big.Int).Set(fm.InitialGasPrice)
-	fm.MaxGasPrice = new(big.Int).Set(fm.MaxGasPrice)
-	return fm
+	// LongAverageInertia defines inertia for long average block gas in EMA model. The equation is: NewAverage = ((LongAverageInertia - 1)*PreviousAverage + GasUsedByCurrentBlock) / LongAverageInertia
+	// The value might be interpreted as the number of blocks which are taken to calculate the average. It would be exactly like that in SMA model, in EMA this is an approximation.
+	LongAverageInertia uint
 }
 
 // DeterministicGasConfig keeps config about deterministic gas for some message types
@@ -187,12 +191,6 @@ type DeterministicGasConfig struct {
 type FeeConfig struct {
 	FeeModel         FeeModel
 	DeterministicGas DeterministicGasConfig
-}
-
-// Clone creates a copy of FeeConfig to allow to pass by value
-func (fc FeeConfig) Clone() FeeConfig {
-	fc.FeeModel = fc.FeeModel.Clone()
-	return fc
 }
 
 // NetworkConfig helps initialize Network instance
@@ -231,7 +229,7 @@ func NewNetwork(c NetworkConfig) Network {
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
 		nodeConfig:     c.NodeConfig.Clone(),
-		fee:            c.Fee.Clone(),
+		fee:            c.Fee,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -409,7 +407,7 @@ func (n Network) TokenSymbol() string {
 
 // FeeModel returns fee model configuration
 func (n Network) FeeModel() FeeModel {
-	return n.fee.FeeModel.Clone()
+	return n.fee.FeeModel
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types

@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -22,8 +23,8 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 				chain.Network.FeeModel().InitialGasPrice,
 				chain.Network.DeterministicGas().BankSend,
 				1,
-				big.NewInt(100),
-			), chain.Network.TokenSymbol())
+				sdk.NewInt(100),
+			).BigInt(), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -32,7 +33,7 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
 
-			minDiscountedGasPriceFloat := new(big.Float).SetInt(chain.Network.FeeModel().InitialGasPrice)
+			minDiscountedGasPriceFloat := new(big.Float).SetInt(chain.Network.FeeModel().InitialGasPrice.BigInt())
 			minDiscountedGasPriceFloat.Mul(minDiscountedGasPriceFloat, big.NewFloat(1.-chain.Network.FeeModel().MaxDiscount))
 			minDiscountedGasPrice, _ := minDiscountedGasPriceFloat.Int(nil)
 
@@ -64,8 +65,8 @@ func TestGasLimitHigherThanMaxBlockGas(chain testing.Chain) (testing.PrepareFunc
 				chain.Network.FeeModel().MaxGasPrice,
 				uint64(chain.Network.FeeModel().MaxBlockGas+1),
 				1,
-				big.NewInt(100),
-			), chain.Network.TokenSymbol())
+				sdk.NewInt(100),
+			).BigInt(), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -78,7 +79,7 @@ func TestGasLimitHigherThanMaxBlockGas(chain testing.Chain) (testing.PrepareFunc
 				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: uint64(chain.Network.FeeModel().MaxBlockGas + 1), // transaction requires more gas than block can fit
-					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice, Denom: chain.Network.TokenSymbol()},
+					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
 				},
 				Sender:   sender,
 				Receiver: sender,
@@ -101,8 +102,8 @@ func TestGasLimitEqualToMaxBlockGas(chain testing.Chain) (testing.PrepareFunc, t
 				chain.Network.FeeModel().MaxGasPrice,
 				uint64(chain.Network.FeeModel().MaxBlockGas),
 				1,
-				big.NewInt(100),
-			), chain.Network.TokenSymbol())
+				sdk.NewInt(100),
+			).BigInt(), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -115,7 +116,7 @@ func TestGasLimitEqualToMaxBlockGas(chain testing.Chain) (testing.PrepareFunc, t
 				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: uint64(chain.Network.FeeModel().MaxBlockGas),
-					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice, Denom: chain.Network.TokenSymbol()},
+					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
 				},
 				Sender:   sender,
 				Receiver: sender,

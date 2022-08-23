@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -34,8 +35,8 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 			chain.Network.FeeModel().InitialGasPrice,
 			chain.Network.DeterministicGas().BankSend,
 			numOfTransactions,
-			big.NewInt(0),
-		)
+			sdk.NewInt(0),
+		).BigInt()
 
 		wallet1 := testing.RandomWallet()
 		wallet2 := testing.RandomWallet()
@@ -93,8 +94,8 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 				chain.Network.FeeModel().InitialGasPrice,
 				chain.Network.DeterministicGas().BankSend,
 				1,
-				big.NewInt(10),
-			), chain.Network.TokenSymbol())
+				sdk.NewInt(10),
+			).BigInt(), chain.Network.TokenSymbol())
 			if err != nil {
 				return err
 			}
@@ -114,7 +115,7 @@ func sendAndReturnGasUsed(ctx context.Context, coredClient client.Client, sender
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: gasLimit,
-			GasPrice: types.Coin{Amount: network.FeeModel().InitialGasPrice, Denom: network.TokenSymbol()},
+			GasPrice: types.Coin{Amount: network.FeeModel().InitialGasPrice.BigInt(), Denom: network.TokenSymbol()},
 			Memo:     maxMemo, // memo is set to max length here to charge as much gas as possible
 		},
 		Sender:   sender,

@@ -11,13 +11,13 @@ import (
 
 var (
 	feeModelSim = Model{
-		InitialGasPrice:                    sdk.NewInt(1500),
-		MaxGasPrice:                        sdk.NewInt(15000),
-		MaxDiscount:                        0.5,
-		EscalationStartBlockGas:            37500000, // 300 * BankSend message
-		MaxBlockGas:                        50000000, // 400 * BankSend message
-		NumOfBlocksForShortAverageBlockGas: 10,
-		NumOfBlocksForLongAverageBlockGas:  1000,
+		InitialGasPrice:         sdk.NewInt(1500),
+		MaxGasPrice:             sdk.NewInt(15000),
+		MaxDiscount:             0.5,
+		EscalationStartBlockGas: 37500000, // 300 * BankSend message
+		MaxBlockGas:             50000000, // 400 * BankSend message
+		ShortAverageInertia:     10,
+		LongAverageInertia:      1000,
 	}
 )
 
@@ -25,7 +25,7 @@ func ExampleGasPricePerBlockGas() {
 	const longAverageBlockGas = 5000000
 
 	for i := int64(0); i <= feeModelSim.MaxBlockGas+5000000; i += 10000 {
-		fmt.Printf("%d\t%d\n", i, calculateNextGasPrice(feeModelSim, i, longAverageBlockGas).Int64())
+		fmt.Printf("%d\t%d\n", i, feeModelSim.CalculateNextGasPrice(i, longAverageBlockGas).Int64())
 	}
 	// Output: list of gas prices for each gas usage
 	// https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=0
@@ -64,9 +64,9 @@ func ExampleGasPriceOverTime() {
 	}
 
 	for i, gas := range blockGas {
-		shortAverage = calculateMovingAverage(shortAverage, gas, feeModelSim.NumOfBlocksForShortAverageBlockGas)
-		longAverage = calculateMovingAverage(longAverage, gas, feeModelSim.NumOfBlocksForLongAverageBlockGas)
-		gasPrice := calculateNextGasPrice(feeModelSim, shortAverage, longAverage)
+		shortAverage = calculateMovingAverage(shortAverage, gas, feeModelSim.ShortAverageInertia)
+		longAverage = calculateMovingAverage(longAverage, gas, feeModelSim.LongAverageInertia)
+		gasPrice := feeModelSim.CalculateNextGasPrice(shortAverage, longAverage)
 
 		if i%10 != 0 {
 			continue
