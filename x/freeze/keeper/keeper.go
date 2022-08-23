@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -77,11 +76,12 @@ func (k *BaseKeeper) FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk
 	key := []byte(coin.Denom)
 
 	if store.Has(key) {
-		amount := big.NewInt(0).SetBytes(store.Get(key))
-		coin.Amount = coin.Amount.Add(sdk.NewIntFromBigInt(amount))
+		var existingCoin sdk.Coin
+		k.cdc.MustUnmarshal(store.Get(key), &existingCoin)
+		coin.Amount = coin.Amount.Add(existingCoin.Amount)
 	}
 
-	store.Set(key, coin.Amount.BigInt().Bytes())
+	store.Set(key, k.cdc.MustMarshal(&coin))
 
 	return nil
 }
@@ -100,14 +100,15 @@ func (k *BaseKeeper) UnfreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin s
 		return fmt.Errorf("%s is not frozen on the given account", coin)
 	}
 
-	amount := sdk.NewIntFromBigInt(big.NewInt(0).SetBytes(store.Get(key)))
-	if coin.Amount.GT(amount) {
-		return fmt.Errorf("only %s%s is frozen on the given account", amount, key)
+	var existingCoin sdk.Coin
+	k.cdc.MustUnmarshal(store.Get(key), &existingCoin)
+	if coin.Amount.GT(existingCoin.Amount) {
+		return fmt.Errorf("only %s%s is frozen on the given account", existingCoin.Amount, key)
 	}
 
-	coin.Amount = coin.Amount.Sub(amount)
+	coin.Amount = coin.Amount.Sub(existingCoin.Amount)
 
-	store.Set(key, coin.Amount.BigInt().Bytes())
+	store.Set(key, k.cdc.MustMarshal(&coin))
 
 	return nil
 }
@@ -120,9 +121,9 @@ func (k *BaseKeeper) ListAccountFrozenCoins(ctx sdk.Context, holder sdk.AccAddre
 
 	var frozenCoins sdk.Coins
 	for ; coinIter.Valid(); coinIter.Next() {
-		denom, amountRaw := coinIter.Key(), coinIter.Value()
-		amount := sdk.NewIntFromBigInt(big.NewInt(0).SetBytes(amountRaw))
-		frozenCoins = frozenCoins.Add(sdk.NewCoin(string(denom), amount))
+		var existingCoin sdk.Coin
+		k.cdc.MustUnmarshal(coinIter.Value(), &existingCoin)
+		frozenCoins = frozenCoins.Add(existingCoin)
 	}
 
 	if err := coinIter.Error(); err != nil {
@@ -153,9 +154,9 @@ func (k *BaseKeeper) ListFrozenCoins(ctx sdk.Context) (map[string]sdk.Coins, err
 
 		coins := sdk.NewCoins()
 		for ; coinIter.Valid(); coinIter.Next() {
-			denom, amountRaw := coinIter.Key(), coinIter.Value()
-			amount := sdk.NewIntFromBigInt(big.NewInt(0).SetBytes(amountRaw))
-			coins = coins.Add(sdk.NewCoin(string(denom), amount))
+			var existingCoin sdk.Coin
+			k.cdc.MustUnmarshal(coinIter.Value(), &existingCoin)
+			coins = coins.Add(existingCoin)
 		}
 
 		if err := coinIter.Error(); err != nil {
