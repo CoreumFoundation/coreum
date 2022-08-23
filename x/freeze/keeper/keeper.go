@@ -81,6 +81,10 @@ func (k *BaseKeeper) FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk
 		coin.Amount = coin.Amount.Add(existingCoin.Amount)
 	}
 
+	if coin.Amount.LT(balance.Amount) {
+		return fmt.Errorf("account balance has only %s, but %s is trying to be frozen", balance.Amount, coin.Amount)
+	}
+
 	store.Set(key, k.cdc.MustMarshal(&coin))
 
 	return nil
