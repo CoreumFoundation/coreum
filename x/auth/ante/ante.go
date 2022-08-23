@@ -11,7 +11,7 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	feeante "github.com/CoreumFoundation/coreum/x/fee/ante"
+	feemodelante "github.com/CoreumFoundation/coreum/x/feemodel/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
@@ -19,7 +19,7 @@ type HandlerOptions struct {
 	AccountKeeper   authante.AccountKeeper
 	BankKeeper      types.BankKeeper
 	FeegrantKeeper  authante.FeegrantKeeper
-	FeeKeeper       feeante.Keeper
+	FeeModelKeeper  feemodelante.Keeper
 	SignModeHandler authsigning.SignModeHandler
 	SigGasConsumer  func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
 	GasRequirements DeterministicGasRequirements
@@ -37,7 +37,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "bank keeper is required for ante builder")
 	}
 
-	if options.FeeKeeper == nil {
+	if options.FeeModelKeeper == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "fee mdoel keeper keeper is required for ante builder")
 	}
 
@@ -56,7 +56,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewTxTimeoutHeightDecorator(),
 		NewDeterministicGasDecorator(options.GasRequirements),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
-		feeante.NewFeeDecorator(options.FeeKeeper),
+		feemodelante.NewFeeDecorator(options.FeeModelKeeper),
 		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		authante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators

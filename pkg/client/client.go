@@ -272,8 +272,3 @@ func ExpectedSequenceFromError(err error) (uint64, bool, error) {
 func IsInsufficientFeeError(err error) bool {
 	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
 }
-
-// IsNotFoundError returns true if error was caused by transaction being not found
-func IsNotFoundError(err error) bool {
-	return asSDKError(err, cosmoserrors.ErrNotFound) != nil
-}

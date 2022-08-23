@@ -1,7 +1,7 @@
 //go:build simulation
 // +build simulation
 
-package fee
+package feemodel
 
 import (
 	"fmt"

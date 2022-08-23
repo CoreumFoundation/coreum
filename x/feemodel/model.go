@@ -1,4 +1,4 @@
-package fee
+package feemodel
 
 import (
 	"math"

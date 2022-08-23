@@ -97,9 +97,9 @@ import (
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
-	"github.com/CoreumFoundation/coreum/x/fee"
-	feekeeper "github.com/CoreumFoundation/coreum/x/fee/keeper"
-	feetypes "github.com/CoreumFoundation/coreum/x/fee/types"
+	"github.com/CoreumFoundation/coreum/x/feemodel"
+	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -163,7 +163,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
-		fee.AppModuleBasic{},
+		feemodel.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -230,7 +230,7 @@ type App struct {
 	TransferKeeper   ibctransferkeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	MonitoringKeeper monitoringpkeeper.Keeper
-	FeeKeeper        feekeeper.Keeper
+	FeeModelKeeper   feemodelkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper        capabilitykeeper.ScopedKeeper
@@ -275,10 +275,10 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
-		feetypes.StoreKey,
+		feemodeltypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feetypes.TransientStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	app := &App{
@@ -344,8 +344,8 @@ func New(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
-	app.FeeKeeper = feekeeper.NewKeeper(sdk.NewCoin(ChosenNetwork.TokenSymbol(), ChosenNetwork.FeeModel().InitialGasPrice),
-		keys[feetypes.StoreKey], tkeys[feetypes.TransientStoreKey])
+	app.FeeModelKeeper = feemodelkeeper.NewKeeper(sdk.NewCoin(ChosenNetwork.TokenSymbol(), ChosenNetwork.FeeModel().InitialGasPrice),
+		keys[feemodeltypes.StoreKey], tkeys[feemodeltypes.TransientStoreKey])
 
 	// ... other modules keepers
 
@@ -416,8 +416,8 @@ func New(
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	feeModel := ChosenNetwork.FeeModel()
-	feeModule := fee.NewAppModule(appCodec, app.FeeKeeper,
-		fee.Model{
+	feeModule := feemodel.NewAppModule(appCodec, app.FeeModelKeeper,
+		feemodel.Model{
 			FeeDenom:                ChosenNetwork.TokenSymbol(),
 			InitialGasPrice:         feeModel.InitialGasPrice,
 			MaxGasPrice:             feeModel.MaxGasPrice,
@@ -482,7 +482,7 @@ func New(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		monitoringptypes.ModuleName,
-		feetypes.ModuleName,
+		feemodeltypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -506,7 +506,7 @@ func New(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		monitoringptypes.ModuleName,
-		feetypes.ModuleName,
+		feemodeltypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -535,7 +535,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		feegrant.ModuleName,
 		monitoringptypes.ModuleName,
-		feetypes.ModuleName,
+		feemodeltypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -579,7 +579,7 @@ func New(
 			BankKeeper:      app.BankKeeper,
 			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 			FeegrantKeeper:  app.FeeGrantKeeper,
-			FeeKeeper:       app.FeeKeeper,
+			FeeModelKeeper:  app.FeeModelKeeper,
 			GasRequirements: ante.DeterministicGasRequirements{
 				BankSend: ChosenNetwork.DeterministicGas().BankSend,
 			},

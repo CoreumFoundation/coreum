@@ -1,4 +1,4 @@
-package fee
+package feemodel
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/fee/types"
+	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 var (
