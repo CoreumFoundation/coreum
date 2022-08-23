@@ -18,7 +18,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		}
 
 		for _, coin := range frozenCoin.Coins {
-			k.FreezeCoin(ctx, acc, coin)
+			if err = k.FreezeCoin(ctx, acc, coin); err != nil {
+				panic(err)
+			}
 		}
 	}
 }

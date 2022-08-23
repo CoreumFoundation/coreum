@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -14,15 +15,18 @@ import (
 	"github.com/CoreumFoundation/coreum/x/freeze/types"
 )
 
+type BankKeeper interface {
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+}
+
 type Keeper interface {
 	Logger(ctx sdk.Context) log.Logger
 
 	GetParams(ctx sdk.Context) types.Params
 	SetParams(ctx sdk.Context, params types.Params)
 
-	FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk.Coin)
+	FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk.Coin) error
 	UnfreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk.Coin) error
-	GetFrozenCoin(ctx sdk.Context, holder sdk.AccAddress, denom string) sdk.Coin
 	ListAccountFrozenCoins(ctx sdk.Context, holder sdk.AccAddress) (sdk.Coins, error)
 	ListFrozenCoins(ctx sdk.Context) (map[string]sdk.Coins, error)
 
@@ -34,6 +38,7 @@ type BaseKeeper struct {
 	storeKey   sdk.StoreKey
 	memKey     sdk.StoreKey
 	paramstore paramtypes.Subspace
+	bankKeeper BankKeeper
 }
 
 func NewKeeper(
@@ -41,6 +46,7 @@ func NewKeeper(
 	storeKey,
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
+	bankKeeper BankKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -52,6 +58,7 @@ func NewKeeper(
 		storeKey:   storeKey,
 		memKey:     memKey,
 		paramstore: ps,
+		bankKeeper: bankKeeper,
 	}
 }
 
@@ -59,9 +66,13 @@ func (k BaseKeeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k *BaseKeeper) FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk.Coin) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
-	store = prefix.NewStore(store, holder.Bytes())
+func (k *BaseKeeper) FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk.Coin) error {
+	balance := k.bankKeeper.GetBalance(ctx, holder, coin.Denom)
+	if balance.Amount.IsZero() {
+		return fmt.Errorf("the given account does not hold the given coin")
+	}
+
+	store := k.getFreezeCoinStore(ctx, holder)
 
 	key := []byte(coin.Denom)
 
@@ -71,11 +82,17 @@ func (k *BaseKeeper) FreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk
 	}
 
 	store.Set(key, coin.Amount.BigInt().Bytes())
+
+	return nil
 }
 
 func (k *BaseKeeper) UnfreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin sdk.Coin) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
-	store = prefix.NewStore(store, holder.Bytes())
+	balance := k.bankKeeper.GetBalance(ctx, holder, coin.Denom)
+	if balance.Amount.IsZero() {
+		return fmt.Errorf("the given account does not hold the given coin")
+	}
+
+	store := k.getFreezeCoinStore(ctx, holder)
 
 	key := []byte(coin.Denom)
 
@@ -95,23 +112,8 @@ func (k *BaseKeeper) UnfreezeCoin(ctx sdk.Context, holder sdk.AccAddress, coin s
 	return nil
 }
 
-func (k *BaseKeeper) GetFrozenCoin(ctx sdk.Context, holder sdk.AccAddress, denom string) sdk.Coin {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
-	store = prefix.NewStore(store, holder.Bytes())
-
-	key := []byte(denom)
-
-	if !store.Has(key) {
-		return sdk.NewInt64Coin(denom, 0)
-	}
-
-	amount := sdk.NewIntFromBigInt(big.NewInt(0).SetBytes(store.Get(key)))
-	return sdk.NewCoin(denom, amount)
-}
-
 func (k *BaseKeeper) ListAccountFrozenCoins(ctx sdk.Context, holder sdk.AccAddress) (sdk.Coins, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
-	store = prefix.NewStore(store, holder.Bytes())
+	store := k.getFreezeCoinStore(ctx, holder)
 
 	coinIter := store.Iterator(nil, nil)
 	defer coinIter.Close()
@@ -131,7 +133,7 @@ func (k *BaseKeeper) ListAccountFrozenCoins(ctx sdk.Context, holder sdk.AccAddre
 }
 
 func (k *BaseKeeper) ListFrozenCoins(ctx sdk.Context) (map[string]sdk.Coins, error) {
-	baseStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey))
+	baseStore := ctx.KVStore(k.storeKey)
 
 	frozenCoins := make(map[string]sdk.Coins)
 
@@ -140,6 +142,10 @@ func (k *BaseKeeper) ListFrozenCoins(ctx sdk.Context) (map[string]sdk.Coins, err
 
 	for ; accIter.Valid(); accIter.Next() {
 		acc := accIter.Key()
+		if !bytes.HasPrefix(acc, types.KeyPrefix(types.FrozenCoinKey)) {
+			continue
+		}
+
 		store := prefix.NewStore(baseStore, acc)
 
 		coinIter := store.Iterator(nil, nil)
@@ -164,4 +170,8 @@ func (k *BaseKeeper) ListFrozenCoins(ctx sdk.Context) (map[string]sdk.Coins, err
 	}
 
 	return frozenCoins, nil
+}
+
+func (k *BaseKeeper) getFreezeCoinStore(ctx sdk.Context, holder sdk.AccAddress) prefix.Store {
+	return prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.FrozenCoinKey+holder.String()))
 }

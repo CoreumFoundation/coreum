@@ -20,7 +20,9 @@ func (k msgServer) FreezeCoin(goCtx context.Context, msg *types.MsgFreezeCoin) (
 	// TODO: Make sure the transaction sender can freeze the given token
 
 	// Freeze coin
-	k.Keeper.FreezeCoin(ctx, holderAddr, msg.Coin)
+	if err = k.Keeper.FreezeCoin(ctx, holderAddr, msg.Coin); err != nil {
+		return nil, err
+	}
 
 	return &types.MsgFreezeCoinResponse{}, nil
 }
