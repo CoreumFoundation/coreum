@@ -17,24 +17,6 @@ type (
 	Config = network.Config
 )
 
-// PrintLogger defines a simple logger used for the network test.
-type PrintLogger struct{}
-
-// NewPrintLogger returns a new instance of the PrintLogger.
-func NewPrintLogger() *PrintLogger {
-	return &PrintLogger{}
-}
-
-// Log logs information into the output.
-func (l *PrintLogger) Log(args ...interface{}) {
-	fmt.Println(args...)
-}
-
-// Logf logs formatter information into the output.
-func (l *PrintLogger) Logf(format string, args ...interface{}) {
-	fmt.Printf(format, args...)
-}
-
 // New creates instance with fully configured cosmos network.
 // Accepts optional config, that will be used in place of the DefaultConfig() if provided.
 func New(t *testing.T, configs ...network.Config) *network.Network {
@@ -48,7 +30,7 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 		cfg = configs[0]
 	}
 
-	net, err := network.New(NewPrintLogger(), tempDir(), cfg)
+	net, err := network.New(t, tempDir(), cfg)
 	if err != nil {
 		panic(fmt.Sprintf("can't create new network : %s", err))
 	}

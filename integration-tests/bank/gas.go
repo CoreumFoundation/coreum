@@ -68,14 +68,14 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 				toSend := types.Coin{Denom: chain.Network.TokenSymbol(), Amount: amount}
 				for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
 					gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed, *chain.Network)
-					require.NoError(t, err)
+					assert.NoError(t, err)
 
 					if gasUsed > maxGasUsed {
 						maxGasUsed = gasUsed
 					}
 					sender.AccountSequence++
 				}
-				require.LessOrEqual(t, margin*float64(maxGasUsed), float64(maxGasAssumed))
+				assert.LessOrEqual(t, margin*float64(maxGasUsed), float64(maxGasAssumed))
 				logger.Get(ctx).Info("Maximum gas used", zap.Int64("maxGasUsed", maxGasUsed))
 			}
 	}
