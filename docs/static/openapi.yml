@@ -4,6 +4,40 @@ info:
   name: ''
   description: ''
 paths:
+  '/CoreumFoundation/coreum/freeze/frozen_coins/{account}':
+    get:
+      summary: Queries a list of FrozenCoins items.
+      operationId: CoreumFoundationCoreumFreezeFrozenCoins
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: account
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /CoreumFoundation/coreum/freeze/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -29612,6 +29646,8 @@ definitions:
   CoreumFoundation.coreum.freeze.Params:
     type: object
     description: Params defines the parameters for the module.
+  CoreumFoundation.coreum.freeze.QueryFrozenCoinsResponse:
+    type: object
   CoreumFoundation.coreum.freeze.QueryParamsResponse:
     type: object
     properties:

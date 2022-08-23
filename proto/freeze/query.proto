@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "freeze/params.proto";
+import "cosmos/base/v1beta1/coin.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/CoreumFoundation/coreum/x/freeze/types";
@@ -15,7 +16,12 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/CoreumFoundation/coreum/freeze/params";
   }
-  // this line is used by starport scaffolding # 2
+  // Queries a list of FrozenCoins items.
+	rpc FrozenCoins(QueryFrozenCoinsRequest) returns (QueryFrozenCoinsResponse) {
+		option (google.api.http).get = "/CoreumFoundation/coreum/freeze/frozen_coins/{account}";
+	}
+
+// this line is used by starport scaffolding # 2
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -25,6 +31,14 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryFrozenCoinsRequest {
+  string account = 1;
+}
+
+message QueryFrozenCoinsResponse {
+  repeated cosmos.base.v1beta1.Coin coins = 2 [(gogoproto.nullable) = false];
 }
 
 // this line is used by starport scaffolding # 3
