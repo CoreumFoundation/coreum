@@ -28,6 +28,12 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 			if err != nil {
 				return err
 			}
+
+			// FIXME (wojtek): Temporary code for transition
+			if chain.Fund != nil {
+				chain.Fund(sender, initialBalance)
+			}
+
 			return chain.Network.FundAccount(sender.Key.PubKey(), initialBalance.String())
 		},
 		func(ctx context.Context, t testing.T) {
