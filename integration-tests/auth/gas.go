@@ -34,7 +34,7 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 			coredClient := chain.Client
 
 			gasPriceWithMaxDiscountFloat := new(big.Float).SetInt(chain.Network.FeeModel().InitialGasPrice.BigInt())
-			gasPriceWithMaxDiscountFloat.Mul(gasPriceWithMaxDiscountFloat, big.NewFloat(1.-chain.Network.FeeModel().MaxDiscount))
+			gasPriceWithMaxDiscountFloat.Mul(gasPriceWithMaxDiscountFloat, big.NewFloat(1.0-chain.Network.FeeModel().MaxDiscount))
 			gasPriceWithMaxDiscount, _ := gasPriceWithMaxDiscountFloat.Int(nil)
 
 			gasPrice := new(big.Int).Sub(gasPriceWithMaxDiscount, big.NewInt(1))

@@ -28,7 +28,7 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 	case shortEMA > m.EscalationStartBlockGas:
 		return m.calculateNextGasPriceInEscalationRegion(shortEMA)
 	case shortEMA >= longEMA:
-		return m.computeMGasPriceWithMaxDiscount()
+		return m.computeGasPriceWithMaxDiscount()
 	case longEMA > 0:
 		return m.calculateNextGasPriceInDiscountRegion(shortEMA, longEMA)
 	default:
@@ -37,8 +37,7 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 }
 
 func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
-	gasPriceWithMaxDiscount := m.computeMGasPriceWithMaxDiscount()
-
+	gasPriceWithMaxDiscount := m.computeGasPriceWithMaxDiscount()
 	// inertia defines how slow gas price goes up after triggering escalation algorithm (the lower the inertia,
 	// the faster price goes up)
 	const inertia = 2.0
@@ -54,7 +53,7 @@ func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
 }
 
 func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int64) sdk.Int {
-	discountFactor := math.Pow(1.-m.MaxDiscount, float64(shortEMA)/float64(longEMA))
+	discountFactor := math.Pow(1.0-m.MaxDiscount, float64(shortEMA)/float64(longEMA))
 
 	gasPriceFloat := big.NewFloat(0).SetInt(m.InitialGasPrice.BigInt())
 	gasPriceFloat.Mul(gasPriceFloat, big.NewFloat(discountFactor))
@@ -63,9 +62,9 @@ func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int
 	return sdk.NewIntFromBigInt(minGasPrice)
 }
 
-func (m Model) computeMGasPriceWithMaxDiscount() sdk.Int {
+func (m Model) computeGasPriceWithMaxDiscount() sdk.Int {
 	gasPriceWithMaxDiscountFloat := big.NewFloat(0).SetInt(m.InitialGasPrice.BigInt())
-	gasPriceWithMaxDiscountFloat.Mul(gasPriceWithMaxDiscountFloat, big.NewFloat(1.-m.MaxDiscount))
+	gasPriceWithMaxDiscountFloat.Mul(gasPriceWithMaxDiscountFloat, big.NewFloat(1.0-m.MaxDiscount))
 	gasPriceWithMaxDiscount, _ := gasPriceWithMaxDiscountFloat.Int(nil)
 	return sdk.NewIntFromBigInt(gasPriceWithMaxDiscount)
 }

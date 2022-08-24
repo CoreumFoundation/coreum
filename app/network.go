@@ -54,27 +54,29 @@ var (
 )
 
 func init() {
+	defaultFeeConfig := FeeConfig{
+		FeeModel: FeeModel{
+			// TODO: Find good parameters before lunching mainnet
+			InitialGasPrice:         sdk.NewInt(1500),
+			MaxGasPrice:             sdk.NewInt(1500000),
+			MaxDiscount:             0.5,
+			EscalationStartBlockGas: 37500000, // 300 * BankSend message
+			MaxBlockGas:             50000000, // 400 * BankSend message
+			ShortAverageInertia:     10,
+			LongAverageInertia:      1000,
+		},
+		DeterministicGas: DeterministicGasConfig{
+			BankSend: 125000,
+		},
+	}
+
 	list := []NetworkConfig{
 		{
 			ChainID:       Mainnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
-			Fee: FeeConfig{
-				FeeModel: FeeModel{
-					// TODO: Find good parameters before lunching mainnet
-					InitialGasPrice:         sdk.NewInt(1500),
-					MaxGasPrice:             sdk.NewInt(1500000),
-					MaxDiscount:             0.5,
-					EscalationStartBlockGas: 37500000, // 300 * BankSend message
-					MaxBlockGas:             50000000, // 400 * BankSend message
-					ShortAverageInertia:     10,
-					LongAverageInertia:      1000,
-				},
-				DeterministicGas: DeterministicGasConfig{
-					BankSend: 125000,
-				},
-			},
+			Fee:           defaultFeeConfig,
 		},
 		{
 			ChainID:       Devnet,
@@ -82,20 +84,7 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
-			Fee: FeeConfig{
-				FeeModel: FeeModel{
-					InitialGasPrice:         sdk.NewInt(1500),
-					MaxGasPrice:             sdk.NewInt(1500000),
-					MaxDiscount:             0.5,
-					EscalationStartBlockGas: 37500000, // 300 * BankSend message
-					MaxBlockGas:             50000000, // 400 * BankSend message
-					ShortAverageInertia:     10,
-					LongAverageInertia:      1000,
-				},
-				DeterministicGas: DeterministicGasConfig{
-					BankSend: 125000,
-				},
-			},
+			Fee:           defaultFeeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"4ae4593aff8dd5ececd217f273195549503e2df8@35.223.81.227:26656"},
 			},
@@ -149,9 +138,9 @@ var networks = map[ChainID]NetworkConfig{}
 
 // FeeModel stores parameters defining fee model of coreum blockchain
 // There are four regions on the fee model curve
-// - between 0 and "long average block gas" where gas price goes down from InitialGasPrice to minimum discounted gas price (InitialGasPrice * (1 -MaxDiscount))
+// - between 0 and "long average block gas" where gas price goes down exponentially from InitialGasPrice to gas price with maximum discount (InitialGasPrice * (1 -MaxDiscount))
 // - between "long average block gas" and EscalationStartBlockGas where we offer minimum discounted gas price all the time
-// - between EscalationStartBlockGas and MaxBlockGas where price goes up rapidly from minimum discounted gas price to MaxGasPrice
+// - between EscalationStartBlockGas and MaxBlockGas where price goes up rapidly (being an output of a power function) from minimum discounted gas price to MaxGasPrice
 // - above MaxBlockGas (if it happens for any reason) where price is equal to MaxGasPrice
 //
 // Chart presenting an example is available at https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=0
@@ -446,7 +435,8 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
-		MaxBlockGas:    n.fee.FeeModel.MaxBlockGas,
+		// TODO: adjust MaxBlockGas before creating testnet & mainnet
+		MaxBlockGas: n.fee.FeeModel.MaxBlockGas,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")

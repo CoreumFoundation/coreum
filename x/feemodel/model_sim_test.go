@@ -28,7 +28,7 @@ func ExampleGasPricePerBlockGas() {
 		fmt.Printf("%d\t%d\n", i, feeModelSim.CalculateNextGasPrice(i, longAverageBlockGas).Int64())
 	}
 	// Output: list of gas prices for each gas usage
-	// https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=0
+	// FIXME (wojtek): refer picture containing a chart once doc is provided for the module
 }
 
 func ExampleGasPriceOverTime() {
@@ -76,5 +76,5 @@ func ExampleGasPriceOverTime() {
 	}
 
 	// Output: list of gas prices over time
-	// https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=940400407
+	// FIXME (wojtek): refer picture containing a chart once doc is provided for the module
 }

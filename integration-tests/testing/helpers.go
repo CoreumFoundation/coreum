@@ -13,6 +13,7 @@ func RandomWallet() types.Wallet {
 }
 
 // ComputeNeededBalance computes the required balance for sending `numOfMessages` number of messages plus some extra amount.
+// FIXME (wojtek): hardcode reasonable default values: https://reviewable.io/reviews/CoreumFoundation/coreum/131#-NA4cljcBl9TBFEqA81t
 func ComputeNeededBalance(gasPrice sdk.Int, messageGasLimit uint64, numOfMessages int, extraAmount sdk.Int) sdk.Int {
 	return gasPrice.MulRaw(int64(messageGasLimit)).MulRaw(int64(numOfMessages)).Add(extraAmount)
 }

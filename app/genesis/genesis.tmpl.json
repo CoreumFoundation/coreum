@@ -209,6 +209,6 @@
     },
     "upgrade": {},
     "vesting": {},
-    "fee": {}
+    "feemodel": {}
   }
 }
