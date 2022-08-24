@@ -25,7 +25,7 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		const margin = 1.5
 		maxGasAssumed := chain.Network.DeterministicGas().BankSend // set it to 50%+ higher than maximum observed value
 
-		amount, ok := big.NewInt(0).SetString("100000000000000000000000000000000000", 10)
+		amount, ok := big.NewInt(0).SetString("1000000000000", 10)
 		if !ok {
 			panic("invalid amount")
 		}
@@ -48,6 +48,12 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 				wallet2InitialBalance, err := types.NewCoin(fees, chain.Network.TokenSymbol())
 				if err != nil {
 					return err
+				}
+
+				// FIXME (wojtek): Temporary code for transition
+				if chain.Fund != nil {
+					chain.Fund(wallet1, wallet1InitialBalance)
+					chain.Fund(wallet2, wallet2InitialBalance)
 				}
 
 				if err := chain.Network.FundAccount(wallet1.Key.PubKey(), wallet1InitialBalance.String()); err != nil {
@@ -98,6 +104,12 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 			if err != nil {
 				return err
 			}
+
+			// FIXME (wojtek): Temporary code for transition
+			if chain.Fund != nil {
+				chain.Fund(sender, initialBalance)
+			}
+
 			return chain.Network.FundAccount(sender.Key.PubKey(), initialBalance.String())
 		},
 		func(ctx context.Context, t testing.T) {
