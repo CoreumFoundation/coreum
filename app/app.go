@@ -181,7 +181,7 @@ var (
 func init() {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
-		panic(errors.Wrap(err, "Failed to get home dir"))
+		panic(errors.Wrap(err, "failed to get home dir"))
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
