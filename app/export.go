@@ -2,7 +2,7 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/pkg/errors"
 	"log"
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -130,12 +130,12 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 
 		if err := app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, delAddr, valAddr); err != nil {
 			// never called as BeforeDelegationCreated always returns nil
-			panic(fmt.Errorf("error while incrementing period: %w", err))
+			panic(errors.Wrap(err, "error while incrementing period"))
 		}
 
 		if err := app.DistrKeeper.Hooks().AfterDelegationModified(ctx, delAddr, valAddr); err != nil {
 			// never called as AfterDelegationModified always returns nil
-			panic(fmt.Errorf("error while creating a new delegation period record: %w", err))
+			panic(errors.Wrap(err, "error while creating a new delegation period record"))
 		}
 	}
 
