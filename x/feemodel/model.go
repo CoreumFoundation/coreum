@@ -11,8 +11,6 @@ import (
 // - between EscalationStartBlockGas and MaxBlockGas where price goes up rapidly (being an output of a power function) from gas price with maximum discount to MaxGasPrice
 // - above MaxBlockGas (if it happens for any reason) where price is equal to MaxGasPrice
 //
-// Chart presenting an example is available at https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=0
-//
 // The input (x value) for that function is calculated by taking short block gas average.
 // Price (y value) being an output of the fee model is used as the minimum gas price for next block.
 type Model struct {
