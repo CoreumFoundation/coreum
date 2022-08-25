@@ -26,7 +26,7 @@ var feeConfig = FeeConfig{
 	FeeModel: FeeModel{
 		InitialGasPrice:         sdk.NewInt(2),
 		MaxGasPrice:             sdk.NewInt(4),
-		MaxDiscount:             0.4,
+		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),
 		EscalationStartBlockGas: 10,
 		MaxBlockGas:             20,
 		ShortAverageInertia:     3,
@@ -260,7 +260,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 
 	assertT.True(n1.FeeModel().InitialGasPrice.Equal(sdk.NewInt(2)))
 	assertT.True(n1.FeeModel().MaxGasPrice.Equal(sdk.NewInt(4)))
-	assertT.Equal(0.4, n1.FeeModel().MaxDiscount)
+	assertT.True(n1.FeeModel().MaxDiscount.Equal(sdk.MustNewDecFromStr("0.4")))
 	assertT.EqualValues(10, n1.FeeModel().EscalationStartBlockGas)
 	assertT.EqualValues(20, n1.FeeModel().MaxBlockGas)
 	assertT.EqualValues(3, n1.FeeModel().ShortAverageInertia)
@@ -327,8 +327,8 @@ func TestNetworkConfigConditions(t *testing.T) {
 		assertT.True(cfg.Fee.FeeModel.MaxGasPrice.Sign() == 1)
 		assertT.True(cfg.Fee.FeeModel.MaxGasPrice.GT(cfg.Fee.FeeModel.InitialGasPrice))
 
-		assertT.Greater(cfg.Fee.FeeModel.MaxDiscount, 0.0)
-		assertT.Less(cfg.Fee.FeeModel.MaxDiscount, 1.0)
+		assertT.True(cfg.Fee.FeeModel.MaxDiscount.GT(sdk.ZeroDec()))
+		assertT.True(cfg.Fee.FeeModel.MaxDiscount.LT(sdk.OneDec()))
 
 		assertT.Greater(cfg.Fee.FeeModel.EscalationStartBlockGas, int64(0))
 		assertT.Greater(cfg.Fee.FeeModel.MaxBlockGas, cfg.Fee.FeeModel.EscalationStartBlockGas)

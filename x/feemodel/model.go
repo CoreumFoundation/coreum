@@ -1,9 +1,6 @@
 package feemodel
 
 import (
-	"math"
-	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -12,7 +9,7 @@ type Model struct {
 	FeeDenom                string
 	InitialGasPrice         sdk.Int
 	MaxGasPrice             sdk.Int
-	MaxDiscount             float64
+	MaxDiscount             sdk.Dec
 	EscalationStartBlockGas int64
 	MaxBlockGas             int64
 	ShortAverageInertia     uint
@@ -26,10 +23,12 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 	case shortEMA >= m.MaxBlockGas:
 		return m.MaxGasPrice
 	case shortEMA > m.EscalationStartBlockGas:
+		// be cautious: this function panics if shortEMA == m.EscalationStartBlockGas, that's why that case is not served here
 		return m.calculateNextGasPriceInEscalationRegion(shortEMA)
 	case shortEMA >= longEMA:
 		return m.computeGasPriceWithMaxDiscount()
 	case longEMA > 0:
+		// be cautious: this function panics if longEMA == 0, that's why that case is not served here
 		return m.calculateNextGasPriceInDiscountRegion(shortEMA, longEMA)
 	default:
 		return m.InitialGasPrice
@@ -38,35 +37,32 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 
 func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
 	gasPriceWithMaxDiscount := m.computeGasPriceWithMaxDiscount()
-	// inertia defines how slow gas price goes up after triggering escalation algorithm (the lower the inertia,
+	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
-	const inertia = 2.0
-	height := m.MaxGasPrice.Sub(gasPriceWithMaxDiscount)
-	width := float64(m.MaxBlockGas - m.EscalationStartBlockGas)
-	x := float64(shortEMA - m.EscalationStartBlockGas)
+	const exponent = 2
+	height := sdk.NewDecFromInt(m.MaxGasPrice.Sub(gasPriceWithMaxDiscount))
+	width := sdk.NewDecFromInt(sdk.NewInt(m.MaxBlockGas - m.EscalationStartBlockGas))
+	x := sdk.NewDecFromInt(sdk.NewInt(shortEMA - m.EscalationStartBlockGas))
 
-	escalationOffsetFloat := new(big.Float).SetInt(height.BigInt())
-	escalationOffsetFloat.Mul(escalationOffsetFloat, big.NewFloat(math.Pow(x/width, inertia)))
-	escalationOffset, _ := escalationOffsetFloat.Int(nil)
-
-	return gasPriceWithMaxDiscount.Add(sdk.NewIntFromBigInt(escalationOffset))
+	offset := height.Mul(x.Quo(width).Power(exponent)).TruncateInt()
+	return gasPriceWithMaxDiscount.Add(offset)
 }
 
 func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int64) sdk.Int {
-	discountFactor := math.Pow(1.0-m.MaxDiscount, float64(shortEMA)/float64(longEMA))
+	gasPriceWithMaxDiscount := m.computeGasPriceWithMaxDiscount()
+	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
+	// the faster price goes up)
+	const exponent = 2
+	height := sdk.NewDecFromInt(m.InitialGasPrice.Sub(gasPriceWithMaxDiscount))
+	width := sdk.NewDecFromInt(sdk.NewInt(longEMA))
+	x := sdk.NewDecFromInt(sdk.NewInt(shortEMA))
 
-	gasPriceFloat := big.NewFloat(0).SetInt(m.InitialGasPrice.BigInt())
-	gasPriceFloat.Mul(gasPriceFloat, big.NewFloat(discountFactor))
-	minGasPrice, _ := gasPriceFloat.Int(nil)
-
-	return sdk.NewIntFromBigInt(minGasPrice)
+	offset := height.Mul(x.Quo(width).Sub(sdk.OneDec()).Abs().Power(exponent)).TruncateInt()
+	return gasPriceWithMaxDiscount.Add(offset)
 }
 
 func (m Model) computeGasPriceWithMaxDiscount() sdk.Int {
-	gasPriceWithMaxDiscountFloat := big.NewFloat(0).SetInt(m.InitialGasPrice.BigInt())
-	gasPriceWithMaxDiscountFloat.Mul(gasPriceWithMaxDiscountFloat, big.NewFloat(1.0-m.MaxDiscount))
-	gasPriceWithMaxDiscount, _ := gasPriceWithMaxDiscountFloat.Int(nil)
-	return sdk.NewIntFromBigInt(gasPriceWithMaxDiscount)
+	return sdk.NewDecFromInt(m.InitialGasPrice).Mul(sdk.OneDec().Sub(m.MaxDiscount)).TruncateInt()
 }
 
 func calculateMovingAverage(previousAverage, newValue int64, numOfBlocks uint) int64 {

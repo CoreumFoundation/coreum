@@ -59,7 +59,7 @@ func init() {
 			// TODO: Find good parameters before lunching mainnet
 			InitialGasPrice:         sdk.NewInt(1500),
 			MaxGasPrice:             sdk.NewInt(1500000),
-			MaxDiscount:             0.5,
+			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 			EscalationStartBlockGas: 37500000, // 300 * BankSend message
 			MaxBlockGas:             50000000, // 400 * BankSend message
 			ShortAverageInertia:     10,
@@ -155,7 +155,7 @@ type FeeModel struct {
 	MaxGasPrice sdk.Int
 
 	// MaxDiscount is th maximum discount we offer on top of initial gas price if short average block gas is between long average block gas and escalation start block gas.
-	MaxDiscount float64
+	MaxDiscount sdk.Dec
 
 	// EscalationStartBlockGas defines block gas usage where gas price escalation starts if short average block gas is higher than this value.
 	EscalationStartBlockGas int64

@@ -39,16 +39,13 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
 
-			gasPriceWithMaxDiscountFloat := new(big.Float).SetInt(chain.Network.FeeModel().InitialGasPrice.BigInt())
-			gasPriceWithMaxDiscountFloat.Mul(gasPriceWithMaxDiscountFloat, big.NewFloat(1.0-chain.Network.FeeModel().MaxDiscount))
-			gasPriceWithMaxDiscount, _ := gasPriceWithMaxDiscountFloat.Int(nil)
-
-			gasPrice := new(big.Int).Sub(gasPriceWithMaxDiscount, big.NewInt(1))
+			gasPriceWithMaxDiscount := sdk.NewDecFromInt(chain.Network.FeeModel().InitialGasPrice).Mul(sdk.OneDec().Sub(chain.Network.FeeModel().MaxDiscount)).TruncateInt()
+			gasPrice := gasPriceWithMaxDiscount.Sub(sdk.OneInt())
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: gasPrice, Denom: chain.Network.TokenSymbol()},
+					GasPrice: types.Coin{Amount: gasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
 				},
 				Sender:   sender,
 				Receiver: sender,
