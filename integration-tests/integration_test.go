@@ -19,7 +19,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/integration-tests"
+	tests "github.com/CoreumFoundation/coreum/integration-tests"
 	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -59,6 +59,8 @@ func TestMain(m *testing.M) {
 }
 
 func Test(t *testing.T) {
+	t.Parallel()
+
 	testSet := tests.Tests()
 
 	ctx := newContext(t, cfg)
@@ -70,7 +72,7 @@ func Test(t *testing.T) {
 		return
 	}
 
-	runTests(t, ctx, testCases)
+	runTests(ctx, t, testCases)
 }
 
 type config struct {
@@ -188,7 +190,7 @@ func prepareTestCases(
 	return testCases, nil
 }
 
-func runTests(t *testing.T, ctx context.Context, testCases []testCase) {
+func runTests(ctx context.Context, t *testing.T, testCases []testCase) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
