@@ -58,15 +58,16 @@ func Test(t *testing.T) {
 
 	testSet := tests.Tests()
 
-	ctx := newContext(t, cfg)
-	testCases, err := prepareTestCases(ctx, cfg, testSet)
+	prerequisites, testCases, err := collectTestCases(cfg, testSet)
 	require.NoError(t, err)
 
+	ctx := newContext(t, cfg)
 	if len(testCases) == 0 {
 		logger.Get(ctx).Warn("No tests to run")
 		return
 	}
 
+	require.NoError(t, servePrerequisites(ctx, prerequisites))
 	runTests(ctx, t, testCases)
 }
 
@@ -91,34 +92,18 @@ func newContext(t *testing.T, cfg config) context.Context {
 	return ctx
 }
 
-type walletToFund struct {
-	Wallet types.Wallet
-	Amount types.Coin
-}
-
 type testCase struct {
-	Name        string
-	PrepareFunc coreumtesting.PrepareFunc
-	RunFunc     coreumtesting.RunFunc
+	Name    string
+	RunFunc coreumtesting.RunFunc
 }
 
-func prepareTestCases(
-	ctx context.Context,
-	cfg config,
-	testSet coreumtesting.TestSet,
-) ([]testCase, error) {
-	// FIXME (wojtek): A lot of logic happens in this function due to how `walletsToFund` slice is built
-	// once `crust` is switched to new framework it will be redone.
-
-	var walletsToFund []walletToFund
+func collectTestCases(cfg config, testSet coreumtesting.TestSet) (coreumtesting.Prerequisites, []testCase, error) {
 	chain := coreumtesting.Chain{
 		Network: &cfg.Network,
 		Client:  cfg.CoredClient,
-		Fund: func(wallet types.Wallet, amount types.Coin) {
-			walletsToFund = append(walletsToFund, walletToFund{Wallet: wallet, Amount: amount})
-		},
 	}
 
+	var prerequisites coreumtesting.Prerequisites
 	var testCases []testCase
 	for _, testFunc := range testSet.SingleChain {
 		name := funcToName(testFunc)
@@ -126,40 +111,35 @@ func prepareTestCases(
 			continue
 		}
 
-		prepFunc, runFunc := testFunc(chain)
+		testPrerequisites, runFunc, err := testFunc(chain)
+		if err != nil {
+			return coreumtesting.Prerequisites{}, nil, err
+		}
+		prerequisites.FundedAccounts = append(prerequisites.FundedAccounts, testPrerequisites.FundedAccounts...)
 		testCases = append(testCases, testCase{
-			Name:        name,
-			PrepareFunc: prepFunc,
-			RunFunc:     runFunc,
+			Name:    name,
+			RunFunc: runFunc,
 		})
 	}
+	return prerequisites, testCases, nil
+}
 
-	if len(testCases) == 0 {
-		return nil, nil
-	}
-
-	for _, tc := range testCases {
-		ctx := logger.With(ctx, zap.String("test", tc.Name))
-		if err := tc.PrepareFunc(ctx); err != nil {
-			return nil, err
-		}
-	}
-
-	logger.Get(ctx).Info("Funding accounts for tests, it might take a while...")
-
+func servePrerequisites(ctx context.Context, prerequisites coreumtesting.Prerequisites) error {
 	var err error
 	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
 	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = cfg.CoredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	gasPrice, err := types.NewCoin(cfg.Network.InitialGasPrice(), cfg.Network.TokenSymbol())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	for _, toFund := range walletsToFund {
+	log := logger.Get(ctx)
+	log.Info("Funding accounts for tests, it might take a while...")
+	for _, toFund := range prerequisites.FundedAccounts {
 		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
 		encodedTx, err := cfg.CoredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 			Base: tx.BaseInput{
@@ -172,17 +152,16 @@ func prepareTestCases(
 			Amount:   toFund.Amount,
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if _, err := cfg.CoredClient.Broadcast(ctx, encodedTx); err != nil {
-			return nil, err
+			return err
 		}
 		fundingWallet.AccountSequence++
 	}
+	log.Info("Test accounts funded")
 
-	logger.Get(ctx).Info("Test accounts funded")
-
-	return testCases, nil
+	return nil
 }
 
 func runTests(ctx context.Context, t *testing.T, testCases []testCase) {

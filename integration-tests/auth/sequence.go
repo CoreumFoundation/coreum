@@ -14,26 +14,26 @@ import (
 
 // TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
 // used to sign transaction
-func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
+func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, error) {
 	sender := testing.RandomWallet()
 
-	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.InitialGasPrice(),
-				chain.Network.DeterministicGas().BankSend,
-				1,
-				big.NewInt(10),
-			), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
+	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+		chain.Network.InitialGasPrice(),
+		chain.Network.DeterministicGas().BankSend,
+		1,
+		big.NewInt(10),
+	), chain.Network.TokenSymbol())
+	if err != nil {
+		return testing.Prerequisites{}, nil, err
+	}
 
-			// FIXME (wojtek): Temporary code for transition
-			if chain.Fund != nil {
-				chain.Fund(sender, initialBalance)
-			}
-
-			return chain.Network.FundAccount(sender.Key.PubKey(), initialBalance.String())
+	return testing.Prerequisites{
+			FundedAccounts: []testing.FundedAccount{
+				{
+					Wallet: sender,
+					Amount: initialBalance,
+				},
+			},
 		},
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
@@ -66,5 +66,5 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.PrepareFunc, tes
 				require.Fail(t, "Unexpected error", err.Error())
 			}
 			require.Equal(t, accSeq, expectedSeq)
-		}
+		}, nil
 }

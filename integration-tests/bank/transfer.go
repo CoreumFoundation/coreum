@@ -16,26 +16,26 @@ import (
 )
 
 // TestInitialBalance checks that initial balance is set by genesis block
-func TestInitialBalance(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
+func TestInitialBalance(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, error) {
 	// Create new random wallet
 	wallet := testing.RandomWallet()
 
-	// First returned function prepares initial well-known state
-	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(big.NewInt(100), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
+	initialBalance, err := types.NewCoin(big.NewInt(100), chain.Network.TokenSymbol())
+	if err != nil {
+		return testing.Prerequisites{}, nil, err
+	}
 
-			// FIXME (wojtek): Temporary code for transition
-			if chain.Fund != nil {
-				chain.Fund(wallet, initialBalance)
-			}
-
-			return chain.Network.FundAccount(wallet.Key.PubKey(), initialBalance.String())
+	// First returned value describes prerequisites of the test
+	return testing.Prerequisites{
+			FundedAccounts: []testing.FundedAccount{
+				{
+					Wallet: wallet,
+					Amount: initialBalance,
+				},
+			},
 		},
 
-		// Second returned function runs test
+		// Second returned value is a function which runs the test
 		func(ctx context.Context, t testing.T) {
 			// Query for current balance available on the wallet
 			balances, err := chain.Client.QueryBankBalances(ctx, wallet)
@@ -43,46 +43,45 @@ func TestInitialBalance(chain testing.Chain) (testing.PrepareFunc, testing.RunFu
 
 			// Test that wallet owns expected balance
 			assert.Equal(t, "100", balances[chain.Network.TokenSymbol()].Amount.String())
-		}
+		}, nil
 }
 
 // TestCoreTransfer checks that core is transferred correctly between wallets
-func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
+func TestCoreTransfer(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, error) {
 	// Create two random wallets
 	sender := testing.RandomWallet()
 	receiver := testing.RandomWallet()
 
-	// First function prepares initial well-known state
-	return func(ctx context.Context) error {
-			// Fund wallets
-			senderInitialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.InitialGasPrice(),
-				chain.Network.DeterministicGas().BankSend,
-				1,
-				big.NewInt(100),
-			), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
+	senderInitialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+		chain.Network.InitialGasPrice(),
+		chain.Network.DeterministicGas().BankSend,
+		1,
+		big.NewInt(100),
+	), chain.Network.TokenSymbol())
+	if err != nil {
+		return testing.Prerequisites{}, nil, err
+	}
 
-			receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
+	receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.Network.TokenSymbol())
+	if err != nil {
+		return testing.Prerequisites{}, nil, err
+	}
 
-			// FIXME (wojtek): Temporary code for transition
-			if chain.Fund != nil {
-				chain.Fund(sender, senderInitialBalance)
-				chain.Fund(receiver, receiverInitialBalance)
-			}
-
-			if err := chain.Network.FundAccount(sender.Key.PubKey(), senderInitialBalance.String()); err != nil {
-				return err
-			}
-			return chain.Network.FundAccount(receiver.Key.PubKey(), receiverInitialBalance.String())
+	// First returned value describes prerequisites of the test
+	return testing.Prerequisites{
+			FundedAccounts: []testing.FundedAccount{
+				{
+					Wallet: sender,
+					Amount: senderInitialBalance,
+				},
+				{
+					Wallet: receiver,
+					Amount: receiverInitialBalance,
+				},
+			},
 		},
 
-		// Second function runs test
+		// Second returned value is a function which runs the test
 		func(ctx context.Context, t testing.T) {
 			// Create client so we can send transactions and query state
 			coredClient := chain.Client
@@ -118,5 +117,5 @@ func TestCoreTransfer(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc
 
 			// Test that tokens reached receiver's wallet
 			assert.Equal(t, "20", balancesReceiver[chain.Network.TokenSymbol()].Amount.String())
-		}
+		}, nil
 }

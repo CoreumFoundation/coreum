@@ -15,9 +15,6 @@ type T interface {
 	require.TestingT
 }
 
-// PrepareFunc defines function which is executed before environment is deployed
-type PrepareFunc = func(ctx context.Context) error
-
 // RunFunc defines function which is responsible for running the test
 type RunFunc = func(ctx context.Context, t T)
 
@@ -25,12 +22,21 @@ type RunFunc = func(ctx context.Context, t T)
 type Chain struct {
 	Network *app.Network
 	Client  client.Client
-	// FIXME (wojtek): Temporary solution to be removed after transition period
-	Fund func(wallet types.Wallet, amount types.Coin)
+}
+
+// Prerequisites reresent requirements of a test which must be met before it can be started
+type Prerequisites struct {
+	FundedAccounts []FundedAccount
+}
+
+// FundedAccount represents a requirement of a test to get some funds for an account
+type FundedAccount struct {
+	Wallet types.Wallet
+	Amount types.Coin
 }
 
 // SingleChainSignature is the signature of test function accepting a chain
-type SingleChainSignature func(chain Chain) (PrepareFunc, RunFunc)
+type SingleChainSignature func(chain Chain) (Prerequisites, RunFunc, error)
 
 // TestSet is a container for tests
 type TestSet struct {
