@@ -80,6 +80,7 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper   Keeper
+	feeDenom string
 	feeModel Model
 }
 
@@ -89,10 +90,13 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {}
 // NewAppModule creates a new AppModule object
 func NewAppModule(cdc codec.Codec,
 	keeper Keeper,
-	feeModel Model) AppModule {
+	feeDenom string,
+	feeModel Model,
+) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
 		keeper:         keeper,
+		feeDenom:       feeDenom,
 		feeModel:       feeModel,
 	}
 }
@@ -139,15 +143,15 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	currentGasUsage := am.keeper.TrackedGas(ctx)
 
 	newShortAverage := calculateMovingAverage(am.keeper.GetShortAverageGas(ctx), currentGasUsage,
-		am.feeModel.ShortAverageInertia)
+		am.feeModel.ShortAverageBlockLength)
 	newLongAverage := calculateMovingAverage(am.keeper.GetLongAverageGas(ctx), currentGasUsage,
-		am.feeModel.LongAverageInertia)
+		am.feeModel.LongAverageBlockLength)
 
 	minGasPrice := am.feeModel.CalculateNextGasPrice(newShortAverage, newLongAverage)
 
 	am.keeper.SetShortAverageGas(ctx, newShortAverage)
 	am.keeper.SetLongAverageGas(ctx, newLongAverage)
-	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(am.feeModel.FeeDenom, minGasPrice))
+	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(am.feeDenom, minGasPrice))
 
 	return []abci.ValidatorUpdate{}
 }

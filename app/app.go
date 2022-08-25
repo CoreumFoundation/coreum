@@ -415,18 +415,7 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	feeModel := ChosenNetwork.FeeModel()
-	feeModule := feemodel.NewAppModule(appCodec, app.FeeModelKeeper,
-		feemodel.Model{
-			FeeDenom:                ChosenNetwork.TokenSymbol(),
-			InitialGasPrice:         feeModel.InitialGasPrice,
-			MaxGasPrice:             feeModel.MaxGasPrice,
-			MaxDiscount:             feeModel.MaxDiscount,
-			EscalationStartBlockGas: feeModel.EscalationStartBlockGas,
-			MaxBlockGas:             feeModel.MaxBlockGas,
-			ShortAverageInertia:     feeModel.ShortAverageInertia,
-			LongAverageInertia:      feeModel.LongAverageInertia,
-		})
+	feeModule := feemodel.NewAppModule(appCodec, app.FeeModelKeeper, ChosenNetwork.TokenSymbol(), ChosenNetwork.FeeModel())
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

@@ -13,6 +13,8 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
+// TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other then CORE is rejected
+
 // TestTooLowGasPrice verifies that transaction fails if offered gas price is below minimum level
 // specified by the fee model of the network
 func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {

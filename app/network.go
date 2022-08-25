@@ -20,6 +20,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	"github.com/CoreumFoundation/coreum/x/feemodel"
 )
 
 // ChainID represents predefined chain ID
@@ -55,15 +56,15 @@ var (
 
 func init() {
 	defaultFeeConfig := FeeConfig{
-		FeeModel: FeeModel{
+		FeeModel: feemodel.Model{
 			// TODO: Find good parameters before lunching mainnet
 			InitialGasPrice:         sdk.NewInt(1500),
 			MaxGasPrice:             sdk.NewInt(1500000),
 			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 			EscalationStartBlockGas: 37500000, // 300 * BankSend message
 			MaxBlockGas:             50000000, // 400 * BankSend message
-			ShortAverageInertia:     10,
-			LongAverageInertia:      1000,
+			ShortAverageBlockLength: 10,
+			LongAverageBlockLength:  1000,
 		},
 		DeterministicGas: DeterministicGasConfig{
 			BankSend: 125000,
@@ -179,7 +180,7 @@ type DeterministicGasConfig struct {
 
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
-	FeeModel         FeeModel
+	FeeModel         feemodel.Model
 	DeterministicGas DeterministicGasConfig
 }
 
@@ -396,7 +397,7 @@ func (n Network) TokenSymbol() string {
 }
 
 // FeeModel returns fee model configuration
-func (n Network) FeeModel() FeeModel {
+func (n Network) FeeModel() feemodel.Model {
 	return n.fee.FeeModel
 }
 

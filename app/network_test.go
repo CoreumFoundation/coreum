@@ -15,6 +15,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	"github.com/CoreumFoundation/coreum/x/feemodel"
 )
 
 func init() {
@@ -23,14 +24,14 @@ func init() {
 }
 
 var feeConfig = FeeConfig{
-	FeeModel: FeeModel{
+	FeeModel: feemodel.Model{
 		InitialGasPrice:         sdk.NewInt(2),
 		MaxGasPrice:             sdk.NewInt(4),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),
 		EscalationStartBlockGas: 10,
 		MaxBlockGas:             20,
-		ShortAverageInertia:     3,
-		LongAverageInertia:      5,
+		ShortAverageBlockLength: 3,
+		LongAverageBlockLength:  5,
 	},
 	DeterministicGas: DeterministicGasConfig{
 		BankSend: 10,
@@ -263,8 +264,8 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT.True(n1.FeeModel().MaxDiscount.Equal(sdk.MustNewDecFromStr("0.4")))
 	assertT.EqualValues(10, n1.FeeModel().EscalationStartBlockGas)
 	assertT.EqualValues(20, n1.FeeModel().MaxBlockGas)
-	assertT.EqualValues(3, n1.FeeModel().ShortAverageInertia)
-	assertT.EqualValues(5, n1.FeeModel().LongAverageInertia)
+	assertT.EqualValues(3, n1.FeeModel().ShortAverageBlockLength)
+	assertT.EqualValues(5, n1.FeeModel().LongAverageBlockLength)
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
 }
@@ -333,8 +334,8 @@ func TestNetworkConfigConditions(t *testing.T) {
 		assertT.Greater(cfg.Fee.FeeModel.EscalationStartBlockGas, int64(0))
 		assertT.Greater(cfg.Fee.FeeModel.MaxBlockGas, cfg.Fee.FeeModel.EscalationStartBlockGas)
 
-		assertT.Greater(cfg.Fee.FeeModel.ShortAverageInertia, uint(0))
-		assertT.Greater(cfg.Fee.FeeModel.LongAverageInertia, cfg.Fee.FeeModel.ShortAverageInertia)
+		assertT.Greater(cfg.Fee.FeeModel.ShortAverageBlockLength, uint(0))
+		assertT.Greater(cfg.Fee.FeeModel.LongAverageBlockLength, cfg.Fee.FeeModel.ShortAverageBlockLength)
 
 		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
 	}

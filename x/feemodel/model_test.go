@@ -9,8 +9,8 @@ import (
 
 var (
 	feeModel = Model{
-		InitialGasPrice:         sdk.NewInt(500000000000000),
-		MaxGasPrice:             sdk.NewInt(1000000000000000),
+		InitialGasPrice:         sdk.NewInt(1500),
+		MaxGasPrice:             sdk.NewInt(1500000),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 		EscalationStartBlockGas: 700,
 		MaxBlockGas:             1000,
@@ -75,8 +75,7 @@ func TestShapeInDecreasingRegion(t *testing.T) {
 	lastPrice := feeModel.InitialGasPrice
 	for i := int64(1); i <= longAverageBlockGas; i++ {
 		nextPrice := feeModel.CalculateNextGasPrice(i, longAverageBlockGas)
-		assert.True(t, nextPrice.LT(lastPrice))
-
+		assert.True(t, nextPrice.LTE(lastPrice))
 		lastPrice = nextPrice
 	}
 }

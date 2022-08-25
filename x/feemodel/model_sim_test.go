@@ -12,12 +12,12 @@ import (
 var (
 	feeModelSim = Model{
 		InitialGasPrice:         sdk.NewInt(1500),
-		MaxGasPrice:             sdk.NewInt(15000),
+		MaxGasPrice:             sdk.NewInt(1500000),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 		EscalationStartBlockGas: 37500000, // 300 * BankSend message
 		MaxBlockGas:             50000000, // 400 * BankSend message
-		ShortAverageInertia:     10,
-		LongAverageInertia:      1000,
+		ShortAverageBlockLength: 10,
+		LongAverageBlockLength:  1000,
 	}
 )
 
@@ -66,8 +66,8 @@ func ExampleGasPriceOverTime() {
 	}
 
 	for i, gas := range blockGas {
-		shortAverage = calculateMovingAverage(shortAverage, gas, feeModelSim.ShortAverageInertia)
-		longAverage = calculateMovingAverage(longAverage, gas, feeModelSim.LongAverageInertia)
+		shortAverage = calculateMovingAverage(shortAverage, gas, feeModelSim.ShortAverageBlockLength)
+		longAverage = calculateMovingAverage(longAverage, gas, feeModelSim.LongAverageBlockLength)
 		gasPrice := feeModelSim.CalculateNextGasPrice(shortAverage, longAverage)
 
 		if i%10 != 0 {
