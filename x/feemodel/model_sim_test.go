@@ -21,6 +21,7 @@ var (
 	}
 )
 
+//nolint:govet // This example does not refer to any identifier
 func ExampleGasPricePerBlockGas() {
 	const longAverageBlockGas = 5000000
 
@@ -31,6 +32,7 @@ func ExampleGasPricePerBlockGas() {
 	// FIXME (wojtek): refer picture containing a chart once doc is provided for the module
 }
 
+//nolint:govet // This example does not refer to any identifier
 func ExampleGasPriceOverTime() {
 	var (
 		blockGas     []int64

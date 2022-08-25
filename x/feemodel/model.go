@@ -40,9 +40,9 @@ func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
-	height := sdk.NewDecFromInt(m.MaxGasPrice.Sub(gasPriceWithMaxDiscount))
-	width := sdk.NewDecFromInt(sdk.NewInt(m.MaxBlockGas - m.EscalationStartBlockGas))
-	x := sdk.NewDecFromInt(sdk.NewInt(shortEMA - m.EscalationStartBlockGas))
+	height := m.MaxGasPrice.Sub(gasPriceWithMaxDiscount).ToDec()
+	width := sdk.NewInt(m.MaxBlockGas - m.EscalationStartBlockGas).ToDec()
+	x := sdk.NewInt(shortEMA - m.EscalationStartBlockGas).ToDec()
 
 	offset := height.Mul(x.Quo(width).Power(exponent)).TruncateInt()
 	return gasPriceWithMaxDiscount.Add(offset)
@@ -53,16 +53,16 @@ func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
-	height := sdk.NewDecFromInt(m.InitialGasPrice.Sub(gasPriceWithMaxDiscount))
-	width := sdk.NewDecFromInt(sdk.NewInt(longEMA))
-	x := sdk.NewDecFromInt(sdk.NewInt(shortEMA))
+	height := m.InitialGasPrice.Sub(gasPriceWithMaxDiscount).ToDec()
+	width := sdk.NewInt(longEMA).ToDec()
+	x := sdk.NewInt(shortEMA).ToDec()
 
 	offset := height.Mul(x.Quo(width).Sub(sdk.OneDec()).Abs().Power(exponent)).TruncateInt()
 	return gasPriceWithMaxDiscount.Add(offset)
 }
 
 func (m Model) computeGasPriceWithMaxDiscount() sdk.Int {
-	return sdk.NewDecFromInt(m.InitialGasPrice).Mul(sdk.OneDec().Sub(m.MaxDiscount)).TruncateInt()
+	return m.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(m.MaxDiscount)).TruncateInt()
 }
 
 func calculateMovingAverage(previousAverage, newValue int64, numOfBlocks uint) int64 {
