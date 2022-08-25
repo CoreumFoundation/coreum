@@ -9,8 +9,8 @@ import (
 
 var (
 	feeModel = Model{
-		InitialGasPrice:         sdk.NewInt(100000000),
-		MaxGasPrice:             sdk.NewInt(200000000),
+		InitialGasPrice:         sdk.NewInt(500000000000000),
+		MaxGasPrice:             sdk.NewInt(1000000000000000),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 		EscalationStartBlockGas: 700,
 		MaxBlockGas:             1000,
