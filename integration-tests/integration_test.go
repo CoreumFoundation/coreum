@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/base64"
 	"flag"
-	"os"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -49,12 +48,8 @@ func TestMain(m *testing.M) {
 
 	cfg.Filter = regexp.MustCompile(filter)
 	cfg.LogFormat = logger.Format(logFormat)
-	for _, flag := range os.Args[1:] {
-		if flag == "-test.v=true" {
-			cfg.LogVerbose = true
-			break
-		}
-	}
+	cfg.LogVerbose = flag.Lookup("test.v").Value.String() == "true"
+
 	m.Run()
 }
 
