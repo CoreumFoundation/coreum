@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/base64"
 	"flag"
-	"os"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -19,7 +18,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/integration-tests"
+	tests "github.com/CoreumFoundation/coreum/integration-tests"
 	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -49,23 +48,26 @@ func TestMain(m *testing.M) {
 
 	cfg.Filter = regexp.MustCompile(filter)
 	cfg.LogFormat = logger.Format(logFormat)
-	for _, flag := range os.Args[1:] {
-		if flag == "-test.v=true" {
-			cfg.LogVerbose = true
-			break
-		}
-	}
+	cfg.LogVerbose = flag.Lookup("test.v").Value.String() == "true"
+
 	m.Run()
 }
 
 func Test(t *testing.T) {
+	t.Parallel()
+
 	testSet := tests.Tests()
 
 	ctx := newContext(t, cfg)
 	testCases, err := prepareTestCases(ctx, cfg, testSet)
 	require.NoError(t, err)
 
-	runTests(t, ctx, testCases)
+	if len(testCases) == 0 {
+		logger.Get(ctx).Warn("No tests to run")
+		return
+	}
+
+	runTests(ctx, t, testCases)
 }
 
 type config struct {
@@ -132,12 +134,18 @@ func prepareTestCases(
 		})
 	}
 
+	if len(testCases) == 0 {
+		return nil, nil
+	}
+
 	for _, tc := range testCases {
 		ctx := logger.With(ctx, zap.String("test", tc.Name))
 		if err := tc.PrepareFunc(ctx); err != nil {
 			return nil, err
 		}
 	}
+
+	logger.Get(ctx).Info("Funding accounts for tests, it might take a while...")
 
 	var err error
 	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
@@ -171,10 +179,13 @@ func prepareTestCases(
 		}
 		fundingWallet.AccountSequence++
 	}
+
+	logger.Get(ctx).Info("Test accounts funded")
+
 	return testCases, nil
 }
 
-func runTests(t *testing.T, ctx context.Context, testCases []testCase) {
+func runTests(ctx context.Context, t *testing.T, testCases []testCase) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
