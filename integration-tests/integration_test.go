@@ -65,6 +65,11 @@ func Test(t *testing.T) {
 	testCases, err := prepareTestCases(ctx, cfg, testSet)
 	require.NoError(t, err)
 
+	if len(testCases) == 0 {
+		logger.Get(ctx).Warn("No tests to run")
+		return
+	}
+
 	runTests(t, ctx, testCases)
 }
 
@@ -132,12 +137,18 @@ func prepareTestCases(
 		})
 	}
 
+	if len(testCases) == 0 {
+		return nil, nil
+	}
+
 	for _, tc := range testCases {
 		ctx := logger.With(ctx, zap.String("test", tc.Name))
 		if err := tc.PrepareFunc(ctx); err != nil {
 			return nil, err
 		}
 	}
+
+	logger.Get(ctx).Info("Funding accounts for tests, it might take a while...")
 
 	var err error
 	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
@@ -171,6 +182,9 @@ func prepareTestCases(
 		}
 		fundingWallet.AccountSequence++
 	}
+
+	logger.Get(ctx).Info("Test accounts funded")
+
 	return testCases, nil
 }
 
