@@ -6,12 +6,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 	cosmcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	cosmkeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 )
 
 func TestMain(m *testing.M) {

@@ -3,13 +3,12 @@ package wasm
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
 // QueryConfig contains contract execution arguments and options.
@@ -36,7 +35,7 @@ func Query(ctx context.Context, contractAddr string, config QueryConfig) (*Query
 	if len(contractAddr) == 0 {
 		err := errors.New("contract address cannot be empty")
 		return nil, err
-	} else if err := config.Validate(); err != nil {
+	} else if err := config.ValidateAndLoad(); err != nil {
 		err = errors.Wrap(err, "failed to validate the execution config")
 		return nil, err
 	}
@@ -67,7 +66,7 @@ func runContractQuery(
 	contractAddr string,
 	queryMsg json.RawMessage,
 ) (result json.RawMessage, err error) {
-	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
+	chainClient := network.Client
 
 	query := &wasmtypes.QuerySmartContractStateRequest{
 		Address:   contractAddr,
@@ -83,14 +82,15 @@ func runContractQuery(
 	return json.RawMessage(resp.Data), nil
 }
 
-// Validate validates the contract query method config.
-func (c *QueryConfig) Validate() error {
+// ValidateAndLoad validates the contract query method config and loads it's initial state.
+// TODO(dhil) it would be better not to sore the state in the config and not set in the validation.
+func (c *QueryConfig) ValidateAndLoad() error {
 	if body := []byte(c.QueryPayload); json.Valid(body) {
 		c.queryPayloadBody = body
 	} else {
 		payloadFilePath := c.QueryPayload
 
-		body, err := ioutil.ReadFile(payloadFilePath)
+		body, err := os.ReadFile(payloadFilePath)
 		if err != nil {
 			err = errors.Wrapf(err, "file specified for exec payload, but couldn't be read: %s", payloadFilePath)
 			return err
@@ -101,7 +101,7 @@ func (c *QueryConfig) Validate() error {
 			return err
 		}
 
-		c.queryPayloadBody = json.RawMessage(body)
+		c.queryPayloadBody = body
 	}
 
 	return nil

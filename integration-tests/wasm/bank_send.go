@@ -2,19 +2,17 @@ package wasm
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
-	"io/ioutil"
+	"math/big"
 	"os"
-	"path/filepath"
+
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/coreum/pkg/wasm"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
-
-	_ "embed"
 )
 
 var (
@@ -22,105 +20,42 @@ var (
 	bankSendWASM []byte
 )
 
-// TestBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
-// to dispurse the native coins.
-func TestBankSendContract(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
-	var (
-		adminWallet        = testing.RandomWallet()
-		testWallet         = testing.RandomWallet()
-		networkConfig      wasm.ChainConfig
-		stagedContractPath string
-	)
-
-	minGasPrice := chain.Network.InitialGasPrice()
+// TestBankSendWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
+// to disperse the native coins.
+func TestBankSendWasmContract(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
+	adminWallet := testing.RandomWallet()
 	nativeDenom := chain.Network.TokenSymbol()
 	nativeTokens := func(v string) string {
 		return v + nativeDenom
 	}
 
 	initTestState := func(ctx context.Context) error {
-		orPanic(chain.Network.FundAccount(adminWallet.Key.PubKey(), nativeTokens("100000000000000000000000000000000000")))
-		orPanic(chain.Network.FundAccount(testWallet.Key.PubKey(), nativeTokens("0")))
-
-		networkConfig = wasm.ChainConfig{
-			ChainID:     string(chain.Network.ChainID()),
-			MinGasPrice: nativeTokens(minGasPrice.String()),
-			RPCEndpoint: chain.RPCAddr,
+		// FIXME (wojtek): Temporary code for transition
+		if chain.Fund != nil {
+			if err := fundDeployerAcc(chain, adminWallet); err != nil {
+				return err
+			}
 		}
-
-		// FIXME: if workdir for the test is fixed, we can avoid embedding & staging
-		// the artefacts. Should be just referencing the local file.
-
-		stagedContractsDir := filepath.Join(os.TempDir(), "crust", "wasm", "artifacts")
-		if err := os.MkdirAll(stagedContractsDir, 0700); err != nil {
-			err = errors.Wrap(err, "failed to init the WASM staging dig")
-			return err
-		}
-
-		stagedContractPath = filepath.Join(stagedContractsDir, "bank_send.wasm")
-		if err := ioutil.WriteFile(stagedContractPath, bankSendWASM, 0600); err != nil {
-			err = errors.Wrap(err, "failed to stage the WASM contract for the test")
-			return err
-		}
-
 		return nil
 	}
 
 	runTestFunc := func(ctx context.Context, t testing.T) {
-		testBankSendContract(
-			chain,
-			adminWallet,
-			testWallet,
-			networkConfig,
-			stagedContractPath,
-			nativeDenom,
-			nativeTokens,
-		)(ctx, t)
-	}
-
-	return initTestState, runTestFunc
-}
-
-func testBankSendContract(
-	chain testing.Chain,
-	adminWallet types.Wallet,
-	testWallet types.Wallet,
-	networkConfig wasm.ChainConfig,
-	stagedContractPath string,
-	nativeDenom string,
-	nativeTokens func(string) string,
-) func(context.Context, testing.T) {
-	return func(ctx context.Context, t testing.T) {
 		expect := require.New(t)
+		networkConfig := wasm.ChainConfig{
+			MinGasPrice: nativeTokens(chain.Network.InitialGasPrice().String()),
+			Client:      chain.Client,
+		}
 
-		deployOut, err := wasm.Deploy(ctx, wasm.DeployConfig{
+		deployOut := deployWasmContract(ctx, wasm.DeployConfig{
 			Network: networkConfig,
 			From:    adminWallet,
-
-			ArtefactPath: stagedContractPath,
-		})
-		expect.NoError(err)
-		expect.NotEmpty(deployOut.StoreTxHash)
-
-		deployOut, err = wasm.Deploy(ctx, wasm.DeployConfig{
-			Network: networkConfig,
-			From:    adminWallet,
-
-			ArtefactPath: stagedContractPath,
 			InstantiationConfig: wasm.ContractInstanceConfig{
 				NeedInstantiation:  true,
 				InstantiatePayload: `{"count": 0}`,
-
-				// transfer some coins during instantiation,
-				// so we could withdraw them later using contract code.
+				// transfer some coins during instantiation, so we could withdraw them later using contract code.
 				Amount: nativeTokens("10000"),
 			},
-		})
-		expect.NoError(err)
-		expect.NotEmpty(deployOut.InitTxHash)
-		expect.NotEmpty(deployOut.ContractAddr)
-
-		// check that the contract has the bank balance after instantiation
+		}, bankSendWASM, expect)
 
 		contractBalance, err := chain.Client.BankQueryClient().Balance(ctx,
 			&banktypes.QueryBalanceRequest{
@@ -132,8 +67,7 @@ func testBankSendContract(
 		expect.Equal(nativeDenom, contractBalance.Balance.Denom)
 		expect.Equal("10000", contractBalance.Balance.Amount.String())
 
-		// withdraw half of the coins to a test wallet, previously empty
-
+		testWallet := testing.RandomWallet()
 		withdrawMsg := fmt.Sprintf(
 			`{"withdraw": { "amount":"5000", "denom":"%s", "recipient":"%s" }}`,
 			nativeDenom,
@@ -141,6 +75,7 @@ func testBankSendContract(
 		)
 
 		execOut, err := wasm.Execute(ctx, deployOut.ContractAddr, wasm.ExecuteConfig{
+			// withdraw half of the coins to a test wallet, previously empty
 			Network:        networkConfig,
 			From:           adminWallet,
 			ExecutePayload: withdrawMsg,
@@ -151,7 +86,6 @@ func testBankSendContract(
 		expect.Equal("try_withdraw", execOut.MethodExecuted)
 
 		// check that contract now has half of the coins
-
 		contractBalance, err = chain.Client.BankQueryClient().Balance(ctx,
 			&banktypes.QueryBalanceRequest{
 				Address: deployOut.ContractAddr,
@@ -163,7 +97,6 @@ func testBankSendContract(
 		expect.Equal("5000", contractBalance.Balance.Amount.String())
 
 		// check that the target test wallet has another half
-
 		testWalletBalance, err := chain.Client.BankQueryClient().Balance(ctx,
 			&banktypes.QueryBalanceRequest{
 				Address: testWallet.Address().String(),
@@ -173,13 +106,43 @@ func testBankSendContract(
 		expect.NotNil(testWalletBalance.Balance)
 		expect.Equal(nativeDenom, testWalletBalance.Balance.Denom)
 		expect.Equal("5000", testWalletBalance.Balance.Amount.String())
-
 		// bank send invoked by the contract code succeeded! 〠
 	}
+
+	return initTestState, runTestFunc
 }
 
-func orPanic(err error) {
-	if err != nil {
-		panic(err)
+func fundDeployerAcc(chain testing.Chain, wallet types.Wallet) error {
+	bv, ok := big.NewInt(0).SetString("1000000000000", 10)
+	if !ok {
+		panic("invalid amount")
 	}
+	balance, err := types.NewCoin(bv, chain.Network.TokenSymbol())
+	if err != nil {
+		return err
+	}
+	chain.Fund(wallet, balance)
+	return nil
+}
+
+func deployWasmContract(
+	ctx context.Context,
+	config wasm.DeployConfig,
+	contractData []byte,
+	expect *require.Assertions,
+) *wasm.DeployOutput {
+	wasmFile, err := os.CreateTemp("", "test_contract.wasm")
+	expect.NoError(err)
+
+	_, err = wasmFile.Write(contractData)
+	expect.NoError(err)
+
+	config.ArtefactPath = wasmFile.Name()
+	deployOut, err := wasm.Deploy(ctx, config)
+
+	expect.NoError(err)
+	expect.NotEmpty(deployOut.StoreTxHash)
+	expect.NotEmpty(deployOut.ContractAddr)
+
+	return deployOut
 }

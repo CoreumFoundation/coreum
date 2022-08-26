@@ -4,19 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"math/big"
+	"os"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"go.uber.org/zap"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // ExecuteConfig contains contract execution arguments and options.
@@ -51,7 +50,7 @@ func Execute(ctx context.Context, contractAddr string, config ExecuteConfig) (*E
 	if len(contractAddr) == 0 {
 		err := errors.New("contract address cannot be empty")
 		return nil, err
-	} else if err := config.Validate(); err != nil {
+	} else if err := config.ValidateAndLoad(); err != nil {
 		return nil, errors.Wrap(err, "failed to validate the execution config")
 	}
 
@@ -89,7 +88,7 @@ func runContractExecution(
 	amount sdk.Coins,
 ) (methodName, txHash string, err error) {
 	log := logger.Get(ctx)
-	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
+	chainClient := network.Client
 
 	input := tx.BaseInput{
 		Signer:   from,
@@ -113,7 +112,7 @@ func runContractExecution(
 		zap.Uint64("gas_limit", gasLimit),
 	)
 
-	input.GasLimit = uint64(float64(gasLimit) * GasMultiplier)
+	input.GasLimit = uint64(float64(gasLimit) * gasMultiplier)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgExecuteContract)
 	if err != nil {
@@ -143,15 +142,15 @@ func runContractExecution(
 	return methodName, txHash, nil
 }
 
-// Validate validates the contract execution config. May load some data from disk.
-// FIXME validate mustn't update the state
-func (c *ExecuteConfig) Validate() error {
+// ValidateAndLoad validates the contract execution config and loads it's initial state.
+// TODO(dhil) it would be better not to sore the state in the config and not set in the validation.
+func (c *ExecuteConfig) ValidateAndLoad() error {
 	if body := []byte(c.ExecutePayload); json.Valid(body) {
 		c.executePayloadBody = body
 	} else {
 		payloadFilePath := c.ExecutePayload
 
-		body, err := ioutil.ReadFile(payloadFilePath)
+		body, err := os.ReadFile(payloadFilePath)
 		if err != nil {
 			return errors.Wrapf(err, "file specified for exec payload, but couldn't be read: %s", payloadFilePath)
 		}
@@ -160,7 +159,7 @@ func (c *ExecuteConfig) Validate() error {
 			return errors.Wrapf(err, "file specified for exec payload, but doesn't contain valid JSON: %s", payloadFilePath)
 		}
 
-		c.executePayloadBody = json.RawMessage(body)
+		c.executePayloadBody = body
 	}
 
 	if len(c.Amount) > 0 {
@@ -172,22 +171,14 @@ func (c *ExecuteConfig) Validate() error {
 		c.amountParsed = amount
 	}
 
-	if len(c.Network.MinGasPrice) == 0 {
-		c.Network.minGasPriceParsed = types.Coin{
-			// FIXME take it as usual tests does
-			Amount: big.NewInt(1500), // matches InitialGasPrice in cored
-			Denom:  "core",
-		}
-	} else {
-		coinValue, err := sdk.ParseCoinNormalized(c.Network.MinGasPrice)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse min gas price coin spec as sdk.Coin: %s", c.Network.MinGasPrice)
-		}
+	coinValue, err := sdk.ParseCoinNormalized(c.Network.MinGasPrice)
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse min gas price coin spec as sdk.Coin: %s", c.Network.MinGasPrice)
+	}
 
-		c.Network.minGasPriceParsed = types.Coin{
-			Amount: coinValue.Amount.BigInt(),
-			Denom:  coinValue.Denom,
-		}
+	c.Network.minGasPriceParsed = types.Coin{
+		Amount: coinValue.Amount.BigInt(),
+		Denom:  coinValue.Denom,
 	}
 
 	return nil

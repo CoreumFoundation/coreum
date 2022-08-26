@@ -16,8 +16,8 @@ func Tests() testing.TestSet {
 			bank.TestInitialBalance,
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
-			wasm.TestSimpleStateContract,
-			wasm.TestBankSendContract,
+			wasm.TestSimpleStateWasmContract,
+			wasm.TestBankSendWasmContract,
 		},
 	}
 

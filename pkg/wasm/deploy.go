@@ -5,27 +5,26 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"math/big"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"go.uber.org/zap"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-// The GasMultiplier is the gas multiplier use for the wasm deployment.
-const GasMultiplier = 1.5
+// gasMultiplier is the gas multiplier used for the wasm deployment.
+const gasMultiplier = 1.5
 
 // DeployConfig provides params for the deploying stage.
 type DeployConfig struct {
@@ -51,13 +50,11 @@ type DeployConfig struct {
 
 // ChainConfig encapsulates chain-specific parameters, used to communicate with daemon.
 type ChainConfig struct {
-	// ChainID used to sign transactions
-	ChainID string
 	// MinGasPrice sets the minimum gas price required to be paid to get the transaction
 	// included in a block. The real gasPrice is a dynamic value, so this option sets its minimum.
 	MinGasPrice string
-	// RPCAddr is the Tendermint RPC endpoint for the chain client
-	RPCEndpoint string
+	// Client the RPC chain client
+	Client client.Client
 
 	minGasPriceParsed types.Coin
 }
@@ -104,7 +101,7 @@ const (
 
 // Deploy implements logic for "contracts deploy" CLI command.
 func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
-	if err := config.ValidateAndInit(); err != nil {
+	if err := config.ValidateAndLoad(); err != nil {
 		return nil, errors.Wrap(err, "failed to validate the deployment config")
 	}
 
@@ -145,7 +142,7 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 }
 
 func loadContractCode(config DeployConfig) (wasmData []byte, codeDataHash string, err error) {
-	wasmData, err = ioutil.ReadFile(config.ArtefactPath)
+	wasmData, err = os.ReadFile(config.ArtefactPath)
 	if err != nil {
 		return nil, "", errors.Wrap(err, "failed to read artefact data from the fs")
 	}
@@ -280,13 +277,13 @@ type DeployOutput struct {
 	InitTxHash   string `json:"initTxHash,omitempty"`
 }
 
-// ValidateAndInit checks the deployment config and inti the deployment state.
-func (c *DeployConfig) ValidateAndInit() error {
+// ValidateAndLoad checks the deployment config and loads it's initial state.
+// TODO(dhil) it would be better not to sore the state in the config and not set in the validation.
+func (c *DeployConfig) ValidateAndLoad() error {
 	if len(c.ArtefactPath) == 0 {
 		return errors.New("the ArtefactPath can't be empty")
 	}
 
-	// FIXME remove it form here, the validate method can't load the state
 	if len(c.InstantiationConfig.InstantiatePayload) > 0 {
 		body, err := getPayloadBody(c.InstantiationConfig.InstantiatePayload)
 		if err != nil {
@@ -306,7 +303,7 @@ func (c *DeployConfig) ValidateAndInit() error {
 	}
 
 	switch AccessType(c.InstantiationConfig.AccessType) {
-	case AccessType(""):
+	case "":
 		c.InstantiationConfig.accessTypeParsed = wasmtypes.AccessTypeUnspecified
 	case AccessTypeUnspecified:
 		c.InstantiationConfig.accessTypeParsed = wasmtypes.AccessTypeUnspecified
@@ -336,21 +333,14 @@ func (c *DeployConfig) ValidateAndInit() error {
 		}
 	}
 
-	if len(c.Network.MinGasPrice) == 0 {
-		c.Network.minGasPriceParsed = types.Coin{
-			Amount: big.NewInt(1500), // matches InitialGasPrice in cored
-			Denom:  "core",
-		}
-	} else {
-		coinValue, err := sdk.ParseCoinNormalized(c.Network.MinGasPrice)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse min gas price coin spec as sdk.Coin: %s", c.Network.MinGasPrice)
-		}
+	coinValue, err := sdk.ParseCoinNormalized(c.Network.MinGasPrice)
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse min gas price coin spec as sdk.Coin: %s", c.Network.MinGasPrice)
+	}
 
-		c.Network.minGasPriceParsed = types.Coin{
-			Amount: coinValue.Amount.BigInt(),
-			Denom:  coinValue.Denom,
-		}
+	c.Network.minGasPriceParsed = types.Coin{
+		Amount: coinValue.Amount.BigInt(),
+		Denom:  coinValue.Denom,
 	}
 
 	return nil
@@ -358,12 +348,12 @@ func (c *DeployConfig) ValidateAndInit() error {
 
 func getPayloadBody(payloadPathOrBody string) (json.RawMessage, error) {
 	if body := []byte(payloadPathOrBody); json.Valid(body) {
-		return json.RawMessage(body), nil
+		return body, nil
 	}
 
 	payloadFilePath := payloadPathOrBody
 
-	body, err := ioutil.ReadFile(payloadFilePath)
+	body, err := os.ReadFile(payloadFilePath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "file specified for instantiate payload, but couldn't be read: %s", payloadFilePath)
 	}
@@ -383,7 +373,7 @@ func runContractStore(
 	accessConfig *wasmtypes.AccessConfig,
 ) (codeID uint64, txHash string, err error) {
 	log := logger.Get(ctx)
-	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
+	chainClient := network.Client
 
 	input := tx.BaseInput{
 		Signer:   from,
@@ -406,7 +396,7 @@ func runContractStore(
 		zap.Uint64("gas_limit", gasLimit),
 	)
 
-	input.GasLimit = uint64(float64(gasLimit) * GasMultiplier)
+	input.GasLimit = uint64(float64(gasLimit) * gasMultiplier)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgStoreCode)
 	if err != nil {
@@ -455,7 +445,7 @@ func runContractInstantiate(
 	adminAcc *sdk.AccAddress,
 ) (contractAddr, txHash string, err error) {
 	log := logger.Get(ctx)
-	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
+	chainClient := network.Client
 
 	input := tx.BaseInput{
 		Signer:   from,
@@ -483,7 +473,7 @@ func runContractInstantiate(
 		zap.Int("contract_msg_size", len(initMsg)),
 		zap.Uint64("gas_limit", gasLimit),
 	)
-	input.GasLimit = uint64(float64(gasLimit) * GasMultiplier)
+	input.GasLimit = uint64(float64(gasLimit) * gasMultiplier)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgInstantiateContract)
 	if err != nil {
@@ -528,15 +518,13 @@ func queryContractCodeInfo(
 	network ChainConfig,
 	codeID uint64,
 ) (info *contractCodeInfo, err error) {
-	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
-
+	chainClient := network.Client
 	resp, err := chainClient.WASMQueryClient().Code(ctx, &wasmtypes.QueryCodeRequest{
 		CodeId: codeID,
 	})
 	if err != nil {
-		// FIXME: proper error unwrapping (module > sdk > rpc > rpc client)
 		if strings.Contains(err.Error(), "code = InvalidArgument desc = not found") {
-			return nil, errors.Errorf("contract codeID=%d not found on chain %s", codeID, network.ChainID)
+			return nil, errors.Errorf("contract codeID=%d not found on chain", codeID)
 		}
 
 		return nil, errors.Wrap(err, "WASMQueryClient failed to query the chain")
@@ -563,7 +551,7 @@ func attrFromEvent(ev sdk.StringEvent, attr string) (value string, ok bool) {
 }
 
 func checkWasmFile(path string) bool {
-	wasmData, err := ioutil.ReadFile(path)
+	wasmData, err := os.ReadFile(path)
 	if err != nil {
 		return false
 	}

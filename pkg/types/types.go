@@ -3,12 +3,13 @@ package types
 import (
 	"math/big"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	cosmcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cosmkeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // Wallet stores information related to wallet
