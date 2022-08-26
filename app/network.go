@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"math/big"
 	"os"
 	"sync"
 	"text/template"
@@ -15,12 +14,15 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
+	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	"github.com/CoreumFoundation/coreum/x/auth"
+	"github.com/CoreumFoundation/coreum/x/auth/ante"
+	"github.com/CoreumFoundation/coreum/x/feemodel"
 )
 
 // ChainID represents predefined chain ID
@@ -55,19 +57,18 @@ var (
 )
 
 func init() {
+	feeConfig := FeeConfig{
+		FeeModel:         feemodel.DefaultModel(),
+		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
+	}
+
 	list := []NetworkConfig{
 		{
 			ChainID:       Mainnet,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
-			Fee: FeeConfig{
-				InitialGasPrice:       big.NewInt(1500),
-				MinDiscountedGasPrice: big.NewInt(1000),
-				DeterministicGas: DeterministicGasConfig{
-					BankSend: 120000,
-				},
-			},
+			Fee:           feeConfig,
 		},
 		{
 			ChainID:       Devnet,
@@ -75,13 +76,7 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
-			Fee: FeeConfig{
-				InitialGasPrice:       big.NewInt(1500),
-				MinDiscountedGasPrice: big.NewInt(1000),
-				DeterministicGas: DeterministicGasConfig{
-					BankSend: 120000,
-				},
-			},
+			Fee:           feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"4ae4593aff8dd5ececd217f273195549503e2df8@35.223.81.227:26656"},
 			},
@@ -133,27 +128,10 @@ func init() {
 
 var networks = map[ChainID]NetworkConfig{}
 
-// DeterministicGasConfig keeps config about deterministic gas for some message types
-type DeterministicGasConfig struct {
-	BankSend uint64
-}
-
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
-	InitialGasPrice       *big.Int
-	MinDiscountedGasPrice *big.Int
-	DeterministicGas      DeterministicGasConfig
-}
-
-// Clone creates a copy of FeeConfig to allow to pass by reference
-func (f FeeConfig) Clone() FeeConfig {
-	return FeeConfig{
-		InitialGasPrice:       big.NewInt(0).Set(f.InitialGasPrice),
-		MinDiscountedGasPrice: big.NewInt(0).Set(f.MinDiscountedGasPrice),
-		DeterministicGas: DeterministicGasConfig{
-			BankSend: f.DeterministicGas.BankSend,
-		},
-	}
+	FeeModel         feemodel.Model
+	DeterministicGas ante.DeterministicGasRequirements
 }
 
 // NetworkConfig helps initialize Network instance
@@ -192,7 +170,7 @@ func NewNetwork(c NetworkConfig) Network {
 		addressPrefix:  c.AddressPrefix,
 		tokenSymbol:    c.TokenSymbol,
 		nodeConfig:     c.NodeConfig.Clone(),
-		fee:            c.Fee.Clone(),
+		fee:            c.Fee,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -368,18 +346,13 @@ func (n Network) TokenSymbol() string {
 	return n.tokenSymbol
 }
 
-// InitialGasPrice returns initial gas price used by the first block
-func (n Network) InitialGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.fee.InitialGasPrice)
-}
-
-// MinDiscountedGasPrice returns minimum gas price after giving maximum discount
-func (n Network) MinDiscountedGasPrice() *big.Int {
-	return big.NewInt(0).Set(n.fee.MinDiscountedGasPrice)
+// FeeModel returns fee model configuration
+func (n Network) FeeModel() feemodel.Model {
+	return n.fee.FeeModel
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types
-func (n Network) DeterministicGas() DeterministicGasConfig {
+func (n Network) DeterministicGas() ante.DeterministicGasRequirements {
 	return n.fee.DeterministicGas
 }
 
@@ -408,10 +381,13 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC string
 		ChainID        ChainID
 		TokenSymbol    string
+		MaxBlockGas    int64
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
+		// TODO: adjust MaxBlockGas before creating testnet & mainnet
+		MaxBlockGas: n.fee.FeeModel.MaxBlockGas,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")

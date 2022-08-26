@@ -3,7 +3,6 @@ package app
 import (
 	"crypto/ed25519"
 	"encoding/json"
-	"math/big"
 	"strings"
 	"testing"
 	"time"
@@ -16,11 +15,28 @@ import (
 
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	"github.com/CoreumFoundation/coreum/x/auth/ante"
+	"github.com/CoreumFoundation/coreum/x/feemodel"
 )
 
 func init() {
 	n := testNetwork()
 	n.SetupPrefixes()
+}
+
+var feeConfig = FeeConfig{
+	FeeModel: feemodel.Model{
+		InitialGasPrice:         sdk.NewInt(2),
+		MaxGasPrice:             sdk.NewInt(4),
+		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),
+		EscalationStartBlockGas: 10,
+		MaxBlockGas:             20,
+		ShortAverageBlockLength: 3,
+		LongAverageBlockLength:  5,
+	},
+	DeterministicGas: ante.DeterministicGasRequirements{
+		BankSend: 10,
+	},
 }
 
 func testNetwork() Network {
@@ -35,13 +51,7 @@ func testNetwork() Network {
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
-		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
-			DeterministicGas: DeterministicGasConfig{
-				BankSend: 10,
-			},
-		},
+		Fee:           feeConfig,
 		FundedAccounts: []FundedAccount{{
 			PublicKey: pubKey,
 			Balances:  "1000some-test-token",
@@ -204,7 +214,7 @@ func TestAddGenTx(t *testing.T) {
 }
 
 func TestDeterministicGas(t *testing.T) {
-	assert.Equal(t, DeterministicGasConfig{
+	assert.Equal(t, ante.DeterministicGasRequirements{
 		BankSend: 10,
 	}, testNetwork().DeterministicGas())
 }
@@ -234,30 +244,29 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 
 	pubKey, _ := types.GenerateSecp256k1Key()
 	cfg := NetworkConfig{
-		ChainID:       ChainID("test-network"),
-		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-		AddressPrefix: "core",
-		TokenSymbol:   TokenSymbolMain,
-		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
-			DeterministicGas: DeterministicGasConfig{
-				BankSend: 10,
-			},
-		},
+		ChainID:        ChainID("test-network"),
+		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+		AddressPrefix:  "core",
+		TokenSymbol:    TokenSymbolMain,
+		Fee:            feeConfig,
 		FundedAccounts: []FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
 	}
 
 	n1 := NewNetwork(cfg)
 
-	cfg.Fee.InitialGasPrice.Set(big.NewInt(150))
-	cfg.Fee.MinDiscountedGasPrice.Set(big.NewInt(100))
+	cfg.Fee.FeeModel.InitialGasPrice.AddRaw(10)
+	cfg.Fee.FeeModel.MaxGasPrice.AddRaw(10)
 	cfg.FundedAccounts[0] = FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
 	cfg.GenTxs[0] = []byte("tx2")
 
-	assertT.True(n1.InitialGasPrice().Cmp(big.NewInt(2)) == 0)
-	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
+	assertT.True(n1.FeeModel().InitialGasPrice.Equal(sdk.NewInt(2)))
+	assertT.True(n1.FeeModel().MaxGasPrice.Equal(sdk.NewInt(4)))
+	assertT.True(n1.FeeModel().MaxDiscount.Equal(sdk.MustNewDecFromStr("0.4")))
+	assertT.EqualValues(10, n1.FeeModel().EscalationStartBlockGas)
+	assertT.EqualValues(20, n1.FeeModel().MaxBlockGas)
+	assertT.EqualValues(3, n1.FeeModel().ShortAverageBlockLength)
+	assertT.EqualValues(5, n1.FeeModel().LongAverageBlockLength)
 	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
 	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
 }
@@ -301,33 +310,33 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
 		TokenSymbol:   TokenSymbolMain,
-		Fee: FeeConfig{
-			InitialGasPrice:       big.NewInt(2),
-			MinDiscountedGasPrice: big.NewInt(1),
-			DeterministicGas: DeterministicGasConfig{
-				BankSend: 10,
-			},
-		},
+		Fee:           feeConfig,
 	}
 
 	n1 := NewNetwork(cfg)
 
-	n1.InitialGasPrice().Set(big.NewInt(150))
-	n1.MinDiscountedGasPrice().Set(big.NewInt(100))
+	n1.FeeModel().InitialGasPrice.AddRaw(10)
+	n1.FeeModel().MaxGasPrice.AddRaw(10)
 
-	assertT.True(n1.InitialGasPrice().Cmp(big.NewInt(2)) == 0)
-	assertT.True(n1.MinDiscountedGasPrice().Cmp(big.NewInt(1)) == 0)
+	assertT.True(n1.FeeModel().InitialGasPrice.Equal(sdk.NewInt(2)))
+	assertT.True(n1.FeeModel().MaxGasPrice.Equal(sdk.NewInt(4)))
 }
 
 func TestNetworkConfigConditions(t *testing.T) {
-	requireT := require.New(t)
 	assertT := assert.New(t)
 	for _, cfg := range networks {
-		requireT.NotNil(cfg.Fee.InitialGasPrice)
-		requireT.NotNil(cfg.Fee.MinDiscountedGasPrice)
-		assertT.True(cfg.Fee.InitialGasPrice.Sign() == 1)
-		assertT.True(cfg.Fee.MinDiscountedGasPrice.Sign() == 1)
-		assertT.True(cfg.Fee.InitialGasPrice.Cmp(cfg.Fee.MinDiscountedGasPrice) >= 0)
+		assertT.True(cfg.Fee.FeeModel.InitialGasPrice.Sign() == 1)
+		assertT.True(cfg.Fee.FeeModel.MaxGasPrice.Sign() == 1)
+		assertT.True(cfg.Fee.FeeModel.MaxGasPrice.GT(cfg.Fee.FeeModel.InitialGasPrice))
+
+		assertT.True(cfg.Fee.FeeModel.MaxDiscount.GT(sdk.ZeroDec()))
+		assertT.True(cfg.Fee.FeeModel.MaxDiscount.LT(sdk.OneDec()))
+
+		assertT.Greater(cfg.Fee.FeeModel.EscalationStartBlockGas, int64(0))
+		assertT.Greater(cfg.Fee.FeeModel.MaxBlockGas, cfg.Fee.FeeModel.EscalationStartBlockGas)
+
+		assertT.Greater(cfg.Fee.FeeModel.ShortAverageBlockLength, uint(0))
+		assertT.Greater(cfg.Fee.FeeModel.LongAverageBlockLength, cfg.Fee.FeeModel.ShortAverageBlockLength)
 
 		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
 	}
