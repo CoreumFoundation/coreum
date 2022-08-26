@@ -28,7 +28,7 @@ func Tests() testing.TestSet {
 	// implemented inside testing framework. Test itself is written serially to not fight for resources with other tests.
 	// In the future, once we have more tests running in parallel, we will replace 10 tests running 20 transactions each
 	// with a single one running 200 of them.
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 11; i++ {
 		testSet.SingleChain = append(testSet.SingleChain, bank.TestTransferMaximumGas(20))
 	}
 
