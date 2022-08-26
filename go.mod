@@ -10,6 +10,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.2.1
+	github.com/CosmWasm/wasmd v0.27.0
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/ibc-go/v3 v3.0.0
