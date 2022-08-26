@@ -96,7 +96,6 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CoreumFoundation/coreum/app/wasmconfig"
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
@@ -402,7 +401,7 @@ func New(
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
-		wasmconfig.DefaultWASMConfig(),
+		wasm.DefaultWasmConfig(),
 		supportedFeatures,
 	)
 
