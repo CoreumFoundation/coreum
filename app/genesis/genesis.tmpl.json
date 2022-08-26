@@ -209,6 +209,15 @@
     },
     "upgrade": {},
     "vesting": {},
+    "wasm": {
+      "params": {
+        "instantiate_default_permission": "Everybody",
+        "code_upload_access": {
+          "permission": "Everybody",
+          "address": ""
+        }
+      }
+    },
     "feemodel": {}
   }
 }
