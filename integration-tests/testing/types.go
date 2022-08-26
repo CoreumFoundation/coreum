@@ -27,6 +27,8 @@ type Chain struct {
 	Client  client.Client
 	// FIXME (wojtek): Temporary solution to be removed after transition period
 	Fund func(wallet types.Wallet, amount types.Coin)
+	// FIXME (dhil): Temporary solution to merge the wasm integration tests
+	RPCAddr string
 }
 
 // SingleChainSignature is the signature of test function accepting a chain
