@@ -80,7 +80,7 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper   Keeper
-	feeDenom string
+	feeDenom string // FIXME (wojtek): store it in genesis
 	feeModel Model
 }
 

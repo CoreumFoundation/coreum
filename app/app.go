@@ -354,6 +354,7 @@ func New(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
+	// FIXME (wojtek): store denom in genesis
 	app.FeeModelKeeper = feemodelkeeper.NewKeeper(sdk.NewCoin(ChosenNetwork.TokenSymbol(), ChosenNetwork.FeeModel().InitialGasPrice),
 		keys[feemodeltypes.StoreKey], tkeys[feemodeltypes.TransientStoreKey])
 
