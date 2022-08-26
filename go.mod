@@ -11,7 +11,6 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.2.1
-	github.com/CoreumFoundation/crust/pkg/contracts v0.0.0-20220808170449-f658d0e8b653
 	github.com/CosmWasm/wasmd v0.27.0
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/go-bip39 v1.0.0

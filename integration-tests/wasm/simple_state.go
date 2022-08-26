@@ -9,7 +9,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/CoreumFoundation/crust/pkg/contracts"
+	"github.com/CoreumFoundation/coreum/pkg/wasm"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	//go:embed fixtures/simple-state/artifacts/simple_state.wasm
+	//go:embed contracts/simple-state/artifacts/simple_state.wasm
 	simpleStateWASM []byte
 )
 
@@ -26,7 +26,7 @@ var (
 func TestSimpleStateContract(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
 	var (
 		adminWallet        = testing.RandomWallet()
-		networkConfig      contracts.ChainConfig
+		networkConfig      wasm.ChainConfig
 		stagedContractPath string
 	)
 
@@ -38,7 +38,7 @@ func TestSimpleStateContract(chain testing.Chain) (testing.PrepareFunc, testing.
 
 	initTestState := func(ctx context.Context) error {
 		orPanic(chain.Network.FundAccount(adminWallet.Key.PubKey(), nativeTokens("100000000000000000000000000000000000")))
-		networkConfig = contracts.ChainConfig{
+		networkConfig = wasm.ChainConfig{
 			ChainID: string(chain.Network.ChainID()),
 			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
 			MinGasPrice: nativeTokens(minGasPrice.String()),
@@ -76,7 +76,7 @@ func TestSimpleStateContract(chain testing.Chain) (testing.PrepareFunc, testing.
 
 func testSimpleStateContract(
 	adminWallet types.Wallet,
-	networkConfig contracts.ChainConfig,
+	networkConfig wasm.ChainConfig,
 	stagedContractPath string,
 ) func(context.Context, testing.T) {
 	return func(ctx context.Context, t testing.T) {
@@ -84,12 +84,11 @@ func testSimpleStateContract(
 
 		// Store the contract code on the chain, instantiation will be done in later step
 
-		deployOut, err := contracts.Deploy(ctx, contracts.DeployConfig{
+		deployOut, err := wasm.Deploy(ctx, wasm.DeployConfig{
 			Network: networkConfig,
 			From:    adminWallet,
 
 			ArtefactPath: stagedContractPath,
-			NeedRebuild:  false,
 		})
 		expect.NoError(err)
 		expect.NotEmpty(deployOut.StoreTxHash)
@@ -98,12 +97,12 @@ func testSimpleStateContract(
 		// This step could be done within previous step, but separated there
 		// so we could chech the intermediate result of code storage.
 
-		deployOut, err = contracts.Deploy(ctx, contracts.DeployConfig{
+		deployOut, err = wasm.Deploy(ctx, wasm.DeployConfig{
 			Network: networkConfig,
 			From:    adminWallet,
 
 			ArtefactPath: stagedContractPath,
-			InstantiationConfig: contracts.ContractInstanceConfig{
+			InstantiationConfig: wasm.ContractInstanceConfig{
 				NeedInstantiation:  true,
 				InstantiatePayload: `{"count": 1337}`,
 			},
@@ -114,7 +113,7 @@ func testSimpleStateContract(
 
 		// Query the contract state to get the initial count
 
-		queryOut, err := contracts.Query(ctx, deployOut.ContractAddr, contracts.QueryConfig{
+		queryOut, err := wasm.Query(ctx, deployOut.ContractAddr, wasm.QueryConfig{
 			Network:      networkConfig,
 			QueryPayload: `{"get_count": {}}`,
 		})
@@ -127,7 +126,7 @@ func testSimpleStateContract(
 
 		// Execute contract to increment the count
 
-		execOut, err := contracts.Execute(ctx, deployOut.ContractAddr, contracts.ExecuteConfig{
+		execOut, err := wasm.Execute(ctx, deployOut.ContractAddr, wasm.ExecuteConfig{
 			Network:        networkConfig,
 			From:           adminWallet,
 			ExecutePayload: `{"increment": {}}`,
@@ -139,7 +138,7 @@ func testSimpleStateContract(
 
 		// Query the contract once again to ensure the count has been incremented
 
-		queryOut, err = contracts.Query(ctx, deployOut.ContractAddr, contracts.QueryConfig{
+		queryOut, err = wasm.Query(ctx, deployOut.ContractAddr, wasm.QueryConfig{
 			Network:      networkConfig,
 			QueryPayload: `{"get_count": {}}`,
 		})

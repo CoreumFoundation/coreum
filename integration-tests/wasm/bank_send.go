@@ -9,7 +9,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/CoreumFoundation/crust/pkg/contracts"
+	"github.com/CoreumFoundation/coreum/pkg/wasm"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	//go:embed fixtures/bank-send/artifacts/bank_send.wasm
+	//go:embed contracts/bank-send/artifacts/bank_send.wasm
 	bankSendWASM []byte
 )
 
@@ -28,7 +28,7 @@ func TestBankSendContract(chain testing.Chain) (testing.PrepareFunc, testing.Run
 	var (
 		adminWallet        = testing.RandomWallet()
 		testWallet         = testing.RandomWallet()
-		networkConfig      contracts.ChainConfig
+		networkConfig      wasm.ChainConfig
 		stagedContractPath string
 	)
 
@@ -42,7 +42,7 @@ func TestBankSendContract(chain testing.Chain) (testing.PrepareFunc, testing.Run
 		orPanic(chain.Network.FundAccount(adminWallet.Key.PubKey(), nativeTokens("100000000000000000000000000000000000")))
 		orPanic(chain.Network.FundAccount(testWallet.Key.PubKey(), nativeTokens("0")))
 
-		networkConfig = contracts.ChainConfig{
+		networkConfig = wasm.ChainConfig{
 			ChainID:     string(chain.Network.ChainID()),
 			MinGasPrice: nativeTokens(minGasPrice.String()),
 			RPCEndpoint: chain.RPCAddr,
@@ -85,7 +85,7 @@ func testBankSendContract(
 	chain testing.Chain,
 	adminWallet types.Wallet,
 	testWallet types.Wallet,
-	networkConfig contracts.ChainConfig,
+	networkConfig wasm.ChainConfig,
 	stagedContractPath string,
 	nativeDenom string,
 	nativeTokens func(string) string,
@@ -93,22 +93,21 @@ func testBankSendContract(
 	return func(ctx context.Context, t testing.T) {
 		expect := require.New(t)
 
-		deployOut, err := contracts.Deploy(ctx, contracts.DeployConfig{
+		deployOut, err := wasm.Deploy(ctx, wasm.DeployConfig{
 			Network: networkConfig,
 			From:    adminWallet,
 
 			ArtefactPath: stagedContractPath,
-			NeedRebuild:  false,
 		})
 		expect.NoError(err)
 		expect.NotEmpty(deployOut.StoreTxHash)
 
-		deployOut, err = contracts.Deploy(ctx, contracts.DeployConfig{
+		deployOut, err = wasm.Deploy(ctx, wasm.DeployConfig{
 			Network: networkConfig,
 			From:    adminWallet,
 
 			ArtefactPath: stagedContractPath,
-			InstantiationConfig: contracts.ContractInstanceConfig{
+			InstantiationConfig: wasm.ContractInstanceConfig{
 				NeedInstantiation:  true,
 				InstantiatePayload: `{"count": 0}`,
 
@@ -141,7 +140,7 @@ func testBankSendContract(
 			testWallet.Address().String(),
 		)
 
-		execOut, err := contracts.Execute(ctx, deployOut.ContractAddr, contracts.ExecuteConfig{
+		execOut, err := wasm.Execute(ctx, deployOut.ContractAddr, wasm.ExecuteConfig{
 			Network:        networkConfig,
 			From:           adminWallet,
 			ExecutePayload: withdrawMsg,
