@@ -3,9 +3,8 @@ package testing
 import (
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/x/auth"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 )
 
@@ -17,17 +16,7 @@ var NetworkConfig = app.NetworkConfig{
 	AddressPrefix: "devcore",
 	TokenSymbol:   app.TokenSymbolDev,
 	Fee: app.FeeConfig{
-		FeeModel: feemodel.Model{
-			InitialGasPrice:         sdk.NewInt(1500),
-			MaxGasPrice:             sdk.NewInt(1500000),
-			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-			EscalationStartBlockGas: 37500000, // 300 * BankSend message
-			MaxBlockGas:             50000000, // 400 * BankSend message
-			ShortAverageBlockLength: 10,
-			LongAverageBlockLength:  1000,
-		},
-		DeterministicGas: app.DeterministicGasConfig{
-			BankSend: 125000,
-		},
+		FeeModel:         feemodel.DefaultModel(),
+		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	},
 }

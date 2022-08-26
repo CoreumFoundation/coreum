@@ -5,21 +5,9 @@ package feemodel
 
 import (
 	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	feeModelSim = Model{
-		InitialGasPrice:         sdk.NewInt(1500),
-		MaxGasPrice:             sdk.NewInt(1500000),
-		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-		EscalationStartBlockGas: 37500000, // 300 * BankSend message
-		MaxBlockGas:             50000000, // 400 * BankSend message
-		ShortAverageBlockLength: 10,
-		LongAverageBlockLength:  1000,
-	}
-)
+var feeModelSim = DefaultModel()
 
 //nolint:govet // This example does not refer to any identifier
 func ExampleGasPricePerBlockGas() {

@@ -20,6 +20,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	"github.com/CoreumFoundation/coreum/x/auth"
+	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 )
 
@@ -55,20 +57,9 @@ var (
 )
 
 func init() {
-	defaultFeeConfig := FeeConfig{
-		FeeModel: feemodel.Model{
-			// TODO: Find good parameters before lunching mainnet
-			InitialGasPrice:         sdk.NewInt(1500),
-			MaxGasPrice:             sdk.NewInt(1500000),
-			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-			EscalationStartBlockGas: 37500000, // 300 * BankSend message
-			MaxBlockGas:             50000000, // 400 * BankSend message
-			ShortAverageBlockLength: 10,
-			LongAverageBlockLength:  1000,
-		},
-		DeterministicGas: DeterministicGasConfig{
-			BankSend: 125000,
-		},
+	feeConfig := FeeConfig{
+		FeeModel:         feemodel.DefaultModel(),
+		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	}
 
 	list := []NetworkConfig{
@@ -77,7 +68,7 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
-			Fee:           defaultFeeConfig,
+			Fee:           feeConfig,
 		},
 		{
 			ChainID:       Devnet,
@@ -85,7 +76,7 @@ func init() {
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
 			TokenSymbol:   TokenSymbolDev,
-			Fee:           defaultFeeConfig,
+			Fee:           feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"4ae4593aff8dd5ececd217f273195549503e2df8@35.223.81.227:26656"},
 			},
@@ -173,15 +164,10 @@ type FeeModel struct {
 	LongAverageInertia uint
 }
 
-// DeterministicGasConfig keeps config about deterministic gas for some message types
-type DeterministicGasConfig struct {
-	BankSend uint64
-}
-
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
 	FeeModel         feemodel.Model
-	DeterministicGas DeterministicGasConfig
+	DeterministicGas ante.DeterministicGasRequirements
 }
 
 // NetworkConfig helps initialize Network instance
@@ -402,7 +388,7 @@ func (n Network) FeeModel() feemodel.Model {
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types
-func (n Network) DeterministicGas() DeterministicGasConfig {
+func (n Network) DeterministicGas() ante.DeterministicGasRequirements {
 	return n.fee.DeterministicGas
 }
 

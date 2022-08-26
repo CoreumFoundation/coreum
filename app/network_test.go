@@ -15,6 +15,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 )
 
@@ -33,7 +34,7 @@ var feeConfig = FeeConfig{
 		ShortAverageBlockLength: 3,
 		LongAverageBlockLength:  5,
 	},
-	DeterministicGas: DeterministicGasConfig{
+	DeterministicGas: ante.DeterministicGasRequirements{
 		BankSend: 10,
 	},
 }
@@ -213,7 +214,7 @@ func TestAddGenTx(t *testing.T) {
 }
 
 func TestDeterministicGas(t *testing.T) {
-	assert.Equal(t, DeterministicGasConfig{
+	assert.Equal(t, ante.DeterministicGasRequirements{
 		BankSend: 10,
 	}, testNetwork().DeterministicGas())
 }
