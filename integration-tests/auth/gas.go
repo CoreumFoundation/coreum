@@ -109,7 +109,7 @@ func TestGasLimitHigherThanMaxBlockGas(chain testing.Chain) (testing.PrepareFunc
 
 	return func(ctx context.Context) error {
 			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.FeeModel().MaxGasPrice,
+				chain.Network.FeeModel().InitialGasPrice,
 				uint64(chain.Network.FeeModel().MaxBlockGas+1),
 				1,
 				sdk.NewInt(100),
@@ -152,7 +152,7 @@ func TestGasLimitEqualToMaxBlockGas(chain testing.Chain) (testing.PrepareFunc, t
 
 	return func(ctx context.Context) error {
 			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.FeeModel().MaxGasPrice,
+				chain.Network.FeeModel().InitialGasPrice,
 				uint64(chain.Network.FeeModel().MaxBlockGas),
 				1,
 				sdk.NewInt(100),
