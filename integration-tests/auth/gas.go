@@ -25,7 +25,7 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.Prerequisites, testing.Run
 		chain.Network.DeterministicGas().BankSend,
 		1,
 		sdk.NewInt(100),
-	), chain.Network.TokenSymbol())
+	).BigInt(), chain.Network.TokenSymbol())
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
