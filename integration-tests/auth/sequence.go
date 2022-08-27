@@ -19,11 +19,11 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.Prerequisites, t
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.Network.FeeModel().InitialGasPrice,
-		chain.Network.DeterministicGas().BankSend,
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
 		sdk.NewInt(10),
-	).BigInt(), chain.Network.TokenSymbol())
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
@@ -49,12 +49,12 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.Prerequisites, t
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
-					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
+					GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+					GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(1)},
+				Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(1)},
 			})
 			require.NoError(t, err)
 			_, err = coredClient.Broadcast(ctx, txBytes)

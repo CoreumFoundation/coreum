@@ -21,11 +21,11 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.Prerequisites, testing.Run
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.Network.FeeModel().InitialGasPrice,
-		chain.Network.DeterministicGas().BankSend,
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
 		sdk.NewInt(100),
-	).BigInt(), chain.Network.TokenSymbol())
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
@@ -41,17 +41,17 @@ func TestTooLowGasPrice(chain testing.Chain) (testing.Prerequisites, testing.Run
 		func(ctx context.Context, t testing.T) {
 			coredClient := chain.Client
 
-			gasPriceWithMaxDiscount := chain.Network.FeeModel().InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(chain.Network.FeeModel().MaxDiscount)).TruncateInt()
+			gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.MaxDiscount)).TruncateInt()
 			gasPrice := gasPriceWithMaxDiscount.Sub(sdk.OneInt())
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
-					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: gasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
+					GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+					GasPrice: types.Coin{Amount: gasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
+				Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
 			})
 			require.NoError(t, err)
 
@@ -66,11 +66,11 @@ func TestNoFee(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, err
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.Network.FeeModel().InitialGasPrice,
-		chain.Network.DeterministicGas().BankSend,
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
 		sdk.NewInt(100),
-	).BigInt(), chain.Network.TokenSymbol())
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
@@ -89,11 +89,11 @@ func TestNoFee(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, err
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
-					GasLimit: chain.Network.DeterministicGas().BankSend,
+					GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
+				Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
 			})
 			require.NoError(t, err)
 
@@ -108,11 +108,11 @@ func TestGasLimitHigherThanMaxBlockGas(chain testing.Chain) (testing.Prerequisit
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.Network.FeeModel().InitialGasPrice,
-		uint64(chain.Network.FeeModel().MaxBlockGas+1),
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas+1),
 		1,
 		sdk.NewInt(100),
-	).BigInt(), chain.Network.TokenSymbol())
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
@@ -131,12 +131,12 @@ func TestGasLimitHigherThanMaxBlockGas(chain testing.Chain) (testing.Prerequisit
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
-					GasLimit: uint64(chain.Network.FeeModel().MaxBlockGas + 1), // transaction requires more gas than block can fit
-					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
+					GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas + 1), // transaction requires more gas than block can fit
+					GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
+				Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
 			})
 			require.NoError(t, err)
 
@@ -151,11 +151,11 @@ func TestGasLimitEqualToMaxBlockGas(chain testing.Chain) (testing.Prerequisites,
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.Network.FeeModel().InitialGasPrice,
-		uint64(chain.Network.FeeModel().MaxBlockGas),
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
 		1,
 		sdk.NewInt(100),
-	).BigInt(), chain.Network.TokenSymbol())
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
@@ -174,12 +174,12 @@ func TestGasLimitEqualToMaxBlockGas(chain testing.Chain) (testing.Prerequisites,
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
-					GasLimit: uint64(chain.Network.FeeModel().MaxBlockGas),
-					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
+					GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
+					GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
+				Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
 			})
 			require.NoError(t, err)
 

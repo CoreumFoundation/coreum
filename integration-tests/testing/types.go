@@ -20,8 +20,8 @@ type RunFunc = func(ctx context.Context, t T)
 
 // Chain holds network and client for the blockchain
 type Chain struct {
-	Network *app.Network
-	Client  client.Client
+	NetworkConfig app.NetworkConfig
+	Client        client.Client
 }
 
 // Prerequisites reresent requirements of a test which must be met before it can be started

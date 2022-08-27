@@ -21,7 +21,7 @@ func TestInitialBalance(chain testing.Chain) (testing.Prerequisites, testing.Run
 	// Create new random wallet
 	wallet := testing.RandomWallet()
 
-	initialBalance, err := types.NewCoin(big.NewInt(100), chain.Network.TokenSymbol())
+	initialBalance, err := types.NewCoin(big.NewInt(100), chain.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
@@ -43,7 +43,7 @@ func TestInitialBalance(chain testing.Chain) (testing.Prerequisites, testing.Run
 			require.NoError(t, err)
 
 			// Test that wallet owns expected balance
-			assert.Equal(t, "100", balances[chain.Network.TokenSymbol()].Amount.String())
+			assert.Equal(t, "100", balances[chain.NetworkConfig.TokenSymbol].Amount.String())
 		}, nil
 }
 
@@ -54,16 +54,16 @@ func TestCoreTransfer(chain testing.Chain) (testing.Prerequisites, testing.RunFu
 	receiver := testing.RandomWallet()
 
 	senderInitialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.Network.FeeModel().InitialGasPrice,
-		chain.Network.DeterministicGas().BankSend,
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
 		sdk.NewInt(100),
-	).BigInt(), chain.Network.TokenSymbol())
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
 
-	receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.Network.TokenSymbol())
+	receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
@@ -91,12 +91,12 @@ func TestCoreTransfer(chain testing.Chain) (testing.Prerequisites, testing.RunFu
 			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 				Base: tx.BaseInput{
 					Signer:   sender,
-					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
+					GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+					GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
 				},
 				Sender:   sender,
 				Receiver: receiver,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
+				Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
 			})
 			require.NoError(t, err)
 			result, err := coredClient.Broadcast(ctx, txBytes)
@@ -114,9 +114,9 @@ func TestCoreTransfer(chain testing.Chain) (testing.Prerequisites, testing.RunFu
 			// Test that tokens disappeared from sender's wallet
 			// - 10core were transferred to receiver
 			// - 180000000core were taken as fee
-			assert.Equal(t, "90", balancesSender[chain.Network.TokenSymbol()].Amount.String())
+			assert.Equal(t, "90", balancesSender[chain.NetworkConfig.TokenSymbol].Amount.String())
 
 			// Test that tokens reached receiver's wallet
-			assert.Equal(t, "20", balancesReceiver[chain.Network.TokenSymbol()].Amount.String())
+			assert.Equal(t, "20", balancesReceiver[chain.NetworkConfig.TokenSymbol].Amount.String())
 		}, nil
 }

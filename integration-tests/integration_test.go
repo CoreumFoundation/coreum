@@ -25,7 +25,9 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-var cfg config
+var cfg = config{
+	NetworkConfig: coreumtesting.NetworkConfig,
+}
 
 func TestMain(m *testing.M) {
 	var coredAddress, fundingPrivKey, logFormat, filter string
@@ -36,9 +38,7 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.Parse()
 
-	cfg.Network = app.NewNetwork(coreumtesting.NetworkConfig)
-	cfg.Network.SetupPrefixes()
-	cfg.CoredClient = client.New(cfg.Network.ChainID(), coredAddress)
+	cfg.CoredClient = client.New(cfg.NetworkConfig.ChainID, coredAddress)
 
 	var err error
 	cfg.FundingPrivKey, err = base64.RawURLEncoding.DecodeString(fundingPrivKey)
@@ -49,6 +49,9 @@ func TestMain(m *testing.M) {
 	cfg.Filter = regexp.MustCompile(filter)
 	cfg.LogFormat = logger.Format(logFormat)
 	cfg.LogVerbose = flag.Lookup("test.v").Value.String() == "true"
+
+	// FIXME (wojtek): remove this once we have our own address encoder
+	app.NewNetwork(cfg.NetworkConfig).SetupPrefixes()
 
 	m.Run()
 }
@@ -73,7 +76,7 @@ func Test(t *testing.T) {
 
 type config struct {
 	CoredClient    client.Client
-	Network        app.Network
+	NetworkConfig  app.NetworkConfig
 	FundingPrivKey types.Secp256k1PrivateKey
 	Filter         *regexp.Regexp
 	LogFormat      logger.Format
@@ -99,8 +102,8 @@ type testCase struct {
 
 func collectTestCases(cfg config, testSet coreumtesting.TestSet) (coreumtesting.Prerequisites, []testCase, error) {
 	chain := coreumtesting.Chain{
-		Network: &cfg.Network,
-		Client:  cfg.CoredClient,
+		NetworkConfig: cfg.NetworkConfig,
+		Client:        cfg.CoredClient,
 	}
 
 	var prerequisites coreumtesting.Prerequisites
@@ -132,7 +135,7 @@ func servePrerequisites(ctx context.Context, prerequisites coreumtesting.Prerequ
 		return err
 	}
 
-	gasPrice, err := types.NewCoin(cfg.Network.FeeModel().InitialGasPrice.BigInt(), cfg.Network.TokenSymbol())
+	gasPrice, err := types.NewCoin(cfg.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), cfg.NetworkConfig.TokenSymbol)
 	if err != nil {
 		return err
 	}
@@ -144,7 +147,7 @@ func servePrerequisites(ctx context.Context, prerequisites coreumtesting.Prerequ
 		encodedTx, err := cfg.CoredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 			Base: tx.BaseInput{
 				Signer:   fundingWallet,
-				GasLimit: cfg.Network.DeterministicGas().BankSend,
+				GasLimit: cfg.NetworkConfig.Fee.DeterministicGas.BankSend,
 				GasPrice: gasPrice,
 			},
 			Sender:   fundingWallet,
