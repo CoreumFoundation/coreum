@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -53,11 +54,11 @@ func TestCoreTransfer(chain testing.Chain) (testing.Prerequisites, testing.RunFu
 	receiver := testing.RandomWallet()
 
 	senderInitialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.Network.InitialGasPrice(),
+		chain.Network.FeeModel().InitialGasPrice,
 		chain.Network.DeterministicGas().BankSend,
 		1,
-		big.NewInt(100),
-	), chain.Network.TokenSymbol())
+		sdk.NewInt(100),
+	).BigInt(), chain.Network.TokenSymbol())
 	if err != nil {
 		return testing.Prerequisites{}, nil, err
 	}
@@ -91,7 +92,7 @@ func TestCoreTransfer(chain testing.Chain) (testing.Prerequisites, testing.RunFu
 				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: chain.Network.InitialGasPrice(), Denom: chain.Network.TokenSymbol()},
+					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
 				},
 				Sender:   sender,
 				Receiver: receiver,

@@ -132,7 +132,7 @@ func servePrerequisites(ctx context.Context, prerequisites coreumtesting.Prerequ
 		return err
 	}
 
-	gasPrice, err := types.NewCoin(cfg.Network.InitialGasPrice(), cfg.Network.TokenSymbol())
+	gasPrice, err := types.NewCoin(cfg.Network.FeeModel().InitialGasPrice.BigInt(), cfg.Network.TokenSymbol())
 	if err != nil {
 		return err
 	}
