@@ -154,7 +154,7 @@ func prepareTestCases(
 		return nil, err
 	}
 
-	gasPrice, err := types.NewCoin(cfg.Network.InitialGasPrice(), cfg.Network.TokenSymbol())
+	gasPrice, err := types.NewCoin(cfg.Network.FeeModel().InitialGasPrice.BigInt(), cfg.Network.TokenSymbol())
 	if err != nil {
 		return nil, err
 	}
