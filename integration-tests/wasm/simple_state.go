@@ -38,7 +38,7 @@ func TestSimpleStateWasmContract(chain testing.Chain) (testing.PrepareFunc, test
 	runTestFunc := func(ctx context.Context, t testing.T) {
 		expect := require.New(t)
 		networkConfig := wasm.ChainConfig{
-			MinGasPrice: nativeTokens(chain.Network.InitialGasPrice().String()),
+			MinGasPrice: nativeTokens(chain.Network.FeeModel().InitialGasPrice.String()),
 			Client:      chain.Client,
 		}
 
