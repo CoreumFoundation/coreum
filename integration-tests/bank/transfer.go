@@ -17,38 +17,31 @@ import (
 )
 
 // TestInitialBalance checks that initial balance is set by genesis block
-func TestInitialBalance(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, error) {
+func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create new random wallet
 	wallet := testing.RandomWallet()
 
+	// Prefunding account required by test
 	initialBalance, err := types.NewCoin(big.NewInt(100), chain.NetworkConfig.TokenSymbol)
-	if err != nil {
-		return testing.Prerequisites{}, nil, err
-	}
+	require.NoError(t, err)
 
-	// First returned value describes prerequisites of the test
-	return testing.Prerequisites{
-			FundedAccounts: []testing.FundedAccount{
-				{
-					Wallet: wallet,
-					Amount: initialBalance,
-				},
-			},
+	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
+		{
+			Wallet: wallet,
+			Amount: initialBalance,
 		},
+	}))
 
-		// Second returned value is a function which runs the test
-		func(ctx context.Context, t testing.T) {
-			// Query for current balance available on the wallet
-			balances, err := chain.Client.QueryBankBalances(ctx, wallet)
-			require.NoError(t, err)
+	// Query for current balance available on the wallet
+	balances, err := chain.Client.QueryBankBalances(ctx, wallet)
+	require.NoError(t, err)
 
-			// Test that wallet owns expected balance
-			assert.Equal(t, "100", balances[chain.NetworkConfig.TokenSymbol].Amount.String())
-		}, nil
+	// Test that wallet owns expected balance
+	assert.Equal(t, "100", balances[chain.NetworkConfig.TokenSymbol].Amount.String())
 }
 
 // TestCoreTransfer checks that core is transferred correctly between wallets
-func TestCoreTransfer(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, error) {
+func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create two random wallets
 	sender := testing.RandomWallet()
 	receiver := testing.RandomWallet()
@@ -59,64 +52,54 @@ func TestCoreTransfer(chain testing.Chain) (testing.Prerequisites, testing.RunFu
 		1,
 		sdk.NewInt(100),
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
-	if err != nil {
-		return testing.Prerequisites{}, nil, err
-	}
+	require.NoError(t, err)
 
 	receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.NetworkConfig.TokenSymbol)
-	if err != nil {
-		return testing.Prerequisites{}, nil, err
-	}
+	require.NoError(t, err)
 
-	// First returned value describes prerequisites of the test
-	return testing.Prerequisites{
-			FundedAccounts: []testing.FundedAccount{
-				{
-					Wallet: sender,
-					Amount: senderInitialBalance,
-				},
-				{
-					Wallet: receiver,
-					Amount: receiverInitialBalance,
-				},
-			},
+	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
+		{
+			Wallet: sender,
+			Amount: senderInitialBalance,
 		},
+		{
+			Wallet: receiver,
+			Amount: receiverInitialBalance,
+		},
+	}))
 
-		// Second returned value is a function which runs the test
-		func(ctx context.Context, t testing.T) {
-			// Create client so we can send transactions and query state
-			coredClient := chain.Client
+	// Create client so we can send transactions and query state
+	coredClient := chain.Client
 
-			// Transfer 10 cores from sender to receiver
-			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-				Base: tx.BaseInput{
-					Signer:   sender,
-					GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-					GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
-				},
-				Sender:   sender,
-				Receiver: receiver,
-				Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
-			})
-			require.NoError(t, err)
-			result, err := coredClient.Broadcast(ctx, txBytes)
-			require.NoError(t, err)
+	// Transfer 10 cores from sender to receiver
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+			GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+		},
+		Sender:   sender,
+		Receiver: receiver,
+		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+	})
+	require.NoError(t, err)
+	result, err := coredClient.Broadcast(ctx, txBytes)
+	require.NoError(t, err)
 
-			logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
+	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
 
-			// Query wallets for current balance
-			balancesSender, err := coredClient.QueryBankBalances(ctx, sender)
-			require.NoError(t, err)
+	// Query wallets for current balance
+	balancesSender, err := coredClient.QueryBankBalances(ctx, sender)
+	require.NoError(t, err)
 
-			balancesReceiver, err := coredClient.QueryBankBalances(ctx, receiver)
-			require.NoError(t, err)
+	balancesReceiver, err := coredClient.QueryBankBalances(ctx, receiver)
+	require.NoError(t, err)
 
-			// Test that tokens disappeared from sender's wallet
-			// - 10core were transferred to receiver
-			// - 180000000core were taken as fee
-			assert.Equal(t, "90", balancesSender[chain.NetworkConfig.TokenSymbol].Amount.String())
+	// Test that tokens disappeared from sender's wallet
+	// - 10core were transferred to receiver
+	// - 180000000core were taken as fee
+	assert.Equal(t, "90", balancesSender[chain.NetworkConfig.TokenSymbol].Amount.String())
 
-			// Test that tokens reached receiver's wallet
-			assert.Equal(t, "20", balancesReceiver[chain.NetworkConfig.TokenSymbol].Amount.String())
-		}, nil
+	// Test that tokens reached receiver's wallet
+	assert.Equal(t, "20", balancesReceiver[chain.NetworkConfig.TokenSymbol].Amount.String())
 }

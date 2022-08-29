@@ -15,18 +15,11 @@ type T interface {
 	require.TestingT
 }
 
-// RunFunc defines function which is responsible for running the test
-type RunFunc = func(ctx context.Context, t T)
-
 // Chain holds network and client for the blockchain
 type Chain struct {
 	NetworkConfig app.NetworkConfig
 	Client        client.Client
-}
-
-// Prerequisites reresent requirements of a test which must be met before it can be started
-type Prerequisites struct {
-	FundedAccounts []FundedAccount
+	FundAccounts  func(ctx context.Context, accountsToFund []FundedAccount) error
 }
 
 // FundedAccount represents a requirement of a test to get some funds for an account
@@ -36,7 +29,7 @@ type FundedAccount struct {
 }
 
 // SingleChainSignature is the signature of test function accepting a chain
-type SingleChainSignature func(chain Chain) (Prerequisites, RunFunc, error)
+type SingleChainSignature func(ctx context.Context, t T, chain Chain)
 
 // TestSet is a container for tests
 type TestSet struct {

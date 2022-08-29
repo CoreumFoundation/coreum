@@ -22,7 +22,7 @@ var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept max
 
 // TestTransferMaximumGas checks that transfer does not take more gas than assumed
 func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature {
-	return func(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, error) {
+	return func(ctx context.Context, t testing.T, chain testing.Chain) {
 		const margin = 1.5
 		maxGasAssumed := chain.NetworkConfig.Fee.DeterministicGas.BankSend // set it to 50%+ higher than maximum observed value
 
@@ -42,56 +42,48 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		wallet2 := testing.RandomWallet()
 
 		wallet1InitialBalance, err := types.NewCoin(new(big.Int).Add(fees, amount), chain.NetworkConfig.TokenSymbol)
-		if err != nil {
-			return testing.Prerequisites{}, nil, err
-		}
+		require.NoError(t, err)
 		wallet2InitialBalance, err := types.NewCoin(fees, chain.NetworkConfig.TokenSymbol)
-		if err != nil {
-			return testing.Prerequisites{}, nil, err
-		}
+		require.NoError(t, err)
 
-		return testing.Prerequisites{
-				FundedAccounts: []testing.FundedAccount{
-					{
-						Wallet: wallet1,
-						Amount: wallet1InitialBalance,
-					},
-					{
-						Wallet: wallet2,
-						Amount: wallet2InitialBalance,
-					},
-				},
+		require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
+			{
+				Wallet: wallet1,
+				Amount: wallet1InitialBalance,
 			},
-			func(ctx context.Context, t testing.T) {
-				client := chain.Client
+			{
+				Wallet: wallet2,
+				Amount: wallet2InitialBalance,
+			},
+		}))
 
-				var err error
-				wallet1.AccountNumber, wallet1.AccountSequence, err = client.GetNumberSequence(ctx, wallet1.Key.Address())
-				require.NoError(t, err)
-				wallet2.AccountNumber, wallet2.AccountSequence, err = client.GetNumberSequence(ctx, wallet2.Key.Address())
-				require.NoError(t, err)
+		client := chain.Client
 
-				var maxGasUsed int64
-				toSend := types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: amount}
-				for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
-					gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed, chain.NetworkConfig)
-					if !assert.NoError(t, err) {
-						break
-					}
+		wallet1.AccountNumber, wallet1.AccountSequence, err = client.GetNumberSequence(ctx, wallet1.Key.Address())
+		require.NoError(t, err)
+		wallet2.AccountNumber, wallet2.AccountSequence, err = client.GetNumberSequence(ctx, wallet2.Key.Address())
+		require.NoError(t, err)
 
-					if gasUsed > maxGasUsed {
-						maxGasUsed = gasUsed
-					}
-					sender.AccountSequence++
-				}
-				assert.LessOrEqual(t, margin*float64(maxGasUsed), float64(maxGasAssumed))
-				logger.Get(ctx).Info("Maximum gas used", zap.Int64("maxGasUsed", maxGasUsed))
-			}, nil
+		var maxGasUsed int64
+		toSend := types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: amount}
+		for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
+			gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed, chain.NetworkConfig)
+			if !assert.NoError(t, err) {
+				break
+			}
+
+			if gasUsed > maxGasUsed {
+				maxGasUsed = gasUsed
+			}
+			sender.AccountSequence++
+		}
+		assert.LessOrEqual(t, margin*float64(maxGasUsed), float64(maxGasAssumed))
+		logger.Get(ctx).Info("Maximum gas used", zap.Int64("maxGasUsed", maxGasUsed))
 	}
 }
 
 // TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
-func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, error) {
+func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T, chain testing.Chain) {
 	maxGasAssumed := chain.NetworkConfig.Fee.DeterministicGas.BankSend
 	sender := testing.RandomWallet()
 
@@ -101,25 +93,20 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain testing.Chain) (testing.Pre
 		1,
 		sdk.NewInt(10),
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
-	if err != nil {
-		return testing.Prerequisites{}, nil, err
-	}
+	require.NoError(t, err)
 
-	return testing.Prerequisites{
-			FundedAccounts: []testing.FundedAccount{
-				{
-					Wallet: sender,
-					Amount: initialBalance,
-				},
-			},
+	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
+		{
+			Wallet: sender,
+			Amount: initialBalance,
 		},
-		func(ctx context.Context, t testing.T) {
-			_, err := sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
-				types.Coin{Amount: big.NewInt(1), Denom: chain.NetworkConfig.TokenSymbol},
-				// declaring gas limit as maxGasAssumed-1 means that tx must fail
-				maxGasAssumed-1, chain.NetworkConfig)
-			assert.True(t, client.IsInsufficientFeeError(err))
-		}, nil
+	}))
+
+	_, err = sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
+		types.Coin{Amount: big.NewInt(1), Denom: chain.NetworkConfig.TokenSymbol},
+		// declaring gas limit as maxGasAssumed-1 means that tx must fail
+		maxGasAssumed-1, chain.NetworkConfig)
+	assert.True(t, client.IsInsufficientFeeError(err))
 }
 
 func sendAndReturnGasUsed(ctx context.Context, coredClient client.Client, sender, receiver types.Wallet, toSend types.Coin, gasLimit uint64, networkConfig app.NetworkConfig) (int64, error) {

@@ -15,7 +15,7 @@ import (
 
 // TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
 // used to sign transaction
-func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.Prerequisites, testing.RunFunc, error) {
+func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
@@ -24,48 +24,43 @@ func TestUnexpectedSequenceNumber(chain testing.Chain) (testing.Prerequisites, t
 		1,
 		sdk.NewInt(10),
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
-	if err != nil {
-		return testing.Prerequisites{}, nil, err
-	}
+	require.NoError(t, err)
 
-	return testing.Prerequisites{
-			FundedAccounts: []testing.FundedAccount{
-				{
-					Wallet: sender,
-					Amount: initialBalance,
-				},
-			},
+	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
+		{
+			Wallet: sender,
+			Amount: initialBalance,
 		},
-		func(ctx context.Context, t testing.T) {
-			coredClient := chain.Client
+	}))
 
-			accNum, accSeq, err := coredClient.GetNumberSequence(ctx, sender.Key.Address())
-			require.NoError(t, err)
+	coredClient := chain.Client
 
-			sender.AccountNumber = accNum
-			sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
+	accNum, accSeq, err := coredClient.GetNumberSequence(ctx, sender.Key.Address())
+	require.NoError(t, err)
 
-			// Broadcast a transaction using incorrect sequence number
-			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-				Base: tx.BaseInput{
-					Signer:   sender,
-					GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-					GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
-				},
-				Sender:   sender,
-				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(1)},
-			})
-			require.NoError(t, err)
-			_, err = coredClient.Broadcast(ctx, txBytes)
-			require.Error(t, err) // We expect error
+	sender.AccountNumber = accNum
+	sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
 
-			// We expect that we get an error saying what the correct sequence number should be
-			expectedSeq, ok, err2 := client.ExpectedSequenceFromError(err)
-			require.NoError(t, err2)
-			if !ok {
-				require.Fail(t, "Unexpected error", err.Error())
-			}
-			require.Equal(t, accSeq, expectedSeq)
-		}, nil
+	// Broadcast a transaction using incorrect sequence number
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+			GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+		},
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(1)},
+	})
+	require.NoError(t, err)
+	_, err = coredClient.Broadcast(ctx, txBytes)
+	require.Error(t, err) // We expect error
+
+	// We expect that we get an error saying what the correct sequence number should be
+	expectedSeq, ok, err2 := client.ExpectedSequenceFromError(err)
+	require.NoError(t, err2)
+	if !ok {
+		require.Fail(t, "Unexpected error", err.Error())
+	}
+	require.Equal(t, accSeq, expectedSeq)
 }

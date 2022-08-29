@@ -60,17 +60,20 @@ func Test(t *testing.T) {
 	t.Parallel()
 
 	testSet := tests.Tests()
+	ctx := newContext(t, cfg)
 
-	prerequisites, testCases, err := collectTestCases(cfg, testSet)
+	var err error
+	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
+	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = cfg.CoredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
 	require.NoError(t, err)
 
-	ctx := newContext(t, cfg)
+	testCases := collectTestCases(cfg, fundingWallet, testSet)
+
 	if len(testCases) == 0 {
 		logger.Get(ctx).Warn("No tests to run")
 		return
 	}
 
-	require.NoError(t, servePrerequisites(ctx, prerequisites))
 	runTests(ctx, t, testCases)
 }
 
@@ -97,70 +100,86 @@ func newContext(t *testing.T, cfg config) context.Context {
 
 type testCase struct {
 	Name    string
-	RunFunc coreumtesting.RunFunc
+	RunFunc func(ctx context.Context, t *testing.T)
 }
 
-func collectTestCases(cfg config, testSet coreumtesting.TestSet) (coreumtesting.Prerequisites, []testCase, error) {
+func collectTestCases(cfg config, fundingWallet types.Wallet, testSet coreumtesting.TestSet) []testCase {
+	faucet := testingFaucet{
+		client:        cfg.CoredClient,
+		networkConfig: cfg.NetworkConfig,
+		muCh:          make(chan struct{}, 1),
+		fundingWallet: fundingWallet,
+	}
+	faucet.muCh <- struct{}{}
+
 	chain := coreumtesting.Chain{
 		NetworkConfig: cfg.NetworkConfig,
 		Client:        cfg.CoredClient,
+		FundAccounts:  faucet.FundAccounts,
 	}
 
-	var prerequisites coreumtesting.Prerequisites
 	var testCases []testCase
 	for _, testFunc := range testSet.SingleChain {
+		testFunc := testFunc
 		name := funcToName(testFunc)
 		if !cfg.Filter.MatchString(name) {
 			continue
 		}
 
-		testPrerequisites, runFunc, err := testFunc(chain)
-		if err != nil {
-			return coreumtesting.Prerequisites{}, nil, err
-		}
-		prerequisites.FundedAccounts = append(prerequisites.FundedAccounts, testPrerequisites.FundedAccounts...)
 		testCases = append(testCases, testCase{
-			Name:    name,
-			RunFunc: runFunc,
+			Name: name,
+			RunFunc: func(ctx context.Context, t *testing.T) {
+				testFunc(ctx, t, chain)
+			},
 		})
 	}
-	return prerequisites, testCases, nil
+	return testCases
 }
 
-func servePrerequisites(ctx context.Context, prerequisites coreumtesting.Prerequisites) error {
-	var err error
-	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
-	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = cfg.CoredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
-	if err != nil {
-		return err
+type testingFaucet struct {
+	client        client.Client
+	networkConfig app.NetworkConfig
+
+	muCh          chan struct{}
+	fundingWallet types.Wallet
+}
+
+func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund []coreumtesting.FundedAccount) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-tf.muCh:
+		defer func() {
+			tf.muCh <- struct{}{}
+		}()
 	}
 
-	gasPrice, err := types.NewCoin(cfg.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), cfg.NetworkConfig.TokenSymbol)
+	gasPrice, err := types.NewCoin(tf.networkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), tf.networkConfig.TokenSymbol)
 	if err != nil {
 		return err
 	}
 
 	log := logger.Get(ctx)
-	log.Info("Funding accounts for tests, it might take a while...")
-	for _, toFund := range prerequisites.FundedAccounts {
+	log.Info("Funding accounts for test, it might take a while...")
+	for _, toFund := range accountsToFund {
 		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
-		encodedTx, err := cfg.CoredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		encodedTx, err := tf.client.PrepareTxBankSend(ctx, client.TxBankSendInput{
 			Base: tx.BaseInput{
-				Signer:   fundingWallet,
-				GasLimit: cfg.NetworkConfig.Fee.DeterministicGas.BankSend,
+				Signer:   tf.fundingWallet,
+				GasLimit: tf.networkConfig.Fee.DeterministicGas.BankSend,
 				GasPrice: gasPrice,
 			},
-			Sender:   fundingWallet,
+			Sender:   tf.fundingWallet,
 			Receiver: toFund.Wallet,
 			Amount:   toFund.Amount,
 		})
 		if err != nil {
 			return err
 		}
-		if _, err := cfg.CoredClient.Broadcast(ctx, encodedTx); err != nil {
+		if _, err := tf.client.Broadcast(ctx, encodedTx); err != nil {
 			return err
 		}
-		fundingWallet.AccountSequence++
+		tf.fundingWallet.AccountSequence++
 	}
 	log.Info("Test accounts funded")
 
