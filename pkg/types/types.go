@@ -3,13 +3,9 @@ package types
 import (
 	"math/big"
 
-	cosmcrypto "github.com/cosmos/cosmos-sdk/crypto"
-	cosmkeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
-
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // Wallet stores information related to wallet
@@ -36,30 +32,6 @@ func (w Wallet) String() string {
 func (w Wallet) Address() sdk.AccAddress {
 	privKey := cosmossecp256k1.PrivKey{Key: w.Key}
 	return sdk.AccAddress(privKey.PubKey().Address())
-}
-
-// NewWalletFromKeyring allows to wrap an account key from keyring into an unsafe Wallet wrapper.
-func NewWalletFromKeyring(kb cosmkeyring.Keyring, accAddr sdk.AccAddress) (wallet Wallet, err error) {
-	keyInfo, err := kb.KeyByAddress(accAddr)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to locate key by address %s in the keyring", accAddr.String())
-		return wallet, err
-	}
-
-	armor, err := kb.ExportPrivKeyArmorByAddress(accAddr, "")
-	must.OK(err)
-
-	privKey, _, err := cosmcrypto.UnarmorDecryptPrivKey(armor, "")
-	must.OK(err)
-
-	wallet = Wallet{
-		Name:            keyInfo.GetName(),
-		Key:             Secp256k1PrivateKey(privKey.(*cosmossecp256k1.PrivKey).Key),
-		AccountNumber:   0,
-		AccountSequence: 0,
-	}
-
-	return wallet, nil
 }
 
 // Coin stores amount and denom of token
