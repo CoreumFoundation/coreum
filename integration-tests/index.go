@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"github.com/CoreumFoundation/coreum/integration-tests/auth"
+	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/gov"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 )
@@ -9,14 +11,14 @@ import (
 func Tests() testing.TestSet {
 	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
-			//auth.TestUnexpectedSequenceNumber,
-			//auth.TestTooLowGasPrice,
-			//auth.TestNoFee,
-			//auth.TestGasLimitHigherThanMaxBlockGas,
-			//auth.TestGasLimitEqualToMaxBlockGas,
-			//bank.TestInitialBalance,
-			//bank.TestCoreTransfer,
-			//bank.TestTransferFailsIfNotEnoughGasIsProvided,
+			auth.TestUnexpectedSequenceNumber,
+			auth.TestTooLowGasPrice,
+			auth.TestNoFee,
+			auth.TestGasLimitHigherThanMaxBlockGas,
+			auth.TestGasLimitEqualToMaxBlockGas,
+			bank.TestInitialBalance,
+			bank.TestCoreTransfer,
+			bank.TestTransferFailsIfNotEnoughGasIsProvided,
 			gov.TestProposalParamChange,
 		},
 	}
@@ -27,7 +29,7 @@ func Tests() testing.TestSet {
 	// In the future, once we have more tests running in parallel, we will replace 10 tests running 20 transactions each
 	// with a single one running 200 of them.
 	for i := 0; i < 10; i++ {
-		//testSet.SingleChain = append(testSet.SingleChain, bank.TestTransferMaximumGas(20))
+		testSet.SingleChain = append(testSet.SingleChain, bank.TestTransferMaximumGas(20))
 	}
 
 	return testSet
