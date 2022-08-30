@@ -5,7 +5,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/x/auth"
-	"github.com/CoreumFoundation/coreum/x/feemodel"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 // NetworkConfig is the network config used by integration tests
@@ -16,7 +16,7 @@ var NetworkConfig = app.NetworkConfig{
 	AddressPrefix: "devcore",
 	TokenSymbol:   app.TokenSymbolDev,
 	Fee: app.FeeConfig{
-		FeeModel:         feemodel.DefaultModel(),
+		FeeModel:         feemodeltypes.DefaultModel(),
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	},
 }

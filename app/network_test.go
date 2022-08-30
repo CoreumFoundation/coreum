@@ -16,7 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
-	"github.com/CoreumFoundation/coreum/x/feemodel"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 func init() {
@@ -25,7 +25,7 @@ func init() {
 }
 
 var feeConfig = FeeConfig{
-	FeeModel: feemodel.Model{
+	FeeModel: feemodeltypes.Model{
 		InitialGasPrice:         sdk.NewInt(2),
 		MaxGasPrice:             sdk.NewInt(4),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),
@@ -325,19 +325,7 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 func TestNetworkConfigConditions(t *testing.T) {
 	assertT := assert.New(t)
 	for _, cfg := range networks {
-		assertT.True(cfg.Fee.FeeModel.InitialGasPrice.Sign() == 1)
-		assertT.True(cfg.Fee.FeeModel.MaxGasPrice.Sign() == 1)
-		assertT.True(cfg.Fee.FeeModel.MaxGasPrice.GT(cfg.Fee.FeeModel.InitialGasPrice))
-
-		assertT.True(cfg.Fee.FeeModel.MaxDiscount.GT(sdk.ZeroDec()))
-		assertT.True(cfg.Fee.FeeModel.MaxDiscount.LT(sdk.OneDec()))
-
-		assertT.Greater(cfg.Fee.FeeModel.EscalationStartBlockGas, int64(0))
-		assertT.Greater(cfg.Fee.FeeModel.MaxBlockGas, cfg.Fee.FeeModel.EscalationStartBlockGas)
-
-		assertT.Greater(cfg.Fee.FeeModel.ShortAverageBlockLength, uint(0))
-		assertT.Greater(cfg.Fee.FeeModel.LongAverageBlockLength, cfg.Fee.FeeModel.ShortAverageBlockLength)
-
+		assert.NoError(t, cfg.Fee.FeeModel.Validate())
 		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
 	}
 }

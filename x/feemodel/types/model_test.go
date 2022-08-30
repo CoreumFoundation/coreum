@@ -1,4 +1,4 @@
-package feemodel
+package types
 
 import (
 	"math"
@@ -17,6 +17,8 @@ var (
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 		EscalationStartBlockGas: 700,
 		MaxBlockGas:             1000,
+		ShortAverageBlockLength: 10,
+		LongAverageBlockLength:  1000,
 	}
 
 	gasPriceWithMaxDiscount = feeModel.computeGasPriceWithMaxDiscount()
@@ -140,8 +142,8 @@ func generateRandomizedModel() (model Model, shortEMA, longEMA int64) {
 
 	initialGasPrice := rand.Uint64()/2 + 10
 	maxGasPrice := initialGasPrice + uint64(float64(math.MaxUint64-initialGasPrice-10)*rand.Float64()+10.0)
-	shortAverageBlockLength := uint(rand.Intn(1000) + 1)
-	longAverageBlockLength := shortAverageBlockLength + uint(rand.Intn(10000))
+	shortAverageBlockLength := uint32(rand.Int31n(1000) + 1)
+	longAverageBlockLength := shortAverageBlockLength + uint32(rand.Int31n(10000))
 	maxBlockGas := rand.Int63()
 	escalationStartBlockGas := rand.Int63n(maxBlockGas-2) + 1
 	// rand.Float64() returns random number in [0.0, 1.0), but we want (0.0, 1.0],
@@ -160,6 +162,40 @@ func generateRandomizedModel() (model Model, shortEMA, longEMA int64) {
 		ShortAverageBlockLength: shortAverageBlockLength,
 		LongAverageBlockLength:  longAverageBlockLength,
 	}, shortEMA, longEMA
+}
+
+//InitialGasPrice:         sdk.NewInt(1500),
+//MaxGasPrice:             sdk.NewInt(1500000),
+//MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
+//EscalationStartBlockGas: 700,
+//MaxBlockGas:             1000,
+
+func TestModelValidation(t *testing.T) {
+	assert.NoError(t, feeModel.Validate())
+
+	testModel := feeModel
+	testModel.InitialGasPrice = sdk.NewInt(0)
+	assert.Error(t, testModel.Validate())
+
+	testModel = feeModel
+	testModel.MaxGasPrice = testModel.InitialGasPrice
+	assert.Error(t, testModel.Validate())
+
+	testModel = feeModel
+	testModel.MaxDiscount = sdk.ZeroDec()
+	assert.Error(t, testModel.Validate())
+
+	testModel = feeModel
+	testModel.MaxDiscount = sdk.OneDec()
+	assert.Error(t, testModel.Validate())
+
+	testModel = feeModel
+	testModel.EscalationStartBlockGas = 0
+	assert.Error(t, testModel.Validate())
+
+	testModel = feeModel
+	testModel.MaxBlockGas = testModel.EscalationStartBlockGas
+	assert.Error(t, testModel.Validate())
 }
 
 func logParameters(t *testing.T, model Model, shortEMA, longEMA int64) {

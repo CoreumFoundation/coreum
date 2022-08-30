@@ -14,6 +14,8 @@ require (
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/ibc-go/v3 v3.0.0
+	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/gogo/protobuf v1.3.3
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/ignite/cli v0.22.2
@@ -21,6 +23,7 @@ require (
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
 	github.com/opencontainers/runc v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/cast v1.4.1
@@ -32,7 +35,10 @@ require (
 	github.com/tendermint/tm-db v0.6.7
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220811182439-13a9a731de15 // indirect
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
-	google.golang.org/grpc v1.46.2
-	google.golang.org/protobuf v1.28.1 // indirect
+	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
+	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
+	google.golang.org/grpc v1.48.0
+	gopkg.in/yaml.v2 v2.4.0
 )

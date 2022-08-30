@@ -2,23 +2,34 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 // Keeper manages transfers between accounts. It implements the Keeper interface.
 type Keeper struct {
-	initialGasPrice   sdk.Coin
+	paramSubspace     paramtypes.Subspace
+	feeDenom          string
 	storeKey          sdk.StoreKey
 	transientStoreKey sdk.StoreKey
 }
 
 // NewKeeper returns a new keeper object providing storage options required by fee model.
 func NewKeeper(
-	initialGasPrice sdk.Coin,
+	paramSubspace paramtypes.Subspace,
+	feeDenom string,
 	storeKey sdk.StoreKey,
 	transientStoreKey sdk.StoreKey,
 ) Keeper {
+	// set KeyTable if it has not already been set
+	if !paramSubspace.HasKeyTable() {
+		paramSubspace = paramSubspace.WithKeyTable(paramtypes.NewKeyTable().RegisterParamSet(&types.Model{}))
+	}
+
 	return Keeper{
-		initialGasPrice:   initialGasPrice,
+		paramSubspace:     paramSubspace,
+		feeDenom:          feeDenom,
 		storeKey:          storeKey,
 		transientStoreKey: transientStoreKey,
 	}
@@ -48,6 +59,18 @@ func (k Keeper) TrackGas(ctx sdk.Context, gas int64) {
 		panic(err)
 	}
 	tStore.Set(gasTrackingKey, bz)
+}
+
+// SetModel sets the parameters of the model
+func (k Keeper) SetModel(ctx sdk.Context, model types.Model) {
+	k.paramSubspace.SetParamSet(ctx, &model)
+}
+
+// GetModel gets the parameters of the model
+func (k Keeper) GetModel(ctx sdk.Context) types.Model {
+	var model types.Model
+	k.paramSubspace.GetParamSet(ctx, &model)
+	return model
 }
 
 // GetShortAverageGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block
@@ -111,7 +134,7 @@ func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(gasPriceKey)
 	if bz == nil {
-		return k.initialGasPrice
+		return sdk.NewCoin(k.feeDenom, k.GetModel(ctx).InitialGasPrice)
 	}
 	var minGasPrice sdk.Coin
 	if err := minGasPrice.Unmarshal(bz); err != nil {
