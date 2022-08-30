@@ -34,6 +34,14 @@ const (
 
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
+// Client is the client for cored blockchain
+type Client struct {
+	clientCtx       client.Context
+	authQueryClient authtypes.QueryClient
+	bankQueryClient banktypes.QueryClient
+	govQueryClient  govtypes.QueryClient
+}
+
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) Client {
 	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
@@ -46,14 +54,8 @@ func New(chainID app.ChainID, addr string) Client {
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
+		govQueryClient:  govtypes.NewQueryClient(clientCtx),
 	}
-}
-
-// Client is the client for cored blockchain
-type Client struct {
-	clientCtx       client.Context
-	authQueryClient authtypes.QueryClient
-	bankQueryClient banktypes.QueryClient
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
@@ -223,65 +225,6 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
 		},
 	}))
-	if err != nil {
-		return nil, err
-	}
-
-	return c.Encode(signedTx), nil
-}
-
-// TxSubmitProposalInput holds input data for PrepareTxSubmitProposal
-type TxSubmitProposalInput struct {
-	Proposer       types.Wallet
-	InitialDeposit types.Coin
-	Content        govtypes.Content
-
-	Base tx.BaseInput
-}
-
-// PrepareTxSubmitProposal creates a transaction to submit a proposal
-func (c Client) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitProposalInput) ([]byte, error) {
-	proposerAddress, err := sdk.AccAddressFromBech32(input.Proposer.Key.Address())
-	must.OK(err)
-
-	if err = input.InitialDeposit.Validate(); err != nil {
-		return nil, errors.Wrap(err, "amount to deposit is invalid")
-	}
-
-	msg, err := govtypes.NewMsgSubmitProposal(input.Content, sdk.Coins{
-		{
-			Denom:  input.InitialDeposit.Denom,
-			Amount: sdk.NewIntFromBigInt(input.InitialDeposit.Amount),
-		},
-	}, proposerAddress)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create proposal message")
-	}
-
-	signedTx, err := c.Sign(ctx, input.Base, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.Encode(signedTx), nil
-}
-
-// TxSubmitProposalVoteInput holds input data for PrepareTxSubmitProposalVote
-type TxSubmitProposalVoteInput struct {
-	Voter      types.Wallet
-	ProposalID uint64
-	Option     govtypes.VoteOption
-
-	Base tx.BaseInput
-}
-
-// PrepareTxSubmitProposalVote creates a transaction to submit a proposal vote
-func (c Client) PrepareTxSubmitProposalVote(ctx context.Context, input TxSubmitProposalVoteInput) ([]byte, error) {
-	voterAddress, err := sdk.AccAddressFromBech32(input.Voter.Key.Address())
-	must.OK(err)
-
-	msg := govtypes.NewMsgVote(voterAddress, input.ProposalID, input.Option)
-	signedTx, err := c.Sign(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err
 	}

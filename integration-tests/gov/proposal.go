@@ -3,6 +3,7 @@ package gov
 import (
 	"context"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"math/big"
@@ -31,10 +32,10 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 		must.OK(err)
 
 		if chain.Fund != nil {
-			chain.Fund(proposer, initialBalance)
+			chain.Fund(wallet, initialBalance)
 		}
 
-		err = chain.Network.FundAccount(proposer.Key.PubKey(), initialBalance.String())
+		err = chain.Network.FundAccount(wallet.Key.PubKey(), initialBalance.String())
 		must.OK(err)
 	}
 
@@ -71,11 +72,20 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 				result, err := coredClient.Broadcast(ctx, txBytes)
 				require.NoError(t, err)
 
+				// Check vote
+				votes, err := coredClient.QueryProposalVotes(ctx, id)
+				require.NoError(t, err)
+				voterVotes, ok := votes[voter.Key.Address()]
+				require.True(t, ok)
+				require.Len(t, voterVotes, 1)
+				require.Equal(t, voterVotes[0].Option, govtypes.OptionYes)
+				require.Equal(t, voterVotes[0].Weight, sdk.NewDec(1))
+
 				// Query wallets for current balance
-				balancesProposer, err := coredClient.QueryBankBalances(ctx, voter)
+				balances, err := coredClient.QueryBankBalances(ctx, voter)
 				require.NoError(t, err)
 
-				return result.TxHash, balancesProposer[chain.Network.TokenSymbol()]
+				return result.TxHash, balances[chain.Network.TokenSymbol()]
 			}
 
 			// Submit a param change proposal
@@ -112,7 +122,7 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 			_, balanceVoter2 := vote(voter2, govtypes.OptionYes, proposalID)
 			_, balanceVoter3 := vote(voter3, govtypes.OptionYes, proposalID)
 
-			logger.Get(ctx).Info("Proposal has 3 votes")
+			logger.Get(ctx).Info("3 voters have been votes successfully")
 
 			// Query wallets for current balance
 			balancesProposer, err := coredClient.QueryBankBalances(ctx, proposer)
