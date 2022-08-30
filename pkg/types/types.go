@@ -56,6 +56,16 @@ func NewCoin(amount *big.Int, denom string) (Coin, error) {
 	return c, nil
 }
 
+// NewCoinUnsafe returns a new instance of coin type and panics in case of the validation error.
+func NewCoinUnsafe(amount *big.Int, denom string) Coin {
+	c, err := NewCoin(amount, denom)
+	if err != nil {
+		panic(errors.Wrap(err, "invalid new coin"))
+	}
+
+	return c
+}
+
 // Validate validates data inside coin
 func (c Coin) Validate() error {
 	if c.Denom == "" {

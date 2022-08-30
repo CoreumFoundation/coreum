@@ -52,11 +52,9 @@ type DeployConfig struct {
 type ChainConfig struct {
 	// MinGasPrice sets the minimum gas price required to be paid to get the transaction
 	// included in a block. The real gasPrice is a dynamic value, so this option sets its minimum.
-	MinGasPrice string
+	MinGasPrice types.Coin
 	// Client the RPC chain client
 	Client client.Client
-
-	minGasPriceParsed types.Coin
 }
 
 // ContractInstanceConfig contains params specific to contract instantiation.
@@ -74,7 +72,7 @@ type ContractInstanceConfig struct {
 	// InstantiatePayload is a path to a file containing JSON-encoded contract instantiate args, or JSON-encoded body itself.
 	InstantiatePayload string
 	// Amount specifies Coins to send to the contract during instantiation.
-	Amount string
+	Amount types.Coin
 	// Label sets the human-readable label for the contract instance.
 	Label string
 
@@ -82,7 +80,6 @@ type ContractInstanceConfig struct {
 	accessTypeParsed       wasmtypes.AccessType
 	accessAddressParsed    sdk.AccAddress
 	adminAddressParsed     sdk.AccAddress
-	amountParsed           sdk.Coins
 }
 
 // AccessType encodes possible values of the access type flag
@@ -253,7 +250,7 @@ func instantiateContract(ctx context.Context, config DeployConfig, out *DeployOu
 		config.From,
 		config.CodeID,
 		config.InstantiationConfig.instantiatePayloadBody,
-		config.InstantiationConfig.amountParsed,
+		config.InstantiationConfig.Amount,
 		config.InstantiationConfig.Label,
 		adminAddress,
 	)
@@ -293,13 +290,8 @@ func (c *DeployConfig) ValidateAndLoad() error {
 		c.InstantiationConfig.instantiatePayloadBody = body
 	}
 
-	if len(c.InstantiationConfig.Amount) > 0 {
-		amount, err := sdk.ParseCoinsNormalized(c.InstantiationConfig.Amount)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse instantiation transfer amount as sdk.Coins: %s", c.InstantiationConfig.Amount)
-		}
-
-		c.InstantiationConfig.amountParsed = amount
+	if err := c.InstantiationConfig.Amount.Validate(); err != nil {
+		return errors.Wrapf(err, "invalid Amount: %v", c.InstantiationConfig.Amount)
 	}
 
 	switch AccessType(c.InstantiationConfig.AccessType) {
@@ -333,14 +325,8 @@ func (c *DeployConfig) ValidateAndLoad() error {
 		}
 	}
 
-	coinValue, err := sdk.ParseCoinNormalized(c.Network.MinGasPrice)
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse min gas price coin spec as sdk.Coin: %s", c.Network.MinGasPrice)
-	}
-
-	c.Network.minGasPriceParsed = types.Coin{
-		Amount: coinValue.Amount.BigInt(),
-		Denom:  coinValue.Denom,
+	if err := c.Network.MinGasPrice.Validate(); err != nil {
+		return errors.Wrapf(err, "invalid MinGasPrice: %v", c.Network.MinGasPrice)
 	}
 
 	return nil
@@ -377,7 +363,7 @@ func runContractStore(
 
 	input := tx.BaseInput{
 		Signer:   from,
-		GasPrice: network.minGasPriceParsed,
+		GasPrice: network.MinGasPrice,
 	}
 
 	msgStoreCode := &wasmtypes.MsgStoreCode{
@@ -440,7 +426,7 @@ func runContractInstantiate(
 	from types.Wallet,
 	codeID uint64,
 	initMsg json.RawMessage,
-	amount sdk.Coins,
+	amount types.Coin,
 	label string,
 	adminAcc *sdk.AccAddress,
 ) (contractAddr, txHash string, err error) {
@@ -449,7 +435,7 @@ func runContractInstantiate(
 
 	input := tx.BaseInput{
 		Signer:   from,
-		GasPrice: network.minGasPriceParsed,
+		GasPrice: network.MinGasPrice,
 	}
 
 	msgInstantiateContract := &wasmtypes.MsgInstantiateContract{
@@ -457,7 +443,7 @@ func runContractInstantiate(
 		CodeID: codeID,
 		Label:  label,
 		Msg:    wasmtypes.RawContractMessage(initMsg),
-		Funds:  amount,
+		Funds:  sdk.NewCoins(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount))),
 	}
 
 	if adminAcc != nil {

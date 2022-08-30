@@ -30,9 +30,8 @@ type ExecuteConfig struct {
 	ExecutePayload string
 
 	// Amount specifies Coins to send to the contract during execution.
-	Amount string
+	Amount types.Coin
 
-	amountParsed       sdk.Coins
 	executePayloadBody json.RawMessage
 }
 
@@ -67,7 +66,7 @@ func Execute(ctx context.Context, contractAddr string, config ExecuteConfig) (*E
 		config.From,
 		contractAddr,
 		config.executePayloadBody,
-		config.amountParsed,
+		config.Amount,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to run contract execution")
@@ -85,21 +84,21 @@ func runContractExecution(
 	from types.Wallet,
 	contractAddr string,
 	execMsg json.RawMessage,
-	amount sdk.Coins,
+	amount types.Coin,
 ) (methodName, txHash string, err error) {
 	log := logger.Get(ctx)
 	chainClient := network.Client
 
 	input := tx.BaseInput{
 		Signer:   from,
-		GasPrice: network.minGasPriceParsed,
+		GasPrice: network.MinGasPrice,
 	}
 
 	msgExecuteContract := &wasmtypes.MsgExecuteContract{
 		Sender:   from.Address().String(),
 		Contract: contractAddr,
 		Msg:      wasmtypes.RawContractMessage(execMsg),
-		Funds:    amount,
+		Funds:    sdk.NewCoins(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount))),
 	}
 
 	gasLimit, err := chainClient.EstimateGas(ctx, input, msgExecuteContract)
@@ -162,23 +161,12 @@ func (c *ExecuteConfig) ValidateAndLoad() error {
 		c.executePayloadBody = body
 	}
 
-	if len(c.Amount) > 0 {
-		amount, err := sdk.ParseCoinsNormalized(c.Amount)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse exec transfer amount as sdk.Coins: %s", c.Amount)
-		}
-
-		c.amountParsed = amount
+	if err := c.Amount.Validate(); err != nil {
+		return errors.Wrapf(err, "invalid Amount: %v", c.Amount)
 	}
 
-	coinValue, err := sdk.ParseCoinNormalized(c.Network.MinGasPrice)
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse min gas price coin spec as sdk.Coin: %s", c.Network.MinGasPrice)
-	}
-
-	c.Network.minGasPriceParsed = types.Coin{
-		Amount: coinValue.Amount.BigInt(),
-		Denom:  coinValue.Denom,
+	if err := c.Network.MinGasPrice.Validate(); err != nil {
+		return errors.Wrapf(err, "invalid MinGasPrice: %v", c.Network.MinGasPrice)
 	}
 
 	return nil
