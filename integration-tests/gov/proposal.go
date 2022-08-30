@@ -2,6 +2,7 @@ package gov
 
 import (
 	"context"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"math/big"
@@ -25,38 +26,25 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 	voter2 := testing.RandomWallet()
 	voter3 := testing.RandomWallet()
 
+	fundWallet := func(wallet types.Wallet, balance *big.Int) {
+		initialBalance, err := types.NewCoin(big.NewInt(20000000000), chain.Network.TokenSymbol())
+		must.OK(err)
+
+		if chain.Fund != nil {
+			chain.Fund(proposer, initialBalance)
+		}
+
+		err = chain.Network.FundAccount(proposer.Key.PubKey(), initialBalance.String())
+		must.OK(err)
+	}
+
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Fund wallets
-			initialBalance, err := types.NewCoin(big.NewInt(20000000000), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
-
-			// FIXME (wojtek): Temporary code for transition
-			if chain.Fund != nil {
-				chain.Fund(proposer, initialBalance)
-				chain.Fund(voter1, initialBalance)
-				chain.Fund(voter2, initialBalance)
-				chain.Fund(voter3, initialBalance)
-			}
-
-			if err = chain.Network.FundAccount(proposer.Key.PubKey(), initialBalance.String()); err != nil {
-				return err
-			}
-
-			if err = chain.Network.FundAccount(voter1.Key.PubKey(), initialBalance.String()); err != nil {
-				return err
-			}
-
-			if err = chain.Network.FundAccount(voter2.Key.PubKey(), initialBalance.String()); err != nil {
-				return err
-			}
-
-			if err = chain.Network.FundAccount(voter3.Key.PubKey(), initialBalance.String()); err != nil {
-				return err
-			}
-
+			fundWallet(proposer, big.NewInt(20000000000))
+			fundWallet(voter1, big.NewInt(20000000000))
+			fundWallet(voter2, big.NewInt(20000000000))
+			fundWallet(voter3, big.NewInt(20000000000))
 			return nil
 		},
 
