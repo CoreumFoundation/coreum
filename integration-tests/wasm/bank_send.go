@@ -37,8 +37,8 @@ func TestBankSendWasmContract(chain testing.Chain) (testing.PrepareFunc, testing
 	runTestFunc := func(ctx context.Context, t testing.T) {
 		requireT := require.New(t)
 		networkConfig := wasm.ChainConfig{
-			MinGasPrice: types.NewCoinUnsafe(chain.Network.FeeModel().InitialGasPrice.BigInt(), nativeDenom),
-			Client:      chain.Client,
+			GasPrice: types.NewCoinUnsafe(chain.Network.FeeModel().InitialGasPrice.BigInt(), nativeDenom),
+			Client:   chain.Client,
 		}
 
 		deployOut := deployWasmContract(ctx, wasm.DeployConfig{

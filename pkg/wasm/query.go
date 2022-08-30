@@ -7,6 +7,7 @@ import (
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
@@ -43,7 +44,7 @@ func Query(ctx context.Context, contractAddr string, config QueryConfig) (*Query
 	out := &QueryOutput{
 		ContractAddress: contractAddr,
 	}
-	log.Sugar().Infof("Querying %s on chain", contractAddr)
+	log.Info("Querying on chain", zap.String("contractAddr", contractAddr))
 
 	result, err := runContractQuery(
 		ctx,

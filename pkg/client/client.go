@@ -18,7 +18,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -246,9 +245,7 @@ func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk
 
 	// usually gas has to be multiplied by some adjustment coefficient: e.g. *1.5
 	// but in this case we return unadjusted, so every module can decide the adjustment value
-	unadjustedGas := simRes.GasInfo.GasUsed
-
-	return unadjustedGas, nil
+	return simRes.GasInfo.GasUsed, nil
 }
 
 // TxBankSendInput holds input data for PrepareTxBankSend
@@ -294,18 +291,6 @@ func (c Client) BankQueryClient() banktypes.QueryClient {
 // using the internal clientCtx.
 func (c Client) WASMQueryClient() wasmtypes.QueryClient {
 	return c.wasmQueryClient
-}
-
-// LogEventLogsInfo sends all events logs as Info to the logger.
-func LogEventLogsInfo(l *zap.Logger, eventLogs sdk.StringEvents) {
-	for _, ev := range eventLogs {
-		fields := make([]zap.Field, 0, len(ev.Attributes))
-		for _, attr := range ev.Attributes {
-			fields = append(fields, zap.String(attr.Key, attr.Value))
-		}
-
-		l.With(fields...).Info(ev.Type)
-	}
 }
 
 func isTxInMempool(errRes *sdk.TxResponse) bool {

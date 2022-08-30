@@ -92,7 +92,6 @@ func BuildSimTx(clientCtx client.Context, base BaseInput, msgs ...sdk.Msg) ([]by
 		return nil, errors.WithStack(err)
 	}
 
-	// TODO: once keyring is introduced in the client, better to get the pubkey from keyring,
 	// not pass the private key around.
 	var pubKey cryptotypes.PubKey = &cosmossecp256k1.PubKey{
 		Key: base.Signer.Key.PubKey(),

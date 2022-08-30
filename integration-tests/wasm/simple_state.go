@@ -35,8 +35,8 @@ func TestSimpleStateWasmContract(chain testing.Chain) (testing.PrepareFunc, test
 	runTestFunc := func(ctx context.Context, t testing.T) {
 		requireT := require.New(t)
 		networkConfig := wasm.ChainConfig{
-			MinGasPrice: types.NewCoinUnsafe(chain.Network.FeeModel().InitialGasPrice.BigInt(), nativeDenom),
-			Client:      chain.Client,
+			GasPrice: types.NewCoinUnsafe(chain.Network.FeeModel().InitialGasPrice.BigInt(), nativeDenom),
+			Client:   chain.Client,
 		}
 
 		// Instantiate the contract and set the initial counter state.

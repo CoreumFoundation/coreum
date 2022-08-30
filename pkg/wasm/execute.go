@@ -13,7 +13,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
@@ -47,8 +46,7 @@ func Execute(ctx context.Context, contractAddr string, config ExecuteConfig) (*E
 	log := logger.Get(ctx)
 
 	if len(contractAddr) == 0 {
-		err := errors.New("contract address cannot be empty")
-		return nil, err
+		return nil, errors.New("contract address cannot be empty")
 	} else if err := config.ValidateAndLoad(); err != nil {
 		return nil, errors.Wrap(err, "failed to validate the execution config")
 	}
@@ -56,9 +54,8 @@ func Execute(ctx context.Context, contractAddr string, config ExecuteConfig) (*E
 	out := &ExecuteOutput{
 		ContractAddress: contractAddr,
 	}
-	log.Sugar().
-		With(zap.String("from", config.From.Address().String())).
-		Infof("Executing %s on chain", contractAddr)
+	log.Info("Executing contract on chain", zap.String("contractAddr", contractAddr),
+		zap.String("from", config.From.Address().String()))
 
 	methodName, execTxHash, err := runContractExecution(
 		ctx,
@@ -91,7 +88,7 @@ func runContractExecution(
 
 	input := tx.BaseInput{
 		Signer:   from,
-		GasPrice: network.MinGasPrice,
+		GasPrice: network.GasPrice,
 	}
 
 	funds := sdk.NewCoins()
@@ -127,10 +124,6 @@ func runContractExecution(
 	res, err := chainClient.Broadcast(ctx, txBytes)
 	if err != nil {
 		return "", txHash, errors.Wrapf(err, "failed to broadcast Tx %s", txHash)
-	}
-
-	if len(res.EventLogs) > 0 {
-		client.LogEventLogsInfo(log, res.EventLogs)
 	}
 
 	for _, ev := range res.EventLogs {
@@ -171,8 +164,8 @@ func (c *ExecuteConfig) ValidateAndLoad() error {
 		}
 	}
 
-	if err := c.Network.MinGasPrice.Validate(); err != nil {
-		return errors.Wrapf(err, "invalid MinGasPrice: %v", c.Network.MinGasPrice)
+	if err := c.Network.GasPrice.Validate(); err != nil {
+		return errors.Wrapf(err, "invalid GasPrice: %v", c.Network.GasPrice)
 	}
 
 	return nil

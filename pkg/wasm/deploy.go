@@ -50,9 +50,9 @@ type DeployConfig struct {
 
 // ChainConfig encapsulates chain-specific parameters, used to communicate with daemon.
 type ChainConfig struct {
-	// MinGasPrice sets the minimum gas price required to be paid to get the transaction
+	// GasPrice sets the minimum gas price required to be paid to get the transaction
 	// included in a block. The real gasPrice is a dynamic value, so this option sets its minimum.
-	MinGasPrice types.Coin
+	GasPrice types.Coin
 	// Client the RPC chain client
 	Client client.Client
 }
@@ -86,8 +86,6 @@ type ContractInstanceConfig struct {
 type AccessType string
 
 const (
-	// AccessTypeUnspecified placeholder for empty value
-	AccessTypeUnspecified AccessType = "undefined"
 	// AccessTypeNobody forbidden
 	AccessTypeNobody AccessType = "nobody"
 	// AccessTypeOnlyAddress restricted to an address
@@ -181,9 +179,7 @@ func deployCode(
 	contractName := strings.TrimSuffix(artefactBase, filepath.Ext(artefactBase))
 
 	deployLog := logger.Get(ctx).With(zap.String("name", contractName))
-	deployLog.Sugar().
-		With(zap.String("from", config.From.Address().String())).
-		Infof("Deploying %s on chain", artefactBase)
+	deployLog.Info("Deploying artefact", zap.String("artefact", artefactBase), zap.String("from", config.From.Address().String()))
 
 	var accessConfig *wasmtypes.AccessConfig
 	if config.InstantiationConfig.accessTypeParsed != wasmtypes.AccessTypeUnspecified {
@@ -224,11 +220,9 @@ func checkCode(
 
 	if config.CodeID == info.CodeID {
 		if codeDataHash != info.CodeDataHash {
-			err := errors.Errorf("code hash mismatch: expected %s, chain has %s",
+			return nil, errors.Errorf("code hash mismatch: expected %s, chain has %s",
 				codeDataHash, info.CodeDataHash,
 			)
-
-			return nil, err
 		}
 	}
 
@@ -299,8 +293,6 @@ func (c *DeployConfig) ValidateAndLoad() error {
 	switch AccessType(c.InstantiationConfig.AccessType) {
 	case "":
 		c.InstantiationConfig.accessTypeParsed = wasmtypes.AccessTypeUnspecified
-	case AccessTypeUnspecified:
-		c.InstantiationConfig.accessTypeParsed = wasmtypes.AccessTypeUnspecified
 	case AccessTypeNobody:
 		c.InstantiationConfig.accessTypeParsed = wasmtypes.AccessTypeNobody
 	case AccessTypeEverybody:
@@ -327,8 +319,8 @@ func (c *DeployConfig) ValidateAndLoad() error {
 		}
 	}
 
-	if err := c.Network.MinGasPrice.Validate(); err != nil {
-		return errors.Wrapf(err, "invalid MinGasPrice: %v", c.Network.MinGasPrice)
+	if err := c.Network.GasPrice.Validate(); err != nil {
+		return errors.Wrapf(err, "invalid GasPrice: %v", c.Network.GasPrice)
 	}
 
 	return nil
@@ -365,7 +357,7 @@ func runContractStore(
 
 	input := tx.BaseInput{
 		Signer:   from,
-		GasPrice: network.MinGasPrice,
+		GasPrice: network.GasPrice,
 	}
 
 	msgStoreCode := &wasmtypes.MsgStoreCode{
@@ -396,10 +388,6 @@ func runContractStore(
 	res, err := chainClient.Broadcast(ctx, txBytes)
 	if err != nil {
 		return 0, txHash, errors.Wrapf(err, "failed to broadcast Tx %s", txHash)
-	}
-
-	if len(res.EventLogs) > 0 {
-		client.LogEventLogsInfo(log, res.EventLogs)
 	}
 
 	for _, ev := range res.EventLogs {
@@ -437,7 +425,7 @@ func runContractInstantiate(
 
 	input := tx.BaseInput{
 		Signer:   from,
-		GasPrice: network.MinGasPrice,
+		GasPrice: network.GasPrice,
 	}
 
 	funds := sdk.NewCoins()
@@ -477,10 +465,6 @@ func runContractInstantiate(
 	res, err := chainClient.Broadcast(ctx, txBytes)
 	if err != nil {
 		return "", txHash, errors.Wrapf(err, "failed to broadcast Tx %s", txHash)
-	}
-
-	if len(res.EventLogs) > 0 {
-		client.LogEventLogsInfo(log, res.EventLogs)
 	}
 
 	for _, ev := range res.EventLogs {
