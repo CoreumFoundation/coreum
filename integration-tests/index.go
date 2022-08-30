@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/CoreumFoundation/coreum/integration-tests/auth"
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
+	"github.com/CoreumFoundation/coreum/integration-tests/gov"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 )
 
@@ -18,6 +19,7 @@ func Tests() testing.TestSet {
 			bank.TestInitialBalance,
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
+			gov.TestProposalParamChange,
 		},
 	}
 

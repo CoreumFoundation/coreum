@@ -13,6 +13,7 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
@@ -222,6 +223,42 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
 		},
 	}))
+	if err != nil {
+		return nil, err
+	}
+
+	return c.Encode(signedTx), nil
+}
+
+// TxSubmitProposalInput holds input data for PrepareTxSubmitProposal
+type TxSubmitProposalInput struct {
+	Proposer       types.Wallet
+	InitialDeposit types.Coin
+	Content        govtypes.Content
+
+	Base tx.BaseInput
+}
+
+// PrepareTxSubmitProposal creates a transaction to submit a proposal
+func (c Client) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitProposalInput) ([]byte, error) {
+	proposerAddress, err := sdk.AccAddressFromBech32(input.Proposer.Key.Address())
+	must.OK(err)
+
+	if err = input.InitialDeposit.Validate(); err != nil {
+		return nil, errors.Wrap(err, "amount to deposit is invalid")
+	}
+
+	msg, err := govtypes.NewMsgSubmitProposal(input.Content, sdk.Coins{
+		{
+			Denom:  input.InitialDeposit.Denom,
+			Amount: sdk.NewIntFromBigInt(input.InitialDeposit.Amount),
+		},
+	}, proposerAddress)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create proposal message")
+	}
+
+	signedTx, err := c.Sign(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err
 	}
