@@ -104,7 +104,7 @@ type testCase struct {
 }
 
 func collectTestCases(cfg config, fundingWallet types.Wallet, testSet coreumtesting.TestSet) []testCase {
-	faucet := testingFaucet{
+	faucet := &testingFaucet{
 		client:        cfg.CoredClient,
 		networkConfig: cfg.NetworkConfig,
 		muCh:          make(chan struct{}, 1),
@@ -115,7 +115,7 @@ func collectTestCases(cfg config, fundingWallet types.Wallet, testSet coreumtest
 	chain := coreumtesting.Chain{
 		NetworkConfig: cfg.NetworkConfig,
 		Client:        cfg.CoredClient,
-		FundAccounts:  faucet.FundAccounts,
+		Faucet:        faucet,
 	}
 
 	var testCases []testCase
@@ -140,11 +140,14 @@ type testingFaucet struct {
 	client        client.Client
 	networkConfig app.NetworkConfig
 
+	// muCh is used to serve the same purpose as `sync.Mutex` to protect `fundingWallet` against being used
+	// to broadcast many transactions in parallel by different integration tests. The difference between this and `sync.Mutex`
+	// is that test may exit immediately when `ctx` is canceled, without waiting for mutex to be unlocked.
 	muCh          chan struct{}
 	fundingWallet types.Wallet
 }
 
-func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund []coreumtesting.FundedAccount) error {
+func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...coreumtesting.FundedAccount) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

@@ -28,12 +28,12 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-		{
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
 			Wallet: sender,
 			Amount: initialBalance,
 		},
-	}))
+	))
 
 	coredClient := chain.Client
 
@@ -68,12 +68,12 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-		{
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
 			Wallet: sender,
 			Amount: initialBalance,
 		},
-	}))
+	))
 
 	coredClient := chain.Client
 
@@ -105,12 +105,12 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-		{
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
 			Wallet: sender,
 			Amount: initialBalance,
 		},
-	}))
+	))
 
 	coredClient := chain.Client
 
@@ -143,12 +143,12 @@ func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain test
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-		{
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
 			Wallet: sender,
 			Amount: initialBalance,
 		},
-	}))
+	))
 
 	coredClient := chain.Client
 

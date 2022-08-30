@@ -15,11 +15,16 @@ type T interface {
 	require.TestingT
 }
 
+// Faucet defines an interface to fund testing accounts
+type Faucet interface {
+	FundAccounts(ctx context.Context, accountsToFund ...FundedAccount) error
+}
+
 // Chain holds network and client for the blockchain
 type Chain struct {
 	NetworkConfig app.NetworkConfig
 	Client        client.Client
-	FundAccounts  func(ctx context.Context, accountsToFund []FundedAccount) error
+	Faucet        Faucet
 }
 
 // FundedAccount represents a requirement of a test to get some funds for an account

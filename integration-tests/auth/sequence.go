@@ -26,12 +26,12 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-		{
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
 			Wallet: sender,
 			Amount: initialBalance,
 		},
-	}))
+	))
 
 	coredClient := chain.Client
 

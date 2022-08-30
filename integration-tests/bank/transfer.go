@@ -25,12 +25,12 @@ func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 	initialBalance, err := types.NewCoin(big.NewInt(100), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-		{
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
 			Wallet: wallet,
 			Amount: initialBalance,
 		},
-	}))
+	))
 
 	// Query for current balance available on the wallet
 	balances, err := chain.Client.QueryBankBalances(ctx, wallet)
@@ -57,16 +57,16 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-		{
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
 			Wallet: sender,
 			Amount: senderInitialBalance,
 		},
-		{
+		testing.FundedAccount{
 			Wallet: receiver,
 			Amount: receiverInitialBalance,
 		},
-	}))
+	))
 
 	// Create client so we can send transactions and query state
 	coredClient := chain.Client

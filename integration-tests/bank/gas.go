@@ -46,16 +46,16 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		wallet2InitialBalance, err := types.NewCoin(fees, chain.NetworkConfig.TokenSymbol)
 		require.NoError(t, err)
 
-		require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-			{
+		require.NoError(t, chain.Faucet.FundAccounts(ctx,
+			testing.FundedAccount{
 				Wallet: wallet1,
 				Amount: wallet1InitialBalance,
 			},
-			{
+			testing.FundedAccount{
 				Wallet: wallet2,
 				Amount: wallet2InitialBalance,
 			},
-		}))
+		))
 
 		client := chain.Client
 
@@ -95,12 +95,12 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccounts(ctx, []testing.FundedAccount{
-		{
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
 			Wallet: sender,
 			Amount: initialBalance,
 		},
-	}))
+	))
 
 	_, err = sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
 		types.Coin{Amount: big.NewInt(1), Denom: chain.NetworkConfig.TokenSymbol},
