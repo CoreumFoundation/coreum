@@ -27,25 +27,13 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 	voter2 := testing.RandomWallet()
 	voter3 := testing.RandomWallet()
 
-	fundWallet := func(wallet types.Wallet, balance *big.Int) {
-		initialBalance, err := types.NewCoin(big.NewInt(20000000000), chain.Network.TokenSymbol())
-		must.OK(err)
-
-		if chain.Fund != nil {
-			chain.Fund(wallet, initialBalance)
-		}
-
-		err = chain.Network.FundAccount(wallet.Key.PubKey(), initialBalance.String())
-		must.OK(err)
-	}
-
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Fund wallets
-			fundWallet(proposer, big.NewInt(20000000000))
-			fundWallet(voter1, big.NewInt(20000000000))
-			fundWallet(voter2, big.NewInt(20000000000))
-			fundWallet(voter3, big.NewInt(20000000000))
+			fundWallet(chain, proposer, big.NewInt(20000000000))
+			fundWallet(chain, voter1, big.NewInt(20000000000))
+			fundWallet(chain, voter2, big.NewInt(20000000000))
+			fundWallet(chain, voter3, big.NewInt(20000000000))
 			return nil
 		},
 
@@ -56,14 +44,7 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 
 			vote := func(voter types.Wallet, option govtypes.VoteOption, id uint64) (string, types.Coin) {
 				txBytes, err := coredClient.PrepareTxSubmitProposalVote(ctx, client.TxSubmitProposalVoteInput{
-					Base: tx.BaseInput{
-						Signer:   voter,
-						GasLimit: chain.Network.DeterministicGas().BankSend,
-						GasPrice: types.Coin{
-							Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(),
-							Denom:  chain.Network.TokenSymbol(),
-						},
-					},
+					Base:       buildBase(chain, voter),
 					Voter:      voter,
 					ProposalID: id,
 					Option:     option,
@@ -90,14 +71,7 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 
 			// Submit a param change proposal
 			txBytes, err := coredClient.PrepareTxSubmitProposal(ctx, client.TxSubmitProposalInput{
-				Base: tx.BaseInput{
-					Signer:   proposer,
-					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{
-						Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(),
-						Denom:  chain.Network.TokenSymbol(),
-					},
-				},
+				Base:           buildBase(chain, proposer),
 				Proposer:       proposer,
 				InitialDeposit: types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
 				Content: paramproposal.NewParameterChangeProposal(
@@ -139,4 +113,27 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 			assert.Equal(t, "19812500000", balanceVoter2.Amount.String())
 			assert.Equal(t, "19812500000", balanceVoter3.Amount.String())
 		}
+}
+
+func fundWallet(chain testing.Chain, wallet types.Wallet, balance *big.Int) {
+	initialBalance, err := types.NewCoin(balance, chain.Network.TokenSymbol())
+	must.OK(err)
+
+	if chain.Fund != nil {
+		chain.Fund(wallet, initialBalance)
+	}
+
+	err = chain.Network.FundAccount(wallet.Key.PubKey(), initialBalance.String())
+	must.OK(err)
+}
+
+func buildBase(chain testing.Chain, signer types.Wallet) tx.BaseInput {
+	return tx.BaseInput{
+		Signer:   signer,
+		GasLimit: chain.Network.DeterministicGas().BankSend,
+		GasPrice: types.Coin{
+			Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(),
+			Denom:  chain.Network.TokenSymbol(),
+		},
+	}
 }
