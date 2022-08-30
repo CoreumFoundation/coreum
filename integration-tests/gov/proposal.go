@@ -42,7 +42,7 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 			// Create client so we can send transactions and query state
 			coredClient := chain.Client
 
-			vote := func(voter types.Wallet, option govtypes.VoteOption, id uint64) (string, types.Coin) {
+			vote := func(voter types.Wallet, option govtypes.VoteOption, id uint64) types.Coin {
 				txBytes, err := coredClient.PrepareTxSubmitProposalVote(ctx, client.TxSubmitProposalVoteInput{
 					Base:       buildBase(chain, voter),
 					Voter:      voter,
@@ -50,7 +50,7 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 					Option:     option,
 				})
 				require.NoError(t, err)
-				result, err := coredClient.Broadcast(ctx, txBytes)
+				_, err = coredClient.Broadcast(ctx, txBytes)
 				require.NoError(t, err)
 
 				// Check vote
@@ -66,7 +66,7 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 				balances, err := coredClient.QueryBankBalances(ctx, voter)
 				require.NoError(t, err)
 
-				return result.TxHash, balances[chain.Network.TokenSymbol()]
+				return balances[chain.Network.TokenSymbol()]
 			}
 
 			// Submit a param change proposal
@@ -92,9 +92,9 @@ func TestProposalParamChange(chain testing.Chain) (testing.PrepareFunc, testing.
 
 			// Vote for the proposal
 			proposalID := uint64(1) // TODO: Fetch proposal ID from the transaction
-			_, balanceVoter1 := vote(voter1, govtypes.OptionYes, proposalID)
-			_, balanceVoter2 := vote(voter2, govtypes.OptionYes, proposalID)
-			_, balanceVoter3 := vote(voter3, govtypes.OptionYes, proposalID)
+			balanceVoter1 := vote(voter1, govtypes.OptionYes, proposalID)
+			balanceVoter2 := vote(voter2, govtypes.OptionYes, proposalID)
+			balanceVoter3 := vote(voter3, govtypes.OptionYes, proposalID)
 
 			logger.Get(ctx).Info("3 voters have been votes successfully")
 
