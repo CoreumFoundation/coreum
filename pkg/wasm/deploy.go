@@ -290,8 +290,10 @@ func (c *DeployConfig) ValidateAndLoad() error {
 		c.InstantiationConfig.instantiatePayloadBody = body
 	}
 
-	if err := c.InstantiationConfig.Amount.Validate(); err != nil {
-		return errors.Wrapf(err, "invalid Amount: %v", c.InstantiationConfig.Amount)
+	if c.InstantiationConfig.Amount.Amount != nil {
+		if err := c.InstantiationConfig.Amount.Validate(); err != nil {
+			return errors.Wrapf(err, "invalid Amount: %v", c.InstantiationConfig.Amount)
+		}
 	}
 
 	switch AccessType(c.InstantiationConfig.AccessType) {
@@ -438,12 +440,16 @@ func runContractInstantiate(
 		GasPrice: network.MinGasPrice,
 	}
 
+	funds := sdk.NewCoins()
+	if amount.Amount != nil {
+		funds = funds.Add(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount)))
+	}
 	msgInstantiateContract := &wasmtypes.MsgInstantiateContract{
 		Sender: from.Address().String(),
 		CodeID: codeID,
 		Label:  label,
 		Msg:    wasmtypes.RawContractMessage(initMsg),
-		Funds:  sdk.NewCoins(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount))),
+		Funds:  funds,
 	}
 
 	if adminAcc != nil {

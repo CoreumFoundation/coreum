@@ -94,11 +94,15 @@ func runContractExecution(
 		GasPrice: network.MinGasPrice,
 	}
 
+	funds := sdk.NewCoins()
+	if amount.Amount != nil {
+		funds = funds.Add(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount)))
+	}
 	msgExecuteContract := &wasmtypes.MsgExecuteContract{
 		Sender:   from.Address().String(),
 		Contract: contractAddr,
 		Msg:      wasmtypes.RawContractMessage(execMsg),
-		Funds:    sdk.NewCoins(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount))),
+		Funds:    funds,
 	}
 
 	gasLimit, err := chainClient.EstimateGas(ctx, input, msgExecuteContract)
@@ -161,8 +165,10 @@ func (c *ExecuteConfig) ValidateAndLoad() error {
 		c.executePayloadBody = body
 	}
 
-	if err := c.Amount.Validate(); err != nil {
-		return errors.Wrapf(err, "invalid Amount: %v", c.Amount)
+	if c.Amount.Amount != nil {
+		if err := c.Amount.Validate(); err != nil {
+			return errors.Wrapf(err, "invalid Amount: %v", c.Amount)
+		}
 	}
 
 	if err := c.Network.MinGasPrice.Validate(); err != nil {

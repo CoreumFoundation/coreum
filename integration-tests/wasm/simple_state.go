@@ -27,7 +27,7 @@ func TestSimpleStateWasmContract(chain testing.Chain) (testing.PrepareFunc, test
 	initTestState := func(ctx context.Context) error {
 		// FIXME (wojtek): Temporary code for transition
 		if chain.Fund != nil {
-			chain.Fund(adminWallet, types.NewCoinUnsafe(big.NewInt(100000), chain.Network.TokenSymbol()))
+			chain.Fund(adminWallet, types.NewCoinUnsafe(big.NewInt(5000000000), chain.Network.TokenSymbol()))
 		}
 		return nil
 	}
