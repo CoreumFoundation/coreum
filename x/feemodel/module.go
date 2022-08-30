@@ -12,6 +12,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -27,6 +28,8 @@ var (
 // Keeper defines an interface of keeper required by fee module
 type Keeper interface {
 	TrackedGas(ctx sdk.Context) int64
+	SetModel(ctx sdk.Context, model types.Model)
+	GetModel(ctx sdk.Context) types.Model
 	GetShortAverageGas(ctx sdk.Context) int64
 	SetShortAverageGas(ctx sdk.Context, averageGas int64)
 	GetLongAverageGas(ctx sdk.Context) int64
@@ -34,9 +37,18 @@ type Keeper interface {
 	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
 }
 
+// NewAppModuleBasic creates AppModuleBasic struct
+func NewAppModuleBasic(
+	feeModel types.Model,
+) AppModuleBasic {
+	return AppModuleBasic{
+		feeModel: feeModel,
+	}
+}
+
 // AppModuleBasic defines the basic application module used by the fee module.
 type AppModuleBasic struct {
-	cdc codec.Codec
+	feeModel types.Model
 }
 
 // Name returns the fee module's name.
@@ -47,13 +59,17 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
 
 // DefaultGenesis returns default genesis state as raw bytes for the fee
 // module.
-func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return nil
+func (amb AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+	return cdc.MustMarshalJSON(&types.GenesisState{Params: amb.feeModel})
 }
 
 // ValidateGenesis performs genesis state validation for the fee module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
-	return nil
+	var genesis types.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &genesis); err != nil {
+		return errors.Wrapf(err, "failed to unmarshal %s genesis state", types.ModuleName)
+	}
+	return genesis.Validate()
 }
 
 // RegisterRESTRoutes registers the REST routes for the fee module.
@@ -81,23 +97,21 @@ type AppModule struct {
 
 	keeper   Keeper
 	feeDenom string // FIXME (wojtek): store it in genesis
-	feeModel Model
 }
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {}
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(cdc codec.Codec,
+func NewAppModule(
+	moduleBasic AppModuleBasic,
 	keeper Keeper,
 	feeDenom string,
-	feeModel Model,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic: AppModuleBasic{cdc: cdc},
+		AppModuleBasic: moduleBasic,
 		keeper:         keeper,
 		feeDenom:       feeDenom,
-		feeModel:       feeModel,
 	}
 }
 
@@ -121,6 +135,17 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // InitGenesis performs genesis initialization for the fee module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+	var genesis types.GenesisState
+	cdc.MustUnmarshalJSON(data, &genesis)
+
+	// FIXME (wojtek): Remove this after crust imports new version of coreum
+	if genesis.Validate() != nil {
+		genesis = types.GenesisState{
+			Params: types.DefaultModel(),
+		}
+	}
+
+	am.keeper.SetModel(ctx, genesis.Params)
 	return []abci.ValidatorUpdate{}
 }
 
@@ -141,13 +166,14 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	// TODO (wojtek): add simulation tests
 	currentGasUsage := am.keeper.TrackedGas(ctx)
+	feeModel := am.keeper.GetModel(ctx)
 
-	newShortAverage := calculateMovingAverage(am.keeper.GetShortAverageGas(ctx), currentGasUsage,
-		am.feeModel.ShortAverageBlockLength)
-	newLongAverage := calculateMovingAverage(am.keeper.GetLongAverageGas(ctx), currentGasUsage,
-		am.feeModel.LongAverageBlockLength)
+	newShortAverage := types.CalculateEMA(am.keeper.GetShortAverageGas(ctx), currentGasUsage,
+		feeModel.ShortAverageBlockLength)
+	newLongAverage := types.CalculateEMA(am.keeper.GetLongAverageGas(ctx), currentGasUsage,
+		feeModel.LongAverageBlockLength)
 
-	minGasPrice := am.feeModel.CalculateNextGasPrice(newShortAverage, newLongAverage)
+	minGasPrice := feeModel.CalculateNextGasPrice(newShortAverage, newLongAverage)
 
 	am.keeper.SetShortAverageGas(ctx, newShortAverage)
 	am.keeper.SetLongAverageGas(ctx, newLongAverage)

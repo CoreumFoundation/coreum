@@ -1,7 +1,7 @@
 //go:build simulation
 // +build simulation
 
-package feemodel
+package types
 
 import (
 	"fmt"
@@ -54,8 +54,8 @@ func ExampleGasPriceOverTime() {
 	}
 
 	for i, gas := range blockGas {
-		shortAverage = calculateMovingAverage(shortAverage, gas, feeModelSim.ShortAverageBlockLength)
-		longAverage = calculateMovingAverage(longAverage, gas, feeModelSim.LongAverageBlockLength)
+		shortAverage = CalculateEMA(shortAverage, gas, feeModelSim.ShortAverageBlockLength)
+		longAverage = CalculateEMA(longAverage, gas, feeModelSim.LongAverageBlockLength)
 		gasPrice := feeModelSim.CalculateNextGasPrice(shortAverage, longAverage)
 
 		if i%10 != 0 {
