@@ -266,6 +266,29 @@ func (c Client) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitPropo
 	return c.Encode(signedTx), nil
 }
 
+// TxSubmitProposalVoteInput holds input data for PrepareTxSubmitProposalVote
+type TxSubmitProposalVoteInput struct {
+	Voter      types.Wallet
+	ProposalID uint64
+	Option     govtypes.VoteOption
+
+	Base tx.BaseInput
+}
+
+// PrepareTxSubmitProposalVote creates a transaction to submit a proposal vote
+func (c Client) PrepareTxSubmitProposalVote(ctx context.Context, input TxSubmitProposalVoteInput) ([]byte, error) {
+	voterAddress, err := sdk.AccAddressFromBech32(input.Voter.Key.Address())
+	must.OK(err)
+
+	msg := govtypes.NewMsgVote(voterAddress, input.ProposalID, input.Option)
+	signedTx, err := c.Sign(ctx, input.Base, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.Encode(signedTx), nil
+}
+
 func isTxInMempool(errRes *sdk.TxResponse) bool {
 	if errRes == nil {
 		return false
