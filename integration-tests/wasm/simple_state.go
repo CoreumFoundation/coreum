@@ -4,18 +4,18 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"fmt"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 var (
-	//go:embed contracts/simple-state/artifacts/simple_state.wasm
+	//go:embed testdata/simple-state/artifacts/simple_state.wasm
 	simpleStateWASM []byte
 )
 
@@ -68,7 +68,9 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	requireT.NoError(err)
 
 	// Query the contract state to get the initial count
-	queryOut, err := wasmTestClient.query(ctx, contractAddr, methodToEmptyBodyPayload(getCount))
+	getCountPayload, err := methodToEmptyBodyPayload(getCount)
+	requireT.NoError(err)
+	queryOut, err := wasmTestClient.query(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
 
 	var response simpleState
@@ -77,11 +79,13 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	requireT.Equal(1337, response.Count)
 
 	// execute contract to increment the count
-	err = wasmTestClient.execute(ctx, contractAddr, methodToEmptyBodyPayload(increment), types.Coin{})
+	incrementPayload, err := methodToEmptyBodyPayload(increment)
+	requireT.NoError(err)
+	err = wasmTestClient.execute(ctx, contractAddr, incrementPayload, types.Coin{})
 	requireT.NoError(err)
 
 	// Query the contract once again to ensure the count has been incremented
-	queryOut, err = wasmTestClient.query(ctx, contractAddr, methodToEmptyBodyPayload(getCount))
+	queryOut, err = wasmTestClient.query(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
 
 	err = json.Unmarshal(queryOut, &response)
@@ -89,6 +93,8 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	requireT.Equal(1338, response.Count)
 }
 
-func methodToEmptyBodyPayload(methodName simpleStateMethod) json.RawMessage {
-	return json.RawMessage(fmt.Sprintf(`{"%s": {}}`, methodName))
+func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
+	return json.Marshal(map[simpleStateMethod]struct{}{
+		methodName: {},
+	})
 }

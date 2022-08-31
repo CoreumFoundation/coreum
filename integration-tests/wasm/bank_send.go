@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -15,7 +16,7 @@ import (
 )
 
 var (
-	//go:embed contracts/bank-send/artifacts/bank_send.wasm
+	//go:embed testdata/bank-send/artifacts/bank_send.wasm
 	bankSendWASM []byte
 )
 
@@ -78,8 +79,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		})
 	requireT.NoError(err)
 	requireT.NotNil(contractBalance.Balance)
-	requireT.Equal(nativeDenom, contractBalance.Balance.Denom)
-	requireT.Equal("10000", contractBalance.Balance.Amount.String())
+	requireT.Equal(sdk.NewInt64Coin(nativeDenom, 10000).String(), contractBalance.Balance.String())
 
 	testWallet := testing.RandomWallet()
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
@@ -89,6 +89,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 			Recipient: testWallet.Address().String(),
 		},
 	})
+	requireT.NoError(err)
 
 	err = wasmTestClient.execute(ctx, contractAddr, withdrawPayload, types.Coin{})
 	requireT.NoError(err)
@@ -101,8 +102,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		})
 	requireT.NoError(err)
 	requireT.NotNil(contractBalance.Balance)
-	requireT.Equal(nativeDenom, contractBalance.Balance.Denom)
-	requireT.Equal("5000", contractBalance.Balance.Amount.String())
+	requireT.Equal(sdk.NewInt64Coin(nativeDenom, 5000).String(), contractBalance.Balance.String())
 
 	// check that the target test wallet has another half
 	testWalletBalance, err := chain.Client.BankQueryClient().Balance(ctx,
@@ -112,8 +112,5 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		})
 	requireT.NoError(err)
 	requireT.NotNil(testWalletBalance.Balance)
-	requireT.Equal(nativeDenom, testWalletBalance.Balance.Denom)
-	requireT.Equal("5000", testWalletBalance.Balance.Amount.String())
-	// bank send invoked by the contract code succeeded! 〠
-
+	requireT.Equal(sdk.NewInt64Coin(nativeDenom, 5000).String(), contractBalance.Balance.String())
 }

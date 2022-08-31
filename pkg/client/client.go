@@ -43,7 +43,7 @@ func New(chainID app.ChainID, addr string) Client {
 		strings.HasPrefix(addr, "http://"),
 		strings.HasPrefix(addr, "https://"):
 	default:
-		addr = "http://" + addr
+		panic(errors.Errorf("the protocol is required for the address:%s", addr))
 	}
 
 	rpcClient, err := client.NewClientFromNode(addr)
@@ -385,7 +385,7 @@ func IsInsufficientFeeError(err error) bool {
 func FindEventAttribute(event sdk.StringEvents, etype, attribute string) (bool, string) {
 	for _, ev := range event {
 		if ev.Type == etype {
-			if value, ok := findAttribute(ev, attribute); ok {
+			if ok, value := findAttribute(ev, attribute); ok {
 				return true, value
 			}
 		}
@@ -393,12 +393,12 @@ func FindEventAttribute(event sdk.StringEvents, etype, attribute string) (bool, 
 	return false, ""
 }
 
-func findAttribute(ev sdk.StringEvent, attr string) (value string, ok bool) {
+func findAttribute(ev sdk.StringEvent, attr string) (ok bool, value string) {
 	for _, attrItem := range ev.Attributes {
 		if attrItem.Key == attr {
-			return attrItem.Value, true
+			return true, attrItem.Value
 		}
 	}
 
-	return "", false
+	return false, ""
 }

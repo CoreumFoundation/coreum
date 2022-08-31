@@ -64,8 +64,7 @@ func (c *testClient) deploy(ctx context.Context, wasmData []byte) (uint64, error
 // instantiates the contract and returns the contract address.
 func (c *testClient) instantiate(ctx context.Context, req instantiateConfig) (string, error) {
 	funds := sdk.NewCoins()
-	amount := req.amount
-	if amount.Amount != nil {
+	if amount := req.amount; amount.Amount != nil {
 		funds = funds.Add(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount)))
 	}
 	msgInstantiateContract := &wasmtypes.MsgInstantiateContract{
