@@ -15,22 +15,26 @@ type T interface {
 	require.TestingT
 }
 
-// PrepareFunc defines function which is executed before environment is deployed
-type PrepareFunc = func(ctx context.Context) error
-
-// RunFunc defines function which is responsible for running the test
-type RunFunc = func(ctx context.Context, t T)
+// Faucet defines an interface to fund testing accounts
+type Faucet interface {
+	FundAccounts(ctx context.Context, accountsToFund ...FundedAccount) error
+}
 
 // Chain holds network and client for the blockchain
 type Chain struct {
-	Network *app.Network
-	Client  client.Client
-	// FIXME (wojtek): Temporary solution to be removed after transition period
-	Fund func(wallet types.Wallet, amount types.Coin)
+	NetworkConfig app.NetworkConfig
+	Client        client.Client
+	Faucet        Faucet
+}
+
+// FundedAccount represents a requirement of a test to get some funds for an account
+type FundedAccount struct {
+	Wallet types.Wallet
+	Amount types.Coin
 }
 
 // SingleChainSignature is the signature of test function accepting a chain
-type SingleChainSignature func(chain Chain) (PrepareFunc, RunFunc)
+type SingleChainSignature func(ctx context.Context, t T, chain Chain)
 
 // TestSet is a container for tests
 type TestSet struct {
