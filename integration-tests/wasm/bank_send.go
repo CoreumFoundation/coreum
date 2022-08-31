@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -55,9 +56,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		GasPrice: gasPrice,
 	}, chain.Client)
 
-	initialPayload, err := json.Marshal(bankInstantiatePayload{
-		Count: 0,
-	})
+	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
 	requireT.NoError(err)
 	contractAddr, err := wasmTestClient.deployAndInstantiate(
 		ctx,

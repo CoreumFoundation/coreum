@@ -49,7 +49,7 @@ func (c *testClient) deploy(ctx context.Context, wasmData []byte) (uint64, error
 		return 0, err
 	}
 
-	ok, codeIDStr := client.FindEventAttribute(res.EventLogs, wasmtypes.EventTypeStoreCode, wasmtypes.AttributeKeyCodeID)
+	codeIDStr, ok := client.FindEventAttribute(res.EventLogs, wasmtypes.EventTypeStoreCode, wasmtypes.AttributeKeyCodeID)
 	if !ok {
 		return 0, errors.New("can't find the codeID in the tx events")
 	}
@@ -80,7 +80,7 @@ func (c *testClient) instantiate(ctx context.Context, req instantiateConfig) (st
 		return "", err
 	}
 
-	ok, contractAddr := client.FindEventAttribute(res.EventLogs, wasmtypes.EventTypeInstantiate, wasmtypes.AttributeKeyContractAddr)
+	contractAddr, ok := client.FindEventAttribute(res.EventLogs, wasmtypes.EventTypeInstantiate, wasmtypes.AttributeKeyContractAddr)
 	if !ok {
 		return "", errors.New("can't find the contract address in the tx events")
 	}
