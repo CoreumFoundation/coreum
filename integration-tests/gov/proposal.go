@@ -64,16 +64,16 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	logger.Get(ctx).Info("Proposal has been submitted", zap.String("txHash", result.TxHash))
 
 	// Vote for the proposal
-	balanceVoter1 := depositProposal(ctx, t, chain, voter1, depositAmount, proposalID)
-	balanceVoter2 := depositProposal(ctx, t, chain, voter2, depositAmount, proposalID)
-	balanceVoter3 := depositProposal(ctx, t, chain, voter3, depositAmount, proposalID)
+	depositProposal(ctx, t, chain, voter1, depositAmount, proposalID)
+	depositProposal(ctx, t, chain, voter2, depositAmount, proposalID)
+	depositProposal(ctx, t, chain, voter3, depositAmount, proposalID)
 
 	logger.Get(ctx).Info("3 depositors have deposited amounts successfully")
 
 	// Vote for the proposal
-	balanceVoter1 = voteProposal(ctx, t, chain, voter1, govtypes.OptionYes, proposalID)
-	balanceVoter2 = voteProposal(ctx, t, chain, voter2, govtypes.OptionYes, proposalID)
-	balanceVoter3 = voteProposal(ctx, t, chain, voter3, govtypes.OptionYes, proposalID)
+	balanceVoter1 := voteProposal(ctx, t, chain, voter1, govtypes.OptionYes, proposalID)
+	balanceVoter2 := voteProposal(ctx, t, chain, voter2, govtypes.OptionYes, proposalID)
+	balanceVoter3 := voteProposal(ctx, t, chain, voter3, govtypes.OptionYes, proposalID)
 
 	logger.Get(ctx).Info("3 voters have voted successfully")
 
@@ -93,7 +93,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	assert.Equal(t, "19622500000", balanceVoter3.Amount.String())
 }
 
-func depositProposal(ctx context.Context, t testing.T, chain testing.Chain, depositor types.Wallet, amount types.Coin, id uint64) types.Coin {
+func depositProposal(ctx context.Context, t testing.T, chain testing.Chain, depositor types.Wallet, amount types.Coin, id uint64) {
 	coredClient := chain.Client
 	txBytes, err := coredClient.PrepareTxSubmitProposalDeposit(ctx, client.TxSubmitProposalDepositInput{
 		Base:       buildBase(chain, depositor),
@@ -104,12 +104,6 @@ func depositProposal(ctx context.Context, t testing.T, chain testing.Chain, depo
 	require.NoError(t, err)
 	_, err = coredClient.Broadcast(ctx, txBytes)
 	require.NoError(t, err)
-
-	// Query wallets for current balance
-	balances, err := coredClient.QueryBankBalances(ctx, depositor)
-	require.NoError(t, err)
-
-	return balances[chain.NetworkConfig.TokenSymbol]
 }
 
 func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter types.Wallet, option govtypes.VoteOption, id uint64) types.Coin {
