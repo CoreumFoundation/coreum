@@ -41,7 +41,11 @@ func PrepareTxStakingCreateValidator(
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
 	}
 
-	signedTx, err := tx.Sign(clientCtx, tx.BaseInput{Signer: types.Wallet{Key: stakerPrivateKey}}, msg)
+	signedTx, err := tx.Sign(
+		clientCtx,
+		tx.SignInput{PrivateKey: cosmossecp256k1.PrivKey{Key: stakerPrivateKey}},
+		msg,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to sign transaction")
 	}
