@@ -385,23 +385,23 @@ func IsInsufficientFeeError(err error) bool {
 }
 
 // FindEventAttribute finds the first event attribute by type and attribute name.
-func FindEventAttribute(event sdk.StringEvents, etype, attribute string) (bool, string) {
+func FindEventAttribute(event sdk.StringEvents, etype, attribute string) (string, bool) {
 	for _, ev := range event {
 		if ev.Type == etype {
-			if ok, value := findAttribute(ev, attribute); ok {
-				return true, value
+			if value, found := findAttribute(ev, attribute); found {
+				return value, true
 			}
 		}
 	}
-	return false, ""
+	return "", false
 }
 
-func findAttribute(ev sdk.StringEvent, attr string) (ok bool, value string) {
+func findAttribute(ev sdk.StringEvent, attr string) (string, bool) {
 	for _, attrItem := range ev.Attributes {
 		if attrItem.Key == attr {
-			return true, attrItem.Value
+			return attrItem.Value, true
 		}
 	}
 
-	return false, ""
+	return "", false
 }
