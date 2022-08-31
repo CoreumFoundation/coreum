@@ -71,8 +71,8 @@ func init() {
 			Fee:           feeConfig,
 			ProposalConfig: ProposalConfig{
 				MinDepositAmount: "10000000",
-				MinDepositPeriod: "172800s",
-				VotingPeriod:     "172800s",
+				MinDepositPeriod: "300s",
+				VotingPeriod:     "300s",
 			},
 		},
 		{
@@ -87,8 +87,8 @@ func init() {
 			},
 			ProposalConfig: ProposalConfig{
 				MinDepositAmount: "10000000",
-				MinDepositPeriod: "172800s",
-				VotingPeriod:     "172800s",
+				MinDepositPeriod: "300s",
+				VotingPeriod:     "300s",
 			},
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
@@ -144,6 +144,7 @@ type FeeConfig struct {
 	DeterministicGas ante.DeterministicGasRequirements
 }
 
+// ProposalConfig contains proposal-related configuration options
 type ProposalConfig struct {
 	MinDepositAmount string
 	MinDepositPeriod string
