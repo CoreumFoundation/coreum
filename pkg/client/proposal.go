@@ -2,15 +2,51 @@ package client
 
 import (
 	"context"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/pkg/errors"
+	"encoding/hex"
+	"strconv"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/pkg/errors"
 )
+
+// GetProposalByTx returns proposal ID by the given transaction hash
+func (c Client) GetProposalByTx(ctx context.Context, tx string) (uint64, error) {
+	txHashBytes, err := hex.DecodeString(tx)
+	must.OK(err)
+
+	txData, err := c.clientCtx.Client.Tx(ctx, txHashBytes, false)
+	must.OK(err)
+
+	var proposalID uint64
+	for _, event := range txData.TxResult.Events {
+		if event.Type != "submit_proposal" {
+			continue
+		}
+
+		if len(event.Attributes) == 0 {
+			continue
+		}
+
+		if string(event.Attributes[0].GetKey()) != "proposal_id" {
+			continue
+		}
+
+		id, err := strconv.Atoi(string(event.Attributes[0].GetValue()))
+		must.OK(err)
+
+		proposalID = uint64(id)
+	}
+
+	if proposalID == 0 {
+		return 0, errors.New("no proposal event found for the given transaction")
+	}
+
+	return proposalID, nil
+}
 
 // QueryProposalVotes queries for proposal votes info
 func (c Client) QueryProposalVotes(ctx context.Context, proposalID uint64) (map[string][]govtypes.WeightedVoteOption, error) {
@@ -58,6 +94,34 @@ func (c Client) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitPropo
 		return nil, errors.Wrap(err, "failed to create proposal message")
 	}
 
+	signedTx, err := c.Sign(ctx, input.Base, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.Encode(signedTx), nil
+}
+
+// TxSubmitProposalDepositInput holds input data for PrepareTxSubmitProposalDeposit
+type TxSubmitProposalDepositInput struct {
+	Depositor  types.Wallet
+	ProposalID uint64
+	Amount     types.Coin
+
+	Base tx.BaseInput
+}
+
+// PrepareTxSubmitProposalDeposit creates a transaction to submit a proposal deposit
+func (c Client) PrepareTxSubmitProposalDeposit(ctx context.Context, input TxSubmitProposalDepositInput) ([]byte, error) {
+	depositorAddress, err := sdk.AccAddressFromBech32(input.Depositor.Key.Address())
+	must.OK(err)
+
+	msg := govtypes.NewMsgDeposit(depositorAddress, input.ProposalID, sdk.Coins{
+		{
+			Denom:  input.Amount.Denom,
+			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
+		},
+	})
 	signedTx, err := c.Sign(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err
