@@ -64,9 +64,9 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Transfer 10 cores from sender to receiver
 	senderPrivateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(senderPrivateKey.PubKey().Bytes())
+	fromAddress := sdk.AccAddress(senderPrivateKey.PubKey().Address())
 	receiverPrivateKey := secp256k1.PrivKey{Key: receiver.Key}
-	toAddress := sdk.AccAddress(receiverPrivateKey.PubKey().Bytes())
+	toAddress := sdk.AccAddress(receiverPrivateKey.PubKey().Address())
 	msg := &banktypes.MsgSend{
 		FromAddress: fromAddress.String(),
 		ToAddress:   toAddress.String(),

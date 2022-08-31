@@ -40,7 +40,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 	gasPrice := gasPriceWithMaxDiscount.Sub(sdk.OneInt())
 
 	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(privateKey.PubKey().Bytes())
+	fromAddress := sdk.AccAddress(privateKey.PubKey().Address())
 	msg := &banktypes.MsgSend{
 		FromAddress: fromAddress.String(),
 		ToAddress:   fromAddress.String(),
@@ -79,7 +79,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 	))
 
 	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(privateKey.PubKey().Bytes())
+	fromAddress := sdk.AccAddress(privateKey.PubKey().Address())
 	msg := &banktypes.MsgSend{
 		FromAddress: fromAddress.String(),
 		ToAddress:   fromAddress.String(),
@@ -114,7 +114,7 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 	))
 
 	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(privateKey.PubKey().Bytes())
+	fromAddress := sdk.AccAddress(privateKey.PubKey().Address())
 	msg := &banktypes.MsgSend{
 		FromAddress: fromAddress.String(),
 		ToAddress:   fromAddress.String(),
@@ -130,7 +130,9 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 	}
 
 	// Broadcast should fail because gas limit is higher than the block capacity
-	_, err := tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
+	txHash, err := tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
+	require.NoError(t, err)
+	_, err = tx.AwaitTx(ctx, chain.ClientCtx, txHash)
 	require.Error(t, err)
 }
 
@@ -154,7 +156,7 @@ func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain test
 	))
 
 	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(privateKey.PubKey().Bytes())
+	fromAddress := sdk.AccAddress(privateKey.PubKey().Address())
 	msg := &banktypes.MsgSend{
 		FromAddress: fromAddress.String(),
 		ToAddress:   fromAddress.String(),

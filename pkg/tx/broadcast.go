@@ -122,7 +122,7 @@ func prepareTx(
 	config SignInput,
 	msgs ...sdk.Msg,
 ) ([]byte, error) {
-	fromAddress := sdk.AccAddress(config.PrivateKey.PubKey().Bytes())
+	fromAddress := sdk.AccAddress(config.PrivateKey.PubKey().Address())
 	if config.AccountInfo.Number == 0 {
 		acc, err := GetAccountInfo(ctx, clientCtx, fromAddress)
 		if err != nil {

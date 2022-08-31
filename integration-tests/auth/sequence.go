@@ -31,12 +31,12 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	))
 
 	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	senderAddress := sdk.AccAddress(privateKey.PubKey().Bytes())
+	senderAddress := sdk.AccAddress(privateKey.PubKey().Address())
 	accInfo, err := tx.GetAccountInfo(ctx, chain.ClientCtx, senderAddress)
 	require.NoError(t, err)
 
-	sender.AccountNumber = accInfo.Number
-	sender.AccountSequence = accInfo.Sequence + 1 // Intentionally set incorrect sequence number
+	updatedAccInfo := accInfo
+	updatedAccInfo.Sequence++ // Intentionally set incorrect sequence number
 
 	msg := &banktypes.MsgSend{
 		FromAddress: senderAddress.String(),
@@ -46,9 +46,10 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 		},
 	}
 	signInput := tx.SignInput{
-		PrivateKey: privateKey,
-		GasLimit:   chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-		GasPrice:   sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol},
+		PrivateKey:  privateKey,
+		GasLimit:    chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		GasPrice:    sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol},
+		AccountInfo: updatedAccInfo,
 	}
 
 	// Broadcast a transaction using incorrect sequence number

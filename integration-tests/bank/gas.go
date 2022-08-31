@@ -62,7 +62,7 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 
 		var maxGasUsed int64
 		gasPrice := sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol}
-		toSend := testing.MustNewCoin(t, amount, chain.NetworkConfig.TokenSymbol)
+		toSend := sdk.NewCoin(chain.NetworkConfig.TokenSymbol, amount)
 		for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
 			gasUsed, err := sendAndReturnGasUsed(ctx, chain.ClientCtx, sender, receiver, toSend, maxGasAssumed, gasPrice)
 			if !assert.NoError(t, err) {
@@ -100,7 +100,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 
 	gasPrice := sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol}
 	_, err := sendAndReturnGasUsed(ctx, chain.ClientCtx, sender, sender,
-		testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
+		sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1)),
 		// declaring gas limit as maxGasAssumed-1 means that tx must fail
 		maxGasAssumed-1, gasPrice)
 	assert.True(t, client.IsInsufficientFeeError(err))
@@ -110,19 +110,19 @@ func sendAndReturnGasUsed(
 	ctx context.Context,
 	clientCtx cosmosclient.Context,
 	sender, receiver types.Wallet,
-	toSend types.Coin,
+	toSend sdk.Coin,
 	gasLimit uint64,
 	gasPrice sdk.Coin,
 ) (int64, error) {
 	senderPrivateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(senderPrivateKey.PubKey().Bytes())
+	fromAddress := sdk.AccAddress(senderPrivateKey.PubKey().Address())
 	receiverPrivateKey := secp256k1.PrivKey{Key: receiver.Key}
-	toAddress := sdk.AccAddress(receiverPrivateKey.PubKey().Bytes())
+	toAddress := sdk.AccAddress(receiverPrivateKey.PubKey().Address())
 	msg := &banktypes.MsgSend{
 		FromAddress: fromAddress.String(),
 		ToAddress:   toAddress.String(),
 		Amount: []sdk.Coin{
-			{Denom: toSend.Denom, Amount: sdk.NewIntFromBigInt(toSend.Amount)},
+			toSend,
 		},
 	}
 
