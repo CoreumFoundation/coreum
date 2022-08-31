@@ -180,13 +180,13 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for test, it might take a while...")
 	fundingPrivateKey := secp256k1.PrivKey{Key: cfg.FundingPrivKey}
-	fundingAddress := sdk.AccAddress(fundingPrivateKey.PubKey().Bytes())
+	fundingAddress := sdk.AccAddress(fundingPrivateKey.PubKey().Address())
 
 	var msgList []sdk.Msg
 	for _, toFund := range accountsToFund {
 		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
 		toPrivateKey := secp256k1.PrivKey{Key: toFund.Wallet.Key}
-		toAddress := sdk.AccAddress(toPrivateKey.PubKey().Bytes())
+		toAddress := sdk.AccAddress(toPrivateKey.PubKey().Address())
 		msg := &banktypes.MsgSend{
 			FromAddress: fundingAddress.String(),
 			ToAddress:   toAddress.String(),
@@ -199,7 +199,7 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 
 	signInput := tx.SignInput{
 		PrivateKey: fundingPrivateKey,
-		GasLimit:   cfg.NetworkConfig.Fee.DeterministicGas.BankSend,
+		GasLimit:   cfg.NetworkConfig.Fee.DeterministicGas.BankSend * uint64(len(accountsToFund)),
 		GasPrice:   gasPrice,
 	}
 
