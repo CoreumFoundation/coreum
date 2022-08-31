@@ -203,7 +203,7 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 		GasPrice:   gasPrice,
 	}
 
-	txHash, err := tx.BroadcastAsync(ctx, cfg.ClientContext, signInput)
+	txHash, err := tx.BroadcastAsync(ctx, cfg.ClientContext, signInput, msgList...)
 	if err != nil {
 		return err
 	}
