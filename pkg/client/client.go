@@ -219,7 +219,7 @@ type submitModifier struct {
 // defaultSubmitModifier returns the default state of the modifier for the SubmitMessage.
 func defaultSubmitModifier() submitModifier {
 	return submitModifier{
-		gasMultiplier: 0,
+		gasMultiplier: 1,
 	}
 }
 
@@ -240,12 +240,15 @@ func (c Client) SubmitMessage(ctx context.Context, input tx.BaseInput, msg sdk.M
 		o(&modifier)
 	}
 
-	gasLimit, err := c.EstimateGas(ctx, input, msg)
-	if err != nil {
-		return BroadcastResult{}, errors.Wrapf(err, "failed to estimate gas for message %q", msg.String())
+	if input.GasLimit == 0 {
+		gasLimit, err := c.EstimateGas(ctx, input, msg)
+		if err != nil {
+			return BroadcastResult{}, errors.Wrapf(err, "failed to estimate gas for message %q", msg.String())
+		}
+		input.GasLimit = gasLimit
 	}
 
-	input.GasLimit = uint64(float64(gasLimit) * modifier.gasMultiplier)
+	input.GasLimit = uint64(float64(input.GasLimit) * modifier.gasMultiplier)
 
 	signedTx, err := c.Sign(ctx, input, msg)
 	if err != nil {
