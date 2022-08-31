@@ -3,7 +3,9 @@ package auth
 import (
 	"context"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -28,27 +30,29 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 		},
 	))
 
-	coredClient := chain.Client
-
-	accNum, accSeq, err := coredClient.GetNumberSequence(ctx, sender.Key.Address())
+	privateKey := secp256k1.PrivKey{Key: sender.Key}
+	senderAddress := sdk.AccAddress(privateKey.PubKey().Bytes())
+	accInfo, err := tx.GetAccountInfo(ctx, chain.ClientCtx, senderAddress)
 	require.NoError(t, err)
 
-	sender.AccountNumber = accNum
-	sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
+	sender.AccountNumber = accInfo.Number
+	sender.AccountSequence = accInfo.Sequence + 1 // Intentionally set incorrect sequence number
+
+	msg := &banktypes.MsgSend{
+		FromAddress: senderAddress.String(),
+		ToAddress:   senderAddress.String(),
+		Amount: []sdk.Coin{
+			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(1)},
+		},
+	}
+	signInput := tx.SignInput{
+		PrivateKey: privateKey,
+		GasLimit:   chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		GasPrice:   sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol},
+	}
 
 	// Broadcast a transaction using incorrect sequence number
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   sender,
-			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
-		},
-		Sender:   sender,
-		Receiver: sender,
-		Amount:   testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
-	})
-	require.NoError(t, err)
-	_, err = coredClient.Broadcast(ctx, txBytes)
+	_, err = tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
 	require.Error(t, err) // We expect error
 
 	// We expect that we get an error saying what the correct sequence number should be
@@ -57,5 +61,5 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	if !ok {
 		require.Fail(t, "Unexpected error", err.Error())
 	}
-	require.Equal(t, accSeq, expectedSeq)
+	require.Equal(t, accInfo.Sequence, expectedSeq)
 }

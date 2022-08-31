@@ -4,7 +4,10 @@ import (
 	"context"
 	"strings"
 
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -58,10 +61,10 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		require.NoError(t, err)
 
 		var maxGasUsed int64
-		gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol)
+		gasPrice := sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol}
 		toSend := testing.MustNewCoin(t, amount, chain.NetworkConfig.TokenSymbol)
 		for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
-			gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed, gasPrice)
+			gasUsed, err := sendAndReturnGasUsed(ctx, chain.ClientCtx, sender, receiver, toSend, maxGasAssumed, gasPrice)
 			if !assert.NoError(t, err) {
 				break
 			}
@@ -95,8 +98,8 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 		},
 	))
 
-	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol)
-	_, err := sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
+	gasPrice := sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol}
+	_, err := sendAndReturnGasUsed(ctx, chain.ClientCtx, sender, sender,
 		testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
 		// declaring gas limit as maxGasAssumed-1 means that tx must fail
 		maxGasAssumed-1, gasPrice)
@@ -105,29 +108,39 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 
 func sendAndReturnGasUsed(
 	ctx context.Context,
-	coredClient client.Client,
+	clientCtx cosmosclient.Context,
 	sender, receiver types.Wallet,
 	toSend types.Coin,
 	gasLimit uint64,
-	gasPrice types.Coin,
+	gasPrice sdk.Coin,
 ) (int64, error) {
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   sender,
-			GasLimit: gasLimit,
-			GasPrice: gasPrice,
-			Memo:     maxMemo, // memo is set to max length here to charge as much gas as possible
+	senderPrivateKey := secp256k1.PrivKey{Key: sender.Key}
+	fromAddress := sdk.AccAddress(senderPrivateKey.PubKey().Bytes())
+	receiverPrivateKey := secp256k1.PrivKey{Key: receiver.Key}
+	toAddress := sdk.AccAddress(receiverPrivateKey.PubKey().Bytes())
+	msg := &banktypes.MsgSend{
+		FromAddress: fromAddress.String(),
+		ToAddress:   toAddress.String(),
+		Amount: []sdk.Coin{
+			{Denom: toSend.Denom, Amount: sdk.NewIntFromBigInt(toSend.Amount)},
 		},
-		Sender:   sender,
-		Receiver: receiver,
-		Amount:   toSend,
-	})
+	}
+
+	signInput := tx.SignInput{
+		PrivateKey: senderPrivateKey,
+		GasLimit:   gasLimit,
+		GasPrice:   gasPrice,
+		Memo:       maxMemo, // memo is set to max length here to charge as much gas as possible
+	}
+	txHash, err := tx.BroadcastAsync(ctx, clientCtx, signInput, msg)
 	if err != nil {
 		return 0, err
 	}
-	result, err := coredClient.Broadcast(ctx, txBytes)
+
+	result, err := tx.AwaitTx(ctx, clientCtx, txHash)
 	if err != nil {
 		return 0, err
 	}
-	return result.GasUsed, nil
+
+	return result.TxResult.GasUsed, nil
 }
