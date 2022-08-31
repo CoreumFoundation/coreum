@@ -17,173 +17,153 @@ import (
 
 // TestTooLowGasPrice verifies that transaction fails if offered gas price is below minimum level
 // specified by the fee model of the network
-func TestTooLowGasPrice(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
+func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
-	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.FeeModel().InitialGasPrice,
-				chain.Network.DeterministicGas().BankSend,
-				1,
-				sdk.NewInt(100),
-			).BigInt(), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
+	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		1,
+		sdk.NewInt(100),
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
+	require.NoError(t, err)
 
-			// FIXME (wojtek): Temporary code for transition
-			if chain.Fund != nil {
-				chain.Fund(sender, initialBalance)
-			}
-
-			return chain.Network.FundAccount(sender.Key.PubKey(), initialBalance.String())
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
+			Wallet: sender,
+			Amount: initialBalance,
 		},
-		func(ctx context.Context, t testing.T) {
-			coredClient := chain.Client
+	))
 
-			gasPriceWithMaxDiscount := chain.Network.FeeModel().InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(chain.Network.FeeModel().MaxDiscount)).TruncateInt()
-			gasPrice := gasPriceWithMaxDiscount.Sub(sdk.OneInt())
-			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-				Base: tx.BaseInput{
-					Signer:   sender,
-					GasLimit: chain.Network.DeterministicGas().BankSend,
-					GasPrice: types.Coin{Amount: gasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
-				},
-				Sender:   sender,
-				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
-			})
-			require.NoError(t, err)
+	coredClient := chain.Client
 
-			// Broadcast should fail because gas price is too low for transaction to enter mempool
-			_, err = coredClient.Broadcast(ctx, txBytes)
-			require.True(t, client.IsInsufficientFeeError(err))
-		}
+	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.MaxDiscount)).TruncateInt()
+	gasPrice := gasPriceWithMaxDiscount.Sub(sdk.OneInt())
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+			GasPrice: types.Coin{Amount: gasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+		},
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+	})
+	require.NoError(t, err)
+
+	// Broadcast should fail because gas price is too low for transaction to enter mempool
+	_, err = coredClient.Broadcast(ctx, txBytes)
+	require.True(t, client.IsInsufficientFeeError(err))
 }
 
 // TestNoFee verifies that transaction fails if sender does not offer fee at all
-func TestNoFee(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
+func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
-	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.FeeModel().InitialGasPrice,
-				chain.Network.DeterministicGas().BankSend,
-				1,
-				sdk.NewInt(100),
-			).BigInt(), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
+	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		1,
+		sdk.NewInt(100),
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
+	require.NoError(t, err)
 
-			// FIXME (wojtek): Temporary code for transition
-			if chain.Fund != nil {
-				chain.Fund(sender, initialBalance)
-			}
-
-			return chain.Network.FundAccount(sender.Key.PubKey(), initialBalance.String())
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
+			Wallet: sender,
+			Amount: initialBalance,
 		},
-		func(ctx context.Context, t testing.T) {
-			coredClient := chain.Client
+	))
 
-			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-				Base: tx.BaseInput{
-					Signer:   sender,
-					GasLimit: chain.Network.DeterministicGas().BankSend,
-				},
-				Sender:   sender,
-				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
-			})
-			require.NoError(t, err)
+	coredClient := chain.Client
 
-			// Broadcast should fail because gas price is too low for transaction to enter mempool
-			_, err = coredClient.Broadcast(ctx, txBytes)
-			require.True(t, client.IsInsufficientFeeError(err))
-		}
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		},
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+	})
+	require.NoError(t, err)
+
+	// Broadcast should fail because gas price is too low for transaction to enter mempool
+	_, err = coredClient.Broadcast(ctx, txBytes)
+	require.True(t, client.IsInsufficientFeeError(err))
 }
 
 // TestGasLimitHigherThanMaxBlockGas verifies that transaction requiring more gas than MaxBlockGas fails
-func TestGasLimitHigherThanMaxBlockGas(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
+func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
-	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.FeeModel().InitialGasPrice,
-				uint64(chain.Network.FeeModel().MaxBlockGas+1),
-				1,
-				sdk.NewInt(100),
-			).BigInt(), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
+	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas+1),
+		1,
+		sdk.NewInt(100),
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
+	require.NoError(t, err)
 
-			// FIXME (wojtek): Temporary code for transition
-			if chain.Fund != nil {
-				chain.Fund(sender, initialBalance)
-			}
-
-			return chain.Network.FundAccount(sender.Key.PubKey(), initialBalance.String())
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
+			Wallet: sender,
+			Amount: initialBalance,
 		},
-		func(ctx context.Context, t testing.T) {
-			coredClient := chain.Client
+	))
 
-			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-				Base: tx.BaseInput{
-					Signer:   sender,
-					GasLimit: uint64(chain.Network.FeeModel().MaxBlockGas + 1), // transaction requires more gas than block can fit
-					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
-				},
-				Sender:   sender,
-				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
-			})
-			require.NoError(t, err)
+	coredClient := chain.Client
 
-			// Broadcast should fail because gas limit is higher than the block capacity
-			_, err = coredClient.Broadcast(ctx, txBytes)
-			require.Error(t, err)
-		}
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas + 1), // transaction requires more gas than block can fit
+			GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+		},
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+	})
+	require.NoError(t, err)
+
+	// Broadcast should fail because gas limit is higher than the block capacity
+	_, err = coredClient.Broadcast(ctx, txBytes)
+	require.Error(t, err)
 }
 
 // TestGasLimitEqualToMaxBlockGas verifies that transaction requiring MaxBlockGas gas succeeds
-func TestGasLimitEqualToMaxBlockGas(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
+func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
-	return func(ctx context.Context) error {
-			initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-				chain.Network.FeeModel().InitialGasPrice,
-				uint64(chain.Network.FeeModel().MaxBlockGas),
-				1,
-				sdk.NewInt(100),
-			).BigInt(), chain.Network.TokenSymbol())
-			if err != nil {
-				return err
-			}
+	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
+		1,
+		sdk.NewInt(100),
+	).BigInt(), chain.NetworkConfig.TokenSymbol)
+	require.NoError(t, err)
 
-			// FIXME (wojtek): Temporary code for transition
-			if chain.Fund != nil {
-				chain.Fund(sender, initialBalance)
-			}
-
-			return chain.Network.FundAccount(sender.Key.PubKey(), initialBalance.String())
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.FundedAccount{
+			Wallet: sender,
+			Amount: initialBalance,
 		},
-		func(ctx context.Context, t testing.T) {
-			coredClient := chain.Client
+	))
 
-			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-				Base: tx.BaseInput{
-					Signer:   sender,
-					GasLimit: uint64(chain.Network.FeeModel().MaxBlockGas),
-					GasPrice: types.Coin{Amount: chain.Network.FeeModel().InitialGasPrice.BigInt(), Denom: chain.Network.TokenSymbol()},
-				},
-				Sender:   sender,
-				Receiver: sender,
-				Amount:   types.Coin{Denom: chain.Network.TokenSymbol(), Amount: big.NewInt(10)},
-			})
-			require.NoError(t, err)
+	coredClient := chain.Client
 
-			_, err = coredClient.Broadcast(ctx, txBytes)
-			require.NoError(t, err)
-		}
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
+			GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+		},
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+	})
+	require.NoError(t, err)
+
+	_, err = coredClient.Broadcast(ctx, txBytes)
+	require.NoError(t, err)
 }
