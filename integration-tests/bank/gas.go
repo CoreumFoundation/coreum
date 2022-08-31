@@ -2,7 +2,6 @@ package bank
 
 import (
 	"context"
-	"math/big"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,7 +10,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -26,25 +24,19 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		const margin = 1.5
 		maxGasAssumed := chain.NetworkConfig.Fee.DeterministicGas.BankSend // set it to 50%+ higher than maximum observed value
 
-		amount, ok := big.NewInt(0).SetString("1000000000000", 10)
-		if !ok {
-			panic("invalid amount")
-		}
-
+		amount := testing.MustNewIntFromString(t, "1000000000000")
 		fees := testing.ComputeNeededBalance(
 			chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
 			chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 			numOfTransactions,
 			sdk.NewInt(0),
-		).BigInt()
+		)
 
 		wallet1 := testing.RandomWallet()
 		wallet2 := testing.RandomWallet()
 
-		wallet1InitialBalance, err := types.NewCoin(new(big.Int).Add(fees, amount), chain.NetworkConfig.TokenSymbol)
-		require.NoError(t, err)
-		wallet2InitialBalance, err := types.NewCoin(fees, chain.NetworkConfig.TokenSymbol)
-		require.NoError(t, err)
+		wallet1InitialBalance := testing.MustNewCoin(t, fees.Add(amount), chain.NetworkConfig.TokenSymbol)
+		wallet2InitialBalance := testing.MustNewCoin(t, fees, chain.NetworkConfig.TokenSymbol)
 
 		require.NoError(t, chain.Faucet.FundAccounts(ctx,
 			testing.FundedAccount{
@@ -59,15 +51,17 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 
 		client := chain.Client
 
+		var err error
 		wallet1.AccountNumber, wallet1.AccountSequence, err = client.GetNumberSequence(ctx, wallet1.Key.Address())
 		require.NoError(t, err)
 		wallet2.AccountNumber, wallet2.AccountSequence, err = client.GetNumberSequence(ctx, wallet2.Key.Address())
 		require.NoError(t, err)
 
 		var maxGasUsed int64
-		toSend := types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: amount}
+		gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol)
+		toSend := testing.MustNewCoin(t, amount, chain.NetworkConfig.TokenSymbol)
 		for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
-			gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed, chain.NetworkConfig)
+			gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed, gasPrice)
 			if !assert.NoError(t, err) {
 				break
 			}
@@ -87,13 +81,12 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 	maxGasAssumed := chain.NetworkConfig.Fee.DeterministicGas.BankSend
 	sender := testing.RandomWallet()
 
-	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
+	initialBalance := testing.MustNewCoin(t, testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
 		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
 		sdk.NewInt(10),
-	).BigInt(), chain.NetworkConfig.TokenSymbol)
-	require.NoError(t, err)
+	), chain.NetworkConfig.TokenSymbol)
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
@@ -102,19 +95,27 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 		},
 	))
 
-	_, err = sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
-		types.Coin{Amount: big.NewInt(1), Denom: chain.NetworkConfig.TokenSymbol},
+	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol)
+	_, err := sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
+		testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
 		// declaring gas limit as maxGasAssumed-1 means that tx must fail
-		maxGasAssumed-1, chain.NetworkConfig)
+		maxGasAssumed-1, gasPrice)
 	assert.True(t, client.IsInsufficientFeeError(err))
 }
 
-func sendAndReturnGasUsed(ctx context.Context, coredClient client.Client, sender, receiver types.Wallet, toSend types.Coin, gasLimit uint64, networkConfig app.NetworkConfig) (int64, error) {
+func sendAndReturnGasUsed(
+	ctx context.Context,
+	coredClient client.Client,
+	sender, receiver types.Wallet,
+	toSend types.Coin,
+	gasLimit uint64,
+	gasPrice types.Coin,
+) (int64, error) {
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: gasLimit,
-			GasPrice: types.Coin{Amount: networkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: networkConfig.TokenSymbol},
+			GasPrice: gasPrice,
 			Memo:     maxMemo, // memo is set to max length here to charge as much gas as possible
 		},
 		Sender:   sender,

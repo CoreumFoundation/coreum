@@ -2,7 +2,6 @@ package bank
 
 import (
 	"context"
-	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +12,6 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // TestInitialBalance checks that initial balance is set by genesis block
@@ -22,13 +20,10 @@ func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 	wallet := testing.RandomWallet()
 
 	// Prefunding account required by test
-	initialBalance, err := types.NewCoin(big.NewInt(100), chain.NetworkConfig.TokenSymbol)
-	require.NoError(t, err)
-
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
 			Wallet: wallet,
-			Amount: initialBalance,
+			Amount: testing.MustNewCoin(t, sdk.NewInt(100), chain.NetworkConfig.TokenSymbol),
 		},
 	))
 
@@ -46,25 +41,19 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 	receiver := testing.RandomWallet()
 
-	senderInitialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
-		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-		1,
-		sdk.NewInt(100),
-	).BigInt(), chain.NetworkConfig.TokenSymbol)
-	require.NoError(t, err)
-
-	receiverInitialBalance, err := types.NewCoin(big.NewInt(10), chain.NetworkConfig.TokenSymbol)
-	require.NoError(t, err)
-
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
 			Wallet: sender,
-			Amount: senderInitialBalance,
+			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
+				chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+				1,
+				sdk.NewInt(100),
+			), chain.NetworkConfig.TokenSymbol),
 		},
 		testing.FundedAccount{
 			Wallet: receiver,
-			Amount: receiverInitialBalance,
+			Amount: testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
 		},
 	))
 
@@ -76,11 +65,11 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-			GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 		},
 		Sender:   sender,
 		Receiver: receiver,
-		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
 	})
 	require.NoError(t, err)
 	result, err := coredClient.Broadcast(ctx, txBytes)

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -38,16 +37,15 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 	coredClient := chain.Client
 
 	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.MaxDiscount)).TruncateInt()
-	gasPrice := gasPriceWithMaxDiscount.Sub(sdk.OneInt())
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-			GasPrice: types.Coin{Amount: gasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+			GasPrice: testing.MustNewCoin(t, gasPriceWithMaxDiscount.Sub(sdk.OneInt()), chain.NetworkConfig.TokenSymbol),
 		},
 		Sender:   sender,
 		Receiver: sender,
-		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
 	})
 	require.NoError(t, err)
 
@@ -84,7 +82,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 		},
 		Sender:   sender,
 		Receiver: sender,
-		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
 	})
 	require.NoError(t, err)
 
@@ -97,18 +95,15 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
-	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
-		uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas+1),
-		1,
-		sdk.NewInt(100),
-	).BigInt(), chain.NetworkConfig.TokenSymbol)
-	require.NoError(t, err)
-
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
 			Wallet: sender,
-			Amount: initialBalance,
+			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
+				chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+				uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas+1),
+				1,
+				sdk.NewInt(100),
+			), chain.NetworkConfig.TokenSymbol),
 		},
 	))
 
@@ -118,11 +113,11 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas + 1), // transaction requires more gas than block can fit
-			GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 		},
 		Sender:   sender,
 		Receiver: sender,
-		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
 	})
 	require.NoError(t, err)
 
@@ -156,11 +151,11 @@ func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain test
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
-			GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 		},
 		Sender:   sender,
 		Receiver: sender,
-		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(10)},
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
 	})
 	require.NoError(t, err)
 

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -10,7 +9,6 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
@@ -18,18 +16,15 @@ import (
 func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
-	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
-		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-		1,
-		sdk.NewInt(10),
-	).BigInt(), chain.NetworkConfig.TokenSymbol)
-	require.NoError(t, err)
-
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
 			Wallet: sender,
-			Amount: initialBalance,
+			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
+				chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+				1,
+				sdk.NewInt(10),
+			), chain.NetworkConfig.TokenSymbol),
 		},
 	))
 
@@ -46,11 +41,11 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-			GasPrice: types.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), Denom: chain.NetworkConfig.TokenSymbol},
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 		},
 		Sender:   sender,
 		Receiver: sender,
-		Amount:   types.Coin{Denom: chain.NetworkConfig.TokenSymbol, Amount: big.NewInt(1)},
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
 	})
 	require.NoError(t, err)
 	_, err = coredClient.Broadcast(ctx, txBytes)
