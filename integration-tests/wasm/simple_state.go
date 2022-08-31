@@ -50,8 +50,6 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	}, chain.Client)
 
 	// instantiate the contract and set the initial counter state.
-	// This step could be done within previous step, but separated there, so we could check
-	// the intermediate result of code storage.
 	initialPayload, err := json.Marshal(simpleState{
 		Count: 1337,
 	})
@@ -67,7 +65,6 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	)
 	requireT.NoError(err)
 
-	// Query the contract state to get the initial count
 	getCountPayload, err := methodToEmptyBodyPayload(getCount)
 	requireT.NoError(err)
 	queryOut, err := wasmTestClient.query(ctx, contractAddr, getCountPayload)
@@ -84,7 +81,6 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	err = wasmTestClient.execute(ctx, contractAddr, incrementPayload, types.Coin{})
 	requireT.NoError(err)
 
-	// Query the contract once again to ensure the count has been incremented
 	queryOut, err = wasmTestClient.query(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
 

@@ -213,12 +213,14 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 
 // submitModifier is the customisation option for the SubmitMessage.
 type submitModifier struct {
+	gasEstimation bool
 	gasMultiplier float64
 }
 
 // defaultSubmitModifier returns the default state of the modifier for the SubmitMessage.
 func defaultSubmitModifier() submitModifier {
 	return submitModifier{
+		gasEstimation: false,
 		gasMultiplier: 1,
 	}
 }
@@ -233,6 +235,13 @@ func WithGasMultiplier(multiplier float64) SubmitOption {
 	}
 }
 
+// WithGasEstimation returns gas estimation option.
+func WithGasEstimation() SubmitOption {
+	return func(m *submitModifier) {
+		m.gasEstimation = true
+	}
+}
+
 // SubmitMessage is a combination of EstimateGas, Sign and Broadcast methods.
 func (c Client) SubmitMessage(ctx context.Context, input tx.BaseInput, msg sdk.Msg, opts ...SubmitOption) (BroadcastResult, error) {
 	modifier := defaultSubmitModifier()
@@ -240,7 +249,7 @@ func (c Client) SubmitMessage(ctx context.Context, input tx.BaseInput, msg sdk.M
 		o(&modifier)
 	}
 
-	if input.GasLimit == 0 {
+	if modifier.gasEstimation {
 		gasLimit, err := c.EstimateGas(ctx, input, msg)
 		if err != nil {
 			return BroadcastResult{}, errors.Wrapf(err, "failed to estimate gas for message %q", msg.String())

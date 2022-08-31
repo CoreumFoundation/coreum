@@ -44,7 +44,13 @@ func (c *testClient) deploy(ctx context.Context, wasmData []byte) (uint64, error
 		WASMByteCode: wasmData,
 	}
 
-	res, err := c.coredClient.SubmitMessage(ctx, c.baseInput, msgStoreCode, client.WithGasMultiplier(c.gasMultiplier))
+	res, err := c.coredClient.SubmitMessage(
+		ctx,
+		c.baseInput,
+		msgStoreCode,
+		client.WithGasMultiplier(c.gasMultiplier),
+		client.WithGasEstimation(),
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -75,7 +81,12 @@ func (c *testClient) instantiate(ctx context.Context, req instantiateConfig) (st
 		Funds:  funds,
 	}
 
-	res, err := c.coredClient.SubmitMessage(ctx, c.baseInput, msgInstantiateContract, client.WithGasMultiplier(c.gasMultiplier))
+	res, err := c.coredClient.SubmitMessage(
+		ctx,
+		c.baseInput,
+		msgInstantiateContract,
+		client.WithGasMultiplier(c.gasMultiplier),
+		client.WithGasEstimation())
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +128,13 @@ func (c *testClient) execute(ctx context.Context, contractAddr string, payload j
 		Funds:    funds,
 	}
 
-	_, err := c.coredClient.SubmitMessage(ctx, c.baseInput, msgExecuteContract, client.WithGasMultiplier(c.gasMultiplier))
+	_, err := c.coredClient.SubmitMessage(
+		ctx,
+		c.baseInput,
+		msgExecuteContract,
+		client.WithGasMultiplier(c.gasMultiplier),
+		client.WithGasEstimation(),
+	)
 	if err != nil {
 		return err
 	}
