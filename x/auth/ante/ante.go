@@ -5,7 +5,6 @@ package ante
 
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -25,7 +24,6 @@ type HandlerOptions struct {
 	SignModeHandler       authsigning.SignModeHandler
 	SigGasConsumer        func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
 	GasRequirements       DeterministicGasRequirements
-	WasmConfig            *wasmTypes.WasmConfig
 	WasmTXCounterStoreKey sdk.StoreKey
 }
 
@@ -51,10 +49,6 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 	if options.SigGasConsumer == nil {
 		options.SigGasConsumer = authante.DefaultSigVerificationGasConsumer
-	}
-
-	if options.WasmConfig == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "wasm config is required for ante builder")
 	}
 
 	if options.WasmTXCounterStoreKey == nil {

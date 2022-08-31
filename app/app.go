@@ -614,7 +614,6 @@ func New(
 			GasRequirements: ante.DeterministicGasRequirements{
 				BankSend: ChosenNetwork.DeterministicGas().BankSend,
 			},
-			WasmConfig:            &wasmConfig,
 			WasmTXCounterStoreKey: keys[wasm.StoreKey],
 		},
 	)
