@@ -5,12 +5,13 @@ import (
 	"encoding/hex"
 	"strconv"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // GetProposalByTx returns proposal ID by the given transaction hash
