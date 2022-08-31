@@ -69,6 +69,11 @@ func init() {
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
 			Fee:           feeConfig,
+			ProposalConfig: ProposalConfig{
+				MinDepositAmount: "10000000",
+				MinDepositPeriod: "172800s",
+				VotingPeriod:     "172800s",
+			},
 		},
 		{
 			ChainID:       Devnet,
@@ -79,6 +84,11 @@ func init() {
 			Fee:           feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"4ae4593aff8dd5ececd217f273195549503e2df8@35.223.81.227:26656"},
+			},
+			ProposalConfig: ProposalConfig{
+				MinDepositAmount: "10000000",
+				MinDepositPeriod: "172800s",
+				VotingPeriod:     "172800s",
 			},
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
@@ -134,6 +144,12 @@ type FeeConfig struct {
 	DeterministicGas ante.DeterministicGasRequirements
 }
 
+type ProposalConfig struct {
+	MinDepositAmount string
+	MinDepositPeriod string
+	VotingPeriod     string
+}
+
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID        ChainID
@@ -144,6 +160,7 @@ type NetworkConfig struct {
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 	NodeConfig     NodeConfig
+	ProposalConfig ProposalConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 }
@@ -156,6 +173,7 @@ type Network struct {
 	tokenSymbol   string
 	fee           FeeConfig
 	nodeConfig    NodeConfig
+	proposal      ProposalConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -171,6 +189,7 @@ func NewNetwork(c NetworkConfig) Network {
 		tokenSymbol:    c.TokenSymbol,
 		nodeConfig:     c.NodeConfig.Clone(),
 		fee:            c.Fee,
+		proposal:       c.ProposalConfig,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -378,19 +397,26 @@ var genesisTemplate string
 func genesis(n Network) ([]byte, error) {
 	genesisBuf := new(bytes.Buffer)
 	err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
-		GenesisTimeUTC string
-		ChainID        ChainID
-		TokenSymbol    string
-		MaxBlockGas    int64
+		GenesisTimeUTC           string
+		ChainID                  ChainID
+		TokenSymbol              string
+		MaxBlockGas              int64
+		ProposalMinDepositAmount string
+		ProposalMinDepositPeriod string
+		ProposalVotingPeriod     string
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
 		// TODO: adjust MaxBlockGas before creating testnet & mainnet
-		MaxBlockGas: n.fee.FeeModel.MaxBlockGas,
+		MaxBlockGas:              n.fee.FeeModel.MaxBlockGas,
+		ProposalMinDepositAmount: n.proposal.MinDepositAmount,
+		ProposalMinDepositPeriod: n.proposal.MinDepositPeriod,
+		ProposalVotingPeriod:     n.proposal.VotingPeriod,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
 	}
+
 	return genesisBuf.Bytes(), nil
 }
