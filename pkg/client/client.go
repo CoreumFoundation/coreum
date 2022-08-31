@@ -211,6 +211,50 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
+// submitModifier is the customisation option for the SubmitMessage.
+type submitModifier struct {
+	gasMultiplier float64
+}
+
+// defaultSubmitModifier returns the default state of the modifier for the SubmitMessage.
+func defaultSubmitModifier() submitModifier {
+	return submitModifier{
+		gasMultiplier: 0,
+	}
+}
+
+// SubmitOption is an option patter modifier for the SubmitMessage func.
+type SubmitOption func(*submitModifier)
+
+// WithGasMultiplier returns gas multiplier option.
+func WithGasMultiplier(multiplier float64) SubmitOption {
+	return func(m *submitModifier) {
+		m.gasMultiplier = multiplier
+	}
+}
+
+// SubmitMessage is a combination of EstimateGas, Sign and Broadcast methods.
+func (c Client) SubmitMessage(ctx context.Context, input tx.BaseInput, msg sdk.Msg, opts ...SubmitOption) (BroadcastResult, error) {
+	modifier := defaultSubmitModifier()
+	for _, o := range opts {
+		o(&modifier)
+	}
+
+	gasLimit, err := c.EstimateGas(ctx, input, msg)
+	if err != nil {
+		return BroadcastResult{}, errors.Wrapf(err, "failed to estimate gas for message %q", msg.String())
+	}
+
+	input.GasLimit = uint64(float64(gasLimit) * modifier.gasMultiplier)
+
+	signedTx, err := c.Sign(ctx, input, msg)
+	if err != nil {
+		return BroadcastResult{}, errors.Wrapf(err, "failed to sign transaction as %s", input.Signer.Address().String())
+	}
+
+	return c.Broadcast(ctx, c.Encode(signedTx))
+}
+
 // EstimateGas runs the transaction cost estimation and returns new suggested gas limit,
 // in contrast with the default Cosmos SDK gas estimation logic, this method returns unadjusted gas used.
 func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk.Msg) (uint64, error) {
@@ -335,4 +379,26 @@ func ExpectedSequenceFromError(err error) (uint64, bool, error) {
 // IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction
 func IsInsufficientFeeError(err error) bool {
 	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
+}
+
+// FindEventAttribute finds the first event attribute by type and attribute name.
+func FindEventAttribute(event sdk.StringEvents, etype, attribute string) (bool, string) {
+	for _, ev := range event {
+		if ev.Type == etype {
+			if value, ok := findAttribute(ev, attribute); ok {
+				return true, value
+			}
+		}
+	}
+	return false, ""
+}
+
+func findAttribute(ev sdk.StringEvent, attr string) (value string, ok bool) {
+	for _, attrItem := range ev.Attributes {
+		if attrItem.Key == attr {
+			return attrItem.Value, true
+		}
+	}
+
+	return "", false
 }

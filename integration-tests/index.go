@@ -16,7 +16,7 @@ func Tests() testing.TestSet {
 			auth.TestNoFee,
 			// FIXME (wojtek): This test might be enabled once crust imports new version of coreum containing feemodel
 			// because only then MaxBlockGas is set in genesis.json when znet creates blockchain
-			// auth.TestGasLimitHigherThanMaxBlockGas,
+			auth.TestGasLimitHigherThanMaxBlockGas,
 			auth.TestGasLimitEqualToMaxBlockGas,
 			bank.TestInitialBalance,
 			bank.TestCoreTransfer,

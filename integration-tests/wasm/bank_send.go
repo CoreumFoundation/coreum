@@ -3,21 +3,37 @@ package wasm
 import (
 	"context"
 	_ "embed"
-	"fmt"
+	"encoding/json"
 	"math/big"
-	"os"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/CoreumFoundation/coreum/pkg/wasm"
 )
 
 var (
 	//go:embed contracts/bank-send/artifacts/bank_send.wasm
 	bankSendWASM []byte
+)
+
+type bankInstantiatePayload struct {
+	Count int `json:"count"`
+}
+
+type bankWithdrawRequest struct {
+	Amount    string `json:"amount"`
+	Denom     string `json:"denom"`
+	Recipient string `json:"recipient"`
+}
+
+type bankMethod string
+
+const (
+	withdraw bankMethod = "withdraw"
 )
 
 // TestBankSendWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
@@ -36,25 +52,31 @@ func TestBankSendWasmContract(chain testing.Chain) (testing.PrepareFunc, testing
 
 	runTestFunc := func(ctx context.Context, t testing.T) {
 		requireT := require.New(t)
-		networkConfig := wasm.ChainConfig{
+		wasmTestClient := newWasmTestClient(tx.BaseInput{
+			Signer:   adminWallet,
 			GasPrice: types.NewCoinUnsafe(chain.Network.FeeModel().InitialGasPrice.BigInt(), nativeDenom),
-			Client:   chain.Client,
-		}
+		}, chain.Client)
 
-		deployOut := deployWasmContract(ctx, wasm.DeployConfig{
-			Network: networkConfig,
-			From:    adminWallet,
-			InstantiationConfig: wasm.ContractInstanceConfig{
-				NeedInstantiation:  true,
-				InstantiatePayload: `{"count": 0}`,
+		initialPayload, err := json.Marshal(bankInstantiatePayload{
+			Count: 0,
+		})
+		requireT.NoError(err)
+		contractAddr, err := wasmTestClient.deployAndInstantiate(
+			ctx,
+			bankSendWASM,
+			instantiateConfig{
+				accessType: wasmtypes.AccessTypeUnspecified,
+				payload:    initialPayload,
 				// transfer some coins during instantiation, so we could withdraw them later using contract code.
-				Amount: types.NewCoinUnsafe(big.NewInt(10000), nativeDenom),
+				amount: types.NewCoinUnsafe(big.NewInt(10000), nativeDenom),
+				label:  "bank_send",
 			},
-		}, bankSendWASM, requireT)
+		)
+		requireT.NoError(err)
 
 		contractBalance, err := chain.Client.BankQueryClient().Balance(ctx,
 			&banktypes.QueryBalanceRequest{
-				Address: deployOut.ContractAddr,
+				Address: contractAddr,
 				Denom:   nativeDenom,
 			})
 		requireT.NoError(err)
@@ -63,27 +85,21 @@ func TestBankSendWasmContract(chain testing.Chain) (testing.PrepareFunc, testing
 		requireT.Equal("10000", contractBalance.Balance.Amount.String())
 
 		testWallet := testing.RandomWallet()
-		withdrawMsg := fmt.Sprintf(
-			`{"withdraw": { "amount":"5000", "denom":"%s", "recipient":"%s" }}`,
-			nativeDenom,
-			testWallet.Address().String(),
-		)
-
-		execOut, err := wasm.Execute(ctx, deployOut.ContractAddr, wasm.ExecuteConfig{
-			// withdraw half of the coins to a test wallet, previously empty
-			Network:        networkConfig,
-			From:           adminWallet,
-			ExecutePayload: withdrawMsg,
+		withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
+			withdraw: {
+				Amount:    "5000",
+				Denom:     nativeDenom,
+				Recipient: testWallet.Address().String(),
+			},
 		})
+
+		err = wasmTestClient.execute(ctx, contractAddr, withdrawPayload, types.Coin{})
 		requireT.NoError(err)
-		requireT.NotEmpty(execOut.ExecuteTxHash)
-		requireT.Equal(deployOut.ContractAddr, execOut.ContractAddress)
-		requireT.Equal("try_withdraw", execOut.MethodExecuted)
 
 		// check that contract now has half of the coins
 		contractBalance, err = chain.Client.BankQueryClient().Balance(ctx,
 			&banktypes.QueryBalanceRequest{
-				Address: deployOut.ContractAddr,
+				Address: contractAddr,
 				Denom:   nativeDenom,
 			})
 		requireT.NoError(err)
@@ -105,26 +121,4 @@ func TestBankSendWasmContract(chain testing.Chain) (testing.PrepareFunc, testing
 	}
 
 	return initTestState, runTestFunc
-}
-
-func deployWasmContract(
-	ctx context.Context,
-	config wasm.DeployConfig,
-	contractData []byte,
-	requireT *require.Assertions,
-) *wasm.DeployOutput {
-	wasmFile, err := os.CreateTemp("", "test_contract.wasm")
-	requireT.NoError(err)
-
-	_, err = wasmFile.Write(contractData)
-	requireT.NoError(err)
-
-	config.ArtefactPath = wasmFile.Name()
-	deployOut, err := wasm.Deploy(ctx, config)
-
-	requireT.NoError(err)
-	requireT.NotEmpty(deployOut.StoreTxHash)
-	requireT.NotEmpty(deployOut.ContractAddr)
-
-	return deployOut
 }
