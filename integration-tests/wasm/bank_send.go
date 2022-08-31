@@ -3,12 +3,11 @@ package wasm
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
-	"math/big"
-	"os"
-
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
+	"math/big"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/types"
@@ -19,6 +18,10 @@ var (
 	//go:embed contracts/bank-send/artifacts/bank_send.wasm
 	bankSendWASM []byte
 )
+
+type bankInstantiatePayload struct {
+	Count int `json:"count"`
+}
 
 // TestBankSendWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
@@ -41,12 +44,16 @@ func TestBankSendWasmContract(chain testing.Chain) (testing.PrepareFunc, testing
 			Client:   chain.Client,
 		}
 
+		initialPayload, err := json.Marshal(bankInstantiatePayload{
+			Count: 0,
+		})
+		requireT.NoError(err)
 		deployOut := deployWasmContract(ctx, wasm.DeployConfig{
 			Network: networkConfig,
 			From:    adminWallet,
 			InstantiationConfig: wasm.ContractInstanceConfig{
 				NeedInstantiation:  true,
-				InstantiatePayload: `{"count": 0}`,
+				InstantiatePayload: initialPayload,
 				// transfer some coins during instantiation, so we could withdraw them later using contract code.
 				Amount: types.NewCoinUnsafe(big.NewInt(10000), nativeDenom),
 			},
@@ -113,13 +120,7 @@ func deployWasmContract(
 	contractData []byte,
 	requireT *require.Assertions,
 ) *wasm.DeployOutput {
-	wasmFile, err := os.CreateTemp("", "test_contract.wasm")
-	requireT.NoError(err)
-
-	_, err = wasmFile.Write(contractData)
-	requireT.NoError(err)
-
-	config.ArtefactPath = wasmFile.Name()
+	config.Contract = contractData
 	deployOut, err := wasm.Deploy(ctx, config)
 
 	requireT.NoError(err)

@@ -18,6 +18,10 @@ var (
 	simpleStateWASM []byte
 )
 
+type simpleTateInstantiatePayload struct {
+	Count int `json:"count"`
+}
+
 // TestSimpleStateWasmContract runs a contract deployment flow and tries to modify the state after deployment.
 // This is a E2E check for the WASM integration, to ensure it works for a simple state contract (Counter).
 func TestSimpleStateWasmContract(chain testing.Chain) (testing.PrepareFunc, testing.RunFunc) {
@@ -40,14 +44,18 @@ func TestSimpleStateWasmContract(chain testing.Chain) (testing.PrepareFunc, test
 		}
 
 		// Instantiate the contract and set the initial counter state.
-		// This step could be done within previous step, but separated there so we could check
+		// This step could be done within previous step, but separated there, so we could check
 		// the intermediate result of code storage.
+		initialPayload, err := json.Marshal(simpleTateInstantiatePayload{
+			Count: 1337,
+		})
+		requireT.NoError(err)
 		deployOut := deployWasmContract(ctx, wasm.DeployConfig{
 			Network: networkConfig,
 			From:    adminWallet,
 			InstantiationConfig: wasm.ContractInstanceConfig{
 				NeedInstantiation:  true,
-				InstantiatePayload: `{"count": 1337}`,
+				InstantiatePayload: initialPayload,
 			},
 		}, simpleStateWASM, requireT)
 

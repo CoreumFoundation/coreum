@@ -5,12 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
@@ -28,10 +25,8 @@ const gasMultiplier = 1.5
 
 // DeployConfig provides params for the deploying stage.
 type DeployConfig struct {
-	// ArtefactPath is a filesystem path to *.wasm artefact to deploy. The blob might be gzipped.
-	// If not provided, will be guessed from WorkspaceDir. Make sure that either WorkspaceDir or ArtefactPath
-	// is provied and exists.
-	ArtefactPath string
+	// Contract represent the contract binary decoded to bytes.
+	Contract []byte
 
 	// CodeID allows to specify existing program code ID to skip the store stage. If CodeID has been provided
 	// and NeedInstantiation if false, the deployment just checks the program for existence on the chain.
@@ -62,7 +57,7 @@ type ContractInstanceConfig struct {
 	// NeedInstantiation enables 2nd stage (contract instantiation) to be executed after code has been stored on chain.
 	NeedInstantiation bool
 	// AccessType sets the permission flag, affecting who can instantiate this contract.
-	AccessType string
+	AccessType wasmtypes.AccessType
 	// AccessAddress is respected when AccessTypeOnlyAddress is chosen as AccessType.
 	AccessAddress string
 	// NeedAdmin controls the option to set admin address explicitly. If false, there will be no admin.
@@ -70,48 +65,31 @@ type ContractInstanceConfig struct {
 	// AdminAddress sets the address of an admin, optional. Used if `NeedAdmin` is true.
 	AdminAddress string
 	// InstantiatePayload is a path to a file containing JSON-encoded contract instantiate args, or JSON-encoded body itself.
-	InstantiatePayload string
+	InstantiatePayload json.RawMessage
 	// Amount specifies Coins to send to the contract during instantiation.
 	Amount types.Coin
 	// Label sets the human-readable label for the contract instance.
 	Label string
 
-	instantiatePayloadBody json.RawMessage
-	accessTypeParsed       wasmtypes.AccessType
-	accessAddressParsed    sdk.AccAddress
-	adminAddressParsed     sdk.AccAddress
+	accessAddressParsed sdk.AccAddress
+	adminAddressParsed  sdk.AccAddress
 }
-
-// AccessType encodes possible values of the access type flag
-type AccessType string
-
-const (
-	// AccessTypeNobody forbidden
-	AccessTypeNobody AccessType = "nobody"
-	// AccessTypeOnlyAddress restricted to an address
-	AccessTypeOnlyAddress AccessType = "address"
-	// AccessTypeEverybody unrestricted
-	AccessTypeEverybody AccessType = "unrestricted"
-)
 
 // Deploy implements logic for "contracts deploy" CLI command.
 func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
-	if err := config.ValidateAndLoad(); err != nil {
+	if err := config.Validate(); err != nil {
 		return nil, errors.Wrap(err, "failed to validate the deployment config")
 	}
 
-	if !checkWasmFile(config.ArtefactPath) {
-		return nil, errors.New(fmt.Sprintf("WASM artefact is not valid at path:%s", config.ArtefactPath))
-	}
-
-	wasmData, codeDataHash, err := loadContractCode(config)
-	if err != nil {
-		return nil, err
-	}
+	wasmData := config.Contract
+	codeDataHash := hashContractCode(config.Contract)
 
 	out := &DeployOutput{
 		CodeID: config.CodeID,
 	}
+
+	// fixme refactor it
+	var err error
 	if config.CodeID == 0 {
 		if out, err = deployCode(ctx, config, out, codeDataHash, wasmData); err != nil {
 			return nil, err
@@ -127,45 +105,12 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 		return out, nil
 	}
 
+	// FIXME try not to do it
 	if len(config.InstantiationConfig.Label) == 0 {
-		artefactBase := filepath.Base(config.ArtefactPath)
-		contractName := strings.TrimSuffix(artefactBase, filepath.Ext(artefactBase))
-		config.InstantiationConfig.Label = contractName
+		config.InstantiationConfig.Label = codeDataHash
 	}
 
 	return instantiateContract(ctx, config, out)
-}
-
-func loadContractCode(config DeployConfig) (wasmData []byte, codeDataHash string, err error) {
-	wasmData, err = os.ReadFile(config.ArtefactPath)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "failed to read artefact data from the fs")
-	}
-
-	switch {
-	case ioutils.IsWasm(wasmData):
-		codeDataHash = hashContractCode(wasmData)
-		wasmData, err = ioutils.GzipIt(wasmData)
-
-		if err != nil {
-			return nil, "", errors.Wrap(err, "failed to gzip the wasm data")
-		}
-	case ioutils.IsGzip(wasmData):
-		srcWasmData, err := ioutils.Uncompress(wasmData, uint64(wasmtypes.MaxWasmSize))
-		if err != nil {
-			return nil, "", errors.Wrap(err, "failed to uncompress the gzip data")
-		} else if !ioutils.IsWasm(srcWasmData) {
-			err := errors.New("invalid input file. Use wasm binary or gzip of a wasm binary")
-			return nil, "", err
-		}
-
-		codeDataHash = hashContractCode(srcWasmData)
-	default:
-		err := errors.New("invalid input file. Use wasm binary or gzip")
-		return nil, "", err
-	}
-
-	return wasmData, codeDataHash, err
 }
 
 func deployCode(
@@ -175,16 +120,15 @@ func deployCode(
 	codeDataHash string,
 	wasmData []byte,
 ) (*DeployOutput, error) {
-	artefactBase := filepath.Base(config.ArtefactPath)
-	contractName := strings.TrimSuffix(artefactBase, filepath.Ext(artefactBase))
+	contractName := config.InstantiationConfig.Label
 
 	deployLog := logger.Get(ctx).With(zap.String("name", contractName))
-	deployLog.Info("Deploying artefact", zap.String("artefact", artefactBase), zap.String("from", config.From.Address().String()))
+	deployLog.Info("Deploying artefact", zap.String("contractName", contractName), zap.String("from", config.From.Address().String()))
 
 	var accessConfig *wasmtypes.AccessConfig
-	if config.InstantiationConfig.accessTypeParsed != wasmtypes.AccessTypeUnspecified {
+	if config.InstantiationConfig.AccessType != wasmtypes.AccessTypeUnspecified {
 		accessConfig = &wasmtypes.AccessConfig{
-			Permission: config.InstantiationConfig.accessTypeParsed,
+			Permission: config.InstantiationConfig.AccessType,
 			Address:    config.InstantiationConfig.accessAddressParsed.String(),
 		}
 	}
@@ -243,7 +187,7 @@ func instantiateContract(ctx context.Context, config DeployConfig, out *DeployOu
 		config.Network,
 		config.From,
 		config.CodeID,
-		config.InstantiationConfig.instantiatePayloadBody,
+		config.InstantiationConfig.InstantiatePayload,
 		config.InstantiationConfig.Amount,
 		config.InstantiationConfig.Label,
 		adminAddress,
@@ -268,42 +212,16 @@ type DeployOutput struct {
 	InitTxHash   string `json:"initTxHash,omitempty"`
 }
 
-// ValidateAndLoad checks the deployment config and loads it's initial state.
-// TODO(dhil) it would be better not to sore the state in the config and not set in the validation.
-func (c *DeployConfig) ValidateAndLoad() error {
-	if len(c.ArtefactPath) == 0 {
-		return errors.New("the ArtefactPath can't be empty")
-	}
-
-	if len(c.InstantiationConfig.InstantiatePayload) > 0 {
-		body, err := getPayloadBody(c.InstantiationConfig.InstantiatePayload)
-		if err != nil {
-			return err
-		}
-
-		c.InstantiationConfig.instantiatePayloadBody = body
+// Validate checks the deployment config and loads it's initial state.
+func (c *DeployConfig) Validate() error {
+	if len(c.Contract) == 0 {
+		return errors.New("the Contract is empty")
 	}
 
 	if c.InstantiationConfig.Amount.Amount != nil {
 		if err := c.InstantiationConfig.Amount.Validate(); err != nil {
 			return errors.Wrapf(err, "invalid Amount: %v", c.InstantiationConfig.Amount)
 		}
-	}
-
-	switch AccessType(c.InstantiationConfig.AccessType) {
-	case "":
-		c.InstantiationConfig.accessTypeParsed = wasmtypes.AccessTypeUnspecified
-	case AccessTypeNobody:
-		c.InstantiationConfig.accessTypeParsed = wasmtypes.AccessTypeNobody
-	case AccessTypeEverybody:
-		c.InstantiationConfig.accessTypeParsed = wasmtypes.AccessTypeEverybody
-	case AccessTypeOnlyAddress:
-		addr, err := sdk.AccAddressFromBech32(c.InstantiationConfig.AccessAddress)
-		if err != nil {
-			return errors.Wrapf(err, "failed to parse instantiation access address from bech32: %s", c.InstantiationConfig.AccessAddress)
-		}
-
-		c.InstantiationConfig.accessAddressParsed = addr
 	}
 
 	if c.InstantiationConfig.NeedAdmin {
@@ -324,25 +242,6 @@ func (c *DeployConfig) ValidateAndLoad() error {
 	}
 
 	return nil
-}
-
-func getPayloadBody(payloadPathOrBody string) (json.RawMessage, error) {
-	if body := []byte(payloadPathOrBody); json.Valid(body) {
-		return body, nil
-	}
-
-	payloadFilePath := payloadPathOrBody
-
-	body, err := os.ReadFile(payloadFilePath)
-	if err != nil {
-		return nil, errors.Wrapf(err, "file specified for instantiate payload, but couldn't be read: %s", payloadFilePath)
-	}
-
-	if !json.Valid(body) {
-		return nil, errors.Wrapf(err, "file specified for instantiate payload, but doesn't contain valid JSON: %s", payloadFilePath)
-	}
-
-	return body, nil
 }
 
 func runContractStore(
@@ -524,15 +423,6 @@ func attrFromEvent(ev sdk.StringEvent, attr string) (value string, ok bool) {
 	}
 
 	return "", false
-}
-
-func checkWasmFile(path string) bool {
-	wasmData, err := os.ReadFile(path)
-	if err != nil {
-		return false
-	}
-
-	return ioutils.IsWasm(wasmData) || ioutils.IsGzip(wasmData)
 }
 
 func hashContractCode(wasmData []byte) string {
