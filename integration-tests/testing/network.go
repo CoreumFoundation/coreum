@@ -19,9 +19,11 @@ var NetworkConfig = app.NetworkConfig{
 		FeeModel:         feemodel.DefaultModel(),
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	},
-	ProposalConfig: app.ProposalConfig{
-		MinDepositAmount: "10000000",
-		MinDepositPeriod: "5s",
-		VotingPeriod:     "5s",
+	GovConfig: app.GovConfig{
+		ProposalConfig: app.GovProposalConfig{
+			MinDepositAmount: "10000000",
+			MinDepositPeriod: "5s",
+			VotingPeriod:     "5s",
+		},
 	},
 }

@@ -46,7 +46,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 		Proposer:       proposer,
 		InitialDeposit: depositAmount,
 		Content: paramproposal.NewParameterChangeProposal(
-			"test", "test", []paramproposal.ParamChange{
+			"Change UnbondingTime", "Propose changing UnbondingTime in the staking module", []paramproposal.ParamChange{
 				{
 					Subspace: "staking",
 					Key:      "UnbondingTime",

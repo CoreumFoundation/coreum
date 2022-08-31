@@ -62,6 +62,14 @@ func init() {
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	}
 
+	govConfig := GovConfig{
+		ProposalConfig: GovProposalConfig{
+			MinDepositAmount: "10000000",
+			MinDepositPeriod: "300s",
+			VotingPeriod:     "300s",
+		},
+	}
+
 	list := []NetworkConfig{
 		{
 			ChainID:       Mainnet,
@@ -69,11 +77,7 @@ func init() {
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
 			Fee:           feeConfig,
-			ProposalConfig: ProposalConfig{
-				MinDepositAmount: "10000000",
-				MinDepositPeriod: "300s",
-				VotingPeriod:     "300s",
-			},
+			GovConfig:     govConfig,
 		},
 		{
 			ChainID:       Devnet,
@@ -85,11 +89,7 @@ func init() {
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"4ae4593aff8dd5ececd217f273195549503e2df8@35.223.81.227:26656"},
 			},
-			ProposalConfig: ProposalConfig{
-				MinDepositAmount: "10000000",
-				MinDepositPeriod: "300s",
-				VotingPeriod:     "300s",
-			},
+			GovConfig: govConfig,
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
 				{
@@ -144,8 +144,13 @@ type FeeConfig struct {
 	DeterministicGas ante.DeterministicGasRequirements
 }
 
-// ProposalConfig contains proposal-related configuration options
-type ProposalConfig struct {
+// GovConfig contains gov module configs
+type GovConfig struct {
+	ProposalConfig GovProposalConfig
+}
+
+// GovProposalConfig contains gov module proposal-related configuration options
+type GovProposalConfig struct {
 	MinDepositAmount string
 	MinDepositPeriod string
 	VotingPeriod     string
@@ -161,7 +166,7 @@ type NetworkConfig struct {
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 	NodeConfig     NodeConfig
-	ProposalConfig ProposalConfig
+	GovConfig      GovConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 }
@@ -174,7 +179,7 @@ type Network struct {
 	tokenSymbol   string
 	fee           FeeConfig
 	nodeConfig    NodeConfig
-	proposal      ProposalConfig
+	gov           GovConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -190,7 +195,7 @@ func NewNetwork(c NetworkConfig) Network {
 		tokenSymbol:    c.TokenSymbol,
 		nodeConfig:     c.NodeConfig.Clone(),
 		fee:            c.Fee,
-		proposal:       c.ProposalConfig,
+		gov:            c.GovConfig,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -411,9 +416,9 @@ func genesis(n Network) ([]byte, error) {
 		TokenSymbol:    n.tokenSymbol,
 		// TODO: adjust MaxBlockGas before creating testnet & mainnet
 		MaxBlockGas:              n.fee.FeeModel.MaxBlockGas,
-		ProposalMinDepositAmount: n.proposal.MinDepositAmount,
-		ProposalMinDepositPeriod: n.proposal.MinDepositPeriod,
-		ProposalVotingPeriod:     n.proposal.VotingPeriod,
+		ProposalMinDepositAmount: n.gov.ProposalConfig.MinDepositAmount,
+		ProposalMinDepositPeriod: n.gov.ProposalConfig.MinDepositPeriod,
+		ProposalVotingPeriod:     n.gov.ProposalConfig.VotingPeriod,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
