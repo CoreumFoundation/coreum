@@ -32,11 +32,12 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 
 	privateKey := secp256k1.PrivKey{Key: sender.Key}
 	senderAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	accInfo, err := tx.GetAccountInfo(ctx, chain.ClientCtx, senderAddress)
+	info, err := chain.ClientCtx.AccountRetriever.GetAccount(chain.ClientCtx, senderAddress)
 	require.NoError(t, err)
 
-	updatedAccInfo := accInfo
-	updatedAccInfo.Sequence++ // Intentionally set incorrect sequence number
+	var accInfo tx.AccountInfo
+	accInfo.Number = info.GetAccountNumber()
+	accInfo.Sequence = info.GetSequence() + 1 // Intentionally set incorrect sequence number
 
 	msg := &banktypes.MsgSend{
 		FromAddress: senderAddress.String(),
@@ -49,7 +50,7 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 		PrivateKey:  privateKey,
 		GasLimit:    chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		GasPrice:    sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol},
-		AccountInfo: updatedAccInfo,
+		AccountInfo: accInfo,
 	}
 
 	// Broadcast a transaction using incorrect sequence number
@@ -62,5 +63,5 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	if !ok {
 		require.Fail(t, "Unexpected error", err.Error())
 	}
-	require.Equal(t, accInfo.Sequence, expectedSeq)
+	require.Equal(t, info.GetSequence(), expectedSeq)
 }
