@@ -25,15 +25,29 @@ const (
 
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
+// BroadcastSync sends transaction to chain and waits for Tx being included in a block.
+func BroadcastSync(
+	ctx context.Context,
+	clientCtx client.Context,
+	input SignInput,
+	msgs ...sdk.Msg,
+) (resultTx *coretypes.ResultTx, err error) {
+	txHash, err := BroadcastAsync(ctx, clientCtx, input, msgs...)
+	if err != nil {
+		return nil, err
+	}
+	return AwaitTx(ctx, clientCtx, txHash)
+}
+
 // BroadcastAsync sends transaction to chain, ensuring it passes CheckTx.
 // Doesn't await for Tx being included in a block.
 func BroadcastAsync(
 	ctx context.Context,
 	clientCtx client.Context,
-	config SignInput,
+	input SignInput,
 	msgs ...sdk.Msg,
 ) (txHash string, err error) {
-	encodedTx, err := prepareTx(clientCtx, config, msgs...)
+	encodedTx, err := prepareTx(clientCtx, input, msgs...)
 	if err != nil {
 		return "", err
 	}

@@ -132,12 +132,7 @@ func sendAndReturnGasUsed(
 		GasPrice:   gasPrice,
 		Memo:       maxMemo, // memo is set to max length here to charge as much gas as possible
 	}
-	txHash, err := tx.BroadcastAsync(ctx, clientCtx, signInput, msg)
-	if err != nil {
-		return 0, err
-	}
-
-	result, err := tx.AwaitTx(ctx, clientCtx, txHash)
+	result, err := tx.BroadcastSync(ctx, clientCtx, signInput, msg)
 	if err != nil {
 		return 0, err
 	}

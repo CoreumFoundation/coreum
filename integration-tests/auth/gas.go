@@ -130,9 +130,7 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 	}
 
 	// Broadcast should fail because gas limit is higher than the block capacity
-	txHash, err := tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
-	require.NoError(t, err)
-	_, err = tx.AwaitTx(ctx, chain.ClientCtx, txHash)
+	_, err := tx.BroadcastSync(ctx, chain.ClientCtx, signInput, msg)
 	require.Error(t, err)
 }
 
