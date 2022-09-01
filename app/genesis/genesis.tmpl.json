@@ -227,6 +227,10 @@
         "max_block_gas": {{ .FeeModel.MaxBlockGas }},
         "short_average_block_length": {{ .FeeModel.ShortAverageBlockLength }},
         "long_average_block_length": {{ .FeeModel.LongAverageBlockLength }}
+      },
+      "min_gas_price": {
+        "denom": "{{ .TokenSymbol }}",
+        "amount": "{{ .FeeModel.InitialGasPrice }}"
       }
     }
   }
