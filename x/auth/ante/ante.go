@@ -4,6 +4,7 @@
 package ante
 
 import (
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -16,13 +17,14 @@ import (
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	AccountKeeper   authante.AccountKeeper
-	BankKeeper      types.BankKeeper
-	FeegrantKeeper  authante.FeegrantKeeper
-	FeeModelKeeper  feemodelante.Keeper
-	SignModeHandler authsigning.SignModeHandler
-	SigGasConsumer  func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
-	GasRequirements DeterministicGasRequirements
+	AccountKeeper         authante.AccountKeeper
+	BankKeeper            types.BankKeeper
+	FeegrantKeeper        authante.FeegrantKeeper
+	FeeModelKeeper        feemodelante.Keeper
+	SignModeHandler       authsigning.SignModeHandler
+	SigGasConsumer        func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
+	GasRequirements       DeterministicGasRequirements
+	WasmTXCounterStoreKey sdk.StoreKey
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -49,8 +51,13 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		options.SigGasConsumer = authante.DefaultSigVerificationGasConsumer
 	}
 
+	if options.WasmTXCounterStoreKey == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
+	}
+
 	anteDecorators := []sdk.AnteDecorator{
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
+		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
 		authante.NewRejectExtensionOptionsDecorator(),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
