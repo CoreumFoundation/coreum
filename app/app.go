@@ -168,7 +168,7 @@ var (
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
 		wasm.AppModuleBasic{},
-		feemodel.NewAppModuleBasic(ChosenNetwork.FeeModel()),
+		feemodel.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -458,7 +458,6 @@ func New(
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	feeModule := feemodel.NewAppModule(
-		feemodel.NewAppModuleBasic(ChosenNetwork.FeeModel()),
 		app.FeeModelKeeper,
 		ChosenNetwork.TokenSymbol(),
 	)

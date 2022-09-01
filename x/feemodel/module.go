@@ -37,18 +37,8 @@ type Keeper interface {
 	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
 }
 
-// NewAppModuleBasic creates AppModuleBasic struct
-func NewAppModuleBasic(
-	feeModel types.Model,
-) AppModuleBasic {
-	return AppModuleBasic{
-		feeModel: feeModel,
-	}
-}
-
 // AppModuleBasic defines the basic application module used by the fee module.
 type AppModuleBasic struct {
-	feeModel types.Model
 }
 
 // Name returns the fee module's name.
@@ -60,7 +50,7 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
 // DefaultGenesis returns default genesis state as raw bytes for the fee
 // module.
 func (amb AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(&types.GenesisState{Params: amb.feeModel})
+	return cdc.MustMarshalJSON(&types.GenesisState{Params: types.DefaultModel()})
 }
 
 // ValidateGenesis performs genesis state validation for the fee module.
@@ -104,14 +94,12 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {}
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
-	moduleBasic AppModuleBasic,
 	keeper Keeper,
 	feeDenom string,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic: moduleBasic,
-		keeper:         keeper,
-		feeDenom:       feeDenom,
+		keeper:   keeper,
+		feeDenom: feeDenom,
 	}
 }
 
