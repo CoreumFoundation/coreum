@@ -33,7 +33,7 @@ func BroadcastAsync(
 	config SignInput,
 	msgs ...sdk.Msg,
 ) (txHash string, err error) {
-	encodedTx, err := prepareTx(ctx, clientCtx, config, msgs...)
+	encodedTx, err := prepareTx(clientCtx, config, msgs...)
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +117,6 @@ func AwaitTx(
 
 // prepareTx encodes messages in a new transaction then signs and encodes it
 func prepareTx(
-	ctx context.Context,
 	clientCtx client.Context,
 	config SignInput,
 	msgs ...sdk.Msg,
