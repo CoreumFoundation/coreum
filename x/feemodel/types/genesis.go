@@ -9,7 +9,7 @@ func DefaultGenesisState() *GenesisState {
 	model := DefaultModel()
 	return &GenesisState{
 		Params:      model,
-		MinGasPrice: sdk.NewCoin("cosmos", model.InitialGasPrice),
+		MinGasPrice: sdk.NewCoin(sdk.DefaultBondDenom, model.InitialGasPrice),
 	}
 }
 
