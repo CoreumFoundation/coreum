@@ -98,6 +98,7 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 	return must.Bytes(c.clientCtx.TxConfig.TxEncoder()(signedTx))
 }
 
+// Context returns the underlying cosmos client.Context types
 func (c Client) Context() client.Context {
 	return c.clientCtx
 }
