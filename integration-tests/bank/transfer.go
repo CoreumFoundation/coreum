@@ -37,7 +37,7 @@ func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.NoError(t, err)
 
 	// Test that wallet owns expected balance
-	assert.Equal(t, "100", balances[chain.NetworkConfig.TokenSymbol].Amount.String())
+	assert.Equal(t, "100", balances.AmountOf(chain.NetworkConfig.TokenSymbol).String())
 }
 
 // TestCoreTransfer checks that core is transferred correctly between wallets
@@ -98,13 +98,13 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Test that tokens disappeared from sender's wallet
 	// - 10core were transferred to receiver
 	// - 180000000core were taken as fee
-	assert.Equal(t, "90", balancesSender[chain.NetworkConfig.TokenSymbol].Amount.String())
+	assert.Equal(t, "90", balancesSender.AmountOf(chain.NetworkConfig.TokenSymbol).String())
 
 	// Test that tokens reached receiver's wallet
-	assert.Equal(t, "20", balancesReceiver[chain.NetworkConfig.TokenSymbol].Amount.String())
+	assert.Equal(t, "20", balancesReceiver.AmountOf(chain.NetworkConfig.TokenSymbol).String())
 }
 
-func queryBankBalances(ctx context.Context, clientCtx client.Context, wallet types.Wallet) (map[string]sdk.Coin, error) {
+func queryBankBalances(ctx context.Context, clientCtx client.Context, wallet types.Wallet) (sdk.Coins, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	bankQueryClient := banktypes.NewQueryClient(clientCtx)
@@ -114,10 +114,5 @@ func queryBankBalances(ctx context.Context, clientCtx client.Context, wallet typ
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]sdk.Coin{}
-	for _, b := range resp.Balances {
-		coin := sdk.NewCoin(b.Denom, b.Amount)
-		balances[b.Denom] = coin
-	}
-	return balances, nil
+	return resp.Balances, nil
 }

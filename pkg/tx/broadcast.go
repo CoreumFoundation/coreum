@@ -124,9 +124,13 @@ func prepareTx(
 ) ([]byte, error) {
 	fromAddress := sdk.AccAddress(config.PrivateKey.PubKey().Address())
 	if config.AccountInfo.Number == 0 {
-		acc, err := GetAccountInfo(ctx, clientCtx, fromAddress)
+		info, err := clientCtx.AccountRetriever.GetAccount(clientCtx, fromAddress)
 		if err != nil {
 			return nil, err
+		}
+		acc := AccountInfo{
+			Number:   info.GetAccountNumber(),
+			Sequence: info.GetSequence(),
 		}
 
 		config.AccountInfo = acc
