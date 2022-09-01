@@ -98,6 +98,10 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 	return must.Bytes(c.clientCtx.TxConfig.TxEncoder()(signedTx))
 }
 
+func (c Client) Context() client.Context {
+	return c.clientCtx
+}
+
 // BroadcastResult contains results of transaction broadcast
 type BroadcastResult struct {
 	TxHash  string
