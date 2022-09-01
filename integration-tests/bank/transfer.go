@@ -81,12 +81,10 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 		GasPrice:   sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol},
 		Memo:       maxMemo, // memo is set to max length here to charge as much gas as possible
 	}
-	txHash, err := tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
-	require.NoError(t, err)
-	_, err = tx.AwaitTx(ctx, chain.ClientCtx, txHash)
+	result, err := tx.BroadcastSync(ctx, chain.ClientCtx, signInput, msg)
 	require.NoError(t, err)
 
-	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", txHash))
+	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.Hash.String()))
 
 	// Query wallets for current balance
 	balancesSender, err := queryBankBalances(ctx, chain.ClientCtx, sender)
