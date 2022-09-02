@@ -1,11 +1,17 @@
 package testing
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/x/auth"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
+)
+
+const (
+	MinDepositPeriod = time.Second * 5
+	MinVotingPeriod  = time.Second * 5
 )
 
 // NetworkConfig is the network config used by integration tests
@@ -22,8 +28,8 @@ var NetworkConfig = app.NetworkConfig{
 	GovConfig: app.GovConfig{
 		ProposalConfig: app.GovProposalConfig{
 			MinDepositAmount: "10000000",
-			MinDepositPeriod: "20s",
-			VotingPeriod:     "20s",
+			MinDepositPeriod: fmt.Sprintf("%ds", int(MinDepositPeriod.Seconds())),
+			VotingPeriod:     fmt.Sprintf("%ds", int(MinVotingPeriod.Seconds())),
 		},
 	},
 }

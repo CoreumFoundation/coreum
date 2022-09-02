@@ -14,8 +14,18 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
+// GetProposal returns proposal by the given ID
+func (c Client) GetProposal(ctx context.Context, proposalID uint64) (*govtypes.Proposal, error) {
+	resp, err := c.govQueryClient.Proposal(ctx, &govtypes.QueryProposalRequest{
+		ProposalId: proposalID,
+	})
+	must.OK(err)
+
+	return &resp.Proposal, nil
+}
+
 // GetProposalByTx returns proposal ID by the given transaction hash
-func (c Client) GetProposalByTx(ctx context.Context, tx string) (uint64, error) {
+func (c Client) GetProposalByTx(ctx context.Context, tx string) (*govtypes.Proposal, error) {
 	txHashBytes, err := hex.DecodeString(tx)
 	must.OK(err)
 
@@ -43,10 +53,15 @@ func (c Client) GetProposalByTx(ctx context.Context, tx string) (uint64, error) 
 	}
 
 	if proposalID == 0 {
-		return 0, errors.New("no proposal event found for the given transaction")
+		return nil, errors.New("no proposal event found for the given transaction")
 	}
 
-	return proposalID, nil
+	resp, err := c.govQueryClient.Proposal(ctx, &govtypes.QueryProposalRequest{
+		ProposalId: proposalID,
+	})
+	must.OK(err)
+
+	return &resp.Proposal, nil
 }
 
 // QueryProposalVotes queries for proposal votes info
