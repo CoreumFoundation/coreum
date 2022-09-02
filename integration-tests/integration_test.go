@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package tests_test
 
 import (
@@ -13,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -39,8 +37,15 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 
 	cfg.CoredClient = client.New(cfg.NetworkConfig.ChainID, coredAddress)
+	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + coredAddress)
+	if err != nil {
+		panic(err)
+	}
+	cfg.ClientContext = app.
+		NewDefaultClientContext().
+		WithChainID(string(cfg.NetworkConfig.ChainID)).
+		WithClient(rpcClient)
 
-	var err error
 	cfg.FundingPrivKey, err = base64.RawURLEncoding.DecodeString(fundingPrivKey)
 	if err != nil {
 		panic(err)
@@ -79,6 +84,7 @@ func Test(t *testing.T) {
 
 type config struct {
 	CoredClient    client.Client
+	ClientContext  cosmosclient.Context
 	NetworkConfig  app.NetworkConfig
 	FundingPrivKey types.Secp256k1PrivateKey
 	Filter         *regexp.Regexp
@@ -115,6 +121,7 @@ func collectTestCases(cfg config, fundingWallet types.Wallet, testSet coreumtest
 	chain := coreumtesting.Chain{
 		NetworkConfig: cfg.NetworkConfig,
 		Client:        cfg.CoredClient,
+		ClientContext: cfg.ClientContext,
 		Faucet:        faucet,
 	}
 
