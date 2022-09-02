@@ -5,11 +5,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+// DefaultGenesisState returns genesis state with default values
 func DefaultGenesisState() *GenesisState {
-	model := DefaultModel()
+	params := DefaultParams()
 	return &GenesisState{
-		Params:      model,
-		MinGasPrice: sdk.NewCoin(sdk.DefaultBondDenom, model.InitialGasPrice),
+		Params:      params,
+		MinGasPrice: sdk.NewCoin(sdk.DefaultBondDenom, params.InitialGasPrice),
 	}
 }
 

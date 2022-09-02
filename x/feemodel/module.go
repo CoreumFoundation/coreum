@@ -137,7 +137,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(&types.GenesisState{
-		Params:      am.keeper.GetModel(ctx),
+		Params:      am.keeper.GetParams(ctx),
 		MinGasPrice: am.keeper.GetMinGasPrice(ctx),
 	})
 }
