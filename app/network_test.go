@@ -25,7 +25,7 @@ func init() {
 }
 
 var feeConfig = FeeConfig{
-	FeeModel: feemodeltypes.Model{
+	FeeModel: feemodeltypes.Params{
 		InitialGasPrice:         sdk.NewInt(2),
 		MaxGasPrice:             sdk.NewInt(4),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),

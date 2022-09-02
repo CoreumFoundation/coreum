@@ -16,7 +16,7 @@ var NetworkConfig = app.NetworkConfig{
 	AddressPrefix: "devcore",
 	TokenSymbol:   app.TokenSymbolDev,
 	Fee: app.FeeConfig{
-		FeeModel:         feemodeltypes.DefaultModel(),
+		FeeModel:         feemodeltypes.DefaultParams(),
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	},
 }

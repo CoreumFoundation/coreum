@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	feeModel = Model{
+	feeModel = Params{
 		InitialGasPrice:         sdk.NewInt(1500),
 		MaxGasPrice:             sdk.NewInt(1500000),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
@@ -113,31 +113,31 @@ func TestWithRandomModels(t *testing.T) {
 		t.Run("RandomCase", func(t *testing.T) {
 			t.Parallel()
 
-			model, shortEMA, longEMA := generateRandomizedModel()
-			logParameters(t, model, shortEMA, longEMA)
-			nextGasPrice := model.CalculateNextGasPrice(shortEMA, longEMA)
+			params, shortEMA, longEMA := generateRandomizedParams()
+			logParameters(t, params, shortEMA, longEMA)
+			nextGasPrice := params.CalculateNextGasPrice(shortEMA, longEMA)
 
 			assert.True(t, nextGasPrice.GT(sdk.ZeroInt()))
-			assert.True(t, nextGasPrice.LTE(model.MaxGasPrice))
+			assert.True(t, nextGasPrice.LTE(params.MaxGasPrice))
 
 			switch {
-			case shortEMA >= model.MaxBlockGas:
-				assert.True(t, nextGasPrice.Equal(model.MaxGasPrice))
-			case shortEMA > model.EscalationStartBlockGas:
-				assert.True(t, nextGasPrice.LT(model.MaxGasPrice))
-				assert.True(t, nextGasPrice.GTE(model.computeGasPriceWithMaxDiscount()))
+			case shortEMA >= params.MaxBlockGas:
+				assert.True(t, nextGasPrice.Equal(params.MaxGasPrice))
+			case shortEMA > params.EscalationStartBlockGas:
+				assert.True(t, nextGasPrice.LT(params.MaxGasPrice))
+				assert.True(t, nextGasPrice.GTE(params.computeGasPriceWithMaxDiscount()))
 			case shortEMA >= longEMA:
-				assert.True(t, nextGasPrice.Equal(model.computeGasPriceWithMaxDiscount()))
+				assert.True(t, nextGasPrice.Equal(params.computeGasPriceWithMaxDiscount()))
 			case shortEMA > 0:
-				assert.True(t, nextGasPrice.LT(model.InitialGasPrice))
+				assert.True(t, nextGasPrice.LT(params.InitialGasPrice))
 			default:
-				assert.True(t, nextGasPrice.Equal(model.InitialGasPrice))
+				assert.True(t, nextGasPrice.Equal(params.InitialGasPrice))
 			}
 		})
 	}
 }
 
-func generateRandomizedModel() (model Model, shortEMA, longEMA int64) {
+func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 	// fuzz engine of go test is not used because it doesn't allow to maintain relationships between generated parameters
 
 	initialGasPrice := rand.Uint64()/2 + 10
@@ -153,7 +153,7 @@ func generateRandomizedModel() (model Model, shortEMA, longEMA int64) {
 	shortEMA = rand.Int63()
 	longEMA = rand.Int63()
 
-	return Model{
+	return Params{
 		InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice),
 		MaxGasPrice:             sdk.NewIntFromUint64(maxGasPrice),
 		MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
@@ -198,7 +198,7 @@ func TestModelValidation(t *testing.T) {
 	assert.Error(t, testModel.Validate())
 }
 
-func logParameters(t *testing.T, model Model, shortEMA, longEMA int64) {
+func logParameters(t *testing.T, params Params, shortEMA, longEMA int64) {
 	t.Logf(`InitialGasPrice: %s
 MaxGasPrice: %s
 MaxDiscount: %s
@@ -208,13 +208,13 @@ ShortAverageBlockLength: %d
 LongAverageBlockLength: %d
 ShortEMA: %d
 LongEMA: %d`,
-		model.InitialGasPrice,
-		model.MaxGasPrice,
-		model.MaxDiscount,
-		model.EscalationStartBlockGas,
-		model.MaxBlockGas,
-		model.ShortAverageBlockLength,
-		model.LongAverageBlockLength,
+		params.InitialGasPrice,
+		params.MaxGasPrice,
+		params.MaxDiscount,
+		params.EscalationStartBlockGas,
+		params.MaxBlockGas,
+		params.ShortAverageBlockLength,
+		params.LongAverageBlockLength,
 		shortEMA,
 		longEMA)
 }

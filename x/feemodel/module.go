@@ -28,8 +28,8 @@ var (
 // Keeper defines an interface of keeper required by fee module
 type Keeper interface {
 	TrackedGas(ctx sdk.Context) int64
-	SetModel(ctx sdk.Context, model types.Model)
-	GetModel(ctx sdk.Context) types.Model
+	SetParams(ctx sdk.Context, params types.Params)
+	GetParams(ctx sdk.Context) types.Params
 	GetShortAverageGas(ctx sdk.Context) int64
 	SetShortAverageGas(ctx sdk.Context, averageGas int64)
 	GetLongAverageGas(ctx sdk.Context) int64
@@ -50,7 +50,7 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
 // DefaultGenesis returns default genesis state as raw bytes for the fee
 // module.
 func (amb AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(&types.GenesisState{Params: types.DefaultModel()})
+	return cdc.MustMarshalJSON(&types.GenesisState{Params: types.DefaultParams()})
 }
 
 // ValidateGenesis performs genesis state validation for the fee module.
@@ -129,11 +129,11 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 	// FIXME (wojtek): Remove this after crust imports new version of coreum
 	if genesis.Validate() != nil {
 		genesis = types.GenesisState{
-			Params: types.DefaultModel(),
+			Params: types.DefaultParams(),
 		}
 	}
 
-	am.keeper.SetModel(ctx, genesis.Params)
+	am.keeper.SetParams(ctx, genesis.Params)
 	return []abci.ValidatorUpdate{}
 }
 
@@ -154,14 +154,14 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	// TODO (wojtek): add simulation tests
 	currentGasUsage := am.keeper.TrackedGas(ctx)
-	feeModel := am.keeper.GetModel(ctx)
+	params := am.keeper.GetParams(ctx)
 
 	newShortAverage := types.CalculateEMA(am.keeper.GetShortAverageGas(ctx), currentGasUsage,
-		feeModel.ShortAverageBlockLength)
+		params.ShortAverageBlockLength)
 	newLongAverage := types.CalculateEMA(am.keeper.GetLongAverageGas(ctx), currentGasUsage,
-		feeModel.LongAverageBlockLength)
+		params.LongAverageBlockLength)
 
-	minGasPrice := feeModel.CalculateNextGasPrice(newShortAverage, newLongAverage)
+	minGasPrice := params.CalculateNextGasPrice(newShortAverage, newLongAverage)
 
 	am.keeper.SetShortAverageGas(ctx, newShortAverage)
 	am.keeper.SetLongAverageGas(ctx, newLongAverage)
