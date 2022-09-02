@@ -3,9 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -36,26 +34,23 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 		},
 	))
 
+	coredClient := chain.Client
+
 	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.MaxDiscount)).TruncateInt()
-	gasPrice := gasPriceWithMaxDiscount.Sub(sdk.OneInt())
-
-	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	msg := &banktypes.MsgSend{
-		FromAddress: fromAddress.String(),
-		ToAddress:   fromAddress.String(),
-		Amount: []sdk.Coin{
-			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(10)},
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+			GasPrice: testing.MustNewCoin(t, gasPriceWithMaxDiscount.Sub(sdk.OneInt()), chain.NetworkConfig.TokenSymbol),
 		},
-	}
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
+	})
+	require.NoError(t, err)
 
-	signInput := tx.SignInput{
-		PrivateKey: privateKey,
-		GasLimit:   chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-		GasPrice:   sdk.Coin{Amount: gasPrice, Denom: chain.NetworkConfig.TokenSymbol},
-	}
 	// Broadcast should fail because gas price is too low for transaction to enter mempool
-	_, err = tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
+	_, err = coredClient.Broadcast(ctx, txBytes)
 	require.True(t, client.IsInsufficientFeeError(err))
 }
 
@@ -78,22 +73,21 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 		},
 	))
 
-	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	msg := &banktypes.MsgSend{
-		FromAddress: fromAddress.String(),
-		ToAddress:   fromAddress.String(),
-		Amount: []sdk.Coin{
-			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(10)},
-		},
-	}
+	coredClient := chain.Client
 
-	signInput := tx.SignInput{
-		PrivateKey: privateKey,
-		GasLimit:   chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-	}
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		},
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
+	})
+	require.NoError(t, err)
+
 	// Broadcast should fail because gas price is too low for transaction to enter mempool
-	_, err = tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
+	_, err = coredClient.Broadcast(ctx, txBytes)
 	require.True(t, client.IsInsufficientFeeError(err))
 }
 
@@ -113,24 +107,22 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 		},
 	))
 
-	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	msg := &banktypes.MsgSend{
-		FromAddress: fromAddress.String(),
-		ToAddress:   fromAddress.String(),
-		Amount: []sdk.Coin{
-			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(10)},
-		},
-	}
+	coredClient := chain.Client
 
-	signInput := tx.SignInput{
-		PrivateKey: privateKey,
-		GasLimit:   uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas + 1), // transaction requires more gas than block can fit
-		GasPrice:   sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol},
-	}
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas + 1), // transaction requires more gas than block can fit
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+		},
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
+	})
+	require.NoError(t, err)
 
 	// Broadcast should fail because gas limit is higher than the block capacity
-	_, err := tx.BroadcastSync(ctx, chain.ClientCtx, signInput, msg)
+	_, err = coredClient.Broadcast(ctx, txBytes)
 	require.Error(t, err)
 }
 
@@ -153,22 +145,20 @@ func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain test
 		},
 	))
 
-	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	fromAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	msg := &banktypes.MsgSend{
-		FromAddress: fromAddress.String(),
-		ToAddress:   fromAddress.String(),
-		Amount: []sdk.Coin{
-			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(10)},
+	coredClient := chain.Client
+
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 		},
-	}
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
+	})
+	require.NoError(t, err)
 
-	signInput := tx.SignInput{
-		PrivateKey: privateKey,
-		GasLimit:   uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
-		GasPrice:   sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol},
-	}
-
-	_, err = tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
+	_, err = coredClient.Broadcast(ctx, txBytes)
 	require.NoError(t, err)
 }

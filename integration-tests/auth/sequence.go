@@ -3,9 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -30,31 +28,27 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 		},
 	))
 
-	privateKey := secp256k1.PrivKey{Key: sender.Key}
-	senderAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	info, err := chain.ClientCtx.AccountRetriever.GetAccount(chain.ClientCtx, senderAddress)
+	coredClient := chain.Client
+
+	accNum, accSeq, err := coredClient.GetNumberSequence(ctx, sender.Key.Address())
 	require.NoError(t, err)
 
-	var accInfo tx.AccountInfo
-	accInfo.Number = info.GetAccountNumber()
-	accInfo.Sequence = info.GetSequence() + 1 // Intentionally set incorrect sequence number
-
-	msg := &banktypes.MsgSend{
-		FromAddress: senderAddress.String(),
-		ToAddress:   senderAddress.String(),
-		Amount: []sdk.Coin{
-			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(1)},
-		},
-	}
-	signInput := tx.SignInput{
-		PrivateKey:  privateKey,
-		GasLimit:    chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-		GasPrice:    sdk.Coin{Amount: chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, Denom: chain.NetworkConfig.TokenSymbol},
-		AccountInfo: accInfo,
-	}
+	sender.AccountNumber = accNum
+	sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
 
 	// Broadcast a transaction using incorrect sequence number
-	_, err = tx.BroadcastAsync(ctx, chain.ClientCtx, signInput, msg)
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
+			Signer:   sender,
+			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+		},
+		Sender:   sender,
+		Receiver: sender,
+		Amount:   testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
+	})
+	require.NoError(t, err)
+	_, err = coredClient.Broadcast(ctx, txBytes)
 	require.Error(t, err) // We expect error
 
 	// We expect that we get an error saying what the correct sequence number should be
@@ -63,5 +57,5 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	if !ok {
 		require.Fail(t, "Unexpected error", err.Error())
 	}
-	require.Equal(t, info.GetSequence(), expectedSeq)
+	require.Equal(t, accSeq, expectedSeq)
 }

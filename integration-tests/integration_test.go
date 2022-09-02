@@ -13,10 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -44,15 +40,7 @@ func TestMain(m *testing.M) {
 
 	cfg.CoredClient = client.New(cfg.NetworkConfig.ChainID, coredAddress)
 
-	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + coredAddress)
-	if err != nil {
-		panic(err)
-	}
-	cfg.ClientContext = app.
-		NewDefaultClientContext().
-		WithChainID(string(cfg.NetworkConfig.ChainID)).
-		WithClient(rpcClient)
-
+	var err error
 	cfg.FundingPrivKey, err = base64.RawURLEncoding.DecodeString(fundingPrivKey)
 	if err != nil {
 		panic(err)
@@ -91,7 +79,6 @@ func Test(t *testing.T) {
 
 type config struct {
 	CoredClient    client.Client
-	ClientContext  cosmosclient.Context
 	NetworkConfig  app.NetworkConfig
 	FundingPrivKey types.Secp256k1PrivateKey
 	Filter         *regexp.Regexp
@@ -126,7 +113,6 @@ func collectTestCases(cfg config, fundingWallet types.Wallet, testSet coreumtest
 	faucet.muCh <- struct{}{}
 
 	chain := coreumtesting.Chain{
-		ClientCtx:     cfg.ClientContext,
 		NetworkConfig: cfg.NetworkConfig,
 		Client:        cfg.CoredClient,
 		Faucet:        faucet,
@@ -161,10 +147,6 @@ type testingFaucet struct {
 	fundingWallet types.Wallet
 }
 
-func coinTypeToSDK(c types.Coin) sdk.Coin {
-	return sdk.NewCoin(c.Denom, sdk.NewIntFromBigInt(c.Amount))
-}
-
 func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...coreumtesting.FundedAccount) error {
 	select {
 	case <-ctx.Done():
@@ -175,40 +157,35 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 		}()
 	}
 
-	gasPrice := sdk.NewCoin(tf.networkConfig.TokenSymbol, tf.networkConfig.Fee.FeeModel.InitialGasPrice)
-
-	log := logger.Get(ctx)
-	log.Info("Funding accounts for test, it might take a while...")
-	fundingPrivateKey := secp256k1.PrivKey{Key: cfg.FundingPrivKey}
-	fundingAddress := sdk.AccAddress(fundingPrivateKey.PubKey().Address())
-
-	var msgList []sdk.Msg
-	for _, toFund := range accountsToFund {
-		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
-		toPrivateKey := secp256k1.PrivKey{Key: toFund.Wallet.Key}
-		toAddress := sdk.AccAddress(toPrivateKey.PubKey().Address())
-		msg := &banktypes.MsgSend{
-			FromAddress: fundingAddress.String(),
-			ToAddress:   toAddress.String(),
-			Amount: []sdk.Coin{
-				coinTypeToSDK(toFund.Amount),
-			},
-		}
-		msgList = append(msgList, msg)
-	}
-
-	signInput := tx.SignInput{
-		PrivateKey: fundingPrivateKey,
-		GasLimit:   cfg.NetworkConfig.Fee.DeterministicGas.BankSend * uint64(len(accountsToFund)),
-		GasPrice:   gasPrice,
-	}
-
-	_, err := tx.BroadcastSync(ctx, cfg.ClientContext, signInput, msgList...)
+	gasPrice, err := types.NewCoin(tf.networkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), tf.networkConfig.TokenSymbol)
 	if err != nil {
 		return err
 	}
 
-	logger.Get(ctx).Info("Test accounts funded")
+	log := logger.Get(ctx)
+	log.Info("Funding accounts for test, it might take a while...")
+	for _, toFund := range accountsToFund {
+		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
+		encodedTx, err := tf.client.PrepareTxBankSend(ctx, client.TxBankSendInput{
+			Base: tx.BaseInput{
+				Signer:   tf.fundingWallet,
+				GasLimit: tf.networkConfig.Fee.DeterministicGas.BankSend,
+				GasPrice: gasPrice,
+			},
+			Sender:   tf.fundingWallet,
+			Receiver: toFund.Wallet,
+			Amount:   toFund.Amount,
+		})
+		if err != nil {
+			return err
+		}
+		if _, err := tf.client.Broadcast(ctx, encodedTx); err != nil {
+			return err
+		}
+		tf.fundingWallet.AccountSequence++
+	}
+	log.Info("Test accounts funded")
+
 	return nil
 }
 

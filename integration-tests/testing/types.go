@@ -3,7 +3,6 @@ package testing
 import (
 	"context"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -24,7 +23,6 @@ type Faucet interface {
 // Chain holds network and client for the blockchain
 type Chain struct {
 	NetworkConfig app.NetworkConfig
-	ClientCtx     cosmosclient.Context
 	Client        client.Client
 	Faucet        Faucet
 }

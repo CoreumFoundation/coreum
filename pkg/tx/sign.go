@@ -2,6 +2,7 @@ package tx
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -9,26 +10,33 @@ import (
 )
 
 // Sign signs transaction
-func Sign(clientCtx client.Context, input SignInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
+func Sign(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+	signer := input.Signer
+
+	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
-	err := txBuilder.SetMsgs(msgs...)
+	err := txBuilder.SetMsgs(msg)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to set message on tx builder")
 	}
 	txBuilder.SetGasLimit(input.GasLimit)
 	txBuilder.SetMemo(input.Memo)
 
-	if !input.GasPrice.Amount.IsNil() {
+	if input.GasPrice.Amount != nil {
+		if err := input.GasPrice.Validate(); err != nil {
+			return nil, errors.Wrap(err, "gas price is invalid")
+		}
+
 		gasLimit := sdk.NewInt(int64(input.GasLimit))
-		gasPrice := input.GasPrice.Amount
+		gasPrice := sdk.NewIntFromBigInt(input.GasPrice.Amount)
 		fee := sdk.NewCoin(input.GasPrice.Denom, gasLimit.Mul(gasPrice))
 		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
 	}
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
-		AccountNumber: input.AccountInfo.Number,
-		Sequence:      input.AccountInfo.Sequence,
+		AccountNumber: signer.AccountNumber,
+		Sequence:      signer.AccountSequence,
 	}
 	sigData := &signing.SingleSignatureData{
 		//nolint:nosnakecase // MixedCap can't be forced on imported constants
@@ -36,9 +44,9 @@ func Sign(clientCtx client.Context, input SignInput, msgs ...sdk.Msg) (authsigni
 		Signature: nil,
 	}
 	sig := signing.SignatureV2{
-		PubKey:   input.PrivateKey.PubKey(),
+		PubKey:   privKey.PubKey(),
 		Data:     sigData,
-		Sequence: input.AccountInfo.Sequence,
+		Sequence: signer.AccountSequence,
 	}
 	err = txBuilder.SetSignatures(sig)
 	if err != nil {
@@ -50,7 +58,7 @@ func Sign(clientCtx client.Context, input SignInput, msgs ...sdk.Msg) (authsigni
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to encode bytes to sign")
 	}
-	sigBytes, err := input.PrivateKey.Sign(bytesToSign)
+	sigBytes, err := privKey.Sign(bytesToSign)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to sign")
 	}
