@@ -7,10 +7,12 @@ import (
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
@@ -38,7 +40,7 @@ const (
 
 // TestBankSendWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
-func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
 	adminWallet := testing.RandomWallet()
 	nativeDenom := chain.NetworkConfig.TokenSymbol
 
@@ -51,17 +53,20 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	))
 
 	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, nativeDenom)
-	wasmTestClient := newWasmTestClient(tx.BaseInput{
+	baseInput := tx.BaseInput{
 		Signer:   adminWallet,
 		GasPrice: gasPrice,
-	}, chain.Client)
+	}
+	coredClient := chain.Client
+	wasmTestClient := NewClient(coredClient)
 
 	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
 	requireT.NoError(err)
-	contractAddr, err := wasmTestClient.deployAndInstantiate(
+	contractAddr, err := wasmTestClient.DeployAndInstantiate(
 		ctx,
+		baseInput,
 		bankSendWASM,
-		instantiateConfig{
+		InstantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
 			// transfer some coins during instantiation, so we could withdraw them later using contract code.
@@ -74,7 +79,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	// send additional coins to contract directly
 	sdkContractAddress, err := sdk.AccAddressFromBech32(contractAddr)
 	requireT.NoError(err)
-	resp, err := chain.Client.SubmitMessage(ctx, tx.BaseInput{
+	bakSendTx, err := coredClient.Sign(ctx, tx.BaseInput{
 		Signer:   adminWallet,
 		GasPrice: gasPrice,
 		GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
@@ -83,10 +88,12 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		sdkContractAddress,
 		sdk.NewCoins(sdk.NewInt64Coin(nativeDenom, 5000)),
 	))
-	requireT.NotEmpty(resp.TxHash)
+	requireT.NoError(err)
+	// TODO (dhil) replace to new Broadcast once we finish with it
+	_, err = coredClient.Broadcast(ctx, coredClient.Encode(bakSendTx))
 	requireT.NoError(err)
 
-	contractBalance, err := chain.Client.BankQueryClient().Balance(ctx,
+	contractBalance, err := coredClient.BankQueryClient().Balance(ctx,
 		&banktypes.QueryBalanceRequest{
 			Address: contractAddr,
 			Denom:   nativeDenom,
@@ -96,7 +103,6 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	requireT.Equal(sdk.NewInt64Coin(nativeDenom, 15000).String(), contractBalance.Balance.String())
 
 	testWallet := testing.RandomWallet()
-
 	// try to exceed the contract limit
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
@@ -106,8 +112,16 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		},
 	})
 	requireT.NoError(err)
-	err = wasmTestClient.execute(ctx, contractAddr, withdrawPayload, types.Coin{})
+	// we execute here with the constant gas fee, to check the cosmoserrors,
+	// since if we don't set the gas cost will be estimated and the estimation func
+	// will return the error which is impossible to convert to cosmoserrors to check the type.
+	err = wasmTestClient.Execute(ctx, tx.BaseInput{
+		Signer:   adminWallet,
+		GasPrice: gasPrice,
+		GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+	}, contractAddr, withdrawPayload, types.Coin{})
 	requireT.Error(err)
+	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFunds))
 
 	// send coin from the contract to test wallet
 	withdrawPayload, err = json.Marshal(map[bankMethod]bankWithdrawRequest{
@@ -118,10 +132,10 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		},
 	})
 	requireT.NoError(err)
-	err = wasmTestClient.execute(ctx, contractAddr, withdrawPayload, types.Coin{})
+	err = wasmTestClient.Execute(ctx, baseInput, contractAddr, withdrawPayload, types.Coin{})
 	requireT.NoError(err)
 
-	contractBalance, err = chain.Client.BankQueryClient().Balance(ctx,
+	contractBalance, err = coredClient.BankQueryClient().Balance(ctx,
 		&banktypes.QueryBalanceRequest{
 			Address: contractAddr,
 			Denom:   nativeDenom,
@@ -130,7 +144,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	requireT.NotNil(contractBalance.Balance)
 	requireT.Equal(sdk.NewInt64Coin(nativeDenom, 10000).String(), contractBalance.Balance.String())
 
-	testWalletBalance, err := chain.Client.BankQueryClient().Balance(ctx,
+	testWalletBalance, err := coredClient.BankQueryClient().Balance(ctx,
 		&banktypes.QueryBalanceRequest{
 			Address: testWallet.Address().String(),
 			Denom:   nativeDenom,

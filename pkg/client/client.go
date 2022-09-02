@@ -211,62 +211,6 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
-// submitModifier is the customisation option for the SubmitMessage.
-type submitModifier struct {
-	gasEstimation bool
-	gasMultiplier float64
-}
-
-// defaultSubmitModifier returns the default state of the modifier for the SubmitMessage.
-func defaultSubmitModifier() submitModifier {
-	return submitModifier{
-		gasEstimation: false,
-		gasMultiplier: 1,
-	}
-}
-
-// SubmitOption is an option patter modifier for the SubmitMessage func.
-type SubmitOption func(*submitModifier)
-
-// WithGasMultiplier returns gas multiplier option.
-func WithGasMultiplier(multiplier float64) SubmitOption {
-	return func(m *submitModifier) {
-		m.gasMultiplier = multiplier
-	}
-}
-
-// WithGasEstimation returns gas estimation option.
-func WithGasEstimation() SubmitOption {
-	return func(m *submitModifier) {
-		m.gasEstimation = true
-	}
-}
-
-// SubmitMessage is a combination of EstimateGas, Sign and Broadcast methods.
-func (c Client) SubmitMessage(ctx context.Context, input tx.BaseInput, msg sdk.Msg, opts ...SubmitOption) (BroadcastResult, error) {
-	modifier := defaultSubmitModifier()
-	for _, o := range opts {
-		o(&modifier)
-	}
-
-	if modifier.gasEstimation {
-		gasLimit, err := c.EstimateGas(ctx, input, msg)
-		if err != nil {
-			return BroadcastResult{}, errors.Wrapf(err, "failed to estimate gas for message %q", msg.String())
-		}
-		input.GasLimit = gasLimit
-	}
-
-	input.GasLimit = uint64(float64(input.GasLimit) * modifier.gasMultiplier)
-
-	signedTx, err := c.Sign(ctx, input, msg)
-	if err != nil {
-		return BroadcastResult{}, errors.Wrapf(err, "failed to sign transaction as %s", input.Signer.Address().String())
-	}
-
-	return c.Broadcast(ctx, c.Encode(signedTx))
-}
-
 // EstimateGas runs the transaction cost estimation and returns new suggested gas limit,
 // in contrast with the default Cosmos SDK gas estimation logic, this method returns unadjusted gas used.
 func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk.Msg) (uint64, error) {
@@ -294,9 +238,11 @@ func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk
 	simRes, err := txSvcClient.Simulate(requestCtx, &txtypes.SimulateRequest{
 		TxBytes: simTxBytes,
 	})
+	errRes := client.CheckTendermintError(err, simTxBytes)
+	_ = errRes
+
 	if err != nil {
-		err = errors.Wrap(err, "failed to simulate the transaction execution")
-		return 0, err
+		return 0, errors.Wrap(err, "failed to simulate the transaction execution")
 	}
 
 	// usually gas has to be multiplied by some adjustment coefficient: e.g. *1.5
@@ -388,9 +334,15 @@ func ExpectedSequenceFromError(err error) (uint64, bool, error) {
 	return expectedSequence, true, nil
 }
 
-// IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction
+// IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction.
+// TODO (dhil) this func should re replaced by the IsErr in all tests.
 func IsInsufficientFeeError(err error) bool {
 	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
+}
+
+// IsErr returns true if error was caused by insufficient funds provided with the transaction
+func IsErr(err error, cosmosErr *cosmoserrors.Error) bool {
+	return asSDKError(err, cosmosErr) != nil
 }
 
 // FindEventAttribute finds the first event attribute by type and attribute name.

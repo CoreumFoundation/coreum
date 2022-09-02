@@ -14,22 +14,22 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-type testClient struct {
-	baseInput     tx.BaseInput
+// Client represents the wasm client with the helper functions used for the testing.
+type Client struct {
 	coredClient   client.Client
 	gasMultiplier float64
 }
 
-func newWasmTestClient(baseInput tx.BaseInput, coredClient client.Client) *testClient {
-	return &testClient{
-		baseInput:     baseInput,
+// NewClient new wasm client.
+func NewClient(coredClient client.Client) *Client {
+	return &Client{
 		coredClient:   coredClient,
 		gasMultiplier: 1.5,
 	}
 }
 
-// instantiateConfig contains params specific to contract instantiation.
-type instantiateConfig struct {
+// InstantiateConfig contains params specific to contract instantiation.
+type InstantiateConfig struct {
 	accessType wasmtypes.AccessType
 	payload    json.RawMessage
 	amount     types.Coin
@@ -37,20 +37,64 @@ type instantiateConfig struct {
 	CodeID     uint64
 }
 
+// DeployAndInstantiate deploys, instantiate the wasm contract and returns its address.
+func (c *Client) DeployAndInstantiate(ctx context.Context, baseInput tx.BaseInput, wasmData []byte, initConfig InstantiateConfig) (string, error) {
+	codeID, err := c.deploy(ctx, baseInput, wasmData)
+	if err != nil {
+		return "", err
+	}
+
+	initConfig.CodeID = codeID
+	contractAddr, err := c.instantiate(ctx, baseInput, initConfig)
+	if err != nil {
+		return "", err
+	}
+
+	return contractAddr, nil
+}
+
+// Execute executes the wasm contract with the payload and optionally funding amount.
+func (c *Client) Execute(ctx context.Context, baseInput tx.BaseInput, contractAddr string, payload json.RawMessage, fundAmt types.Coin) error {
+	funds := sdk.NewCoins()
+	if fundAmt.Amount != nil {
+		funds = funds.Add(sdk.NewCoin(fundAmt.Denom, sdk.NewIntFromBigInt(fundAmt.Amount)))
+	}
+
+	if _, err := c.submitWithEstimatedGasLimit(ctx, baseInput, &wasmtypes.MsgExecuteContract{
+		Sender:   baseInput.Signer.Address().String(),
+		Contract: contractAddr,
+		Msg:      wasmtypes.RawContractMessage(payload),
+		Funds:    funds,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Query queries the contract with the requested payload.
+func (c *Client) Query(ctx context.Context, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
+	query := &wasmtypes.QuerySmartContractStateRequest{
+		Address:   contractAddr,
+		QueryData: wasmtypes.RawContractMessage(payload),
+	}
+
+	resp, err := c.coredClient.WASMQueryClient().SmartContractState(ctx, query)
+	if err != nil {
+		return nil, errors.Wrap(err, "WASMQueryClient returns an error after smart contract state Query")
+	}
+
+	return json.RawMessage(resp.Data), nil
+}
+
 // deploys the wasm contract and returns its codeID.
-func (c *testClient) deploy(ctx context.Context, wasmData []byte) (uint64, error) {
+func (c *Client) deploy(ctx context.Context, baseInput tx.BaseInput, wasmData []byte) (uint64, error) {
 	msgStoreCode := &wasmtypes.MsgStoreCode{
-		Sender:       c.baseInput.Signer.Address().String(),
+		Sender:       baseInput.Signer.Address().String(),
 		WASMByteCode: wasmData,
 	}
 
-	res, err := c.coredClient.SubmitMessage(
-		ctx,
-		c.baseInput,
-		msgStoreCode,
-		client.WithGasMultiplier(c.gasMultiplier),
-		client.WithGasEstimation(),
-	)
+	res, err := c.submitWithEstimatedGasLimit(ctx, baseInput, msgStoreCode)
 	if err != nil {
 		return 0, err
 	}
@@ -68,25 +112,20 @@ func (c *testClient) deploy(ctx context.Context, wasmData []byte) (uint64, error
 }
 
 // instantiates the contract and returns the contract address.
-func (c *testClient) instantiate(ctx context.Context, req instantiateConfig) (string, error) {
+func (c *Client) instantiate(ctx context.Context, baseInput tx.BaseInput, req InstantiateConfig) (string, error) {
 	funds := sdk.NewCoins()
 	if amount := req.amount; amount.Amount != nil {
 		funds = funds.Add(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount)))
 	}
 	msgInstantiateContract := &wasmtypes.MsgInstantiateContract{
-		Sender: c.baseInput.Signer.Address().String(),
+		Sender: baseInput.Signer.Address().String(),
 		CodeID: req.CodeID,
 		Label:  req.label,
 		Msg:    wasmtypes.RawContractMessage(req.payload),
 		Funds:  funds,
 	}
 
-	res, err := c.coredClient.SubmitMessage(
-		ctx,
-		c.baseInput,
-		msgInstantiateContract,
-		client.WithGasMultiplier(c.gasMultiplier),
-		client.WithGasEstimation())
+	res, err := c.submitWithEstimatedGasLimit(ctx, baseInput, msgInstantiateContract)
 	if err != nil {
 		return "", err
 	}
@@ -99,60 +138,20 @@ func (c *testClient) instantiate(ctx context.Context, req instantiateConfig) (st
 	return contractAddr, nil
 }
 
-// deployAndInstantiate deploys, instantiate the wasm contract and returns its address.
-func (c *testClient) deployAndInstantiate(ctx context.Context, wasmData []byte, initConfig instantiateConfig) (string, error) {
-	codeID, err := c.deploy(ctx, wasmData)
+// submitWithEstimatedGasLimit is a combination of EstimateGas, Sign and Broadcast methods.
+func (c *Client) submitWithEstimatedGasLimit(ctx context.Context, input tx.BaseInput, msg sdk.Msg) (client.BroadcastResult, error) {
+	if input.GasLimit == 0 {
+		gasLimit, err := c.coredClient.EstimateGas(ctx, input, msg)
+		if err != nil {
+			return client.BroadcastResult{}, err
+		}
+		input.GasLimit = gasLimit
+	}
+	input.GasLimit = uint64(float64(input.GasLimit) * c.gasMultiplier)
+	signedTx, err := c.coredClient.Sign(ctx, input, msg)
 	if err != nil {
-		return "", err
+		return client.BroadcastResult{}, err
 	}
 
-	initConfig.CodeID = codeID
-	contractAddr, err := c.instantiate(ctx, initConfig)
-	if err != nil {
-		return "", err
-	}
-
-	return contractAddr, nil
-}
-
-// executes the wasm contract with the payload and optionally funding amount.
-func (c *testClient) execute(ctx context.Context, contractAddr string, payload json.RawMessage, fundAmt types.Coin) error {
-	funds := sdk.NewCoins()
-	if fundAmt.Amount != nil {
-		funds = funds.Add(sdk.NewCoin(fundAmt.Denom, sdk.NewIntFromBigInt(fundAmt.Amount)))
-	}
-	msgExecuteContract := &wasmtypes.MsgExecuteContract{
-		Sender:   c.baseInput.Signer.Address().String(),
-		Contract: contractAddr,
-		Msg:      wasmtypes.RawContractMessage(payload),
-		Funds:    funds,
-	}
-
-	_, err := c.coredClient.SubmitMessage(
-		ctx,
-		c.baseInput,
-		msgExecuteContract,
-		client.WithGasMultiplier(c.gasMultiplier),
-		client.WithGasEstimation(),
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// queries the contract with the requested payload.
-func (c *testClient) query(ctx context.Context, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
-	query := &wasmtypes.QuerySmartContractStateRequest{
-		Address:   contractAddr,
-		QueryData: wasmtypes.RawContractMessage(payload),
-	}
-
-	resp, err := c.coredClient.WASMQueryClient().SmartContractState(ctx, query)
-	if err != nil {
-		return nil, errors.Wrap(err, "WASMQueryClient returns an error after smart contract state query")
-	}
-
-	return json.RawMessage(resp.Data), nil
+	return c.coredClient.Broadcast(ctx, c.coredClient.Encode(signedTx))
 }

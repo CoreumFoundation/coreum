@@ -44,20 +44,22 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 		},
 	))
 
-	wasmTestClient := newWasmTestClient(tx.BaseInput{
+	baseInput := tx.BaseInput{
 		Signer:   wallet,
 		GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, nativeDenom),
-	}, chain.Client)
+	}
+	wasmTestClient := NewClient(chain.Client)
 
 	// instantiate the contract and set the initial counter state.
 	initialPayload, err := json.Marshal(simpleState{
 		Count: 1337,
 	})
 	requireT.NoError(err)
-	contractAddr, err := wasmTestClient.deployAndInstantiate(
+	contractAddr, err := wasmTestClient.DeployAndInstantiate(
 		ctx,
+		baseInput,
 		simpleStateWASM,
-		instantiateConfig{
+		InstantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
 			label:      "simple_state",
@@ -67,7 +69,7 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 
 	getCountPayload, err := methodToEmptyBodyPayload(getCount)
 	requireT.NoError(err)
-	queryOut, err := wasmTestClient.query(ctx, contractAddr, getCountPayload)
+	queryOut, err := wasmTestClient.Query(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
 
 	var response simpleState
@@ -75,13 +77,13 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	requireT.NoError(err)
 	requireT.Equal(1337, response.Count)
 
-	// execute contract to increment the count
+	// Execute contract to increment the count
 	incrementPayload, err := methodToEmptyBodyPayload(increment)
 	requireT.NoError(err)
-	err = wasmTestClient.execute(ctx, contractAddr, incrementPayload, types.Coin{})
+	err = wasmTestClient.Execute(ctx, baseInput, contractAddr, incrementPayload, types.Coin{})
 	requireT.NoError(err)
 
-	queryOut, err = wasmTestClient.query(ctx, contractAddr, getCountPayload)
+	queryOut, err = wasmTestClient.Query(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
 
 	err = json.Unmarshal(queryOut, &response)
