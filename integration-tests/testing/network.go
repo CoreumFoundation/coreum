@@ -22,8 +22,8 @@ var NetworkConfig = app.NetworkConfig{
 	GovConfig: app.GovConfig{
 		ProposalConfig: app.GovProposalConfig{
 			MinDepositAmount: "10000000",
-			MinDepositPeriod: "5s",
-			VotingPeriod:     "5s",
+			MinDepositPeriod: "20s",
+			VotingPeriod:     "20s",
 		},
 	},
 }

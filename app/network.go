@@ -65,8 +65,8 @@ func init() {
 	govConfig := GovConfig{
 		ProposalConfig: GovProposalConfig{
 			MinDepositAmount: "10000000",
-			MinDepositPeriod: "300s",
-			VotingPeriod:     "300s",
+			MinDepositPeriod: "172800s",
+			VotingPeriod:     "172800s",
 		},
 	}
 
