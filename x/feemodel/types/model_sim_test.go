@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-var feeModelSim = DefaultModel()
+var feeModelSim = DefaultParams()
 
 //nolint:govet // This example does not refer to any identifier
 func ExampleGasPricePerBlockGas() {

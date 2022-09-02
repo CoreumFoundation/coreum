@@ -58,7 +58,7 @@ var (
 
 func init() {
 	feeConfig := FeeConfig{
-		FeeModel:         feemodeltypes.DefaultModel(),
+		FeeModel:         feemodeltypes.DefaultParams(),
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	}
 
@@ -130,7 +130,7 @@ var networks = map[ChainID]NetworkConfig{}
 
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
-	FeeModel         feemodeltypes.Model
+	FeeModel         feemodeltypes.Params
 	DeterministicGas ante.DeterministicGasRequirements
 }
 
@@ -347,7 +347,7 @@ func (n Network) TokenSymbol() string {
 }
 
 // FeeModel returns fee model configuration
-func (n Network) FeeModel() feemodeltypes.Model {
+func (n Network) FeeModel() feemodeltypes.Params {
 	return n.fee.FeeModel
 }
 
@@ -381,7 +381,7 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC string
 		ChainID        ChainID
 		TokenSymbol    string
-		FeeModel       feemodeltypes.Model
+		FeeModel       feemodeltypes.Params
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,

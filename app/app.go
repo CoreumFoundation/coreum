@@ -395,8 +395,8 @@ func New(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
+	wasmConfig := wasm.DefaultWasmConfig()
 	wasmDir := filepath.Join(homePath, "wasm-data")
-
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	supportedFeatures := "iterator,staking,stargate"
@@ -415,7 +415,7 @@ func New(
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
-		wasm.DefaultWasmConfig(),
+		wasmConfig,
 		supportedFeatures,
 	)
 
@@ -618,6 +618,7 @@ func New(
 			GasRequirements: ante.DeterministicGasRequirements{
 				BankSend: ChosenNetwork.DeterministicGas().BankSend,
 			},
+			WasmTXCounterStoreKey: keys[wasm.StoreKey],
 		},
 	)
 	if err != nil {

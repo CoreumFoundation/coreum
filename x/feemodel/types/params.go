@@ -8,14 +8,14 @@ import (
 )
 
 // String implements the stringer interface.
-func (m Model) String() string {
+func (m Params) String() string {
 	out, _ := yaml.Marshal(m)
 	return string(out)
 }
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // of model's parameters.
-func (m *Model) ParamSetPairs() paramtypes.ParamSetPairs {
+func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	modelValidator := func(value interface{}) error {
 		return m.Validate()
 	}
@@ -31,9 +31,9 @@ func (m *Model) ParamSetPairs() paramtypes.ParamSetPairs {
 	}
 }
 
-// DefaultModel returns model with default values
-func DefaultModel() Model {
-	return Model{
+// DefaultParams returns params with default values
+func DefaultParams() Params {
+	return Params{
 		// TODO: Find good parameters before lunching mainnet
 		InitialGasPrice:         sdk.NewInt(1500),
 		MaxGasPrice:             sdk.NewInt(1500000),
@@ -48,7 +48,7 @@ func DefaultModel() Model {
 
 // CalculateNextGasPrice calculates minimum gas price for next block
 // Chart showing a sample output of the fee mdoel: https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=0
-func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
+func (m Params) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 	switch {
 	case shortEMA >= m.MaxBlockGas:
 		return m.MaxGasPrice
@@ -66,7 +66,7 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 }
 
 // Validate validates parameters of the model
-func (m Model) Validate() error {
+func (m Params) Validate() error {
 	if m.InitialGasPrice.IsNil() {
 		return errors.New("initial gas price is not set")
 	}
@@ -108,7 +108,7 @@ func (m Model) Validate() error {
 	return nil
 }
 
-func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
+func (m Params) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
 	gasPriceWithMaxDiscount := m.computeGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
@@ -121,7 +121,7 @@ func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
 	return gasPriceWithMaxDiscount.Add(offset)
 }
 
-func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int64) sdk.Int {
+func (m Params) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int64) sdk.Int {
 	gasPriceWithMaxDiscount := m.computeGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
@@ -134,7 +134,7 @@ func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int
 	return gasPriceWithMaxDiscount.Add(offset)
 }
 
-func (m Model) computeGasPriceWithMaxDiscount() sdk.Int {
+func (m Params) computeGasPriceWithMaxDiscount() sdk.Int {
 	return m.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(m.MaxDiscount)).TruncateInt()
 }
 

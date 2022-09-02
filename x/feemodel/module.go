@@ -28,8 +28,8 @@ var (
 // Keeper defines an interface of keeper required by fee module
 type Keeper interface {
 	TrackedGas(ctx sdk.Context) int64
-	SetModel(ctx sdk.Context, model types.Model)
-	GetModel(ctx sdk.Context) types.Model
+	SetParams(ctx sdk.Context, params types.Params)
+	GetParams(ctx sdk.Context) types.Params
 	GetShortAverageGas(ctx sdk.Context) int64
 	SetShortAverageGas(ctx sdk.Context, averageGas int64)
 	GetLongAverageGas(ctx sdk.Context) int64
@@ -128,7 +128,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 		genesis.MinGasPrice.Denom = "dacore"
 	}
 
-	am.keeper.SetModel(ctx, genesis.Params)
+	am.keeper.SetParams(ctx, genesis.Params)
 	am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice)
 	return []abci.ValidatorUpdate{}
 }
@@ -153,15 +153,15 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	// TODO (wojtek): add simulation tests
 	currentGasUsage := am.keeper.TrackedGas(ctx)
-	feeModel := am.keeper.GetModel(ctx)
+	params := am.keeper.GetParams(ctx)
 	oldMinGasPrice := am.keeper.GetMinGasPrice(ctx)
 
 	newShortAverage := types.CalculateEMA(am.keeper.GetShortAverageGas(ctx), currentGasUsage,
-		feeModel.ShortAverageBlockLength)
+		params.ShortAverageBlockLength)
 	newLongAverage := types.CalculateEMA(am.keeper.GetLongAverageGas(ctx), currentGasUsage,
-		feeModel.LongAverageBlockLength)
+		params.LongAverageBlockLength)
 
-	newMinGasPrice := feeModel.CalculateNextGasPrice(newShortAverage, newLongAverage)
+	newMinGasPrice := params.CalculateNextGasPrice(newShortAverage, newLongAverage)
 
 	am.keeper.SetShortAverageGas(ctx, newShortAverage)
 	am.keeper.SetLongAverageGas(ctx, newLongAverage)
