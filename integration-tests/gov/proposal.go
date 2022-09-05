@@ -102,6 +102,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Wait for voting period to be started
 	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusVotingPeriod, testing.MinDepositPeriod, proposal.ProposalId)
+	assert.Equal(t, govtypes.StatusVotingPeriod, proposal.Status)
 
 	// Vote for the proposal
 	balanceVoter1 := voteProposal(ctx, t, chain, voter1, govtypes.OptionYes, proposal.ProposalId)
@@ -116,6 +117,11 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Wait for proposal result
 	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, testing.MinVotingPeriod, proposal.ProposalId)
+	assert.Equal(t, govtypes.StatusPassed, proposal.Status)
+	assert.Equal(t, int64(2), proposal.FinalTallyResult.Yes.Int64())
+	assert.Equal(t, int64(0), proposal.FinalTallyResult.No.Int64())
+	assert.Equal(t, int64(0), proposal.FinalTallyResult.Abstain.Int64())
+	assert.Equal(t, int64(0), proposal.FinalTallyResult.NoWithVeto.Int64())
 }
 
 func depositProposal(ctx context.Context, t testing.T, chain testing.Chain, depositor types.Wallet, amount types.Coin, proposalID uint64) {
