@@ -34,7 +34,7 @@ func (c Client) GetProposalByTx(ctx context.Context, tx string) (*govtypes.Propo
 
 	var proposalID uint64
 	for _, event := range txData.TxResult.Events {
-		if event.Type != "submit_proposal" {
+		if event.Type != govtypes.EventTypeSubmitProposal {
 			continue
 		}
 
@@ -42,7 +42,7 @@ func (c Client) GetProposalByTx(ctx context.Context, tx string) (*govtypes.Propo
 			continue
 		}
 
-		if string(event.Attributes[0].GetKey()) != "proposal_id" {
+		if string(event.Attributes[0].GetKey()) != govtypes.AttributeKeyProposalID {
 			continue
 		}
 
