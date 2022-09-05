@@ -58,6 +58,28 @@ func New(chainID app.ChainID, addr string) Client {
 	}
 }
 
+// GetTotalSupply returns the total supply
+func (c Client) GetTotalSupply(ctx context.Context, denom string) (*sdk.Int, error) {
+	resp, err := c.bankQueryClient.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get total supply")
+	}
+
+	var totalSupply *sdk.Coin
+	for _, coin := range resp.Supply {
+		if coin.Denom == denom {
+			totalSupply = &coin
+			break
+		}
+	}
+
+	if totalSupply == nil {
+		return nil, errors.Errorf("total supply not found for %s", denom)
+	}
+
+	return &totalSupply.Amount, nil
+}
+
 // GetNumberSequence returns account number and account sequence for provided address
 func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(address)

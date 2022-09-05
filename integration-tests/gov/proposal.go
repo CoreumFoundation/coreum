@@ -29,33 +29,41 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	voter2 := testing.RandomWallet()
 
 	// Prepare initial balances
-	initialDeposit := sdk.NewInt(20000000000)
 	proposerInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
 		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
-		initialDeposit,
+		sdk.NewInt(20000000000),
 	)
 	voterInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
 		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
-		initialDeposit,
+		sdk.NewInt(835000000000000), // 1670000000000000
 	)
+
+	// Make sure the total balance of two voters is > 66% of the total supply.
+	// This is needed to have successful voting process.
+	totalSupply, err := coredClient.GetTotalSupply(ctx, chain.NetworkConfig.TokenSymbol)
+	require.NoError(t, err)
+	minTotalBalance := totalSupply.MulRaw(66).ModRaw(100)
+	totalVotersBalance := voterInitialBalance.MulRaw(2)
+	require.True(t, minTotalBalance.LT(totalVotersBalance), "%s > %s", minTotalBalance, totalVotersBalance)
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.FundedAccount{
 		Wallet: proposer,
 		Amount: testing.MustNewCoin(t, proposerInitialBalance, chain.NetworkConfig.TokenSymbol),
-	}))
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.FundedAccount{
+	}, testing.FundedAccount{
 		Wallet: voter1,
 		Amount: testing.MustNewCoin(t, voterInitialBalance, chain.NetworkConfig.TokenSymbol),
-	}))
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.FundedAccount{
+	}, testing.FundedAccount{
 		Wallet: voter2,
 		Amount: testing.MustNewCoin(t, voterInitialBalance, chain.NetworkConfig.TokenSymbol),
 	}))
+	t.Cleanup(func() {
+		assert.NoError(t, chain.Faucet.CleanupAccounts(ctx, proposer, voter1, voter2))
+	})
 
 	// Set account deposit amount
 	depositAmount := testing.MustNewCoin(t, sdk.NewInt(3500000), chain.NetworkConfig.TokenSymbol)
@@ -82,7 +90,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	// Check proposer balance
 	balancesProposer, err := coredClient.QueryBankBalances(ctx, proposer)
 	require.NoError(t, err)
-	assert.Equal(t, initialDeposit.Uint64()-depositAmount.Amount.Uint64(), balancesProposer[chain.NetworkConfig.TokenSymbol].Amount.Uint64())
+	assert.Equal(t, "19996500000", balancesProposer[chain.NetworkConfig.TokenSymbol].Amount.String())
 
 	logger.Get(ctx).Info("Proposal has been submitted", zap.String("txHash", result.TxHash))
 
@@ -101,8 +109,8 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Test that tokens disappeared from voter's wallet
 	// - 187500000core were taken as fee
-	assert.Equal(t, "19809000000", balanceVoter1.Amount.String())
-	assert.Equal(t, "19809000000", balanceVoter2.Amount.String())
+	assert.Equal(t, "834999809000000", balanceVoter1.Amount.String())
+	assert.Equal(t, "834999809000000", balanceVoter2.Amount.String())
 
 	logger.Get(ctx).Info("2 voters have voted successfully")
 
