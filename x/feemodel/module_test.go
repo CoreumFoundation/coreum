@@ -19,8 +19,8 @@ var genesis = types.GenesisState{
 		MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
 		EscalationStartBlockGas: 7,
 		MaxBlockGas:             10,
-		ShortAverageBlockLength: 1,
-		LongAverageBlockLength:  3,
+		ShortEmaBlockLength:     1,
+		LongEmaBlockLength:      3,
 	},
 	MinGasPrice: sdk.NewCoin("coin", sdk.NewInt(155)),
 }
@@ -40,19 +40,19 @@ func (k keeperMock) GetParams(ctx sdk.Context) types.Params {
 	return genesis.Params
 }
 
-func (k keeperMock) GetShortAverageGas(ctx sdk.Context) int64 {
+func (k keeperMock) GetShortEMAGas(ctx sdk.Context) int64 {
 	panic("not implemented")
 }
 
-func (k keeperMock) SetShortAverageGas(ctx sdk.Context, averageGas int64) {
+func (k keeperMock) SetShortEMAGas(ctx sdk.Context, emaGas int64) {
 	panic("not implemented")
 }
 
-func (k keeperMock) GetLongAverageGas(ctx sdk.Context) int64 {
+func (k keeperMock) GetLongEMAGas(ctx sdk.Context) int64 {
 	panic("not implemented")
 }
 
-func (k keeperMock) SetLongAverageGas(ctx sdk.Context, averageGas int64) {
+func (k keeperMock) SetLongEMAGas(ctx sdk.Context, emaGas int64) {
 	panic("not implemented")
 }
 
