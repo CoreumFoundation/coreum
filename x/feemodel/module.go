@@ -30,10 +30,10 @@ type Keeper interface {
 	TrackedGas(ctx sdk.Context) int64
 	SetParams(ctx sdk.Context, params types.Params)
 	GetParams(ctx sdk.Context) types.Params
-	GetShortAverageGas(ctx sdk.Context) int64
-	SetShortAverageGas(ctx sdk.Context, averageGas int64)
-	GetLongAverageGas(ctx sdk.Context) int64
-	SetLongAverageGas(ctx sdk.Context, averageGas int64)
+	GetShortEMAGas(ctx sdk.Context) int64
+	SetShortEMAGas(ctx sdk.Context, emaGas int64)
+	GetLongEMAGas(ctx sdk.Context) int64
+	SetLongEMAGas(ctx sdk.Context, emaGas int64)
 	GetMinGasPrice(ctx sdk.Context) sdk.Coin
 	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
 }
@@ -154,17 +154,18 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	// TODO (wojtek): add simulation tests
 	currentGasUsage := am.keeper.TrackedGas(ctx)
 	params := am.keeper.GetParams(ctx)
+	model := types.NewModel(params)
 	oldMinGasPrice := am.keeper.GetMinGasPrice(ctx)
 
-	newShortAverage := types.CalculateEMA(am.keeper.GetShortAverageGas(ctx), currentGasUsage,
-		params.ShortAverageBlockLength)
-	newLongAverage := types.CalculateEMA(am.keeper.GetLongAverageGas(ctx), currentGasUsage,
-		params.LongAverageBlockLength)
+	newShortEMA := types.CalculateEMA(am.keeper.GetShortEMAGas(ctx), currentGasUsage,
+		params.ShortEmaBlockLength)
+	newLongEMA := types.CalculateEMA(am.keeper.GetLongEMAGas(ctx), currentGasUsage,
+		params.LongEmaBlockLength)
 
-	newMinGasPrice := params.CalculateNextGasPrice(newShortAverage, newLongAverage)
+	newMinGasPrice := model.CalculateNextGasPrice(newShortEMA, newLongEMA)
 
-	am.keeper.SetShortAverageGas(ctx, newShortAverage)
-	am.keeper.SetLongAverageGas(ctx, newLongAverage)
+	am.keeper.SetShortEMAGas(ctx, newShortEMA)
+	am.keeper.SetLongEMAGas(ctx, newLongEMA)
 	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(oldMinGasPrice.Denom, newMinGasPrice))
 
 	return []abci.ValidatorUpdate{}
