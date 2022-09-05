@@ -1,0 +1,1 @@
+45ae90c5383d4510494a0a83d8e38c82c8ca972bde401c7d18d5edd1ba6d4e1c  bank_send.wasm

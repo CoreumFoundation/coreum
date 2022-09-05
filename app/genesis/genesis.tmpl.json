@@ -5,7 +5,7 @@
   "consensus_params": {
     "block": {
       "max_bytes": "22020096",
-      "max_gas": "{{ .FeeModel.MaxBlockGas }}",
+      "max_gas": "{{ .FeeModelParamsMaxBlockGas }}",
       "time_iota_ms": "1000"
     },
     "evidence": {
@@ -228,9 +228,9 @@
         "short_ema_block_length": {{ .FeeModelParams.ShortEmaBlockLength }},
         "long_ema_block_length": {{ .FeeModelParams.LongEmaBlockLength }}
       },
-      "min_gas_price": {
-        "denom": "{{ .TokenSymbol }}",
-        "amount": "{{ .FeeModel.InitialGasPrice }}"
+        "min_gas_price": {
+          "denom": "{{ .TokenSymbol }}",
+          "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
     }
   }
