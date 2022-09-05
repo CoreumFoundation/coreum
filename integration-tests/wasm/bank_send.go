@@ -52,7 +52,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		},
 	))
 
-	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, nativeDenom)
+	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, nativeDenom)
 	baseInput := tx.BaseInput{
 		Signer:   adminWallet,
 		GasPrice: gasPrice,

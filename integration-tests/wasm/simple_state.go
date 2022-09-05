@@ -46,7 +46,7 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 
 	baseInput := tx.BaseInput{
 		Signer:   wallet,
-		GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, nativeDenom),
+		GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, nativeDenom),
 	}
 	wasmTestClient := NewClient(chain.Client)
 
