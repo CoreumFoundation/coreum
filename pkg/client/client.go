@@ -5,11 +5,14 @@ import (
 	"encoding/hex"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -40,11 +43,21 @@ type Client struct {
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
 	govQueryClient  govtypes.QueryClient
+	wasmQueryClient wasmtypes.QueryClient
 }
 
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) Client {
-	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
+	switch {
+	case strings.HasPrefix(addr, "tcp://"),
+		strings.HasPrefix(addr, "http://"),
+		strings.HasPrefix(addr, "https://"):
+	default:
+		// FIXME (dhil) - temp fix, to be compatible with the current crust version, will be remove later.
+		addr = "tcp://" + addr
+	}
+
+	rpcClient, err := client.NewClientFromNode(addr)
 	must.OK(err)
 	clientCtx := app.
 		NewDefaultClientContext().
@@ -54,6 +67,7 @@ func New(chainID app.ChainID, addr string) Client {
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
+		wasmQueryClient: wasmtypes.NewQueryClient(clientCtx),
 		govQueryClient:  govtypes.NewQueryClient(clientCtx),
 	}
 }
@@ -125,7 +139,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, input tx.BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, input tx.BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
@@ -137,7 +151,7 @@ func (c Client) Sign(ctx context.Context, input tx.BaseInput, msg sdk.Msg) (auth
 		input.Signer = signer
 	}
 
-	return tx.Sign(c.clientCtx, input, msg)
+	return tx.Sign(c.clientCtx, input, msgs...)
 }
 
 // Encode encodes transaction to be broadcasted
@@ -147,8 +161,9 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 
 // BroadcastResult contains results of transaction broadcast
 type BroadcastResult struct {
-	TxHash  string
-	GasUsed int64
+	TxHash    string
+	GasUsed   int64
+	EventLogs sdk.StringEvents
 }
 
 // Broadcast broadcasts encoded transaction and returns tx hash
@@ -216,9 +231,43 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		return BroadcastResult{}, err
 	}
 	return BroadcastResult{
-		TxHash:  txHash,
-		GasUsed: resultTx.TxResult.GasUsed,
+		TxHash:    txHash,
+		GasUsed:   resultTx.TxResult.GasUsed,
+		EventLogs: sdk.StringifyEvents(resultTx.TxResult.Events),
 	}, nil
+}
+
+// EstimateGas runs the transaction cost estimation.
+func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk.Msg) (uint64, error) {
+	signer := input.Signer
+	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
+		var err error
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
+		if err != nil {
+			return 0, err
+		}
+
+		input.Signer = signer
+	}
+
+	simTxBytes, err := tx.BuildSimTx(c.clientCtx, input, msgs...)
+	if err != nil {
+		err = errors.Wrap(err, "failed to build sim tx bytes")
+		return 0, err
+	}
+
+	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
+	txSvcClient := txtypes.NewServiceClient(c.clientCtx)
+	simRes, err := txSvcClient.Simulate(requestCtx, &txtypes.SimulateRequest{
+		TxBytes: simTxBytes,
+	})
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to simulate the transaction execution")
+	}
+
+	return simRes.GasInfo.GasUsed, nil
 }
 
 // TxBankSendInput holds input data for PrepareTxBankSend
@@ -252,6 +301,18 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	}
 
 	return c.Encode(signedTx), nil
+}
+
+// BankQueryClient returns a Bank module querying client, initialized
+// using the internal clientCtx.
+func (c Client) BankQueryClient() banktypes.QueryClient {
+	return c.bankQueryClient
+}
+
+// WASMQueryClient returns a WASM module querying client, initialized
+// using the internal clientCtx.
+func (c Client) WASMQueryClient() wasmtypes.QueryClient {
+	return c.wasmQueryClient
 }
 
 func isTxInMempool(errRes *sdk.TxResponse) bool {
@@ -293,7 +354,29 @@ func ExpectedSequenceFromError(err error) (uint64, bool, error) {
 	return expectedSequence, true, nil
 }
 
-// IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction
-func IsInsufficientFeeError(err error) bool {
-	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
+// IsErr returns true if error was caused by insufficient funds provided with the transaction
+func IsErr(err error, cosmosErr *cosmoserrors.Error) bool {
+	return asSDKError(err, cosmosErr) != nil
+}
+
+// FindEventAttribute finds the first event attribute by type and attribute name.
+func FindEventAttribute(event sdk.StringEvents, etype, attribute string) (string, bool) {
+	for _, ev := range event {
+		if ev.Type == etype {
+			if value, found := findAttribute(ev, attribute); found {
+				return value, true
+			}
+		}
+	}
+	return "", false
+}
+
+func findAttribute(ev sdk.StringEvent, attr string) (string, bool) {
+	for _, attrItem := range ev.Attributes {
+		if attrItem.Key == attr {
+			return attrItem.Value, true
+		}
+	}
+
+	return "", false
 }

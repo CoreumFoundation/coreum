@@ -3,6 +3,8 @@ package types
 import (
 	"math/big"
 
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 )
 
@@ -24,6 +26,12 @@ type Wallet struct {
 // String returns string representation of the wallet
 func (w Wallet) String() string {
 	return w.Name + "@" + w.Key.Address()
+}
+
+// Address returns cosmos acc address from the pub key of the wallet.
+func (w Wallet) Address() sdk.AccAddress {
+	privKey := cosmossecp256k1.PrivKey{Key: w.Key}
+	return sdk.AccAddress(privKey.PubKey().Address())
 }
 
 // Coin stores amount and denom of token

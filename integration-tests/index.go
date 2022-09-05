@@ -5,6 +5,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/gov"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests/wasm"
 )
 
 // Tests returns testing environment and tests
@@ -20,6 +21,8 @@ func Tests() testing.TestSet {
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
 			gov.TestProposalParamChange,
+			wasm.TestSimpleStateWasmContract,
+			wasm.TestBankSendWasmContract,
 		},
 	}
 
