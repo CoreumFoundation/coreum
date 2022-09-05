@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -17,7 +18,7 @@ type Factory = tx.Factory
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will also simulate gas requirements if necessary.
 // It will return an error upon failure.
-// NOTE: copied from
+// NOTE: copied from the link below and made some changes
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
@@ -42,7 +43,32 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 	}
 
 	// broadcast to a Tendermint node
-	return clientCtx.BroadcastTx(txBytes)
+	switch clientCtx.BroadcastMode {
+	case flags.BroadcastSync:
+		res, err := clientCtx.Client.BroadcastTxSync(ctx, txBytes)
+		if err != nil {
+			return nil, err
+		}
+		return sdk.NewResponseFormatBroadcastTx(res), nil
+
+	case flags.BroadcastAsync:
+		res, err := clientCtx.Client.BroadcastTxAsync(ctx, txBytes)
+		if err != nil {
+			return nil, err
+		}
+		return sdk.NewResponseFormatBroadcastTx(res), nil
+
+	case flags.BroadcastBlock:
+		res, err := clientCtx.Client.BroadcastTxCommit(ctx, txBytes)
+		if err != nil {
+			return nil, err
+		}
+		return sdk.NewResponseFormatBroadcastTxCommit(res), nil
+
+	default:
+		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode)
+	}
+
 }
 
 func prepareFactory(ctx context.Context, clientCtx client.Context, txf tx.Factory) (tx.Factory, error) {
@@ -51,8 +77,9 @@ func prepareFactory(ctx context.Context, clientCtx client.Context, txf tx.Factor
 		if err != nil {
 			return txf, err
 		}
-		txf = txf.WithAccountNumber(acc.GetAccountNumber())
-		txf = txf.WithSequence(acc.GetSequence())
+		txf = txf.
+			WithAccountNumber(acc.GetAccountNumber()).
+			WithSequence(acc.GetSequence())
 	}
 
 	return txf, nil
