@@ -212,8 +212,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
-// EstimateGas runs the transaction cost estimation and returns new suggested gas limit,
-// in contrast with the default Cosmos SDK gas estimation logic, this method returns unadjusted gas used.
+// EstimateGas runs the transaction cost estimation.
 func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk.Msg) (uint64, error) {
 	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
@@ -239,15 +238,10 @@ func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk
 	simRes, err := txSvcClient.Simulate(requestCtx, &txtypes.SimulateRequest{
 		TxBytes: simTxBytes,
 	})
-	errRes := client.CheckTendermintError(err, simTxBytes)
-	_ = errRes
-
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to simulate the transaction execution")
 	}
 
-	// usually gas has to be multiplied by some adjustment coefficient: e.g. *1.5
-	// but in this case we return unadjusted, so every module can decide the adjustment value
 	return simRes.GasInfo.GasUsed, nil
 }
 
@@ -333,12 +327,6 @@ func ExpectedSequenceFromError(err error) (uint64, bool, error) {
 		return 0, false, errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
 	}
 	return expectedSequence, true, nil
-}
-
-// IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction.
-// TODO (dhil) this func should re replaced by the IsErr in all tests.
-func IsInsufficientFeeError(err error) bool {
-	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
 }
 
 // IsErr returns true if error was caused by insufficient funds provided with the transaction

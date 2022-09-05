@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -51,7 +52,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Broadcast should fail because gas price is too low for transaction to enter mempool
 	_, err = coredClient.Broadcast(ctx, txBytes)
-	require.True(t, client.IsInsufficientFeeError(err))
+	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee))
 }
 
 // TestNoFee verifies that transaction fails if sender does not offer fee at all
@@ -88,7 +89,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Broadcast should fail because gas price is too low for transaction to enter mempool
 	_, err = coredClient.Broadcast(ctx, txBytes)
-	require.True(t, client.IsInsufficientFeeError(err))
+	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee))
 }
 
 // TestGasLimitHigherThanMaxBlockGas verifies that transaction requiring more gas than MaxBlockGas fails
