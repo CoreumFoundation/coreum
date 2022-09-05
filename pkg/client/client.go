@@ -43,7 +43,8 @@ func New(chainID app.ChainID, addr string) Client {
 		strings.HasPrefix(addr, "http://"),
 		strings.HasPrefix(addr, "https://"):
 	default:
-		panic(errors.Errorf("the protocol is required for the address:%s", addr))
+		// FIXME (dhil) - temp fix, to be compatible with the current crust version, will be remove later.
+		addr = "tcp://" + addr
 	}
 
 	rpcClient, err := client.NewClientFromNode(addr)
