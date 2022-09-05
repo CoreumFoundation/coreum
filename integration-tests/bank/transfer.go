@@ -4,17 +4,15 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
-
-// FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
 
 // TestInitialBalance checks that initial balance is set by genesis block
 func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
@@ -40,8 +38,8 @@ func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 // TestCoreTransfer checks that core is transferred correctly between wallets
 func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create two random wallets
-	sender := testing.RandomWallet()
-	receiver := testing.RandomWallet()
+	sender := chain.RandomWallet()
+	receiver := chain.RandomWallet()
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
@@ -59,31 +57,30 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 		},
 	))
 
-	// Create client so we can send transactions and query state
-	coredClient := chain.Client
-
 	// Transfer 10 cores from sender to receiver
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   sender,
-			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+	msg := &banktypes.MsgSend{
+		FromAddress: sender.Address().String(),
+		ToAddress:   receiver.Address().String(),
+		Amount: []sdk.Coin{
+			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(10)},
 		},
-		Sender:   sender,
-		Receiver: receiver,
-		Amount:   testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
-	})
-	require.NoError(t, err)
-	result, err := coredClient.Broadcast(ctx, txBytes)
+	}
+
+	result, err := tx.BroadcastTx(
+		ctx,
+		sender.ClientCtx(chain.ClientContext),
+		chain.TxFactory().WithGas(chain.NetworkConfig.Fee.DeterministicGas.BankSend),
+		msg,
+	)
 	require.NoError(t, err)
 
 	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
 
 	// Query wallets for current balance
-	balancesSender, err := coredClient.QueryBankBalances(ctx, sender)
+	balancesSender, err := chain.Client.QueryBankBalances(ctx, sender)
 	require.NoError(t, err)
 
-	balancesReceiver, err := coredClient.QueryBankBalances(ctx, receiver)
+	balancesReceiver, err := chain.Client.QueryBankBalances(ctx, receiver)
 	require.NoError(t, err)
 
 	// Test that tokens disappeared from sender's wallet
