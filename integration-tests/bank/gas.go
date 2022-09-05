@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -100,7 +101,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 		testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
 		// declaring gas limit as maxGasAssumed-1 means that tx must fail
 		maxGasAssumed-1, gasPrice)
-	assert.True(t, client.IsInsufficientFeeError(err))
+	assert.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee))
 }
 
 func sendAndReturnGasUsed(
