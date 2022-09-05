@@ -5,8 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
@@ -18,13 +16,6 @@ type T interface {
 // Faucet defines an interface to fund testing accounts
 type Faucet interface {
 	FundAccounts(ctx context.Context, accountsToFund ...FundedAccount) error
-}
-
-// Chain holds network and client for the blockchain
-type Chain struct {
-	NetworkConfig app.NetworkConfig
-	Client        client.Client
-	Faucet        Faucet
 }
 
 // FundedAccount represents a requirement of a test to get some funds for an account

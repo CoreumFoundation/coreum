@@ -3,6 +3,7 @@ package types
 import (
 	"math/big"
 
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
@@ -14,6 +15,7 @@ type Wallet struct {
 	Name string
 
 	// Key is the private key of the wallet
+	// TODO: Check if we really need to store private key here or public is enough since mnemonic is stored in keyring.
 	Key Secp256k1PrivateKey
 
 	// AccountNumber is the account number as stored on blockchain
@@ -32,6 +34,13 @@ func (w Wallet) String() string {
 func (w Wallet) Address() sdk.AccAddress {
 	privKey := cosmossecp256k1.PrivKey{Key: w.Key}
 	return sdk.AccAddress(privKey.PubKey().Address())
+}
+
+// ClientCtx returns cosmos client context with values present for the Wallet.
+func (w Wallet) ClientCtx(parentCtx cosmosclient.Context) cosmosclient.Context {
+	return parentCtx.
+		WithFromName(w.Name).
+		WithFromAddress(w.Address())
 }
 
 // Coin stores amount and denom of token
