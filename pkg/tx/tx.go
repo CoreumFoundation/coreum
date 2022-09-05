@@ -11,6 +11,7 @@ import (
 )
 
 // Factory is a re-export of the cosmos sdk tx.Factory type, to make usage of this package more convenient.
+// It will help users by removing the need to import tx package from cosmos sdk and help avoid package name collision.
 type Factory = tx.Factory
 
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
