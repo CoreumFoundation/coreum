@@ -18,7 +18,7 @@ type Factory = tx.Factory
 // It will return an error upon failure.
 // NOTE: copied from
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
-func BroadcastTx(ctx context.Context, clientCtx client.Context, txf tx.Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
+func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
 		return nil, err

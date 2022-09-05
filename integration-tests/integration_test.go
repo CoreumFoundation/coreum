@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -44,7 +45,8 @@ func TestMain(m *testing.M) {
 	cfg.ClientContext = app.
 		NewDefaultClientContext().
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
-		WithClient(rpcClient)
+		WithClient(rpcClient).
+		WithBroadcastMode(flags.BroadcastBlock)
 
 	cfg.FundingPrivKey, err = base64.RawURLEncoding.DecodeString(fundingPrivKey)
 	if err != nil {

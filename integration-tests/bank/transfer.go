@@ -3,10 +3,8 @@ package bank
 import (
 	"context"
 	"encoding/hex"
-	"time"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -49,8 +47,8 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create two random wallets
 	clientCtx := chain.ClientContext
 	txf, walletGen := setup(clientCtx)
-	sender, senderAddress := walletGen()
-	receiver, receiverAddress := walletGen()
+	sender, senderCtx, senderAddress := walletGen()
+	receiver, _, receiverAddress := walletGen()
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
@@ -79,16 +77,11 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(10)},
 		},
 	}
-	clCtx := clientCtx.
-		WithFromName(sender.Name).
-		WithFromAddress(senderAddress).
-		WithBroadcastMode(flags.BroadcastBlock)
 	txf = txf.
 		WithGas(chain.NetworkConfig.Fee.DeterministicGas.BankSend).
 		WithGasPrices(sdk.NewCoin(chain.NetworkConfig.TokenSymbol, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice).String())
-	result, err := tx.BroadcastTx(ctx, clCtx, txf, msg)
+	result, err := tx.BroadcastTx(ctx, senderCtx, txf, msg)
 	require.NoError(t, err)
-	time.Sleep(4 * time.Second)
 
 	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
 
@@ -108,10 +101,10 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	assert.Equal(t, "20", balancesReceiver[chain.NetworkConfig.TokenSymbol].Amount.String())
 }
 
-type walletGen = func() (types.Wallet, sdk.AccAddress)
+type walletGen = func() (types.Wallet, cosmosclient.Context, sdk.AccAddress)
 
-func gen(kr keyring.UnsafeKeyring) walletGen {
-	return func() (types.Wallet, sdk.AccAddress) {
+func gen(kr keyring.UnsafeKeyring, clientCtx cosmosclient.Context) walletGen {
+	return func() (types.Wallet, cosmosclient.Context, sdk.AccAddress) {
 		name := uuid.New().String()
 		_, _, err := kr.NewMnemonic(name, keyring.English, "", "", hd.Secp256k1)
 		if err != nil {
@@ -132,7 +125,11 @@ func gen(kr keyring.UnsafeKeyring) walletGen {
 		privKey := secp256k1.PrivKey{Key: privKeyBytes}
 		address := sdk.AccAddress(privKey.PubKey().Address())
 
-		return types.Wallet{Name: name, Key: privKeyBytes}, address
+		clCtx := clientCtx.
+			WithFromName(name).
+			WithFromAddress(address)
+
+		return types.Wallet{Name: name, Key: privKeyBytes}, clCtx, address
 	}
 }
 
@@ -142,5 +139,5 @@ func setup(clientCtx cosmosclient.Context) (tx.Factory, walletGen) {
 		WithKeybase(kr).
 		WithChainID(clientCtx.ChainID).
 		WithTxConfig(clientCtx.TxConfig)
-	return txf, gen(kr)
+	return txf, gen(kr, clientCtx)
 }
