@@ -67,25 +67,25 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	)
 	requireT.NoError(err)
 
+	// get the current counter state
 	getCountPayload, err := methodToEmptyBodyPayload(getCount)
 	requireT.NoError(err)
 	queryOut, err := wasmTestClient.Query(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
-
 	var response simpleState
 	err = json.Unmarshal(queryOut, &response)
 	requireT.NoError(err)
 	requireT.Equal(1337, response.Count)
 
-	// Execute contract to increment the count
+	// execute contract to increment the count
 	incrementPayload, err := methodToEmptyBodyPayload(increment)
 	requireT.NoError(err)
 	err = wasmTestClient.Execute(ctx, baseInput, contractAddr, incrementPayload, types.Coin{})
 	requireT.NoError(err)
 
+	// check the update count
 	queryOut, err = wasmTestClient.Query(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
-
 	err = json.Unmarshal(queryOut, &response)
 	requireT.NoError(err)
 	requireT.Equal(1338, response.Count)

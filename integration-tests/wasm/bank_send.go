@@ -60,6 +60,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	coredClient := chain.Client
 	wasmTestClient := NewClient(coredClient)
 
+	// deploy and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
 	requireT.NoError(err)
 	contractAddr, err := wasmTestClient.DeployAndInstantiate(
@@ -69,9 +70,8 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		InstantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
-			// transfer some coins during instantiation, so we could withdraw them later using contract code.
-			amount: testing.MustNewCoin(t, sdk.NewInt(10000), nativeDenom),
-			label:  "bank_send",
+			amount:     testing.MustNewCoin(t, sdk.NewInt(10000), nativeDenom),
+			label:      "bank_send",
 		},
 	)
 	requireT.NoError(err)
@@ -93,6 +93,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	_, err = coredClient.Broadcast(ctx, coredClient.Encode(bakSendTx))
 	requireT.NoError(err)
 
+	// get the contract balance and check total
 	contractBalance, err := coredClient.BankQueryClient().Balance(ctx,
 		&banktypes.QueryBalanceRequest{
 			Address: contractAddr,
@@ -135,6 +136,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	err = wasmTestClient.Execute(ctx, baseInput, contractAddr, withdrawPayload, types.Coin{})
 	requireT.NoError(err)
 
+	// check contract and wallet balances
 	contractBalance, err = coredClient.BankQueryClient().Balance(ctx,
 		&banktypes.QueryBalanceRequest{
 			Address: contractAddr,
