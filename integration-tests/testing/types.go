@@ -3,7 +3,6 @@ package testing
 import (
 	"context"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -25,7 +24,6 @@ type Faucet interface {
 type Chain struct {
 	NetworkConfig app.NetworkConfig
 	Client        client.Client
-	ClientContext cosmosclient.Context
 	Faucet        Faucet
 }
 
