@@ -2,23 +2,34 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 // Keeper manages transfers between accounts. It implements the Keeper interface.
 type Keeper struct {
-	initialGasPrice   sdk.Coin
+	paramSubspace     paramtypes.Subspace
+	feeDenom          string
 	storeKey          sdk.StoreKey
 	transientStoreKey sdk.StoreKey
 }
 
 // NewKeeper returns a new keeper object providing storage options required by fee model.
 func NewKeeper(
-	initialGasPrice sdk.Coin,
+	paramSubspace paramtypes.Subspace,
+	feeDenom string,
 	storeKey sdk.StoreKey,
 	transientStoreKey sdk.StoreKey,
 ) Keeper {
+	// set KeyTable if it has not already been set
+	if !paramSubspace.HasKeyTable() {
+		paramSubspace = paramSubspace.WithKeyTable(paramtypes.NewKeyTable().RegisterParamSet(&types.Params{}))
+	}
+
 	return Keeper{
-		initialGasPrice:   initialGasPrice,
+		paramSubspace:     paramSubspace,
+		feeDenom:          feeDenom,
 		storeKey:          storeKey,
 		transientStoreKey: transientStoreKey,
 	}
@@ -50,60 +61,72 @@ func (k Keeper) TrackGas(ctx sdk.Context, gas int64) {
 	tStore.Set(gasTrackingKey, bz)
 }
 
-// GetShortAverageGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block
-func (k Keeper) GetShortAverageGas(ctx sdk.Context) int64 {
+// SetParams sets the parameters of the model
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramSubspace.SetParamSet(ctx, &params)
+}
+
+// GetParams gets the parameters of the model
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	var params types.Params
+	k.paramSubspace.GetParamSet(ctx, &params)
+	return params
+}
+
+// GetShortEMAGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block
+func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(shortAverageGasKey)
+	bz := store.Get(shortEMAGasKey)
 
 	if bz == nil {
 		return 0
 	}
 
-	currentAverageGas := sdk.NewInt(0)
-	if err := currentAverageGas.Unmarshal(bz); err != nil {
+	currentEMAGas := sdk.NewInt(0)
+	if err := currentEMAGas.Unmarshal(bz); err != nil {
 		panic(err)
 	}
-	return currentAverageGas.Int64()
+	return currentEMAGas.Int64()
 }
 
-// SetShortAverageGas sets average gas used by previous blocks, used as a representation of smoothed gas used by latest block
-func (k Keeper) SetShortAverageGas(ctx sdk.Context, currentAverageGas int64) {
+// SetShortEMAGas sets average gas used by previous blocks, used as a representation of smoothed gas used by latest block
+func (k Keeper) SetShortEMAGas(ctx sdk.Context, emaGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz, err := sdk.NewInt(currentAverageGas).Marshal()
+	bz, err := sdk.NewInt(emaGas).Marshal()
 	if err != nil {
 		panic(err)
 	}
 
-	store.Set(shortAverageGasKey, bz)
+	store.Set(shortEMAGasKey, bz)
 }
 
-// GetLongAverageGas retrieves long average gas used by previous blocks, used for determining average block load where maximum discount is applied
-func (k Keeper) GetLongAverageGas(ctx sdk.Context) int64 {
+// GetLongEMAGas retrieves long average gas used by previous blocks, used for determining average block load where maximum discount is applied
+func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(longAverageGasKey)
+	bz := store.Get(longEMAGasKey)
 
 	if bz == nil {
 		return 0
 	}
 
-	averageGas := sdk.NewInt(0)
-	if err := averageGas.Unmarshal(bz); err != nil {
+	emaGas := sdk.NewInt(0)
+	if err := emaGas.Unmarshal(bz); err != nil {
 		panic(err)
 	}
-	return averageGas.Int64()
+	return emaGas.Int64()
 }
 
-// SetLongAverageGas sets long average gas used by previous blocks, used for determining average block load where maximum discount is applied
-func (k Keeper) SetLongAverageGas(ctx sdk.Context, averageGas int64) {
+// SetLongEMAGas sets long average gas used by previous blocks, used for determining average block load where maximum discount is applied
+func (k Keeper) SetLongEMAGas(ctx sdk.Context, emaGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz, err := sdk.NewInt(averageGas).Marshal()
+	bz, err := sdk.NewInt(emaGas).Marshal()
 	if err != nil {
 		panic(err)
 	}
 
-	store.Set(longAverageGasKey, bz)
+	store.Set(longEMAGasKey, bz)
 }
 
 // GetMinGasPrice returns current minimum gas price required by the network
@@ -111,7 +134,7 @@ func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(gasPriceKey)
 	if bz == nil {
-		return k.initialGasPrice
+		return sdk.NewCoin(k.feeDenom, k.GetParams(ctx).InitialGasPrice)
 	}
 	var minGasPrice sdk.Coin
 	if err := minGasPrice.Unmarshal(bz); err != nil {

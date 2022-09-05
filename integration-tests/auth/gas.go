@@ -21,7 +21,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
 		sdk.NewInt(100),
@@ -37,7 +37,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	coredClient := chain.Client
 
-	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.MaxDiscount)).TruncateInt()
+	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.Params().MaxDiscount)).TruncateInt()
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   sender,
@@ -60,7 +60,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
 		sdk.NewInt(100),
@@ -100,8 +100,8 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 		testing.FundedAccount{
 			Wallet: sender,
 			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
-				uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas+1),
+				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+				uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas+1),
 				1,
 				sdk.NewInt(100),
 			), chain.NetworkConfig.TokenSymbol),
@@ -113,8 +113,8 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   sender,
-			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas + 1), // transaction requires more gas than block can fit
-			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas + 1), // transaction requires more gas than block can fit
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 		},
 		Sender:   sender,
 		Receiver: sender,
@@ -132,8 +132,8 @@ func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain test
 	sender := testing.RandomWallet()
 
 	initialBalance, err := types.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
-		uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
 		1,
 		sdk.NewInt(100),
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
@@ -151,8 +151,8 @@ func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain test
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   sender,
-			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.MaxBlockGas),
-			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 		},
 		Sender:   sender,
 		Receiver: sender,

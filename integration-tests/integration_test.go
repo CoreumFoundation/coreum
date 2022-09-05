@@ -157,7 +157,7 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 		}()
 	}
 
-	gasPrice, err := types.NewCoin(tf.networkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), tf.networkConfig.TokenSymbol)
+	gasPrice, err := types.NewCoin(tf.networkConfig.Fee.FeeModel.Params().InitialGasPrice.BigInt(), tf.networkConfig.TokenSymbol)
 	if err != nil {
 		return err
 	}
