@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,6 +17,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
@@ -74,28 +73,6 @@ func New(chainID app.ChainID, addr string) Client {
 		govQueryClient:     govtypes.NewQueryClient(clientCtx),
 		stakingQueryClient: stakingtypes.NewQueryClient(clientCtx),
 	}
-}
-
-// GetTotalSupply returns the total supply
-func (c Client) GetTotalSupply(ctx context.Context, denom string) (*sdk.Int, error) {
-	resp, err := c.bankQueryClient.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get total supply")
-	}
-
-	var totalSupply *sdk.Coin
-	for _, coin := range resp.Supply {
-		if coin.Denom == denom {
-			totalSupply = &coin
-			break
-		}
-	}
-
-	if totalSupply == nil {
-		return nil, errors.Errorf("total supply not found for %s", denom)
-	}
-
-	return &totalSupply.Amount, nil
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
