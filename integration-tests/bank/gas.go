@@ -27,7 +27,7 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 
 		amount := testing.MustNewIntFromString(t, "1000000000000")
 		fees := testing.ComputeNeededBalance(
-			chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+			chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 			chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 			numOfTransactions,
 			sdk.NewInt(0),
@@ -59,7 +59,7 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 		require.NoError(t, err)
 
 		var maxGasUsed int64
-		gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol)
+		gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol)
 		toSend := testing.MustNewCoin(t, amount, chain.NetworkConfig.TokenSymbol)
 		for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
 			gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed, gasPrice)
@@ -83,7 +83,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 	sender := testing.RandomWallet()
 
 	initialBalance := testing.MustNewCoin(t, testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 		1,
 		sdk.NewInt(10),
@@ -96,7 +96,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 		},
 	))
 
-	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol)
+	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol)
 	_, err := sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
 		testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
 		// declaring gas limit as maxGasAssumed-1 means that tx must fail

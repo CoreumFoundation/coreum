@@ -6,7 +6,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/x/auth"
-	"github.com/CoreumFoundation/coreum/x/feemodel"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 const (
@@ -29,7 +29,7 @@ var NetworkConfig = app.NetworkConfig{
 	AddressPrefix: "devcore",
 	TokenSymbol:   app.TokenSymbolDev,
 	Fee: app.FeeConfig{
-		FeeModel:         feemodel.DefaultModel(),
+		FeeModel:         feemodeltypes.DefaultModel(),
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	},
 	GovConfig: app.GovConfig{

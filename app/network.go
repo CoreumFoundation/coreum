@@ -22,7 +22,7 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/coreum/x/auth"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
-	"github.com/CoreumFoundation/coreum/x/feemodel"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 // ChainID represents predefined chain ID
@@ -58,7 +58,7 @@ var (
 
 func init() {
 	feeConfig := FeeConfig{
-		FeeModel:         feemodel.DefaultModel(),
+		FeeModel:         feemodeltypes.DefaultModel(),
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	}
 
@@ -140,7 +140,7 @@ var networks = map[ChainID]NetworkConfig{}
 
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
-	FeeModel         feemodel.Model
+	FeeModel         feemodeltypes.Model
 	DeterministicGas ante.DeterministicGasRequirements
 }
 
@@ -372,7 +372,7 @@ func (n Network) TokenSymbol() string {
 }
 
 // FeeModel returns fee model configuration
-func (n Network) FeeModel() feemodel.Model {
+func (n Network) FeeModel() feemodeltypes.Model {
 	return n.fee.FeeModel
 }
 
@@ -406,7 +406,7 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC           string
 		ChainID                  ChainID
 		TokenSymbol              string
-		MaxBlockGas              int64
+		FeeModelParams feemodeltypes.Params
 		ProposalMinDepositAmount string
 		ProposalMinDepositPeriod string
 		ProposalVotingPeriod     string
@@ -414,8 +414,7 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
-		// TODO: adjust MaxBlockGas before creating testnet & mainnet
-		MaxBlockGas:              n.fee.FeeModel.MaxBlockGas,
+		FeeModelParams: n.FeeModel().Params(),
 		ProposalMinDepositAmount: n.gov.ProposalConfig.MinDepositAmount,
 		ProposalMinDepositPeriod: n.gov.ProposalConfig.MinDepositPeriod,
 		ProposalVotingPeriod:     n.gov.ProposalConfig.VotingPeriod,
