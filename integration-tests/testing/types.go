@@ -13,13 +13,11 @@ import (
 // T is an interface representing test, accepted by `assert.*` and `require.*` packages
 type T interface {
 	require.TestingT
-	Cleanup(f func())
 }
 
 // Faucet defines an interface to fund testing accounts
 type Faucet interface {
 	FundAccounts(ctx context.Context, accountsToFund ...FundedAccount) error
-	CleanupAccounts(ctx context.Context, accountsToCleanup ...types.Wallet) error
 }
 
 // Chain holds network and client for the blockchain

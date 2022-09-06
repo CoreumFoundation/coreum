@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/base64"
 	"flag"
-	"math/big"
 	"reflect"
 	"regexp"
 	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -184,68 +182,6 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 		tf.fundingWallet.AccountSequence++
 	}
 	log.Info("Test accounts funded")
-
-	return nil
-}
-
-func (tf *testingFaucet) CleanupAccounts(ctx context.Context, accountsToCleanup ...types.Wallet) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-tf.muCh:
-		defer func() {
-			tf.muCh <- struct{}{}
-		}()
-	}
-
-	gasPrice, err := types.NewCoin(tf.networkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), tf.networkConfig.TokenSymbol)
-	if err != nil {
-		return err
-	}
-
-	log := logger.Get(ctx)
-	log.Info("Cleaning up accounts after test is done, it might take a while...")
-	for _, toCleanup := range accountsToCleanup {
-		// Get remaining balances first
-		remainingBalances, err := tf.client.QueryBankBalances(ctx, toCleanup)
-		if err != nil {
-			return err
-		}
-
-		remainingBalance, ok := remainingBalances[tf.networkConfig.TokenSymbol]
-		if !ok {
-			return errors.Errorf("balance is empty for %s", tf.networkConfig.TokenSymbol)
-		}
-
-		// Transfer coin to the funding account
-		remainingBalance.Amount = remainingBalance.Amount.Sub(
-			remainingBalance.Amount,
-			big.NewInt(0).Mul(
-				gasPrice.Amount,
-				big.NewInt(0).SetUint64(tf.networkConfig.Fee.DeterministicGas.BankSend),
-			),
-		)
-
-		// FIXME (wojtek): Clean up all accounts in single tx once new "client" is ready
-		encodedTx, err := tf.client.PrepareTxBankSend(ctx, client.TxBankSendInput{
-			Base: tx.BaseInput{
-				Signer:   toCleanup,
-				GasLimit: tf.networkConfig.Fee.DeterministicGas.BankSend,
-				GasPrice: gasPrice,
-			},
-			Sender:   toCleanup,
-			Receiver: tf.fundingWallet,
-			Amount:   remainingBalance,
-		})
-		if err != nil {
-			return err
-		}
-
-		if _, err := tf.client.Broadcast(ctx, encodedTx); err != nil {
-			return err
-		}
-	}
-	log.Info("Test accounts cleaned up")
 
 	return nil
 }

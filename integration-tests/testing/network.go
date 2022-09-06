@@ -10,8 +10,12 @@ import (
 )
 
 const (
-	MinDepositPeriod = time.Second * 5
-	MinVotingPeriod  = time.Second * 5
+	// MinDepositPeriod is the proposal deposit period duration. Deposit should be made together with the proposal
+	// so not needed to spend more time to make extra deposits.
+	MinDepositPeriod = time.Second / 2
+
+	// MinVotingPeriod is the proposal voting period duration
+	MinVotingPeriod = time.Second * 5
 )
 
 // NetworkConfig is the network config used by integration tests

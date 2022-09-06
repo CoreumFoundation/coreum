@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,11 +41,12 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx       client.Context
-	authQueryClient authtypes.QueryClient
-	bankQueryClient banktypes.QueryClient
-	govQueryClient  govtypes.QueryClient
-	wasmQueryClient wasmtypes.QueryClient
+	clientCtx          client.Context
+	authQueryClient    authtypes.QueryClient
+	bankQueryClient    banktypes.QueryClient
+	govQueryClient     govtypes.QueryClient
+	wasmQueryClient    wasmtypes.QueryClient
+	stakingQueryClient stakingtypes.QueryClient
 }
 
 // New creates new client for cored
@@ -64,11 +67,12 @@ func New(chainID app.ChainID, addr string) Client {
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 	return Client{
-		clientCtx:       clientCtx,
-		authQueryClient: authtypes.NewQueryClient(clientCtx),
-		bankQueryClient: banktypes.NewQueryClient(clientCtx),
-		wasmQueryClient: wasmtypes.NewQueryClient(clientCtx),
-		govQueryClient:  govtypes.NewQueryClient(clientCtx),
+		clientCtx:          clientCtx,
+		authQueryClient:    authtypes.NewQueryClient(clientCtx),
+		bankQueryClient:    banktypes.NewQueryClient(clientCtx),
+		wasmQueryClient:    wasmtypes.NewQueryClient(clientCtx),
+		govQueryClient:     govtypes.NewQueryClient(clientCtx),
+		stakingQueryClient: stakingtypes.NewQueryClient(clientCtx),
 	}
 }
 
