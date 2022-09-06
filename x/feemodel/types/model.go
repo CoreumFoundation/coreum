@@ -36,7 +36,7 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 		// be cautious: this function panics if shortEMA == m.EscalationStartBlockGas, that's why that case is not served here
 		return m.calculateNextGasPriceInEscalationRegion(shortEMA)
 	case shortEMA >= longEMA:
-		return m.computeGasPriceWithMaxDiscount()
+		return m.CalculateGasPriceWithMaxDiscount()
 	case longEMA > 0:
 		// be cautious: this function panics if longEMA == 0, that's why that case is not served here
 		return m.calculateNextGasPriceInDiscountRegion(shortEMA, longEMA)
@@ -45,8 +45,13 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 	}
 }
 
+// CalculateGasPriceWithMaxDiscount calculates gas price with maximum discount applied
+func (m Model) CalculateGasPriceWithMaxDiscount() sdk.Int {
+	return m.params.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(m.params.MaxDiscount)).TruncateInt()
+}
+
 func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
-	gasPriceWithMaxDiscount := m.computeGasPriceWithMaxDiscount()
+	gasPriceWithMaxDiscount := m.CalculateGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
@@ -59,7 +64,7 @@ func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
 }
 
 func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int64) sdk.Int {
-	gasPriceWithMaxDiscount := m.computeGasPriceWithMaxDiscount()
+	gasPriceWithMaxDiscount := m.CalculateGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
@@ -69,10 +74,6 @@ func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int
 
 	offset := height.Mul(x.Quo(width).Sub(sdk.OneDec()).Abs().Power(exponent)).TruncateInt()
 	return gasPriceWithMaxDiscount.Add(offset)
-}
-
-func (m Model) computeGasPriceWithMaxDiscount() sdk.Int {
-	return m.params.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(m.params.MaxDiscount)).TruncateInt()
 }
 
 // CalculateEMA calculates next EMA value
