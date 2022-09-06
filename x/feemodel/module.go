@@ -155,7 +155,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	currentGasUsage := am.keeper.TrackedGas(ctx)
 	params := am.keeper.GetParams(ctx)
 	model := types.NewModel(params)
-	oldMinGasPrice := am.keeper.GetMinGasPrice(ctx)
+	previousMinGasPrice := am.keeper.GetMinGasPrice(ctx)
 
 	newShortEMA := types.CalculateEMA(am.keeper.GetShortEMAGas(ctx), currentGasUsage,
 		params.ShortEmaBlockLength)
@@ -166,7 +166,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 
 	am.keeper.SetShortEMAGas(ctx, newShortEMA)
 	am.keeper.SetLongEMAGas(ctx, newLongEMA)
-	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(oldMinGasPrice.Denom, newMinGasPrice))
+	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(previousMinGasPrice.Denom, newMinGasPrice))
 
 	return []abci.ValidatorUpdate{}
 }
