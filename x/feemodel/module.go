@@ -1,6 +1,7 @@
 package feemodel
 
 import (
+	"context"
 	"encoding/json"
 	"math/rand"
 
@@ -15,7 +16,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/CoreumFoundation/coreum/x/feemodel/client/cli"
+	"github.com/CoreumFoundation/coreum/x/feemodel/client/rest"
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -64,10 +69,15 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 }
 
 // RegisterRESTRoutes registers the REST routes for the fee module.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {}
+func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
+	rest.RegisterHandlers(clientCtx, rtr)
+}
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the fee module.
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	//nolint:errcheck // Welcome to Cosmos SDK
+	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+}
 
 // GetTxCmd returns the root tx command for the fee module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
@@ -76,7 +86,7 @@ func (AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // GetQueryCmd returns no root query command for the fee module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return nil
+	return cli.GetQueryCmd()
 }
 
 // RegisterInterfaces registers interfaces and implementations of the fee module.
@@ -90,7 +100,9 @@ type AppModule struct {
 }
 
 // RegisterServices registers module services.
-func (am AppModule) RegisterServices(cfg module.Configurator) {}
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterQueryServer(cfg.QueryServer(), keeperToQueryServer{keeper: am.keeper})
+}
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(keeper Keeper) AppModule {
@@ -109,7 +121,7 @@ func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 func (am AppModule) Route() sdk.Route { return sdk.Route{} }
 
 // QuerierRoute returns the fee module's querier route name.
-func (AppModule) QuerierRoute() string { return "" }
+func (AppModule) QuerierRoute() string { return types.RouterKey }
 
 // LegacyQuerierHandler returns the fee module sdk.Querier.
 func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
@@ -192,4 +204,28 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
+}
+
+type keeperToQueryServer struct {
+	keeper Keeper
+}
+
+func (k keeperToQueryServer) MinGasPrice(ctx context.Context, req *types.QueryMinGasPriceRequest) (*types.QueryMinGasPriceResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	return &types.QueryMinGasPriceResponse{
+		MinGasPrice: k.keeper.GetMinGasPrice(sdk.UnwrapSDKContext(ctx)),
+	}, nil
+}
+
+func (k keeperToQueryServer) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	return &types.QueryParamsResponse{
+		Params: k.keeper.GetParams(sdk.UnwrapSDKContext(ctx)),
+	}, nil
 }
