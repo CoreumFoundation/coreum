@@ -36,12 +36,11 @@ const (
 
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
-const clientProtocols = "tcp,http,https"
-
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) Client {
+	clientProtocols := []string{"tcp", "http", "https"}
 	found := false
-	for _, protocol := range strings.Split(clientProtocols, ",") {
+	for _, protocol := range clientProtocols {
 		if strings.HasPrefix(addr, protocol+"://") {
 			found = true
 		}
