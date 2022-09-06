@@ -4,8 +4,8 @@ The doc describes the **coreum** CLI command for the multisig accounts.
 
 # Multisig CLI sample
 
-The sample below describes the full from the creation of the multisig account to the tx broadcast.
-The commands should be executed using the built coreum artifact. The current use case uses the "coredev-00" as it.
+The sample below describes the full flow of the creation of the multisig account to the tx broadcast.
+The commands should be executed using the built **cored** artifact. The current use case uses the "coredev-00" as it.
 
 * Generate 3 new keys
 
@@ -50,7 +50,7 @@ coredev-00 tx bank send alice $(coredev-00 keys show --address k1k2k3) 100000000
 * Check the tx status
 
 ```
-coredev-00 q tx "the-tx-has"
+coredev-00 q tx "tx-hash"
 ```
 
 The code should be 0.
@@ -121,7 +121,7 @@ coredev-00 tx broadcast bank-signed-tx.json
 * Check the tx status
 
 ```
-coredev-00 q tx "the-tx-has"
+coredev-00 q tx "tx-hash"
 ```
 
 should be 0
