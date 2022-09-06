@@ -47,13 +47,13 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Prepare initial balances
 	proposerInitialBalance := testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		getGasLimit(chain),
 		1,
 		sdk.NewInt(20000000000),
 	)
 	voterInitialBalance := testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		getGasLimit(chain),
 		3,
 		voterDelegateAmount,
@@ -204,7 +204,7 @@ func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain
 }
 
 func getBaseTransactionFee(chain testing.Chain) sdk.Int {
-	return chain.NetworkConfig.Fee.FeeModel.InitialGasPrice.Mul(
+	return chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice.Mul(
 		sdk.NewIntFromUint64(getGasLimit(chain)),
 	)
 }
@@ -213,7 +213,7 @@ func buildBase(t testing.T, chain testing.Chain, signer types.Wallet) tx.BaseInp
 	return tx.BaseInput{
 		Signer:   signer,
 		GasLimit: getGasLimit(chain),
-		GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+		GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 	}
 }
 
