@@ -12,20 +12,14 @@ import (
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
-var genesis = types.GenesisState{
-	Params: types.Params{
-		InitialGasPrice:         sdk.NewInt(15),
-		MaxGasPrice:             sdk.NewInt(150),
-		MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
-		EscalationStartBlockGas: 7,
-		MaxBlockGas:             10,
-		ShortEmaBlockLength:     1,
-		LongEmaBlockLength:      3,
-	},
-	MinGasPrice: sdk.NewCoin("coin", sdk.NewInt(155)),
+func newKeeperMock(genesis types.GenesisState) keeperMock {
+	return keeperMock{
+		genesis: genesis,
+	}
 }
 
 type keeperMock struct {
+	genesis types.GenesisState
 }
 
 func (k keeperMock) TrackedGas(ctx sdk.Context) int64 {
@@ -37,7 +31,7 @@ func (k keeperMock) SetParams(ctx sdk.Context, params types.Params) {
 }
 
 func (k keeperMock) GetParams(ctx sdk.Context) types.Params {
-	return genesis.Params
+	return k.genesis.Params
 }
 
 func (k keeperMock) GetShortEMAGas(ctx sdk.Context) int64 {
@@ -57,7 +51,7 @@ func (k keeperMock) SetLongEMAGas(ctx sdk.Context, emaGas int64) {
 }
 
 func (k keeperMock) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
-	return genesis.MinGasPrice
+	return k.genesis.MinGasPrice
 }
 
 func (k keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin) {
@@ -65,9 +59,22 @@ func (k keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin) {
 }
 
 func TestExport(t *testing.T) {
+	genesis := types.GenesisState{
+		Params: types.Params{
+			InitialGasPrice:         sdk.NewInt(15),
+			MaxGasPrice:             sdk.NewInt(150),
+			MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
+			EscalationStartBlockGas: 7,
+			MaxBlockGas:             10,
+			ShortEmaBlockLength:     1,
+			LongEmaBlockLength:      3,
+		},
+		MinGasPrice: sdk.NewCoin("coin", sdk.NewInt(155)),
+	}
+
 	cdc := app.NewEncodingConfig().Marshaler
 
-	module := feemodel.NewAppModule(keeperMock{})
+	module := feemodel.NewAppModule(newKeeperMock(genesis))
 	encodedGenesis := module.ExportGenesis(sdk.Context{}, cdc)
 
 	var decodedGenesis types.GenesisState
