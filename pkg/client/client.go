@@ -46,7 +46,7 @@ func New(chainID app.ChainID, addr string) Client {
 		}
 	}
 	if !found {
-		panic(errors.Errorf("the address %q contains not supported propol, supported are: %q", addr, clientProtocols))
+		panic(errors.Errorf("the address %q contains not supported protocol, supported are: %q", addr, clientProtocols))
 	}
 
 	rpcClient, err := client.NewClientFromNode(addr)
