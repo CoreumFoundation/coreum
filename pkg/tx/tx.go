@@ -2,13 +2,27 @@ package tx
 
 import (
 	"context"
+	"encoding/hex"
+	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/pkg/errors"
+	"github.com/tendermint/tendermint/mempool"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+)
+
+var (
+	txTimeout            = time.Minute
+	txStatusPollInterval = 500 * time.Millisecond
+	requestTimeout       = 10 * time.Second
 )
 
 // Factory is a re-export of the cosmos sdk tx.Factory type, to make usage of this package more convenient.
@@ -60,16 +74,21 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 		return sdk.NewResponseFormatBroadcastTx(res), nil
 
 	case flags.BroadcastBlock:
-		res, err := clientCtx.Client.BroadcastTxCommit(ctx, txBytes)
+		res, err := clientCtx.Client.BroadcastTxSync(ctx, txBytes)
 		if err != nil {
 			return nil, err
 		}
-		return sdk.NewResponseFormatBroadcastTxCommit(res), nil
+
+		awaitRes, err := AwaitTx(ctx, clientCtx, res.Hash.String())
+		if err != nil {
+			return nil, err
+		}
+
+		return sdk.NewResponseResultTx(awaitRes, nil, ""), nil
 
 	default:
 		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode)
 	}
-
 }
 
 func prepareFactory(ctx context.Context, clientCtx client.Context, txf tx.Factory) (tx.Factory, error) {
@@ -107,4 +126,110 @@ func GetAccountInfo(
 	}
 
 	return acc, nil
+}
+
+// AwaitTx awaits until a signed transaction is included in a block, returning the result.
+func AwaitTx(
+	ctx context.Context,
+	clientCtx client.Context,
+	txHash string,
+) (resultTx *coretypes.ResultTx, err error) {
+	txHashBytes, err := hex.DecodeString(txHash)
+	if err != nil {
+		err = errors.Wrap(err, "tx hash is not a valid hex")
+		return nil, err
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
+	defer cancel()
+
+	if err = retry.Do(timeoutCtx, txStatusPollInterval, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+		defer cancel()
+
+		var err error
+		resultTx, err = clientCtx.Client.Tx(requestCtx, txHashBytes, false)
+		if err != nil {
+			if errors.Is(err, requestCtx.Err()) {
+				return retry.Retryable(errors.WithStack(err))
+			}
+
+			if errRes := checkTendermintError(err, txHash); errRes != nil {
+				if isTxInMempool(errRes) {
+					return retry.Retryable(errors.WithStack(err))
+				}
+				return errors.WithStack(err)
+			}
+
+			return retry.Retryable(errors.WithStack(err))
+		}
+
+		if resultTx.TxResult.Code != 0 {
+			res := resultTx.TxResult
+			return errors.Wrapf(sdkerrors.New(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
+		}
+
+		if resultTx.Height == 0 {
+			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return resultTx, nil
+}
+
+// checkTendermintError checks if the error returned from BroadcastTx is a
+// Tendermint error that is returned before the tx is submitted due to
+// precondition checks that failed. If an Tendermint error is detected, this
+// function returns the correct code back in TxResponse.
+//
+// NOTE: copy paste from Cosmos SDK! To avoid hassle getting the tx hash.
+// copied from https://github.com/cosmos/cosmos-sdk/blob/069514e4d607718995a4c8c4dc02785cbbccf752/client/broadcast.go#L49
+func checkTendermintError(err error, txHash string) *sdk.TxResponse {
+	if err == nil {
+		return nil
+	}
+
+	errStr := strings.ToLower(err.Error())
+
+	switch {
+	case strings.Contains(errStr, strings.ToLower(mempool.ErrTxInCache.Error())):
+		return &sdk.TxResponse{
+			Code:      sdkerrors.ErrTxInMempoolCache.ABCICode(),
+			Codespace: sdkerrors.ErrTxInMempoolCache.Codespace(),
+			TxHash:    txHash,
+		}
+
+	case strings.Contains(errStr, "mempool is full"):
+		return &sdk.TxResponse{
+			Code:      sdkerrors.ErrMempoolIsFull.ABCICode(),
+			Codespace: sdkerrors.ErrMempoolIsFull.Codespace(),
+			TxHash:    txHash,
+		}
+
+	case strings.Contains(errStr, "tx too large"):
+		return &sdk.TxResponse{
+			Code:      sdkerrors.ErrTxTooLarge.ABCICode(),
+			Codespace: sdkerrors.ErrTxTooLarge.Codespace(),
+			TxHash:    txHash,
+		}
+
+	default:
+		return nil
+	}
+}
+
+func isTxInMempool(errRes *sdk.TxResponse) bool {
+	if errRes == nil {
+		return false
+	}
+	return isSDKErrorResult(errRes.Codespace, errRes.Code, sdkerrors.ErrTxInMempoolCache)
+}
+
+func isSDKErrorResult(codespace string, code uint32, expectedSDKError *sdkerrors.Error) bool {
+	return codespace == expectedSDKError.Codespace() &&
+		code == expectedSDKError.ABCICode()
 }
