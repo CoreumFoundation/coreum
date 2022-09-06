@@ -406,15 +406,15 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC           string
 		ChainID                  ChainID
 		TokenSymbol              string
-		FeeModelParams feemodeltypes.Params
+		FeeModelParams           feemodeltypes.Params
 		ProposalMinDepositAmount string
 		ProposalMinDepositPeriod string
 		ProposalVotingPeriod     string
 	}{
-		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
-		ChainID:        n.chainID,
-		TokenSymbol:    n.tokenSymbol,
-		FeeModelParams: n.FeeModel().Params(),
+		GenesisTimeUTC:           n.genesisTime.UTC().Format(time.RFC3339),
+		ChainID:                  n.chainID,
+		TokenSymbol:              n.tokenSymbol,
+		FeeModelParams:           n.FeeModel().Params(),
 		ProposalMinDepositAmount: n.gov.ProposalConfig.MinDepositAmount,
 		ProposalMinDepositPeriod: n.gov.ProposalConfig.MinDepositPeriod,
 		ProposalVotingPeriod:     n.gov.ProposalConfig.VotingPeriod,
