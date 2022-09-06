@@ -43,14 +43,14 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	for _, validator := range validators {
 		totalDelegated = totalDelegated.Add(validator.Tokens)
 	}
-	voterDelegateAmount := totalDelegated.MulRaw(51).QuoRaw(100).QuoRaw(2)
+	voterDelegateAmount := totalDelegated.MulRaw(52).QuoRaw(100).QuoRaw(2)
 
 	// Prepare initial balances
 	proposerInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		getGasLimit(chain),
 		1,
-		sdk.NewInt(20000000000),
+		sdk.NewInt(11000000),
 	)
 	voterInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
