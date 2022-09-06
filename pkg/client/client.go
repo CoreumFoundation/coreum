@@ -36,15 +36,18 @@ const (
 
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
+const clientProtocols = "tcp,http,https"
+
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) Client {
-	switch {
-	case strings.HasPrefix(addr, "tcp://"),
-		strings.HasPrefix(addr, "http://"),
-		strings.HasPrefix(addr, "https://"):
-	default:
-		// FIXME (dhil) - temp fix, to be compatible with the current crust version, will be remove later.
-		addr = "tcp://" + addr
+	found := false
+	for _, protocol := range strings.Split(clientProtocols, ",") {
+		if strings.HasPrefix(addr, protocol+"://") {
+			found = true
+		}
+	}
+	if !found {
+		panic(errors.Errorf("the address %q contains not supported propol, supported are: %q", addr, clientProtocols))
 	}
 
 	rpcClient, err := client.NewClientFromNode(addr)
