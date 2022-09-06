@@ -11,7 +11,7 @@ import (
 
 const (
 	// MinDepositAmount is the minimum proposal deposit amount to be collected in order to activate it.
-	MinDepositAmount = "10000000"
+	MinDepositAmount = 10000000
 
 	// MinDepositPeriod is the proposal deposit period duration. Deposit should be made together with the proposal
 	// so not needed to spend more time to make extra deposits.
@@ -34,7 +34,7 @@ var NetworkConfig = app.NetworkConfig{
 	},
 	GovConfig: app.GovConfig{
 		ProposalConfig: app.GovProposalConfig{
-			MinDepositAmount: MinDepositAmount,
+			MinDepositAmount: fmt.Sprintf("%d", MinDepositAmount),
 			MinDepositPeriod: fmt.Sprintf("%ds", int(MinDepositPeriod.Seconds())),
 			VotingPeriod:     fmt.Sprintf("%ds", int(MinVotingPeriod.Seconds())),
 		},

@@ -2,6 +2,8 @@ package gov
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -50,7 +52,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		getGasLimit(chain),
 		1,
-		sdk.NewInt(11000000),
+		sdk.NewInt(testing.MinDepositAmount),
 	)
 	voterInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
@@ -79,7 +81,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	delegateCoins(ctx, t, chain, voter2, valAddress, delegateAmount)
 
 	// Submit a param change proposal
-	initialDeposit := testing.MustNewCoin(t, sdk.NewInt(10000000), chain.NetworkConfig.TokenSymbol)
+	initialDeposit := testing.MustNewCoin(t, sdk.NewInt(testing.MinDepositAmount), chain.NetworkConfig.TokenSymbol)
 	txBytes, err := coredClient.PrepareTxSubmitProposal(ctx, client.TxSubmitProposalInput{
 		Base:           buildBase(t, chain, proposer),
 		Proposer:       proposer,
@@ -192,6 +194,9 @@ func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain
 		default:
 			proposal, err := coredClient.GetProposal(ctx, proposalID)
 			require.NoError(t, err)
+
+			proposalRaw, _ := json.Marshal(proposal)
+			fmt.Println(string(proposalRaw))
 
 			if proposal.Status == status {
 				return proposal
