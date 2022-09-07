@@ -12,6 +12,7 @@ import (
 func Tests() testing.TestSet {
 	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
+			gov.TestProposalParamChange,
 			auth.TestUnexpectedSequenceNumber,
 			auth.TestTooLowGasPrice,
 			auth.TestNoFee,
@@ -20,7 +21,6 @@ func Tests() testing.TestSet {
 			bank.TestInitialBalance,
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
-			gov.TestProposalParamChange,
 			wasm.TestSimpleStateWasmContract,
 			wasm.TestBankSendWasmContract,
 		},
