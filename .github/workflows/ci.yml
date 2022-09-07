@@ -22,5 +22,5 @@ jobs:
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint, run unit tests and build
         run: crust lint test build --log-format=yaml
-      # - name: Execute integration tests
-      #   run: crust znet test --log-format=yaml
+      - name: Execute integration tests
+        run: crust znet test --log-format=yaml
