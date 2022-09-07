@@ -105,7 +105,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	require.NoError(t, err)
 	assert.Equal(t,
 		proposerInitialBalance.Sub(getBaseTransactionFee(chain)).Sub(sdk.NewIntFromBigInt(initialDeposit.Amount)).BigInt(),
-		balancesProposer[chain.NetworkConfig.TokenSymbol].Amount,
+		big.NewInt(0).Set(balancesProposer[chain.NetworkConfig.TokenSymbol].Amount),
 	)
 
 	logger.Get(ctx).Info("Proposal has been submitted", zap.String("txHash", result.TxHash))
