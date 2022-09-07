@@ -355,9 +355,7 @@ func New(
 	)
 
 	app.FeeModelKeeper = feemodelkeeper.NewKeeper(
-		app.GetSubspace(feemodeltypes.ModuleName),
-		// FIXME (wojtek): store denom in genesis
-		ChosenNetwork.TokenSymbol(),
+		app.GetSubspace(feemodeltypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&feemodeltypes.Params{})),
 		keys[feemodeltypes.StoreKey],
 		tkeys[feemodeltypes.TransientStoreKey],
 	)
