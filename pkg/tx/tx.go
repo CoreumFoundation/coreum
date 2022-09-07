@@ -99,7 +99,7 @@ func broadcastTxCommit(ctx context.Context, clientCtx client.Context, encodedTx 
 			return nil, errors.WithStack(err)
 		}
 	} else if res.Code != 0 {
-		return nil, errors.Wrapf(sdkerrors.New(res.Codespace, res.Code, res.Log),
+		return nil, errors.Wrapf(sdkerrors.ABCIError(res.Codespace, res.Code, res.Log),
 			"transaction '%s' failed", txHash)
 	}
 
