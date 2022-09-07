@@ -29,16 +29,13 @@ const (
 
 // TestProposalParamChange checks that param change proposal works correctly
 func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
-	// Create client so we can send transactions and query state
-	coredClient := chain.Client
-
 	// Create two random wallets
 	proposer := testing.RandomWallet()
 	voter1 := testing.RandomWallet()
 	voter2 := testing.RandomWallet()
 
 	// Calculate a voter balance based on min amount to be delegated
-	validators, err := coredClient.GetValidators(ctx)
+	validators, err := chain.Client.GetValidators(ctx)
 	require.NoError(t, err)
 	require.NotEmpty(t, validators)
 	totalDelegated := sdk.NewInt(0)
@@ -82,7 +79,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Submit a param change proposal
 	initialDeposit := testing.MustNewCoin(t, sdk.NewInt(testing.MinDepositAmount), chain.NetworkConfig.TokenSymbol)
-	txBytes, err := coredClient.PrepareTxSubmitProposal(ctx, client.TxSubmitProposalInput{
+	txBytes, err := chain.Client.PrepareTxSubmitProposal(ctx, client.TxSubmitProposalInput{
 		Base:           buildBase(t, chain, proposer),
 		Proposer:       proposer,
 		InitialDeposit: initialDeposit,
@@ -95,13 +92,13 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 		),
 	})
 	require.NoError(t, err)
-	result, err := coredClient.Broadcast(ctx, txBytes)
+	result, err := chain.Client.Broadcast(ctx, txBytes)
 	require.NoError(t, err)
-	proposal, err := coredClient.GetProposalByTx(ctx, result.TxHash)
+	proposal, err := chain.Client.GetProposalByTx(ctx, result.TxHash)
 	require.NoError(t, err)
 
 	// Check proposer balance
-	balancesProposer, err := coredClient.QueryBankBalances(ctx, proposer)
+	balancesProposer, err := chain.Client.QueryBankBalances(ctx, proposer)
 	require.NoError(t, err)
 	if balance, ok := balancesProposer[chain.NetworkConfig.TokenSymbol]; ok {
 		assert.Equal(t,
@@ -135,37 +132,34 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 }
 
 func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delegator types.Wallet, validator sdk.ValAddress, amount types.Coin) {
-	coredClient := chain.Client
-	txBytes, err := coredClient.PrepareTxSubmitDelegation(ctx, client.TxSubmitDelegationInput{
+	txBytes, err := chain.Client.PrepareTxSubmitDelegation(ctx, client.TxSubmitDelegationInput{
 		Base:      buildBase(t, chain, delegator),
 		Delegator: delegator,
 		Validator: validator,
 		Amount:    amount,
 	})
 	require.NoError(t, err)
-	_, err = coredClient.Broadcast(ctx, txBytes)
+	_, err = chain.Client.Broadcast(ctx, txBytes)
 	require.NoError(t, err)
 }
 
 func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter types.Wallet, option govtypes.VoteOption, proposalID uint64) {
-	coredClient := chain.Client
-
 	// Query voter initial balance
-	initialBalances, err := coredClient.QueryBankBalances(ctx, voter)
+	initialBalances, err := chain.Client.QueryBankBalances(ctx, voter)
 	require.NoError(t, err)
 
-	txBytes, err := coredClient.PrepareTxSubmitProposalVote(ctx, client.TxSubmitProposalVoteInput{
+	txBytes, err := chain.Client.PrepareTxSubmitProposalVote(ctx, client.TxSubmitProposalVoteInput{
 		Base:       buildBase(t, chain, voter),
 		Voter:      voter,
 		ProposalID: proposalID,
 		Option:     option,
 	})
 	require.NoError(t, err)
-	_, err = coredClient.Broadcast(ctx, txBytes)
+	_, err = chain.Client.Broadcast(ctx, txBytes)
 	require.NoError(t, err)
 
 	// Check vote
-	votes, err := coredClient.QueryProposalVotes(ctx, proposalID)
+	votes, err := chain.Client.QueryProposalVotes(ctx, proposalID)
 	require.NoError(t, err)
 	voterVotes, ok := votes[voter.Key.Address()]
 	require.True(t, ok)
@@ -174,7 +168,7 @@ func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter t
 	require.Equal(t, voterVotes[0].Weight, sdk.NewDec(1))
 
 	// Query wallets for current balance
-	finalBalances, err := coredClient.QueryBankBalances(ctx, voter)
+	finalBalances, err := chain.Client.QueryBankBalances(ctx, voter)
 	require.NoError(t, err)
 
 	// Check balance
