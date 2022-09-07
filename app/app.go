@@ -354,9 +354,13 @@ func New(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
-	// FIXME (wojtek): store denom in genesis
-	app.FeeModelKeeper = feemodelkeeper.NewKeeper(sdk.NewCoin(ChosenNetwork.TokenSymbol(), ChosenNetwork.FeeModel().InitialGasPrice),
-		keys[feemodeltypes.StoreKey], tkeys[feemodeltypes.TransientStoreKey])
+	app.FeeModelKeeper = feemodelkeeper.NewKeeper(
+		app.GetSubspace(feemodeltypes.ModuleName),
+		// FIXME (wojtek): store denom in genesis
+		ChosenNetwork.TokenSymbol(),
+		keys[feemodeltypes.StoreKey],
+		tkeys[feemodeltypes.TransientStoreKey],
+	)
 
 	// ... other modules keepers
 
@@ -453,7 +457,10 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	feeModule := feemodel.NewAppModule(appCodec, app.FeeModelKeeper, ChosenNetwork.TokenSymbol(), ChosenNetwork.FeeModel())
+	feeModule := feemodel.NewAppModule(
+		app.FeeModelKeeper,
+		ChosenNetwork.TokenSymbol(),
+	)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -778,6 +785,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
+	paramsKeeper.Subspace(feemodeltypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

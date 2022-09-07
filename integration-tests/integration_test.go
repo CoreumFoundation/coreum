@@ -32,7 +32,7 @@ var cfg = config{
 func TestMain(m *testing.M) {
 	var coredAddress, fundingPrivKey, logFormat, filter string
 
-	flag.StringVar(&coredAddress, "cored-address", "localhost:26657", "Address of cored node started by znet")
+	flag.StringVar(&coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
 	flag.StringVar(&fundingPrivKey, "priv-key", "LPIPcUDVpp8Cn__g-YMntGts-DfDbd2gKTcgUgqSLfY", "Base64-encoded private key used to fund accounts required by tests")
 	flag.StringVar(&filter, "filter", "", "Regular expression used to run only a subset of tests")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
@@ -157,7 +157,7 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 		}()
 	}
 
-	gasPrice, err := types.NewCoin(tf.networkConfig.Fee.FeeModel.InitialGasPrice.BigInt(), tf.networkConfig.TokenSymbol)
+	gasPrice, err := types.NewCoin(tf.networkConfig.Fee.FeeModel.Params().InitialGasPrice.BigInt(), tf.networkConfig.TokenSymbol)
 	if err != nil {
 		return err
 	}

@@ -14,6 +14,8 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
+// FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
+
 // TestInitialBalance checks that initial balance is set by genesis block
 func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create new random wallet
@@ -45,7 +47,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 		testing.FundedAccount{
 			Wallet: sender,
 			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.InitialGasPrice,
+				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 				1,
 				sdk.NewInt(100),
@@ -65,7 +67,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 		},
 		Sender:   sender,
 		Receiver: receiver,
