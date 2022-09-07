@@ -18,7 +18,7 @@ const (
 	MinDepositPeriod = time.Second / 2
 
 	// MinVotingPeriod is the proposal voting period duration
-	MinVotingPeriod = time.Second * 5
+	MinVotingPeriod = time.Second * 10
 )
 
 // NetworkConfig is the network config used by integration tests
