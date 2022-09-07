@@ -3,6 +3,7 @@ package tx
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/mempool"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 )
@@ -30,9 +32,9 @@ var (
 type Factory = tx.Factory
 
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
-// given set of messages. It will also simulate gas requirements if necessary.
-// It will return an error upon failure.
-// NOTE: copied from the link below and made some changes
+// given set of messages. It will return an error upon failure.
+// NOTE: copied from the link below and made some changes.
+// the main idea is to add context.Context to the signature and use it
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 // TODO: add test to check if client respects ctx.
 func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
@@ -74,25 +76,43 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 		return sdk.NewResponseFormatBroadcastTx(res), nil
 
 	case flags.BroadcastBlock:
-		res, err := clientCtx.Client.BroadcastTxSync(ctx, txBytes)
-		if err != nil {
-			return nil, err
-		}
-
-		awaitRes, err := AwaitTx(ctx, clientCtx, res.Hash.String())
-		if err != nil {
-			return nil, err
-		}
-
-		return sdk.NewResponseResultTx(awaitRes, nil, ""), nil
+		return broadcastTxCommit(ctx, clientCtx, txBytes)
 
 	default:
 		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode)
 	}
 }
 
+// broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block
+func broadcastTxCommit(ctx context.Context, clientCtx client.Context, encodedTx []byte) (*sdk.TxResponse, error) {
+	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	defer cancel()
+
+	txHash := fmt.Sprintf("%X", tmtypes.Tx(encodedTx).Hash())
+	res, err := clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
+	if err != nil {
+		if errors.Is(err, requestCtx.Err()) {
+			return nil, errors.WithStack(err)
+		}
+
+		if err := convertTendermintError(err); !sdkerrors.ErrTxInMempoolCache.Is(err) {
+			return nil, errors.WithStack(err)
+		}
+	} else if res.Code != 0 {
+		return nil, errors.Wrapf(sdkerrors.New(res.Codespace, res.Code, res.Log),
+			"transaction '%s' failed", txHash)
+	}
+
+	awaitRes, err := AwaitTx(ctx, clientCtx, txHash)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return sdk.NewResponseResultTx(awaitRes, nil, ""), nil
+}
+
 func prepareFactory(ctx context.Context, clientCtx client.Context, txf tx.Factory) (tx.Factory, error) {
-	if txf.AccountNumber() == 0 || txf.Sequence() == 0 {
+	if txf.AccountNumber() == 0 && txf.Sequence() == 0 {
 		acc, err := GetAccountInfo(ctx, clientCtx, clientCtx.GetFromAddress())
 		if err != nil {
 			return txf, err
@@ -136,8 +156,7 @@ func AwaitTx(
 ) (resultTx *coretypes.ResultTx, err error) {
 	txHashBytes, err := hex.DecodeString(txHash)
 	if err != nil {
-		err = errors.Wrap(err, "tx hash is not a valid hex")
-		return nil, err
+		return nil, errors.Wrap(err, "tx hash is not a valid hex")
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
@@ -150,17 +169,6 @@ func AwaitTx(
 		var err error
 		resultTx, err = clientCtx.Client.Tx(requestCtx, txHashBytes, false)
 		if err != nil {
-			if errors.Is(err, requestCtx.Err()) {
-				return retry.Retryable(errors.WithStack(err))
-			}
-
-			if errRes := checkTendermintError(err, txHash); errRes != nil {
-				if isTxInMempool(errRes) {
-					return retry.Retryable(errors.WithStack(err))
-				}
-				return errors.WithStack(err)
-			}
-
 			return retry.Retryable(errors.WithStack(err))
 		}
 
@@ -181,55 +189,23 @@ func AwaitTx(
 	return resultTx, nil
 }
 
-// checkTendermintError checks if the error returned from BroadcastTx is a
-// Tendermint error that is returned before the tx is submitted due to
-// precondition checks that failed. If an Tendermint error is detected, this
-// function returns the correct code back in TxResponse.
-//
-// NOTE: copy paste from Cosmos SDK! To avoid hassle getting the tx hash.
-// copied from https://github.com/cosmos/cosmos-sdk/blob/069514e4d607718995a4c8c4dc02785cbbccf752/client/broadcast.go#L49
-func checkTendermintError(err error, txHash string) *sdk.TxResponse {
+// the idea behind this function is to map it similar to cosmos sdk does it in the link below
+// so the users can match against cosmos sdk error types.
+// https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/broadcast.go#L49
+func convertTendermintError(err error) error {
 	if err == nil {
 		return nil
 	}
-
 	errStr := strings.ToLower(err.Error())
 
 	switch {
 	case strings.Contains(errStr, strings.ToLower(mempool.ErrTxInCache.Error())):
-		return &sdk.TxResponse{
-			Code:      sdkerrors.ErrTxInMempoolCache.ABCICode(),
-			Codespace: sdkerrors.ErrTxInMempoolCache.Codespace(),
-			TxHash:    txHash,
-		}
-
-	case strings.Contains(errStr, "mempool is full"):
-		return &sdk.TxResponse{
-			Code:      sdkerrors.ErrMempoolIsFull.ABCICode(),
-			Codespace: sdkerrors.ErrMempoolIsFull.Codespace(),
-			TxHash:    txHash,
-		}
-
-	case strings.Contains(errStr, "tx too large"):
-		return &sdk.TxResponse{
-			Code:      sdkerrors.ErrTxTooLarge.ABCICode(),
-			Codespace: sdkerrors.ErrTxTooLarge.Codespace(),
-			TxHash:    txHash,
-		}
-
+		return sdkerrors.ErrTxInMempoolCache.Wrap(err.Error())
+	case strings.Contains(errStr, sdkerrors.ErrMempoolIsFull.Error()):
+		return sdkerrors.ErrMempoolIsFull.Wrap(err.Error())
+	case strings.Contains(errStr, sdkerrors.ErrTxTooLarge.Error()):
+		return sdkerrors.ErrTxTooLarge.Wrap(err.Error())
 	default:
-		return nil
+		return err
 	}
-}
-
-func isTxInMempool(errRes *sdk.TxResponse) bool {
-	if errRes == nil {
-		return false
-	}
-	return isSDKErrorResult(errRes.Codespace, errRes.Code, sdkerrors.ErrTxInMempoolCache)
-}
-
-func isSDKErrorResult(codespace string, code uint32, expectedSDKError *sdkerrors.Error) bool {
-	return codespace == expectedSDKError.Codespace() &&
-		code == expectedSDKError.ABCICode()
 }
