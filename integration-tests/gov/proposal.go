@@ -2,8 +2,6 @@ package gov
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -193,9 +191,6 @@ func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain
 		default:
 			proposal, err := coredClient.GetProposal(ctx, proposalID)
 			require.NoError(t, err)
-
-			proposalRaw, _ := json.Marshal(proposal)
-			fmt.Println(string(proposalRaw))
 
 			if proposal.Status == status {
 				return proposal
