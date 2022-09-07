@@ -103,10 +103,15 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	// Check proposer balance
 	balancesProposer, err := coredClient.QueryBankBalances(ctx, proposer)
 	require.NoError(t, err)
-	assert.Equal(t,
-		proposerInitialBalance.Sub(getBaseTransactionFee(chain)).Sub(sdk.NewIntFromBigInt(initialDeposit.Amount)).BigInt(),
-		big.NewInt(0).Set(balancesProposer[chain.NetworkConfig.TokenSymbol].Amount),
-	)
+	if balance, ok := balancesProposer[chain.NetworkConfig.TokenSymbol]; ok {
+		assert.Equal(t,
+			proposerInitialBalance.
+				Sub(getBaseTransactionFee(chain)).
+				Sub(sdk.NewIntFromBigInt(initialDeposit.Amount)).
+				BigInt(),
+			big.NewInt(0).Set(balance.Amount),
+		)
+	}
 
 	logger.Get(ctx).Info("Proposal has been submitted", zap.String("txHash", result.TxHash))
 
