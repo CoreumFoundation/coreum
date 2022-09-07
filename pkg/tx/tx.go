@@ -189,7 +189,7 @@ func AwaitTx(
 	return resultTx, nil
 }
 
-// the idea behind this function is to map it similar to cosmos sdk does it in the link below
+// the idea behind this function is to map it similar to how cosmos sdk does it in the link below
 // so the users can match against cosmos sdk error types.
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/broadcast.go#L49
 func convertTendermintError(err error) error {
