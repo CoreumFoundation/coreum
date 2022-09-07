@@ -40,7 +40,7 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) Client {
 	clientProtocols := []string{"tcp", "http", "https"}
-	if !lo.ContainsBy[string](clientProtocols, func(protocol string) bool {
+	if !lo.ContainsBy(clientProtocols, func(protocol string) bool {
 		return strings.HasPrefix(addr, protocol+"://")
 	}) {
 		panic(errors.Errorf("the address %q contains not supported protocol, supported are: %q", addr, clientProtocols))
