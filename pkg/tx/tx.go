@@ -174,7 +174,7 @@ func AwaitTx(
 
 		if resultTx.TxResult.Code != 0 {
 			res := resultTx.TxResult
-			return errors.Wrapf(sdkerrors.New(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
+			return errors.Wrapf(sdkerrors.ABCIError(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
 		}
 
 		if resultTx.Height == 0 {
