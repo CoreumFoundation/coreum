@@ -7,29 +7,27 @@ import (
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
+// ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters
+type ParamSubspace interface {
+	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
+	SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
+}
+
 // Keeper manages transfers between accounts. It implements the Keeper interface.
 type Keeper struct {
-	paramSubspace     paramtypes.Subspace
-	feeDenom          string
+	paramSubspace     ParamSubspace
 	storeKey          sdk.StoreKey
 	transientStoreKey sdk.StoreKey
 }
 
 // NewKeeper returns a new keeper object providing storage options required by fee model.
 func NewKeeper(
-	paramSubspace paramtypes.Subspace,
-	feeDenom string,
+	paramSubspace ParamSubspace,
 	storeKey sdk.StoreKey,
 	transientStoreKey sdk.StoreKey,
 ) Keeper {
-	// set KeyTable if it has not already been set
-	if !paramSubspace.HasKeyTable() {
-		paramSubspace = paramSubspace.WithKeyTable(paramtypes.NewKeyTable().RegisterParamSet(&types.Params{}))
-	}
-
 	return Keeper{
 		paramSubspace:     paramSubspace,
-		feeDenom:          feeDenom,
 		storeKey:          storeKey,
 		transientStoreKey: transientStoreKey,
 	}
@@ -134,7 +132,8 @@ func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(gasPriceKey)
 	if bz == nil {
-		return sdk.NewCoin(k.feeDenom, k.GetParams(ctx).InitialGasPrice)
+		// Thi si really a panic condition because it means that genesis initialization was not done correctly
+		panic("min gas price not set")
 	}
 	var minGasPrice sdk.Coin
 	if err := minGasPrice.Unmarshal(bz); err != nil {
