@@ -16,11 +16,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/CoreumFoundation/coreum/x/feemodel/client/cli"
-	"github.com/CoreumFoundation/coreum/x/feemodel/client/rest"
+	"github.com/CoreumFoundation/coreum/x/feemodel/keeper"
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -69,9 +67,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 }
 
 // RegisterRESTRoutes registers the REST routes for the fee module.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
-	rest.RegisterHandlers(clientCtx, rtr)
-}
+func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {}
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the fee module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
@@ -101,7 +97,7 @@ type AppModule struct {
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), keeperToQueryServer{keeper: am.keeper})
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 }
 
 // NewAppModule creates a new AppModule object
@@ -204,28 +200,4 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
-}
-
-type keeperToQueryServer struct {
-	keeper Keeper
-}
-
-func (k keeperToQueryServer) MinGasPrice(ctx context.Context, req *types.QueryMinGasPriceRequest) (*types.QueryMinGasPriceResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
-	}
-
-	return &types.QueryMinGasPriceResponse{
-		MinGasPrice: k.keeper.GetMinGasPrice(sdk.UnwrapSDKContext(ctx)),
-	}, nil
-}
-
-func (k keeperToQueryServer) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
-	}
-
-	return &types.QueryParamsResponse{
-		Params: k.keeper.GetParams(sdk.UnwrapSDKContext(ctx)),
-	}, nil
 }
