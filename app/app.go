@@ -355,9 +355,7 @@ func New(
 	)
 
 	app.FeeModelKeeper = feemodelkeeper.NewKeeper(
-		app.GetSubspace(feemodeltypes.ModuleName),
-		// FIXME (wojtek): store denom in genesis
-		ChosenNetwork.TokenSymbol(),
+		app.GetSubspace(feemodeltypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&feemodeltypes.Params{})),
 		keys[feemodeltypes.StoreKey],
 		tkeys[feemodeltypes.TransientStoreKey],
 	)
@@ -457,10 +455,7 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	feeModule := feemodel.NewAppModule(
-		app.FeeModelKeeper,
-		ChosenNetwork.TokenSymbol(),
-	)
+	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

@@ -34,6 +34,7 @@ type Keeper interface {
 	SetShortEMAGas(ctx sdk.Context, emaGas int64)
 	GetLongEMAGas(ctx sdk.Context) int64
 	SetLongEMAGas(ctx sdk.Context, emaGas int64)
+	GetMinGasPrice(ctx sdk.Context) sdk.Coin
 	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
 }
 
@@ -50,7 +51,7 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
 // DefaultGenesis returns default genesis state as raw bytes for the fee
 // module.
 func (amb AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(&types.GenesisState{Params: types.DefaultParams()})
+	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 // ValidateGenesis performs genesis state validation for the fee module.
@@ -85,21 +86,16 @@ func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) 
 type AppModule struct {
 	AppModuleBasic
 
-	keeper   Keeper
-	feeDenom string // FIXME (wojtek): store it in genesis
+	keeper Keeper
 }
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {}
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(
-	keeper Keeper,
-	feeDenom string,
-) AppModule {
+func NewAppModule(keeper Keeper) AppModule {
 	return AppModule{
-		keeper:   keeper,
-		feeDenom: feeDenom,
+		keeper: keeper,
 	}
 }
 
@@ -123,24 +119,27 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // InitGenesis performs genesis initialization for the fee module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesis types.GenesisState
-	cdc.MustUnmarshalJSON(data, &genesis)
+	genesis := &types.GenesisState{}
+	cdc.MustUnmarshalJSON(data, genesis)
 
 	// FIXME (wojtek): Remove this after crust imports new version of coreum
 	if genesis.Validate() != nil {
-		genesis = types.GenesisState{
-			Params: types.DefaultParams(),
-		}
+		genesis = types.DefaultGenesisState()
+		genesis.MinGasPrice.Denom = "dmcore"
 	}
 
 	am.keeper.SetParams(ctx, genesis.Params)
+	am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice)
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the fee
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	return nil
+	return cdc.MustMarshalJSON(&types.GenesisState{
+		Params:      am.keeper.GetParams(ctx),
+		MinGasPrice: am.keeper.GetMinGasPrice(ctx),
+	})
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
@@ -156,17 +155,18 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	currentGasUsage := am.keeper.TrackedGas(ctx)
 	params := am.keeper.GetParams(ctx)
 	model := types.NewModel(params)
+	previousMinGasPrice := am.keeper.GetMinGasPrice(ctx)
 
 	newShortEMA := types.CalculateEMA(am.keeper.GetShortEMAGas(ctx), currentGasUsage,
 		params.ShortEmaBlockLength)
 	newLongEMA := types.CalculateEMA(am.keeper.GetLongEMAGas(ctx), currentGasUsage,
 		params.LongEmaBlockLength)
 
-	minGasPrice := model.CalculateNextGasPrice(newShortEMA, newLongEMA)
+	newMinGasPrice := model.CalculateNextGasPrice(newShortEMA, newLongEMA)
 
 	am.keeper.SetShortEMAGas(ctx, newShortEMA)
 	am.keeper.SetLongEMAGas(ctx, newLongEMA)
-	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(am.feeDenom, minGasPrice))
+	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(previousMinGasPrice.Denom, newMinGasPrice))
 
 	return []abci.ValidatorUpdate{}
 }
