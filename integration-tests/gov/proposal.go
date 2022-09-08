@@ -174,6 +174,9 @@ func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain
 	ticker := time.NewTicker(time.Second / 4)
 	for range ticker.C {
 		select {
+		case <-ctx.Done():
+			t.Errorf("canceled context")
+			t.FailNow()
 		case <-timeout.C:
 			t.Errorf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus)
 			t.FailNow()
