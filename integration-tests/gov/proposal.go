@@ -2,7 +2,6 @@ package gov
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -19,6 +18,10 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+)
+
+const (
+	proposedMaxValidators = 201
 )
 
 var (
@@ -86,10 +89,10 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 		Proposer:       proposer,
 		InitialDeposit: initialDeposit,
 		Content: paramproposal.NewParameterChangeProposal(
-			"Change UnbondingTime",
-			"Propose changing UnbondingTime in the staking module",
+			"Change MaxValidators",
+			"Propose changing MaxValidators in the staking module",
 			[]paramproposal.ParamChange{
-				paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyUnbondingTime), "\"172800000000000\""),
+				paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyMaxValidators), strconv.Itoa(proposedMaxValidators)),
 			},
 		),
 	})
@@ -116,7 +119,19 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	logger.Get(ctx).Info("2 voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result
-	fmt.Println("time.Until(proposal.VotingEndTime)", time.Until(proposal.VotingEndTime))
+	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, time.Until(proposal.VotingEndTime), proposal.ProposalId)
+	assert.Equal(t, govtypes.StatusPassed, proposal.Status)
+	assert.Equal(t, proposal.FinalTallyResult, govtypes.TallyResult{
+		Yes:        sdk.NewIntFromBigInt(delegateAmount.Amount).MulRaw(2),
+		Abstain:    sdk.NewInt(0),
+		No:         sdk.NewInt(0),
+		NoWithVeto: sdk.NewInt(0),
+	})
+
+	// Check the proposed change is applied
+	stakingParams, err := chain.Client.GetStakingParams(ctx)
+	require.NoError(t, err)
+	require.Equal(t, uint32(proposedMaxValidators), stakingParams.MaxValidators)
 }
 
 func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delegator types.Wallet, validator sdk.ValAddress, amount types.Coin) {
@@ -155,7 +170,7 @@ func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter t
 func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain, status govtypes.ProposalStatus, duration time.Duration, proposalID uint64) *govtypes.Proposal {
 	coredClient := chain.Client
 	var lastStatus govtypes.ProposalStatus
-	timeout := time.NewTimer(duration)
+	timeout := time.NewTimer(duration + time.Second*10)
 	ticker := time.NewTicker(time.Second / 4)
 	for range ticker.C {
 		select {

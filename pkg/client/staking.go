@@ -22,6 +22,16 @@ func (c Client) GetBondedTokens(ctx context.Context) (sdk.Int, error) {
 	return resp.Pool.BondedTokens, nil
 }
 
+// GetStakingParams returns staking params
+func (c Client) GetStakingParams(ctx context.Context) (*stakingtypes.Params, error) {
+	resp, err := c.stakingQueryClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Params, nil
+}
+
 // GetValidators returns validators list
 func (c Client) GetValidators(ctx context.Context) ([]stakingtypes.Validator, error) {
 	resp, err := c.stakingQueryClient.Validators(ctx, &stakingtypes.QueryValidatorsRequest{
