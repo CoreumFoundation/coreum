@@ -70,7 +70,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	result, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromName(sender.Name).WithFromAddress(sender.Address()),
+		chain.ClientContext.WithFromName(sender.Name).WithFromAddress(sdk.AccAddress(sender.Name)),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
 		msg,
 	)

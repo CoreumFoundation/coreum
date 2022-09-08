@@ -9,12 +9,12 @@ import (
 )
 
 // Wallet stores information related to wallet
+// TODO: Drop this type
 type Wallet struct {
 	// Name is the name of the key stored in keystore
 	Name string
 
 	// Key is the private key of the wallet
-	// TODO: Check if we really need to store private key here or public is enough since mnemonic is stored in keyring.
 	Key Secp256k1PrivateKey
 
 	// AccountNumber is the account number as stored on blockchain
