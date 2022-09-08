@@ -31,6 +31,15 @@ var (
 // It will help users by removing the need to import tx package from cosmos sdk and help avoid package name collision.
 type Factory = tx.Factory
 
+// SignTx signs a given tx with a named key. The bytes signed over are canconical.
+// The resulting signature will be added to the transaction builder overwriting the previous
+// ones if overwrite=true (otherwise, the signature will be appended).
+// Signing a transaction with mutltiple signers in the DIRECT mode is not supprted and will
+// return an error.
+// An error is returned upon failure.
+// https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
+var SignTx = tx.Sign
+
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
 // NOTE: copied from the link below and made some changes.
@@ -86,18 +95,6 @@ func BroadcastRawTx(ctx context.Context, clientCtx client.Context, txBytes []byt
 	default:
 		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode)
 	}
-}
-
-// SignTx signs a given tx with a named key. The bytes signed over are canconical.
-// The resulting signature will be added to the transaction builder overwriting the previous
-// ones if overwrite=true (otherwise, the signature will be appended).
-// Signing a transaction with mutltiple signers in the DIRECT mode is not supprted and will
-// return an error.
-// An error is returned upon failure.
-// https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
-// TODO (dhil) rename to Sign when we remove the deprecated Sign.
-func SignTx(txf Factory, name string, txBuilder client.TxBuilder, overwriteSig bool) error {
-	return tx.Sign(txf, name, txBuilder, overwriteSig)
 }
 
 // broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block
