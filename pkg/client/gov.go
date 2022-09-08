@@ -23,18 +23,6 @@ func (c Client) GetGovTallyParams(ctx context.Context) (*govtypes.TallyParams, e
 	return &resp.TallyParams, nil
 }
 
-// GetGovVotingParams returns voting params of gov module
-func (c Client) GetGovVotingParams(ctx context.Context) (*govtypes.VotingParams, error) {
-	resp, err := c.govQueryClient.Params(ctx, &govtypes.QueryParamsRequest{
-		ParamsType: govtypes.ParamVoting,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.VotingParams, nil
-}
-
 // GetProposal returns proposal by the given ID
 func (c Client) GetProposal(ctx context.Context, proposalID uint64) (*govtypes.Proposal, error) {
 	resp, err := c.govQueryClient.Proposal(ctx, &govtypes.QueryProposalRequest{
