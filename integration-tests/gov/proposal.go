@@ -27,10 +27,16 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	voter1 := testing.RandomWallet()
 	voter2 := testing.RandomWallet()
 
+	// Get gov tally params
+	govTallyParams, err := chain.Client.GetGovTallyParams(ctx)
+	require.NoError(t, err)
+
 	// Calculate a voter balance based on min amount to be delegated
 	bondedTokens, err := chain.Client.GetBondedTokens(ctx)
 	require.NoError(t, err)
-	voterDelegateAmount := bondedTokens.MulRaw(52).QuoRaw(100).QuoRaw(2)
+	minDepositMultiplier, err := sdk.NewDecFromStr("1.02")
+	require.NoError(t, err)
+	voterDelegateAmount := bondedTokens.ToDec().Mul(govTallyParams.Threshold.Mul(minDepositMultiplier)).QuoInt64(2).RoundInt()
 
 	// Prepare initial balances
 	minDepositAmount, ok := sdk.NewIntFromString(chain.NetworkConfig.GovConfig.ProposalConfig.MinDepositAmount)
@@ -95,7 +101,9 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	logger.Get(ctx).Info("Proposal has been submitted", zap.String("txHash", result.TxHash), zap.Int("proposalID", proposalID))
 
 	// Wait for voting period to be started
-	proposal := waitForProposalStatus(ctx, t, chain, govtypes.StatusVotingPeriod, testing.MinDepositPeriod, uint64(proposalID))
+	depositPeriod, err := time.ParseDuration(chain.NetworkConfig.GovConfig.ProposalConfig.MinDepositPeriod)
+	require.NoError(t, err)
+	proposal := waitForProposalStatus(ctx, t, chain, govtypes.StatusVotingPeriod, depositPeriod, uint64(proposalID))
 	assert.Equal(t, govtypes.StatusVotingPeriod, proposal.Status)
 
 	// Vote for the proposal
@@ -105,7 +113,9 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	logger.Get(ctx).Info("2 voters have voted successfully")
 
 	// Wait for proposal result
-	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, testing.MinVotingPeriod, proposal.ProposalId)
+	votingPeriod, err := time.ParseDuration(chain.NetworkConfig.GovConfig.ProposalConfig.VotingPeriod)
+	require.NoError(t, err)
+	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, votingPeriod, proposal.ProposalId)
 	assert.Equal(t, govtypes.StatusPassed, proposal.Status)
 	assert.Equal(t, proposal.FinalTallyResult, govtypes.TallyResult{
 		Yes:        sdk.NewIntFromBigInt(delegateAmount.Amount).MulRaw(2),
@@ -151,7 +161,7 @@ func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter t
 func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain, status govtypes.ProposalStatus, duration time.Duration, proposalID uint64) *govtypes.Proposal {
 	coredClient := chain.Client
 	var lastStatus govtypes.ProposalStatus
-	timeout := time.NewTimer(duration + time.Second)
+	timeout := time.NewTimer(duration + time.Second*2)
 	ticker := time.NewTicker(time.Second / 4)
 	for range ticker.C {
 		select {
