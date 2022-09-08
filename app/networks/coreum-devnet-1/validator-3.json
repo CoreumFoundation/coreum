@@ -4,7 +4,7 @@
       {
         "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
         "description": {
-          "moniker": "devcore1dawh59rtggwpxe4pevtaklu0l3z322reg86qyd",
+          "moniker": "devcore1eept2559sss300fgp38fyffnrl7k290v7j674m",
           "identity": "",
           "website": "",
           "security_contact": "",
@@ -16,15 +16,15 @@
           "max_change_rate": "0.010000000000000000"
         },
         "min_self_delegation": "1",
-        "delegator_address": "devcore1dawh59rtggwpxe4pevtaklu0l3z322reg86qyd",
-        "validator_address": "devcorevaloper1dawh59rtggwpxe4pevtaklu0l3z322re3cy9tc",
+        "delegator_address": "devcore1eept2559sss300fgp38fyffnrl7k290v7j674m",
+        "validator_address": "devcorevaloper1eept2559sss300fgp38fyffnrl7k290v8dym6w",
         "pubkey": {
           "@type": "/cosmos.crypto.ed25519.PubKey",
-          "key": "hVFxUbrNW/KoiqQFQYYncQWLx4o884hdeV/mOOakaqQ="
+          "key": "N0Z04uWc99TlLKW7Wac7tcgCYwnWHArwtpFTO/0Vi4I="
         },
         "value": {
-          "denom": "dacore",
-          "amount": "100000000"
+          "denom": "dmcore",
+          "amount": "10000000000000"
         }
       }
     ],
@@ -38,7 +38,7 @@
       {
         "public_key": {
           "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "Arv7raYNjP2faiTEuNAshLRXS9jBi9r5GCFj3nv9XfXn"
+          "key": "A0bRmRwVlzZeR3CJawu6jFBtp11FvpybRxtCtNrW2Zo+"
         },
         "mode_info": {
           "single": {
@@ -50,12 +50,12 @@
     ],
     "fee": {
       "amount": [],
-      "gas_limit": "200000",
+      "gas_limit": "0",
       "payer": "",
       "granter": ""
     }
   },
   "signatures": [
-    "MxT5CHJiurOyYkTa5jOw+EbfJiruNPJe4zB70G1sZaBKrmdX9t66ZElMol853oz4uIQJ/hFrBpGe/W0C0rbfAQ=="
+    "uwBwqb8ghMWS8o6mTudH47ZE4mHYkwA7qrlA+kJIcRp3E222C8uC0szo2+qs4Qw0knJ3ZvE2izJRpQ+1ABYSag=="
   ]
 }
