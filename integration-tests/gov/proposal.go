@@ -61,16 +61,11 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	)
 
 	// Fund wallets
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.FundedAccount{
-		Wallet: proposer,
-		Amount: testing.MustNewCoin(t, proposerInitialBalance, chain.NetworkConfig.TokenSymbol),
-	}, testing.FundedAccount{
-		Wallet: voter1,
-		Amount: testing.MustNewCoin(t, voterInitialBalance, chain.NetworkConfig.TokenSymbol),
-	}, testing.FundedAccount{
-		Wallet: voter2,
-		Amount: testing.MustNewCoin(t, voterInitialBalance, chain.NetworkConfig.TokenSymbol),
-	}))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.NewFundedAccount(proposer, testing.MustNewCoin(t, proposerInitialBalance, chain.NetworkConfig.TokenSymbol)),
+		testing.NewFundedAccount(voter1, testing.MustNewCoin(t, voterInitialBalance, chain.NetworkConfig.TokenSymbol)),
+		testing.NewFundedAccount(voter2, testing.MustNewCoin(t, voterInitialBalance, chain.NetworkConfig.TokenSymbol)),
+	))
 
 	// Delegate coins
 	validators, err := chain.Client.GetValidators(ctx)
@@ -88,9 +83,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 		Base:           buildBaseTxInput(t, chain, proposer),
 		Proposer:       proposer,
 		InitialDeposit: initialDeposit,
-		Content: paramproposal.NewParameterChangeProposal(
-			"Change MaxValidators",
-			"Propose changing MaxValidators in the staking module",
+		Content: paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
 			[]paramproposal.ParamChange{
 				paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyMaxValidators), strconv.Itoa(proposedMaxValidators)),
 			},
