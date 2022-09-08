@@ -104,9 +104,9 @@ func TestParams(t *testing.T) {
 	keeper.SetParams(ctx, defParams)
 	params := keeper.GetParams(ctx)
 
-	assert.True(t, defParams.InitialGasPrice.Equal(params.InitialGasPrice))
-	assert.True(t, defParams.MaxGasPrice.Equal(params.MaxGasPrice))
-	assert.True(t, defParams.MaxDiscount.Equal(params.MaxDiscount))
+	assert.Equal(t, defParams.InitialGasPrice.String(), params.InitialGasPrice.String())
+	assert.Equal(t, defParams.MaxGasPrice.String(), params.MaxGasPrice.String())
+	assert.Equal(t, defParams.MaxDiscount.String(), params.MaxDiscount.String())
 	assert.Equal(t, defParams.EscalationStartBlockGas, params.EscalationStartBlockGas)
 	assert.Equal(t, defParams.MaxBlockGas, params.MaxBlockGas)
 	assert.Equal(t, defParams.ShortEmaBlockLength, params.ShortEmaBlockLength)
