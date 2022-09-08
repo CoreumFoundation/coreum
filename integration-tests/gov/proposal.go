@@ -181,23 +181,24 @@ func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter t
 
 func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain, status govtypes.ProposalStatus, duration time.Duration, proposalID uint64) *govtypes.Proposal {
 	coredClient := chain.Client
-	timeout := time.NewTimer(duration)
+	var lastStatus govtypes.ProposalStatus
+	timeout := time.NewTimer(duration + time.Second)
 	ticker := time.NewTicker(time.Second / 4)
 	for range ticker.C {
 		select {
 		case <-timeout.C:
-			t.Errorf("waiting for %s status is timed out for proposal %d", status, proposalID)
+			t.Errorf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus)
 			t.FailNow()
 		default:
 			proposal, err := coredClient.GetProposal(ctx, proposalID)
 			require.NoError(t, err)
 
-			if proposal.Status == status {
+			if lastStatus = proposal.Status; lastStatus == status {
 				return proposal
 			}
 		}
 	}
-	t.Errorf("waiting for %s status is timed out for proposal %d", status, proposalID)
+	t.Errorf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus)
 	t.FailNow()
 	return nil
 }
