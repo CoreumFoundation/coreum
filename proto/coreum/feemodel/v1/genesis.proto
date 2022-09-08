@@ -2,6 +2,7 @@ syntax = "proto3";
 package coreum.feemodel.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
 import "coreum/feemodel/v1/params.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/feemodel/types";
@@ -10,4 +11,7 @@ option go_package = "github.com/CoreumFoundation/coreum/x/feemodel/types";
 message GenesisState {
   // params defines all the paramaters of the module.
   Params params = 1 [(gogoproto.nullable) = false];
+
+  // min_gas_price is the current minimum gas price required by the chain.
+  cosmos.base.v1beta1.Coin min_gas_price = 2 [(gogoproto.nullable) = false];
 }
