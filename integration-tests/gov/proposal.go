@@ -20,6 +20,10 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
+var (
+	minDepositMultiplier, _ = sdk.NewDecFromStr("1.02")
+)
+
 // TestProposalParamChange checks that param change proposal works correctly
 func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create two random wallets
@@ -33,8 +37,6 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Calculate a voter balance based on min amount to be delegated
 	bondedTokens, err := chain.Client.GetBondedTokens(ctx)
-	require.NoError(t, err)
-	minDepositMultiplier, err := sdk.NewDecFromStr("1.02")
 	require.NoError(t, err)
 	voterDelegateAmount := bondedTokens.ToDec().Mul(govTallyParams.Threshold.Mul(minDepositMultiplier)).QuoInt64(2).RoundInt()
 
