@@ -59,6 +59,11 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 		return nil, err
 	}
 
+	return BroadcastRawTx(ctx, clientCtx, txBytes)
+}
+
+// BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
+func BroadcastRawTx(ctx context.Context, clientCtx client.Context, txBytes []byte) (*sdk.TxResponse, error) {
 	// broadcast to a Tendermint node
 	switch clientCtx.BroadcastMode {
 	case flags.BroadcastSync:
@@ -81,6 +86,18 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 	default:
 		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode)
 	}
+}
+
+// SignTx signs a given tx with a named key. The bytes signed over are canconical.
+// The resulting signature will be added to the transaction builder overwriting the previous
+// ones if overwrite=true (otherwise, the signature will be appended).
+// Signing a transaction with mutltiple signers in the DIRECT mode is not supprted and will
+// return an error.
+// An error is returned upon failure.
+// https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
+// TODO (dhil) rename to Sign when we remove the deprecated Sign.
+func SignTx(txf Factory, name string, txBuilder client.TxBuilder, overwriteSig bool) error {
+	return tx.Sign(txf, name, txBuilder, overwriteSig)
 }
 
 // broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block
