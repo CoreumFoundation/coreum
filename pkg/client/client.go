@@ -17,6 +17,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -38,13 +39,11 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // New creates new client for cored
 func New(chainID app.ChainID, addr string) Client {
-	switch {
-	case strings.HasPrefix(addr, "tcp://"),
-		strings.HasPrefix(addr, "http://"),
-		strings.HasPrefix(addr, "https://"):
-	default:
-		// FIXME (dhil) - temp fix, to be compatible with the current crust version, will be remove later.
-		addr = "tcp://" + addr
+	clientProtocols := []string{"tcp", "http", "https"}
+	if !lo.ContainsBy(clientProtocols, func(protocol string) bool {
+		return strings.HasPrefix(addr, protocol+"://")
+	}) {
+		panic(errors.Errorf("the address %q contains not supported protocol, supported are: %q", addr, clientProtocols))
 	}
 
 	rpcClient, err := client.NewClientFromNode(addr)
