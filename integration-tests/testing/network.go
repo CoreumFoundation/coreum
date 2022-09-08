@@ -1,11 +1,24 @@
 package testing
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/x/auth"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
+)
+
+const (
+	// MinDepositAmount is the minimum proposal deposit amount to be collected in order to activate it.
+	MinDepositAmount = 1000
+
+	// MinDepositPeriod is the proposal deposit period duration. Deposit should be made together with the proposal
+	// so not needed to spend more time to make extra deposits.
+	MinDepositPeriod = time.Second / 2
+
+	// MinVotingPeriod is the proposal voting period duration
+	MinVotingPeriod = time.Second * 5
 )
 
 // NetworkConfig is the network config used by integration tests
@@ -18,5 +31,12 @@ var NetworkConfig = app.NetworkConfig{
 	Fee: app.FeeConfig{
 		FeeModel:         feemodeltypes.DefaultModel(),
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
+	},
+	GovConfig: app.GovConfig{
+		ProposalConfig: app.GovProposalConfig{
+			MinDepositAmount: strconv.Itoa(MinDepositAmount),
+			MinDepositPeriod: MinDepositPeriod.String(),
+			VotingPeriod:     MinVotingPeriod.String(),
+		},
 	},
 }
