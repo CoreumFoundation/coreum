@@ -2,8 +2,10 @@ package gov
 
 import (
 	"context"
-	"math/big"
+	"strconv"
 	"time"
+
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -33,25 +35,22 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	voter2 := testing.RandomWallet()
 
 	// Calculate a voter balance based on min amount to be delegated
-	validators, err := chain.Client.GetValidators(ctx)
+	bondedTokens, err := chain.Client.GetBondedTokens(ctx)
 	require.NoError(t, err)
-	require.NotEmpty(t, validators)
-	totalDelegated := sdk.NewInt(0)
-	for _, validator := range validators {
-		totalDelegated = totalDelegated.Add(validator.Tokens)
-	}
-	voterDelegateAmount := totalDelegated.MulRaw(52).QuoRaw(100).QuoRaw(2)
+	voterDelegateAmount := bondedTokens.MulRaw(52).QuoRaw(100).QuoRaw(2)
 
 	// Prepare initial balances
+	minDepositAmount, ok := sdk.NewIntFromString(chain.NetworkConfig.GovConfig.ProposalConfig.MinDepositAmount)
+	require.True(t, ok)
 	proposerInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		getGasLimit(chain),
+		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
 		1,
-		sdk.NewInt(testing.MinDepositAmount),
+		minDepositAmount,
 	)
 	voterInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		getGasLimit(chain),
+		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
 		3,
 		voterDelegateAmount,
 	)
@@ -69,6 +68,9 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	}))
 
 	// Delegate coins
+	validators, err := chain.Client.GetValidators(ctx)
+	require.NoError(t, err)
+	require.NotEmpty(t, validators)
 	valAddress, err := sdk.ValAddressFromBech32(validators[0].OperatorAddress)
 	require.NoError(t, err)
 	delegateAmount := testing.MustNewCoin(t, voterDelegateAmount, chain.NetworkConfig.TokenSymbol)
@@ -76,42 +78,31 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	delegateCoins(ctx, t, chain, voter2, valAddress, delegateAmount)
 
 	// Submit a param change proposal
-	initialDeposit := testing.MustNewCoin(t, sdk.NewInt(testing.MinDepositAmount), chain.NetworkConfig.TokenSymbol)
+	initialDeposit := testing.MustNewCoin(t, minDepositAmount, chain.NetworkConfig.TokenSymbol)
 	txBytes, err := chain.Client.PrepareTxSubmitProposal(ctx, client.TxSubmitProposalInput{
-		Base:           buildBase(t, chain, proposer),
+		Base:           buildBaseTxInput(t, chain, proposer),
 		Proposer:       proposer,
 		InitialDeposit: initialDeposit,
 		Content: paramproposal.NewParameterChangeProposal(
 			"Change UnbondingTime",
 			"Propose changing UnbondingTime in the staking module",
 			[]paramproposal.ParamChange{
-				paramproposal.NewParamChange("staking", "UnbondingTime", "\"172800000000000\""),
+				paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyUnbondingTime), "\"172800000000000\""),
 			},
 		),
 	})
 	require.NoError(t, err)
 	result, err := chain.Client.Broadcast(ctx, txBytes)
 	require.NoError(t, err)
-	proposal, err := chain.Client.GetProposalByTx(ctx, result.TxHash)
+	proposalIDStr, ok := client.FindEventAttribute(result.EventLogs, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
+	require.True(t, ok)
+	proposalID, err := strconv.Atoi(proposalIDStr)
 	require.NoError(t, err)
 
-	// Check proposer balance
-	balancesProposer, err := chain.Client.QueryBankBalances(ctx, proposer)
-	require.NoError(t, err)
-	if balance, ok := balancesProposer[chain.NetworkConfig.TokenSymbol]; ok {
-		assert.Equal(t,
-			proposerInitialBalance.
-				Sub(getBaseTransactionFee(chain)).
-				Sub(sdk.NewIntFromBigInt(initialDeposit.Amount)).
-				BigInt(),
-			big.NewInt(0).Set(balance.Amount),
-		)
-	}
-
-	logger.Get(ctx).Info("Proposal has been submitted", zap.String("txHash", result.TxHash))
+	logger.Get(ctx).Info("Proposal has been submitted", zap.String("txHash", result.TxHash), zap.Int("proposalID", proposalID))
 
 	// Wait for voting period to be started
-	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusVotingPeriod, testing.MinDepositPeriod, proposal.ProposalId)
+	proposal := waitForProposalStatus(ctx, t, chain, govtypes.StatusVotingPeriod, testing.MinDepositPeriod, uint64(proposalID))
 	assert.Equal(t, govtypes.StatusVotingPeriod, proposal.Status)
 
 	// Vote for the proposal
@@ -123,15 +114,17 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	// Wait for proposal result
 	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, testing.MinVotingPeriod, proposal.ProposalId)
 	assert.Equal(t, govtypes.StatusPassed, proposal.Status)
-	assert.Equal(t, big.NewInt(0).Mul(delegateAmount.Amount, big.NewInt(2)), proposal.FinalTallyResult.Yes.BigInt())
-	assert.Equal(t, int64(0), proposal.FinalTallyResult.No.Int64())
-	assert.Equal(t, int64(0), proposal.FinalTallyResult.Abstain.Int64())
-	assert.Equal(t, int64(0), proposal.FinalTallyResult.NoWithVeto.Int64())
+	assert.Equal(t, proposal.FinalTallyResult, govtypes.TallyResult{
+		Yes:        sdk.NewIntFromBigInt(delegateAmount.Amount).MulRaw(2),
+		Abstain:    sdk.NewInt(0),
+		No:         sdk.NewInt(0),
+		NoWithVeto: sdk.NewInt(0),
+	})
 }
 
 func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delegator types.Wallet, validator sdk.ValAddress, amount types.Coin) {
 	txBytes, err := chain.Client.PrepareTxSubmitDelegation(ctx, client.TxSubmitDelegationInput{
-		Base:      buildBase(t, chain, delegator),
+		Base:      buildBaseTxInput(t, chain, delegator),
 		Delegator: delegator,
 		Validator: validator,
 		Amount:    amount,
@@ -142,12 +135,8 @@ func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delega
 }
 
 func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter types.Wallet, option govtypes.VoteOption, proposalID uint64) {
-	// Query voter initial balance
-	initialBalances, err := chain.Client.QueryBankBalances(ctx, voter)
-	require.NoError(t, err)
-
 	txBytes, err := chain.Client.PrepareTxSubmitProposalVote(ctx, client.TxSubmitProposalVoteInput{
-		Base:       buildBase(t, chain, voter),
+		Base:       buildBaseTxInput(t, chain, voter),
 		Voter:      voter,
 		ProposalID: proposalID,
 		Option:     option,
@@ -164,19 +153,6 @@ func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter t
 	require.Len(t, voterVotes, 1)
 	require.Equal(t, voterVotes[0].Option, govtypes.OptionYes)
 	require.Equal(t, voterVotes[0].Weight, sdk.NewDec(1))
-
-	// Query wallets for current balance
-	finalBalances, err := chain.Client.QueryBankBalances(ctx, voter)
-	require.NoError(t, err)
-
-	// Check balance
-	assert.Equal(t,
-		big.NewInt(0).Sub(
-			initialBalances[chain.NetworkConfig.TokenSymbol].Amount,
-			getBaseTransactionFee(chain).BigInt(),
-		),
-		finalBalances[chain.NetworkConfig.TokenSymbol].Amount,
-	)
 }
 
 func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain, status govtypes.ProposalStatus, duration time.Duration, proposalID uint64) *govtypes.Proposal {
@@ -203,20 +179,10 @@ func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain
 	return nil
 }
 
-func getBaseTransactionFee(chain testing.Chain) sdk.Int {
-	return chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice.Mul(
-		sdk.NewIntFromUint64(getGasLimit(chain)),
-	)
-}
-
-func buildBase(t testing.T, chain testing.Chain, signer types.Wallet) tx.BaseInput {
+func buildBaseTxInput(t testing.T, chain testing.Chain, signer types.Wallet) tx.BaseInput {
 	return tx.BaseInput{
 		Signer:   signer,
-		GasLimit: getGasLimit(chain),
+		GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
 		GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol),
 	}
-}
-
-func getGasLimit(chain testing.Chain) uint64 {
-	return chain.NetworkConfig.Fee.DeterministicGas.BankSend + gasLimitThreshold
 }

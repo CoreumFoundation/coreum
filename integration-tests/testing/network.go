@@ -1,7 +1,7 @@
 package testing
 
 import (
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -34,9 +34,9 @@ var NetworkConfig = app.NetworkConfig{
 	},
 	GovConfig: app.GovConfig{
 		ProposalConfig: app.GovProposalConfig{
-			MinDepositAmount: fmt.Sprintf("%d", MinDepositAmount),
-			MinDepositPeriod: fmt.Sprintf("%ds", int(MinDepositPeriod.Seconds())),
-			VotingPeriod:     fmt.Sprintf("%ds", int(MinVotingPeriod.Seconds())),
+			MinDepositAmount: strconv.Itoa(MinDepositAmount),
+			MinDepositPeriod: MinDepositPeriod.String(),
+			VotingPeriod:     MinVotingPeriod.String(),
 		},
 	},
 }

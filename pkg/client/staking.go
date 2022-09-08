@@ -12,6 +12,16 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
+// GetBondedTokens returns bonded tokens amount
+func (c Client) GetBondedTokens(ctx context.Context) (sdk.Int, error) {
+	resp, err := c.stakingQueryClient.Pool(ctx, &stakingtypes.QueryPoolRequest{})
+	if err != nil {
+		return sdk.NewInt(0), err
+	}
+
+	return resp.Pool.BondedTokens, nil
+}
+
 // GetValidators returns validators list
 func (c Client) GetValidators(ctx context.Context) ([]stakingtypes.Validator, error) {
 	resp, err := c.stakingQueryClient.Validators(ctx, &stakingtypes.QueryValidatorsRequest{
