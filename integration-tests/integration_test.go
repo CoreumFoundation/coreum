@@ -67,7 +67,7 @@ func Test(t *testing.T) {
 	chain, err := newChain(ctx, cfg)
 	require.NoError(t, err)
 
-	testCases := collectTestCases(cfg, chain, testSet)
+	testCases := collectTestCases(chain, testSet, cfg.Filter)
 	if len(testCases) == 0 {
 		logger.Get(ctx).Warn("No tests to run")
 		return
@@ -137,12 +137,12 @@ type testCase struct {
 	RunFunc func(ctx context.Context, t *testing.T)
 }
 
-func collectTestCases(cfg config, chain coreumtesting.Chain, testSet coreumtesting.TestSet) []testCase {
+func collectTestCases(chain coreumtesting.Chain, testSet coreumtesting.TestSet, testFilter *regexp.Regexp) []testCase {
 	var testCases []testCase
 	for _, testFunc := range testSet.SingleChain {
 		testFunc := testFunc
 		name := funcToName(testFunc)
-		if !cfg.Filter.MatchString(name) {
+		if !testFilter.MatchString(name) {
 			continue
 		}
 
