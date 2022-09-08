@@ -20,12 +20,6 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-const (
-	// gasLimitThreshold is the threshold added to the gas limit number to add a little more space if a transaction
-	// would cost a little more that was expected.
-	gasLimitThreshold = 20000
-)
-
 // TestProposalParamChange checks that param change proposal works correctly
 func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create two random wallets
