@@ -55,5 +55,5 @@ func (c Chain) TxFactory() tx.Factory {
 		WithKeybase(c.Keyring).
 		WithChainID(string(c.NetworkConfig.ChainID)).
 		WithTxConfig(c.ClientContext.TxConfig).
-		WithGasPrices(sdk.NewCoin(c.NetworkConfig.TokenSymbol, c.NetworkConfig.Fee.FeeModel.InitialGasPrice).String())
+		WithGasPrices(sdk.NewCoin(c.NetworkConfig.TokenSymbol, c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice).String())
 }
