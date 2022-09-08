@@ -402,21 +402,17 @@ var genesisTemplate string
 func genesis(n Network) ([]byte, error) {
 	genesisBuf := new(bytes.Buffer)
 	err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
-		GenesisTimeUTC           string
-		ChainID                  ChainID
-		TokenSymbol              string
-		FeeModelParams           feemodeltypes.Params
-		ProposalMinDepositAmount string
-		ProposalMinDepositPeriod string
-		ProposalVotingPeriod     string
+		GenesisTimeUTC string
+		ChainID        ChainID
+		TokenSymbol    string
+		FeeModelParams feemodeltypes.Params
+		ProposalConfig GovProposalConfig
 	}{
-		GenesisTimeUTC:           n.genesisTime.UTC().Format(time.RFC3339),
-		ChainID:                  n.chainID,
-		TokenSymbol:              n.tokenSymbol,
-		FeeModelParams:           n.FeeModel().Params(),
-		ProposalMinDepositAmount: n.gov.ProposalConfig.MinDepositAmount,
-		ProposalMinDepositPeriod: n.gov.ProposalConfig.MinDepositPeriod,
-		ProposalVotingPeriod:     n.gov.ProposalConfig.VotingPeriod,
+		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
+		ChainID:        n.chainID,
+		TokenSymbol:    n.tokenSymbol,
+		FeeModelParams: n.FeeModel().Params(),
+		ProposalConfig: n.gov.ProposalConfig,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")

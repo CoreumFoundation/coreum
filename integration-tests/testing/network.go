@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -10,9 +9,6 @@ import (
 )
 
 const (
-	// MinDepositAmount is the minimum proposal deposit amount to be collected in order to activate it.
-	MinDepositAmount = 1000
-
 	// MinDepositPeriod is the proposal deposit period duration. Deposit should be made together with the proposal
 	// so not needed to spend more time to make extra deposits.
 	MinDepositPeriod = time.Second / 2
@@ -34,7 +30,7 @@ var NetworkConfig = app.NetworkConfig{
 	},
 	GovConfig: app.GovConfig{
 		ProposalConfig: app.GovProposalConfig{
-			MinDepositAmount: strconv.Itoa(MinDepositAmount),
+			MinDepositAmount: "1000",
 			MinDepositPeriod: MinDepositPeriod.String(),
 			VotingPeriod:     MinVotingPeriod.String(),
 		},
