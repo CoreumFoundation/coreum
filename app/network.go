@@ -406,13 +406,13 @@ func genesis(n Network) ([]byte, error) {
 		ChainID        ChainID
 		TokenSymbol    string
 		FeeModelParams feemodeltypes.Params
-		ProposalConfig GovProposalConfig
+		Gov            GovConfig
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
 		FeeModelParams: n.FeeModel().Params(),
-		ProposalConfig: n.gov.ProposalConfig,
+		Gov:            n.gov,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
