@@ -115,9 +115,9 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	logger.Get(ctx).Info("2 voters have voted successfully")
 
 	// Wait for proposal result
-	votingPeriod, err := time.ParseDuration(chain.NetworkConfig.GovConfig.ProposalConfig.VotingPeriod)
+	govVotingParams, err := chain.Client.GetGovVotingParams(ctx)
 	require.NoError(t, err)
-	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, votingPeriod, proposal.ProposalId)
+	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, govVotingParams.VotingPeriod, proposal.ProposalId)
 	assert.Equal(t, govtypes.StatusPassed, proposal.Status)
 	assert.Equal(t, proposal.FinalTallyResult, govtypes.TallyResult{
 		Yes:        sdk.NewIntFromBigInt(delegateAmount.Amount).MulRaw(2),
