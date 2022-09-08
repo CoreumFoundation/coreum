@@ -115,7 +115,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	logger.Get(ctx).Info("2 voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result
-	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, proposal.VotingEndTime.Sub(time.Now()), proposal.ProposalId)
+	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, time.Until(proposal.VotingEndTime), proposal.ProposalId)
 	assert.Equal(t, govtypes.StatusPassed, proposal.Status)
 	assert.Equal(t, proposal.FinalTallyResult, govtypes.TallyResult{
 		Yes:        sdk.NewIntFromBigInt(delegateAmount.Amount).MulRaw(2),
