@@ -3,7 +3,6 @@ package types
 import (
 	"math/big"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
@@ -34,13 +33,6 @@ func (w Wallet) String() string {
 func (w Wallet) Address() sdk.AccAddress {
 	privKey := cosmossecp256k1.PrivKey{Key: w.Key}
 	return sdk.AccAddress(privKey.PubKey().Address())
-}
-
-// ClientCtx returns cosmos client context with values present for the Wallet.
-func (w Wallet) ClientCtx(parentCtx cosmosclient.Context) cosmosclient.Context {
-	return parentCtx.
-		WithFromName(w.Name).
-		WithFromAddress(w.Address())
 }
 
 // Coin stores amount and denom of token

@@ -64,14 +64,14 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 		FromAddress: sender.Address().String(),
 		ToAddress:   receiver.Address().String(),
 		Amount: []sdk.Coin{
-			{Denom: chain.NetworkConfig.TokenSymbol, Amount: sdk.NewInt(10)},
+			chain.NewCoin(sdk.NewInt(10)),
 		},
 	}
 
 	result, err := tx.BroadcastTx(
 		ctx,
-		sender.ClientCtx(chain.ClientContext),
-		chain.TxFactory().WithGas(chain.NetworkConfig.Fee.DeterministicGas.BankSend),
+		chain.ClientContext.WithFromName(sender.Name).WithFromAddress(sender.Address()),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
 		msg,
 	)
 	require.NoError(t, err)

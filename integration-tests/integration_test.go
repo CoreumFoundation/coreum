@@ -116,7 +116,7 @@ func newChain(ctx context.Context, cfg config) (coreumtesting.Chain, error) {
 		ClientContext: clientContext,
 		NetworkConfig: cfg.NetworkConfig,
 		Faucet:        faucet,
-		Keyring:       keyring.NewUnsafe(keyring.NewInMemory()),
+		Keyring:       keyring.NewInMemory(),
 	}, nil
 }
 
