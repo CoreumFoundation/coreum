@@ -163,7 +163,7 @@ func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter t
 func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain, status govtypes.ProposalStatus, duration time.Duration, proposalID uint64) *govtypes.Proposal {
 	coredClient := chain.Client
 	var lastStatus govtypes.ProposalStatus
-	timeout := time.NewTimer(duration + time.Second*2)
+	timeout := time.NewTimer(duration * 2)
 	ticker := time.NewTicker(time.Second / 4)
 	for range ticker.C {
 		select {
