@@ -117,6 +117,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	// Wait for proposal result
 	govVotingParams, err := chain.Client.GetGovVotingParams(ctx)
 	require.NoError(t, err)
+	assert.Equal(t, testing.MinVotingPeriod, govVotingParams.VotingPeriod)
 	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, govVotingParams.VotingPeriod, proposal.ProposalId)
 	assert.Equal(t, govtypes.StatusPassed, proposal.Status)
 	assert.Equal(t, proposal.FinalTallyResult, govtypes.TallyResult{
