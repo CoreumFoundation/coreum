@@ -60,16 +60,15 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	// generate the keyring and collect the keys to use for the multisig account
 	keyNamesSet := []string{key1, key2, key3}
 	kr := sdkkeyring.NewInMemory()
-	publicKeysSet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
+	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
 	for _, key := range keyNamesSet {
-		info, err := addRandomAccountToKeyring(key, kr)
-		requireT.NoError(err)
-		publicKeysSet = append(publicKeysSet, info.GetPubKey())
+		info := addRandomAccountToKeyring(requireT, key, kr)
+		publicKeySet = append(publicKeySet, info.GetPubKey())
 	}
 
 	// create multisig account
 	const multisigThreshold = 2
-	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeysSet)
+	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
 	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
 
 	// fund the multisig account
@@ -115,14 +114,14 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	// prepare the tx factory to sign with the account seq and number of the multisig account
 	multisigAccInfo, err := tx.GetAccountInfo(ctx, clientCtx, multisigAddress)
 	requireT.NoError(err)
-	txF := sdktx.Factory{}. // TODO (dhil) move this code to helpers after the migration to the ne tx package
+	txF := sdktx.Factory{}. // TODO (dhil) move/use this code to/from helpers after the migration to the ne tx package
 				WithAccountNumber(multisigAccInfo.GetAccountNumber()).
 				WithSequence(multisigAccInfo.GetSequence()).
 				WithChainID(string(chain.NetworkConfig.ChainID)).
-				WithGas(bankSendGas).
 				WithKeybase(kr).
 				WithTxConfig(clientCtx.TxConfig).
-				WithFees(sdk.NewCoins(sdk.NewCoin(nativeDenom, initialGasPrice.Mul(sdk.NewInt(int64(bankSendGas))))).String()).
+				WithGas(bankSendGas).
+				WithGasPrices(sdk.NewCoin(nativeDenom, initialGasPrice).String()).
 				WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON) //nolint:nosnakecase // the sdk constant
 
 	bankSendMsg := banktypes.NewMsgSend(
@@ -135,8 +134,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	requireT.NoError(err)
 	err = tx.SignTx(txF, key1, txBuilder, false)
 	requireT.NoError(err)
-	multisigTx, err := createMulisignTx(txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	requireT.NoError(err)
+	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	_, err = tx.BroadcastRawTx(ctx, clientCtx, coredClient.Encode(multisigTx))
 	requireT.Error(err)
 	require.True(t, client.IsErr(err, sdkerrors.ErrUnauthorized))
@@ -148,8 +146,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	requireT.NoError(err)
 	err = tx.SignTx(txF, key2, txBuilder, false)
 	requireT.NoError(err)
-	multisigTx, err = createMulisignTx(txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	requireT.NoError(err)
+	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	_, err = tx.BroadcastRawTx(ctx, clientCtx, coredClient.Encode(multisigTx))
 	requireT.NoError(err)
 
@@ -160,36 +157,33 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
 }
 
-func addRandomAccountToKeyring(name string, kr sdkkeyring.Keyring) (sdkkeyring.Info, error) {
-	mnemonic, err := generateRandomMnemonic()
-	if err != nil {
-		return nil, err
-	}
+func addRandomAccountToKeyring(requireT *require.Assertions, name string, kr sdkkeyring.Keyring) sdkkeyring.Info {
+	mnemonic := generateRandomMnemonic(requireT)
 
-	return kr.NewAccount(name, mnemonic, "", "", sdkhd.Secp256k1)
+	accInfo, err := kr.NewAccount(name, mnemonic, "", "", sdkhd.Secp256k1)
+	requireT.NoError(err)
+
+	return accInfo
 }
 
-func generateRandomMnemonic() (string, error) {
+func generateRandomMnemonic(requireT *require.Assertions) string {
 	const mnemonicEntropySize = 256
 	entropySeed, err := bip39.NewEntropy(mnemonicEntropySize)
-	if err != nil {
-		return "", err
-	}
+	requireT.NoError(err)
 
-	return bip39.NewMnemonic(entropySeed)
+	mnemonic, err := bip39.NewMnemonic(entropySeed)
+	requireT.NoError(err)
+
+	return mnemonic
 }
 
-func createMulisignTx(txBuilder sdkclient.TxBuilder, accSec uint64, multisigPublicKey *sdkmultisig.LegacyAminoPubKey) (authsigning.Tx, error) {
+func createMulisignTx(requireT *require.Assertions, txBuilder sdkclient.TxBuilder, accSec uint64, multisigPublicKey *sdkmultisig.LegacyAminoPubKey) authsigning.Tx {
 	signs, err := txBuilder.GetTx().GetSignaturesV2()
-	if err != nil {
-		return nil, err
-	}
+	requireT.NoError(err)
 
 	multisigSig := multisigtypes.NewMultisig(len(multisigPublicKey.PubKeys))
 	for _, sig := range signs {
-		if err := multisigtypes.AddSignatureV2(multisigSig, sig, multisigPublicKey.GetPubKeys()); err != nil {
-			return nil, err
-		}
+		requireT.NoError(multisigtypes.AddSignatureV2(multisigSig, sig, multisigPublicKey.GetPubKeys()))
 	}
 
 	sigV2 := sdksigning.SignatureV2{
@@ -198,9 +192,7 @@ func createMulisignTx(txBuilder sdkclient.TxBuilder, accSec uint64, multisigPubl
 		Sequence: accSec,
 	}
 
-	if err := txBuilder.SetSignatures(sigV2); err != nil {
-		return nil, err
-	}
+	requireT.NoError(txBuilder.SetSignatures(sigV2))
 
-	return txBuilder.GetTx(), nil
+	return txBuilder.GetTx()
 }
