@@ -45,7 +45,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
-			Wallet: sender,
+			Wallet: chain.AccAddressToLegacyWallet(sender),
 			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
@@ -54,15 +54,15 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 			), chain.NetworkConfig.TokenSymbol),
 		},
 		testing.FundedAccount{
-			Wallet: receiver,
+			Wallet: chain.AccAddressToLegacyWallet(receiver),
 			Amount: testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
 		},
 	))
 
 	// Transfer 10 cores from sender to receiver
 	msg := &banktypes.MsgSend{
-		FromAddress: sender.Address().String(),
-		ToAddress:   receiver.Address().String(),
+		FromAddress: sender.String(),
+		ToAddress:   receiver.String(),
 		Amount: []sdk.Coin{
 			chain.NewCoin(sdk.NewInt(10)),
 		},
@@ -70,7 +70,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	result, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromName(sender.Name).WithFromAddress(sdk.AccAddress(sender.Name)),
+		chain.ClientContext.WithFromName(sender.String()).WithFromAddress(sender),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
 		msg,
 	)
@@ -79,10 +79,10 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
 
 	// Query wallets for current balance
-	balancesSender, err := chain.Client.QueryBankBalances(ctx, sender)
+	balancesSender, err := chain.Client.QueryBankBalances(ctx, chain.AccAddressToLegacyWallet(sender))
 	require.NoError(t, err)
 
-	balancesReceiver, err := chain.Client.QueryBankBalances(ctx, receiver)
+	balancesReceiver, err := chain.Client.QueryBankBalances(ctx, chain.AccAddressToLegacyWallet(receiver))
 	require.NoError(t, err)
 
 	// Test that tokens disappeared from sender's wallet

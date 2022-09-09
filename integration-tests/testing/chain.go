@@ -1,13 +1,13 @@
 package testing
 
 import (
+	"encoding/hex"
 	"reflect"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -29,7 +29,7 @@ type Chain struct {
 
 // RandomWallet generates a wallet for the chain with random name and
 // private key and stores mnemonic in Keyring.
-func (c Chain) RandomWallet() types.Wallet {
+func (c Chain) RandomWallet() sdk.AccAddress {
 	// Generate and store a new mnemonic using temporary keyring
 	keyInfo, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, "", "", hd.Secp256k1)
 	// we are using panics here, since we are sure it will not error out, and handling error
@@ -43,7 +43,7 @@ func (c Chain) RandomWallet() types.Wallet {
 		panic(err)
 	}
 
-	return types.Wallet{Name: keyInfo.GetAddress().String()}
+	return keyInfo.GetAddress()
 }
 
 // TxFactory returns factory with present values for the Chain.
@@ -62,17 +62,31 @@ func (c Chain) NewCoin(amount sdk.Int) sdk.Coin {
 }
 
 func (c Chain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
-	deterministicGas := NetworkConfig.Fee.DeterministicGas
-
 	var totalGasRequired uint64 = 0
 	for _, msg := range msgs {
-		switch msg.(type) {
-		case *banktypes.MsgSend:
-			totalGasRequired += deterministicGas.BankSend
-		default:
+		msgGas := c.NetworkConfig.Fee.DeterministicGas.GasRequiredByMessage(msg)
+		if msgGas == 0 {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
+		totalGasRequired += msgGas
 	}
 
 	return totalGasRequired
+}
+
+// AccAddressToLegacyWallet is temporary method to keep compatibility between
+// func signatures while types.Wallet is being removed.
+func (c Chain) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wallet {
+	name := accAddr.String()
+	privKeyHex, err := keyring.NewUnsafe(c.Keyring).UnsafeExportPrivKeyHex(name)
+	if err != nil {
+		panic(err)
+	}
+
+	privKeyBytes, err := hex.DecodeString(privKeyHex)
+	if err != nil {
+		panic(err)
+	}
+
+	return types.Wallet{Name: name, Key: privKeyBytes}
 }
