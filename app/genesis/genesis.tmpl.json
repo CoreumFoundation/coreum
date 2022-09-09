@@ -91,13 +91,13 @@
         "min_deposit": [
           {
             "denom": "{{ .TokenSymbol }}",
-            "amount": "10000000"
+            "amount": "{{ .Gov.ProposalConfig.MinDepositAmount }}"
           }
         ],
-        "max_deposit_period": "172800s"
+        "max_deposit_period": "{{ .Gov.ProposalConfig.MinDepositPeriod }}"
       },
       "voting_params": {
-        "voting_period": "172800s"
+        "voting_period": "{{ .Gov.ProposalConfig.VotingPeriod }}"
       },
       "tally_params": {
         "quorum": "0.334000000000000000",
