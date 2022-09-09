@@ -25,9 +25,9 @@ import (
 func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
 	faucetWallet := chain.RandomWallet()
 
-	signerOneWallet := chain.RandomWallet()
-	signerTwoWallet := chain.RandomWallet()
-	signerThreeWallet := chain.RandomWallet()
+	signer1Wallet := chain.RandomWallet()
+	signer2Wallet := chain.RandomWallet()
+	signer3Wallet := chain.RandomWallet()
 
 	recipientWallet := chain.RandomWallet()
 
@@ -55,7 +55,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	))
 
 	// generate the keyring and collect the keys to use for the multisig account
-	keyNamesSet := []string{signerOneWallet.String(), signerTwoWallet.String(), signerThreeWallet.String()}
+	keyNamesSet := []string{signer1Wallet.String(), signer2Wallet.String(), signer3Wallet.String()}
 	kr := chain.Keyring
 	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
 	for _, key := range keyNamesSet {
@@ -125,7 +125,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	// sign and submit with just one key to check the tx rejection
 	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, signerOneWallet.String(), txBuilder, false)
+	err = tx.SignTx(txF, signer1Wallet.String(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err := clientCtx.TxConfig.TxEncoder()(multisigTx)
@@ -138,9 +138,9 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, signerOneWallet.String(), txBuilder, false)
+	err = tx.SignTx(txF, signer1Wallet.String(), txBuilder, false)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, signerTwoWallet.String(), txBuilder, false)
+	err = tx.SignTx(txF, signer2Wallet.String(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = clientCtx.TxConfig.TxEncoder()(multisigTx)
