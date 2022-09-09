@@ -156,7 +156,7 @@ func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter t
 	votes, err := chain.Client.QueryProposalVotes(ctx, proposalID)
 	require.NoError(t, err)
 	voterVotes, ok := votes[voter.Key.Address()]
-	require.True(t, ok, votes, voter.Key.Address())
+	require.True(t, ok, "%#v, %s", votes, voter.Key.Address())
 	require.Len(t, voterVotes, 1)
 	require.Equal(t, voterVotes[0].Option, govtypes.OptionYes)
 	require.Equal(t, voterVotes[0].Weight, sdk.NewDec(1))
