@@ -42,12 +42,12 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx          client.Context
-	authQueryClient    authtypes.QueryClient
-	bankQueryClient    banktypes.QueryClient
-	govQueryClient     govtypes.QueryClient
-	wasmQueryClient    wasmtypes.QueryClient
-	stakingQueryClient stakingtypes.QueryClient
+	clientCtx           client.Context
+	authQueryClient     authtypes.QueryClient
+	bankQueryClient     banktypes.QueryClient
+	govQueryClient      govtypes.QueryClient
+	wasmQueryClient     wasmtypes.QueryClient
+	stakingQueryClient  stakingtypes.QueryClient
 	feemodelQueryClient feemodeltypes.QueryClient
 }
 
@@ -67,12 +67,12 @@ func New(chainID app.ChainID, addr string) Client {
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 	return Client{
-		clientCtx:          clientCtx,
-		authQueryClient:    authtypes.NewQueryClient(clientCtx),
-		bankQueryClient:    banktypes.NewQueryClient(clientCtx),
-		wasmQueryClient:    wasmtypes.NewQueryClient(clientCtx),
-		govQueryClient:     govtypes.NewQueryClient(clientCtx),
-		stakingQueryClient: stakingtypes.NewQueryClient(clientCtx),
+		clientCtx:           clientCtx,
+		authQueryClient:     authtypes.NewQueryClient(clientCtx),
+		bankQueryClient:     banktypes.NewQueryClient(clientCtx),
+		wasmQueryClient:     wasmtypes.NewQueryClient(clientCtx),
+		govQueryClient:      govtypes.NewQueryClient(clientCtx),
+		stakingQueryClient:  stakingtypes.NewQueryClient(clientCtx),
 		feemodelQueryClient: feemodeltypes.NewQueryClient(clientCtx),
 	}
 }
