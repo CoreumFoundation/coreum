@@ -4,10 +4,6 @@ import (
 	"context"
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdktx "github.com/cosmos/cosmos-sdk/client/tx"
-	sdkhd "github.com/cosmos/cosmos-sdk/crypto/hd"
-	sdkkeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
@@ -16,9 +12,10 @@ import (
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -26,14 +23,14 @@ import (
 
 // TestMultisig tests the cosmos-sdk multisig accounts and API.
 func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
-	const (
-		key1 = "key1"
-		key2 = "key2"
-		key3 = "key3"
-	)
+	faucetWallet := chain.RandomWallet()
 
-	faucetWallet := testing.RandomWallet()
-	recipientWallet := testing.RandomWallet()
+	signerOneWallet := chain.RandomWallet()
+	signerTwoWallet := chain.RandomWallet()
+	signerThreeWallet := chain.RandomWallet()
+
+	recipientWallet := chain.RandomWallet()
+
 	nativeDenom := chain.NetworkConfig.TokenSymbol
 	initialGasPrice := chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
 	bankSendGas := chain.NetworkConfig.Fee.DeterministicGas.BankSend
@@ -44,8 +41,8 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
 		testing.FundedAccount{
 			// TODO (dhil): the test uses the faucetWallet since the FundedAccount consumes the Wallet instead of the address.
-			// Once start using the sdk types directly this code will be refactored, and multisig account will be funded directly.
-			Wallet: faucetWallet,
+			// Once we start using the sdk types directly this code will be refactored, and multisig account will be funded directly.
+			Wallet: chain.AccAddressToLegacyWallet(faucetWallet),
 			Amount: testing.MustNewCoin(t,
 				testing.ComputeNeededBalance(
 					initialGasPrice,
@@ -58,11 +55,12 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	))
 
 	// generate the keyring and collect the keys to use for the multisig account
-	keyNamesSet := []string{key1, key2, key3}
-	kr := sdkkeyring.NewInMemory()
+	keyNamesSet := []string{signerOneWallet.String(), signerTwoWallet.String(), signerThreeWallet.String()}
+	kr := chain.Keyring
 	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
 	for _, key := range keyNamesSet {
-		info := addRandomAccountToKeyring(requireT, key, kr)
+		info, err := kr.Key(key)
+		requireT.NoError(err)
 		publicKeySet = append(publicKeySet, info.GetPubKey())
 	}
 
@@ -70,32 +68,36 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	const multisigThreshold = 2
 	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
 	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
-
+	requireT.NoError(err)
 	// fund the multisig account
 	coredClient := chain.Client
-	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, nativeDenom)
-	requireT.NoError(err)
+
 	coinsToFundMultisigAddress := sdk.NewCoins(sdk.NewCoin(nativeDenom, testing.ComputeNeededBalance(
 		initialGasPrice,
 		bankSendGas,
 		1, sdk.NewInt(amountToSendFromMultisigAccount))))
 
-	bankSendTx, err := coredClient.Sign(
+	bankSendMsg := &banktypes.MsgSend{
+		FromAddress: faucetWallet.String(),
+		ToAddress:   multisigAddress.String(),
+		Amount:      coinsToFundMultisigAddress,
+	}
+
+	clientCtx := chain.ClientContext.
+		WithFromName(faucetWallet.String()).
+		WithFromAddress(faucetWallet)
+
+	txF := chain.TxFactory().
+		WithGas(chain.GasLimitByMsgs(bankSendMsg))
+
+	result, err := tx.BroadcastTx(
 		ctx,
-		tx.BaseInput{
-			Signer:   faucetWallet,
-			GasPrice: gasPrice,
-			GasLimit: bankSendGas,
-		},
-		banktypes.NewMsgSend(
-			faucetWallet.Address(),
-			multisigAddress,
-			coinsToFundMultisigAddress),
+		clientCtx,
+		txF,
+		bankSendMsg,
 	)
-	requireT.NoError(err)
-	// TODO (dhil) replace to new Broadcast once we finish with it
-	_, err = coredClient.Broadcast(ctx, coredClient.Encode(bankSendTx))
-	requireT.NoError(err)
+	require.NoError(t, err)
+	logger.Get(ctx).Info("Multisig funding executed", zap.String("txHash", result.TxHash))
 
 	multisigBalances, err := coredClient.BankQueryClient().AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: multisigAddress.String(),
@@ -104,35 +106,27 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	requireT.Equal(coinsToFundMultisigAddress, multisigBalances.Balances)
 
 	// prepare account to be funded from the multisig
-	recipientAddr := recipientWallet.Address()
+	recipientAddr := recipientWallet.String()
 	coinsToSendToRecipient := sdk.NewCoins(sdk.NewInt64Coin(nativeDenom, 1000))
-
-	// TODO (dhil): this will be refactored once we migrate fully to the new tx package
-	clientCtx := coredClient.GetClientCtx().
-		WithBroadcastMode(flags.BroadcastBlock)
 
 	// prepare the tx factory to sign with the account seq and number of the multisig account
 	multisigAccInfo, err := tx.GetAccountInfo(ctx, clientCtx, multisigAddress)
 	requireT.NoError(err)
-	txF := sdktx.Factory{}. // TODO (dhil) move/use this code to/from helpers after the migration to the ne tx package
-				WithAccountNumber(multisigAccInfo.GetAccountNumber()).
-				WithSequence(multisigAccInfo.GetSequence()).
-				WithChainID(string(chain.NetworkConfig.ChainID)).
-				WithKeybase(kr).
-				WithTxConfig(clientCtx.TxConfig).
-				WithGas(bankSendGas).
-				WithGasPrices(sdk.NewCoin(nativeDenom, initialGasPrice).String()).
-				WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON) //nolint:nosnakecase // the sdk constant
+	txF = txF.
+		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
+		WithSequence(multisigAccInfo.GetSequence()).
+		WithKeybase(kr).
+		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON) //nolint:nosnakecase // the sdk constant
 
-	bankSendMsg := banktypes.NewMsgSend(
-		multisigAddress,
-		recipientAddr,
-		coinsToSendToRecipient)
-
+	bankSendMsg = &banktypes.MsgSend{
+		FromAddress: multisigAddress.String(),
+		ToAddress:   recipientAddr,
+		Amount:      coinsToSendToRecipient,
+	}
 	// sign and submit with just one key to check the tx rejection
 	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, key1, txBuilder, false)
+	err = tx.SignTx(txF, signerOneWallet.String(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	_, err = tx.BroadcastRawTx(ctx, clientCtx, coredClient.Encode(multisigTx))
@@ -142,39 +136,19 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, key1, txBuilder, false)
+	err = tx.SignTx(txF, signerOneWallet.String(), txBuilder, false)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, key2, txBuilder, false)
+	err = tx.SignTx(txF, signerTwoWallet.String(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	_, err = tx.BroadcastRawTx(ctx, clientCtx, coredClient.Encode(multisigTx))
 	requireT.NoError(err)
 
 	recipientBalances, err := coredClient.BankQueryClient().AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
-		Address: recipientAddr.String(),
+		Address: recipientAddr,
 	})
 	requireT.NoError(err)
 	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
-}
-
-func addRandomAccountToKeyring(requireT *require.Assertions, name string, kr sdkkeyring.Keyring) sdkkeyring.Info {
-	mnemonic := generateRandomMnemonic(requireT)
-
-	accInfo, err := kr.NewAccount(name, mnemonic, "", "", sdkhd.Secp256k1)
-	requireT.NoError(err)
-
-	return accInfo
-}
-
-func generateRandomMnemonic(requireT *require.Assertions) string {
-	const mnemonicEntropySize = 256
-	entropySeed, err := bip39.NewEntropy(mnemonicEntropySize)
-	requireT.NoError(err)
-
-	mnemonic, err := bip39.NewMnemonic(entropySeed)
-	requireT.NoError(err)
-
-	return mnemonic
 }
 
 func createMulisignTx(requireT *require.Assertions, txBuilder sdkclient.TxBuilder, accSec uint64, multisigPublicKey *sdkmultisig.LegacyAminoPubKey) authsigning.Tx {
