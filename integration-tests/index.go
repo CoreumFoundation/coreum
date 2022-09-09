@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/CoreumFoundation/coreum/integration-tests/auth"
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
+	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
 	"github.com/CoreumFoundation/coreum/integration-tests/gov"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/integration-tests/wasm"
@@ -23,6 +24,7 @@ func Tests() testing.TestSet {
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
 			wasm.TestSimpleStateWasmContract,
 			wasm.TestBankSendWasmContract,
+			feemodel.TestQueryingMinGasPrice,
 		},
 	}
 

@@ -29,6 +29,7 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 const (
@@ -47,6 +48,7 @@ type Client struct {
 	govQueryClient     govtypes.QueryClient
 	wasmQueryClient    wasmtypes.QueryClient
 	stakingQueryClient stakingtypes.QueryClient
+	feemodelQueryClient feemodeltypes.QueryClient
 }
 
 // New creates new client for cored
@@ -71,6 +73,7 @@ func New(chainID app.ChainID, addr string) Client {
 		wasmQueryClient:    wasmtypes.NewQueryClient(clientCtx),
 		govQueryClient:     govtypes.NewQueryClient(clientCtx),
 		stakingQueryClient: stakingtypes.NewQueryClient(clientCtx),
+		feemodelQueryClient: feemodeltypes.NewQueryClient(clientCtx),
 	}
 }
 
@@ -293,6 +296,12 @@ func (c Client) BankQueryClient() banktypes.QueryClient {
 // using the internal clientCtx.
 func (c Client) WASMQueryClient() wasmtypes.QueryClient {
 	return c.wasmQueryClient
+}
+
+// FeemodelQueryClient returns a feemodel module querying client, initialized
+// using the internal clientCtx.
+func (c Client) FeemodelQueryClient() feemodeltypes.QueryClient {
+	return c.feemodelQueryClient
 }
 
 func isTxInMempool(errRes *sdk.TxResponse) bool {
