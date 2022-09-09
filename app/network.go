@@ -62,6 +62,14 @@ func init() {
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	}
 
+	govConfig := GovConfig{
+		ProposalConfig: GovProposalConfig{
+			MinDepositAmount: "10000000",
+			MinDepositPeriod: "172800s",
+			VotingPeriod:     "172800s",
+		},
+	}
+
 	list := []NetworkConfig{
 		{
 			ChainID:       Mainnet,
@@ -69,6 +77,7 @@ func init() {
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
 			Fee:           feeConfig,
+			GovConfig:     govConfig,
 		},
 		{
 			ChainID:       Devnet,
@@ -80,6 +89,7 @@ func init() {
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@35.223.81.227:26656"},
 			},
+			GovConfig: govConfig,
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
 				{
@@ -133,6 +143,18 @@ type FeeConfig struct {
 	DeterministicGas ante.DeterministicGasRequirements
 }
 
+// GovConfig contains gov module configs
+type GovConfig struct {
+	ProposalConfig GovProposalConfig
+}
+
+// GovProposalConfig contains gov module proposal-related configuration options
+type GovProposalConfig struct {
+	MinDepositAmount string
+	MinDepositPeriod string
+	VotingPeriod     string
+}
+
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID        ChainID
@@ -143,6 +165,7 @@ type NetworkConfig struct {
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
 	NodeConfig     NodeConfig
+	GovConfig      GovConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 }
@@ -155,6 +178,7 @@ type Network struct {
 	tokenSymbol   string
 	fee           FeeConfig
 	nodeConfig    NodeConfig
+	gov           GovConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -170,6 +194,7 @@ func NewNetwork(c NetworkConfig) Network {
 		tokenSymbol:    c.TokenSymbol,
 		nodeConfig:     c.NodeConfig.Clone(),
 		fee:            c.Fee,
+		gov:            c.GovConfig,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -381,14 +406,17 @@ func genesis(n Network) ([]byte, error) {
 		ChainID        ChainID
 		TokenSymbol    string
 		FeeModelParams feemodeltypes.Params
+		Gov            GovConfig
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
 		FeeModelParams: n.FeeModel().Params(),
+		Gov:            n.gov,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
 	}
+
 	return genesisBuf.Bytes(), nil
 }

@@ -15,7 +15,7 @@ var (
 		params: params,
 	}
 
-	gasPriceWithMaxDiscount = feeModel.computeGasPriceWithMaxDiscount()
+	gasPriceWithMaxDiscount = feeModel.CalculateGasPriceWithMaxDiscount()
 )
 
 func TestCalculateNextGasPriceKeyPoints(t *testing.T) {
@@ -122,9 +122,9 @@ func TestWithRandomModels(t *testing.T) {
 				assert.True(t, nextGasPrice.Equal(params.MaxGasPrice))
 			case shortEMA > params.EscalationStartBlockGas:
 				assert.True(t, nextGasPrice.LT(params.MaxGasPrice))
-				assert.True(t, nextGasPrice.GTE(model.computeGasPriceWithMaxDiscount()))
+				assert.True(t, nextGasPrice.GTE(model.CalculateGasPriceWithMaxDiscount()))
 			case shortEMA >= longEMA:
-				assert.True(t, nextGasPrice.Equal(model.computeGasPriceWithMaxDiscount()))
+				assert.True(t, nextGasPrice.Equal(model.CalculateGasPriceWithMaxDiscount()))
 			case shortEMA > 0:
 				assert.True(t, nextGasPrice.LT(params.InitialGasPrice))
 			default:

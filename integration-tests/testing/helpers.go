@@ -8,6 +8,7 @@ import (
 )
 
 // RandomWallet generates wallet with random name and private key
+// Deprecated: Use chain.RandomWallet instead
 func RandomWallet() types.Wallet {
 	_, privKey := types.GenerateSecp256k1Key()
 	return types.Wallet{Name: privKey.Address(), Key: privKey}
