@@ -70,8 +70,6 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
 	requireT.NoError(err)
 	// fund the multisig account
-	coredClient := chain.Client
-
 	coinsToFundMultisigAddress := sdk.NewCoins(sdk.NewCoin(nativeDenom, testing.ComputeNeededBalance(
 		initialGasPrice,
 		bankSendGas,
@@ -99,7 +97,8 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	require.NoError(t, err)
 	logger.Get(ctx).Info("Multisig funding executed", zap.String("txHash", result.TxHash))
 
-	multisigBalances, err := coredClient.BankQueryClient().AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+	bankClient := banktypes.NewQueryClient(clientCtx)
+	multisigBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: multisigAddress.String(),
 	})
 	requireT.NoError(err)
@@ -129,9 +128,12 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	err = tx.SignTx(txF, signerOneWallet.String(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	_, err = tx.BroadcastRawTx(ctx, clientCtx, coredClient.Encode(multisigTx))
+	encodedTx, err := clientCtx.TxConfig.TxEncoder()(multisigTx)
+	requireT.NoError(err)
+	_, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.Error(err)
-	require.True(t, client.IsErr(err, sdkerrors.ErrUnauthorized))
+	requireT.True(client.IsErr(err, sdkerrors.ErrUnauthorized))
+	logger.Get(ctx).Info("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
@@ -141,10 +143,13 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	err = tx.SignTx(txF, signerTwoWallet.String(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	_, err = tx.BroadcastRawTx(ctx, clientCtx, coredClient.Encode(multisigTx))
+	encodedTx, err = clientCtx.TxConfig.TxEncoder()(multisigTx)
 	requireT.NoError(err)
+	result, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
+	requireT.NoError(err)
+	logger.Get(ctx).Info("Fully signed tx executed", zap.String("txHash", result.TxHash))
 
-	recipientBalances, err := coredClient.BankQueryClient().AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipientAddr,
 	})
 	requireT.NoError(err)
