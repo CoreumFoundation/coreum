@@ -31,7 +31,7 @@ var (
 // It will help users by removing the need to import tx package from cosmos sdk and help avoid package name collision.
 type Factory = tx.Factory
 
-// SignTx signs a given tx with a named key. The bytes signed over are canconical.
+// SignTx signs a given tx with a named key. The bytes signed over are canonical.
 // The resulting signature will be added to the transaction builder overwriting the previous
 // ones if overwrite=true (otherwise, the signature will be appended).
 // Signing a transaction with mutltiple signers in the DIRECT mode is not supprted and will
