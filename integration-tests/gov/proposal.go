@@ -30,6 +30,8 @@ var (
 
 // TestProposalParamChange checks that param change proposal works correctly
 func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
+	nativeDenom := chain.NetworkConfig.TokenSymbol
+
 	// Create two random wallets
 	proposer := testing.RandomWallet()
 	voter1 := testing.RandomWallet()
@@ -62,9 +64,9 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(proposer, testing.MustNewCoin(t, proposerInitialBalance, chain.NetworkConfig.TokenSymbol)),
-		testing.NewFundedAccount(voter1, testing.MustNewCoin(t, voterInitialBalance, chain.NetworkConfig.TokenSymbol)),
-		testing.NewFundedAccount(voter2, testing.MustNewCoin(t, voterInitialBalance, chain.NetworkConfig.TokenSymbol)),
+		testing.NewFundedAccount(proposer, testing.MustNewCoin(t, proposerInitialBalance, nativeDenom)),
+		testing.NewFundedAccount(voter1, testing.MustNewCoin(t, voterInitialBalance, nativeDenom)),
+		testing.NewFundedAccount(voter2, testing.MustNewCoin(t, voterInitialBalance, nativeDenom)),
 	))
 
 	// Delegate coins
@@ -73,12 +75,12 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	require.NotEmpty(t, validators)
 	valAddress, err := sdk.ValAddressFromBech32(validators[0].OperatorAddress)
 	require.NoError(t, err)
-	delegateAmount := testing.MustNewCoin(t, voterDelegateAmount, chain.NetworkConfig.TokenSymbol)
+	delegateAmount := testing.MustNewCoin(t, voterDelegateAmount, nativeDenom)
 	delegateCoins(ctx, t, chain, voter1, valAddress, delegateAmount)
 	delegateCoins(ctx, t, chain, voter2, valAddress, delegateAmount)
 
 	// Submit a param change proposal
-	initialDeposit := testing.MustNewCoin(t, minDepositAmount, chain.NetworkConfig.TokenSymbol)
+	initialDeposit := testing.MustNewCoin(t, minDepositAmount, nativeDenom)
 	txBytes, err := chain.Client.PrepareTxSubmitProposal(ctx, client.TxSubmitProposalInput{
 		Base:           buildBaseTxInput(t, chain, proposer),
 		Proposer:       proposer,
@@ -164,7 +166,7 @@ func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain
 	coredClient := chain.Client
 	var lastStatus govtypes.ProposalStatus
 	timeout := time.NewTimer(duration + time.Second*10)
-	ticker := time.NewTicker(time.Second / 4)
+	ticker := time.NewTicker(time.Millisecond * 250)
 	for range ticker.C {
 		select {
 		case <-ctx.Done():
