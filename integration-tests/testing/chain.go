@@ -61,6 +61,8 @@ func (c Chain) NewCoin(amount sdk.Int) sdk.Coin {
 	return sdk.NewCoin(c.NetworkConfig.TokenSymbol, amount)
 }
 
+// GasLimitByMsgs calculates sum of gas limits required for message types passed.
+// It panics if unsupported message type specified.
 func (c Chain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64 = 0
 	for _, msg := range msgs {

@@ -57,4 +57,3 @@ func (dgd DeterministicGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 	return next(ctx, tx, simulate)
 }
-
