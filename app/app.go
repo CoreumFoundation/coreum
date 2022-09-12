@@ -1,7 +1,7 @@
 package app
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
@@ -635,7 +635,7 @@ func New(
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := app.WASMKeeper.InitializePinnedCodes(ctx); err != nil {
-			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
+			tmos.Exit(errors.Wrapf(err, "failed initialize wasmp pinned codes").Error())
 		}
 	}
 
