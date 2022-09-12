@@ -31,6 +31,15 @@ var (
 // It will help users by removing the need to import tx package from cosmos sdk and help avoid package name collision.
 type Factory = tx.Factory
 
+// SignTx signs a given tx with a named key. The bytes signed over are canonical.
+// The resulting signature will be added to the transaction builder overwriting the previous
+// ones if overwrite=true (otherwise, the signature will be appended).
+// Signing a transaction with mutltiple signers in the DIRECT mode is not supprted and will
+// return an error.
+// An error is returned upon failure.
+// https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
+var SignTx = tx.Sign
+
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
 // NOTE: copied from the link below and made some changes.
@@ -59,6 +68,11 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 		return nil, err
 	}
 
+	return BroadcastRawTx(ctx, clientCtx, txBytes)
+}
+
+// BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
+func BroadcastRawTx(ctx context.Context, clientCtx client.Context, txBytes []byte) (*sdk.TxResponse, error) {
 	// broadcast to a Tendermint node
 	switch clientCtx.BroadcastMode {
 	case flags.BroadcastSync:
