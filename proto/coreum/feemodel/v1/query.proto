@@ -1,0 +1,39 @@
+syntax = "proto3";
+package coreum.feemodel.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "coreum/feemodel/v1/params.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/feemodel/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // MinGasPrice queries the current minimum gas price required by the network.
+  rpc MinGasPrice(QueryMinGasPriceRequest) returns (QueryMinGasPriceResponse) {
+    option (google.api.http).get = "/coreum/feemodel/v1/min_gas_price";
+  }
+
+  // Params queries the parameters of x/feemodel module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/coreum/feemodel/v1/params";
+  }
+}
+
+// QueryMinGasPriceRequest is the request type for the Query/MinGasPrice RPC method.
+message QueryMinGasPriceRequest {}
+
+// QueryMinGasPriceResponse is the response type for the Query/MinGasPrice RPC method.
+message QueryMinGasPriceResponse {
+  // min_gas_price is the current minimum gas price required by the network.
+  cosmos.base.v1beta1.Coin min_gas_price = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryParamsRequest defines the request type for querying x/feemodel parameters.
+message QueryParamsRequest {}
+
+// QueryParamsResponse defines the response type for querying x/feemodel parameters.
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
