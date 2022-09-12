@@ -9,9 +9,7 @@ parent:
 
 ## Abstract
 
-This document specifies the feemodel module of the Cosmos SDK.
-
-The feemodel module is responsible for calculating minimum gas price required by the chain based on the [parameters](03_params.md) of fee model.
+This document specifies the feemodel module. The module is responsible for calculating minimum gas price required by the chain based on the [parameters](03_params.md) of fee model.
 
 There are four regions on the fee model curve:
  - between 0 and *long average block gas* where gas price goes down exponentially from `InitialGasPrice` to gas price with maximum discount (`InitialGasPrice * (1 -MaxDiscount)`)
