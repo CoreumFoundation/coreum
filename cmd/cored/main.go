@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
@@ -15,7 +14,7 @@ import (
 
 func main() {
 	logger := server.ZeroLogWrapper{Logger: log.Logger}
-	network, err := preProcessFlags()
+	network, err := cosmoscmd.PreProcessFlags()
 	if err != nil {
 		logger.Error("Error processing chain id flag", "err", err)
 		os.Exit(1)
@@ -27,23 +26,12 @@ func main() {
 		string(network.ChainID()),
 		app.ModuleBasics,
 		app.New,
-		// this line is used by starport scaffolding # root/arguments
 	)
 
-	rootCmd.AddCommand(initCmd(app.DefaultNodeHome))
-	overwriteDefaultChainIDFlags(rootCmd)
+	rootCmd.AddCommand(cosmoscmd.InitCmd(app.DefaultNodeHome))
+	cosmoscmd.OverwriteDefaultChainIDFlags(rootCmd)
 	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
-	}
-}
-
-func overwriteDefaultChainIDFlags(parentCmd *cobra.Command) {
-	for _, cmd := range parentCmd.Commands() {
-		if flag := cmd.LocalFlags().Lookup(flags.FlagChainID); flag != nil {
-			flag.DefValue = string(app.DefaultChainID)
-		}
-
-		overwriteDefaultChainIDFlags(cmd)
 	}
 }

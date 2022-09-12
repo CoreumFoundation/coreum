@@ -112,7 +112,7 @@ func TestGenesisValidation(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(
 		ModuleBasics.ValidateGenesis(
-			encCfg.Marshaler,
+			encCfg.Codec,
 			encCfg.TxConfig,
 			appStateMapJSONRawMessage,
 		))
@@ -304,7 +304,7 @@ func TestValidateAllGenesis(t *testing.T) {
 
 		assertT.NoErrorf(
 			ModuleBasics.ValidateGenesis(
-				encCfg.Marshaler,
+				encCfg.Codec,
 				encCfg.TxConfig,
 				appStateMapJSONRawMessage,
 			), "genesis for network '%s' is invalid", chainID)

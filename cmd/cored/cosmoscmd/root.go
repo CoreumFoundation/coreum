@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -28,12 +29,15 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/CoreumFoundation/coreum/app"
 )
 
 type (
@@ -46,29 +50,14 @@ type (
 		skipUpgradeHeights map[int64]bool,
 		homePath string,
 		invCheckPeriod uint,
-		encodingConfig EncodingConfig,
+		encodingConfig app.EncodingConfig,
 		appOpts servertypes.AppOptions,
 		baseAppOptions ...func(*baseapp.BaseApp),
-	) App
-
-	// App represents a Cosmos SDK application that can be run as a server and with an exportable state
-	App interface {
-		servertypes.Application
-		ExportableApp
-	}
-
-	// ExportableApp represents an app with an exportable state
-	ExportableApp interface {
-		ExportAppStateAndValidators(
-			forZeroHeight bool,
-			jailAllowedAddrs []string,
-		) (servertypes.ExportedApp, error)
-		LoadHeight(height int64) error
-	}
+	) *app.App
 
 	// appCreator is an app creator
 	appCreator struct {
-		encodingConfig EncodingConfig
+		encodingConfig app.EncodingConfig
 		buildApp       AppBuilder
 	}
 )
@@ -95,27 +84,6 @@ func (s *rootOptions) apply(options ...Option) {
 	}
 }
 
-// AddSubCmd adds sub commands.
-func AddSubCmd(cmd ...*cobra.Command) Option {
-	return func(o *rootOptions) {
-		o.addSubCmds = append(o.addSubCmds, cmd...)
-	}
-}
-
-// CustomizeStartCmd accepts a handler to customize the start command.
-func CustomizeStartCmd(h func(startCmd *cobra.Command)) Option {
-	return func(o *rootOptions) {
-		o.startCmdCustomizer = h
-	}
-}
-
-// WithEnvPrefix accepts a new prefix for environment variables.
-func WithEnvPrefix(envPrefix string) Option {
-	return func(o *rootOptions) {
-		o.envPrefix = envPrefix
-	}
-}
-
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd(
 	appName,
@@ -125,15 +93,15 @@ func NewRootCmd(
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
 	options ...Option,
-) (*cobra.Command, EncodingConfig) {
+) (*cobra.Command, app.EncodingConfig) {
 	rootOptions := newRootOptions(options...)
 
 	// Set config for prefixes
-	SetPrefixes(accountAddressPrefix)
+	app.SetPrefixes(accountAddressPrefix)
 
-	encodingConfig := MakeEncodingConfig(moduleBasics)
+	encodingConfig := app.NewModuleEncodingConfig(moduleBasics)
 	initClientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
@@ -193,7 +161,7 @@ func NewRootCmd(
 
 func initRootCmd(
 	rootCmd *cobra.Command,
-	encodingConfig EncodingConfig,
+	encodingConfig app.EncodingConfig,
 	defaultNodeHome string,
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
@@ -209,7 +177,7 @@ func initRootCmd(
 			defaultNodeHome,
 		),
 		genutilcli.ValidateGenesisCmd(moduleBasics),
-		AddGenesisAccountCmd(defaultNodeHome),
+		cosmoscmd.AddGenesisAccountCmd(defaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
 		config.Cmd(),
@@ -303,6 +271,7 @@ func txCommand(moduleBasics module.BasicManager) *cobra.Command {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
+	wasm.AddModuleInitFlags(startCmd)
 }
 
 func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
@@ -388,14 +357,12 @@ func (a appCreator) appExport(
 	jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions,
 ) (servertypes.ExportedApp, error) {
-	var exportableApp ExportableApp
-
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	exportableApp = a.buildApp(
+	exportableApp := a.buildApp(
 		logger,
 		db,
 		traceStore,
@@ -419,23 +386,6 @@ func (a appCreator) appExport(
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
 func initAppConfig() (string, interface{}) {
-	// The following code snippet is just for reference.
-
-	// WASMConfig defines configuration for the wasm module.
-	type WASMConfig struct {
-		// This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
-		QueryGasLimit uint64 `mapstructure:"query_gas_limit"`
-
-		// Address defines the gRPC-web server to listen on
-		LruSize uint64 `mapstructure:"lru_size"`
-	}
-
-	type CustomAppConfig struct {
-		serverconfig.Config
-
-		WASM WASMConfig `mapstructure:"wasm"`
-	}
-
 	// Optionally allow the chain developer to overwrite the SDK's default
 	// server config.
 	srvCfg := serverconfig.DefaultConfig()
@@ -453,21 +403,37 @@ func initAppConfig() (string, interface{}) {
 	// In simapp, we set the min gas prices to 0.
 	srvCfg.MinGasPrices = "0stake"
 
+	// WASMConfig defines configuration for the wasm module.
+	type WASMConfig struct {
+		// # This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
+		QueryGasLimit uint64
+		// This defines the memory size for Wasm modules that we can keep cached to speed-up instantiation
+		// The value is in MiB not bytes
+		MemoryCacheSize uint32
+	}
+
+	type CustomAppConfig struct {
+		serverconfig.Config
+		WASM WASMConfig
+	}
+
+	defaultWasmConfig := wasm.DefaultWasmConfig()
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
 		WASM: WASMConfig{
-			LruSize:       1,
-			QueryGasLimit: 300000,
+			QueryGasLimit:   defaultWasmConfig.SmartQueryGasLimit,
+			MemoryCacheSize: defaultWasmConfig.MemoryCacheSize,
 		},
 	}
 
 	customAppTemplate := serverconfig.DefaultConfigTemplate + `
 [wasm]
 # This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
-query_gas_limit = 300000
-# This is the number of wasm vm instances we keep cached in memory for speed-up
-# Warning: this is currently unstable and may lead to crashes, best to keep for 0 unless testing locally
-lru_size = 0`
+query_gas_limit = {{ .WASM.QueryGasLimit }}
+# This defines the memory size for Wasm modules that we can keep cached to speed-up instantiation
+# The value is in MiB not bytes
+memory_cache_size = {{ .WASM.MemoryCacheSize }}
+`
 
 	return customAppTemplate, customAppConfig
 }
