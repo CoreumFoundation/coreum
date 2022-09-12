@@ -11,6 +11,17 @@ type DeterministicGasRequirements struct {
 	BankSend uint64
 }
 
+// GasRequiredByMessage returns gas required by a sdk.Msg.
+// If fixed gas is not specified for the message type it returns 0.
+func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) uint64 {
+	switch msg.(type) {
+	case *banktypes.MsgSend:
+		return dgr.BankSend
+	default:
+		return 0
+	}
+}
+
 // DeterministicGasDecorator verifies that declared gas limit meets the requirements
 // of messages for which deterministic gas amount is defined.
 // CONTRACT: Tx must implement FeeTx to use DeterministicGasDecorator
@@ -36,7 +47,7 @@ func (dgd DeterministicGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	if ctx.IsCheckTx() && !simulate {
 		var gasRequired uint64
 		for _, msg := range tx.GetMsgs() {
-			gasRequired += dgd.gasRequiredByMessage(msg)
+			gasRequired += dgd.requirements.GasRequiredByMessage(msg)
 		}
 
 		if gasDeclared := feeTx.GetGas(); gasRequired > gasDeclared {
@@ -45,13 +56,4 @@ func (dgd DeterministicGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	}
 
 	return next(ctx, tx, simulate)
-}
-
-func (dgd DeterministicGasDecorator) gasRequiredByMessage(msg sdk.Msg) uint64 {
-	switch msg.(type) {
-	case *banktypes.MsgSend:
-		return dgd.requirements.BankSend
-	default:
-		return 0
-	}
 }

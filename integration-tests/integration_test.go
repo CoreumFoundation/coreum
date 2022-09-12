@@ -13,6 +13,10 @@ import (
 	"strings"
 	"testing"
 
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -30,7 +34,7 @@ var cfg = config{
 }
 
 func TestMain(m *testing.M) {
-	var coredAddress, fundingPrivKey, logFormat, filter string
+	var fundingPrivKey, coredAddress, logFormat, filter string
 
 	flag.StringVar(&coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
 	flag.StringVar(&fundingPrivKey, "priv-key", "LPIPcUDVpp8Cn__g-YMntGts-DfDbd2gKTcgUgqSLfY", "Base64-encoded private key used to fund accounts required by tests")
@@ -38,14 +42,12 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.Parse()
 
-	cfg.CoredClient = client.New(cfg.NetworkConfig.ChainID, coredAddress)
-
-	var err error
-	cfg.FundingPrivKey, err = base64.RawURLEncoding.DecodeString(fundingPrivKey)
+	decodedFundingPrivKey, err := base64.RawURLEncoding.DecodeString(fundingPrivKey)
 	if err != nil {
 		panic(err)
 	}
-
+	cfg.FundingPrivKey = decodedFundingPrivKey
+	cfg.CoredAddress = coredAddress
 	cfg.Filter = regexp.MustCompile(filter)
 	cfg.LogFormat = logger.Format(logFormat)
 	cfg.LogVerbose = flag.Lookup("test.v").Value.String() == "true"
@@ -62,13 +64,10 @@ func Test(t *testing.T) {
 	testSet := tests.Tests()
 	ctx := newContext(t, cfg)
 
-	var err error
-	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
-	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = cfg.CoredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
+	chain, err := newChain(ctx, cfg)
 	require.NoError(t, err)
 
-	testCases := collectTestCases(cfg, fundingWallet, testSet)
-
+	testCases := collectTestCases(chain, testSet, cfg.Filter)
 	if len(testCases) == 0 {
 		logger.Get(ctx).Warn("No tests to run")
 		return
@@ -78,12 +77,47 @@ func Test(t *testing.T) {
 }
 
 type config struct {
-	CoredClient    client.Client
+	CoredAddress   string
 	NetworkConfig  app.NetworkConfig
 	FundingPrivKey types.Secp256k1PrivateKey
 	Filter         *regexp.Regexp
 	LogFormat      logger.Format
 	LogVerbose     bool
+}
+
+func newChain(ctx context.Context, cfg config) (coreumtesting.Chain, error) {
+	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.CoredAddress)
+	rpcClient, err := cosmosclient.NewClientFromNode(cfg.CoredAddress)
+	if err != nil {
+		panic(err)
+	}
+	clientContext := app.
+		NewDefaultClientContext().
+		WithChainID(string(cfg.NetworkConfig.ChainID)).
+		WithClient(rpcClient).
+		WithBroadcastMode(flags.BroadcastBlock)
+
+	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
+	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = coredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
+	if err != nil {
+		return coreumtesting.Chain{}, errors.Wrapf(err, "failed to get funding wallet sequence")
+	}
+
+	faucet := &testingFaucet{
+		client:        coredClient,
+		networkConfig: cfg.NetworkConfig,
+		muCh:          make(chan struct{}, 1),
+		fundingWallet: fundingWallet,
+	}
+	faucet.muCh <- struct{}{}
+
+	return coreumtesting.Chain{
+		Client:        coredClient,
+		ClientContext: clientContext,
+		NetworkConfig: cfg.NetworkConfig,
+		Faucet:        faucet,
+		Keyring:       keyring.NewInMemory(),
+	}, nil
 }
 
 func newContext(t *testing.T, cfg config) context.Context {
@@ -103,26 +137,12 @@ type testCase struct {
 	RunFunc func(ctx context.Context, t *testing.T)
 }
 
-func collectTestCases(cfg config, fundingWallet types.Wallet, testSet coreumtesting.TestSet) []testCase {
-	faucet := &testingFaucet{
-		client:        cfg.CoredClient,
-		networkConfig: cfg.NetworkConfig,
-		muCh:          make(chan struct{}, 1),
-		fundingWallet: fundingWallet,
-	}
-	faucet.muCh <- struct{}{}
-
-	chain := coreumtesting.Chain{
-		NetworkConfig: cfg.NetworkConfig,
-		Client:        cfg.CoredClient,
-		Faucet:        faucet,
-	}
-
+func collectTestCases(chain coreumtesting.Chain, testSet coreumtesting.TestSet, testFilter *regexp.Regexp) []testCase {
 	var testCases []testCase
 	for _, testFunc := range testSet.SingleChain {
 		testFunc := testFunc
 		name := funcToName(testFunc)
-		if !cfg.Filter.MatchString(name) {
+		if !testFilter.MatchString(name) {
 			continue
 		}
 
