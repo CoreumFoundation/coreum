@@ -77,6 +77,12 @@ func New(chainID app.ChainID, addr string) Client {
 	}
 }
 
+// GetClientCtx returns the clientCtx from the client.
+// TODO (dhil): this is temp workaround to get access to the configured client context util we migrate to new tx package
+func (c Client) GetClientCtx() client.Context {
+	return c.clientCtx
+}
+
 // GetNumberSequence returns account number and account sequence for provided address
 func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, uint64, error) {
 	addr, err := sdk.AccAddressFromBech32(address)
