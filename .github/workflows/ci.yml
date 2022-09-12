@@ -18,8 +18,7 @@ jobs:
       - name: Set up crust
         run: |
           cd ..
-          git clone https://github.com/CoreumFoundation/crust.git 
-          git checkout origin/begmaroman/update-coreum-version
+          git clone -b begmaroman/update-coreum-version https://github.com/CoreumFoundation/crust.git 
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint, run unit tests and build
         run: crust lint test build --log-format=yaml
