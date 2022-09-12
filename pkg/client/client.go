@@ -27,6 +27,7 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 const (
@@ -53,19 +54,21 @@ func New(chainID app.ChainID, addr string) Client {
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 	return Client{
-		clientCtx:       clientCtx,
-		authQueryClient: authtypes.NewQueryClient(clientCtx),
-		bankQueryClient: banktypes.NewQueryClient(clientCtx),
-		wasmQueryClient: wasmtypes.NewQueryClient(clientCtx),
+		clientCtx:           clientCtx,
+		authQueryClient:     authtypes.NewQueryClient(clientCtx),
+		bankQueryClient:     banktypes.NewQueryClient(clientCtx),
+		wasmQueryClient:     wasmtypes.NewQueryClient(clientCtx),
+		feemodelQueryClient: feemodeltypes.NewQueryClient(clientCtx),
 	}
 }
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx       client.Context
-	authQueryClient authtypes.QueryClient
-	bankQueryClient banktypes.QueryClient
-	wasmQueryClient wasmtypes.QueryClient
+	clientCtx           client.Context
+	authQueryClient     authtypes.QueryClient
+	bankQueryClient     banktypes.QueryClient
+	wasmQueryClient     wasmtypes.QueryClient
+	feemodelQueryClient feemodeltypes.QueryClient
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
@@ -287,6 +290,12 @@ func (c Client) BankQueryClient() banktypes.QueryClient {
 // using the internal clientCtx.
 func (c Client) WASMQueryClient() wasmtypes.QueryClient {
 	return c.wasmQueryClient
+}
+
+// FeemodelQueryClient returns a feemodel module querying client, initialized
+// using the internal clientCtx.
+func (c Client) FeemodelQueryClient() feemodeltypes.QueryClient {
+	return c.feemodelQueryClient
 }
 
 func isTxInMempool(errRes *sdk.TxResponse) bool {
