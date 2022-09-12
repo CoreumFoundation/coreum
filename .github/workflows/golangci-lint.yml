@@ -27,4 +27,3 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.48.0
-          args: --config=https://raw.githubusercontent.com/CoreumFoundation/crust/master/build/.golangci.yaml
