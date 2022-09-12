@@ -129,13 +129,6 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	genesis := &types.GenesisState{}
 	cdc.MustUnmarshalJSON(data, genesis)
-
-	// FIXME (wojtek): Remove this after crust imports new version of coreum
-	if genesis.Validate() != nil {
-		genesis = types.DefaultGenesisState()
-		genesis.MinGasPrice.Denom = "dmcore"
-	}
-
 	am.keeper.SetParams(ctx, genesis.Params)
 	am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice)
 	return []abci.ValidatorUpdate{}
