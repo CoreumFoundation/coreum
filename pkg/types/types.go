@@ -9,6 +9,7 @@ import (
 )
 
 // Wallet stores information related to wallet
+// TODO: Drop this type
 type Wallet struct {
 	// Name is the name of the key stored in keystore
 	Name string

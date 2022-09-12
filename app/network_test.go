@@ -57,6 +57,13 @@ func testNetwork() Network {
 			Balances:  "1000some-test-token",
 		}},
 		GenTxs: []json.RawMessage{tx},
+		GovConfig: GovConfig{
+			ProposalConfig: GovProposalConfig{
+				MinDepositAmount: "10000000",
+				MinDepositPeriod: "172800s",
+				VotingPeriod:     "172800s",
+			},
+		},
 	})
 }
 
