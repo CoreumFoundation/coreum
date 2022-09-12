@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
@@ -87,6 +86,7 @@ import (
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/ignite/cli/ignite/pkg/openapiconsole"
+	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"github.com/tendermint/spn/x/monitoringp"
 	monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
