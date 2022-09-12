@@ -26,5 +26,5 @@ jobs:
         run: crust build --log-format=yaml
       - name: Unit testing
         run: crust test --log-format=yaml
-      - name: Execute integration tests
+      - name: Integration tests
         run: crust znet test --log-format=yaml
