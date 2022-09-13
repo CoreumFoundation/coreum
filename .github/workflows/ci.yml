@@ -10,33 +10,30 @@ jobs:
   ci:
     runs-on: ubuntu-22.04
     steps:
+      - name: Go version used to build crust tool
+        run: go version
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
-      #- uses: actions/checkout@v3
-      #  with:
-      #    name: CoreumFoundation/crust
-      - name: Cache
+      - name: Checkout crust
+        uses: actions/checkout@v3
+        with:
+          name: CoreumFoundation/crust
+      - name: Set up cache
         id: cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
             ~/.cache/golangci-lint
-            ~/go/pkg/mod
+            ~/go/pkg
           key: ${{ runner.os }}-ci-cache
-      - name: Go version used to build crust tool
-        run: go version
       - name: Set up crust
-        run: |
-          cd ..
-          git clone https://github.com/CoreumFoundation/crust.git 
-          echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+        run: cd .. && echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint
         run: |
           export GOLANGCI_LINT_CACHE=$HOME/.cache/golangci-lint
           crust lint --log-format=yaml
-          bin/golangci-lint cache status
       - name: Build
         run: crust build --log-format=yaml
       - name: Unit testing
