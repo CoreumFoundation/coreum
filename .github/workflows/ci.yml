@@ -25,8 +25,7 @@ jobs:
         id: cache
         uses: actions/cache@v3
         with:
-          path: |
-            $HOME/.cache/golangci-lint
+          path: $HOME/.cache/golangci-lint
           key: ${{ runner.os }}-ci-cache
       - name: Checkout coreum
         uses: actions/checkout@v3
