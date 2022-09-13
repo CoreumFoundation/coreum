@@ -69,7 +69,7 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 		},
 		MinGasPrice: sdk.NewCoin("coin", sdk.NewInt(155)),
 	}
-	cdc := app.NewEncodingConfig().Marshaler
+	cdc := app.NewEncodingConfig().Codec
 	keeper := newKeeperMock(genesisState)
 	module := feemodel.NewAppModule(keeper)
 

@@ -1,10 +1,44 @@
 package app
 
 import (
-	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/std"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 )
 
-// NewEncodingConfig returns the encoding config
-func NewEncodingConfig() cosmoscmd.EncodingConfig {
-	return cosmoscmd.MakeEncodingConfig(ModuleBasics)
+// EncodingConfig specifies the concrete encoding types to use for a given app.
+// This is provided for compatibility between protobuf and amino implementations.
+type EncodingConfig struct {
+	InterfaceRegistry types.InterfaceRegistry
+	Codec             codec.Codec
+	TxConfig          client.TxConfig
+	Amino             *codec.LegacyAmino
+}
+
+// NewEncodingConfig creates an EncodingConfig for testing.
+func NewEncodingConfig() EncodingConfig {
+	return NewModuleEncodingConfig(ModuleBasics)
+}
+
+// NewModuleEncodingConfig creates an EncodingConfig for the provided module.BasicManager.
+func NewModuleEncodingConfig(moduleBasics module.BasicManager) EncodingConfig {
+	amino := codec.NewLegacyAmino()
+	interfaceRegistry := types.NewInterfaceRegistry()
+	marshaler := codec.NewProtoCodec(interfaceRegistry)
+	txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
+
+	encodingConfig := EncodingConfig{
+		InterfaceRegistry: interfaceRegistry,
+		Codec:             marshaler,
+		TxConfig:          txCfg,
+		Amino:             amino,
+	}
+	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	moduleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	moduleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	return encodingConfig
 }
