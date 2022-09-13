@@ -37,7 +37,7 @@ jobs:
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint
         run: |
-          echo $GOLANGCI_LINT_CACHE
+          echo $HOME
           crust lint --log-format=yaml
       - name: Build
         run: crust build --log-format=yaml
