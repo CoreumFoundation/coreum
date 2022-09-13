@@ -34,8 +34,9 @@ jobs:
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint
         run: |
+          export GOLANGCI_LINT_CACHE=$HOME/.cache/golangci-lint
           crust lint --log-format=yaml
-          $(pwd)/crust/bin/golangci-lint cache status
+          bin/golangci-lint cache status
       - name: Build
         run: crust build --log-format=yaml
       - name: Unit testing
