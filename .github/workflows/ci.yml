@@ -32,12 +32,7 @@ jobs:
             ~/go/pkg
           key: ${{ runner.os }}-ci-cache
       - name: Set up crust
-        run: |
-          echo $(pwd)
-          ls .
-          cd .. 
-          ls .
-          echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint
         run: |
           export GOLANGCI_LINT_CACHE=$HOME/.cache/golangci-lint
