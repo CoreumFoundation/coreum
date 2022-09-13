@@ -1,4 +1,4 @@
-package testing
+package client
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 )
 
 // GetBondedTokens returns bonded tokens amount
-func (c Chain) GetBondedTokens(ctx context.Context) (sdk.Int, error) {
-	resp, err := c.Client.StakingQueryClient().Pool(ctx, &stakingtypes.QueryPoolRequest{})
+func (c Client) GetBondedTokens(ctx context.Context) (sdk.Int, error) {
+	resp, err := c.StakingQueryClient().Pool(ctx, &stakingtypes.QueryPoolRequest{})
 	if err != nil {
 		return sdk.NewInt(0), err
 	}
@@ -22,8 +22,8 @@ func (c Chain) GetBondedTokens(ctx context.Context) (sdk.Int, error) {
 }
 
 // GetStakingParams returns staking params
-func (c Chain) GetStakingParams(ctx context.Context) (*stakingtypes.Params, error) {
-	resp, err := c.Client.StakingQueryClient().Params(ctx, &stakingtypes.QueryParamsRequest{})
+func (c Client) GetStakingParams(ctx context.Context) (*stakingtypes.Params, error) {
+	resp, err := c.StakingQueryClient().Params(ctx, &stakingtypes.QueryParamsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -32,8 +32,8 @@ func (c Chain) GetStakingParams(ctx context.Context) (*stakingtypes.Params, erro
 }
 
 // GetValidators returns validators list
-func (c Chain) GetValidators(ctx context.Context) ([]stakingtypes.Validator, error) {
-	resp, err := c.Client.StakingQueryClient().Validators(ctx, &stakingtypes.QueryValidatorsRequest{
+func (c Client) GetValidators(ctx context.Context) ([]stakingtypes.Validator, error) {
+	resp, err := c.StakingQueryClient().Validators(ctx, &stakingtypes.QueryValidatorsRequest{
 		Status: stakingtypes.BondStatusBonded,
 	})
 	if err != nil {
@@ -53,7 +53,7 @@ type TxSubmitDelegationInput struct {
 }
 
 // PrepareTxSubmitDelegation creates a transaction to submit a delegation
-func (c Chain) PrepareTxSubmitDelegation(ctx context.Context, input TxSubmitDelegationInput) ([]byte, error) {
+func (c Client) PrepareTxSubmitDelegation(ctx context.Context, input TxSubmitDelegationInput) ([]byte, error) {
 	delegatorAddress, err := sdk.AccAddressFromBech32(input.Delegator.Key.Address())
 	if err != nil {
 		return nil, err
@@ -68,10 +68,10 @@ func (c Chain) PrepareTxSubmitDelegation(ctx context.Context, input TxSubmitDele
 		Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
 	})
 
-	signedTx, err := c.Client.Sign(ctx, input.Base, msg)
+	signedTx, err := c.Sign(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.Client.Encode(signedTx), nil
+	return c.Encode(signedTx), nil
 }

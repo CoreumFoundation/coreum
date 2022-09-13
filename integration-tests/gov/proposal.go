@@ -38,11 +38,11 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	voter2 := testing.RandomWallet()
 
 	// Get gov tally params
-	govTallyParams, err := chain.GetGovTallyParams(ctx)
+	govTallyParams, err := chain.Client.GetGovTallyParams(ctx)
 	require.NoError(t, err)
 
 	// Calculate a voter balance based on min amount to be delegated
-	bondedTokens, err := chain.GetBondedTokens(ctx)
+	bondedTokens, err := chain.Client.GetBondedTokens(ctx)
 	require.NoError(t, err)
 	voterDelegateAmount := bondedTokens.ToDec().Mul(govTallyParams.Threshold.Mul(minDepositMultiplier)).QuoInt64(2).RoundInt()
 
@@ -70,7 +70,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	))
 
 	// Delegate coins
-	validators, err := chain.GetValidators(ctx)
+	validators, err := chain.Client.GetValidators(ctx)
 	require.NoError(t, err)
 	require.NotEmpty(t, validators)
 	valAddress, err := sdk.ValAddressFromBech32(validators[0].OperatorAddress)
@@ -81,7 +81,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Submit a param change proposal
 	initialDeposit := testing.MustNewCoin(t, minDepositAmount, nativeDenom)
-	txBytes, err := chain.PrepareTxSubmitProposal(ctx, testing.TxSubmitProposalInput{
+	txBytes, err := chain.Client.PrepareTxSubmitProposal(ctx, client.TxSubmitProposalInput{
 		Base:           buildBaseTxInput(t, chain, proposer),
 		Proposer:       proposer,
 		InitialDeposit: initialDeposit,
@@ -124,13 +124,13 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	})
 
 	// Check the proposed change is applied
-	stakingParams, err := chain.GetStakingParams(ctx)
+	stakingParams, err := chain.Client.GetStakingParams(ctx)
 	require.NoError(t, err)
 	require.Equal(t, uint32(proposedMaxValidators), stakingParams.MaxValidators)
 }
 
 func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delegator types.Wallet, validator sdk.ValAddress, amount types.Coin) {
-	txBytes, err := chain.PrepareTxSubmitDelegation(ctx, testing.TxSubmitDelegationInput{
+	txBytes, err := chain.Client.PrepareTxSubmitDelegation(ctx, client.TxSubmitDelegationInput{
 		Base:      buildBaseTxInput(t, chain, delegator),
 		Delegator: delegator,
 		Validator: validator,
@@ -142,7 +142,7 @@ func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delega
 }
 
 func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter types.Wallet, option govtypes.VoteOption, proposalID uint64) {
-	txBytes, err := chain.PrepareTxSubmitProposalVote(ctx, testing.TxSubmitProposalVoteInput{
+	txBytes, err := chain.Client.PrepareTxSubmitProposalVote(ctx, client.TxSubmitProposalVoteInput{
 		Base:       buildBaseTxInput(t, chain, voter),
 		Voter:      voter,
 		ProposalID: proposalID,
@@ -153,7 +153,7 @@ func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter t
 	require.NoError(t, err)
 
 	// Check vote
-	votes, err := chain.QueryProposalVotes(ctx, proposalID)
+	votes, err := chain.Client.QueryProposalVotes(ctx, proposalID)
 	require.NoError(t, err)
 	voterVotes, ok := votes[voter.Key.Address()]
 	require.True(t, ok, "%#v, %s", votes, voter.Key.Address())
@@ -175,7 +175,7 @@ func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain
 			t.Errorf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus)
 			t.FailNow()
 		default:
-			proposal, err := chain.GetProposal(ctx, proposalID)
+			proposal, err := chain.Client.GetProposal(ctx, proposalID)
 			require.NoError(t, err)
 
 			if lastStatus = proposal.Status; lastStatus == status {
