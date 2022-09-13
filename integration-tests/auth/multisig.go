@@ -39,11 +39,11 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
+		testing.NewFundedAccount(
 			// TODO (dhil): the test uses the faucetWallet since the FundedAccount consumes the Wallet instead of the address.
 			// Once we start using the sdk types directly this code will be refactored, and multisig account will be funded directly.
-			Wallet: chain.AccAddressToLegacyWallet(faucetWallet),
-			Amount: testing.MustNewCoin(t,
+			chain.AccAddressToLegacyWallet(faucetWallet),
+			testing.MustNewCoin(t,
 				testing.ComputeNeededBalance(
 					initialGasPrice,
 					bankSendGas,
@@ -51,7 +51,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 					sdk.NewInt(amountToSendFromMultisigAccount)),
 				nativeDenom,
 			),
-		},
+		),
 	))
 
 	// generate the keyring and collect the keys to use for the multisig account

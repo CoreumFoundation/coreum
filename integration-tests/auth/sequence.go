@@ -17,15 +17,15 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	sender := testing.RandomWallet()
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
-			Wallet: sender,
-			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
+		testing.NewFundedAccount(
+			sender,
+			testing.MustNewCoin(t, testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 				1,
 				sdk.NewInt(10),
 			), chain.NetworkConfig.TokenSymbol),
-		},
+		),
 	))
 
 	coredClient := chain.Client

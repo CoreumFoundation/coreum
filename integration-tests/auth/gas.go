@@ -28,12 +28,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
-			Wallet: sender,
-			Amount: initialBalance,
-		},
-	))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
 
 	coredClient := chain.Client
 
@@ -67,12 +62,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
-			Wallet: sender,
-			Amount: initialBalance,
-		},
-	))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
 
 	coredClient := chain.Client
 
@@ -97,15 +87,12 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 	sender := testing.RandomWallet()
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
-			Wallet: sender,
-			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas+1),
-				1,
-				sdk.NewInt(100),
-			), chain.NetworkConfig.TokenSymbol),
-		},
+		testing.NewFundedAccount(sender, testing.MustNewCoin(t, testing.ComputeNeededBalance(
+			chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+			uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas+1),
+			1,
+			sdk.NewInt(100),
+		), chain.NetworkConfig.TokenSymbol)),
 	))
 
 	coredClient := chain.Client
@@ -139,12 +126,7 @@ func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain test
 	).BigInt(), chain.NetworkConfig.TokenSymbol)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
-			Wallet: sender,
-			Amount: initialBalance,
-		},
-	))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
 
 	coredClient := chain.Client
 

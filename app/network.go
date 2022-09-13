@@ -149,9 +149,14 @@ type GovConfig struct {
 
 // GovProposalConfig contains gov module proposal-related configuration options
 type GovProposalConfig struct {
+	// MinDepositAmount is the minimum amount needed to create a proposal. Basically anti-spam policy.
 	MinDepositAmount string
+
+	// MinDepositPeriod is the minimum deposit period. Basically the duration when a proposal depositing is available.
 	MinDepositPeriod string
-	VotingPeriod     string
+
+	// VotingPeriod is the proposal voting period duration.
+	VotingPeriod string
 }
 
 // NetworkConfig helps initialize Network instance
