@@ -29,10 +29,9 @@ jobs:
           cd ..
           git clone https://github.com/CoreumFoundation/crust.git 
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+          $(pwd)/crust/bin/golangci-lint cache status
       - name: Lint
         run: |
-          golangci-lint cache status
-          export GOLANGCI_LINT_CACHE=golangci-lint-cache
           crust lint --log-format=yaml
       - name: Build
         run: crust build --log-format=yaml
