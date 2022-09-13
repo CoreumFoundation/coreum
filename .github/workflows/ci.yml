@@ -12,7 +12,8 @@ jobs:
     steps:
       - name: Go version used to build crust tool
         run: go version
-      - uses: actions/checkout@v3
+      - name: Checkout coreum
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Checkout crust
@@ -30,9 +31,9 @@ jobs:
           key: ${{ runner.os }}-ci-cache
       - name: Set up crust
         run: |
-          echo $pwd
+          echo $(pwd)
           cd .. 
-          ls $(pwd)/crust/bin
+          ls .
           echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint
         run: |
