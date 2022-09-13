@@ -38,10 +38,7 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
-			Wallet: wallet,
-			Amount: testing.MustNewCoin(t, sdk.NewInt(5000000000), nativeDenom),
-		},
+		testing.NewFundedAccount(wallet, testing.MustNewCoin(t, sdk.NewInt(5000000000), nativeDenom)),
 	))
 
 	baseInput := tx.BaseInput{
