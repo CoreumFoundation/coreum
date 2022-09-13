@@ -23,10 +23,7 @@ func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Prefunding account required by test
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
-			Wallet: wallet,
-			Amount: testing.MustNewCoin(t, sdk.NewInt(100), chain.NetworkConfig.TokenSymbol),
-		},
+		testing.NewFundedAccount(wallet, testing.MustNewCoin(t, sdk.NewInt(100), chain.NetworkConfig.TokenSymbol)),
 	))
 
 	// Query for current balance available on the wallet
@@ -44,19 +41,19 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	receiver := chain.RandomWallet()
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.FundedAccount{
-			Wallet: chain.AccAddressToLegacyWallet(sender),
-			Amount: testing.MustNewCoin(t, testing.ComputeNeededBalance(
+		testing.NewFundedAccount(
+			chain.AccAddressToLegacyWallet(sender),
+			testing.MustNewCoin(t, testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 				1,
 				sdk.NewInt(100),
 			), chain.NetworkConfig.TokenSymbol),
-		},
-		testing.FundedAccount{
-			Wallet: chain.AccAddressToLegacyWallet(receiver),
-			Amount: testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
-		},
+		),
+		testing.NewFundedAccount(
+			chain.AccAddressToLegacyWallet(receiver),
+			testing.MustNewCoin(t, sdk.NewInt(10), chain.NetworkConfig.TokenSymbol),
+		),
 	))
 
 	// Transfer 10 cores from sender to receiver

@@ -1,4 +1,4 @@
-package client
+package testing
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 )
 
 // GetGovTallyParams returns tally params of gov module
-func (c Client) GetGovTallyParams(ctx context.Context) (*govtypes.TallyParams, error) {
-	resp, err := c.govQueryClient.Params(ctx, &govtypes.QueryParamsRequest{
+func (c Chain) GetGovTallyParams(ctx context.Context) (*govtypes.TallyParams, error) {
+	resp, err := c.Client.GovQueryClient().Params(ctx, &govtypes.QueryParamsRequest{
 		ParamsType: govtypes.ParamTallying,
 	})
 	if err != nil {
@@ -24,8 +24,8 @@ func (c Client) GetGovTallyParams(ctx context.Context) (*govtypes.TallyParams, e
 }
 
 // GetProposal returns proposal by the given ID
-func (c Client) GetProposal(ctx context.Context, proposalID uint64) (*govtypes.Proposal, error) {
-	resp, err := c.govQueryClient.Proposal(ctx, &govtypes.QueryProposalRequest{
+func (c Chain) GetProposal(ctx context.Context, proposalID uint64) (*govtypes.Proposal, error) {
+	resp, err := c.Client.GovQueryClient().Proposal(ctx, &govtypes.QueryProposalRequest{
 		ProposalId: proposalID,
 	})
 	if err != nil {
@@ -36,12 +36,12 @@ func (c Client) GetProposal(ctx context.Context, proposalID uint64) (*govtypes.P
 }
 
 // QueryProposalVotes queries for proposal votes info
-func (c Client) QueryProposalVotes(ctx context.Context, proposalID uint64) (map[string][]govtypes.WeightedVoteOption, error) {
+func (c Chain) QueryProposalVotes(ctx context.Context, proposalID uint64) (map[string][]govtypes.WeightedVoteOption, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
 	// FIXME (wojtek): support pagination
-	resp, err := c.govQueryClient.Votes(requestCtx, &govtypes.QueryVotesRequest{ProposalId: proposalID})
+	resp, err := c.Client.GovQueryClient().Votes(requestCtx, &govtypes.QueryVotesRequest{ProposalId: proposalID})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -63,7 +63,7 @@ type TxSubmitProposalInput struct {
 }
 
 // PrepareTxSubmitProposal creates a transaction to submit a proposal
-func (c Client) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitProposalInput) ([]byte, error) {
+func (c Chain) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitProposalInput) ([]byte, error) {
 	proposerAddress, err := sdk.AccAddressFromBech32(input.Proposer.Key.Address())
 	if err != nil {
 		return nil, err
@@ -83,12 +83,12 @@ func (c Client) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitPropo
 		return nil, errors.Wrap(err, "failed to create proposal message")
 	}
 
-	signedTx, err := c.Sign(ctx, input.Base, msg)
+	signedTx, err := c.Client.Sign(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.Encode(signedTx), nil
+	return c.Client.Encode(signedTx), nil
 }
 
 // TxSubmitProposalDepositInput holds input data for PrepareTxSubmitProposalDeposit
@@ -101,7 +101,7 @@ type TxSubmitProposalDepositInput struct {
 }
 
 // PrepareTxSubmitProposalDeposit creates a transaction to submit a proposal deposit
-func (c Client) PrepareTxSubmitProposalDeposit(ctx context.Context, input TxSubmitProposalDepositInput) ([]byte, error) {
+func (c Chain) PrepareTxSubmitProposalDeposit(ctx context.Context, input TxSubmitProposalDepositInput) ([]byte, error) {
 	depositorAddress, err := sdk.AccAddressFromBech32(input.Depositor.Key.Address())
 	if err != nil {
 		return nil, err
@@ -113,12 +113,12 @@ func (c Client) PrepareTxSubmitProposalDeposit(ctx context.Context, input TxSubm
 			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
 		},
 	})
-	signedTx, err := c.Sign(ctx, input.Base, msg)
+	signedTx, err := c.Client.Sign(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.Encode(signedTx), nil
+	return c.Client.Encode(signedTx), nil
 }
 
 // TxSubmitProposalVoteInput holds input data for PrepareTxSubmitProposalVote
@@ -131,17 +131,17 @@ type TxSubmitProposalVoteInput struct {
 }
 
 // PrepareTxSubmitProposalVote creates a transaction to submit a proposal vote
-func (c Client) PrepareTxSubmitProposalVote(ctx context.Context, input TxSubmitProposalVoteInput) ([]byte, error) {
+func (c Chain) PrepareTxSubmitProposalVote(ctx context.Context, input TxSubmitProposalVoteInput) ([]byte, error) {
 	voterAddress, err := sdk.AccAddressFromBech32(input.Voter.Key.Address())
 	if err != nil {
 		return nil, err
 	}
 
 	msg := govtypes.NewMsgVote(voterAddress, input.ProposalID, input.Option)
-	signedTx, err := c.Sign(ctx, input.Base, msg)
+	signedTx, err := c.Client.Sign(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.Encode(signedTx), nil
+	return c.Client.Encode(signedTx), nil
 }

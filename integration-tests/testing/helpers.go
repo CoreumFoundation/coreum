@@ -1,10 +1,16 @@
 package testing
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
+)
+
+const (
+	requestTimeout = 10 * time.Second
 )
 
 // RandomWallet generates wallet with random name and private key
