@@ -11,7 +11,7 @@ import (
 const (
 	// minDepositPeriod is the proposal deposit period duration. Deposit should be made together with the proposal
 	// so not needed to spend more time to make extra deposits.
-	minDepositPeriod = time.Second / 2
+	minDepositPeriod = time.Millisecond * 500
 
 	// minVotingPeriod is the proposal voting period duration
 	minVotingPeriod = time.Second * 15
