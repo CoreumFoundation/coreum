@@ -3,6 +3,7 @@ package cosmoscmd
 import (
 	"bufio"
 	"path/filepath"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -47,6 +48,9 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 
 			config := server.GetServerContextFromCmd(cmd).Config
 			config.SetRoot(clientCtx.HomeDir)
+
+			// Update the default consensus config
+			config.Consensus.TimeoutCommit = time.Second
 
 			// Get bip39 mnemonic
 			var mnemonic string
