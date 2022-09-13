@@ -17,6 +17,7 @@ func Tests() testing.TestSet {
 			auth.TestNoFee,
 			auth.TestGasLimitHigherThanMaxBlockGas,
 			auth.TestGasLimitEqualToMaxBlockGas,
+			auth.TestMultisig,
 			bank.TestInitialBalance,
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,

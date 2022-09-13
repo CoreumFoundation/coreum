@@ -1,4 +1,4 @@
-package main
+package cosmoscmd
 
 import (
 	"fmt"
@@ -8,12 +8,25 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	"github.com/CoreumFoundation/coreum/app"
 )
 
-func preProcessFlags() (app.Network, error) {
+// OverwriteDefaultChainIDFlags searches for the DefaultChainID flag and replaces its value of the current default.
+func OverwriteDefaultChainIDFlags(parentCmd *cobra.Command) {
+	for _, cmd := range parentCmd.Commands() {
+		if flag := cmd.LocalFlags().Lookup(flags.FlagChainID); flag != nil {
+			flag.DefValue = string(app.DefaultChainID)
+		}
+
+		OverwriteDefaultChainIDFlags(cmd)
+	}
+}
+
+// PreProcessFlags prepares the initial flags config for the cli.
+func PreProcessFlags() (app.Network, error) {
 	// define flags
 	const flagHelp = "help"
 	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)

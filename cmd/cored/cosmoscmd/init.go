@@ -1,4 +1,4 @@
-package main
+package cosmoscmd
 
 import (
 	"bufio"
@@ -27,7 +27,8 @@ const (
 	FlagRecover = "recover"
 )
 
-func initCmd(defaultNodeHome string) *cobra.Command {
+// InitCmd returns the init cobra command.
+func InitCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [moniker]",
 		Short: "Initialize configuration files for private validator, p2p, genesis, and application",

@@ -12,6 +12,7 @@ import (
 )
 
 // Sign signs transaction
+// Deprecated: Use the SignTx instead.
 func Sign(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
