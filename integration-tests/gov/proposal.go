@@ -25,7 +25,6 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	const proposedMaxValidators = 201
 	minDepositMultiplier, err := sdk.NewDecFromStr("1.02")
 	require.NoError(t, err)
-
 	nativeDenom := chain.NetworkConfig.TokenSymbol
 
 	// Create two random wallets
