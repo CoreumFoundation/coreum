@@ -25,7 +25,7 @@ jobs:
         id: cache
         uses: actions/cache@v3
         with:
-          path: $HOME/.cache/golangci-lint
+          path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-ci-cache
       - name: Checkout coreum
         uses: actions/checkout@v3
@@ -45,7 +45,7 @@ jobs:
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint
-        run: GOLANGCI_LINT_CACHE=$HOME/.cache/golangci-lint crust lint --log-format=yaml
+        run: crust lint --log-format=yaml
       - name: Build
         run: crust build --log-format=yaml
       - name: Unit testing
