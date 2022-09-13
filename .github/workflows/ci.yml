@@ -10,7 +10,7 @@ jobs:
   ci:
     runs-on: ubuntu-22.04
     env:
-      GOLANGCI_LINT_CACHE: $(HOME)/.cache/golangci-lint
+      GOLANGCI_LINT_CACHE: $HOME/.cache/golangci-lint
     steps:
       - name: Go version used to build crust tool
         run: go version
@@ -36,7 +36,9 @@ jobs:
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint
-        run: crust lint --log-format=yaml
+        run: |
+          echo $GOLANGCI_LINT_CACHE
+          crust lint --log-format=yaml
       - name: Build
         run: crust build --log-format=yaml
       - name: Unit testing
