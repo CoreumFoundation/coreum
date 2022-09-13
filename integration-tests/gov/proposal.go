@@ -20,13 +20,11 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-var (
-	minDepositMultiplier, _ = sdk.NewDecFromStr("1.02")
-)
-
 // TestProposalParamChange checks that param change proposal works correctly
 func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
 	const proposedMaxValidators = 201
+	minDepositMultiplier, err := sdk.NewDecFromStr("1.02")
+	require.NoError(t, err)
 
 	nativeDenom := chain.NetworkConfig.TokenSymbol
 
