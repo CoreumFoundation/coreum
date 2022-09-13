@@ -8,7 +8,7 @@ import (
 func NewDefaultClientContext() client.Context {
 	encodingConfig := NewEncodingConfig()
 	return client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino)
