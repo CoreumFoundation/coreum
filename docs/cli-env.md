@@ -39,7 +39,3 @@ fund_cored_account(){
 --data-raw "{ \"address\": \"$1\"}" \
 }
 ```
-
-
-
-
