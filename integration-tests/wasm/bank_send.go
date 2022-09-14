@@ -78,7 +78,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	bakSendTx, err := coredClient.Sign(ctx, tx.BaseInput{
 		Signer:   adminWallet,
 		GasPrice: gasPrice,
-		GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		GasLimit: chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 	}, banktypes.NewMsgSend(
 		adminWallet.Address(),
 		sdkContractAddress,
@@ -109,16 +109,17 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		},
 	})
 	requireT.NoError(err)
+
 	// we execute here with the constant gas fee, to check the cosmoserrors,
 	// since if we don't set the gas cost will be estimated and the estimation func
 	// will return the error which is impossible to convert to cosmoserrors to check the type.
 	err = wasmTestClient.Execute(ctx, tx.BaseInput{
 		Signer:   adminWallet,
 		GasPrice: gasPrice,
-		GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		GasLimit: chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 	}, contractAddr, withdrawPayload, sdk.Coin{})
 	requireT.Error(err)
-	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFunds))
+	require.True(t, client.IsErr(err, cosmoserrors.ErrOutOfGas), err)
 
 	// send coin from the contract to test wallet
 	withdrawPayload, err = json.Marshal(map[bankMethod]bankWithdrawRequest{

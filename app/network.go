@@ -11,7 +11,7 @@ import (
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authcosmostypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/pkg/errors"
@@ -19,8 +19,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/CoreumFoundation/coreum/x/auth"
-	"github.com/CoreumFoundation/coreum/x/auth/ante"
+	authtypes "github.com/CoreumFoundation/coreum/x/auth/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -59,7 +58,7 @@ var (
 func init() {
 	feeConfig := FeeConfig{
 		FeeModel:         feemodeltypes.DefaultModel(),
-		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
+		DeterministicGas: authtypes.DefaultDeterministicGasRequirements(),
 	}
 
 	govConfig := GovConfig{
@@ -140,7 +139,7 @@ var networks = map[ChainID]NetworkConfig{}
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
 	FeeModel         feemodeltypes.Model
-	DeterministicGas ante.DeterministicGasRequirements
+	DeterministicGas authtypes.DeterministicGasRequirements
 }
 
 // GovConfig contains gov module configs
@@ -248,12 +247,12 @@ func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 
 func applyFundedAccountToGenesis(
 	fa FundedAccount,
-	accountState authtypes.GenesisAccounts,
+	accountState authcosmostypes.GenesisAccounts,
 	bankState *banktypes.GenesisState,
-) (authtypes.GenesisAccounts, error) {
+) (authcosmostypes.GenesisAccounts, error) {
 	pubKey := cosmossecp256k1.PubKey{Key: fa.PublicKey}
 	accountAddress := sdk.AccAddress(pubKey.Address())
-	accountState = append(accountState, authtypes.NewBaseAccount(accountAddress, nil, 0, 0))
+	accountState = append(accountState, authcosmostypes.NewBaseAccount(accountAddress, nil, 0, 0))
 	coins, err := sdk.ParseCoinsNormalized(fa.Balances)
 	if err != nil {
 		return nil, errors.Wrapf(err, "not able to parse balances %s", fa.Balances)
@@ -285,8 +284,8 @@ func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
 		return nil, errors.Wrap(err, "not able to parse genesis app state")
 	}
 
-	authState := authtypes.GetGenesisStateFromAppState(codec, appState)
-	accountState, err := authtypes.UnpackAccounts(authState.Accounts)
+	authState := authcosmostypes.GetGenesisStateFromAppState(codec, appState)
+	accountState, err := authcosmostypes.UnpackAccounts(authState.Accounts)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to unpack auth accounts")
 	}
@@ -307,11 +306,11 @@ func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
 	genutilState.GenTxs = append(genutilState.GenTxs, n.genTxs...)
 
 	genutiltypes.SetGenesisStateInAppState(codec, appState, genutilState)
-	authState.Accounts, err = authtypes.PackAccounts(authtypes.SanitizeGenesisAccounts(accountState))
+	authState.Accounts, err = authcosmostypes.PackAccounts(authcosmostypes.SanitizeGenesisAccounts(accountState))
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to sanitize and pack accounts")
 	}
-	appState[authtypes.ModuleName] = codec.MustMarshalJSON(&authState)
+	appState[authcosmostypes.ModuleName] = codec.MustMarshalJSON(&authState)
 
 	bankState.Balances = banktypes.SanitizeGenesisBalances(bankState.Balances)
 	appState[banktypes.ModuleName] = codec.MustMarshalJSON(bankState)
@@ -381,7 +380,7 @@ func (n Network) FeeModel() feemodeltypes.Model {
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types
-func (n Network) DeterministicGas() ante.DeterministicGasRequirements {
+func (n Network) DeterministicGas() authtypes.DeterministicGasRequirements {
 	return n.fee.DeterministicGas
 }
 

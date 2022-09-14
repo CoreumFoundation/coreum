@@ -14,10 +14,10 @@ func RandomWallet() types.Wallet {
 	return types.Wallet{Name: privKey.Address(), Key: privKey}
 }
 
-// ComputeNeededBalance computes the required balance for sending `numOfMessages` number of messages plus some extra amount.
+// ComputeNeededBalance computes the required balance for sending `numOfTransactions` number of transactions plus some extra amount.
 // FIXME (wojtek): hardcode reasonable default values: https://reviewable.io/reviews/CoreumFoundation/coreum/131#-NA4cljcBl9TBFEqA81t
-func ComputeNeededBalance(gasPrice sdk.Dec, messageGasLimit uint64, numOfMessages int, extraAmount sdk.Int) sdk.Int {
-	return gasPrice.Mul(sdk.NewIntFromUint64(messageGasLimit).ToDec()).TruncateInt().MulRaw(int64(numOfMessages)).Add(extraAmount)
+func ComputeNeededBalance(gasPrice sdk.Dec, transactionGasLimit uint64, numOfTransactions int, extraAmount sdk.Int) sdk.Int {
+	return gasPrice.Mul(sdk.NewIntFromUint64(transactionGasLimit).ToDec()).TruncateInt().MulRaw(int64(numOfTransactions)).Add(extraAmount)
 }
 
 // MustNewIntFromString returns a new instance of sdk.Int type from string and fails the test in case of error.

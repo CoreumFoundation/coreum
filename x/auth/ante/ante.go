@@ -12,18 +12,19 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	"github.com/CoreumFoundation/coreum/x/auth/keeper"
 	feemodelante "github.com/CoreumFoundation/coreum/x/feemodel/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
+	FixedGas              uint64
 	AccountKeeper         authante.AccountKeeper
 	BankKeeper            types.BankKeeper
 	FeegrantKeeper        authante.FeegrantKeeper
 	FeeModelKeeper        feemodelante.Keeper
 	SignModeHandler       authsigning.SignModeHandler
 	SigGasConsumer        func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
-	GasRequirements       DeterministicGasRequirements
 	WasmTXCounterStoreKey sdk.StoreKey
 }
 
@@ -55,22 +56,26 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
 	}
 
+	infiniteAccountKeeper := keeper.NewInfiniteAccountKeeper(options.AccountKeeper)
+
 	anteDecorators := []sdk.AnteDecorator{
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
-		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
+		NewSetupGasMeterDecorator(),
 		authante.NewRejectExtensionOptionsDecorator(),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
-		NewDeterministicGasDecorator(options.GasRequirements),
+		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		feemodelante.NewFeeDecorator(options.FeeModelKeeper),
-		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
 		authante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
-		authante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
+		NewFreeGasDecorator(infiniteAccountKeeper),
+		authante.NewConsumeGasForTxSizeDecorator(infiniteAccountKeeper),
+		authante.NewSigGasConsumeDecorator(infiniteAccountKeeper, options.SigGasConsumer),
+		NewFinalGasDecorator(infiniteAccountKeeper, options.FixedGas),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil

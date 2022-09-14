@@ -2,58 +2,103 @@ package ante
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/CoreumFoundation/coreum/x/auth/types"
 )
 
-// DeterministicGasRequirements specifies gas required by some transaction types
-type DeterministicGasRequirements struct {
-	BankSend uint64
+// SetupGasMeterDecorator sets the infinite gas limit for ante handler
+// CONTRACT: Must be the first decorator in the chain
+// CONTRACT: Tx must implement GasTx interface
+// FIXME (wojtek): THIS IS BAD, used only for testing
+type SetupGasMeterDecorator struct{}
+
+// NewSetupGasMeterDecorator creates new SetupGasMeterDecorator
+func NewSetupGasMeterDecorator() SetupGasMeterDecorator {
+	return SetupGasMeterDecorator{}
 }
 
-// GasRequiredByMessage returns gas required by a sdk.Msg.
-// If fixed gas is not specified for the message type it returns 0.
-func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) uint64 {
-	switch msg.(type) {
-	case *banktypes.MsgSend:
-		return dgr.BankSend
-	default:
-		return 0
+// AnteHandle resets the gas limit inside GasMeter
+func (sgmd SetupGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	// Set infinite gas meter for ante handler
+	return next(ctx.WithGasMeter(sdk.NewInfiniteGasMeter()), tx, simulate)
+}
+
+// FreeGasDecorator adds free gas to gas meter
+// CONTRACT: Tx must implement GasTx interface
+type FreeGasDecorator struct {
+	ak authante.AccountKeeper
+}
+
+// NewFreeGasDecorator creates new FreeGasDecorator
+func NewFreeGasDecorator(ak authante.AccountKeeper) FreeGasDecorator {
+	return FreeGasDecorator{
+		ak: ak,
 	}
 }
 
-// DeterministicGasDecorator verifies that declared gas limit meets the requirements
-// of messages for which deterministic gas amount is defined.
-// CONTRACT: Tx must implement FeeTx to use DeterministicGasDecorator
-type DeterministicGasDecorator struct {
-	requirements DeterministicGasRequirements
+// AnteHandle resets the gas limit inside GasMeter
+func (fgd FreeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	var gasMeter sdk.GasMeter
+	if simulate || ctx.BlockHeight() == 0 {
+		// During simulation and genesis initialization infinite gas meter is set inside context by `SetUpContextDecorator`.
+		// Here, we reset it to initial state with 0 gas consumed.
+		gasMeter = sdk.NewInfiniteGasMeter()
+	} else {
+		params := fgd.ak.GetParams(ctx)
+
+		// It is not needed to verify that tx really implements `GasTx` interface because it has been already done by
+		// `SetUpContextDecorator`
+		gasTx := tx.(authante.GasTx)
+
+		gasMeter = sdk.NewGasMeter(gasTx.GetGas() + bonusGas(params))
+	}
+	return next(ctx.WithGasMeter(gasMeter), tx, simulate)
 }
 
-// NewDeterministicGasDecorator creates ante decorator refusing transactions which does not offer enough gas limit
-// covering requirements of messages for which deterministic gas amount is defined.
-func NewDeterministicGasDecorator(requirements DeterministicGasRequirements) DeterministicGasDecorator {
-	return DeterministicGasDecorator{
-		requirements: requirements,
+// FinalGasDecorator sets gas meter for message handlers
+// CONTRACT: Tx must implement GasTx interface
+type FinalGasDecorator struct {
+	ak       authante.AccountKeeper
+	fixedGas uint64
+}
+
+// NewFinalGasDecorator creates new FinalGasDecorator
+func NewFinalGasDecorator(ak authante.AccountKeeper, fixedGas uint64) FinalGasDecorator {
+	return FinalGasDecorator{
+		ak:       ak,
+		fixedGas: fixedGas,
 	}
 }
 
-// AnteHandle handles transaction in ante decorator
-func (dgd DeterministicGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	feeTx, ok := tx.(sdk.FeeTx)
-	if !ok {
-		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+// AnteHandle resets the gas limit inside GasMeter
+func (fgd FinalGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	// It is not needed to verify that tx really implements `GasTx` interface because it has been already done by
+	// `SetUpContextDecorator`
+	gasTx := tx.(authante.GasTx)
+
+	params := fgd.ak.GetParams(ctx)
+
+	var gasMeter sdk.GasMeter
+	if simulate || ctx.BlockHeight() == 0 {
+		// During simulation and genesis initialization infinite gas meter is set inside context by `SetUpContextDecorator`.
+		// We reset it to initial state with 0 gas consumed.
+		gasMeter = sdk.NewInfiniteGasMeter()
+	} else {
+		gasMeter = sdk.NewGasMeter(gasTx.GetGas())
 	}
 
-	if ctx.IsCheckTx() && !simulate {
-		var gasRequired uint64
-		for _, msg := range tx.GetMsgs() {
-			gasRequired += dgd.requirements.GasRequiredByMessage(msg)
-		}
-
-		if gasDeclared := feeTx.GetGas(); gasRequired > gasDeclared {
-			return ctx, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, "deterministic messages in the transaction require %d units of gas in total, while only %d were allowed by the gas limit", gasRequired, gasDeclared)
-		}
+	gasConsumed := ctx.GasMeter().GasConsumed()
+	bonus := bonusGas(params) //nolint:ifshort // Don't want to put it inside `if`
+	if gasConsumed > bonus {
+		gasMeter.ConsumeGas(gasConsumed-bonus, "OverBonus")
 	}
+	gasMeter.ConsumeGas(fgd.fixedGas, "Fixed")
 
-	return next(ctx, tx, simulate)
+	return next(ctx.WithGasMeter(gasMeter), tx, simulate)
+}
+
+func bonusGas(params authtypes.Params) uint64 {
+	return types.FreeBytes*params.TxSizeCostPerByte + types.FreeSignatures*params.SigVerifyCostSecp256k1
 }

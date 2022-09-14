@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -21,7 +22,7 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 			sender,
 			chain.NewCoin(testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 				1,
 				sdk.NewInt(10),
 			)),
@@ -40,7 +41,7 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   sender,
-			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+			GasLimit: chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 			GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
 		},
 		Sender:   sender,
