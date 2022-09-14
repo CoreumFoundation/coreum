@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/x/auth"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -26,7 +25,7 @@ var NetworkConfig = app.NetworkConfig{
 	TokenSymbol:   app.TokenSymbolDev,
 	Fee: app.FeeConfig{
 		FeeModel:         feemodeltypes.DefaultModel(),
-		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
+		DeterministicGas: app.DefaultDeterministicGasRequirements(),
 	},
 	GovConfig: app.GovConfig{
 		ProposalConfig: app.GovProposalConfig{

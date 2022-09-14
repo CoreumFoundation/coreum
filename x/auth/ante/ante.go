@@ -23,7 +23,6 @@ type HandlerOptions struct {
 	FeeModelKeeper        feemodelante.Keeper
 	SignModeHandler       authsigning.SignModeHandler
 	SigGasConsumer        func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
-	GasRequirements       DeterministicGasRequirements
 	WasmTXCounterStoreKey sdk.StoreKey
 }
 
@@ -61,7 +60,6 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewRejectExtensionOptionsDecorator(),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
-		NewDeterministicGasDecorator(options.GasRequirements),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		feemodelante.NewFeeDecorator(options.FeeModelKeeper),
 		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),

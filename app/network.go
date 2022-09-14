@@ -19,8 +19,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/CoreumFoundation/coreum/x/auth"
-	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -58,7 +56,7 @@ var (
 func init() {
 	feeConfig := FeeConfig{
 		FeeModel:         feemodeltypes.DefaultModel(),
-		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
+		DeterministicGas: DefaultDeterministicGasRequirements(),
 	}
 
 	govConfig := GovConfig{
@@ -139,7 +137,7 @@ var networks = map[ChainID]NetworkConfig{}
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
 	FeeModel         feemodeltypes.Model
-	DeterministicGas ante.DeterministicGasRequirements
+	DeterministicGas DeterministicGasRequirements
 }
 
 // GovConfig contains gov module configs
@@ -380,7 +378,7 @@ func (n Network) FeeModel() feemodeltypes.Model {
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types
-func (n Network) DeterministicGas() ante.DeterministicGasRequirements {
+func (n Network) DeterministicGas() DeterministicGasRequirements {
 	return n.fee.DeterministicGas
 }
 
