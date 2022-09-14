@@ -2,8 +2,6 @@ package cosmoscmd
 
 import (
 	"bufio"
-	"path/filepath"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -15,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 	tmos "github.com/tendermint/tendermint/libs/os"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum/app"
 )
@@ -48,9 +47,6 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 
 			config := server.GetServerContextFromCmd(cmd).Config
 			config.SetRoot(clientCtx.HomeDir)
-
-			// Update the default consensus config
-			config.Consensus.TimeoutCommit = time.Second
 
 			// Get bip39 mnemonic
 			var mnemonic string

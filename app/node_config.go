@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tendermint/tendermint/config"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
@@ -92,6 +93,10 @@ func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
 	if len(nc.SeedPeers) > 0 {
 		cfg.P2P.Seeds = strings.Join(nc.SeedPeers, ",")
 	}
+
+	// Update the default consensus config
+	cfg.Consensus.TimeoutCommit = time.Second
+
 	return cfg
 }
 
