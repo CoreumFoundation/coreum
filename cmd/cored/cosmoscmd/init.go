@@ -2,6 +2,7 @@ package cosmoscmd
 
 import (
 	"bufio"
+	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -13,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
 	tmos "github.com/tendermint/tendermint/libs/os"
-	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum/app"
 )
