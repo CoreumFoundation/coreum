@@ -97,6 +97,7 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/docs"
@@ -637,9 +638,26 @@ func New(
 	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
 
+	// must be before Loading version
+	if manager := app.SnapshotManager(); manager != nil {
+		err := manager.RegisterExtensions(
+			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WASMKeeper),
+		)
+		if err != nil {
+			panic(errors.Wrapf(err, "failed to register wasm snapshot extension"))
+		}
+	}
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
+		}
+
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+
+		// Initialize pinned codes in wasmvm as they are not persisted there
+		if err := app.WASMKeeper.InitializePinnedCodes(ctx); err != nil {
+			tmos.Exit(errors.Wrapf(err, "failed initialize wasmp pinned codes").Error())
 		}
 	}
 
