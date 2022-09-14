@@ -32,6 +32,11 @@ jobs:
         with:
           persist-credentials: false
           path: coreum
+      - name: Checkout crust
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/crust
+          path: crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint
