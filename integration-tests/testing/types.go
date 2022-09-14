@@ -24,6 +24,14 @@ type FundedAccount struct {
 	Amount types.Coin
 }
 
+// NewFundedAccount is the constructor of FundedAccount
+func NewFundedAccount(wallet types.Wallet, amount types.Coin) FundedAccount {
+	return FundedAccount{
+		Wallet: wallet,
+		Amount: amount,
+	}
+}
+
 // SingleChainSignature is the signature of test function accepting a chain
 type SingleChainSignature func(ctx context.Context, t T, chain Chain)
 
