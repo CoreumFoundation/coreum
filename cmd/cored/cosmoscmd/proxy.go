@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//nolint:revive
 const TunnelRerunDelay = 5 * time.Second
 
 // startProxyForTunneledPeers hooks the `appd start` command to start an HTTP proxy server and HTTP proxy clients

@@ -86,7 +86,9 @@ type config struct {
 }
 
 func newChain(ctx context.Context, cfg config) (coreumtesting.Chain, error) {
+	//nolint:contextcheck
 	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.CoredAddress)
+	//nolint:contextcheck
 	rpcClient, err := cosmosclient.NewClientFromNode(cfg.CoredAddress)
 	if err != nil {
 		panic(err)
