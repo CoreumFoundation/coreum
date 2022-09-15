@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -47,7 +46,6 @@ type deterministicGasRouter struct {
 }
 
 func (r *deterministicGasRouter) AddRoute(route sdk.Route) sdk.Router {
-	fmt.Println(route.Path())
 	r.baseRouter.AddRoute(sdk.NewRoute(route.Path(), r.handler(route.Handler())))
 	return r
 }
