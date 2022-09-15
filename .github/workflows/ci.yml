@@ -12,16 +12,21 @@ jobs:
     steps:
       - name: Go version used to build crust tool
         run: go version
-      - name: Setup cache
+      - name: Setup go modules cache
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/golangci-lint
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-ci-$(date +'%Y-%m')
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-ci-
+            ${{ runner.os }}-go-
+      - name: Set linter cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/golangci-lint
+          key: ${{ runner.os }}-ci-cache
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
