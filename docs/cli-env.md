@@ -1,4 +1,4 @@
-# ClI environment setup
+# CLI environment setup
 
 This doc describes the command to set up the cored environment depends on the type of the network you want to use.
 
@@ -33,9 +33,9 @@ cored query bank total $CORED_NODE_ARGS
 
 ```bash
 fund_cored_account(){ 
-  echo Finding account: $1
+  echo Funding account: $1
   curl --location --request POST "$CORED_FAUCET_URL/api/faucet/v1/send-money" \
 --header 'Content-Type: application/json' \
---data-raw "{ \"address\": \"$1\"}" \
+--data-raw "{ \"address\": \"$1\"}"
 }
 ```

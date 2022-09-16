@@ -1,6 +1,6 @@
 # WASM
 
-The doc provides the brief overview of the integrated wasm module with the a tutorial how to build and deploy simple
+The doc provides the brief overview of the integrated wasm module with the tutorial how to build and deploy simple
 wasm contract.
 
 # Overview
@@ -37,7 +37,7 @@ Set up the CLI environment following the [doc](cli-env.md).
 brew install jq curl
 ```
 
-* Linux.
+* Linux (Ubuntu and Debian).
 
 ```bash
 apt install jq curl
@@ -109,7 +109,7 @@ cored q wasm code-info $CODE_ID $CORED_NODE_ARGS
 
 ```bash
 INIT="{\"purchase_price\":{\"amount\":\"100\",\"denom\":\"$CORED_DENOM\"},\"transfer_price\":{\"amount\":\"999\",\"denom\":\"$CORED_DENOM\"}}"
-cored tx wasm instantiate $CODE_ID "$INIT" --from wallet --gas-prices 1500$CORED_DENOM --label "name service" -b block -y --no-admin $CORED_CHAIN_ID_ARGS
+cored tx wasm instantiate $CODE_ID "$INIT" --from wallet --gas-prices 1500$CORED_DENOM --label "name service" -b block -y --no-admin $CORED_NODE_ARGS
 ```
 
 * Check the contract details and account balance.
