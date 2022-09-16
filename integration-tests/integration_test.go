@@ -86,11 +86,9 @@ type config struct {
 }
 
 func newChain(ctx context.Context, cfg config) (coreumtesting.Chain, error) {
-	//nolint:contextcheck
-	// This linter should be disabled because the context should not be passed in the constructor.
+	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
 	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.CoredAddress)
-	//nolint:contextcheck
-	// This linter should be disabled because the context should not be passed in the constructor.
+	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
 	rpcClient, err := cosmosclient.NewClientFromNode(cfg.CoredAddress)
 	if err != nil {
 		panic(err)
