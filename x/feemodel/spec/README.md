@@ -13,13 +13,13 @@ This document specifies the feemodel module. The module is responsible for calcu
 
 Two charts are presented below, showing how the implemented fee model behaves. Keep in mind that data presented on those charts were generated using `MaxGasPrice` set to `2000` for better readability, while in reality we use `1500000`.
 
-Chart below presents the dependency between average gas consumed by last block and minimum gas price required by the network.
+TERMS:
+- *long average block gas* is the EMA (exponential moving average) of gas consumed by previous blocks using `LongEmaBlockLength` parameter for computing the EMA.
+- *short average block gas* is the EMA (exponential moving average) of gas consumed by previous blocks using `ShortEmaBlockLength` parameter for computing the EMA.
+
+Chart below presents the dependency between *short average block gas* and minimum gas price required by the network on next block.
 
 ![Fee model curve](assets/curve.png)
-
-TERMS:
-- *long average block gas* is the EMA (exponential moving average) of gas consumed over last 1000 blocks,
-- *short average block gas* is the EMA (exponential moving average) of gas consumed over last 10 blocks.
 
 There are four regions on the fee model curve:
 - between 0 and *long average block gas* where gas price goes down exponentially from `InitialGasPrice` to gas price with maximum discount (`InitialGasPrice * (1 - MaxDiscount)`),
@@ -34,8 +34,8 @@ Second chart presents the model behavior over time, presenting how changes in ga
 
 ![Fee model time series](assets/time_series.png)
 
-- x axis represents gas consumed by the following blocks
-- lef y axis is related to `ShortEMA` (red line) and `LongEMA` (orange line),
+- x axis represents block number
+- left y axis is related to `ShortEMA` (red line) and `LongEMA` (orange line),
 - right axis presents the minimum gas price computed after particular block,
 - blue line (almost completely covered by the red one) represents the raw gas consumed by blocks,
 - red line is the *short average block gas*,
