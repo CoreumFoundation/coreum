@@ -27,7 +27,7 @@ message QueryMinGasPriceRequest {}
 // QueryMinGasPriceResponse is the response type for the Query/MinGasPrice RPC method.
 message QueryMinGasPriceResponse {
   // min_gas_price is the current minimum gas price required by the network.
-  cosmos.base.v1beta1.Coin min_gas_price = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.DecCoin min_gas_price = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryParamsRequest defines the request type for querying x/feemodel parameters.

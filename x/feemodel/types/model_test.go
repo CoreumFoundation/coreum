@@ -114,7 +114,7 @@ func TestWithRandomModels(t *testing.T) {
 			logParameters(t, params, shortEMA, longEMA)
 			nextGasPrice := model.CalculateNextGasPrice(shortEMA, longEMA)
 
-			assert.True(t, nextGasPrice.GT(sdk.ZeroInt()))
+			assert.True(t, nextGasPrice.GT(sdk.ZeroDec()))
 			assert.True(t, nextGasPrice.LTE(params.MaxGasPrice))
 
 			switch {
@@ -151,8 +151,8 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 	longEMA = rand.Int63()
 
 	return Params{
-		InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice),
-		MaxGasPrice:             sdk.NewIntFromUint64(maxGasPrice),
+		InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice).ToDec(),
+		MaxGasPrice:             sdk.NewIntFromUint64(maxGasPrice).ToDec(),
 		MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
 		EscalationStartBlockGas: escalationStartBlockGas,
 		MaxBlockGas:             maxBlockGas,

@@ -13,7 +13,7 @@ import (
 // QueryKeeper defines subscope of keeper methods required by query service
 type QueryKeeper interface {
 	GetParams(ctx sdk.Context) types.Params
-	GetMinGasPrice(ctx sdk.Context) sdk.Coin
+	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
 }
 
 // NewQueryService creates query service
