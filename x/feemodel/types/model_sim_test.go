@@ -17,7 +17,7 @@ func ExampleGasPricePerBlockGas() {
 		fmt.Printf("%d\t%s\n", i, feeModelSim.CalculateNextGasPrice(i, longEMABlockGas))
 	}
 	// Output: list of gas prices for each gas usage
-	// FIXME (wojtek): refer picture containing a chart once doc is provided for the module
+	// Check x/feemodel/spec/assets/curve.png
 }
 
 //nolint:govet // This example does not refer to any identifier
@@ -67,5 +67,5 @@ func ExampleGasPriceOverTime() {
 	}
 
 	// Output: list of gas prices over time
-	// FIXME (wojtek): refer picture containing a chart once doc is provided for the module
+	// Check x/feemodel/spec/assets/time_series.png
 }
