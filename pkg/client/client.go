@@ -106,7 +106,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map[string]types.Coin, error) {
+func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map[string]sdk.Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -116,13 +116,9 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]types.Coin{}
+	balances := map[string]sdk.Coin{}
 	for _, b := range resp.Balances {
-		coin, err := types.NewCoin(b.Amount.BigInt(), b.Denom)
-		if err != nil {
-			return nil, err
-		}
-		balances[b.Denom] = coin
+		balances[b.Denom] = b
 	}
 	return balances, nil
 }
@@ -263,7 +259,7 @@ func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk
 type TxBankSendInput struct {
 	Sender   types.Wallet
 	Receiver types.Wallet
-	Amount   types.Coin
+	Amount   sdk.Coin
 
 	Base tx.BaseInput
 }
@@ -279,12 +275,7 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 		return nil, errors.Wrap(err, "amount to send is invalid")
 	}
 
-	signedTx, err := c.Sign(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
-		{
-			Denom:  input.Amount.Denom,
-			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
-		},
-	}))
+	signedTx, err := c.Sign(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{input.Amount}))
 	if err != nil {
 		return nil, err
 	}

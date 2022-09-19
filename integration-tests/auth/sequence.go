@@ -19,12 +19,12 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			sender,
-			testing.MustNewCoin(t, testing.ComputeNeededBalance(
+			chain.NewCoin(testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
 				1,
 				sdk.NewInt(10),
-			), chain.NetworkConfig.TokenSymbol),
+			)),
 		),
 	))
 
@@ -41,11 +41,11 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-			GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+			GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
 		},
 		Sender:   sender,
 		Receiver: sender,
-		Amount:   testing.MustNewCoin(t, sdk.NewInt(1), chain.NetworkConfig.TokenSymbol),
+		Amount:   chain.NewCoin(sdk.NewInt(1)),
 	})
 	require.NoError(t, err)
 	_, err = coredClient.Broadcast(ctx, txBytes)

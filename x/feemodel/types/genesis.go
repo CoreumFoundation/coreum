@@ -10,7 +10,7 @@ func DefaultGenesisState() *GenesisState {
 	params := DefaultParams()
 	return &GenesisState{
 		Params:      params,
-		MinGasPrice: sdk.NewCoin(sdk.DefaultBondDenom, params.InitialGasPrice),
+		MinGasPrice: sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, params.InitialGasPrice),
 	}
 }
 

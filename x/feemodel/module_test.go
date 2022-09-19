@@ -48,26 +48,26 @@ func (k *keeperMock) GetLongEMAGas(ctx sdk.Context) int64 {
 
 func (k *keeperMock) SetLongEMAGas(ctx sdk.Context, emaGas int64) {}
 
-func (k *keeperMock) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
+func (k *keeperMock) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
 	return k.state.MinGasPrice
 }
 
-func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin) {
+func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 	k.state.MinGasPrice = minGasPrice
 }
 
 func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Codec) {
 	genesisState := types.GenesisState{
 		Params: types.Params{
-			InitialGasPrice:         sdk.NewInt(15),
-			MaxGasPrice:             sdk.NewInt(150),
+			InitialGasPrice:         sdk.NewDec(15),
+			MaxGasPrice:             sdk.NewDec(150),
 			MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
 			EscalationStartBlockGas: 7,
 			MaxBlockGas:             10,
 			ShortEmaBlockLength:     1,
 			LongEmaBlockLength:      3,
 		},
-		MinGasPrice: sdk.NewCoin("coin", sdk.NewInt(155)),
+		MinGasPrice: sdk.NewDecCoin("coin", sdk.NewInt(155)),
 	}
 	cdc := app.NewEncodingConfig().Codec
 	keeper := newKeeperMock(genesisState)
@@ -80,15 +80,15 @@ func TestInitGenesis(t *testing.T) {
 	module, keeper, state, cdc := setup()
 
 	genesisState := state
-	genesisState.Params.InitialGasPrice.Add(sdk.OneInt())
-	genesisState.Params.MaxGasPrice.Add(sdk.OneInt())
+	genesisState.Params.InitialGasPrice.Add(sdk.OneDec())
+	genesisState.Params.MaxGasPrice.Add(sdk.OneDec())
 	genesisState.Params.MaxDiscount.Add(sdk.MustNewDecFromStr("0.2"))
 	genesisState.Params.EscalationStartBlockGas++
 	genesisState.Params.MaxBlockGas++
 	genesisState.Params.ShortEmaBlockLength++
 	genesisState.Params.LongEmaBlockLength++
 	genesisState.MinGasPrice.Denom = "coin2"
-	genesisState.MinGasPrice.Amount.Add(sdk.OneInt())
+	genesisState.MinGasPrice.Amount.Add(sdk.OneDec())
 
 	module.InitGenesis(sdk.Context{}, cdc, cdc.MustMarshalJSON(&genesisState))
 

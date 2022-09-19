@@ -21,12 +21,9 @@ func TestMinGasPrice(t *testing.T) {
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cmd, []string{"min-gas-price", "--output", "json"})
 	require.NoError(t, err)
 
-	resp := struct {
-		Denom  string  `json:"denom"`
-		Amount sdk.Int `json:"amount"`
-	}{}
-
+	var resp sdk.DecCoin
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &resp))
+
 	assert.Equal(t, "stake", resp.Denom)
-	assert.True(t, resp.Amount.GT(sdk.ZeroInt()))
+	assert.True(t, resp.Amount.GT(sdk.ZeroDec()))
 }
