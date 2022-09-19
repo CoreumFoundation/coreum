@@ -25,7 +25,6 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	const proposedMaxValidators = 201
 	minDepositMultiplier, err := sdk.NewDecFromStr("1.02")
 	require.NoError(t, err)
-	nativeDenom := chain.NetworkConfig.TokenSymbol
 
 	// Create two random wallets
 	proposer := testing.RandomWallet()
@@ -59,9 +58,9 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(proposer, testing.MustNewCoin(t, proposerInitialBalance, nativeDenom)),
-		testing.NewFundedAccount(voter1, testing.MustNewCoin(t, voterInitialBalance, nativeDenom)),
-		testing.NewFundedAccount(voter2, testing.MustNewCoin(t, voterInitialBalance, nativeDenom)),
+		testing.NewFundedAccount(proposer, chain.NewCoin(proposerInitialBalance)),
+		testing.NewFundedAccount(voter1, chain.NewCoin(voterInitialBalance)),
+		testing.NewFundedAccount(voter2, chain.NewCoin(voterInitialBalance)),
 	))
 
 	// Delegate coins
@@ -70,14 +69,14 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	require.NotEmpty(t, validators)
 	valAddress, err := sdk.ValAddressFromBech32(validators[0].OperatorAddress)
 	require.NoError(t, err)
-	delegateAmount := testing.MustNewCoin(t, voterDelegateAmount, nativeDenom)
+	delegateAmount := chain.NewCoin(voterDelegateAmount)
 	delegateCoins(ctx, t, chain, voter1, valAddress, delegateAmount)
 	delegateCoins(ctx, t, chain, voter2, valAddress, delegateAmount)
 
 	// Submit a param change proposal
-	initialDeposit := testing.MustNewCoin(t, minDepositAmount, nativeDenom)
+	initialDeposit := chain.NewCoin(minDepositAmount)
 	txBytes, err := chain.Client.PrepareTxSubmitProposal(ctx, client.TxSubmitProposalInput{
-		Base:           buildBaseTxInput(t, chain, proposer),
+		Base:           buildBaseTxInput(chain, proposer),
 		Proposer:       proposer,
 		InitialDeposit: initialDeposit,
 		Content: paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
@@ -112,7 +111,7 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	proposal = waitForProposalStatus(ctx, t, chain, govtypes.StatusPassed, time.Until(proposal.VotingEndTime), proposal.ProposalId)
 	assert.Equal(t, govtypes.StatusPassed, proposal.Status)
 	assert.Equal(t, proposal.FinalTallyResult, govtypes.TallyResult{
-		Yes:        sdk.NewIntFromBigInt(delegateAmount.Amount).MulRaw(2),
+		Yes:        delegateAmount.Amount.MulRaw(2),
 		Abstain:    sdk.NewInt(0),
 		No:         sdk.NewInt(0),
 		NoWithVeto: sdk.NewInt(0),
@@ -124,9 +123,9 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Cha
 	require.Equal(t, uint32(proposedMaxValidators), stakingParams.MaxValidators)
 }
 
-func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delegator types.Wallet, validator sdk.ValAddress, amount types.Coin) {
+func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delegator types.Wallet, validator sdk.ValAddress, amount sdk.Coin) {
 	txBytes, err := chain.Client.PrepareTxSubmitDelegation(ctx, client.TxSubmitDelegationInput{
-		Base:      buildBaseTxInput(t, chain, delegator),
+		Base:      buildBaseTxInput(chain, delegator),
 		Delegator: delegator,
 		Validator: validator,
 		Amount:    amount,
@@ -138,7 +137,7 @@ func delegateCoins(ctx context.Context, t testing.T, chain testing.Chain, delega
 
 func voteProposal(ctx context.Context, t testing.T, chain testing.Chain, voter types.Wallet, option govtypes.VoteOption, proposalID uint64) {
 	txBytes, err := chain.Client.PrepareTxSubmitProposalVote(ctx, client.TxSubmitProposalVoteInput{
-		Base:       buildBaseTxInput(t, chain, voter),
+		Base:       buildBaseTxInput(chain, voter),
 		Voter:      voter,
 		ProposalID: proposalID,
 		Option:     option,
@@ -183,10 +182,10 @@ func waitForProposalStatus(ctx context.Context, t testing.T, chain testing.Chain
 	return nil
 }
 
-func buildBaseTxInput(t testing.T, chain testing.Chain, signer types.Wallet) tx.BaseInput {
+func buildBaseTxInput(chain testing.Chain, signer types.Wallet) tx.BaseInput {
 	return tx.BaseInput{
 		Signer:   signer,
 		GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
-		GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, chain.NetworkConfig.TokenSymbol),
+		GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
 	}
 }

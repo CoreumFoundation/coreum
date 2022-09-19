@@ -37,8 +37,8 @@ type Keeper interface {
 	SetShortEMAGas(ctx sdk.Context, emaGas int64)
 	GetLongEMAGas(ctx sdk.Context) int64
 	SetLongEMAGas(ctx sdk.Context, emaGas int64)
-	GetMinGasPrice(ctx sdk.Context) sdk.Coin
-	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
+	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
+	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin)
 }
 
 // AppModuleBasic defines the basic application module used by the fee module.
@@ -167,7 +167,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 
 	am.keeper.SetShortEMAGas(ctx, newShortEMA)
 	am.keeper.SetLongEMAGas(ctx, newLongEMA)
-	am.keeper.SetMinGasPrice(ctx, sdk.NewCoin(previousMinGasPrice.Denom, newMinGasPrice))
+	am.keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec(previousMinGasPrice.Denom, newMinGasPrice))
 
 	return []abci.ValidatorUpdate{}
 }

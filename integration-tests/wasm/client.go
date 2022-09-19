@@ -11,7 +11,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // Client represents the wasm client with the helper functions used for the testing.
@@ -32,7 +31,7 @@ func NewClient(coredClient client.Client) *Client {
 type InstantiateConfig struct {
 	accessType wasmtypes.AccessType
 	payload    json.RawMessage
-	amount     types.Coin
+	amount     sdk.Coin
 	label      string
 	CodeID     uint64
 }
@@ -54,10 +53,10 @@ func (c *Client) DeployAndInstantiate(ctx context.Context, baseInput tx.BaseInpu
 }
 
 // Execute executes the wasm contract with the payload and optionally funding amount.
-func (c *Client) Execute(ctx context.Context, baseInput tx.BaseInput, contractAddr string, payload json.RawMessage, fundAmt types.Coin) error {
+func (c *Client) Execute(ctx context.Context, baseInput tx.BaseInput, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) error {
 	funds := sdk.NewCoins()
-	if fundAmt.Amount != nil {
-		funds = funds.Add(sdk.NewCoin(fundAmt.Denom, sdk.NewIntFromBigInt(fundAmt.Amount)))
+	if !fundAmt.Amount.IsNil() {
+		funds = funds.Add(fundAmt)
 	}
 
 	if _, err := c.submitWithEstimatedGasLimit(ctx, baseInput, &wasmtypes.MsgExecuteContract{
@@ -114,8 +113,8 @@ func (c *Client) deploy(ctx context.Context, baseInput tx.BaseInput, wasmData []
 // instantiates the contract and returns the contract address.
 func (c *Client) instantiate(ctx context.Context, baseInput tx.BaseInput, req InstantiateConfig) (string, error) {
 	funds := sdk.NewCoins()
-	if amount := req.amount; amount.Amount != nil {
-		funds = funds.Add(sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount)))
+	if amount := req.amount; !amount.Amount.IsNil() {
+		funds = funds.Add(amount)
 	}
 	msgInstantiateContract := &wasmtypes.MsgInstantiateContract{
 		Sender: baseInput.Signer.Address().String(),
