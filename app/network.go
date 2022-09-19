@@ -36,9 +36,9 @@ const (
 // Known TokenSymbols
 const (
 	// m prefix stands for milli, more info here https://en.wikipedia.org/wiki/Metric_prefix
-	TokenSymbolMain string = "mcore"
+	TokenSymbolMain string = "ucore"
 	// d prefix stands for development
-	TokenSymbolDev string = "dmcore"
+	TokenSymbolDev string = "ducore"
 )
 
 var (
