@@ -30,7 +30,7 @@ There are four regions on the fee model curve:
 The input (x value) for that function is calculated by taking *short block gas average*.
 Price (y value) being an output of the fee model is used as the minimum gas price for the next block.
 
-Second chart presents the model behavior over time, presenting how changes in gas consumed by blocks affect the minimum gas price required by the network.
+Second chart presents the model behavior over time, presenting how changes in gas consumed by blocks affect the minimum gas price required by the network. Chart was calculated using fixed *long average block gas` equal to 5 millions. 
 
 ![Fee model time series](assets/time_series.png)
 
