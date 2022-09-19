@@ -1,12 +1,12 @@
 # WASM
 
-The doc provides the brief overview of the integrated wasm module with the tutorial how to build and deploy simple
-wasm contract.
+The doc provides the brief overview of the integrated WASM module with the tutorial how to build and deploy simple
+WASM contract.
 
 # Overview
 
-Wasm module is a Cosmos SDK based module which is plugged into the coreum chain.
-This module allows to build, deploy and use the wasm contracts on the coreum chain.
+WASM module is a Cosmos SDK based module which is plugged into the coreum chain.
+This module allows to build, deploy and use the WASM contracts on the coreum chain.
 Currently, it supports the Rust language as a language of the contracts.
 
 The detailed module architecture overview can be
@@ -16,7 +16,7 @@ The contract semantics is [here](https://docs.cosmwasm.com/docs/1.0/smart-contra
 
 # Write and deploy first contract
 
-The section provides the tutorial how to build and deploy the wasm contract to the coreum chain.
+The section provides the tutorial how to build and deploy the WASM contract to the coreum chain.
 
 ## Set up environment
 
@@ -43,7 +43,7 @@ brew install jq curl
 apt install jq curl
 ```
 
-## Write, build and deploy wasm contract
+## Write, build and deploy WASM contract
 
 * Clone the smart contract template.
 
@@ -67,12 +67,16 @@ cored keys add wallet $CORED_CHAIN_ID_ARGS
 
 * Fund the wallet from the faucet and check the balance.
 
+Using the CLI:
+
 ```bash
 fund_cored_account $(cored keys show --address wallet $CORED_CHAIN_ID_ARGS)
 cored q bank balances $(cored keys show --address wallet $CORED_CHAIN_ID_ARGS) $CORED_NODE_ARGS
 ```
 
-* Build optimized wasm smart contract.
+Or use the [faucet doc](https://docs.coreum.dev/faucet/).
+
+* Build optimized WASM smart contract.
 
 ```bash
 docker run --rm -v "$(pwd)":/code \
@@ -133,6 +137,7 @@ cored tx wasm execute $CONTRACT "$REGISTER" --amount 100$CORED_DENOM --from wall
 NAME_QUERY='{"resolve_record": {"name": "fred"}}'
 cored query wasm contract-state smart $CONTRACT "$NAME_QUERY" --output json $CORED_NODE_ARGS
 ```
+
 The owner is the "wallet" now.
 
 * Transfer the ownership of the name record to "new-owner" wallet.

@@ -14,10 +14,10 @@ This doc describes the command to set up the cored environment depends on the ty
 * Set the chain env variables with the "network" corresponding values
 
 ```
-export CORED_CHAIN_ID="Chain ID"
-export CORED_DENOM="Denom"
-export CORED_NODE="Node URL"
-export CORED_FAUCET_URL="Faucet URL"
+export CORED_CHAIN_ID="{Chain ID}"
+export CORED_DENOM="{Denom}"
+export CORED_NODE="{Node URL}"
+export CORED_FAUCET_URL="{Faucet URL}"
 
 export CORED_CHAIN_ID_ARGS=(--chain-id=$CORED_CHAIN_ID)
 export CORED_NODE_ARGS=(--node=$CORED_NODE $CORED_CHAIN_ID_ARGS)
