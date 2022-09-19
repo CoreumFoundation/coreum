@@ -41,5 +41,5 @@ jobs:
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint, run unit tests and build
         run: crust build lint/coreum test/coreum --log-format=yaml
-      - name: Integration tests
-        run: crust znet test --log-format=yaml
+#      - name: Integration tests # TODO: enable back
+#        run: crust znet test --log-format=yaml
