@@ -8,8 +8,8 @@ This doc describes the command to set up the cored environment depends on the ty
 ----|-----------------| ----
 **Chain ID**   | coreum-devnet-1 | coreum-devnet-1
 **Denom** | dmcore | dmcore
-**Node URL**   | http://localhost:26657 | http://35.192.45.37:26657
-**Faucet URL** | http://localhost:8090 | Not ready yet
+**Node URL**   | http://localhost:26657 | http://104.197.42.0:26657
+**Faucet URL** | http://localhost:8090 | https://api.devnet-1.coreum.dev
 
 * Set the chain env variables with the "network" corresponding values
 
