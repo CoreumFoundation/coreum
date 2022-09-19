@@ -27,7 +27,7 @@ func (m Model) Params() Params {
 }
 
 // CalculateNextGasPrice calculates minimum gas price for next block
-// Chart showing a sample output of the fee mdoel: https://docs.google.com/spreadsheets/d/1YTvt06CIgHpx5kgOXk2BK-kuJ63DwVYtGfDEHLxvCZQ/edit#gid=0
+// Chart showing a sample output of the fee model: x/feemodel/spec/assets/curve.png
 func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 	switch {
 	case shortEMA >= m.params.MaxBlockGas:
