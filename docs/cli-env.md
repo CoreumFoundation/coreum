@@ -1,6 +1,6 @@
 # CLI environment setup
 
-This doc describes the command to set up the cored environment depends on the type of the network you want to use.
+This doc describes the command to set up the cored environment depending on the type of the network you want to use.
 
 # Network variables
 
