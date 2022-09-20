@@ -16,7 +16,7 @@ import (
 
 // TestTooLowGasPrice verifies that transaction fails if offered gas price is below minimum level
 // specified by the fee model of the network
-func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestTooLowGasPrice(ctx context.Context, t testing.T, chain *testing.Chain) {
 	sender := testing.RandomWallet()
 
 	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
@@ -49,7 +49,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 }
 
 // TestNoFee verifies that transaction fails if sender does not offer fee at all
-func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestNoFee(ctx context.Context, t testing.T, chain *testing.Chain) {
 	sender := testing.RandomWallet()
 
 	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
@@ -80,7 +80,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 }
 
 // TestGasLimitHigherThanMaxBlockGas verifies that transaction requiring more gas than MaxBlockGas fails
-func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain *testing.Chain) {
 	sender := testing.RandomWallet()
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
@@ -112,7 +112,7 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 }
 
 // TestGasLimitEqualToMaxBlockGas verifies that transaction requiring MaxBlockGas gas succeeds
-func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain *testing.Chain) {
 	sender := testing.RandomWallet()
 
 	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(

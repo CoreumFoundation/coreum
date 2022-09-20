@@ -16,7 +16,7 @@ import (
 
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {
-	chainCtx       ChainContext
+	chainContext   *ChainContext
 	govClient      govtypes.QueryClient
 	faucet         *Faucet
 	votersAccounts []sdk.AccAddress
@@ -25,7 +25,7 @@ type Governance struct {
 // NewGovernance initializes the voter accounts to have enough voting power for the voting.
 func NewGovernance(
 	ctx context.Context,
-	chainCtx ChainContext,
+	chainContext *ChainContext,
 	faucet *Faucet,
 ) (*Governance, error) {
 	const (
@@ -37,8 +37,8 @@ func NewGovernance(
 		return nil, err
 	}
 
-	clientCtx := chainCtx.ClientContext
-	networkCfg := chainCtx.NetworkConfig
+	clientCtx := chainContext.ClientContext
+	networkCfg := chainContext.NetworkConfig
 
 	govClient := govtypes.NewQueryClient(clientCtx)
 	stakingClient := stakingtypes.NewQueryClient(clientCtx)
@@ -46,7 +46,7 @@ func NewGovernance(
 	// add voters to keyring
 	votersAccounts := make([]sdk.AccAddress, 0, govVotersNumber)
 	for i := 0; i < govVotersNumber; i++ {
-		votersAccounts = append(votersAccounts, chainCtx.RandomWallet())
+		votersAccounts = append(votersAccounts, chainContext.RandomWallet())
 	}
 
 	govParams, err := queryGovParams(ctx, govClient)
@@ -74,7 +74,7 @@ func NewGovernance(
 
 	fundedAccounts := make([]FundedAccount, 0, len(votersAccounts))
 	for _, voter := range votersAccounts {
-		wallet := chainCtx.AccAddressToLegacyWallet(voter)
+		wallet := chainContext.AccAddressToLegacyWallet(voter)
 		fundedAccounts = append(fundedAccounts, NewFundedAccount(wallet, sdk.NewCoin(networkCfg.TokenSymbol, voterInitialBalance)))
 	}
 
@@ -90,9 +90,9 @@ func NewGovernance(
 		return nil, err
 	}
 	valAddress, err := sdk.ValAddressFromBech32(validators.Validators[0].OperatorAddress)
-	delegateCoin := chainCtx.NewCoin(voterDelegateAmount)
+	delegateCoin := chainContext.NewCoin(voterDelegateAmount)
 
-	txf := chainCtx.TxFactory()
+	txf := chainContext.TxFactory()
 	txf = txf.WithGas(uint64(networkCfg.Fee.FeeModel.Params().MaxBlockGas))
 	for _, voter := range votersAccounts {
 		msg := &stakingtypes.MsgDelegate{
@@ -115,28 +115,29 @@ func NewGovernance(
 	}
 
 	return &Governance{
-		chainCtx:       chainCtx,
+		chainContext:   chainContext,
 		faucet:         faucet,
 		votersAccounts: votersAccounts,
 		govClient:      govClient,
 	}, nil
 }
 
+// CreateProposer creates a new proposed and funds it with enough tokens for the proposal.
 func (g *Governance) CreateProposer(ctx context.Context) (sdk.AccAddress, error) {
-	proposer := g.chainCtx.RandomWallet()
+	proposer := g.chainContext.RandomWallet()
 	govParams, err := g.getParams(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	proposerInitialBalance := ComputeNeededBalance(
-		g.chainCtx.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		uint64(g.chainCtx.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
+		g.chainContext.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		uint64(g.chainContext.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
 		1,
 		govParams.DepositParams.MinDeposit[0].Amount,
 	)
 
-	err = g.faucet.FundAccounts(ctx, NewFundedAccount(g.chainCtx.AccAddressToLegacyWallet(proposer), g.chainCtx.NewCoin(proposerInitialBalance)))
+	err = g.faucet.FundAccounts(ctx, NewFundedAccount(g.chainContext.AccAddressToLegacyWallet(proposer), g.chainContext.NewCoin(proposerInitialBalance)))
 	if err != nil {
 		return nil, err
 	}
@@ -155,11 +156,11 @@ func (g *Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conte
 		return 0, err
 	}
 
-	txf := g.chainCtx.TxFactory()
-	txf = txf.WithGas(uint64(g.chainCtx.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
+	txf := g.chainContext.TxFactory()
+	txf = txf.WithGas(uint64(g.chainContext.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
 	result, err := tx.BroadcastTx(
 		ctx,
-		g.chainCtx.ClientContext.
+		g.chainContext.ClientContext.
 			WithFromName(proposer.String()).
 			WithFromAddress(proposer),
 		txf,
@@ -181,9 +182,10 @@ func (g *Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conte
 	return proposalID, nil
 }
 
+// VoteAll votes for the proposalID from all voting accounts with the provided VoteOption.
 func (g *Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, proposalID uint64) error {
-	txf := g.chainCtx.TxFactory()
-	txf = txf.WithGas(uint64(g.chainCtx.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
+	txf := g.chainContext.TxFactory()
+	txf = txf.WithGas(uint64(g.chainContext.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
 	for _, voter := range g.votersAccounts {
 		msg := &govtypes.MsgVote{
 			ProposalId: proposalID,
@@ -193,7 +195,7 @@ func (g *Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pr
 
 		_, err := tx.BroadcastTx(
 			ctx,
-			g.chainCtx.ClientContext.
+			g.chainContext.ClientContext.
 				WithFromName(voter.String()).
 				WithFromAddress(voter),
 			txf,
@@ -207,6 +209,7 @@ func (g *Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pr
 	return nil
 }
 
+// WaitForProposalStatus wait for the proposal status during the gov VotingPeriod.
 func (g *Governance) WaitForProposalStatus(ctx context.Context, status govtypes.ProposalStatus, proposalID uint64) (govtypes.Proposal, error) {
 	var lastStatus govtypes.ProposalStatus
 
@@ -239,6 +242,7 @@ func (g *Governance) WaitForProposalStatus(ctx context.Context, status govtypes.
 	return govtypes.Proposal{}, errors.New(fmt.Sprintf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus))
 }
 
+// GetVotersAccounts returns the configured voting accounts.
 func (g *Governance) GetVotersAccounts() []sdk.AccAddress {
 	return g.votersAccounts
 }

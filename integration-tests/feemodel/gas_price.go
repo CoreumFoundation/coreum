@@ -13,7 +13,7 @@ import (
 )
 
 // TestQueryingMinGasPrice check that it's possible to query current minimum gas price required by the network.
-func TestQueryingMinGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestQueryingMinGasPrice(ctx context.Context, t testing.T, chain *testing.Chain) {
 	res, err := chain.Client.FeemodelQueryClient().MinGasPrice(ctx, &types.QueryMinGasPriceRequest{})
 	require.NoError(t, err)
 

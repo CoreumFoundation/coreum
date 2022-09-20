@@ -15,7 +15,7 @@ import (
 )
 
 // TestProposalParamChange checks that param change proposal works correctly.
-func TestProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestProposalParamChange(ctx context.Context, t testing.T, chain *testing.Chain) {
 	const targetMaxValidators = 201
 	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
