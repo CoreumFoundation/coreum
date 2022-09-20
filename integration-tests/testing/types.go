@@ -3,6 +3,7 @@ package testing
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
@@ -21,11 +22,11 @@ type Faucet interface {
 // FundedAccount represents a requirement of a test to get some funds for an account
 type FundedAccount struct {
 	Wallet types.Wallet
-	Amount types.Coin
+	Amount sdk.Coin
 }
 
 // NewFundedAccount is the constructor of FundedAccount
-func NewFundedAccount(wallet types.Wallet, amount types.Coin) FundedAccount {
+func NewFundedAccount(wallet types.Wallet, amount sdk.Coin) FundedAccount {
 	return FundedAccount{
 		Wallet: wallet,
 		Amount: amount,

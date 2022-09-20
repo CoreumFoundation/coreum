@@ -56,7 +56,7 @@ func (c Client) QueryProposalVotes(ctx context.Context, proposalID uint64) (map[
 // TxSubmitProposalInput holds input data for PrepareTxSubmitProposal
 type TxSubmitProposalInput struct {
 	Proposer       types.Wallet
-	InitialDeposit types.Coin
+	InitialDeposit sdk.Coin
 	Content        govtypes.Content
 
 	Base tx.BaseInput
@@ -73,12 +73,7 @@ func (c Client) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitPropo
 		return nil, errors.Wrap(err, "amount to deposit is invalid")
 	}
 
-	msg, err := govtypes.NewMsgSubmitProposal(input.Content, sdk.Coins{
-		{
-			Denom:  input.InitialDeposit.Denom,
-			Amount: sdk.NewIntFromBigInt(input.InitialDeposit.Amount),
-		},
-	}, proposerAddress)
+	msg, err := govtypes.NewMsgSubmitProposal(input.Content, sdk.Coins{input.InitialDeposit}, proposerAddress)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create proposal message")
 	}
@@ -95,7 +90,7 @@ func (c Client) PrepareTxSubmitProposal(ctx context.Context, input TxSubmitPropo
 type TxSubmitProposalDepositInput struct {
 	Depositor  types.Wallet
 	ProposalID uint64
-	Amount     types.Coin
+	Amount     sdk.Coin
 
 	Base tx.BaseInput
 }
@@ -107,12 +102,7 @@ func (c Client) PrepareTxSubmitProposalDeposit(ctx context.Context, input TxSubm
 		return nil, err
 	}
 
-	msg := govtypes.NewMsgDeposit(depositorAddress, input.ProposalID, sdk.Coins{
-		{
-			Denom:  input.Amount.Denom,
-			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
-		},
-	})
+	msg := govtypes.NewMsgDeposit(depositorAddress, input.ProposalID, sdk.Coins{input.Amount})
 	signedTx, err := c.Sign(ctx, input.Base, msg)
 	if err != nil {
 		return nil, err

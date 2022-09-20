@@ -14,7 +14,6 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 var (
@@ -46,10 +45,10 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(adminWallet, testing.MustNewCoin(t, sdk.NewInt(5000000000), nativeDenom)),
+		testing.NewFundedAccount(adminWallet, chain.NewCoin(sdk.NewInt(5000000000))),
 	))
 
-	gasPrice := testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, nativeDenom)
+	gasPrice := chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice)
 	baseInput := tx.BaseInput{
 		Signer:   adminWallet,
 		GasPrice: gasPrice,
@@ -67,7 +66,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		InstantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
-			amount:     testing.MustNewCoin(t, sdk.NewInt(10000), nativeDenom),
+			amount:     chain.NewCoin(sdk.NewInt(10000)),
 			label:      "bank_send",
 		},
 	)
@@ -117,7 +116,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		Signer:   adminWallet,
 		GasPrice: gasPrice,
 		GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-	}, contractAddr, withdrawPayload, types.Coin{})
+	}, contractAddr, withdrawPayload, sdk.Coin{})
 	requireT.Error(err)
 	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFunds))
 
@@ -130,7 +129,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		},
 	})
 	requireT.NoError(err)
-	err = wasmTestClient.Execute(ctx, baseInput, contractAddr, withdrawPayload, types.Coin{})
+	err = wasmTestClient.Execute(ctx, baseInput, contractAddr, withdrawPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check contract and wallet balances

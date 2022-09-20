@@ -35,8 +35,8 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func DefaultParams() Params {
 	return Params{
 		// TODO: Find good parameters before lunching mainnet
-		InitialGasPrice:         sdk.NewInt(1500),
-		MaxGasPrice:             sdk.NewInt(1500000),
+		InitialGasPrice:         sdk.NewDec(1500),
+		MaxGasPrice:             sdk.NewDec(1500000),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 		EscalationStartBlockGas: 37500000, // 300 * BankSend message
 		// TODO: adjust MaxBlockGas before creating testnet & mainnet
@@ -58,10 +58,10 @@ func (m Params) Validate() error {
 		return errors.New("max discount is not set")
 	}
 
-	if m.InitialGasPrice.Sign() != 1 {
+	if !m.InitialGasPrice.IsPositive() {
 		return errors.New("initial gas price must be positive")
 	}
-	if m.MaxGasPrice.Sign() != 1 {
+	if !m.MaxGasPrice.IsPositive() {
 		return errors.New("max gas price must be positive")
 	}
 	if m.MaxGasPrice.LTE(m.InitialGasPrice) {

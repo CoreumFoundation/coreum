@@ -28,7 +28,7 @@ func (m Model) Params() Params {
 
 // CalculateNextGasPrice calculates minimum gas price for next block
 // Chart showing a sample output of the fee model: x/feemodel/spec/assets/curve.png
-func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
+func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Dec {
 	switch {
 	case shortEMA >= m.params.MaxBlockGas:
 		return m.params.MaxGasPrice
@@ -46,33 +46,33 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Int {
 }
 
 // CalculateGasPriceWithMaxDiscount calculates gas price with maximum discount applied
-func (m Model) CalculateGasPriceWithMaxDiscount() sdk.Int {
-	return m.params.InitialGasPrice.ToDec().Mul(sdk.OneDec().Sub(m.params.MaxDiscount)).TruncateInt()
+func (m Model) CalculateGasPriceWithMaxDiscount() sdk.Dec {
+	return m.params.InitialGasPrice.Mul(sdk.OneDec().Sub(m.params.MaxDiscount))
 }
 
-func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Int {
+func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Dec {
 	gasPriceWithMaxDiscount := m.CalculateGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
-	height := m.params.MaxGasPrice.Sub(gasPriceWithMaxDiscount).ToDec()
+	height := m.params.MaxGasPrice.Sub(gasPriceWithMaxDiscount)
 	width := sdk.NewInt(m.params.MaxBlockGas - m.params.EscalationStartBlockGas).ToDec()
 	x := sdk.NewInt(shortEMA - m.params.EscalationStartBlockGas).ToDec()
 
-	offset := height.Mul(x.Quo(width).Power(exponent)).TruncateInt()
+	offset := height.Mul(x.Quo(width).Power(exponent))
 	return gasPriceWithMaxDiscount.Add(offset)
 }
 
-func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int64) sdk.Int {
+func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA int64, longEMA int64) sdk.Dec {
 	gasPriceWithMaxDiscount := m.CalculateGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
-	height := m.params.InitialGasPrice.Sub(gasPriceWithMaxDiscount).ToDec()
+	height := m.params.InitialGasPrice.Sub(gasPriceWithMaxDiscount)
 	width := sdk.NewInt(longEMA).ToDec()
 	x := sdk.NewInt(shortEMA).ToDec()
 
-	offset := height.Mul(x.Quo(width).Sub(sdk.OneDec()).Abs().Power(exponent)).TruncateInt()
+	offset := height.Mul(x.Quo(width).Sub(sdk.OneDec()).Abs().Power(exponent))
 	return gasPriceWithMaxDiscount.Add(offset)
 }
 

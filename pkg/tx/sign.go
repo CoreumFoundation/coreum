@@ -25,14 +25,13 @@ func Sign(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigni
 	txBuilder.SetGasLimit(input.GasLimit)
 	txBuilder.SetMemo(input.Memo)
 
-	if input.GasPrice.Amount != nil {
+	if !input.GasPrice.Amount.IsNil() {
 		if err := input.GasPrice.Validate(); err != nil {
 			return nil, errors.Wrap(err, "gas price is invalid")
 		}
 
 		gasLimit := sdk.NewInt(int64(input.GasLimit))
-		gasPrice := sdk.NewIntFromBigInt(input.GasPrice.Amount)
-		fee := sdk.NewCoin(input.GasPrice.Denom, gasLimit.Mul(gasPrice))
+		fee := sdk.NewCoin(input.GasPrice.Denom, input.GasPrice.Amount.Mul(gasLimit.ToDec()).TruncateInt())
 		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
 	}
 

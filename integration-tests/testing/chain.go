@@ -52,13 +52,17 @@ func (c Chain) TxFactory() tx.Factory {
 		WithKeybase(c.Keyring).
 		WithChainID(string(c.NetworkConfig.ChainID)).
 		WithTxConfig(c.ClientContext.TxConfig).
-		WithGasPrices(c.NewCoin(c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice).String())
+		WithGasPrices(c.NewDecCoin(c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice).String())
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
-// TODO: Use NewCoin instead of sdk.NewCoin & testing.MustNewCoin everywhere
 func (c Chain) NewCoin(amount sdk.Int) sdk.Coin {
 	return sdk.NewCoin(c.NetworkConfig.TokenSymbol, amount)
+}
+
+// NewDecCoin helper function to initialize sdk.DecCoin by passing just amount.
+func (c Chain) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
+	return sdk.NewDecCoinFromDec(c.NetworkConfig.TokenSymbol, amount)
 }
 
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
