@@ -1,31 +1,28 @@
 package tests
 
 import (
-	"github.com/CoreumFoundation/coreum/integration-tests/auth"
-	"github.com/CoreumFoundation/coreum/integration-tests/bank"
-	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
-	"github.com/CoreumFoundation/coreum/integration-tests/gov"
+	"github.com/CoreumFoundation/coreum/integration-tests/staking"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/integration-tests/wasm"
 )
 
 // Tests returns testing environment and tests
 func Tests() testing.TestSet {
+	// FIXME
 	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
-			gov.TestProposalParamChange,
-			auth.TestUnexpectedSequenceNumber,
-			auth.TestTooLowGasPrice,
-			auth.TestNoFee,
-			auth.TestGasLimitHigherThanMaxBlockGas,
-			auth.TestGasLimitEqualToMaxBlockGas,
-			auth.TestMultisig,
-			bank.TestInitialBalance,
-			bank.TestCoreTransfer,
-			bank.TestTransferFailsIfNotEnoughGasIsProvided,
-			wasm.TestSimpleStateWasmContract,
-			wasm.TestBankSendWasmContract,
-			feemodel.TestQueryingMinGasPrice,
+			staking.TestProposalParamChange,
+			//auth.TestUnexpectedSequenceNumber,
+			//auth.TestTooLowGasPrice,
+			//auth.TestNoFee,
+			//auth.TestGasLimitHigherThanMaxBlockGas,
+			//auth.TestGasLimitEqualToMaxBlockGas,
+			//auth.TestMultisig,
+			//bank.TestInitialBalance,
+			// bank.TestCoreTransfer,
+			//bank.TestTransferFailsIfNotEnoughGasIsProvided,
+			//wasm.TestSimpleStateWasmContract,
+			//wasm.TestBankSendWasmContract,
+			//feemodel.TestQueryingMinGasPrice,
 		},
 	}
 
@@ -34,9 +31,10 @@ func Tests() testing.TestSet {
 	// implemented inside testing framework. Test itself is written serially to not fight for resources with other tests.
 	// In the future, once we have more tests running in parallel, we will replace 10 tests running 20 transactions each
 	// with a single one running 200 of them.
-	for i := 0; i < 10; i++ {
-		testSet.SingleChain = append(testSet.SingleChain, bank.TestTransferMaximumGas(20))
-	}
+	// FIXME
+	//for i := 0; i < 10; i++ {
+	//	testSet.SingleChain = append(testSet.SingleChain, bank.TestTransferMaximumGas(20))
+	//}
 
 	return testSet
 }
