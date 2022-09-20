@@ -45,7 +45,7 @@ jobs:
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint, run unit tests and build
         run: |
-          [ -f ~/.cache/docker/crust-go-build.tar ] || docker load -i ~/.cache/docker/crust-go-build.tar
+          [ -f ~/.cache/docker/crust-go-build.tar ] && docker load -i ~/.cache/docker/crust-go-build.tar
           crust build lint/coreum test/coreum --log-format=yaml
           docker save -o ~/.cache/docker/crust-go-build.tar crust-go-build:latest
       - name: Integration tests
