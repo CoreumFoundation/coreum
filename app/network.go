@@ -35,10 +35,11 @@ const (
 
 // Known TokenSymbols
 const (
-	// m prefix stands for milli, more info here https://en.wikipedia.org/wiki/Metric_prefix
+	// u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
+	// We also add another prefix for non mainnet network symbols to differentiate them from mainnet.
+	// 'd' prefix in ducore stands for devnet.
 	TokenSymbolMain string = "ucore"
-	// d prefix stands for development
-	TokenSymbolDev string = "ducore"
+	TokenSymbolDev  string = "ducore"
 )
 
 var (
