@@ -35,7 +35,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
-			GasPrice: chain.NewDecCoin(gasPriceWithMaxDiscount.Sub(sdk.OneDec())),
+			GasPrice: chain.NewDecCoin(gasPriceWithMaxDiscount.Mul(sdk.MustNewDecFromStr("0.5"))),
 		},
 		Sender:   sender,
 		Receiver: sender,

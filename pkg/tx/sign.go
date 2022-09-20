@@ -31,7 +31,9 @@ func Sign(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigni
 		}
 
 		gasLimit := sdk.NewInt(int64(input.GasLimit))
-		fee := sdk.NewCoin(input.GasPrice.Denom, input.GasPrice.Amount.Mul(gasLimit.ToDec()).TruncateInt())
+
+		// Ceil().RoundInt() is here to be compatible with the sdk's TxFactory
+		fee := sdk.NewCoin(input.GasPrice.Denom, input.GasPrice.Amount.Mul(gasLimit.ToDec()).Ceil().RoundInt())
 		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
 	}
 
