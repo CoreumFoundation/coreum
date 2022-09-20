@@ -13,11 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -25,8 +20,6 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 	tests "github.com/CoreumFoundation/coreum/integration-tests"
 	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
@@ -48,7 +41,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	cfg.FundingPrivKey = decodedFundingPrivKey
-	cfg.CoredAddress = coredAddress
+	cfg.RPCAddress = coredAddress
 	cfg.Filter = regexp.MustCompile(filter)
 	cfg.LogFormat = logger.Format(logFormat)
 	cfg.LogVerbose = flag.Lookup("test.v").Value.String() == "true"
@@ -65,7 +58,12 @@ func Test(t *testing.T) {
 	testSet := tests.Tests()
 	ctx := newContext(t, cfg)
 
-	chain, err := newChain(ctx, cfg)
+	chainCfg := coreumtesting.ChainConfig{
+		RPCAddress:     cfg.RPCAddress,
+		NetworkConfig:  cfg.NetworkConfig,
+		FundingPrivKey: cfg.FundingPrivKey,
+	}
+	chain, err := coreumtesting.NewChain(ctx, chainCfg)
 	require.NoError(t, err)
 
 	testCases := collectTestCases(chain, testSet, cfg.Filter)
@@ -78,49 +76,12 @@ func Test(t *testing.T) {
 }
 
 type config struct {
-	CoredAddress   string
+	RPCAddress     string
 	NetworkConfig  app.NetworkConfig
 	FundingPrivKey types.Secp256k1PrivateKey
 	Filter         *regexp.Regexp
 	LogFormat      logger.Format
 	LogVerbose     bool
-}
-
-func newChain(ctx context.Context, cfg config) (coreumtesting.Chain, error) {
-	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
-	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.CoredAddress)
-	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
-	rpcClient, err := cosmosclient.NewClientFromNode(cfg.CoredAddress)
-	if err != nil {
-		panic(err)
-	}
-	clientContext := app.
-		NewDefaultClientContext().
-		WithChainID(string(cfg.NetworkConfig.ChainID)).
-		WithClient(rpcClient).
-		WithBroadcastMode(flags.BroadcastBlock)
-
-	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
-	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = coredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
-	if err != nil {
-		return coreumtesting.Chain{}, errors.Wrapf(err, "failed to get funding wallet sequence")
-	}
-
-	faucet := &testingFaucet{
-		client:        coredClient,
-		networkConfig: cfg.NetworkConfig,
-		muCh:          make(chan struct{}, 1),
-		fundingWallet: fundingWallet,
-	}
-	faucet.muCh <- struct{}{}
-
-	return coreumtesting.Chain{
-		Client:        coredClient,
-		ClientContext: clientContext,
-		NetworkConfig: cfg.NetworkConfig,
-		Faucet:        faucet,
-		Keyring:       keyring.NewInMemory(),
-	}, nil
 }
 
 func newContext(t *testing.T, cfg config) context.Context {
@@ -157,56 +118,6 @@ func collectTestCases(chain coreumtesting.Chain, testSet coreumtesting.TestSet, 
 		})
 	}
 	return testCases
-}
-
-type testingFaucet struct {
-	client        client.Client
-	networkConfig app.NetworkConfig
-
-	// muCh is used to serve the same purpose as `sync.Mutex` to protect `fundingWallet` against being used
-	// to broadcast many transactions in parallel by different integration tests. The difference between this and `sync.Mutex`
-	// is that test may exit immediately when `ctx` is canceled, without waiting for mutex to be unlocked.
-	muCh          chan struct{}
-	fundingWallet types.Wallet
-}
-
-func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...coreumtesting.FundedAccount) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-tf.muCh:
-		defer func() {
-			tf.muCh <- struct{}{}
-		}()
-	}
-
-	gasPrice := sdk.NewDecCoinFromDec(tf.networkConfig.TokenSymbol, tf.networkConfig.Fee.FeeModel.Params().InitialGasPrice)
-
-	log := logger.Get(ctx)
-	log.Info("Funding accounts for test, it might take a while...")
-	for _, toFund := range accountsToFund {
-		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
-		encodedTx, err := tf.client.PrepareTxBankSend(ctx, client.TxBankSendInput{
-			Base: tx.BaseInput{
-				Signer:   tf.fundingWallet,
-				GasLimit: tf.networkConfig.Fee.DeterministicGas.BankSend,
-				GasPrice: gasPrice,
-			},
-			Sender:   tf.fundingWallet,
-			Receiver: toFund.Wallet,
-			Amount:   toFund.Amount,
-		})
-		if err != nil {
-			return err
-		}
-		if _, err := tf.client.Broadcast(ctx, encodedTx); err != nil {
-			return err
-		}
-		tf.fundingWallet.AccountSequence++
-	}
-	log.Info("Test accounts funded")
-
-	return nil
 }
 
 func runTests(ctx context.Context, t *testing.T, testCases []testCase) {

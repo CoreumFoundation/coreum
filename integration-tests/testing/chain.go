@@ -1,10 +1,12 @@
 package testing
 
 import (
+	"context"
 	"encoding/hex"
 	"reflect"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,9 +24,40 @@ type Chain struct {
 	ClientContext cosmosclient.Context
 
 	NetworkConfig app.NetworkConfig
-	Faucet        Faucet
+	Faucet        *Faucet
 
 	Keyring keyring.Keyring
+}
+
+type ChainConfig struct {
+	RPCAddress     string
+	NetworkConfig  app.NetworkConfig
+	FundingPrivKey types.Secp256k1PrivateKey
+}
+
+func NewChain(ctx context.Context, cfg ChainConfig) (Chain, error) {
+	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
+	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.RPCAddress)
+	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
+	rpcClient, err := cosmosclient.NewClientFromNode(cfg.RPCAddress)
+	if err != nil {
+		panic(err)
+	}
+	clientContext := app.
+		NewDefaultClientContext().
+		WithChainID(string(cfg.NetworkConfig.ChainID)).
+		WithClient(rpcClient).
+		WithBroadcastMode(flags.BroadcastBlock)
+
+	faucet := NewFaucet(coredClient, cfg.NetworkConfig, cfg.FundingPrivKey)
+
+	return Chain{
+		Client:        coredClient,
+		ClientContext: clientContext,
+		NetworkConfig: cfg.NetworkConfig,
+		Faucet:        faucet,
+		Keyring:       keyring.NewInMemory(),
+	}, nil
 }
 
 // RandomWallet generates a wallet for the chain with random name and
