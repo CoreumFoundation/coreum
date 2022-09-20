@@ -44,6 +44,6 @@ jobs:
           mkdir -p ~/.cache/docker
           [ -f ~/.cache/docker/crust-go.tar ] && docker load -i ~/.cache/docker/crust-go.tar
           crust build lint/coreum test/coreum images --log-format=yaml
-          docker save -o ~/.cache/docker/crust-go.tar crust-go-build
+          docker save -o ~/.cache/docker/crust-go.tar crust-go-build:e1c0506f
       - name: Integration tests
         run: crust znet test --log-format=yaml
