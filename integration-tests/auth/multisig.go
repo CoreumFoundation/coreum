@@ -54,7 +54,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 
 	// generate the keyring and collect the keys to use for the multisig account
 	keyNamesSet := []string{signer1Wallet.String(), signer2Wallet.String(), signer3Wallet.String()}
-	kr := chain.Keyring
+	kr := chain.ClientContext.Keyring
 	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
 	for _, key := range keyNamesSet {
 		info, err := kr.Key(key)
