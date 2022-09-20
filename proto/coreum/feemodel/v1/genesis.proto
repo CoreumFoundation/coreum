@@ -13,5 +13,5 @@ message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
 
   // min_gas_price is the current minimum gas price required by the chain.
-  cosmos.base.v1beta1.Coin min_gas_price = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.DecCoin min_gas_price = 2 [(gogoproto.nullable) = false];
 }

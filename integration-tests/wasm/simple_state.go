@@ -11,7 +11,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 var (
@@ -34,16 +33,15 @@ const (
 // This is a E2E check for the WASM integration, to ensure it works for a simple state contract (Counter).
 func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing.Chain) {
 	wallet := testing.RandomWallet()
-	nativeDenom := chain.NetworkConfig.TokenSymbol
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(wallet, testing.MustNewCoin(t, sdk.NewInt(5000000000), nativeDenom)),
+		testing.NewFundedAccount(wallet, chain.NewCoin(sdk.NewInt(5000000000))),
 	))
 
 	baseInput := tx.BaseInput{
 		Signer:   wallet,
-		GasPrice: testing.MustNewCoin(t, chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice, nativeDenom),
+		GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
 	}
 	wasmTestClient := NewClient(chain.Client)
 
@@ -77,7 +75,7 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	// execute contract to increment the count
 	incrementPayload, err := methodToEmptyBodyPayload(increment)
 	requireT.NoError(err)
-	err = wasmTestClient.Execute(ctx, baseInput, contractAddr, incrementPayload, types.Coin{})
+	err = wasmTestClient.Execute(ctx, baseInput, contractAddr, incrementPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check the update count

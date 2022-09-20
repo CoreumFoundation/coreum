@@ -16,6 +16,7 @@ import (
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -179,10 +180,7 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 		}()
 	}
 
-	gasPrice, err := types.NewCoin(tf.networkConfig.Fee.FeeModel.Params().InitialGasPrice.BigInt(), tf.networkConfig.TokenSymbol)
-	if err != nil {
-		return err
-	}
+	gasPrice := sdk.NewDecCoinFromDec(tf.networkConfig.TokenSymbol, tf.networkConfig.Fee.FeeModel.Params().InitialGasPrice)
 
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for test, it might take a while...")
