@@ -47,7 +47,7 @@ func (c Client) GetValidators(ctx context.Context) ([]stakingtypes.Validator, er
 type TxSubmitDelegationInput struct {
 	Delegator types.Wallet
 	Validator sdk.ValAddress
-	Amount    types.Coin
+	Amount    sdk.Coin
 
 	Base tx.BaseInput
 }
@@ -63,10 +63,7 @@ func (c Client) PrepareTxSubmitDelegation(ctx context.Context, input TxSubmitDel
 		return nil, errors.Wrap(err, "amount to delegate is invalid")
 	}
 
-	msg := stakingtypes.NewMsgDelegate(delegatorAddress, input.Validator, sdk.Coin{
-		Denom:  input.Amount.Denom,
-		Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
-	})
+	msg := stakingtypes.NewMsgDelegate(delegatorAddress, input.Validator, input.Amount)
 
 	signedTx, err := c.Sign(ctx, input.Base, msg)
 	if err != nil {

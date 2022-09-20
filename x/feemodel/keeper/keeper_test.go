@@ -86,14 +86,14 @@ func TestLongEMAGas(t *testing.T) {
 func TestMinGasPrice(t *testing.T) {
 	ctx, keeper := setup()
 
-	keeper.SetMinGasPrice(ctx, sdk.NewCoin("coin", sdk.NewInt(10)))
+	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdk.NewInt(10)))
 	minGasPrice := keeper.GetMinGasPrice(ctx)
-	assert.EqualValues(t, 10, minGasPrice.Amount.Int64())
+	assert.Equal(t, "10.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)
 
-	keeper.SetMinGasPrice(ctx, sdk.NewCoin("coin", sdk.NewInt(20)))
+	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdk.NewInt(20)))
 	minGasPrice = keeper.GetMinGasPrice(ctx)
-	assert.EqualValues(t, 20, minGasPrice.Amount.Int64())
+	assert.EqualValues(t, "20.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)
 }
 

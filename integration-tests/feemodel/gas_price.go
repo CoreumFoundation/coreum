@@ -22,7 +22,7 @@ func TestQueryingMinGasPrice(ctx context.Context, t testing.T, chain testing.Cha
 	params := chain.NetworkConfig.Fee.FeeModel.Params()
 	model := types.NewModel(params)
 
-	require.False(t, res.MinGasPrice.IsNil())
+	require.False(t, res.MinGasPrice.Amount.IsNil())
 	assert.True(t, res.MinGasPrice.Amount.GTE(model.CalculateGasPriceWithMaxDiscount()))
 	assert.True(t, res.MinGasPrice.Amount.LTE(params.MaxGasPrice))
 	assert.Equal(t, chain.NetworkConfig.TokenSymbol, res.MinGasPrice.Denom)

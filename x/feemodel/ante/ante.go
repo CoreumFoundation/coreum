@@ -8,7 +8,7 @@ import (
 // Keeper interface exposes methods required by ante handler decorator of fee model
 type Keeper interface {
 	TrackGas(ctx sdk.Context, gas int64)
-	GetMinGasPrice(ctx sdk.Context) sdk.Coin
+	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
 }
 
 // FeeDecorator will check if the gas price offered by transaction's fee is at least as large
@@ -56,9 +56,9 @@ func (fd FeeDecorator) actOnFeeModelOutput(ctx sdk.Context, feeTx sdk.FeeTx) err
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "fee must be paid in '%s' coin only", minGasPrice.Denom)
 	}
 
-	gasDeclared := sdk.NewInt(int64(feeTx.GetGas()))
-	feeOffered := sdk.NewCoin(minGasPrice.Denom, fees.AmountOf(minGasPrice.Denom))
-	feeRequired := sdk.NewCoin(minGasPrice.Denom, gasDeclared.Mul(minGasPrice.Amount))
+	gasDeclared := sdk.NewDecFromInt(sdk.NewIntFromUint64(feeTx.GetGas()))
+	feeOffered := sdk.NewDecCoin(minGasPrice.Denom, fees.AmountOf(minGasPrice.Denom))
+	feeRequired := sdk.NewDecCoinFromDec(minGasPrice.Denom, gasDeclared.Mul(minGasPrice.Amount))
 
 	if feeOffered.IsLT(feeRequired) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeOffered, feeRequired)

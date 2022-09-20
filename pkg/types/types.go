@@ -1,11 +1,8 @@
 package types
 
 import (
-	"math/big"
-
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/pkg/errors"
 )
 
 // Wallet stores information related to wallet
@@ -33,45 +30,4 @@ func (w Wallet) String() string {
 func (w Wallet) Address() sdk.AccAddress {
 	privKey := cosmossecp256k1.PrivKey{Key: w.Key}
 	return sdk.AccAddress(privKey.PubKey().Address())
-}
-
-// Coin stores amount and denom of token
-type Coin struct {
-	// Amount is stored amount
-	Amount *big.Int `json:"amount"`
-
-	// Denom is a token symbol
-	Denom string `json:"denom"`
-}
-
-// NewCoin returns a new instance of coin type
-func NewCoin(amount *big.Int, denom string) (Coin, error) {
-	c := Coin{
-		Amount: big.NewInt(0).Set(amount),
-		Denom:  denom,
-	}
-	if err := c.Validate(); err != nil {
-		return Coin{}, err
-	}
-
-	return c, nil
-}
-
-// Validate validates data inside coin
-func (c Coin) Validate() error {
-	if c.Denom == "" {
-		return errors.New("denom is empty")
-	}
-	if c.Amount == nil {
-		return errors.New("amount is nil")
-	}
-	if c.Amount.Cmp(big.NewInt(0)) == -1 {
-		return errors.New("amount is negative")
-	}
-	return nil
-}
-
-// String returns string representation of coin
-func (c Coin) String() string {
-	return c.Amount.String() + c.Denom
 }

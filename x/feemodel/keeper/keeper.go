@@ -128,14 +128,14 @@ func (k Keeper) SetLongEMAGas(ctx sdk.Context, emaGas int64) {
 }
 
 // GetMinGasPrice returns current minimum gas price required by the network
-func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
+func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(gasPriceKey)
 	if bz == nil {
 		// Thi si really a panic condition because it means that genesis initialization was not done correctly
 		panic("min gas price not set")
 	}
-	var minGasPrice sdk.Coin
+	var minGasPrice sdk.DecCoin
 	if err := minGasPrice.Unmarshal(bz); err != nil {
 		panic(err)
 	}
@@ -143,7 +143,7 @@ func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.Coin {
 }
 
 // SetMinGasPrice sets minimum gas price required by the network on current block
-func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin) {
+func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 	store := ctx.KVStore(k.storeKey)
 	bz, err := minGasPrice.Marshal()
 	if err != nil {
