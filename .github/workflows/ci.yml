@@ -26,7 +26,8 @@ jobs:
         with:
           path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-ci-cache
-      - uses: satackey/action-docker-layer-caching@v0.0.11
+      - name: Set docker cache
+        uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
       - name: Checkout coreum
         uses: actions/checkout@v3
