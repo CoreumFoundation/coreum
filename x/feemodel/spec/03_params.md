@@ -6,15 +6,15 @@ order: 3
 
 The feemodel module contains the following parameters:
 
-| Key                     | Type         | Example   |
-|-------------------------|--------------|-----------|
-| InitialGasPrice         | string (int) | "1500"    |
-| MaxGasPrice             | string (int) | "1500000" |
-| MaxDiscount             | string (dec) | "0.5"     |
-| EscalationStartBlockGas | int64        | 37500000  |
-| MaxBlockGas             | int64        | 50000000  |
-| ShortEmaBlockLength     | uint32       | 10        |
-| LongEmaBlockLength      | uint32       | 1000      |
+| Key                     | Type         | Example  |
+|-------------------------|--------------|----------|
+| InitialGasPrice         | string (dec) | "0.0625" |
+| MaxGasPrice             | string (int) | "62.5"   |
+| MaxDiscount             | string (dec) | "0.5"    |
+| EscalationStartBlockGas | int64        | 37500000 |
+| MaxBlockGas             | int64        | 50000000 |
+| ShortEmaBlockLength     | uint32       | 10       |
+| LongEmaBlockLength      | uint32       | 1000     |
 
 
 ## InitialGasPrice
