@@ -26,11 +26,12 @@ jobs:
         with:
           path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-ci-cache
-      - name: Set docker cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/docker
-          key: ${{ runner.os }}-docker-cache
+      # In this step, this action saves a list of existing images,
+      # the cache is created without them in the post run.
+      # It also restores the cache if it exists.
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
@@ -44,10 +45,6 @@ jobs:
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Lint, run unit tests and build
-        run: |
-          mkdir -p ~/.cache/docker
-          docker load -i ~/.cache/docker/crust-go.tar || true
-          crust build lint/coreum test/coreum images --log-format=yaml
-          docker save -o ~/.cache/docker/crust-go.tar crust-go-build
+        run: crust build lint/coreum test/coreum images --log-format=yaml
       - name: Integration tests
         run: crust znet test --log-format=yaml
