@@ -26,11 +26,12 @@ import (
 	tests "github.com/CoreumFoundation/coreum/integration-tests"
 	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-var cfg = config{
+var cfg = testingConfig{
 	NetworkConfig: coreumtesting.NetworkConfig,
 }
 
@@ -54,7 +55,7 @@ func TestMain(m *testing.M) {
 	cfg.LogVerbose = flag.Lookup("test.v").Value.String() == "true"
 
 	// FIXME (wojtek): remove this once we have our own address encoder
-	app.NewNetwork(cfg.NetworkConfig).SetupPrefixes()
+	config.NewNetwork(cfg.NetworkConfig).SetupPrefixes()
 
 	m.Run()
 }
@@ -77,16 +78,16 @@ func Test(t *testing.T) {
 	runTests(ctx, t, testCases)
 }
 
-type config struct {
+type testingConfig struct {
 	CoredAddress   string
-	NetworkConfig  app.NetworkConfig
+	NetworkConfig  config.NetworkConfig
 	FundingPrivKey types.Secp256k1PrivateKey
 	Filter         *regexp.Regexp
 	LogFormat      logger.Format
 	LogVerbose     bool
 }
 
-func newChain(ctx context.Context, cfg config) (coreumtesting.Chain, error) {
+func newChain(ctx context.Context, cfg testingConfig) (coreumtesting.Chain, error) {
 	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
 	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.CoredAddress)
 	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
@@ -94,8 +95,7 @@ func newChain(ctx context.Context, cfg config) (coreumtesting.Chain, error) {
 	if err != nil {
 		panic(err)
 	}
-	clientContext := app.
-		NewDefaultClientContext().
+	clientContext := config.NewClientContext(app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
 		WithClient(rpcClient).
 		WithBroadcastMode(flags.BroadcastBlock)
@@ -123,7 +123,7 @@ func newChain(ctx context.Context, cfg config) (coreumtesting.Chain, error) {
 	}, nil
 }
 
-func newContext(t *testing.T, cfg config) context.Context {
+func newContext(t *testing.T, cfg testingConfig) context.Context {
 	loggerConfig := logger.Config{
 		Format:  cfg.LogFormat,
 		Verbose: cfg.LogVerbose,
@@ -161,7 +161,7 @@ func collectTestCases(chain coreumtesting.Chain, testSet coreumtesting.TestSet, 
 
 type testingFaucet struct {
 	client        client.Client
-	networkConfig app.NetworkConfig
+	networkConfig config.NetworkConfig
 
 	// muCh is used to serve the same purpose as `sync.Mutex` to protect `fundingWallet` against being used
 	// to broadcast many transactions in parallel by different integration tests. The difference between this and `sync.Mutex`

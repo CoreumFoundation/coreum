@@ -12,7 +12,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/config"
+	clientconfig "github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -38,6 +38,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 type (
@@ -50,14 +51,14 @@ type (
 		skipUpgradeHeights map[int64]bool,
 		homePath string,
 		invCheckPeriod uint,
-		encodingConfig app.EncodingConfig,
+		encodingConfig config.EncodingConfig,
 		appOpts servertypes.AppOptions,
 		baseAppOptions ...func(*baseapp.BaseApp),
 	) *app.App
 
 	// appCreator is an app creator
 	appCreator struct {
-		encodingConfig app.EncodingConfig
+		encodingConfig config.EncodingConfig
 		buildApp       AppBuilder
 	}
 )
@@ -93,13 +94,13 @@ func NewRootCmd(
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
 	options ...Option,
-) (*cobra.Command, app.EncodingConfig) {
+) (*cobra.Command, config.EncodingConfig) {
 	rootOptions := newRootOptions(options...)
 
 	// Set config for prefixes
-	app.SetPrefixes(accountAddressPrefix)
+	config.SetPrefixes(accountAddressPrefix)
 
-	encodingConfig := app.NewModuleEncodingConfig(moduleBasics)
+	encodingConfig := config.NewEncodingConfig(moduleBasics)
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -122,7 +123,7 @@ func NewRootCmd(
 			if err != nil {
 				return err
 			}
-			initClientCtx, err = config.ReadFromClientConfig(initClientCtx)
+			initClientCtx, err = clientconfig.ReadFromClientConfig(initClientCtx)
 			if err != nil {
 				return err
 			}
@@ -161,7 +162,7 @@ func NewRootCmd(
 
 func initRootCmd(
 	rootCmd *cobra.Command,
-	encodingConfig app.EncodingConfig,
+	encodingConfig config.EncodingConfig,
 	defaultNodeHome string,
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
@@ -180,7 +181,7 @@ func initRootCmd(
 		cosmoscmd.AddGenesisAccountCmd(defaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
-		config.Cmd(),
+		clientconfig.Cmd(),
 	)
 
 	a := appCreator{

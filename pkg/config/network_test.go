@@ -72,12 +72,9 @@ func testNetwork() config.Network {
 func knownNetworks(t *testing.T) []config.Network {
 	devnet, err := config.NetworkByChainID(config.Devnet)
 	require.NoError(t, err)
-	mainnet, err := config.NetworkByChainID(config.Mainnet)
-	require.NoError(t, err)
 
 	return []config.Network{
 		devnet,
-		mainnet,
 	}
 }
 
