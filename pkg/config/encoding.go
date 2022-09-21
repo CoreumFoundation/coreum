@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"

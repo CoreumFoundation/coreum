@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"crypto/ed25519"
