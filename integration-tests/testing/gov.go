@@ -3,15 +3,17 @@ package testing
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
+	"strconv"
+	"time"
 
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"strconv"
-	"time"
+	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // Governance keep the test chain predefined account for the governance operations.
@@ -23,7 +25,7 @@ type Governance struct {
 }
 
 // NewGovernance initializes the voter accounts to have enough voting power for the voting.
-func NewGovernance(
+func NewGovernance( //nolint:funlen // The test covers step-by step use case
 	ctx context.Context,
 	chainContext *ChainContext,
 	faucet *Faucet,
@@ -32,6 +34,10 @@ func NewGovernance(
 		govVotersNumber      = 2
 		delegationMultiplier = "1.02"
 	)
+
+	log := logger.Get(ctx)
+	log.Info("Initialising the governance accounts")
+
 	delegationMultiplierDec, err := sdk.NewDecFromStr(delegationMultiplier)
 	if err != nil {
 		return nil, err
@@ -90,6 +96,10 @@ func NewGovernance(
 		return nil, err
 	}
 	valAddress, err := sdk.ValAddressFromBech32(validators.Validators[0].OperatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	delegateCoin := chainContext.NewCoin(voterDelegateAmount)
 
 	txf := chainContext.TxFactory()
@@ -113,6 +123,8 @@ func NewGovernance(
 			return nil, err
 		}
 	}
+
+	log.Info("Initialisation of the governance accounts is done")
 
 	return &Governance{
 		chainContext:   chainContext,

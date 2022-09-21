@@ -2,13 +2,13 @@ package staking
 
 import (
 	"context"
+	"strconv"
+
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"strconv"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -35,7 +35,8 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain *testing.Ch
 
 	// Wait for voting period to be started.
 	proposal, err := chain.Governance.WaitForProposalStatus(ctx, govtypes.StatusVotingPeriod, uint64(proposalID))
-	assert.Equal(t, govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
 	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
@@ -45,9 +46,10 @@ func TestProposalParamChange(ctx context.Context, t testing.T, chain *testing.Ch
 
 	// Wait for proposal result.
 	proposal, err = chain.Governance.WaitForProposalStatus(ctx, govtypes.StatusPassed, uint64(proposalID))
+	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusPassed, proposal.Status)
 
-	// Check the proposed change is applied
+	// Check the proposed change is applied.
 	stakingParams, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
 	requireT.NoError(err)
 	requireT.Equal(uint32(targetMaxValidators), stakingParams.Params.MaxValidators)
