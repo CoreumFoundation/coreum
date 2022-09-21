@@ -13,7 +13,7 @@ import (
 func Tests() testing.TestSet {
 	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
-			staking.TestProposalParamChange,
+			staking.TestStakingProposalParamChange,
 			auth.TestUnexpectedSequenceNumber,
 			auth.TestTooLowGasPrice,
 			auth.TestNoFee,

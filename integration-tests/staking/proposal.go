@@ -14,8 +14,8 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 )
 
-// TestProposalParamChange checks that param change proposal works correctly.
-func TestProposalParamChange(ctx context.Context, t testing.T, chain *testing.Chain) {
+// TestStakingProposalParamChange checks that staking param change proposal works correctly.
+func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain *testing.Chain) {
 	const targetMaxValidators = 201
 	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
