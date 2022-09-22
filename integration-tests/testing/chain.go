@@ -23,7 +23,7 @@ import (
 type ChainContext struct {
 	ClientContext cosmosclient.Context
 	NetworkConfig app.NetworkConfig
-	mu            sync.Mutex
+	mu            sync.RWMutex
 }
 
 // NewChainContext returns a new instance if the ChainContext.
@@ -31,7 +31,7 @@ func NewChainContext(clientCtx cosmosclient.Context, networkCfg app.NetworkConfi
 	return &ChainContext{
 		ClientContext: clientCtx,
 		NetworkConfig: networkCfg,
-		mu:            sync.Mutex{},
+		mu:            sync.RWMutex{},
 	}
 }
 
@@ -95,8 +95,8 @@ func (c *ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 func (c *ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wallet {
 	name := accAddr.String()
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	privKeyHex, err := keyring.NewUnsafe(c.ClientContext.Keyring).UnsafeExportPrivKeyHex(name)
 	if err != nil {
 		panic(err)
