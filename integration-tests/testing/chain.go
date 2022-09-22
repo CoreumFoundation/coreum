@@ -38,8 +38,6 @@ func NewChainContext(clientCtx cosmosclient.Context, networkCfg app.NetworkConfi
 // RandomWallet generates a wallet for the chain with random name and
 // private key and stores mnemonic in Keyring.
 func (c *ChainContext) RandomWallet() sdk.AccAddress {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	// Generate and store a new mnemonic using temporary keyring
 	keyInfo, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, "", "", hd.Secp256k1)
 	// we are using panics here, since we are sure it will not error out, and handling error
@@ -48,6 +46,8 @@ func (c *ChainContext) RandomWallet() sdk.AccAddress {
 		panic(err)
 	}
 
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	// Store generated mnemonic using account address as UID
 	if _, err = c.ClientContext.Keyring.NewAccount(keyInfo.GetAddress().String(), mnemonic, "", "", hd.Secp256k1); err != nil {
 		panic(err)
@@ -94,6 +94,9 @@ func (c *ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 // func signatures while types.Wallet is being removed.
 func (c *ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wallet {
 	name := accAddr.String()
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	privKeyHex, err := keyring.NewUnsafe(c.ClientContext.Keyring).UnsafeExportPrivKeyHex(name)
 	if err != nil {
 		panic(err)

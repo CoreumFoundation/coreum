@@ -18,10 +18,10 @@ import (
 
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {
-	chainContext   *ChainContext
-	govClient      govtypes.QueryClient
-	faucet         *Faucet
-	votersAccounts []sdk.AccAddress
+	chainContext  *ChainContext
+	govClient     govtypes.QueryClient
+	faucet        *Faucet
+	voterAccounts []sdk.AccAddress
 }
 
 // NewGovernance initializes the voter accounts to have enough voting power for the voting.
@@ -127,10 +127,10 @@ func NewGovernance( //nolint:funlen // The test covers step-by step use case
 	log.Info("Initialisation of the governance accounts is done")
 
 	return &Governance{
-		chainContext:   chainContext,
-		faucet:         faucet,
-		votersAccounts: votersAccounts,
-		govClient:      govClient,
+		chainContext:  chainContext,
+		faucet:        faucet,
+		voterAccounts: votersAccounts,
+		govClient:     govClient,
 	}, nil
 }
 
@@ -198,7 +198,7 @@ func (g *Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conte
 func (g *Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, proposalID uint64) error {
 	txf := g.chainContext.TxFactory()
 	txf = txf.WithGas(uint64(g.chainContext.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
-	for _, voter := range g.votersAccounts {
+	for _, voter := range g.voterAccounts {
 		msg := &govtypes.MsgVote{
 			ProposalId: proposalID,
 			Voter:      voter.String(),
@@ -256,7 +256,7 @@ func (g *Governance) WaitForProposalStatus(ctx context.Context, status govtypes.
 
 // GetVotersAccounts returns the configured voting accounts.
 func (g *Governance) GetVotersAccounts() []sdk.AccAddress {
-	return g.votersAccounts
+	return g.voterAccounts
 }
 
 func (g *Governance) getParams(ctx context.Context) (govtypes.Params, error) {
