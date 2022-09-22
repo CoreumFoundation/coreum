@@ -7,8 +7,18 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var (
+	KeyModel = []byte("Model")
+)
+
 // String implements the stringer interface.
 func (m Params) String() string {
+	out, _ := yaml.Marshal(m)
+	return string(out)
+}
+
+// String implements the stringer interface.
+func (m ModelParams) String() string {
 	out, _ := yaml.Marshal(m)
 	return string(out)
 }
@@ -16,38 +26,39 @@ func (m Params) String() string {
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // of model's parameters.
 func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
-	modelValidator := func(value interface{}) error {
-		return m.Validate()
-	}
-
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair([]byte("InitialGasPrice"), &m.InitialGasPrice, modelValidator),
-		paramtypes.NewParamSetPair([]byte("MaxGasPrice"), &m.MaxGasPrice, modelValidator),
-		paramtypes.NewParamSetPair([]byte("MaxDiscount"), &m.MaxDiscount, modelValidator),
-		paramtypes.NewParamSetPair([]byte("EscalationStartBlockGas"), &m.EscalationStartBlockGas, modelValidator),
-		paramtypes.NewParamSetPair([]byte("MaxBlockGas"), &m.MaxBlockGas, modelValidator),
-		paramtypes.NewParamSetPair([]byte("ShortEmaBlockLength"), &m.ShortEmaBlockLength, modelValidator),
-		paramtypes.NewParamSetPair([]byte("LongEmaBlockLength"), &m.LongEmaBlockLength, modelValidator),
+		paramtypes.NewParamSetPair(KeyModel, &m.Model, validateModelParams),
 	}
 }
 
-// DefaultParams returns params with default values
+// DefaultParams returns params with default values.
 func DefaultParams() Params {
 	return Params{
-		// TODO: Find good parameters before launching mainnet
-		InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
-		MaxGasPrice:             sdk.MustNewDecFromStr("62.5"),
-		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-		EscalationStartBlockGas: 37500000, // 300 * BankSend message
-		// TODO: adjust MaxBlockGas before creating testnet & mainnet
-		MaxBlockGas:         50000000, // 400 * BankSend message
-		ShortEmaBlockLength: 10,
-		LongEmaBlockLength:  1000,
+		Model: ModelParams{
+			// TODO: Find good parameters before launching mainnet
+			InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
+			MaxGasPrice:             sdk.MustNewDecFromStr("62.5"),
+			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
+			EscalationStartBlockGas: 37500000, // 300 * BankSend message
+			// TODO: adjust MaxBlockGas before creating testnet & mainnet
+			MaxBlockGas:         50000000, // 400 * BankSend message
+			ShortEmaBlockLength: 10,
+			LongEmaBlockLength:  1000,
+		},
 	}
 }
 
-// Validate validates parameters of the model
-func (m Params) Validate() error {
+// ValidateBasic validates parameters of the model
+func (m Params) ValidateBasic() error {
+	return validateModelParams(m.Model)
+}
+
+func validateModelParams(i interface{}) error {
+	m, ok := i.(ModelParams)
+	if !ok {
+		return errors.Errorf("invalid parameter type: %T", i)
+	}
+
 	if m.InitialGasPrice.IsNil() {
 		return errors.New("initial gas price is not set")
 	}
