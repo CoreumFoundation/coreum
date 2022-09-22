@@ -5,12 +5,12 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 // DefaultModel returns model with default params
 func DefaultModel() Model {
 	return Model{
-		params: DefaultParams(),
+		params: DefaultParams().Model,
 	}
 }
 
 // NewModel creates model
-func NewModel(params Params) Model {
+func NewModel(params ModelParams) Model {
 	return Model{
 		params: params,
 	}
@@ -18,11 +18,11 @@ func NewModel(params Params) Model {
 
 // Model executes fee model
 type Model struct {
-	params Params
+	params ModelParams
 }
 
 // Params returns fee model params
-func (m Model) Params() Params {
+func (m Model) Params() ModelParams {
 	return m.params
 }
 

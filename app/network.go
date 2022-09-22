@@ -409,7 +409,7 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC string
 		ChainID        ChainID
 		TokenSymbol    string
-		FeeModelParams feemodeltypes.Params
+		FeeModelParams feemodeltypes.ModelParams
 		Gov            GovConfig
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),

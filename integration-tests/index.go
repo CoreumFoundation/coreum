@@ -26,6 +26,7 @@ func Tests() testing.TestSet {
 			wasm.TestSimpleStateWasmContract,
 			wasm.TestBankSendWasmContract,
 			feemodel.TestQueryingMinGasPrice,
+			feemodel.TestFeeModelProposalParamChange,
 		},
 	}
 
