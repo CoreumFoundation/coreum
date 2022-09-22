@@ -34,9 +34,9 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // DefaultParams returns params with default values
 func DefaultParams() Params {
 	return Params{
-		// TODO: Find good parameters before lunching mainnet
-		InitialGasPrice:         sdk.NewDec(1500),
-		MaxGasPrice:             sdk.NewDec(1500000),
+		// TODO: Find good parameters before launching mainnet
+		InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
+		MaxGasPrice:             sdk.MustNewDecFromStr("62.5"),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 		EscalationStartBlockGas: 37500000, // 300 * BankSend message
 		// TODO: adjust MaxBlockGas before creating testnet & mainnet
