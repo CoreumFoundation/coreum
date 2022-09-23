@@ -3,7 +3,6 @@ package ante
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/CoreumFoundation/coreum/x/auth/types"
 )
@@ -28,13 +27,15 @@ func (sgmd SetupGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 // FreeGasDecorator adds free gas to gas meter
 // CONTRACT: Tx must implement GasTx interface
 type FreeGasDecorator struct {
-	ak authante.AccountKeeper
+	ak                           authante.AccountKeeper
+	deterministicGasRequirements types.DeterministicGasRequirements
 }
 
 // NewFreeGasDecorator creates new FreeGasDecorator
-func NewFreeGasDecorator(ak authante.AccountKeeper) FreeGasDecorator {
+func NewFreeGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements types.DeterministicGasRequirements) FreeGasDecorator {
 	return FreeGasDecorator{
-		ak: ak,
+		ak:                           ak,
+		deterministicGasRequirements: deterministicGasRequirements,
 	}
 }
 
@@ -52,7 +53,7 @@ func (fgd FreeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 		// `SetUpContextDecorator`
 		gasTx := tx.(authante.GasTx)
 
-		gasMeter = sdk.NewGasMeter(gasTx.GetGas() + bonusGas(params))
+		gasMeter = sdk.NewGasMeter(gasTx.GetGas() + fgd.deterministicGasRequirements.TxBonusGas(params))
 	}
 	return next(ctx.WithGasMeter(gasMeter), tx, simulate)
 }
@@ -60,15 +61,15 @@ func (fgd FreeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 // FinalGasDecorator sets gas meter for message handlers
 // CONTRACT: Tx must implement GasTx interface
 type FinalGasDecorator struct {
-	ak       authante.AccountKeeper
-	fixedGas uint64
+	ak                           authante.AccountKeeper
+	deterministicGasRequirements types.DeterministicGasRequirements
 }
 
 // NewFinalGasDecorator creates new FinalGasDecorator
-func NewFinalGasDecorator(ak authante.AccountKeeper, fixedGas uint64) FinalGasDecorator {
+func NewFinalGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements types.DeterministicGasRequirements) FinalGasDecorator {
 	return FinalGasDecorator{
-		ak:       ak,
-		fixedGas: fixedGas,
+		ak:                           ak,
+		deterministicGasRequirements: deterministicGasRequirements,
 	}
 }
 
@@ -90,15 +91,11 @@ func (fgd FinalGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate boo
 	}
 
 	gasConsumed := ctx.GasMeter().GasConsumed()
-	bonus := bonusGas(params) //nolint:ifshort // Don't want to put it inside `if`
+	bonus := fgd.deterministicGasRequirements.TxBonusGas(params)
 	if gasConsumed > bonus {
 		gasMeter.ConsumeGas(gasConsumed-bonus, "OverBonus")
 	}
-	gasMeter.ConsumeGas(fgd.fixedGas, "Fixed")
+	gasMeter.ConsumeGas(fgd.deterministicGasRequirements.FixedGas, "Fixed")
 
 	return next(ctx.WithGasMeter(gasMeter), tx, simulate)
-}
-
-func bonusGas(params authtypes.Params) uint64 {
-	return types.FreeBytes*params.TxSizeCostPerByte + types.FreeSignatures*params.SigVerifyCostSecp256k1
 }

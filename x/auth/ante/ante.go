@@ -10,22 +10,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/CoreumFoundation/coreum/x/auth/keeper"
+	"github.com/CoreumFoundation/coreum/x/auth/types"
 	feemodelante "github.com/CoreumFoundation/coreum/x/feemodel/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	FixedGas              uint64
-	AccountKeeper         authante.AccountKeeper
-	BankKeeper            types.BankKeeper
-	FeegrantKeeper        authante.FeegrantKeeper
-	FeeModelKeeper        feemodelante.Keeper
-	SignModeHandler       authsigning.SignModeHandler
-	SigGasConsumer        func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
-	WasmTXCounterStoreKey sdk.StoreKey
+	DeterministicGasRequirements types.DeterministicGasRequirements
+	AccountKeeper                authante.AccountKeeper
+	BankKeeper                   authtypes.BankKeeper
+	FeegrantKeeper               authante.FeegrantKeeper
+	FeeModelKeeper               feemodelante.Keeper
+	SignModeHandler              authsigning.SignModeHandler
+	SigGasConsumer               func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
+	WasmTXCounterStoreKey        sdk.StoreKey
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -72,10 +73,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
 		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
-		NewFreeGasDecorator(infiniteAccountKeeper),
+		NewFreeGasDecorator(infiniteAccountKeeper, options.DeterministicGasRequirements),
 		authante.NewConsumeGasForTxSizeDecorator(infiniteAccountKeeper),
 		authante.NewSigGasConsumeDecorator(infiniteAccountKeeper, options.SigGasConsumer),
-		NewFinalGasDecorator(infiniteAccountKeeper, options.FixedGas),
+		NewFinalGasDecorator(infiniteAccountKeeper, options.DeterministicGasRequirements),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil

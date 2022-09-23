@@ -2,24 +2,19 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // DefaultDeterministicGasRequirements returns default config for deterministic gas
 func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 	return DeterministicGasRequirements{
-		FixedGas: 50000,
-		BankSend: 30000,
+		FixedGas:       50000,
+		FreeBytes:      2048,
+		FreeSignatures: 1,
+		BankSend:       30000,
 	}
 }
-
-const (
-	// FreeBytes defines how many tx bytes are stored for free (included in `FixedGas` price)
-	FreeBytes = 2048
-
-	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
-	FreeSignatures = 1
-)
 
 // DeterministicGasRequirements specifies gas required by some transaction types
 type DeterministicGasRequirements struct {
@@ -28,6 +23,13 @@ type DeterministicGasRequirements struct {
 	// - `FreeSignatures` secp256k1 signature verifications
 	// - `FreeBytes` bytes of transaction
 	FixedGas uint64
+
+	// FreeBytes defines how many tx bytes are stored for free (included in `FixedGas` price)
+	FreeBytes uint64
+
+	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
+	FreeSignatures uint64
+
 	BankSend uint64
 }
 
@@ -40,4 +42,9 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) uint64
 	default:
 		return 0
 	}
+}
+
+// TxBonusGas is the free gas we give to every transaction to cover costs of tx size and signature verification
+func (dgr DeterministicGasRequirements) TxBonusGas(params authtypes.Params) uint64 {
+	return dgr.FreeBytes*params.TxSizeCostPerByte + dgr.FreeSignatures*params.SigVerifyCostSecp256k1
 }

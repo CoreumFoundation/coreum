@@ -622,13 +622,13 @@ func New(
 
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
-			FixedGas:              ChosenNetwork.DeterministicGas().FixedGas,
-			AccountKeeper:         app.AccountKeeper,
-			BankKeeper:            app.BankKeeper,
-			SignModeHandler:       encodingConfig.TxConfig.SignModeHandler(),
-			FeegrantKeeper:        app.FeeGrantKeeper,
-			FeeModelKeeper:        app.FeeModelKeeper,
-			WasmTXCounterStoreKey: keys[wasm.StoreKey],
+			DeterministicGasRequirements: ChosenNetwork.DeterministicGas(),
+			AccountKeeper:                app.AccountKeeper,
+			BankKeeper:                   app.BankKeeper,
+			SignModeHandler:              encodingConfig.TxConfig.SignModeHandler(),
+			FeegrantKeeper:               app.FeeGrantKeeper,
+			FeeModelKeeper:               app.FeeModelKeeper,
+			WasmTXCounterStoreKey:        keys[wasm.StoreKey],
 		},
 	)
 	if err != nil {
