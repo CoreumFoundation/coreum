@@ -3,7 +3,7 @@ package testing
 import (
 	"time"
 
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	authtypes "github.com/CoreumFoundation/coreum/x/auth/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
