@@ -38,10 +38,7 @@ func NewGovernance( //nolint:funlen // The test covers step-by step use case
 	log := logger.Get(ctx)
 	log.Info("Initialising the governance accounts")
 
-	delegationMultiplierDec, err := sdk.NewDecFromStr(delegationMultiplier)
-	if err != nil {
-		return nil, err
-	}
+	delegationMultiplierDec := sdk.MustNewDecFromStr(delegationMultiplier)
 
 	clientCtx := chainContext.ClientContext
 	networkCfg := chainContext.NetworkConfig
