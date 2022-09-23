@@ -12,14 +12,14 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/auth/keeper"
-	"github.com/CoreumFoundation/coreum/x/auth/types"
 	feemodelante "github.com/CoreumFoundation/coreum/x/feemodel/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	DeterministicGasRequirements types.DeterministicGasRequirements
+	DeterministicGasRequirements config.DeterministicGasRequirements
 	AccountKeeper                authante.AccountKeeper
 	BankKeeper                   authtypes.BankKeeper
 	FeegrantKeeper               authante.FeegrantKeeper

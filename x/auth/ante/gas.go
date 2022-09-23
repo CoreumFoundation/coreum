@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
-	"github.com/CoreumFoundation/coreum/x/auth/types"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 // SetupGasMeterDecorator sets the infinite gas limit for ante handler
@@ -28,11 +28,11 @@ func (sgmd SetupGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 // CONTRACT: Tx must implement GasTx interface
 type FreeGasDecorator struct {
 	ak                           authante.AccountKeeper
-	deterministicGasRequirements types.DeterministicGasRequirements
+	deterministicGasRequirements config.DeterministicGasRequirements
 }
 
 // NewFreeGasDecorator creates new FreeGasDecorator
-func NewFreeGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements types.DeterministicGasRequirements) FreeGasDecorator {
+func NewFreeGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements config.DeterministicGasRequirements) FreeGasDecorator {
 	return FreeGasDecorator{
 		ak:                           ak,
 		deterministicGasRequirements: deterministicGasRequirements,
@@ -62,11 +62,11 @@ func (fgd FreeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 // CONTRACT: Tx must implement GasTx interface
 type FinalGasDecorator struct {
 	ak                           authante.AccountKeeper
-	deterministicGasRequirements types.DeterministicGasRequirements
+	deterministicGasRequirements config.DeterministicGasRequirements
 }
 
 // NewFinalGasDecorator creates new FinalGasDecorator
-func NewFinalGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements types.DeterministicGasRequirements) FinalGasDecorator {
+func NewFinalGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements config.DeterministicGasRequirements) FinalGasDecorator {
 	return FinalGasDecorator{
 		ak:                           ak,
 		deterministicGasRequirements: deterministicGasRequirements,
