@@ -33,10 +33,10 @@ type Keeper interface {
     SetLongEMAGas(ctx sdk.Context, emaGas int64)
 
     // GetMinGasPrice returns current minimum gas price required by the network
-    GetMinGasPrice(ctx sdk.Context) sdk.Coin
+    GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
 
     // SetMinGasPrice sets minimum gas price required by the network on current block
-    SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.Coin)
+    SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin)
 }
 ```
 
