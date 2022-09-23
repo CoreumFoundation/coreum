@@ -9,7 +9,7 @@ The feemodel module contains the following parameters:
 | Key                     | Type         | Example  |
 |-------------------------|--------------|----------|
 | InitialGasPrice         | string (dec) | "0.0625" |
-| MaxGasPrice             | string (int) | "62.5"   |
+| MaxGasPrice             | string (dec) | "62.5"   |
 | MaxDiscount             | string (dec) | "0.5"    |
 | EscalationStartBlockGas | int64        | 37500000 |
 | MaxBlockGas             | int64        | 50000000 |
