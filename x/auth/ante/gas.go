@@ -10,7 +10,6 @@ import (
 // SetupGasMeterDecorator sets the infinite gas limit for ante handler
 // CONTRACT: Must be the first decorator in the chain
 // CONTRACT: Tx must implement GasTx interface
-// FIXME (wojtek): THIS IS BAD, used only for testing
 type SetupGasMeterDecorator struct{}
 
 // NewSetupGasMeterDecorator creates new SetupGasMeterDecorator
