@@ -69,15 +69,6 @@ func testNetwork() config.Network {
 	})
 }
 
-func knownNetworks(t *testing.T) []config.Network {
-	devnet, err := config.NetworkByChainID(config.Devnet)
-	require.NoError(t, err)
-
-	return []config.Network{
-		devnet,
-	}
-}
-
 func TestAddressPrefixIsSet(t *testing.T) {
 	assertT := assert.New(t)
 	n := testNetwork()
@@ -316,7 +307,7 @@ func TestValidateAllGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	encCfg := config.NewEncodingConfig(app.ModuleBasics)
 
-	for _, n := range knownNetworks(t) {
+	for _, n := range config.EnabledNetworks() {
 		genesisJSON, err := n.EncodeGenesis()
 		if !assertT.NoError(err) {
 			continue
@@ -344,7 +335,7 @@ func TestValidateAllGenesis(t *testing.T) {
 
 func TestNetworkConfigConditions(t *testing.T) {
 	assertT := assert.New(t)
-	for _, n := range knownNetworks(t) {
+	for _, n := range config.EnabledNetworks() {
 		assert.NoError(t, n.FeeModel().Params().Validate())
 		assertT.Greater(n.DeterministicGas().BankSend, uint64(0))
 	}

@@ -142,6 +142,17 @@ func init() {
 
 var networks = map[ChainID]NetworkConfig{}
 
+// EnabledNetworks returns enabled networks
+func EnabledNetworks() []Network {
+	enabledNetworks := make([]Network, 0, len(networks))
+	for _, nc := range networks {
+		if nc.Enabled {
+			enabledNetworks = append(enabledNetworks, NewNetwork(nc))
+		}
+	}
+	return enabledNetworks
+}
+
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
 	FeeModel         feemodeltypes.Model
