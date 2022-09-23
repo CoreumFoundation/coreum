@@ -18,18 +18,18 @@ const (
 )
 
 // NetworkConfig is the network config used by integration tests
-var NetworkConfig = app.NetworkConfig{
-	ChainID:       app.Devnet,
+var NetworkConfig = config.NetworkConfig{
+	ChainID:       config.Devnet,
 	Enabled:       true,
 	GenesisTime:   time.Now(),
 	AddressPrefix: "devcore",
-	TokenSymbol:   app.TokenSymbolDev,
-	Fee: app.FeeConfig{
+	TokenSymbol:   config.TokenSymbolDev,
+	Fee: config.FeeConfig{
 		FeeModel:         feemodeltypes.DefaultModel(),
 		DeterministicGas: authtypes.DefaultDeterministicGasRequirements(),
 	},
-	GovConfig: app.GovConfig{
-		ProposalConfig: app.GovProposalConfig{
+	GovConfig: config.GovConfig{
+		ProposalConfig: config.GovProposalConfig{
 			MinDepositAmount: "1000",
 			MinDepositPeriod: minDepositPeriod.String(),
 			VotingPeriod:     minVotingPeriod.String(),

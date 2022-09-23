@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"bytes"
@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcosmostypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -135,6 +136,17 @@ func init() {
 }
 
 var networks = map[ChainID]NetworkConfig{}
+
+// EnabledNetworks returns enabled networks
+func EnabledNetworks() []Network {
+	enabledNetworks := make([]Network, 0, len(networks))
+	for _, nc := range networks {
+		if nc.Enabled {
+			enabledNetworks = append(enabledNetworks, NewNetwork(nc))
+		}
+	}
+	return enabledNetworks
+}
 
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
@@ -268,7 +280,13 @@ func applyFundedAccountToGenesis(
 
 // genesisDoc returns the genesis doc of the network
 func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
-	codec := NewEncodingConfig().Codec
+	codec := NewEncodingConfig(module.NewBasicManager(
+		auth.AppModuleBasic{},
+		authzmodule.AppModuleBasic{},
+		genutil.AppModuleBasic{},
+		bank.AppModuleBasic{},
+	)).Codec
+
 	genesisJSON, err := genesis(n)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
@@ -366,6 +384,31 @@ func (n Network) AddressPrefix() string {
 // ChainID returns the chain ID used in network config
 func (n Network) ChainID() ChainID {
 	return n.chainID
+}
+
+// GenesisTime returns the genesis time of the network
+func (n Network) GenesisTime() time.Time {
+	return n.genesisTime
+}
+
+// FundedAccounts returns the funded accounts
+func (n Network) FundedAccounts() []FundedAccount {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	fundedAccounts := make([]FundedAccount, len(n.fundedAccounts))
+	copy(fundedAccounts, n.fundedAccounts)
+	return fundedAccounts
+}
+
+// GenTxs returns the genesis transactions
+func (n Network) GenTxs() []json.RawMessage {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	genTxs := make([]json.RawMessage, len(n.genTxs))
+	copy(genTxs, n.genTxs)
+	return genTxs
 }
 
 // TokenSymbol returns the governance token symbol. This is different

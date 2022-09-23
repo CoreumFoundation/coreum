@@ -15,8 +15,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/server/api"
-	"github.com/cosmos/cosmos-sdk/server/config"
+	serverapi "github.com/cosmos/cosmos-sdk/server/api"
+	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -101,6 +101,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/docs"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
@@ -113,14 +114,14 @@ const (
 	Name = "core"
 
 	// DefaultChainID is the default chain id of the network
-	DefaultChainID = Mainnet
+	DefaultChainID = config.Mainnet
 )
 
 // ChosenNetwork is a hacky solution to pass network config
 // from cmd package to app.
 // FIXME remove this global field hack and pass network to the New function.
 // This can be implemented once we separate network config into its own package.
-var ChosenNetwork Network
+var ChosenNetwork config.Network
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
 
@@ -267,7 +268,7 @@ func New(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	invCheckPeriod uint,
-	encodingConfig EncodingConfig,
+	encodingConfig config.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
@@ -764,7 +765,7 @@ func (app *App) GetSubspace(moduleName string) paramstypes.Subspace {
 
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
-func (app *App) RegisterAPIRoutes(apiSvr *api.Server, _ config.APIConfig) {
+func (app *App) RegisterAPIRoutes(apiSvr *serverapi.Server, _ serverconfig.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
 	// Register legacy tx routes.

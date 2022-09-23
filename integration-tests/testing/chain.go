@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
@@ -21,7 +21,7 @@ type Chain struct {
 	Client        client.Client
 	ClientContext cosmosclient.Context
 
-	NetworkConfig app.NetworkConfig
+	NetworkConfig config.NetworkConfig
 	Faucet        Faucet
 
 	Keyring keyring.Keyring
