@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 func init() {
@@ -25,7 +26,7 @@ func BenchmarkSimulation(b *testing.B) {
 	simapp.FlagEnabledValue = true
 	simapp.FlagCommitValue = true
 
-	config, db, dir, logger, _, err := simapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	cfg, db, dir, logger, _, err := simapp.SetupSimulation("goleveldb-app-sim", "Simulation")
 	require.NoError(b, err, "simulation setup failed")
 
 	b.Cleanup(func() {
@@ -34,8 +35,8 @@ func BenchmarkSimulation(b *testing.B) {
 		require.NoError(b, err)
 	})
 
-	encoding := app.NewEncodingConfig()
-	network, err := app.NetworkByChainID(app.Devnet)
+	encoding := config.NewEncodingConfig(app.ModuleBasics)
+	network, err := config.NetworkByChainID(config.Devnet)
 	if err != nil {
 		panic(err)
 	}
@@ -60,18 +61,18 @@ func BenchmarkSimulation(b *testing.B) {
 		simApp.GetBaseApp(),
 		simapp.AppStateFn(simApp.AppCodec(), simApp.SimulationManager()),
 		simulationtypes.RandomAccounts,
-		simapp.SimulationOperations(simApp, simApp.AppCodec(), config),
+		simapp.SimulationOperations(simApp, simApp.AppCodec(), cfg),
 		simApp.ModuleAccountAddrs(),
-		config,
+		cfg,
 		simApp.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = simapp.CheckExportSimulation(simApp, config, simParams)
+	err = simapp.CheckExportSimulation(simApp, cfg, simParams)
 	require.NoError(b, err)
 	require.NoError(b, simErr)
 
-	if config.Commit {
+	if cfg.Commit {
 		simapp.PrintStats(db)
 	}
 }

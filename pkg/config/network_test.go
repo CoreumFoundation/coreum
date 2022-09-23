@@ -1,4 +1,4 @@
-package app
+package config_test
 
 import (
 	"crypto/ed25519"
@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
@@ -24,7 +26,7 @@ func init() {
 	n.SetupPrefixes()
 }
 
-var feeConfig = FeeConfig{
+var feeConfig = config.FeeConfig{
 	FeeModel: feemodeltypes.NewModel(feemodeltypes.Params{
 		InitialGasPrice:         sdk.NewDec(2),
 		MaxGasPrice:             sdk.NewDec(4),
@@ -39,26 +41,26 @@ var feeConfig = FeeConfig{
 	},
 }
 
-func testNetwork() Network {
+func testNetwork() config.Network {
 	pubKey, privKey := types.GenerateSecp256k1Key()
-	clientCtx := NewDefaultClientContext()
+	clientCtx := config.NewClientContext(app.ModuleBasics)
 	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	if err != nil {
 		panic(err)
 	}
-	return NewNetwork(NetworkConfig{
-		ChainID:       ChainID("test-network"),
+	return config.NewNetwork(config.NetworkConfig{
+		ChainID:       "test-network",
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
-		TokenSymbol:   TokenSymbolMain,
+		TokenSymbol:   config.TokenSymbolMain,
 		Fee:           feeConfig,
-		FundedAccounts: []FundedAccount{{
+		FundedAccounts: []config.FundedAccount{{
 			PublicKey: pubKey,
 			Balances:  "1000some-test-token",
 		}},
 		GenTxs: []json.RawMessage{tx},
-		GovConfig: GovConfig{
-			ProposalConfig: GovProposalConfig{
+		GovConfig: config.GovConfig{
+			ProposalConfig: config.GovProposalConfig{
 				MinDepositAmount: "10000000",
 				MinDepositPeriod: "172800s",
 				VotingPeriod:     "172800s",
@@ -73,7 +75,7 @@ func TestAddressPrefixIsSet(t *testing.T) {
 	pubKey, _ := types.GenerateSecp256k1Key()
 	secp256k1 := cosmossecp256k1.PubKey{Key: pubKey}
 	accountAddress := sdk.AccAddress(secp256k1.Address())
-	assertT.True(strings.HasPrefix(accountAddress.String(), n.addressPrefix))
+	assertT.True(strings.HasPrefix(accountAddress.String(), n.AddressPrefix()))
 }
 
 func TestGenesisValidation(t *testing.T) {
@@ -86,7 +88,7 @@ func TestGenesisValidation(t *testing.T) {
 	requireT.NoError(err)
 	gen, err := tmtypes.GenesisDocFromJSON(genesisJSON)
 	requireT.NoError(err)
-	encCfg := NewEncodingConfig()
+	encCfg := config.NewEncodingConfig(app.ModuleBasics)
 
 	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
@@ -94,8 +96,8 @@ func TestGenesisValidation(t *testing.T) {
 	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
 	requireT.NoError(err)
 
-	assertT.EqualValues(parsedGenesisDoc.ChainID, n.chainID)
-	assertT.EqualValues(parsedGenesisDoc.GenesisTime, n.genesisTime)
+	assertT.EqualValues(parsedGenesisDoc.ChainID, n.ChainID())
+	assertT.EqualValues(parsedGenesisDoc.GenesisTime, n.GenesisTime())
 
 	// In order to compare app state, we need to unmarshal it first
 	// because comparing json.RawMessage may give false negatives.
@@ -111,7 +113,7 @@ func TestGenesisValidation(t *testing.T) {
 	err = json.Unmarshal(gen.AppState, &appStateMapJSONRawMessage)
 	requireT.NoError(err)
 	requireT.NoError(
-		ModuleBasics.ValidateGenesis(
+		app.ModuleBasics.ValidateGenesis(
 			encCfg.Codec,
 			encCfg.TxConfig,
 			appStateMapJSONRawMessage,
@@ -134,7 +136,7 @@ func TestAddFundsToGenesis(t *testing.T) {
 	key2 := cosmossecp256k1.PubKey{Key: pubKey2}
 	accountAddress2 := sdk.AccAddress(key2.Address())
 
-	requireT.Len(n.fundedAccounts, 3)
+	requireT.Len(n.FundedAccounts(), 3)
 
 	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
@@ -198,7 +200,7 @@ func TestAddGenTx(t *testing.T) {
 
 	n := testNetwork()
 	pubKey, privKey := types.GenerateSecp256k1Key()
-	clientCtx := NewDefaultClientContext()
+	clientCtx := config.NewClientContext(app.ModuleBasics)
 	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	n.AddGenesisTx(tx)
@@ -230,42 +232,42 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	n, err := NetworkByChainID(Devnet)
+	n, err := config.NetworkByChainID(config.Devnet)
 	requireT.NoError(err)
 
 	pubKey, _ := types.GenerateSecp256k1Key()
 	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
 	n.AddGenesisTx([]byte("test string"))
 
-	assertT.Len(n.fundedAccounts, 6)
-	assertT.Len(n.genTxs, 5)
+	assertT.Len(n.FundedAccounts(), 6)
+	assertT.Len(n.GenTxs(), 5)
 
-	n, err = NetworkByChainID(Devnet)
+	n, err = config.NetworkByChainID(config.Devnet)
 	requireT.NoError(err)
-	assertT.Len(n.fundedAccounts, 5)
-	assertT.Len(n.genTxs, 4)
+	assertT.Len(n.FundedAccounts(), 5)
+	assertT.Len(n.GenTxs(), 4)
 }
 
 func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT := assert.New(t)
 
 	pubKey, _ := types.GenerateSecp256k1Key()
-	cfg := NetworkConfig{
-		ChainID:        ChainID("test-network"),
+	cfg := config.NetworkConfig{
+		ChainID:        "test-network",
 		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix:  "core",
-		TokenSymbol:    TokenSymbolMain,
+		TokenSymbol:    config.TokenSymbolMain,
 		Fee:            feeConfig,
-		FundedAccounts: []FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
+		FundedAccounts: []config.FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
 	}
 
-	n1 := NewNetwork(cfg)
+	n1 := config.NewNetwork(cfg)
 
 	params := cfg.Fee.FeeModel.Params()
 	params.InitialGasPrice.Add(sdk.NewDec(10))
 	params.MaxGasPrice.Add(sdk.NewDec(10))
-	cfg.FundedAccounts[0] = FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
+	cfg.FundedAccounts[0] = config.FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
 	cfg.GenTxs[0] = []byte("tx2")
 
 	nParams := n1.FeeModel().Params()
@@ -276,16 +278,36 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT.EqualValues(20, nParams.MaxBlockGas)
 	assertT.EqualValues(3, nParams.ShortEmaBlockLength)
 	assertT.EqualValues(5, nParams.LongEmaBlockLength)
-	assertT.EqualValues(n1.fundedAccounts[0], FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
-	assertT.EqualValues(n1.genTxs[0], []byte("tx1"))
+	assertT.EqualValues(n1.FundedAccounts()[0], config.FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
+	assertT.EqualValues(n1.GenTxs()[0], []byte("tx1"))
+}
+
+func TestNetworkFeesNotMutable(t *testing.T) {
+	assertT := assert.New(t)
+
+	cfg := config.NetworkConfig{
+		ChainID:       "test-network",
+		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+		AddressPrefix: "core",
+		TokenSymbol:   config.TokenSymbolMain,
+		Fee:           feeConfig,
+	}
+
+	n1 := config.NewNetwork(cfg)
+
+	nParams := n1.FeeModel().Params()
+	nParams.InitialGasPrice.Add(sdk.NewDec(10))
+	nParams.MaxGasPrice.Add(sdk.NewDec(10))
+
+	assertT.True(nParams.InitialGasPrice.Equal(sdk.NewDec(2)))
+	assertT.True(nParams.MaxGasPrice.Equal(sdk.NewDec(4)))
 }
 
 func TestValidateAllGenesis(t *testing.T) {
 	assertT := assert.New(t)
-	encCfg := NewEncodingConfig()
+	encCfg := config.NewEncodingConfig(app.ModuleBasics)
 
-	for chainID, cfg := range networks {
-		n := NewNetwork(cfg)
+	for _, n := range config.EnabledNetworks() {
 		genesisJSON, err := n.EncodeGenesis()
 		if !assertT.NoError(err) {
 			continue
@@ -303,39 +325,18 @@ func TestValidateAllGenesis(t *testing.T) {
 		}
 
 		assertT.NoErrorf(
-			ModuleBasics.ValidateGenesis(
+			app.ModuleBasics.ValidateGenesis(
 				encCfg.Codec,
 				encCfg.TxConfig,
 				appStateMapJSONRawMessage,
-			), "genesis for network '%s' is invalid", chainID)
+			), "genesis for network '%s' is invalid", n.ChainID())
 	}
-}
-
-func TestNetworkFeesNotMutable(t *testing.T) {
-	assertT := assert.New(t)
-
-	cfg := NetworkConfig{
-		ChainID:       ChainID("test-network"),
-		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-		AddressPrefix: "core",
-		TokenSymbol:   TokenSymbolMain,
-		Fee:           feeConfig,
-	}
-
-	n1 := NewNetwork(cfg)
-
-	nParams := n1.FeeModel().Params()
-	nParams.InitialGasPrice.Add(sdk.NewDec(10))
-	nParams.MaxGasPrice.Add(sdk.NewDec(10))
-
-	assertT.True(nParams.InitialGasPrice.Equal(sdk.NewDec(2)))
-	assertT.True(nParams.MaxGasPrice.Equal(sdk.NewDec(4)))
 }
 
 func TestNetworkConfigConditions(t *testing.T) {
 	assertT := assert.New(t)
-	for _, cfg := range networks {
-		assert.NoError(t, cfg.Fee.FeeModel.Params().Validate())
-		assertT.Greater(cfg.Fee.DeterministicGas.BankSend, uint64(0))
+	for _, n := range config.EnabledNetworks() {
+		assert.NoError(t, n.FeeModel().Params().Validate())
+		assertT.Greater(n.DeterministicGas().BankSend, uint64(0))
 	}
 }

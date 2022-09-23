@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 // OverwriteDefaultChainIDFlags searches for the DefaultChainID flag and replaces its value of the current default.
@@ -26,7 +27,7 @@ func OverwriteDefaultChainIDFlags(parentCmd *cobra.Command) {
 }
 
 // PreProcessFlags prepares the initial flags config for the cli.
-func PreProcessFlags() (app.Network, error) {
+func PreProcessFlags() (config.Network, error) {
 	// define flags
 	const flagHelp = "help"
 	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)
@@ -40,13 +41,13 @@ func PreProcessFlags() (app.Network, error) {
 	// we consider the issued command to be a help command if no args are provided.
 	// in that case we will not check the chain-id and will return
 	if len(os.Args) == 1 || *help {
-		return app.Network{}, nil
+		return config.Network{}, nil
 	}
 
 	// get chain config
-	network, err := app.NetworkByChainID(app.ChainID(*chainID))
+	network, err := config.NetworkByChainID(config.ChainID(*chainID))
 	if err != nil {
-		return app.Network{}, err
+		return config.Network{}, err
 	}
 
 	app.ChosenNetwork = network
@@ -55,7 +56,7 @@ func PreProcessFlags() (app.Network, error) {
 	if flagSet.Changed(flags.FlagHome) {
 		err = appendStringFlag(os.Args, flags.FlagHome, *chainID)
 		if err != nil {
-			return app.Network{}, err
+			return config.Network{}, err
 		}
 	} else {
 		appendedHome := filepath.Join(app.DefaultNodeHome, *chainID)
