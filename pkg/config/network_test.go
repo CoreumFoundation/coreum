@@ -66,7 +66,7 @@ func testNetwork() config.Network {
 				VotingPeriod:     "172800s",
 			},
 		},
-		StakingConfig: StakingConfig{
+		StakingConfig: config.StakingConfig{
 			UnbondingTime: "1814400s",
 		},
 	})
