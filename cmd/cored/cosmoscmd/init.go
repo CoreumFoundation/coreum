@@ -16,6 +16,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 // used flags
@@ -45,8 +46,8 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
-			config := server.GetServerContextFromCmd(cmd).Config
-			config.SetRoot(clientCtx.HomeDir)
+			cfg := server.GetServerContextFromCmd(cmd).Config
+			cfg.SetRoot(clientCtx.HomeDir)
 
 			// Get bip39 mnemonic
 			var mnemonic string
@@ -67,14 +68,14 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 				}
 			}
 
-			genFile := config.GenesisFile()
+			genFile := cfg.GenesisFile()
 			overwrite, _ := cmd.Flags().GetBool(FlagOverwrite)
 
 			if !overwrite && tmos.FileExists(genFile) {
 				return errors.Errorf("genesis.json file already exists: %v", genFile)
 			}
 
-			network, err := app.NetworkByChainID(app.ChainID(chainID))
+			network, err := config.NetworkByChainID(config.ChainID(chainID))
 			if err != nil {
 				return err
 			}
@@ -86,16 +87,16 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 
 			networkNodeConfig := network.NodeConfig()
 			networkNodeConfig.Name = args[0]
-			config = network.NodeConfig().TendermintNodeConfig(config)
+			cfg = network.NodeConfig().TendermintNodeConfig(cfg)
 
-			_, _, err = genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
+			_, _, err = genutil.InitializeNodeValidatorFilesFromMnemonic(cfg, mnemonic)
 			if err != nil {
 				return err
 			}
 
-			return app.WriteTendermintConfigToFile(
-				filepath.Join(config.RootDir, app.DefaultNodeConfigPath),
-				config,
+			return config.WriteTendermintConfigToFile(
+				filepath.Join(cfg.RootDir, config.DefaultNodeConfigPath),
+				cfg,
 			)
 		},
 	}
