@@ -64,6 +64,9 @@ func testNetwork() Network {
 				VotingPeriod:     "172800s",
 			},
 		},
+		StakingConfig: StakingConfig{
+			UnbondingTime: "1814400s",
+		},
 	})
 }
 

@@ -70,6 +70,10 @@ func init() {
 		},
 	}
 
+	stakingConfig := StakingConfig{
+		UnbondingTime: "1814400s",
+	}
+
 	list := []NetworkConfig{
 		{
 			ChainID:       Mainnet,
@@ -78,6 +82,7 @@ func init() {
 			TokenSymbol:   TokenSymbolMain,
 			Fee:           feeConfig,
 			GovConfig:     govConfig,
+			StakingConfig: stakingConfig,
 		},
 		{
 			ChainID:       Devnet,
@@ -89,7 +94,8 @@ func init() {
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@35.223.81.227:26656"},
 			},
-			GovConfig: govConfig,
+			GovConfig:     govConfig,
+			StakingConfig: stakingConfig,
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
 				{
@@ -160,6 +166,12 @@ type GovProposalConfig struct {
 	VotingPeriod string
 }
 
+// StakingConfig contains staking module configuration
+type StakingConfig struct {
+	// UnbondingTime is the time duration after which bonded coins will become to be released
+	UnbondingTime string
+}
+
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID        ChainID
@@ -171,6 +183,7 @@ type NetworkConfig struct {
 	GenTxs         []json.RawMessage
 	NodeConfig     NodeConfig
 	GovConfig      GovConfig
+	StakingConfig  StakingConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 }
@@ -184,6 +197,7 @@ type Network struct {
 	fee           FeeConfig
 	nodeConfig    NodeConfig
 	gov           GovConfig
+	staking       StakingConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -200,6 +214,7 @@ func NewNetwork(c NetworkConfig) Network {
 		nodeConfig:     c.NodeConfig.Clone(),
 		fee:            c.Fee,
 		gov:            c.GovConfig,
+		staking:        c.StakingConfig,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -412,12 +427,14 @@ func genesis(n Network) ([]byte, error) {
 		TokenSymbol    string
 		FeeModelParams feemodeltypes.Params
 		Gov            GovConfig
+		Staking        StakingConfig
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
 		FeeModelParams: n.FeeModel().Params(),
 		Gov:            n.gov,
+		Staking:        n.staking,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
