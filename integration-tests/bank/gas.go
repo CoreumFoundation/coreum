@@ -21,7 +21,7 @@ var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept max
 // TestTransferDeterministicGas checks that transfer takes the deterministic amount of gas
 func TestTransferDeterministicGas(numOfTransactions int) testing.SingleChainSignature {
 	return func(ctx context.Context, t testing.T, chain testing.Chain) {
-		gasAssumed := chain.GasLimitByMsgs(&banktypes.MsgSend{})
+		gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 
 		amount := testing.MustNewIntFromString(t, "1000000000000")
 		fees := testing.ComputeNeededBalance(
@@ -53,11 +53,11 @@ func TestTransferDeterministicGas(numOfTransactions int) testing.SingleChainSign
 		gasPrice := chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice)
 		toSend := chain.NewCoin(amount)
 		for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
-			gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, gasAssumed, gasPrice)
+			gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, gasExpected, gasPrice)
 			if !assert.NoError(t, err) {
 				continue
 			}
-			assert.Equal(t, gasAssumed, gasUsed)
+			assert.Equal(t, gasExpected, gasUsed)
 			sender.AccountSequence++
 		}
 	}
@@ -65,7 +65,7 @@ func TestTransferDeterministicGas(numOfTransactions int) testing.SingleChainSign
 
 // TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
 func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T, chain testing.Chain) {
-	maxGasAssumed := chain.GasLimitByMsgs(&banktypes.MsgSend{})
+	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	sender := testing.RandomWallet()
 
 	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
@@ -80,8 +80,8 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 	gasPrice := chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice)
 	_, err := sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
 		chain.NewCoin(sdk.NewInt(1)),
-		// declaring gas limit as maxGasAssumed-1 means that tx must fail
-		maxGasAssumed-1, gasPrice)
+		// declaring gas limit as gasExpected-1 means that tx must fail
+		gasExpected-1, gasPrice)
 	assert.True(t, client.IsErr(err, cosmoserrors.ErrOutOfGas), err)
 }
 
@@ -91,17 +91,17 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 	receiver := testing.RandomWallet()
 
 	amount := testing.MustNewIntFromString(t, "1000000000000")
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
+	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 		1,
 		amount,
-	)))))
+	))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
 
-	gasAssumed := chain.GasLimitByMsgs(&banktypes.MsgSend{})
+	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	estimatedGas, err := chain.Client.EstimateGas(ctx, tx.BaseInput{
 		Signer:   sender,
-		GasLimit: 10 * gasAssumed, // set it to bigger value and check later that only `gasAssumed` is required
 		GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
 	}, &banktypes.MsgSend{
 		FromAddress: sender.Address().String(),
@@ -110,7 +110,7 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, gasAssumed, estimatedGas)
+	assert.Equal(t, gasExpected, estimatedGas)
 }
 
 func sendAndReturnGasUsed(
