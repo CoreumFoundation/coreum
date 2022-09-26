@@ -31,7 +31,7 @@ const (
 
 // TestSimpleStateWasmContract runs a contract deployment flow and tries to modify the state after deployment.
 // This is a E2E check for the WASM integration, to ensure it works for a simple state contract (Counter).
-func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain *testing.Chain) {
+func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing.Chain) {
 	wallet := testing.RandomWallet()
 
 	requireT := require.New(t)

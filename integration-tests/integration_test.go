@@ -101,7 +101,7 @@ type testCase struct {
 	RunFunc func(ctx context.Context, t *testing.T)
 }
 
-func collectTestCases(chain *coreumtesting.Chain, testSet coreumtesting.TestSet, testFilter *regexp.Regexp) []testCase {
+func collectTestCases(chain coreumtesting.Chain, testSet coreumtesting.TestSet, testFilter *regexp.Regexp) []testCase {
 	var testCases []testCase
 	for _, testFunc := range testSet.SingleChain {
 		testFunc := testFunc

@@ -22,7 +22,7 @@ import (
 )
 
 // TestMultisig tests the cosmos-sdk multisig accounts and API.
-func TestMultisig(ctx context.Context, t testing.T, chain *testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
+func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
 	faucetWallet := chain.RandomWallet()
 
 	signer1Wallet := chain.RandomWallet()

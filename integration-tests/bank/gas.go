@@ -21,7 +21,7 @@ var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept max
 
 // TestTransferMaximumGas checks that transfer does not take more gas than assumed
 func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature {
-	return func(ctx context.Context, t testing.T, chain *testing.Chain) {
+	return func(ctx context.Context, t testing.T, chain testing.Chain) {
 		const margin = 1.5
 		maxGasAssumed := chain.NetworkConfig.Fee.DeterministicGas.BankSend // set it to 50%+ higher than maximum observed value
 
@@ -72,7 +72,7 @@ func TestTransferMaximumGas(numOfTransactions int) testing.SingleChainSignature 
 }
 
 // TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
-func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T, chain *testing.Chain) {
+func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T, chain testing.Chain) {
 	maxGasAssumed := chain.NetworkConfig.Fee.DeterministicGas.BankSend
 	sender := testing.RandomWallet()
 

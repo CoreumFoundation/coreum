@@ -17,7 +17,7 @@ import (
 // FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
 
 // TestInitialBalance checks that initial balance is set by genesis block
-func TestInitialBalance(ctx context.Context, t testing.T, chain *testing.Chain) {
+func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create new random wallet
 	wallet := testing.RandomWallet()
 
@@ -35,7 +35,7 @@ func TestInitialBalance(ctx context.Context, t testing.T, chain *testing.Chain) 
 }
 
 // TestCoreTransfer checks that core is transferred correctly between wallets
-func TestCoreTransfer(ctx context.Context, t testing.T, chain *testing.Chain) {
+func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Create two random wallets
 	sender := chain.RandomWallet()
 	receiver := chain.RandomWallet()

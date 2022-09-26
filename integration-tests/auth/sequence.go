@@ -13,7 +13,7 @@ import (
 
 // TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
 // used to sign transaction
-func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain *testing.Chain) {
+func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := testing.RandomWallet()
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,

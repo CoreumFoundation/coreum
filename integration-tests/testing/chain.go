@@ -23,21 +23,21 @@ import (
 type ChainContext struct {
 	ClientContext cosmosclient.Context
 	NetworkConfig app.NetworkConfig
-	mu            sync.RWMutex
+	mu            *sync.RWMutex
 }
 
 // NewChainContext returns a new instance if the ChainContext.
-func NewChainContext(clientCtx cosmosclient.Context, networkCfg app.NetworkConfig) *ChainContext {
-	return &ChainContext{
+func NewChainContext(clientCtx cosmosclient.Context, networkCfg app.NetworkConfig) ChainContext {
+	return ChainContext{
 		ClientContext: clientCtx,
 		NetworkConfig: networkCfg,
-		mu:            sync.RWMutex{},
+		mu:            &sync.RWMutex{},
 	}
 }
 
 // RandomWallet generates a wallet for the chain with random name and
 // private key and stores mnemonic in Keyring.
-func (c *ChainContext) RandomWallet() sdk.AccAddress {
+func (c ChainContext) RandomWallet() sdk.AccAddress {
 	// Generate and store a new mnemonic using temporary keyring
 	keyInfo, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, "", "", hd.Secp256k1)
 	// we are using panics here, since we are sure it will not error out, and handling error
@@ -57,7 +57,7 @@ func (c *ChainContext) RandomWallet() sdk.AccAddress {
 }
 
 // TxFactory returns factory with present values for the Chain.
-func (c *ChainContext) TxFactory() tx.Factory {
+func (c ChainContext) TxFactory() tx.Factory {
 	return tx.Factory{}.
 		WithKeybase(c.ClientContext.Keyring).
 		WithChainID(string(c.NetworkConfig.ChainID)).
@@ -66,18 +66,18 @@ func (c *ChainContext) TxFactory() tx.Factory {
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
-func (c *ChainContext) NewCoin(amount sdk.Int) sdk.Coin {
+func (c ChainContext) NewCoin(amount sdk.Int) sdk.Coin {
 	return sdk.NewCoin(c.NetworkConfig.TokenSymbol, amount)
 }
 
 // NewDecCoin helper function to initialize sdk.DecCoin by passing just amount.
-func (c *ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
+func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
 	return sdk.NewDecCoinFromDec(c.NetworkConfig.TokenSymbol, amount)
 }
 
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
 // It panics if unsupported message type specified.
-func (c *ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
+func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64 = 0
 	for _, msg := range msgs {
 		msgGas := c.NetworkConfig.Fee.DeterministicGas.GasRequiredByMessage(msg)
@@ -92,7 +92,7 @@ func (c *ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 
 // AccAddressToLegacyWallet is temporary method to keep compatibility between
 // func signatures while types.Wallet is being removed.
-func (c *ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wallet {
+func (c ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wallet {
 	name := accAddr.String()
 
 	c.mu.RLock()
@@ -119,14 +119,14 @@ type ChainConfig struct {
 
 // Chain holds network and client for the blockchain
 type Chain struct {
-	*ChainContext
+	ChainContext
 	Client     client.Client
-	Faucet     *Faucet
-	Governance *Governance
+	Faucet     Faucet
+	Governance Governance
 }
 
 // NewChain creates an instance of the new Chain.
-func NewChain(ctx context.Context, cfg ChainConfig) (*Chain, error) {
+func NewChain(ctx context.Context, cfg ChainConfig) (Chain, error) {
 	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
 	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.RPCAddress)
 	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
@@ -145,10 +145,10 @@ func NewChain(ctx context.Context, cfg ChainConfig) (*Chain, error) {
 	faucet := NewFaucet(coredClient, cfg.NetworkConfig, cfg.FundingPrivKey)
 	governance, err := NewGovernance(ctx, chainContext, faucet)
 	if err != nil {
-		return nil, errors.Wrap(err, "can't init chain governance")
+		return Chain{}, errors.Wrap(err, "can't init chain governance")
 	}
 
-	return &Chain{
+	return Chain{
 		ChainContext: chainContext,
 		Client:       coredClient,
 		Faucet:       faucet,

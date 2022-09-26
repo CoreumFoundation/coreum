@@ -12,7 +12,7 @@ type T interface {
 }
 
 // SingleChainSignature is the signature of test function accepting a chain
-type SingleChainSignature func(ctx context.Context, t T, chain *Chain)
+type SingleChainSignature func(ctx context.Context, t T, chain Chain)
 
 // TestSet is a container for tests
 type TestSet struct {

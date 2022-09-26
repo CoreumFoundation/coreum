@@ -40,9 +40,9 @@ type Faucet struct {
 }
 
 // NewFaucet creates a new instance of the Faucet.
-func NewFaucet(client client.Client, networkConfig app.NetworkConfig, fundingPrivKey types.Secp256k1PrivateKey) *Faucet {
+func NewFaucet(client client.Client, networkConfig app.NetworkConfig, fundingPrivKey types.Secp256k1PrivateKey) Faucet {
 	fundingWallet := types.Wallet{Key: fundingPrivKey}
-	faucet := &Faucet{
+	faucet := Faucet{
 		client:        client,
 		networkConfig: networkConfig,
 		muCh:          make(chan struct{}, 1),
@@ -54,7 +54,7 @@ func NewFaucet(client client.Client, networkConfig app.NetworkConfig, fundingPri
 }
 
 // FundAccounts funds the list of the received wallets.
-func (f *Faucet) FundAccounts(ctx context.Context, accountsToFund ...FundedAccount) error {
+func (f Faucet) FundAccounts(ctx context.Context, accountsToFund ...FundedAccount) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

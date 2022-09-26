@@ -18,18 +18,18 @@ import (
 
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {
-	chainContext  *ChainContext
+	chainContext  ChainContext
 	govClient     govtypes.QueryClient
-	faucet        *Faucet
+	faucet        Faucet
 	voterAccounts []sdk.AccAddress
 }
 
 // NewGovernance initializes the voter accounts to have enough voting power for the voting.
 func NewGovernance( //nolint:funlen // The test covers step-by step use case
 	ctx context.Context,
-	chainContext *ChainContext,
-	faucet *Faucet,
-) (*Governance, error) {
+	chainContext ChainContext,
+	faucet Faucet,
+) (Governance, error) {
 	const (
 		govVotersNumber      = 2
 		delegationMultiplier = "1.02"
@@ -54,12 +54,12 @@ func NewGovernance( //nolint:funlen // The test covers step-by step use case
 
 	govParams, err := queryGovParams(ctx, govClient)
 	if err != nil {
-		return nil, err
+		return Governance{}, err
 	}
 
 	stakingPool, err := stakingClient.Pool(ctx, &stakingtypes.QueryPoolRequest{})
 	if err != nil {
-		return nil, err
+		return Governance{}, err
 	}
 
 	// compute needed balance for voters and add fund them
@@ -83,18 +83,18 @@ func NewGovernance( //nolint:funlen // The test covers step-by step use case
 
 	err = faucet.FundAccounts(ctx, fundedAccounts...)
 	if err != nil {
-		return nil, err
+		return Governance{}, err
 	}
 
 	// Delegate voter coins for the voters
 
 	validators, err := stakingClient.Validators(ctx, &stakingtypes.QueryValidatorsRequest{})
 	if err != nil {
-		return nil, err
+		return Governance{}, err
 	}
 	valAddress, err := sdk.ValAddressFromBech32(validators.Validators[0].OperatorAddress)
 	if err != nil {
-		return nil, err
+		return Governance{}, err
 	}
 
 	delegateCoin := chainContext.NewCoin(voterDelegateAmount)
@@ -117,13 +117,13 @@ func NewGovernance( //nolint:funlen // The test covers step-by step use case
 			msg,
 		)
 		if err != nil {
-			return nil, err
+			return Governance{}, err
 		}
 	}
 
 	log.Info("Initialisation of the governance accounts is done")
 
-	return &Governance{
+	return Governance{
 		chainContext:  chainContext,
 		faucet:        faucet,
 		voterAccounts: votersAccounts,
@@ -132,7 +132,7 @@ func NewGovernance( //nolint:funlen // The test covers step-by step use case
 }
 
 // CreateProposer creates a new proposed and funds it with enough tokens for the proposal.
-func (g *Governance) CreateProposer(ctx context.Context) (sdk.AccAddress, error) {
+func (g Governance) CreateProposer(ctx context.Context) (sdk.AccAddress, error) {
 	proposer := g.chainContext.RandomWallet()
 	govParams, err := g.getParams(ctx)
 	if err != nil {
@@ -154,7 +154,7 @@ func (g *Governance) CreateProposer(ctx context.Context) (sdk.AccAddress, error)
 	return proposer, nil
 }
 
-func (g *Governance) Propose(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (int, error) {
+func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (int, error) {
 	govParams, err := g.getParams(ctx)
 	if err != nil {
 		return 0, err
@@ -192,7 +192,7 @@ func (g *Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conte
 }
 
 // VoteAll votes for the proposalID from all voting accounts with the provided VoteOption.
-func (g *Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, proposalID uint64) error {
+func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, proposalID uint64) error {
 	txf := g.chainContext.TxFactory()
 	txf = txf.WithGas(uint64(g.chainContext.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
 	for _, voter := range g.voterAccounts {
@@ -219,7 +219,7 @@ func (g *Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pr
 }
 
 // WaitForProposalStatus wait for the proposal status during the gov VotingPeriod.
-func (g *Governance) WaitForProposalStatus(ctx context.Context, status govtypes.ProposalStatus, proposalID uint64) (govtypes.Proposal, error) {
+func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.ProposalStatus, proposalID uint64) (govtypes.Proposal, error) {
 	var lastStatus govtypes.ProposalStatus
 
 	govParams, err := g.getParams(ctx)
@@ -252,15 +252,15 @@ func (g *Governance) WaitForProposalStatus(ctx context.Context, status govtypes.
 }
 
 // GetVotersAccounts returns the configured voting accounts.
-func (g *Governance) GetVotersAccounts() []sdk.AccAddress {
+func (g Governance) GetVotersAccounts() []sdk.AccAddress {
 	return g.voterAccounts
 }
 
-func (g *Governance) getParams(ctx context.Context) (govtypes.Params, error) {
+func (g Governance) getParams(ctx context.Context) (govtypes.Params, error) {
 	return queryGovParams(ctx, g.govClient)
 }
 
-func (g *Governance) getProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
+func (g Governance) getProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
 	resp, err := g.govClient.Proposal(ctx, &govtypes.QueryProposalRequest{
 		ProposalId: proposalID,
 	})
