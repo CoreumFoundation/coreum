@@ -21,13 +21,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	"google.golang.org/grpc"
+	googlegrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/grpc"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -67,14 +68,16 @@ func New(chainID config.ChainID, addr string) Client {
 	clientCtx := config.NewClientContext(app.ModuleBasics).
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
+
+	grpcClient := grpc.NewClient(clientCtx)
 	return Client{
 		clientCtx:           clientCtx,
-		authQueryClient:     authtypes.NewQueryClient(clientCtx),
-		bankQueryClient:     banktypes.NewQueryClient(clientCtx),
-		wasmQueryClient:     wasmtypes.NewQueryClient(clientCtx),
-		govQueryClient:      govtypes.NewQueryClient(clientCtx),
-		stakingQueryClient:  stakingtypes.NewQueryClient(clientCtx),
-		feemodelQueryClient: feemodeltypes.NewQueryClient(clientCtx),
+		authQueryClient:     authtypes.NewQueryClient(grpcClient),
+		bankQueryClient:     banktypes.NewQueryClient(grpcClient),
+		wasmQueryClient:     wasmtypes.NewQueryClient(grpcClient),
+		govQueryClient:      govtypes.NewQueryClient(grpcClient),
+		stakingQueryClient:  stakingtypes.NewQueryClient(grpcClient),
+		feemodelQueryClient: feemodeltypes.NewQueryClient(grpcClient),
 	}
 }
 
@@ -93,7 +96,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 	defer cancel()
 
 	var header metadata.MD
-	res, err := c.authQueryClient.Account(requestCtx, &authtypes.QueryAccountRequest{Address: addr.String()}, grpc.Header(&header))
+	res, err := c.authQueryClient.Account(requestCtx, &authtypes.QueryAccountRequest{Address: addr.String()}, googlegrpc.Header(&header))
 	if err != nil {
 		return 0, 0, errors.WithStack(err)
 	}

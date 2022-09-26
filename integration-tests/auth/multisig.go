@@ -18,6 +18,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/grpc"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -95,7 +96,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	require.NoError(t, err)
 	logger.Get(ctx).Info("Multisig funding executed", zap.String("txHash", result.TxHash))
 
-	bankClient := banktypes.NewQueryClient(clientCtx)
+	bankClient := banktypes.NewQueryClient(grpc.NewClient(clientCtx))
 	multisigBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: multisigAddress.String(),
 	})

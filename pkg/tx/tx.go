@@ -19,6 +19,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	"github.com/CoreumFoundation/coreum/pkg/grpc"
 )
 
 var (
@@ -148,7 +149,7 @@ func GetAccountInfo(
 	req := &authtypes.QueryAccountRequest{
 		Address: address.String(),
 	}
-	authQueryClient := authtypes.NewQueryClient(clientCtx)
+	authQueryClient := authtypes.NewQueryClient(grpc.NewClient(clientCtx))
 	res, err := authQueryClient.Account(ctx, req)
 	if err != nil {
 		return nil, errors.WithStack(err)
