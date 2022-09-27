@@ -30,7 +30,10 @@ func NewClient(clientCtx cosmosclient.Context) Client {
 }
 
 // Client contains code copied from https://github.com/cosmos/cosmos-sdk/blob/35ae2c4c72d4aeb33447d5a7af23ca47f786606e/client/grpc_query.go
-// We improved it to respect received context instead of passing context.Background()
+// We improved it to respect received context instead of passing context.Background().
+// Original code supports both querying and broadcasting transactions. We removed broadcasting part because doing it
+// correctly (with context) would require copying big chunks of code while that functionality is not needed because another functions
+// are used for broadcasting transactions.
 type Client struct {
 	clientCtx cosmosclient.Context
 }
