@@ -14,6 +14,9 @@ const (
 
 	// minVotingPeriod is the proposal voting period duration
 	minVotingPeriod = time.Second * 15
+
+	// unbondingTime is the coins unbonding time
+	unbondingTime = time.Second * 5
 )
 
 // NetworkConfig is the network config used by integration tests
@@ -33,5 +36,8 @@ var NetworkConfig = config.NetworkConfig{
 			MinDepositPeriod: minDepositPeriod.String(),
 			VotingPeriod:     minVotingPeriod.String(),
 		},
+	},
+	StakingConfig: config.StakingConfig{
+		UnbondingTime: unbondingTime.String(),
 	},
 }
