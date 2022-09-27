@@ -71,8 +71,8 @@ func (c Chain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	deterministicGas := c.NetworkConfig.Fee.DeterministicGas
 	var totalGasRequired uint64 = 0
 	for _, msg := range msgs {
-		msgGas := deterministicGas.GasRequiredByMessage(msg)
-		if msgGas == 0 {
+		msgGas, exists := deterministicGas.GasRequiredByMessage(msg)
+		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
 		totalGasRequired += msgGas

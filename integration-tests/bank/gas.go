@@ -19,48 +19,32 @@ import (
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
 // TestTransferDeterministicGas checks that transfer takes the deterministic amount of gas
-func TestTransferDeterministicGas(numOfTransactions int) testing.SingleChainSignature {
-	return func(ctx context.Context, t testing.T, chain testing.Chain) {
-		gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
+func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testing.Chain) {
+	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 
-		amount := testing.MustNewIntFromString(t, "1000000000000")
-		fees := testing.ComputeNeededBalance(
-			chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-			chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-			numOfTransactions,
-			sdk.NewInt(0),
-		)
+	amount := testing.MustNewIntFromString(t, "1000000000000")
+	fees := testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
+		1,
+		sdk.NewInt(0),
+	)
 
-		wallet1 := testing.RandomWallet()
-		wallet2 := testing.RandomWallet()
+	sender := testing.RandomWallet()
+	receiver := testing.RandomWallet()
 
-		wallet1InitialBalance := chain.NewCoin(fees.Add(amount))
-		wallet2InitialBalance := chain.NewCoin(fees)
+	senderInitialBalance := chain.NewCoin(fees.Add(amount))
 
-		require.NoError(t, chain.Faucet.FundAccounts(ctx,
-			testing.NewFundedAccount(wallet1, wallet1InitialBalance),
-			testing.NewFundedAccount(wallet2, wallet2InitialBalance),
-		))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, senderInitialBalance)))
 
-		client := chain.Client
+	client := chain.Client
 
-		var err error
-		wallet1.AccountNumber, wallet1.AccountSequence, err = client.GetNumberSequence(ctx, wallet1.Key.Address())
-		require.NoError(t, err)
-		wallet2.AccountNumber, wallet2.AccountSequence, err = client.GetNumberSequence(ctx, wallet2.Key.Address())
-		require.NoError(t, err)
+	gasPrice := chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice)
+	toSend := chain.NewCoin(amount)
+	gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, gasExpected, gasPrice)
 
-		gasPrice := chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice)
-		toSend := chain.NewCoin(amount)
-		for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
-			gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, gasExpected, gasPrice)
-			if !assert.NoError(t, err) {
-				continue
-			}
-			assert.Equal(t, gasExpected, gasUsed)
-			sender.AccountSequence++
-		}
-	}
+	require.NoError(t, err)
+	assert.Equal(t, gasExpected, gasUsed)
 }
 
 // TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided

@@ -10,15 +10,23 @@ import (
 // SetupGasMeterDecorator sets the infinite gas limit for ante handler
 // CONTRACT: Must be the first decorator in the chain
 // CONTRACT: Tx must implement GasTx interface
-type SetupGasMeterDecorator struct{}
+type SetupGasMeterDecorator struct {
+	deterministicGasRequirements config.DeterministicGasRequirements
+}
 
 // NewSetupGasMeterDecorator creates new SetupGasMeterDecorator
-func NewSetupGasMeterDecorator() SetupGasMeterDecorator {
-	return SetupGasMeterDecorator{}
+func NewSetupGasMeterDecorator(deterministicGasRequirements config.DeterministicGasRequirements) SetupGasMeterDecorator {
+	return SetupGasMeterDecorator{
+		deterministicGasRequirements: deterministicGasRequirements,
+	}
 }
 
 // AnteHandle resets the gas limit inside GasMeter
 func (sgmd SetupGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	// This is done to return an error early if user provided gas amount which can't even cover the constant fee charged on the real
+	// gas meter in `FinalGasDecorator`. This will save resources on running preliminary ante decorators.
+	ctx.GasMeter().ConsumeGas(sgmd.deterministicGasRequirements.FixedGas, "Fixed")
+
 	// Set infinite gas meter for ante handler
 	return next(ctx.WithGasMeter(sdk.NewInfiniteGasMeter()), tx, simulate)
 }
@@ -51,7 +59,6 @@ func (fgd FreeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 		// It is not needed to verify that tx really implements `GasTx` interface because it has been already done by
 		// `SetUpContextDecorator`
 		gasTx := tx.(authante.GasTx)
-
 		gasMeter = sdk.NewGasMeter(gasTx.GetGas() + fgd.deterministicGasRequirements.TxBonusGas(params))
 	}
 	return next(ctx.WithGasMeter(gasMeter), tx, simulate)

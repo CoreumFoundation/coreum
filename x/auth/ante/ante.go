@@ -60,8 +60,38 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	infiniteAccountKeeper := keeper.NewInfiniteAccountKeeper(options.AccountKeeper)
 
 	anteDecorators := []sdk.AnteDecorator{
+		// We added 3 special decorators working together to provide deterministic gas consumption mechanism for selected message types.
+		// The decorators are:
+		// - NewSetupGasMeterDecorator
+		// - NewFreeGasDecorator
+		// - NewFinalGasDecorator
+		//
+		// We consume gas as follows:
+		// - constant preliminary fee (`FixedGas`) is charged on every tx to cover the cost of running some ante decorators
+		// - bonus gas is added for free to cover cost related to transaction size (`FreeBytes`) and signatures (`FreeSignatures`)
+		// - at the end we compute gas available to message handlers
+		//
+		// Details:
+		//
+		// `SetupGasMeterDecorator` serves two purposes:
+		// - verifies that at least `FixedGas` gas amount is provided by the sender
+		// - replaces original gas meter with an infinite one to let all the preliminary ante decorators to pass without
+		//   consuming real gas. It doesn't mean they run for free, the cost of running them is covered later by charging
+		//   `FixedGas` on the final gas meter
+		//
+		// `FreeGasDecorator` is there to add some bonus gas covering cost of a tx size up to limit defined by `FreeBytes`
+		// and signature verification up to `FreeSignatures` signatures.
+		//
+		// `FinalGasDecorator` creates final gas meter passed to message handlers and computes and charges final gas
+		// to be consumed by the entire ante handler. Consumed gas is computed as follows:
+		// - new gas meter is created with gas limit set to the amount declared by the tx sender
+		// - `FixedGas` gas is consumed
+		// - if more than bonus gas assigned by `FreeGasDecorator` was consumed by `ConsumeGasForTxSizeDecorator` and
+		//   `SigGasConsumeDecorator`, the difference between bonus and real consumption is charged on the final gas meter.
+		//   IMPORTANT: If they consumed less, the rest **IS NOT** given to the message handlers for free.
+
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
-		NewSetupGasMeterDecorator(),
+		NewSetupGasMeterDecorator(options.DeterministicGasRequirements),
 		authante.NewRejectExtensionOptionsDecorator(),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
