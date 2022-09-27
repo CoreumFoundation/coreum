@@ -37,8 +37,8 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 		Validator:         validatorAddr,
 		PubKey:            (&cosmossecp256k1.PrivKey{Key: validator.Key}).PubKey(),
 		Amount:            chain.NewCoin(validatorAmount),
-		Description:       stakingtypes.Description{},
-		CommissionRates:   stakingtypes.CommissionRates{},
+		Description:       stakingtypes.NewDescription("a", "b", "c", "d", "e"),
+		CommissionRates:   stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		MinSelfDelegation: sdk.NewInt(1),
 		Base: tx.BaseInput{
 			Signer:   validator,
