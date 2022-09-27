@@ -3,7 +3,7 @@ package staking
 import (
 	"context"
 
-	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -35,7 +35,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	// Create validator
 	txBytes, err := chain.Client.PrepareTxCreateValidator(ctx, client.TxCreateValidatorInput{
 		Validator:         validatorAddr,
-		PubKey:            (&cosmossecp256k1.PrivKey{Key: validator.Key}).PubKey(),
+		PubKey:            cosmosed25519.GenPrivKey().PubKey(),
 		Amount:            chain.NewCoin(validatorAmount),
 		Description:       stakingtypes.NewDescription("a", "b", "c", "d", "e"),
 		CommissionRates:   stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
