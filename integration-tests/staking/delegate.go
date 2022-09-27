@@ -14,13 +14,19 @@ import (
 // TestDelegate checks that delegation works correctly
 func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	delegateAmount := sdk.NewInt(100)
+	delegatorInitialBalance := testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
+		1,
+		delegateAmount,
+	)
 
 	// Create random delegator wallet
 	delegator := testing.RandomWallet()
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(delegator, chain.NewCoin(delegateAmount)),
+		testing.NewFundedAccount(delegator, chain.NewCoin(delegatorInitialBalance)),
 	))
 
 	// Fetch existing validator
