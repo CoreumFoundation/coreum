@@ -5,29 +5,32 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
 	"github.com/CoreumFoundation/coreum/integration-tests/gov"
+	"github.com/CoreumFoundation/coreum/integration-tests/staking"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/integration-tests/wasm"
 )
 
 // Tests returns testing environment and tests
 func Tests() testing.TestSet {
-	testSet := testing.TestSet{
-		SingleChain: []testing.SingleChainSignature{
-			gov.TestProposalParamChange,
-			auth.TestUnexpectedSequenceNumber,
-			auth.TestTooLowGasPrice,
-			auth.TestNoFee,
-			auth.TestGasLimitHigherThanMaxBlockGas,
-			auth.TestGasLimitEqualToMaxBlockGas,
-			auth.TestMultisig,
-			bank.TestInitialBalance,
-			bank.TestCoreTransfer,
-			bank.TestTransferFailsIfNotEnoughGasIsProvided,
-			wasm.TestSimpleStateWasmContract,
-			wasm.TestBankSendWasmContract,
-			feemodel.TestQueryingMinGasPrice,
-		},
-	}
+	var testSet testing.TestSet
+
+	// Add gov module tests
+	testSet.SingleChain = append(testSet.SingleChain, gov.SingleChainTests()...)
+
+	// Add auth module tests
+	testSet.SingleChain = append(testSet.SingleChain, auth.SingleChainTests()...)
+
+	// Add bank module tests
+	testSet.SingleChain = append(testSet.SingleChain, bank.SingleChainTests()...)
+
+	// Add wasm module tests
+	testSet.SingleChain = append(testSet.SingleChain, wasm.SingleChainTests()...)
+
+	// Add fee model tests
+	testSet.SingleChain = append(testSet.SingleChain, feemodel.SingleChainTests()...)
+
+	// Add staking module tests
+	testSet.SingleChain = append(testSet.SingleChain, staking.SingleChainTests()...)
 
 	// The idea is to run 200 transfer transactions to be sure that none of them uses more gas than we assumed.
 	// To make each faster the same test is started 10 times, each broadcasting 20 transactions, to make use of parallelism
