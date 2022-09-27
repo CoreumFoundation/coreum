@@ -18,7 +18,7 @@ func TestUndelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	delegatorInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
-		1,
+		2,
 		delegateAmount,
 	)
 
