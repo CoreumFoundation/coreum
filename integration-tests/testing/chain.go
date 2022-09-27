@@ -13,8 +13,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
@@ -22,8 +22,10 @@ import (
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
 	ClientContext cosmosclient.Context
-	NetworkConfig app.NetworkConfig
+
+	NetworkConfig config.NetworkConfig
 	mu            *sync.RWMutex
+
 }
 
 // NewChainContext returns a new instance if the ChainContext.

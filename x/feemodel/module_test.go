@@ -5,11 +5,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
@@ -69,7 +70,7 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 		},
 		MinGasPrice: sdk.NewDecCoin("coin", sdk.NewInt(155)),
 	}
-	cdc := app.NewEncodingConfig().Codec
+	cdc := config.NewEncodingConfig(module.NewBasicManager()).Codec
 	keeper := newKeeperMock(genesisState)
 	module := feemodel.NewAppModule(keeper)
 

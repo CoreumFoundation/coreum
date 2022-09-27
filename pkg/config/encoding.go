@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
@@ -18,13 +18,8 @@ type EncodingConfig struct {
 	Amino             *codec.LegacyAmino
 }
 
-// NewEncodingConfig creates an EncodingConfig for testing.
-func NewEncodingConfig() EncodingConfig {
-	return NewModuleEncodingConfig(ModuleBasics)
-}
-
-// NewModuleEncodingConfig creates an EncodingConfig for the provided module.BasicManager.
-func NewModuleEncodingConfig(moduleBasics module.BasicManager) EncodingConfig {
+// NewEncodingConfig creates an EncodingConfig for the provided module.BasicManager.
+func NewEncodingConfig(modules module.BasicManager) EncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := types.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
@@ -38,7 +33,7 @@ func NewModuleEncodingConfig(moduleBasics module.BasicManager) EncodingConfig {
 	}
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	moduleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	moduleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	modules.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	modules.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	return encodingConfig
 }

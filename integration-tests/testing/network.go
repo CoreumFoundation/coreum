@@ -3,7 +3,7 @@ package testing
 import (
 	"time"
 
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/auth"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
@@ -15,24 +15,30 @@ const (
 
 	// minVotingPeriod is the proposal voting period duration
 	minVotingPeriod = time.Second * 15
+
+	// unbondingTime is the coins unbonding time
+	unbondingTime = time.Second * 5
 )
 
 // NetworkConfig is the network config used by integration tests
-var NetworkConfig = app.NetworkConfig{
-	ChainID:       app.Devnet,
+var NetworkConfig = config.NetworkConfig{
+	ChainID:       config.Devnet,
 	Enabled:       true,
 	GenesisTime:   time.Now(),
 	AddressPrefix: "devcore",
-	TokenSymbol:   app.TokenSymbolDev,
-	Fee: app.FeeConfig{
+	TokenSymbol:   config.TokenSymbolDev,
+	Fee: config.FeeConfig{
 		FeeModel:         feemodeltypes.DefaultModel(),
 		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
 	},
-	GovConfig: app.GovConfig{
-		ProposalConfig: app.GovProposalConfig{
+	GovConfig: config.GovConfig{
+		ProposalConfig: config.GovProposalConfig{
 			MinDepositAmount: "1000",
 			MinDepositPeriod: minDepositPeriod.String(),
 			VotingPeriod:     minVotingPeriod.String(),
 		},
+	},
+	StakingConfig: config.StakingConfig{
+		UnbondingTime: unbondingTime.String(),
 	},
 }

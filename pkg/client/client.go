@@ -25,6 +25,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -48,7 +49,7 @@ type Client struct {
 }
 
 // New creates new client for cored
-func New(chainID app.ChainID, addr string) Client {
+func New(chainID config.ChainID, addr string) Client {
 	clientProtocols := []string{"tcp", "http", "https"}
 	if !lo.ContainsBy(clientProtocols, func(protocol string) bool {
 		return strings.HasPrefix(addr, protocol+"://")
@@ -58,8 +59,8 @@ func New(chainID app.ChainID, addr string) Client {
 
 	rpcClient, err := client.NewClientFromNode(addr)
 	must.OK(err)
-	clientCtx := app.
-		NewDefaultClientContext().
+	// This line takes `app.ModuleBasics` but this code will be removed anyway
+	clientCtx := config.NewClientContext(app.ModuleBasics).
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 	return Client{

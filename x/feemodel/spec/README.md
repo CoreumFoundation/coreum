@@ -11,7 +11,7 @@ parent:
 
 This document specifies the feemodel module. The module is responsible for calculating minimum gas price required by the chain based on the [parameters](03_params.md) of fee model.
 
-Two charts are presented below, showing how the implemented fee model behaves. Keep in mind that data presented on those charts were generated using `MaxGasPrice` set to `2000` for better readability, while in reality we use `1500000`.
+Two charts are presented below, showing how the implemented fee model behaves. Keep in mind that data presented on those charts were generated using `MaxGasPrice` set to `0.15` for better readability, while in reality we use `62.5`.
 
 TERMS:
 - *long average block gas* is the EMA (exponential moving average) of gas consumed by previous blocks using `LongEmaBlockLength` parameter for computing the EMA.

@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"bytes"
@@ -11,16 +11,21 @@ import (
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/pkg/errors"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/CoreumFoundation/coreum/x/auth"
-	"github.com/CoreumFoundation/coreum/x/auth/ante"
+	coreumauth "github.com/CoreumFoundation/coreum/x/auth"
+	coreumante "github.com/CoreumFoundation/coreum/x/auth/ante"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -35,10 +40,11 @@ const (
 
 // Known TokenSymbols
 const (
-	// m prefix stands for milli, more info here https://en.wikipedia.org/wiki/Metric_prefix
+	// u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
+	// We also add another prefix for non mainnet network symbols to differentiate them from mainnet.
+	// 'd' prefix in ducore stands for devnet.
 	TokenSymbolMain string = "ucore"
-	// d prefix stands for development
-	TokenSymbolDev string = "ducore"
+	TokenSymbolDev  string = "ducore"
 )
 
 var (
@@ -58,7 +64,7 @@ var (
 func init() {
 	feeConfig := FeeConfig{
 		FeeModel:         feemodeltypes.DefaultModel(),
-		DeterministicGas: auth.DefaultDeterministicGasRequirements(),
+		DeterministicGas: coreumauth.DefaultDeterministicGasRequirements(),
 	}
 
 	govConfig := GovConfig{
@@ -69,6 +75,10 @@ func init() {
 		},
 	}
 
+	stakingConfig := StakingConfig{
+		UnbondingTime: "1814400s",
+	}
+
 	list := []NetworkConfig{
 		{
 			ChainID:       Mainnet,
@@ -77,6 +87,7 @@ func init() {
 			TokenSymbol:   TokenSymbolMain,
 			Fee:           feeConfig,
 			GovConfig:     govConfig,
+			StakingConfig: stakingConfig,
 		},
 		{
 			ChainID:       Devnet,
@@ -88,7 +99,8 @@ func init() {
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@35.223.81.227:26656"},
 			},
-			GovConfig: govConfig,
+			GovConfig:     govConfig,
+			StakingConfig: stakingConfig,
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
 				{
@@ -136,10 +148,21 @@ func init() {
 
 var networks = map[ChainID]NetworkConfig{}
 
+// EnabledNetworks returns enabled networks
+func EnabledNetworks() []Network {
+	enabledNetworks := make([]Network, 0, len(networks))
+	for _, nc := range networks {
+		if nc.Enabled {
+			enabledNetworks = append(enabledNetworks, NewNetwork(nc))
+		}
+	}
+	return enabledNetworks
+}
+
 // FeeConfig is the part of network config defining parameters of our fee model
 type FeeConfig struct {
 	FeeModel         feemodeltypes.Model
-	DeterministicGas ante.DeterministicGasRequirements
+	DeterministicGas coreumante.DeterministicGasRequirements
 }
 
 // GovConfig contains gov module configs
@@ -159,6 +182,12 @@ type GovProposalConfig struct {
 	VotingPeriod string
 }
 
+// StakingConfig contains staking module configuration
+type StakingConfig struct {
+	// UnbondingTime is the time duration after which bonded coins will become to be released
+	UnbondingTime string
+}
+
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID        ChainID
@@ -170,6 +199,7 @@ type NetworkConfig struct {
 	GenTxs         []json.RawMessage
 	NodeConfig     NodeConfig
 	GovConfig      GovConfig
+	StakingConfig  StakingConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 }
@@ -183,6 +213,7 @@ type Network struct {
 	fee           FeeConfig
 	nodeConfig    NodeConfig
 	gov           GovConfig
+	staking       StakingConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -199,6 +230,7 @@ func NewNetwork(c NetworkConfig) Network {
 		nodeConfig:     c.NodeConfig.Clone(),
 		fee:            c.Fee,
 		gov:            c.GovConfig,
+		staking:        c.StakingConfig,
 		mu:             &sync.Mutex{},
 		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
@@ -268,7 +300,13 @@ func applyFundedAccountToGenesis(
 
 // genesisDoc returns the genesis doc of the network
 func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
-	codec := NewEncodingConfig().Codec
+	codec := NewEncodingConfig(module.NewBasicManager(
+		auth.AppModuleBasic{},
+		authzmodule.AppModuleBasic{},
+		genutil.AppModuleBasic{},
+		bank.AppModuleBasic{},
+	)).Codec
+
 	genesisJSON, err := genesis(n)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
@@ -368,6 +406,31 @@ func (n Network) ChainID() ChainID {
 	return n.chainID
 }
 
+// GenesisTime returns the genesis time of the network
+func (n Network) GenesisTime() time.Time {
+	return n.genesisTime
+}
+
+// FundedAccounts returns the funded accounts
+func (n Network) FundedAccounts() []FundedAccount {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	fundedAccounts := make([]FundedAccount, len(n.fundedAccounts))
+	copy(fundedAccounts, n.fundedAccounts)
+	return fundedAccounts
+}
+
+// GenTxs returns the genesis transactions
+func (n Network) GenTxs() []json.RawMessage {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	genTxs := make([]json.RawMessage, len(n.genTxs))
+	copy(genTxs, n.genTxs)
+	return genTxs
+}
+
 // TokenSymbol returns the governance token symbol. This is different
 // for each network(i.e mainnet, testnet, etc)
 func (n Network) TokenSymbol() string {
@@ -380,7 +443,7 @@ func (n Network) FeeModel() feemodeltypes.Model {
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types
-func (n Network) DeterministicGas() ante.DeterministicGasRequirements {
+func (n Network) DeterministicGas() coreumante.DeterministicGasRequirements {
 	return n.fee.DeterministicGas
 }
 
@@ -411,12 +474,14 @@ func genesis(n Network) ([]byte, error) {
 		TokenSymbol    string
 		FeeModelParams feemodeltypes.Params
 		Gov            GovConfig
+		Staking        StakingConfig
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
 		TokenSymbol:    n.tokenSymbol,
 		FeeModelParams: n.FeeModel().Params(),
 		Gov:            n.gov,
+		Staking:        n.staking,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
