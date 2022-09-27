@@ -3,6 +3,7 @@ package testing
 import (
 	"context"
 	"encoding/hex"
+	"github.com/CoreumFoundation/coreum/app"
 	"reflect"
 	"sync"
 
@@ -25,11 +26,10 @@ type ChainContext struct {
 
 	NetworkConfig config.NetworkConfig
 	mu            *sync.RWMutex
-
 }
 
 // NewChainContext returns a new instance if the ChainContext.
-func NewChainContext(clientCtx cosmosclient.Context, networkCfg app.NetworkConfig) ChainContext {
+func NewChainContext(clientCtx cosmosclient.Context, networkCfg config.NetworkConfig) ChainContext {
 	return ChainContext{
 		ClientContext: clientCtx,
 		NetworkConfig: networkCfg,
@@ -115,7 +115,7 @@ func (c ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wal
 // ChainConfig defines the config arguments required for the test chain initialisation.
 type ChainConfig struct {
 	RPCAddress     string
-	NetworkConfig  app.NetworkConfig
+	NetworkConfig  config.NetworkConfig
 	FundingPrivKey types.Secp256k1PrivateKey
 }
 
@@ -136,8 +136,7 @@ func NewChain(ctx context.Context, cfg ChainConfig) (Chain, error) {
 	if err != nil {
 		panic(err)
 	}
-	clientContext := app.
-		NewDefaultClientContext().
+	clientContext := config.NewClientContext(app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
 		WithClient(rpcClient).
 		WithKeyring(keyring.NewInMemory()).

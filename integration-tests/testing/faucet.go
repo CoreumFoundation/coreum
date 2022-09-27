@@ -2,12 +2,12 @@ package testing
 
 import (
 	"context"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
@@ -30,7 +30,7 @@ func NewFundedAccount(wallet types.Wallet, amount sdk.Coin) FundedAccount {
 // Faucet is the test chain faucet.
 type Faucet struct {
 	client        client.Client
-	networkConfig app.NetworkConfig
+	networkConfig config.NetworkConfig
 
 	// muCh is used to serve the same purpose as `sync.Mutex` to protect `fundingWallet` against being used
 	// to broadcast many transactions in parallel by different integration tests. The difference between this and `sync.Mutex`
@@ -40,7 +40,7 @@ type Faucet struct {
 }
 
 // NewFaucet creates a new instance of the Faucet.
-func NewFaucet(client client.Client, networkConfig app.NetworkConfig, fundingPrivKey types.Secp256k1PrivateKey) Faucet {
+func NewFaucet(client client.Client, networkConfig config.NetworkConfig, fundingPrivKey types.Secp256k1PrivateKey) Faucet {
 	fundingWallet := types.Wallet{Key: fundingPrivKey}
 	faucet := Faucet{
 		client:        client,
