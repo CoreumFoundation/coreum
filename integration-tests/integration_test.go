@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/base64"
 	"flag"
+	"fmt"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -31,15 +32,34 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
+// stringsFlag allows setting a value multiple times to collect a list, as in -I=val1 -I=val2.
+type stringsFlag []string
+
+func (m *stringsFlag) String() string {
+	if len(*m) == 0 {
+		return ""
+	}
+	return fmt.Sprint(*m)
+}
+
+func (m *stringsFlag) Set(val string) error {
+	*m = append(*m, val)
+	return nil
+}
+
 var cfg = testingConfig{
 	NetworkConfig: coreumtesting.NetworkConfig,
 }
 
 func TestMain(m *testing.M) {
-	var fundingPrivKey, coredAddress, logFormat, filter string
+	var fundingPrivKey, fundingMnemonic, coredAddress, logFormat, filter string
+	var stakerMnemonics stringsFlag
 
 	flag.StringVar(&coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
 	flag.StringVar(&fundingPrivKey, "priv-key", "LPIPcUDVpp8Cn__g-YMntGts-DfDbd2gKTcgUgqSLfY", "Base64-encoded private key used to fund accounts required by tests")
+	// TODO (dhil) those values are needed here for the backward compatibility of the crust, during the migration from priv keys to mnemonics
+	flag.StringVar(&fundingMnemonic, "funding-mnemonic", "", "Funding account mnemonic required by tests")
+	flag.Var(&stakerMnemonics, "staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
 	flag.StringVar(&filter, "filter", "", "Regular expression used to run only a subset of tests")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.Parse()
