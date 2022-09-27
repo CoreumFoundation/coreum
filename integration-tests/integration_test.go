@@ -12,12 +12,16 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -106,21 +110,21 @@ func newChain(ctx context.Context, cfg testingConfig) (coreumtesting.Chain, erro
 		return coreumtesting.Chain{}, errors.Wrapf(err, "failed to get funding wallet sequence")
 	}
 
-	faucet := &testingFaucet{
-		client:        coredClient,
-		networkConfig: cfg.NetworkConfig,
-		muCh:          make(chan struct{}, 1),
-		fundingWallet: fundingWallet,
-	}
-	faucet.muCh <- struct{}{}
-
-	return coreumtesting.Chain{
+	chain := coreumtesting.Chain{
 		Client:        coredClient,
 		ClientContext: clientContext,
 		NetworkConfig: cfg.NetworkConfig,
-		Faucet:        faucet,
 		Keyring:       keyring.NewInMemory(),
-	}, nil
+	}
+
+	faucet, err := newTestingFaucet(cfg, chain)
+	if err != nil {
+		return coreumtesting.Chain{}, err
+	}
+
+	chain.Faucet = faucet
+
+	return chain, nil
 }
 
 func newContext(t *testing.T, cfg testingConfig) context.Context {
@@ -159,50 +163,113 @@ func collectTestCases(chain coreumtesting.Chain, testSet coreumtesting.TestSet, 
 	return testCases
 }
 
+type fundingRequest struct {
+	AccountsToFund []coreumtesting.FundedAccount
+	FundedCh       chan error
+}
+
+func newTestingFaucet(cfg testingConfig, chain coreumtesting.Chain) (*testingFaucet, error) {
+	privKey := &cosmossecp256k1.PrivKey{Key: cfg.FundingPrivKey}
+	keyringDB := keyring.NewInMemory()
+	err := keyringDB.ImportPrivKey("faucet", crypto.EncryptArmorPrivKey(privKey, "dummy", privKey.Type()), "dummy")
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	faucet := &testingFaucet{
+		chain:         chain,
+		keyring:       keyringDB,
+		address:       sdk.AccAddress(privKey.PubKey().Address()),
+		networkConfig: cfg.NetworkConfig,
+		queue:         make(chan fundingRequest),
+		muCh:          make(chan struct{}, 1),
+	}
+	faucet.muCh <- struct{}{}
+	return faucet, err
+}
+
 type testingFaucet struct {
-	client        client.Client
+	chain         coreumtesting.Chain
+	keyring       keyring.Keyring
+	address       sdk.AccAddress
 	networkConfig config.NetworkConfig
+	queue         chan fundingRequest
 
 	// muCh is used to serve the same purpose as `sync.Mutex` to protect `fundingWallet` against being used
 	// to broadcast many transactions in parallel by different integration tests. The difference between this and `sync.Mutex`
 	// is that test may exit immediately when `ctx` is canceled, without waiting for mutex to be unlocked.
-	muCh          chan struct{}
-	fundingWallet types.Wallet
+	muCh chan struct{}
 }
 
-func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...coreumtesting.FundedAccount) error {
+func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...coreumtesting.FundedAccount) (retErr error) {
+	req := fundingRequest{
+		AccountsToFund: accountsToFund,
+		FundedCh:       make(chan error, 1),
+	}
+
+	requests := make([]fundingRequest, 0, 20)
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
+	case tf.queue <- req:
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case err := <-req.FundedCh:
+			return err
+		}
 	case <-tf.muCh:
 		defer func() {
 			tf.muCh <- struct{}{}
+			for _, req := range requests {
+				req.FundedCh <- retErr
+			}
 		}()
 	}
 
-	gasPrice := sdk.NewDecCoinFromDec(tf.networkConfig.TokenSymbol, tf.networkConfig.Fee.FeeModel.Params().InitialGasPrice)
+	requests = append(requests, req)
+	numOfAccounts := len(req.AccountsToFund)
+	timeout := time.After(100 * time.Millisecond)
+loop:
+	for numOfAccounts < cap(requests) {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-timeout:
+			break loop
+		case req := <-tf.queue:
+			requests = append(requests, req)
+			numOfAccounts += len(req.AccountsToFund)
+		}
+	}
+
+	messages := make([]sdk.Msg, 0, numOfAccounts)
+	for _, req := range requests {
+		for _, acc := range req.AccountsToFund {
+			messages = append(messages, &banktypes.MsgSend{
+				FromAddress: tf.address.String(),
+				ToAddress:   acc.Wallet.Key.Address(),
+				Amount:      sdk.NewCoins(acc.Amount),
+			})
+		}
+	}
 
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for test, it might take a while...")
-	for _, toFund := range accountsToFund {
-		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
-		encodedTx, err := tf.client.PrepareTxBankSend(ctx, client.TxBankSendInput{
-			Base: tx.BaseInput{
-				Signer:   tf.fundingWallet,
-				GasLimit: tf.networkConfig.Fee.DeterministicGas.BankSend,
-				GasPrice: gasPrice,
-			},
-			Sender:   tf.fundingWallet,
-			Receiver: toFund.Wallet,
-			Amount:   toFund.Amount,
-		})
-		if err != nil {
-			return err
-		}
-		if _, err := tf.client.Broadcast(ctx, encodedTx); err != nil {
-			return err
-		}
-		tf.fundingWallet.AccountSequence++
+
+	clientCtx := tf.chain.ClientContext.WithKeyring(tf.keyring).WithFromName("faucet").WithFromAddress(tf.address)
+	resp, err := tx.BroadcastTx(
+		ctx,
+		clientCtx,
+		tf.chain.TxFactory().WithKeybase(tf.keyring).WithGas(uint64(numOfAccounts)*tf.chain.GasLimitByMsgs(&banktypes.MsgSend{})),
+		messages...,
+	)
+	if err != nil {
+		return err
+	}
+	if _, err := tx.AwaitTx(ctx, clientCtx, resp.TxHash); err != nil {
+		return err
 	}
 	log.Info("Test accounts funded")
 
