@@ -25,6 +25,8 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	// Create random validator wallet
 	validator := testing.RandomWallet()
 	validatorAddr := sdk.ValAddress(validator.Key.Address())
+	validatorKeyInfo, err := chain.Keyring.Key(validator.String())
+	require.NoError(t, err)
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
@@ -34,7 +36,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	// Create validator
 	txBytes, err := chain.Client.PrepareTxCreateValidator(ctx, client.TxCreateValidatorInput{
 		Validator:         validatorAddr,
-		PubKey:            nil,
+		PubKey:            validatorKeyInfo.GetPubKey(),
 		Amount:            chain.NewCoin(validatorAmount),
 		Description:       stakingtypes.Description{},
 		CommissionRates:   stakingtypes.CommissionRates{},
