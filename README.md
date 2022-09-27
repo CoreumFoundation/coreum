@@ -28,9 +28,9 @@ $ git clone https://github.com/CoreumFoundation/crust
 ```
 $ export PATH="$HOME/crust/bin:$PATH"
 ```
-3. Compile all the required binaries:
+3. Compile all the required binaries and docker images:
 ```
-$ $HOME/crust/bin/crust build
+$ $HOME/crust/bin/crust build images
 ```
 
 After the command completes you may find executable `$HOME/crust/bin/cored`, being both blockchain node and client.
