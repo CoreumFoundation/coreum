@@ -3,6 +3,8 @@ package staking
 import (
 	"context"
 
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -24,9 +26,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 
 	// Create random validator wallet
 	validator := testing.RandomWallet()
-	validatorAddr := sdk.ValAddress(validator.Key.Address())
-	validatorKeyInfo, err := chain.Keyring.Key(validator.Address().String())
-	require.NoError(t, err)
+	validatorAddr := sdk.ValAddress(validator.Address())
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
@@ -36,7 +36,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	// Create validator
 	txBytes, err := chain.Client.PrepareTxCreateValidator(ctx, client.TxCreateValidatorInput{
 		Validator:         validatorAddr,
-		PubKey:            validatorKeyInfo.GetPubKey(),
+		PubKey:            (&cosmossecp256k1.PrivKey{Key: validator.Key}).PubKey(),
 		Amount:            chain.NewCoin(validatorAmount),
 		Description:       stakingtypes.Description{},
 		CommissionRates:   stakingtypes.CommissionRates{},
