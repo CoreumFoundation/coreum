@@ -59,6 +59,7 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 
 	unsignedTx.SetFeeGranter(clientCtx.GetFeeGranterAddress())
 
+	// in case the name is not provided by that address is, take the name by the address
 	fromName := clientCtx.GetFromName()
 	if fromName == "" && len(clientCtx.GetFromAddress()) > 0 {
 		key, err := clientCtx.Keyring.KeyByAddress(clientCtx.FromAddress)

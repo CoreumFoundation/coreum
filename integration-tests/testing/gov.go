@@ -17,24 +17,24 @@ import (
 
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {
-	chainContext  ChainContext
-	govClient     govtypes.QueryClient
-	voterAccounts []sdk.AccAddress
-	muCh          chan struct{}
+	chainContext   ChainContext
+	govClient      govtypes.QueryClient
+	stakerAccounts []sdk.AccAddress
+	muCh           chan struct{}
 }
 
 // NewGovernance initializes the voter accounts to have enough voting power for the voting.
 func NewGovernance(chainContext ChainContext, voterMnemonics []string) Governance {
-	voterAccounts := make([]sdk.AccAddress, 0, len(voterMnemonics))
+	stakerAccounts := make([]sdk.AccAddress, 0, len(voterMnemonics))
 	for _, stakerMnemonic := range voterMnemonics {
-		voterAccounts = append(voterAccounts, chainContext.ImportMnemonic(stakerMnemonic))
+		stakerAccounts = append(stakerAccounts, chainContext.ImportMnemonic(stakerMnemonic))
 	}
 
 	gov := Governance{
-		chainContext:  chainContext,
-		voterAccounts: voterAccounts,
-		govClient:     govtypes.NewQueryClient(chainContext.ClientContext),
-		muCh:          make(chan struct{}, 1),
+		chainContext:   chainContext,
+		stakerAccounts: stakerAccounts,
+		govClient:      govtypes.NewQueryClient(chainContext.ClientContext),
+		muCh:           make(chan struct{}, 1),
 	}
 	gov.muCh <- struct{}{}
 
@@ -52,7 +52,7 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	initialGasPrice := NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
 	proposerInitialBalance := ComputeNeededBalance(
 		initialGasPrice,
-		NetworkConfig.Fee.DeterministicGas.GovSubmitProposal,
+		g.chainContext.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}),
 		1,
 		midDeposit.Amount,
 	)
@@ -71,8 +71,8 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 		return 0, err
 	}
 
-	txf := g.chainContext.TxFactory()
-	txf = txf.WithGas(NetworkConfig.Fee.DeterministicGas.GovSubmitProposal)
+	txf := g.chainContext.TxFactory().
+		WithGas(g.chainContext.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}))
 	result, err := tx.BroadcastTx(
 		ctx,
 		g.chainContext.ClientContext.
@@ -107,8 +107,8 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 		}()
 	}
 
-	txHashes := make([]string, 0, len(g.voterAccounts))
-	for _, voter := range g.voterAccounts {
+	txHashes := make([]string, 0, len(g.stakerAccounts))
+	for _, voter := range g.stakerAccounts {
 		msg := &govtypes.MsgVote{
 			ProposalId: proposalID,
 			Voter:      voter.String(),
@@ -182,7 +182,7 @@ func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.P
 
 // GetVotersAccounts returns the configured voting accounts.
 func (g Governance) GetVotersAccounts() []sdk.AccAddress {
-	return g.voterAccounts
+	return g.stakerAccounts
 }
 
 func (g Governance) getParams(ctx context.Context) (govtypes.Params, error) {
