@@ -48,7 +48,7 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	}
 }
 
-// TxBonusGas is the free gas we give to every transaction to cover costs of tx size and signature verification
-func (dgr DeterministicGasRequirements) TxBonusGas(params authtypes.Params) uint64 {
+// TxBaseGas is the free gas we give to every transaction to cover costs of tx size and signature verification
+func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint64 {
 	return dgr.FreeBytes*params.TxSizeCostPerByte + dgr.FreeSignatures*params.SigVerifyCostSecp256k1
 }
