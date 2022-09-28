@@ -46,7 +46,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromName(delegator.String()).WithFromAddress(delegator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		chain.TxFactory().WithGas(chain.NetworkConfig.Fee.DeterministicGas.FixedGas),
 		msg,
 	)
 	require.NoError(t, err)
