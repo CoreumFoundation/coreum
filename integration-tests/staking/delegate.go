@@ -53,6 +53,11 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", result.TxHash))
 
+	// Check delegator address
+	delegatorBalance, err := chain.Client.QueryBankBalances(ctx, chain.AccAddressToLegacyWallet(delegator))
+	require.NoError(t, err)
+	require.Equal(t, delegatorInitialBalance.Sub(delegateAmount), delegatorBalance[chain.NetworkConfig.TokenSymbol].Amount)
+
 	// Make sure coins have been delegated
 	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: valAddress.String(),

@@ -62,4 +62,5 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	})
 	require.NoError(t, err)
 	require.Equal(t, validatorAmount, resp.Validator.Tokens)
+	require.Equal(t, stakingtypes.Bonded, resp.Validator.Status)
 }
