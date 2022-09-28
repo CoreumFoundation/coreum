@@ -148,7 +148,7 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 // BroadcastResult contains results of transaction broadcast
 type BroadcastResult struct {
 	TxHash    string
-	GasUsed   int64
+	GasUsed   uint64
 	EventLogs sdk.StringEvents
 }
 
@@ -218,7 +218,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}
 	return BroadcastResult{
 		TxHash:    txHash,
-		GasUsed:   resultTx.TxResult.GasUsed,
+		GasUsed:   uint64(resultTx.TxResult.GasUsed),
 		EventLogs: sdk.StringifyEvents(resultTx.TxResult.Events),
 	}, nil
 }
