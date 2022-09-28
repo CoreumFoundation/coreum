@@ -204,12 +204,13 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for test, it might take a while...")
+	gasLimit := tf.networkConfig.Fee.DeterministicGas.BankSend + tf.networkConfig.Fee.DeterministicGas.FixedGas
 	for _, toFund := range accountsToFund {
 		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
 		encodedTx, err := tf.client.PrepareTxBankSend(ctx, client.TxBankSendInput{
 			Base: tx.BaseInput{
 				Signer:   tf.fundingWallet,
-				GasLimit: tf.networkConfig.Fee.DeterministicGas.BankSend,
+				GasLimit: gasLimit,
 				GasPrice: gasPrice,
 			},
 			Sender:   tf.fundingWallet,

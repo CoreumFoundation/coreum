@@ -45,7 +45,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 			chain.AccAddressToLegacyWallet(sender),
 			chain.NewCoin(testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 				1,
 				sdk.NewInt(100),
 			)),
