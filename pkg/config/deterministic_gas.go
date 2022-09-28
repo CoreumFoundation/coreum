@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // DefaultDeterministicGasRequirements returns default config for deterministic gas
@@ -13,6 +14,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 		BankSend:       30000,
+		Delegate:       51000,
+		Undelegate:     51000,
 	}
 }
 
@@ -31,6 +34,10 @@ type DeterministicGasRequirements struct {
 	FreeSignatures uint64
 
 	BankSend uint64
+
+	Delegate uint64
+
+	Undelegate uint64
 }
 
 // GasRequiredByMessage returns gas required by a sdk.Msg.
@@ -43,6 +50,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	switch msg.(type) {
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
+	case *stakingtypes.MsgDelegate:
+		return dgr.Delegate, true
+	case *stakingtypes.MsgUndelegate:
+		return dgr.Undelegate, true
 	default:
 		return 0, false
 	}

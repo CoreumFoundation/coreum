@@ -48,7 +48,7 @@ func TestUndelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromName(delegator.String()).WithFromAddress(delegator),
-		chain.TxFactory().WithGas(chain.NetworkConfig.Fee.DeterministicGas.FixedGas),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
 		delegateMsg,
 	)
 	require.NoError(t, err)
