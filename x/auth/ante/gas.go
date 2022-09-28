@@ -4,11 +4,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 // DeterministicGasRequirements specifies gas required by some transaction types
 type DeterministicGasRequirements struct {
-	BankSend uint64
+	BankSend          uint64
+	GovSubmitProposal uint64
+	GovVote           uint64
 }
 
 // GasRequiredByMessage returns gas required by a sdk.Msg.
@@ -17,6 +20,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) uint64
 	switch msg.(type) {
 	case *banktypes.MsgSend:
 		return dgr.BankSend
+	case *govtypes.MsgSubmitProposal:
+		return dgr.GovSubmitProposal
+	case *govtypes.MsgVote:
+		return dgr.GovVote
 	default:
 		return 0
 	}

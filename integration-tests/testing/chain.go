@@ -1,9 +1,7 @@
 package testing
 
 import (
-	"context"
 	"encoding/hex"
-	"github.com/CoreumFoundation/coreum/app"
 	"reflect"
 	"sync"
 
@@ -12,8 +10,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -23,9 +23,8 @@ import (
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
 	ClientContext cosmosclient.Context
-
 	NetworkConfig config.NetworkConfig
-	mu            *sync.RWMutex
+	keyringMu     *sync.RWMutex
 }
 
 // NewChainContext returns a new instance if the ChainContext.
@@ -33,7 +32,7 @@ func NewChainContext(clientCtx cosmosclient.Context, networkCfg config.NetworkCo
 	return ChainContext{
 		ClientContext: clientCtx,
 		NetworkConfig: networkCfg,
-		mu:            &sync.RWMutex{},
+		keyringMu:     &sync.RWMutex{},
 	}
 }
 
@@ -41,17 +40,20 @@ func NewChainContext(clientCtx cosmosclient.Context, networkCfg config.NetworkCo
 // private key and stores mnemonic in Keyring.
 func (c ChainContext) RandomWallet() sdk.AccAddress {
 	// Generate and store a new mnemonic using temporary keyring
-	keyInfo, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, "", "", hd.Secp256k1)
-	// we are using panics here, since we are sure it will not error out, and handling error
-	// upstream is a waste of time.
+	_, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, "", "", hd.Secp256k1)
 	if err != nil {
 		panic(err)
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	// Store generated mnemonic using account address as UID
-	if _, err = c.ClientContext.Keyring.NewAccount(keyInfo.GetAddress().String(), mnemonic, "", "", hd.Secp256k1); err != nil {
+	return c.ImportMnemonic(mnemonic)
+}
+
+// ImportMnemonic imports the mnemonic into the clientContext Keyring and return its address.
+func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
+	c.keyringMu.Lock()
+	defer c.keyringMu.Unlock()
+	keyInfo, err := c.ClientContext.Keyring.NewAccount(uuid.New().String(), mnemonic, "", "", hd.Secp256k1)
+	if err != nil {
 		panic(err)
 	}
 
@@ -95,11 +97,15 @@ func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 // AccAddressToLegacyWallet is temporary method to keep compatibility between
 // func signatures while types.Wallet is being removed.
 func (c ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wallet {
-	name := accAddr.String()
+	c.keyringMu.RLock()
+	defer c.keyringMu.RUnlock()
 
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	privKeyHex, err := keyring.NewUnsafe(c.ClientContext.Keyring).UnsafeExportPrivKeyHex(name)
+	info, err := c.ClientContext.Keyring.KeyByAddress(accAddr)
+	if err != nil {
+		panic(err)
+	}
+
+	privKeyHex, err := keyring.NewUnsafe(c.ClientContext.Keyring).UnsafeExportPrivKeyHex(info.GetName())
 	if err != nil {
 		panic(err)
 	}
@@ -109,14 +115,15 @@ func (c ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wal
 		panic(err)
 	}
 
-	return types.Wallet{Name: name, Key: privKeyBytes}
+	return types.Wallet{Name: info.GetName(), Key: privKeyBytes}
 }
 
 // ChainConfig defines the config arguments required for the test chain initialisation.
 type ChainConfig struct {
-	RPCAddress     string
-	NetworkConfig  config.NetworkConfig
-	FundingPrivKey types.Secp256k1PrivateKey
+	RPCAddress      string
+	NetworkConfig   config.NetworkConfig
+	FundingPrivKey  types.Secp256k1PrivateKey
+	StakerMnemonics []string
 }
 
 // Chain holds network and client for the blockchain
@@ -128,10 +135,8 @@ type Chain struct {
 }
 
 // NewChain creates an instance of the new Chain.
-func NewChain(ctx context.Context, cfg ChainConfig) (Chain, error) {
-	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
+func NewChain(cfg ChainConfig) Chain {
 	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.RPCAddress)
-	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
 	rpcClient, err := cosmosclient.NewClientFromNode(cfg.RPCAddress)
 	if err != nil {
 		panic(err)
@@ -144,15 +149,12 @@ func NewChain(ctx context.Context, cfg ChainConfig) (Chain, error) {
 
 	chainContext := NewChainContext(clientContext, cfg.NetworkConfig)
 	faucet := NewFaucet(coredClient, cfg.NetworkConfig, cfg.FundingPrivKey)
-	governance, err := NewGovernance(ctx, chainContext, faucet)
-	if err != nil {
-		return Chain{}, errors.Wrap(err, "can't init chain governance")
-	}
+	governance := NewGovernance(chainContext, cfg.StakerMnemonics)
 
 	return Chain{
 		ChainContext: chainContext,
 		Client:       coredClient,
 		Faucet:       faucet,
 		Governance:   governance,
-	}, nil
+	}
 }

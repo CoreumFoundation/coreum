@@ -6,12 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
@@ -20,138 +19,45 @@ import (
 type Governance struct {
 	chainContext  ChainContext
 	govClient     govtypes.QueryClient
-	faucet        Faucet
 	voterAccounts []sdk.AccAddress
+	muCh          chan struct{}
 }
 
 // NewGovernance initializes the voter accounts to have enough voting power for the voting.
-func NewGovernance( //nolint:funlen // The test covers step-by step use case
-	ctx context.Context,
-	chainContext ChainContext,
-	faucet Faucet,
-) (Governance, error) {
-	const (
-		govVotersNumber      = 2
-		delegationMultiplier = "1.02"
-	)
-
-	log := logger.Get(ctx)
-	log.Info("Initialising the governance accounts")
-
-	delegationMultiplierDec := sdk.MustNewDecFromStr(delegationMultiplier)
-
-	clientCtx := chainContext.ClientContext
-	networkCfg := chainContext.NetworkConfig
-
-	govClient := govtypes.NewQueryClient(clientCtx)
-	stakingClient := stakingtypes.NewQueryClient(clientCtx)
-
-	// add voters to keyring
-	votersAccounts := make([]sdk.AccAddress, 0, govVotersNumber)
-	for i := 0; i < govVotersNumber; i++ {
-		votersAccounts = append(votersAccounts, chainContext.RandomWallet())
+func NewGovernance(chainContext ChainContext, voterMnemonics []string) Governance {
+	voterAccounts := make([]sdk.AccAddress, 0, len(voterMnemonics))
+	for _, stakerMnemonic := range voterMnemonics {
+		voterAccounts = append(voterAccounts, chainContext.ImportMnemonic(stakerMnemonic))
 	}
 
-	govParams, err := queryGovParams(ctx, govClient)
-	if err != nil {
-		return Governance{}, err
-	}
-
-	stakingPool, err := stakingClient.Pool(ctx, &stakingtypes.QueryPoolRequest{})
-	if err != nil {
-		return Governance{}, err
-	}
-
-	// compute needed balance for voters and add fund them
-
-	voterDelegateAmount := stakingPool.Pool.BondedTokens.ToDec().
-		Mul(govParams.TallyParams.Threshold.Mul(delegationMultiplierDec)).
-		QuoInt64(int64(len(votersAccounts))).RoundInt()
-
-	voterInitialBalance := ComputeNeededBalance(
-		networkCfg.Fee.FeeModel.Params().InitialGasPrice,
-		uint64(networkCfg.Fee.FeeModel.Params().MaxBlockGas),
-		3,
-		voterDelegateAmount,
-	)
-
-	fundedAccounts := make([]FundedAccount, 0, len(votersAccounts))
-	for _, voter := range votersAccounts {
-		wallet := chainContext.AccAddressToLegacyWallet(voter)
-		fundedAccounts = append(fundedAccounts, NewFundedAccount(wallet, sdk.NewCoin(networkCfg.TokenSymbol, voterInitialBalance)))
-	}
-
-	err = faucet.FundAccounts(ctx, fundedAccounts...)
-	if err != nil {
-		return Governance{}, err
-	}
-
-	// Delegate voter coins for the voters
-
-	validators, err := stakingClient.Validators(ctx, &stakingtypes.QueryValidatorsRequest{})
-	if err != nil {
-		return Governance{}, err
-	}
-	valAddress, err := sdk.ValAddressFromBech32(validators.Validators[0].OperatorAddress)
-	if err != nil {
-		return Governance{}, err
-	}
-
-	delegateCoin := chainContext.NewCoin(voterDelegateAmount)
-
-	txf := chainContext.TxFactory()
-	txf = txf.WithGas(uint64(networkCfg.Fee.FeeModel.Params().MaxBlockGas))
-	for _, voter := range votersAccounts {
-		msg := &stakingtypes.MsgDelegate{
-			DelegatorAddress: voter.String(),
-			ValidatorAddress: valAddress.String(),
-			Amount:           delegateCoin,
-		}
-
-		_, err := tx.BroadcastTx(
-			ctx,
-			clientCtx.
-				WithFromName(voter.String()).
-				WithFromAddress(voter),
-			txf,
-			msg,
-		)
-		if err != nil {
-			return Governance{}, err
-		}
-	}
-
-	log.Info("Initialisation of the governance accounts is done")
-
-	return Governance{
+	gov := Governance{
 		chainContext:  chainContext,
-		faucet:        faucet,
-		voterAccounts: votersAccounts,
-		govClient:     govClient,
-	}, nil
+		voterAccounts: voterAccounts,
+		govClient:     govtypes.NewQueryClient(chainContext.ClientContext),
+		muCh:          make(chan struct{}, 1),
+	}
+	gov.muCh <- struct{}{}
+
+	return gov
 }
 
-// CreateProposer creates a new proposed and funds it with enough tokens for the proposal.
-func (g Governance) CreateProposer(ctx context.Context) (sdk.AccAddress, error) {
-	proposer := g.chainContext.RandomWallet()
+// ComputeProposerBalance computes the balance required for the proposer.
+func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error) {
 	govParams, err := g.getParams(ctx)
 	if err != nil {
-		return nil, err
+		return sdk.Coin{}, err
 	}
 
+	midDeposit := govParams.DepositParams.MinDeposit[0]
+	initialGasPrice := NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
 	proposerInitialBalance := ComputeNeededBalance(
-		g.chainContext.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		uint64(g.chainContext.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
+		initialGasPrice,
+		NetworkConfig.Fee.DeterministicGas.GovSubmitProposal,
 		1,
-		govParams.DepositParams.MinDeposit[0].Amount,
+		midDeposit.Amount,
 	)
 
-	err = g.faucet.FundAccounts(ctx, NewFundedAccount(g.chainContext.AccAddressToLegacyWallet(proposer), g.chainContext.NewCoin(proposerInitialBalance)))
-	if err != nil {
-		return nil, err
-	}
-
-	return proposer, nil
+	return g.chainContext.NewCoin(proposerInitialBalance), nil
 }
 
 func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (int, error) {
@@ -166,11 +72,10 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 	}
 
 	txf := g.chainContext.TxFactory()
-	txf = txf.WithGas(uint64(g.chainContext.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
+	txf = txf.WithGas(NetworkConfig.Fee.DeterministicGas.GovSubmitProposal)
 	result, err := tx.BroadcastTx(
 		ctx,
 		g.chainContext.ClientContext.
-			WithFromName(proposer.String()).
 			WithFromAddress(proposer),
 		txf,
 		msg,
@@ -193,8 +98,16 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 
 // VoteAll votes for the proposalID from all voting accounts with the provided VoteOption.
 func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, proposalID uint64) error {
-	txf := g.chainContext.TxFactory()
-	txf = txf.WithGas(uint64(g.chainContext.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-g.muCh:
+		defer func() {
+			g.muCh <- struct{}{}
+		}()
+	}
+
+	txHashes := make([]string, 0, len(g.voterAccounts))
 	for _, voter := range g.voterAccounts {
 		msg := &govtypes.MsgVote{
 			ProposalId: proposalID,
@@ -202,16 +115,32 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 			Option:     option,
 		}
 
-		_, err := tx.BroadcastTx(
+		txf := g.chainContext.TxFactory()
+		txf = txf.WithGas(g.chainContext.GasLimitByMsgs(msg))
+
+		clientCtx := g.chainContext.ClientContext.
+			WithBroadcastMode(flags.BroadcastSync)
+		res, err := tx.BroadcastTx(
 			ctx,
-			g.chainContext.ClientContext.
-				WithFromName(voter.String()).
+			clientCtx.
 				WithFromAddress(voter),
 			txf,
 			msg,
 		)
 		if err != nil {
 			return err
+		}
+		txHashes = append(txHashes, res.TxHash)
+	}
+
+	// await for the first error
+	for _, txHash := range txHashes {
+		res, err := tx.AwaitTx(ctx, g.chainContext.ClientContext, txHash)
+		if err != nil {
+			return err
+		}
+		if res.TxResult.Code != 0 {
+			return errors.Errorf("the vote tx is failed, %s", string(res.TxResult.Data))
 		}
 	}
 

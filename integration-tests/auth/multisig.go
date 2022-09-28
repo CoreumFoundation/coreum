@@ -80,7 +80,6 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	}
 
 	clientCtx := chain.ClientContext.
-		WithFromName(faucetWallet.String()).
 		WithFromAddress(faucetWallet)
 
 	txF := chain.TxFactory().

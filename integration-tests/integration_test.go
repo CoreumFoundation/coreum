@@ -14,7 +14,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -55,12 +54,19 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&filter, "filter", "", "Regular expression used to run only a subset of tests")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.Parse()
+	// set the default staker mnemonic used in the dev znet by default
+	if len(stakerMnemonics) == 0 {
+		stakerMnemonics = []string{
+			"biology rigid design broccoli adult hood modify tissue swallow arctic option improve quiz cliff inject soup ozone suffer fantasy layer negative eagle leader priority",
+		}
+	}
 
 	decodedFundingPrivKey, err := base64.RawURLEncoding.DecodeString(fundingPrivKey)
 	if err != nil {
 		panic(err)
 	}
 	cfg.FundingPrivKey = decodedFundingPrivKey
+	cfg.StakerMnemonics = stakerMnemonics
 	cfg.RPCAddress = coredAddress
 	cfg.Filter = regexp.MustCompile(filter)
 	cfg.LogFormat = logger.Format(logFormat)
@@ -79,12 +85,12 @@ func Test(t *testing.T) {
 	ctx := newContext(t, cfg)
 
 	chainCfg := coreumtesting.ChainConfig{
-		RPCAddress:     cfg.RPCAddress,
-		NetworkConfig:  cfg.NetworkConfig,
-		FundingPrivKey: cfg.FundingPrivKey,
+		RPCAddress:      cfg.RPCAddress,
+		NetworkConfig:   cfg.NetworkConfig,
+		FundingPrivKey:  cfg.FundingPrivKey,
+		StakerMnemonics: cfg.StakerMnemonics,
 	}
-	chain, err := coreumtesting.NewChain(ctx, chainCfg)
-	require.NoError(t, err)
+	chain := coreumtesting.NewChain(chainCfg)
 
 	testCases := collectTestCases(chain, testSet, cfg.Filter)
 	if len(testCases) == 0 {
@@ -96,12 +102,13 @@ func Test(t *testing.T) {
 }
 
 type testingConfig struct {
-	RPCAddress     string
-	NetworkConfig  config.NetworkConfig
-	FundingPrivKey types.Secp256k1PrivateKey
-	Filter         *regexp.Regexp
-	LogFormat      logger.Format
-	LogVerbose     bool
+	RPCAddress      string
+	NetworkConfig   config.NetworkConfig
+	FundingPrivKey  types.Secp256k1PrivateKey
+	StakerMnemonics []string
+	Filter          *regexp.Regexp
+	LogFormat       logger.Format
+	LogVerbose      bool
 }
 
 func newContext(t *testing.T, cfg testingConfig) context.Context {

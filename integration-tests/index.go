@@ -13,19 +13,19 @@ import (
 func Tests() testing.TestSet {
 	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
-			staking.TestStakingProposalParamChange,
 			auth.TestUnexpectedSequenceNumber,
 			auth.TestTooLowGasPrice,
 			auth.TestNoFee,
 			auth.TestGasLimitHigherThanMaxBlockGas,
 			auth.TestGasLimitEqualToMaxBlockGas,
 			auth.TestMultisig,
+			feemodel.TestQueryingMinGasPrice,
 			bank.TestInitialBalance,
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
+			staking.TestStakingProposalParamChange,
 			wasm.TestSimpleStateWasmContract,
 			wasm.TestBankSendWasmContract,
-			feemodel.TestQueryingMinGasPrice,
 		},
 	}
 
