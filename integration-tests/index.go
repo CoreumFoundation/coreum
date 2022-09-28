@@ -12,25 +12,26 @@ import (
 
 // Tests returns testing environment and tests
 func Tests() testing.TestSet {
-	var testSet testing.TestSet
-
-	// Add gov module tests
-	testSet.SingleChain = append(testSet.SingleChain, gov.SingleChainTests()...)
-
-	// Add auth module tests
-	testSet.SingleChain = append(testSet.SingleChain, auth.SingleChainTests()...)
-
-	// Add bank module tests
-	testSet.SingleChain = append(testSet.SingleChain, bank.SingleChainTests()...)
-
-	// Add wasm module tests
-	testSet.SingleChain = append(testSet.SingleChain, wasm.SingleChainTests()...)
-
-	// Add fee model tests
-	testSet.SingleChain = append(testSet.SingleChain, feemodel.SingleChainTests()...)
-
-	// Add staking module tests
-	testSet.SingleChain = append(testSet.SingleChain, staking.SingleChainTests()...)
-
-	return testSet
+	return testing.TestSet{
+		SingleChain: []testing.SingleChainSignature{
+			gov.TestProposalParamChange,
+			auth.TestUnexpectedSequenceNumber,
+			auth.TestTooLowGasPrice,
+			auth.TestNoFee,
+			auth.TestGasLimitHigherThanMaxBlockGas,
+			auth.TestGasLimitEqualToMaxBlockGas,
+			auth.TestMultisig,
+			bank.TestInitialBalance,
+			bank.TestCoreTransfer,
+			bank.TestTransferFailsIfNotEnoughGasIsProvided,
+			bank.TestTransferDeterministicGas,
+			bank.TestTransferGasEstimation,
+			wasm.TestSimpleStateWasmContract,
+			wasm.TestBankSendWasmContract,
+			feemodel.TestQueryingMinGasPrice,
+			staking.TestDelegate,
+			staking.TestUndelegate,
+			staking.TestCreateValidator,
+		},
+	}
 }
