@@ -8,5 +8,7 @@ func SingleChainTests() []testing.SingleChainSignature {
 		TestInitialBalance,
 		TestCoreTransfer,
 		TestTransferFailsIfNotEnoughGasIsProvided,
+		TestTransferDeterministicGas,
+		TestTransferGasEstimation,
 	}
 }
