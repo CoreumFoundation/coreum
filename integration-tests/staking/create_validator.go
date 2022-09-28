@@ -7,9 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -24,31 +25,35 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	)
 
 	// Create random validator wallet
-	validator := testing.RandomWallet()
-	validatorAddr := sdk.ValAddress(validator.Address())
+	validator := chain.RandomWallet()
+	validatorAddr := sdk.ValAddress(validator)
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(validator, chain.NewCoin(validatorInitialBalance)),
+		testing.NewFundedAccount(
+			chain.AccAddressToLegacyWallet(validator),
+			chain.NewCoin(validatorInitialBalance),
+		),
 	))
 
 	// Create validator
-	txBytes, err := chain.Client.PrepareTxCreateValidator(ctx, client.TxCreateValidatorInput{
-		Validator:         validatorAddr,
-		PubKey:            cosmosed25519.GenPrivKey().PubKey(),
-		Amount:            chain.NewCoin(validatorAmount),
-		Description:       stakingtypes.NewDescription("a", "b", "c", "d", "e"),
-		CommissionRates:   stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-		MinSelfDelegation: sdk.NewInt(1),
-		Base: tx.BaseInput{
-			Signer:   validator,
-			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
-			GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
-		},
-	})
+	msg, err := stakingtypes.NewMsgCreateValidator(
+		validatorAddr,
+		cosmosed25519.GenPrivKey().PubKey(),
+		chain.NewCoin(validatorAmount),
+		stakingtypes.NewDescription("a", "b", "c", "d", "e"),
+		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+		sdk.NewInt(1),
+	)
+	result, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromName(validator.String()).WithFromAddress(validator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
 	require.NoError(t, err)
-	_, err = chain.Client.Broadcast(ctx, txBytes)
-	require.NoError(t, err)
+
+	logger.Get(ctx).Info("Validator creation executed", zap.String("txHash", result.TxHash))
 
 	// Make sure validator has been created
 	validatorModel, err := chain.Client.GetValidator(ctx, validatorAddr)

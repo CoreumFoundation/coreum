@@ -4,10 +4,12 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -22,11 +24,13 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	// Create random delegator wallet
-	delegator := testing.RandomWallet()
+	delegator := chain.RandomWallet()
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(delegator, chain.NewCoin(delegatorInitialBalance)),
+		testing.NewFundedAccount(
+			chain.AccAddressToLegacyWallet(delegator),
+			chain.NewCoin(delegatorInitialBalance)),
 	))
 
 	// Fetch existing validator
@@ -38,19 +42,16 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.NoError(t, err)
 
 	// Delegate coins
-	txBytes, err := chain.Client.PrepareTxSubmitDelegation(ctx, client.TxSubmitDelegationInput{
-		Base: tx.BaseInput{
-			Signer:   delegator,
-			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
-			GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
-		},
-		Delegator: delegator,
-		Validator: valAddress,
-		Amount:    chain.NewCoin(delegateAmount),
-	})
+	msg := stakingtypes.NewMsgDelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
+	result, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromName(delegator.String()).WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
 	require.NoError(t, err)
-	_, err = chain.Client.Broadcast(ctx, txBytes)
-	require.NoError(t, err)
+
+	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", result.TxHash))
 
 	// Make sure coins have been delegated
 	validator, err := chain.Client.GetValidator(ctx, valAddress)

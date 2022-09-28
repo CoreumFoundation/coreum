@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
@@ -77,74 +76,6 @@ func (c Client) PrepareTxSubmitDelegation(ctx context.Context, input TxSubmitDel
 	}
 
 	msg := stakingtypes.NewMsgDelegate(delegatorAddress, input.Validator, input.Amount)
-
-	signedTx, err := c.Sign(ctx, input.Base, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.Encode(signedTx), nil
-}
-
-// TxSubmitUndelegationInput holds input data for PrepareTxSubmitUndelegation
-type TxSubmitUndelegationInput struct {
-	Delegator types.Wallet
-	Validator sdk.ValAddress
-	Amount    sdk.Coin
-
-	Base tx.BaseInput
-}
-
-// PrepareTxSubmitUndelegation creates a transaction to submit an undelegation
-func (c Client) PrepareTxSubmitUndelegation(ctx context.Context, input TxSubmitUndelegationInput) ([]byte, error) {
-	delegatorAddress, err := sdk.AccAddressFromBech32(input.Delegator.Key.Address())
-	if err != nil {
-		return nil, err
-	}
-
-	if err = input.Amount.Validate(); err != nil {
-		return nil, errors.Wrap(err, "amount to undelegate is invalid")
-	}
-
-	msg := stakingtypes.NewMsgUndelegate(delegatorAddress, input.Validator, input.Amount)
-
-	signedTx, err := c.Sign(ctx, input.Base, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.Encode(signedTx), nil
-}
-
-// TxCreateValidatorInput holds input data for PrepareTxCreateValidator
-type TxCreateValidatorInput struct {
-	Validator         sdk.ValAddress
-	PubKey            cryptotypes.PubKey
-	Amount            sdk.Coin
-	Description       stakingtypes.Description
-	CommissionRates   stakingtypes.CommissionRates
-	MinSelfDelegation sdk.Int
-
-	Base tx.BaseInput
-}
-
-// PrepareTxCreateValidator creates a transaction to create a new validator
-func (c Client) PrepareTxCreateValidator(ctx context.Context, input TxCreateValidatorInput) ([]byte, error) {
-	if err := input.Amount.Validate(); err != nil {
-		return nil, errors.Wrap(err, "amount to self-delegate is invalid")
-	}
-
-	msg, err := stakingtypes.NewMsgCreateValidator(
-		input.Validator,
-		input.PubKey,
-		input.Amount,
-		input.Description,
-		input.CommissionRates,
-		input.MinSelfDelegation,
-	)
-	if err != nil {
-		return nil, err
-	}
 
 	signedTx, err := c.Sign(ctx, input.Base, msg)
 	if err != nil {
