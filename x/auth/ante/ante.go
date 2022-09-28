@@ -14,6 +14,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/auth/keeper"
+	deterministicgasante "github.com/CoreumFoundation/coreum/x/deterministicgas/ante"
 	feemodelante "github.com/CoreumFoundation/coreum/x/feemodel/ante"
 )
 
@@ -91,7 +92,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		//   IMPORTANT: If they consumed less, the rest **IS NOT** given to the message handlers for free.
 
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
-		NewSetInfiniteGasMeterDecorator(options.DeterministicGasRequirements),
+		deterministicgasante.NewSetInfiniteGasMeterDecorator(options.DeterministicGasRequirements),
 		authante.NewRejectExtensionOptionsDecorator(),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
@@ -103,10 +104,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
 		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
-		NewAddBaseGasDecorator(infiniteAccountKeeper, options.DeterministicGasRequirements),
+		deterministicgasante.NewAddBaseGasDecorator(infiniteAccountKeeper, options.DeterministicGasRequirements),
 		authante.NewConsumeGasForTxSizeDecorator(infiniteAccountKeeper),
 		authante.NewSigGasConsumeDecorator(infiniteAccountKeeper, options.SigGasConsumer),
-		NewChargeFixedGasDecorator(infiniteAccountKeeper, options.DeterministicGasRequirements),
+		deterministicgasante.NewChargeFixedGasDecorator(infiniteAccountKeeper, options.DeterministicGasRequirements),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil
