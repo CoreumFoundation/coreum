@@ -277,12 +277,12 @@ loop:
 
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for test, it might take a while...")
-
+	gasLimit := uint64(numOfAccounts) * tf.chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	clientCtx := tf.chain.ClientContext.WithKeyring(tf.keyring).WithFromName("faucet").WithFromAddress(tf.address)
 	resp, err := tx.BroadcastTx(
 		ctx,
 		clientCtx,
-		tf.chain.TxFactory().WithKeybase(tf.keyring).WithGas(uint64(numOfAccounts)*tf.chain.GasLimitByMsgs(&banktypes.MsgSend{})),
+		tf.chain.TxFactory().WithKeybase(tf.keyring).WithGas(gasLimit),
 		messages...,
 	)
 	if err != nil {

@@ -103,6 +103,7 @@ import (
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
+	deterministicgastypes "github.com/CoreumFoundation/coreum/x/deterministicgas/types"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -280,6 +281,7 @@ func New(
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
+	bApp.SetRouter(deterministicgastypes.NewDeterministicGasRouter(bApp.Router(), ChosenNetwork.DeterministicGas()))
 
 	keys := sdk.NewKVStoreKeys(
 		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey, stakingtypes.StoreKey,
@@ -587,7 +589,8 @@ func New(
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
-	app.mm.RegisterServices(module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter()))
+	app.mm.RegisterServices(module.NewConfigurator(app.appCodec,
+		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), ChosenNetwork.DeterministicGas()), app.GRPCQueryRouter()))
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	app.sm = module.NewSimulationManager(
@@ -621,15 +624,13 @@ func New(
 
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
-			AccountKeeper:   app.AccountKeeper,
-			BankKeeper:      app.BankKeeper,
-			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-			FeegrantKeeper:  app.FeeGrantKeeper,
-			FeeModelKeeper:  app.FeeModelKeeper,
-			GasRequirements: ante.DeterministicGasRequirements{
-				BankSend: ChosenNetwork.DeterministicGas().BankSend,
-			},
-			WasmTXCounterStoreKey: keys[wasm.StoreKey],
+			DeterministicGasRequirements: ChosenNetwork.DeterministicGas(),
+			AccountKeeper:                app.AccountKeeper,
+			BankKeeper:                   app.BankKeeper,
+			SignModeHandler:              encodingConfig.TxConfig.SignModeHandler(),
+			FeegrantKeeper:               app.FeeGrantKeeper,
+			FeeModelKeeper:               app.FeeModelKeeper,
+			WasmTXCounterStoreKey:        keys[wasm.StoreKey],
 		},
 	)
 	if err != nil {
