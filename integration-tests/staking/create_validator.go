@@ -45,6 +45,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		sdk.NewInt(1),
 	)
+	require.NoError(t, err)
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromName(validator.String()).WithFromAddress(validator),
