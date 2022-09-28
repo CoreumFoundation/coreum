@@ -69,7 +69,7 @@ func (c Chain) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
 // It panics if unsupported message type specified.
 func (c Chain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	deterministicGas := c.NetworkConfig.Fee.DeterministicGas
-	var totalGasRequired uint64 = 0
+	var totalGasRequired uint64
 	for _, msg := range msgs {
 		msgGas, exists := deterministicGas.GasRequiredByMessage(msg)
 		if !exists {
