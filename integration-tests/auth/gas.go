@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -21,7 +22,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 		1,
 		sdk.NewInt(100),
 	))
@@ -34,7 +35,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   sender,
-			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+			GasLimit: chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 			GasPrice: chain.NewDecCoin(gasPriceWithMaxDiscount.Mul(sdk.MustNewDecFromStr("0.5"))),
 		},
 		Sender:   sender,
@@ -45,7 +46,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Broadcast should fail because gas price is too low for transaction to enter mempool
 	_, err = coredClient.Broadcast(ctx, txBytes)
-	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee))
+	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee), err)
 }
 
 // TestNoFee verifies that transaction fails if sender does not offer fee at all
@@ -54,7 +55,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 		1,
 		sdk.NewInt(100),
 	))
@@ -66,7 +67,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   sender,
-			GasLimit: chain.NetworkConfig.Fee.DeterministicGas.BankSend,
+			GasLimit: chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 		},
 		Sender:   sender,
 		Receiver: sender,
@@ -76,7 +77,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Broadcast should fail because gas price is too low for transaction to enter mempool
 	_, err = coredClient.Broadcast(ctx, txBytes)
-	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee))
+	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee), err)
 }
 
 // TestGasLimitHigherThanMaxBlockGas verifies that transaction requiring more gas than MaxBlockGas fails
