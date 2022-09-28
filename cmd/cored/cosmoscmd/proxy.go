@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const TunnelRerunDelay = 5 * time.Second
+const tunnelRerunDelay = 5 * time.Second
 
 // startProxyForTunneledPeers hooks the `appd start` command to start an HTTP proxy server and HTTP proxy clients
 // for each node that needs HTTP tunneling.
@@ -47,7 +47,7 @@ func startProxyForTunneledPeers(clientCtx client.Context, cmd *cobra.Command) {
 			peer := peer
 			go func() {
 				//nolint:errcheck
-				ctxticker.DoNow(ctx, TunnelRerunDelay, func() error {
+				ctxticker.DoNow(ctx, tunnelRerunDelay, func() error {
 					serverCtx.Logger.Info("Starting chisel client", "tunnelAddress", peer.Address, "localPort", peer.LocalPort)
 					err := xchisel.StartClient(ctx, peer.Address, peer.LocalPort, "26656")
 					if err != nil {
@@ -66,7 +66,7 @@ func startProxyForTunneledPeers(clientCtx client.Context, cmd *cobra.Command) {
 	if gitpod.IsOnGitpod() {
 		go func() {
 			//nolint:errcheck
-			ctxticker.DoNow(ctx, TunnelRerunDelay, func() error {
+			ctxticker.DoNow(ctx, tunnelRerunDelay, func() error {
 				serverCtx.Logger.Info("Starting chisel server", "port", xchisel.DefaultServerPort)
 				err := xchisel.StartServer(ctx, xchisel.DefaultServerPort)
 				if err != nil {
