@@ -49,7 +49,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromName(validator.String()).WithFromAddress(validator),
-		chain.TxFactory(),
+		chain.TxFactory().WithGas(chain.NetworkConfig.Fee.DeterministicGas.FixedGas),
 		msg,
 	)
 	require.NoError(t, err)
