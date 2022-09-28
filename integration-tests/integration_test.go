@@ -277,6 +277,7 @@ loop:
 
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for test, it might take a while...")
+	// FIXME (wojtek): use estimation once it is available in `tx` package
 	gasLimit := uint64(numOfAccounts) * tf.chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	clientCtx := tf.chain.ClientContext.WithKeyring(tf.keyring).WithFromName("faucet").WithFromAddress(tf.address)
 	resp, err := tx.BroadcastTx(
