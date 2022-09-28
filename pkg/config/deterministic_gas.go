@@ -10,12 +10,13 @@ import (
 // DefaultDeterministicGasRequirements returns default config for deterministic gas
 func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 	return DeterministicGasRequirements{
-		FixedGas:       50000,
-		FreeBytes:      2048,
-		FreeSignatures: 1,
-		BankSend:       30000,
-		Delegate:       51000,
-		Undelegate:     51000,
+		FixedGas:        50000,
+		FreeBytes:       2048,
+		FreeSignatures:  1,
+		BankSend:        30000,
+		Delegate:        51000,
+		Undelegate:      51000,
+		CreateValidator: 50000,
 	}
 }
 
@@ -35,9 +36,14 @@ type DeterministicGasRequirements struct {
 
 	BankSend uint64
 
+	// Delegate is the fixed gas for the Delegate transaction
 	Delegate uint64
 
+	// Undelegate is the fixed gas for the Undelegate transaction
 	Undelegate uint64
+
+	// CreateValidator is the fixed gas for the Undelegate transaction
+	CreateValidator uint64
 }
 
 // GasRequiredByMessage returns gas required by a sdk.Msg.
@@ -54,6 +60,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.Delegate, true
 	case *stakingtypes.MsgUndelegate:
 		return dgr.Undelegate, true
+	case *stakingtypes.MsgCreateValidator:
+		return dgr.CreateValidator, true
 	default:
 		return 0, false
 	}
