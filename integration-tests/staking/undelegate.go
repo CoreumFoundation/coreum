@@ -56,9 +56,11 @@ func TestUndelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", result.TxHash))
 
 	// Make sure coins have been delegated
-	validator, err := chain.Client.GetValidator(ctx, valAddress)
+	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: valAddress.String(),
+	})
 	require.NoError(t, err)
-	require.Equal(t, validators[0].Tokens.Add(delegateAmount), validator.Tokens)
+	require.Equal(t, validators[0].Tokens.Add(delegateAmount), resp.Validator.Tokens)
 
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
@@ -78,7 +80,9 @@ func TestUndelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	time.Sleep(unbondingTime)
 
 	// Make sure coins have been undelegated
-	validator, err = chain.Client.GetValidator(ctx, valAddress)
+	resp, err = chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: valAddress.String(),
+	})
 	require.NoError(t, err)
-	require.Equal(t, validators[0].Tokens, validator.Tokens)
+	require.Equal(t, validators[0].Tokens, resp.Validator.Tokens)
 }

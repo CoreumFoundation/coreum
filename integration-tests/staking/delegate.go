@@ -54,7 +54,9 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", result.TxHash))
 
 	// Make sure coins have been delegated
-	validator, err := chain.Client.GetValidator(ctx, valAddress)
+	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: valAddress.String(),
+	})
 	require.NoError(t, err)
-	require.Equal(t, validators[0].Tokens.Add(delegateAmount), validator.Tokens)
+	require.Equal(t, validators[0].Tokens.Add(delegateAmount), resp.Validator.Tokens)
 }

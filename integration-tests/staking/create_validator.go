@@ -56,7 +56,9 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	logger.Get(ctx).Info("Validator creation executed", zap.String("txHash", result.TxHash))
 
 	// Make sure validator has been created
-	validatorModel, err := chain.Client.GetValidator(ctx, validatorAddr)
+	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validatorAddr.String(),
+	})
 	require.NoError(t, err)
-	require.Equal(t, validatorAmount, validatorModel.Tokens)
+	require.Equal(t, validatorAmount, resp.Validator.Tokens)
 }

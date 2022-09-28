@@ -43,18 +43,6 @@ func (c Client) GetValidators(ctx context.Context) ([]stakingtypes.Validator, er
 	return resp.Validators, nil
 }
 
-// GetValidator returns validator by the given address
-func (c Client) GetValidator(ctx context.Context, addr sdk.ValAddress) (*stakingtypes.Validator, error) {
-	resp, err := c.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
-		ValidatorAddr: addr.String(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Validator, nil
-}
-
 // TxSubmitDelegationInput holds input data for PrepareTxSubmitDelegation
 type TxSubmitDelegationInput struct {
 	Delegator types.Wallet
