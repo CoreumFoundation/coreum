@@ -88,9 +88,9 @@ func (s *rootOptions) apply(options ...Option) {
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd(
 	appName,
-	accountAddressPrefix,
 	defaultNodeHome,
 	defaultChainID string,
+	network config.Network,
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
 	options ...Option,
@@ -98,7 +98,7 @@ func NewRootCmd(
 	rootOptions := newRootOptions(options...)
 
 	// Set config for prefixes
-	config.SetPrefixes(accountAddressPrefix)
+	network.SetSDKConfig()
 
 	encodingConfig := config.NewEncodingConfig(moduleBasics)
 	initClientCtx := client.Context{}.
