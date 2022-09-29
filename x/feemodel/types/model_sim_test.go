@@ -24,9 +24,9 @@ func ExampleGasPricePerBlockGas() {
 func ExampleGasPriceOverTime() {
 	var (
 		blockGas []int64
-		shortEMA int64 = 0
-		longEMA  int64 = 0
-		params         = feeModelSim.Params()
+		shortEMA int64
+		longEMA  int64
+		params   = feeModelSim.Params()
 	)
 	for i := int64(0.4 * float64(params.EscalationStartBlockGas)); i <= params.MaxBlockGas; i += 1000 {
 		blockGas = append(blockGas, i)
