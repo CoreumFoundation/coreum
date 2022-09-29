@@ -45,6 +45,11 @@ const (
 	TokenSymbolDev  string = "ducore"
 )
 
+const (
+	// coreBIP44CoinType is the CORE coin type as defined in SLIP44 (https://github.com/satoshilabs/slips/blob/master/slip-0044.md)
+	coreBIP44CoinType uint32 = 111999
+)
+
 var (
 	//go:embed networks/coreum-devnet-1/validator-0.json
 	coreumDevnet1Validator0 json.RawMessage
@@ -81,6 +86,7 @@ func init() {
 	list := []NetworkConfig{
 		{
 			ChainID:       Mainnet,
+			Enabled:       false,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
 			TokenSymbol:   TokenSymbolMain,
@@ -393,9 +399,18 @@ func (n Network) SaveGenesis(homeDir string) error {
 	return errors.Wrap(err, "unable to write genesis bytes to file")
 }
 
-// SetupPrefixes sets the global account prefixes config for cosmos sdk.
-func (n Network) SetupPrefixes() {
-	SetPrefixes(n.addressPrefix)
+func (n Network) SetSDKConfig() {
+	config := sdk.GetConfig()
+
+	// Set address & public key prefixes
+	config.SetBech32PrefixForAccount(n.addressPrefix, n.addressPrefix+"pub")
+	config.SetBech32PrefixForValidator(n.addressPrefix+"valoper", n.addressPrefix+"valoperpub")
+	config.SetBech32PrefixForConsensusNode(n.addressPrefix+"valcons", n.addressPrefix+"valconspub")
+
+	// Set BIP44 coin type corresponding to CORE
+	config.SetCoinType(coreBIP44CoinType)
+
+	config.Seal()
 }
 
 // AddressPrefix returns the address prefix to be used in network config

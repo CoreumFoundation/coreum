@@ -23,7 +23,7 @@ import (
 
 func init() {
 	n := testNetwork()
-	n.SetupPrefixes()
+	n.SetSDKConfig()
 }
 
 var feeConfig = config.FeeConfig{

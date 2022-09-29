@@ -21,9 +21,9 @@ func main() {
 	}
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
-		network.AddressPrefix(),
 		app.DefaultNodeHome,
 		string(network.ChainID()),
+		network,
 		app.ModuleBasics,
 		app.New,
 	)

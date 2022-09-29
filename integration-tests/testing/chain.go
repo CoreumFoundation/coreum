@@ -39,8 +39,10 @@ func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig
 // RandomWallet generates a wallet for the chain with random name and
 // private key and stores mnemonic in Keyring.
 func (c ChainContext) RandomWallet() sdk.AccAddress {
+	hdPath := hd.CreateHDPath(sdk.GetConfig().GetCoinType(), 0, 0).String()
+
 	// Generate and store a new mnemonic using temporary keyring
-	_, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, "", "", hd.Secp256k1)
+	_, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, hdPath, "", hd.Secp256k1)
 	if err != nil {
 		panic(err)
 	}
@@ -51,9 +53,12 @@ func (c ChainContext) RandomWallet() sdk.AccAddress {
 
 // ImportMnemonic imports the mnemonic into the clientContext Keyring and return its address.
 func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
+	hdPath := hd.CreateHDPath(sdk.GetConfig().GetCoinType(), 0, 0).String()
+
 	c.keyringMu.Lock()
 	defer c.keyringMu.Unlock()
-	keyInfo, err := c.ClientContext.Keyring().NewAccount(uuid.New().String(), mnemonic, "", "", hd.Secp256k1)
+
+	keyInfo, err := c.ClientContext.Keyring().NewAccount(uuid.New().String(), mnemonic, "", hdPath, hd.Secp256k1)
 	if err != nil {
 		panic(err)
 	}
