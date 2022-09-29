@@ -2,7 +2,6 @@ package testing
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -158,7 +157,7 @@ func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.P
 		case <-ctx.Done():
 			return govtypes.Proposal{}, ctx.Err()
 		case <-timeout.C:
-			return govtypes.Proposal{}, errors.New(fmt.Sprintf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus))
+			return govtypes.Proposal{}, errors.Errorf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus)
 
 		default:
 			proposal, err := g.getProposal(ctx, proposalID)
@@ -171,7 +170,7 @@ func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.P
 			}
 		}
 	}
-	return govtypes.Proposal{}, errors.New(fmt.Sprintf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus))
+	return govtypes.Proposal{}, errors.Errorf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus)
 }
 
 func (g Governance) getProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {

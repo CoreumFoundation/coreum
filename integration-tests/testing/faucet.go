@@ -4,7 +4,6 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/pkg/client"
@@ -68,21 +67,13 @@ func (f Faucet) FundAccounts(ctx context.Context, accountsToFund ...FundedAccoun
 
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for test, it might take a while...")
-
-	var err error
-	if f.fundingWallet.AccountNumber == 0 && f.fundingWallet.AccountSequence == 0 {
-		f.fundingWallet.AccountNumber, f.fundingWallet.AccountSequence, err = f.client.GetNumberSequence(ctx, f.fundingWallet.Address().String())
-		if err != nil {
-			return errors.Wrapf(err, "failed to get funding wallet sequence")
-		}
-	}
-
+	gasLimit := f.networkConfig.Fee.DeterministicGas.BankSend + f.networkConfig.Fee.DeterministicGas.FixedGas
 	for _, toFund := range accountsToFund {
 		// FIXME (wojtek): Fund all accounts in single tx once new "client" is ready
 		encodedTx, err := f.client.PrepareTxBankSend(ctx, client.TxBankSendInput{
 			Base: tx.BaseInput{
 				Signer:   f.fundingWallet,
-				GasLimit: f.networkConfig.Fee.DeterministicGas.BankSend,
+				GasLimit: gasLimit,
 				GasPrice: gasPrice,
 			},
 			Sender:   f.fundingWallet,
