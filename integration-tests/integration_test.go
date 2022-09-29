@@ -28,6 +28,7 @@ import (
 	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/grpc"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
@@ -136,7 +137,7 @@ func newChain(ctx context.Context, cfg testingConfig) (coreumtesting.Chain, erro
 
 	return coreumtesting.Chain{
 		Client:        coredClient,
-		ClientContext: clientContext,
+		Context:       coreumtesting.NewContext(clientContext, grpc.NewClient(clientContext)),
 		NetworkConfig: cfg.NetworkConfig,
 		Faucet:        faucet,
 		Keyring:       keyring.NewInMemory(),

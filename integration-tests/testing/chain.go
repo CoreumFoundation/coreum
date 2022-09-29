@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"reflect"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,8 +17,8 @@ import (
 
 // Chain holds network and client for the blockchain
 type Chain struct {
-	Client        client.Client
-	ClientContext cosmosclient.Context
+	Client  client.Client
+	Context Context
 
 	NetworkConfig config.NetworkConfig
 	Faucet        Faucet
@@ -51,7 +50,7 @@ func (c Chain) TxFactory() tx.Factory {
 	return tx.Factory{}.
 		WithKeybase(c.Keyring).
 		WithChainID(string(c.NetworkConfig.ChainID)).
-		WithTxConfig(c.ClientContext.TxConfig).
+		WithTxConfig(c.Context.TxConfig()).
 		WithGasPrices(c.NewDecCoin(c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice).String())
 }
 
