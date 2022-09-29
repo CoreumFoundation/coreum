@@ -102,13 +102,48 @@ func Test(t *testing.T) {
 }
 
 type testingConfig struct {
-	RPCAddress      string
-	NetworkConfig   config.NetworkConfig
-	FundingPrivKey  types.Secp256k1PrivateKey
-	StakerMnemonics []string
-	Filter          *regexp.Regexp
-	LogFormat       logger.Format
-	LogVerbose      bool
+	CoredAddress   string
+	NetworkConfig  config.NetworkConfig
+	FundingPrivKey types.Secp256k1PrivateKey
+	Filter         *regexp.Regexp
+	LogFormat      logger.Format
+	LogVerbose     bool
+}
+
+func newChain(ctx context.Context, cfg testingConfig) (coreumtesting.Chain, error) {
+	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
+	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.CoredAddress)
+	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
+	rpcClient, err := cosmosclient.NewClientFromNode(cfg.CoredAddress)
+	if err != nil {
+		panic(err)
+	}
+	clientContext := config.NewClientContext(app.ModuleBasics).
+		WithChainID(string(cfg.NetworkConfig.ChainID)).
+		WithClient(rpcClient).
+		WithBroadcastMode(flags.BroadcastBlock)
+
+	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
+	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = coredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
+	if err != nil {
+		return coreumtesting.Chain{}, errors.Wrapf(err, "failed to get funding wallet sequence")
+	}
+
+	faucet := &testingFaucet{
+		client:        coredClient,
+		networkConfig: cfg.NetworkConfig,
+		muCh:          make(chan struct{}, 1),
+		fundingWallet: fundingWallet,
+	}
+	faucet.muCh <- struct{}{}
+
+	return coreumtesting.Chain{
+		Client:        coredClient,
+		ClientContext: clientContext,
+		NetworkConfig: cfg.NetworkConfig,
+		Faucet:        faucet,
+		Keyring:       keyring.NewInMemory(),
+	}, nil
 }
 
 func newContext(t *testing.T, cfg testingConfig) context.Context {

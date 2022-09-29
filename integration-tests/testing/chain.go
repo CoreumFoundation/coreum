@@ -82,16 +82,17 @@ func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
 // It panics if unsupported message type specified.
 func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
-	var totalGasRequired uint64 = 0
+	deterministicGas := c.NetworkConfig.Fee.DeterministicGas
+	var totalGasRequired uint64
 	for _, msg := range msgs {
-		msgGas := c.NetworkConfig.Fee.DeterministicGas.GasRequiredByMessage(msg)
-		if msgGas == 0 {
+		msgGas, exists := deterministicGas.GasRequiredByMessage(msg)
+		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
 		totalGasRequired += msgGas
 	}
 
-	return totalGasRequired
+	return totalGasRequired + deterministicGas.FixedGas
 }
 
 // AccAddressToLegacyWallet is temporary method to keep compatibility between
