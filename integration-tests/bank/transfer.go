@@ -50,6 +50,9 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 				sdk.NewInt(100),
 			)),
 		),
+	))
+
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			chain.AccAddressToLegacyWallet(receiver),
 			chain.NewCoin(sdk.NewInt(10)),
