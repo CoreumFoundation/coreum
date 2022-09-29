@@ -1,0 +1,49 @@
+name: release
+on:
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Go version used to build crust tool
+        run: go version
+      - name: Setup go cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Set docker cache
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+      - name: Checkout coreum
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: coreum
+      - name: Checkout crust
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/crust
+          path: crust
+      - name: Set up crust
+        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+      - name: Build cored
+        run: crust build/cored --log-format=yaml
+      - name: Extract tag name
+        id: tag
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: return context.ref.replace(/refs\/tags\//, '');
+      - name: Create asset
+        run: ln crust/bin/.cache/docker/cored/cored cored-${{ steps.tag.outputs.result }}-linux-amd64
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: cored-${{ steps.tag.outputs.result }}-linux-amd64
