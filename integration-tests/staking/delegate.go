@@ -2,6 +2,7 @@ package staking
 
 import (
 	"context"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -13,13 +14,13 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TestDelegate checks that delegation works correctly
+// TestDelegate checks that delegation and undelegation works correctly
 func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	delegateAmount := sdk.NewInt(100)
 	delegatorInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
-		1,
+		2,
 		delegateAmount,
 	)
 
@@ -30,7 +31,8 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			chain.AccAddressToLegacyWallet(delegator),
-			chain.NewCoin(delegatorInitialBalance)),
+			chain.NewCoin(delegatorInitialBalance),
+		),
 	))
 
 	// Fetch existing validator
@@ -42,12 +44,12 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.NoError(t, err)
 
 	// Delegate coins
-	msg := stakingtypes.NewMsgDelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
+	delegateMsg := stakingtypes.NewMsgDelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromName(delegator.String()).WithFromAddress(delegator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
-		msg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
+		delegateMsg,
 	)
 	require.NoError(t, err)
 
@@ -64,4 +66,33 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, validators[0].Tokens.Add(delegateAmount), resp.Validator.Tokens)
+
+	// Undelegate coins
+	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
+	result, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromName(delegator.String()).WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
+		undelegateMsg,
+	)
+	require.NoError(t, err)
+
+	logger.Get(ctx).Info("Undelegation executed", zap.String("txHash", result.TxHash))
+
+	// Wait for undelegation
+	unbondingTime, err := time.ParseDuration(chain.NetworkConfig.StakingConfig.UnbondingTime)
+	require.NoError(t, err)
+	time.Sleep(unbondingTime + time.Second*2)
+
+	// Check delegator balance
+	delegatorBalance, err = chain.Client.QueryBankBalances(ctx, chain.AccAddressToLegacyWallet(delegator))
+	require.NoError(t, err)
+	require.Equal(t, delegatorInitialBalance, delegatorBalance[chain.NetworkConfig.TokenSymbol].Amount)
+
+	// Make sure coins have been undelegated
+	resp, err = chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: valAddress.String(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, validators[0].Tokens, resp.Validator.Tokens)
 }

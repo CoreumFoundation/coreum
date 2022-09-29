@@ -268,16 +268,12 @@ type TxBankSendInput struct {
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
 func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(input.Sender.Key.Address())
-	if err != nil {
-		return nil, err
-	}
+	must.OK(err)
 
 	toAddress, err := sdk.AccAddressFromBech32(input.Receiver.Key.Address())
-	if err != nil {
-		return nil, err
-	}
+	must.OK(err)
 
-	if err = input.Amount.Validate(); err != nil {
+	if err := input.Amount.Validate(); err != nil {
 		return nil, errors.Wrap(err, "amount to send is invalid")
 	}
 

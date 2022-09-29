@@ -30,7 +30,6 @@ func Tests() testing.TestSet {
 			wasm.TestBankSendWasmContract,
 			feemodel.TestQueryingMinGasPrice,
 			staking.TestDelegate,
-			staking.TestUndelegate,
 			staking.TestCreateValidator,
 		},
 	}
