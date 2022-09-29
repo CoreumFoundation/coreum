@@ -68,7 +68,7 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 
 	msg, err := govtypes.NewMsgSubmitProposal(content, govParams.DepositParams.MinDeposit, proposer)
 	if err != nil {
-		return 0, err
+		return 0, errors.WithStack(err)
 	}
 
 	txf := g.chainContext.TxFactory().
@@ -90,7 +90,7 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 	}
 	proposalID, err := strconv.Atoi(proposalIDStr)
 	if err != nil {
-		return 0, err
+		return 0, errors.WithStack(err)
 	}
 
 	return proposalID, nil
@@ -115,18 +115,13 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 			Option:     option,
 		}
 
-		txf := g.chainContext.TxFactory()
-		txf = txf.WithGas(g.chainContext.GasLimitByMsgs(msg))
+		txf := g.chainContext.TxFactory().
+			WithGas(g.chainContext.GasLimitByMsgs(msg))
 
 		clientCtx := g.chainContext.ClientContext.
 			WithBroadcastMode(flags.BroadcastSync)
-		res, err := tx.BroadcastTx(
-			ctx,
-			clientCtx.
-				WithFromAddress(voter),
-			txf,
-			msg,
-		)
+
+		res, err := tx.BroadcastTx(ctx, clientCtx.WithFromAddress(voter), txf, msg)
 		if err != nil {
 			return err
 		}
@@ -135,12 +130,9 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 
 	// await for the first error
 	for _, txHash := range txHashes {
-		res, err := tx.AwaitTx(ctx, g.chainContext.ClientContext, txHash)
+		_, err := tx.AwaitTx(ctx, g.chainContext.ClientContext, txHash)
 		if err != nil {
 			return err
-		}
-		if res.TxResult.Code != 0 {
-			return errors.Errorf("the vote tx is failed, %s", string(res.TxResult.Data))
 		}
 	}
 
@@ -157,8 +149,9 @@ func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.P
 	}
 
 	timeout := time.NewTimer(govParams.VotingParams.VotingPeriod + time.Second*10)
-
+	defer timeout.Stop()
 	ticker := time.NewTicker(time.Millisecond * 250)
+	defer ticker.Stop()
 	for range ticker.C {
 		select {
 		case <-ctx.Done():
@@ -178,11 +171,6 @@ func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.P
 		}
 	}
 	return govtypes.Proposal{}, errors.New(fmt.Sprintf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus))
-}
-
-// GetVotersAccounts returns the configured voting accounts.
-func (g Governance) GetVotersAccounts() []sdk.AccAddress {
-	return g.stakerAccounts
 }
 
 func (g Governance) getParams(ctx context.Context) (govtypes.Params, error) {
@@ -205,26 +193,26 @@ func queryGovParams(ctx context.Context, govClient govtypes.QueryClient) (govtyp
 		ParamsType: govtypes.ParamVoting,
 	})
 	if err != nil {
-		return govtypes.Params{}, err
+		return govtypes.Params{}, errors.WithStack(err)
 	}
 
 	depositParams, err := govClient.Params(ctx, &govtypes.QueryParamsRequest{
 		ParamsType: govtypes.ParamDeposit,
 	})
 	if err != nil {
-		return govtypes.Params{}, err
+		return govtypes.Params{}, errors.WithStack(err)
 	}
 
-	tailyParams, err := govClient.Params(ctx, &govtypes.QueryParamsRequest{
+	taillyParams, err := govClient.Params(ctx, &govtypes.QueryParamsRequest{
 		ParamsType: govtypes.ParamTallying,
 	})
 	if err != nil {
-		return govtypes.Params{}, err
+		return govtypes.Params{}, errors.WithStack(err)
 	}
 
 	return govtypes.Params{
 		VotingParams:  votingParams.VotingParams,
 		DepositParams: depositParams.DepositParams,
-		TallyParams:   tailyParams.TallyParams,
+		TallyParams:   taillyParams.TallyParams,
 	}, nil
 }
