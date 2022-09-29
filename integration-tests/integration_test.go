@@ -90,7 +90,7 @@ func Test(t *testing.T) {
 	testSet := tests.Tests()
 	ctx := newContext(t, cfg)
 
-	chain, err := newChain(ctx, cfg)
+	chain, err := newChain(cfg)
 	require.NoError(t, err)
 
 	testCases := collectTestCases(chain, testSet, cfg.Filter)
@@ -111,7 +111,7 @@ type testingConfig struct {
 	LogVerbose     bool
 }
 
-func newChain(ctx context.Context, cfg testingConfig) (coreumtesting.Chain, error) {
+func newChain(cfg testingConfig) (coreumtesting.Chain, error) {
 	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
 	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.CoredAddress)
 	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
@@ -119,16 +119,11 @@ func newChain(ctx context.Context, cfg testingConfig) (coreumtesting.Chain, erro
 	if err != nil {
 		panic(err)
 	}
+
 	clientContext := config.NewClientContext(app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
 		WithClient(rpcClient).
 		WithBroadcastMode(flags.BroadcastBlock)
-
-	fundingWallet := types.Wallet{Key: cfg.FundingPrivKey}
-	fundingWallet.AccountNumber, fundingWallet.AccountSequence, err = coredClient.GetNumberSequence(ctx, cfg.FundingPrivKey.Address())
-	if err != nil {
-		return coreumtesting.Chain{}, errors.Wrapf(err, "failed to get funding wallet sequence")
-	}
 
 	chain := coreumtesting.Chain{
 		Client:        coredClient,
@@ -137,11 +132,16 @@ func newChain(ctx context.Context, cfg testingConfig) (coreumtesting.Chain, erro
 		Keyring:       keyring.NewInMemory(),
 	}
 
-	faucet, err := newTestingFaucet(cfg, chain)
+	faucetPrivKey := &cosmossecp256k1.PrivKey{Key: cfg.FundingPrivKey}
+	err = chain.Keyring.ImportPrivKey("faucet", crypto.EncryptArmorPrivKey(faucetPrivKey, "dummy", faucetPrivKey.Type()), "dummy")
 	if err != nil {
-		return coreumtesting.Chain{}, err
+		return coreumtesting.Chain{}, errors.WithStack(err)
 	}
 
+	faucet := newTestingFaucet(
+		clientContext.WithFromName("faucet").WithFromAddress(sdk.AccAddress(faucetPrivKey.PubKey().Address())),
+		chain,
+	)
 	chain.Faucet = faucet
 
 	return chain, nil
@@ -188,32 +188,21 @@ type fundingRequest struct {
 	FundedCh       chan error
 }
 
-func newTestingFaucet(cfg testingConfig, chain coreumtesting.Chain) (*testingFaucet, error) {
-	privKey := &cosmossecp256k1.PrivKey{Key: cfg.FundingPrivKey}
-	keyringDB := keyring.NewInMemory()
-	err := keyringDB.ImportPrivKey("faucet", crypto.EncryptArmorPrivKey(privKey, "dummy", privKey.Type()), "dummy")
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
+func newTestingFaucet(clientCtx cosmosclient.Context, chain coreumtesting.Chain) *testingFaucet {
 	faucet := &testingFaucet{
-		chain:         chain,
-		keyring:       keyringDB,
-		address:       sdk.AccAddress(privKey.PubKey().Address()),
-		networkConfig: cfg.NetworkConfig,
-		queue:         make(chan fundingRequest),
-		muCh:          make(chan struct{}, 1),
+		clientCtx: clientCtx,
+		chain:     chain,
+		queue:     make(chan fundingRequest),
+		muCh:      make(chan struct{}, 1),
 	}
 	faucet.muCh <- struct{}{}
-	return faucet, err
+	return faucet
 }
 
 type testingFaucet struct {
-	chain         coreumtesting.Chain
-	keyring       keyring.Keyring
-	address       sdk.AccAddress
-	networkConfig config.NetworkConfig
-	queue         chan fundingRequest
+	clientCtx cosmosclient.Context
+	chain     coreumtesting.Chain
+	queue     chan fundingRequest
 
 	// muCh is used to serve the same purpose as `sync.Mutex` to protect `fundingWallet` against being used
 	// to broadcast many transactions in parallel by different integration tests. The difference between this and `sync.Mutex`
@@ -222,17 +211,37 @@ type testingFaucet struct {
 }
 
 func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...coreumtesting.FundedAccount) (retErr error) {
+	const (
+		maxAccountsPerRequest = 20
+		requestsPerTx         = 20
+		timeoutDuration       = 100 * time.Millisecond
+	)
+
+	if len(accountsToFund) > maxAccountsPerRequest {
+		return errors.Errorf("the number of accounts to fund (%d) is greater than the allowed maximu (%d)", len(accountsToFund), maxAccountsPerRequest)
+	}
+
 	req := fundingRequest{
 		AccountsToFund: accountsToFund,
 		FundedCh:       make(chan error, 1),
 	}
 
-	requests := make([]fundingRequest, 0, 20)
+	// This `select` block is essential for understanding how the algorithm works.
+	// It decides if the caller of the function is the leader of the transaction or just a regular participant.
+	// There are 3 possible scenarios:
+	// - `<-tf.muCh` succeeds - the caller becomes a leader of the transaction. Its responsibility is to collect requests from
+	//    other participants, broadcast transaction and await it.
+	// - `tf.queue <- req` succeeds - the caller becomes a participant and his request was accepted by the leader, accounts will be funded in coming block
+	//   Caller waits until `<-req.FundedCh` succeeds, meaning that accounts were successfully funded or process failed.
+	// - none of the above - meaning that current leader finished the process of collecting requests from participants and now
+	//   transaction is broadcasted or awaited. Once it is finished `muCh` is unlocked and another caller will become a new leader
+	//   accepting requests from other participants again.
 
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	case tf.queue <- req:
+		// There is a leader who accepted this request. Now we must wait for transaction to be included in a block.
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -240,35 +249,51 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 			return err
 		}
 	case <-tf.muCh:
-		defer func() {
-			tf.muCh <- struct{}{}
-			for _, req := range requests {
-				req.FundedCh <- retErr
-			}
-		}()
+		// This call is a leader, it will collect requests from participants and broadcast transaction.
 	}
 
+	// Code below is executed by the leader.
+
+	requests := make([]fundingRequest, 0, requestsPerTx)
+
+	defer func() {
+		// After transaction is broadcasted we unlock `muCh` so anothet leader for next transaction might be selected
+		tf.muCh <- struct{}{}
+
+		// If leader got an error during broadcasting, that error is propagated to all the other participants.
+		for _, req := range requests {
+			req.FundedCh <- retErr
+		}
+	}()
+
+	// Leader adds hiw own request to the batch
 	requests = append(requests, req)
 	numOfAccounts := len(req.AccountsToFund)
-	timeout := time.After(100 * time.Millisecond)
+
+	// In the loop, we wait a moment to give other participants to join.
+	timeout := time.After(timeoutDuration)
 loop:
-	for numOfAccounts < cap(requests) {
+	for len(requests) < cap(requests) {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-timeout:
+			// We close the window when other participants might join the batch.
+			// If someone comes after timeout they must wait for next leader.
 			break loop
 		case req := <-tf.queue:
+			// Request from other participant is accepted and added to the batch.
 			requests = append(requests, req)
 			numOfAccounts += len(req.AccountsToFund)
 		}
 	}
 
+	// All requests are collected, let's make a transaction
 	messages := make([]sdk.Msg, 0, numOfAccounts)
 	for _, req := range requests {
 		for _, acc := range req.AccountsToFund {
 			messages = append(messages, &banktypes.MsgSend{
-				FromAddress: tf.address.String(),
+				FromAddress: tf.clientCtx.FromAddress.String(),
 				ToAddress:   acc.Wallet.Key.Address(),
 				Amount:      sdk.NewCoins(acc.Amount),
 			})
@@ -279,17 +304,18 @@ loop:
 	log.Info("Funding accounts for test, it might take a while...")
 	// FIXME (wojtek): use estimation once it is available in `tx` package
 	gasLimit := uint64(numOfAccounts) * tf.chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	clientCtx := tf.chain.ClientContext.WithKeyring(tf.keyring).WithFromName("faucet").WithFromAddress(tf.address)
+
+	// Transaction is broadcasted and awaited
 	resp, err := tx.BroadcastTx(
 		ctx,
-		clientCtx,
-		tf.chain.TxFactory().WithKeybase(tf.keyring).WithGas(gasLimit),
+		tf.clientCtx,
+		tf.chain.TxFactory().WithGas(gasLimit),
 		messages...,
 	)
 	if err != nil {
 		return err
 	}
-	if _, err := tx.AwaitTx(ctx, clientCtx, resp.TxHash); err != nil {
+	if _, err := tx.AwaitTx(ctx, tf.clientCtx, resp.TxHash); err != nil {
 		return err
 	}
 	log.Info("Test accounts funded")
