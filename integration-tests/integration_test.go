@@ -212,7 +212,7 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 	const maxAccountsPerRequest = 20
 
 	if len(accountsToFund) > maxAccountsPerRequest {
-		return errors.Errorf("the number of accounts to fund (%d) is greater than the allowed maximu (%d)", len(accountsToFund), maxAccountsPerRequest)
+		return errors.Errorf("the number of accounts to fund (%d) is greater than the allowed maximum (%d)", len(accountsToFund), maxAccountsPerRequest)
 	}
 
 	req := fundingRequest{
@@ -256,7 +256,7 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 	}
 
 	defer func() {
-		// After transaction is broadcasted we unlock `muCh` so anothet leader for next transaction might be selected
+		// After transaction is broadcasted we unlock `muCh` so another leader for next transaction might be selected
 		tf.muCh <- struct{}{}
 
 		// If leader got an error during broadcasting, that error is propagated to all the other participants.
@@ -282,7 +282,7 @@ func (tf *testingFaucet) collectRequests(ctx context.Context, leaderReq fundingR
 
 	// In the loop, we wait a moment to give other participants to join.
 	timeout := time.After(timeoutDuration)
-	for len(requests) < cap(requests) {
+	for len(requests) < requestsPerTx {
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
