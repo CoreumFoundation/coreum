@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -36,11 +38,13 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	))
 
 	// Fetch existing validator
-	validators, err := chain.Client.GetValidators(ctx)
+	validatorsResp, err := chain.Client.StakingQueryClient().Validators(ctx, &stakingtypes.QueryValidatorsRequest{
+		Status: stakingtypes.BondStatusBonded,
+	})
 	require.NoError(t, err)
-	require.NotEmpty(t, validators)
+	require.NotEmpty(t, validatorsResp.Validators)
 
-	valAddress, err := sdk.ValAddressFromBech32(validators[0].OperatorAddress)
+	valAddress, err := sdk.ValAddressFromBech32(validatorsResp.Validators[0].OperatorAddress)
 	require.NoError(t, err)
 
 	// Delegate coins
@@ -56,16 +60,15 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", result.TxHash))
 
 	// Check delegator address
-	delegatorBalance, err := chain.Client.QueryBankBalances(ctx, chain.AccAddressToLegacyWallet(delegator))
-	require.NoError(t, err)
-	require.Equal(t, delegatorInitialBalance.Sub(delegateAmount), delegatorBalance[chain.NetworkConfig.TokenSymbol].Amount)
+	delegatorBalance := getBalance(ctx, t, chain, delegator)
+	require.Equal(t, delegatorInitialBalance.Sub(delegateAmount), delegatorBalance.Amount)
 
 	// Make sure coins have been delegated
 	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: valAddress.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, validators[0].Tokens.Add(delegateAmount), resp.Validator.Tokens)
+	require.Equal(t, validatorsResp.Validators[0].Tokens.Add(delegateAmount), resp.Validator.Tokens)
 
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
@@ -85,14 +88,29 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	time.Sleep(unbondingTime + time.Second*2)
 
 	// Check delegator balance
-	delegatorBalance, err = chain.Client.QueryBankBalances(ctx, chain.AccAddressToLegacyWallet(delegator))
-	require.NoError(t, err)
-	require.Equal(t, delegatorInitialBalance, delegatorBalance[chain.NetworkConfig.TokenSymbol].Amount)
+	delegatorBalance = getBalance(ctx, t, chain, delegator)
+	require.Equal(t, delegatorInitialBalance, delegatorBalance.Amount)
 
 	// Make sure coins have been undelegated
 	resp, err = chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: valAddress.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, validators[0].Tokens, resp.Validator.Tokens)
+	require.Equal(t, validatorsResp.Validators[0].Tokens, resp.Validator.Tokens)
+}
+
+func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.AccAddress) *sdk.Coin {
+	resp, err := chain.Client.BankQueryClient().AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: addr.String()})
+	require.NoError(t, err)
+
+	var balance *sdk.Coin
+	for _, b := range resp.Balances {
+		if b.Denom == chain.NetworkConfig.TokenSymbol {
+			balance = &b
+			break
+		}
+	}
+	require.NotNil(t, balance)
+
+	return balance
 }

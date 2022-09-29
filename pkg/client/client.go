@@ -269,7 +269,6 @@ type TxBankSendInput struct {
 func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
 	fromAddress, err := sdk.AccAddressFromBech32(input.Sender.Key.Address())
 	must.OK(err)
-
 	toAddress, err := sdk.AccAddressFromBech32(input.Receiver.Key.Address())
 	must.OK(err)
 
