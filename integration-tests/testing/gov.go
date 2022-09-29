@@ -23,10 +23,10 @@ type Governance struct {
 	muCh           chan struct{}
 }
 
-// NewGovernance initializes the voter accounts to have enough voting power for the voting.
-func NewGovernance(chainContext ChainContext, voterMnemonics []string) Governance {
-	stakerAccounts := make([]sdk.AccAddress, 0, len(voterMnemonics))
-	for _, stakerMnemonic := range voterMnemonics {
+// NewGovernance returns the new instance of Governance.
+func NewGovernance(chainContext ChainContext, stakerMnemonics []string) Governance {
+	stakerAccounts := make([]sdk.AccAddress, 0, len(stakerMnemonics))
+	for _, stakerMnemonic := range stakerMnemonics {
 		stakerAccounts = append(stakerAccounts, chainContext.ImportMnemonic(stakerMnemonic))
 	}
 
@@ -43,7 +43,7 @@ func NewGovernance(chainContext ChainContext, voterMnemonics []string) Governanc
 
 // ComputeProposerBalance computes the balance required for the proposer.
 func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error) {
-	govParams, err := g.getParams(ctx)
+	govParams, err := queryGovParams(ctx, g.govClient)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
@@ -60,8 +60,9 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	return g.chainContext.NewCoin(proposerInitialBalance), nil
 }
 
+// Propose creates a new proposal.
 func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (int, error) {
-	govParams, err := g.getParams(ctx)
+	govParams, err := queryGovParams(ctx, g.govClient)
 	if err != nil {
 		return 0, err
 	}
@@ -108,10 +109,10 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 	}
 
 	txHashes := make([]string, 0, len(g.stakerAccounts))
-	for _, voter := range g.stakerAccounts {
+	for _, staker := range g.stakerAccounts {
 		msg := &govtypes.MsgVote{
 			ProposalId: proposalID,
-			Voter:      voter.String(),
+			Voter:      staker.String(),
 			Option:     option,
 		}
 
@@ -121,7 +122,7 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 		clientCtx := g.chainContext.ClientContext.
 			WithBroadcastMode(flags.BroadcastSync)
 
-		res, err := tx.BroadcastTx(ctx, clientCtx.WithFromAddress(voter), txf, msg)
+		res, err := tx.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
 		if err != nil {
 			return err
 		}
@@ -143,7 +144,7 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.ProposalStatus, proposalID uint64) (govtypes.Proposal, error) {
 	var lastStatus govtypes.ProposalStatus
 
-	govParams, err := g.getParams(ctx)
+	govParams, err := queryGovParams(ctx, g.govClient)
 	if err != nil {
 		return govtypes.Proposal{}, err
 	}
@@ -171,10 +172,6 @@ func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.P
 		}
 	}
 	return govtypes.Proposal{}, errors.New(fmt.Sprintf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus))
-}
-
-func (g Governance) getParams(ctx context.Context) (govtypes.Params, error) {
-	return queryGovParams(ctx, g.govClient)
 }
 
 func (g Governance) getProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
