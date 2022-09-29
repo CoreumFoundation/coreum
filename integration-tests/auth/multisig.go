@@ -87,7 +87,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 
 	result, err := tx.BroadcastTx(
 		ctx,
-		chainCtx.ClientContext(),
+		chainCtx,
 		txF,
 		bankSendMsg,
 	)
@@ -106,7 +106,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	coinsToSendToRecipient := sdk.NewCoins(sdk.NewInt64Coin(nativeDenom, 1000))
 
 	// prepare the tx factory to sign with the account seq and number of the multisig account
-	multisigAccInfo, err := tx.GetAccountInfo(ctx, chainCtx.ClientContext(), multisigAddress)
+	multisigAccInfo, err := tx.GetAccountInfo(ctx, chainCtx, multisigAddress)
 	requireT.NoError(err)
 	txF = txF.
 		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
@@ -127,7 +127,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err := chainCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
-	_, err = tx.BroadcastRawTx(ctx, chainCtx.ClientContext(), encodedTx)
+	_, err = tx.BroadcastRawTx(ctx, chainCtx, encodedTx)
 	requireT.Error(err)
 	requireT.True(client.IsErr(err, sdkerrors.ErrUnauthorized), err)
 	logger.Get(ctx).Info("Partially signed tx executed with expected error")
@@ -142,7 +142,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = chainCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
-	result, err = tx.BroadcastRawTx(ctx, chainCtx.ClientContext(), encodedTx)
+	result, err = tx.BroadcastRawTx(ctx, chainCtx, encodedTx)
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Fully signed tx executed", zap.String("txHash", result.TxHash))
 

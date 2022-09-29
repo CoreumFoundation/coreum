@@ -10,16 +10,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/gogo/protobuf/grpc"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/mempool"
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/pkg/grpc"
 )
 
 var (
@@ -41,13 +43,26 @@ type Factory = tx.Factory
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 var SignTx = tx.Sign
 
+// ClientContext is the interface describing client context of Cosmos SDK
+type ClientContext interface {
+	grpc.ClientConn
+
+	GetFeeGranterAddress() sdk.AccAddress
+	GetFromName() string
+	GetFromAddress() sdk.AccAddress
+	TxConfig() client.TxConfig
+	BroadcastMode() string
+	Client() rpcclient.Client
+	InterfaceRegistry() codectypes.InterfaceRegistry
+}
+
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
 // NOTE: copied from the link below and made some changes.
 // the main idea is to add context.Context to the signature and use it
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 // TODO: add test to check if client respects ctx.
-func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
+func BroadcastTx(ctx context.Context, clientCtx ClientContext, txf Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
 		return nil, err
@@ -64,7 +79,7 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 		return nil, err
 	}
 
-	txBytes, err := clientCtx.TxConfig.TxEncoder()(unsignedTx.GetTx())
+	txBytes, err := clientCtx.TxConfig().TxEncoder()(unsignedTx.GetTx())
 	if err != nil {
 		return nil, err
 	}
@@ -73,18 +88,18 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 }
 
 // BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
-func BroadcastRawTx(ctx context.Context, clientCtx client.Context, txBytes []byte) (*sdk.TxResponse, error) {
+func BroadcastRawTx(ctx context.Context, clientCtx ClientContext, txBytes []byte) (*sdk.TxResponse, error) {
 	// broadcast to a Tendermint node
-	switch clientCtx.BroadcastMode {
+	switch clientCtx.BroadcastMode() {
 	case flags.BroadcastSync:
-		res, err := clientCtx.Client.BroadcastTxSync(ctx, txBytes)
+		res, err := clientCtx.Client().BroadcastTxSync(ctx, txBytes)
 		if err != nil {
 			return nil, err
 		}
 		return sdk.NewResponseFormatBroadcastTx(res), nil
 
 	case flags.BroadcastAsync:
-		res, err := clientCtx.Client.BroadcastTxAsync(ctx, txBytes)
+		res, err := clientCtx.Client().BroadcastTxAsync(ctx, txBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -94,17 +109,17 @@ func BroadcastRawTx(ctx context.Context, clientCtx client.Context, txBytes []byt
 		return broadcastTxCommit(ctx, clientCtx, txBytes)
 
 	default:
-		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode)
+		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode())
 	}
 }
 
 // broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block
-func broadcastTxCommit(ctx context.Context, clientCtx client.Context, encodedTx []byte) (*sdk.TxResponse, error) {
+func broadcastTxCommit(ctx context.Context, clientCtx ClientContext, encodedTx []byte) (*sdk.TxResponse, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
 	txHash := fmt.Sprintf("%X", tmtypes.Tx(encodedTx).Hash())
-	res, err := clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
+	res, err := clientCtx.Client().BroadcastTxSync(requestCtx, encodedTx)
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return nil, errors.WithStack(err)
@@ -126,7 +141,7 @@ func broadcastTxCommit(ctx context.Context, clientCtx client.Context, encodedTx 
 	return sdk.NewResponseResultTx(awaitRes, nil, ""), nil
 }
 
-func prepareFactory(ctx context.Context, clientCtx client.Context, txf tx.Factory) (tx.Factory, error) {
+func prepareFactory(ctx context.Context, clientCtx ClientContext, txf tx.Factory) (tx.Factory, error) {
 	if txf.AccountNumber() == 0 && txf.Sequence() == 0 {
 		acc, err := GetAccountInfo(ctx, clientCtx, clientCtx.GetFromAddress())
 		if err != nil {
@@ -143,20 +158,20 @@ func prepareFactory(ctx context.Context, clientCtx client.Context, txf tx.Factor
 // GetAccountInfo returns account number and account sequence for provided address
 func GetAccountInfo(
 	ctx context.Context,
-	clientCtx client.Context,
+	clientCtx ClientContext,
 	address sdk.AccAddress,
 ) (authtypes.AccountI, error) {
 	req := &authtypes.QueryAccountRequest{
 		Address: address.String(),
 	}
-	authQueryClient := authtypes.NewQueryClient(grpc.NewClient(clientCtx))
+	authQueryClient := authtypes.NewQueryClient(clientCtx)
 	res, err := authQueryClient.Account(ctx, req)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	var acc authtypes.AccountI
-	if err := clientCtx.InterfaceRegistry.UnpackAny(res.Account, &acc); err != nil {
+	if err := clientCtx.InterfaceRegistry().UnpackAny(res.Account, &acc); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
@@ -166,7 +181,7 @@ func GetAccountInfo(
 // AwaitTx awaits until a signed transaction is included in a block, returning the result.
 func AwaitTx(
 	ctx context.Context,
-	clientCtx client.Context,
+	clientCtx ClientContext,
 	txHash string,
 ) (resultTx *coretypes.ResultTx, err error) {
 	txHashBytes, err := hex.DecodeString(txHash)
@@ -182,7 +197,7 @@ func AwaitTx(
 		defer cancel()
 
 		var err error
-		resultTx, err = clientCtx.Client.Tx(requestCtx, txHashBytes, false)
+		resultTx, err = clientCtx.Client().Tx(requestCtx, txHashBytes, false)
 		if err != nil {
 			return retry.Retryable(errors.WithStack(err))
 		}
