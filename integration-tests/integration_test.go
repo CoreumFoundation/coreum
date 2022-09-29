@@ -112,9 +112,7 @@ type testingConfig struct {
 }
 
 func newChain(cfg testingConfig) (coreumtesting.Chain, error) {
-	//nolint:contextcheck // `New->New->NewWithClient->New$1` should pass the context parameter
 	coredClient := client.New(cfg.NetworkConfig.ChainID, cfg.CoredAddress)
-	//nolint:contextcheck // `New->NewWithClient` should pass the context parameter
 	rpcClient, err := cosmosclient.NewClientFromNode(cfg.CoredAddress)
 	if err != nil {
 		panic(err)
@@ -211,11 +209,7 @@ type testingFaucet struct {
 }
 
 func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...coreumtesting.FundedAccount) (retErr error) {
-	const (
-		maxAccountsPerRequest = 20
-		requestsPerTx         = 20
-		timeoutDuration       = 100 * time.Millisecond
-	)
+	const maxAccountsPerRequest = 20
 
 	if len(accountsToFund) > maxAccountsPerRequest {
 		return errors.Errorf("the number of accounts to fund (%d) is greater than the allowed maximu (%d)", len(accountsToFund), maxAccountsPerRequest)
@@ -254,7 +248,12 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 
 	// Code below is executed by the leader.
 
-	requests := make([]fundingRequest, 0, requestsPerTx)
+	// This call may fail only because of cancelled context, so we don't need to propagate it to
+	// other participants
+	requests, err := tf.collectRequests(ctx, req)
+	if err != nil {
+		return err
+	}
 
 	defer func() {
 		// After transaction is broadcasted we unlock `muCh` so anothet leader for next transaction might be selected
@@ -266,30 +265,41 @@ func (tf *testingFaucet) FundAccounts(ctx context.Context, accountsToFund ...cor
 		}
 	}()
 
-	// Leader adds hiw own request to the batch
-	requests = append(requests, req)
-	numOfAccounts := len(req.AccountsToFund)
+	// All requests are collected, let's create messages and broadcast tx
+	return tf.broadcastTx(ctx, tf.collectMessages(requests))
+}
+
+func (tf *testingFaucet) collectRequests(ctx context.Context, leaderReq fundingRequest) ([]fundingRequest, error) {
+	const (
+		requestsPerTx   = 20
+		timeoutDuration = 100 * time.Millisecond
+	)
+
+	requests := make([]fundingRequest, 0, requestsPerTx)
+
+	// Leader adds his own request to the batch
+	requests = append(requests, leaderReq)
 
 	// In the loop, we wait a moment to give other participants to join.
 	timeout := time.After(timeoutDuration)
-loop:
 	for len(requests) < cap(requests) {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil, ctx.Err()
 		case <-timeout:
 			// We close the window when other participants might join the batch.
 			// If someone comes after timeout they must wait for next leader.
-			break loop
+			return requests, nil
 		case req := <-tf.queue:
 			// Request from other participant is accepted and added to the batch.
 			requests = append(requests, req)
-			numOfAccounts += len(req.AccountsToFund)
 		}
 	}
+	return requests, nil
+}
 
-	// All requests are collected, let's make a transaction
-	messages := make([]sdk.Msg, 0, numOfAccounts)
+func (tf *testingFaucet) collectMessages(requests []fundingRequest) []sdk.Msg {
+	var messages []sdk.Msg
 	for _, req := range requests {
 		for _, acc := range req.AccountsToFund {
 			messages = append(messages, &banktypes.MsgSend{
@@ -299,18 +309,21 @@ loop:
 			})
 		}
 	}
+	return messages
+}
 
+func (tf *testingFaucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
 	log := logger.Get(ctx)
-	log.Info("Funding accounts for test, it might take a while...")
+	log.Info("Funding accounts for tests, it might take a while...")
 	// FIXME (wojtek): use estimation once it is available in `tx` package
-	gasLimit := uint64(numOfAccounts) * tf.chain.GasLimitByMsgs(&banktypes.MsgSend{})
+	gasLimit := uint64(len(msgs)) * tf.chain.GasLimitByMsgs(&banktypes.MsgSend{})
 
 	// Transaction is broadcasted and awaited
 	resp, err := tx.BroadcastTx(
 		ctx,
 		tf.clientCtx,
 		tf.chain.TxFactory().WithGas(gasLimit),
-		messages...,
+		msgs...,
 	)
 	if err != nil {
 		return err
