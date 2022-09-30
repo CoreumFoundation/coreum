@@ -101,7 +101,8 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 }
 
 func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.AccAddress) sdk.Coin {
-	resp, err := chain.Client.BankQueryClient().AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: addr.String()})
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	resp, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: addr.String()})
 	require.NoError(t, err)
 
 	var balance sdk.Coin
