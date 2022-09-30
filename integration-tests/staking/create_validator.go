@@ -64,7 +64,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	})
 	require.NoError(t, err)
 	require.Equal(t, validatorAmount, resp.Validator.Tokens)
-	require.Equal(t, stakingtypes.Bonded, resp.Validator.Status)
+	require.Equal(t, stakingtypes.Unbonded, resp.Validator.Status)
 
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(validator, validatorAddr, chain.NewCoin(validatorAmount))
