@@ -45,7 +45,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(adminWallet, chain.NewCoin(sdk.NewInt(5000000000))),
+		testing.NewFundedAccount(adminWallet.Address(), chain.NewCoin(sdk.NewInt(5000000000))),
 	))
 
 	gasPrice := chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice)
