@@ -124,7 +124,7 @@ func (c ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wal
 type ChainConfig struct {
 	RPCAddress      string
 	NetworkConfig   config.NetworkConfig
-	FundingPrivKey  types.Secp256k1PrivateKey
+	FundingMnemonic string
 	StakerMnemonics []string
 }
 
@@ -150,13 +150,12 @@ func NewChain(cfg ChainConfig) Chain {
 		WithBroadcastMode(flags.BroadcastBlock)
 
 	chainContext := NewChainContext(clientContext, cfg.NetworkConfig)
-	faucet := NewFaucet(coredClient, cfg.NetworkConfig, cfg.FundingPrivKey)
 	governance := NewGovernance(chainContext, cfg.StakerMnemonics)
-
+	faucet := NewFaucet(NewChainContext(clientContext.WithFromAddress(chainContext.ImportMnemonic(cfg.FundingMnemonic)), cfg.NetworkConfig))
 	return Chain{
 		ChainContext: chainContext,
 		Client:       coredClient,
-		Faucet:       faucet,
 		Governance:   governance,
+		Faucet:       faucet,
 	}
 }

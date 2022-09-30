@@ -47,7 +47,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 		testing.NewFundedAccount(
 			// TODO (dhil): the test uses the faucetWallet since the FundedAccount consumes the Wallet instead of the address.
 			// Once we start using the sdk types directly this code will be refactored, and multisig account will be funded directly.
-			chain.AccAddressToLegacyWallet(faucetWallet),
+			faucetWallet,
 			chain.NewCoin(testing.ComputeNeededBalance(
 				initialGasPrice,
 				chain.GasLimitByMsgs(&banktypes.MsgSend{}),

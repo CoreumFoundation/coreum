@@ -27,7 +27,7 @@ func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
 		sdk.NewInt(100),
 	))
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
 
 	coredClient := chain.Client
 
@@ -60,7 +60,7 @@ func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
 		sdk.NewInt(100),
 	))
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
 
 	coredClient := chain.Client
 
@@ -85,7 +85,7 @@ func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain t
 	sender := testing.RandomWallet()
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
+		testing.NewFundedAccount(sender.Address(), chain.NewCoin(testing.ComputeNeededBalance(
 			chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 			uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas+1),
 			1,
@@ -123,7 +123,7 @@ func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain test
 		sdk.NewInt(100),
 	))
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
 
 	coredClient := chain.Client
 
