@@ -99,14 +99,14 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.Equal(t, validatorsResp.Validators[0].Tokens, resp.Validator.Tokens)
 }
 
-func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.AccAddress) *sdk.Coin {
+func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.AccAddress) sdk.Coin {
 	resp, err := chain.Client.BankQueryClient().AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: addr.String()})
 	require.NoError(t, err)
 
-	var balance *sdk.Coin
+	var balance sdk.Coin
 	for _, b := range resp.Balances {
 		if b.Denom == chain.NetworkConfig.TokenSymbol {
-			balance = &b
+			balance = b
 			break
 		}
 	}
