@@ -47,6 +47,7 @@ var SignTx = tx.Sign
 type ClientContext interface {
 	grpc.ClientConn
 
+	ChainID() string
 	GetFeeGranterAddress() sdk.AccAddress
 	GetFromName() string
 	GetFromAddress() sdk.AccAddress

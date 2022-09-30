@@ -3,7 +3,6 @@ package staking
 import (
 	"crypto/ed25519"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +15,7 @@ import (
 
 // PrepareTxStakingCreateValidator generates transaction of type MsgCreateValidator
 func PrepareTxStakingCreateValidator(
-	clientCtx client.Context,
+	clientCtx tx.ClientContext,
 	validatorPublicKey ed25519.PublicKey,
 	stakerPrivateKey types.Secp256k1PrivateKey,
 	stakedBalance string,
@@ -45,7 +44,7 @@ func PrepareTxStakingCreateValidator(
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to sign transaction")
 	}
-	encodedTx, err := clientCtx.TxConfig.TxJSONEncoder()(signedTx)
+	encodedTx, err := clientCtx.TxConfig().TxJSONEncoder()(signedTx)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to encode transaction")
 	}

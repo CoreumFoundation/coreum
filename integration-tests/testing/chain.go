@@ -18,7 +18,7 @@ import (
 // Chain holds network and client for the blockchain
 type Chain struct {
 	Client  client.Client
-	Context Context
+	Context config.ClientContext
 
 	NetworkConfig config.NetworkConfig
 	Faucet        Faucet

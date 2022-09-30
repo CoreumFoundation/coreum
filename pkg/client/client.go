@@ -28,7 +28,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/grpc"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -44,7 +43,7 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx           client.Context
+	clientCtx           config.ClientContext
 	authQueryClient     authtypes.QueryClient
 	bankQueryClient     banktypes.QueryClient
 	govQueryClient      govtypes.QueryClient
@@ -69,21 +68,20 @@ func New(chainID config.ChainID, addr string) Client {
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 
-	grpcClient := grpc.NewClient(clientCtx)
 	return Client{
 		clientCtx:           clientCtx,
-		authQueryClient:     authtypes.NewQueryClient(grpcClient),
-		bankQueryClient:     banktypes.NewQueryClient(grpcClient),
-		wasmQueryClient:     wasmtypes.NewQueryClient(grpcClient),
-		govQueryClient:      govtypes.NewQueryClient(grpcClient),
-		stakingQueryClient:  stakingtypes.NewQueryClient(grpcClient),
-		feemodelQueryClient: feemodeltypes.NewQueryClient(grpcClient),
+		authQueryClient:     authtypes.NewQueryClient(clientCtx),
+		bankQueryClient:     banktypes.NewQueryClient(clientCtx),
+		wasmQueryClient:     wasmtypes.NewQueryClient(clientCtx),
+		govQueryClient:      govtypes.NewQueryClient(clientCtx),
+		stakingQueryClient:  stakingtypes.NewQueryClient(clientCtx),
+		feemodelQueryClient: feemodeltypes.NewQueryClient(clientCtx),
 	}
 }
 
 // GetClientCtx returns the clientCtx from the client.
 // TODO (dhil): this is temp workaround to get access to the configured client context util we migrate to new tx package
-func (c Client) GetClientCtx() client.Context {
+func (c Client) GetClientCtx() config.ClientContext {
 	return c.clientCtx
 }
 
@@ -102,7 +100,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 	}
 
 	var acc authtypes.AccountI
-	if err := c.clientCtx.InterfaceRegistry.UnpackAny(res.Account, &acc); err != nil {
+	if err := c.clientCtx.InterfaceRegistry().UnpackAny(res.Account, &acc); err != nil {
 		return 0, 0, errors.WithStack(err)
 	}
 
@@ -145,7 +143,7 @@ func (c Client) Sign(ctx context.Context, input tx.BaseInput, msgs ...sdk.Msg) (
 
 // Encode encodes transaction to be broadcasted
 func (c Client) Encode(signedTx authsigning.Tx) []byte {
-	return must.Bytes(c.clientCtx.TxConfig.TxEncoder()(signedTx))
+	return must.Bytes(c.clientCtx.TxConfig().TxEncoder()(signedTx))
 }
 
 // BroadcastResult contains results of transaction broadcast
@@ -161,7 +159,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
+	res, err := c.clientCtx.Client().BroadcastTxSync(requestCtx, encodedTx)
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return BroadcastResult{}, errors.WithStack(err)
@@ -194,7 +192,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		defer cancel()
 
 		var err error
-		resultTx, err = c.clientCtx.Client.Tx(requestCtx, txHashBytes, false)
+		resultTx, err = c.clientCtx.Client().Tx(requestCtx, txHashBytes, false)
 		if err != nil {
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))

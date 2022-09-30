@@ -1,7 +1,6 @@
 package tx
 
 import (
-	"github.com/cosmos/cosmos-sdk/client"
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -13,11 +12,11 @@ import (
 
 // Sign signs transaction
 // Deprecated: Use the SignTx instead.
-func Sign(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
+func Sign(clientCtx ClientContext, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
-	txBuilder := clientCtx.TxConfig.NewTxBuilder()
+	txBuilder := clientCtx.TxConfig().NewTxBuilder()
 	err := txBuilder.SetMsgs(msgs...)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to set message on tx builder")
@@ -39,7 +38,7 @@ func Sign(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigni
 	}
 
 	signerData := authsigning.SignerData{
-		ChainID:       clientCtx.ChainID,
+		ChainID:       clientCtx.ChainID(),
 		AccountNumber: signer.AccountNumber,
 		Sequence:      signer.AccountSequence,
 	}
@@ -59,7 +58,7 @@ func Sign(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigni
 	}
 
 	//nolint:nosnakecase // MixedCap can't be forced on imported constants
-	bytesToSign, err := clientCtx.TxConfig.SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, txBuilder.GetTx())
+	bytesToSign, err := clientCtx.TxConfig().SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, txBuilder.GetTx())
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to encode bytes to sign")
 	}
@@ -81,10 +80,10 @@ func Sign(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigni
 // BuildSimTx creates an unsigned tx with an empty single signature and returns
 // the encoded transaction or an error if the unsigned transaction cannot be
 // built.
-func BuildSimTx(clientCtx client.Context, base BaseInput, msgs ...sdk.Msg) ([]byte, error) {
+func BuildSimTx(clientCtx ClientContext, base BaseInput, msgs ...sdk.Msg) ([]byte, error) {
 	factory := new(clienttx.Factory).
-		WithTxConfig(clientCtx.TxConfig).
-		WithChainID(clientCtx.ChainID).
+		WithTxConfig(clientCtx.TxConfig()).
+		WithChainID(clientCtx.ChainID()).
 		WithGasPrices(base.GasPrice.String()).
 		WithMemo(base.Memo).
 		//nolint:nosnakecase // MixedCap can't be forced on imported constants
@@ -114,5 +113,5 @@ func BuildSimTx(clientCtx client.Context, base BaseInput, msgs ...sdk.Msg) ([]by
 		return nil, errors.WithStack(err)
 	}
 
-	return clientCtx.TxConfig.TxEncoder()(txb.GetTx())
+	return clientCtx.TxConfig().TxEncoder()(txb.GetTx())
 }
