@@ -19,7 +19,7 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
-			sender,
+			sender.Address(),
 			chain.NewCoin(testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 				chain.GasLimitByMsgs(&banktypes.MsgSend{}),

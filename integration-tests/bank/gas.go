@@ -35,7 +35,7 @@ func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testin
 
 	senderInitialBalance := chain.NewCoin(fees.Add(amount))
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, senderInitialBalance)))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), senderInitialBalance)))
 
 	client := chain.Client
 
@@ -59,7 +59,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 		sdk.NewInt(10),
 	))
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
 
 	gasPrice := chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice)
 	_, err := sendAndReturnGasUsed(ctx, chain.Client, sender, sender,
@@ -81,7 +81,7 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 		1,
 		amount,
 	))
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, initialBalance)))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
 
 	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	estimatedGas, err := chain.Client.EstimateGas(ctx, tx.BaseInput{
