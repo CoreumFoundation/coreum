@@ -22,10 +22,15 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	delegateAmount := sdk.NewInt(100)
 	delegatorInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
-		2,
+		chain.GasLimitByMsgs(&stakingtypes.MsgDelegate{}),
+		1,
 		delegateAmount,
-	)
+	).Add(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		chain.GasLimitByMsgs(&stakingtypes.MsgUndelegate{}),
+		1,
+		delegateAmount,
+	))
 
 	// Create random delegator wallet
 	delegator := chain.RandomWallet()

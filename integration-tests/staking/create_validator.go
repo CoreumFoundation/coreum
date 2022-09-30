@@ -21,7 +21,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	validatorAmount := sdk.NewInt(100)
 	validatorInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
+		chain.GasLimitByMsgs(&stakingtypes.MsgCreateValidator{}),
 		1,
 		validatorAmount,
 	)
