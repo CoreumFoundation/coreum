@@ -29,7 +29,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		chain.GasLimitByMsgs(&stakingtypes.MsgUndelegate{}),
 		1,
-		delegateAmount,
+		sdk.NewInt(0),
 	))
 
 	// Create random delegator wallet
