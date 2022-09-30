@@ -37,10 +37,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			chain.AccAddressToLegacyWallet(delegator),
-			chain.NewCoin(delegatorInitialBalance),
-		),
+		testing.NewFundedAccount(delegator, chain.NewCoin(delegatorInitialBalance)),
 	))
 
 	// Fetch existing validator

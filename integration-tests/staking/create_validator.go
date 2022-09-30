@@ -18,7 +18,7 @@ import (
 func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
-	validatorAmount := sdk.NewInt(100)
+	validatorAmount := sdk.NewInt(1000000)
 	validatorInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		chain.GasLimitByMsgs(&stakingtypes.MsgCreateValidator{}),
@@ -32,10 +32,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			chain.AccAddressToLegacyWallet(validator),
-			chain.NewCoin(validatorInitialBalance),
-		),
+		testing.NewFundedAccount(validator, chain.NewCoin(validatorInitialBalance)),
 	))
 
 	// Create validator
@@ -45,7 +42,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 		chain.NewCoin(validatorAmount),
 		stakingtypes.NewDescription("a", "b", "c", "d", "e"),
 		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-		sdk.NewInt(1),
+		sdk.NewInt(1000000),
 	)
 	require.NoError(t, err)
 	result, err := tx.BroadcastTx(
