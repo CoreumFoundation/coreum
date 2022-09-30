@@ -24,7 +24,12 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 		chain.GasLimitByMsgs(&stakingtypes.MsgCreateValidator{}),
 		1,
 		validatorAmount,
-	)
+	).Add(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		chain.GasLimitByMsgs(&stakingtypes.MsgUndelegate{}),
+		1,
+		validatorAmount,
+	))
 
 	// Create random validator wallet
 	validator := chain.RandomWallet()
