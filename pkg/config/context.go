@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
@@ -117,6 +118,17 @@ func (c ClientContext) Client() rpcclient.Client {
 // InterfaceRegistry returns interface registry of SDK context
 func (c ClientContext) InterfaceRegistry() codectypes.InterfaceRegistry {
 	return c.clientCtx.InterfaceRegistry
+}
+
+// Keyring returns keyring
+func (c ClientContext) Keyring() keyring.Keyring {
+	return c.clientCtx.Keyring
+}
+
+// WithKeyring returns a copy of the context with an updated keyring
+func (c ClientContext) WithKeyring(k keyring.Keyring) ClientContext {
+	c.clientCtx = c.clientCtx.WithKeyring(k)
+	return c
 }
 
 // Invoke invokes GRPC method
