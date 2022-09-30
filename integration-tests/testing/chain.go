@@ -45,6 +45,7 @@ func (c ChainContext) RandomWallet() sdk.AccAddress {
 		panic(err)
 	}
 
+	// TODO(dhil) start returning the key info instead of address.
 	return c.ImportMnemonic(mnemonic)
 }
 
