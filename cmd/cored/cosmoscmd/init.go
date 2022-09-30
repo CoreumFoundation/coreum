@@ -36,14 +36,6 @@ func InitCmd(network config.Network, defaultNodeHome string) *cobra.Command {
 		Long:  `Initialize validators's and node's configuration files.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			chainID, err := cmd.Flags().GetString(flags.FlagChainID)
-			if err != nil {
-				return errors.Wrapf(err, "got error getting chain-id flag")
-			}
-			if chainID == "" {
-				return errors.New("chain id not provided")
-			}
-
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			cfg := server.GetServerContextFromCmd(cmd).Config
