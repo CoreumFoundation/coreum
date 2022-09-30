@@ -67,7 +67,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 		DelegatorAddr: delegator.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, validatorsResp.Validators[0].Tokens.Add(delegateAmount), ddResp.DelegationResponses[0].Balance.Amount)
+	require.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
