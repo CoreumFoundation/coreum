@@ -67,6 +67,7 @@ func testNetwork() config.Network {
 		},
 		StakingConfig: config.StakingConfig{
 			UnbondingTime: "1814400s",
+			MaxValidators: 32,
 		},
 	})
 }
