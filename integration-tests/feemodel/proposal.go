@@ -1,14 +1,13 @@
 package feemodel
 
 import (
-	"bytes"
 	"context"
-	"text/template"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/require"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -18,14 +17,17 @@ import (
 )
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
-func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain *testing.Chain) {
+func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
 	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
 
 	requireT := require.New(t)
 	feeModelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 
 	// Create new proposer.
-	proposer, err := chain.Governance.CreateProposer(ctx)
+	proposer := chain.RandomWallet()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(chain.AccAddressToLegacyWallet(proposer), proposerBalance))
 	requireT.NoError(err)
 
 	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
@@ -37,15 +39,15 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain *te
 	_, err = chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Invalid proposal", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
-				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), toProposalString(requireT, feeModelParams),
+				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
 			),
 		},
 	))
 	requireT.Error(err)
 	require.True(t, client.IsErr(err, govtypes.ErrInvalidProposalContent))
 
-	// Re-create new proposer to have enough deposit for the next proposal.
-	proposer, err = chain.Governance.CreateProposer(ctx)
+	// Fund proposer to have enough deposit for the next proposal.
+	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(chain.AccAddressToLegacyWallet(proposer), proposerBalance))
 	requireT.NoError(err)
 
 	// Create proposal to change MaxDiscount.
@@ -57,7 +59,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain *te
 	proposalID, err := chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxDiscount", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
-				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), toProposalString(requireT, feeModelParams),
+				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
 			),
 		},
 	))
@@ -86,22 +88,8 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain *te
 	requireT.Equal(feeModelParams.String(), feeModelParamsRes.Params.Model.String())
 }
 
-func toProposalString(requireT *require.Assertions, modelParams feemodeltypes.ModelParams) string {
-	// the template is used here since the encoding expect the int to be wrapped to double quotes, but uint32 without.
-	proposalTemplate := `
-{
-  "initial_gas_price": "{{.InitialGasPrice}}",
-  "max_gas_price": "{{.MaxGasPrice}}",
-  "max_discount": "{{.MaxDiscount}}",
-  "escalation_start_block_gas":"{{.EscalationStartBlockGas}}",
-  "max_block_gas":"{{.MaxBlockGas}}",
-  "short_ema_block_length":{{.ShortEmaBlockLength}},
-  "long_ema_block_length":{{.LongEmaBlockLength}}
-}
-`
-	buf := new(bytes.Buffer)
-	err := template.Must(template.New("").Parse(proposalTemplate)).Execute(buf, modelParams)
+func marshalParamChangeProposal(requireT *require.Assertions, modelParams feemodeltypes.ModelParams) string {
+	str, err := tmjson.Marshal(modelParams)
 	requireT.NoError(err)
-
-	return buf.String()
+	return string(str)
 }

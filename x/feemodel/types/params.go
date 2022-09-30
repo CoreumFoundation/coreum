@@ -4,24 +4,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 var (
+	// KeyModel represents the Model param key with which the ModelParams will be stored.
 	KeyModel = []byte("Model")
 )
-
-// String implements the stringer interface.
-func (m Params) String() string {
-	out, _ := yaml.Marshal(m)
-	return string(out)
-}
-
-// String implements the stringer interface.
-func (m ModelParams) String() string {
-	out, _ := yaml.Marshal(m)
-	return string(out)
-}
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // of model's parameters.
@@ -48,9 +36,14 @@ func DefaultParams() Params {
 	}
 }
 
-// ValidateBasic validates parameters of the model
+// ValidateBasic validates parameters of the model.
 func (m Params) ValidateBasic() error {
 	return validateModelParams(m.Model)
+}
+
+// ValidateBasic validates parameters of the model params.
+func (m ModelParams) ValidateBasic() error {
+	return validateModelParams(m)
 }
 
 func validateModelParams(i interface{}) error {
