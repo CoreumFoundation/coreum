@@ -39,5 +39,6 @@ var NetworkConfig = config.NetworkConfig{
 	},
 	StakingConfig: config.StakingConfig{
 		UnbondingTime: unbondingTime.String(),
+		MaxValidators: 32,
 	},
 }

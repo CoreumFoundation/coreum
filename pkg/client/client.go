@@ -16,8 +16,6 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -46,9 +44,7 @@ type Client struct {
 	clientCtx           client.Context
 	authQueryClient     authtypes.QueryClient
 	bankQueryClient     banktypes.QueryClient
-	govQueryClient      govtypes.QueryClient
 	wasmQueryClient     wasmtypes.QueryClient
-	stakingQueryClient  stakingtypes.QueryClient
 	feemodelQueryClient feemodeltypes.QueryClient
 }
 
@@ -72,8 +68,6 @@ func New(chainID config.ChainID, addr string) Client {
 		authQueryClient:     authtypes.NewQueryClient(clientCtx),
 		bankQueryClient:     banktypes.NewQueryClient(clientCtx),
 		wasmQueryClient:     wasmtypes.NewQueryClient(clientCtx),
-		govQueryClient:      govtypes.NewQueryClient(clientCtx),
-		stakingQueryClient:  stakingtypes.NewQueryClient(clientCtx),
 		feemodelQueryClient: feemodeltypes.NewQueryClient(clientCtx),
 	}
 }
@@ -282,18 +276,6 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	}
 
 	return c.Encode(signedTx), nil
-}
-
-// GovQueryClient returns a Gov module querying client, initialized
-// using the internal clientCtx.
-func (c Client) GovQueryClient() govtypes.QueryClient {
-	return c.govQueryClient
-}
-
-// StakingQueryClient returns a Staking module querying client, initialized
-// using the internal clientCtx.
-func (c Client) StakingQueryClient() stakingtypes.QueryClient {
-	return c.stakingQueryClient
 }
 
 // BankQueryClient returns a Bank module querying client, initialized
