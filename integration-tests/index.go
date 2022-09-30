@@ -12,9 +12,8 @@ import (
 
 // Tests returns testing environment and tests
 func Tests() testing.TestSet {
-	return testing.TestSet{
+	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
-			gov.TestProposalParamChange,
 			auth.TestUnexpectedSequenceNumber,
 			auth.TestTooLowGasPrice,
 			auth.TestNoFee,
@@ -26,11 +25,14 @@ func Tests() testing.TestSet {
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
 			bank.TestTransferDeterministicGas,
 			bank.TestTransferGasEstimation,
+			feemodel.TestQueryingMinGasPrice,
 			wasm.TestSimpleStateWasmContract,
 			wasm.TestBankSendWasmContract,
-			feemodel.TestQueryingMinGasPrice,
+			staking.TestStakingProposalParamChange,
 			staking.TestDelegate,
 			staking.TestCreateValidator,
 		},
 	}
+
+	return testSet
 }

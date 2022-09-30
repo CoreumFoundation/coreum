@@ -58,7 +58,18 @@ func BroadcastTx(ctx context.Context, clientCtx client.Context, txf Factory, msg
 	}
 
 	unsignedTx.SetFeeGranter(clientCtx.GetFeeGranterAddress())
-	err = tx.Sign(txf, clientCtx.GetFromName(), unsignedTx, true)
+
+	// in case the name is not provided by that address, take the name by the address
+	fromName := clientCtx.GetFromName()
+	if fromName == "" && len(clientCtx.GetFromAddress()) > 0 {
+		key, err := clientCtx.Keyring.KeyByAddress(clientCtx.FromAddress)
+		if err != nil {
+			return nil, errors.Errorf("failed to get key by the address %q from the keyring", clientCtx.GetFromAddress().String())
+		}
+		fromName = key.GetName()
+	}
+
+	err = tx.Sign(txf, fromName, unsignedTx, true)
 	if err != nil {
 		return nil, err
 	}
