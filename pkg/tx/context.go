@@ -1,4 +1,4 @@
-package config
+package tx
 
 import (
 	"context"
@@ -21,13 +21,15 @@ import (
 	"google.golang.org/grpc/encoding/proto"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 var protoCodec = encoding.GetCodec(proto.Name)
 
 // NewClientContext returns new context
 func NewClientContext(modules module.BasicManager) ClientContext {
-	encodingConfig := NewEncodingConfig(modules)
+	encodingConfig := config.NewEncodingConfig(modules)
 	return ClientContext{
 		clientCtx: client.Context{}.
 			WithCodec(encodingConfig.Codec).

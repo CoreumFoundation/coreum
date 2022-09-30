@@ -41,7 +41,7 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx           config.ClientContext
+	clientCtx           tx.ClientContext
 	authQueryClient     authtypes.QueryClient
 	bankQueryClient     banktypes.QueryClient
 	wasmQueryClient     wasmtypes.QueryClient
@@ -60,7 +60,7 @@ func New(chainID config.ChainID, addr string) Client {
 	rpcClient, err := client.NewClientFromNode(addr)
 	must.OK(err)
 	// This line takes `app.ModuleBasics` but this code will be removed anyway
-	clientCtx := config.NewClientContext(app.ModuleBasics).
+	clientCtx := tx.NewClientContext(app.ModuleBasics).
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 
@@ -75,7 +75,7 @@ func New(chainID config.ChainID, addr string) Client {
 
 // GetClientCtx returns the clientCtx from the client.
 // TODO (dhil): this is temp workaround to get access to the configured client context util we migrate to new tx package
-func (c Client) GetClientCtx() config.ClientContext {
+func (c Client) GetClientCtx() tx.ClientContext {
 	return c.clientCtx
 }
 

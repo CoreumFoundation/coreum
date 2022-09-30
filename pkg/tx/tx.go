@@ -7,18 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/gogo/protobuf/grpc"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/mempool"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
@@ -43,21 +38,6 @@ type Factory = tx.Factory
 // An error is returned upon failure.
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 var SignTx = tx.Sign
-
-// ClientContext is the interface describing client context of Cosmos SDK
-type ClientContext interface {
-	grpc.ClientConn
-
-	ChainID() string
-	FeeGranterAddress() sdk.AccAddress
-	FromName() string
-	FromAddress() sdk.AccAddress
-	TxConfig() client.TxConfig
-	BroadcastMode() string
-	Keyring() keyring.Keyring
-	Client() rpcclient.Client
-	InterfaceRegistry() codectypes.InterfaceRegistry
-}
 
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
