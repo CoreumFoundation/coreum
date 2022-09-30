@@ -62,10 +62,6 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", result.TxHash))
 
-	// Check delegator address
-	delegatorBalance := getBalance(ctx, t, chain, delegator)
-	require.Equal(t, delegatorInitialBalance.Sub(delegateAmount), delegatorBalance.Amount)
-
 	// Make sure coins have been delegated
 	ddResp, err := stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
 		DelegatorAddr: delegator.String(),
@@ -91,7 +87,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	time.Sleep(unbondingTime + time.Second*2)
 
 	// Check delegator balance
-	delegatorBalance = getBalance(ctx, t, chain, delegator)
+	delegatorBalance := getBalance(ctx, t, chain, delegator)
 	require.Equal(t, delegatorInitialBalance, delegatorBalance.Amount)
 
 	// Make sure coins have been undelegated
