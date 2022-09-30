@@ -47,7 +47,7 @@ const (
 
 const (
 	// coreBIP44CoinType is the CORE coin type as defined in SLIP44 (https://github.com/satoshilabs/slips/blob/master/slip-0044.md)
-	coreBIP44CoinType uint32 = 111999
+	coreBIP44CoinType uint32 = 990
 )
 
 var (
