@@ -23,7 +23,7 @@ func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Prefunding account required by test
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(wallet, chain.NewCoin(sdk.NewInt(100))),
+		testing.NewFundedAccount(wallet.Address(), chain.NewCoin(sdk.NewInt(100))),
 	))
 
 	// Query for current balance available on the wallet
@@ -42,7 +42,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
-			chain.AccAddressToLegacyWallet(sender),
+			sender,
 			chain.NewCoin(testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
@@ -54,7 +54,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
-			chain.AccAddressToLegacyWallet(receiver),
+			receiver,
 			chain.NewCoin(sdk.NewInt(10)),
 		),
 	))

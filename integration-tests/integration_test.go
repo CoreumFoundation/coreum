@@ -5,7 +5,6 @@ package tests_test
 
 import (
 	"context"
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"reflect"
@@ -20,7 +19,6 @@ import (
 	tests "github.com/CoreumFoundation/coreum/integration-tests"
 	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // stringsFlag allows setting a value multiple times to collect a list, as in -I=val1 -I=val2.
@@ -41,7 +39,7 @@ func (m *stringsFlag) Set(val string) error {
 type testingConfig struct {
 	RPCAddress      string
 	NetworkConfig   config.NetworkConfig
-	FundingPrivKey  types.Secp256k1PrivateKey
+	FundingMnemonic string
 	StakerMnemonics []string
 	Filter          *regexp.Regexp
 	LogFormat       logger.Format
@@ -71,11 +69,7 @@ func TestMain(m *testing.M) {
 		}
 	}
 
-	decodedFundingPrivKey, err := base64.RawURLEncoding.DecodeString(fundingPrivKey)
-	if err != nil {
-		panic(err)
-	}
-	cfg.FundingPrivKey = decodedFundingPrivKey
+	cfg.FundingMnemonic = fundingMnemonic
 	cfg.StakerMnemonics = stakerMnemonics
 	cfg.RPCAddress = coredAddress
 	cfg.Filter = regexp.MustCompile(filter)
@@ -97,7 +91,7 @@ func Test(t *testing.T) {
 	chainCfg := coreumtesting.ChainConfig{
 		RPCAddress:      cfg.RPCAddress,
 		NetworkConfig:   cfg.NetworkConfig,
-		FundingPrivKey:  cfg.FundingPrivKey,
+		FundingMnemonic: cfg.FundingMnemonic,
 		StakerMnemonics: cfg.StakerMnemonics,
 	}
 	chain := coreumtesting.NewChain(chainCfg)

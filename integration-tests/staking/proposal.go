@@ -25,7 +25,7 @@ func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain test
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(chain.AccAddressToLegacyWallet(proposer), proposerBalance))
+	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
 	// Create proposition to change max validators value.
