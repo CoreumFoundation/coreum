@@ -75,6 +75,7 @@ func init() {
 
 	stakingConfig := StakingConfig{
 		UnbondingTime: "1814400s",
+		MaxValidators: 32,
 	}
 
 	list := []NetworkConfig{
@@ -184,6 +185,9 @@ type GovProposalConfig struct {
 type StakingConfig struct {
 	// UnbondingTime is the time duration after which bonded coins will become to be released
 	UnbondingTime string
+
+	// MaxValidators is the maximum number of validators that could be created
+	MaxValidators int
 }
 
 // NetworkConfig helps initialize Network instance
