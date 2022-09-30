@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -64,11 +63,11 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.Equal(t, delegatorInitialBalance.Sub(delegateAmount), delegatorBalance.Amount)
 
 	// Make sure coins have been delegated
-	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
-		ValidatorAddr: valAddress.String(),
+	ddResp, err := chain.Client.StakingQueryClient().DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: delegator.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, validatorsResp.Validators[0].Tokens.Add(delegateAmount), resp.Validator.Tokens)
+	require.Equal(t, validatorsResp.Validators[0].Tokens.Add(delegateAmount), ddResp.DelegationResponses[0].Balance.Amount)
 
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
@@ -92,7 +91,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.Equal(t, delegatorInitialBalance, delegatorBalance.Amount)
 
 	// Make sure coins have been undelegated
-	resp, err = chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
+	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: valAddress.String(),
 	})
 	require.NoError(t, err)
