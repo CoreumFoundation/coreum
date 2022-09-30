@@ -50,7 +50,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	require.NoError(t, err)
 	result, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromName(validator.String()).WithFromAddress(validator),
+		chain.ClientContext.WithFromAddress(validator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
 		msg,
 	)
@@ -70,7 +70,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	undelegateMsg := stakingtypes.NewMsgUndelegate(validator, validatorAddr, chain.NewCoin(validatorAmount))
 	_, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromName(validator.String()).WithFromAddress(validator),
+		chain.ClientContext.WithFromAddress(validator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
 		undelegateMsg,
 	)

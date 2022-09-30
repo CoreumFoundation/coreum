@@ -52,7 +52,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	delegateMsg := stakingtypes.NewMsgDelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
 	result, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromName(delegator.String()).WithFromAddress(delegator),
+		chain.ClientContext.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
 		delegateMsg,
 	)
@@ -75,7 +75,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
 	result, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromName(delegator.String()).WithFromAddress(delegator),
+		chain.ClientContext.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
 		undelegateMsg,
 	)
