@@ -90,15 +90,11 @@ func NewRootCmd(
 	appName,
 	defaultNodeHome,
 	defaultChainID string,
-	network config.Network,
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
 	options ...Option,
 ) (*cobra.Command, config.EncodingConfig) {
 	rootOptions := newRootOptions(options...)
-
-	// Set config for prefixes
-	network.SetSDKConfig()
 
 	encodingConfig := config.NewEncodingConfig(moduleBasics)
 	initClientCtx := client.Context{}.

@@ -399,6 +399,8 @@ func (n Network) SaveGenesis(homeDir string) error {
 	return errors.Wrap(err, "unable to write genesis bytes to file")
 }
 
+// SetSDKConfig sets global SDK config to some network-specific values.
+// In typical applications this func should be called right after network initialization.
 func (n Network) SetSDKConfig() {
 	config := sdk.GetConfig()
 

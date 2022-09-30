@@ -40,6 +40,7 @@ func BenchmarkSimulation(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
+	network.SetSDKConfig()
 
 	app.ChosenNetwork = network
 	simApp := app.New(
