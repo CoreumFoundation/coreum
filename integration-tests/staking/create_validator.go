@@ -68,7 +68,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(validator, validatorAddr, chain.NewCoin(validatorAmount))
-	result, err = tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromName(validator.String()).WithFromAddress(validator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
