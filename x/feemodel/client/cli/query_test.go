@@ -9,11 +9,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/feemodel/client/cli"
 )
 
 func TestMinGasPrice(t *testing.T) {
+	networkCfg, err := config.NetworkByChainID(config.Devnet)
+	require.NoError(t, err)
+	app.ChosenNetwork = networkCfg
+
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
