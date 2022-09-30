@@ -31,7 +31,7 @@ func TestIssueAsset(t *testing.T) {
 	var res sdk.TxResponse
 	requireT.NoError(tmjson.Unmarshal(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
-	requireT.Equal(0, res.Code)
+	requireT.Equal(uint32(0), res.Code)
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {
