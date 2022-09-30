@@ -26,6 +26,8 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	// Create new proposer.
 	proposer := chain.RandomWallet()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	// For the test we need to create the proposal twice.
+	proposerBalance = proposerBalance.Add(proposerBalance)
 	requireT.NoError(err)
 	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(chain.AccAddressToLegacyWallet(proposer), proposerBalance))
 	requireT.NoError(err)
@@ -43,12 +45,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 			),
 		},
 	))
-	requireT.Error(err)
-	require.True(t, client.IsErr(err, govtypes.ErrInvalidProposalContent))
-
-	// Fund proposer to have enough deposit for the next proposal.
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(chain.AccAddressToLegacyWallet(proposer), proposerBalance))
-	requireT.NoError(err)
+	requireT.True(client.IsErr(err, govtypes.ErrInvalidProposalContent))
 
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
