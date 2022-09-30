@@ -3,34 +3,12 @@ package testing
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // T is an interface representing test, accepted by `assert.*` and `require.*` packages
 type T interface {
 	require.TestingT
-}
-
-// Faucet defines an interface to fund testing accounts
-type Faucet interface {
-	FundAccounts(ctx context.Context, accountsToFund ...FundedAccount) error
-}
-
-// FundedAccount represents a requirement of a test to get some funds for an account
-type FundedAccount struct {
-	Wallet types.Wallet
-	Amount sdk.Coin
-}
-
-// NewFundedAccount is the constructor of FundedAccount
-func NewFundedAccount(wallet types.Wallet, amount sdk.Coin) FundedAccount {
-	return FundedAccount{
-		Wallet: wallet,
-		Amount: amount,
-	}
 }
 
 // SingleChainSignature is the signature of test function accepting a chain

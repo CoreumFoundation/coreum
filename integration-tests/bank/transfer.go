@@ -50,6 +50,9 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 				sdk.NewInt(100),
 			)),
 		),
+	))
+
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			chain.AccAddressToLegacyWallet(receiver),
 			chain.NewCoin(sdk.NewInt(10)),
@@ -67,7 +70,7 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	result, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromName(sender.String()).WithFromAddress(sender),
+		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
 		msg,
 	)

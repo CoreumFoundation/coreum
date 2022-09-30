@@ -23,11 +23,18 @@ import (
 
 // TestMultisig tests the cosmos-sdk multisig accounts and API.
 func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
+	requireT := require.New(t)
+
 	faucetWallet := chain.RandomWallet()
 
-	signer1Wallet := chain.RandomWallet()
-	signer2Wallet := chain.RandomWallet()
-	signer3Wallet := chain.RandomWallet()
+	signer1KeyInfo, err := chain.ClientContext.Keyring.KeyByAddress(chain.RandomWallet())
+	requireT.NoError(err)
+
+	signer2KeyInfo, err := chain.ClientContext.Keyring.KeyByAddress(chain.RandomWallet())
+	requireT.NoError(err)
+
+	signer3KeyInfo, err := chain.ClientContext.Keyring.KeyByAddress(chain.RandomWallet())
+	requireT.NoError(err)
 
 	recipientWallet := chain.RandomWallet()
 
@@ -36,7 +43,6 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 
 	amountToSendFromMultisigAccount := int64(1000)
 
-	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			// TODO (dhil): the test uses the faucetWallet since the FundedAccount consumes the Wallet instead of the address.
@@ -52,8 +58,8 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	))
 
 	// generate the keyring and collect the keys to use for the multisig account
-	keyNamesSet := []string{signer1Wallet.String(), signer2Wallet.String(), signer3Wallet.String()}
-	kr := chain.Keyring
+	keyNamesSet := []string{signer1KeyInfo.GetName(), signer2KeyInfo.GetName(), signer3KeyInfo.GetName()}
+	kr := chain.ClientContext.Keyring
 	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
 	for _, key := range keyNamesSet {
 		info, err := kr.Key(key)
@@ -79,7 +85,6 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	}
 
 	clientCtx := chain.ClientContext.
-		WithFromName(faucetWallet.String()).
 		WithFromAddress(faucetWallet)
 
 	txF := chain.TxFactory().
@@ -122,7 +127,8 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	// sign and submit with just one key to check the tx rejection
 	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, signer1Wallet.String(), txBuilder, false)
+
+	err = tx.SignTx(txF, signer1KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err := clientCtx.TxConfig.TxEncoder()(multisigTx)
@@ -135,9 +141,9 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, signer1Wallet.String(), txBuilder, false)
+	err = tx.SignTx(txF, signer1KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, signer2Wallet.String(), txBuilder, false)
+	err = tx.SignTx(txF, signer2KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = clientCtx.TxConfig.TxEncoder()(multisigTx)

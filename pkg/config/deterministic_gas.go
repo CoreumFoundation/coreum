@@ -4,15 +4,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 // DefaultDeterministicGasRequirements returns default config for deterministic gas
 func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 	return DeterministicGasRequirements{
-		FixedGas:       50000,
-		FreeBytes:      2048,
-		FreeSignatures: 1,
-		BankSend:       30000,
+		FixedGas:          50000,
+		FreeBytes:         2048,
+		FreeSignatures:    1,
+		BankSend:          30000,
+		GovSubmitProposal: 150000,
+		GovVote:           80000,
 	}
 }
 
@@ -30,7 +33,9 @@ type DeterministicGasRequirements struct {
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
 
-	BankSend uint64
+	BankSend          uint64
+	GovSubmitProposal uint64
+	GovVote           uint64
 }
 
 // GasRequiredByMessage returns gas required by a sdk.Msg.
@@ -43,6 +48,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	switch msg.(type) {
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
+	case *govtypes.MsgSubmitProposal:
+		return dgr.GovSubmitProposal, true
+	case *govtypes.MsgVote:
+		return dgr.GovVote, true
 	default:
 		return 0, false
 	}
