@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -48,11 +49,12 @@ type ClientContext interface {
 	grpc.ClientConn
 
 	ChainID() string
-	GetFeeGranterAddress() sdk.AccAddress
-	GetFromName() string
-	GetFromAddress() sdk.AccAddress
+	FeeGranterAddress() sdk.AccAddress
+	FromName() string
+	FromAddress() sdk.AccAddress
 	TxConfig() client.TxConfig
 	BroadcastMode() string
+	Keyring() keyring.Keyring
 	Client() rpcclient.Client
 	InterfaceRegistry() codectypes.InterfaceRegistry
 }
@@ -74,14 +76,14 @@ func BroadcastTx(ctx context.Context, clientCtx ClientContext, txf Factory, msgs
 		return nil, err
 	}
 
-	unsignedTx.SetFeeGranter(clientCtx.GetFeeGranterAddress())
+	unsignedTx.SetFeeGranter(clientCtx.FeeGranterAddress())
 
 	// in case the name is not provided by that address, take the name by the address
-	fromName := clientCtx.GetFromName()
-	if fromName == "" && len(clientCtx.GetFromAddress()) > 0 {
-		key, err := clientCtx.Keyring.KeyByAddress(clientCtx.FromAddress)
+	fromName := clientCtx.FromName()
+	if fromName == "" && len(clientCtx.FromAddress()) > 0 {
+		key, err := clientCtx.Keyring().KeyByAddress(clientCtx.FromAddress())
 		if err != nil {
-			return nil, errors.Errorf("failed to get key by the address %q from the keyring", clientCtx.GetFromAddress().String())
+			return nil, errors.Errorf("failed to get key by the address %q from the keyring", clientCtx.FromAddress().String())
 		}
 		fromName = key.GetName()
 	}
@@ -155,7 +157,7 @@ func broadcastTxCommit(ctx context.Context, clientCtx ClientContext, encodedTx [
 
 func prepareFactory(ctx context.Context, clientCtx ClientContext, txf tx.Factory) (tx.Factory, error) {
 	if txf.AccountNumber() == 0 && txf.Sequence() == 0 {
-		acc, err := GetAccountInfo(ctx, clientCtx, clientCtx.GetFromAddress())
+		acc, err := GetAccountInfo(ctx, clientCtx, clientCtx.FromAddress())
 		if err != nil {
 			return txf, err
 		}

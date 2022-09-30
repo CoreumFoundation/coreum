@@ -90,18 +90,18 @@ func (c ClientContext) NewStream(ctx context.Context, desc *grpc.StreamDesc, met
 	return nil, fmt.Errorf("streaming rpc not supported")
 }
 
-// GetFeeGranterAddress returns the fee granter address from the context
-func (c ClientContext) GetFeeGranterAddress() sdk.AccAddress {
+// FeeGranterAddress returns the fee granter address from the context
+func (c ClientContext) FeeGranterAddress() sdk.AccAddress {
 	return c.clientCtx.GetFeeGranterAddress()
 }
 
-// GetFromName returns the key name for the current context.
-func (c ClientContext) GetFromName() string {
+// FromName returns the key name for the current context.
+func (c ClientContext) FromName() string {
 	return c.clientCtx.GetFromName()
 }
 
-// GetFromAddress returns the from address from the context's name.
-func (c ClientContext) GetFromAddress() sdk.AccAddress {
+// FromAddress returns the from address from the context's name.
+func (c ClientContext) FromAddress() sdk.AccAddress {
 	return c.clientCtx.GetFromAddress()
 }
 
