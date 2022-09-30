@@ -186,7 +186,7 @@
     "staking": {
       "params": {
         "unbonding_time": "{{ .Staking.UnbondingTime }}",
-        "max_validators": 100,
+        "max_validators": {{ .Staking.MaxValidators }},
         "max_entries": 7,
         "historical_entries": 10000,
         "bond_denom": "{{ .TokenSymbol }}"
