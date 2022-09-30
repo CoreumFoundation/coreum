@@ -23,12 +23,11 @@ func main() {
 		app.Name,
 		app.DefaultNodeHome,
 		string(network.ChainID()),
-		network,
 		app.ModuleBasics,
 		app.New,
 	)
 
-	rootCmd.AddCommand(cosmoscmd.InitCmd(app.DefaultNodeHome))
+	rootCmd.AddCommand(cosmoscmd.InitCmd(network, app.DefaultNodeHome))
 	cosmoscmd.OverwriteDefaultChainIDFlags(rootCmd)
 	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {

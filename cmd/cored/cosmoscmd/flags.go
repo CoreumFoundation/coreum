@@ -49,6 +49,7 @@ func PreProcessFlags() (config.Network, error) {
 	if err != nil {
 		return config.Network{}, err
 	}
+	network.SetSDKConfig()
 
 	app.ChosenNetwork = network
 

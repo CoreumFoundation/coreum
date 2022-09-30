@@ -29,7 +29,7 @@ const (
 )
 
 // InitCmd returns the init cobra command.
-func InitCmd(defaultNodeHome string) *cobra.Command {
+func InitCmd(network config.Network, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [moniker]",
 		Short: "Initialize configuration files for private validator, p2p, genesis, and application",
@@ -73,11 +73,6 @@ func InitCmd(defaultNodeHome string) *cobra.Command {
 
 			if !overwrite && tmos.FileExists(genFile) {
 				return errors.Errorf("genesis.json file already exists: %v", genFile)
-			}
-
-			network, err := config.NetworkByChainID(config.ChainID(chainID))
-			if err != nil {
-				return err
 			}
 
 			err = network.SaveGenesis(clientCtx.HomeDir)
