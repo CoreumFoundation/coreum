@@ -52,7 +52,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Delegate coins
 	delegateMsg := stakingtypes.NewMsgDelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
-	result, err := tx.BroadcastTx(
+	delegateResult, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
@@ -60,7 +60,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	require.NoError(t, err)
 
-	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", result.TxHash))
+	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", delegateResult.TxHash))
 
 	// Make sure coins have been delegated
 	ddResp, err := stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
@@ -71,7 +71,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
-	result, err = tx.BroadcastTx(
+	undelegateResult, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
@@ -79,7 +79,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	require.NoError(t, err)
 
-	logger.Get(ctx).Info("Undelegation executed", zap.String("txHash", result.TxHash))
+	logger.Get(ctx).Info("Undelegation executed", zap.String("txHash", undelegateResult.TxHash))
 
 	// Wait for undelegation
 	unbondingTime, err := time.ParseDuration(chain.NetworkConfig.StakingConfig.UnbondingTime)
@@ -88,7 +88,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Check delegator balance
 	delegatorBalance := getBalance(ctx, t, chain, delegator)
-	require.Equal(t, delegatorInitialBalance, delegatorBalance.Amount)
+	require.Equal(t, delegateAmount.AddRaw(1), delegatorBalance.Amount)
 
 	// Make sure coins have been undelegated
 	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
