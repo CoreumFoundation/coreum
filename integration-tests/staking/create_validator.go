@@ -16,6 +16,8 @@ import (
 
 // TestCreateValidator checks that validator creation works correctly
 func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) {
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+
 	validatorAmount := sdk.NewInt(100)
 	validatorInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
@@ -57,7 +59,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	logger.Get(ctx).Info("Validator creation executed", zap.String("txHash", result.TxHash))
 
 	// Make sure validator has been created
-	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
+	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validatorAddr.String(),
 	})
 	require.NoError(t, err)

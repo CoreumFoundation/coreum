@@ -17,6 +17,8 @@ import (
 
 // TestDelegate checks that delegation and undelegation works correctly
 func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+
 	delegateAmount := sdk.NewInt(100)
 	delegatorInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
@@ -37,7 +39,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	))
 
 	// Fetch existing validator
-	validatorsResp, err := chain.Client.StakingQueryClient().Validators(ctx, &stakingtypes.QueryValidatorsRequest{
+	validatorsResp, err := stakingClient.Validators(ctx, &stakingtypes.QueryValidatorsRequest{
 		Status: stakingtypes.BondStatusBonded,
 	})
 	require.NoError(t, err)
@@ -63,7 +65,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.Equal(t, delegatorInitialBalance.Sub(delegateAmount), delegatorBalance.Amount)
 
 	// Make sure coins have been delegated
-	ddResp, err := chain.Client.StakingQueryClient().DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
+	ddResp, err := stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
 		DelegatorAddr: delegator.String(),
 	})
 	require.NoError(t, err)
@@ -91,7 +93,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.Equal(t, delegatorInitialBalance, delegatorBalance.Amount)
 
 	// Make sure coins have been undelegated
-	resp, err := chain.Client.StakingQueryClient().Validator(ctx, &stakingtypes.QueryValidatorRequest{
+	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: valAddress.String(),
 	})
 	require.NoError(t, err)

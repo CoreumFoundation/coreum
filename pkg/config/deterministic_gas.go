@@ -11,12 +11,12 @@ import (
 // DefaultDeterministicGasRequirements returns default config for deterministic gas
 func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 	return DeterministicGasRequirements{
-		FixedGas:          50000,
-		FreeBytes:         2048,
-		FreeSignatures:    1,
-		BankSend:          30000,
-		GovSubmitProposal: 150000,
-		GovVote:           80000,
+		FixedGas:               50000,
+		FreeBytes:              2048,
+		FreeSignatures:         1,
+		BankSend:               30000,
+		GovSubmitProposal:      150000,
+		GovVote:                80000,
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
 		StakingCreateValidator: 50000,
@@ -37,11 +37,11 @@ type DeterministicGasRequirements struct {
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
 
-	BankSend          uint64
-	GovSubmitProposal uint64
-	GovVote           uint64
-	StakingDelegate uint64
-	StakingUndelegate uint64
+	BankSend               uint64
+	GovSubmitProposal      uint64
+	GovVote                uint64
+	StakingDelegate        uint64
+	StakingUndelegate      uint64
 	StakingCreateValidator uint64
 }
 
