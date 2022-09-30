@@ -51,7 +51,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromName(validator.String()).WithFromAddress(validator),
-		chain.TxFactory().WithGas(chain.NetworkConfig.Fee.DeterministicGas.FixedGas),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
 		msg,
 	)
 	require.NoError(t, err)
