@@ -22,13 +22,13 @@ import (
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
-	ClientContext cosmosclient.Context
+	ClientContext tx.ClientContext
 	NetworkConfig config.NetworkConfig
 	keyringMu     *sync.RWMutex
 }
 
 // NewChainContext returns a new instance if the ChainContext.
-func NewChainContext(clientCtx cosmosclient.Context, networkCfg config.NetworkConfig) ChainContext {
+func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig) ChainContext {
 	return ChainContext{
 		ClientContext: clientCtx,
 		NetworkConfig: networkCfg,
@@ -53,7 +53,7 @@ func (c ChainContext) RandomWallet() sdk.AccAddress {
 func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 	c.keyringMu.Lock()
 	defer c.keyringMu.Unlock()
-	keyInfo, err := c.ClientContext.Keyring.NewAccount(uuid.New().String(), mnemonic, "", "", hd.Secp256k1)
+	keyInfo, err := c.ClientContext.Keyring().NewAccount(uuid.New().String(), mnemonic, "", "", hd.Secp256k1)
 	if err != nil {
 		panic(err)
 	}
@@ -64,9 +64,9 @@ func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 // TxFactory returns factory with present values for the Chain.
 func (c ChainContext) TxFactory() tx.Factory {
 	return tx.Factory{}.
-		WithKeybase(c.ClientContext.Keyring).
+		WithKeybase(c.ClientContext.Keyring()).
 		WithChainID(string(c.NetworkConfig.ChainID)).
-		WithTxConfig(c.ClientContext.TxConfig).
+		WithTxConfig(c.ClientContext.TxConfig()).
 		WithGasPrices(c.NewDecCoin(c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice).String())
 }
 
@@ -102,12 +102,12 @@ func (c ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wal
 	c.keyringMu.RLock()
 	defer c.keyringMu.RUnlock()
 
-	info, err := c.ClientContext.Keyring.KeyByAddress(accAddr)
+	info, err := c.ClientContext.Keyring().KeyByAddress(accAddr)
 	if err != nil {
 		panic(err)
 	}
 
-	privKeyHex, err := keyring.NewUnsafe(c.ClientContext.Keyring).UnsafeExportPrivKeyHex(info.GetName())
+	privKeyHex, err := keyring.NewUnsafe(c.ClientContext.Keyring()).UnsafeExportPrivKeyHex(info.GetName())
 	if err != nil {
 		panic(err)
 	}
@@ -143,7 +143,7 @@ func NewChain(cfg ChainConfig) Chain {
 	if err != nil {
 		panic(err)
 	}
-	clientContext := config.NewClientContext(app.ModuleBasics).
+	clientContext := tx.NewClientContext(app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
 		WithClient(rpcClient).
 		WithKeyring(keyring.NewInMemory()).

@@ -27,13 +27,13 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 
 	faucetWallet := chain.RandomWallet()
 
-	signer1KeyInfo, err := chain.ClientContext.Keyring.KeyByAddress(chain.RandomWallet())
+	signer1KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.RandomWallet())
 	requireT.NoError(err)
 
-	signer2KeyInfo, err := chain.ClientContext.Keyring.KeyByAddress(chain.RandomWallet())
+	signer2KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.RandomWallet())
 	requireT.NoError(err)
 
-	signer3KeyInfo, err := chain.ClientContext.Keyring.KeyByAddress(chain.RandomWallet())
+	signer3KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.RandomWallet())
 	requireT.NoError(err)
 
 	recipientWallet := chain.RandomWallet()
@@ -59,7 +59,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 
 	// generate the keyring and collect the keys to use for the multisig account
 	keyNamesSet := []string{signer1KeyInfo.GetName(), signer2KeyInfo.GetName(), signer3KeyInfo.GetName()}
-	kr := chain.ClientContext.Keyring
+	kr := chain.ClientContext.Keyring()
 	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
 	for _, key := range keyNamesSet {
 		info, err := kr.Key(key)
@@ -131,7 +131,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	err = tx.SignTx(txF, signer1KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err := clientCtx.TxConfig.TxEncoder()(multisigTx)
+	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
 	_, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.Error(err)
@@ -146,7 +146,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	err = tx.SignTx(txF, signer2KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err = clientCtx.TxConfig.TxEncoder()(multisigTx)
+	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
 	result, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.NoError(err)
