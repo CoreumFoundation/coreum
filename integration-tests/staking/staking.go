@@ -39,7 +39,8 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Setup validator and delegator
 	delegator := chain.RandomWallet()
-	validator := createValidator(ctx, t, chain)
+	validator, deactivateValidator := createValidator(ctx, t, chain)
+	defer deactivateValidator()
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
@@ -94,7 +95,7 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.Equal(t, int64(initialValidatorAmount), resp.Validator.Tokens.Int64())
 }
 
-func createValidator(ctx context.Context, t testing.T, chain testing.Chain) sdk.ValAddress {
+func createValidator(ctx context.Context, t testing.T, chain testing.Chain) (sdk.ValAddress, func()) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
 	validatorAmount := sdk.NewInt(initialValidatorAmount)
@@ -147,22 +148,26 @@ func createValidator(ctx context.Context, t testing.T, chain testing.Chain) sdk.
 	require.Equal(t, validatorAmount, resp.Validator.Tokens)
 	require.Equal(t, stakingtypes.Bonded, resp.Validator.Status)
 
-	return validatorAddr
+	return validatorAddr, func() {
+		// Undelegate coins, i.e. deactivate validator
+		undelegateMsg := stakingtypes.NewMsgUndelegate(validator, validatorAddr, chain.NewCoin(validatorAmount))
+		_, err = tx.BroadcastTx(
+			ctx,
+			chain.ClientContext.WithFromAddress(validator),
+			chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
+			undelegateMsg,
+		)
+		require.NoError(t, err)
+	}
 }
 
 func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.AccAddress) sdk.Coin {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-	resp, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: addr.String()})
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: addr.String(),
+		Denom:   chain.NetworkConfig.TokenSymbol,
+	})
 	require.NoError(t, err)
 
-	var balance sdk.Coin
-	for _, b := range resp.Balances {
-		if b.Denom == chain.NetworkConfig.TokenSymbol {
-			balance = b
-			break
-		}
-	}
-	require.NotNil(t, balance)
-
-	return balance
+	return *resp.Balance
 }
