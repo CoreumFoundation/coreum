@@ -29,7 +29,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	// For the test we need to create the proposal twice.
 	proposerBalance = proposerBalance.Add(proposerBalance)
 	requireT.NoError(err)
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(chain.AccAddressToLegacyWallet(proposer), proposerBalance))
+	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
 	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
