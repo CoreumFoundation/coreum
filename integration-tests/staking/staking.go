@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -15,8 +16,12 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TestDelegate checks that delegation and undelegation works correctly
-func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
+const (
+	initialValidatorAmount = 1000000
+)
+
+// TestStaking checks validator creation, delegation and undelegation operations work correctly
+func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
 	delegateAmount := sdk.NewInt(100)
@@ -32,26 +37,17 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 		sdk.NewInt(0),
 	))
 
-	// Create random delegator wallet
+	// Setup validator and delegator
 	delegator := chain.RandomWallet()
+	validator := createValidator(ctx, t, chain)
 
 	// Fund wallets
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(delegator, chain.NewCoin(delegatorInitialBalance)),
 	))
 
-	// Fetch existing validator
-	validatorsResp, err := stakingClient.Validators(ctx, &stakingtypes.QueryValidatorsRequest{
-		Status: stakingtypes.BondStatusBonded,
-	})
-	require.NoError(t, err)
-	require.NotEmpty(t, validatorsResp.Validators)
-
-	valAddress, err := sdk.ValAddressFromBech32(validatorsResp.Validators[0].OperatorAddress)
-	require.NoError(t, err)
-
 	// Delegate coins
-	delegateMsg := stakingtypes.NewMsgDelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
+	delegateMsg := stakingtypes.NewMsgDelegate(delegator, validator, chain.NewCoin(delegateAmount))
 	delegateResult, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
@@ -70,7 +66,7 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 
 	// Undelegate coins
-	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, valAddress, chain.NewCoin(delegateAmount))
+	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, validator, chain.NewCoin(delegateAmount))
 	undelegateResult, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
@@ -92,10 +88,66 @@ func TestDelegate(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Make sure coins have been undelegated
 	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
-		ValidatorAddr: valAddress.String(),
+		ValidatorAddr: validator.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, validatorsResp.Validators[0].Tokens, resp.Validator.Tokens)
+	require.Equal(t, int64(initialValidatorAmount), resp.Validator.Tokens.Int64())
+}
+
+func createValidator(ctx context.Context, t testing.T, chain testing.Chain) sdk.ValAddress {
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+
+	validatorAmount := sdk.NewInt(initialValidatorAmount)
+	validatorInitialBalance := testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		chain.GasLimitByMsgs(&stakingtypes.MsgCreateValidator{}),
+		1,
+		validatorAmount,
+	).Add(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		chain.GasLimitByMsgs(&stakingtypes.MsgUndelegate{}),
+		1,
+		validatorAmount,
+	))
+
+	// Create random validator wallet
+	validator := chain.RandomWallet()
+	validatorAddr := sdk.ValAddress(validator)
+
+	// Fund wallets
+	require.NoError(t, chain.Faucet.FundAccounts(ctx,
+		testing.NewFundedAccount(validator, chain.NewCoin(validatorInitialBalance)),
+	))
+
+	// Create validator
+	msg, err := stakingtypes.NewMsgCreateValidator(
+		validatorAddr,
+		cosmosed25519.GenPrivKey().PubKey(),
+		chain.NewCoin(validatorAmount),
+		stakingtypes.Description{Moniker: "TestCreateValidator"},
+		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+		sdk.OneInt(),
+	)
+	require.NoError(t, err)
+	result, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(validator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+	require.NoError(t, err)
+
+	logger.Get(ctx).Info("Validator creation executed", zap.String("txHash", result.TxHash))
+
+	// Make sure validator has been created
+	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validatorAddr.String(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, validatorAmount, resp.Validator.Tokens)
+	require.Equal(t, stakingtypes.Bonded, resp.Validator.Status)
+
+	return validatorAddr
 }
 
 func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.AccAddress) sdk.Coin {
