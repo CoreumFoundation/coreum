@@ -165,16 +165,13 @@ func (f Faucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
 	gasLimit := uint64(len(msgs)) * f.chainCtx.GasLimitByMsgs(&banktypes.MsgSend{})
 
 	// Transaction is broadcasted and awaited
-	resp, err := tx.BroadcastTx(
+	_, err := tx.BroadcastTx(
 		ctx,
 		f.chainCtx.ClientContext,
 		f.chainCtx.TxFactory().WithGas(gasLimit),
 		msgs...,
 	)
 	if err != nil {
-		return err
-	}
-	if _, err := tx.AwaitTx(ctx, f.chainCtx.ClientContext, resp.TxHash); err != nil {
 		return err
 	}
 	log.Info("Test accounts funded")
