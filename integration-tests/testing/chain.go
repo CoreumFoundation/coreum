@@ -2,7 +2,6 @@ package testing
 
 import (
 	"encoding/hex"
-	"fmt"
 	"reflect"
 	"sync"
 
@@ -40,10 +39,14 @@ func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig
 // RandomWallet generates a wallet for the chain with random name and
 // private key and stores mnemonic in Keyring.
 func (c ChainContext) RandomWallet() sdk.AccAddress {
-	hdPath := hd.CreateHDPath(sdk.GetConfig().GetCoinType(), 0, 0).String()
-
 	// Generate and store a new mnemonic using temporary keyring
-	_, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, hdPath, "", hd.Secp256k1)
+	_, mnemonic, err := keyring.NewInMemory().NewMnemonic(
+		"tmp",
+		keyring.English,
+		sdk.GetConfig().GetFullBIP44Path(),
+		"",
+		hd.Secp256k1,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -54,12 +57,16 @@ func (c ChainContext) RandomWallet() sdk.AccAddress {
 
 // ImportMnemonic imports the mnemonic into the clientContext Keyring and return its address.
 func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
-	hdPath := hd.CreateHDPath(sdk.GetConfig().GetCoinType(), 0, 0).String()
-
 	c.keyringMu.Lock()
 	defer c.keyringMu.Unlock()
 
-	keyInfo, err := c.ClientContext.Keyring().NewAccount(uuid.New().String(), mnemonic, "", hdPath, hd.Secp256k1)
+	keyInfo, err := c.ClientContext.Keyring().NewAccount(
+		uuid.New().String(),
+		mnemonic,
+		"",
+		sdk.GetConfig().GetFullBIP44Path(),
+		hd.Secp256k1,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -158,7 +165,6 @@ func NewChain(cfg ChainConfig) Chain {
 	chainContext := NewChainContext(clientContext, cfg.NetworkConfig)
 	governance := NewGovernance(chainContext, cfg.StakerMnemonics)
 	faucetAddress := chainContext.ImportMnemonic(cfg.FundingMnemonic)
-	fmt.Printf("faucet address in new CHain %v\n\n\n\n\n", faucetAddress.String())
 	faucet := NewFaucet(NewChainContext(clientContext.WithFromAddress(faucetAddress), cfg.NetworkConfig))
 	return Chain{
 		ChainContext: chainContext,

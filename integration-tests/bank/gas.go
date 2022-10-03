@@ -2,7 +2,6 @@ package bank
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -75,9 +74,6 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 	sender := testing.RandomWallet()
 	receiver := testing.RandomWallet()
 
-	fmt.Printf("sender: %v\n\n\n\n\n\n", sender.Address().String())
-	fmt.Printf("receiver: %v\n\n\n\n\n\n\n", receiver.Address().String())
-
 	amount := testing.MustNewIntFromString(t, "1000000000000")
 	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
@@ -85,10 +81,8 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 		1,
 		amount,
 	))
-	fmt.Printf("calling fund account\n")
 
 	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
-	fmt.Printf("after fund account\n")
 
 	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	estimatedGas, err := chain.Client.EstimateGas(ctx, tx.BaseInput{
