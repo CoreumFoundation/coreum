@@ -84,7 +84,7 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Check delegator balance
 	delegatorBalance := getBalance(ctx, t, chain, delegator)
-	require.GreaterOrEqual(t, delegatorBalance.Amount, delegateAmount)
+	require.GreaterOrEqual(t, delegatorBalance.Amount.Int64(), delegateAmount.Int64())
 
 	// Make sure coins have been undelegated
 	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
