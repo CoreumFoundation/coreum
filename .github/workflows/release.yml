@@ -20,6 +20,8 @@ jobs:
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Build cored
         run: crust build/cored --log-format=yaml
+      - name: Create asset
+        run: ln crust/bin/.cache/docker/cored/cored cored-linux-amd64
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
