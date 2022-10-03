@@ -167,3 +167,41 @@ func Benchmark100KDenomBankModuleSend(b *testing.B) {
 		}
 	})
 }
+
+func Benchmark100KDenomBankGetSupply(b *testing.B) {
+	simApp := createSimApp(b)
+	bankKeeper := simApp.BankKeeper
+	sdkContext := simApp.NewUncachedContext(false, types.Header{})
+
+	singleCoinDenom := config.TokenSymbolDev
+	coin := sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000))
+	coins := sdk.NewCoins(coin)
+	err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
+	assert.NoError(b, err)
+	b.ResetTimer()
+	b.Run("test-single-get-supply", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			supply := bankKeeper.GetSupply(sdkContext, singleCoinDenom)
+			assert.NoError(b, err)
+			assert.EqualValues(b, coin.String(), supply.String())
+		}
+	})
+
+	var denoms []string
+	mintValue := sdk.NewInt(1_000_000_000)
+	for i := 0; i < 100_000; i++ {
+		denom := fmt.Sprintf("test-denom-%d", i)
+		denoms = append(denoms, denom)
+		coins := sdk.NewCoins(sdk.NewCoin(denom, mintValue))
+		err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
+		assert.NoError(b, err)
+	}
+
+	b.Run("test-100k-get-supply", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			denom := denoms[b.N%len(denoms)]
+			supply := bankKeeper.GetSupply(sdkContext, denom)
+			assert.EqualValues(b, mintValue, supply.Amount, "denom: %s", supply.Denom)
+		}
+	})
+}
