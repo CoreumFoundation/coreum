@@ -12,7 +12,7 @@ import (
 
 var (
 	feeModel = Model{
-		params: params,
+		params: params.Model,
 	}
 
 	gasPriceWithMaxDiscount = feeModel.CalculateGasPriceWithMaxDiscount()
@@ -108,27 +108,28 @@ func TestWithRandomModels(t *testing.T) {
 			t.Parallel()
 
 			params, shortEMA, longEMA := generateRandomizedParams()
+			modelParams := params.Model
 			model := Model{
-				params: params,
+				params: modelParams,
 			}
-			logParameters(t, params, shortEMA, longEMA)
+			logParameters(t, modelParams, shortEMA, longEMA)
 			nextGasPrice := model.CalculateNextGasPrice(shortEMA, longEMA)
 
 			assert.True(t, nextGasPrice.GT(sdk.ZeroDec()))
-			assert.True(t, nextGasPrice.LTE(params.MaxGasPrice))
+			assert.True(t, nextGasPrice.LTE(modelParams.MaxGasPrice))
 
 			switch {
-			case shortEMA >= params.MaxBlockGas:
-				assert.True(t, nextGasPrice.Equal(params.MaxGasPrice))
-			case shortEMA > params.EscalationStartBlockGas:
-				assert.True(t, nextGasPrice.LT(params.MaxGasPrice))
+			case shortEMA >= modelParams.MaxBlockGas:
+				assert.True(t, nextGasPrice.Equal(modelParams.MaxGasPrice))
+			case shortEMA > modelParams.EscalationStartBlockGas:
+				assert.True(t, nextGasPrice.LT(modelParams.MaxGasPrice))
 				assert.True(t, nextGasPrice.GTE(model.CalculateGasPriceWithMaxDiscount()))
 			case shortEMA >= longEMA:
 				assert.True(t, nextGasPrice.Equal(model.CalculateGasPriceWithMaxDiscount()))
 			case shortEMA > 0:
-				assert.True(t, nextGasPrice.LT(params.InitialGasPrice))
+				assert.True(t, nextGasPrice.LT(modelParams.InitialGasPrice))
 			default:
-				assert.True(t, nextGasPrice.Equal(params.InitialGasPrice))
+				assert.True(t, nextGasPrice.Equal(modelParams.InitialGasPrice))
 			}
 		})
 	}
@@ -151,17 +152,19 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 	longEMA = rand.Int63()
 
 	return Params{
-		InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice).ToDec(),
-		MaxGasPrice:             sdk.NewIntFromUint64(maxGasPrice).ToDec(),
-		MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
-		EscalationStartBlockGas: escalationStartBlockGas,
-		MaxBlockGas:             maxBlockGas,
-		ShortEmaBlockLength:     shortEMABlockLength,
-		LongEmaBlockLength:      longEMABlockLength,
+		Model: ModelParams{
+			InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice).ToDec(),
+			MaxGasPrice:             sdk.NewIntFromUint64(maxGasPrice).ToDec(),
+			MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
+			EscalationStartBlockGas: escalationStartBlockGas,
+			MaxBlockGas:             maxBlockGas,
+			ShortEmaBlockLength:     shortEMABlockLength,
+			LongEmaBlockLength:      longEMABlockLength,
+		},
 	}, shortEMA, longEMA
 }
 
-func logParameters(t *testing.T, params Params, shortEMA, longEMA int64) {
+func logParameters(t *testing.T, params ModelParams, shortEMA, longEMA int64) {
 	t.Logf(`InitialGasPrice: %s
 MaxGasPrice: %s
 MaxDiscount: %s

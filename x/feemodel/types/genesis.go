@@ -10,7 +10,7 @@ func DefaultGenesisState() *GenesisState {
 	params := DefaultParams()
 	return &GenesisState{
 		Params:      params,
-		MinGasPrice: sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, params.InitialGasPrice),
+		MinGasPrice: sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, params.Model.InitialGasPrice),
 	}
 }
 
@@ -19,5 +19,5 @@ func (m *GenesisState) Validate() error {
 	if err := m.MinGasPrice.Validate(); err != nil {
 		return errors.WithStack(err)
 	}
-	return m.Params.Validate()
+	return m.Params.ValidateBasic()
 }
