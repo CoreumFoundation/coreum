@@ -45,7 +45,7 @@ func TestCreateValidator(ctx context.Context, t testing.T, chain testing.Chain) 
 		validatorAddr,
 		cosmosed25519.GenPrivKey().PubKey(),
 		chain.NewCoin(validatorAmount),
-		stakingtypes.NewDescription("a", "b", "c", "d", "e"),
+		stakingtypes.Description{Moniker: "TestCreateValidator"},
 		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		sdk.NewInt(1000000),
 	)
