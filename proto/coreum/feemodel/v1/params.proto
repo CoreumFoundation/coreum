@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/feemodel/types";
 
-// Params stores parameters defining fee model of coreum blockchain
+// ModelParams define fee model params.
 // There are four regions on the fee model curve
 // - between 0 and "long average block gas" where gas price goes down exponentially from InitialGasPrice to gas price with maximum discount (InitialGasPrice * (1 -MaxDiscount))
 // - between "long average block gas" and EscalationStartBlockGas where we offer gas price with maximum discount all the time
@@ -15,9 +15,7 @@ option go_package = "github.com/CoreumFoundation/coreum/x/feemodel/types";
 //
 // The input (x value) for that function is calculated by taking short block gas average.
 // Price (y value) being an output of the fee model is used as the minimum gas price for next block.
-message Params {
-  option (gogoproto.goproto_stringer) = false;
-
+message ModelParams {
   // initial_gas_price is used when block gas short average is 0. It happens when there are no transactions being broadcasted. This value is also used to initialize gas price on brand-new chain.
   string initial_gas_price = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"initial_gas_price\""];
 
@@ -40,4 +38,10 @@ message Params {
   // long_ema_block_length defines inertia for long average block gas in EMA model. The equation is: NewAverage = ((LongAverageBlockLength - 1)*PreviousAverage + GasUsedByCurrentBlock) / LongAverageBlockLength
   // The value might be interpreted as the number of blocks which are taken to calculate the average. It would be exactly like that in SMA model, in EMA this is an approximation.
   uint32 long_ema_block_length = 7 [(gogoproto.moretags) = "yaml:\"long_ema_block_length\""];
+}
+
+// Params store gov manageable feemodel parameters.
+message Params {
+  // model is a fee model params.
+  ModelParams model = 1 [(gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"model\""];
 }

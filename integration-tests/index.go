@@ -25,6 +25,7 @@ func Tests() testing.TestSet {
 			bank.TestTransferDeterministicGas,
 			bank.TestTransferGasEstimation,
 			feemodel.TestQueryingMinGasPrice,
+			feemodel.TestFeeModelProposalParamChange,
 			staking.TestStakingProposalParamChange,
 			staking.TestStaking,
 			wasm.TestSimpleStateWasmContract,
