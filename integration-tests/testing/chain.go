@@ -164,8 +164,9 @@ func NewChain(cfg ChainConfig) Chain {
 
 	chainContext := NewChainContext(clientContext, cfg.NetworkConfig)
 	governance := NewGovernance(chainContext, cfg.StakerMnemonics)
-	faucetAddress := chainContext.ImportMnemonic(cfg.FundingMnemonic)
-	faucet := NewFaucet(NewChainContext(clientContext.WithFromAddress(faucetAddress), cfg.NetworkConfig))
+
+	faucetAddr := chainContext.ImportMnemonic(cfg.FundingMnemonic)
+	faucet := NewFaucet(NewChainContext(clientContext.WithFromAddress(faucetAddr), cfg.NetworkConfig))
 	return Chain{
 		ChainContext: chainContext,
 		Client:       coredClient,
