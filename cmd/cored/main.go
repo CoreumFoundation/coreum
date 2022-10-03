@@ -19,6 +19,9 @@ func main() {
 		logger.Error("Error processing chain id flag", "err", err)
 		os.Exit(1)
 	}
+	network.SetSDKConfig()
+	app.ChosenNetwork = network
+
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
 		app.DefaultNodeHome,
