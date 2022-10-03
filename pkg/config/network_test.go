@@ -27,7 +27,7 @@ func init() {
 }
 
 var feeConfig = config.FeeConfig{
-	FeeModel: feemodeltypes.NewModel(feemodeltypes.Params{
+	FeeModel: feemodeltypes.NewModel(feemodeltypes.ModelParams{
 		InitialGasPrice:         sdk.NewDec(2),
 		MaxGasPrice:             sdk.NewDec(4),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),
@@ -340,7 +340,7 @@ func TestValidateAllGenesis(t *testing.T) {
 func TestNetworkConfigConditions(t *testing.T) {
 	assertT := assert.New(t)
 	for _, n := range config.EnabledNetworks() {
-		assert.NoError(t, n.FeeModel().Params().Validate())
+		assert.NoError(t, n.FeeModel().Params().ValidateBasic())
 		assertT.Greater(n.DeterministicGas().BankSend, uint64(0))
 	}
 }

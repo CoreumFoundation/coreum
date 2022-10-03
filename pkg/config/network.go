@@ -474,7 +474,7 @@ func genesis(n Network) ([]byte, error) {
 		GenesisTimeUTC string
 		ChainID        ChainID
 		TokenSymbol    string
-		FeeModelParams feemodeltypes.Params
+		FeeModelParams feemodeltypes.ModelParams
 		Gov            GovConfig
 		Staking        StakingConfig
 	}{

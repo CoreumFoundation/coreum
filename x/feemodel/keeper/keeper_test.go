@@ -104,11 +104,11 @@ func TestParams(t *testing.T) {
 	keeper.SetParams(ctx, defParams)
 	params := keeper.GetParams(ctx)
 
-	assert.Equal(t, defParams.InitialGasPrice.String(), params.InitialGasPrice.String())
-	assert.Equal(t, defParams.MaxGasPrice.String(), params.MaxGasPrice.String())
-	assert.Equal(t, defParams.MaxDiscount.String(), params.MaxDiscount.String())
-	assert.Equal(t, defParams.EscalationStartBlockGas, params.EscalationStartBlockGas)
-	assert.Equal(t, defParams.MaxBlockGas, params.MaxBlockGas)
-	assert.Equal(t, defParams.ShortEmaBlockLength, params.ShortEmaBlockLength)
-	assert.Equal(t, defParams.LongEmaBlockLength, params.LongEmaBlockLength)
+	assert.Equal(t, defParams.Model.InitialGasPrice.String(), params.Model.InitialGasPrice.String())
+	assert.Equal(t, defParams.Model.MaxGasPrice.String(), params.Model.MaxGasPrice.String())
+	assert.Equal(t, defParams.Model.MaxDiscount.String(), params.Model.MaxDiscount.String())
+	assert.Equal(t, defParams.Model.EscalationStartBlockGas, params.Model.EscalationStartBlockGas)
+	assert.Equal(t, defParams.Model.MaxBlockGas, params.Model.MaxBlockGas)
+	assert.Equal(t, defParams.Model.ShortEmaBlockLength, params.Model.ShortEmaBlockLength)
+	assert.Equal(t, defParams.Model.LongEmaBlockLength, params.Model.LongEmaBlockLength)
 }
