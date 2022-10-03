@@ -2,6 +2,7 @@ package testing
 
 import (
 	"encoding/hex"
+	"fmt"
 	"reflect"
 	"sync"
 
@@ -156,7 +157,9 @@ func NewChain(cfg ChainConfig) Chain {
 
 	chainContext := NewChainContext(clientContext, cfg.NetworkConfig)
 	governance := NewGovernance(chainContext, cfg.StakerMnemonics)
-	faucet := NewFaucet(NewChainContext(clientContext.WithFromAddress(chainContext.ImportMnemonic(cfg.FundingMnemonic)), cfg.NetworkConfig))
+	faucetAddress := chainContext.ImportMnemonic(cfg.FundingMnemonic)
+	fmt.Printf("faucet address in new CHain %v\n\n\n\n\n", faucetAddress.String())
+	faucet := NewFaucet(NewChainContext(clientContext.WithFromAddress(faucetAddress), cfg.NetworkConfig))
 	return Chain{
 		ChainContext: chainContext,
 		Client:       coredClient,
