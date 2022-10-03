@@ -220,13 +220,15 @@
     },
     "feemodel": {
       "params": {
-        "initial_gas_price": "{{ .FeeModelParams.InitialGasPrice }}",
-        "max_gas_price": "{{ .FeeModelParams.MaxGasPrice }}",
-        "max_discount": "{{ .FeeModelParams.MaxDiscount }}",
-        "escalation_start_block_gas": {{ .FeeModelParams.EscalationStartBlockGas }},
-        "max_block_gas": {{ .FeeModelParams.MaxBlockGas }},
-        "short_ema_block_length": {{ .FeeModelParams.ShortEmaBlockLength }},
-        "long_ema_block_length": {{ .FeeModelParams.LongEmaBlockLength }}
+        "model": {
+          "initial_gas_price": "{{ .FeeModelParams.InitialGasPrice }}",
+          "max_gas_price": "{{ .FeeModelParams.MaxGasPrice }}",
+          "max_discount": "{{ .FeeModelParams.MaxDiscount }}",
+          "escalation_start_block_gas": {{ .FeeModelParams.EscalationStartBlockGas }},
+          "max_block_gas": {{ .FeeModelParams.MaxBlockGas }},
+          "short_ema_block_length": {{ .FeeModelParams.ShortEmaBlockLength }},
+          "long_ema_block_length": {{ .FeeModelParams.LongEmaBlockLength }}
+        }
       },
         "min_gas_price": {
           "denom": "{{ .TokenSymbol }}",

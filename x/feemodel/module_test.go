@@ -60,13 +60,15 @@ func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Codec) {
 	genesisState := types.GenesisState{
 		Params: types.Params{
-			InitialGasPrice:         sdk.NewDec(15),
-			MaxGasPrice:             sdk.NewDec(150),
-			MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
-			EscalationStartBlockGas: 7,
-			MaxBlockGas:             10,
-			ShortEmaBlockLength:     1,
-			LongEmaBlockLength:      3,
+			Model: types.ModelParams{
+				InitialGasPrice:         sdk.NewDec(15),
+				MaxGasPrice:             sdk.NewDec(150),
+				MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
+				EscalationStartBlockGas: 7,
+				MaxBlockGas:             10,
+				ShortEmaBlockLength:     1,
+				LongEmaBlockLength:      3,
+			},
 		},
 		MinGasPrice: sdk.NewDecCoin("coin", sdk.NewInt(155)),
 	}
@@ -81,13 +83,13 @@ func TestInitGenesis(t *testing.T) {
 	module, keeper, state, cdc := setup()
 
 	genesisState := state
-	genesisState.Params.InitialGasPrice.Add(sdk.OneDec())
-	genesisState.Params.MaxGasPrice.Add(sdk.OneDec())
-	genesisState.Params.MaxDiscount.Add(sdk.MustNewDecFromStr("0.2"))
-	genesisState.Params.EscalationStartBlockGas++
-	genesisState.Params.MaxBlockGas++
-	genesisState.Params.ShortEmaBlockLength++
-	genesisState.Params.LongEmaBlockLength++
+	genesisState.Params.Model.InitialGasPrice.Add(sdk.OneDec())
+	genesisState.Params.Model.MaxGasPrice.Add(sdk.OneDec())
+	genesisState.Params.Model.MaxDiscount.Add(sdk.MustNewDecFromStr("0.2"))
+	genesisState.Params.Model.EscalationStartBlockGas++
+	genesisState.Params.Model.MaxBlockGas++
+	genesisState.Params.Model.ShortEmaBlockLength++
+	genesisState.Params.Model.LongEmaBlockLength++
 	genesisState.MinGasPrice.Denom = "coin2"
 	genesisState.MinGasPrice.Amount.Add(sdk.OneDec())
 
@@ -95,13 +97,13 @@ func TestInitGenesis(t *testing.T) {
 
 	params := keeper.GetParams(sdk.Context{})
 	minGasPrice := keeper.GetMinGasPrice(sdk.Context{})
-	assert.True(t, genesisState.Params.InitialGasPrice.Equal(params.InitialGasPrice))
-	assert.True(t, genesisState.Params.MaxGasPrice.Equal(params.MaxGasPrice))
-	assert.True(t, genesisState.Params.MaxDiscount.Equal(params.MaxDiscount))
-	assert.Equal(t, genesisState.Params.EscalationStartBlockGas, params.EscalationStartBlockGas)
-	assert.Equal(t, genesisState.Params.MaxBlockGas, params.MaxBlockGas)
-	assert.Equal(t, genesisState.Params.ShortEmaBlockLength, params.ShortEmaBlockLength)
-	assert.Equal(t, genesisState.Params.LongEmaBlockLength, params.LongEmaBlockLength)
+	assert.True(t, genesisState.Params.Model.InitialGasPrice.Equal(params.Model.InitialGasPrice))
+	assert.True(t, genesisState.Params.Model.MaxGasPrice.Equal(params.Model.MaxGasPrice))
+	assert.True(t, genesisState.Params.Model.MaxDiscount.Equal(params.Model.MaxDiscount))
+	assert.Equal(t, genesisState.Params.Model.EscalationStartBlockGas, params.Model.EscalationStartBlockGas)
+	assert.Equal(t, genesisState.Params.Model.MaxBlockGas, params.Model.MaxBlockGas)
+	assert.Equal(t, genesisState.Params.Model.ShortEmaBlockLength, params.Model.ShortEmaBlockLength)
+	assert.Equal(t, genesisState.Params.Model.LongEmaBlockLength, params.Model.LongEmaBlockLength)
 	assert.Equal(t, genesisState.MinGasPrice.Denom, minGasPrice.Denom)
 	assert.True(t, genesisState.MinGasPrice.Amount.Equal(minGasPrice.Amount))
 }
@@ -119,7 +121,7 @@ func TestEndBlock(t *testing.T) {
 
 	module.EndBlock(sdk.Context{}, abci.RequestEndBlock{})
 
-	model := types.NewModel(state.Params)
+	model := types.NewModel(state.Params.Model)
 	minGasPrice := keeper.GetMinGasPrice(sdk.Context{})
 	assert.True(t, minGasPrice.Amount.Equal(model.CalculateGasPriceWithMaxDiscount()))
 	assert.Equal(t, minGasPrice.Denom, state.MinGasPrice.Denom)
