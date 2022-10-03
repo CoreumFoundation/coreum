@@ -8,39 +8,41 @@ import (
 )
 
 var params = Params{
-	InitialGasPrice:         sdk.NewDec(1500),
-	MaxGasPrice:             sdk.NewDec(1500000),
-	MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-	EscalationStartBlockGas: 700,
-	MaxBlockGas:             1000,
-	ShortEmaBlockLength:     10,
-	LongEmaBlockLength:      1000,
+	Model: ModelParams{
+		InitialGasPrice:         sdk.NewDec(1500),
+		MaxGasPrice:             sdk.NewDec(1500000),
+		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
+		EscalationStartBlockGas: 700,
+		MaxBlockGas:             1000,
+		ShortEmaBlockLength:     10,
+		LongEmaBlockLength:      1000,
+	},
 }
 
 func TestParamsValidation(t *testing.T) {
-	assert.NoError(t, params.Validate())
+	assert.NoError(t, params.ValidateBasic())
 
 	testParams := params
-	testParams.InitialGasPrice = sdk.NewDec(0)
-	assert.Error(t, testParams.Validate())
+	testParams.Model.InitialGasPrice = sdk.NewDec(0)
+	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.MaxGasPrice = testParams.InitialGasPrice
-	assert.Error(t, testParams.Validate())
+	testParams.Model.MaxGasPrice = testParams.Model.InitialGasPrice
+	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.MaxDiscount = sdk.ZeroDec()
-	assert.Error(t, testParams.Validate())
+	testParams.Model.MaxDiscount = sdk.ZeroDec()
+	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.MaxDiscount = sdk.OneDec()
-	assert.Error(t, testParams.Validate())
+	testParams.Model.MaxDiscount = sdk.OneDec()
+	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.EscalationStartBlockGas = 0
-	assert.Error(t, testParams.Validate())
+	testParams.Model.EscalationStartBlockGas = 0
+	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.MaxBlockGas = testParams.EscalationStartBlockGas
-	assert.Error(t, testParams.Validate())
+	testParams.Model.MaxBlockGas = testParams.Model.EscalationStartBlockGas
+	assert.Error(t, testParams.ValidateBasic())
 }

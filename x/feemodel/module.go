@@ -155,13 +155,13 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	// TODO (wojtek): add simulation tests
 	currentGasUsage := am.keeper.TrackedGas(ctx)
 	params := am.keeper.GetParams(ctx)
-	model := types.NewModel(params)
+	model := types.NewModel(params.Model)
 	previousMinGasPrice := am.keeper.GetMinGasPrice(ctx)
 
 	newShortEMA := types.CalculateEMA(am.keeper.GetShortEMAGas(ctx), currentGasUsage,
-		params.ShortEmaBlockLength)
+		params.Model.ShortEmaBlockLength)
 	newLongEMA := types.CalculateEMA(am.keeper.GetLongEMAGas(ctx), currentGasUsage,
-		params.LongEmaBlockLength)
+		params.Model.LongEmaBlockLength)
 
 	newMinGasPrice := model.CalculateNextGasPrice(newShortEMA, newLongEMA)
 
