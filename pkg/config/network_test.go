@@ -16,17 +16,18 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/staking"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 func init() {
 	n := testNetwork()
-	n.SetupPrefixes()
+	n.SetSDKConfig()
 }
 
 var feeConfig = config.FeeConfig{
-	FeeModel: feemodeltypes.NewModel(feemodeltypes.Params{
+	FeeModel: feemodeltypes.NewModel(feemodeltypes.ModelParams{
 		InitialGasPrice:         sdk.NewDec(2),
 		MaxGasPrice:             sdk.NewDec(4),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),
@@ -42,7 +43,7 @@ var feeConfig = config.FeeConfig{
 
 func testNetwork() config.Network {
 	pubKey, privKey := types.GenerateSecp256k1Key()
-	clientCtx := config.NewClientContext(app.ModuleBasics)
+	clientCtx := tx.NewClientContext(app.ModuleBasics)
 	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	if err != nil {
 		panic(err)
@@ -203,7 +204,7 @@ func TestAddGenTx(t *testing.T) {
 
 	n := testNetwork()
 	pubKey, privKey := types.GenerateSecp256k1Key()
-	clientCtx := config.NewClientContext(app.ModuleBasics)
+	clientCtx := tx.NewClientContext(app.ModuleBasics)
 	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
 	requireT.NoError(err)
 	n.AddGenesisTx(tx)
@@ -339,7 +340,7 @@ func TestValidateAllGenesis(t *testing.T) {
 func TestNetworkConfigConditions(t *testing.T) {
 	assertT := assert.New(t)
 	for _, n := range config.EnabledNetworks() {
-		assert.NoError(t, n.FeeModel().Params().Validate())
+		assert.NoError(t, n.FeeModel().Params().ValidateBasic())
 		assertT.Greater(n.DeterministicGas().BankSend, uint64(0))
 	}
 }

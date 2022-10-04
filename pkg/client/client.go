@@ -19,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	"google.golang.org/grpc"
+	googlegrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -41,7 +41,7 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx           client.Context
+	clientCtx           tx.ClientContext
 	authQueryClient     authtypes.QueryClient
 	bankQueryClient     banktypes.QueryClient
 	wasmQueryClient     wasmtypes.QueryClient
@@ -60,9 +60,10 @@ func New(chainID config.ChainID, addr string) Client {
 	rpcClient, err := client.NewClientFromNode(addr)
 	must.OK(err)
 	// This line takes `app.ModuleBasics` but this code will be removed anyway
-	clientCtx := config.NewClientContext(app.ModuleBasics).
+	clientCtx := tx.NewClientContext(app.ModuleBasics).
 		WithChainID(string(chainID)).
 		WithClient(rpcClient)
+
 	return Client{
 		clientCtx:           clientCtx,
 		authQueryClient:     authtypes.NewQueryClient(clientCtx),
@@ -74,7 +75,7 @@ func New(chainID config.ChainID, addr string) Client {
 
 // GetClientCtx returns the clientCtx from the client.
 // TODO (dhil): this is temp workaround to get access to the configured client context util we migrate to new tx package
-func (c Client) GetClientCtx() client.Context {
+func (c Client) GetClientCtx() tx.ClientContext {
 	return c.clientCtx
 }
 
@@ -87,13 +88,13 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 	defer cancel()
 
 	var header metadata.MD
-	res, err := c.authQueryClient.Account(requestCtx, &authtypes.QueryAccountRequest{Address: addr.String()}, grpc.Header(&header))
+	res, err := c.authQueryClient.Account(requestCtx, &authtypes.QueryAccountRequest{Address: addr.String()}, googlegrpc.Header(&header))
 	if err != nil {
 		return 0, 0, errors.WithStack(err)
 	}
 
 	var acc authtypes.AccountI
-	if err := c.clientCtx.InterfaceRegistry.UnpackAny(res.Account, &acc); err != nil {
+	if err := c.clientCtx.InterfaceRegistry().UnpackAny(res.Account, &acc); err != nil {
 		return 0, 0, errors.WithStack(err)
 	}
 
@@ -136,7 +137,7 @@ func (c Client) Sign(ctx context.Context, input tx.BaseInput, msgs ...sdk.Msg) (
 
 // Encode encodes transaction to be broadcasted
 func (c Client) Encode(signedTx authsigning.Tx) []byte {
-	return must.Bytes(c.clientCtx.TxConfig.TxEncoder()(signedTx))
+	return must.Bytes(c.clientCtx.TxConfig().TxEncoder()(signedTx))
 }
 
 // BroadcastResult contains results of transaction broadcast
@@ -152,7 +153,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
-	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
+	res, err := c.clientCtx.Client().BroadcastTxSync(requestCtx, encodedTx)
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return BroadcastResult{}, errors.WithStack(err)
@@ -185,7 +186,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		defer cancel()
 
 		var err error
-		resultTx, err = c.clientCtx.Client.Tx(requestCtx, txHashBytes, false)
+		resultTx, err = c.clientCtx.Client().Tx(requestCtx, txHashBytes, false)
 		if err != nil {
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
