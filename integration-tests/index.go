@@ -27,6 +27,7 @@ func Tests() testing.TestSet {
 			feemodel.TestQueryingMinGasPrice,
 			feemodel.TestFeeModelProposalParamChange,
 			staking.TestStakingProposalParamChange,
+			staking.TestStaking,
 			wasm.TestSimpleStateWasmContract,
 			wasm.TestBankSendWasmContract,
 		},
