@@ -44,23 +44,21 @@ func PreProcessFlags() (config.Network, error) {
 		return config.Network{}, nil
 	}
 
-	// get chain config
-	network, err := config.NetworkByChainID(config.ChainID(*chainID))
-	if err != nil {
-		return config.Network{}, err
-	}
-
-	app.ChosenNetwork = network
-
 	// overwrite home flag
 	if flagSet.Changed(flags.FlagHome) {
-		err = appendStringFlag(os.Args, flags.FlagHome, *chainID)
+		err := appendStringFlag(os.Args, flags.FlagHome, *chainID)
 		if err != nil {
 			return config.Network{}, err
 		}
 	} else {
 		appendedHome := filepath.Join(app.DefaultNodeHome, *chainID)
 		os.Args = append(os.Args, fmt.Sprintf("--%s=%s", flags.FlagHome, appendedHome))
+	}
+
+	// get chain config
+	network, err := config.NetworkByChainID(config.ChainID(*chainID))
+	if err != nil {
+		return config.Network{}, err
 	}
 
 	return network, nil

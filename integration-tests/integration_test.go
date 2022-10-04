@@ -77,7 +77,7 @@ func TestMain(m *testing.M) {
 	cfg.LogVerbose = flag.Lookup("test.v").Value.String() == "true"
 
 	// FIXME (wojtek): remove this once we have our own address encoder
-	config.NewNetwork(cfg.NetworkConfig).SetupPrefixes()
+	config.NewNetwork(cfg.NetworkConfig).SetSDKConfig()
 
 	m.Run()
 }
