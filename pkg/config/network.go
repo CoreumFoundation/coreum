@@ -46,8 +46,8 @@ const (
 )
 
 const (
-	// coreBIP44CoinType is the CORE coin type as defined in SLIP44 (https://github.com/satoshilabs/slips/blob/master/slip-0044.md)
-	coreBIP44CoinType uint32 = 990
+	// CoinType is the CORE coin type as defined in SLIP44 (https://github.com/satoshilabs/slips/blob/master/slip-0044.md)
+	CoinType uint32 = 990
 )
 
 var (
@@ -410,7 +410,7 @@ func (n Network) SetSDKConfig() {
 	config.SetBech32PrefixForConsensusNode(n.addressPrefix+"valcons", n.addressPrefix+"valconspub")
 
 	// Set BIP44 coin type corresponding to CORE
-	config.SetCoinType(coreBIP44CoinType)
+	config.SetCoinType(CoinType)
 
 	config.Seal()
 }
