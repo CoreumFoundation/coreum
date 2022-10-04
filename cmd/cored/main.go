@@ -19,16 +19,18 @@ func main() {
 		logger.Error("Error processing chain id flag", "err", err)
 		os.Exit(1)
 	}
+	network.SetSDKConfig()
+	app.ChosenNetwork = network
+
 	rootCmd, _ := cosmoscmd.NewRootCmd(
 		app.Name,
-		network.AddressPrefix(),
 		app.DefaultNodeHome,
 		string(network.ChainID()),
 		app.ModuleBasics,
 		app.New,
 	)
 
-	rootCmd.AddCommand(cosmoscmd.InitCmd(app.DefaultNodeHome))
+	rootCmd.AddCommand(cosmoscmd.InitCmd(network, app.DefaultNodeHome))
 	cosmoscmd.OverwriteDefaultChainIDFlags(rootCmd)
 	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {

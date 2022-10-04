@@ -88,7 +88,6 @@ func (s *rootOptions) apply(options ...Option) {
 // NewRootCmd creates a new root command for a Cosmos SDK application
 func NewRootCmd(
 	appName,
-	accountAddressPrefix,
 	defaultNodeHome,
 	defaultChainID string,
 	moduleBasics module.BasicManager,
@@ -96,9 +95,6 @@ func NewRootCmd(
 	options ...Option,
 ) (*cobra.Command, config.EncodingConfig) {
 	rootOptions := newRootOptions(options...)
-
-	// Set config for prefixes
-	config.SetPrefixes(accountAddressPrefix)
 
 	encodingConfig := config.NewEncodingConfig(moduleBasics)
 	initClientCtx := client.Context{}.

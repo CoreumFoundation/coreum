@@ -81,6 +81,7 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 		1,
 		amount,
 	))
+
 	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
 
 	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
