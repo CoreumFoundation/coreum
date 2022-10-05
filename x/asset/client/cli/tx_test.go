@@ -10,13 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
 )
 
 func TestIssueAsset(t *testing.T) {
 	const name = "name"
+
 	requireT := require.New(t)
+	networkCfg, err := config.NetworkByChainID(config.Devnet)
+	requireT.NoError(err)
+	app.ChosenNetwork = networkCfg
 
 	testNetwork := network.New(t)
 
