@@ -1,0 +1,29 @@
+syntax = "proto3";
+package coreum.asset.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+import "coreum/asset/v1/asset.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Asset queries the assets of the module.
+  rpc Asset(QueryAssetRequest) returns (QueryAssetResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/assets/{id}";
+  }
+}
+
+// QueryAssetRequest is request type for the Query/Asset RPC method.
+message QueryAssetRequest {
+  // the asset id
+  string id = 1;
+}
+
+// QueryAssetResponse is response type for the Query/Asset RPC method.
+message QueryAssetResponse {
+  // the queried asset.
+  Asset asset = 1 [(gogoproto.nullable) = false];
+}

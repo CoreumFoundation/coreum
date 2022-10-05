@@ -102,6 +102,9 @@ import (
 
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/x/asset"
+	assetkeeper "github.com/CoreumFoundation/coreum/x/asset/keeper"
+	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/x/deterministicgas/types"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
@@ -174,6 +177,7 @@ var (
 		monitoringp.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
+		asset.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -241,14 +245,14 @@ type App struct {
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	MonitoringKeeper monitoringpkeeper.Keeper
 	WASMKeeper       wasm.Keeper
-	FeeModelKeeper   feemodelkeeper.Keeper
+	AssetKeeper      assetkeeper.Keeper
 
+	FeeModelKeeper feemodelkeeper.Keeper
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper        capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper   capabilitykeeper.ScopedKeeper
 	ScopedMonitoringKeeper capabilitykeeper.ScopedKeeper
 	ScopedWASMKeeper       capabilitykeeper.ScopedKeeper
-
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -288,7 +292,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
-		wasm.StoreKey, feemodeltypes.StoreKey,
+		wasm.StoreKey, feemodeltypes.StoreKey, assettypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
@@ -454,6 +458,12 @@ func New(
 	)
 	monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
+	app.AssetKeeper = assetkeeper.NewKeeper(
+		appCodec,
+		keys[assettypes.StoreKey],
+	)
+	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -500,6 +510,7 @@ func New(
 		monitoringModule,
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
+		assetModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -529,6 +540,7 @@ func New(
 		monitoringptypes.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
+		assettypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -554,6 +566,7 @@ func New(
 		monitoringptypes.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
+		assettypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -584,6 +597,7 @@ func New(
 		monitoringptypes.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
+		assettypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -610,6 +624,7 @@ func New(
 		transferModule,
 		monitoringModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
+		assetModule,
 	)
 	app.sm.RegisterStoreDecoders()
 

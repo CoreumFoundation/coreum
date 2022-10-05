@@ -22,6 +22,9 @@
   },
   "app_hash": "",
   "app_state": {
+    "asset": {
+      "assets": []
+    },
     "auth": {
       "params": {
         "max_memo_characters": "256",

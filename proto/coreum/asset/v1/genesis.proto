@@ -1,0 +1,13 @@
+syntax = "proto3";
+package coreum.asset.v1;
+
+import "gogoproto/gogo.proto";
+import "coreum/asset/v1/asset.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
+
+// GenesisState defines the asset module's genesis state.
+message GenesisState {
+  // assets state
+  repeated Asset assets = 1 [(gogoproto.nullable) = false];
+}
