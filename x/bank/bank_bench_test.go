@@ -59,112 +59,45 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 	err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
 	assert.NoError(b, err)
 
-	b.ResetTimer()
-	b.Run("test-single-send", func(b *testing.B) {
+	testAction := func(b *testing.B, numberOfDenoms int) {
 		b.StopTimer()
-		var addresses []sdk.AccAddress
-		for i := 0; i < b.N; i++ {
-			address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-			addresses = append(addresses, address)
-			amount := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(10)))
-			err = bankKeeper.SendCoinsFromModuleToAccount(sdkContext, minttypes.ModuleName, address, amount)
+		denoms := make([]string, numberOfDenoms)
+		for i := 0; i < numberOfDenoms; i++ {
+			denoms[i] = fmt.Sprintf("test-denom-%d", i)
+			coins := sdk.NewCoins(sdk.NewCoin(denoms[i], sdk.NewInt(1_000_000_000)))
+			err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
+			assert.NoError(b, err)
 		}
 
-		amount := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(10)))
+		addresses := make([]sdk.AccAddress, b.N)
+		for i := 0; i < b.N; i++ {
+			address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+			addresses[i] = address
+
+			denom := denoms[b.N%len(denoms)]
+			amount := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
+			err = bankKeeper.SendCoinsFromModuleToAccount(sdkContext, minttypes.ModuleName, address, amount)
+			assert.NoError(b, err)
+		}
+
 		b.StartTimer()
 		for i := 0; i < b.N; i++ {
 			fromAddress := addresses[i]
 			toAddress := addresses[(i+1)%len(addresses)]
+			denom := denoms[b.N%len(denoms)]
+			amount := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
 			err = bankKeeper.SendCoins(sdkContext, fromAddress, toAddress, amount)
 			assert.NoError(b, err)
 		}
+	}
+
+	b.ResetTimer()
+	b.Run("test-single-send", func(b *testing.B) {
+		testAction(b, 1)
 	})
 
 	b.Run("test-100k-denom-send", func(b *testing.B) {
-		b.StopTimer()
-		var denoms []string
-		for i := 0; i < 100_000; i++ {
-			denom := fmt.Sprintf("test-denom-%d", i)
-			denoms = append(denoms, denom)
-			coins := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1_000_000_000)))
-			err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
-			assert.NoError(b, err)
-		}
-
-		var addresses []sdk.AccAddress
-		for i := 0; i < b.N; i++ {
-			address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-			addresses = append(addresses, address)
-
-			denom := denoms[b.N%len(denoms)]
-			amount := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
-			err = bankKeeper.SendCoinsFromModuleToAccount(sdkContext, minttypes.ModuleName, address, amount)
-		}
-
-		b.StartTimer()
-		for i := 0; i < b.N; i++ {
-			fromAddress := addresses[i]
-			toAddress := addresses[(i+1)%len(addresses)]
-			denom := denoms[b.N%len(denoms)]
-			amount := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
-			err = bankKeeper.SendCoins(sdkContext, fromAddress, toAddress, amount)
-			assert.NoError(b, err)
-		}
-	})
-}
-
-func Benchmark100KDenomBankModuleSend(b *testing.B) {
-	simApp := createSimApp(b)
-	bankKeeper := simApp.BankKeeper
-	sdkContext := simApp.NewUncachedContext(false, types.Header{})
-	singleCoinDenom := config.TokenSymbolDev
-	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000)))
-	err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
-	assert.NoError(b, err)
-
-	b.ResetTimer()
-	b.Run("test-single-module-send", func(b *testing.B) {
-		b.StopTimer()
-		var addresses []sdk.AccAddress
-		for i := 0; i < b.N; i++ {
-			address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-			addresses = append(addresses, address)
-		}
-
-		b.StartTimer()
-		for i := 0; i < b.N; i++ {
-			address := addresses[i]
-			amount := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(10)))
-			err = bankKeeper.SendCoinsFromModuleToAccount(sdkContext, minttypes.ModuleName, address, amount)
-			assert.NoError(b, err)
-		}
-	})
-
-	b.Run("test-100k-denom-module-send", func(b *testing.B) {
-		b.StopTimer()
-		var denoms []string
-		for i := 0; i < 100_000; i++ {
-			denom := fmt.Sprintf("test-denom-%d", i)
-			denoms = append(denoms, denom)
-			coins := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1_000_000_000)))
-			err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
-			assert.NoError(b, err)
-		}
-
-		var addresses []sdk.AccAddress
-		for i := 0; i < b.N; i++ {
-			address := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-			addresses = append(addresses, address)
-		}
-
-		b.StartTimer()
-		for i := 0; i < b.N; i++ {
-			address := addresses[i]
-			denom := denoms[b.N%len(denoms)]
-			amount := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
-			err = bankKeeper.SendCoinsFromModuleToAccount(sdkContext, minttypes.ModuleName, address, amount)
-			assert.NoError(b, err)
-		}
+		testAction(b, 100_000)
 	})
 }
 
@@ -178,7 +111,6 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	coins := sdk.NewCoins(coin)
 	err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
 	assert.NoError(b, err)
-	b.ResetTimer()
 	b.Run("test-single-get-supply", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			supply := bankKeeper.GetSupply(sdkContext, singleCoinDenom)
