@@ -24,9 +24,9 @@ message FTCustomDefinition {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // denom_name is the name of bank denom which corresponds the asset with the provided precision
+  // denom_name is the name of bank denom which corresponds to the asset with the provided precision
   string denom_name = 3;
-  // denom_base_name is the name of bank denom which corresponds the asset with the zero precision
+  // denom_base_name is the name of bank denom which corresponds to the asset with the zero precision
   string denom_base_name = 4;
 }
 
