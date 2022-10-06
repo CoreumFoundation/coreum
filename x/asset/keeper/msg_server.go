@@ -4,15 +4,13 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
-	IssueAsset(ctx sdk.Context, name string) string
+	IssueAsset(ctx sdk.Context, definition types.AssetDefinition) (uint64, error)
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -29,10 +27,10 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 
 // IssueAsset defines a tx handler to issue a new asset.
 func (ms MsgServer) IssueAsset(ctx context.Context, req *types.MsgIssueAsset) (*types.MsgIssueAssetResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
+	_, err := ms.keeper.IssueAsset(sdk.UnwrapSDKContext(ctx), *req.Definition)
+	if err != nil {
+		return nil, err
 	}
-	ms.keeper.IssueAsset(sdk.UnwrapSDKContext(ctx), req.Name)
 
 	return &types.MsgIssueAssetResponse{}, nil
 }

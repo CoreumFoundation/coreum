@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -46,7 +47,10 @@ $ %[1]s query asset show {id}
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
-			id := args[0]
+			id, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
 			res, err := queryClient.Asset(cmd.Context(), &types.QueryAssetRequest{
 				Id: id,
 			})

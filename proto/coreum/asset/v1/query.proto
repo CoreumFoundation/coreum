@@ -18,12 +18,12 @@ service Query {
 
 // QueryAssetRequest is request type for the Query/Asset RPC method.
 message QueryAssetRequest {
-  // the asset id
-  string id = 1;
+  // id is the asset id
+  uint64 id = 1;
 }
 
 // QueryAssetResponse is response type for the Query/Asset RPC method.
 message QueryAssetResponse {
-  // the queried asset.
+  // the queried asset
   Asset asset = 1 [(gogoproto.nullable) = false];
 }

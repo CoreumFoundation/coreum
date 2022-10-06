@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/CoreumFoundation/coreum/integration-tests/asset"
 	"github.com/CoreumFoundation/coreum/integration-tests/auth"
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
@@ -13,6 +14,7 @@ import (
 func Tests() testing.TestSet {
 	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
+			asset.TestIssueFTAsset,
 			auth.TestUnexpectedSequenceNumber,
 			auth.TestTooLowGasPrice,
 			auth.TestNoFee,

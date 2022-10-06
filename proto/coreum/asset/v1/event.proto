@@ -1,0 +1,10 @@
+syntax = "proto3";
+package coreum.asset.v1;
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
+
+// EventAssetIssued is emitted on MsgIssueAsset.
+message EventAssetIssued {
+  // id is the asset id
+  uint64 id = 1;
+}

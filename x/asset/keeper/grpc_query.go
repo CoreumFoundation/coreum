@@ -10,7 +10,7 @@ import (
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
-	GetAsset(ctx sdk.Context, id string) types.Asset
+	GetAsset(ctx sdk.Context, id uint64) (types.Asset, error)
 }
 
 // QueryService serves grpc query requests for assets module.
@@ -27,7 +27,12 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 
 // Asset queries an asset.
 func (qs QueryService) Asset(ctx context.Context, req *types.QueryAssetRequest) (*types.QueryAssetResponse, error) {
+	asset, err := qs.keeper.GetAsset(sdk.UnwrapSDKContext(ctx), req.GetId())
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryAssetResponse{
-		Asset: qs.keeper.GetAsset(sdk.UnwrapSDKContext(ctx), req.GetId()),
+		Asset: asset,
 	}, nil
 }

@@ -1,9 +1,10 @@
 package cli_test
 
 import (
-	"encoding/json"
+	"strconv"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
 
@@ -15,7 +16,7 @@ import (
 )
 
 func TestQueryAsset(t *testing.T) {
-	const id = "id1"
+	const id = uint64(1)
 
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkByChainID(config.Devnet)
@@ -25,10 +26,20 @@ func TestQueryAsset(t *testing.T) {
 	testNetwork := network.New(t)
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryAsset(), []string{id, "--output", "json"})
+
+	createAsset(requireT, ctx, testNetwork)
+
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryAsset(), []string{strconv.Itoa(int(id)), "--output", "json"})
 	requireT.NoError(err)
 
 	var resp types.QueryAssetResponse
-	requireT.NoError(json.Unmarshal(buf.Bytes(), &resp))
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 	requireT.Equal(id, resp.Asset.Id)
+}
+
+func createAsset(requireT *require.Assertions, ctx client.Context, testNetwork *network.Network) {
+	args := []string{testNetwork.Validators[0].Address.String(), "BTC", `"BTC Token"`, "6", "777"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFTAsset(), args)
+	requireT.NoError(err)
 }

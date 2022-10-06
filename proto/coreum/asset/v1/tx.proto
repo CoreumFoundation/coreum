@@ -15,11 +15,11 @@ service Msg {
 
 // MsgIssueAsset defines message to issue new asset.
 message MsgIssueAsset {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   string from = 1;
-  string name = 2;
+  AssetDefinition definition = 2;
 }
 
 // MsgIssueAsset defines message response of the to issued asset.

@@ -8,7 +8,6 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -17,8 +16,6 @@ import (
 )
 
 func TestIssueAsset(t *testing.T) {
-	const name = "name"
-
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkByChainID(config.Devnet)
 	requireT.NoError(err)
@@ -29,13 +26,13 @@ func TestIssueAsset(t *testing.T) {
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
 
-	args := []string{name}
+	args := []string{testNetwork.Validators[0].Address.String(), "BTC", `"BTC Token"`, "6", "777"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueAsset(), args)
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFTAsset(), args)
 	requireT.NoError(err)
 
 	var res sdk.TxResponse
-	requireT.NoError(tmjson.Unmarshal(buf.Bytes(), &res))
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
 	requireT.Equal(uint32(0), res.Code)
 }
