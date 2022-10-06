@@ -4,7 +4,7 @@
       {
         "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
         "description": {
-          "moniker": "staker1",
+          "moniker": "Venus",
           "identity": "",
           "website": "",
           "security_contact": "",
@@ -56,6 +56,6 @@
     }
   },
   "signatures": [
-    "ZxoNuwO1TEK6VR0tcE+sGG5XCbVlFkMCLgcwsqui94kFFj0m8nOvar6fKtjr16eJ1ZeuE92hnc2eOuYGA+Tvdw=="
+    "C15uNvGlYjjTBzYLLUtKClKRVF1CiicRvB+vr2q4FQs5RQflaMvXkF15AHPamIIrZ7zvZKIg5p6/ZZl1Lkxl4Q=="
   ]
 }
