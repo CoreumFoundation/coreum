@@ -61,7 +61,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	)
 	requireT.NoError(err)
 
-	// send additional coins to contract directly
+	// fund contract address
 	sdkContractAddress, err := sdk.AccAddressFromBech32(contractAddr)
 	requireT.NoError(err)
 	err = chain.Faucet.FundAccounts(
@@ -71,7 +71,6 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	requireT.NoError(err)
 
 	receiver := chain.RandomWallet()
-	// send coin from the contract to test wallet
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
 			Amount:    "5000",
@@ -97,7 +96,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	maxGasExpected := minGasExpected * 10
 
-	clientCtx := chain.ChainContext.ClientContext.WithFromName(adminKeyInfo.GetName()).WithFromAddress(adminAddress)
+	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(adminAddress)
 	txf := chain.ChainContext.TxFactory().WithGas(maxGasExpected)
 	result, err := tx.BroadcastTx(ctx, clientCtx, txf, wasmBankSend, bankSend)
 	require.NoError(t, err)

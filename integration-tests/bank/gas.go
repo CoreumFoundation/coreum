@@ -51,36 +51,31 @@ func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testin
 func TestTransferDeterministicGas2BankSends(ctx context.Context, t testing.T, chain testing.Chain) {
 	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 
-	amount := testing.MustNewIntFromString(t, "1000000000000")
-	fees := testing.ComputeNeededBalance(
+	senderInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{}),
+		gasExpected,
 		1,
-		sdk.NewInt(0),
+		testing.MustNewIntFromString(t, "1000000000000"),
 	)
 
 	sender := chain.RandomWallet()
 	receiver1 := chain.RandomWallet()
 	receiver2 := chain.RandomWallet()
 
-	senderKeyInfo, err := chain.ChainContext.ClientContext.Keyring().KeyByAddress(sender)
-	require.NoError(t, err)
-
-	senderInitialBalance := chain.NewCoin(fees.Add(amount))
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, senderInitialBalance)))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(senderInitialBalance))))
 
 	bankSend1 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   receiver1.String(),
-		Amount:      []sdk.Coin{sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1000))},
+		Amount:      []sdk.Coin{chain.NewCoin(sdk.NewInt(1000))},
 	}
 	bankSend2 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   receiver2.String(),
-		Amount:      []sdk.Coin{sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1000))},
+		Amount:      []sdk.Coin{chain.NewCoin(sdk.NewInt(1000))},
 	}
 
-	clientCtx := chain.ChainContext.ClientContext.WithFromName(senderKeyInfo.GetName()).WithFromAddress(sender)
+	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)
 	txf := chain.ChainContext.TxFactory().WithGas(gasExpected)
 	result, err := tx.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
 	require.NoError(t, err)
