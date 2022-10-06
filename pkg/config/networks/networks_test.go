@@ -1,4 +1,4 @@
-package networks
+package networks_test
 
 import (
 	"testing"
@@ -78,12 +78,16 @@ var invalidSignatureTx = []byte(`
 }
 `)
 
-func TestSignedTxs(t *testing.T) {
-	network, err := config.NetworkByChainID(config.Devnet)
-	assert.NoError(t, err)
+func init() {
+	network, _ := config.NetworkByChainID(config.Devnet)
 	// Since we have a single network currently (devnet) we can seal config here.
 	// The idea is to add SetSDKConfigNoSeal to Network once we need to validate txs for multiple networks.
 	network.SetSDKConfig()
+}
+
+func TestInvalidTxSignature(t *testing.T) {
+	network, err := config.NetworkByChainID(config.Devnet)
+	assert.NoError(t, err)
 
 	clientContext := tx.NewClientContext(app.ModuleBasics).WithChainID(string(network.ChainID()))
 
@@ -91,6 +95,13 @@ func TestSignedTxs(t *testing.T) {
 	sdkTx, err := clientContext.TxConfig().TxJSONDecoder()(invalidSignatureTx)
 	assert.NoError(t, err)
 	assert.ErrorContains(t, validateGenesisTxSignature(clientContext, sdkTx), "signature verification failed")
+}
+
+func TestNetworkTxSignatures(t *testing.T) {
+	network, err := config.NetworkByChainID(config.Devnet)
+	assert.NoError(t, err)
+
+	clientContext := tx.NewClientContext(app.ModuleBasics).WithChainID(string(network.ChainID()))
 
 	// Check real network txs.
 	for _, rawTx := range network.GenTxs() {
