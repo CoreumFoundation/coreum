@@ -47,6 +47,48 @@ func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testin
 	assert.Equal(t, gasExpected, gasUsed)
 }
 
+// TestTransferDeterministicGas2BankSends checks that transfer takes the deterministic amount of gas
+func TestTransferDeterministicGas2BankSends(ctx context.Context, t testing.T, chain testing.Chain) {
+	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
+
+	amount := testing.MustNewIntFromString(t, "1000000000000")
+	fees := testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{}),
+		1,
+		sdk.NewInt(0),
+	)
+
+	sender := chain.RandomWallet()
+	receiver1 := chain.RandomWallet()
+	receiver2 := chain.RandomWallet()
+
+	senderKeyInfo, err := chain.ChainContext.ClientContext.Keyring().KeyByAddress(sender)
+	require.NoError(t, err)
+
+	senderInitialBalance := chain.NewCoin(fees.Add(amount))
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, senderInitialBalance)))
+
+	bankSend1 := &banktypes.MsgSend{
+		FromAddress: sender.String(),
+		ToAddress:   receiver1.String(),
+		Amount:      []sdk.Coin{sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1000))},
+	}
+	bankSend2 := &banktypes.MsgSend{
+		FromAddress: sender.String(),
+		ToAddress:   receiver2.String(),
+		Amount:      []sdk.Coin{sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1000))},
+	}
+
+	clientCtx := chain.ChainContext.ClientContext.WithFromName(senderKeyInfo.GetName()).WithFromAddress(sender)
+	txf := chain.ChainContext.TxFactory().WithGas(gasExpected)
+	result, err := tx.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	assert.EqualValues(t, gasExpected, result.GasUsed)
+}
+
 // TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
 func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T, chain testing.Chain) {
 	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{})
