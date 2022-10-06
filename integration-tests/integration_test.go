@@ -37,13 +37,14 @@ func (m *stringsFlag) Set(val string) error {
 }
 
 type testingConfig struct {
-	RPCAddress      string
-	NetworkConfig   config.NetworkConfig
-	FundingMnemonic string
-	StakerMnemonics []string
-	Filter          *regexp.Regexp
-	LogFormat       logger.Format
-	LogVerbose      bool
+	RPCAddress        string
+	UpgradeRPCAddress string
+	NetworkConfig     config.NetworkConfig
+	FundingMnemonic   string
+	StakerMnemonics   []string
+	Filter            *regexp.Regexp
+	LogFormat         logger.Format
+	LogVerbose        bool
 }
 
 var cfg = testingConfig{
@@ -51,10 +52,11 @@ var cfg = testingConfig{
 }
 
 func TestMain(m *testing.M) {
-	var fundingPrivKey, fundingMnemonic, coredAddress, logFormat, filter string
+	var fundingPrivKey, fundingMnemonic, coredAddress, coredUpgradeAddress, logFormat, filter string
 	var stakerMnemonics stringsFlag
 
 	flag.StringVar(&coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
+	flag.StringVar(&coredUpgradeAddress, "cored-upgrade-address", "tcp://localhost:46657", "Address of cored node started by znet used to test upgrades")
 	flag.StringVar(&fundingPrivKey, "priv-key", "LPIPcUDVpp8Cn__g-YMntGts-DfDbd2gKTcgUgqSLfY", "Base64-encoded private key used to fund accounts required by tests")
 	// TODO (dhil) those values are needed here for the backward compatibility of the crust, during the migration from priv keys to mnemonics
 	flag.StringVar(&fundingMnemonic, "funding-mnemonic", "", "Funding account mnemonic required by tests")
@@ -72,6 +74,7 @@ func TestMain(m *testing.M) {
 	cfg.FundingMnemonic = fundingMnemonic
 	cfg.StakerMnemonics = stakerMnemonics
 	cfg.RPCAddress = coredAddress
+	cfg.UpgradeRPCAddress = coredUpgradeAddress
 	cfg.Filter = regexp.MustCompile(filter)
 	cfg.LogFormat = logger.Format(logFormat)
 	cfg.LogVerbose = flag.Lookup("test.v").Value.String() == "true"
@@ -88,15 +91,22 @@ func Test(t *testing.T) {
 	testSet := tests.Tests()
 	ctx := newContext(t, cfg)
 
-	chainCfg := coreumtesting.ChainConfig{
+	chain := coreumtesting.NewChain(coreumtesting.ChainConfig{
 		RPCAddress:      cfg.RPCAddress,
 		NetworkConfig:   cfg.NetworkConfig,
 		FundingMnemonic: cfg.FundingMnemonic,
 		StakerMnemonics: cfg.StakerMnemonics,
-	}
-	chain := coreumtesting.NewChain(chainCfg)
+	})
+	upgradeChain := coreumtesting.NewChain(coreumtesting.ChainConfig{
+		RPCAddress:      cfg.UpgradeRPCAddress,
+		NetworkConfig:   cfg.NetworkConfig,
+		FundingMnemonic: cfg.FundingMnemonic,
+		StakerMnemonics: cfg.StakerMnemonics,
+	})
 
-	testCases := collectTestCases(chain, testSet, cfg.Filter)
+	testCases := collectSingleChainTests(testSet.SingleChain, chain, cfg.Filter)
+	testCases = append(testCases, collectSingleChainTests(testSet.UpgradeChain, upgradeChain, cfg.Filter)...)
+
 	if len(testCases) == 0 {
 		logger.Get(ctx).Warn("No tests to run")
 		return
@@ -120,25 +130,6 @@ func newContext(t *testing.T, cfg testingConfig) context.Context {
 type testCase struct {
 	Name    string
 	RunFunc func(ctx context.Context, t *testing.T)
-}
-
-func collectTestCases(chain coreumtesting.Chain, testSet coreumtesting.TestSet, testFilter *regexp.Regexp) []testCase {
-	var testCases []testCase
-	for _, testFunc := range testSet.SingleChain {
-		testFunc := testFunc
-		name := funcToName(testFunc)
-		if !testFilter.MatchString(name) {
-			continue
-		}
-
-		testCases = append(testCases, testCase{
-			Name: name,
-			RunFunc: func(ctx context.Context, t *testing.T) {
-				testFunc(ctx, t, chain)
-			},
-		})
-	}
-	return testCases
 }
 
 func runTests(ctx context.Context, t *testing.T, testCases []testCase) {
@@ -168,4 +159,23 @@ func funcToName(f interface{}) string {
 	funcName := strings.TrimSuffix(parts[len(parts)-1], ".func1")
 
 	return repoName + "." + funcName
+}
+
+func collectSingleChainTests(tests []coreumtesting.SingleChainSignature, chain coreumtesting.Chain, testFilter *regexp.Regexp) []testCase {
+	testCases := make([]testCase, 0, len(tests))
+	for _, testFunc := range tests {
+		testFunc := testFunc
+		name := funcToName(testFunc)
+		if !testFilter.MatchString(name) {
+			continue
+		}
+
+		testCases = append(testCases, testCase{
+			Name: name,
+			RunFunc: func(ctx context.Context, t *testing.T) {
+				testFunc(ctx, t, chain)
+			},
+		})
+	}
+	return testCases
 }
