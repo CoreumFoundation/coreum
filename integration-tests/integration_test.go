@@ -37,14 +37,15 @@ func (m *stringsFlag) Set(val string) error {
 }
 
 type testingConfig struct {
-	RPCAddress        string
-	UpgradeRPCAddress string
-	NetworkConfig     config.NetworkConfig
-	FundingMnemonic   string
-	StakerMnemonics   []string
-	Filter            *regexp.Regexp
-	LogFormat         logger.Format
-	LogVerbose        bool
+	RPCAddress             string
+	UpgradeRPCAddress      string
+	NetworkConfig          config.NetworkConfig
+	FundingMnemonic        string
+	StakerMnemonics        []string
+	UpgradeStakerMnemonics []string
+	Filter                 *regexp.Regexp
+	LogFormat              logger.Format
+	LogVerbose             bool
 }
 
 var cfg = testingConfig{
@@ -52,15 +53,14 @@ var cfg = testingConfig{
 }
 
 func TestMain(m *testing.M) {
-	var fundingPrivKey, fundingMnemonic, coredAddress, coredUpgradeAddress, logFormat, filter string
-	var stakerMnemonics stringsFlag
+	var fundingMnemonic, coredAddress, coredUpgradeAddress, logFormat, filter string
+	var stakerMnemonics, upgradeStakerMnemonics stringsFlag
 
 	flag.StringVar(&coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
 	flag.StringVar(&coredUpgradeAddress, "cored-upgrade-address", "tcp://localhost:46657", "Address of cored node started by znet used to test upgrades")
-	flag.StringVar(&fundingPrivKey, "priv-key", "LPIPcUDVpp8Cn__g-YMntGts-DfDbd2gKTcgUgqSLfY", "Base64-encoded private key used to fund accounts required by tests")
-	// TODO (dhil) those values are needed here for the backward compatibility of the crust, during the migration from priv keys to mnemonics
 	flag.StringVar(&fundingMnemonic, "funding-mnemonic", "", "Funding account mnemonic required by tests")
 	flag.Var(&stakerMnemonics, "staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
+	flag.Var(&upgradeStakerMnemonics, "upgrade-staker-mnemonic", "Staker account mnemonics required by upgrade tests, supports multiple")
 	flag.StringVar(&filter, "filter", "", "Regular expression used to run only a subset of tests")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.Parse()
@@ -73,6 +73,7 @@ func TestMain(m *testing.M) {
 
 	cfg.FundingMnemonic = fundingMnemonic
 	cfg.StakerMnemonics = stakerMnemonics
+	cfg.UpgradeStakerMnemonics = upgradeStakerMnemonics
 	cfg.RPCAddress = coredAddress
 	cfg.UpgradeRPCAddress = coredUpgradeAddress
 	cfg.Filter = regexp.MustCompile(filter)
@@ -101,7 +102,7 @@ func Test(t *testing.T) {
 		RPCAddress:      cfg.UpgradeRPCAddress,
 		NetworkConfig:   cfg.NetworkConfig,
 		FundingMnemonic: cfg.FundingMnemonic,
-		StakerMnemonics: cfg.StakerMnemonics,
+		StakerMnemonics: cfg.UpgradeStakerMnemonics,
 	})
 
 	testCases := collectSingleChainTests(testSet.SingleChain, chain, cfg.Filter)
