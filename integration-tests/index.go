@@ -10,30 +10,38 @@ import (
 )
 
 // Tests returns testing environment and tests
-func Tests() testing.TestSet {
-	testSet := testing.TestSet{
-		SingleChain: []testing.SingleChainSignature{
-			auth.TestUnexpectedSequenceNumber,
-			auth.TestTooLowGasPrice,
-			auth.TestNoFee,
-			auth.TestGasLimitHigherThanMaxBlockGas,
-			auth.TestGasLimitEqualToMaxBlockGas,
-			auth.TestMultisig,
-			bank.TestInitialBalance,
-			bank.TestCoreTransfer,
-			bank.TestTransferFailsIfNotEnoughGasIsProvided,
-			bank.TestTransferDeterministicGas,
-			bank.TestTransferDeterministicGasTwoBankSends,
-			bank.TestTransferGasEstimation,
-			feemodel.TestQueryingMinGasPrice,
-			feemodel.TestFeeModelProposalParamChange,
-			staking.TestStakingProposalParamChange,
-			staking.TestStaking,
-			wasm.TestSimpleStateWasmContract,
-			wasm.TestBankSendWasmContract,
-			wasm.TestGasWasmBankSendAndBankSend,
+func Tests() []testing.TestSet {
+	return []testing.TestSet{
+		// FIXME (wojtek): uncomment once crust is ready
+		// {
+		// 	Name: "Upgrade",
+		// 	SingleChain: []testing.SingleChainSignature{
+		// 		upgrade.TestUpgrade,
+		// 	},
+		// },
+		{
+			Parallel: true,
+			SingleChain: []testing.SingleChainSignature{
+				auth.TestUnexpectedSequenceNumber,
+				auth.TestTooLowGasPrice,
+				auth.TestNoFee,
+				auth.TestGasLimitHigherThanMaxBlockGas,
+				auth.TestGasLimitEqualToMaxBlockGas,
+				auth.TestMultisig,
+				bank.TestInitialBalance,
+				bank.TestCoreTransfer,
+				bank.TestTransferFailsIfNotEnoughGasIsProvided,
+				bank.TestTransferDeterministicGas,
+				bank.TestTransferDeterministicGasTwoBankSends,
+				bank.TestTransferGasEstimation,
+				feemodel.TestQueryingMinGasPrice,
+				feemodel.TestFeeModelProposalParamChange,
+				staking.TestStakingProposalParamChange,
+				staking.TestStaking,
+				wasm.TestSimpleStateWasmContract,
+				wasm.TestBankSendWasmContract,
+				wasm.TestGasWasmBankSendAndBankSend,
+			},
 		},
 	}
-
-	return testSet
 }
