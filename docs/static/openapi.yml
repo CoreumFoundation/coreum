@@ -4,6 +4,53 @@ info:
   name: ''
   description: ''
 paths:
+  '/coreum/asset/v1/assets/{id}':
+    get:
+      summary: Asset queries the assets of the module.
+      operationId: CoreumAssetV1Asset
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              asset:
+                description: the queried asset.
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+            description: >-
+              QueryAssetResponse is response type for the Query/Asset RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: id
+          description: the asset id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /coreum/feemodel/v1/min_gas_price:
     get:
       summary: >-
@@ -33570,291 +33617,29 @@ paths:
       tags:
         - Query
 definitions:
-  coreum.feemodel.v1.ModelParams:
+  coreum.asset.v1.Asset:
     type: object
     properties:
-      initial_gas_price:
+      id:
         type: string
-        description: >-
-          initial_gas_price is used when block gas short average is 0. It
-          happens when there are no transactions being broadcasted. This value
-          is also used to initialize gas price on brand-new chain.
-      max_gas_price:
+      name:
         type: string
-        description: >-
-          max_gas_price is used when block gas short average is greater than or
-          equal to MaxBlockGas. This value is used to limit gas price escalation
-          to avoid having possible infinity GasPrice value otherwise.
-      max_discount:
-        type: string
-        description: >-
-          max_discount is th maximum discount we offer on top of initial gas
-          price if short average block gas is between long average block gas and
-          escalation start block gas.
-      escalation_start_block_gas:
-        type: string
-        format: int64
-        description: >-
-          escalation_start_block_gas defines block gas usage where gas price
-          escalation starts if short average block gas is higher than this
-          value.
-      max_block_gas:
-        type: string
-        format: int64
-        description: >-
-          max_block_gas sets the maximum capacity of block. This is enforced on
-          tendermint level in genesis configuration. Once short average block
-          gas goes above this value, gas price is a flat line equal to
-          MaxGasPrice.
-      short_ema_block_length:
-        type: integer
-        format: int64
-        description: >-
-          short_ema_block_length defines inertia for short average long gas in
-          EMA model. The equation is: NewAverage = ((ShortAverageBlockLength -
-          1)*PreviousAverage + GasUsedByCurrentBlock) / ShortAverageBlockLength
-
-          The value might be interpreted as the number of blocks which are taken
-          to calculate the average. It would be exactly like that in SMA model,
-          in EMA this is an approximation.
-      long_ema_block_length:
-        type: integer
-        format: int64
-        description: >-
-          long_ema_block_length defines inertia for long average block gas in
-          EMA model. The equation is: NewAverage = ((LongAverageBlockLength -
-          1)*PreviousAverage + GasUsedByCurrentBlock) / LongAverageBlockLength
-
-          The value might be interpreted as the number of blocks which are taken
-          to calculate the average. It would be exactly like that in SMA model,
-          in EMA this is an approximation.
-    description: >-
-      The input (x value) for that function is calculated by taking short block
-      gas average.
-
-      Price (y value) being an output of the fee model is used as the minimum
-      gas price for next block.
-    title: >-
-      ModelParams define fee model params.
-
-      There are four regions on the fee model curve
-
-      - between 0 and "long average block gas" where gas price goes down
-      exponentially from InitialGasPrice to gas price with maximum discount
-      (InitialGasPrice * (1 -MaxDiscount))
-
-      - between "long average block gas" and EscalationStartBlockGas where we
-      offer gas price with maximum discount all the time
-
-      - between EscalationStartBlockGas and MaxBlockGas where price goes up
-      rapidly (being an output of a power function) from gas price with maximum
-      discount to MaxGasPrice
-
-      - above MaxBlockGas (if it happens for any reason) where price is equal to
-      MaxGasPrice
-  coreum.feemodel.v1.Params:
+    description: Asset represents the asset struct.
+  coreum.asset.v1.MsgIssueAssetResponse:
+    type: object
+    description: MsgIssueAsset defines message response of the to issued asset.
+  coreum.asset.v1.QueryAssetResponse:
     type: object
     properties:
-      model:
-        description: model is a fee model params.
+      asset:
+        description: the queried asset.
         type: object
         properties:
-          initial_gas_price:
+          id:
             type: string
-            description: >-
-              initial_gas_price is used when block gas short average is 0. It
-              happens when there are no transactions being broadcasted. This
-              value is also used to initialize gas price on brand-new chain.
-          max_gas_price:
+          name:
             type: string
-            description: >-
-              max_gas_price is used when block gas short average is greater than
-              or equal to MaxBlockGas. This value is used to limit gas price
-              escalation to avoid having possible infinity GasPrice value
-              otherwise.
-          max_discount:
-            type: string
-            description: >-
-              max_discount is th maximum discount we offer on top of initial gas
-              price if short average block gas is between long average block gas
-              and escalation start block gas.
-          escalation_start_block_gas:
-            type: string
-            format: int64
-            description: >-
-              escalation_start_block_gas defines block gas usage where gas price
-              escalation starts if short average block gas is higher than this
-              value.
-          max_block_gas:
-            type: string
-            format: int64
-            description: >-
-              max_block_gas sets the maximum capacity of block. This is enforced
-              on tendermint level in genesis configuration. Once short average
-              block gas goes above this value, gas price is a flat line equal to
-              MaxGasPrice.
-          short_ema_block_length:
-            type: integer
-            format: int64
-            description: >-
-              short_ema_block_length defines inertia for short average long gas
-              in EMA model. The equation is: NewAverage =
-              ((ShortAverageBlockLength - 1)*PreviousAverage +
-              GasUsedByCurrentBlock) / ShortAverageBlockLength
-
-              The value might be interpreted as the number of blocks which are
-              taken to calculate the average. It would be exactly like that in
-              SMA model, in EMA this is an approximation.
-          long_ema_block_length:
-            type: integer
-            format: int64
-            description: >-
-              long_ema_block_length defines inertia for long average block gas
-              in EMA model. The equation is: NewAverage =
-              ((LongAverageBlockLength - 1)*PreviousAverage +
-              GasUsedByCurrentBlock) / LongAverageBlockLength
-
-              The value might be interpreted as the number of blocks which are
-              taken to calculate the average. It would be exactly like that in
-              SMA model, in EMA this is an approximation.
-        title: >-
-          ModelParams define fee model params.
-
-          There are four regions on the fee model curve
-
-          - between 0 and "long average block gas" where gas price goes down
-          exponentially from InitialGasPrice to gas price with maximum discount
-          (InitialGasPrice * (1 -MaxDiscount))
-
-          - between "long average block gas" and EscalationStartBlockGas where
-          we offer gas price with maximum discount all the time
-
-          - between EscalationStartBlockGas and MaxBlockGas where price goes up
-          rapidly (being an output of a power function) from gas price with
-          maximum discount to MaxGasPrice
-
-          - above MaxBlockGas (if it happens for any reason) where price is
-          equal to MaxGasPrice
-    description: Params store gov manageable feemodel parameters.
-  coreum.feemodel.v1.QueryMinGasPriceResponse:
-    type: object
-    properties:
-      min_gas_price:
-        description: >-
-          min_gas_price is the current minimum gas price required by the
-          network.
-        type: object
-        properties:
-          denom:
-            type: string
-          amount:
-            type: string
-    description: >-
-      QueryMinGasPriceResponse is the response type for the Query/MinGasPrice
-      RPC method.
-  coreum.feemodel.v1.QueryParamsResponse:
-    type: object
-    properties:
-      params:
-        type: object
-        properties:
-          model:
-            description: model is a fee model params.
-            type: object
-            properties:
-              initial_gas_price:
-                type: string
-                description: >-
-                  initial_gas_price is used when block gas short average is 0.
-                  It happens when there are no transactions being broadcasted.
-                  This value is also used to initialize gas price on brand-new
-                  chain.
-              max_gas_price:
-                type: string
-                description: >-
-                  max_gas_price is used when block gas short average is greater
-                  than or equal to MaxBlockGas. This value is used to limit gas
-                  price escalation to avoid having possible infinity GasPrice
-                  value otherwise.
-              max_discount:
-                type: string
-                description: >-
-                  max_discount is th maximum discount we offer on top of initial
-                  gas price if short average block gas is between long average
-                  block gas and escalation start block gas.
-              escalation_start_block_gas:
-                type: string
-                format: int64
-                description: >-
-                  escalation_start_block_gas defines block gas usage where gas
-                  price escalation starts if short average block gas is higher
-                  than this value.
-              max_block_gas:
-                type: string
-                format: int64
-                description: >-
-                  max_block_gas sets the maximum capacity of block. This is
-                  enforced on tendermint level in genesis configuration. Once
-                  short average block gas goes above this value, gas price is a
-                  flat line equal to MaxGasPrice.
-              short_ema_block_length:
-                type: integer
-                format: int64
-                description: >-
-                  short_ema_block_length defines inertia for short average long
-                  gas in EMA model. The equation is: NewAverage =
-                  ((ShortAverageBlockLength - 1)*PreviousAverage +
-                  GasUsedByCurrentBlock) / ShortAverageBlockLength
-
-                  The value might be interpreted as the number of blocks which
-                  are taken to calculate the average. It would be exactly like
-                  that in SMA model, in EMA this is an approximation.
-              long_ema_block_length:
-                type: integer
-                format: int64
-                description: >-
-                  long_ema_block_length defines inertia for long average block
-                  gas in EMA model. The equation is: NewAverage =
-                  ((LongAverageBlockLength - 1)*PreviousAverage +
-                  GasUsedByCurrentBlock) / LongAverageBlockLength
-
-                  The value might be interpreted as the number of blocks which
-                  are taken to calculate the average. It would be exactly like
-                  that in SMA model, in EMA this is an approximation.
-            title: >-
-              ModelParams define fee model params.
-
-              There are four regions on the fee model curve
-
-              - between 0 and "long average block gas" where gas price goes down
-              exponentially from InitialGasPrice to gas price with maximum
-              discount (InitialGasPrice * (1 -MaxDiscount))
-
-              - between "long average block gas" and EscalationStartBlockGas
-              where we offer gas price with maximum discount all the time
-
-              - between EscalationStartBlockGas and MaxBlockGas where price goes
-              up rapidly (being an output of a power function) from gas price
-              with maximum discount to MaxGasPrice
-
-              - above MaxBlockGas (if it happens for any reason) where price is
-              equal to MaxGasPrice
-        description: Params store gov manageable feemodel parameters.
-    description: >-
-      QueryParamsResponse defines the response type for querying x/feemodel
-      parameters.
-  cosmos.base.v1beta1.DecCoin:
-    type: object
-    properties:
-      denom:
-        type: string
-      amount:
-        type: string
-    description: |-
-      DecCoin defines a token with a denomination and a decimal amount.
-
-      NOTE: The amount field is an Dec which implements the custom method
-      signatures required by gogoproto.
+    description: QueryAssetResponse is response type for the Query/Asset RPC method.
   google.protobuf.Any:
     type: object
     properties:
@@ -34178,6 +33963,291 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
+  coreum.feemodel.v1.ModelParams:
+    type: object
+    properties:
+      initial_gas_price:
+        type: string
+        description: >-
+          initial_gas_price is used when block gas short average is 0. It
+          happens when there are no transactions being broadcasted. This value
+          is also used to initialize gas price on brand-new chain.
+      max_gas_price:
+        type: string
+        description: >-
+          max_gas_price is used when block gas short average is greater than or
+          equal to MaxBlockGas. This value is used to limit gas price escalation
+          to avoid having possible infinity GasPrice value otherwise.
+      max_discount:
+        type: string
+        description: >-
+          max_discount is th maximum discount we offer on top of initial gas
+          price if short average block gas is between long average block gas and
+          escalation start block gas.
+      escalation_start_block_gas:
+        type: string
+        format: int64
+        description: >-
+          escalation_start_block_gas defines block gas usage where gas price
+          escalation starts if short average block gas is higher than this
+          value.
+      max_block_gas:
+        type: string
+        format: int64
+        description: >-
+          max_block_gas sets the maximum capacity of block. This is enforced on
+          tendermint level in genesis configuration. Once short average block
+          gas goes above this value, gas price is a flat line equal to
+          MaxGasPrice.
+      short_ema_block_length:
+        type: integer
+        format: int64
+        description: >-
+          short_ema_block_length defines inertia for short average long gas in
+          EMA model. The equation is: NewAverage = ((ShortAverageBlockLength -
+          1)*PreviousAverage + GasUsedByCurrentBlock) / ShortAverageBlockLength
+
+          The value might be interpreted as the number of blocks which are taken
+          to calculate the average. It would be exactly like that in SMA model,
+          in EMA this is an approximation.
+      long_ema_block_length:
+        type: integer
+        format: int64
+        description: >-
+          long_ema_block_length defines inertia for long average block gas in
+          EMA model. The equation is: NewAverage = ((LongAverageBlockLength -
+          1)*PreviousAverage + GasUsedByCurrentBlock) / LongAverageBlockLength
+
+          The value might be interpreted as the number of blocks which are taken
+          to calculate the average. It would be exactly like that in SMA model,
+          in EMA this is an approximation.
+    description: >-
+      The input (x value) for that function is calculated by taking short block
+      gas average.
+
+      Price (y value) being an output of the fee model is used as the minimum
+      gas price for next block.
+    title: >-
+      ModelParams define fee model params.
+
+      There are four regions on the fee model curve
+
+      - between 0 and "long average block gas" where gas price goes down
+      exponentially from InitialGasPrice to gas price with maximum discount
+      (InitialGasPrice * (1 -MaxDiscount))
+
+      - between "long average block gas" and EscalationStartBlockGas where we
+      offer gas price with maximum discount all the time
+
+      - between EscalationStartBlockGas and MaxBlockGas where price goes up
+      rapidly (being an output of a power function) from gas price with maximum
+      discount to MaxGasPrice
+
+      - above MaxBlockGas (if it happens for any reason) where price is equal to
+      MaxGasPrice
+  coreum.feemodel.v1.Params:
+    type: object
+    properties:
+      model:
+        description: model is a fee model params.
+        type: object
+        properties:
+          initial_gas_price:
+            type: string
+            description: >-
+              initial_gas_price is used when block gas short average is 0. It
+              happens when there are no transactions being broadcasted. This
+              value is also used to initialize gas price on brand-new chain.
+          max_gas_price:
+            type: string
+            description: >-
+              max_gas_price is used when block gas short average is greater than
+              or equal to MaxBlockGas. This value is used to limit gas price
+              escalation to avoid having possible infinity GasPrice value
+              otherwise.
+          max_discount:
+            type: string
+            description: >-
+              max_discount is th maximum discount we offer on top of initial gas
+              price if short average block gas is between long average block gas
+              and escalation start block gas.
+          escalation_start_block_gas:
+            type: string
+            format: int64
+            description: >-
+              escalation_start_block_gas defines block gas usage where gas price
+              escalation starts if short average block gas is higher than this
+              value.
+          max_block_gas:
+            type: string
+            format: int64
+            description: >-
+              max_block_gas sets the maximum capacity of block. This is enforced
+              on tendermint level in genesis configuration. Once short average
+              block gas goes above this value, gas price is a flat line equal to
+              MaxGasPrice.
+          short_ema_block_length:
+            type: integer
+            format: int64
+            description: >-
+              short_ema_block_length defines inertia for short average long gas
+              in EMA model. The equation is: NewAverage =
+              ((ShortAverageBlockLength - 1)*PreviousAverage +
+              GasUsedByCurrentBlock) / ShortAverageBlockLength
+
+              The value might be interpreted as the number of blocks which are
+              taken to calculate the average. It would be exactly like that in
+              SMA model, in EMA this is an approximation.
+          long_ema_block_length:
+            type: integer
+            format: int64
+            description: >-
+              long_ema_block_length defines inertia for long average block gas
+              in EMA model. The equation is: NewAverage =
+              ((LongAverageBlockLength - 1)*PreviousAverage +
+              GasUsedByCurrentBlock) / LongAverageBlockLength
+
+              The value might be interpreted as the number of blocks which are
+              taken to calculate the average. It would be exactly like that in
+              SMA model, in EMA this is an approximation.
+        title: >-
+          ModelParams define fee model params.
+
+          There are four regions on the fee model curve
+
+          - between 0 and "long average block gas" where gas price goes down
+          exponentially from InitialGasPrice to gas price with maximum discount
+          (InitialGasPrice * (1 -MaxDiscount))
+
+          - between "long average block gas" and EscalationStartBlockGas where
+          we offer gas price with maximum discount all the time
+
+          - between EscalationStartBlockGas and MaxBlockGas where price goes up
+          rapidly (being an output of a power function) from gas price with
+          maximum discount to MaxGasPrice
+
+          - above MaxBlockGas (if it happens for any reason) where price is
+          equal to MaxGasPrice
+    description: Params store gov manageable feemodel parameters.
+  coreum.feemodel.v1.QueryMinGasPriceResponse:
+    type: object
+    properties:
+      min_gas_price:
+        description: >-
+          min_gas_price is the current minimum gas price required by the
+          network.
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+    description: >-
+      QueryMinGasPriceResponse is the response type for the Query/MinGasPrice
+      RPC method.
+  coreum.feemodel.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        type: object
+        properties:
+          model:
+            description: model is a fee model params.
+            type: object
+            properties:
+              initial_gas_price:
+                type: string
+                description: >-
+                  initial_gas_price is used when block gas short average is 0.
+                  It happens when there are no transactions being broadcasted.
+                  This value is also used to initialize gas price on brand-new
+                  chain.
+              max_gas_price:
+                type: string
+                description: >-
+                  max_gas_price is used when block gas short average is greater
+                  than or equal to MaxBlockGas. This value is used to limit gas
+                  price escalation to avoid having possible infinity GasPrice
+                  value otherwise.
+              max_discount:
+                type: string
+                description: >-
+                  max_discount is th maximum discount we offer on top of initial
+                  gas price if short average block gas is between long average
+                  block gas and escalation start block gas.
+              escalation_start_block_gas:
+                type: string
+                format: int64
+                description: >-
+                  escalation_start_block_gas defines block gas usage where gas
+                  price escalation starts if short average block gas is higher
+                  than this value.
+              max_block_gas:
+                type: string
+                format: int64
+                description: >-
+                  max_block_gas sets the maximum capacity of block. This is
+                  enforced on tendermint level in genesis configuration. Once
+                  short average block gas goes above this value, gas price is a
+                  flat line equal to MaxGasPrice.
+              short_ema_block_length:
+                type: integer
+                format: int64
+                description: >-
+                  short_ema_block_length defines inertia for short average long
+                  gas in EMA model. The equation is: NewAverage =
+                  ((ShortAverageBlockLength - 1)*PreviousAverage +
+                  GasUsedByCurrentBlock) / ShortAverageBlockLength
+
+                  The value might be interpreted as the number of blocks which
+                  are taken to calculate the average. It would be exactly like
+                  that in SMA model, in EMA this is an approximation.
+              long_ema_block_length:
+                type: integer
+                format: int64
+                description: >-
+                  long_ema_block_length defines inertia for long average block
+                  gas in EMA model. The equation is: NewAverage =
+                  ((LongAverageBlockLength - 1)*PreviousAverage +
+                  GasUsedByCurrentBlock) / LongAverageBlockLength
+
+                  The value might be interpreted as the number of blocks which
+                  are taken to calculate the average. It would be exactly like
+                  that in SMA model, in EMA this is an approximation.
+            title: >-
+              ModelParams define fee model params.
+
+              There are four regions on the fee model curve
+
+              - between 0 and "long average block gas" where gas price goes down
+              exponentially from InitialGasPrice to gas price with maximum
+              discount (InitialGasPrice * (1 -MaxDiscount))
+
+              - between "long average block gas" and EscalationStartBlockGas
+              where we offer gas price with maximum discount all the time
+
+              - between EscalationStartBlockGas and MaxBlockGas where price goes
+              up rapidly (being an output of a power function) from gas price
+              with maximum discount to MaxGasPrice
+
+              - above MaxBlockGas (if it happens for any reason) where price is
+              equal to MaxGasPrice
+        description: Params store gov manageable feemodel parameters.
+    description: >-
+      QueryParamsResponse defines the response type for querying x/feemodel
+      parameters.
+  cosmos.base.v1beta1.DecCoin:
+    type: object
+    properties:
+      denom:
+        type: string
+      amount:
+        type: string
+    description: |-
+      DecCoin defines a token with a denomination and a decimal amount.
+
+      NOTE: The amount field is an Dec which implements the custom method
+      signatures required by gogoproto.
   cosmos.auth.v1beta1.Params:
     type: object
     properties:

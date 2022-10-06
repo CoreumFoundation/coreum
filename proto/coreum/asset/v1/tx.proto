@@ -1,0 +1,26 @@
+syntax = "proto3";
+package coreum.asset.v1;
+
+import "gogoproto/gogo.proto";
+
+import "coreum/asset/v1/asset.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
+
+// Msg defines the Msg service.
+service Msg {
+  // MsgIssueAsset defines a method to issue a new asset.
+  rpc IssueAsset(MsgIssueAsset) returns (MsgIssueAssetResponse);
+}
+
+// MsgIssueAsset defines message to issue new asset.
+message MsgIssueAsset {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string from = 1;
+  string name = 2;
+}
+
+// MsgIssueAsset defines message response of the to issued asset.
+message MsgIssueAssetResponse {}
