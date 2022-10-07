@@ -10,7 +10,7 @@ import (
 var params = Params{
 	Model: ModelParams{
 		InitialGasPrice:         sdk.NewDec(1500),
-		MaxGasPrice:             sdk.NewDec(1500000),
+		MaxGasPriceMultiplier:   sdk.NewDec(1000),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 		EscalationStartBlockGas: 700,
 		MaxBlockGas:             1000,
@@ -27,7 +27,7 @@ func TestParamsValidation(t *testing.T) {
 	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.MaxGasPrice = testParams.Model.InitialGasPrice
+	testParams.Model.MaxGasPriceMultiplier = sdk.OneDec()
 	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params

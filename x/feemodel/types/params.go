@@ -25,7 +25,7 @@ func DefaultParams() Params {
 		Model: ModelParams{
 			// TODO: Find good parameters before launching mainnet
 			InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
-			MaxGasPrice:             sdk.MustNewDecFromStr("62.5"),
+			MaxGasPriceMultiplier:   sdk.MustNewDecFromStr("1000.0"),
 			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 			EscalationStartBlockGas: 37500000, // 300 * BankSend message
 			// TODO: adjust MaxBlockGas before creating testnet & mainnet
@@ -55,8 +55,8 @@ func validateModelParams(i interface{}) error {
 	if m.InitialGasPrice.IsNil() {
 		return errors.New("initial gas price is not set")
 	}
-	if m.MaxGasPrice.IsNil() {
-		return errors.New("max gas price is not set")
+	if m.MaxGasPriceMultiplier.IsNil() {
+		return errors.New("max gas price multiplier is not set")
 	}
 	if m.MaxDiscount.IsNil() {
 		return errors.New("max discount is not set")
@@ -65,11 +65,8 @@ func validateModelParams(i interface{}) error {
 	if !m.InitialGasPrice.IsPositive() {
 		return errors.New("initial gas price must be positive")
 	}
-	if !m.MaxGasPrice.IsPositive() {
-		return errors.New("max gas price must be positive")
-	}
-	if m.MaxGasPrice.LTE(m.InitialGasPrice) {
-		return errors.New("max gas price must be greater than initial gas price")
+	if m.MaxGasPriceMultiplier.LTE(sdk.OneDec()) {
+		return errors.New("max gas price multiplier must be greater than one")
 	}
 	if m.MaxDiscount.LTE(sdk.ZeroDec()) {
 		return errors.New("max discount must be greater than 0")

@@ -62,7 +62,7 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 		Params: types.Params{
 			Model: types.ModelParams{
 				InitialGasPrice:         sdk.NewDec(15),
-				MaxGasPrice:             sdk.NewDec(150),
+				MaxGasPriceMultiplier:   sdk.NewDec(10),
 				MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
 				EscalationStartBlockGas: 7,
 				MaxBlockGas:             10,
@@ -84,7 +84,7 @@ func TestInitGenesis(t *testing.T) {
 
 	genesisState := state
 	genesisState.Params.Model.InitialGasPrice.Add(sdk.OneDec())
-	genesisState.Params.Model.MaxGasPrice.Add(sdk.OneDec())
+	genesisState.Params.Model.MaxGasPriceMultiplier.Add(sdk.OneDec())
 	genesisState.Params.Model.MaxDiscount.Add(sdk.MustNewDecFromStr("0.2"))
 	genesisState.Params.Model.EscalationStartBlockGas++
 	genesisState.Params.Model.MaxBlockGas++
@@ -98,7 +98,7 @@ func TestInitGenesis(t *testing.T) {
 	params := keeper.GetParams(sdk.Context{})
 	minGasPrice := keeper.GetMinGasPrice(sdk.Context{})
 	assert.True(t, genesisState.Params.Model.InitialGasPrice.Equal(params.Model.InitialGasPrice))
-	assert.True(t, genesisState.Params.Model.MaxGasPrice.Equal(params.Model.MaxGasPrice))
+	assert.True(t, genesisState.Params.Model.MaxGasPriceMultiplier.Equal(params.Model.MaxGasPriceMultiplier))
 	assert.True(t, genesisState.Params.Model.MaxDiscount.Equal(params.Model.MaxDiscount))
 	assert.Equal(t, genesisState.Params.Model.EscalationStartBlockGas, params.Model.EscalationStartBlockGas)
 	assert.Equal(t, genesisState.Params.Model.MaxBlockGas, params.Model.MaxBlockGas)

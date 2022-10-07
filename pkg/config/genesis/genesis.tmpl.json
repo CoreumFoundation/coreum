@@ -225,7 +225,7 @@
       "params": {
         "model": {
           "initial_gas_price": "{{ .FeeModelParams.InitialGasPrice }}",
-          "max_gas_price": "{{ .FeeModelParams.MaxGasPrice }}",
+          "max_gas_price_multiplier": "{{ .FeeModelParams.MaxGasPriceMultiplier }}",
           "max_discount": "{{ .FeeModelParams.MaxDiscount }}",
           "escalation_start_block_gas": {{ .FeeModelParams.EscalationStartBlockGas }},
           "max_block_gas": {{ .FeeModelParams.MaxBlockGas }},

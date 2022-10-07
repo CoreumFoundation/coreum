@@ -1,7 +1,6 @@
 package types
 
 import (
-	"math"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -37,12 +36,12 @@ func TestCalculateNextGasPriceKeyPoints(t *testing.T) {
 	// if current average gas is equal to MaxBlockGas it should be max gas price number
 
 	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.params.MaxBlockGas, 100)
-	assert.True(t, nextGasPrice.Equal(feeModel.params.MaxGasPrice))
+	assert.True(t, nextGasPrice.Equal(feeModel.CalculateMaxGasPrice()))
 
 	// if current average gas is greater than MaxBlockGas it should stay the same
 
 	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.params.MaxBlockGas+100, 100)
-	assert.True(t, nextGasPrice.Equal(feeModel.params.MaxGasPrice))
+	assert.True(t, nextGasPrice.Equal(feeModel.CalculateMaxGasPrice()))
 }
 
 func TestEMAGasBeyondEscalationStartBlockGas(t *testing.T) {
@@ -116,13 +115,13 @@ func TestWithRandomModels(t *testing.T) {
 			nextGasPrice := model.CalculateNextGasPrice(shortEMA, longEMA)
 
 			assert.True(t, nextGasPrice.GT(sdk.ZeroDec()))
-			assert.True(t, nextGasPrice.LTE(modelParams.MaxGasPrice))
+			assert.True(t, nextGasPrice.LTE(model.CalculateMaxGasPrice()))
 
 			switch {
 			case shortEMA >= modelParams.MaxBlockGas:
-				assert.True(t, nextGasPrice.Equal(modelParams.MaxGasPrice))
+				assert.True(t, nextGasPrice.Equal(model.CalculateMaxGasPrice()))
 			case shortEMA > modelParams.EscalationStartBlockGas:
-				assert.True(t, nextGasPrice.LT(modelParams.MaxGasPrice))
+				assert.True(t, nextGasPrice.LT(model.CalculateMaxGasPrice()))
 				assert.True(t, nextGasPrice.GTE(model.CalculateGasPriceWithMaxDiscount()))
 			case shortEMA >= longEMA:
 				assert.True(t, nextGasPrice.Equal(model.CalculateGasPriceWithMaxDiscount()))
@@ -139,7 +138,7 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 	// fuzz engine of go test is not used because it doesn't allow to maintain relationships between generated parameters
 
 	initialGasPrice := rand.Uint64()/2 + 10
-	maxGasPrice := initialGasPrice + uint64(float64(math.MaxUint64-initialGasPrice-10)*rand.Float64()+10.0)
+	maxGasPriceMultiplier := uint64(1000.0*rand.Float64() + 10.0)
 	shortEMABlockLength := uint32(rand.Int31n(1000) + 1)
 	longEMABlockLength := shortEMABlockLength + uint32(rand.Int31n(10000))
 	maxBlockGas := rand.Int63()
@@ -154,7 +153,7 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 	return Params{
 		Model: ModelParams{
 			InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice).ToDec(),
-			MaxGasPrice:             sdk.NewIntFromUint64(maxGasPrice).ToDec(),
+			MaxGasPriceMultiplier:   sdk.NewIntFromUint64(maxGasPriceMultiplier).ToDec(),
 			MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
 			EscalationStartBlockGas: escalationStartBlockGas,
 			MaxBlockGas:             maxBlockGas,
@@ -166,7 +165,7 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 
 func logParameters(t *testing.T, params ModelParams, shortEMA, longEMA int64) {
 	t.Logf(`InitialGasPrice: %s
-MaxGasPrice: %s
+MaxGasPriceMultiplier: %s
 MaxDiscount: %s
 EscalationStartBlockGas: %d
 MaxBlockGas: %d
@@ -175,7 +174,7 @@ LongEMABlockLength: %d
 ShortEMA: %d
 LongEMA: %d`,
 		params.InitialGasPrice,
-		params.MaxGasPrice,
+		params.MaxGasPriceMultiplier,
 		params.MaxDiscount,
 		params.EscalationStartBlockGas,
 		params.MaxBlockGas,
