@@ -31,7 +31,7 @@ var feeConfig = config.FeeConfig{
 		InitialGasPrice:         sdk.NewDec(2),
 		MaxGasPriceMultiplier:   sdk.NewDec(2),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),
-		EscalationStartBlockGas: 10,
+		EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
 		MaxBlockGas:             20,
 		ShortEmaBlockLength:     3,
 		LongEmaBlockLength:      5,
@@ -278,7 +278,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT.True(nParams.InitialGasPrice.Equal(sdk.NewDec(2)))
 	assertT.True(nParams.MaxGasPriceMultiplier.Equal(sdk.NewDec(2)))
 	assertT.True(nParams.MaxDiscount.Equal(sdk.MustNewDecFromStr("0.4")))
-	assertT.EqualValues(10, nParams.EscalationStartBlockGas)
+	assertT.True(nParams.EscalationStartFraction.Equal(sdk.MustNewDecFromStr("0.8")))
 	assertT.EqualValues(20, nParams.MaxBlockGas)
 	assertT.EqualValues(3, nParams.ShortEmaBlockLength)
 	assertT.EqualValues(5, nParams.LongEmaBlockLength)

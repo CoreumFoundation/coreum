@@ -131,6 +131,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 	cdc.MustUnmarshalJSON(data, genesis)
 
 	// FIXME (wojtek): remove this
+	genesis.Params.Model.EscalationStartFraction = sdk.MustNewDecFromStr("0.8")
 	genesis.Params.Model.MaxGasPriceMultiplier = sdk.MustNewDecFromStr("1000")
 
 	am.keeper.SetParams(ctx, genesis.Params)

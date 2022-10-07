@@ -30,7 +30,7 @@ func TestCalculateNextGasPriceKeyPoints(t *testing.T) {
 
 	// if current average gas equals escalation start block gas it still should be gasPriceWithMaxDiscount
 
-	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.params.EscalationStartBlockGas, 100)
+	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.CalculateEscalationStartBlockGas(), 100)
 	assert.True(t, nextGasPrice.Equal(gasPriceWithMaxDiscount))
 
 	// if current average gas is equal to MaxBlockGas it should be max gas price number
@@ -49,13 +49,13 @@ func TestEMAGasBeyondEscalationStartBlockGas(t *testing.T) {
 	// The question is if in such scenario we should offer discounted gas price or escalation should be applied instead.
 	// It seems obvious that price should be escalated.
 
-	nextGasPrice := feeModel.CalculateNextGasPrice(feeModel.params.EscalationStartBlockGas+150, feeModel.params.EscalationStartBlockGas+100)
+	nextGasPrice := feeModel.CalculateNextGasPrice(feeModel.CalculateEscalationStartBlockGas()+150, feeModel.CalculateEscalationStartBlockGas()+100)
 	assert.True(t, nextGasPrice.GT(gasPriceWithMaxDiscount))
 
 	// Next gas price should be the same as for long average block gas being below optimal block gas.
 	// It means that escalation was turned on.
 
-	nextGasPrice2 := feeModel.CalculateNextGasPrice(feeModel.params.EscalationStartBlockGas+150, feeModel.params.EscalationStartBlockGas-100)
+	nextGasPrice2 := feeModel.CalculateNextGasPrice(feeModel.CalculateEscalationStartBlockGas()+150, feeModel.CalculateEscalationStartBlockGas()-100)
 	assert.True(t, nextGasPrice2.Equal(nextGasPrice))
 }
 
@@ -81,7 +81,7 @@ func TestShapeInDecreasingRegion(t *testing.T) {
 func TestShapeInFlatRegion(t *testing.T) {
 	const longEMABlockGas = 100
 
-	for i := int64(longEMABlockGas); i <= feeModel.params.EscalationStartBlockGas; i++ {
+	for i := int64(longEMABlockGas); i <= feeModel.CalculateEscalationStartBlockGas(); i++ {
 		nextPrice := feeModel.CalculateNextGasPrice(i, longEMABlockGas)
 		assert.True(t, nextPrice.Equal(gasPriceWithMaxDiscount))
 	}
@@ -91,7 +91,7 @@ func TestShapeInEscalationRegion(t *testing.T) {
 	const longEMABlockGas = 100
 
 	lastPrice := gasPriceWithMaxDiscount
-	for i := feeModel.params.EscalationStartBlockGas + 1; i <= feeModel.params.MaxBlockGas; i++ {
+	for i := feeModel.CalculateEscalationStartBlockGas() + 1; i <= feeModel.params.MaxBlockGas; i++ {
 		nextPrice := feeModel.CalculateNextGasPrice(i, longEMABlockGas)
 		assert.True(t, nextPrice.GT(lastPrice))
 
@@ -120,7 +120,7 @@ func TestWithRandomModels(t *testing.T) {
 			switch {
 			case shortEMA >= modelParams.MaxBlockGas:
 				assert.True(t, nextGasPrice.Equal(model.CalculateMaxGasPrice()))
-			case shortEMA > modelParams.EscalationStartBlockGas:
+			case shortEMA > model.CalculateEscalationStartBlockGas():
 				assert.True(t, nextGasPrice.LT(model.CalculateMaxGasPrice()))
 				assert.True(t, nextGasPrice.GTE(model.CalculateGasPriceWithMaxDiscount()))
 			case shortEMA >= longEMA:
@@ -142,7 +142,7 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 	shortEMABlockLength := uint32(rand.Int31n(1000) + 1)
 	longEMABlockLength := shortEMABlockLength + uint32(rand.Int31n(10000))
 	maxBlockGas := rand.Int63()
-	escalationStartBlockGas := rand.Int63n(maxBlockGas-2) + 1
+	escalationStartFraction := 0.8*rand.Float64() + 0.1
 	// rand.Float64() returns random number in [0.0, 1.0), but we want (0.0, 1.0],
 	// calculating 1.0 - rand.Float64() is the simplest way of achieving this.
 	maxDiscount := (1.0 - rand.Float64()) * 0.8 // this gives a number in range (0.0, 0.8]
@@ -155,7 +155,7 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 			InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice).ToDec(),
 			MaxGasPriceMultiplier:   sdk.NewIntFromUint64(maxGasPriceMultiplier).ToDec(),
 			MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
-			EscalationStartBlockGas: escalationStartBlockGas,
+			EscalationStartFraction: sdk.MustNewDecFromStr(strconv.FormatFloat(escalationStartFraction, 'f', 4, 64)),
 			MaxBlockGas:             maxBlockGas,
 			ShortEmaBlockLength:     shortEMABlockLength,
 			LongEmaBlockLength:      longEMABlockLength,
@@ -167,7 +167,7 @@ func logParameters(t *testing.T, params ModelParams, shortEMA, longEMA int64) {
 	t.Logf(`InitialGasPrice: %s
 MaxGasPriceMultiplier: %s
 MaxDiscount: %s
-EscalationStartBlockGas: %d
+EscalationStartFraction: %d
 MaxBlockGas: %d
 ShortEMABlockLength: %d
 LongEMABlockLength: %d
@@ -176,7 +176,7 @@ LongEMA: %d`,
 		params.InitialGasPrice,
 		params.MaxGasPriceMultiplier,
 		params.MaxDiscount,
-		params.EscalationStartBlockGas,
+		params.EscalationStartFraction,
 		params.MaxBlockGas,
 		params.ShortEmaBlockLength,
 		params.LongEmaBlockLength,

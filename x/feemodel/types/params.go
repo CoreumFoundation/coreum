@@ -27,7 +27,7 @@ func DefaultParams() Params {
 			InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
 			MaxGasPriceMultiplier:   sdk.MustNewDecFromStr("1000.0"),
 			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-			EscalationStartBlockGas: 37500000, // 300 * BankSend message
+			EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
 			// TODO: adjust MaxBlockGas before creating testnet & mainnet
 			MaxBlockGas:         50000000, // 400 * BankSend message
 			ShortEmaBlockLength: 10,
@@ -74,11 +74,15 @@ func validateModelParams(i interface{}) error {
 	if m.MaxDiscount.GTE(sdk.OneDec()) {
 		return errors.New("max discount must be less than 1")
 	}
-	if m.EscalationStartBlockGas <= 0 {
-		return errors.New("escalation start block gas must be greater than 0")
+
+	if m.EscalationStartFraction.IsNil() {
+		return errors.New("escalation start fraction is not set")
 	}
-	if m.MaxBlockGas <= m.EscalationStartBlockGas {
-		return errors.New("max block gas must be greater than escalation start block gas")
+	if m.EscalationStartFraction.LTE(sdk.ZeroDec()) {
+		return errors.New("escalation start fraction must be greater than 0")
+	}
+	if m.EscalationStartFraction.GTE(sdk.OneDec()) {
+		return errors.New("escalation start fraction must be less than 1")
 	}
 	if m.ShortEmaBlockLength == 0 {
 		return errors.New("short EMA block length must be greater than 0")

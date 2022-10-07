@@ -12,7 +12,7 @@ var params = Params{
 		InitialGasPrice:         sdk.NewDec(1500),
 		MaxGasPriceMultiplier:   sdk.NewDec(1000),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
-		EscalationStartBlockGas: 700,
+		EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
 		MaxBlockGas:             1000,
 		ShortEmaBlockLength:     10,
 		LongEmaBlockLength:      1000,
@@ -24,6 +24,10 @@ func TestParamsValidation(t *testing.T) {
 
 	testParams := params
 	testParams.Model.InitialGasPrice = sdk.NewDec(0)
+	assert.Error(t, testParams.ValidateBasic())
+
+	testParams = params
+	testParams.Model.MaxGasPriceMultiplier = sdk.ZeroDec()
 	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
@@ -39,10 +43,14 @@ func TestParamsValidation(t *testing.T) {
 	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.EscalationStartBlockGas = 0
+	testParams.Model.MaxDiscount = sdk.ZeroDec()
 	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.Model.MaxBlockGas = testParams.Model.EscalationStartBlockGas
+	testParams.Model.EscalationStartFraction = sdk.ZeroDec()
+	assert.Error(t, testParams.ValidateBasic())
+
+	testParams = params
+	testParams.Model.EscalationStartFraction = sdk.OneDec()
 	assert.Error(t, testParams.ValidateBasic())
 }

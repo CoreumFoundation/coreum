@@ -32,8 +32,8 @@ func (m Model) CalculateNextGasPrice(shortEMA int64, longEMA int64) sdk.Dec {
 	switch {
 	case shortEMA >= m.params.MaxBlockGas:
 		return m.CalculateMaxGasPrice()
-	case shortEMA > m.params.EscalationStartBlockGas:
-		// be cautious: this function panics if shortEMA == m.EscalationStartBlockGas, that's why that case is not served here
+	case shortEMA > m.CalculateEscalationStartBlockGas():
+		// be cautious: this function panics if shortEMA == EscalationStartBlockGas, that's why that case is not served here
 		return m.calculateNextGasPriceInEscalationRegion(shortEMA)
 	case shortEMA >= longEMA:
 		return m.CalculateGasPriceWithMaxDiscount()
@@ -55,14 +55,20 @@ func (m Model) CalculateMaxGasPrice() sdk.Dec {
 	return m.params.InitialGasPrice.Mul(m.params.MaxGasPriceMultiplier)
 }
 
+// CalculateEscalationStartBlockGas calculates escalation start block gas
+func (m Model) CalculateEscalationStartBlockGas() int64 {
+	return sdk.NewInt(m.params.MaxBlockGas).ToDec().Mul(m.params.EscalationStartFraction).TruncateInt64()
+}
+
 func (m Model) calculateNextGasPriceInEscalationRegion(shortEMA int64) sdk.Dec {
 	gasPriceWithMaxDiscount := m.CalculateGasPriceWithMaxDiscount()
 	// exponent defines how slow gas price goes up after triggering escalation algorithm (the lower the exponent,
 	// the faster price goes up)
 	const exponent = 2
+	escalationStartBlockGas := m.CalculateEscalationStartBlockGas()
 	height := m.CalculateMaxGasPrice().Sub(gasPriceWithMaxDiscount)
-	width := sdk.NewInt(m.params.MaxBlockGas - m.params.EscalationStartBlockGas).ToDec()
-	x := sdk.NewInt(shortEMA - m.params.EscalationStartBlockGas).ToDec()
+	width := sdk.NewInt(m.params.MaxBlockGas - escalationStartBlockGas).ToDec()
+	x := sdk.NewInt(shortEMA - escalationStartBlockGas).ToDec()
 
 	offset := height.Mul(x.Quo(width).Power(exponent))
 	return gasPriceWithMaxDiscount.Add(offset)
