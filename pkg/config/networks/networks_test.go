@@ -85,6 +85,9 @@ func init() {
 	network.SetSDKConfig()
 }
 
+// The purpose of this test is to verify that validateGenesisTxSignature func works properly for negative case.
+// Because invalidSignatureTx passes cosmos SDK `tx validate-signatures --offline` successfully even though
+// the signature is obviously invalid.
 func TestInvalidTxSignature(t *testing.T) {
 	network, err := config.NetworkByChainID(config.Devnet)
 	assert.NoError(t, err)
