@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -27,23 +26,23 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		CmdTxIssueFTAsset(),
+		CmdTxIssueFungibleToken(),
 	)
 
 	return cmd
 }
 
-// CmdTxIssueFTAsset return issue IssueAsset cobra command.
-func CmdTxIssueFTAsset() *cobra.Command {
+// CmdTxIssueFungibleToken returns issue IssueFungibleTokenSettings cobra command.
+func CmdTxIssueFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "issue-ft [recipient_address] [code] [description] [precision] [initial_amount] --from [signer_address]",
-		Args:  cobra.ExactArgs(5),
-		Short: "Issue new asset",
+		Use:   "issue-ft [symbol] [description] [recipient_address] [initial_amount] --from [issuer]",
+		Args:  cobra.ExactArgs(4),
+		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Issues new asset.
+			fmt.Sprintf(`Issues new fungible token.
 
 Example:
-$ %s tx asset issue-ft [recipient_address] BTC "BTC Token" 18 100000 --from [signer_address]
+$ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer]
 `,
 				version.AppName,
 			),
@@ -54,31 +53,35 @@ $ %s tx asset issue-ft [recipient_address] BTC "BTC Token" 18 100000 --from [sig
 				return err
 			}
 
-			recipient := args[0]
-			code := args[1]
-			description := args[2]
-			precision, err := strconv.ParseUint(args[3], 10, 32)
-			if err != nil {
-				return err
+			issuer := clientCtx.GetFromAddress()
+			symbol := args[0]
+			description := args[1]
+			recipient := args[2]
+			// is the recipient wasn't provided the signer is the recipient
+			if recipient != "" {
+				if _, err = sdk.AccAddressFromBech32(recipient); err != nil {
+					return sdkerrors.Wrap(err, "invalid recipient")
+				}
+			} else {
+				recipient = issuer.String()
 			}
-			initialAmount, ok := sdk.NewIntFromString(args[4])
-			if !ok {
-				return sdkerrors.Wrap(err, "invalid initial_amount")
-			}
-			from := clientCtx.GetFromAddress()
 
-			msg := &types.MsgIssueAsset{
-				From: from.String(),
-				Definition: &types.AssetDefinition{
-					Recipient:   recipient,
-					Type:        types.AssetType_FT, //nolint:nosnakecase // protogen
-					Code:        code,
-					Description: description,
-					Ft: &types.FTCustomDefinition{
-						Precision:     uint32(precision),
-						InitialAmount: initialAmount,
-					},
-				},
+			// the initial amount wasn't provided the amount is zero
+			initialAmount := sdk.ZeroInt()
+			if args[3] != "" {
+				var ok bool
+				initialAmount, ok = sdk.NewIntFromString(args[3])
+				if !ok {
+					return sdkerrors.Wrap(err, "invalid initial_amount")
+				}
+			}
+
+			msg := &types.MsgIssueFungibleToken{
+				Issuer:        issuer.String(),
+				Symbol:        symbol,
+				Description:   description,
+				Recipient:     recipient,
+				InitialAmount: initialAmount,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

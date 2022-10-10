@@ -5,10 +5,8 @@ import (
 )
 
 var (
-	// ErrInvalidAsset defines the common error for the invalid asset state.
-	ErrInvalidAsset = sdkerrors.Register(ModuleName, 1, "invalid asset")
-	// ErrNotFound error for an entry not found in the store
-	ErrNotFound = sdkerrors.Register(ModuleName, 2, "not found")
-	// ErrInvalidState defines the common error for the invalid state.
-	ErrInvalidState = sdkerrors.Register(ModuleName, 3, "invalid state")
+	// ErrInvalidFungibleToken defines the common error for the invalid fungible tokens.
+	ErrInvalidFungibleToken = sdkerrors.Register(ModuleName, 1, "invalid fungible token")
+	// ErrFungibleTokenNotFound error for a fungible token not found in the store.
+	ErrFungibleTokenNotFound = sdkerrors.Register(ModuleName, 2, "fungible token not found")
 )

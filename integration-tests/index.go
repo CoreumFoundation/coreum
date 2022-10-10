@@ -14,7 +14,7 @@ import (
 func Tests() testing.TestSet {
 	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
-			asset.TestIssueFTAsset,
+			asset.TestIssueFungibleToken,
 			auth.TestUnexpectedSequenceNumber,
 			auth.TestTooLowGasPrice,
 			auth.TestNoFee,

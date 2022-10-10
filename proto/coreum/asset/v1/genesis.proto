@@ -8,6 +8,6 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
 // GenesisState defines the asset module's genesis state.
 message GenesisState {
-  // assets state
-  repeated Asset assets = 1 [(gogoproto.nullable) = false];
+  // fungible_tokens keep the fungible token state
+  repeated FungibleTokenDefinition fungible_tokens  = 1 [(gogoproto.nullable) = false];
 }

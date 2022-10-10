@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/binary"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -29,48 +28,65 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 	}
 }
 
-// IssueAsset issues new asset.
-func (k Keeper) IssueAsset(ctx sdk.Context, definition types.AssetDefinition) (uint64, error) {
-	recipient, err := sdk.AccAddressFromBech32(definition.Recipient)
-	if err != nil {
-		return 0, sdkerrors.Wrapf(err, "can't decode %s recipient address to AccAddress", definition.Recipient)
+// IssueFungibleToken issues new fungible token and returns it's denom.
+func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error) {
+	denom := types.BuildFungibleTokenDenom(settings.Symbol, settings.Issuer)
+	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
+		return "", sdkerrors.Wrapf(
+			types.ErrInvalidFungibleToken,
+			"symbol %s already registered for the address %s",
+			settings.Symbol,
+			settings.Issuer.String(),
+		)
 	}
 
-	var id uint64
-	switch definition.Type {
-	case types.AssetType_FT: //nolint:nosnakecase // protogen
-		id, err = k.issueFTAsset(ctx, definition, recipient)
-		if err != nil {
-			return 0, sdkerrors.Wrap(err, "can't issue FT asset")
+	k.setFungibleTokenDenomMetadata(ctx, settings.Symbol, denom, settings.Description)
+	if settings.InitialAmount.IsPositive() {
+		if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
+			return "", err
 		}
-	case types.AssetType_NFT: //nolint:nosnakecase // protogen
-		return 0, sdkerrors.Wrapf(types.ErrInvalidAsset, "asset module doesn't support the NFT issuance yet")
 	}
 
-	if err = ctx.EventManager().EmitTypedEvent(&types.EventAssetIssued{
-		Id: id,
+	store := ctx.KVStore(k.storeKey)
+	definition := types.FungibleTokenDefinition{
+		Denom:  denom,
+		Issuer: settings.Issuer.String(),
+	}
+	store.Set(types.GetFungibleTokenKey(denom), k.cdc.MustMarshal(&definition))
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenIssued{
+		Denom:  denom,
+		Issuer: settings.Issuer.String(),
+		Symbol: settings.Symbol,
 	}); err != nil {
-		return 0, sdkerrors.Wrap(err, "can't emit EventAssetIssued event")
+		return "", sdkerrors.Wrap(err, "can't emit EventFungibleTokenIssued event")
 	}
 
-	return id, nil
+	k.Logger(ctx).Debug("issued new fungible token with denom %d", denom)
+
+	return denom, nil
 }
 
-// GetAsset return the asset by its id.
-func (k Keeper) GetAsset(ctx sdk.Context, id uint64) (types.Asset, error) {
+// GetFungibleToken return the fungible token by its denom.
+func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error) {
 	store := ctx.KVStore(k.storeKey)
-	store.Get(types.GetAssetFTKey(id))
-
-	bz := store.Get(types.GetAssetFTKey(id))
+	bz := store.Get(types.GetFungibleTokenKey(denom))
 	if bz == nil {
-		return types.Asset{}, sdkerrors.Wrap(types.ErrNotFound, "asset")
+		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "denom: %s", denom)
 	}
-	var definition types.AssetDefinition
+	var definition types.FungibleTokenDefinition
 	k.cdc.MustUnmarshal(bz, &definition)
 
-	return types.Asset{
-		Id:         id,
-		Definition: &definition,
+	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, denom)
+	if !found {
+		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadate for %s denom not found", denom)
+	}
+
+	return types.FungibleToken{
+		Denom:       definition.Denom,
+		Issuer:      definition.Issuer,
+		Symbol:      metadata.Symbol,
+		Description: metadata.Description,
 	}, nil
 }
 
@@ -79,87 +95,33 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) issueFTAsset(ctx sdk.Context, definition types.AssetDefinition, recipient sdk.AccAddress) (uint64, error) {
-	id := k.incrementAssetID(ctx)
-	// register the denom metadata in the bank module
-	denomName, denomBaseName, err := k.createFTDenomMetadata(ctx, definition.Code, definition.Description, definition.Ft.Precision, id)
-	if err != nil {
-		return 0, err
-	}
-	// set the denom names to be stored in the keeper
-	definition.Ft.DenomName = denomName
-	definition.Ft.DenomBaseName = denomBaseName
-
-	// mint the initial amount
-	if definition.Ft.InitialAmount.IsPositive() {
-		if err := k.mintFTWithPrecision(ctx, denomBaseName, definition.Ft.InitialAmount, definition.Ft.Precision, recipient); err != nil {
-			return 0, err
-		}
-	}
-	// store the new asset
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetAssetFTKey(id), k.cdc.MustMarshal(&definition))
-
-	k.Logger(ctx).Debug("issued new asset %s with id %d", denomBaseName, id)
-
-	return id, nil
-}
-
-func (k Keeper) incrementAssetID(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.AssetSequenceKey)
-	id := uint64(1)
-	if bz != nil {
-		id = binary.BigEndian.Uint64(bz)
-	}
-	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(types.AssetSequenceKey, bz)
-	return id
-}
-
-func (k Keeper) createFTDenomMetadata(ctx sdk.Context, code, description string, precision uint32, assetID uint64) (string, string, error) {
-	denomName := fmt.Sprintf("%s%s%d", types.ModuleName, code, assetID)
-	denomBaseName := fmt.Sprintf("b%s", denomName)
-	// in case the precision is zero the name is equal the base name
-	if precision == 0 {
-		denomBaseName = denomName
-	}
-
-	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denomBaseName); found {
-		return "", "", sdkerrors.Wrapf(types.ErrInvalidState, "found unexpected denom metadata %s", denomBaseName)
-	}
+func (k Keeper) setFungibleTokenDenomMetadata(ctx sdk.Context, symbol, denom, description string) {
 	denomMetadata := banktypes.Metadata{
-		Name:        denomName,
-		Symbol:      denomName,
+		Name:        denom,
+		Symbol:      symbol,
 		Description: description,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    denomBaseName,
+				Denom:    denom,
 				Exponent: uint32(0),
 			},
 		},
-		Base:    denomBaseName,
-		Display: denomName,
-	}
-	// Add additional denom unit in case the precision is not zero
-	if precision > 0 {
-		denomMetadata.DenomUnits = append(denomMetadata.DenomUnits, &banktypes.DenomUnit{
-			Denom:    denomName,
-			Exponent: precision,
-		})
+		Base:    denom,
+		Display: denom,
 	}
 
 	k.bankKeeper.SetDenomMetaData(ctx, denomMetadata)
-
-	return denomName, denomBaseName, nil
 }
 
-func (k Keeper) mintFTWithPrecision(ctx sdk.Context, denom string, amount sdk.Int, precision uint32, recipient sdk.AccAddress) error {
-	initialAmount := amount.Mul(sdk.NewIntWithDecimal(1, int(precision)))
-	coinsToMint := sdk.NewCoins(sdk.NewCoin(denom, initialAmount))
+func (k Keeper) mintFungibleToken(ctx sdk.Context, denom string, amount sdk.Int, recipient sdk.AccAddress) error {
+	coinsToMint := sdk.NewCoins(sdk.NewCoin(denom, amount))
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coinsToMint); err != nil {
 		return sdkerrors.Wrapf(err, "can't mint %s for the module %s", coinsToMint.String(), types.ModuleName)
 	}
 
-	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coinsToMint)
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coinsToMint); err != nil {
+		return sdkerrors.Wrapf(err, "can't send mined coins from module %s to account %s", types.ModuleName, recipient.String())
+	}
+
+	return nil
 }

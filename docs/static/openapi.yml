@@ -4,80 +4,31 @@ info:
   name: ''
   description: ''
 paths:
-  '/coreum/asset/v1/assets/{id}':
+  '/coreum/asset/v1/assets/ft/{denom}':
     get:
-      summary: Asset queries the assets of the module.
-      operationId: CoreumAssetV1Asset
+      summary: FungibleToken queries the fungible token of the module.
+      operationId: CoreumAssetV1FungibleToken
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              asset:
-                title: the queried asset
+              fungible_token:
                 type: object
                 properties:
-                  id:
+                  denom:
                     type: string
-                    format: uint64
-                    title: id is the asset id
-                  definition:
-                    title: definition is the asset definition
-                    type: object
-                    properties:
-                      recipient:
-                        type: string
-                        title: the recipient of initially minted asset
-                      type:
-                        title: type is type of asset
-                        type: string
-                        enum:
-                          - FT
-                          - NFT
-                        default: FT
-                        description: |-
-                          AssetType defines the asset types.
-
-                           - FT: FT defines fungible token
-                           - NFT: NFT defines non-fungible token
-                      code:
-                        type: string
-                        title: code is token code/name
-                      description:
-                        type: string
-                        title: description is token description
-                      ft:
-                        title: ft defines the custom options for the FT token type
-                        type: object
-                        properties:
-                          precision:
-                            type: integer
-                            format: int64
-                            title: precision is the FT token/coin precision
-                          initial_amount:
-                            type: string
-                            title: >-
-                              initial_amount is the amount to issue on the asset
-                              issuance
-                          denom_name:
-                            type: string
-                            title: >-
-                              denom_name is the name of bank denom which
-                              corresponds the asset with the provided precision
-                          denom_base_name:
-                            type: string
-                            title: >-
-                              denom_base_name is the name of bank denom which
-                              corresponds the asset with the zero precision
-                        description: >-
-                          FTCustomDefinition defines the custom attributes for
-                          the FT token type.
-                    description: AssetDefinition defines the common asset settings.
-                description: Asset represents the single asset.
+                  issuer:
+                    type: string
+                  symbol:
+                    type: string
+                  description:
+                    type: string
+                description: FungibleToken is a full representation of the fungible token.
             description: >-
-              QueryAssetResponse is response type for the Query/Asset RPC
-              method.
+              QueryFungibleTokenResponse is response type for the
+              Query/FungibleToken RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -97,12 +48,10 @@ paths:
                       type: string
                   additionalProperties: {}
       parameters:
-        - name: id
-          description: id is the asset id
+        - name: denom
           in: path
           required: true
           type: string
-          format: uint64
       tags:
         - Query
   /coreum/feemodel/v1/min_gas_price:
@@ -33671,213 +33620,41 @@ paths:
       tags:
         - Query
 definitions:
-  coreum.asset.v1.Asset:
+  coreum.asset.v1.FungibleToken:
     type: object
     properties:
-      id:
+      denom:
         type: string
-        format: uint64
-        title: id is the asset id
-      definition:
-        title: definition is the asset definition
-        type: object
-        properties:
-          recipient:
-            type: string
-            title: the recipient of initially minted asset
-          type:
-            title: type is type of asset
-            type: string
-            enum:
-              - FT
-              - NFT
-            default: FT
-            description: |-
-              AssetType defines the asset types.
-
-               - FT: FT defines fungible token
-               - NFT: NFT defines non-fungible token
-          code:
-            type: string
-            title: code is token code/name
-          description:
-            type: string
-            title: description is token description
-          ft:
-            title: ft defines the custom options for the FT token type
-            type: object
-            properties:
-              precision:
-                type: integer
-                format: int64
-                title: precision is the FT token/coin precision
-              initial_amount:
-                type: string
-                title: initial_amount is the amount to issue on the asset issuance
-              denom_name:
-                type: string
-                title: >-
-                  denom_name is the name of bank denom which corresponds the
-                  asset with the provided precision
-              denom_base_name:
-                type: string
-                title: >-
-                  denom_base_name is the name of bank denom which corresponds
-                  the asset with the zero precision
-            description: >-
-              FTCustomDefinition defines the custom attributes for the FT token
-              type.
-        description: AssetDefinition defines the common asset settings.
-    description: Asset represents the single asset.
-  coreum.asset.v1.AssetDefinition:
-    type: object
-    properties:
-      recipient:
+      issuer:
         type: string
-        title: the recipient of initially minted asset
-      type:
-        title: type is type of asset
+      symbol:
         type: string
-        enum:
-          - FT
-          - NFT
-        default: FT
-        description: |-
-          AssetType defines the asset types.
-
-           - FT: FT defines fungible token
-           - NFT: NFT defines non-fungible token
-      code:
-        type: string
-        title: code is token code/name
       description:
         type: string
-        title: description is token description
-      ft:
-        title: ft defines the custom options for the FT token type
-        type: object
-        properties:
-          precision:
-            type: integer
-            format: int64
-            title: precision is the FT token/coin precision
-          initial_amount:
-            type: string
-            title: initial_amount is the amount to issue on the asset issuance
-          denom_name:
-            type: string
-            title: >-
-              denom_name is the name of bank denom which corresponds the asset
-              with the provided precision
-          denom_base_name:
-            type: string
-            title: >-
-              denom_base_name is the name of bank denom which corresponds the
-              asset with the zero precision
-        description: >-
-          FTCustomDefinition defines the custom attributes for the FT token
-          type.
-    description: AssetDefinition defines the common asset settings.
-  coreum.asset.v1.AssetType:
-    type: string
-    enum:
-      - FT
-      - NFT
-    default: FT
-    description: |-
-      AssetType defines the asset types.
-
-       - FT: FT defines fungible token
-       - NFT: NFT defines non-fungible token
-  coreum.asset.v1.FTCustomDefinition:
+    description: FungibleToken is a full representation of the fungible token.
+  coreum.asset.v1.MsgIssueFungibleTokenResponse:
+    type: object
+    description: >-
+      MsgIssueFungibleTokenResponse defines message response for the
+      IssueFungibleToken.
+  coreum.asset.v1.QueryFungibleTokenResponse:
     type: object
     properties:
-      precision:
-        type: integer
-        format: int64
-        title: precision is the FT token/coin precision
-      initial_amount:
-        type: string
-        title: initial_amount is the amount to issue on the asset issuance
-      denom_name:
-        type: string
-        title: >-
-          denom_name is the name of bank denom which corresponds the asset with
-          the provided precision
-      denom_base_name:
-        type: string
-        title: >-
-          denom_base_name is the name of bank denom which corresponds the asset
-          with the zero precision
-    description: FTCustomDefinition defines the custom attributes for the FT token type.
-  coreum.asset.v1.MsgIssueAssetResponse:
-    type: object
-    description: MsgIssueAsset defines message response of the to issued asset.
-  coreum.asset.v1.QueryAssetResponse:
-    type: object
-    properties:
-      asset:
-        title: the queried asset
+      fungible_token:
         type: object
         properties:
-          id:
+          denom:
             type: string
-            format: uint64
-            title: id is the asset id
-          definition:
-            title: definition is the asset definition
-            type: object
-            properties:
-              recipient:
-                type: string
-                title: the recipient of initially minted asset
-              type:
-                title: type is type of asset
-                type: string
-                enum:
-                  - FT
-                  - NFT
-                default: FT
-                description: |-
-                  AssetType defines the asset types.
-
-                   - FT: FT defines fungible token
-                   - NFT: NFT defines non-fungible token
-              code:
-                type: string
-                title: code is token code/name
-              description:
-                type: string
-                title: description is token description
-              ft:
-                title: ft defines the custom options for the FT token type
-                type: object
-                properties:
-                  precision:
-                    type: integer
-                    format: int64
-                    title: precision is the FT token/coin precision
-                  initial_amount:
-                    type: string
-                    title: >-
-                      initial_amount is the amount to issue on the asset
-                      issuance
-                  denom_name:
-                    type: string
-                    title: >-
-                      denom_name is the name of bank denom which corresponds the
-                      asset with the provided precision
-                  denom_base_name:
-                    type: string
-                    title: >-
-                      denom_base_name is the name of bank denom which
-                      corresponds the asset with the zero precision
-                description: >-
-                  FTCustomDefinition defines the custom attributes for the FT
-                  token type.
-            description: AssetDefinition defines the common asset settings.
-        description: Asset represents the single asset.
-    description: QueryAssetResponse is response type for the Query/Asset RPC method.
+          issuer:
+            type: string
+          symbol:
+            type: string
+          description:
+            type: string
+        description: FungibleToken is a full representation of the fungible token.
+    description: >-
+      QueryFungibleTokenResponse is response type for the Query/FungibleToken
+      RPC method.
   google.protobuf.Any:
     type: object
     properties:

@@ -22,24 +22,25 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// EventAssetIssued is emitted on MsgIssueAsset.
-type EventAssetIssued struct {
-	// id is the asset id
-	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+// EventFungibleTokenIssued is emitted on MsgIssueFungibleToken.
+type EventFungibleTokenIssued struct {
+	Denom  string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Issuer string `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Symbol string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
 }
 
-func (m *EventAssetIssued) Reset()         { *m = EventAssetIssued{} }
-func (m *EventAssetIssued) String() string { return proto.CompactTextString(m) }
-func (*EventAssetIssued) ProtoMessage()    {}
-func (*EventAssetIssued) Descriptor() ([]byte, []int) {
+func (m *EventFungibleTokenIssued) Reset()         { *m = EventFungibleTokenIssued{} }
+func (m *EventFungibleTokenIssued) String() string { return proto.CompactTextString(m) }
+func (*EventFungibleTokenIssued) ProtoMessage()    {}
+func (*EventFungibleTokenIssued) Descriptor() ([]byte, []int) {
 	return fileDescriptor_aede4b64fdc52aa3, []int{0}
 }
-func (m *EventAssetIssued) XXX_Unmarshal(b []byte) error {
+func (m *EventFungibleTokenIssued) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EventAssetIssued) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *EventFungibleTokenIssued) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EventAssetIssued.Marshal(b, m, deterministic)
+		return xxx_messageInfo_EventFungibleTokenIssued.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -49,47 +50,63 @@ func (m *EventAssetIssued) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *EventAssetIssued) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventAssetIssued.Merge(m, src)
+func (m *EventFungibleTokenIssued) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventFungibleTokenIssued.Merge(m, src)
 }
-func (m *EventAssetIssued) XXX_Size() int {
+func (m *EventFungibleTokenIssued) XXX_Size() int {
 	return m.Size()
 }
-func (m *EventAssetIssued) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventAssetIssued.DiscardUnknown(m)
+func (m *EventFungibleTokenIssued) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventFungibleTokenIssued.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EventAssetIssued proto.InternalMessageInfo
+var xxx_messageInfo_EventFungibleTokenIssued proto.InternalMessageInfo
 
-func (m *EventAssetIssued) GetId() uint64 {
+func (m *EventFungibleTokenIssued) GetDenom() string {
 	if m != nil {
-		return m.Id
+		return m.Denom
 	}
-	return 0
+	return ""
+}
+
+func (m *EventFungibleTokenIssued) GetIssuer() string {
+	if m != nil {
+		return m.Issuer
+	}
+	return ""
+}
+
+func (m *EventFungibleTokenIssued) GetSymbol() string {
+	if m != nil {
+		return m.Symbol
+	}
+	return ""
 }
 
 func init() {
-	proto.RegisterType((*EventAssetIssued)(nil), "coreum.asset.v1.EventAssetIssued")
+	proto.RegisterType((*EventFungibleTokenIssued)(nil), "coreum.asset.v1.EventFungibleTokenIssued")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/event.proto", fileDescriptor_aede4b64fdc52aa3) }
 
 var fileDescriptor_aede4b64fdc52aa3 = []byte{
-	// 165 bytes of a gzipped FileDescriptorProto
+	// 204 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4e, 0xce, 0x2f, 0x4a,
 	0x2d, 0xcd, 0xd5, 0x4f, 0x2c, 0x2e, 0x4e, 0x2d, 0xd1, 0x2f, 0x33, 0xd4, 0x4f, 0x2d, 0x4b, 0xcd,
 	0x2b, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x87, 0x48, 0xea, 0x81, 0x25, 0xf5, 0xca,
-	0x0c, 0x95, 0x94, 0xb8, 0x04, 0x5c, 0x41, 0xf2, 0x8e, 0x20, 0x01, 0xcf, 0xe2, 0xe2, 0xd2, 0xd4,
-	0x14, 0x21, 0x3e, 0x2e, 0xa6, 0xcc, 0x14, 0x09, 0x46, 0x05, 0x46, 0x0d, 0x96, 0x20, 0xa6, 0xcc,
-	0x14, 0x27, 0xaf, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71,
-	0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x48, 0xcf,
-	0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x77, 0x06, 0x9b, 0xec, 0x96, 0x5f, 0x9a,
-	0x97, 0x92, 0x58, 0x92, 0x99, 0x9f, 0xa7, 0x0f, 0x75, 0x47, 0x05, 0xd4, 0x25, 0x25, 0x95, 0x05,
-	0xa9, 0xc5, 0x49, 0x6c, 0x60, 0x77, 0x18, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x37, 0x95, 0x32,
-	0xd8, 0xa6, 0x00, 0x00, 0x00,
+	0x0c, 0x95, 0x12, 0xb8, 0x24, 0x5c, 0x41, 0xf2, 0x6e, 0xa5, 0x79, 0xe9, 0x99, 0x49, 0x39, 0xa9,
+	0x21, 0xf9, 0xd9, 0xa9, 0x79, 0x9e, 0xc5, 0xc5, 0xa5, 0xa9, 0x29, 0x42, 0x22, 0x5c, 0xac, 0x29,
+	0xa9, 0x79, 0xf9, 0xb9, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x10, 0x8e, 0x90, 0x18, 0x17,
+	0x5b, 0x26, 0x48, 0xbe, 0x48, 0x82, 0x09, 0x2c, 0x0c, 0xe5, 0x81, 0xc4, 0x8b, 0x2b, 0x73, 0x93,
+	0xf2, 0x73, 0x24, 0x98, 0x21, 0xe2, 0x10, 0x9e, 0x93, 0xd7, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e,
+	0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37,
+	0x1e, 0xcb, 0x31, 0x44, 0x19, 0xa4, 0x67, 0x96, 0x64, 0x94, 0x26, 0xe9, 0x25, 0xe7, 0xe7, 0xea,
+	0x3b, 0x83, 0xdd, 0xe5, 0x96, 0x5f, 0x9a, 0x97, 0x92, 0x58, 0x92, 0x99, 0x9f, 0xa7, 0x0f, 0xf5,
+	0x45, 0x05, 0xd4, 0x1f, 0x25, 0x95, 0x05, 0xa9, 0xc5, 0x49, 0x6c, 0x60, 0x5f, 0x18, 0x03, 0x02,
+	0x00, 0x00, 0xff, 0xff, 0xb0, 0x1f, 0xf4, 0x3a, 0xe4, 0x00, 0x00, 0x00,
 }
 
-func (m *EventAssetIssued) Marshal() (dAtA []byte, err error) {
+func (m *EventFungibleTokenIssued) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -99,20 +116,36 @@ func (m *EventAssetIssued) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EventAssetIssued) MarshalTo(dAtA []byte) (int, error) {
+func (m *EventFungibleTokenIssued) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EventAssetIssued) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *EventFungibleTokenIssued) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Id != 0 {
-		i = encodeVarintEvent(dAtA, i, uint64(m.Id))
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintEvent(dAtA, i, uint64(len(m.Symbol)))
 		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0x1a
+	}
+	if len(m.Issuer) > 0 {
+		i -= len(m.Issuer)
+		copy(dAtA[i:], m.Issuer)
+		i = encodeVarintEvent(dAtA, i, uint64(len(m.Issuer)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintEvent(dAtA, i, uint64(len(m.Denom)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -128,14 +161,23 @@ func encodeVarintEvent(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *EventAssetIssued) Size() (n int) {
+func (m *EventFungibleTokenIssued) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Id != 0 {
-		n += 1 + sovEvent(uint64(m.Id))
+	l = len(m.Denom)
+	if l > 0 {
+		n += 1 + l + sovEvent(uint64(l))
+	}
+	l = len(m.Issuer)
+	if l > 0 {
+		n += 1 + l + sovEvent(uint64(l))
+	}
+	l = len(m.Symbol)
+	if l > 0 {
+		n += 1 + l + sovEvent(uint64(l))
 	}
 	return n
 }
@@ -146,7 +188,7 @@ func sovEvent(x uint64) (n int) {
 func sozEvent(x uint64) (n int) {
 	return sovEvent(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *EventAssetIssued) Unmarshal(dAtA []byte) error {
+func (m *EventFungibleTokenIssued) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -169,17 +211,17 @@ func (m *EventAssetIssued) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EventAssetIssued: wiretype end group for non-group")
+			return fmt.Errorf("proto: EventFungibleTokenIssued: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventAssetIssued: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: EventFungibleTokenIssued: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
-			m.Id = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvent
@@ -189,11 +231,88 @@ func (m *EventAssetIssued) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Id |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvent
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvent
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Denom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Issuer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvent
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvent
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Issuer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvent
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvent
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Symbol = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvent(dAtA[iNdEx:])

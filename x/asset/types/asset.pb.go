@@ -5,7 +5,6 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
@@ -24,58 +23,24 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// AssetType defines the asset types.
-type AssetType int32
-
-const (
-	// FT defines fungible token
-	AssetType_FT AssetType = 0
-	// NFT defines non-fungible token
-	AssetType_NFT AssetType = 1
-)
-
-var AssetType_name = map[int32]string{
-	0: "FT",
-	1: "NFT",
+// FungibleTokenDefinition defines the fungible token settings to store.
+type FungibleTokenDefinition struct {
+	Issuer string `protobuf:"bytes,1,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Denom  string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
 }
 
-var AssetType_value = map[string]int32{
-	"FT":  0,
-	"NFT": 1,
-}
-
-func (x AssetType) String() string {
-	return proto.EnumName(AssetType_name, int32(x))
-}
-
-func (AssetType) EnumDescriptor() ([]byte, []int) {
+func (m *FungibleTokenDefinition) Reset()         { *m = FungibleTokenDefinition{} }
+func (m *FungibleTokenDefinition) String() string { return proto.CompactTextString(m) }
+func (*FungibleTokenDefinition) ProtoMessage()    {}
+func (*FungibleTokenDefinition) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4597e399dbd6e434, []int{0}
 }
-
-// FTCustomDefinition defines the custom attributes for the FT token type.
-type FTCustomDefinition struct {
-	// precision is the FT token/coin precision
-	Precision uint32 `protobuf:"varint,1,opt,name=precision,proto3" json:"precision,omitempty"`
-	// initial_amount is the amount to issue on the asset issuance
-	InitialAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=initial_amount,json=initialAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"initial_amount"`
-	// denom_name is the name of bank denom which corresponds the asset with the provided precision
-	DenomName string `protobuf:"bytes,3,opt,name=denom_name,json=denomName,proto3" json:"denom_name,omitempty"`
-	// denom_base_name is the name of bank denom which corresponds the asset with the zero precision
-	DenomBaseName string `protobuf:"bytes,4,opt,name=denom_base_name,json=denomBaseName,proto3" json:"denom_base_name,omitempty"`
-}
-
-func (m *FTCustomDefinition) Reset()         { *m = FTCustomDefinition{} }
-func (m *FTCustomDefinition) String() string { return proto.CompactTextString(m) }
-func (*FTCustomDefinition) ProtoMessage()    {}
-func (*FTCustomDefinition) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4597e399dbd6e434, []int{0}
-}
-func (m *FTCustomDefinition) XXX_Unmarshal(b []byte) error {
+func (m *FungibleTokenDefinition) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *FTCustomDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *FungibleTokenDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_FTCustomDefinition.Marshal(b, m, deterministic)
+		return xxx_messageInfo_FungibleTokenDefinition.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -85,44 +50,38 @@ func (m *FTCustomDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-func (m *FTCustomDefinition) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FTCustomDefinition.Merge(m, src)
+func (m *FungibleTokenDefinition) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FungibleTokenDefinition.Merge(m, src)
 }
-func (m *FTCustomDefinition) XXX_Size() int {
+func (m *FungibleTokenDefinition) XXX_Size() int {
 	return m.Size()
 }
-func (m *FTCustomDefinition) XXX_DiscardUnknown() {
-	xxx_messageInfo_FTCustomDefinition.DiscardUnknown(m)
+func (m *FungibleTokenDefinition) XXX_DiscardUnknown() {
+	xxx_messageInfo_FungibleTokenDefinition.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_FTCustomDefinition proto.InternalMessageInfo
+var xxx_messageInfo_FungibleTokenDefinition proto.InternalMessageInfo
 
-// AssetDefinition defines the setting for the all asset types.
-type AssetDefinition struct {
-	// the recipient of initially minted asset
-	Recipient string `protobuf:"bytes,1,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	// type is type of asset
-	Type AssetType `protobuf:"varint,2,opt,name=type,proto3,enum=coreum.asset.v1.AssetType" json:"type,omitempty"`
-	// code is token code/name
-	Code string `protobuf:"bytes,3,opt,name=code,proto3" json:"code,omitempty"`
-	// description is token description
+// FungibleToken is a full representation of the fungible token.
+type FungibleToken struct {
+	Denom       string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Issuer      string `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Symbol      string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	// ft defines the custom options for the FT token type
-	Ft *FTCustomDefinition `protobuf:"bytes,5,opt,name=ft,proto3" json:"ft,omitempty"`
 }
 
-func (m *AssetDefinition) Reset()         { *m = AssetDefinition{} }
-func (m *AssetDefinition) String() string { return proto.CompactTextString(m) }
-func (*AssetDefinition) ProtoMessage()    {}
-func (*AssetDefinition) Descriptor() ([]byte, []int) {
+func (m *FungibleToken) Reset()         { *m = FungibleToken{} }
+func (m *FungibleToken) String() string { return proto.CompactTextString(m) }
+func (*FungibleToken) ProtoMessage()    {}
+func (*FungibleToken) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4597e399dbd6e434, []int{1}
 }
-func (m *AssetDefinition) XXX_Unmarshal(b []byte) error {
+func (m *FungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *AssetDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *FungibleToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_AssetDefinition.Marshal(b, m, deterministic)
+		return xxx_messageInfo_FungibleToken.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -132,102 +91,47 @@ func (m *AssetDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *AssetDefinition) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AssetDefinition.Merge(m, src)
+func (m *FungibleToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FungibleToken.Merge(m, src)
 }
-func (m *AssetDefinition) XXX_Size() int {
+func (m *FungibleToken) XXX_Size() int {
 	return m.Size()
 }
-func (m *AssetDefinition) XXX_DiscardUnknown() {
-	xxx_messageInfo_AssetDefinition.DiscardUnknown(m)
+func (m *FungibleToken) XXX_DiscardUnknown() {
+	xxx_messageInfo_FungibleToken.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AssetDefinition proto.InternalMessageInfo
-
-// Asset represents the single asset.
-type Asset struct {
-	// id is the asset id
-	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// definition defines the asset definition
-	Definition *AssetDefinition `protobuf:"bytes,2,opt,name=definition,proto3" json:"definition,omitempty"`
-}
-
-func (m *Asset) Reset()         { *m = Asset{} }
-func (m *Asset) String() string { return proto.CompactTextString(m) }
-func (*Asset) ProtoMessage()    {}
-func (*Asset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4597e399dbd6e434, []int{2}
-}
-func (m *Asset) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Asset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Asset.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *Asset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Asset.Merge(m, src)
-}
-func (m *Asset) XXX_Size() int {
-	return m.Size()
-}
-func (m *Asset) XXX_DiscardUnknown() {
-	xxx_messageInfo_Asset.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Asset proto.InternalMessageInfo
+var xxx_messageInfo_FungibleToken proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterEnum("coreum.asset.v1.AssetType", AssetType_name, AssetType_value)
-	proto.RegisterType((*FTCustomDefinition)(nil), "coreum.asset.v1.FTCustomDefinition")
-	proto.RegisterType((*AssetDefinition)(nil), "coreum.asset.v1.AssetDefinition")
-	proto.RegisterType((*Asset)(nil), "coreum.asset.v1.Asset")
+	proto.RegisterType((*FungibleTokenDefinition)(nil), "coreum.asset.v1.FungibleTokenDefinition")
+	proto.RegisterType((*FungibleToken)(nil), "coreum.asset.v1.FungibleToken")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/asset.proto", fileDescriptor_4597e399dbd6e434) }
 
 var fileDescriptor_4597e399dbd6e434 = []byte{
-	// 454 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x92, 0x31, 0x6f, 0xd3, 0x40,
-	0x14, 0xc7, 0x7d, 0x6e, 0x5a, 0xf0, 0x8b, 0x92, 0x54, 0x27, 0x86, 0xa8, 0x14, 0xc7, 0x2a, 0x52,
-	0x15, 0x21, 0x61, 0xd3, 0x74, 0x63, 0xa2, 0x29, 0x8a, 0x04, 0x43, 0x07, 0x2b, 0x2c, 0x2c, 0x95,
-	0x63, 0x5f, 0xc2, 0x09, 0xee, 0xce, 0xf2, 0x9d, 0x2b, 0xfa, 0x0d, 0x18, 0xf9, 0x08, 0xfd, 0x38,
-	0x1d, 0x3b, 0x30, 0xa0, 0x0e, 0x15, 0x4a, 0x16, 0x3e, 0x06, 0xba, 0x67, 0x97, 0x18, 0xd2, 0xc9,
-	0xa7, 0xff, 0xfb, 0xfb, 0xff, 0xde, 0xef, 0xee, 0xc1, 0xd3, 0x54, 0x15, 0xac, 0x14, 0x51, 0xa2,
-	0x35, 0x33, 0xd1, 0xc5, 0x51, 0x75, 0x08, 0xf3, 0x42, 0x19, 0x45, 0x7b, 0x55, 0x31, 0xac, 0xb4,
-	0x8b, 0xa3, 0xbd, 0x27, 0x0b, 0xb5, 0x50, 0x58, 0x8b, 0xec, 0xa9, 0xb2, 0x1d, 0xdc, 0x12, 0xa0,
-	0x93, 0xe9, 0x69, 0xa9, 0x8d, 0x12, 0x6f, 0xd9, 0x9c, 0x4b, 0x6e, 0xb8, 0x92, 0x74, 0x1f, 0xbc,
-	0xbc, 0x60, 0x29, 0xd7, 0x5c, 0xc9, 0x3e, 0x09, 0xc8, 0xb0, 0x13, 0xaf, 0x05, 0xfa, 0x01, 0xba,
-	0x68, 0x4c, 0xbe, 0x9c, 0x27, 0x42, 0x95, 0xd2, 0xf4, 0xdd, 0x80, 0x0c, 0xbd, 0x71, 0x78, 0x7d,
-	0x37, 0x70, 0x6e, 0xef, 0x06, 0x87, 0x0b, 0x6e, 0x3e, 0x95, 0xb3, 0x30, 0x55, 0x22, 0x4a, 0x95,
-	0x16, 0x4a, 0xd7, 0x9f, 0x97, 0x3a, 0xfb, 0x1c, 0x99, 0xcb, 0x9c, 0xe9, 0xf0, 0x9d, 0x34, 0x71,
-	0xa7, 0x4e, 0x39, 0xc1, 0x10, 0xfa, 0x0c, 0x20, 0x63, 0x52, 0x89, 0x73, 0x99, 0x08, 0xd6, 0xdf,
-	0xb2, 0x91, 0xb1, 0x87, 0xca, 0x59, 0x22, 0x18, 0x3d, 0x84, 0x5e, 0x55, 0x9e, 0x25, 0x9a, 0x55,
-	0x9e, 0x16, 0x7a, 0x3a, 0x28, 0x8f, 0x13, 0xcd, 0xac, 0xef, 0xf5, 0xe3, 0x6f, 0x57, 0x03, 0xe7,
-	0xf7, 0xd5, 0xc0, 0x39, 0xf8, 0x41, 0xa0, 0x77, 0x62, 0xf9, 0xff, 0x25, 0xb3, 0x1c, 0x39, 0x67,
-	0xd2, 0x20, 0x99, 0x17, 0xaf, 0x05, 0x1a, 0x42, 0xcb, 0x8e, 0x87, 0x3c, 0xdd, 0xd1, 0x5e, 0xf8,
-	0xdf, 0x25, 0x86, 0x98, 0x36, 0xbd, 0xcc, 0x59, 0x8c, 0x3e, 0x4a, 0xa1, 0x95, 0xaa, 0xec, 0x7e,
-	0x58, 0x3c, 0xd3, 0x00, 0xda, 0x19, 0xd3, 0x69, 0xc1, 0x73, 0xdb, 0xb0, 0x9e, 0xb1, 0x29, 0xd1,
-	0x63, 0x70, 0xe7, 0xa6, 0xbf, 0x1d, 0x90, 0x61, 0x7b, 0xf4, 0x7c, 0xa3, 0xc7, 0xe6, 0x73, 0xc4,
-	0xee, 0xdc, 0x34, 0xb0, 0x52, 0xd8, 0xc6, 0x39, 0x68, 0x17, 0x5c, 0x9e, 0x21, 0x44, 0x2b, 0x76,
-	0x79, 0x46, 0xdf, 0xd8, 0x0b, 0xbc, 0xff, 0x09, 0x19, 0xda, 0xa3, 0xe0, 0x61, 0x86, 0x46, 0x78,
-	0xe3, 0x9f, 0x75, 0x93, 0x17, 0xfb, 0xe0, 0xfd, 0x85, 0xa5, 0x3b, 0xe0, 0x4e, 0xa6, 0xbb, 0x0e,
-	0x7d, 0x04, 0x5b, 0x67, 0x93, 0xe9, 0x2e, 0x19, 0xbf, 0xbf, 0x5e, 0xfa, 0xe4, 0x66, 0xe9, 0x93,
-	0x5f, 0x4b, 0x9f, 0x7c, 0x5f, 0xf9, 0xce, 0xcd, 0xca, 0x77, 0x7e, 0xae, 0x7c, 0xe7, 0xe3, 0xab,
-	0xc6, 0xdb, 0x9f, 0x62, 0xe7, 0x89, 0x2a, 0x65, 0x96, 0xd8, 0xf8, 0xa8, 0x5e, 0xd8, 0xaf, 0xf5,
-	0xca, 0xe2, 0x26, 0xcc, 0x76, 0x70, 0x13, 0x8f, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0x52, 0x60,
-	0x97, 0x85, 0xcf, 0x02, 0x00, 0x00,
+	// 264 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4e, 0xce, 0x2f, 0x4a,
+	0x2d, 0xcd, 0xd5, 0x4f, 0x2c, 0x2e, 0x4e, 0x2d, 0xd1, 0x2f, 0x33, 0x84, 0x30, 0xf4, 0x0a, 0x8a,
+	0xf2, 0x4b, 0xf2, 0x85, 0xf8, 0x21, 0x92, 0x7a, 0x10, 0xb1, 0x32, 0x43, 0x29, 0x91, 0xf4, 0xfc,
+	0xf4, 0x7c, 0xb0, 0x9c, 0x3e, 0x88, 0x05, 0x51, 0xa6, 0x14, 0xc8, 0x25, 0xee, 0x56, 0x9a, 0x97,
+	0x9e, 0x99, 0x94, 0x93, 0x1a, 0x92, 0x9f, 0x9d, 0x9a, 0xe7, 0x92, 0x9a, 0x96, 0x99, 0x97, 0x59,
+	0x92, 0x99, 0x9f, 0x27, 0x24, 0xc6, 0xc5, 0x96, 0x59, 0x5c, 0x5c, 0x9a, 0x5a, 0x24, 0xc1, 0xa8,
+	0xc0, 0xa8, 0xc1, 0x19, 0x04, 0xe5, 0x09, 0x89, 0x70, 0xb1, 0xa6, 0xa4, 0xe6, 0xe5, 0xe7, 0x4a,
+	0x30, 0x81, 0x85, 0x21, 0x1c, 0x2b, 0x8e, 0x8e, 0x05, 0xf2, 0x0c, 0x2f, 0x16, 0xc8, 0x33, 0x28,
+	0x35, 0x32, 0x72, 0xf1, 0xa2, 0x98, 0x89, 0xd0, 0xc1, 0x88, 0xa4, 0x03, 0xc9, 0x7c, 0x26, 0x14,
+	0xf3, 0xc5, 0xb8, 0xd8, 0x8a, 0x2b, 0x73, 0x93, 0xf2, 0x73, 0x24, 0x98, 0x21, 0xe2, 0x10, 0x9e,
+	0x90, 0x02, 0x17, 0x77, 0x4a, 0x6a, 0x71, 0x72, 0x51, 0x66, 0x01, 0xc8, 0x79, 0x12, 0x2c, 0x60,
+	0x49, 0x64, 0x21, 0x84, 0x1b, 0x9c, 0xbc, 0x4e, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1,
+	0xc1, 0x23, 0x39, 0xc6, 0x09, 0x8f, 0xe5, 0x18, 0x2e, 0x3c, 0x96, 0x63, 0xb8, 0xf1, 0x58, 0x8e,
+	0x21, 0xca, 0x20, 0x3d, 0xb3, 0x24, 0xa3, 0x34, 0x49, 0x2f, 0x39, 0x3f, 0x57, 0xdf, 0x19, 0x1c,
+	0x44, 0x6e, 0xf9, 0xa5, 0x79, 0x29, 0x89, 0x20, 0x03, 0xf4, 0xa1, 0x01, 0x5a, 0x01, 0x0d, 0xd2,
+	0x92, 0xca, 0x82, 0xd4, 0xe2, 0x24, 0x36, 0x70, 0x48, 0x19, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff,
+	0xeb, 0x64, 0x56, 0x91, 0x6f, 0x01, 0x00, 0x00,
 }
 
-func (m *FTCustomDefinition) Marshal() (dAtA []byte, err error) {
+func (m *FungibleTokenDefinition) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -237,49 +141,34 @@ func (m *FTCustomDefinition) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *FTCustomDefinition) MarshalTo(dAtA []byte) (int, error) {
+func (m *FungibleTokenDefinition) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *FTCustomDefinition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *FungibleTokenDefinition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.DenomBaseName) > 0 {
-		i -= len(m.DenomBaseName)
-		copy(dAtA[i:], m.DenomBaseName)
-		i = encodeVarintAsset(dAtA, i, uint64(len(m.DenomBaseName)))
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.Denom)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x12
 	}
-	if len(m.DenomName) > 0 {
-		i -= len(m.DenomName)
-		copy(dAtA[i:], m.DenomName)
-		i = encodeVarintAsset(dAtA, i, uint64(len(m.DenomName)))
+	if len(m.Issuer) > 0 {
+		i -= len(m.Issuer)
+		copy(dAtA[i:], m.Issuer)
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.Issuer)))
 		i--
-		dAtA[i] = 0x1a
-	}
-	{
-		size := m.InitialAmount.Size()
-		i -= size
-		if _, err := m.InitialAmount.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintAsset(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x12
-	if m.Precision != 0 {
-		i = encodeVarintAsset(dAtA, i, uint64(m.Precision))
-		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *AssetDefinition) Marshal() (dAtA []byte, err error) {
+func (m *FungibleToken) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -289,28 +178,16 @@ func (m *AssetDefinition) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *AssetDefinition) MarshalTo(dAtA []byte) (int, error) {
+func (m *FungibleToken) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *AssetDefinition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *FungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Ft != nil {
-		{
-			size, err := m.Ft.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAsset(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x2a
-	}
 	if len(m.Description) > 0 {
 		i -= len(m.Description)
 		copy(dAtA[i:], m.Description)
@@ -318,64 +195,26 @@ func (m *AssetDefinition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.Code) > 0 {
-		i -= len(m.Code)
-		copy(dAtA[i:], m.Code)
-		i = encodeVarintAsset(dAtA, i, uint64(len(m.Code)))
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.Symbol)))
 		i--
 		dAtA[i] = 0x1a
 	}
-	if m.Type != 0 {
-		i = encodeVarintAsset(dAtA, i, uint64(m.Type))
-		i--
-		dAtA[i] = 0x10
-	}
-	if len(m.Recipient) > 0 {
-		i -= len(m.Recipient)
-		copy(dAtA[i:], m.Recipient)
-		i = encodeVarintAsset(dAtA, i, uint64(len(m.Recipient)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *Asset) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Asset) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Asset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Definition != nil {
-		{
-			size, err := m.Definition.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAsset(dAtA, i, uint64(size))
-		}
+	if len(m.Issuer) > 0 {
+		i -= len(m.Issuer)
+		copy(dAtA[i:], m.Issuer)
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.Issuer)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.Id != 0 {
-		i = encodeVarintAsset(dAtA, i, uint64(m.Id))
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.Denom)))
 		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -391,67 +230,43 @@ func encodeVarintAsset(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *FTCustomDefinition) Size() (n int) {
+func (m *FungibleTokenDefinition) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Precision != 0 {
-		n += 1 + sovAsset(uint64(m.Precision))
-	}
-	l = m.InitialAmount.Size()
-	n += 1 + l + sovAsset(uint64(l))
-	l = len(m.DenomName)
+	l = len(m.Issuer)
 	if l > 0 {
 		n += 1 + l + sovAsset(uint64(l))
 	}
-	l = len(m.DenomBaseName)
+	l = len(m.Denom)
 	if l > 0 {
 		n += 1 + l + sovAsset(uint64(l))
 	}
 	return n
 }
 
-func (m *AssetDefinition) Size() (n int) {
+func (m *FungibleToken) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Recipient)
+	l = len(m.Denom)
 	if l > 0 {
 		n += 1 + l + sovAsset(uint64(l))
 	}
-	if m.Type != 0 {
-		n += 1 + sovAsset(uint64(m.Type))
+	l = len(m.Issuer)
+	if l > 0 {
+		n += 1 + l + sovAsset(uint64(l))
 	}
-	l = len(m.Code)
+	l = len(m.Symbol)
 	if l > 0 {
 		n += 1 + l + sovAsset(uint64(l))
 	}
 	l = len(m.Description)
 	if l > 0 {
-		n += 1 + l + sovAsset(uint64(l))
-	}
-	if m.Ft != nil {
-		l = m.Ft.Size()
-		n += 1 + l + sovAsset(uint64(l))
-	}
-	return n
-}
-
-func (m *Asset) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Id != 0 {
-		n += 1 + sovAsset(uint64(m.Id))
-	}
-	if m.Definition != nil {
-		l = m.Definition.Size()
 		n += 1 + l + sovAsset(uint64(l))
 	}
 	return n
@@ -463,7 +278,7 @@ func sovAsset(x uint64) (n int) {
 func sozAsset(x uint64) (n int) {
 	return sovAsset(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *FTCustomDefinition) Unmarshal(dAtA []byte) error {
+func (m *FungibleTokenDefinition) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -486,17 +301,17 @@ func (m *FTCustomDefinition) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: FTCustomDefinition: wiretype end group for non-group")
+			return fmt.Errorf("proto: FungibleTokenDefinition: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: FTCustomDefinition: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: FungibleTokenDefinition: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Precision", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Issuer", wireType)
 			}
-			m.Precision = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowAsset
@@ -506,14 +321,27 @@ func (m *FTCustomDefinition) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Precision |= uint32(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAsset
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAsset
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Issuer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InitialAmount", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -541,73 +369,7 @@ func (m *FTCustomDefinition) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.InitialAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DenomName", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAsset
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAsset
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAsset
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.DenomName = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DenomBaseName", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAsset
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAsset
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAsset
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.DenomBaseName = string(dAtA[iNdEx:postIndex])
+			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -630,7 +392,7 @@ func (m *FTCustomDefinition) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *AssetDefinition) Unmarshal(dAtA []byte) error {
+func (m *FungibleToken) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -653,15 +415,15 @@ func (m *AssetDefinition) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: AssetDefinition: wiretype end group for non-group")
+			return fmt.Errorf("proto: FungibleToken: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AssetDefinition: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: FungibleToken: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Recipient", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -689,30 +451,11 @@ func (m *AssetDefinition) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Recipient = string(dAtA[iNdEx:postIndex])
+			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
-			}
-			m.Type = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAsset
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Type |= AssetType(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Code", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Issuer", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -740,7 +483,39 @@ func (m *AssetDefinition) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Code = string(dAtA[iNdEx:postIndex])
+			m.Issuer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAsset
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAsset
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAsset
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Symbol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -773,147 +548,6 @@ func (m *AssetDefinition) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Description = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Ft", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAsset
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAsset
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAsset
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Ft == nil {
-				m.Ft = &FTCustomDefinition{}
-			}
-			if err := m.Ft.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAsset(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthAsset
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Asset) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAsset
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Asset: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Asset: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			m.Id = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAsset
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Id |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Definition", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAsset
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAsset
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAsset
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Definition == nil {
-				m.Definition = &AssetDefinition{}
-			}
-			if err := m.Definition.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

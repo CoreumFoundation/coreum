@@ -5,53 +5,20 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
-// AssetType defines the asset types.
-enum AssetType {
-  // FT defines fungible token
-  FT = 0;
-  // NFT defines non-fungible token
-  NFT = 1;
-}
-
-// FTCustomDefinition defines the custom attributes for the FT token type.
-message FTCustomDefinition {
+// FungibleTokenDefinition defines the fungible token settings to store.
+message FungibleTokenDefinition {
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.equal) = false;
-  // precision is the FT token/coin precision
-  uint32 precision = 1;
-  // initial_amount is the amount to issue on the asset issuance
-  string initial_amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  // denom_name is the name of bank denom which corresponds to the asset with the provided precision
-  string denom_name = 3;
-  // denom_base_name is the name of bank denom which corresponds to the asset with the zero precision
-  string denom_base_name = 4;
+  string issuer = 1;
+  string denom = 2;
 }
 
-// AssetDefinition defines the common asset settings.
-message AssetDefinition {
-  option (gogoproto.goproto_getters) = false;
+// FungibleToken is a full representation of the fungible token.
+message FungibleToken {
   option (gogoproto.equal) = false;
-  // the recipient of initially minted asset
-  string recipient = 1;
-  // type is type of asset
-  AssetType type = 2;
-  // code is token code/name
-  string code = 3;
-  // description is token description
+  option (gogoproto.goproto_getters) = false;
+  string denom = 1;
+  string issuer = 2;
+  string symbol = 3;
   string description = 4;
-  // ft defines the custom options for the FT token type
-  FTCustomDefinition ft = 5;
-}
-
-// Asset represents the single asset.
-message Asset {
-  option (gogoproto.goproto_getters) = false;
-  option (gogoproto.equal) = false;
-  // id is the asset id
-  uint64   id = 1;
-  // definition is the asset definition
-  AssetDefinition   definition = 2;
 }

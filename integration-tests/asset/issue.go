@@ -2,8 +2,6 @@ package asset
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,8 +15,8 @@ import (
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// TestIssueFTAsset checks that FT asset is issued.
-func TestIssueFTAsset(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestIssueFungibleToken checks that fungible token is issued.
+func TestIssueFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	chainContext := chain.ClientContext
 
@@ -31,26 +29,20 @@ func TestIssueFTAsset(ctx context.Context, t testing.T, chain testing.Chain) {
 			issuer,
 			chain.NewCoin(testing.ComputeNeededBalance(
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&assettypes.MsgIssueAsset{}),
+				chain.GasLimitByMsgs(&assettypes.MsgIssueFungibleToken{}),
 				1,
 				sdk.NewInt(0),
 			)),
 		),
 	))
 
-	// Issue the new asset
-	msg := &assettypes.MsgIssueAsset{
-		From: issuer.String(),
-		Definition: &assettypes.AssetDefinition{
-			Recipient:   issuer.String(),
-			Type:        assettypes.AssetType_FT, //nolint:nosnakecase // protogen
-			Code:        "BTC",
-			Description: "BTC Description",
-			Ft: &assettypes.FTCustomDefinition{
-				Precision:     6,
-				InitialAmount: sdk.NewInt(777),
-			},
-		},
+	// Issue the new fungible token
+	msg := &assettypes.MsgIssueFungibleToken{
+		Issuer:        issuer.String(),
+		Symbol:        "BTC",
+		Description:   "BTC Description",
+		Recipient:     issuer.String(),
+		InitialAmount: sdk.Int{},
 	}
 
 	res, err := tx.BroadcastTx(
@@ -61,40 +53,31 @@ func TestIssueFTAsset(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	requireT.NoError(err)
 
-	eventAssetIssuedName := proto.MessageName(&assettypes.EventAssetIssued{})
-	assetIDStr, ok := client.FindEventAttribute(sdk.StringifyEvents(res.Events), eventAssetIssuedName, "id")
-	// the typed events are decoded with the strings escape
-	assetIDStr = strings.ReplaceAll(assetIDStr, "\"", "")
+	eventFungibleTokenIssuedName := proto.MessageName(&assettypes.EventFungibleTokenIssued{})
+	denom, ok := client.FindEventAttribute(sdk.StringifyEvents(res.Events), eventFungibleTokenIssuedName, "denom")
 	requireT.True(ok)
-	assetID, err := strconv.ParseUint(assetIDStr, 10, 64)
-	requireT.NoError(err)
-	requireT.True(assetID > 0)
+	// the typed events are decoded with the strings escape
+	denom = strings.ReplaceAll(denom, "\"", "")
 
-	// query for the asset the check what is stored
-	assetRes, err := assetClient.Asset(ctx, &assettypes.QueryAssetRequest{
-		Id: assetID,
+	// query for the token to check what is stored
+	gotToken, err := assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{
+		Denom: denom,
 	})
 	requireT.NoError(err)
 
-	expectedDefinition := msg.Definition
-	denomName := fmt.Sprintf("%s%s%d", assettypes.ModuleName, msg.Definition.Code, assetID)
-	denomBaseName := fmt.Sprintf("b%s", denomName)
-	expectedDefinition.Ft.DenomName = denomName
-	expectedDefinition.Ft.DenomBaseName = denomBaseName
-	expectedAsset := assettypes.Asset{
-		Id:         assetID,
-		Definition: expectedDefinition,
-	}
-	requireT.Equal(expectedAsset, assetRes.Asset)
+	requireT.Equal(assettypes.FungibleToken{
+		Denom:       denom,
+		Issuer:      msg.Issuer,
+		Symbol:      msg.Symbol,
+		Description: msg.Description,
+	}, gotToken.FungibleToken)
 
 	// query balance
-	assetBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	tokenBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: issuer.String(),
-		Denom:   denomBaseName,
+		Denom:   denom,
 	})
 	requireT.NoError(err)
-	assetBalance := assetBalanceRes.Balance
 
-	expectedBalance := msg.Definition.Ft.InitialAmount.Mul(sdk.NewIntWithDecimal(1, int(msg.Definition.Ft.Precision)))
-	requireT.Equal(sdk.NewCoin(denomBaseName, expectedBalance).String(), assetBalance.String())
+	requireT.Equal(sdk.NewCoin(denom, msg.InitialAmount).String(), tokenBalanceRes.Balance.String())
 }

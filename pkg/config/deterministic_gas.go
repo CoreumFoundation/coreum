@@ -58,7 +58,7 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	// Then define a reasonable value for the message and return `true` again.
 
 	switch msg.(type) {
-	case *assettypes.MsgIssueAsset:
+	case *assettypes.MsgIssueFungibleToken:
 		return dgr.AssetIssue, true
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true

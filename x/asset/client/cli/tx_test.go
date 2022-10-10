@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -15,7 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
 )
 
-func TestIssueAsset(t *testing.T) {
+func TestIssueFungibleToken(t *testing.T) {
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkByChainID(config.Devnet)
 	requireT.NoError(err)
@@ -23,12 +24,13 @@ func TestIssueAsset(t *testing.T) {
 
 	testNetwork := network.New(t)
 
+	symbol := uuid.NewString()[:8]
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
 
-	args := []string{testNetwork.Validators[0].Address.String(), "BTC", `"BTC Token"`, "6", "777"}
+	args := []string{symbol, `"My Token"`, testNetwork.Validators[0].Address.String(), "777"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFTAsset(), args)
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)
 
 	var res sdk.TxResponse

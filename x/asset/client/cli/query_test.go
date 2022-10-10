@@ -1,11 +1,13 @@
 package cli_test
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gogo/protobuf/proto"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -15,9 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-func TestQueryAsset(t *testing.T) {
-	const id = uint64(1)
-
+func TestQueryFungibleToken(t *testing.T) {
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkByChainID(config.Devnet)
 	requireT.NoError(err)
@@ -25,21 +25,50 @@ func TestQueryAsset(t *testing.T) {
 
 	testNetwork := network.New(t)
 
+	symbol := uuid.NewString()[:8]
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	createAsset(requireT, ctx, testNetwork)
+	denom := createFungibleToken(requireT, ctx, symbol, testNetwork)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryAsset(), []string{strconv.Itoa(int(id)), "--output", "json"})
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
 
-	var resp types.QueryAssetResponse
+	var resp types.QueryFungibleTokenResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
-	requireT.Equal(id, resp.Asset.Id)
+
+	requireT.Equal(types.FungibleToken{
+		Denom:       denom,
+		Issuer:      testNetwork.Validators[0].Address.String(),
+		Symbol:      symbol,
+		Description: "",
+	}, resp.FungibleToken)
 }
 
-func createAsset(requireT *require.Assertions, ctx client.Context, testNetwork *network.Network) {
-	args := []string{testNetwork.Validators[0].Address.String(), "BTC", `"BTC Token"`, "6", "777"}
+func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbol string, testNetwork *network.Network) string {
+	args := []string{symbol, "", "", ""}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFTAsset(), args)
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)
+
+	var res sdk.TxResponse
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
+	requireT.NotEmpty(res.TxHash)
+	requireT.Equal(uint32(0), res.Code)
+
+	eventFungibleTokenIssuedName := proto.MessageName(&types.EventFungibleTokenIssued{})
+	for i := range res.Events {
+		if res.Events[i].Type != eventFungibleTokenIssuedName {
+			continue
+		}
+		evt, err := sdk.ParseTypedEvent(res.Events[i])
+		requireT.NoError(err)
+		eventFungibleTokenIssued, ok := evt.(*types.EventFungibleTokenIssued)
+		if !ok {
+			break
+		}
+		return eventFungibleTokenIssued.Denom
+	}
+	requireT.Failf("event: %s not fount in the create fungible token response", eventFungibleTokenIssuedName)
+
+	return ""
 }
