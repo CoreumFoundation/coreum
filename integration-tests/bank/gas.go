@@ -47,15 +47,15 @@ func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testin
 	assert.Equal(t, gasExpected, gasUsed)
 }
 
-// TestTransferDeterministicGas2BankSends checks that transfer takes the deterministic amount of gas
-func TestTransferDeterministicGas2BankSends(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestTransferDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
+func TestTransferDeterministicGasTwoBankSends(ctx context.Context, t testing.T, chain testing.Chain) {
 	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 
 	senderInitialBalance := testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		gasExpected,
 		1,
-		testing.MustNewIntFromString(t, "1000000000000"),
+		testing.MustNewIntFromString(t, "2000"),
 	)
 
 	sender := chain.RandomWallet()
@@ -67,12 +67,12 @@ func TestTransferDeterministicGas2BankSends(ctx context.Context, t testing.T, ch
 	bankSend1 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   receiver1.String(),
-		Amount:      []sdk.Coin{chain.NewCoin(sdk.NewInt(1000))},
+		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 	bankSend2 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   receiver2.String(),
-		Amount:      []sdk.Coin{chain.NewCoin(sdk.NewInt(1000))},
+		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 
 	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)

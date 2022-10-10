@@ -2,11 +2,9 @@ package wasm
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +12,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // TestGasWasmBankSendAndBankSend checks that a message containing a deterministic and a
@@ -23,15 +20,8 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	requireT := require.New(t)
 	adminAddress := chain.RandomWallet()
 	nativeDenom := chain.NetworkConfig.TokenSymbol
-	adminKeyInfo, err := chain.ChainContext.ClientContext.Keyring().KeyByAddress(adminAddress)
-	requireT.NoError(err)
-	unsafeKeyRing := keyring.NewUnsafe(chain.ChainContext.ClientContext.Keyring())
-	adminPrivateKeyHex, err := unsafeKeyRing.UnsafeExportPrivKeyHex(adminKeyInfo.GetName())
-	requireT.NoError(err)
-	adminPrivateKey, err := hex.DecodeString(adminPrivateKeyHex)
-	requireT.NoError(err)
 
-	adminWallet := types.Wallet{Name: adminAddress.String(), Key: adminPrivateKey}
+	adminWallet := chain.AccAddressToLegacyWallet(adminAddress)
 
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(adminWallet.Address(), chain.NewCoin(sdk.NewInt(5000000000))),
@@ -61,15 +51,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	)
 	requireT.NoError(err)
 
-	// fund contract address
-	sdkContractAddress, err := sdk.AccAddressFromBech32(contractAddr)
-	requireT.NoError(err)
-	err = chain.Faucet.FundAccounts(
-		ctx,
-		testing.NewFundedAccount(sdkContractAddress, sdk.NewInt64Coin(nativeDenom, 5000)),
-	)
-	requireT.NoError(err)
-
+	// Send tokens
 	receiver := chain.RandomWallet()
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
@@ -90,7 +72,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	bankSend := &banktypes.MsgSend{
 		FromAddress: adminAddress.String(),
 		ToAddress:   receiver.String(),
-		Amount:      []sdk.Coin{sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1000))},
+		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1000))),
 	}
 
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
