@@ -40,7 +40,13 @@ func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig
 // private key and stores mnemonic in Keyring.
 func (c ChainContext) RandomWallet() sdk.AccAddress {
 	// Generate and store a new mnemonic using temporary keyring
-	_, mnemonic, err := keyring.NewInMemory().NewMnemonic("tmp", keyring.English, "", "", hd.Secp256k1)
+	_, mnemonic, err := keyring.NewInMemory().NewMnemonic(
+		"tmp",
+		keyring.English,
+		sdk.GetConfig().GetFullBIP44Path(),
+		"",
+		hd.Secp256k1,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -53,7 +59,14 @@ func (c ChainContext) RandomWallet() sdk.AccAddress {
 func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 	c.keyringMu.Lock()
 	defer c.keyringMu.Unlock()
-	keyInfo, err := c.ClientContext.Keyring().NewAccount(uuid.New().String(), mnemonic, "", "", hd.Secp256k1)
+
+	keyInfo, err := c.ClientContext.Keyring().NewAccount(
+		uuid.New().String(),
+		mnemonic,
+		"",
+		sdk.GetConfig().GetFullBIP44Path(),
+		hd.Secp256k1,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -151,7 +164,9 @@ func NewChain(cfg ChainConfig) Chain {
 
 	chainContext := NewChainContext(clientContext, cfg.NetworkConfig)
 	governance := NewGovernance(chainContext, cfg.StakerMnemonics)
-	faucet := NewFaucet(NewChainContext(clientContext.WithFromAddress(chainContext.ImportMnemonic(cfg.FundingMnemonic)), cfg.NetworkConfig))
+
+	faucetAddr := chainContext.ImportMnemonic(cfg.FundingMnemonic)
+	faucet := NewFaucet(NewChainContext(clientContext.WithFromAddress(faucetAddr), cfg.NetworkConfig))
 	return Chain{
 		ChainContext: chainContext,
 		Client:       coredClient,

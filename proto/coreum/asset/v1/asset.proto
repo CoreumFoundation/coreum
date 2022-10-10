@@ -1,0 +1,15 @@
+syntax = "proto3";
+package coreum.asset.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
+
+// Asset represents the asset struct.
+message Asset {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+
+  string   id = 1;
+  string   name = 2;
+}
