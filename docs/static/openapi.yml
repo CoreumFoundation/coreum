@@ -120,13 +120,16 @@ paths:
                           is 0. It happens when there are no transactions being
                           broadcasted. This value is also used to initialize gas
                           price on brand-new chain.
-                      max_gas_price:
+                      max_gas_price_multiplier:
                         type: string
                         description: >-
-                          max_gas_price is used when block gas short average is
-                          greater than or equal to MaxBlockGas. This value is
-                          used to limit gas price escalation to avoid having
-                          possible infinity GasPrice value otherwise.
+                          max_gas_price_multiplier is used to compute
+                          max_gas_price (max_gas_price = initial_gas_price *
+                          max_gas_price_multiplier). Max gas price is charged
+                          when block gas short average is greater than or equal
+                          to MaxBlockGas. This value is used to limit gas price
+                          escalation to avoid having possible infinity GasPrice
+                          value otherwise.
                       max_discount:
                         type: string
                         description: >-
@@ -134,13 +137,12 @@ paths:
                           initial gas price if short average block gas is
                           between long average block gas and escalation start
                           block gas.
-                      escalation_start_block_gas:
+                      escalation_start_fraction:
                         type: string
-                        format: int64
                         description: >-
-                          escalation_start_block_gas defines block gas usage
-                          where gas price escalation starts if short average
-                          block gas is higher than this value.
+                          escalation_start_fraction defines fraction of max
+                          block gas usage where gas price escalation starts if
+                          short average block gas is higher than this value.
                       max_block_gas:
                         type: string
                         format: int64
@@ -184,19 +186,24 @@ paths:
 
                       - between 0 and "long average block gas" where gas price
                       goes down exponentially from InitialGasPrice to gas price
-                      with maximum discount (InitialGasPrice * (1 -MaxDiscount))
+                      with maximum discount (InitialGasPrice * (1 -
+                      MaxDiscount))
 
                       - between "long average block gas" and
-                      EscalationStartBlockGas where we offer gas price with
-                      maximum discount all the time
+                      EscalationStartBlockGas (EscalationStartBlockGas =
+                      MaxBlockGas * EscalationStartFraction) where we offer gas
+                      price with maximum discount all the time
 
-                      - between EscalationStartBlockGas and MaxBlockGas where
-                      price goes up rapidly (being an output of a power
+                      - between EscalationStartBlockGas (EscalationStartBlockGas
+                      = MaxBlockGas * EscalationStartFraction) and MaxBlockGas
+                      where price goes up rapidly (being an output of a power
                       function) from gas price with maximum discount to
-                      MaxGasPrice
+                      MaxGasPrice  (MaxGasPrice = InitialGasPrice *
+                      MaxGasMultiplier)
 
                       - above MaxBlockGas (if it happens for any reason) where
-                      price is equal to MaxGasPrice
+                      price is equal to MaxGasPrice (MaxGasPrice =
+                      InitialGasPrice * MaxGasMultiplier)
                 description: Params store gov manageable feemodel parameters.
             description: >-
               QueryParamsResponse defines the response type for querying
@@ -33972,10 +33979,12 @@ definitions:
           initial_gas_price is used when block gas short average is 0. It
           happens when there are no transactions being broadcasted. This value
           is also used to initialize gas price on brand-new chain.
-      max_gas_price:
+      max_gas_price_multiplier:
         type: string
         description: >-
-          max_gas_price is used when block gas short average is greater than or
+          max_gas_price_multiplier is used to compute max_gas_price
+          (max_gas_price = initial_gas_price * max_gas_price_multiplier). Max
+          gas price is charged when block gas short average is greater than or
           equal to MaxBlockGas. This value is used to limit gas price escalation
           to avoid having possible infinity GasPrice value otherwise.
       max_discount:
@@ -33984,13 +33993,12 @@ definitions:
           max_discount is th maximum discount we offer on top of initial gas
           price if short average block gas is between long average block gas and
           escalation start block gas.
-      escalation_start_block_gas:
+      escalation_start_fraction:
         type: string
-        format: int64
         description: >-
-          escalation_start_block_gas defines block gas usage where gas price
-          escalation starts if short average block gas is higher than this
-          value.
+          escalation_start_fraction defines fraction of max block gas usage
+          where gas price escalation starts if short average block gas is higher
+          than this value.
       max_block_gas:
         type: string
         format: int64
@@ -34034,17 +34042,19 @@ definitions:
 
       - between 0 and "long average block gas" where gas price goes down
       exponentially from InitialGasPrice to gas price with maximum discount
-      (InitialGasPrice * (1 -MaxDiscount))
+      (InitialGasPrice * (1 - MaxDiscount))
 
-      - between "long average block gas" and EscalationStartBlockGas where we
+      - between "long average block gas" and EscalationStartBlockGas
+      (EscalationStartBlockGas = MaxBlockGas * EscalationStartFraction) where we
       offer gas price with maximum discount all the time
 
-      - between EscalationStartBlockGas and MaxBlockGas where price goes up
-      rapidly (being an output of a power function) from gas price with maximum
-      discount to MaxGasPrice
+      - between EscalationStartBlockGas (EscalationStartBlockGas = MaxBlockGas *
+      EscalationStartFraction) and MaxBlockGas where price goes up rapidly
+      (being an output of a power function) from gas price with maximum discount
+      to MaxGasPrice  (MaxGasPrice = InitialGasPrice * MaxGasMultiplier)
 
       - above MaxBlockGas (if it happens for any reason) where price is equal to
-      MaxGasPrice
+      MaxGasPrice (MaxGasPrice = InitialGasPrice * MaxGasMultiplier)
   coreum.feemodel.v1.Params:
     type: object
     properties:
@@ -34058,12 +34068,14 @@ definitions:
               initial_gas_price is used when block gas short average is 0. It
               happens when there are no transactions being broadcasted. This
               value is also used to initialize gas price on brand-new chain.
-          max_gas_price:
+          max_gas_price_multiplier:
             type: string
             description: >-
-              max_gas_price is used when block gas short average is greater than
-              or equal to MaxBlockGas. This value is used to limit gas price
-              escalation to avoid having possible infinity GasPrice value
+              max_gas_price_multiplier is used to compute max_gas_price
+              (max_gas_price = initial_gas_price * max_gas_price_multiplier).
+              Max gas price is charged when block gas short average is greater
+              than or equal to MaxBlockGas. This value is used to limit gas
+              price escalation to avoid having possible infinity GasPrice value
               otherwise.
           max_discount:
             type: string
@@ -34071,13 +34083,12 @@ definitions:
               max_discount is th maximum discount we offer on top of initial gas
               price if short average block gas is between long average block gas
               and escalation start block gas.
-          escalation_start_block_gas:
+          escalation_start_fraction:
             type: string
-            format: int64
             description: >-
-              escalation_start_block_gas defines block gas usage where gas price
-              escalation starts if short average block gas is higher than this
-              value.
+              escalation_start_fraction defines fraction of max block gas usage
+              where gas price escalation starts if short average block gas is
+              higher than this value.
           max_block_gas:
             type: string
             format: int64
@@ -34117,17 +34128,21 @@ definitions:
 
           - between 0 and "long average block gas" where gas price goes down
           exponentially from InitialGasPrice to gas price with maximum discount
-          (InitialGasPrice * (1 -MaxDiscount))
+          (InitialGasPrice * (1 - MaxDiscount))
 
-          - between "long average block gas" and EscalationStartBlockGas where
-          we offer gas price with maximum discount all the time
+          - between "long average block gas" and EscalationStartBlockGas
+          (EscalationStartBlockGas = MaxBlockGas * EscalationStartFraction)
+          where we offer gas price with maximum discount all the time
 
-          - between EscalationStartBlockGas and MaxBlockGas where price goes up
-          rapidly (being an output of a power function) from gas price with
-          maximum discount to MaxGasPrice
+          - between EscalationStartBlockGas (EscalationStartBlockGas =
+          MaxBlockGas * EscalationStartFraction) and MaxBlockGas where price
+          goes up rapidly (being an output of a power function) from gas price
+          with maximum discount to MaxGasPrice  (MaxGasPrice = InitialGasPrice *
+          MaxGasMultiplier)
 
           - above MaxBlockGas (if it happens for any reason) where price is
-          equal to MaxGasPrice
+          equal to MaxGasPrice (MaxGasPrice = InitialGasPrice *
+          MaxGasMultiplier)
     description: Params store gov manageable feemodel parameters.
   coreum.feemodel.v1.QueryMinGasPriceResponse:
     type: object
@@ -34162,26 +34177,27 @@ definitions:
                   It happens when there are no transactions being broadcasted.
                   This value is also used to initialize gas price on brand-new
                   chain.
-              max_gas_price:
+              max_gas_price_multiplier:
                 type: string
                 description: >-
-                  max_gas_price is used when block gas short average is greater
-                  than or equal to MaxBlockGas. This value is used to limit gas
-                  price escalation to avoid having possible infinity GasPrice
-                  value otherwise.
+                  max_gas_price_multiplier is used to compute max_gas_price
+                  (max_gas_price = initial_gas_price *
+                  max_gas_price_multiplier). Max gas price is charged when block
+                  gas short average is greater than or equal to MaxBlockGas.
+                  This value is used to limit gas price escalation to avoid
+                  having possible infinity GasPrice value otherwise.
               max_discount:
                 type: string
                 description: >-
                   max_discount is th maximum discount we offer on top of initial
                   gas price if short average block gas is between long average
                   block gas and escalation start block gas.
-              escalation_start_block_gas:
+              escalation_start_fraction:
                 type: string
-                format: int64
                 description: >-
-                  escalation_start_block_gas defines block gas usage where gas
-                  price escalation starts if short average block gas is higher
-                  than this value.
+                  escalation_start_fraction defines fraction of max block gas
+                  usage where gas price escalation starts if short average block
+                  gas is higher than this value.
               max_block_gas:
                 type: string
                 format: int64
@@ -34221,17 +34237,21 @@ definitions:
 
               - between 0 and "long average block gas" where gas price goes down
               exponentially from InitialGasPrice to gas price with maximum
-              discount (InitialGasPrice * (1 -MaxDiscount))
+              discount (InitialGasPrice * (1 - MaxDiscount))
 
               - between "long average block gas" and EscalationStartBlockGas
+              (EscalationStartBlockGas = MaxBlockGas * EscalationStartFraction)
               where we offer gas price with maximum discount all the time
 
-              - between EscalationStartBlockGas and MaxBlockGas where price goes
-              up rapidly (being an output of a power function) from gas price
-              with maximum discount to MaxGasPrice
+              - between EscalationStartBlockGas (EscalationStartBlockGas =
+              MaxBlockGas * EscalationStartFraction) and MaxBlockGas where price
+              goes up rapidly (being an output of a power function) from gas
+              price with maximum discount to MaxGasPrice  (MaxGasPrice =
+              InitialGasPrice * MaxGasMultiplier)
 
               - above MaxBlockGas (if it happens for any reason) where price is
-              equal to MaxGasPrice
+              equal to MaxGasPrice (MaxGasPrice = InitialGasPrice *
+              MaxGasMultiplier)
         description: Params store gov manageable feemodel parameters.
     description: >-
       QueryParamsResponse defines the response type for querying x/feemodel
