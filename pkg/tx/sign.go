@@ -2,8 +2,6 @@ package tx
 
 import (
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
-	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -15,7 +13,6 @@ import (
 func Sign(clientCtx ClientContext, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
-	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig().NewTxBuilder()
 	err := txBuilder.SetMsgs(msgs...)
 	if err != nil {
@@ -48,7 +45,7 @@ func Sign(clientCtx ClientContext, input BaseInput, msgs ...sdk.Msg) (authsignin
 		Signature: nil,
 	}
 	sig := signing.SignatureV2{
-		PubKey:   privKey.PubKey(),
+		PubKey:   signer.Key.PubKey(),
 		Data:     sigData,
 		Sequence: signer.AccountSequence,
 	}
@@ -62,7 +59,7 @@ func Sign(clientCtx ClientContext, input BaseInput, msgs ...sdk.Msg) (authsignin
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to encode bytes to sign")
 	}
-	sigBytes, err := privKey.Sign(bytesToSign)
+	sigBytes, err := signer.Key.Sign(bytesToSign)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to sign")
 	}
@@ -94,15 +91,10 @@ func BuildSimTx(clientCtx ClientContext, base BaseInput, msgs ...sdk.Msg) ([]byt
 		return nil, errors.WithStack(err)
 	}
 
-	// not pass the private key around.
-	var pubKey cryptotypes.PubKey = &cosmossecp256k1.PubKey{
-		Key: base.Signer.Key.PubKey(),
-	}
-
 	// Create an empty signature literal as the ante handler will populate with a
 	// sentinel pubkey.
 	sig := signing.SignatureV2{
-		PubKey: pubKey,
+		PubKey: base.Signer.Key.PubKey(),
 		Data: &signing.SingleSignatureData{
 			SignMode: factory.SignMode(),
 		},

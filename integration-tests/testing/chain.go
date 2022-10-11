@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -130,7 +131,9 @@ func (c ChainContext) AccAddressToLegacyWallet(accAddr sdk.AccAddress) types.Wal
 		panic(err)
 	}
 
-	return types.Wallet{Name: info.GetName(), Key: privKeyBytes}
+	return types.Wallet{Name: info.GetName(), Key: cosmossecp256k1.PrivKey{
+		Key: privKeyBytes,
+	}}
 }
 
 // ChainConfig defines the config arguments required for the test chain initialisation.

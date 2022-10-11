@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"crypto/ed25519"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -17,7 +16,6 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -42,9 +40,10 @@ var feeConfig = config.FeeConfig{
 }
 
 func testNetwork() config.Network {
-	pubKey, privKey := types.GenerateSecp256k1Key()
+	privKey := *cosmossecp256k1.GenPrivKey()
+	pubKey := privKey.PubKey()
 	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, pubKey.Bytes(), privKey, "1000core")
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +57,7 @@ func testNetwork() config.Network {
 			PublicKey: pubKey,
 			Balances:  "1000some-test-token",
 		}},
-		GenTxs: []json.RawMessage{tx},
+		GenTxs: []json.RawMessage{createValidatorTx},
 		GovConfig: config.GovConfig{
 			ProposalConfig: config.GovProposalConfig{
 				MinDepositAmount: "10000000",
@@ -76,10 +75,8 @@ func testNetwork() config.Network {
 func TestAddressPrefixIsSet(t *testing.T) {
 	assertT := assert.New(t)
 	n := testNetwork()
-	pubKey, _ := types.GenerateSecp256k1Key()
-	secp256k1 := cosmossecp256k1.PubKey{Key: pubKey}
-	accountAddress := sdk.AccAddress(secp256k1.Address())
-	assertT.True(strings.HasPrefix(accountAddress.String(), n.AddressPrefix()))
+	address := sdk.AccAddress(cosmossecp256k1.GenPrivKey().PubKey().Address())
+	assertT.True(strings.HasPrefix(address.String(), n.AddressPrefix()))
 }
 
 func TestGenesisValidation(t *testing.T) {
@@ -130,15 +127,13 @@ func TestAddFundsToGenesis(t *testing.T) {
 
 	n := testNetwork()
 
-	pubKey, _ := types.GenerateSecp256k1Key()
+	pubKey := cosmossecp256k1.GenPrivKey().PubKey()
 	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
-	key1 := cosmossecp256k1.PubKey{Key: pubKey}
-	accountAddress := sdk.AccAddress(key1.Address())
+	accountAddress := sdk.AccAddress(pubKey.Address())
 
-	pubKey2, _ := types.GenerateSecp256k1Key()
+	pubKey2 := cosmossecp256k1.GenPrivKey().PubKey()
 	requireT.NoError(n.FundAccount(pubKey2, "2000someTestToken"))
-	key2 := cosmossecp256k1.PubKey{Key: pubKey2}
-	accountAddress2 := sdk.AccAddress(key2.Address())
+	accountAddress2 := sdk.AccAddress(pubKey2.Address())
 
 	requireT.Len(n.FundedAccounts(), 3)
 
@@ -203,11 +198,12 @@ func TestAddGenTx(t *testing.T) {
 	requireT := require.New(t)
 
 	n := testNetwork()
-	pubKey, privKey := types.GenerateSecp256k1Key()
+	privKey := *cosmossecp256k1.GenPrivKey()
+	pubKey := privKey.PubKey()
 	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, ed25519.PublicKey(pubKey), privKey, "1000core")
+	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, pubKey.Bytes(), privKey, "1000core")
 	requireT.NoError(err)
-	n.AddGenesisTx(tx)
+	n.AddGenesisTx(createValidatorTx)
 
 	genDocBytes, err := n.EncodeGenesis()
 	requireT.NoError(err)
@@ -239,7 +235,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	n, err := config.NetworkByChainID(config.Devnet)
 	requireT.NoError(err)
 
-	pubKey, _ := types.GenerateSecp256k1Key()
+	pubKey := cosmossecp256k1.GenPrivKey().PubKey()
 	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
 	n.AddGenesisTx([]byte("test string"))
 
@@ -255,7 +251,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT := assert.New(t)
 
-	pubKey, _ := types.GenerateSecp256k1Key()
+	pubKey := cosmossecp256k1.GenPrivKey().PubKey()
 	cfg := config.NetworkConfig{
 		ChainID:        "test-network",
 		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),

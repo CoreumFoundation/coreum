@@ -17,7 +17,7 @@ import (
 func PrepareTxStakingCreateValidator(
 	clientCtx tx.ClientContext,
 	validatorPublicKey ed25519.PublicKey,
-	stakerPrivateKey types.Secp256k1PrivateKey,
+	stakerPrivateKey cosmossecp256k1.PrivKey,
 	stakedBalance string,
 ) ([]byte, error) {
 	amount, err := sdk.ParseCoinNormalized(stakedBalance)
@@ -31,10 +31,8 @@ func PrepareTxStakingCreateValidator(
 		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
 	}
 
+	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
 	valPubKey := &cosmosed25519.PubKey{Key: validatorPublicKey}
-	stakerPrivKey := &cosmossecp256k1.PrivKey{Key: stakerPrivateKey}
-	stakerAddress := sdk.AccAddress(stakerPrivKey.PubKey().Address())
-
 	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
