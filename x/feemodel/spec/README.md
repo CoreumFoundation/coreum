@@ -16,6 +16,8 @@ Two charts are presented below, showing how the implemented fee model behaves. K
 TERMS:
 - *long average block gas* is the EMA (exponential moving average) of gas consumed by previous blocks using `LongEmaBlockLength` parameter for computing the EMA.
 - *short average block gas* is the EMA (exponential moving average) of gas consumed by previous blocks using `ShortEmaBlockLength` parameter for computing the EMA.
+- `MaxGasPrice = InitialGasPrice * MaxGasPriceMultiplier`
+- `EscalationStartBlockGas = MaxBlockGas * EscalationStartFraction`
 
 Chart below presents the dependency between *short average block gas* and minimum gas price required by the network on next block.
 

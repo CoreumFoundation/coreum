@@ -29,9 +29,9 @@ func init() {
 var feeConfig = config.FeeConfig{
 	FeeModel: feemodeltypes.NewModel(feemodeltypes.ModelParams{
 		InitialGasPrice:         sdk.NewDec(2),
-		MaxGasPrice:             sdk.NewDec(4),
+		MaxGasPriceMultiplier:   sdk.NewDec(2),
 		MaxDiscount:             sdk.MustNewDecFromStr("0.4"),
-		EscalationStartBlockGas: 10,
+		EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
 		MaxBlockGas:             20,
 		ShortEmaBlockLength:     3,
 		LongEmaBlockLength:      5,
@@ -270,15 +270,15 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 
 	params := cfg.Fee.FeeModel.Params()
 	params.InitialGasPrice.Add(sdk.NewDec(10))
-	params.MaxGasPrice.Add(sdk.NewDec(10))
+	params.MaxGasPriceMultiplier.Add(sdk.NewDec(10))
 	cfg.FundedAccounts[0] = config.FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
 	cfg.GenTxs[0] = []byte("tx2")
 
 	nParams := n1.FeeModel().Params()
 	assertT.True(nParams.InitialGasPrice.Equal(sdk.NewDec(2)))
-	assertT.True(nParams.MaxGasPrice.Equal(sdk.NewDec(4)))
+	assertT.True(nParams.MaxGasPriceMultiplier.Equal(sdk.NewDec(2)))
 	assertT.True(nParams.MaxDiscount.Equal(sdk.MustNewDecFromStr("0.4")))
-	assertT.EqualValues(10, nParams.EscalationStartBlockGas)
+	assertT.True(nParams.EscalationStartFraction.Equal(sdk.MustNewDecFromStr("0.8")))
 	assertT.EqualValues(20, nParams.MaxBlockGas)
 	assertT.EqualValues(3, nParams.ShortEmaBlockLength)
 	assertT.EqualValues(5, nParams.LongEmaBlockLength)
@@ -301,10 +301,10 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 
 	nParams := n1.FeeModel().Params()
 	nParams.InitialGasPrice.Add(sdk.NewDec(10))
-	nParams.MaxGasPrice.Add(sdk.NewDec(10))
+	nParams.MaxGasPriceMultiplier.Add(sdk.NewDec(10))
 
 	assertT.True(nParams.InitialGasPrice.Equal(sdk.NewDec(2)))
-	assertT.True(nParams.MaxGasPrice.Equal(sdk.NewDec(4)))
+	assertT.True(nParams.MaxGasPriceMultiplier.Equal(sdk.NewDec(2)))
 }
 
 func TestValidateAllGenesis(t *testing.T) {
