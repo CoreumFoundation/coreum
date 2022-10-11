@@ -23,6 +23,7 @@ func Tests() testing.TestSet {
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
 			bank.TestTransferDeterministicGas,
+			bank.TestTransferDeterministicGasTwoBankSends,
 			bank.TestTransferGasEstimation,
 			feemodel.TestQueryingMinGasPrice,
 			feemodel.TestFeeModelProposalParamChange,
@@ -30,6 +31,7 @@ func Tests() testing.TestSet {
 			staking.TestStaking,
 			wasm.TestSimpleStateWasmContract,
 			wasm.TestBankSendWasmContract,
+			wasm.TestGasWasmBankSendAndBankSend,
 		},
 	}
 
