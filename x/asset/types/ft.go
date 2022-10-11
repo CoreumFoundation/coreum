@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"github.com/sigurn/crc8"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -17,5 +18,6 @@ type IssueFungibleTokenSettings struct {
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
 func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
-	return fmt.Sprintf("%s-%s", symbol, issuer)
+	base := fmt.Sprintf("%s-%s", symbol, issuer)
+	return fmt.Sprintf("%s-%x", base, crc8.Checksum([]byte(base), crc8.MakeTable(crc8.CRC8)))
 }
