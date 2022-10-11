@@ -62,9 +62,9 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 		Params: types.Params{
 			Model: types.ModelParams{
 				InitialGasPrice:         sdk.NewDec(15),
-				MaxGasPrice:             sdk.NewDec(150),
+				MaxGasPriceMultiplier:   sdk.NewDec(1000),
 				MaxDiscount:             sdk.MustNewDecFromStr("0.1"),
-				EscalationStartBlockGas: 7,
+				EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
 				MaxBlockGas:             10,
 				ShortEmaBlockLength:     1,
 				LongEmaBlockLength:      3,
@@ -84,9 +84,9 @@ func TestInitGenesis(t *testing.T) {
 
 	genesisState := state
 	genesisState.Params.Model.InitialGasPrice.Add(sdk.OneDec())
-	genesisState.Params.Model.MaxGasPrice.Add(sdk.OneDec())
+	genesisState.Params.Model.MaxGasPriceMultiplier.Add(sdk.OneDec())
 	genesisState.Params.Model.MaxDiscount.Add(sdk.MustNewDecFromStr("0.2"))
-	genesisState.Params.Model.EscalationStartBlockGas++
+	genesisState.Params.Model.EscalationStartFraction.Sub(sdk.MustNewDecFromStr("0.1"))
 	genesisState.Params.Model.MaxBlockGas++
 	genesisState.Params.Model.ShortEmaBlockLength++
 	genesisState.Params.Model.LongEmaBlockLength++
@@ -97,10 +97,10 @@ func TestInitGenesis(t *testing.T) {
 
 	params := keeper.GetParams(sdk.Context{})
 	minGasPrice := keeper.GetMinGasPrice(sdk.Context{})
-	assert.True(t, genesisState.Params.Model.InitialGasPrice.Equal(params.Model.InitialGasPrice))
-	assert.True(t, genesisState.Params.Model.MaxGasPrice.Equal(params.Model.MaxGasPrice))
-	assert.True(t, genesisState.Params.Model.MaxDiscount.Equal(params.Model.MaxDiscount))
-	assert.Equal(t, genesisState.Params.Model.EscalationStartBlockGas, params.Model.EscalationStartBlockGas)
+	assert.Equal(t, genesisState.Params.Model.InitialGasPrice.String(), params.Model.InitialGasPrice.String())
+	assert.Equal(t, genesisState.Params.Model.MaxGasPriceMultiplier.String(), params.Model.MaxGasPriceMultiplier.String())
+	assert.Equal(t, genesisState.Params.Model.MaxDiscount.String(), params.Model.MaxDiscount.String())
+	assert.Equal(t, genesisState.Params.Model.EscalationStartFraction.String(), params.Model.EscalationStartFraction.String())
 	assert.Equal(t, genesisState.Params.Model.MaxBlockGas, params.Model.MaxBlockGas)
 	assert.Equal(t, genesisState.Params.Model.ShortEmaBlockLength, params.Model.ShortEmaBlockLength)
 	assert.Equal(t, genesisState.Params.Model.LongEmaBlockLength, params.Model.LongEmaBlockLength)
@@ -113,6 +113,10 @@ func TestExport(t *testing.T) {
 
 	var decodedGenesis types.GenesisState
 	require.NoError(t, cdc.UnmarshalJSON(module.ExportGenesis(sdk.Context{}, cdc), &decodedGenesis))
+
+	// FIXME (wojtek): remove this
+	decodedGenesis.Params.Model.MaxGasPrice = sdk.Dec{}
+
 	assert.EqualValues(t, state, decodedGenesis)
 }
 

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"math"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -31,18 +30,18 @@ func TestCalculateNextGasPriceKeyPoints(t *testing.T) {
 
 	// if current average gas equals escalation start block gas it still should be gasPriceWithMaxDiscount
 
-	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.params.EscalationStartBlockGas, 100)
+	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.CalculateEscalationStartBlockGas(), 100)
 	assert.True(t, nextGasPrice.Equal(gasPriceWithMaxDiscount))
 
 	// if current average gas is equal to MaxBlockGas it should be max gas price number
 
 	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.params.MaxBlockGas, 100)
-	assert.True(t, nextGasPrice.Equal(feeModel.params.MaxGasPrice))
+	assert.True(t, nextGasPrice.Equal(feeModel.CalculateMaxGasPrice()))
 
 	// if current average gas is greater than MaxBlockGas it should stay the same
 
 	nextGasPrice = feeModel.CalculateNextGasPrice(feeModel.params.MaxBlockGas+100, 100)
-	assert.True(t, nextGasPrice.Equal(feeModel.params.MaxGasPrice))
+	assert.True(t, nextGasPrice.Equal(feeModel.CalculateMaxGasPrice()))
 }
 
 func TestEMAGasBeyondEscalationStartBlockGas(t *testing.T) {
@@ -50,13 +49,13 @@ func TestEMAGasBeyondEscalationStartBlockGas(t *testing.T) {
 	// The question is if in such scenario we should offer discounted gas price or escalation should be applied instead.
 	// It seems obvious that price should be escalated.
 
-	nextGasPrice := feeModel.CalculateNextGasPrice(feeModel.params.EscalationStartBlockGas+150, feeModel.params.EscalationStartBlockGas+100)
+	nextGasPrice := feeModel.CalculateNextGasPrice(feeModel.CalculateEscalationStartBlockGas()+150, feeModel.CalculateEscalationStartBlockGas()+100)
 	assert.True(t, nextGasPrice.GT(gasPriceWithMaxDiscount))
 
 	// Next gas price should be the same as for long average block gas being below optimal block gas.
 	// It means that escalation was turned on.
 
-	nextGasPrice2 := feeModel.CalculateNextGasPrice(feeModel.params.EscalationStartBlockGas+150, feeModel.params.EscalationStartBlockGas-100)
+	nextGasPrice2 := feeModel.CalculateNextGasPrice(feeModel.CalculateEscalationStartBlockGas()+150, feeModel.CalculateEscalationStartBlockGas()-100)
 	assert.True(t, nextGasPrice2.Equal(nextGasPrice))
 }
 
@@ -82,7 +81,7 @@ func TestShapeInDecreasingRegion(t *testing.T) {
 func TestShapeInFlatRegion(t *testing.T) {
 	const longEMABlockGas = 100
 
-	for i := int64(longEMABlockGas); i <= feeModel.params.EscalationStartBlockGas; i++ {
+	for i := int64(longEMABlockGas); i <= feeModel.CalculateEscalationStartBlockGas(); i++ {
 		nextPrice := feeModel.CalculateNextGasPrice(i, longEMABlockGas)
 		assert.True(t, nextPrice.Equal(gasPriceWithMaxDiscount))
 	}
@@ -92,7 +91,7 @@ func TestShapeInEscalationRegion(t *testing.T) {
 	const longEMABlockGas = 100
 
 	lastPrice := gasPriceWithMaxDiscount
-	for i := feeModel.params.EscalationStartBlockGas + 1; i <= feeModel.params.MaxBlockGas; i++ {
+	for i := feeModel.CalculateEscalationStartBlockGas() + 1; i <= feeModel.params.MaxBlockGas; i++ {
 		nextPrice := feeModel.CalculateNextGasPrice(i, longEMABlockGas)
 		assert.True(t, nextPrice.GT(lastPrice))
 
@@ -116,13 +115,13 @@ func TestWithRandomModels(t *testing.T) {
 			nextGasPrice := model.CalculateNextGasPrice(shortEMA, longEMA)
 
 			assert.True(t, nextGasPrice.GT(sdk.ZeroDec()))
-			assert.True(t, nextGasPrice.LTE(modelParams.MaxGasPrice))
+			assert.True(t, nextGasPrice.LTE(model.CalculateMaxGasPrice()))
 
 			switch {
 			case shortEMA >= modelParams.MaxBlockGas:
-				assert.True(t, nextGasPrice.Equal(modelParams.MaxGasPrice))
-			case shortEMA > modelParams.EscalationStartBlockGas:
-				assert.True(t, nextGasPrice.LT(modelParams.MaxGasPrice))
+				assert.True(t, nextGasPrice.Equal(model.CalculateMaxGasPrice()))
+			case shortEMA > model.CalculateEscalationStartBlockGas():
+				assert.True(t, nextGasPrice.LT(model.CalculateMaxGasPrice()))
 				assert.True(t, nextGasPrice.GTE(model.CalculateGasPriceWithMaxDiscount()))
 			case shortEMA >= longEMA:
 				assert.True(t, nextGasPrice.Equal(model.CalculateGasPriceWithMaxDiscount()))
@@ -139,11 +138,11 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 	// fuzz engine of go test is not used because it doesn't allow to maintain relationships between generated parameters
 
 	initialGasPrice := rand.Uint64()/2 + 10
-	maxGasPrice := initialGasPrice + uint64(float64(math.MaxUint64-initialGasPrice-10)*rand.Float64()+10.0)
+	maxGasPriceMultiplier := uint64(1000.0*rand.Float64() + 10.0)
 	shortEMABlockLength := uint32(rand.Int31n(1000) + 1)
 	longEMABlockLength := shortEMABlockLength + uint32(rand.Int31n(10000))
 	maxBlockGas := rand.Int63()
-	escalationStartBlockGas := rand.Int63n(maxBlockGas-2) + 1
+	escalationStartFraction := 0.8*rand.Float64() + 0.1
 	// rand.Float64() returns random number in [0.0, 1.0), but we want (0.0, 1.0],
 	// calculating 1.0 - rand.Float64() is the simplest way of achieving this.
 	maxDiscount := (1.0 - rand.Float64()) * 0.8 // this gives a number in range (0.0, 0.8]
@@ -154,9 +153,9 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 	return Params{
 		Model: ModelParams{
 			InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice).ToDec(),
-			MaxGasPrice:             sdk.NewIntFromUint64(maxGasPrice).ToDec(),
+			MaxGasPriceMultiplier:   sdk.NewIntFromUint64(maxGasPriceMultiplier).ToDec(),
 			MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
-			EscalationStartBlockGas: escalationStartBlockGas,
+			EscalationStartFraction: sdk.MustNewDecFromStr(strconv.FormatFloat(escalationStartFraction, 'f', 4, 64)),
 			MaxBlockGas:             maxBlockGas,
 			ShortEmaBlockLength:     shortEMABlockLength,
 			LongEmaBlockLength:      longEMABlockLength,
@@ -166,18 +165,18 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 
 func logParameters(t *testing.T, params ModelParams, shortEMA, longEMA int64) {
 	t.Logf(`InitialGasPrice: %s
-MaxGasPrice: %s
+MaxGasPriceMultiplier: %s
 MaxDiscount: %s
-EscalationStartBlockGas: %d
+EscalationStartFraction: %d
 MaxBlockGas: %d
 ShortEMABlockLength: %d
 LongEMABlockLength: %d
 ShortEMA: %d
 LongEMA: %d`,
 		params.InitialGasPrice,
-		params.MaxGasPrice,
+		params.MaxGasPriceMultiplier,
 		params.MaxDiscount,
-		params.EscalationStartBlockGas,
+		params.EscalationStartFraction,
 		params.MaxBlockGas,
 		params.ShortEmaBlockLength,
 		params.LongEmaBlockLength,

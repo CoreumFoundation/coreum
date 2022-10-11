@@ -37,7 +37,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 
 	// Create invalid proposal MaxGasPrice = InitialGasPrice.
 	feeModelParams := feeModelParamsRes.Params.Model
-	feeModelParams.MaxGasPrice = feeModelParams.InitialGasPrice
+	feeModelParams.MaxGasPriceMultiplier = sdk.OneDec()
 	_, err = chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Invalid proposal", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(

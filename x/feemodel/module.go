@@ -129,6 +129,11 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	genesis := &types.GenesisState{}
 	cdc.MustUnmarshalJSON(data, genesis)
+
+	// FIXME (wojtek): remove this
+	genesis.Params.Model.EscalationStartFraction = sdk.MustNewDecFromStr("0.8")
+	genesis.Params.Model.MaxGasPriceMultiplier = sdk.MustNewDecFromStr("1000")
+
 	am.keeper.SetParams(ctx, genesis.Params)
 	am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice)
 	return []abci.ValidatorUpdate{}
