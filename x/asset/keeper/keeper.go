@@ -41,10 +41,9 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	}
 
 	k.setFungibleTokenDenomMetadata(ctx, settings.Symbol, denom, settings.Description)
-	if settings.InitialAmount.IsPositive() {
-		if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
-			return "", err
-		}
+
+	if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
+		return "", err
 	}
 
 	store := ctx.KVStore(k.storeKey)
@@ -55,9 +54,12 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	store.Set(types.GetFungibleTokenKey(denom), k.cdc.MustMarshal(&definition))
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenIssued{
-		Denom:  denom,
-		Issuer: settings.Issuer.String(),
-		Symbol: settings.Symbol,
+		Denom:         denom,
+		Issuer:        settings.Issuer.String(),
+		Symbol:        settings.Symbol,
+		Description:   settings.Description,
+		Recipient:     settings.Recipient.String(),
+		InitialAmount: settings.InitialAmount,
 	}); err != nil {
 		return "", sdkerrors.Wrap(err, "can't emit EventFungibleTokenIssued event")
 	}
@@ -79,7 +81,7 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 
 	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, denom)
 	if !found {
-		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadate for %s denom not found", denom)
+		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadata for %s denom not found", denom)
 	}
 
 	return types.FungibleToken{
@@ -114,13 +116,16 @@ func (k Keeper) setFungibleTokenDenomMetadata(ctx sdk.Context, symbol, denom, de
 }
 
 func (k Keeper) mintFungibleToken(ctx sdk.Context, denom string, amount sdk.Int, recipient sdk.AccAddress) error {
+	if !amount.IsPositive() {
+		return nil
+	}
 	coinsToMint := sdk.NewCoins(sdk.NewCoin(denom, amount))
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coinsToMint); err != nil {
 		return sdkerrors.Wrapf(err, "can't mint %s for the module %s", coinsToMint.String(), types.ModuleName)
 	}
 
 	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coinsToMint); err != nil {
-		return sdkerrors.Wrapf(err, "can't send mined coins from module %s to account %s", types.ModuleName, recipient.String())
+		return sdkerrors.Wrapf(err, "can't send minted coins from module %s to account %s", types.ModuleName, recipient.String())
 	}
 
 	return nil

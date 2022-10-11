@@ -2,21 +2,18 @@ package asset
 
 import (
 	"context"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// TestIssueFungibleToken checks that fungible token is issued.
-func TestIssueFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestIssueBasicFungibleToken checks that fungible token is issued.
+func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	chainContext := chain.ClientContext
 
@@ -24,6 +21,7 @@ func TestIssueFungibleToken(ctx context.Context, t testing.T, chain testing.Chai
 	bankClient := banktypes.NewQueryClient(chainContext)
 
 	issuer := chain.RandomWallet()
+	recipient := chain.RandomWallet()
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			issuer,
@@ -38,26 +36,37 @@ func TestIssueFungibleToken(ctx context.Context, t testing.T, chain testing.Chai
 
 	// Issue the new fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
-		Issuer:        issuer.String(),
-		Symbol:        "BTC",
-		Description:   "BTC Description",
-		Recipient:     issuer.String(),
-		InitialAmount: sdk.Int{},
+		Issuer:      issuer.String(),
+		Symbol:      "BTC",
+		Description: "BTC Description",
+		// the custom receiver
+		Recipient:     recipient.String(),
+		InitialAmount: sdk.NewInt(777),
 	}
 
 	res, err := tx.BroadcastTx(
 		ctx,
-		chainContext.WithFromAddress(issuer),
+		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
 		msg,
 	)
-	requireT.NoError(err)
 
-	eventFungibleTokenIssuedName := proto.MessageName(&assettypes.EventFungibleTokenIssued{})
-	denom, ok := client.FindEventAttribute(sdk.StringifyEvents(res.Events), eventFungibleTokenIssuedName, "denom")
-	requireT.True(ok)
-	// the typed events are decoded with the strings escape
-	denom = strings.ReplaceAll(denom, "\"", "")
+	require.NoError(t, err)
+	evt := testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
+	fungibleTokenIssuedEvt, ok := evt.(*assettypes.EventFungibleTokenIssued)
+	require.True(t, ok)
+
+	require.NoError(t, err)
+	require.Equal(t, assettypes.EventFungibleTokenIssued{
+		Denom:         assettypes.BuildFungibleTokenDenom(msg.Symbol, issuer),
+		Issuer:        msg.Issuer,
+		Symbol:        msg.Symbol,
+		Description:   msg.Description,
+		Recipient:     msg.Recipient,
+		InitialAmount: msg.InitialAmount,
+	}, *fungibleTokenIssuedEvt)
+
+	denom := fungibleTokenIssuedEvt.Denom
 
 	// query for the token to check what is stored
 	gotToken, err := assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{
@@ -73,11 +82,19 @@ func TestIssueFungibleToken(ctx context.Context, t testing.T, chain testing.Chai
 	}, gotToken.FungibleToken)
 
 	// query balance
-	tokenBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	// check the recipient balance
+	recipientBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, msg.InitialAmount).String(), recipientBalanceRes.Balance.String())
+
+	// check the issuer balance
+	issuerBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: issuer.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-
-	requireT.Equal(sdk.NewCoin(denom, msg.InitialAmount).String(), tokenBalanceRes.Balance.String())
+	requireT.True(issuerBalanceRes.Balance.Amount.IsZero())
 }

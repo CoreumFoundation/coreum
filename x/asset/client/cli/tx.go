@@ -32,7 +32,7 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
-// CmdTxIssueFungibleToken returns issue IssueFungibleTokenSettings cobra command.
+// CmdTxIssueFungibleToken returns issue IssueFungibleToken cobra command.
 func CmdTxIssueFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "issue-ft [symbol] [description] [recipient_address] [initial_amount] --from [issuer]",
@@ -57,7 +57,7 @@ $ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer
 			symbol := args[0]
 			description := args[1]
 			recipient := args[2]
-			// is the recipient wasn't provided the signer is the recipient
+			// if the recipient wasn't provided the signer is the recipient
 			if recipient != "" {
 				if _, err = sdk.AccAddressFromBech32(recipient); err != nil {
 					return sdkerrors.Wrap(err, "invalid recipient")
@@ -66,7 +66,7 @@ $ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer
 				recipient = issuer.String()
 			}
 
-			// the initial amount wasn't provided the amount is zero
+			// if the initial amount wasn't provided the amount is zero
 			initialAmount := sdk.ZeroInt()
 			if args[3] != "" {
 				var ok bool
