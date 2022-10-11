@@ -18,6 +18,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 var (
@@ -49,6 +50,21 @@ func BroadcastTx(ctx context.Context, clientCtx ClientContext, txf Factory, msgs
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
 		return nil, err
+	}
+
+	if txf.SimulateAndExecute() {
+		gasPrice, err := GetGasPrice(ctx, clientCtx)
+		if err != nil {
+			return nil, err
+		}
+		txf = txf.WithGasPrices(gasPrice.String())
+
+		_, adjusted, err := tx.CalculateGas(clientCtx, txf, msgs...)
+		if err != nil {
+			return nil, err
+		}
+
+		txf = txf.WithGas(adjusted)
 	}
 
 	unsignedTx, err := txf.BuildUnsignedTx(msgs...)
@@ -211,6 +227,20 @@ func AwaitTx(
 	}
 
 	return resultTx, nil
+}
+
+// GetGasPrice returns the current gas price of the chain
+func GetGasPrice(
+	ctx context.Context,
+	clientCtx ClientContext,
+) (sdk.DecCoin, error) {
+	feeQueryClient := feemodeltypes.NewQueryClient(clientCtx)
+	res, err := feeQueryClient.MinGasPrice(ctx, &feemodeltypes.QueryMinGasPriceRequest{})
+	if err != nil {
+		return sdk.DecCoin{}, errors.WithStack(err)
+	}
+
+	return res.GetMinGasPrice(), nil
 }
 
 // the idea behind this function is to map it similarly to how cosmos sdk does it in the link below
