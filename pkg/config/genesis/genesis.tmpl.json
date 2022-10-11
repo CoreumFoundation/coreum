@@ -15,7 +15,8 @@
     },
     "validator": {
       "pub_key_types": [
-        "ed25519"
+        "ed25519",
+        "secp256k1"
       ]
     },
     "version": {}
