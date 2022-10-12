@@ -7,7 +7,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-// FindTypedEvent finds the event in the list of events and returns the decoded
+// FindTypedEvent finds the event in the list of events and returns the decoded event.
 func FindTypedEvent(t T, event proto.Message, events []abci.Event) interface{} {
 	eventName := proto.MessageName(event)
 	for i := range events {

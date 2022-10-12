@@ -24,7 +24,8 @@
   "app_hash": "",
   "app_state": {
     "asset": {
-      "fungible_tokens": []
+      "fungible_tokens": [],
+      "assets": []
     },
     "auth": {
       "params": {

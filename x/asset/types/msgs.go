@@ -22,6 +22,10 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid symbol %s, the length must be greater than 0 and less than %d", msg.Symbol, maxSymbolLength)
 	}
 
+	if err := sdk.ValidateDenom(msg.Symbol); err != nil {
+		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid symbol %s, the symbol must follow the rule: %s", msg.Symbol, sdk.DefaultCoinDenomRegex())
+	}
+
 	if len(msg.Description) > maxDescriptionLength {
 		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid description %q, the length must less than %d", msg.Description, maxDescriptionLength)
 	}
@@ -30,7 +34,7 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid recipient %s", msg.Recipient)
 	}
 
-	if msg.InitialAmount.IsNegative() {
+	if msg.InitialAmount.IsNil() || msg.InitialAmount.IsNegative() {
 		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid initial amount %s, can't be negative", msg.InitialAmount.String())
 	}
 

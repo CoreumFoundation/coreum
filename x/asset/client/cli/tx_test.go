@@ -24,7 +24,8 @@ func TestIssueFungibleToken(t *testing.T) {
 
 	testNetwork := network.New(t)
 
-	symbol := uuid.NewString()[:8]
+	// the denom must start from the latter
+	symbol := "l" + uuid.NewString()[:4]
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
 
@@ -36,7 +37,7 @@ func TestIssueFungibleToken(t *testing.T) {
 	var res sdk.TxResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
-	requireT.Equal(uint32(0), res.Code)
+	requireT.Equal(uint32(0), res.Code, "can't submit IssueFungibleToken tx", res)
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {

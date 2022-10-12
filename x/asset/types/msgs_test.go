@@ -40,11 +40,19 @@ func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 	requireT.Error(msg.ValidateBasic())
 
 	msg = msgF()
+	msg.Symbol = "1BT"
+	requireT.Error(msg.ValidateBasic())
+
+	msg = msgF()
 	msg.Description = string(make([]byte, 10000))
 	requireT.Error(msg.ValidateBasic())
 
 	msg = msgF()
 	msg.Recipient = "invalid"
+	requireT.Error(msg.ValidateBasic())
+
+	msg = msgF()
+	msg.InitialAmount = sdk.Int{}
 	requireT.Error(msg.ValidateBasic())
 
 	msg = msgF()

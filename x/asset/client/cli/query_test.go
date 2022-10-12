@@ -18,6 +18,7 @@ import (
 )
 
 func TestQueryFungibleToken(t *testing.T) {
+
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkByChainID(config.Devnet)
 	requireT.NoError(err)
@@ -25,7 +26,8 @@ func TestQueryFungibleToken(t *testing.T) {
 
 	testNetwork := network.New(t)
 
-	symbol := uuid.NewString()[:8]
+	// the denom must start from the latter
+	symbol := "l" + uuid.NewString()[:4]
 	ctx := testNetwork.Validators[0].ClientCtx
 
 	denom := createFungibleToken(requireT, ctx, symbol, testNetwork)
@@ -53,7 +55,7 @@ func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbo
 	var res sdk.TxResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
-	requireT.Equal(uint32(0), res.Code)
+	requireT.Equal(uint32(0), res.Code, "can't submit IssueFungibleToken tx for query", res)
 
 	eventFungibleTokenIssuedName := proto.MessageName(&types.EventFungibleTokenIssued{})
 	for i := range res.Events {
