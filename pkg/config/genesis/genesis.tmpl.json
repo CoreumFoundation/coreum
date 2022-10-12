@@ -144,16 +144,16 @@
     },
     "mint": {
       "minter": {
-        "inflation": "0.130000000000000000",
+        "inflation": "0.080000000000000000",
         "annual_provisions": "0.000000000000000000"
       },
       "params": {
         "mint_denom": "{{ .TokenSymbol }}",
         "inflation_rate_change": "0.130000000000000000",
         "inflation_max": "0.200000000000000000",
-        "inflation_min": "0.070000000000000000",
+        "inflation_min": "0.000000000000000000",
         "goal_bonded": "0.670000000000000000",
-        "blocks_per_year": "6311520"
+        "blocks_per_year": "17900000"
       }
     },
     "monitoringp": {
@@ -190,7 +190,10 @@
     "staking": {
       "params": {
         "unbonding_time": "{{ .Staking.UnbondingTime }}",
-        "max_validators": {{ .Staking.MaxValidators }},
+        "max_validators": {
+          { .Staking.MaxValidators
+          }
+        },
         "max_entries": 7,
         "historical_entries": 10000,
         "bond_denom": "{{ .TokenSymbol }}"
@@ -229,9 +232,18 @@
           "max_gas_price_multiplier": "{{ .FeeModelParams.MaxGasPriceMultiplier }}",
           "max_discount": "{{ .FeeModelParams.MaxDiscount }}",
           "escalation_start_fraction": "{{ .FeeModelParams.EscalationStartFraction }}",
-          "max_block_gas": {{ .FeeModelParams.MaxBlockGas }},
-          "short_ema_block_length": {{ .FeeModelParams.ShortEmaBlockLength }},
-          "long_ema_block_length": {{ .FeeModelParams.LongEmaBlockLength }}
+          "max_block_gas": {
+            { .FeeModelParams.MaxBlockGas
+            }
+          },
+          "short_ema_block_length": {
+            { .FeeModelParams.ShortEmaBlockLength
+            }
+          },
+          "long_ema_block_length": {
+            { .FeeModelParams.LongEmaBlockLength
+            }
+          }
         }
       },
       "min_gas_price": {
