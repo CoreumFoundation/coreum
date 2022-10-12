@@ -25,7 +25,6 @@ require (
 	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/rs/zerolog v1.26.1
 	github.com/samber/lo v1.28.0
-	github.com/sigurn/crc8 v0.0.0-20220107193325-2243fe600f9f
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
