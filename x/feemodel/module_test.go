@@ -114,9 +114,6 @@ func TestExport(t *testing.T) {
 	var decodedGenesis types.GenesisState
 	require.NoError(t, cdc.UnmarshalJSON(module.ExportGenesis(sdk.Context{}, cdc), &decodedGenesis))
 
-	// FIXME (wojtek): remove this
-	decodedGenesis.Params.Model.MaxGasPrice = sdk.Dec{}
-
 	assert.EqualValues(t, state, decodedGenesis)
 }
 
