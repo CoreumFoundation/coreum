@@ -51,10 +51,6 @@ type ModelParams struct {
 	// long_ema_block_length defines inertia for long average block gas in EMA model. The equation is: NewAverage = ((LongAverageBlockLength - 1)*PreviousAverage + GasUsedByCurrentBlock) / LongAverageBlockLength
 	// The value might be interpreted as the number of blocks which are taken to calculate the average. It would be exactly like that in SMA model, in EMA this is an approximation.
 	LongEmaBlockLength uint32 `protobuf:"varint,7,opt,name=long_ema_block_length,json=longEmaBlockLength,proto3" json:"long_ema_block_length,omitempty" yaml:"long_ema_block_length"`
-
-	// FIXME (wojtek): remove this
-	EscalationStartBlockGas int64 `protobuf:"varint,4,opt,name=escalation_start_block_gas,json=escalationStartBlockGas,proto3" json:"escalation_start_block_gas,omitempty" yaml:"escalation_start_block_gas"`
-	MaxGasPrice github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=max_gas_price,json=maxGasPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_gas_price" yaml:"max_gas_price"`
 }
 
 func (m *ModelParams) Reset()         { *m = ModelParams{} }
