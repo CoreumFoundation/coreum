@@ -59,6 +59,7 @@ func BroadcastTx(ctx context.Context, clientCtx ClientContext, txf Factory, msgs
 		}
 		txf = txf.WithGasPrices(gasPrice.String())
 
+		//nolint:contextcheck // False positive
 		_, adjusted, err := tx.CalculateGas(clientCtx, txf, msgs...)
 		if err != nil {
 			return nil, err

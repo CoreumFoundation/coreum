@@ -43,7 +43,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	}
 
 	if options.FeeModelKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "fee mdoel keeper keeper is required for ante builder")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "fee model keeper is required for ante builder")
 	}
 
 	if options.SignModeHandler == nil {
