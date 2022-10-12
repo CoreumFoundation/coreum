@@ -249,6 +249,7 @@ func NewNetwork(c NetworkConfig) Network {
 
 // FundedAccount is used to provide information about pre funded
 // accounts in network config
+// TODO(dhil) refactor to use the address instead of PublicKey.
 type FundedAccount struct {
 	PublicKey cryptotypes.PubKey
 	Balances  string
@@ -284,8 +285,6 @@ func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 
 	n.genTxs = append(n.genTxs, signedTx)
 }
-
-// FIXME REFACTOR THAT FUNC
 
 func applyFundedAccountToGenesis(
 	fa FundedAccount,
