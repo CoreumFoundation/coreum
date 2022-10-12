@@ -1,6 +1,7 @@
 package testing
 
 import (
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -10,8 +11,8 @@ import (
 // RandomWallet generates wallet with random name and private key
 // Deprecated: Use chain.RandomWallet instead
 func RandomWallet() types.Wallet {
-	_, privKey := types.GenerateSecp256k1Key()
-	return types.Wallet{Name: privKey.Address(), Key: privKey}
+	privKey := cosmossecp256k1.GenPrivKey()
+	return types.Wallet{Name: sdk.AccAddress(privKey.PubKey().Address()).String(), Key: *privKey}
 }
 
 // ComputeNeededBalance computes the required balance for sending `numOfTransactions` number of transactions plus some extra amount.
