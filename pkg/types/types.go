@@ -23,7 +23,7 @@ type Wallet struct {
 
 // String returns string representation of the wallet
 func (w Wallet) String() string {
-	return w.Name + "@" + sdk.AccAddress(w.Key.PubKey().Bytes()).String()
+	return w.Name + "@" + sdk.AccAddress(w.Key.PubKey().Address()).String()
 }
 
 // Address returns cosmos acc address from the pub key of the wallet.

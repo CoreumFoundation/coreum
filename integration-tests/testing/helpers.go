@@ -12,7 +12,7 @@ import (
 // Deprecated: Use chain.RandomWallet instead
 func RandomWallet() types.Wallet {
 	privKey := cosmossecp256k1.GenPrivKey()
-	return types.Wallet{Name: sdk.AccAddress(privKey.PubKey().Bytes()).String(), Key: *privKey}
+	return types.Wallet{Name: sdk.AccAddress(privKey.PubKey().Address()).String(), Key: *privKey}
 }
 
 // ComputeNeededBalance computes the required balance for sending `numOfTransactions` number of transactions plus some extra amount.

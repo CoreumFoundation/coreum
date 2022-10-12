@@ -1,6 +1,8 @@
 package config_test
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -40,10 +42,16 @@ var feeConfig = config.FeeConfig{
 }
 
 func testNetwork() config.Network {
-	privKey := *cosmossecp256k1.GenPrivKey()
-	pubKey := privKey.PubKey()
+	validatorPubKey, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+
+	stakerPrivKey := *cosmossecp256k1.GenPrivKey()
+	stakerPubKey := stakerPrivKey.PubKey()
+
 	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, pubKey.Bytes(), privKey, "1000core")
+	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPubKey, stakerPrivKey, "1000core")
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +62,7 @@ func testNetwork() config.Network {
 		TokenSymbol:   config.TokenSymbolMain,
 		Fee:           feeConfig,
 		FundedAccounts: []config.FundedAccount{{
-			PublicKey: pubKey,
+			PublicKey: stakerPubKey,
 			Balances:  "1000some-test-token",
 		}},
 		GenTxs: []json.RawMessage{createValidatorTx},
@@ -198,10 +206,12 @@ func TestAddGenTx(t *testing.T) {
 	requireT := require.New(t)
 
 	n := testNetwork()
-	privKey := *cosmossecp256k1.GenPrivKey()
-	pubKey := privKey.PubKey()
+	validatorPubKey, _, err := ed25519.GenerateKey(rand.Reader)
+	requireT.NoError(err)
+
+	stakerPrivKey := *cosmossecp256k1.GenPrivKey()
 	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, pubKey.Bytes(), privKey, "1000core")
+	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPubKey, stakerPrivKey, "1000core")
 	requireT.NoError(err)
 	n.AddGenesisTx(createValidatorTx)
 

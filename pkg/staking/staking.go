@@ -32,8 +32,7 @@ func PrepareTxStakingCreateValidator(
 	}
 
 	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
-	valPubKey := &cosmosed25519.PubKey{Key: validatorPublicKey}
-	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
+	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), &cosmosed25519.PubKey{Key: validatorPublicKey}, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
 	}
