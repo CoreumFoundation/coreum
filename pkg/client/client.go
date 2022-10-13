@@ -107,7 +107,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map
 	defer cancel()
 
 	// FIXME (wojtek): support pagination
-	resp, err := c.bankQueryClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{Address: wallet.Key.Address()})
+	resp, err := c.bankQueryClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{Address: wallet.Address().String()})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -124,7 +124,7 @@ func (c Client) Sign(ctx context.Context, input tx.BaseInput, msgs ...sdk.Msg) (
 	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
-		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Address().String())
 		if err != nil {
 			return nil, err
 		}
@@ -223,7 +223,7 @@ func (c Client) EstimateGas(ctx context.Context, input tx.BaseInput, msgs ...sdk
 	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
-		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Address().String())
 		if err != nil {
 			return 0, err
 		}
@@ -262,10 +262,8 @@ type TxBankSendInput struct {
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
 func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(input.Sender.Key.Address())
-	must.OK(err)
-	toAddress, err := sdk.AccAddressFromBech32(input.Receiver.Key.Address())
-	must.OK(err)
+	fromAddress := input.Sender.Address()
+	toAddress := input.Receiver.Address()
 
 	if err := input.Amount.Validate(); err != nil {
 		return nil, errors.Wrap(err, "amount to send is invalid")
