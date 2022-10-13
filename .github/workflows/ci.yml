@@ -8,6 +8,10 @@ on:
 
 jobs:
   ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_step: [ crust lint/coreum, crust test/coreum, crust images, crust build && crust znet test ]
     runs-on: ubuntu-22.04
     steps:
       - name: Go version used to build crust tool
@@ -41,8 +45,5 @@ jobs:
           path: crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-      - name: Lint, run unit tests and build
-        run: crust build lint/coreum test/coreum images --log-format=yaml
-# FIXME(dhil) remove once we update the crust
-#      - name: Integration tests
-#        run: crust znet test --log-format=yaml
+      - name: Run ${{ matrix.ci_step }}
+        run: ${{ matrix.ci_step }}
