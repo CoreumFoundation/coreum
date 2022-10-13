@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/CoreumFoundation/coreum/integration-tests/asset"
 	"github.com/CoreumFoundation/coreum/integration-tests/auth"
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
@@ -13,6 +14,7 @@ import (
 func Tests() testing.TestSet {
 	testSet := testing.TestSet{
 		SingleChain: []testing.SingleChainSignature{
+			asset.TestIssueBasicFungibleToken,
 			auth.TestUnexpectedSequenceNumber,
 			auth.TestTooLowGasPrice,
 			auth.TestNoFee,
@@ -23,7 +25,6 @@ func Tests() testing.TestSet {
 			bank.TestCoreTransfer,
 			bank.TestTransferFailsIfNotEnoughGasIsProvided,
 			bank.TestTransferDeterministicGas,
-			bank.TestTransferDeterministicGasTwoBankSends,
 			bank.TestTransferGasEstimation,
 			feemodel.TestQueryingMinGasPrice,
 			feemodel.TestFeeModelProposalParamChange,
@@ -31,7 +32,6 @@ func Tests() testing.TestSet {
 			staking.TestStaking,
 			wasm.TestSimpleStateWasmContract,
 			wasm.TestBankSendWasmContract,
-			wasm.TestGasWasmBankSendAndBankSend,
 		},
 	}
 

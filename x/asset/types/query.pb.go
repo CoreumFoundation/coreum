@@ -29,24 +29,23 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// QueryAssetRequest is request type for the Query/Asset RPC method.
-type QueryAssetRequest struct {
-	// the asset id
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+// QueryFungibleTokenRequest is request type for the Query/FungibleToken RPC method.
+type QueryFungibleTokenRequest struct {
+	Denom string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
 }
 
-func (m *QueryAssetRequest) Reset()         { *m = QueryAssetRequest{} }
-func (m *QueryAssetRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryAssetRequest) ProtoMessage()    {}
-func (*QueryAssetRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFungibleTokenRequest) Reset()         { *m = QueryFungibleTokenRequest{} }
+func (m *QueryFungibleTokenRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFungibleTokenRequest) ProtoMessage()    {}
+func (*QueryFungibleTokenRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b5e1eecf0acd8ab7, []int{0}
 }
-func (m *QueryAssetRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFungibleTokenRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryAssetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFungibleTokenRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryAssetRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFungibleTokenRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -56,43 +55,42 @@ func (m *QueryAssetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
-func (m *QueryAssetRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAssetRequest.Merge(m, src)
+func (m *QueryFungibleTokenRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFungibleTokenRequest.Merge(m, src)
 }
-func (m *QueryAssetRequest) XXX_Size() int {
+func (m *QueryFungibleTokenRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryAssetRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAssetRequest.DiscardUnknown(m)
+func (m *QueryFungibleTokenRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFungibleTokenRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryAssetRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFungibleTokenRequest proto.InternalMessageInfo
 
-func (m *QueryAssetRequest) GetId() string {
+func (m *QueryFungibleTokenRequest) GetDenom() string {
 	if m != nil {
-		return m.Id
+		return m.Denom
 	}
 	return ""
 }
 
-// QueryAssetResponse is response type for the Query/Asset RPC method.
-type QueryAssetResponse struct {
-	// the queried asset.
-	Asset Asset `protobuf:"bytes,1,opt,name=asset,proto3" json:"asset"`
+// QueryFungibleTokenResponse is response type for the Query/FungibleToken RPC method.
+type QueryFungibleTokenResponse struct {
+	FungibleToken FungibleToken `protobuf:"bytes,1,opt,name=fungible_token,json=fungibleToken,proto3" json:"fungible_token"`
 }
 
-func (m *QueryAssetResponse) Reset()         { *m = QueryAssetResponse{} }
-func (m *QueryAssetResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryAssetResponse) ProtoMessage()    {}
-func (*QueryAssetResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFungibleTokenResponse) Reset()         { *m = QueryFungibleTokenResponse{} }
+func (m *QueryFungibleTokenResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFungibleTokenResponse) ProtoMessage()    {}
+func (*QueryFungibleTokenResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b5e1eecf0acd8ab7, []int{1}
 }
-func (m *QueryAssetResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFungibleTokenResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryAssetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFungibleTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryAssetResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFungibleTokenResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -102,53 +100,54 @@ func (m *QueryAssetResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-func (m *QueryAssetResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAssetResponse.Merge(m, src)
+func (m *QueryFungibleTokenResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFungibleTokenResponse.Merge(m, src)
 }
-func (m *QueryAssetResponse) XXX_Size() int {
+func (m *QueryFungibleTokenResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryAssetResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAssetResponse.DiscardUnknown(m)
+func (m *QueryFungibleTokenResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFungibleTokenResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryAssetResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFungibleTokenResponse proto.InternalMessageInfo
 
-func (m *QueryAssetResponse) GetAsset() Asset {
+func (m *QueryFungibleTokenResponse) GetFungibleToken() FungibleToken {
 	if m != nil {
-		return m.Asset
+		return m.FungibleToken
 	}
-	return Asset{}
+	return FungibleToken{}
 }
 
 func init() {
-	proto.RegisterType((*QueryAssetRequest)(nil), "coreum.asset.v1.QueryAssetRequest")
-	proto.RegisterType((*QueryAssetResponse)(nil), "coreum.asset.v1.QueryAssetResponse")
+	proto.RegisterType((*QueryFungibleTokenRequest)(nil), "coreum.asset.v1.QueryFungibleTokenRequest")
+	proto.RegisterType((*QueryFungibleTokenResponse)(nil), "coreum.asset.v1.QueryFungibleTokenResponse")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/query.proto", fileDescriptor_b5e1eecf0acd8ab7) }
 
 var fileDescriptor_b5e1eecf0acd8ab7 = []byte{
-	// 291 bytes of a gzipped FileDescriptorProto
+	// 316 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4e, 0xce, 0x2f, 0x4a,
 	0x2d, 0xcd, 0xd5, 0x4f, 0x2c, 0x2e, 0x4e, 0x2d, 0xd1, 0x2f, 0x33, 0xd4, 0x2f, 0x2c, 0x4d, 0x2d,
 	0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x87, 0x48, 0xea, 0x81, 0x25, 0xf5, 0xca,
 	0x0c, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0x72, 0xfa, 0x20, 0x16, 0x44, 0x99, 0x94, 0x4c,
 	0x7a, 0x7e, 0x7e, 0x7a, 0x4e, 0xaa, 0x7e, 0x62, 0x41, 0xa6, 0x7e, 0x62, 0x5e, 0x5e, 0x7e, 0x49,
-	0x62, 0x49, 0x66, 0x7e, 0x5e, 0x31, 0x54, 0x16, 0xc3, 0x06, 0x88, 0x69, 0x60, 0x49, 0x25, 0x65,
-	0x2e, 0xc1, 0x40, 0x90, 0x85, 0x8e, 0x20, 0xb1, 0xa0, 0xd4, 0xc2, 0xd2, 0xd4, 0xe2, 0x12, 0x21,
-	0x3e, 0x2e, 0xa6, 0xcc, 0x14, 0x09, 0x46, 0x05, 0x46, 0x0d, 0xce, 0x20, 0xa6, 0xcc, 0x14, 0x25,
-	0x0f, 0x2e, 0x21, 0x64, 0x45, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x42, 0x46, 0x5c, 0xac, 0x60,
-	0x93, 0xc0, 0x0a, 0xb9, 0x8d, 0xc4, 0xf4, 0xd0, 0x1c, 0xab, 0x07, 0x56, 0xee, 0xc4, 0x72, 0xe2,
-	0x9e, 0x3c, 0x43, 0x10, 0x44, 0xa9, 0x51, 0x3d, 0x17, 0x2b, 0xd8, 0x24, 0xa1, 0x32, 0x2e, 0x56,
-	0xb0, 0xb4, 0x90, 0x12, 0x86, 0x36, 0x0c, 0xf7, 0x48, 0x29, 0xe3, 0x55, 0x03, 0x71, 0x8e, 0x92,
-	0x4a, 0xd3, 0xe5, 0x27, 0x93, 0x99, 0xe4, 0x84, 0x64, 0xf4, 0xb1, 0xfa, 0xb7, 0x58, 0xbf, 0x3a,
-	0x33, 0xa5, 0xd6, 0xc9, 0xeb, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92,
-	0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39, 0x86, 0x1b, 0x8f, 0xe5, 0x18, 0xa2, 0x0c,
-	0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73, 0xf5, 0x9d, 0xc1, 0x26, 0xb8, 0xe5,
-	0x97, 0xe6, 0xa5, 0x80, 0x83, 0x12, 0x66, 0x64, 0x05, 0xd4, 0xd0, 0x92, 0xca, 0x82, 0xd4, 0xe2,
-	0x24, 0x36, 0x70, 0x10, 0x1a, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x16, 0xb1, 0xac, 0x8f, 0xc3,
-	0x01, 0x00, 0x00,
+	0x62, 0x49, 0x66, 0x7e, 0x5e, 0x31, 0x54, 0x16, 0xc3, 0x06, 0x88, 0x69, 0x60, 0x49, 0x25, 0x43,
+	0x2e, 0xc9, 0x40, 0x90, 0x85, 0x6e, 0xa5, 0x79, 0xe9, 0x99, 0x49, 0x39, 0xa9, 0x21, 0xf9, 0xd9,
+	0xa9, 0x79, 0x41, 0xa9, 0x85, 0xa5, 0xa9, 0xc5, 0x25, 0x42, 0x22, 0x5c, 0xac, 0x29, 0xa9, 0x79,
+	0xf9, 0xb9, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x10, 0x8e, 0x52, 0x26, 0x97, 0x14, 0x36,
+	0x2d, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x42, 0xde, 0x5c, 0x7c, 0x69, 0x50, 0x89, 0xf8, 0x12,
+	0x90, 0x0c, 0x58, 0x33, 0xb7, 0x91, 0x9c, 0x1e, 0x9a, 0x5f, 0xf4, 0x50, 0xf4, 0x3b, 0xb1, 0x9c,
+	0xb8, 0x27, 0xcf, 0x10, 0xc4, 0x9b, 0x86, 0x2c, 0x68, 0x34, 0x8f, 0x91, 0x8b, 0x15, 0x6c, 0x97,
+	0xd0, 0x14, 0x46, 0x2e, 0x5e, 0x14, 0x0d, 0x42, 0x5a, 0x18, 0x06, 0xe2, 0xf4, 0x88, 0x94, 0x36,
+	0x51, 0x6a, 0x21, 0x3e, 0x50, 0xd2, 0x6a, 0xba, 0xfc, 0x64, 0x32, 0x93, 0x8a, 0x90, 0x92, 0x3e,
+	0xd6, 0x80, 0x2b, 0xd6, 0x4f, 0x2b, 0xd1, 0xaf, 0x06, 0x07, 0x45, 0xad, 0x93, 0xd7, 0x89, 0x47,
+	0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85,
+	0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x19, 0xa4, 0x67, 0x96, 0x64, 0x94, 0x26, 0xe9,
+	0x25, 0xe7, 0xe7, 0xea, 0x3b, 0x83, 0xcd, 0x71, 0xcb, 0x2f, 0xcd, 0x4b, 0x01, 0xc7, 0x0c, 0xcc,
+	0xe0, 0x0a, 0xa8, 0xd1, 0x25, 0x95, 0x05, 0xa9, 0xc5, 0x49, 0x6c, 0xe0, 0x18, 0x31, 0x06, 0x04,
+	0x00, 0x00, 0xff, 0xff, 0x99, 0xd3, 0xf2, 0x41, 0x12, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -163,8 +162,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Asset queries the assets of the module.
-	Asset(ctx context.Context, in *QueryAssetRequest, opts ...grpc.CallOption) (*QueryAssetResponse, error)
+	// FungibleToken queries the fungible token of the module.
+	FungibleToken(ctx context.Context, in *QueryFungibleTokenRequest, opts ...grpc.CallOption) (*QueryFungibleTokenResponse, error)
 }
 
 type queryClient struct {
@@ -175,9 +174,9 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) Asset(ctx context.Context, in *QueryAssetRequest, opts ...grpc.CallOption) (*QueryAssetResponse, error) {
-	out := new(QueryAssetResponse)
-	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Query/Asset", in, out, opts...)
+func (c *queryClient) FungibleToken(ctx context.Context, in *QueryFungibleTokenRequest, opts ...grpc.CallOption) (*QueryFungibleTokenResponse, error) {
+	out := new(QueryFungibleTokenResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Query/FungibleToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,36 +185,36 @@ func (c *queryClient) Asset(ctx context.Context, in *QueryAssetRequest, opts ...
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Asset queries the assets of the module.
-	Asset(context.Context, *QueryAssetRequest) (*QueryAssetResponse, error)
+	// FungibleToken queries the fungible token of the module.
+	FungibleToken(context.Context, *QueryFungibleTokenRequest) (*QueryFungibleTokenResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) Asset(ctx context.Context, req *QueryAssetRequest) (*QueryAssetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Asset not implemented")
+func (*UnimplementedQueryServer) FungibleToken(ctx context.Context, req *QueryFungibleTokenRequest) (*QueryFungibleTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FungibleToken not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
 }
 
-func _Query_Asset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryAssetRequest)
+func _Query_FungibleToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFungibleTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Asset(ctx, in)
+		return srv.(QueryServer).FungibleToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/coreum.asset.v1.Query/Asset",
+		FullMethod: "/coreum.asset.v1.Query/FungibleToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Asset(ctx, req.(*QueryAssetRequest))
+		return srv.(QueryServer).FungibleToken(ctx, req.(*QueryFungibleTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -225,15 +224,15 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Asset",
-			Handler:    _Query_Asset_Handler,
+			MethodName: "FungibleToken",
+			Handler:    _Query_FungibleToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "coreum/asset/v1/query.proto",
 }
 
-func (m *QueryAssetRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFungibleTokenRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -243,27 +242,27 @@ func (m *QueryAssetRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryAssetRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFungibleTokenRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryAssetRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFungibleTokenRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Id) > 0 {
-		i -= len(m.Id)
-		copy(dAtA[i:], m.Id)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Id)))
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Denom)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryAssetResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFungibleTokenResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -273,18 +272,18 @@ func (m *QueryAssetResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryAssetResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFungibleTokenResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryAssetResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	{
-		size, err := m.Asset.MarshalToSizedBuffer(dAtA[:i])
+		size, err := m.FungibleToken.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -307,26 +306,26 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryAssetRequest) Size() (n int) {
+func (m *QueryFungibleTokenRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Id)
+	l = len(m.Denom)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
 }
 
-func (m *QueryAssetResponse) Size() (n int) {
+func (m *QueryFungibleTokenResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = m.Asset.Size()
+	l = m.FungibleToken.Size()
 	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
@@ -337,7 +336,7 @@ func sovQuery(x uint64) (n int) {
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryAssetRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFungibleTokenRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -360,15 +359,15 @@ func (m *QueryAssetRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAssetRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFungibleTokenRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAssetRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFungibleTokenRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -396,7 +395,7 @@ func (m *QueryAssetRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Id = string(dAtA[iNdEx:postIndex])
+			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -419,7 +418,7 @@ func (m *QueryAssetRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryAssetResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFungibleTokenResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -442,15 +441,15 @@ func (m *QueryAssetResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAssetResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFungibleTokenResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAssetResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFungibleTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Asset", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FungibleToken", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -477,7 +476,7 @@ func (m *QueryAssetResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Asset.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.FungibleToken.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

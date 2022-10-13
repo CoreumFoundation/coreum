@@ -23,21 +23,21 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryAsset())
+	cmd.AddCommand(CmdQueryFungibleToken())
 	return cmd
 }
 
-// CmdQueryAsset return the QueryAsset cobra command.
-func CmdQueryAsset() *cobra.Command {
+// CmdQueryFungibleToken return the QueryFungibleToken cobra command.
+func CmdQueryFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show [id]",
+		Use:   "ft [denom]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Query one asset",
+		Short: "Query fungible token",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query asset details by id.
+			fmt.Sprintf(`Query fungible token details.
 
 Example:
-$ %[1]s query asset show {id}
+$ %[1]s query asset ft [denom]
 `,
 				version.AppName,
 			),
@@ -46,9 +46,9 @@ $ %[1]s query asset show {id}
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
-			id := args[0]
-			res, err := queryClient.Asset(cmd.Context(), &types.QueryAssetRequest{
-				Id: id,
+			denom := args[0]
+			res, err := queryClient.FungibleToken(cmd.Context(), &types.QueryFungibleTokenRequest{
+				Denom: denom,
 			})
 			if err != nil {
 				return err

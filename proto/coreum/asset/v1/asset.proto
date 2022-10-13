@@ -5,11 +5,20 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
-// Asset represents the asset struct.
-message Asset {
+// FungibleTokenDefinition defines the fungible token settings to store.
+message FungibleTokenDefinition {
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.equal) = false;
+  string issuer = 1;
+  string denom = 2;
+}
 
-  string   id = 1;
-  string   name = 2;
+// FungibleToken is a full representation of the fungible token.
+message FungibleToken {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  string denom = 1;
+  string issuer = 2;
+  string symbol = 3;
+  string description = 4;
 }
