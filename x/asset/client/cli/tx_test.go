@@ -24,7 +24,7 @@ func TestIssueFungibleToken(t *testing.T) {
 
 	testNetwork := network.New(t)
 
-	// the denom must start from the latter
+	// the denom must start from the letter
 	symbol := "l" + uuid.NewString()[:4]
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx

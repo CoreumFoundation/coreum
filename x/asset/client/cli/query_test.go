@@ -25,7 +25,7 @@ func TestQueryFungibleToken(t *testing.T) {
 
 	testNetwork := network.New(t)
 
-	// the denom must start from the latter
+	// the denom must start from the letter
 	symbol := "l" + uuid.NewString()[:4]
 	ctx := testNetwork.Validators[0].ClientCtx
 
@@ -69,7 +69,7 @@ func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbo
 		}
 		return eventFungibleTokenIssued.Denom
 	}
-	requireT.Failf("event: %s not fount in the create fungible token response", eventFungibleTokenIssuedName)
+	requireT.Failf("event: %s not found in the create fungible token response", eventFungibleTokenIssuedName)
 
 	return ""
 }
