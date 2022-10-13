@@ -24,7 +24,7 @@ jobs:
             linter-cache: false
             docker-cache: false
           - ci_step: "build & znet test"
-            command: "crust build --log-format=yaml && crust images --log-format=yaml && crust znet test --log-format=yaml"
+            command: "crust build images --log-format=yaml && crust znet test --log-format=yaml"
             go-cache: true
             linter-cache: false
             docker-cache: true
