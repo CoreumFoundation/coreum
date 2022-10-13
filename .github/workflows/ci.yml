@@ -11,13 +11,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ crust lint/coreum, crust test/coreum, crust images, crust build && crust znet test ]
+        ci_step: [ "lint", "test", "images", "build and integration" ]
+        include:
+          - ci_step: "lint"
+            command: "crust lint/coreum"
+            go-cache: true
+            linter-cache: true
+            docker-cache: false
+          - ci_step: "test"
+            command: "crust test/coreum"
+            go-cache: true
+            linter-cache: false
+            docker-cache: false
+          - ci_step: "images"
+            command: "crust images"
+            go-cache: false
+            linter-cache: false
+            docker-cache: true
+          - ci_step: "build and integration"
+            command: "crust build && crust znet test"
+            go-cache: true
+            linter-cache: false
+            docker-cache: true
+
     runs-on: ubuntu-22.04
     steps:
       - name: Go version used to build crust tool
         run: go version
       - name: Setup go cache
         uses: actions/cache@v3
+        if: ${{ matrix.go-cache }}
         with:
           path: |
             ~/.cache/go-build
@@ -27,11 +50,13 @@ jobs:
             ${{ runner.os }}-go-
       - name: Set linter cache
         uses: actions/cache@v3
+        if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-ci-cache
       - name: Set docker cache
         uses: satackey/action-docker-layer-caching@v0.0.11
+        if: ${{ matrix.docker-cache }}
         continue-on-error: true
       - name: Checkout coreum
         uses: actions/checkout@v3
@@ -46,4 +71,4 @@ jobs:
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Run ${{ matrix.ci_step }}
-        run: ${{ matrix.ci_step }}
+        run: ${{ matrix.command }}
