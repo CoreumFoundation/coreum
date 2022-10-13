@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ "lint", "test", "build & znet test" ]
+        ci_step: [ "lint", "test", "build", "integration tests" ]
         include:
           - ci_step: "lint"
             command: "crust lint/coreum --log-format=yaml"
@@ -23,8 +23,13 @@ jobs:
             go-cache: true
             linter-cache: false
             docker-cache: false
-          - ci_step: "build & znet test"
-            command: "crust build images --log-format=yaml && crust znet test --log-format=yaml"
+          - ci_step: "build"
+            command: "crust build --log-format=yaml"
+            go-cache: true
+            linter-cache: false
+            docker-cache: false
+          - ci_step: "integration tests"
+            command: "crust build/integration-tests images --log-format=yaml && crust znet test --log-format=yaml"
             go-cache: true
             linter-cache: false
             docker-cache: true
