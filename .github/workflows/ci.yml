@@ -39,8 +39,8 @@ jobs:
       - name: Go version used to build crust tool
         run: go version
       - name: Setup go cache
-        if: ${{ matrix.go-cache }} == 'true'
         uses: actions/cache@v3
+        if: ${{ matrix.go-cache }} == 'true'
         with:
           path: |
             ~/.cache/go-build
@@ -49,14 +49,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Set linter cache
-        if: ${{ matrix.linter-cache }} == 'true'
         uses: actions/cache@v3
+        if: ${{ matrix.linter-cache }} == 'true'
         with:
           path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-ci-cache
       - name: Set docker cache
-        if: ${{ matrix.docker-cache }} == 'true'
         uses: satackey/action-docker-layer-caching@v0.0.11
+        if: ${{ matrix.docker-cache }} == 'true'
         continue-on-error: true
       - name: Checkout coreum
         uses: actions/checkout@v3
