@@ -23,7 +23,7 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 	}
 
 	if err := sdk.ValidateDenom(msg.Symbol); err != nil {
-		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid symbol %s, the symbol must follow the rule: %s", msg.Symbol, sdk.DefaultCoinDenomRegex())
+		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid symbol %s, the symbol must follow the rule: [a-zA-Z][a-zA-Z0-9/-]", msg.Symbol)
 	}
 
 	if len(msg.Description) > maxDescriptionLength {
