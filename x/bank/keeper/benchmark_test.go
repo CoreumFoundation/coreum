@@ -17,7 +17,7 @@ import (
 func Benchmark100KDenomBankSend(b *testing.B) {
 	simApp := simapp.New()
 	sdkContext := simApp.BaseApp.NewContext(false, tmproto.Header{})
-	bankKeeper := simApp.WrappedBankKeeper
+	bankKeeper := simApp.BankKeeper
 	singleCoinDenom := config.TokenSymbolDev
 	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000)))
 	err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
@@ -68,7 +68,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	simApp := simapp.New()
 	sdkContext := simApp.BaseApp.NewContext(false, tmproto.Header{})
-	bankKeeper := simApp.WrappedBankKeeper
+	bankKeeper := simApp.BankKeeper
 
 	singleCoinDenom := config.TokenSymbolDev
 	coin := sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000))

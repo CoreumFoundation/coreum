@@ -21,7 +21,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
 	assetKeeper := testApp.AssetKeeper
-	bankKeeper := testApp.WrappedBankKeeper
+	bankKeeper := testApp.BankKeeper
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
