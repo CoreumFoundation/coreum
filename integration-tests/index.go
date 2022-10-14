@@ -7,6 +7,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
 	"github.com/CoreumFoundation/coreum/integration-tests/staking"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests/upgrade"
 	"github.com/CoreumFoundation/coreum/integration-tests/wasm"
 )
 
