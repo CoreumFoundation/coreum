@@ -10,20 +10,18 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Asset queries the assets of the module.
-  rpc Asset(QueryAssetRequest) returns (QueryAssetResponse) {
-    option (google.api.http).get = "/coreum/asset/v1/assets/{id}";
+  // FungibleToken queries the fungible token of the module.
+  rpc FungibleToken(QueryFungibleTokenRequest) returns (QueryFungibleTokenResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/assets/ft/{denom}";
   }
 }
 
-// QueryAssetRequest is request type for the Query/Asset RPC method.
-message QueryAssetRequest {
-  // the asset id
-  string id = 1;
+// QueryFungibleTokenRequest is request type for the Query/FungibleToken RPC method.
+message QueryFungibleTokenRequest {
+  string denom = 1;
 }
 
-// QueryAssetResponse is response type for the Query/Asset RPC method.
-message QueryAssetResponse {
-  // the queried asset.
-  Asset asset = 1 [(gogoproto.nullable) = false];
+// QueryFungibleTokenResponse is response type for the Query/FungibleToken RPC method.
+message QueryFungibleTokenResponse {
+  FungibleToken fungible_token = 1 [(gogoproto.nullable) = false];
 }

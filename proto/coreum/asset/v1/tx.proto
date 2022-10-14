@@ -9,18 +9,23 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // MsgIssueAsset defines a method to issue a new asset.
-  rpc IssueAsset(MsgIssueAsset) returns (MsgIssueAssetResponse);
+  // IssueFungibleToken defines a method to issue a new fungible token.
+  rpc IssueFungibleToken(MsgIssueFungibleToken) returns (MsgIssueFungibleTokenResponse);
 }
 
-// MsgIssueAsset defines message to issue new asset.
-message MsgIssueAsset {
-  option (gogoproto.equal)           = false;
+// MsgIssueFungibleToken defines message to issue new fungible token.
+message MsgIssueFungibleToken {
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
-
-  string from = 1;
-  string name = 2;
+  string issuer = 1;
+  string symbol = 2;
+  string description = 3;
+  string recipient = 4;
+  string initial_amount = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
-// MsgIssueAsset defines message response of the to issued asset.
-message MsgIssueAssetResponse {}
+// MsgIssueFungibleTokenResponse defines message response for the IssueFungibleToken.
+message MsgIssueFungibleTokenResponse {}

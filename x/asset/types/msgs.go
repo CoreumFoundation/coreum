@@ -6,24 +6,44 @@ import (
 )
 
 var (
-	_ sdk.Msg = &MsgIssueAsset{}
+	_ sdk.Msg = &MsgIssueFungibleToken{}
 )
 
 // ValidateBasic validates the message.
-func (msg MsgIssueAsset) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.From); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.From)
+func (msg MsgIssueFungibleToken) ValidateBasic() error {
+	const maxSymbolLength = 32
+	const maxDescriptionLength = 200
+
+	if _, err := sdk.AccAddressFromBech32(msg.Issuer); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer %s", msg.Issuer)
 	}
 
-	if msg.Name == "" {
-		return sdkerrors.Wrap(ErrInvalidAsset, "name is empty")
+	if len(msg.Symbol) == 0 || len(msg.Symbol) > maxSymbolLength {
+		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid symbol %s, the length must be greater than 0 and less than %d", msg.Symbol, maxSymbolLength)
+	}
+
+	if err := sdk.ValidateDenom(msg.Symbol); err != nil {
+		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid symbol %s, the symbol must follow the rule: [a-zA-Z][a-zA-Z0-9/-]", msg.Symbol)
+	}
+
+	if len(msg.Description) > maxDescriptionLength {
+		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid description %q, the length must less than %d", msg.Description, maxDescriptionLength)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(msg.Recipient); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid recipient %s", msg.Recipient)
+	}
+
+	if msg.InitialAmount.IsNil() || msg.InitialAmount.IsNegative() {
+		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid initial amount %s, can't be negative", msg.InitialAmount.String())
 	}
 
 	return nil
 }
 
-// GetSigners returns the message signers.
-func (msg MsgIssueAsset) GetSigners() []sdk.AccAddress {
-	from, _ := sdk.AccAddressFromBech32(msg.From)
-	return []sdk.AccAddress{from}
+// GetSigners MsgIssueFungibleToken the message signers.
+func (msg MsgIssueFungibleToken) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Issuer),
+	}
 }

@@ -12,7 +12,7 @@ type Wallet struct {
 	Name string
 
 	// Key is the private key of the wallet
-	Key Secp256k1PrivateKey
+	Key cosmossecp256k1.PrivKey
 
 	// AccountNumber is the account number as stored on blockchain
 	AccountNumber uint64
@@ -23,11 +23,10 @@ type Wallet struct {
 
 // String returns string representation of the wallet
 func (w Wallet) String() string {
-	return w.Name + "@" + w.Key.Address()
+	return w.Name + "@" + sdk.AccAddress(w.Key.PubKey().Address()).String()
 }
 
 // Address returns cosmos acc address from the pub key of the wallet.
 func (w Wallet) Address() sdk.AccAddress {
-	privKey := cosmossecp256k1.PrivKey{Key: w.Key}
-	return sdk.AccAddress(privKey.PubKey().Address())
+	return sdk.AccAddress(w.Key.PubKey().Address())
 }

@@ -1,0 +1,19 @@
+syntax = "proto3";
+package coreum.asset.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
+
+// EventFungibleTokenIssued is emitted on MsgIssueFungibleToken.
+message EventFungibleTokenIssued {
+  string denom = 1;
+  string issuer = 2;
+  string symbol = 3;
+  string description = 4;
+  string recipient = 5;
+  string initial_amount = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}

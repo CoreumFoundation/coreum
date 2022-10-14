@@ -10,7 +10,7 @@ import (
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
-	GetAsset(ctx sdk.Context, id string) types.Asset
+	GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error)
 }
 
 // QueryService serves grpc query requests for assets module.
@@ -25,9 +25,14 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 	}
 }
 
-// Asset queries an asset.
-func (qs QueryService) Asset(ctx context.Context, req *types.QueryAssetRequest) (*types.QueryAssetResponse, error) {
-	return &types.QueryAssetResponse{
-		Asset: qs.keeper.GetAsset(sdk.UnwrapSDKContext(ctx), req.GetId()),
+// FungibleToken queries an fungible token.
+func (qs QueryService) FungibleToken(ctx context.Context, req *types.QueryFungibleTokenRequest) (*types.QueryFungibleTokenResponse, error) {
+	token, err := qs.keeper.GetFungibleToken(sdk.UnwrapSDKContext(ctx), req.GetDenom())
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryFungibleTokenResponse{
+		FungibleToken: token,
 	}, nil
 }

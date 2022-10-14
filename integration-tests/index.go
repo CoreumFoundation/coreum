@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/CoreumFoundation/coreum/integration-tests/asset"
 	"github.com/CoreumFoundation/coreum/integration-tests/auth"
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
@@ -12,16 +13,16 @@ import (
 // Tests returns testing environment and tests
 func Tests() []testing.TestSet {
 	return []testing.TestSet{
-		// FIXME (wojtek): uncomment once crust is ready
-		// {
-		// 	Name: "Upgrade",
-		// 	SingleChain: []testing.SingleChainSignature{
-		// 		upgrade.TestUpgrade,
-		// 	},
-		// },
+		{
+			Name: "Upgrade",
+			SingleChain: []testing.SingleChainSignature{
+				upgrade.TestUpgrade,
+			},
+		},
 		{
 			Parallel: true,
 			SingleChain: []testing.SingleChainSignature{
+				asset.TestIssueBasicFungibleToken,
 				auth.TestUnexpectedSequenceNumber,
 				auth.TestTooLowGasPrice,
 				auth.TestNoFee,

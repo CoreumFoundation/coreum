@@ -191,6 +191,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
+		assettypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -468,6 +469,7 @@ func New(
 	app.AssetKeeper = assetkeeper.NewKeeper(
 		appCodec,
 		keys[assettypes.StoreKey],
+		app.BankKeeper,
 	)
 	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
 
