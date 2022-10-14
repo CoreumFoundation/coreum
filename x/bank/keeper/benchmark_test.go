@@ -2,22 +2,58 @@ package keeper_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/cosmos/ibc-go/v3/testing/simapp"
 	"github.com/stretchr/testify/assert"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
 )
 
+func createSimApp(b *testing.B) *app.App {
+	simapp.FlagEnabledValue = true
+	_, db, dir, logger, _, err := simapp.SetupSimulation("coreum-app-sim", "Simulation")
+	require.NoError(b, err, "simulation setup failed")
+
+	b.Cleanup(func() {
+		db.Close()
+		err = os.RemoveAll(dir)
+		require.NoError(b, err)
+	})
+
+	encoding := config.NewEncodingConfig(app.ModuleBasics)
+	network, err := config.NetworkByChainID(config.Devnet)
+	if err != nil {
+		panic(err)
+	}
+
+	app.ChosenNetwork = network
+	simApp := app.New(
+		logger,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		0,
+		encoding,
+		simapp.EmptyAppOptions{},
+	)
+
+	return simApp
+}
+
 func Benchmark100KDenomBankSend(b *testing.B) {
-	simApp := simapp.New()
-	sdkContext := simApp.BaseApp.NewContext(false, tmproto.Header{})
+	simApp := createSimApp(b)
 	bankKeeper := simApp.BankKeeper
+	sdkContext := simApp.NewUncachedContext(false, types.Header{})
 	singleCoinDenom := config.TokenSymbolDev
 	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000)))
 	err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
@@ -66,9 +102,9 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 }
 
 func Benchmark100KDenomBankGetSupply(b *testing.B) {
-	simApp := simapp.New()
-	sdkContext := simApp.BaseApp.NewContext(false, tmproto.Header{})
+	simApp := createSimApp(b)
 	bankKeeper := simApp.BankKeeper
+	sdkContext := simApp.NewUncachedContext(false, types.Header{})
 
 	singleCoinDenom := config.TokenSymbolDev
 	coin := sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000))
