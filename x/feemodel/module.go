@@ -117,7 +117,7 @@ func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 func (am AppModule) Route() sdk.Route { return sdk.Route{} }
 
 // QuerierRoute returns the fee module's querier route name.
-func (AppModule) QuerierRoute() string { return types.RouterKey }
+func (AppModule) QuerierRoute() string { return types.QuerierRoute }
 
 // LegacyQuerierHandler returns the fee module sdk.Querier.
 func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {

@@ -110,6 +110,9 @@ import (
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/x/snapshot"
+	snapshotkeeper "github.com/CoreumFoundation/coreum/x/snapshot/keeper"
+	snapshottypes "github.com/CoreumFoundation/coreum/x/snapshot/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -178,6 +181,7 @@ var (
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
 		asset.AppModuleBasic{},
+		snapshot.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -247,6 +251,7 @@ type App struct {
 	MonitoringKeeper monitoringpkeeper.Keeper
 	WASMKeeper       wasm.Keeper
 	AssetKeeper      assetkeeper.Keeper
+	SnapshotKeeper   snapshotkeeper.Keeper
 
 	FeeModelKeeper feemodelkeeper.Keeper
 	// make scoped keepers public for test purposes
@@ -293,7 +298,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
-		wasm.StoreKey, feemodeltypes.StoreKey, assettypes.StoreKey,
+		wasm.StoreKey, feemodeltypes.StoreKey, assettypes.StoreKey, snapshottypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
@@ -466,10 +471,14 @@ func New(
 	)
 	monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
+	app.SnapshotKeeper = snapshotkeeper.NewKeeper(keys[snapshottypes.StoreKey])
+	snapshotModule := snapshot.NewAppModule(appCodec, app.SnapshotKeeper)
+
 	app.AssetKeeper = assetkeeper.NewKeeper(
 		appCodec,
 		keys[assettypes.StoreKey],
 		app.BankKeeper,
+		app.SnapshotKeeper,
 	)
 	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
 
@@ -520,6 +529,7 @@ func New(
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
 		assetModule,
+		snapshotModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -550,6 +560,7 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		snapshottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -576,6 +587,8 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		// This should be the last item or at least go after all the modules which might affect snapshotted state in end blocker
+		snapshottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -607,6 +620,7 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		snapshottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -632,8 +646,9 @@ func New(
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
 		monitoringModule,
-		// this line is used by starport scaffolding # stargate/app/appModule
 		assetModule,
+		snapshotModule,
+		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -645,6 +660,7 @@ func New(
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
+	app.CommitMultiStore()
 
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
@@ -655,6 +671,10 @@ func New(
 			FeegrantKeeper:               app.FeeGrantKeeper,
 			FeeModelKeeper:               app.FeeModelKeeper,
 			WasmTXCounterStoreKey:        keys[wasm.StoreKey],
+			SnapshotKey:                  keys[snapshottypes.StoreKey],
+			SnapshotTransformations: []snapshottypes.Transformation{
+				assettypes.NewBankTransformation(keys[banktypes.StoreKey]),
+			},
 		},
 	)
 	if err != nil {

@@ -47,3 +47,15 @@ func (msg MsgIssueFungibleToken) GetSigners() []sdk.AccAddress {
 		sdk.MustAccAddressFromBech32(msg.Issuer),
 	}
 }
+
+func (msg MsgSnapshotFungibleToken) ValidateBasic() error {
+	// FIXME (wojtek): implement this
+
+	return nil
+}
+
+func (msg MsgSnapshotFungibleToken) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Owner),
+	}
+}

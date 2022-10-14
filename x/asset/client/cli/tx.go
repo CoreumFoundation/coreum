@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -10,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
@@ -27,6 +29,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdTxIssueFungibleToken(),
+		CmdTxSnapshotFungibleToken(),
 	)
 
 	return cmd
@@ -82,6 +85,52 @@ $ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer
 				Description:   description,
 				Recipient:     recipient,
 				InitialAmount: initialAmount,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdTxSnapshotFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "snapshot-ft [denom] [height] [name] [description] --from [owner]",
+		Args:  cobra.ExactArgs(4),
+		Short: "Requests a snapshot of fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Requests a snapshot of fungible token.
+
+Example:
+$ %s tx asset snapshot-ft [denom] 1000 "dividend-2022" "Dividend 2022" 100000 --from [owner]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			owner := clientCtx.GetFromAddress()
+			denom := args[0]
+			height, err := strconv.ParseInt(args[1], 10, 64)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			name := args[2]
+			description := args[3]
+
+			msg := &types.MsgSnapshotFungibleToken{
+				Denom:       denom,
+				Owner:       owner.String(),
+				Height:      height,
+				Name:        name,
+				Description: description,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

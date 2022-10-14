@@ -12,6 +12,7 @@ import (
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
 	IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error)
+	SnapshotFungibleToken(ctx sdk.Context, request types.FreezeRequestFungibleToken) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -48,4 +49,19 @@ func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueF
 	}
 
 	return &types.MsgIssueFungibleTokenResponse{}, nil
+}
+
+func (ms MsgServer) SnapshotFungibleToken(ctx context.Context, req *types.MsgSnapshotFungibleToken) (*types.MsgSnapshotFungibleTokenResponse, error) {
+	err := ms.keeper.SnapshotFungibleToken(sdk.UnwrapSDKContext(ctx), types.FreezeRequestFungibleToken{
+		Denom:       req.Denom,
+		Owner:       req.Owner,
+		Height:      req.Height,
+		Name:        req.Name,
+		Description: req.Description,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgSnapshotFungibleTokenResponse{}, nil
 }

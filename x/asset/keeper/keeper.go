@@ -10,21 +10,33 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
+	snapshottypes "github.com/CoreumFoundation/coreum/x/snapshot/types"
 )
+
+type SnapshotKeeper interface {
+	RequestFreeze(ctx sdk.Context, request snapshottypes.FreezeRequest) error
+}
 
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   sdk.StoreKey
-	bankKeeper types.BankKeeper
+	cdc            codec.BinaryCodec
+	storeKey       sdk.StoreKey
+	bankKeeper     types.BankKeeper
+	snapshotKeeper SnapshotKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.BankKeeper) Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey sdk.StoreKey,
+	bankKeeper types.BankKeeper,
+	snapshotKeeper SnapshotKeeper,
+) Keeper {
 	return Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		bankKeeper: bankKeeper,
+		cdc:            cdc,
+		storeKey:       storeKey,
+		bankKeeper:     bankKeeper,
+		snapshotKeeper: snapshotKeeper,
 	}
 }
 
@@ -90,6 +102,21 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		Symbol:      metadata.Symbol,
 		Description: metadata.Description,
 	}, nil
+}
+
+func (k Keeper) SnapshotFungibleToken(ctx sdk.Context, request types.FreezeRequestFungibleToken) error {
+	// FIXME (wojtek): verify that denom exists
+
+	return k.snapshotKeeper.RequestFreeze(ctx, snapshottypes.FreezeRequest{
+		SnapshotID: snapshottypes.SnapshotID{
+			StoreName: banktypes.StoreKey,
+			Name:      []byte(request.Denom),
+		},
+		Owner:       request.Owner,
+		Height:      request.Height,
+		Name:        request.Name,
+		Description: request.Description,
+	})
 }
 
 // Logger returns the Keeper logger.

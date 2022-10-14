@@ -16,6 +16,8 @@ import (
 	"github.com/CoreumFoundation/coreum/x/auth/keeper"
 	deterministicgasante "github.com/CoreumFoundation/coreum/x/deterministicgas/ante"
 	feemodelante "github.com/CoreumFoundation/coreum/x/feemodel/ante"
+	snapshotante "github.com/CoreumFoundation/coreum/x/snapshot/ante"
+	snapshottypes "github.com/CoreumFoundation/coreum/x/snapshot/types"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
@@ -28,6 +30,8 @@ type HandlerOptions struct {
 	SignModeHandler              authsigning.SignModeHandler
 	SigGasConsumer               func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	WasmTXCounterStoreKey        sdk.StoreKey
+	SnapshotKey                  sdk.StoreKey
+	SnapshotTransformations      []snapshottypes.Transformation
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -56,6 +60,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 	if options.WasmTXCounterStoreKey == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
+	}
+
+	if options.SnapshotKey == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "snapshot key is required for ante builder")
 	}
 
 	infiniteAccountKeeper := keeper.NewInfiniteAccountKeeper(options.AccountKeeper)
@@ -92,6 +100,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		//   IMPORTANT: If they consumed less, the rest **IS NOT** given to the message handlers for free.
 
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
+		snapshotante.NewAddListenersDecorator(options.SnapshotKey, options.SnapshotTransformations), // this must be the second decorator as it set up snapshotting which might be affected by other decorators
 		deterministicgasante.NewSetInfiniteGasMeterDecorator(options.DeterministicGasRequirements),
 		authante.NewRejectExtensionOptionsDecorator(),
 		authante.NewValidateBasicDecorator(),

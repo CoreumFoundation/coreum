@@ -11,6 +11,7 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 service Msg {
   // IssueFungibleToken defines a method to issue a new fungible token.
   rpc IssueFungibleToken(MsgIssueFungibleToken) returns (MsgIssueFungibleTokenResponse);
+  rpc SnapshotFungibleToken(MsgSnapshotFungibleToken) returns (MsgSnapshotFungibleTokenResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -29,3 +30,15 @@ message MsgIssueFungibleToken {
 
 // MsgIssueFungibleTokenResponse defines message response for the IssueFungibleToken.
 message MsgIssueFungibleTokenResponse {}
+
+message MsgSnapshotFungibleToken {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  string denom = 1;
+  string owner = 2;
+  int64 height = 3;
+  string name = 4;
+  string description = 5;
+}
+
+message MsgSnapshotFungibleTokenResponse {}
