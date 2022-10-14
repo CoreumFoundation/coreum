@@ -1,0 +1,34 @@
+syntax = "proto3";
+package coreum.snapshot.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+import "coreum/snapshot/v1/types.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/snapshot/types";
+
+service Query {
+  rpc Pending(QueryPendingRequest) returns (QueryPendingResponse) {
+    option (google.api.http).get = "/coreum/snapshot/v1/pending/{address}";
+  }
+  rpc Snapshots(QuerySnapshotsRequest) returns (QuerySnapshotsResponse) {
+    option (google.api.http).get = "/coreum/snapshot/v1/list/{address}";
+  }
+}
+
+message QueryPendingRequest {
+  string address = 1;
+}
+
+message QueryPendingResponse {
+  repeated SnapshotInfo pending = 1 [(gogoproto.nullable) = false];
+}
+
+message QuerySnapshotsRequest {
+  string address = 1;
+}
+
+message QuerySnapshotsResponse {
+  repeated SnapshotInfo snapshots = 1 [(gogoproto.nullable) = false];
+}

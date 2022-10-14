@@ -1,0 +1,23 @@
+syntax = "proto3";
+package coreum.airdrop.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "coreum/airdrop/v1/types.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/airdrop/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  rpc List(QueryListRequest) returns (QueryListResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/airdrop/{denom}";
+  }
+}
+
+message QueryListRequest {
+  string denom = 1;
+}
+
+message QueryListResponse {
+  repeated Airdrop airdrops = 1 [(gogoproto.nullable) = false];
+}

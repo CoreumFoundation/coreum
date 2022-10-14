@@ -1,0 +1,17 @@
+syntax = "proto3";
+package coreum.airdrop.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+option go_package = "github.com/CoreumFoundation/coreum/x/airdrop/types";
+
+message Airdrop {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  uint64 id = 1;
+  string sender = 2;
+  int64 height = 3;
+  string description = 4;
+  string required_denom = 5;
+  repeated cosmos.base.v1beta1.DecCoin offer = 6 [(gogoproto.nullable) = false];
+}

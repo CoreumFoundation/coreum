@@ -1,0 +1,25 @@
+syntax = "proto3";
+package coreum.airdrop.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "coreum/asset/v1/asset.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/airdrop/types";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc Create(MsgCreate) returns (MsgCreateResponse);
+}
+
+message MsgCreate {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  string sender = 1;
+  int64 height = 2;
+  string description = 3;
+  string required_denom = 4;
+  repeated cosmos.base.v1beta1.DecCoin offer = 5 [(gogoproto.nullable) = false];
+}
+
+message MsgCreateResponse {}

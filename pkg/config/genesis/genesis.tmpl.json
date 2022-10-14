@@ -258,6 +258,8 @@
         "denom": "{{ .BaseDenom }}",
         "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
-    }
+    },
+    "snapshot" : {},
+    "airdrop": {}
   }
 }

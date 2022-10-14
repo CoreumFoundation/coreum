@@ -1,0 +1,44 @@
+syntax = "proto3";
+package coreum.snapshot.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/snapshot/types";
+
+message SnapshotPrefix {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  string StoreName = 1;
+  bytes Name = 2;
+}
+
+message SnapshotKey {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  SnapshotPrefix prefix = 1 [(gogoproto.nullable) = false];
+  uint64 index = 2;
+}
+
+message SnapshotRequest {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  SnapshotInfo info = 1 [(gogoproto.nullable) = false];
+  SnapshotPrefix prefix = 2 [(gogoproto.nullable) = false];
+}
+
+message Snapshot {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  SnapshotInfo info = 1 [(gogoproto.nullable) = false];
+  SnapshotKey key = 2 [(gogoproto.nullable) = false];
+}
+
+message SnapshotInfo {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  uint64 id = 1;
+  string owner = 2;
+  int64 height = 3;
+  string description = 4;
+  string user_description = 5;
+}
