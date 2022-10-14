@@ -92,26 +92,26 @@ func TestInvalidTxSignature(t *testing.T) {
 	network, err := config.NetworkByChainID(config.Devnet)
 	assert.NoError(t, err)
 
-	clientContext := tx.NewClientContext(app.ModuleBasics).WithChainID(string(network.ChainID()))
+	clientCtx := tx.NewClientContext(app.ModuleBasics).WithChainID(string(network.ChainID()))
 
 	// Check on a sample tx with a wrong signature that signature verification works properly.
-	sdkTx, err := clientContext.TxConfig().TxJSONDecoder()(invalidSignatureTx)
+	sdkTx, err := clientCtx.TxConfig().TxJSONDecoder()(invalidSignatureTx)
 	assert.NoError(t, err)
-	assert.ErrorContains(t, validateGenesisTxSignature(clientContext, sdkTx), "signature verification failed")
+	assert.ErrorContains(t, validateGenesisTxSignature(clientCtx, sdkTx), "signature verification failed")
 }
 
 func TestNetworkTxSignatures(t *testing.T) {
 	network, err := config.NetworkByChainID(config.Devnet)
 	assert.NoError(t, err)
 
-	clientContext := tx.NewClientContext(app.ModuleBasics).WithChainID(string(network.ChainID()))
+	clientCtx := tx.NewClientContext(app.ModuleBasics).WithChainID(string(network.ChainID()))
 
 	// Check real network txs.
 	for _, rawTx := range network.GenTxs() {
-		sdkTx, err := clientContext.TxConfig().TxJSONDecoder()(rawTx)
+		sdkTx, err := clientCtx.TxConfig().TxJSONDecoder()(rawTx)
 		assert.NoError(t, err)
 
-		assert.NoError(t, validateGenesisTxSignature(clientContext, sdkTx))
+		assert.NoError(t, validateGenesisTxSignature(clientCtx, sdkTx))
 	}
 }
 

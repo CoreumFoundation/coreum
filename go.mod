@@ -24,7 +24,6 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/rs/zerolog v1.26.1
-	github.com/samber/lo v1.28.0
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
@@ -172,7 +171,6 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/exp v0.0.0-20220907003533-145caa8ea1d0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220811182439-13a9a731de15 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect

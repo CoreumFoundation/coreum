@@ -51,12 +51,13 @@ func testNetwork() config.Network {
 	stakerPubKey := stakerPrivKey.PubKey()
 
 	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPubKey, stakerPrivKey, "1000core")
+	stakerBalance := sdk.NewInt64Coin("core", 1000)
+	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(config.Devnet, clientCtx.TxConfig(), validatorPubKey, stakerPrivKey, stakerBalance)
 	if err != nil {
 		panic(err)
 	}
 	return config.NewNetwork(config.NetworkConfig{
-		ChainID:       "test-network",
+		ChainID:       config.Devnet,
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
 		TokenSymbol:   config.TokenSymbolMain,
@@ -211,7 +212,8 @@ func TestAddGenTx(t *testing.T) {
 
 	stakerPrivKey := *cosmossecp256k1.GenPrivKey()
 	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPubKey, stakerPrivKey, "1000core")
+	stakerBalance := sdk.NewInt64Coin("core", 1000)
+	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(config.Devnet, clientCtx.TxConfig(), validatorPubKey, stakerPrivKey, stakerBalance)
 	requireT.NoError(err)
 	n.AddGenesisTx(createValidatorTx)
 
