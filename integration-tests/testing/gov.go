@@ -47,13 +47,13 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 		return sdk.Coin{}, err
 	}
 
-	midDeposit := govParams.DepositParams.MinDeposit[0]
+	minDeposit := govParams.DepositParams.MinDeposit[0]
 	initialGasPrice := NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
 	proposerInitialBalance := ComputeNeededBalance(
 		initialGasPrice,
 		g.chainContext.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}),
 		1,
-		midDeposit.Amount,
+		minDeposit.Amount,
 	)
 
 	return g.chainContext.NewCoin(proposerInitialBalance), nil

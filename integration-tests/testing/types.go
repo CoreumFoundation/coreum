@@ -16,5 +16,7 @@ type SingleChainSignature func(ctx context.Context, t T, chain Chain)
 
 // TestSet is a container for tests
 type TestSet struct {
+	Name        string
+	Parallel    bool
 	SingleChain []SingleChainSignature
 }
