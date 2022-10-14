@@ -101,16 +101,24 @@ import (
 
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/x/airdrop"
+	airdropkeeper "github.com/CoreumFoundation/coreum/x/airdrop/keeper"
+	airdroptypes "github.com/CoreumFoundation/coreum/x/airdrop/types"
 	"github.com/CoreumFoundation/coreum/x/asset"
 	assetkeeper "github.com/CoreumFoundation/coreum/x/asset/keeper"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	wbank "github.com/CoreumFoundation/coreum/x/bank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/bank/keeper"
+	coreumbanktypes "github.com/CoreumFoundation/coreum/x/bank/types"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/x/deterministicgas/types"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/x/snapshot"
+	snapshotkeeper "github.com/CoreumFoundation/coreum/x/snapshot/keeper"
+	"github.com/CoreumFoundation/coreum/x/snapshot/store"
+	snapshottypes "github.com/CoreumFoundation/coreum/x/snapshot/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -179,6 +187,8 @@ var (
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
 		asset.AppModuleBasic{},
+		airdrop.AppModuleBasic{},
+		snapshot.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -193,6 +203,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		assettypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		airdroptypes.ModuleName:        {authtypes.Minter},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -250,6 +261,8 @@ type App struct {
 	AssetKeeper    assetkeeper.Keeper
 	FeeModelKeeper feemodelkeeper.Keeper
 	BankKeeper     wbankkeeper.BaseKeeperWrapper
+	SnapshotKeeper snapshotkeeper.Keeper
+	AirdropKeeper  airdropkeeper.Keeper
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper        capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper   capabilitykeeper.ScopedKeeper
@@ -294,11 +307,15 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
-		wasm.StoreKey, feemodeltypes.StoreKey, assettypes.StoreKey,
+		wasm.StoreKey, feemodeltypes.StoreKey, assettypes.StoreKey, airdroptypes.StoreKey, snapshottypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+
+	bApp.SetCMS(store.New(bApp.CommitMultiStore(), keys[snapshottypes.StoreKey], []snapshottypes.Mapping{
+		coreumbanktypes.NewSnapshotMapping(appCodec, keys[banktypes.StoreKey]),
+	}))
 
 	app := &App{
 		BaseApp:           bApp,
@@ -347,6 +364,8 @@ func New(
 	)
 
 	app.AssetKeeper = assetKeeper
+	app.SnapshotKeeper = snapshotkeeper.NewKeeper(appCodec, keys[snapshottypes.StoreKey])
+	app.AirdropKeeper = airdropkeeper.NewKeeper(appCodec, keys[airdroptypes.StoreKey], app.SnapshotKeeper, app.BankKeeper)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
@@ -493,6 +512,8 @@ func New(
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
+	snapshotModule := snapshot.NewAppModule(appCodec, app.SnapshotKeeper)
+	airdropModule := airdrop.NewAppModule(appCodec, app.AirdropKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
@@ -524,6 +545,8 @@ func New(
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
 		assetModule,
+		airdropModule,
+		snapshotModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -554,6 +577,8 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		airdroptypes.ModuleName,
+		snapshottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -579,7 +604,10 @@ func New(
 		monitoringptypes.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
+		airdroptypes.ModuleName,
 		assettypes.ModuleName,
+		// This should be the last item or at least go after all the modules which might affect snapshotted state in end blocker
+		snapshottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -611,6 +639,8 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		airdroptypes.ModuleName,
+		snapshottypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -636,8 +666,10 @@ func New(
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
 		monitoringModule,
-		// this line is used by starport scaffolding # stargate/app/appModule
 		assetModule,
+		airdropModule,
+		snapshotModule,
+		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
 
