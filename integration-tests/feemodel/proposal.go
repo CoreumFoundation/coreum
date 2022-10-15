@@ -75,8 +75,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result.
-	_, err = chain.Governance.WaitForProposalStatus(ctx, govtypes.StatusPassed, uint64(proposalID))
-	requireT.NoError(err)
+	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
 
 	// Check the proposed change is applied.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
