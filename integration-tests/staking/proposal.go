@@ -37,9 +37,10 @@ func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain test
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Int("proposalID", proposalID))
 
-	// Wait for voting period to be started.
-	proposal, err := chain.Governance.WaitForProposalStatus(ctx, govtypes.StatusVotingPeriod, uint64(proposalID))
+	// Verify that voting period started.
+	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
 	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
 	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
