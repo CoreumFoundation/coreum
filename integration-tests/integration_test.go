@@ -81,9 +81,6 @@ func TestMain(m *testing.M) {
 }
 
 func Test(t *testing.T) {
-	t.Parallel()
-
-	testSet := tests.Tests()
 	ctx := newContext(t, cfg)
 
 	chainCfg := coreumtesting.ChainConfig{
@@ -94,13 +91,21 @@ func Test(t *testing.T) {
 	}
 	chain := coreumtesting.NewChain(chainCfg)
 
-	testCases := collectTestCases(chain, testSet, cfg.Filter)
-	if len(testCases) == 0 {
-		logger.Get(ctx).Warn("No tests to run")
-		return
+	var testCount int
+	for _, testSet := range tests.Tests() {
+		testSet := testSet
+		testCases := collectSingleChainTests(testSet.SingleChain, chain, cfg.Filter)
+		if len(testCases) == 0 {
+			continue
+		}
+		testCount += len(testCases)
+		t.Run(testSet.Name, func(t *testing.T) {
+			runTests(ctx, t, testCases, testSet.Parallel)
+		})
 	}
-
-	runTests(ctx, t, testCases)
+	if testCount == 0 {
+		logger.Get(ctx).Warn("No tests to run")
+	}
 }
 
 func newContext(t *testing.T, cfg testingConfig) context.Context {
@@ -120,30 +125,13 @@ type testCase struct {
 	RunFunc func(ctx context.Context, t *testing.T)
 }
 
-func collectTestCases(chain coreumtesting.Chain, testSet coreumtesting.TestSet, testFilter *regexp.Regexp) []testCase {
-	var testCases []testCase
-	for _, testFunc := range testSet.SingleChain {
-		testFunc := testFunc
-		name := funcToName(testFunc)
-		if !testFilter.MatchString(name) {
-			continue
-		}
-
-		testCases = append(testCases, testCase{
-			Name: name,
-			RunFunc: func(ctx context.Context, t *testing.T) {
-				testFunc(ctx, t, chain)
-			},
-		})
-	}
-	return testCases
-}
-
-func runTests(ctx context.Context, t *testing.T, testCases []testCase) {
+func runTests(ctx context.Context, t *testing.T, testCases []testCase, parallel bool) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			t.Parallel()
+			if parallel {
+				t.Parallel()
+			}
 
 			ctx, cancel := context.WithCancel(logger.With(ctx, zap.String("test", tc.Name)))
 			t.Cleanup(cancel)
@@ -166,4 +154,23 @@ func funcToName(f interface{}) string {
 	funcName := strings.TrimSuffix(parts[len(parts)-1], ".func1")
 
 	return repoName + "." + funcName
+}
+
+func collectSingleChainTests(tests []coreumtesting.SingleChainSignature, chain coreumtesting.Chain, testFilter *regexp.Regexp) []testCase {
+	testCases := make([]testCase, 0, len(tests))
+	for _, testFunc := range tests {
+		testFunc := testFunc
+		name := funcToName(testFunc)
+		if !testFilter.MatchString(name) {
+			continue
+		}
+
+		testCases = append(testCases, testCase{
+			Name: name,
+			RunFunc: func(ctx context.Context, t *testing.T) {
+				testFunc(ctx, t, chain)
+			},
+		})
+	}
+	return testCases
 }
