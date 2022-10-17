@@ -47,7 +47,27 @@
       },
       "balances": [],
       "supply": [],
-      "denom_metadata": []
+      "denom_metadata": [
+        {
+          "description": "CORE coin",
+          "denom_units": [
+            {
+              "denom": "{{ .TokenSymbol }}",
+              "exponent": 0,
+              "aliases": []
+            },
+            {
+              "denom": "core",
+              "exponent": 6,
+              "aliases": []
+            }
+          ],
+          "base": "{{ .TokenSymbol }}",
+          "display": "core",
+          "name": "CORE",
+          "symbol": "CORE"
+        }
+      ]
     },
     "capability": {
       "index": "1",
