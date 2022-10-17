@@ -25,7 +25,7 @@ func Tests() []testing.TestSet {
 			SingleChain: []testing.SingleChainSignature{
 				asset.TestIssueBasicFungibleToken,
 				auth.TestUnexpectedSequenceNumber,
-				auth.TestGasLimits,
+				auth.TestFeeLimits,
 				auth.TestMultisig,
 				bank.TestCoreTransfer,
 				bank.TestTransferFailsIfNotEnoughGasIsProvided,

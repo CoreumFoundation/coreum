@@ -14,8 +14,8 @@ import (
 
 // TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other then CORE is rejected
 
-// TestGasLimits verifies that invalid message gas won't be accepted.
-func TestGasLimits(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestFeeLimits verifies that invalid message gas won't be accepted.
+func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := chain.GenAccount()
 
 	maxBlockGas := chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas
