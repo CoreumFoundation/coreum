@@ -36,6 +36,10 @@ const (
 	Devnet  ChainID = "coreum-devnet-1"
 )
 
+// EnableFakeUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
+// It is string, not bool, because -X flag supports strings only.
+var EnableFakeUpgradeHandler string
+
 // Known TokenSymbols
 const (
 	// u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
@@ -143,6 +147,7 @@ func init() {
 				coreumDevnet1Validator2,
 				coreumDevnet1Validator3,
 			},
+			EnableFakeUpgradeHandler: EnableFakeUpgradeHandler != "",
 		},
 	}
 
@@ -210,18 +215,21 @@ type NetworkConfig struct {
 	StakingConfig  StakingConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
+	// TODO: remove this field once we have real upgrade handler
+	EnableFakeUpgradeHandler bool
 }
 
 // Network holds all the configuration for different predefined networks
 type Network struct {
-	chainID       ChainID
-	genesisTime   time.Time
-	addressPrefix string
-	tokenSymbol   string
-	fee           FeeConfig
-	nodeConfig    NodeConfig
-	gov           GovConfig
-	staking       StakingConfig
+	chainID                  ChainID
+	genesisTime              time.Time
+	addressPrefix            string
+	tokenSymbol              string
+	fee                      FeeConfig
+	nodeConfig               NodeConfig
+	gov                      GovConfig
+	staking                  StakingConfig
+	enableFakeUpgradeHandler bool
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -231,17 +239,18 @@ type Network struct {
 // NewNetwork returns a new instance of Network
 func NewNetwork(c NetworkConfig) Network {
 	n := Network{
-		genesisTime:    c.GenesisTime,
-		chainID:        c.ChainID,
-		addressPrefix:  c.AddressPrefix,
-		tokenSymbol:    c.TokenSymbol,
-		nodeConfig:     c.NodeConfig.Clone(),
-		fee:            c.Fee,
-		gov:            c.GovConfig,
-		staking:        c.StakingConfig,
-		mu:             &sync.Mutex{},
-		fundedAccounts: append([]FundedAccount{}, c.FundedAccounts...),
-		genTxs:         append([]json.RawMessage{}, c.GenTxs...),
+		genesisTime:              c.GenesisTime,
+		chainID:                  c.ChainID,
+		addressPrefix:            c.AddressPrefix,
+		tokenSymbol:              c.TokenSymbol,
+		nodeConfig:               c.NodeConfig.Clone(),
+		fee:                      c.Fee,
+		gov:                      c.GovConfig,
+		staking:                  c.StakingConfig,
+		mu:                       &sync.Mutex{},
+		fundedAccounts:           append([]FundedAccount{}, c.FundedAccounts...),
+		genTxs:                   append([]json.RawMessage{}, c.GenTxs...),
+		enableFakeUpgradeHandler: c.EnableFakeUpgradeHandler,
 	}
 
 	return n
@@ -459,6 +468,11 @@ func (n Network) TokenSymbol() string {
 // FeeModel returns fee model configuration
 func (n Network) FeeModel() feemodeltypes.Model {
 	return n.fee.FeeModel
+}
+
+// EnableFakeUpgradeHandler enables temporry fake upgrade handler until we have real one
+func (n Network) EnableFakeUpgradeHandler() bool {
+	return n.enableFakeUpgradeHandler
 }
 
 // DeterministicGas returns deterministic gas amounts required by some message types
