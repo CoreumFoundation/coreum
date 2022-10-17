@@ -185,6 +185,7 @@ func (g Governance) WaitForVotingToPass(ctx context.Context, proposalID uint64) 
 	return nil
 }
 
+// GetProposal returns proposal by ID
 func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
 	resp, err := g.govClient.Proposal(ctx, &govtypes.QueryProposalRequest{
 		ProposalId: proposalID,
