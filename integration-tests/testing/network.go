@@ -21,11 +21,11 @@ const (
 
 // NetworkConfig is the network config used by integration tests
 var NetworkConfig = config.NetworkConfig{
-	ChainID:       config.Devnet,
+	ChainID:       config.ChainIDDev,
 	Enabled:       true,
 	GenesisTime:   time.Now(),
 	AddressPrefix: "devcore",
-	TokenSymbol:   config.TokenSymbolDev,
+	BaseDenom:     config.BaseDenomDev,
 	Fee: config.FeeConfig{
 		FeeModel:         feemodeltypes.DefaultModel(),
 		DeterministicGas: config.DefaultDeterministicGasRequirements(),

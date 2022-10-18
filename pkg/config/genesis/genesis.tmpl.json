@@ -49,23 +49,23 @@
       "supply": [],
       "denom_metadata": [
         {
-          "description": "CORE coin",
+          "description": "{{ .Denom }} coin",
           "denom_units": [
             {
-              "denom": "{{ .TokenSymbol }}",
+              "denom": "{{ .BaseDenom }}",
               "exponent": 0,
               "aliases": []
             },
             {
-              "denom": "core",
+              "denom": "{{ .Denom }}",
               "exponent": 6,
               "aliases": []
             }
           ],
-          "base": "{{ .TokenSymbol }}",
-          "display": "core",
-          "name": "CORE",
-          "symbol": "CORE"
+          "base": "{{ .BaseDenom }}",
+          "display": "{{ .Denom }}",
+          "name": "{{ .Denom }}",
+          "symbol": "{{ .Denom }}"
         }
       ]
     },
@@ -75,7 +75,7 @@
     },
     "crisis": {
       "constant_fee": {
-        "denom": "{{ .TokenSymbol }}",
+        "denom": "{{ .BaseDenom }}",
         "amount": "1000"
       }
     },
@@ -115,7 +115,7 @@
       "deposit_params": {
         "min_deposit": [
           {
-            "denom": "{{ .TokenSymbol }}",
+            "denom": "{{ .BaseDenom }}",
             "amount": "{{ .Gov.ProposalConfig.MinDepositAmount }}"
           }
         ],
@@ -169,7 +169,7 @@
         "annual_provisions": "0.000000000000000000"
       },
       "params": {
-        "mint_denom": "{{ .TokenSymbol }}",
+        "mint_denom": "{{ .BaseDenom }}",
         "inflation_rate_change": "0.130000000000000000",
         "inflation_max": "0.200000000000000000",
         "inflation_min": "0.000000000000000000",
@@ -214,7 +214,7 @@
         "max_validators": {{ .Staking.MaxValidators }},
         "max_entries": 7,
         "historical_entries": 10000,
-        "bond_denom": "{{ .TokenSymbol }}"
+        "bond_denom": "{{ .BaseDenom }}"
       },
       "last_total_power": "0",
       "last_validator_powers": [],
@@ -256,7 +256,7 @@
         }
       },
       "min_gas_price": {
-        "denom": "{{ .TokenSymbol }}",
+        "denom": "{{ .BaseDenom }}",
         "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
     }

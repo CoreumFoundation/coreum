@@ -38,7 +38,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 
 	recipientWallet := chain.RandomWallet()
 
-	nativeDenom := chain.NetworkConfig.TokenSymbol
+	nativeDenom := chain.NetworkConfig.BaseDenom
 	initialGasPrice := chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
 
 	amountToSendFromMultisigAccount := int64(1000)

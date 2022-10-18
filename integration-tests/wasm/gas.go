@@ -19,7 +19,7 @@ import (
 func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	adminAddress := chain.RandomWallet()
-	nativeDenom := chain.NetworkConfig.TokenSymbol
+	nativeDenom := chain.NetworkConfig.BaseDenom
 
 	adminWallet := chain.AccAddressToLegacyWallet(adminAddress)
 
@@ -72,7 +72,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	bankSend := &banktypes.MsgSend{
 		FromAddress: adminAddress.String(),
 		ToAddress:   receiver.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1000))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.BaseDenom, sdk.NewInt(1000))),
 	}
 
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})

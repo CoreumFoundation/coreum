@@ -31,7 +31,7 @@ func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.NoError(t, err)
 
 	// Test that wallet owns expected balance
-	assert.Equal(t, "100", balances[chain.NetworkConfig.TokenSymbol].Amount.String())
+	assert.Equal(t, "100", balances[chain.NetworkConfig.BaseDenom].Amount.String())
 }
 
 // TestCoreTransfer checks that core is transferred correctly between wallets
@@ -88,8 +88,8 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Test that tokens disappeared from sender's wallet
 	// - 10core were transferred to receiver
 	// - 180000000core were taken as fee
-	assert.Equal(t, "90", balancesSender[chain.NetworkConfig.TokenSymbol].Amount.String())
+	assert.Equal(t, "90", balancesSender[chain.NetworkConfig.BaseDenom].Amount.String())
 
 	// Test that tokens reached receiver's wallet
-	assert.Equal(t, "20", balancesReceiver[chain.NetworkConfig.TokenSymbol].Amount.String())
+	assert.Equal(t, "20", balancesReceiver[chain.NetworkConfig.BaseDenom].Amount.String())
 }
