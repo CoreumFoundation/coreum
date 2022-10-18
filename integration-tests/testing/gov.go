@@ -10,6 +10,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
@@ -139,41 +140,53 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 	return nil
 }
 
-// WaitForProposalStatus wait for the proposal status during the gov VotingPeriod.
-func (g Governance) WaitForProposalStatus(ctx context.Context, status govtypes.ProposalStatus, proposalID uint64) (govtypes.Proposal, error) {
-	var lastStatus govtypes.ProposalStatus
-
-	govParams, err := queryGovParams(ctx, g.govClient)
+// WaitForVotingToPass waits for the voting to pass.
+func (g Governance) WaitForVotingToPass(ctx context.Context, proposalID uint64) error {
+	proposal, err := g.GetProposal(ctx, proposalID)
 	if err != nil {
-		return govtypes.Proposal{}, err
+		return err
 	}
 
-	timeout := time.NewTimer(govParams.VotingParams.VotingPeriod + time.Second*10)
-	defer timeout.Stop()
-	ticker := time.NewTicker(time.Millisecond * 250)
-	defer ticker.Stop()
-	for range ticker.C {
-		select {
-		case <-ctx.Done():
-			return govtypes.Proposal{}, ctx.Err()
-		case <-timeout.C:
-			return govtypes.Proposal{}, errors.Errorf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus)
+	block, err := g.chainContext.ClientContext.Client().Block(ctx, nil)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if block.Block.Time.Before(proposal.VotingEndTime) {
+		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(block.Block.Time))
+		defer waitCancel()
 
-		default:
-			proposal, err := g.getProposal(ctx, proposalID)
-			if err != nil {
-				return govtypes.Proposal{}, err
-			}
-
-			if lastStatus = proposal.Status; lastStatus == status {
-				return proposal, nil
-			}
+		<-waitCtx.Done()
+		if ctx.Err() != nil {
+			return ctx.Err()
 		}
 	}
-	return govtypes.Proposal{}, errors.Errorf("waiting for %s status is timed out for proposal %d and final status %s", status, proposalID, lastStatus)
+
+	retryCtx, retryCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer retryCancel()
+
+	err = retry.Do(retryCtx, time.Second, func() error {
+		proposal, err := g.GetProposal(ctx, proposalID)
+		if err != nil {
+			return err
+		}
+
+		switch proposal.Status {
+		case govtypes.StatusPassed:
+			return nil
+		case govtypes.StatusFailed:
+			return errors.New("voting failed")
+		default:
+			return retry.Retryable(errors.Errorf("waiting for status %s but current one is %s", govtypes.StatusPassed, proposal.Status))
+		}
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (g Governance) getProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
+// GetProposal returns proposal by ID
+func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
 	resp, err := g.govClient.Proposal(ctx, &govtypes.QueryProposalRequest{
 		ProposalId: proposalID,
 	})
