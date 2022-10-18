@@ -95,7 +95,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
 	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
 	_, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.True(testing.IsErr(err, sdkerrors.ErrUnauthorized), err)
+	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 	logger.Get(ctx).Info("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold

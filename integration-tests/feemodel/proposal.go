@@ -44,7 +44,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 			),
 		},
 	))
-	requireT.True(testing.IsErr(err, govtypes.ErrInvalidProposalContent))
+	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
 
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})

@@ -108,7 +108,8 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 		chain.TxFactory().
 			WithGas(bankSendGas-1), // gas less than expected
 		msg)
-	require.True(t, testing.IsErr(err, cosmoserrors.ErrOutOfGas), err)
+
+	require.True(t, cosmoserrors.ErrOutOfGas.Is(err))
 }
 
 // TestTransferGasEstimation checks that gas is correctly estimated for send message

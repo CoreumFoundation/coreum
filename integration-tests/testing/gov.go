@@ -82,7 +82,7 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 		return 0, err
 	}
 
-	proposalID, err := FindUintEventAttribute(result.Events, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
+	proposalID, err := FindUint64EventAttribute(result.Events, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
 	if err != nil {
 		return 0, err
 	}

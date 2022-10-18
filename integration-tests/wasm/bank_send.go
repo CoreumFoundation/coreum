@@ -109,7 +109,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 		// the gas here is to try to execute the tx and don't fail on the gas estimation
 		WithGas(uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
 	err = Execute(ctx, clientCtx, txf, contractAddr, withdrawPayload, sdk.Coin{})
-	requireT.True(testing.IsErr(err, cosmoserrors.ErrInsufficientFunds), err)
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// send coin from the contract to test wallet
 	withdrawPayload, err = json.Marshal(map[bankMethod]bankWithdrawRequest{

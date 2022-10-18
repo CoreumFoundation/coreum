@@ -28,8 +28,8 @@ func FindTypedEvent(t T, event proto.Message, events []tmtypes.Event) interface{
 	return nil
 }
 
-// FindUintEventAttribute finds the first event attribute by type and attribute name and convert it to the uint64 type.
-func FindUintEventAttribute(events []tmtypes.Event, etype, attribute string) (uint64, error) {
+// FindUint64EventAttribute finds the first event attribute by type and attribute name and convert it to the uint64 type.
+func FindUint64EventAttribute(events []tmtypes.Event, etype, attribute string) (uint64, error) {
 	strAttr, err := FindStringEventAttribute(events, etype, attribute)
 	if err != nil {
 		return 0, errors.New("can't find the codeID in the tx events")

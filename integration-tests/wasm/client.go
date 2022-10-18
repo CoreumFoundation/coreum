@@ -91,7 +91,7 @@ func deploy(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, was
 		return 0, err
 	}
 
-	codeID, err := testing.FindUintEventAttribute(res.Events, wasmtypes.EventTypeStoreCode, wasmtypes.AttributeKeyCodeID)
+	codeID, err := testing.FindUint64EventAttribute(res.Events, wasmtypes.EventTypeStoreCode, wasmtypes.AttributeKeyCodeID)
 	if err != nil {
 		return 0, err
 	}

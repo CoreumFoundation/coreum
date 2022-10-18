@@ -46,5 +46,5 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 			WithAccountNumber(accInfo.GetAccountNumber()).
 			WithGas(chain.GasLimitByMsgs(msg)),
 		msg)
-	testing.IsErr(err, cosmoserrors.ErrWrongSequence)
+	require.True(t, cosmoserrors.ErrWrongSequence.Is(err))
 }

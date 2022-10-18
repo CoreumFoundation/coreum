@@ -60,17 +60,18 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	// Query wallets for current balance
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	balancesSender, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+	balancesSender, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: sender.String(),
+		Denom:   chain.NetworkConfig.TokenSymbol,
 	})
 	require.NoError(t, err)
 
-	balancesRecipient, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+	balancesRecipient, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: recipient.String(),
+		Denom:   chain.NetworkConfig.TokenSymbol,
 	})
 	require.NoError(t, err)
 
-	// Test that tokens disappeared from sender's wallet
-	assert.Equal(t, senderInitialAmount.Sub(amountToSend).String(), balancesSender.Balances.AmountOf(chain.NetworkConfig.TokenSymbol).String())
-	assert.Equal(t, recipientInitialAmount.Add(amountToSend).String(), balancesRecipient.Balances.AmountOf(chain.NetworkConfig.TokenSymbol).String())
+	assert.Equal(t, senderInitialAmount.Sub(amountToSend).String(), balancesSender.Balance.Amount.String())
+	assert.Equal(t, recipientInitialAmount.Add(amountToSend).String(), balancesRecipient.Balance.Amount.String())
 }

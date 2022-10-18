@@ -42,7 +42,7 @@ func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
 			WithGas(chain.GasLimitByMsgs(msg)).
 			WithGasPrices(chain.NewDecCoin(gasPriceWithMaxDiscount.QuoInt64(2)).String()),
 		msg)
-	require.True(t, testing.IsErr(err, cosmoserrors.ErrInsufficientFee), err)
+	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
 
 	// no gas price
 	_, err = tx.BroadcastTx(ctx,
@@ -51,7 +51,7 @@ func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
 			WithGas(chain.GasLimitByMsgs(msg)).
 			WithGasPrices(""),
 		msg)
-	require.True(t, testing.IsErr(err, cosmoserrors.ErrInsufficientFee), err)
+	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
 
 	// more gas than MaxBlockGas
 	_, err = tx.BroadcastTx(ctx,
