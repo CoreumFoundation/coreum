@@ -15,13 +15,13 @@ import (
 // TestIssueBasicFungibleToken checks that fungible token is issued.
 func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
-	chainContext := chain.ClientContext
+	clientCtx := chain.ClientContext
 
-	assetClient := assettypes.NewQueryClient(chainContext)
-	bankClient := banktypes.NewQueryClient(chainContext)
+	assetClient := assettypes.NewQueryClient(clientCtx)
+	bankClient := banktypes.NewQueryClient(clientCtx)
 
-	issuer := chain.RandomWallet()
-	recipient := chain.RandomWallet()
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			issuer,

@@ -38,7 +38,7 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	))
 
 	// Setup validator and delegator
-	delegator := chain.RandomWallet()
+	delegator := chain.GenAccount()
 	validator, deactivateValidator := createValidator(ctx, t, chain)
 	defer deactivateValidator()
 
@@ -112,7 +112,7 @@ func createValidator(ctx context.Context, t testing.T, chain testing.Chain) (sdk
 	))
 
 	// Create random validator wallet
-	validator := chain.RandomWallet()
+	validator := chain.GenAccount()
 	validatorAddr := sdk.ValAddress(validator)
 
 	// Fund wallets
