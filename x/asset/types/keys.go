@@ -1,8 +1,6 @@
 package types
 
-import (
-	"github.com/gogo/protobuf/proto"
-)
+import "github.com/CoreumFoundation/coreum/pkg/store"
 
 const (
 	// ModuleName defines the module name
@@ -25,30 +23,5 @@ var (
 
 // GetFungibleTokenKey constructs the key for the fungible token.
 func GetFungibleTokenKey(denom string) []byte {
-	return JoinKeysWithLength(FungibleTokenKeyPrefix, []byte(denom))
-}
-
-// JoinKeysWithLength joins the keys with the length separation to protect from the intersecting keys
-// in case the length is not fixed.
-//
-// Example of such behavior:
-// prefix + ab + c = prefixabc
-// prefix + a + bc = prefixabc
-//
-// Example with the usage of the func
-// prefix + ab + c = prefix2ab1c
-// prefix + a + bc = prefix1a2bc
-func JoinKeysWithLength(prefix []byte, keys ...[]byte) []byte {
-	compositeKey := make([]byte, 0)
-	compositeKey = append(compositeKey, prefix...)
-	for _, key := range keys {
-		if len(key) == 0 {
-			continue
-		}
-		byteLen := proto.EncodeVarint(uint64(len(key)))
-		compositeKey = append(compositeKey, byteLen...)
-		compositeKey = append(compositeKey, key...)
-	}
-
-	return compositeKey
+	return store.JoinKeysWithLength(FungibleTokenKeyPrefix, []byte(denom))
 }
