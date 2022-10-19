@@ -29,7 +29,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdTxIssueFungibleToken(),
-		CmdTxSnapshotFungibleToken(),
+		CmdTxAirdropFungibleToken(),
 	)
 
 	return cmd
@@ -96,16 +96,16 @@ $ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer
 	return cmd
 }
 
-func CmdTxSnapshotFungibleToken() *cobra.Command {
+func CmdTxAirdropFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "snapshot-ft [denom] [height] [description] --from [owner]",
-		Args:  cobra.ExactArgs(3),
-		Short: "Requests a snapshot of fungible token",
+		Use:   "airdrop-ft [required_denom] [offer] [height] [description] --from [owner]",
+		Args:  cobra.ExactArgs(4),
+		Short: "Creates an airdrop for fungible token",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Requests a snapshot of fungible token.
+			fmt.Sprintf(`Creates an airdrop for fungible token.
 
 Example:
-$ %s tx asset snapshot-ft [denom] 1000 "dividend-2022" "Dividend 2022" 100000 --from [owner]
+$ %s tx asset airdrop-ft [required_denom] 0.1denom1,100denom2 100 "Airdrop 2022" --from [sender]
 `,
 				version.AppName,
 			),
@@ -116,19 +116,24 @@ $ %s tx asset snapshot-ft [denom] 1000 "dividend-2022" "Dividend 2022" 100000 --
 				return err
 			}
 
-			owner := clientCtx.GetFromAddress()
-			denom := args[0]
-			height, err := strconv.ParseInt(args[1], 10, 64)
+			sender := clientCtx.GetFromAddress()
+			requiredDenom := args[0]
+			offer, err := sdk.ParseDecCoins(args[1])
+			if err != nil {
+				return errors.Wrapf(err, "parsing offered coins failed")
+			}
+			height, err := strconv.ParseInt(args[2], 10, 64)
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			description := args[2]
+			description := args[3]
 
-			msg := &types.MsgSnapshotFungibleToken{
-				Denom:       denom,
-				Owner:       owner.String(),
-				Height:      height,
-				Description: description,
+			msg := &types.MsgAirdropFungibleToken{
+				Sender:        sender.String(),
+				Height:        height,
+				Description:   description,
+				RequiredDenom: requiredDenom,
+				Offer:         offer,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

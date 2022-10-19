@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
@@ -108,25 +109,26 @@ func (m *MsgIssueFungibleTokenResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgIssueFungibleTokenResponse proto.InternalMessageInfo
 
-type MsgSnapshotFungibleToken struct {
-	Denom       string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
-	Owner       string `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
-	Height      int64  `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+type MsgAirdropFungibleToken struct {
+	Sender        string          `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Height        int64           `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	Description   string          `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	RequiredDenom string          `protobuf:"bytes,4,opt,name=required_denom,json=requiredDenom,proto3" json:"required_denom,omitempty"`
+	Offer         []types.DecCoin `protobuf:"bytes,5,rep,name=offer,proto3" json:"offer"`
 }
 
-func (m *MsgSnapshotFungibleToken) Reset()         { *m = MsgSnapshotFungibleToken{} }
-func (m *MsgSnapshotFungibleToken) String() string { return proto.CompactTextString(m) }
-func (*MsgSnapshotFungibleToken) ProtoMessage()    {}
-func (*MsgSnapshotFungibleToken) Descriptor() ([]byte, []int) {
+func (m *MsgAirdropFungibleToken) Reset()         { *m = MsgAirdropFungibleToken{} }
+func (m *MsgAirdropFungibleToken) String() string { return proto.CompactTextString(m) }
+func (*MsgAirdropFungibleToken) ProtoMessage()    {}
+func (*MsgAirdropFungibleToken) Descriptor() ([]byte, []int) {
 	return fileDescriptor_67f41154fcbb1ebe, []int{2}
 }
-func (m *MsgSnapshotFungibleToken) XXX_Unmarshal(b []byte) error {
+func (m *MsgAirdropFungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgSnapshotFungibleToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAirdropFungibleToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgSnapshotFungibleToken.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAirdropFungibleToken.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -136,33 +138,33 @@ func (m *MsgSnapshotFungibleToken) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *MsgSnapshotFungibleToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgSnapshotFungibleToken.Merge(m, src)
+func (m *MsgAirdropFungibleToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAirdropFungibleToken.Merge(m, src)
 }
-func (m *MsgSnapshotFungibleToken) XXX_Size() int {
+func (m *MsgAirdropFungibleToken) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgSnapshotFungibleToken) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgSnapshotFungibleToken.DiscardUnknown(m)
+func (m *MsgAirdropFungibleToken) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAirdropFungibleToken.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgSnapshotFungibleToken proto.InternalMessageInfo
+var xxx_messageInfo_MsgAirdropFungibleToken proto.InternalMessageInfo
 
-type MsgSnapshotFungibleTokenResponse struct {
+type MsgAirdropFungibleTokenResponse struct {
 }
 
-func (m *MsgSnapshotFungibleTokenResponse) Reset()         { *m = MsgSnapshotFungibleTokenResponse{} }
-func (m *MsgSnapshotFungibleTokenResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgSnapshotFungibleTokenResponse) ProtoMessage()    {}
-func (*MsgSnapshotFungibleTokenResponse) Descriptor() ([]byte, []int) {
+func (m *MsgAirdropFungibleTokenResponse) Reset()         { *m = MsgAirdropFungibleTokenResponse{} }
+func (m *MsgAirdropFungibleTokenResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAirdropFungibleTokenResponse) ProtoMessage()    {}
+func (*MsgAirdropFungibleTokenResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_67f41154fcbb1ebe, []int{3}
 }
-func (m *MsgSnapshotFungibleTokenResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgAirdropFungibleTokenResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgSnapshotFungibleTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAirdropFungibleTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgSnapshotFungibleTokenResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAirdropFungibleTokenResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -172,57 +174,61 @@ func (m *MsgSnapshotFungibleTokenResponse) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-func (m *MsgSnapshotFungibleTokenResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgSnapshotFungibleTokenResponse.Merge(m, src)
+func (m *MsgAirdropFungibleTokenResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAirdropFungibleTokenResponse.Merge(m, src)
 }
-func (m *MsgSnapshotFungibleTokenResponse) XXX_Size() int {
+func (m *MsgAirdropFungibleTokenResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgSnapshotFungibleTokenResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgSnapshotFungibleTokenResponse.DiscardUnknown(m)
+func (m *MsgAirdropFungibleTokenResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAirdropFungibleTokenResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgSnapshotFungibleTokenResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgAirdropFungibleTokenResponse proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterType((*MsgIssueFungibleToken)(nil), "coreum.asset.v1.MsgIssueFungibleToken")
 	proto.RegisterType((*MsgIssueFungibleTokenResponse)(nil), "coreum.asset.v1.MsgIssueFungibleTokenResponse")
-	proto.RegisterType((*MsgSnapshotFungibleToken)(nil), "coreum.asset.v1.MsgSnapshotFungibleToken")
-	proto.RegisterType((*MsgSnapshotFungibleTokenResponse)(nil), "coreum.asset.v1.MsgSnapshotFungibleTokenResponse")
+	proto.RegisterType((*MsgAirdropFungibleToken)(nil), "coreum.asset.v1.MsgAirdropFungibleToken")
+	proto.RegisterType((*MsgAirdropFungibleTokenResponse)(nil), "coreum.asset.v1.MsgAirdropFungibleTokenResponse")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/tx.proto", fileDescriptor_67f41154fcbb1ebe) }
 
 var fileDescriptor_67f41154fcbb1ebe = []byte{
-	// 439 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0x4f, 0x6b, 0xd4, 0x40,
-	0x1c, 0xcd, 0xb8, 0x6d, 0xb1, 0x23, 0x2a, 0x0c, 0xad, 0x84, 0x55, 0x93, 0x65, 0x0f, 0x45, 0x0f,
-	0x4e, 0x5c, 0xbd, 0x79, 0xb3, 0x42, 0xa1, 0xc2, 0x5e, 0x56, 0xbd, 0x78, 0x91, 0xfc, 0x19, 0x26,
-	0x43, 0x93, 0xf9, 0x85, 0xfc, 0x26, 0xb5, 0xfd, 0x06, 0xe2, 0xc9, 0x8f, 0xd0, 0x8f, 0xd3, 0x63,
-	0x8f, 0xe2, 0xa1, 0xc8, 0xee, 0xa5, 0xf8, 0x29, 0x24, 0x93, 0x59, 0x5c, 0xd7, 0x08, 0x7b, 0x4a,
-	0x7e, 0xef, 0x3d, 0xde, 0xfc, 0xe6, 0xcd, 0xa3, 0x7e, 0x0a, 0xb5, 0x68, 0xca, 0x28, 0x46, 0x14,
-	0x26, 0x3a, 0x9d, 0x44, 0xe6, 0x8c, 0x57, 0x35, 0x18, 0x60, 0xf7, 0x3b, 0x86, 0x5b, 0x86, 0x9f,
-	0x4e, 0x86, 0x7b, 0x12, 0x24, 0x58, 0x2e, 0x6a, 0xff, 0x3a, 0xd9, 0xf0, 0xe1, 0xba, 0x41, 0xa7,
-	0xb7, 0xe4, 0xf8, 0x86, 0xd0, 0xfd, 0x29, 0xca, 0x63, 0xc4, 0x46, 0x1c, 0x35, 0x5a, 0xaa, 0xa4,
-	0x10, 0xef, 0xe1, 0x44, 0x68, 0xf6, 0x80, 0xee, 0xa8, 0x16, 0xad, 0x7d, 0x32, 0x22, 0x4f, 0x76,
-	0x67, 0x6e, 0x6a, 0x71, 0x3c, 0x2f, 0x13, 0x28, 0xfc, 0x5b, 0x1d, 0xde, 0x4d, 0x6c, 0x44, 0xef,
-	0x64, 0x02, 0xd3, 0x5a, 0x55, 0x46, 0x81, 0xf6, 0x07, 0x96, 0x5c, 0x85, 0xd8, 0x23, 0xba, 0x5b,
-	0x8b, 0x54, 0x55, 0x4a, 0x68, 0xe3, 0x6f, 0x59, 0xfe, 0x0f, 0xc0, 0x3e, 0xd0, 0x7b, 0x4a, 0x2b,
-	0xa3, 0xe2, 0xe2, 0x53, 0x5c, 0x42, 0xa3, 0x8d, 0xbf, 0xdd, 0x4a, 0x0e, 0xf9, 0xe5, 0x75, 0xe8,
-	0xfd, 0xb8, 0x0e, 0x0f, 0xa4, 0x32, 0x79, 0x93, 0xf0, 0x14, 0xca, 0x28, 0x05, 0x2c, 0x01, 0xdd,
-	0xe7, 0x19, 0x66, 0x27, 0x91, 0x39, 0xaf, 0x04, 0xf2, 0x63, 0x6d, 0x66, 0x77, 0x9d, 0xcb, 0x6b,
-	0x6b, 0xf2, 0xea, 0xf6, 0x97, 0x8b, 0xd0, 0xbb, 0xb9, 0x08, 0xbd, 0x71, 0x48, 0x1f, 0xf7, 0xde,
-	0x74, 0x26, 0xb0, 0x02, 0x8d, 0x62, 0xfc, 0x95, 0x50, 0x7f, 0x8a, 0xf2, 0x9d, 0x8e, 0x2b, 0xcc,
-	0xc1, 0xfc, 0x1d, 0xc7, 0x1e, 0xdd, 0xce, 0x84, 0x86, 0xd2, 0xa5, 0xd1, 0x0d, 0x2d, 0x0a, 0x9f,
-	0xb5, 0xa8, 0x5d, 0x16, 0xdd, 0xd0, 0x46, 0x94, 0x0b, 0x25, 0x73, 0x63, 0x53, 0x18, 0xcc, 0xdc,
-	0xb4, 0x1e, 0xd1, 0xd6, 0x3f, 0x11, 0xad, 0x6c, 0x3b, 0xa6, 0xa3, 0xff, 0xed, 0xb2, 0x5c, 0xf8,
-	0xc5, 0x2f, 0x42, 0x07, 0x53, 0x94, 0xac, 0xa0, 0xac, 0xe7, 0x01, 0x0f, 0xf8, 0x5a, 0x3f, 0x78,
-	0xef, 0xf5, 0x87, 0x7c, 0x33, 0xdd, 0xf2, 0x54, 0xd6, 0xd0, 0xfd, 0xfe, 0x88, 0x9e, 0xf6, 0x19,
-	0xf5, 0x4a, 0x87, 0x93, 0x8d, 0xa5, 0xcb, 0x63, 0x0f, 0xdf, 0x5e, 0xce, 0x03, 0x72, 0x35, 0x0f,
-	0xc8, 0xcf, 0x79, 0x40, 0xbe, 0x2d, 0x02, 0xef, 0x6a, 0x11, 0x78, 0xdf, 0x17, 0x81, 0xf7, 0xf1,
-	0xf9, 0x4a, 0x33, 0xde, 0x58, 0xdb, 0x23, 0x68, 0x74, 0x16, 0xb7, 0x89, 0x46, 0xae, 0xfc, 0x67,
-	0xae, 0xfe, 0xb6, 0x27, 0xc9, 0x8e, 0x2d, 0xff, 0xcb, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0xae,
-	0xaa, 0xbe, 0x79, 0x5c, 0x03, 0x00, 0x00,
+	// 499 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0xcf, 0x6a, 0xdb, 0x4e,
+	0x10, 0x96, 0x7e, 0x8e, 0xc3, 0x2f, 0x1b, 0x92, 0x82, 0x48, 0x5b, 0xe1, 0xa6, 0x92, 0x6b, 0x68,
+	0xf0, 0xa5, 0xbb, 0x71, 0x7a, 0x29, 0xbd, 0xc5, 0x09, 0x81, 0x14, 0x7c, 0x11, 0xed, 0xa5, 0x97,
+	0xa0, 0x3f, 0x13, 0x79, 0x89, 0xb5, 0xa3, 0xee, 0xae, 0x4c, 0xf2, 0x06, 0x3d, 0xf6, 0x11, 0xf2,
+	0x38, 0x39, 0xe6, 0x54, 0x4a, 0x0f, 0xa1, 0xd8, 0x87, 0xe6, 0x31, 0x8a, 0x56, 0x32, 0x31, 0xa9,
+	0x0a, 0x3e, 0x49, 0xf3, 0x7d, 0xb3, 0x33, 0x7c, 0xdf, 0xcc, 0x10, 0x37, 0x46, 0x09, 0x45, 0xc6,
+	0x42, 0xa5, 0x40, 0xb3, 0xe9, 0x80, 0xe9, 0x4b, 0x9a, 0x4b, 0xd4, 0xe8, 0x3c, 0xa9, 0x18, 0x6a,
+	0x18, 0x3a, 0x1d, 0x74, 0x76, 0x52, 0x4c, 0xd1, 0x70, 0xac, 0xfc, 0xab, 0xd2, 0x3a, 0x5e, 0x8c,
+	0x2a, 0x43, 0xc5, 0xa2, 0x50, 0x01, 0x9b, 0x0e, 0x22, 0xd0, 0xe1, 0x80, 0xc5, 0xc8, 0x45, 0xcd,
+	0xbf, 0x78, 0xdc, 0xa0, 0xaa, 0x67, 0xc8, 0xde, 0xbd, 0x4d, 0x9e, 0x8e, 0x54, 0x7a, 0xaa, 0x54,
+	0x01, 0x27, 0x85, 0x48, 0x79, 0x34, 0x81, 0x8f, 0x78, 0x01, 0xc2, 0x79, 0x46, 0xd6, 0x79, 0x89,
+	0x4a, 0xd7, 0xee, 0xda, 0xfd, 0x8d, 0xa0, 0x8e, 0x4a, 0x5c, 0x5d, 0x65, 0x11, 0x4e, 0xdc, 0xff,
+	0x2a, 0xbc, 0x8a, 0x9c, 0x2e, 0xd9, 0x4c, 0x40, 0xc5, 0x92, 0xe7, 0x9a, 0xa3, 0x70, 0x5b, 0x86,
+	0x5c, 0x86, 0x9c, 0x5d, 0xb2, 0x21, 0x21, 0xe6, 0x39, 0x07, 0xa1, 0xdd, 0x35, 0xc3, 0x3f, 0x00,
+	0xce, 0x27, 0xb2, 0xcd, 0x05, 0xd7, 0x3c, 0x9c, 0x9c, 0x85, 0x19, 0x16, 0x42, 0xbb, 0xed, 0x32,
+	0x65, 0x48, 0x6f, 0xee, 0x7c, 0xeb, 0xe7, 0x9d, 0xbf, 0x97, 0x72, 0x3d, 0x2e, 0x22, 0x1a, 0x63,
+	0xc6, 0x6a, 0xc5, 0xd5, 0xe7, 0x8d, 0x4a, 0x2e, 0x98, 0xbe, 0xca, 0x41, 0xd1, 0x53, 0xa1, 0x83,
+	0xad, 0xba, 0xca, 0xa1, 0x29, 0xf2, 0xfe, 0xff, 0xaf, 0xd7, 0xbe, 0x75, 0x7f, 0xed, 0x5b, 0x3d,
+	0x9f, 0xbc, 0x6c, 0x54, 0x1a, 0x80, 0xca, 0x51, 0x28, 0xe8, 0x7d, 0xb7, 0xc9, 0xf3, 0x91, 0x4a,
+	0x0f, 0xb9, 0x4c, 0x24, 0xe6, 0x7f, 0xb9, 0xa1, 0x40, 0x24, 0x0f, 0x6e, 0x54, 0x51, 0x89, 0x8f,
+	0x81, 0xa7, 0x63, 0x6d, 0xdc, 0x68, 0x05, 0x75, 0xb4, 0x82, 0x1b, 0xaf, 0xc9, 0xb6, 0x84, 0x2f,
+	0x05, 0x97, 0x90, 0x9c, 0x25, 0x20, 0x30, 0xab, 0x2d, 0xd9, 0x5a, 0xa0, 0xc7, 0x25, 0xe8, 0xbc,
+	0x23, 0x6d, 0x3c, 0x3f, 0x07, 0xe9, 0xb6, 0xbb, 0xad, 0xfe, 0xe6, 0xc1, 0x2e, 0xad, 0x44, 0xd3,
+	0x72, 0xda, 0xb4, 0x9e, 0x36, 0x3d, 0x86, 0xf8, 0x08, 0xb9, 0x18, 0xae, 0x95, 0x5e, 0x05, 0xd5,
+	0x83, 0x25, 0xe5, 0xaf, 0x88, 0xff, 0x0f, 0x5d, 0x0b, 0xed, 0x07, 0xbf, 0x6d, 0xd2, 0x1a, 0xa9,
+	0xd4, 0x99, 0x10, 0xa7, 0x61, 0x17, 0xf6, 0xe8, 0xa3, 0x55, 0xa4, 0x8d, 0x4e, 0x76, 0xe8, 0x6a,
+	0x79, 0x8b, 0xae, 0x8e, 0x24, 0x3b, 0x8d, 0x6e, 0xf7, 0x9b, 0xea, 0x34, 0x65, 0x76, 0xf6, 0x57,
+	0xcd, 0x5c, 0xf4, 0x1c, 0x7e, 0xb8, 0x99, 0x79, 0xf6, 0xed, 0xcc, 0xb3, 0x7f, 0xcd, 0x3c, 0xfb,
+	0xdb, 0xdc, 0xb3, 0x6e, 0xe7, 0x9e, 0xf5, 0x63, 0xee, 0x59, 0x9f, 0xf7, 0x97, 0x36, 0xec, 0xc8,
+	0x54, 0x3d, 0xc1, 0x42, 0x24, 0x61, 0x39, 0x2e, 0x56, 0x1f, 0xd1, 0x65, 0x7d, 0x46, 0x66, 0xdf,
+	0xa2, 0x75, 0x73, 0x44, 0x6f, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0x99, 0xd1, 0x80, 0x83, 0xc4,
+	0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -239,7 +245,7 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	// IssueFungibleToken defines a method to issue a new fungible token.
 	IssueFungibleToken(ctx context.Context, in *MsgIssueFungibleToken, opts ...grpc.CallOption) (*MsgIssueFungibleTokenResponse, error)
-	SnapshotFungibleToken(ctx context.Context, in *MsgSnapshotFungibleToken, opts ...grpc.CallOption) (*MsgSnapshotFungibleTokenResponse, error)
+	AirdropFungibleToken(ctx context.Context, in *MsgAirdropFungibleToken, opts ...grpc.CallOption) (*MsgAirdropFungibleTokenResponse, error)
 }
 
 type msgClient struct {
@@ -259,9 +265,9 @@ func (c *msgClient) IssueFungibleToken(ctx context.Context, in *MsgIssueFungible
 	return out, nil
 }
 
-func (c *msgClient) SnapshotFungibleToken(ctx context.Context, in *MsgSnapshotFungibleToken, opts ...grpc.CallOption) (*MsgSnapshotFungibleTokenResponse, error) {
-	out := new(MsgSnapshotFungibleTokenResponse)
-	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/SnapshotFungibleToken", in, out, opts...)
+func (c *msgClient) AirdropFungibleToken(ctx context.Context, in *MsgAirdropFungibleToken, opts ...grpc.CallOption) (*MsgAirdropFungibleTokenResponse, error) {
+	out := new(MsgAirdropFungibleTokenResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/AirdropFungibleToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +278,7 @@ func (c *msgClient) SnapshotFungibleToken(ctx context.Context, in *MsgSnapshotFu
 type MsgServer interface {
 	// IssueFungibleToken defines a method to issue a new fungible token.
 	IssueFungibleToken(context.Context, *MsgIssueFungibleToken) (*MsgIssueFungibleTokenResponse, error)
-	SnapshotFungibleToken(context.Context, *MsgSnapshotFungibleToken) (*MsgSnapshotFungibleTokenResponse, error)
+	AirdropFungibleToken(context.Context, *MsgAirdropFungibleToken) (*MsgAirdropFungibleTokenResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -282,8 +288,8 @@ type UnimplementedMsgServer struct {
 func (*UnimplementedMsgServer) IssueFungibleToken(ctx context.Context, req *MsgIssueFungibleToken) (*MsgIssueFungibleTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IssueFungibleToken not implemented")
 }
-func (*UnimplementedMsgServer) SnapshotFungibleToken(ctx context.Context, req *MsgSnapshotFungibleToken) (*MsgSnapshotFungibleTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SnapshotFungibleToken not implemented")
+func (*UnimplementedMsgServer) AirdropFungibleToken(ctx context.Context, req *MsgAirdropFungibleToken) (*MsgAirdropFungibleTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AirdropFungibleToken not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -308,20 +314,20 @@ func _Msg_IssueFungibleToken_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_SnapshotFungibleToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgSnapshotFungibleToken)
+func _Msg_AirdropFungibleToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAirdropFungibleToken)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).SnapshotFungibleToken(ctx, in)
+		return srv.(MsgServer).AirdropFungibleToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/coreum.asset.v1.Msg/SnapshotFungibleToken",
+		FullMethod: "/coreum.asset.v1.Msg/AirdropFungibleToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).SnapshotFungibleToken(ctx, req.(*MsgSnapshotFungibleToken))
+		return srv.(MsgServer).AirdropFungibleToken(ctx, req.(*MsgAirdropFungibleToken))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -335,8 +341,8 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_IssueFungibleToken_Handler,
 		},
 		{
-			MethodName: "SnapshotFungibleToken",
-			Handler:    _Msg_SnapshotFungibleToken_Handler,
+			MethodName: "AirdropFungibleToken",
+			Handler:    _Msg_AirdropFungibleToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -427,7 +433,7 @@ func (m *MsgIssueFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, 
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgSnapshotFungibleToken) Marshal() (dAtA []byte, err error) {
+func (m *MsgAirdropFungibleToken) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -437,46 +443,60 @@ func (m *MsgSnapshotFungibleToken) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgSnapshotFungibleToken) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAirdropFungibleToken) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgSnapshotFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAirdropFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.Offer) > 0 {
+		for iNdEx := len(m.Offer) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Offer[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if len(m.RequiredDenom) > 0 {
+		i -= len(m.RequiredDenom)
+		copy(dAtA[i:], m.RequiredDenom)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.RequiredDenom)))
+		i--
+		dAtA[i] = 0x22
+	}
 	if len(m.Description) > 0 {
 		i -= len(m.Description)
 		copy(dAtA[i:], m.Description)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Description)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if m.Height != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.Height))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x10
 	}
-	if len(m.Owner) > 0 {
-		i -= len(m.Owner)
-		copy(dAtA[i:], m.Owner)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Owner)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Denom) > 0 {
-		i -= len(m.Denom)
-		copy(dAtA[i:], m.Denom)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgSnapshotFungibleTokenResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgAirdropFungibleTokenResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -486,12 +506,12 @@ func (m *MsgSnapshotFungibleTokenResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgSnapshotFungibleTokenResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAirdropFungibleTokenResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgSnapshotFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAirdropFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -546,17 +566,13 @@ func (m *MsgIssueFungibleTokenResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgSnapshotFungibleToken) Size() (n int) {
+func (m *MsgAirdropFungibleToken) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Denom)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.Owner)
+	l = len(m.Sender)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -567,10 +583,20 @@ func (m *MsgSnapshotFungibleToken) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
+	l = len(m.RequiredDenom)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Offer) > 0 {
+		for _, e := range m.Offer {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
 	return n
 }
 
-func (m *MsgSnapshotFungibleTokenResponse) Size() (n int) {
+func (m *MsgAirdropFungibleTokenResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -847,7 +873,7 @@ func (m *MsgIssueFungibleTokenResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgSnapshotFungibleToken) Unmarshal(dAtA []byte) error {
+func (m *MsgAirdropFungibleToken) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -870,15 +896,15 @@ func (m *MsgSnapshotFungibleToken) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgSnapshotFungibleToken: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAirdropFungibleToken: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgSnapshotFungibleToken: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAirdropFungibleToken: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -906,41 +932,9 @@ func (m *MsgSnapshotFungibleToken) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Denom = string(dAtA[iNdEx:postIndex])
+			m.Sender = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Owner = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
 			}
@@ -959,7 +953,7 @@ func (m *MsgSnapshotFungibleToken) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
 			}
@@ -991,6 +985,72 @@ func (m *MsgSnapshotFungibleToken) Unmarshal(dAtA []byte) error {
 			}
 			m.Description = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RequiredDenom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RequiredDenom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Offer", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Offer = append(m.Offer, types.DecCoin{})
+			if err := m.Offer[len(m.Offer)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -1012,7 +1072,7 @@ func (m *MsgSnapshotFungibleToken) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgSnapshotFungibleTokenResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgAirdropFungibleTokenResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1035,10 +1095,10 @@ func (m *MsgSnapshotFungibleTokenResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgSnapshotFungibleTokenResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAirdropFungibleTokenResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgSnapshotFungibleTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAirdropFungibleTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

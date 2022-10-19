@@ -121,7 +121,7 @@ func (cms Store) GetKVStore(key storetypes.StoreKey) storetypes.KVStore {
 
 func NewSnapshotKeyStore(snapshotStore storetypes.KVStore, storeName string) SnapshotKeyStore {
 	return SnapshotKeyStore{
-		store: prefix.NewStore(snapshotStore, types.StoreSnapshotsPrefix(storeName)),
+		store: prefix.NewStore(snapshotStore, types.GetStoreSnapshotsPrefix(storeName)),
 	}
 }
 
@@ -180,7 +180,7 @@ func (s SnapshotNameStore) Claim(index sdk.Int, key []byte) error {
 
 func (s SnapshotNameStore) TakeSnapshot() sdk.Int {
 	index := s.pendingIndex()
-	s.store.Set(types.PendingSnapshotSubkey, must.Bytes(index.Add(sdk.OneInt()).Marshal()))
+	s.store.Set(types.PendingSnapshotSubkeyPrefix, must.Bytes(index.Add(sdk.OneInt()).Marshal()))
 	return index
 }
 
@@ -199,7 +199,7 @@ func (s SnapshotNameStore) pendingSnapshot() SnapshotDataStore {
 
 func (s SnapshotNameStore) latestSnapshotByKey(key []byte) (SnapshotDataStore, bool) {
 	var index sdk.Int
-	bz := s.store.Get(types.SubkeyForCurrentValueSnapshotIndex(key))
+	bz := s.store.Get(types.GetCurrentValueSnapshotIndexSubkey(key))
 	if bz == nil {
 		return SnapshotDataStore{}, false
 	}
@@ -212,7 +212,7 @@ func (s SnapshotNameStore) latestSnapshotByKey(key []byte) (SnapshotDataStore, b
 
 func (s SnapshotNameStore) pendingIndex() sdk.Int {
 	index := sdk.ZeroInt()
-	bz := s.store.Get(types.PendingSnapshotSubkey)
+	bz := s.store.Get(types.PendingSnapshotSubkeyPrefix)
 	if bz != nil {
 		if err := index.Unmarshal(bz); err != nil {
 			panic(err)
@@ -222,11 +222,11 @@ func (s SnapshotNameStore) pendingIndex() sdk.Int {
 }
 
 func (s SnapshotNameStore) deleteIndex(key []byte) {
-	s.store.Delete(types.SubkeyForCurrentValueSnapshotIndex(key))
+	s.store.Delete(types.GetCurrentValueSnapshotIndexSubkey(key))
 }
 
 func (s SnapshotNameStore) setIndex(key []byte, index sdk.Int) {
-	s.store.Set(types.SubkeyForCurrentValueSnapshotIndex(key), must.Bytes(index.Marshal()))
+	s.store.Set(types.GetCurrentValueSnapshotIndexSubkey(key), must.Bytes(index.Marshal()))
 }
 
 func (s SnapshotNameStore) fillSnapshot(key []byte) {
@@ -246,7 +246,7 @@ func (s SnapshotNameStore) fillSnapshot(key []byte) {
 func NewSnapshotDataStore(index sdk.Int, isPending bool, parentStore storetypes.KVStore) SnapshotDataStore {
 	return SnapshotDataStore{
 		index:     index,
-		store:     prefix.NewStore(parentStore, types.SnapshotDataPrefix(index)),
+		store:     prefix.NewStore(parentStore, types.GetSnapshotDataPrefix(index)),
 		isPending: isPending,
 	}
 }

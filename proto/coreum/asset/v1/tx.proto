@@ -2,7 +2,7 @@ syntax = "proto3";
 package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
-
+import "cosmos/base/v1beta1/coin.proto";
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
@@ -11,7 +11,7 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 service Msg {
   // IssueFungibleToken defines a method to issue a new fungible token.
   rpc IssueFungibleToken(MsgIssueFungibleToken) returns (MsgIssueFungibleTokenResponse);
-  rpc SnapshotFungibleToken(MsgSnapshotFungibleToken) returns (MsgSnapshotFungibleTokenResponse);
+  rpc AirdropFungibleToken(MsgAirdropFungibleToken) returns (MsgAirdropFungibleTokenResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -31,13 +31,14 @@ message MsgIssueFungibleToken {
 // MsgIssueFungibleTokenResponse defines message response for the IssueFungibleToken.
 message MsgIssueFungibleTokenResponse {}
 
-message MsgSnapshotFungibleToken {
+message MsgAirdropFungibleToken {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
-  string denom = 1;
-  string owner = 2;
-  int64 height = 3;
-  string description = 4;
+  string sender = 1;
+  int64 height = 2;
+  string description = 3;
+  string required_denom = 4;
+  repeated cosmos.base.v1beta1.DecCoin offer = 5 [(gogoproto.nullable) = false];
 }
 
-message MsgSnapshotFungibleTokenResponse {}
+message MsgAirdropFungibleTokenResponse {}

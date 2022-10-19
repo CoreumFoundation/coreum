@@ -48,14 +48,14 @@ func (msg MsgIssueFungibleToken) GetSigners() []sdk.AccAddress {
 	}
 }
 
-func (msg MsgSnapshotFungibleToken) ValidateBasic() error {
+func (msg MsgAirdropFungibleToken) ValidateBasic() error {
 	// FIXME (wojtek): implement this
 
 	return nil
 }
 
-func (msg MsgSnapshotFungibleToken) GetSigners() []sdk.AccAddress {
+func (msg MsgAirdropFungibleToken) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Owner),
+		sdk.MustAccAddressFromBech32(msg.Sender),
 	}
 }

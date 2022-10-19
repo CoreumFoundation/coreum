@@ -12,7 +12,7 @@ import (
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
 	IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error)
-	SnapshotFungibleToken(ctx sdk.Context, request types.SnapshotRequestFungibleToken) error
+	AirdropFungibleToken(ctx sdk.Context, airdropInfo types.AirdropFungibleTokenInfo) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -51,16 +51,17 @@ func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueF
 	return &types.MsgIssueFungibleTokenResponse{}, nil
 }
 
-func (ms MsgServer) SnapshotFungibleToken(ctx context.Context, req *types.MsgSnapshotFungibleToken) (*types.MsgSnapshotFungibleTokenResponse, error) {
-	err := ms.keeper.SnapshotFungibleToken(sdk.UnwrapSDKContext(ctx), types.SnapshotRequestFungibleToken{
-		Denom:       req.Denom,
-		Owner:       req.Owner,
-		Height:      req.Height,
-		Description: req.Description,
+func (ms MsgServer) AirdropFungibleToken(ctx context.Context, req *types.MsgAirdropFungibleToken) (*types.MsgAirdropFungibleTokenResponse, error) {
+	err := ms.keeper.AirdropFungibleToken(sdk.UnwrapSDKContext(ctx), types.AirdropFungibleTokenInfo{
+		Sender:        req.Sender,
+		Height:        req.Height,
+		Description:   req.Description,
+		RequiredDenom: req.RequiredDenom,
+		Offer:         req.Offer,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgSnapshotFungibleTokenResponse{}, nil
+	return &types.MsgAirdropFungibleTokenResponse{}, nil
 }

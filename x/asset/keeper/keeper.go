@@ -14,7 +14,7 @@ import (
 )
 
 type SnapshotKeeper interface {
-	RequestSnapshot(ctx sdk.Context, request snapshottypes.SnapshotRequestInfo) error
+	RequestSnapshot(ctx sdk.Context, request snapshottypes.SnapshotRequestInfo) (sdk.Int, error)
 }
 
 // Keeper is the asset module keeper.
@@ -102,21 +102,6 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		Symbol:      metadata.Symbol,
 		Description: metadata.Description,
 	}, nil
-}
-
-func (k Keeper) SnapshotFungibleToken(ctx sdk.Context, request types.SnapshotRequestFungibleToken) error {
-	// FIXME (wojtek): verify that denom exists
-
-	return k.snapshotKeeper.RequestSnapshot(ctx, snapshottypes.SnapshotRequestInfo{
-		Prefix: snapshottypes.SnapshotPrefix{
-			StoreName: banktypes.StoreKey,
-			Name:      types.BalancesSnapshotName(request.Denom),
-		},
-		Owner:           request.Owner,
-		Height:          request.Height,
-		Description:     fmt.Sprintf("snapshot of fungible token %s balances", request.Denom),
-		UserDescription: request.Description,
-	})
 }
 
 // Logger returns the Keeper logger.

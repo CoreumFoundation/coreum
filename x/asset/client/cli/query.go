@@ -23,7 +23,10 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryFungibleToken())
+	cmd.AddCommand(
+		CmdQueryFungibleToken(),
+		CmdQueryAirdropsFungibleToken(),
+	)
 	return cmd
 }
 
@@ -48,6 +51,41 @@ $ %[1]s query asset ft [denom]
 
 			denom := args[0]
 			res, err := queryClient.FungibleToken(cmd.Context(), &types.QueryFungibleTokenRequest{
+				Denom: denom,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryAirdropsFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "airdrops-ft [denom]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query airdrops for fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query airdrops for fungible token.
+
+Example:
+$ %[1]s query asset airdrops-ft [denom]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			denom := args[0]
+			res, err := queryClient.AirdropsFungibleToken(cmd.Context(), &types.QueryAirdropsFungibleTokenRequest{
 				Denom: denom,
 			})
 			if err != nil {

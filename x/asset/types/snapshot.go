@@ -9,6 +9,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/pkg/bytesop"
 	snapshottypes "github.com/CoreumFoundation/coreum/x/snapshot/types"
 )
 
@@ -20,7 +21,7 @@ var (
 )
 
 func BalancesSnapshotName(denom string) []byte {
-	return snapshottypes.Join(denomsCode, []byte(denom), balancesSubcode)
+	return bytesop.Join(denomsCode, bytesop.WithLength([]byte(denom)), balancesSubcode)
 }
 
 type BankTransformation struct {
@@ -63,12 +64,4 @@ func decodeAddressDenom(key []byte) (sdk.AccAddress, string) {
 	addressLen := int(key[0])
 	key = key[1:]
 	return key[:addressLen], string(key[addressLen:])
-}
-
-type SnapshotRequestFungibleToken struct {
-	Denom       string
-	Owner       string
-	Height      int64
-	Name        string
-	Description string
 }

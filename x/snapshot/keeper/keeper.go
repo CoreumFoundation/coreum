@@ -26,7 +26,7 @@ func NewKeeper(
 	}
 }
 
-func (k Keeper) RequestSnapshot(ctx sdk.Context, info types.SnapshotRequestInfo) error {
+func (k Keeper) RequestSnapshot(ctx sdk.Context, info types.SnapshotRequestInfo) (sdk.Int, error) {
 	// FIXME (wojtek): validate request
 
 	store := ctx.KVStore(k.storeKey)
@@ -41,7 +41,7 @@ func (k Keeper) RequestSnapshot(ctx sdk.Context, info types.SnapshotRequestInfo)
 
 	ownerAddress, err := sdk.AccAddressFromBech32(info.Owner)
 	if err != nil {
-		return errors.WithStack(err)
+		return sdk.Int{}, errors.WithStack(err)
 	}
 
 	request := &types.SnapshotRequest{
@@ -53,14 +53,14 @@ func (k Keeper) RequestSnapshot(ctx sdk.Context, info types.SnapshotRequestInfo)
 		UserDescription: info.UserDescription,
 	}
 	requestMarshaled := k.cdc.MustMarshal(request)
-	store.Set(types.AccountPendingSnapshotKey(ownerAddress, id), requestMarshaled)
-	store.Set(types.BlockPendingSnapshotKey(request.Height, id), requestMarshaled)
-	return nil
+	store.Set(types.GetPendingByAccountSnapshotKey(ownerAddress, id), requestMarshaled)
+	store.Set(types.GetPendingByBlockSnapshotKey(request.Height, id), requestMarshaled)
+	return id, nil
 }
 
 func (k Keeper) TakeSnapshots(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	requestStore := prefix.NewStore(store, types.PendingByBlockPrefix(ctx.BlockHeight()))
+	requestStore := prefix.NewStore(store, types.GetPendingByBlockPrefix(ctx.BlockHeight()))
 	iterator := requestStore.Iterator(nil, nil)
 	defer iterator.Close()
 
@@ -82,16 +82,16 @@ func (k Keeper) TakeSnapshots(ctx sdk.Context) {
 		}
 
 		owner := sdk.MustAccAddressFromBech32(request.Owner)
-		store.Set(types.AccountTakenSnapshotKey(owner, request.Id), k.cdc.MustMarshal(snapshot))
-		store.Delete(types.AccountPendingSnapshotKey(owner, request.Id))
+		store.Set(types.GetTakenByAccountSnapshotKey(owner, request.Id), k.cdc.MustMarshal(snapshot))
+		store.Delete(types.GetPendingByAccountSnapshotKey(owner, request.Id))
 		requestStore.Delete(iterator.Key())
 	}
 }
 
-func (k Keeper) GetPending(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.SnapshotRequest, error) {
+func (k Keeper) GetPending(ctx sdk.Context, accAddress sdk.AccAddress) []types.SnapshotRequest {
 	// FIXME (wojtek): add pagination
 
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingByAccountPrefix(accAddress))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetPendingByAccountPrefix(accAddress))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
@@ -102,13 +102,13 @@ func (k Keeper) GetPending(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.
 		res = append(res, request)
 	}
 
-	return res, nil
+	return res
 }
 
-func (k Keeper) GetSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.Snapshot, error) {
+func (k Keeper) GetSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) []types.Snapshot {
 	// FIXME (wojtek): add pagination
 
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TakenByAccountPrefix(accAddress))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetTakenByAccountPrefix(accAddress))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
@@ -119,5 +119,5 @@ func (k Keeper) GetSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) ([]type
 		res = append(res, snapshot)
 	}
 
-	return res, nil
+	return res
 }

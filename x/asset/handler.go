@@ -18,8 +18,8 @@ func NewHandler(ms keeper.MsgServer) sdk.Handler {
 		case *types.MsgIssueFungibleToken:
 			res, err := ms.IssueFungibleToken(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgSnapshotFungibleToken:
-			res, err := ms.SnapshotFungibleToken(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgAirdropFungibleToken:
+			res, err := ms.AirdropFungibleToken(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)

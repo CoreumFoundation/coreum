@@ -3,7 +3,7 @@ package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-
+import "coreum/asset/v1/airdrop.proto";
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
@@ -13,6 +13,10 @@ service Query {
   // FungibleToken queries the fungible token of the module.
   rpc FungibleToken(QueryFungibleTokenRequest) returns (QueryFungibleTokenResponse) {
     option (google.api.http).get = "/coreum/asset/v1/assets/ft/{denom}";
+  }
+
+  rpc AirdropsFungibleToken(QueryAirdropsFungibleTokenRequest) returns (QueryAirdropsFungibleTokenResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/assets/ft/{denom}/airdrops";
   }
 }
 
@@ -24,4 +28,12 @@ message QueryFungibleTokenRequest {
 // QueryFungibleTokenResponse is response type for the Query/FungibleToken RPC method.
 message QueryFungibleTokenResponse {
   FungibleToken fungible_token = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAirdropsFungibleTokenRequest {
+  string denom = 1;
+}
+
+message QueryAirdropsFungibleTokenResponse {
+  repeated AirdropFungibleToken airdrops = 1 [(gogoproto.nullable) = false];
 }

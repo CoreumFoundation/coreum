@@ -11,6 +11,7 @@ import (
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
 	GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error)
+	GetAirdropsFungibleToken(ctx sdk.Context, denom string) []types.AirdropFungibleToken
 }
 
 // QueryService serves grpc query requests for assets module.
@@ -34,5 +35,11 @@ func (qs QueryService) FungibleToken(ctx context.Context, req *types.QueryFungib
 
 	return &types.QueryFungibleTokenResponse{
 		FungibleToken: token,
+	}, nil
+}
+
+func (qs QueryService) AirdropsFungibleToken(ctx context.Context, req *types.QueryAirdropsFungibleTokenRequest) (*types.QueryAirdropsFungibleTokenResponse, error) {
+	return &types.QueryAirdropsFungibleTokenResponse{
+		Airdrops: qs.keeper.GetAirdropsFungibleToken(sdk.UnwrapSDKContext(ctx), req.Denom),
 	}, nil
 }

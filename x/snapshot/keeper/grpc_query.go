@@ -10,8 +10,8 @@ import (
 )
 
 type QueryKeeper interface {
-	GetPending(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.SnapshotRequest, error)
-	GetSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.Snapshot, error)
+	GetPending(ctx sdk.Context, accAddress sdk.AccAddress) []types.SnapshotRequest
+	GetSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) []types.Snapshot
 }
 
 type QueryService struct {
@@ -29,10 +29,7 @@ func (qs QueryService) Pending(ctx context.Context, req *types.QueryPendingReque
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	pending, err := qs.keeper.GetPending(sdk.UnwrapSDKContext(ctx), address)
-	if err != nil {
-		return nil, err
-	}
+	pending := qs.keeper.GetPending(sdk.UnwrapSDKContext(ctx), address)
 
 	return &types.QueryPendingResponse{
 		Pending: pending,
@@ -44,10 +41,7 @@ func (qs QueryService) Snapshots(ctx context.Context, req *types.QuerySnapshotsR
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	snapshots, err := qs.keeper.GetSnapshots(sdk.UnwrapSDKContext(ctx), address)
-	if err != nil {
-		return nil, err
-	}
+	snapshots := qs.keeper.GetSnapshots(sdk.UnwrapSDKContext(ctx), address)
 
 	return &types.QuerySnapshotsResponse{
 		Snapshots: snapshots,
