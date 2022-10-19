@@ -1,7 +1,7 @@
 package types
 
 import (
-	"strconv"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -45,7 +45,7 @@ func JoinKeysWithLength(prefix []byte, keys ...[]byte) []byte {
 		if len(key) == 0 {
 			continue
 		}
-		byteLen := []byte(strconv.Itoa(len(key)))
+		byteLen := proto.EncodeVarint(uint64(len(key)))
 		compositeKey = append(compositeKey, byteLen...)
 		compositeKey = append(compositeKey, key...)
 	}
