@@ -15,13 +15,21 @@ const (
 )
 
 var (
-	// AssetKeyPrefix defines the store key prefix for the asset.
-	AssetKeyPrefix = []byte{0x01}
 	// FungibleTokenKeyPrefix defines the key prefix for the fungible token.
-	FungibleTokenKeyPrefix = append(AssetKeyPrefix, 0x01)
+	FungibleTokenKeyPrefix = []byte{0x01}
 )
 
 // GetFungibleTokenKey constructs the key for the fungible token.
 func GetFungibleTokenKey(denom string) []byte {
-	return append(FungibleTokenKeyPrefix, []byte(denom)...)
+	return JoinKeys(FungibleTokenKeyPrefix, []byte(denom))
+}
+
+// JoinKeys joins the keys protecting the prefixes from the modification.
+func JoinKeys(keys ...[]byte) []byte {
+	compositeKey := make([]byte, 0)
+	for _, key := range keys {
+		compositeKey = append(compositeKey, key...)
+	}
+
+	return compositeKey
 }
