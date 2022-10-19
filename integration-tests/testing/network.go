@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 const (
@@ -19,26 +18,25 @@ const (
 	unbondingTime = time.Second * 5
 )
 
-// NetworkConfig is the network config used by integration tests
-var NetworkConfig = config.NetworkConfig{
-	ChainID:       config.Devnet,
-	Enabled:       true,
-	GenesisTime:   time.Now(),
-	AddressPrefix: "devcore",
-	TokenSymbol:   config.TokenSymbolDev,
-	Fee: config.FeeConfig{
-		FeeModel:         feemodeltypes.DefaultModel(),
-		DeterministicGas: config.DefaultDeterministicGasRequirements(),
-	},
-	GovConfig: config.GovConfig{
-		ProposalConfig: config.GovProposalConfig{
-			MinDepositAmount: "1000",
-			MinDepositPeriod: minDepositPeriod.String(),
-			VotingPeriod:     minVotingPeriod.String(),
-		},
-	},
-	StakingConfig: config.StakingConfig{
+// NewNetworkConfig returns the network config used by integration tests.
+func NewNetworkConfig() (config.NetworkConfig, error) {
+	networkConfig, err := config.NetworkConfigByChainID(config.ChainIDDev)
+	if err != nil {
+		return config.NetworkConfig{}, err
+	}
+	networkConfig.GovConfig.ProposalConfig = config.GovProposalConfig{
+		MinDepositAmount: "1000",
+		MinDepositPeriod: minDepositPeriod.String(),
+		VotingPeriod:     minVotingPeriod.String(),
+	}
+
+	networkConfig.StakingConfig = config.StakingConfig{
 		UnbondingTime: unbondingTime.String(),
 		MaxValidators: 32,
-	},
+	}
+
+	networkConfig.FundedAccounts = nil
+	networkConfig.GenTxs = nil
+
+	return networkConfig, nil
 }

@@ -39,11 +39,15 @@ var feeConfig = config.FeeConfig{
 
 func testNetwork() config.Network {
 	return config.NewNetwork(config.NetworkConfig{
-		ChainID:       config.Devnet,
+		ChainID:       config.ChainIDDev,
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
-		TokenSymbol:   config.TokenSymbolMain,
-		Fee:           feeConfig,
+		Denom:         "dcore",
+		// BaseDenom uses the u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
+		// We also add another prefix for non mainnet network symbols to differentiate them from mainnet.
+		// 'd' prefix in ducore stands for devnet.
+		BaseDenom: "ucore",
+		Fee:       feeConfig,
 		FundedAccounts: []config.FundedAccount{{
 			PublicKey: cosmossecp256k1.GenPrivKey().PubKey(),
 			Balances:  "1000some-test-token",
@@ -194,7 +198,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	n, err := config.NetworkByChainID(config.Devnet)
+	n, err := config.NetworkByChainID(config.ChainIDDev)
 	requireT.NoError(err)
 
 	pubKey := cosmossecp256k1.GenPrivKey().PubKey()
@@ -204,7 +208,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT.Len(n.FundedAccounts(), 6)
 	assertT.Len(n.GenTxs(), 5)
 
-	n, err = config.NetworkByChainID(config.Devnet)
+	n, err = config.NetworkByChainID(config.ChainIDDev)
 	requireT.NoError(err)
 	assertT.Len(n.FundedAccounts(), 5)
 	assertT.Len(n.GenTxs(), 4)
@@ -218,7 +222,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		ChainID:        "test-network",
 		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix:  "core",
-		TokenSymbol:    config.TokenSymbolMain,
+		BaseDenom:      "ucore",
 		Fee:            feeConfig,
 		FundedAccounts: []config.FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
@@ -251,7 +255,7 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 		ChainID:       "test-network",
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
-		TokenSymbol:   config.TokenSymbolMain,
+		BaseDenom:     "ucore",
 		Fee:           feeConfig,
 	}
 
