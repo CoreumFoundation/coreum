@@ -35,5 +35,5 @@ func NewNetworkConfig() (config.NetworkConfig, error) {
 		MaxValidators: 32,
 	}
 
-	return networkConfig, err
+	return networkConfig, nil
 }
