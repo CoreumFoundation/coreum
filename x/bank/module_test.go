@@ -54,4 +54,5 @@ func TestAppModuleOriginalBak_RegisterServices(t *testing.T) {
 	configurator := newConfiguratorMock()
 	bankModule.RegisterServices(configurator)
 	require.Equal(t, []uint64{1}, configurator.capturedMigrationVersions)
+	require.Equal(t, uint64(2), bankModule.ConsensusVersion())
 }
