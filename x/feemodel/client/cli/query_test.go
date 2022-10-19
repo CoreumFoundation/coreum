@@ -16,7 +16,7 @@ import (
 )
 
 func TestMinGasPrice(t *testing.T) {
-	networkCfg, err := config.NetworkByChainID(config.Devnet)
+	networkCfg, err := config.NetworkByChainID(config.ChainIDDev)
 	require.NoError(t, err)
 	app.ChosenNetwork = networkCfg
 

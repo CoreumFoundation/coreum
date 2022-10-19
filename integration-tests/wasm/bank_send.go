@@ -40,7 +40,7 @@ const (
 // to disperse the native coins.
 func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
 	admin := chain.GenAccount()
-	nativeDenom := chain.NetworkConfig.TokenSymbol
+	nativeDenom := chain.NetworkConfig.BaseDenom
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,

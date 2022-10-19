@@ -29,7 +29,7 @@ func createSimApp(b *testing.B) *app.App {
 	})
 
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
-	network, err := config.NetworkByChainID(config.Devnet)
+	network, err := config.NetworkByChainID(config.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
@@ -54,9 +54,11 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 	simApp := createSimApp(b)
 	bankKeeper := simApp.BankKeeper
 	sdkContext := simApp.NewUncachedContext(false, types.Header{})
-	singleCoinDenom := config.TokenSymbolDev
+	chainConfig, err := config.NetworkByChainID(config.ChainIDDev)
+	require.NoError(b, err)
+	singleCoinDenom := chainConfig.BaseDenom()
 	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000)))
-	err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
+	err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
 	assert.NoError(b, err)
 
 	testAction := func(b *testing.B, numberOfDenoms int) {
@@ -106,10 +108,12 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	bankKeeper := simApp.BankKeeper
 	sdkContext := simApp.NewUncachedContext(false, types.Header{})
 
-	singleCoinDenom := config.TokenSymbolDev
+	chainConfig, err := config.NetworkByChainID(config.ChainIDDev)
+	require.NoError(b, err)
+	singleCoinDenom := chainConfig.BaseDenom()
 	coin := sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000))
 	coins := sdk.NewCoins(coin)
-	err := bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
+	err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
 	assert.NoError(b, err)
 	b.Run("test-single-get-supply", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

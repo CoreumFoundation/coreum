@@ -30,29 +30,20 @@ import (
 // ChainID represents predefined chain ID
 type ChainID string
 
-// Predefined chain IDs
+// Predefined chain ids
 const (
-	Mainnet ChainID = "coreum-mainnet-1"
-	Devnet  ChainID = "coreum-devnet-1"
-)
-
-// EnableFakeUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
-// It is string, not bool, because -X flag supports strings only.
-var EnableFakeUpgradeHandler string
-
-// Known TokenSymbols
-const (
-	// u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
-	// We also add another prefix for non mainnet network symbols to differentiate them from mainnet.
-	// 'd' prefix in ducore stands for devnet.
-	TokenSymbolMain string = "ucore"
-	TokenSymbolDev  string = "ducore"
+	ChainIDMain ChainID = "coreum-mainnet-1"
+	ChainIDDev  ChainID = "coreum-devnet-1"
 )
 
 const (
 	// CoinType is the CORE coin type as defined in SLIP44 (https://github.com/satoshilabs/slips/blob/master/slip-0044.md)
 	CoinType uint32 = 990
 )
+
+// EnableFakeUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
+// It is string, not bool, because -X flag supports strings only.
+var EnableFakeUpgradeHandler string
 
 var (
 	//go:embed networks/coreum-devnet-1/validator-0.json
@@ -87,23 +78,27 @@ func init() {
 		MaxValidators: 32,
 	}
 
+	const baseDenomDev = "ducore"
+
 	list := []NetworkConfig{
 		{
-			ChainID:       Mainnet,
+			ChainID:       ChainIDMain,
 			Enabled:       false,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "core",
-			TokenSymbol:   TokenSymbolMain,
+			Denom:         "core",
+			BaseDenom:     "ucore",
 			Fee:           feeConfig,
 			GovConfig:     govConfig,
 			StakingConfig: stakingConfig,
 		},
 		{
-			ChainID:       Devnet,
+			ChainID:       ChainIDDev,
 			Enabled:       true,
 			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix: "devcore",
-			TokenSymbol:   TokenSymbolDev,
+			Denom:         "dcore",
+			BaseDenom:     baseDenomDev,
 			Fee:           feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@35.223.81.227:26656"},
@@ -114,31 +109,31 @@ func init() {
 				// Staker of validator 0
 				{
 					PublicKey: &cosmossecp256k1.PubKey{Key: []byte{0x2, 0x2f, 0xae, 0x96, 0x14, 0xe, 0x4e, 0x4e, 0xfc, 0x42, 0xaa, 0xce, 0xc2, 0xbf, 0x72, 0x49, 0xd6, 0x50, 0xf8, 0xde, 0x85, 0xe4, 0xfc, 0xe4, 0x45, 0x4e, 0xcb, 0xb1, 0x85, 0xc0, 0xdb, 0x81, 0xa5}},
-					Balances:  "10000000000000" + TokenSymbolDev,
+					Balances:  "10000000000000" + baseDenomDev,
 				},
 
 				// Staker of validator 1
 				{
 					PublicKey: &cosmossecp256k1.PubKey{Key: []byte{0x2, 0x64, 0xfd, 0xa6, 0x29, 0xc4, 0x89, 0x7b, 0xcf, 0x9b, 0xa6, 0x1f, 0xd9, 0xbe, 0xae, 0x61, 0x20, 0x49, 0xfd, 0x93, 0xb6, 0x3, 0xa5, 0xab, 0xe8, 0xdf, 0x6, 0xe0, 0xcf, 0x61, 0xd1, 0x8d, 0xa7}},
-					Balances:  "10000000000000" + TokenSymbolDev,
+					Balances:  "10000000000000" + baseDenomDev,
 				},
 
 				// Staker of validator 2
 				{
 					PublicKey: &cosmossecp256k1.PubKey{Key: []byte{0x2, 0x68, 0x60, 0xc0, 0xa3, 0xcf, 0x14, 0x8c, 0xb, 0xdd, 0xd5, 0xe0, 0xbf, 0xf1, 0xb5, 0x3d, 0xd7, 0xee, 0x0, 0xf9, 0xab, 0x61, 0xd9, 0xa5, 0x82, 0x6f, 0x56, 0x21, 0x7, 0x50, 0x60, 0xd8, 0xd0}},
-					Balances:  "10000000000000" + TokenSymbolDev,
+					Balances:  "10000000000000" + baseDenomDev,
 				},
 
 				// Staker of validator 3
 				{
 					PublicKey: &cosmossecp256k1.PubKey{Key: []byte{0x3, 0x93, 0xa9, 0x5b, 0xd4, 0x80, 0xa9, 0x1c, 0x6, 0xe6, 0x5d, 0xc7, 0xdd, 0x9c, 0xa4, 0xf6, 0x97, 0xfc, 0xd, 0x6b, 0x83, 0xb1, 0x37, 0x1c, 0xf9, 0x75, 0x68, 0xd3, 0x3c, 0x24, 0x85, 0xe6, 0x94}},
-					Balances:  "10000000000000" + TokenSymbolDev,
+					Balances:  "10000000000000" + baseDenomDev,
 				},
 
 				// Faucet's account storing the rest of total supply
 				{
 					PublicKey: &cosmossecp256k1.PubKey{Key: []byte{0x2, 0x5b, 0xb9, 0x1c, 0x57, 0xec, 0x12, 0x10, 0x92, 0x58, 0xef, 0xf9, 0x5, 0x7b, 0x70, 0x9d, 0x96, 0xbb, 0x57, 0xc5, 0xaa, 0x38, 0x61, 0x60, 0xca, 0xb2, 0x9, 0x21, 0xf, 0x45, 0x32, 0xc6, 0x6b}},
-					Balances:  "10000000000000" + TokenSymbolDev,
+					Balances:  "10000000000000" + baseDenomDev,
 				},
 			},
 			GenTxs: []json.RawMessage{
@@ -152,16 +147,16 @@ func init() {
 	}
 
 	for _, elem := range list {
-		networks[elem.ChainID] = elem
+		networkConfigs[elem.ChainID] = elem
 	}
 }
 
-var networks = map[ChainID]NetworkConfig{}
+var networkConfigs = map[ChainID]NetworkConfig{}
 
 // EnabledNetworks returns enabled networks
 func EnabledNetworks() []Network {
-	enabledNetworks := make([]Network, 0, len(networks))
-	for _, nc := range networks {
+	enabledNetworks := make([]Network, 0, len(networkConfigs))
+	for _, nc := range networkConfigs {
 		if nc.Enabled {
 			enabledNetworks = append(enabledNetworks, NewNetwork(nc))
 		}
@@ -206,7 +201,8 @@ type NetworkConfig struct {
 	ChainID        ChainID
 	GenesisTime    time.Time
 	AddressPrefix  string
-	TokenSymbol    string
+	Denom          string
+	BaseDenom      string
 	Fee            FeeConfig
 	FundedAccounts []FundedAccount
 	GenTxs         []json.RawMessage
@@ -224,7 +220,8 @@ type Network struct {
 	chainID                  ChainID
 	genesisTime              time.Time
 	addressPrefix            string
-	tokenSymbol              string
+	denom                    string
+	baseDenom                string
 	fee                      FeeConfig
 	nodeConfig               NodeConfig
 	gov                      GovConfig
@@ -242,7 +239,8 @@ func NewNetwork(c NetworkConfig) Network {
 		genesisTime:              c.GenesisTime,
 		chainID:                  c.ChainID,
 		addressPrefix:            c.AddressPrefix,
-		tokenSymbol:              c.TokenSymbol,
+		denom:                    c.Denom,
+		baseDenom:                c.BaseDenom,
 		nodeConfig:               c.NodeConfig.Clone(),
 		fee:                      c.Fee,
 		gov:                      c.GovConfig,
@@ -459,10 +457,10 @@ func (n Network) GenTxs() []json.RawMessage {
 	return genTxs
 }
 
-// TokenSymbol returns the governance token symbol. This is different
-// for each network(i.e mainnet, testnet, etc)
-func (n Network) TokenSymbol() string {
-	return n.tokenSymbol
+// BaseDenom returns the base chain denom. This is different
+// for each network(i.e. mainnet, testnet, etc)
+func (n Network) BaseDenom() string {
+	return n.baseDenom
 }
 
 // FeeModel returns fee model configuration
@@ -480,20 +478,29 @@ func (n Network) DeterministicGas() DeterministicGasRequirements {
 	return n.fee.DeterministicGas
 }
 
-// NetworkByChainID returns config for a predefined config.
-// predefined networks are "coreum-mainnet" and "coreum-devnet".
-func NetworkByChainID(id ChainID) (Network, error) {
-	nw, found := networks[id]
+// NetworkConfigByChainID returns predefined NetworkConfig for a ChainID.
+func NetworkConfigByChainID(id ChainID) (NetworkConfig, error) {
+	nc, found := networkConfigs[id]
 	if !found {
-		return Network{}, errors.Errorf("chainID %s not found", id)
+		return NetworkConfig{}, errors.Errorf("chainID %s not found", id)
 	}
 
-	// TODO: remove this check once all preconfigured networks are enabled
-	if !nw.Enabled {
-		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(Devnet))
+	return nc, nil
+}
+
+// NetworkByChainID returns predefined Network for a ChainID.
+func NetworkByChainID(id ChainID) (Network, error) {
+	nc, err := NetworkConfigByChainID(id)
+	if err != nil {
+		return Network{}, err
 	}
 
-	return NewNetwork(nw), nil
+	// TODO: remove this check once all preconfigured networkConfigs are enabled
+	if !nc.Enabled {
+		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(ChainIDDev))
+	}
+
+	return NewNetwork(nc), nil
 }
 
 //go:embed genesis/genesis.tmpl.json
@@ -504,14 +511,16 @@ func genesis(n Network) ([]byte, error) {
 	err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
 		GenesisTimeUTC string
 		ChainID        ChainID
-		TokenSymbol    string
+		Denom          string
+		BaseDenom      string
 		FeeModelParams feemodeltypes.ModelParams
 		Gov            GovConfig
 		Staking        StakingConfig
 	}{
 		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:        n.chainID,
-		TokenSymbol:    n.tokenSymbol,
+		Denom:          n.denom,
+		BaseDenom:      n.baseDenom,
 		FeeModelParams: n.FeeModel().Params(),
 		Gov:            n.gov,
 		Staking:        n.staking,
