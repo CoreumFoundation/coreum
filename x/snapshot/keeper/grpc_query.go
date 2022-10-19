@@ -10,8 +10,8 @@ import (
 )
 
 type QueryKeeper interface {
-	GetPending(ctx sdk.Context, accAddress sdk.AccAddress) []types.SnapshotRequest
-	GetSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) []types.Snapshot
+	GetPending(ctx sdk.Context, accAddress sdk.AccAddress) []types.SnapshotInfo
+	GetSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) []types.SnapshotInfo
 }
 
 type QueryService struct {

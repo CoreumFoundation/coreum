@@ -22,21 +22,23 @@ message SnapshotKey {
 message SnapshotRequest {
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.equal) = false;
-  SnapshotPrefix prefix = 1 [(gogoproto.nullable) = false];
-  string id = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
-  string owner = 3;
-  int64 height = 4;
-  string description = 5;
-  string user_description = 6;
+  SnapshotInfo info = 1 [(gogoproto.nullable) = false];
+  SnapshotPrefix prefix = 2 [(gogoproto.nullable) = false];
 }
 
 message Snapshot {
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.equal) = false;
-  SnapshotKey key = 1 [(gogoproto.nullable) = false];
-  string id = 2 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
-  string owner = 3;
-  int64 height = 4;
-  string description = 5;
-  string user_description = 6;
+  SnapshotInfo info = 1 [(gogoproto.nullable) = false];
+  SnapshotKey key = 2 [(gogoproto.nullable) = false];
+}
+
+message SnapshotInfo {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  string id = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+  string owner = 2;
+  int64 height = 3;
+  string description = 4;
+  string user_description = 5;
 }

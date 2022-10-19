@@ -22,7 +22,7 @@ message QueryPendingRequest {
 }
 
 message QueryPendingResponse {
-  repeated SnapshotRequest pending = 1 [(gogoproto.nullable) = false];
+  repeated SnapshotInfo pending = 1 [(gogoproto.nullable) = false];
 }
 
 message QuerySnapshotsRequest {
@@ -30,5 +30,5 @@ message QuerySnapshotsRequest {
 }
 
 message QuerySnapshotsResponse {
-  repeated Snapshot snapshots = 1 [(gogoproto.nullable) = false];
+  repeated SnapshotInfo snapshots = 1 [(gogoproto.nullable) = false];
 }
