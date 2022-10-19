@@ -39,7 +39,7 @@ func New() *app.App {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
-	network, err := config.NetworkByChainID(config.Devnet)
+	network, err := config.NetworkByChainID(config.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
