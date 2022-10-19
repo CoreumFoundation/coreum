@@ -1,5 +1,9 @@
 package types
 
+import (
+	"strconv"
+)
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "asset"
@@ -21,18 +25,28 @@ var (
 
 // GetFungibleTokenKey constructs the key for the fungible token.
 func GetFungibleTokenKey(denom string) []byte {
-	return JoinKeys(FungibleTokenKeyPrefix, []byte(denom))
+	return JoinKeysWithLength(FungibleTokenKeyPrefix, []byte(denom))
 }
 
-// JoinKeys joins the keys protecting the prefixes from the modification.
-func JoinKeys(keys ...[]byte) []byte {
-	var length int
+// JoinKeysWithLength joins the keys with the length separation to protect from the intersecting keys
+// in case the length is not fixed.
+//
+// Example of such behavior:
+// prefix + ab + c = prefixabc
+// prefix + a + bc = prefixabc
+//
+// Example with the usage of the func
+// prefix + ab + c = prefix2ab1c
+// prefix + a + ab = prefix1a2bc
+func JoinKeysWithLength(prefix []byte, keys ...[]byte) []byte {
+	compositeKey := make([]byte, 0)
+	compositeKey = append(compositeKey, prefix...)
 	for _, key := range keys {
-		length += len(key)
-	}
-
-	compositeKey := make([]byte, 0, length)
-	for _, key := range keys {
+		if len(key) == 0 {
+			continue
+		}
+		byteLen := []byte(strconv.Itoa(len(key)))
+		compositeKey = append(compositeKey, byteLen...)
 		compositeKey = append(compositeKey, key...)
 	}
 

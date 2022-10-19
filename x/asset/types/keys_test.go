@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,11 @@ func TestJoinKeys(t *testing.T) {
 	keyClone := append(make([]byte, 0, len(prefix)), prefix...)
 	// gen new key
 	denom := []byte("denom")
-	key := types.JoinKeys(prefix, denom)
-	require.Equal(t, append(prefix, denom...), key)
+	key := types.JoinKeysWithLength(prefix, denom)
+	exp := make([]byte, 0)
+	exp = append(exp, prefix...)
+	exp = append(exp, []byte(strconv.Itoa(len(denom)))...)
+	exp = append(exp, denom...)
+	require.Equal(t, exp, key)
 	require.Equal(t, keyClone, prefix)
 }
