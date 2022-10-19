@@ -37,7 +37,7 @@ func GetFungibleTokenKey(denom string) []byte {
 //
 // Example with the usage of the func
 // prefix + ab + c = prefix2ab1c
-// prefix + a + ab = prefix1a2bc
+// prefix + a + bc = prefix1a2bc
 func JoinKeysWithLength(prefix []byte, keys ...[]byte) []byte {
 	compositeKey := make([]byte, 0)
 	compositeKey = append(compositeKey, prefix...)
