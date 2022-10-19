@@ -9,136 +9,64 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other then CORE is rejected
 
-// TestTooLowGasPrice verifies that transaction fails if offered gas price is below minimum level
-// specified by the fee model of the network
-func TestTooLowGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := testing.RandomWallet()
+// TestFeeLimits verifies that invalid message gas won't be accepted.
+func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
+	sender := chain.GenAccount()
 
-	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
+	maxBlockGas := chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas
+	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
 		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 		1,
-		sdk.NewInt(100),
-	))
+		sdk.NewInt(maxBlockGas+100),
+	)))))
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
+	msg := &banktypes.MsgSend{
+		FromAddress: sender.String(),
+		ToAddress:   sender.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
+	}
 
-	coredClient := chain.Client
+	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice.
+		Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.Params().MaxDiscount))
 
-	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice.Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.Params().MaxDiscount))
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   sender,
-			GasLimit: chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-			GasPrice: chain.NewDecCoin(gasPriceWithMaxDiscount.Mul(sdk.MustNewDecFromStr("0.5"))),
-		},
-		Sender:   sender,
-		Receiver: sender,
-		Amount:   chain.NewCoin(sdk.NewInt(10)),
-	})
-	require.NoError(t, err)
+	// the gas price is too low
+	_, err := tx.BroadcastTx(ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(chain.GasLimitByMsgs(msg)).
+			WithGasPrices(chain.NewDecCoin(gasPriceWithMaxDiscount.QuoInt64(2)).String()),
+		msg)
+	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
 
-	// Broadcast should fail because gas price is too low for transaction to enter mempool
-	_, err = coredClient.Broadcast(ctx, txBytes)
-	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee), err)
-}
+	// no gas price
+	_, err = tx.BroadcastTx(ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(chain.GasLimitByMsgs(msg)).
+			WithGasPrices(""),
+		msg)
+	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
 
-// TestNoFee verifies that transaction fails if sender does not offer fee at all
-func TestNoFee(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := testing.RandomWallet()
-
-	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-		1,
-		sdk.NewInt(100),
-	))
-
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
-
-	coredClient := chain.Client
-
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   sender,
-			GasLimit: chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-		},
-		Sender:   sender,
-		Receiver: sender,
-		Amount:   chain.NewCoin(sdk.NewInt(10)),
-	})
-	require.NoError(t, err)
-
-	// Broadcast should fail because gas price is too low for transaction to enter mempool
-	_, err = coredClient.Broadcast(ctx, txBytes)
-	require.True(t, client.IsErr(err, cosmoserrors.ErrInsufficientFee), err)
-}
-
-// TestGasLimitHigherThanMaxBlockGas verifies that transaction requiring more gas than MaxBlockGas fails
-func TestGasLimitHigherThanMaxBlockGas(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := testing.RandomWallet()
-
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(sender.Address(), chain.NewCoin(testing.ComputeNeededBalance(
-			chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-			uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas+1),
-			1,
-			sdk.NewInt(100),
-		))),
-	))
-
-	coredClient := chain.Client
-
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   sender,
-			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas + 1), // transaction requires more gas than block can fit
-			GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
-		},
-		Sender:   sender,
-		Receiver: sender,
-		Amount:   chain.NewCoin(sdk.NewInt(10)),
-	})
-	require.NoError(t, err)
-
-	// Broadcast should fail because gas limit is higher than the block capacity
-	_, err = coredClient.Broadcast(ctx, txBytes)
+	// more gas than MaxBlockGas
+	_, err = tx.BroadcastTx(ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(uint64(maxBlockGas+1)),
+		msg)
+	// TODO(dhil) here we get the Internal error -> "tx (***) not found" and the test takes the "txTimeout" time, validate that it's expected
 	require.Error(t, err)
-}
 
-// TestGasLimitEqualToMaxBlockGas verifies that transaction requiring MaxBlockGas gas succeeds
-func TestGasLimitEqualToMaxBlockGas(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := testing.RandomWallet()
-
-	initialBalance := chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
-		1,
-		sdk.NewInt(100),
-	))
-
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender.Address(), initialBalance)))
-
-	coredClient := chain.Client
-
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   sender,
-			GasLimit: uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas),
-			GasPrice: chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice),
-		},
-		Sender:   sender,
-		Receiver: sender,
-		Amount:   chain.NewCoin(sdk.NewInt(10)),
-	})
-	require.NoError(t, err)
-
-	_, err = coredClient.Broadcast(ctx, txBytes)
+	// gas equal MaxBlockGas, the tx should pass
+	_, err = tx.BroadcastTx(ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(uint64(maxBlockGas)),
+		msg)
 	require.NoError(t, err)
 }

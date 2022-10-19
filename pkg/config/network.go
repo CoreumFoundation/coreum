@@ -77,13 +77,13 @@ func init() {
 	govConfig := GovConfig{
 		ProposalConfig: GovProposalConfig{
 			MinDepositAmount: "10000000",
-			MinDepositPeriod: "172800s",
-			VotingPeriod:     "172800s",
+			MinDepositPeriod: "120h", // 5 days
+			VotingPeriod:     "120h", // 5 days
 		},
 	}
 
 	stakingConfig := StakingConfig{
-		UnbondingTime: "1814400s",
+		UnbondingTime: "168h", // 7 days
 		MaxValidators: 32,
 	}
 

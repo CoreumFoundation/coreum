@@ -36,7 +36,7 @@ func TestUpgrade(ctx context.Context, t testing.T, chain testing.Chain) {
 	upgradeHeight := infoBefore.LastBlockHeight + 30
 
 	// Create new proposer.
-	proposer := chain.RandomWallet()
+	proposer := chain.GenAccount()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 

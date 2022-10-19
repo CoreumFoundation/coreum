@@ -2,7 +2,6 @@ package testing
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -11,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -85,16 +83,12 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 		return 0, err
 	}
 
-	proposalIDStr, ok := client.FindEventAttribute(sdk.StringifyEvents(result.Events), govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
-	if !ok {
-		return 0, errors.New("can find proposal id in the broadcast response")
-	}
-	proposalID, err := strconv.Atoi(proposalIDStr)
+	proposalID, err := FindUint64EventAttribute(result.Events, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
 	if err != nil {
-		return 0, errors.WithStack(err)
+		return 0, err
 	}
 
-	return proposalID, nil
+	return int(proposalID), nil
 }
 
 // VoteAll votes for the proposalID from all voting accounts with the provided VoteOption.

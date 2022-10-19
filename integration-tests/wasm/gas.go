@@ -18,29 +18,24 @@ import (
 // non-deterministic transaction takes gas within appropriate limits.
 func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
-	adminAddress := chain.RandomWallet()
-	nativeDenom := chain.NetworkConfig.TokenSymbol
-
-	adminWallet := chain.AccAddressToLegacyWallet(adminAddress)
+	admin := chain.GenAccount()
 
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(adminWallet.Address(), chain.NewCoin(sdk.NewInt(5000000000))),
+		testing.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
 	))
-
-	gasPrice := chain.NewDecCoin(chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice)
-	baseInput := tx.BaseInput{
-		Signer:   adminWallet,
-		GasPrice: gasPrice,
-	}
-	coredClient := chain.Client
-	wasmTestClient := NewClient(coredClient)
 
 	// deploy and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
 	requireT.NoError(err)
-	contractAddr, err := wasmTestClient.DeployAndInstantiate(
+
+	clientCtx := chain.ClientContext.WithFromAddress(admin)
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	contractAddr, err := DeployAndInstantiate(
 		ctx,
-		baseInput,
+		clientCtx,
+		txf,
 		bankSendWASM,
 		InstantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
@@ -52,25 +47,25 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	requireT.NoError(err)
 
 	// Send tokens
-	receiver := chain.RandomWallet()
+	receiver := chain.GenAccount()
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
 			Amount:    "5000",
-			Denom:     nativeDenom,
+			Denom:     chain.NetworkConfig.TokenSymbol,
 			Recipient: receiver.String(),
 		},
 	})
 	requireT.NoError(err)
 
 	wasmBankSend := &wasmtypes.MsgExecuteContract{
-		Sender:   adminAddress.String(),
+		Sender:   admin.String(),
 		Contract: contractAddr,
 		Msg:      wasmtypes.RawContractMessage(withdrawPayload),
 		Funds:    sdk.Coins{},
 	}
 
 	bankSend := &banktypes.MsgSend{
-		FromAddress: adminAddress.String(),
+		FromAddress: admin.String(),
 		ToAddress:   receiver.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.TokenSymbol, sdk.NewInt(1000))),
 	}
@@ -78,8 +73,8 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	maxGasExpected := minGasExpected * 10
 
-	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(adminAddress)
-	txf := chain.ChainContext.TxFactory().WithGas(maxGasExpected)
+	clientCtx = chain.ChainContext.ClientContext.WithFromAddress(admin)
+	txf = chain.ChainContext.TxFactory().WithGas(maxGasExpected)
 	result, err := tx.BroadcastTx(ctx, clientCtx, txf, wasmBankSend, bankSend)
 	require.NoError(t, err)
 
