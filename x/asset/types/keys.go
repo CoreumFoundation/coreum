@@ -35,5 +35,6 @@ func JoinKeys(keys ...[]byte) []byte {
 	for _, key := range keys {
 		compositeKey = append(compositeKey, key...)
 	}
+
 	return compositeKey
 }
