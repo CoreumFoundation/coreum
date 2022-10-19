@@ -24,10 +24,10 @@ Chart below presents the dependency between *short average block gas* and minimu
 ![Fee model curve](assets/curve.png)
 
 There are four regions on the fee model curve:
-- between 0 and *long average block gas* where gas price goes down exponentially from `InitialGasPrice` to gas price with maximum discount (`InitialGasPrice * (1 - MaxDiscount)`),
-- between *long average block gas* and `EscalationStartBlockGas` where we offer gas price with maximum discount all the time,
-- between `EscalationStartBlockGas` and `MaxBlockGas` where price goes up rapidly (being an output of a power function) from gas price with maximum discount to `MaxGasPrice`,
-- above `MaxBlockGas` (if it happens for any reason) where price is equal to `MaxGasPrice`.
+- green - between 0 and *long average block gas* where gas price goes down exponentially from `InitialGasPrice` to gas price with maximum discount (`InitialGasPrice * (1 - MaxDiscount)`),
+- red - between *long average block gas* and `EscalationStartBlockGas` where we offer gas price with maximum discount all the time,
+- yellow - between `EscalationStartBlockGas` and `MaxBlockGas` where price goes up rapidly (being an output of a power function) from gas price with maximum discount to `MaxGasPrice`,
+- blue - above `MaxBlockGas` (if it happens for any reason) where price is equal to `MaxGasPrice`.
 
 The input (x value) for that function is calculated by taking *short block gas average*.
 Price (y value) being an output of the fee model is used as the minimum gas price for the next block.
