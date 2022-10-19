@@ -27,29 +27,38 @@ var (
 	CurrentValueSnapshotIndexSubkey = []byte{0x01}
 	DataSubkey                      = []byte{0x02}
 
-	IDGeneratorKey     = []byte{0x01}
-	PendingRequestsKey = []byte{0x02}
-	TakenKey           = []byte{0x03}
+	IDGeneratorKey      = []byte{0x01}
+	PendingByAccountKey = []byte{0x02}
+	PendingByBlockKey   = []byte{0x03}
+	TakenByAccountKey   = []byte{0x04}
 )
 
-func AccountPendingSnapshotsPrefix(accAddress sdk.AccAddress) []byte {
-	return Join(PendingRequestsKey, address.MustLengthPrefix(accAddress))
+func PendingByAccountPrefix(accAddress sdk.AccAddress) []byte {
+	return Join(PendingByAccountKey, address.MustLengthPrefix(accAddress))
 }
 
-func AccountPendingSnapshotKey(accAddress sdk.AccAddress, index sdk.Int) []byte {
-	return Join(AccountPendingSnapshotsPrefix(accAddress), must.Bytes(index.Marshal()))
+func PendingByBlockPrefix(height int64) []byte {
+	return Join(PendingByBlockKey, must.Bytes(sdk.NewInt(height).Marshal()))
 }
 
-func AccountTakenSnapshotsPrefix(accAddress sdk.AccAddress) []byte {
-	return Join(TakenKey, address.MustLengthPrefix(accAddress))
+func AccountPendingSnapshotKey(accAddress sdk.AccAddress, snapshotID sdk.Int) []byte {
+	return Join(PendingByAccountPrefix(accAddress), must.Bytes(snapshotID.Marshal()))
 }
 
-func AccountTakenSnapshotKey(accAddress sdk.AccAddress, index sdk.Int) []byte {
-	return Join(AccountTakenSnapshotsPrefix(accAddress), must.Bytes(index.Marshal()))
+func BlockPendingSnapshotKey(height int64, snapshotID sdk.Int) []byte {
+	return Join(PendingByBlockPrefix(height), must.Bytes(snapshotID.Marshal()))
 }
 
-func SnapshotDataPrefix(index sdk.Int) []byte {
-	return Join(DataSubkey, must.Bytes(index.Marshal()))
+func TakenByAccountPrefix(accAddress sdk.AccAddress) []byte {
+	return Join(TakenByAccountKey, address.MustLengthPrefix(accAddress))
+}
+
+func AccountTakenSnapshotKey(accAddress sdk.AccAddress, snapshotID sdk.Int) []byte {
+	return Join(TakenByAccountPrefix(accAddress), must.Bytes(snapshotID.Marshal()))
+}
+
+func SnapshotDataPrefix(snapshotIndex sdk.Int) []byte {
+	return Join(DataSubkey, must.Bytes(snapshotIndex.Marshal()))
 }
 
 func StoreSnapshotsPrefix(storeName string) []byte {
