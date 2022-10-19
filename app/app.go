@@ -471,7 +471,7 @@ func New(
 	)
 	monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
-	app.SnapshotKeeper = snapshotkeeper.NewKeeper(keys[snapshottypes.StoreKey])
+	app.SnapshotKeeper = snapshotkeeper.NewKeeper(appCodec, keys[snapshottypes.StoreKey])
 	snapshotModule := snapshot.NewAppModule(appCodec, app.SnapshotKeeper)
 
 	app.AssetKeeper = assetkeeper.NewKeeper(
