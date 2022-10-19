@@ -1,8 +1,6 @@
 package config_test
 
 import (
-	"crypto/ed25519"
-	"crypto/rand"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -16,8 +14,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/staking"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -42,30 +38,17 @@ var feeConfig = config.FeeConfig{
 }
 
 func testNetwork() config.Network {
-	validatorPubKey, _, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		panic(err)
-	}
-
-	stakerPrivKey := *cosmossecp256k1.GenPrivKey()
-	stakerPubKey := stakerPrivKey.PubKey()
-
-	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPubKey, stakerPrivKey, "1000core")
-	if err != nil {
-		panic(err)
-	}
 	return config.NewNetwork(config.NetworkConfig{
-		ChainID:       "test-network",
+		ChainID:       config.Devnet,
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
 		TokenSymbol:   config.TokenSymbolMain,
 		Fee:           feeConfig,
 		FundedAccounts: []config.FundedAccount{{
-			PublicKey: stakerPubKey,
+			PublicKey: cosmossecp256k1.GenPrivKey().PubKey(),
 			Balances:  "1000some-test-token",
 		}},
-		GenTxs: []json.RawMessage{createValidatorTx},
+		GenTxs: []json.RawMessage{},
 		GovConfig: config.GovConfig{
 			ProposalConfig: config.GovProposalConfig{
 				MinDepositAmount: "10000000",
@@ -199,37 +182,6 @@ func TestAddFundsToGenesis(t *testing.T) {
 		{Address: accountAddress.String()},
 		{Address: accountAddress2.String()},
 	})
-}
-
-func TestAddGenTx(t *testing.T) {
-	assertT := assert.New(t)
-	requireT := require.New(t)
-
-	n := testNetwork()
-	validatorPubKey, _, err := ed25519.GenerateKey(rand.Reader)
-	requireT.NoError(err)
-
-	stakerPrivKey := *cosmossecp256k1.GenPrivKey()
-	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPubKey, stakerPrivKey, "1000core")
-	requireT.NoError(err)
-	n.AddGenesisTx(createValidatorTx)
-
-	genDocBytes, err := n.EncodeGenesis()
-	requireT.NoError(err)
-
-	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
-	requireT.NoError(err)
-
-	var state struct {
-		GenUtil struct {
-			GenTxs []json.RawMessage `json:"gen_txs"` //nolint:tagliatelle
-		} `json:"genutil"`
-	}
-
-	err = json.Unmarshal(parsedGenesisDoc.AppState, &state)
-	requireT.NoError(err)
-	assertT.Len(state.GenUtil.GenTxs, 2)
 }
 
 func TestDeterministicGas(t *testing.T) {
