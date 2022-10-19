@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -36,8 +35,8 @@ func NewNetworkConfig() (config.NetworkConfig, error) {
 		MaxValidators: 32,
 	}
 
-	networkConfig.FundedAccounts = make([]config.FundedAccount, 0)
-	networkConfig.GenTxs = make([]json.RawMessage, 0)
+	networkConfig.FundedAccounts = nil
+	networkConfig.GenTxs = nil
 
 	return networkConfig, nil
 }
