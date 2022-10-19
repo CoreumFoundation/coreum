@@ -26,10 +26,14 @@ func GetFungibleTokenKey(denom string) []byte {
 
 // JoinKeys joins the keys protecting the prefixes from the modification.
 func JoinKeys(keys ...[]byte) []byte {
-	compositeKey := make([]byte, 0)
+	var length int
+	for _, key := range keys {
+		length += len(key)
+	}
+
+	compositeKey := make([]byte, 0, length)
 	for _, key := range keys {
 		compositeKey = append(compositeKey, key...)
 	}
-
 	return compositeKey
 }
