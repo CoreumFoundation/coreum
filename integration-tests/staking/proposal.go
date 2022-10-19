@@ -21,7 +21,7 @@ func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain test
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
 	// Create new proposer.
-	proposer := chain.RandomWallet()
+	proposer := chain.GenAccount()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 

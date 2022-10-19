@@ -12,7 +12,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -24,7 +23,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	feeModelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 
 	// Create new proposer.
-	proposer := chain.RandomWallet()
+	proposer := chain.GenAccount()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	// For the test we need to create the proposal twice.
 	proposerBalance = proposerBalance.Add(proposerBalance)
@@ -45,7 +44,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 			),
 		},
 	))
-	requireT.True(client.IsErr(err, govtypes.ErrInvalidProposalContent))
+	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
 
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})

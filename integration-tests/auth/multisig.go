@@ -17,45 +17,24 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // TestMultisig tests the cosmos-sdk multisig accounts and API.
-func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
+func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 
-	faucetWallet := chain.RandomWallet()
-
-	signer1KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.RandomWallet())
+	signer1KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
 	requireT.NoError(err)
 
-	signer2KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.RandomWallet())
+	signer2KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
 	requireT.NoError(err)
 
-	signer3KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.RandomWallet())
+	signer3KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
 	requireT.NoError(err)
 
-	recipientWallet := chain.RandomWallet()
-
-	nativeDenom := chain.NetworkConfig.TokenSymbol
-	initialGasPrice := chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
-
+	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
-
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			// TODO (dhil): the test uses the faucetWallet since the FundedAccount consumes the Wallet instead of the address.
-			// Once we start using the sdk types directly this code will be refactored, and multisig account will be funded directly.
-			faucetWallet,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				initialGasPrice,
-				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-				2,
-				sdk.NewInt(amountToSendFromMultisigAccount)),
-			),
-		),
-	))
 
 	// generate the keyring and collect the keys to use for the multisig account
 	keyNamesSet := []string{signer1KeyInfo.GetName(), signer2KeyInfo.GetName(), signer3KeyInfo.GetName()}
@@ -72,54 +51,36 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
 	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
 	requireT.NoError(err)
+
 	// fund the multisig account
-	coinsToFundMultisigAddress := sdk.NewCoins(sdk.NewCoin(nativeDenom, testing.ComputeNeededBalance(
-		initialGasPrice,
-		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-		1, sdk.NewInt(amountToSendFromMultisigAccount))))
-
-	bankSendMsg := &banktypes.MsgSend{
-		FromAddress: faucetWallet.String(),
-		ToAddress:   multisigAddress.String(),
-		Amount:      coinsToFundMultisigAddress,
-	}
-
-	clientCtx := chain.ClientContext.
-		WithFromAddress(faucetWallet)
-
-	txF := chain.TxFactory().
-		WithGas(chain.GasLimitByMsgs(bankSendMsg))
-
-	result, err := tx.BroadcastTx(
-		ctx,
-		clientCtx,
-		txF,
-		bankSendMsg,
-	)
-	require.NoError(t, err)
-	logger.Get(ctx).Info("Multisig funding executed", zap.String("txHash", result.TxHash))
-
-	bankClient := banktypes.NewQueryClient(clientCtx)
-	multisigBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
-		Address: multisigAddress.String(),
-	})
-	requireT.NoError(err)
-	requireT.Equal(coinsToFundMultisigAddress, multisigBalances.Balances)
+	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+		testing.NewFundedAccount(
+			multisigAddress,
+			chain.NewCoin(testing.ComputeNeededBalance(
+				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
+				1,
+				sdk.NewInt(amountToSendFromMultisigAccount)),
+			),
+		),
+	))
 
 	// prepare account to be funded from the multisig
-	recipientAddr := recipientWallet.String()
-	coinsToSendToRecipient := sdk.NewCoins(sdk.NewInt64Coin(nativeDenom, 1000))
+	recipientAddr := recipient.String()
+	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
 
+	clientCtx := chain.ClientContext
 	// prepare the tx factory to sign with the account seq and number of the multisig account
 	multisigAccInfo, err := tx.GetAccountInfo(ctx, clientCtx, multisigAddress)
 	requireT.NoError(err)
-	txF = txF.
+	txF := chain.TxFactory().
+		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
 		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
 		WithSequence(multisigAccInfo.GetSequence()).
 		WithKeybase(kr).
 		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON) //nolint:nosnakecase // the sdk constant
 
-	bankSendMsg = &banktypes.MsgSend{
+	bankSendMsg := &banktypes.MsgSend{
 		FromAddress: multisigAddress.String(),
 		ToAddress:   recipientAddr,
 		Amount:      coinsToSendToRecipient,
@@ -128,30 +89,30 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) { //nol
 	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
 
-	err = tx.SignTx(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = tx.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
 	_, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.Error(err)
-	requireT.True(client.IsErr(err, sdkerrors.ErrUnauthorized), err)
+	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 	logger.Get(ctx).Info("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = tx.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
-	err = tx.SignTx(txF, signer2KeyInfo.GetName(), txBuilder, false)
+	err = tx.Sign(txF, signer2KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
-	result, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
+	result, err := tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Fully signed tx executed", zap.String("txHash", result.TxHash))
 
+	bankClient := banktypes.NewQueryClient(clientCtx)
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipientAddr,
 	})

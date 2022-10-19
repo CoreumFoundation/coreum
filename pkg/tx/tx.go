@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/mempool"
@@ -31,14 +32,14 @@ var (
 // It will help users by removing the need to import tx package from cosmos sdk and help avoid package name collision.
 type Factory = tx.Factory
 
-// SignTx signs a given tx with a named key. The bytes signed over are canonical.
+// Sign signs a given tx with a named key. The bytes signed over are canonical.
 // The resulting signature will be added to the transaction builder overwriting the previous
 // ones if overwrite=true (otherwise, the signature will be appended).
 // Signing a transaction with mutltiple signers in the DIRECT mode is not supprted and will
 // return an error.
 // An error is returned upon failure.
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
-var SignTx = tx.Sign
+var Sign = tx.Sign
 
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
@@ -59,8 +60,7 @@ func BroadcastTx(ctx context.Context, clientCtx ClientContext, txf Factory, msgs
 		}
 		txf = txf.WithGasPrices(gasPrice.String())
 
-		//nolint:contextcheck // False positive
-		_, adjusted, err := tx.CalculateGas(clientCtx, txf, msgs...)
+		_, adjusted, err := CalculateGas(ctx, clientCtx, txf, msgs...)
 		if err != nil {
 			return nil, err
 		}
@@ -96,6 +96,29 @@ func BroadcastTx(ctx context.Context, clientCtx ClientContext, txf Factory, msgs
 	}
 
 	return BroadcastRawTx(ctx, clientCtx, txBytes)
+}
+
+// CalculateGas simulates the execution of a transaction and returns the
+// simulation response obtained by the query and the adjusted gas amount.
+func CalculateGas(ctx context.Context, clientCtx ClientContext, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
+	txBytes, err := tx.BuildSimTx(txf, msgs...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	txSvcClient := sdktx.NewServiceClient(clientCtx)
+	simRes, err := txSvcClient.Simulate(ctx, &sdktx.SimulateRequest{
+		TxBytes: txBytes,
+	})
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "transaction estimation failed")
+	}
+
+	if txf.GasAdjustment() == 0 {
+		txf = txf.WithGasAdjustment(1.0)
+	}
+
+	return simRes, uint64(txf.GasAdjustment() * float64(simRes.GasInfo.GasUsed)), nil
 }
 
 // BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
