@@ -39,7 +39,7 @@ var feeConfig = config.FeeConfig{
 
 func testNetwork() config.Network {
 	return config.NewNetwork(config.NetworkConfig{
-		ChainID:       config.Devnet,
+		ChainID:       config.ChainIDDev,
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
 		Denom:         "dcore",
