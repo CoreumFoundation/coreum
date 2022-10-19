@@ -121,7 +121,7 @@ func (cms Store) GetKVStore(key storetypes.StoreKey) storetypes.KVStore {
 
 func NewSnapshotKeyStore(snapshotStore storetypes.KVStore, storeName string) SnapshotKeyStore {
 	return SnapshotKeyStore{
-		store: prefix.NewStore(snapshotStore, types.Join(types.SnapshotsKey, []byte(storeName))),
+		store: prefix.NewStore(snapshotStore, types.StoreSnapshotsPrefix(storeName)),
 	}
 }
 
@@ -129,17 +129,17 @@ type SnapshotKeyStore struct {
 	store storetypes.KVStore
 }
 
-func (s SnapshotKeyStore) ByName(shanpshotName []byte) SnapshotIDStore {
-	return SnapshotIDStore{
+func (s SnapshotKeyStore) ByName(shanpshotName []byte) SnapshotNameStore {
+	return SnapshotNameStore{
 		store: prefix.NewStore(s.store, shanpshotName),
 	}
 }
 
-type SnapshotIDStore struct {
+type SnapshotNameStore struct {
 	store storetypes.KVStore
 }
 
-func (s SnapshotIDStore) Get(key []byte) []byte {
+func (s SnapshotNameStore) Get(key []byte) []byte {
 	snapshot, exists := s.latestSnapshotByKey(key)
 	if !exists {
 		return nil
@@ -147,25 +147,25 @@ func (s SnapshotIDStore) Get(key []byte) []byte {
 	return snapshot.Get(key)
 }
 
-func (s SnapshotIDStore) Has(key []byte) bool {
+func (s SnapshotNameStore) Has(key []byte) bool {
 	_, exists := s.latestSnapshotByKey(key)
 	return exists
 }
 
-func (s SnapshotIDStore) Set(key, value []byte) {
+func (s SnapshotNameStore) Set(key, value []byte) {
 	s.fillSnapshot(key)
 	snapshot := s.pendingSnapshot()
 	snapshot.set(key, value)
 	s.setIndex(key, snapshot.Index())
 }
 
-func (s SnapshotIDStore) Delete(key []byte) {
+func (s SnapshotNameStore) Delete(key []byte) {
 	s.fillSnapshot(key)
 	s.pendingSnapshot().delete(key)
 	s.deleteIndex(key)
 }
 
-func (s SnapshotIDStore) Claim(index sdk.Int, key []byte) error {
+func (s SnapshotNameStore) Claim(index sdk.Int, key []byte) error {
 	s.fillSnapshot(key)
 	snapshot, exists := s.ByIndex(index)
 	if !exists {
@@ -178,13 +178,13 @@ func (s SnapshotIDStore) Claim(index sdk.Int, key []byte) error {
 	return nil
 }
 
-func (s SnapshotIDStore) Freeze() sdk.Int {
+func (s SnapshotNameStore) TakeSnapshot() sdk.Int {
 	index := s.pendingIndex()
 	s.store.Set(types.PendingSnapshotSubkey, must.Bytes(index.Add(sdk.OneInt()).Marshal()))
 	return index
 }
 
-func (s SnapshotIDStore) ByIndex(index sdk.Int) (SnapshotDataStore, bool) {
+func (s SnapshotNameStore) ByIndex(index sdk.Int) (SnapshotDataStore, bool) {
 	pendingIndex := s.pendingIndex()
 	if index.GT(pendingIndex) {
 		return SnapshotDataStore{}, false
@@ -192,14 +192,14 @@ func (s SnapshotIDStore) ByIndex(index sdk.Int) (SnapshotDataStore, bool) {
 	return NewSnapshotDataStore(index, index.Equal(pendingIndex), s.store), true
 }
 
-func (s SnapshotIDStore) pendingSnapshot() SnapshotDataStore {
+func (s SnapshotNameStore) pendingSnapshot() SnapshotDataStore {
 	snapshot, _ := s.ByIndex(s.pendingIndex())
 	return snapshot
 }
 
-func (s SnapshotIDStore) latestSnapshotByKey(key []byte) (SnapshotDataStore, bool) {
+func (s SnapshotNameStore) latestSnapshotByKey(key []byte) (SnapshotDataStore, bool) {
 	var index sdk.Int
-	bz := s.store.Get(types.Join(types.CurrentValueSnapshotSubkey, key))
+	bz := s.store.Get(types.SubkeyForCurrentValueSnapshotIndex(key))
 	if bz == nil {
 		return SnapshotDataStore{}, false
 	}
@@ -210,7 +210,7 @@ func (s SnapshotIDStore) latestSnapshotByKey(key []byte) (SnapshotDataStore, boo
 	return s.ByIndex(index)
 }
 
-func (s SnapshotIDStore) pendingIndex() sdk.Int {
+func (s SnapshotNameStore) pendingIndex() sdk.Int {
 	index := sdk.ZeroInt()
 	bz := s.store.Get(types.PendingSnapshotSubkey)
 	if bz != nil {
@@ -221,15 +221,15 @@ func (s SnapshotIDStore) pendingIndex() sdk.Int {
 	return index
 }
 
-func (s SnapshotIDStore) deleteIndex(key []byte) {
-	s.store.Delete(types.Join(types.CurrentValueSnapshotSubkey, key))
+func (s SnapshotNameStore) deleteIndex(key []byte) {
+	s.store.Delete(types.SubkeyForCurrentValueSnapshotIndex(key))
 }
 
-func (s SnapshotIDStore) setIndex(key []byte, index sdk.Int) {
-	s.store.Set(types.Join(types.CurrentValueSnapshotSubkey, key), must.Bytes(index.Marshal()))
+func (s SnapshotNameStore) setIndex(key []byte, index sdk.Int) {
+	s.store.Set(types.SubkeyForCurrentValueSnapshotIndex(key), must.Bytes(index.Marshal()))
 }
 
-func (s SnapshotIDStore) fillSnapshot(key []byte) {
+func (s SnapshotNameStore) fillSnapshot(key []byte) {
 	currentValueSnapshotStore, exists := s.latestSnapshotByKey(key)
 	if !exists || currentValueSnapshotStore.IsPending() {
 		return
@@ -246,7 +246,7 @@ func (s SnapshotIDStore) fillSnapshot(key []byte) {
 func NewSnapshotDataStore(index sdk.Int, isPending bool, parentStore storetypes.KVStore) SnapshotDataStore {
 	return SnapshotDataStore{
 		index:     index,
-		store:     prefix.NewStore(parentStore, types.Join(types.DataSubkey, must.Bytes(index.Marshal()))),
+		store:     prefix.NewStore(parentStore, types.SnapshotDataPrefix(index)),
 		isPending: isPending,
 	}
 }
@@ -342,12 +342,12 @@ func (s kvStore) CacheWrapWithListeners(storeKey storetypes.StoreKey, listeners 
 
 func (s kvStore) onWrite(key, value []byte, deleted bool) {
 	for _, t := range s.transformations {
-		snapshotID, keyValuePairs := t.Transform(key, value, deleted)
-		if len(snapshotID) == 0 || len(keyValuePairs) == 0 {
+		snapshotName, keyValuePairs := t.Transform(key, value, deleted)
+		if len(snapshotName) == 0 || len(keyValuePairs) == 0 {
 			return
 		}
 
-		store := s.snapshotKeySubstore.ByName(snapshotID)
+		store := s.snapshotKeySubstore.ByName(snapshotName)
 		for _, kv := range keyValuePairs {
 			if kv.Delete {
 				store.Delete(kv.Key)

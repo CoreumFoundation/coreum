@@ -9,26 +9,26 @@ import "coreum/snapshot/v1/types.proto";
 option go_package = "github.com/CoreumFoundation/coreum/x/snapshot/types";
 
 service Query {
-  rpc PendingFreezeRequests(QueryPendingFreezeRequestsRequest) returns (QueryPendingFreezeRequestsResponse) {
-    option (google.api.http).get = "/coreum/snapshot/v1/pending_freeze_requests/{address}";
+  rpc Pending(QueryPendingRequest) returns (QueryPendingResponse) {
+    option (google.api.http).get = "/coreum/snapshot/v1/pending/{address}";
   }
-  rpc FrozenSnapshots(QueryFrozenSnapshotsRequest) returns (QueryFrozenSnapshotsResponse) {
-    option (google.api.http).get = "/coreum/snapshot/v1/frozen_snapshots/{address}";
+  rpc Snapshots(QuerySnapshotsRequest) returns (QuerySnapshotsResponse) {
+    option (google.api.http).get = "/coreum/snapshot/v1/list/{address}";
   }
 }
 
-message QueryPendingFreezeRequestsRequest {
+message QueryPendingRequest {
   string address = 1;
 }
 
-message QueryPendingFreezeRequestsResponse {
-  repeated FreezeRequest requests = 1 [(gogoproto.nullable) = false];
+message QueryPendingResponse {
+  repeated SnapshotRequest pending = 1 [(gogoproto.nullable) = false];
 }
 
-message QueryFrozenSnapshotsRequest {
+message QuerySnapshotsRequest {
   string address = 1;
 }
 
-message QueryFrozenSnapshotsResponse {
-  repeated FrozenSnapshot snapshots = 1 [(gogoproto.nullable) = false];
+message QuerySnapshotsResponse {
+  repeated Snapshot snapshots = 1 [(gogoproto.nullable) = false];
 }

@@ -98,7 +98,7 @@ $ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer
 
 func CmdTxSnapshotFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "snapshot-ft [denom] [height] [name] [description] --from [owner]",
+		Use:   "snapshot-ft [denom] [height] [description] --from [owner]",
 		Args:  cobra.ExactArgs(4),
 		Short: "Requests a snapshot of fungible token",
 		Long: strings.TrimSpace(
@@ -122,14 +122,12 @@ $ %s tx asset snapshot-ft [denom] 1000 "dividend-2022" "Dividend 2022" 100000 --
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			name := args[2]
-			description := args[3]
+			description := args[2]
 
 			msg := &types.MsgSnapshotFungibleToken{
 				Denom:       denom,
 				Owner:       owner.String(),
 				Height:      height,
-				Name:        name,
 				Description: description,
 			}
 

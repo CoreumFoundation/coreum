@@ -23,19 +23,19 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		CmdQueryPendingFreezeRequests(),
-		CmdQueryFrozenSnapshots(),
+		CmdQueryPending(),
+		CmdQuerySnapshots(),
 	)
 	return cmd
 }
 
-func CmdQueryPendingFreezeRequests() *cobra.Command {
+func CmdQueryPending() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pending [address]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Query pending freeze requests",
+		Short: "Query pending snapshot requests",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query pending freeze requests.
+			fmt.Sprintf(`Query pending snapshot requests.
 
 Example:
 $ %[1]s query snapshot pending [address]
@@ -48,7 +48,7 @@ $ %[1]s query snapshot pending [address]
 			queryClient := types.NewQueryClient(clientCtx)
 
 			address := args[0]
-			res, err := queryClient.PendingFreezeRequests(cmd.Context(), &types.QueryPendingFreezeRequestsRequest{
+			res, err := queryClient.Pending(cmd.Context(), &types.QueryPendingRequest{
 				Address: address,
 			})
 			if err != nil {
@@ -64,16 +64,16 @@ $ %[1]s query snapshot pending [address]
 	return cmd
 }
 
-func CmdQueryFrozenSnapshots() *cobra.Command {
+func CmdQuerySnapshots() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "frozen [address]",
+		Use:   "list [address]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Query frozen snapshots",
+		Short: "Query snapshots",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query frozen snapshots.
+			fmt.Sprintf(`Query snapshots.
 
 Example:
-$ %[1]s query snapshot frozen [address]
+$ %[1]s query snapshot list [address]
 `,
 				version.AppName,
 			),
@@ -83,7 +83,7 @@ $ %[1]s query snapshot frozen [address]
 			queryClient := types.NewQueryClient(clientCtx)
 
 			address := args[0]
-			res, err := queryClient.FrozenSnapshots(cmd.Context(), &types.QueryFrozenSnapshotsRequest{
+			res, err := queryClient.Snapshots(cmd.Context(), &types.QuerySnapshotsRequest{
 				Address: address,
 			})
 			if err != nil {

@@ -10,8 +10,8 @@ import (
 )
 
 type QueryKeeper interface {
-	GetPendingFreezeRequests(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.FreezeRequest, error)
-	GetFrozenSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.FrozenSnapshot, error)
+	GetPending(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.SnapshotRequest, error)
+	GetSnapshots(ctx sdk.Context, accAddress sdk.AccAddress) ([]types.Snapshot, error)
 }
 
 type QueryService struct {
@@ -24,32 +24,32 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 	}
 }
 
-func (qs QueryService) PendingFreezeRequests(ctx context.Context, req *types.QueryPendingFreezeRequestsRequest) (*types.QueryPendingFreezeRequestsResponse, error) {
+func (qs QueryService) Pending(ctx context.Context, req *types.QueryPendingRequest) (*types.QueryPendingResponse, error) {
 	address, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	requests, err := qs.keeper.GetPendingFreezeRequests(sdk.UnwrapSDKContext(ctx), address)
+	pending, err := qs.keeper.GetPending(sdk.UnwrapSDKContext(ctx), address)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryPendingFreezeRequestsResponse{
-		Requests: requests,
+	return &types.QueryPendingResponse{
+		Pending: pending,
 	}, nil
 }
 
-func (qs QueryService) FrozenSnapshots(ctx context.Context, req *types.QueryFrozenSnapshotsRequest) (*types.QueryFrozenSnapshotsResponse, error) {
+func (qs QueryService) Snapshots(ctx context.Context, req *types.QuerySnapshotsRequest) (*types.QuerySnapshotsResponse, error) {
 	address, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	snapshots, err := qs.keeper.GetFrozenSnapshots(sdk.UnwrapSDKContext(ctx), address)
+	snapshots, err := qs.keeper.GetSnapshots(sdk.UnwrapSDKContext(ctx), address)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryFrozenSnapshotsResponse{
+	return &types.QuerySnapshotsResponse{
 		Snapshots: snapshots,
 	}, nil
 }

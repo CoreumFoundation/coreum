@@ -37,8 +37,7 @@ message MsgSnapshotFungibleToken {
   string denom = 1;
   string owner = 2;
   int64 height = 3;
-  string name = 4;
-  string description = 5;
+  string description = 4;
 }
 
 message MsgSnapshotFungibleTokenResponse {}

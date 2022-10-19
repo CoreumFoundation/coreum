@@ -164,7 +164,7 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock executes all ABCI EndBlock logic respective to the asset module. It
 // returns no validator updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	am.keeper.Freeze(ctx)
+	am.keeper.TakeSnapshots(ctx)
 	return []abci.ValidatorUpdate{}
 }
 

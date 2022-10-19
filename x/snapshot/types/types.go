@@ -14,3 +14,11 @@ type Transformation interface {
 	StoreKey() sdk.StoreKey
 	Transform(key, value []byte, deleted bool) ([]byte, KeyValuePairs)
 }
+
+type SnapshotRequestInfo struct {
+	Prefix          SnapshotPrefix
+	Owner           string
+	Height          int64
+	Description     string
+	UserDescription string
+}

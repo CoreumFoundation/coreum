@@ -18,7 +18,7 @@ var (
 	balancesSubcode = []byte{0x00}
 )
 
-func BalancesSnapshotID(denom string) []byte {
+func BalancesSnapshotName(denom string) []byte {
 	return snapshottypes.Join(denomsCode, []byte(denom), balancesSubcode)
 }
 
@@ -43,7 +43,7 @@ func (bt BankTransformation) Transform(key, value []byte, deleted bool) ([]byte,
 	accAddress, denom := decodeAddressDenom(key)
 	var balance sdk.Coin
 	must.OK(balance.Unmarshal(value))
-	return BalancesSnapshotID(denom), snapshottypes.KeyValuePairs{
+	return BalancesSnapshotName(denom), snapshottypes.KeyValuePairs{
 		{
 			Key:    address.MustLengthPrefix(accAddress),
 			Value:  must.Bytes((&AccountBalance{Balance: balance, Address: accAddress.String()}).Marshal()),
@@ -59,7 +59,7 @@ func decodeAddressDenom(key []byte) (sdk.AccAddress, string) {
 	return key[:addressLen], string(key[addressLen:])
 }
 
-type FreezeRequestFungibleToken struct {
+type SnapshotRequestFungibleToken struct {
 	Denom       string
 	Owner       string
 	Height      int64

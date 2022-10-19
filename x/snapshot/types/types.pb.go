@@ -24,23 +24,23 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type SnapshotID struct {
+type SnapshotPrefix struct {
 	StoreName string `protobuf:"bytes,1,opt,name=StoreName,proto3" json:"StoreName,omitempty"`
 	Name      []byte `protobuf:"bytes,2,opt,name=Name,proto3" json:"Name,omitempty"`
 }
 
-func (m *SnapshotID) Reset()         { *m = SnapshotID{} }
-func (m *SnapshotID) String() string { return proto.CompactTextString(m) }
-func (*SnapshotID) ProtoMessage()    {}
-func (*SnapshotID) Descriptor() ([]byte, []int) {
+func (m *SnapshotPrefix) Reset()         { *m = SnapshotPrefix{} }
+func (m *SnapshotPrefix) String() string { return proto.CompactTextString(m) }
+func (*SnapshotPrefix) ProtoMessage()    {}
+func (*SnapshotPrefix) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f43ece0bbef69194, []int{0}
 }
-func (m *SnapshotID) XXX_Unmarshal(b []byte) error {
+func (m *SnapshotPrefix) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *SnapshotID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SnapshotPrefix) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_SnapshotID.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SnapshotPrefix.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -50,38 +50,35 @@ func (m *SnapshotID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *SnapshotID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SnapshotID.Merge(m, src)
+func (m *SnapshotPrefix) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SnapshotPrefix.Merge(m, src)
 }
-func (m *SnapshotID) XXX_Size() int {
+func (m *SnapshotPrefix) XXX_Size() int {
 	return m.Size()
 }
-func (m *SnapshotID) XXX_DiscardUnknown() {
-	xxx_messageInfo_SnapshotID.DiscardUnknown(m)
+func (m *SnapshotPrefix) XXX_DiscardUnknown() {
+	xxx_messageInfo_SnapshotPrefix.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SnapshotID proto.InternalMessageInfo
+var xxx_messageInfo_SnapshotPrefix proto.InternalMessageInfo
 
-type FreezeRequest struct {
-	SnapshotID  SnapshotID `protobuf:"bytes,1,opt,name=snapshotID,proto3" json:"snapshotID"`
-	Owner       string     `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
-	Height      int64      `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
-	Name        string     `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
-	Description string     `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+type SnapshotKey struct {
+	Prefix SnapshotPrefix                         `protobuf:"bytes,1,opt,name=prefix,proto3" json:"prefix"`
+	Index  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=index,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"index"`
 }
 
-func (m *FreezeRequest) Reset()         { *m = FreezeRequest{} }
-func (m *FreezeRequest) String() string { return proto.CompactTextString(m) }
-func (*FreezeRequest) ProtoMessage()    {}
-func (*FreezeRequest) Descriptor() ([]byte, []int) {
+func (m *SnapshotKey) Reset()         { *m = SnapshotKey{} }
+func (m *SnapshotKey) String() string { return proto.CompactTextString(m) }
+func (*SnapshotKey) ProtoMessage()    {}
+func (*SnapshotKey) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f43ece0bbef69194, []int{1}
 }
-func (m *FreezeRequest) XXX_Unmarshal(b []byte) error {
+func (m *SnapshotKey) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *FreezeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SnapshotKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_FreezeRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SnapshotKey.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -91,39 +88,39 @@ func (m *FreezeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *FreezeRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FreezeRequest.Merge(m, src)
+func (m *SnapshotKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SnapshotKey.Merge(m, src)
 }
-func (m *FreezeRequest) XXX_Size() int {
+func (m *SnapshotKey) XXX_Size() int {
 	return m.Size()
 }
-func (m *FreezeRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_FreezeRequest.DiscardUnknown(m)
+func (m *SnapshotKey) XXX_DiscardUnknown() {
+	xxx_messageInfo_SnapshotKey.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_FreezeRequest proto.InternalMessageInfo
+var xxx_messageInfo_SnapshotKey proto.InternalMessageInfo
 
-type FrozenSnapshot struct {
-	SnapshotID    SnapshotID                             `protobuf:"bytes,1,opt,name=snapshotID,proto3" json:"snapshotID"`
-	SnapshotIndex github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=SnapshotIndex,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"SnapshotIndex"`
-	Owner         string                                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
-	Height        int64                                  `protobuf:"varint,4,opt,name=height,proto3" json:"height,omitempty"`
-	Name          string                                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
-	Description   string                                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+type SnapshotRequest struct {
+	Prefix          SnapshotPrefix                         `protobuf:"bytes,1,opt,name=prefix,proto3" json:"prefix"`
+	Id              github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=id,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"id"`
+	Owner           string                                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
+	Height          int64                                  `protobuf:"varint,4,opt,name=height,proto3" json:"height,omitempty"`
+	Description     string                                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	UserDescription string                                 `protobuf:"bytes,6,opt,name=user_description,json=userDescription,proto3" json:"user_description,omitempty"`
 }
 
-func (m *FrozenSnapshot) Reset()         { *m = FrozenSnapshot{} }
-func (m *FrozenSnapshot) String() string { return proto.CompactTextString(m) }
-func (*FrozenSnapshot) ProtoMessage()    {}
-func (*FrozenSnapshot) Descriptor() ([]byte, []int) {
+func (m *SnapshotRequest) Reset()         { *m = SnapshotRequest{} }
+func (m *SnapshotRequest) String() string { return proto.CompactTextString(m) }
+func (*SnapshotRequest) ProtoMessage()    {}
+func (*SnapshotRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f43ece0bbef69194, []int{2}
 }
-func (m *FrozenSnapshot) XXX_Unmarshal(b []byte) error {
+func (m *SnapshotRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *FrozenSnapshot) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *SnapshotRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_FrozenSnapshot.Marshal(b, m, deterministic)
+		return xxx_messageInfo_SnapshotRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -133,56 +130,101 @@ func (m *FrozenSnapshot) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *FrozenSnapshot) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FrozenSnapshot.Merge(m, src)
+func (m *SnapshotRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SnapshotRequest.Merge(m, src)
 }
-func (m *FrozenSnapshot) XXX_Size() int {
+func (m *SnapshotRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *FrozenSnapshot) XXX_DiscardUnknown() {
-	xxx_messageInfo_FrozenSnapshot.DiscardUnknown(m)
+func (m *SnapshotRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SnapshotRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_FrozenSnapshot proto.InternalMessageInfo
+var xxx_messageInfo_SnapshotRequest proto.InternalMessageInfo
+
+type Snapshot struct {
+	Key             SnapshotKey                            `protobuf:"bytes,1,opt,name=key,proto3" json:"key"`
+	Id              github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=id,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"id"`
+	Owner           string                                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
+	Height          int64                                  `protobuf:"varint,4,opt,name=height,proto3" json:"height,omitempty"`
+	Description     string                                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	UserDescription string                                 `protobuf:"bytes,6,opt,name=user_description,json=userDescription,proto3" json:"user_description,omitempty"`
+}
+
+func (m *Snapshot) Reset()         { *m = Snapshot{} }
+func (m *Snapshot) String() string { return proto.CompactTextString(m) }
+func (*Snapshot) ProtoMessage()    {}
+func (*Snapshot) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f43ece0bbef69194, []int{3}
+}
+func (m *Snapshot) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Snapshot) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Snapshot.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Snapshot) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Snapshot.Merge(m, src)
+}
+func (m *Snapshot) XXX_Size() int {
+	return m.Size()
+}
+func (m *Snapshot) XXX_DiscardUnknown() {
+	xxx_messageInfo_Snapshot.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Snapshot proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*SnapshotID)(nil), "coreum.snapshot.v1.SnapshotID")
-	proto.RegisterType((*FreezeRequest)(nil), "coreum.snapshot.v1.FreezeRequest")
-	proto.RegisterType((*FrozenSnapshot)(nil), "coreum.snapshot.v1.FrozenSnapshot")
+	proto.RegisterType((*SnapshotPrefix)(nil), "coreum.snapshot.v1.SnapshotPrefix")
+	proto.RegisterType((*SnapshotKey)(nil), "coreum.snapshot.v1.SnapshotKey")
+	proto.RegisterType((*SnapshotRequest)(nil), "coreum.snapshot.v1.SnapshotRequest")
+	proto.RegisterType((*Snapshot)(nil), "coreum.snapshot.v1.Snapshot")
 }
 
 func init() { proto.RegisterFile("coreum/snapshot/v1/types.proto", fileDescriptor_f43ece0bbef69194) }
 
 var fileDescriptor_f43ece0bbef69194 = []byte{
-	// 387 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x52, 0x31, 0x6f, 0xda, 0x40,
-	0x18, 0xf5, 0x81, 0x41, 0xe5, 0x28, 0x1d, 0x4e, 0xa8, 0x42, 0x55, 0x75, 0xb6, 0x18, 0x2a, 0x96,
-	0xda, 0xa2, 0x6c, 0x1d, 0x29, 0x42, 0x65, 0x48, 0x06, 0x93, 0x29, 0x1b, 0xd8, 0x27, 0xdb, 0x8a,
-	0x7c, 0xe7, 0xf8, 0xce, 0x84, 0xf0, 0x0b, 0x32, 0x66, 0xce, 0xc4, 0x7f, 0xc9, 0xc2, 0xc8, 0x18,
-	0x65, 0x40, 0x11, 0x2c, 0xf9, 0x19, 0x91, 0xcf, 0x06, 0x3b, 0x0a, 0xc9, 0x94, 0xc9, 0xdf, 0xdd,
-	0x7b, 0x7e, 0x7e, 0xef, 0xf9, 0x83, 0xd8, 0x66, 0x11, 0x89, 0x03, 0x93, 0xd3, 0x49, 0xc8, 0x3d,
-	0x26, 0xcc, 0x59, 0xd7, 0x14, 0xd7, 0x21, 0xe1, 0x46, 0x18, 0x31, 0xc1, 0x10, 0x4a, 0x71, 0x63,
-	0x8f, 0x1b, 0xb3, 0xee, 0x8f, 0xa6, 0xcb, 0x5c, 0x26, 0x61, 0x33, 0x99, 0x52, 0x66, 0xfb, 0x3f,
-	0x84, 0xe3, 0x8c, 0x34, 0x1a, 0xa0, 0x9f, 0xb0, 0x36, 0x16, 0x2c, 0x22, 0xa7, 0x93, 0x80, 0xb4,
-	0x80, 0x0e, 0x3a, 0x35, 0x2b, 0xbf, 0x40, 0x08, 0xaa, 0x12, 0x28, 0xe9, 0xa0, 0xf3, 0xd5, 0x92,
-	0xf3, 0xdf, 0x2f, 0x37, 0x4b, 0x4d, 0x79, 0x5e, 0x6a, 0x4a, 0xfb, 0x1e, 0xc0, 0xc6, 0x30, 0x22,
-	0x64, 0x41, 0x2c, 0x72, 0x19, 0x13, 0x2e, 0xd0, 0x00, 0x42, 0x7e, 0xd0, 0x96, 0x72, 0xf5, 0x3f,
-	0xd8, 0x78, 0x6b, 0xcd, 0xc8, 0x1d, 0xf4, 0xd5, 0xd5, 0x46, 0x53, 0xac, 0xc2, 0x7b, 0xa8, 0x09,
-	0x2b, 0xec, 0x8a, 0x92, 0x48, 0x7e, 0xb6, 0x66, 0xa5, 0x07, 0xf4, 0x1d, 0x56, 0x3d, 0xe2, 0xbb,
-	0x9e, 0x68, 0x95, 0x75, 0xd0, 0x29, 0x5b, 0xd9, 0x29, 0xf1, 0x48, 0x13, 0x8f, 0xaa, 0x24, 0xcb,
-	0x19, 0xe9, 0xb0, 0xee, 0x10, 0x6e, 0x47, 0x7e, 0x28, 0x7c, 0x46, 0x5b, 0x15, 0x09, 0x15, 0xaf,
-	0x0a, 0x29, 0xee, 0x4a, 0xf0, 0xdb, 0x30, 0x62, 0x0b, 0x42, 0xf7, 0xa6, 0x3e, 0x29, 0xc6, 0x19,
-	0x6c, 0x1c, 0x70, 0xea, 0x90, 0x79, 0x1a, 0xa7, 0x6f, 0x24, 0xc4, 0xc7, 0x8d, 0xf6, 0xcb, 0xf5,
-	0x85, 0x17, 0x4f, 0x0d, 0x9b, 0x05, 0xa6, 0xcd, 0x78, 0xc0, 0x78, 0xf6, 0xf8, 0xcd, 0x9d, 0x8b,
-	0xec, 0xdf, 0x8e, 0xa8, 0xb0, 0x5e, 0x8b, 0xe4, 0xe5, 0x94, 0x8f, 0x97, 0xa3, 0x1e, 0x2d, 0xa7,
-	0xf2, 0x7e, 0x39, 0xd5, 0x0f, 0xca, 0xe9, 0x9f, 0xac, 0xb6, 0x18, 0xac, 0xb7, 0x18, 0x3c, 0x6d,
-	0x31, 0xb8, 0xdd, 0x61, 0x65, 0xbd, 0xc3, 0xca, 0xc3, 0x0e, 0x2b, 0xe7, 0xbd, 0x82, 0xfd, 0x7f,
-	0xb2, 0x99, 0x21, 0x8b, 0xa9, 0x33, 0x49, 0x04, 0xcc, 0x6c, 0x59, 0xe7, 0xf9, 0xba, 0xca, 0x3c,
-	0xd3, 0xaa, 0x5c, 0xc1, 0xde, 0x4b, 0x00, 0x00, 0x00, 0xff, 0xff, 0x88, 0xb0, 0xec, 0x86, 0xce,
-	0x02, 0x00, 0x00,
+	// 418 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x93, 0xbf, 0xcb, 0xd3, 0x40,
+	0x18, 0xc7, 0x73, 0x69, 0x1b, 0xda, 0xab, 0x58, 0x39, 0x8a, 0x04, 0x91, 0x24, 0x74, 0x90, 0x3a,
+	0x98, 0x50, 0x3b, 0x08, 0x0e, 0x22, 0xb5, 0x08, 0x52, 0x15, 0x49, 0x37, 0x17, 0x69, 0x93, 0x33,
+	0x39, 0x4a, 0x72, 0x31, 0x77, 0xa9, 0xcd, 0x7f, 0xd0, 0xd1, 0xd1, 0xcd, 0xfe, 0x39, 0x1d, 0x3b,
+	0x8a, 0x43, 0x91, 0x76, 0xf1, 0xcf, 0x90, 0x5c, 0x2e, 0x34, 0x22, 0xbc, 0xc3, 0xcb, 0x3b, 0xbd,
+	0xd3, 0xdd, 0xf3, 0x7c, 0x9f, 0x9f, 0x1f, 0x78, 0xa0, 0xe1, 0xd1, 0x14, 0x67, 0x91, 0xc3, 0xe2,
+	0x45, 0xc2, 0x42, 0xca, 0x9d, 0xf5, 0xc8, 0xe1, 0x79, 0x82, 0x99, 0x9d, 0xa4, 0x94, 0x53, 0x84,
+	0x4a, 0xdd, 0xae, 0x74, 0x7b, 0x3d, 0x7a, 0xd0, 0x0f, 0x68, 0x40, 0x85, 0xec, 0x14, 0xbf, 0x32,
+	0x72, 0xf0, 0x16, 0xde, 0x9d, 0xcb, 0xa0, 0x0f, 0x29, 0xfe, 0x4c, 0x36, 0xe8, 0x21, 0xec, 0xcc,
+	0x39, 0x4d, 0xf1, 0xfb, 0x45, 0x84, 0x75, 0x60, 0x81, 0x61, 0xc7, 0xbd, 0x38, 0x10, 0x82, 0x4d,
+	0x21, 0xa8, 0x16, 0x18, 0xde, 0x71, 0xc5, 0xff, 0x79, 0x7b, 0xbb, 0x33, 0x95, 0x3f, 0x3b, 0x53,
+	0x19, 0xfc, 0x00, 0xb0, 0x5b, 0x95, 0x9b, 0xe1, 0x1c, 0xbd, 0x84, 0x5a, 0x22, 0xaa, 0x8a, 0x42,
+	0xdd, 0xa7, 0x03, 0xfb, 0xff, 0xc1, 0xec, 0x7f, 0xfb, 0x4f, 0x9a, 0xfb, 0xa3, 0xa9, 0xb8, 0x32,
+	0x0f, 0x4d, 0x61, 0x8b, 0xc4, 0x3e, 0xde, 0x88, 0x86, 0x9d, 0x89, 0x5d, 0x88, 0xbf, 0x8e, 0xe6,
+	0xa3, 0x80, 0xf0, 0x30, 0x5b, 0xda, 0x1e, 0x8d, 0x1c, 0x8f, 0xb2, 0x88, 0x32, 0xf9, 0x3c, 0x61,
+	0xfe, 0x4a, 0xa2, 0x78, 0x13, 0x73, 0xb7, 0x4c, 0xae, 0x4d, 0xf8, 0x5d, 0x85, 0xbd, 0xaa, 0xa1,
+	0x8b, 0xbf, 0x64, 0x98, 0xf1, 0x1b, 0x98, 0xf2, 0x05, 0x54, 0x89, 0x7f, 0xcd, 0x11, 0x55, 0xe2,
+	0xa3, 0x3e, 0x6c, 0xd1, 0xaf, 0x31, 0x4e, 0xf5, 0x86, 0xe0, 0x5d, 0x1a, 0xe8, 0x3e, 0xd4, 0x42,
+	0x4c, 0x82, 0x90, 0xeb, 0x4d, 0x0b, 0x0c, 0x1b, 0xae, 0xb4, 0x90, 0x05, 0xbb, 0x3e, 0x66, 0x5e,
+	0x4a, 0x12, 0x4e, 0x68, 0xac, 0xb7, 0x44, 0x4e, 0xdd, 0x85, 0x1e, 0xc3, 0x7b, 0x19, 0xc3, 0xe9,
+	0xa7, 0x7a, 0x98, 0x26, 0xc2, 0x7a, 0x85, 0x7f, 0x7a, 0x71, 0xd7, 0xd0, 0x6c, 0x55, 0xd8, 0xae,
+	0xb6, 0x44, 0xcf, 0x60, 0x63, 0x85, 0x73, 0x09, 0xc4, 0xbc, 0x0a, 0xc8, 0x0c, 0xe7, 0x92, 0x46,
+	0x91, 0x71, 0x2b, 0x50, 0x4c, 0xde, 0xed, 0x4f, 0x06, 0x38, 0x9c, 0x0c, 0xf0, 0xfb, 0x64, 0x80,
+	0x6f, 0x67, 0x43, 0x39, 0x9c, 0x0d, 0xe5, 0xe7, 0xd9, 0x50, 0x3e, 0x8e, 0x6b, 0xab, 0xbc, 0x12,
+	0x50, 0x5e, 0xd3, 0x2c, 0xf6, 0x17, 0x45, 0x01, 0x47, 0x5e, 0xe5, 0xe6, 0x72, 0x97, 0x62, 0xb7,
+	0xa5, 0x26, 0x6e, 0x6d, 0xfc, 0x37, 0x00, 0x00, 0xff, 0xff, 0x73, 0xc6, 0x61, 0xa0, 0xb7, 0x03,
+	0x00, 0x00,
 }
 
-func (m *SnapshotID) Marshal() (dAtA []byte, err error) {
+func (m *SnapshotPrefix) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -192,12 +234,12 @@ func (m *SnapshotID) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *SnapshotID) MarshalTo(dAtA []byte) (int, error) {
+func (m *SnapshotPrefix) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *SnapshotID) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *SnapshotPrefix) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -219,7 +261,7 @@ func (m *SnapshotID) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *FreezeRequest) Marshal() (dAtA []byte, err error) {
+func (m *SnapshotKey) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -229,44 +271,28 @@ func (m *FreezeRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *FreezeRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *SnapshotKey) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *FreezeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *SnapshotKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Description) > 0 {
-		i -= len(m.Description)
-		copy(dAtA[i:], m.Description)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Description)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if m.Height != 0 {
-		i = encodeVarintTypes(dAtA, i, uint64(m.Height))
-		i--
-		dAtA[i] = 0x18
-	}
-	if len(m.Owner) > 0 {
-		i -= len(m.Owner)
-		copy(dAtA[i:], m.Owner)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Owner)))
-		i--
-		dAtA[i] = 0x12
-	}
 	{
-		size, err := m.SnapshotID.MarshalToSizedBuffer(dAtA[:i])
+		size := m.Index.Size()
+		i -= size
+		if _, err := m.Index.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTypes(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size, err := m.Prefix.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -278,7 +304,7 @@ func (m *FreezeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *FrozenSnapshot) Marshal() (dAtA []byte, err error) {
+func (m *SnapshotRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -288,27 +314,27 @@ func (m *FrozenSnapshot) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *FrozenSnapshot) MarshalTo(dAtA []byte) (int, error) {
+func (m *SnapshotRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *FrozenSnapshot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *SnapshotRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.UserDescription) > 0 {
+		i -= len(m.UserDescription)
+		copy(dAtA[i:], m.UserDescription)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.UserDescription)))
+		i--
+		dAtA[i] = 0x32
+	}
 	if len(m.Description) > 0 {
 		i -= len(m.Description)
 		copy(dAtA[i:], m.Description)
 		i = encodeVarintTypes(dAtA, i, uint64(len(m.Description)))
-		i--
-		dAtA[i] = 0x32
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Name)))
 		i--
 		dAtA[i] = 0x2a
 	}
@@ -325,9 +351,9 @@ func (m *FrozenSnapshot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 	}
 	{
-		size := m.SnapshotIndex.Size()
+		size := m.Id.Size()
 		i -= size
-		if _, err := m.SnapshotIndex.MarshalTo(dAtA[i:]); err != nil {
+		if _, err := m.Id.MarshalTo(dAtA[i:]); err != nil {
 			return 0, err
 		}
 		i = encodeVarintTypes(dAtA, i, uint64(size))
@@ -335,7 +361,76 @@ func (m *FrozenSnapshot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i--
 	dAtA[i] = 0x12
 	{
-		size, err := m.SnapshotID.MarshalToSizedBuffer(dAtA[:i])
+		size, err := m.Prefix.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTypes(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *Snapshot) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Snapshot) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Snapshot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.UserDescription) > 0 {
+		i -= len(m.UserDescription)
+		copy(dAtA[i:], m.UserDescription)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.UserDescription)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.Description) > 0 {
+		i -= len(m.Description)
+		copy(dAtA[i:], m.Description)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Description)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.Height != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Owner) > 0 {
+		i -= len(m.Owner)
+		copy(dAtA[i:], m.Owner)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Owner)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	{
+		size := m.Id.Size()
+		i -= size
+		if _, err := m.Id.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTypes(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size, err := m.Key.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -358,7 +453,7 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *SnapshotID) Size() (n int) {
+func (m *SnapshotPrefix) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -375,13 +470,28 @@ func (m *SnapshotID) Size() (n int) {
 	return n
 }
 
-func (m *FreezeRequest) Size() (n int) {
+func (m *SnapshotKey) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = m.SnapshotID.Size()
+	l = m.Prefix.Size()
+	n += 1 + l + sovTypes(uint64(l))
+	l = m.Index.Size()
+	n += 1 + l + sovTypes(uint64(l))
+	return n
+}
+
+func (m *SnapshotRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Prefix.Size()
+	n += 1 + l + sovTypes(uint64(l))
+	l = m.Id.Size()
 	n += 1 + l + sovTypes(uint64(l))
 	l = len(m.Owner)
 	if l > 0 {
@@ -390,26 +500,26 @@ func (m *FreezeRequest) Size() (n int) {
 	if m.Height != 0 {
 		n += 1 + sovTypes(uint64(m.Height))
 	}
-	l = len(m.Name)
+	l = len(m.Description)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	l = len(m.Description)
+	l = len(m.UserDescription)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
 	return n
 }
 
-func (m *FrozenSnapshot) Size() (n int) {
+func (m *Snapshot) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = m.SnapshotID.Size()
+	l = m.Key.Size()
 	n += 1 + l + sovTypes(uint64(l))
-	l = m.SnapshotIndex.Size()
+	l = m.Id.Size()
 	n += 1 + l + sovTypes(uint64(l))
 	l = len(m.Owner)
 	if l > 0 {
@@ -418,11 +528,11 @@ func (m *FrozenSnapshot) Size() (n int) {
 	if m.Height != 0 {
 		n += 1 + sovTypes(uint64(m.Height))
 	}
-	l = len(m.Name)
+	l = len(m.Description)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	l = len(m.Description)
+	l = len(m.UserDescription)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
@@ -435,7 +545,7 @@ func sovTypes(x uint64) (n int) {
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *SnapshotID) Unmarshal(dAtA []byte) error {
+func (m *SnapshotPrefix) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -458,10 +568,10 @@ func (m *SnapshotID) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: SnapshotID: wiretype end group for non-group")
+			return fmt.Errorf("proto: SnapshotPrefix: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SnapshotID: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SnapshotPrefix: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -551,7 +661,7 @@ func (m *SnapshotID) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *FreezeRequest) Unmarshal(dAtA []byte) error {
+func (m *SnapshotKey) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -574,15 +684,15 @@ func (m *FreezeRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: FreezeRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: SnapshotKey: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: FreezeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SnapshotKey: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SnapshotID", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Prefix", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -609,13 +719,13 @@ func (m *FreezeRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.SnapshotID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Prefix.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -643,90 +753,9 @@ func (m *FreezeRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Owner = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			if err := m.Index.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
-			m.Height = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Height |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Description = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -749,7 +778,7 @@ func (m *FreezeRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *FrozenSnapshot) Unmarshal(dAtA []byte) error {
+func (m *SnapshotRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -772,15 +801,15 @@ func (m *FrozenSnapshot) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: FrozenSnapshot: wiretype end group for non-group")
+			return fmt.Errorf("proto: SnapshotRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: FrozenSnapshot: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: SnapshotRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SnapshotID", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Prefix", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -807,13 +836,13 @@ func (m *FrozenSnapshot) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.SnapshotID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Prefix.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SnapshotIndex", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -841,7 +870,7 @@ func (m *FrozenSnapshot) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.SnapshotIndex.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Id.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -898,7 +927,7 @@ func (m *FrozenSnapshot) Unmarshal(dAtA []byte) error {
 			}
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -926,9 +955,209 @@ func (m *FrozenSnapshot) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
+			m.Description = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UserDescription", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UserDescription = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Snapshot) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Snapshot: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Snapshot: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Key.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Id.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Owner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
 			}
@@ -959,6 +1188,38 @@ func (m *FrozenSnapshot) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Description = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UserDescription", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UserDescription = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

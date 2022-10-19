@@ -29,22 +29,22 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type QueryPendingFreezeRequestsRequest struct {
+type QueryPendingRequest struct {
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
-func (m *QueryPendingFreezeRequestsRequest) Reset()         { *m = QueryPendingFreezeRequestsRequest{} }
-func (m *QueryPendingFreezeRequestsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryPendingFreezeRequestsRequest) ProtoMessage()    {}
-func (*QueryPendingFreezeRequestsRequest) Descriptor() ([]byte, []int) {
+func (m *QueryPendingRequest) Reset()         { *m = QueryPendingRequest{} }
+func (m *QueryPendingRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryPendingRequest) ProtoMessage()    {}
+func (*QueryPendingRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_00a55b56744cc18c, []int{0}
 }
-func (m *QueryPendingFreezeRequestsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryPendingRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryPendingFreezeRequestsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryPendingRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryPendingFreezeRequestsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryPendingRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -54,41 +54,41 @@ func (m *QueryPendingFreezeRequestsRequest) XXX_Marshal(b []byte, deterministic 
 		return b[:n], nil
 	}
 }
-func (m *QueryPendingFreezeRequestsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPendingFreezeRequestsRequest.Merge(m, src)
+func (m *QueryPendingRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPendingRequest.Merge(m, src)
 }
-func (m *QueryPendingFreezeRequestsRequest) XXX_Size() int {
+func (m *QueryPendingRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryPendingFreezeRequestsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPendingFreezeRequestsRequest.DiscardUnknown(m)
+func (m *QueryPendingRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPendingRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryPendingFreezeRequestsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryPendingRequest proto.InternalMessageInfo
 
-func (m *QueryPendingFreezeRequestsRequest) GetAddress() string {
+func (m *QueryPendingRequest) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
 	return ""
 }
 
-type QueryPendingFreezeRequestsResponse struct {
-	Requests []FreezeRequest `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests"`
+type QueryPendingResponse struct {
+	Pending []SnapshotRequest `protobuf:"bytes,1,rep,name=pending,proto3" json:"pending"`
 }
 
-func (m *QueryPendingFreezeRequestsResponse) Reset()         { *m = QueryPendingFreezeRequestsResponse{} }
-func (m *QueryPendingFreezeRequestsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryPendingFreezeRequestsResponse) ProtoMessage()    {}
-func (*QueryPendingFreezeRequestsResponse) Descriptor() ([]byte, []int) {
+func (m *QueryPendingResponse) Reset()         { *m = QueryPendingResponse{} }
+func (m *QueryPendingResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryPendingResponse) ProtoMessage()    {}
+func (*QueryPendingResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_00a55b56744cc18c, []int{1}
 }
-func (m *QueryPendingFreezeRequestsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryPendingResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryPendingFreezeRequestsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryPendingResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryPendingFreezeRequestsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryPendingResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -98,41 +98,41 @@ func (m *QueryPendingFreezeRequestsResponse) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-func (m *QueryPendingFreezeRequestsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPendingFreezeRequestsResponse.Merge(m, src)
+func (m *QueryPendingResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryPendingResponse.Merge(m, src)
 }
-func (m *QueryPendingFreezeRequestsResponse) XXX_Size() int {
+func (m *QueryPendingResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryPendingFreezeRequestsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPendingFreezeRequestsResponse.DiscardUnknown(m)
+func (m *QueryPendingResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryPendingResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryPendingFreezeRequestsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryPendingResponse proto.InternalMessageInfo
 
-func (m *QueryPendingFreezeRequestsResponse) GetRequests() []FreezeRequest {
+func (m *QueryPendingResponse) GetPending() []SnapshotRequest {
 	if m != nil {
-		return m.Requests
+		return m.Pending
 	}
 	return nil
 }
 
-type QueryFrozenSnapshotsRequest struct {
+type QuerySnapshotsRequest struct {
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
-func (m *QueryFrozenSnapshotsRequest) Reset()         { *m = QueryFrozenSnapshotsRequest{} }
-func (m *QueryFrozenSnapshotsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryFrozenSnapshotsRequest) ProtoMessage()    {}
-func (*QueryFrozenSnapshotsRequest) Descriptor() ([]byte, []int) {
+func (m *QuerySnapshotsRequest) Reset()         { *m = QuerySnapshotsRequest{} }
+func (m *QuerySnapshotsRequest) String() string { return proto.CompactTextString(m) }
+func (*QuerySnapshotsRequest) ProtoMessage()    {}
+func (*QuerySnapshotsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_00a55b56744cc18c, []int{2}
 }
-func (m *QueryFrozenSnapshotsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QuerySnapshotsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFrozenSnapshotsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QuerySnapshotsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFrozenSnapshotsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QuerySnapshotsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -142,41 +142,41 @@ func (m *QueryFrozenSnapshotsRequest) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
-func (m *QueryFrozenSnapshotsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFrozenSnapshotsRequest.Merge(m, src)
+func (m *QuerySnapshotsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QuerySnapshotsRequest.Merge(m, src)
 }
-func (m *QueryFrozenSnapshotsRequest) XXX_Size() int {
+func (m *QuerySnapshotsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFrozenSnapshotsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFrozenSnapshotsRequest.DiscardUnknown(m)
+func (m *QuerySnapshotsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QuerySnapshotsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFrozenSnapshotsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QuerySnapshotsRequest proto.InternalMessageInfo
 
-func (m *QueryFrozenSnapshotsRequest) GetAddress() string {
+func (m *QuerySnapshotsRequest) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
 	return ""
 }
 
-type QueryFrozenSnapshotsResponse struct {
-	Snapshots []FrozenSnapshot `protobuf:"bytes,1,rep,name=snapshots,proto3" json:"snapshots"`
+type QuerySnapshotsResponse struct {
+	Snapshots []Snapshot `protobuf:"bytes,1,rep,name=snapshots,proto3" json:"snapshots"`
 }
 
-func (m *QueryFrozenSnapshotsResponse) Reset()         { *m = QueryFrozenSnapshotsResponse{} }
-func (m *QueryFrozenSnapshotsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryFrozenSnapshotsResponse) ProtoMessage()    {}
-func (*QueryFrozenSnapshotsResponse) Descriptor() ([]byte, []int) {
+func (m *QuerySnapshotsResponse) Reset()         { *m = QuerySnapshotsResponse{} }
+func (m *QuerySnapshotsResponse) String() string { return proto.CompactTextString(m) }
+func (*QuerySnapshotsResponse) ProtoMessage()    {}
+func (*QuerySnapshotsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_00a55b56744cc18c, []int{3}
 }
-func (m *QueryFrozenSnapshotsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QuerySnapshotsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFrozenSnapshotsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QuerySnapshotsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFrozenSnapshotsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QuerySnapshotsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -186,19 +186,19 @@ func (m *QueryFrozenSnapshotsResponse) XXX_Marshal(b []byte, deterministic bool)
 		return b[:n], nil
 	}
 }
-func (m *QueryFrozenSnapshotsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFrozenSnapshotsResponse.Merge(m, src)
+func (m *QuerySnapshotsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QuerySnapshotsResponse.Merge(m, src)
 }
-func (m *QueryFrozenSnapshotsResponse) XXX_Size() int {
+func (m *QuerySnapshotsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFrozenSnapshotsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFrozenSnapshotsResponse.DiscardUnknown(m)
+func (m *QuerySnapshotsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QuerySnapshotsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFrozenSnapshotsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QuerySnapshotsResponse proto.InternalMessageInfo
 
-func (m *QueryFrozenSnapshotsResponse) GetSnapshots() []FrozenSnapshot {
+func (m *QuerySnapshotsResponse) GetSnapshots() []Snapshot {
 	if m != nil {
 		return m.Snapshots
 	}
@@ -206,42 +206,40 @@ func (m *QueryFrozenSnapshotsResponse) GetSnapshots() []FrozenSnapshot {
 }
 
 func init() {
-	proto.RegisterType((*QueryPendingFreezeRequestsRequest)(nil), "coreum.snapshot.v1.QueryPendingFreezeRequestsRequest")
-	proto.RegisterType((*QueryPendingFreezeRequestsResponse)(nil), "coreum.snapshot.v1.QueryPendingFreezeRequestsResponse")
-	proto.RegisterType((*QueryFrozenSnapshotsRequest)(nil), "coreum.snapshot.v1.QueryFrozenSnapshotsRequest")
-	proto.RegisterType((*QueryFrozenSnapshotsResponse)(nil), "coreum.snapshot.v1.QueryFrozenSnapshotsResponse")
+	proto.RegisterType((*QueryPendingRequest)(nil), "coreum.snapshot.v1.QueryPendingRequest")
+	proto.RegisterType((*QueryPendingResponse)(nil), "coreum.snapshot.v1.QueryPendingResponse")
+	proto.RegisterType((*QuerySnapshotsRequest)(nil), "coreum.snapshot.v1.QuerySnapshotsRequest")
+	proto.RegisterType((*QuerySnapshotsResponse)(nil), "coreum.snapshot.v1.QuerySnapshotsResponse")
 }
 
 func init() { proto.RegisterFile("coreum/snapshot/v1/query.proto", fileDescriptor_00a55b56744cc18c) }
 
 var fileDescriptor_00a55b56744cc18c = []byte{
-	// 409 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x93, 0xcb, 0x6e, 0xe2, 0x30,
-	0x14, 0x86, 0x63, 0xe6, 0x8a, 0x67, 0x31, 0x92, 0x35, 0x23, 0xa1, 0x0c, 0xca, 0x40, 0x56, 0xac,
-	0x62, 0x2e, 0x02, 0x56, 0x6c, 0x40, 0xca, 0x6e, 0xa4, 0x19, 0x66, 0x37, 0x1b, 0x14, 0x88, 0x09,
-	0x91, 0x06, 0x3b, 0xc4, 0x09, 0x2a, 0x54, 0xdd, 0xf4, 0x09, 0x2a, 0xf5, 0x35, 0xfa, 0x1a, 0x95,
-	0x58, 0x22, 0x75, 0xd3, 0x55, 0x55, 0x41, 0x9f, 0xa3, 0xaa, 0x70, 0x1c, 0xe8, 0xc5, 0x6d, 0xe9,
-	0x2a, 0x97, 0x93, 0xcf, 0xff, 0xe7, 0xe3, 0x1c, 0x68, 0x0c, 0x58, 0x48, 0xe2, 0x31, 0xe6, 0xd4,
-	0x09, 0xf8, 0x88, 0x45, 0x78, 0x5a, 0xc1, 0x93, 0x98, 0x84, 0x33, 0x2b, 0x08, 0x59, 0xc4, 0x10,
-	0x4a, 0xea, 0x56, 0x5a, 0xb7, 0xa6, 0x15, 0xfd, 0x9b, 0xc7, 0x3c, 0x26, 0xca, 0x78, 0x73, 0x97,
-	0x7c, 0xa9, 0xe7, 0x3d, 0xc6, 0xbc, 0xff, 0x04, 0x3b, 0x81, 0x8f, 0x1d, 0x4a, 0x59, 0xe4, 0x44,
-	0x3e, 0xa3, 0x5c, 0x56, 0x55, 0x39, 0xd1, 0x2c, 0x20, 0xb2, 0x6e, 0xb6, 0x60, 0xf1, 0xcf, 0x26,
-	0xf6, 0x37, 0xa1, 0xae, 0x4f, 0x3d, 0x3b, 0x24, 0x64, 0x4e, 0xba, 0x64, 0x12, 0x13, 0x1e, 0x71,
-	0x79, 0x45, 0x39, 0xf8, 0xc9, 0x71, 0xdd, 0x90, 0x70, 0x9e, 0x03, 0x05, 0x50, 0xca, 0x76, 0xd3,
-	0x47, 0xd3, 0x87, 0xe6, 0x4b, 0x38, 0x0f, 0x18, 0xe5, 0x04, 0x75, 0xe0, 0xe7, 0x50, 0xbe, 0xcb,
-	0x81, 0xc2, 0xbb, 0xd2, 0x97, 0x6a, 0xd1, 0x7a, 0xba, 0x3f, 0xeb, 0x01, 0xdd, 0x7e, 0xbf, 0xb8,
-	0xfa, 0xa9, 0x75, 0xb7, 0xa0, 0xd9, 0x84, 0x3f, 0x44, 0x94, 0x1d, 0xb2, 0x39, 0xa1, 0x7f, 0x25,
-	0xb7, 0x87, 0xe3, 0x10, 0xe6, 0xd5, 0xa0, 0xb4, 0xb3, 0x61, 0x36, 0xb5, 0x48, 0xf5, 0x4c, 0xb5,
-	0xde, 0x7d, 0x5e, 0xfa, 0xed, 0xd0, 0xea, 0x6d, 0x06, 0x7e, 0x10, 0x41, 0xe8, 0x1c, 0xc0, 0xef,
-	0xca, 0x8e, 0xa0, 0xba, 0x6a, 0xe1, 0x57, 0x0f, 0x40, 0x6f, 0xbc, 0x15, 0x4b, 0xb6, 0x66, 0xb6,
-	0x8e, 0x2f, 0x6e, 0x4e, 0x33, 0x4d, 0x54, 0xc7, 0x8a, 0xdf, 0x20, 0x48, 0xd0, 0xde, 0x50, 0xb0,
-	0xbd, 0xb4, 0xd1, 0xf8, 0x50, 0x36, 0xee, 0x08, 0x9d, 0x01, 0xf8, 0xf5, 0x51, 0xd7, 0x10, 0x7e,
-	0x56, 0x45, 0x7d, 0x30, 0x7a, 0x79, 0x7f, 0x40, 0x5a, 0x37, 0x84, 0x75, 0x19, 0x59, 0x2a, 0xeb,
-	0xa1, 0x80, 0x7a, 0xdb, 0xb6, 0xef, 0x74, 0xdb, 0xbf, 0x16, 0x2b, 0x03, 0x2c, 0x57, 0x06, 0xb8,
-	0x5e, 0x19, 0xe0, 0x64, 0x6d, 0x68, 0xcb, 0xb5, 0xa1, 0x5d, 0xae, 0x0d, 0xed, 0x5f, 0xcd, 0xf3,
-	0xa3, 0x51, 0xdc, 0xb7, 0x06, 0x6c, 0x8c, 0x3b, 0x62, 0x4d, 0x9b, 0xc5, 0xd4, 0x15, 0x93, 0x92,
-	0x86, 0x1c, 0xec, 0x62, 0xc4, 0x80, 0xf4, 0x3f, 0x8a, 0x09, 0xa9, 0xdd, 0x05, 0x00, 0x00, 0xff,
-	0xff, 0x10, 0x94, 0x13, 0xee, 0xab, 0x03, 0x00, 0x00,
+	// 381 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0x4f, 0x4b, 0x02, 0x41,
+	0x18, 0xc6, 0x77, 0xec, 0x8f, 0x38, 0xdd, 0x26, 0x0b, 0x59, 0x64, 0x93, 0xad, 0xd0, 0x84, 0x76,
+	0x50, 0xbf, 0x40, 0x28, 0x74, 0x0b, 0xca, 0x6e, 0x76, 0x5a, 0xdd, 0x61, 0x5d, 0xd0, 0x99, 0x75,
+	0x67, 0x56, 0x92, 0xe8, 0xd2, 0x35, 0x88, 0xa0, 0xef, 0xd0, 0x67, 0xf1, 0x28, 0x74, 0xe9, 0x14,
+	0xa1, 0x7d, 0x90, 0x70, 0x76, 0x36, 0xc9, 0xb6, 0xec, 0x36, 0xfa, 0xbc, 0xef, 0xf3, 0xfc, 0xde,
+	0x77, 0x5f, 0x68, 0x74, 0x58, 0x40, 0xc2, 0x3e, 0xe6, 0xd4, 0xf6, 0x79, 0x97, 0x09, 0x3c, 0xac,
+	0xe0, 0x41, 0x48, 0x82, 0x91, 0xe5, 0x07, 0x4c, 0x30, 0x84, 0x22, 0xdd, 0x8a, 0x75, 0x6b, 0x58,
+	0xd1, 0xb3, 0x2e, 0x73, 0x99, 0x94, 0xf1, 0xfc, 0x15, 0x55, 0xea, 0x79, 0x97, 0x31, 0xb7, 0x47,
+	0xb0, 0xed, 0x7b, 0xd8, 0xa6, 0x94, 0x09, 0x5b, 0x78, 0x8c, 0x72, 0xa5, 0x26, 0xe5, 0x88, 0x91,
+	0x4f, 0x94, 0x6e, 0x62, 0xb8, 0x7d, 0x31, 0x8f, 0x3d, 0x27, 0xd4, 0xf1, 0xa8, 0xdb, 0x24, 0x83,
+	0x90, 0x70, 0x81, 0x72, 0x30, 0x6d, 0x3b, 0x4e, 0x40, 0x38, 0xcf, 0x81, 0x02, 0x28, 0x65, 0x9a,
+	0xf1, 0x4f, 0xf3, 0x0a, 0x66, 0xbf, 0x37, 0x70, 0x9f, 0x51, 0x4e, 0x50, 0x03, 0xa6, 0xfd, 0xe8,
+	0xaf, 0x1c, 0x28, 0xac, 0x95, 0xb6, 0xaa, 0xfb, 0xd6, 0xcf, 0x11, 0xac, 0x4b, 0xf5, 0x56, 0x39,
+	0xf5, 0xf5, 0xf1, 0xdb, 0x9e, 0xd6, 0x8c, 0x3b, 0xcd, 0x0a, 0xdc, 0x91, 0xe6, 0x71, 0x19, 0x5f,
+	0xcd, 0xd3, 0x82, 0xbb, 0xcb, 0x2d, 0x8a, 0xe8, 0x04, 0x66, 0xe2, 0x68, 0xae, 0x98, 0xf2, 0x7f,
+	0x31, 0x29, 0x98, 0x45, 0x53, 0xf5, 0x39, 0x05, 0x37, 0xa4, 0x39, 0xba, 0x07, 0x30, 0xad, 0x26,
+	0x46, 0xc5, 0x24, 0x93, 0x84, 0x25, 0xea, 0xa5, 0xd5, 0x85, 0x11, 0xaa, 0x79, 0x7c, 0xf7, 0xf2,
+	0xf1, 0x94, 0x2a, 0xa2, 0x43, 0x9c, 0xf0, 0xb9, 0xd4, 0x72, 0xf0, 0x8d, 0x1a, 0xf9, 0x16, 0x3d,
+	0x00, 0x98, 0xf9, 0x9a, 0x17, 0x1d, 0xfd, 0x1a, 0xb3, 0xbc, 0x46, 0xbd, 0xfc, 0x9f, 0x52, 0xc5,
+	0x54, 0x96, 0x4c, 0x07, 0xc8, 0x4c, 0x62, 0xea, 0x79, 0x5c, 0x2c, 0x80, 0xea, 0x67, 0xe3, 0xa9,
+	0x01, 0x26, 0x53, 0x03, 0xbc, 0x4f, 0x0d, 0xf0, 0x38, 0x33, 0xb4, 0xc9, 0xcc, 0xd0, 0x5e, 0x67,
+	0x86, 0xd6, 0xaa, 0xb9, 0x9e, 0xe8, 0x86, 0x6d, 0xab, 0xc3, 0xfa, 0xb8, 0x21, 0x7d, 0x4e, 0x59,
+	0x48, 0x1d, 0x79, 0xa3, 0xb1, 0xf1, 0xf5, 0xc2, 0x5a, 0x9e, 0x66, 0x7b, 0x53, 0xde, 0x66, 0xed,
+	0x33, 0x00, 0x00, 0xff, 0xff, 0xa3, 0x02, 0x78, 0xe1, 0x25, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -256,8 +254,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	PendingFreezeRequests(ctx context.Context, in *QueryPendingFreezeRequestsRequest, opts ...grpc.CallOption) (*QueryPendingFreezeRequestsResponse, error)
-	FrozenSnapshots(ctx context.Context, in *QueryFrozenSnapshotsRequest, opts ...grpc.CallOption) (*QueryFrozenSnapshotsResponse, error)
+	Pending(ctx context.Context, in *QueryPendingRequest, opts ...grpc.CallOption) (*QueryPendingResponse, error)
+	Snapshots(ctx context.Context, in *QuerySnapshotsRequest, opts ...grpc.CallOption) (*QuerySnapshotsResponse, error)
 }
 
 type queryClient struct {
@@ -268,18 +266,18 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) PendingFreezeRequests(ctx context.Context, in *QueryPendingFreezeRequestsRequest, opts ...grpc.CallOption) (*QueryPendingFreezeRequestsResponse, error) {
-	out := new(QueryPendingFreezeRequestsResponse)
-	err := c.cc.Invoke(ctx, "/coreum.snapshot.v1.Query/PendingFreezeRequests", in, out, opts...)
+func (c *queryClient) Pending(ctx context.Context, in *QueryPendingRequest, opts ...grpc.CallOption) (*QueryPendingResponse, error) {
+	out := new(QueryPendingResponse)
+	err := c.cc.Invoke(ctx, "/coreum.snapshot.v1.Query/Pending", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) FrozenSnapshots(ctx context.Context, in *QueryFrozenSnapshotsRequest, opts ...grpc.CallOption) (*QueryFrozenSnapshotsResponse, error) {
-	out := new(QueryFrozenSnapshotsResponse)
-	err := c.cc.Invoke(ctx, "/coreum.snapshot.v1.Query/FrozenSnapshots", in, out, opts...)
+func (c *queryClient) Snapshots(ctx context.Context, in *QuerySnapshotsRequest, opts ...grpc.CallOption) (*QuerySnapshotsResponse, error) {
+	out := new(QuerySnapshotsResponse)
+	err := c.cc.Invoke(ctx, "/coreum.snapshot.v1.Query/Snapshots", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -288,57 +286,57 @@ func (c *queryClient) FrozenSnapshots(ctx context.Context, in *QueryFrozenSnapsh
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	PendingFreezeRequests(context.Context, *QueryPendingFreezeRequestsRequest) (*QueryPendingFreezeRequestsResponse, error)
-	FrozenSnapshots(context.Context, *QueryFrozenSnapshotsRequest) (*QueryFrozenSnapshotsResponse, error)
+	Pending(context.Context, *QueryPendingRequest) (*QueryPendingResponse, error)
+	Snapshots(context.Context, *QuerySnapshotsRequest) (*QuerySnapshotsResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) PendingFreezeRequests(ctx context.Context, req *QueryPendingFreezeRequestsRequest) (*QueryPendingFreezeRequestsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PendingFreezeRequests not implemented")
+func (*UnimplementedQueryServer) Pending(ctx context.Context, req *QueryPendingRequest) (*QueryPendingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Pending not implemented")
 }
-func (*UnimplementedQueryServer) FrozenSnapshots(ctx context.Context, req *QueryFrozenSnapshotsRequest) (*QueryFrozenSnapshotsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FrozenSnapshots not implemented")
+func (*UnimplementedQueryServer) Snapshots(ctx context.Context, req *QuerySnapshotsRequest) (*QuerySnapshotsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Snapshots not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
 }
 
-func _Query_PendingFreezeRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryPendingFreezeRequestsRequest)
+func _Query_Pending_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPendingRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).PendingFreezeRequests(ctx, in)
+		return srv.(QueryServer).Pending(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/coreum.snapshot.v1.Query/PendingFreezeRequests",
+		FullMethod: "/coreum.snapshot.v1.Query/Pending",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).PendingFreezeRequests(ctx, req.(*QueryPendingFreezeRequestsRequest))
+		return srv.(QueryServer).Pending(ctx, req.(*QueryPendingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_FrozenSnapshots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryFrozenSnapshotsRequest)
+func _Query_Snapshots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySnapshotsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).FrozenSnapshots(ctx, in)
+		return srv.(QueryServer).Snapshots(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/coreum.snapshot.v1.Query/FrozenSnapshots",
+		FullMethod: "/coreum.snapshot.v1.Query/Snapshots",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).FrozenSnapshots(ctx, req.(*QueryFrozenSnapshotsRequest))
+		return srv.(QueryServer).Snapshots(ctx, req.(*QuerySnapshotsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -348,19 +346,19 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "PendingFreezeRequests",
-			Handler:    _Query_PendingFreezeRequests_Handler,
+			MethodName: "Pending",
+			Handler:    _Query_Pending_Handler,
 		},
 		{
-			MethodName: "FrozenSnapshots",
-			Handler:    _Query_FrozenSnapshots_Handler,
+			MethodName: "Snapshots",
+			Handler:    _Query_Snapshots_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "coreum/snapshot/v1/query.proto",
 }
 
-func (m *QueryPendingFreezeRequestsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryPendingRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -370,12 +368,12 @@ func (m *QueryPendingFreezeRequestsRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryPendingFreezeRequestsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryPendingRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryPendingFreezeRequestsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryPendingRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -390,7 +388,7 @@ func (m *QueryPendingFreezeRequestsRequest) MarshalToSizedBuffer(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryPendingFreezeRequestsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryPendingResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -400,20 +398,20 @@ func (m *QueryPendingFreezeRequestsResponse) Marshal() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *QueryPendingFreezeRequestsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryPendingResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryPendingFreezeRequestsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryPendingResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Requests) > 0 {
-		for iNdEx := len(m.Requests) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Pending) > 0 {
+		for iNdEx := len(m.Pending) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Requests[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Pending[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -427,7 +425,7 @@ func (m *QueryPendingFreezeRequestsResponse) MarshalToSizedBuffer(dAtA []byte) (
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFrozenSnapshotsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QuerySnapshotsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -437,12 +435,12 @@ func (m *QueryFrozenSnapshotsRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryFrozenSnapshotsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QuerySnapshotsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFrozenSnapshotsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QuerySnapshotsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -457,7 +455,7 @@ func (m *QueryFrozenSnapshotsRequest) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFrozenSnapshotsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QuerySnapshotsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -467,12 +465,12 @@ func (m *QueryFrozenSnapshotsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryFrozenSnapshotsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QuerySnapshotsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFrozenSnapshotsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QuerySnapshotsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -505,7 +503,7 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryPendingFreezeRequestsRequest) Size() (n int) {
+func (m *QueryPendingRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -518,14 +516,14 @@ func (m *QueryPendingFreezeRequestsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryPendingFreezeRequestsResponse) Size() (n int) {
+func (m *QueryPendingResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.Requests) > 0 {
-		for _, e := range m.Requests {
+	if len(m.Pending) > 0 {
+		for _, e := range m.Pending {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -533,7 +531,7 @@ func (m *QueryPendingFreezeRequestsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryFrozenSnapshotsRequest) Size() (n int) {
+func (m *QuerySnapshotsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -546,7 +544,7 @@ func (m *QueryFrozenSnapshotsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryFrozenSnapshotsResponse) Size() (n int) {
+func (m *QuerySnapshotsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -567,7 +565,7 @@ func sovQuery(x uint64) (n int) {
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryPendingFreezeRequestsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryPendingRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -590,10 +588,10 @@ func (m *QueryPendingFreezeRequestsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPendingFreezeRequestsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryPendingRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPendingFreezeRequestsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryPendingRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -649,7 +647,7 @@ func (m *QueryPendingFreezeRequestsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryPendingFreezeRequestsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryPendingResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -672,15 +670,15 @@ func (m *QueryPendingFreezeRequestsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPendingFreezeRequestsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryPendingResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPendingFreezeRequestsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryPendingResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Requests", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Pending", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -707,8 +705,8 @@ func (m *QueryPendingFreezeRequestsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Requests = append(m.Requests, FreezeRequest{})
-			if err := m.Requests[len(m.Requests)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Pending = append(m.Pending, SnapshotRequest{})
+			if err := m.Pending[len(m.Pending)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -733,7 +731,7 @@ func (m *QueryPendingFreezeRequestsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFrozenSnapshotsRequest) Unmarshal(dAtA []byte) error {
+func (m *QuerySnapshotsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -756,10 +754,10 @@ func (m *QueryFrozenSnapshotsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFrozenSnapshotsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QuerySnapshotsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFrozenSnapshotsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QuerySnapshotsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -815,7 +813,7 @@ func (m *QueryFrozenSnapshotsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFrozenSnapshotsResponse) Unmarshal(dAtA []byte) error {
+func (m *QuerySnapshotsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -838,10 +836,10 @@ func (m *QueryFrozenSnapshotsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFrozenSnapshotsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QuerySnapshotsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFrozenSnapshotsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QuerySnapshotsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -873,7 +871,7 @@ func (m *QueryFrozenSnapshotsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Snapshots = append(m.Snapshots, FrozenSnapshot{})
+			m.Snapshots = append(m.Snapshots, Snapshot{})
 			if err := m.Snapshots[len(m.Snapshots)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
