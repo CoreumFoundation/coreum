@@ -673,7 +673,7 @@ func New(
 			WasmTXCounterStoreKey:        keys[wasm.StoreKey],
 			SnapshotKey:                  keys[snapshottypes.StoreKey],
 			SnapshotTransformations: []snapshottypes.Transformation{
-				assettypes.NewBankTransformation(keys[banktypes.StoreKey]),
+				assettypes.NewBankTransformation(appCodec, keys[banktypes.StoreKey]),
 			},
 		},
 	)

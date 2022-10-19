@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -23,11 +24,16 @@ func BalancesSnapshotName(denom string) []byte {
 }
 
 type BankTransformation struct {
+	cdc      codec.BinaryCodec
 	storeKey sdk.StoreKey
 }
 
-func NewBankTransformation(bankKey sdk.StoreKey) BankTransformation {
+func NewBankTransformation(
+	cdc codec.BinaryCodec,
+	bankKey sdk.StoreKey,
+) BankTransformation {
 	return BankTransformation{
+		cdc:      cdc,
 		storeKey: bankKey,
 	}
 }
@@ -46,7 +52,7 @@ func (bt BankTransformation) Transform(key, value []byte, deleted bool) ([]byte,
 	return BalancesSnapshotName(denom), snapshottypes.KeyValuePairs{
 		{
 			Key:    address.MustLengthPrefix(accAddress),
-			Value:  must.Bytes((&AccountBalance{Balance: balance, Address: accAddress.String()}).Marshal()),
+			Value:  bt.cdc.MustMarshal(&AccountBalance{Balance: balance, Address: accAddress.String()}),
 			Delete: deleted,
 		},
 	}
