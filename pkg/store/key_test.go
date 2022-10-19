@@ -1,9 +1,9 @@
 package store_test
 
 import (
-	"strconv"
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/pkg/store"
@@ -20,7 +20,7 @@ func TestJoinKeysWithLength(t *testing.T) {
 	key := store.JoinKeysWithLength(prefix, denom)
 	exp := make([]byte, 0)
 	exp = append(exp, prefix...)
-	exp = append(exp, []byte(strconv.Itoa(len(denom)))...)
+	exp = append(exp, proto.EncodeVarint(uint64(len(denom)))...)
 	exp = append(exp, denom...)
 	require.Equal(t, exp, key)
 	require.Equal(t, keyClone, prefix)
