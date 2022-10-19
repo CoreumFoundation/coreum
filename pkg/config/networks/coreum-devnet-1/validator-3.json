@@ -19,8 +19,8 @@
         "delegator_address": "devcore1xsthw036vst75rhh4py57lt7nx59qpvzez3a8k",
         "validator_address": "devcorevaloper1xsthw036vst75rhh4py57lt7nx59qpvzqa0cgr",
         "pubkey": {
-          "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "A5OpW9SAqRwG5l3H3Zyk9pf8DWuDsTcc+XVo0zwkheaU"
+          "@type": "/cosmos.crypto.ed25519.PubKey",
+          "key": "N0Z04uWc99TlLKW7Wac7tcgCYwnWHArwtpFTO/0Vi4I="
         },
         "value": {
           "denom": "ducore",
@@ -56,6 +56,6 @@
     }
   },
   "signatures": [
-    "A4N7yxaNiTje2fNMBdmaze5jw/wzK6LhlF9ltq06dYk3ITkwjjPmxE6hrA+2XSUnYTqlJpFufEjxUjQeDvAzYA=="
+    "BsMp59jMd8mVdYs/KaYL7I9lAaZbjfmIT8roNREh7vQm2OGNrKA7OrSc7mGiWSsk45myDHdAvdmnV6lNa3tKlw=="
   ]
 }

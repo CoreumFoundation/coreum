@@ -16,30 +16,13 @@ import (
 
 // FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
 
-// TestInitialBalance checks that initial balance is set by genesis block
-func TestInitialBalance(ctx context.Context, t testing.T, chain testing.Chain) {
-	// Create new random wallet
-	wallet := testing.RandomWallet()
-
-	// Prefunding account required by test
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(wallet.Address(), chain.NewCoin(sdk.NewInt(100))),
-	))
-
-	// Query for current balance available on the wallet
-	balances, err := chain.Client.QueryBankBalances(ctx, wallet)
-	require.NoError(t, err)
-
-	// Test that wallet owns expected balance
-	assert.Equal(t, "100", balances[chain.NetworkConfig.TokenSymbol].Amount.String())
-}
-
 // TestCoreTransfer checks that core is transferred correctly between wallets
 func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
-	// Create two random wallets
-	sender := chain.RandomWallet()
-	receiver := chain.RandomWallet()
+	sender := chain.GenAccount()
+	recipient := chain.GenAccount()
 
+	senderInitialAmount := sdk.NewInt(100)
+	recipientInitialAmount := sdk.NewInt(10)
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			sender,
@@ -47,25 +30,21 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
 				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
 				1,
-				sdk.NewInt(100),
+				senderInitialAmount,
 			)),
 		),
-	))
-
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
-			receiver,
-			chain.NewCoin(sdk.NewInt(10)),
+			recipient,
+			chain.NewCoin(recipientInitialAmount),
 		),
 	))
 
-	// Transfer 10 cores from sender to receiver
+	// transfer tokens from sender to recipient
+	amountToSend := sdk.NewInt(10)
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
-		ToAddress:   receiver.String(),
-		Amount: []sdk.Coin{
-			chain.NewCoin(sdk.NewInt(10)),
-		},
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
 	}
 
 	result, err := tx.BroadcastTx(
@@ -79,17 +58,20 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
 
 	// Query wallets for current balance
-	balancesSender, err := chain.Client.QueryBankBalances(ctx, chain.AccAddressToLegacyWallet(sender))
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	balancesSender, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: sender.String(),
+		Denom:   chain.NetworkConfig.TokenSymbol,
+	})
 	require.NoError(t, err)
 
-	balancesReceiver, err := chain.Client.QueryBankBalances(ctx, chain.AccAddressToLegacyWallet(receiver))
+	balancesRecipient, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   chain.NetworkConfig.TokenSymbol,
+	})
 	require.NoError(t, err)
 
-	// Test that tokens disappeared from sender's wallet
-	// - 10core were transferred to receiver
-	// - 180000000core were taken as fee
-	assert.Equal(t, "90", balancesSender[chain.NetworkConfig.TokenSymbol].Amount.String())
-
-	// Test that tokens reached receiver's wallet
-	assert.Equal(t, "20", balancesReceiver[chain.NetworkConfig.TokenSymbol].Amount.String())
+	assert.Equal(t, senderInitialAmount.Sub(amountToSend).String(), balancesSender.Balance.Amount.String())
+	assert.Equal(t, recipientInitialAmount.Add(amountToSend).String(), balancesRecipient.Balance.Amount.String())
 }
