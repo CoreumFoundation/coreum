@@ -46,8 +46,16 @@ type testingConfig struct {
 	LogVerbose      bool
 }
 
-var cfg = testingConfig{
-	NetworkConfig: coreumtesting.NetworkConfig,
+var cfg testingConfig
+
+func init() {
+	networkConfig, err := coreumtesting.NewNetworkConfig()
+	if err != nil {
+		panic(fmt.Sprintf("can't create network config for the integration tests: %s", err))
+	}
+	cfg = testingConfig{
+		NetworkConfig: networkConfig,
+	}
 }
 
 func TestMain(m *testing.M) {

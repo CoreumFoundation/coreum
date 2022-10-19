@@ -59,9 +59,12 @@ func testNetwork() config.Network {
 		ChainID:       "test-network",
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
-		Denom:         config.DenomDev,
-		BaseDenom:     config.BaseDenomMain,
-		Fee:           feeConfig,
+		Denom:         "dcore",
+		// BaseDenom uses the u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
+		// We also add another prefix for non mainnet network symbols to differentiate them from mainnet.
+		// 'd' prefix in ducore stands for devnet.
+		BaseDenom: "ucore",
+		Fee:       feeConfig,
 		FundedAccounts: []config.FundedAccount{{
 			PublicKey: stakerPubKey,
 			Balances:  "1000some-test-token",
@@ -267,7 +270,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		ChainID:        "test-network",
 		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix:  "core",
-		BaseDenom:      config.BaseDenomMain,
+		BaseDenom:      "ucore",
 		Fee:            feeConfig,
 		FundedAccounts: []config.FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
@@ -300,7 +303,7 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 		ChainID:       "test-network",
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
-		BaseDenom:     config.BaseDenomMain,
+		BaseDenom:     "ucore",
 		Fee:           feeConfig,
 	}
 
