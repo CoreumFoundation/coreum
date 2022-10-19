@@ -92,8 +92,8 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 	}, nil
 }
 
-// GetLockedCoins consumes the account balances and returns the locked coins for the account.
-func (k Keeper) GetLockedCoins(ctx sdk.Context, address sdk.AccAddress, currentBalances sdk.Coins) sdk.Coins {
+// GetLockedCoins consumes returns the locked coins for the account.
+func (k Keeper) GetLockedCoins(ctx sdk.Context, address sdk.AccAddress) sdk.Coins {
 	return sdk.NewCoins()
 }
 

@@ -83,15 +83,6 @@ func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(ctx sdk.Context, senderA
 
 // SendCoins is a BaseKeeper SendCoins wrapped method.
 func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	if !amt.IsValid() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, amt.String())
-	}
-
-	balances := k.GetAllBalances(ctx, fromAddr)
-	locked := k.ftProvider.GetLockedCoins(ctx, fromAddr, balances)
-	if _, ok := balances.SafeSub(amt.Add(locked...)); ok {
-		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, "insufficient amount to send")
-	}
-
+	// TODO integrate the locked coins interaction here
 	return k.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
