@@ -1,5 +1,7 @@
 package types
 
+import "github.com/CoreumFoundation/coreum/pkg/store"
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "asset"
@@ -15,13 +17,11 @@ const (
 )
 
 var (
-	// AssetKeyPrefix defines the store key prefix for the asset.
-	AssetKeyPrefix = []byte{0x01}
 	// FungibleTokenKeyPrefix defines the key prefix for the fungible token.
-	FungibleTokenKeyPrefix = append(AssetKeyPrefix, 0x01)
+	FungibleTokenKeyPrefix = []byte{0x01}
 )
 
 // GetFungibleTokenKey constructs the key for the fungible token.
 func GetFungibleTokenKey(denom string) []byte {
-	return append(FungibleTokenKeyPrefix, []byte(denom)...)
+	return store.JoinKeysWithLength(FungibleTokenKeyPrefix, []byte(denom))
 }

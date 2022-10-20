@@ -18,7 +18,7 @@ import (
 
 func TestIssueFungibleToken(t *testing.T) {
 	requireT := require.New(t)
-	networkCfg, err := config.NetworkByChainID(config.Devnet)
+	networkCfg, err := config.NetworkByChainID(config.ChainIDDev)
 	requireT.NoError(err)
 	app.ChosenNetwork = networkCfg
 

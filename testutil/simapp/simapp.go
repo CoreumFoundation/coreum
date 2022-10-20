@@ -39,6 +39,12 @@ func New() *app.App {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
+	network, err := config.NetworkByChainID(config.ChainIDDev)
+	if err != nil {
+		panic(err)
+	}
+
+	app.ChosenNetwork = network
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
 
 	coreApp := app.New(logger, db, nil, true, map[int64]bool{}, "", 0, encoding,

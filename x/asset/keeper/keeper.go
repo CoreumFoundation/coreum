@@ -92,6 +92,11 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 	}, nil
 }
 
+// GetLockedCoins returns the locked coins for the account.
+func (k Keeper) GetLockedCoins(ctx sdk.Context, address sdk.AccAddress) sdk.Coins {
+	return sdk.NewCoins()
+}
+
 // Logger returns the Keeper logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
