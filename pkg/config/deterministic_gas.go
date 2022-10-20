@@ -23,7 +23,9 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		GovVote:                80000,
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
+		StakingBeginRedelegate: 51000,
 		StakingCreateValidator: 50000,
+		StakingEditValidator:   50000,
 	}
 }
 
@@ -47,7 +49,9 @@ type DeterministicGasRequirements struct {
 	GovVote                uint64
 	StakingDelegate        uint64
 	StakingUndelegate      uint64
+	StakingBeginRedelegate uint64
 	StakingCreateValidator uint64
+	StakingEditValidator   uint64
 }
 
 // GasRequiredByMessage returns gas required by a sdk.Msg.
@@ -70,8 +74,12 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:
 		return dgr.StakingUndelegate, true
+	case *stakingtypes.MsgBeginRedelegate:
+		return dgr.StakingBeginRedelegate, true
 	case *stakingtypes.MsgCreateValidator:
 		return dgr.StakingCreateValidator, true
+	case *stakingtypes.MsgEditValidator:
+		return dgr.StakingEditValidator, true
 	default:
 		return 0, false
 	}

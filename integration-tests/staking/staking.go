@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -20,7 +21,9 @@ const (
 	initialValidatorAmount = 1000000
 )
 
-// TestStaking checks validator creation, delegation and undelegation operations work correctly
+// TestStaking checks validator creation, delegation and undelegation operations work correctly.
+//
+//nolint:funlen // this function is a long test scenario and breaking it down might not be that beneficial
 func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
@@ -35,6 +38,16 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 		chain.GasLimitByMsgs(&stakingtypes.MsgUndelegate{}),
 		1,
 		sdk.NewInt(0),
+	)).Add(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		chain.GasLimitByMsgs(&stakingtypes.MsgBeginRedelegate{}),
+		1,
+		sdk.NewInt(0),
+	)).Add(testing.ComputeNeededBalance(
+		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
+		chain.GasLimitByMsgs(&stakingtypes.MsgEditValidator{}),
+		1,
+		sdk.NewInt(0),
 	))
 
 	// Setup validator and delegator
@@ -46,6 +59,29 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.NoError(t, chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(delegator, chain.NewCoin(delegatorInitialBalance)),
 	))
+
+	// Edit Validator
+	updatedDetail := "updated detail"
+	editValidatorMsg := &stakingtypes.MsgEditValidator{
+		Description:      stakingtypes.Description{Details: updatedDetail},
+		ValidatorAddress: validator.String(),
+	}
+
+	editValidatorRes, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sdk.AccAddress(validator)),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(editValidatorMsg)),
+		editValidatorMsg,
+	)
+	require.NoError(t, err)
+	assert.EqualValues(t, int64(chain.GasLimitByMsgs(editValidatorMsg)), editValidatorRes.GasUsed)
+
+	valResp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validator.String(),
+	})
+
+	require.NoError(t, err)
+	assert.EqualValues(t, updatedDetail, valResp.GetValidator().Description.Details)
 
 	// Delegate coins
 	delegateMsg := stakingtypes.NewMsgDelegate(delegator, validator, chain.NewCoin(delegateAmount))
@@ -66,8 +102,36 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.NoError(t, err)
 	require.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 
+	// Redelegate Coins
+	validator2, deactivateValidator2 := createValidator(ctx, t, chain)
+	defer deactivateValidator2()
+	redelegateMsg := &stakingtypes.MsgBeginRedelegate{
+		DelegatorAddress:    delegator.String(),
+		ValidatorSrcAddress: validator.String(),
+		ValidatorDstAddress: validator2.String(),
+		Amount:              chain.NewCoin(delegateAmount),
+	}
+
+	redelegateResult, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(delegator),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(redelegateMsg)),
+		redelegateMsg,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, int64(chain.GasLimitByMsgs(redelegateMsg)), redelegateResult.GasUsed)
+	logger.Get(ctx).Info("Redelegation executed", zap.String("txHash", redelegateResult.TxHash))
+
+	ddResp, err = stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
+		DelegatorAddr: delegator.String(),
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
+	assert.Equal(t, validator2.String(), ddResp.DelegationResponses[0].GetDelegation().ValidatorAddress)
+
 	// Undelegate coins
-	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, validator, chain.NewCoin(delegateAmount))
+	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, validator2, chain.NewCoin(delegateAmount))
 	undelegateResult, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
@@ -88,11 +152,11 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.GreaterOrEqual(t, delegatorBalance.Amount.Int64(), delegateAmount.Int64())
 
 	// Make sure coins have been undelegated
-	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
+	valResp, err = stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validator.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, int64(initialValidatorAmount), resp.Validator.Tokens.Int64())
+	require.Equal(t, int64(initialValidatorAmount), valResp.Validator.Tokens.Int64())
 }
 
 func createValidator(ctx context.Context, t testing.T, chain testing.Chain) (sdk.ValAddress, func()) {
