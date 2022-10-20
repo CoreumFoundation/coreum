@@ -39,13 +39,12 @@ const (
 // TestBankSendWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
 func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
-	admin := chain.GenAccount()
 	nativeDenom := chain.NetworkConfig.BaseDenom
 
 	requireT := require.New(t)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-	))
+
+	admin, err := chain.GenFundedAccount(ctx)
+	requireT.NoError(err)
 
 	clientCtx := chain.ClientContext.WithFromAddress(admin)
 	txf := chain.TxFactory().
@@ -103,13 +102,17 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	})
 	requireT.NoError(err)
 
+	gasPrice, err := tx.GetGasPrice(ctx, chain.ClientContext)
+	requireT.NoError(err)
+
 	// try to withdraw more than the admin has
 	txf = txf.
 		WithSimulateAndExecute(false).
 		// the gas here is to try to execute the tx and don't fail on the gas estimation
-		WithGas(uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
+		WithGas(uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas / 2)).
+		WithGasPrices(gasPrice.String())
 	err = Execute(ctx, clientCtx, txf, contractAddr, withdrawPayload, sdk.Coin{})
-	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(err, cosmoserrors.ErrInsufficientFunds)
 
 	// send coin from the contract to test wallet
 	withdrawPayload, err = json.Marshal(map[bankMethod]bankWithdrawRequest{

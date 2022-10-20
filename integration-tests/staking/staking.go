@@ -25,34 +25,18 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
 	delegateAmount := sdk.NewInt(100)
-	delegatorInitialBalance := testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.GasLimitByMsgs(&stakingtypes.MsgDelegate{}),
-		1,
-		delegateAmount,
-	).Add(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.GasLimitByMsgs(&stakingtypes.MsgUndelegate{}),
-		1,
-		sdk.NewInt(0),
-	))
-
 	// Setup validator and delegator
-	delegator := chain.GenAccount()
+	delegator, err := chain.GenFundedAccount(ctx)
+	require.NoError(t, err)
 	validator, deactivateValidator := createValidator(ctx, t, chain)
 	defer deactivateValidator()
-
-	// Fund wallets
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(delegator, chain.NewCoin(delegatorInitialBalance)),
-	))
 
 	// Delegate coins
 	delegateMsg := stakingtypes.NewMsgDelegate(delegator, validator, chain.NewCoin(delegateAmount))
 	delegateResult, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		delegateMsg,
 	)
 	require.NoError(t, err)
@@ -71,7 +55,7 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	undelegateResult, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		undelegateMsg,
 	)
 	require.NoError(t, err)
@@ -98,27 +82,12 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 func createValidator(ctx context.Context, t testing.T, chain testing.Chain) (sdk.ValAddress, func()) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
-	validatorAmount := sdk.NewInt(initialValidatorAmount)
-	validatorInitialBalance := testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.GasLimitByMsgs(&stakingtypes.MsgCreateValidator{}),
-		1,
-		validatorAmount,
-	).Add(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.GasLimitByMsgs(&stakingtypes.MsgUndelegate{}),
-		1,
-		validatorAmount,
-	))
-
 	// Create random validator wallet
-	validator := chain.GenAccount()
+	validator, err := chain.GenFundedAccount(ctx)
+	require.NoError(t, err)
 	validatorAddr := sdk.ValAddress(validator)
 
-	// Fund wallets
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(validator, chain.NewCoin(validatorInitialBalance)),
-	))
+	validatorAmount := sdk.NewInt(initialValidatorAmount)
 
 	// Create validator
 	msg, err := stakingtypes.NewMsgCreateValidator(
@@ -133,7 +102,7 @@ func createValidator(ctx context.Context, t testing.T, chain testing.Chain) (sdk
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(validator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		msg,
 	)
 	require.NoError(t, err)
@@ -154,7 +123,7 @@ func createValidator(ctx context.Context, t testing.T, chain testing.Chain) (sdk
 		_, err = tx.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(validator),
-			chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
+			chain.TxFactory().WithSimulateAndExecute(true),
 			undelegateMsg,
 		)
 		require.NoError(t, err)

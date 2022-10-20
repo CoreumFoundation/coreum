@@ -37,7 +37,7 @@ func TestUpgrade(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.Governance.GetMinDeposit(ctx)
 	requireT.NoError(err)
 
 	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))

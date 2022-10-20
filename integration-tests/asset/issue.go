@@ -20,19 +20,9 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	assetClient := assettypes.NewQueryClient(clientCtx)
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
-	issuer := chain.GenAccount()
+	issuer, err := chain.GenFundedAccount(ctx)
+	requireT.NoError(err)
 	recipient := chain.GenAccount()
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			issuer,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&assettypes.MsgIssueFungibleToken{}),
-				1,
-				sdk.NewInt(0),
-			)),
-		),
-	))
 
 	// Issue the new fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
@@ -47,17 +37,17 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	res, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		msg,
 	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(msg), uint64(res.GasUsed))
 
-	require.NoError(t, err)
 	evt := testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
 	fungibleTokenIssuedEvt, ok := evt.(*assettypes.EventFungibleTokenIssued)
-	require.True(t, ok)
+	requireT.True(ok)
 
-	require.NoError(t, err)
-	require.Equal(t, assettypes.EventFungibleTokenIssued{
+	requireT.Equal(assettypes.EventFungibleTokenIssued{
 		Denom:         assettypes.BuildFungibleTokenDenom(msg.Symbol, issuer),
 		Issuer:        msg.Issuer,
 		Symbol:        msg.Symbol,

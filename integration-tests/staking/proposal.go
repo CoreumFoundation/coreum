@@ -21,8 +21,9 @@ func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain test
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
 	// Create new proposer.
-	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposer, err := chain.GenFundedAccount(ctx)
+	requireT.NoError(err)
+	proposerBalance, err := chain.Governance.GetMinDeposit(ctx)
 	requireT.NoError(err)
 
 	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))

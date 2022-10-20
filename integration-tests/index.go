@@ -28,7 +28,6 @@ func Tests() []testing.TestSet {
 				auth.TestFeeLimits,
 				auth.TestMultisig,
 				bank.TestCoreTransfer,
-				bank.TestTransferFailsIfNotEnoughGasIsProvided,
 				bank.TestTransferDeterministicGas,
 				bank.TestTransferDeterministicGasTwoBankSends,
 				bank.TestTransferGasEstimation,

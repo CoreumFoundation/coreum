@@ -161,14 +161,12 @@ func (f Faucet) collectMessages(requests []fundingRequest) []sdk.Msg {
 func (f Faucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for tests, it might take a while...")
-	// FIXME (wojtek): use estimation once it is available in `tx` package
-	gasLimit := uint64(len(msgs)) * f.chainCtx.GasLimitByMsgs(&banktypes.MsgSend{})
 
 	// Transaction is broadcasted and awaited
 	_, err := tx.BroadcastTx(
 		ctx,
 		f.chainCtx.ClientContext,
-		f.chainCtx.TxFactory().WithGas(gasLimit),
+		f.chainCtx.TxFactory().WithSimulateAndExecute(true),
 		msgs...,
 	)
 	if err != nil {

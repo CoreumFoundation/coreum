@@ -39,23 +39,14 @@ func NewGovernance(chainContext ChainContext, stakerMnemonics []string) Governan
 	return gov
 }
 
-// ComputeProposerBalance computes the balance required for the proposer.
-func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error) {
+// GetMinDeposit computes the min deposit required for the proposal.
+func (g Governance) GetMinDeposit(ctx context.Context) (sdk.Coin, error) {
 	govParams, err := queryGovParams(ctx, g.govClient)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
 
-	minDeposit := govParams.DepositParams.MinDeposit[0]
-	initialGasPrice := g.chainContext.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
-	proposerInitialBalance := ComputeNeededBalance(
-		initialGasPrice,
-		g.chainContext.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}),
-		1,
-		minDeposit.Amount,
-	)
-
-	return g.chainContext.NewCoin(proposerInitialBalance), nil
+	return govParams.DepositParams.MinDeposit[0], nil
 }
 
 // Propose creates a new proposal.
@@ -70,8 +61,16 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 		return 0, errors.WithStack(err)
 	}
 
+	gasPrie, err := tx.GetGasPrice(ctx, g.chainContext.ClientContext)
+	if err != nil {
+		return 0, err
+	}
+
+	// we don't use auto estimation to get proper error
 	txf := g.chainContext.TxFactory().
-		WithGas(g.chainContext.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}))
+		WithGas(g.chainContext.GasLimitByMsgs(&govtypes.MsgSubmitProposal{})).
+		WithGasPrices(gasPrie.String())
+
 	result, err := tx.BroadcastTx(
 		ctx,
 		g.chainContext.ClientContext.
@@ -111,7 +110,7 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 		}
 
 		txf := g.chainContext.TxFactory().
-			WithGas(g.chainContext.GasLimitByMsgs(msg))
+			WithSimulateAndExecute(true)
 
 		clientCtx := g.chainContext.ClientContext.
 			WithBroadcastMode(flags.BroadcastSync)

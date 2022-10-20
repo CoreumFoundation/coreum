@@ -16,53 +16,56 @@ import (
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
-// TestTransferDeterministicGas checks that transfer takes the deterministic amount of gas
+// TestTransferDeterministicGas checks that transfer takes the deterministic amount of gas.
 func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := chain.GenAccount()
+	sender, err := chain.GenFundedAccount(ctx)
 	recipient := chain.GenAccount()
-
-	amountToSend := sdk.NewInt(1000)
-	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		bankSendGas,
-		1,
-		amountToSend,
-	)))))
+	require.NoError(t, err)
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
+
+	gasPrice, err := tx.GetGasPrice(ctx, clientCtx)
+	require.NoError(t, err)
+
+	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
+
+	// send with not enough gas
+	_, err = tx.BroadcastTx(
+		ctx,
+		clientCtx,
+		chain.TxFactory().
+			WithGas(bankSendGas-1). // gas less than expected
+			WithGasPrices(gasPrice.String()),
+		msg)
+	require.ErrorIs(t, cosmoserrors.ErrOutOfGas, err)
+
+	// send with enough gas
 	res, err := tx.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
 			WithMemo(maxMemo). // memo is set to max length here to charge as much gas as possible
-			WithGas(bankSendGas),
+			WithGas(bankSendGas).
+			WithGasPrices(gasPrice.String()),
 		msg)
 	require.NoError(t, err)
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
-// TestTransferDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
+// TestTransferDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas.
 func TestTransferDeterministicGasTwoBankSends(ctx context.Context, t testing.T, chain testing.Chain) {
 	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
-	senderInitialBalance := testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		gasExpected,
-		1,
-		sdk.NewInt(2000),
-	)
 
-	sender := chain.GenAccount()
+	sender, err := chain.GenFundedAccount(ctx)
+	require.NoError(t, err)
 	receiver1 := chain.GenAccount()
 	receiver2 := chain.GenAccount()
-
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(senderInitialBalance))))
 
 	bankSend1 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -75,68 +78,43 @@ func TestTransferDeterministicGasTwoBankSends(ctx context.Context, t testing.T, 
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 
-	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)
-	txf := chain.ChainContext.TxFactory().WithGas(gasExpected)
+	clientCtx := chain.ClientContext.WithFromAddress(sender)
+
+	gasPrice, err := tx.GetGasPrice(ctx, clientCtx)
+	require.NoError(t, err)
+
+	txf := chain.TxFactory().
+		WithGas(gasExpected).
+		WithGasPrices(gasPrice.String())
 	result, err := tx.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
 	require.NoError(t, err)
 	require.EqualValues(t, gasExpected, result.GasUsed)
 }
 
-// TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
-func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := chain.GenAccount()
-
-	amountToSend := sdk.NewInt(1000)
-	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		bankSendGas,
-		1,
-		amountToSend,
-	)))))
-
-	msg := &banktypes.MsgSend{
-		FromAddress: sender.String(),
-		ToAddress:   sender.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
-	}
-
-	clientCtx := chain.ClientContext.WithFromAddress(sender)
-	_, err := tx.BroadcastTx(
-		ctx,
-		clientCtx,
-		chain.TxFactory().
-			WithGas(bankSendGas-1), // gas less than expected
-		msg)
-
-	require.True(t, cosmoserrors.ErrOutOfGas.Is(err))
-}
-
-// TestTransferGasEstimation checks that gas is correctly estimated for send message
+// TestTransferGasEstimation checks that gas is correctly estimated for send message.
 func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := chain.GenAccount()
+	sender, err := chain.GenFundedAccount(ctx)
+	require.NoError(t, err)
 
 	amountToSend := sdk.NewInt(1000)
 	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		bankSendGas,
-		1,
-		amountToSend,
-	)))))
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   sender.String(),
 		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
 	}
+
+	gasPrice, err := tx.GetGasPrice(ctx, chain.ClientContext)
+	require.NoError(t, err)
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	_, estimatedGas, err := tx.CalculateGas(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
-			WithGas(bankSendGas),
+			WithGas(bankSendGas).
+			WithGasPrices(gasPrice.String()),
 		msg)
 	require.NoError(t, err)
 	assert.Equal(t, bankSendGas, estimatedGas)

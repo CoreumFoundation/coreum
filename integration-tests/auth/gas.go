@@ -16,15 +16,8 @@ import (
 
 // TestFeeLimits verifies that invalid message gas won't be accepted.
 func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := chain.GenAccount()
-
-	maxBlockGas := chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-		1,
-		sdk.NewInt(maxBlockGas+100),
-	)))))
+	sender, err := chain.GenFundedAccount(ctx)
+	require.NoError(t, err)
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -32,17 +25,17 @@ func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
 	}
 
-	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice.
-		Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.Params().MaxDiscount))
+	gasPrice, err := tx.GetGasPrice(ctx, chain.ClientContext)
+	require.NoError(t, err)
 
 	// the gas price is too low
-	_, err := tx.BroadcastTx(ctx,
+	_, err = tx.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
 			WithGas(chain.GasLimitByMsgs(msg)).
-			WithGasPrices(chain.NewDecCoin(gasPriceWithMaxDiscount.QuoInt64(2)).String()),
+			WithGasPrices(chain.NewDecCoin(gasPrice.Amount.QuoInt64(2)).String()),
 		msg)
-	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
+	require.ErrorIs(t, cosmoserrors.ErrInsufficientFee, err)
 
 	// no gas price
 	_, err = tx.BroadcastTx(ctx,
@@ -51,22 +44,26 @@ func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
 			WithGas(chain.GasLimitByMsgs(msg)).
 			WithGasPrices(""),
 		msg)
-	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
+	require.ErrorIs(t, err, cosmoserrors.ErrInsufficientFee)
 
 	// more gas than MaxBlockGas
-	_, err = tx.BroadcastTx(ctx,
-		chain.ClientContext.WithFromAddress(sender),
-		chain.TxFactory().
-			WithGas(uint64(maxBlockGas+1)),
-		msg)
-	// TODO(dhil) here we get the Internal error -> "tx (***) not found" and the test takes the "txTimeout" time, validate that it's expected
-	require.Error(t, err)
+	maxBlockGas := chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas
 
 	// gas equal MaxBlockGas, the tx should pass
 	_, err = tx.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
-			WithGas(uint64(maxBlockGas)),
+			WithGas(uint64(maxBlockGas)).
+			WithGasPrices(gasPrice.String()),
 		msg)
 	require.NoError(t, err)
+
+	_, err = tx.BroadcastTx(ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(uint64(maxBlockGas+1)).
+			WithGasPrices(gasPrice.String()),
+		msg)
+	// TODO(dhil) here we get the Internal error -> "tx (***) not found" and the test takes the "txTimeout" time, validate that it's expected
+	require.Error(t, err)
 }

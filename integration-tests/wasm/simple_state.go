@@ -31,12 +31,10 @@ const (
 // TestSimpleStateWasmContract runs a contract deployment flow and tries to modify the state after deployment.
 // This is a E2E check for the WASM integration, to ensure it works for a simple state contract (Counter).
 func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing.Chain) {
-	admin := chain.GenAccount()
-
 	requireT := require.New(t)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-	))
+
+	admin, err := chain.GenFundedAccount(ctx)
+	requireT.NoError(err)
 
 	// instantiate the contract and set the initial counter state.
 	initialPayload, err := json.Marshal(simpleState{

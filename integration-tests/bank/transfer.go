@@ -4,8 +4,8 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -14,64 +14,89 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
-
 // TestCoreTransfer checks that core is transferred correctly between wallets
 func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := chain.GenAccount()
-	recipient := chain.GenAccount()
-
-	senderInitialAmount := sdk.NewInt(100)
-	recipientInitialAmount := sdk.NewInt(10)
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			sender,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-				1,
-				senderInitialAmount,
-			)),
-		),
-		testing.NewFundedAccount(
-			recipient,
-			chain.NewCoin(recipientInitialAmount),
-		),
-	))
-
-	// transfer tokens from sender to recipient
-	amountToSend := sdk.NewInt(10)
-	msg := &banktypes.MsgSend{
-		FromAddress: sender.String(),
-		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
-	}
-
-	result, err := tx.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(sender),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
-		msg,
-	)
+	sender, err := chain.GenFundedAccount(ctx)
+	require.NoError(t, err)
+	recipient, err := chain.GenFundedAccount(ctx)
 	require.NoError(t, err)
 
-	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
-
-	// Query wallets for current balance
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	balancesSender, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	senderInitialBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: sender.String(),
 		Denom:   chain.NetworkConfig.BaseDenom,
 	})
 	require.NoError(t, err)
 
-	balancesRecipient, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	recipientInitialBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: recipient.String(),
 		Denom:   chain.NetworkConfig.BaseDenom,
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, senderInitialAmount.Sub(amountToSend).String(), balancesSender.Balance.Amount.String())
-	assert.Equal(t, recipientInitialAmount.Add(amountToSend).String(), balancesRecipient.Balance.Amount.String())
+	gasPrice, err := tx.GetGasPrice(ctx, chain.ClientContext)
+	require.NoError(t, err)
+
+	// try to send the x2 balance
+	msg := &banktypes.MsgSend{
+		FromAddress: sender.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(senderInitialBalance.Balance.Add(*senderInitialBalance.Balance)),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(chain.GasLimitByMsgs(msg)).
+			WithGasPrices(gasPrice.String()),
+		msg,
+	)
+	require.ErrorIs(t, cosmoserrors.ErrInsufficientFunds, err)
+
+	// update the sender balance since some tokens are spend on prev reverted tx
+	senderInitialBalance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: sender.String(),
+		Denom:   chain.NetworkConfig.BaseDenom,
+	})
+	require.NoError(t, err)
+
+	// transfer tokens from sender to recipient
+	amountToSend := sdk.NewInt(10)
+	msg = &banktypes.MsgSend{
+		FromAddress: sender.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
+	}
+
+	gasPrice, err = tx.GetGasPrice(ctx, chain.ClientContext)
+	require.NoError(t, err)
+	txResult, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(chain.GasLimitByMsgs(msg)).
+			WithGasPrices(gasPrice.String()),
+		msg,
+	)
+	require.NoError(t, err)
+	spentOnTxs := testing.ComputeFeeAmount(gasPrice.Amount, uint64(txResult.GasUsed))
+
+	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", txResult.TxHash))
+
+	senderBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: sender.String(),
+		Denom:   chain.NetworkConfig.BaseDenom,
+	})
+	require.NoError(t, err)
+
+	recipientBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   chain.NetworkConfig.BaseDenom,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, senderInitialBalance.Balance.Amount.Sub(amountToSend).Sub(spentOnTxs).String(), senderBalance.Balance.Amount.String())
+	require.Equal(t, recipientInitialBalance.Balance.Amount.Add(amountToSend).String(), recipientBalance.Balance.Amount.String())
 }

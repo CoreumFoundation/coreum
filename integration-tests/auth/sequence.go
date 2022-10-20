@@ -15,19 +15,8 @@ import (
 // TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
 // used to sign transaction
 func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testing.Chain) {
-	sender := chain.GenAccount()
-
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			sender,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-				1,
-				sdk.NewInt(10),
-			)),
-		),
-	))
+	sender, err := chain.GenFundedAccount(ctx)
+	require.NoError(t, err)
 
 	clientCtx := chain.ClientContext
 	accInfo, err := tx.GetAccountInfo(ctx, clientCtx, sender)
@@ -39,12 +28,16 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
 	}
 
+	gasPrice, err := tx.GetGasPrice(ctx, clientCtx)
+	require.NoError(t, err)
+
 	_, err = tx.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
 			WithSequence(accInfo.GetSequence()+1). // incorrect sequence
 			WithAccountNumber(accInfo.GetAccountNumber()).
-			WithGas(chain.GasLimitByMsgs(msg)),
+			WithGas(chain.GasLimitByMsgs(msg)).
+			WithGasPrices(gasPrice.String()),
 		msg)
-	require.True(t, cosmoserrors.ErrWrongSequence.Is(err))
+	require.ErrorIs(t, cosmoserrors.ErrWrongSequence, err)
 }

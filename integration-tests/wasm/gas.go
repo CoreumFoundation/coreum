@@ -18,11 +18,8 @@ import (
 // non-deterministic transaction takes gas within appropriate limits.
 func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
-	admin := chain.GenAccount()
-
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-	))
+	admin, err := chain.GenFundedAccount(ctx)
+	requireT.NoError(err)
 
 	// deploy and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
@@ -73,8 +70,13 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	maxGasExpected := minGasExpected * 10
 
-	clientCtx = chain.ChainContext.ClientContext.WithFromAddress(admin)
-	txf = chain.ChainContext.TxFactory().WithGas(maxGasExpected)
+	gasPrice, err := tx.GetGasPrice(ctx, chain.ClientContext)
+	require.NoError(t, err)
+
+	clientCtx = chain.ClientContext.WithFromAddress(admin)
+	txf = chain.TxFactory().
+		WithGas(maxGasExpected).
+		WithGasPrices(gasPrice.String())
 	result, err := tx.BroadcastTx(ctx, clientCtx, txf, wasmBankSend, bankSend)
 	require.NoError(t, err)
 

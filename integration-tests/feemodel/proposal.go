@@ -23,18 +23,19 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	feeModelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 
 	// Create new proposer.
-	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-	// For the test we need to create the proposal twice.
-	proposerBalance = proposerBalance.Add(proposerBalance)
+	proposer, err := chain.GenFundedAccount(ctx)
 	requireT.NoError(err)
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	depositBalance, err := chain.Governance.GetMinDeposit(ctx)
+	requireT.NoError(err)
+	// For the test we need to create the proposal twice.
+	depositBalance = depositBalance.Add(depositBalance)
+	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, depositBalance))
 	requireT.NoError(err)
 
 	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
 
-	// Create invalid proposal MaxGasPrice = InitialGasPrice.
+	// Create invalid proposal.
 	feeModelParams := feeModelParamsRes.Params.Model
 	feeModelParams.MaxGasPriceMultiplier = sdk.OneDec()
 	_, err = chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Invalid proposal", "-",
@@ -44,7 +45,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 			),
 		},
 	))
-	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
+	requireT.ErrorIs(govtypes.ErrInvalidProposalContent, err)
 
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})

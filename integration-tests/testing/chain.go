@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"context"
 	"reflect"
 	"sync"
 
@@ -75,8 +76,7 @@ func (c ChainContext) TxFactory() tx.Factory {
 	return tx.Factory{}.
 		WithKeybase(c.ClientContext.Keyring()).
 		WithChainID(string(c.NetworkConfig.ChainID)).
-		WithTxConfig(c.ClientContext.TxConfig()).
-		WithGasPrices(c.NewDecCoin(c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice).String())
+		WithTxConfig(c.ClientContext.TxConfig())
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
@@ -142,4 +142,18 @@ func NewChain(cfg ChainConfig) Chain {
 		Governance:   governance,
 		Faucet:       faucet,
 	}
+}
+
+// GenFundedAccount generates a new account in the chain and fund it with the predefined balance
+func (c Chain) GenFundedAccount(ctx context.Context) (sdk.AccAddress, error) {
+	acc := c.GenAccount()
+	err := c.Faucet.FundAccounts(ctx, FundedAccount{
+		Address: acc,
+		Amount:  c.NewCoin(sdk.NewInt(10_000_000)), // 10core
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return acc, nil
 }

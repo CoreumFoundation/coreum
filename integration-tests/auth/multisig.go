@@ -56,12 +56,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
 		testing.NewFundedAccount(
 			multisigAddress,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-				1,
-				sdk.NewInt(amountToSendFromMultisigAccount)),
-			),
+			chain.NewCoin(sdk.NewInt(1_000_000)),
 		),
 	))
 
@@ -73,8 +68,11 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
 	// prepare the tx factory to sign with the account seq and number of the multisig account
 	multisigAccInfo, err := tx.GetAccountInfo(ctx, clientCtx, multisigAddress)
 	requireT.NoError(err)
+	gasPrice, err := tx.GetGasPrice(ctx, clientCtx)
+	requireT.NoError(err)
 	txF := chain.TxFactory().
 		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
+		WithGasPrices(gasPrice.String()).
 		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
 		WithSequence(multisigAccInfo.GetSequence()).
 		WithKeybase(kr).
@@ -95,7 +93,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
 	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
 	_, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 	logger.Get(ctx).Info("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
