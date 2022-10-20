@@ -1,4 +1,4 @@
-package benchmarks
+package keeper_test
 
 import (
 	"fmt"
@@ -18,6 +18,7 @@ import (
 )
 
 func createSimApp(b *testing.B) *app.App {
+	// TODO(dhil) add and in the coreum simapp options to run using the LevelDB and update that part
 	simapp.FlagEnabledValue = true
 	_, db, dir, logger, _, err := simapp.SetupSimulation("coreum-app-sim", "Simulation")
 	require.NoError(b, err, "simulation setup failed")
