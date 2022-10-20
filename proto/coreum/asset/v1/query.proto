@@ -3,6 +3,7 @@ package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 import "coreum/asset/v1/asset.proto";
 
@@ -14,6 +15,14 @@ service Query {
   rpc FungibleToken(QueryFungibleTokenRequest) returns (QueryFungibleTokenResponse) {
     option (google.api.http).get = "/coreum/asset/v1/assets/ft/{denom}";
   }
+
+  rpc FrozenBalances(QueryFrozenBalancesRequest) returns (QueryFrozenBalancesResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/assets/ft/balances/{account}/frozen";
+  }
+
+  rpc FrozenBalance(QueryFrozenBalanceRequest) returns (QueryFrozenBalanceResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/assets/ft/balances/{account}/frozen/{denom}";
+  }
 }
 
 // QueryFungibleTokenRequest is request type for the Query/FungibleToken RPC method.
@@ -24,4 +33,24 @@ message QueryFungibleTokenRequest {
 // QueryFungibleTokenResponse is response type for the Query/FungibleToken RPC method.
 message QueryFungibleTokenResponse {
   FungibleToken fungible_token = 1 [(gogoproto.nullable) = false];
+}
+
+message  QueryFrozenBalancesRequest {
+  string account = 1;
+}
+  
+message  QueryFrozenBalancesResponse {
+  repeated cosmos.base.v1beta1.Coin coins = 3 [
+    (gogoproto.nullable) = false, 
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message  QueryFrozenBalanceRequest {
+  string account = 1;
+  string denom = 2;
+}
+
+message  QueryFrozenBalanceResponse {
+  cosmos.base.v1beta1.Coin coin = 1;
 }

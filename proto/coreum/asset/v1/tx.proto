@@ -2,7 +2,7 @@ syntax = "proto3";
 package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
-
+import "cosmos/base/v1beta1/coin.proto";
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
@@ -11,6 +11,9 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 service Msg {
   // IssueFungibleToken defines a method to issue a new fungible token.
   rpc IssueFungibleToken(MsgIssueFungibleToken) returns (MsgIssueFungibleTokenResponse);
+  // FreezeFungibleToken freezes/unfreezes a part of the fungible token in an 
+  // account, only if the freezable option is enabled on that token.
+  rpc FreezeFungibleToken(MsgFreezeFungibleToken) returns (MsgFreezeFungibleTokenResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -25,7 +28,20 @@ message MsgIssueFungibleToken {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  bool is_freezable = 6;
 }
 
 // MsgIssueFungibleTokenResponse defines message response for the IssueFungibleToken.
 message MsgIssueFungibleTokenResponse {}
+
+message MsgFreezeFungibleToken {
+  FreezeAction action = 1;
+  string token_issuer = 2;
+  string account = 3;
+  repeated cosmos.base.v1beta1.Coin coins = 4 [
+    (gogoproto.nullable) = false, 
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message MsgFreezeFungibleTokenResponse {}

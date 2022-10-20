@@ -11,6 +11,7 @@ message FungibleTokenDefinition {
   option (gogoproto.equal) = false;
   string issuer = 1;
   string denom = 2;
+  bool is_freezable = 3;
 }
 
 // FungibleToken is a full representation of the fungible token.
@@ -21,4 +22,11 @@ message FungibleToken {
   string issuer = 2;
   string symbol = 3;
   string description = 4;
+  bool is_freezable = 5;
+}
+
+enum FreezeAction {
+  UNSPECIFIED = 0;
+  FREEZE = 1;
+  UNFREEZE = 2;
 }
