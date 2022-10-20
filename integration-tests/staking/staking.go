@@ -61,8 +61,9 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	))
 
 	// Edit Validator
+	updatedDetail := "updated detail"
 	editValidatorMsg := &stakingtypes.MsgEditValidator{
-		Description:      stakingtypes.Description{Details: "updated Details"},
+		Description:      stakingtypes.Description{Details: updatedDetail},
 		ValidatorAddress: validator.String(),
 	}
 
@@ -72,16 +73,15 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(editValidatorMsg)),
 		editValidatorMsg,
 	)
-
 	require.NoError(t, err)
+	assert.EqualValues(t, int64(chain.GasLimitByMsgs(editValidatorMsg)), editValidatorRes.GasUsed)
 
-	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
+	valResp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validator.String(),
 	})
 
 	require.NoError(t, err)
-	assert.EqualValues(t, "updated Details", resp.GetValidator().Description.Details)
-	assert.EqualValues(t, int64(chain.GasLimitByMsgs(editValidatorMsg)), editValidatorRes.GasUsed)
+	assert.EqualValues(t, updatedDetail, valResp.GetValidator().Description.Details)
 
 	// Delegate coins
 	delegateMsg := stakingtypes.NewMsgDelegate(delegator, validator, chain.NewCoin(delegateAmount))
@@ -119,6 +119,7 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 		redelegateMsg,
 	)
 	require.NoError(t, err)
+	assert.Equal(t, int64(chain.GasLimitByMsgs(redelegateMsg)), redelegateResult.GasUsed)
 	logger.Get(ctx).Info("Redelegation executed", zap.String("txHash", redelegateResult.TxHash))
 
 	ddResp, err = stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
@@ -126,7 +127,6 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, int64(chain.GasLimitByMsgs(redelegateMsg)), redelegateResult.GasUsed)
 	assert.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 	assert.Equal(t, validator2.String(), ddResp.DelegationResponses[0].GetDelegation().ValidatorAddress)
 
@@ -152,11 +152,11 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.GreaterOrEqual(t, delegatorBalance.Amount.Int64(), delegateAmount.Int64())
 
 	// Make sure coins have been undelegated
-	resp, err = stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
+	valResp, err = stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validator.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, int64(initialValidatorAmount), resp.Validator.Tokens.Int64())
+	require.Equal(t, int64(initialValidatorAmount), valResp.Validator.Tokens.Int64())
 }
 
 func createValidator(ctx context.Context, t testing.T, chain testing.Chain) (sdk.ValAddress, func()) {
