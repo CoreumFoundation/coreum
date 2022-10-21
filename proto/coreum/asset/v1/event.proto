@@ -18,13 +18,20 @@ message EventFungibleTokenIssued {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  bool is_freezable = 7;
+  repeated FungibleTokenOption options = 7;
 }
 
 message EvnetFungibleTokenFreeze {
-  FreezeAction action = 1;
-  string account = 2;
-  repeated cosmos.base.v1beta1.Coin coins = 3 [
+  string account = 1;
+  repeated cosmos.base.v1beta1.Coin coins = 2 [
+    (gogoproto.nullable) = false, 
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message EvnetFungibleTokenUnfreeze {
+  string account = 1;
+  repeated cosmos.base.v1beta1.Coin coins = 2 [
     (gogoproto.nullable) = false, 
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];

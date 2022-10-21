@@ -4,6 +4,7 @@ package coreum.asset.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 
 import "coreum/asset/v1/asset.proto";
 
@@ -36,21 +37,30 @@ message QueryFungibleTokenResponse {
 }
 
 message  QueryFrozenBalancesRequest {
-  string account = 1;
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // account specifies the account onto which we query frozen balances
+  string account = 2;
 }
   
 message  QueryFrozenBalancesResponse {
-  repeated cosmos.base.v1beta1.Coin coins = 3 [
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  // coins contains the frozen coins on the queried account
+  repeated cosmos.base.v1beta1.Coin coins = 2 [
     (gogoproto.nullable) = false, 
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
 
 message  QueryFrozenBalanceRequest {
+  // account specifies the account onto which we query frozen balances
   string account = 1;
+  // denom specifies frozen balances on a specific denom
   string denom = 2;
 }
 
 message  QueryFrozenBalanceResponse {
+  // coins contains the frozen coin with specific account and denom 
   cosmos.base.v1beta1.Coin coin = 1;
 }
