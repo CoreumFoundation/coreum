@@ -1,8 +1,6 @@
 package config_test
 
 import (
-	"crypto/ed25519"
-	"crypto/rand"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -16,8 +14,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/staking"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -42,30 +38,21 @@ var feeConfig = config.FeeConfig{
 }
 
 func testNetwork() config.Network {
-	validatorPubKey, _, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		panic(err)
-	}
-
-	stakerPrivKey := *cosmossecp256k1.GenPrivKey()
-	stakerPubKey := stakerPrivKey.PubKey()
-
-	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPubKey, stakerPrivKey, "1000core")
-	if err != nil {
-		panic(err)
-	}
 	return config.NewNetwork(config.NetworkConfig{
-		ChainID:       "test-network",
+		ChainID:       config.ChainIDDev,
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
-		TokenSymbol:   config.TokenSymbolMain,
-		Fee:           feeConfig,
+		Denom:         "dcore",
+		// BaseDenom uses the u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
+		// We also add another prefix for non mainnet network symbols to differentiate them from mainnet.
+		// 'd' prefix in ducore stands for devnet.
+		BaseDenom: "ucore",
+		Fee:       feeConfig,
 		FundedAccounts: []config.FundedAccount{{
-			PublicKey: stakerPubKey,
+			PublicKey: cosmossecp256k1.GenPrivKey().PubKey(),
 			Balances:  "1000some-test-token",
 		}},
-		GenTxs: []json.RawMessage{createValidatorTx},
+		GenTxs: []json.RawMessage{},
 		GovConfig: config.GovConfig{
 			ProposalConfig: config.GovProposalConfig{
 				MinDepositAmount: "10000000",
@@ -201,37 +188,6 @@ func TestAddFundsToGenesis(t *testing.T) {
 	})
 }
 
-func TestAddGenTx(t *testing.T) {
-	assertT := assert.New(t)
-	requireT := require.New(t)
-
-	n := testNetwork()
-	validatorPubKey, _, err := ed25519.GenerateKey(rand.Reader)
-	requireT.NoError(err)
-
-	stakerPrivKey := *cosmossecp256k1.GenPrivKey()
-	clientCtx := tx.NewClientContext(app.ModuleBasics)
-	createValidatorTx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPubKey, stakerPrivKey, "1000core")
-	requireT.NoError(err)
-	n.AddGenesisTx(createValidatorTx)
-
-	genDocBytes, err := n.EncodeGenesis()
-	requireT.NoError(err)
-
-	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
-	requireT.NoError(err)
-
-	var state struct {
-		GenUtil struct {
-			GenTxs []json.RawMessage `json:"gen_txs"` //nolint:tagliatelle
-		} `json:"genutil"`
-	}
-
-	err = json.Unmarshal(parsedGenesisDoc.AppState, &state)
-	requireT.NoError(err)
-	assertT.Len(state.GenUtil.GenTxs, 2)
-}
-
 func TestDeterministicGas(t *testing.T) {
 	assert.Equal(t, config.DeterministicGasRequirements{
 		BankSend: 10,
@@ -242,7 +198,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	n, err := config.NetworkByChainID(config.Devnet)
+	n, err := config.NetworkByChainID(config.ChainIDDev)
 	requireT.NoError(err)
 
 	pubKey := cosmossecp256k1.GenPrivKey().PubKey()
@@ -252,7 +208,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT.Len(n.FundedAccounts(), 6)
 	assertT.Len(n.GenTxs(), 5)
 
-	n, err = config.NetworkByChainID(config.Devnet)
+	n, err = config.NetworkByChainID(config.ChainIDDev)
 	requireT.NoError(err)
 	assertT.Len(n.FundedAccounts(), 5)
 	assertT.Len(n.GenTxs(), 4)
@@ -266,7 +222,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		ChainID:        "test-network",
 		GenesisTime:    time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix:  "core",
-		TokenSymbol:    config.TokenSymbolMain,
+		BaseDenom:      "ucore",
 		Fee:            feeConfig,
 		FundedAccounts: []config.FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
@@ -299,7 +255,7 @@ func TestNetworkFeesNotMutable(t *testing.T) {
 		ChainID:       "test-network",
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix: "core",
-		TokenSymbol:   config.TokenSymbolMain,
+		BaseDenom:     "ucore",
 		Fee:           feeConfig,
 	}
 

@@ -4,27 +4,31 @@ info:
   name: ''
   description: ''
 paths:
-  '/coreum/asset/v1/assets/{id}':
+  '/coreum/asset/v1/assets/ft/{denom}':
     get:
-      summary: Asset queries the assets of the module.
-      operationId: CoreumAssetV1Asset
+      summary: FungibleToken queries the fungible token of the module.
+      operationId: CoreumAssetV1FungibleToken
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              asset:
-                description: the queried asset.
+              fungible_token:
                 type: object
                 properties:
-                  id:
+                  denom:
                     type: string
-                  name:
+                  issuer:
                     type: string
+                  symbol:
+                    type: string
+                  description:
+                    type: string
+                description: FungibleToken is a full representation of the fungible token.
             description: >-
-              QueryAssetResponse is response type for the Query/Asset RPC
-              method.
+              QueryFungibleTokenResponse is response type for the
+              Query/FungibleToken RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -44,8 +48,7 @@ paths:
                       type: string
                   additionalProperties: {}
       parameters:
-        - name: id
-          description: the asset id
+        - name: denom
           in: path
           required: true
           type: string
@@ -33624,29 +33627,41 @@ paths:
       tags:
         - Query
 definitions:
-  coreum.asset.v1.Asset:
+  coreum.asset.v1.FungibleToken:
     type: object
     properties:
-      id:
+      denom:
         type: string
-      name:
+      issuer:
         type: string
-    description: Asset represents the asset struct.
-  coreum.asset.v1.MsgIssueAssetResponse:
+      symbol:
+        type: string
+      description:
+        type: string
+    description: FungibleToken is a full representation of the fungible token.
+  coreum.asset.v1.MsgIssueFungibleTokenResponse:
     type: object
-    description: MsgIssueAsset defines message response of the to issued asset.
-  coreum.asset.v1.QueryAssetResponse:
+    description: >-
+      MsgIssueFungibleTokenResponse defines message response for the
+      IssueFungibleToken.
+  coreum.asset.v1.QueryFungibleTokenResponse:
     type: object
     properties:
-      asset:
-        description: the queried asset.
+      fungible_token:
         type: object
         properties:
-          id:
+          denom:
             type: string
-          name:
+          issuer:
             type: string
-    description: QueryAssetResponse is response type for the Query/Asset RPC method.
+          symbol:
+            type: string
+          description:
+            type: string
+        description: FungibleToken is a full representation of the fungible token.
+    description: >-
+      QueryFungibleTokenResponse is response type for the Query/FungibleToken
+      RPC method.
   google.protobuf.Any:
     type: object
     properties:

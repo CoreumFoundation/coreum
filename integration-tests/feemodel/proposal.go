@@ -12,7 +12,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -24,7 +23,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	feeModelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 
 	// Create new proposer.
-	proposer := chain.RandomWallet()
+	proposer := chain.GenAccount()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	// For the test we need to create the proposal twice.
 	proposerBalance = proposerBalance.Add(proposerBalance)
@@ -45,7 +44,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 			),
 		},
 	))
-	requireT.True(client.IsErr(err, govtypes.ErrInvalidProposalContent))
+	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
 
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
@@ -63,8 +62,8 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Int("proposalID", proposalID))
 
-	// Wait for voting period to be started.
-	proposal, err := chain.Governance.WaitForProposalStatus(ctx, govtypes.StatusVotingPeriod, uint64(proposalID))
+	// Verify that voting period started.
+	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
@@ -75,9 +74,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result.
-	proposal, err = chain.Governance.WaitForProposalStatus(ctx, govtypes.StatusPassed, uint64(proposalID))
-	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, proposal.Status)
+	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
 
 	// Check the proposed change is applied.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})

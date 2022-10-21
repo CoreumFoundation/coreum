@@ -6,20 +6,26 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 // DefaultDeterministicGasRequirements returns default config for deterministic gas
 func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 	return DeterministicGasRequirements{
-		FixedGas:               50000,
-		FreeBytes:              2048,
-		FreeSignatures:         1,
+		FixedGas:       50000,
+		FreeBytes:      2048,
+		FreeSignatures: 1,
+
+		AssetIssue:             80000,
 		BankSend:               30000,
 		GovSubmitProposal:      150000,
 		GovVote:                80000,
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
+		StakingBeginRedelegate: 51000,
 		StakingCreateValidator: 50000,
+		StakingEditValidator:   50000,
 	}
 }
 
@@ -37,12 +43,15 @@ type DeterministicGasRequirements struct {
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
 
+	AssetIssue             uint64
 	BankSend               uint64
 	GovSubmitProposal      uint64
 	GovVote                uint64
 	StakingDelegate        uint64
 	StakingUndelegate      uint64
+	StakingBeginRedelegate uint64
 	StakingCreateValidator uint64
+	StakingEditValidator   uint64
 }
 
 // GasRequiredByMessage returns gas required by a sdk.Msg.
@@ -53,6 +62,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	// Then define a reasonable value for the message and return `true` again.
 
 	switch msg.(type) {
+	case *assettypes.MsgIssueFungibleToken:
+		return dgr.AssetIssue, true
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
 	case *govtypes.MsgSubmitProposal:
@@ -63,8 +74,12 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:
 		return dgr.StakingUndelegate, true
+	case *stakingtypes.MsgBeginRedelegate:
+		return dgr.StakingBeginRedelegate, true
 	case *stakingtypes.MsgCreateValidator:
 		return dgr.StakingCreateValidator, true
+	case *stakingtypes.MsgEditValidator:
+		return dgr.StakingEditValidator, true
 	default:
 		return 0, false
 	}
