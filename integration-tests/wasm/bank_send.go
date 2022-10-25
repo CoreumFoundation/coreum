@@ -55,7 +55,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	// deploy and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
 	requireT.NoError(err)
-	contractAddr, err := DeployAndInstantiate(
+	contractAddr, _, err := DeployAndInstantiate(
 		ctx,
 		clientCtx,
 		txf,

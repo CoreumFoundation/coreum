@@ -24,19 +24,19 @@ type InstantiateConfig struct {
 }
 
 // DeployAndInstantiate deploys, instantiate the wasm contract and returns its address.
-func DeployAndInstantiate(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte, initConfig InstantiateConfig) (string, error) {
+func DeployAndInstantiate(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte, initConfig InstantiateConfig) (string, uint64, error) {
 	codeID, err := deploy(ctx, clientCtx, txf, wasmData)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	initConfig.CodeID = codeID
 	contractAddr, err := instantiate(ctx, clientCtx, txf, initConfig)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
-	return contractAddr, nil
+	return contractAddr, codeID, nil
 }
 
 // Execute executes the wasm contract with the payload and optionally funding amount.
@@ -70,10 +70,25 @@ func Query(ctx context.Context, clientCtx tx.ClientContext, contractAddr string,
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.SmartContractState(ctx, query)
 	if err != nil {
-		return nil, errors.Wrap(err, "WASMQueryClient returns an error after smart contract state Query")
+		return nil, errors.Wrap(err, "WASMQueryClient returned an error after smart contract state Query")
 	}
 
 	return json.RawMessage(resp.Data), nil
+}
+
+// IsPinned returns true if smart contract is pinned
+func IsPinned(ctx context.Context, clientCtx tx.ClientContext, codeID uint64) (bool, error) {
+	wasmClient := wasmtypes.NewQueryClient(clientCtx)
+	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})
+	if err != nil {
+		return false, errors.Wrap(err, "WASMQueryClient returned an error after querying pinned contracts")
+	}
+	for _, c := range resp.CodeIDs {
+		if c == codeID {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // deploys the wasm contract and returns its codeID.
