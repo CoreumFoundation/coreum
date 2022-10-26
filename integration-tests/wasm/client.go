@@ -40,7 +40,7 @@ func DeployAndInstantiate(ctx context.Context, clientCtx tx.ClientContext, txf t
 }
 
 // Execute executes the wasm contract with the payload and optionally funding amount.
-func Execute(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) error {
+func Execute(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
 	funds := sdk.NewCoins()
 	if !fundAmt.Amount.IsNil() {
 		funds = funds.Add(fundAmt)
@@ -56,8 +56,11 @@ func Execute(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, co
 	txf = txf.
 		WithGasAdjustment(gasMultiplier)
 
-	_, err := tx.BroadcastTx(ctx, clientCtx, txf, msg)
-	return err
+	res, err := tx.BroadcastTx(ctx, clientCtx, txf, msg)
+	if err != nil {
+		return 0, err
+	}
+	return res.GasUsed, nil
 }
 
 // Query queries the contract with the requested payload.

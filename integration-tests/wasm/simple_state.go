@@ -8,6 +8,7 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -81,7 +82,7 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	requireT.Equal(1337, response.Count)
 
 	// execute contract to increment the count
-	incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1338)
+	gasUsedBeforePinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1338)
 
 	// verify that smart contract is not pinned
 	requireT.False(IsPinned(ctx, clientCtx, codeID))
@@ -104,7 +105,7 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 
 	requireT.True(IsPinned(ctx, clientCtx, codeID))
 
-	incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1339)
+	gasUsedAfterPinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1339)
 
 	// unpin smart contract
 	proposalID, err = chain.Governance.Propose(ctx, proposer, &wasmtypes.UnpinCodesProposal{
@@ -124,7 +125,11 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 
 	requireT.False(IsPinned(ctx, clientCtx, codeID))
 
-	incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1340)
+	gasUsedAfterUnpinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1340)
+
+	assertT := assert.New(t)
+	assertT.Less(gasUsedAfterPinning, gasUsedBeforePinning)
+	assertT.Greater(gasUsedAfterUnpinning, gasUsedAfterPinning)
 }
 
 func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
@@ -140,11 +145,11 @@ func incrementAndVerify(
 	contractAddr string,
 	requireT *require.Assertions,
 	expectedValue int,
-) {
+) int64 {
 	// execute contract to increment the count
 	incrementPayload, err := methodToEmptyBodyPayload(increment)
 	requireT.NoError(err)
-	err = Execute(ctx, clientCtx, txf, contractAddr, incrementPayload, sdk.Coin{})
+	gasUsed, err := Execute(ctx, clientCtx, txf, contractAddr, incrementPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check the update count
@@ -156,6 +161,7 @@ func incrementAndVerify(
 	var response simpleState
 	err = json.Unmarshal(queryOut, &response)
 	requireT.NoError(err)
-
 	requireT.Equal(expectedValue, response.Count)
+
+	return gasUsed
 }
