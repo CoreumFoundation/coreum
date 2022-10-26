@@ -83,6 +83,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 	amountToSend := sdk.NewInt(1000)
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   amountToSend,
 	}))
 
 	msg := &banktypes.MsgSend{
