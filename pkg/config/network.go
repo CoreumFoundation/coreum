@@ -150,7 +150,7 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 	genTxs := make([]json.RawMessage, 0)
 	err := fs.WalkDir(genTxsFs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			panic("cant open GenTxs FS")
+			panic("can't open GenTxs FS")
 		}
 		if d.IsDir() {
 			return nil
@@ -158,18 +158,18 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 
 		file, err := genTxsFs.Open(path)
 		if err != nil {
-			panic(fmt.Sprintf("cant open file %q from GenTxs FS", path))
+			panic(fmt.Sprintf("can't open file %q from GenTxs FS", path))
 		}
 		defer file.Close()
 		txBytes, err := io.ReadAll(file)
 		if err != nil {
-			panic(fmt.Sprintf("cant read file %+v from GenTxs FS", file))
+			panic(fmt.Sprintf("can't read file %+v from GenTxs FS", file))
 		}
 		genTxs = append(genTxs, txBytes)
 		return nil
 	})
 	if err != nil {
-		panic("cant read files from GenTxs FS")
+		panic("can't read files from GenTxs FS")
 	}
 
 	return genTxs
