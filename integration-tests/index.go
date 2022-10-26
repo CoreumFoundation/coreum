@@ -15,12 +15,14 @@ import (
 func Tests() []testing.TestSet {
 	return []testing.TestSet{
 		{
-			Name: "Upgrade",
+			Name:     "Upgrade",
+			Parallel: false,
 			SingleChain: []testing.SingleChainSignature{
 				upgrade.TestUpgrade,
 			},
 		},
 		{
+			Name:     "Main",
 			Parallel: true,
 			SingleChain: []testing.SingleChainSignature{
 				asset.TestIssueBasicFungibleToken,
