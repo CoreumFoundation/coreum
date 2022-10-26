@@ -56,7 +56,7 @@ func testNetwork() config.Network {
 		GovConfig: config.GovConfig{
 			ProposalConfig: config.GovProposalConfig{
 				MinDepositAmount: "10000000",
-				MinDepositPeriod: "172800s",
+				MaxDepositPeriod: "172800s",
 				VotingPeriod:     "172800s",
 			},
 		},
