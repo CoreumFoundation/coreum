@@ -22,10 +22,15 @@ func FindTypedEvent[T proto.Message](event T, events []tmtypes.Event) (T, error)
 			return *new(T), err //nolint:gocritic // T(nil) doesn't work with proto.Message
 		}
 
-		return msg.(T), nil
+		typedMsg, ok := msg.(T)
+		if !ok {
+			return *new(T), errors.Errorf("can't cast found event to %+v", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
+		}
+
+		return typedMsg, nil
 	}
 
-	return *new(T), nil //nolint:gocritic // T(nil) doesn't work with the proto.Message
+	return *new(T), errors.Errorf("can't find event %+v in events", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
 }
 
 // FindUint64EventAttribute finds the first event attribute by type and attribute name and convert it to the uint64 type.
