@@ -10,7 +10,9 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
@@ -31,9 +33,9 @@ const (
 	increment simpleStateMethod = "increment"
 )
 
-// TestSimpleStateWasmContract runs a contract deployment flow and tries to modify the state after deployment.
-// This is a E2E check for the WASM integration, to ensure it works for a simple state contract (Counter).
-func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
+// pinning and unpinning through proposals works correctly. We also verify that pinned smart contract consumes less gas.
+func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t testing.T, chain testing.Chain) {
 	admin := chain.GenAccount()
 	proposer := chain.GenAccount()
 
@@ -126,6 +128,10 @@ func TestSimpleStateWasmContract(ctx context.Context, t testing.T, chain testing
 	requireT.False(IsPinned(ctx, clientCtx, codeID))
 
 	gasUsedAfterUnpinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1340)
+
+	logger.Get(ctx).Info("Gas saved on poinned contract",
+		zap.Int64("gasBeforePinning", gasUsedBeforePinning),
+		zap.Int64("gasAfterPinning", gasUsedAfterPinning))
 
 	assertT := assert.New(t)
 	assertT.Less(gasUsedAfterPinning, gasUsedBeforePinning)
