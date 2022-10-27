@@ -8,12 +8,39 @@ on:
 
 jobs:
   ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_step: [ "lint", "test", "build", "integration tests" ]
+        include:
+          - ci_step: "lint"
+            command: "crust lint/coreum --log-format=yaml"
+            go-cache: true
+            linter-cache: true
+            docker-cache: false
+          - ci_step: "test"
+            command: "crust test/coreum --log-format=yaml"
+            go-cache: true
+            linter-cache: false
+            docker-cache: false
+          - ci_step: "build"
+            command: "crust build --log-format=yaml"
+            go-cache: true
+            linter-cache: false
+            docker-cache: true
+          - ci_step: "integration tests"
+            command: "crust build/integration-tests images --log-format=yaml && crust znet test --log-format=yaml"
+            go-cache: true
+            linter-cache: false
+            docker-cache: true
+
     runs-on: ubuntu-22.04
     steps:
       - name: Go version used to build crust tool
         run: go version
       - name: Setup go cache
         uses: actions/cache@v3
+        if: ${{ matrix.go-cache }}
         with:
           path: |
             ~/.cache/go-build
@@ -23,11 +50,13 @@ jobs:
             ${{ runner.os }}-go-
       - name: Set linter cache
         uses: actions/cache@v3
+        if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-ci-cache
       - name: Set docker cache
         uses: satackey/action-docker-layer-caching@v0.0.11
+        if: ${{ matrix.docker-cache }}
         continue-on-error: true
       - name: Checkout coreum
         uses: actions/checkout@v3
@@ -41,7 +70,5 @@ jobs:
           path: crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-      - name: Lint, run unit tests and build
-        run: crust build lint/coreum test/coreum images --log-format=yaml
-      - name: Integration tests
-        run: crust znet test --log-format=yaml
+      - name: Run ${{ matrix.ci_step }}
+        run: ${{ matrix.command }}
