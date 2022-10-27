@@ -45,7 +45,7 @@ func TestUpgrade(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	log.Info("Creating proposal for upgrading", zap.Int64("upgradeHeight", upgradeHeight))
 
-	// Create proposition to upgrade chain.
+	// Create proposal to upgrade chain.
 	proposalID, err := chain.Governance.Propose(ctx, proposer, upgradetypes.NewSoftwareUpgradeProposal("Upgrade test", "Testing if new version of node is started by cosmovisor",
 		upgradetypes.Plan{
 			Name:   "upgrade",
