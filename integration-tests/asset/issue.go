@@ -22,17 +22,9 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			issuer,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&assettypes.MsgIssueFungibleToken{}),
-				1,
-				sdk.NewInt(0),
-			)),
-		),
-	))
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+		Messages: []sdk.Msg{&assettypes.MsgIssueFungibleToken{}},
+	}))
 
 	// Issue the new fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
