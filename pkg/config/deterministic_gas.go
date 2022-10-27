@@ -17,10 +17,16 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssue:             80000,
-		BankSend:               30000,
-		GovSubmitProposal:      150000,
-		GovVote:                80000,
+		AssetIssue: 80000,
+
+		BankSend: 30000,
+
+		// TODO: find proper values.
+		GovSubmitProposal: 150000,
+		GovVote:           80000,
+		GovVoteWeighted:   80000,
+		GovDeposit:        80000,
+
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
 		StakingBeginRedelegate: 51000,
@@ -43,10 +49,19 @@ type DeterministicGasRequirements struct {
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
 
-	AssetIssue             uint64
-	BankSend               uint64
-	GovSubmitProposal      uint64
-	GovVote                uint64
+	// x/asset
+	AssetIssue uint64
+
+	// x/bank
+	BankSend uint64
+
+	// x/gov
+	GovSubmitProposal uint64
+	GovVote           uint64
+	GovVoteWeighted   uint64
+	GovDeposit        uint64
+
+	// x/staking
 	StakingDelegate        uint64
 	StakingUndelegate      uint64
 	StakingBeginRedelegate uint64
@@ -70,6 +85,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.GovSubmitProposal, true
 	case *govtypes.MsgVote:
 		return dgr.GovVote, true
+	case *govtypes.MsgVoteWeighted:
+		return dgr.GovVoteWeighted, true
+	case *govtypes.MsgDeposit:
+		return dgr.GovDeposit, true
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:

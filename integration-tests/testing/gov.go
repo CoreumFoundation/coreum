@@ -56,24 +56,12 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
 }
 
-// Propose creates a new proposal.
-func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (int, error) {
-	govParams, err := queryGovParams(ctx, g.govClient)
-	if err != nil {
-		return 0, err
-	}
-
-	msg, err := govtypes.NewMsgSubmitProposal(content, govParams.DepositParams.MinDeposit, proposer)
-	if err != nil {
-		return 0, errors.WithStack(err)
-	}
-
+func (g Governance) ProposeV2(ctx context.Context, msg *govtypes.MsgSubmitProposal) (int, error) {
 	txf := g.chainCtx.TxFactory().
 		WithGas(g.chainCtx.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}))
 	result, err := tx.BroadcastTx(
 		ctx,
-		g.chainCtx.ClientContext.
-			WithFromAddress(proposer),
+		g.chainCtx.ClientContext.WithFromAddress(msg.GetProposer()),
 		txf,
 		msg,
 	)
@@ -87,6 +75,21 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 	}
 
 	return int(proposalID), nil
+}
+
+// Propose creates a new proposal.
+func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (int, error) {
+	govParams, err := queryGovParams(ctx, g.govClient)
+	if err != nil {
+		return 0, err
+	}
+
+	msg, err := govtypes.NewMsgSubmitProposal(content, govParams.DepositParams.MinDeposit, proposer)
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+
+	return g.ProposeV2(ctx, msg)
 }
 
 // VoteAll votes for the proposalID from all voting accounts with the provided VoteOption.
@@ -187,6 +190,10 @@ func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (govtype
 	}
 
 	return resp.Proposal, nil
+}
+
+func (g Governance) QueryGovParams(ctx context.Context) (govtypes.Params, error) {
+	return queryGovParams(ctx, g.govClient)
 }
 
 func queryGovParams(ctx context.Context, govClient govtypes.QueryClient) (govtypes.Params, error) {
