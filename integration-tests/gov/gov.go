@@ -4,13 +4,14 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // TestProposalWithDepositAndWeightedVotes - todo
@@ -23,10 +24,11 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposerBalance, err := gov.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
 
+	// Create proposer depositor.
 	depositor := chain.GenAccount()
 	depositorBalance := chain.NewCoin(
 		testing.ComputeNeededBalance(
@@ -46,61 +48,77 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	govParams, err := gov.QueryGovParams(ctx)
 	requireT.NoError(err)
 
+	// Create proposal with deposit less than min deposit.
+	initialDeposit := govParams.DepositParams.MinDeposit[0].Sub(missingDepositAmount)
 	msg, err := govtypes.NewMsgSubmitProposal(
-		govtypes.NewTextProposal("abc", "def"),
-		govParams.DepositParams.MinDeposit.Sub(depositorBalance).,
+		govtypes.NewTextProposal("Test proposal with weighted votes", "-"),
+		sdk.Coins{initialDeposit},
 		proposer,
 	)
-	chain.Governance.ProposeV2(ctx, )
-	chain.Governance.Propose(ctx, proposer, govtypes.NewTextProposal())
-
-	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
+	proposalID, err := gov.ProposeV2(ctx, msg)
 	requireT.NoError(err)
 
-	// Create invalid proposal MaxGasPrice = InitialGasPrice.
-	feeModelParams := feeModelParamsRes.Params.Model
-	feeModelParams.MaxGasPriceMultiplier = sdk.OneDec()
-	_, err = chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Invalid proposal", "-",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(
-				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
-			),
+	logger.Get(ctx).Info("proposal created", zap.Int("proposal_id", proposalID))
+
+	// Verify that proposal is waiting for deposit.
+	requireProposalStatusF := func(expectedStatus govtypes.ProposalStatus) {
+		proposal, err := gov.GetProposal(ctx, uint64(proposalID))
+		requireT.NoError(err)
+		requireT.Equal(expectedStatus, proposal.Status)
+	}
+	requireProposalStatusF(govtypes.StatusDepositPeriod)
+
+	// Deposit missing amount to proposal.
+	msg2 := govtypes.NewMsgDeposit(depositor, uint64(proposalID), sdk.Coins{missingDepositAmount})
+	result, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(depositor),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg2)),
+		msg2,
+	)
+	requireT.NoError(err)
+	logger.Get(ctx).Info("deposited more funds to proposal", zap.String("txHash", result.TxHash))
+
+	// Verify that proposal voting has started.
+	requireProposalStatusF(govtypes.StatusVotingPeriod)
+
+	// Store proposer and depositor balances before voting has finished.
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	accBalanceF := func(address sdk.AccAddress) sdk.Coin {
+		accBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: proposer.String(),
+			Denom:   chain.NetworkConfig.BaseDenom,
+		})
+		requireT.NoError(err)
+		return *accBalance.Balance
+	}
+	proposerBalanceBeforeVoting := accBalanceF(proposer)
+	depositorBalanceBeforeVoting := accBalanceF(depositor)
+
+	// Vote by all staker accounts 70% - NoWithVeto 30% - Yes.
+	err = gov.VoteAllWeighted(ctx,
+		govtypes.WeightedVoteOptions{
+			govtypes.WeightedVoteOption{
+				Option: govtypes.OptionNoWithVeto,
+				Weight: sdk.MustNewDecFromStr("0.7"),
+			},
+			govtypes.WeightedVoteOption{
+				Option: govtypes.OptionYes,
+				Weight: sdk.MustNewDecFromStr("0.3"),
+			},
 		},
-	))
-	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
-
-	// Create proposal to change MaxDiscount.
-	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
+		uint64(proposalID),
+	)
 	requireT.NoError(err)
-	feeModelParams = feeModelParamsRes.Params.Model
-	feeModelParams.MaxDiscount = targetMaxDiscount
-	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxDiscount", "-",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(
-				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
-			),
-		},
-	))
-	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Int("proposalID", proposalID))
-
-	// Verify that voting period started.
-	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
-	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
-
-	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
-	requireT.NoError(err)
-
-	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result.
-	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
-
-	// Check the proposed change is applied.
-	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, uint64(proposalID))
 	requireT.NoError(err)
-	requireT.Equal(feeModelParams.String(), feeModelParamsRes.Params.Model.String())
+	requireT.Equal(govtypes.StatusRejected, finalStatus)
+
+	// Assert that proposer & depositor deposits were not credited back.
+	proposerBalanceAfterVoting := accBalanceF(proposer)
+	depositorBalanceAfterVoting := accBalanceF(depositor)
+	requireT.Equal(proposerBalanceBeforeVoting, proposerBalanceAfterVoting)
+	requireT.Equal(depositorBalanceBeforeVoting, depositorBalanceAfterVoting)
 }

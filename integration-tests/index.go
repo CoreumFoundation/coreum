@@ -5,6 +5,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/auth"
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
+	"github.com/CoreumFoundation/coreum/integration-tests/gov"
 	"github.com/CoreumFoundation/coreum/integration-tests/staking"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/integration-tests/upgrade"
@@ -41,6 +42,7 @@ func Tests() []testing.TestSet {
 				wasm.TestPinningAndUnpinningSmartContractUsingGovernance,
 				wasm.TestBankSendWasmContract,
 				wasm.TestGasWasmBankSendAndBankSend,
+				gov.TestProposalWithDepositAndWeightedVotes,
 			},
 		},
 	}
