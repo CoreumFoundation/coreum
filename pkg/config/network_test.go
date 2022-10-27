@@ -41,7 +41,7 @@ func testNetwork() config.Network {
 	return config.NewNetwork(config.NetworkConfig{
 		ChainID:       config.ChainIDDev,
 		GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-		AddressPrefix: "core",
+		AddressPrefix: "devcore",
 		Denom:         "dcore",
 		// BaseDenom uses the u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
 		// We also add another prefix for non mainnet network symbols to differentiate them from mainnet.
@@ -49,8 +49,8 @@ func testNetwork() config.Network {
 		BaseDenom: "ucore",
 		Fee:       feeConfig,
 		FundedAccounts: []config.FundedAccount{{
-			PublicKey: cosmossecp256k1.GenPrivKey().PubKey(),
-			Balances:  "1000some-test-token",
+			Address:  sdk.AccAddress(cosmossecp256k1.GenPrivKey().PubKey().Address()).String(),
+			Balances: sdk.NewCoins(sdk.NewInt64Coin("some-test-token", 1000)),
 		}},
 		GenTxs: []json.RawMessage{},
 		GovConfig: config.GovConfig{
@@ -123,12 +123,12 @@ func TestAddFundsToGenesis(t *testing.T) {
 	n := testNetwork()
 
 	pubKey := cosmossecp256k1.GenPrivKey().PubKey()
-	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
 	accountAddress := sdk.AccAddress(pubKey.Address())
+	requireT.NoError(n.FundAccount(accountAddress, sdk.NewCoins(sdk.NewInt64Coin("someTestToken", 1000))))
 
 	pubKey2 := cosmossecp256k1.GenPrivKey().PubKey()
-	requireT.NoError(n.FundAccount(pubKey2, "2000someTestToken"))
 	accountAddress2 := sdk.AccAddress(pubKey2.Address())
+	requireT.NoError(n.FundAccount(accountAddress2, sdk.NewCoins(sdk.NewInt64Coin("someTestToken", 2000))))
 
 	requireT.Len(n.FundedAccounts(), 3)
 
@@ -202,7 +202,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	requireT.NoError(err)
 
 	pubKey := cosmossecp256k1.GenPrivKey().PubKey()
-	requireT.NoError(n.FundAccount(pubKey, "1000someTestToken"))
+	requireT.NoError(n.FundAccount(sdk.AccAddress(pubKey.Address()), sdk.NewCoins(sdk.NewInt64Coin("someTestToken", 1000))))
 	n.AddGenesisTx([]byte("test string"))
 
 	assertT.Len(n.FundedAccounts(), 6)
@@ -224,7 +224,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 		AddressPrefix:  "core",
 		BaseDenom:      "ucore",
 		Fee:            feeConfig,
-		FundedAccounts: []config.FundedAccount{{PublicKey: pubKey, Balances: "100test-token"}},
+		FundedAccounts: []config.FundedAccount{{Address: sdk.AccAddress(pubKey.Address()).String(), Balances: sdk.NewCoins(sdk.NewInt64Coin("test-token", 100))}},
 		GenTxs:         []json.RawMessage{[]byte("tx1")},
 	}
 
@@ -233,7 +233,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	params := cfg.Fee.FeeModel.Params()
 	params.InitialGasPrice.Add(sdk.NewDec(10))
 	params.MaxGasPriceMultiplier.Add(sdk.NewDec(10))
-	cfg.FundedAccounts[0] = config.FundedAccount{PublicKey: pubKey, Balances: "100test-token2"}
+	cfg.FundedAccounts[0] = config.FundedAccount{Address: sdk.AccAddress(pubKey.Address()).String(), Balances: sdk.NewCoins(sdk.NewInt64Coin("test-token2", 100))}
 	cfg.GenTxs[0] = []byte("tx2")
 
 	nParams := n1.FeeModel().Params()
@@ -244,7 +244,7 @@ func TestNetworkConfigNotMutable(t *testing.T) {
 	assertT.EqualValues(20, nParams.MaxBlockGas)
 	assertT.EqualValues(3, nParams.ShortEmaBlockLength)
 	assertT.EqualValues(5, nParams.LongEmaBlockLength)
-	assertT.EqualValues(n1.FundedAccounts()[0], config.FundedAccount{PublicKey: pubKey, Balances: "100test-token"})
+	assertT.EqualValues(n1.FundedAccounts()[0], config.FundedAccount{Address: sdk.AccAddress(pubKey.Address()).String(), Balances: sdk.NewCoins(sdk.NewInt64Coin("test-token", 100))})
 	assertT.EqualValues(n1.GenTxs()[0], []byte("tx1"))
 }
 
