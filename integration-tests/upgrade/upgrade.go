@@ -67,7 +67,9 @@ func TestUpgrade(ctx context.Context, t testing.T, chain testing.Chain) {
 	log.Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result.
-	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, uint64(proposalID))
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
 	// Verify that upgrade plan is there waiting to be applied.
 	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})

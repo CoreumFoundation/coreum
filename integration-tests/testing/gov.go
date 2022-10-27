@@ -74,6 +74,7 @@ func (g Governance) ProposeV2(ctx context.Context, msg *govtypes.MsgSubmitPropos
 		return 0, err
 	}
 
+	// TODO: Change to uint
 	return int(proposalID), nil
 }
 
@@ -92,8 +93,28 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 	return g.ProposeV2(ctx, msg)
 }
 
-// VoteAll votes for the proposalID from all voting accounts with the provided VoteOption.
 func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, proposalID uint64) error {
+	return g.voteAll(ctx, func(voter sdk.AccAddress) sdk.Msg {
+		return &govtypes.MsgVote{
+			ProposalId: proposalID,
+			Voter:      voter.String(),
+			Option:     option,
+		}
+	})
+}
+
+func (g Governance) VoteAllWeighted(ctx context.Context, options govtypes.WeightedVoteOptions, proposalID uint64) error {
+	return g.voteAll(ctx, func(voter sdk.AccAddress) sdk.Msg {
+		return &govtypes.MsgVoteWeighted{
+			ProposalId: proposalID,
+			Voter:      voter.String(),
+			Options:    options,
+		}
+	})
+}
+
+// VoteAll votes for the proposalID from all voting accounts with the provided VoteOption.
+func (g Governance) voteAll(ctx context.Context, msgF func(sdk.AccAddress) sdk.Msg) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -105,11 +126,7 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 
 	txHashes := make([]string, 0, len(g.stakerAccounts))
 	for _, staker := range g.stakerAccounts {
-		msg := &govtypes.MsgVote{
-			ProposalId: proposalID,
-			Voter:      staker.String(),
-			Option:     option,
-		}
+		msg := msgF(staker)
 
 		txf := g.chainCtx.TxFactory().
 			WithGas(g.chainCtx.GasLimitByMsgs(msg))
@@ -135,16 +152,17 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 	return nil
 }
 
-// WaitForVotingToPass waits for the voting to pass.
-func (g Governance) WaitForVotingToPass(ctx context.Context, proposalID uint64) error {
+// WaitForVotingToFinalize waits for the proposal status to change to final.
+// Final statuses are: StatusPassed, StatusRejected or StatusFailed.
+func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint64) (govtypes.ProposalStatus, error) {
 	proposal, err := g.GetProposal(ctx, proposalID)
 	if err != nil {
-		return err
+		return proposal.Status, err
 	}
 
 	block, err := g.chainCtx.ClientContext.Client().Block(ctx, nil)
 	if err != nil {
-		return errors.WithStack(err)
+		return proposal.Status, errors.WithStack(err)
 	}
 	if block.Block.Time.Before(proposal.VotingEndTime) {
 		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(block.Block.Time))
@@ -152,7 +170,7 @@ func (g Governance) WaitForVotingToPass(ctx context.Context, proposalID uint64) 
 
 		<-waitCtx.Done()
 		if ctx.Err() != nil {
-			return ctx.Err()
+			return proposal.Status, ctx.Err()
 		}
 	}
 
@@ -160,24 +178,22 @@ func (g Governance) WaitForVotingToPass(ctx context.Context, proposalID uint64) 
 	defer retryCancel()
 
 	err = retry.Do(retryCtx, time.Second, func() error {
-		proposal, err := g.GetProposal(ctx, proposalID)
+		proposal, err = g.GetProposal(ctx, proposalID)
 		if err != nil {
 			return err
 		}
 
-		switch proposal.Status {
-		case govtypes.StatusPassed:
+		// StatusPassed = 3, StatusRejected = 4, StatusFailed = 5
+		if proposal.Status >= govtypes.StatusPassed && proposal.Status <= govtypes.StatusFailed {
 			return nil
-		case govtypes.StatusFailed:
-			return errors.New("voting failed")
-		default:
-			return retry.Retryable(errors.Errorf("waiting for status %s but current one is %s", govtypes.StatusPassed, proposal.Status))
 		}
+
+		return retry.Retryable(errors.Errorf("waiting for one of final statuses but current one is %s", proposal.Status))
 	})
 	if err != nil {
-		return err
+		return proposal.Status, err
 	}
-	return nil
+	return proposal.Status, nil
 }
 
 // GetProposal returns proposal by ID
