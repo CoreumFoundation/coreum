@@ -80,9 +80,9 @@ $ %s tx asset issue-ft WBTC [recipient_address] 21000000 "Wrapped Bitcoin" --fro
 			msg := &types.MsgIssueFungibleToken{
 				Issuer:        issuer.String(),
 				Symbol:        symbol,
-				Description:   description,
 				Recipient:     recipient,
 				InitialAmount: initialAmount,
+				Description:   description,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

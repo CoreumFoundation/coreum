@@ -10,10 +10,10 @@ message EventFungibleTokenIssued {
   string denom = 1;
   string issuer = 2;
   string symbol = 3;
-  string description = 4;
-  string recipient = 5;
-  string initial_amount = 6 [
+  string recipient = 4;
+  string initial_amount = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
-  ];
+    ];
+  string description = 6;
 }
