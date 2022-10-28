@@ -81,12 +81,12 @@ func (c ChainContext) TxFactory() tx.Factory {
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
 func (c ChainContext) NewCoin(amount sdk.Int) sdk.Coin {
-	return sdk.NewCoin(c.NetworkConfig.BaseDenom, amount)
+	return sdk.NewCoin(c.NetworkConfig.Denom, amount)
 }
 
 // NewDecCoin helper function to initialize sdk.DecCoin by passing just amount.
 func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
-	return sdk.NewDecCoinFromDec(c.NetworkConfig.BaseDenom, amount)
+	return sdk.NewDecCoinFromDec(c.NetworkConfig.Denom, amount)
 }
 
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
