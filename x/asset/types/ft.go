@@ -18,6 +18,7 @@ type IssueFungibleTokenSettings struct {
 	Description   string
 	Recipient     sdk.AccAddress
 	InitialAmount sdk.Int
+	Options       []FungibleTokenOption
 }
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.

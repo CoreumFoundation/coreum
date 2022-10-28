@@ -48,8 +48,9 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 
 	store := ctx.KVStore(k.storeKey)
 	definition := types.FungibleTokenDefinition{
-		Denom:  denom,
-		Issuer: settings.Issuer.String(),
+		Denom:   denom,
+		Issuer:  settings.Issuer.String(),
+		Options: settings.Options,
 	}
 	store.Set(types.GetFungibleTokenKey(denom), k.cdc.MustMarshal(&definition))
 
@@ -60,6 +61,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Description:   settings.Description,
 		Recipient:     settings.Recipient.String(),
 		InitialAmount: settings.InitialAmount,
+		Options:       settings.Options,
 	}); err != nil {
 		return "", sdkerrors.Wrap(err, "can't emit EventFungibleTokenIssued event")
 	}
@@ -89,12 +91,13 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		Issuer:      definition.Issuer,
 		Symbol:      metadata.Symbol,
 		Description: metadata.Description,
+		Options:     definition.Options,
 	}, nil
 }
 
-// GetLockedCoins returns the locked coins for the account.
-func (k Keeper) GetLockedCoins(ctx sdk.Context, address sdk.AccAddress) sdk.Coins {
-	return sdk.NewCoins()
+// IsTransferAllowed checks that a transfer request is allowed or not
+func (k Keeper) IsTransferAllowed(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
+	return k.areCoinsSpendable(ctx, fromAddress, coins)
 }
 
 // Logger returns the Keeper logger.

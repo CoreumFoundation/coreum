@@ -6,6 +6,9 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/cosmos/cosmos-sdk/types"
+	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
@@ -119,35 +122,263 @@ func (m *QueryFungibleTokenResponse) GetFungibleToken() FungibleToken {
 	return FungibleToken{}
 }
 
+type QueryFrozenBalancesRequest struct {
+	// pagination defines an optional pagination for the request.
+	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	// account specifies the account onto which we query frozen balances
+	Account string `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
+}
+
+func (m *QueryFrozenBalancesRequest) Reset()         { *m = QueryFrozenBalancesRequest{} }
+func (m *QueryFrozenBalancesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFrozenBalancesRequest) ProtoMessage()    {}
+func (*QueryFrozenBalancesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b5e1eecf0acd8ab7, []int{2}
+}
+func (m *QueryFrozenBalancesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFrozenBalancesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFrozenBalancesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFrozenBalancesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFrozenBalancesRequest.Merge(m, src)
+}
+func (m *QueryFrozenBalancesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFrozenBalancesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFrozenBalancesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFrozenBalancesRequest proto.InternalMessageInfo
+
+func (m *QueryFrozenBalancesRequest) GetPagination() *query.PageRequest {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+func (m *QueryFrozenBalancesRequest) GetAccount() string {
+	if m != nil {
+		return m.Account
+	}
+	return ""
+}
+
+type QueryFrozenBalancesResponse struct {
+	// pagination defines the pagination in the response.
+	Pagination *query.PageResponse `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	// coins contains the frozen coins on the queried account
+	Coins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
+}
+
+func (m *QueryFrozenBalancesResponse) Reset()         { *m = QueryFrozenBalancesResponse{} }
+func (m *QueryFrozenBalancesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFrozenBalancesResponse) ProtoMessage()    {}
+func (*QueryFrozenBalancesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b5e1eecf0acd8ab7, []int{3}
+}
+func (m *QueryFrozenBalancesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFrozenBalancesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFrozenBalancesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFrozenBalancesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFrozenBalancesResponse.Merge(m, src)
+}
+func (m *QueryFrozenBalancesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFrozenBalancesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFrozenBalancesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFrozenBalancesResponse proto.InternalMessageInfo
+
+func (m *QueryFrozenBalancesResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+func (m *QueryFrozenBalancesResponse) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
+type QueryFrozenBalanceRequest struct {
+	// account specifies the account onto which we query frozen balances
+	Account string `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	// denom specifies frozen balances on a specific denom
+	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+}
+
+func (m *QueryFrozenBalanceRequest) Reset()         { *m = QueryFrozenBalanceRequest{} }
+func (m *QueryFrozenBalanceRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFrozenBalanceRequest) ProtoMessage()    {}
+func (*QueryFrozenBalanceRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b5e1eecf0acd8ab7, []int{4}
+}
+func (m *QueryFrozenBalanceRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFrozenBalanceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFrozenBalanceRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFrozenBalanceRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFrozenBalanceRequest.Merge(m, src)
+}
+func (m *QueryFrozenBalanceRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFrozenBalanceRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFrozenBalanceRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFrozenBalanceRequest proto.InternalMessageInfo
+
+func (m *QueryFrozenBalanceRequest) GetAccount() string {
+	if m != nil {
+		return m.Account
+	}
+	return ""
+}
+
+func (m *QueryFrozenBalanceRequest) GetDenom() string {
+	if m != nil {
+		return m.Denom
+	}
+	return ""
+}
+
+type QueryFrozenBalanceResponse struct {
+	// coins contains the frozen coin with specific account and denom
+	Coin types.Coin `protobuf:"bytes,1,opt,name=coin,proto3" json:"coin"`
+}
+
+func (m *QueryFrozenBalanceResponse) Reset()         { *m = QueryFrozenBalanceResponse{} }
+func (m *QueryFrozenBalanceResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFrozenBalanceResponse) ProtoMessage()    {}
+func (*QueryFrozenBalanceResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b5e1eecf0acd8ab7, []int{5}
+}
+func (m *QueryFrozenBalanceResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryFrozenBalanceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryFrozenBalanceResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryFrozenBalanceResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFrozenBalanceResponse.Merge(m, src)
+}
+func (m *QueryFrozenBalanceResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryFrozenBalanceResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFrozenBalanceResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryFrozenBalanceResponse proto.InternalMessageInfo
+
+func (m *QueryFrozenBalanceResponse) GetCoin() types.Coin {
+	if m != nil {
+		return m.Coin
+	}
+	return types.Coin{}
+}
+
 func init() {
 	proto.RegisterType((*QueryFungibleTokenRequest)(nil), "coreum.asset.v1.QueryFungibleTokenRequest")
 	proto.RegisterType((*QueryFungibleTokenResponse)(nil), "coreum.asset.v1.QueryFungibleTokenResponse")
+	proto.RegisterType((*QueryFrozenBalancesRequest)(nil), "coreum.asset.v1.QueryFrozenBalancesRequest")
+	proto.RegisterType((*QueryFrozenBalancesResponse)(nil), "coreum.asset.v1.QueryFrozenBalancesResponse")
+	proto.RegisterType((*QueryFrozenBalanceRequest)(nil), "coreum.asset.v1.QueryFrozenBalanceRequest")
+	proto.RegisterType((*QueryFrozenBalanceResponse)(nil), "coreum.asset.v1.QueryFrozenBalanceResponse")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/query.proto", fileDescriptor_b5e1eecf0acd8ab7) }
 
 var fileDescriptor_b5e1eecf0acd8ab7 = []byte{
-	// 316 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4e, 0xce, 0x2f, 0x4a,
-	0x2d, 0xcd, 0xd5, 0x4f, 0x2c, 0x2e, 0x4e, 0x2d, 0xd1, 0x2f, 0x33, 0xd4, 0x2f, 0x2c, 0x4d, 0x2d,
-	0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x87, 0x48, 0xea, 0x81, 0x25, 0xf5, 0xca,
-	0x0c, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0x72, 0xfa, 0x20, 0x16, 0x44, 0x99, 0x94, 0x4c,
-	0x7a, 0x7e, 0x7e, 0x7a, 0x4e, 0xaa, 0x7e, 0x62, 0x41, 0xa6, 0x7e, 0x62, 0x5e, 0x5e, 0x7e, 0x49,
-	0x62, 0x49, 0x66, 0x7e, 0x5e, 0x31, 0x54, 0x16, 0xc3, 0x06, 0x88, 0x69, 0x60, 0x49, 0x25, 0x43,
-	0x2e, 0xc9, 0x40, 0x90, 0x85, 0x6e, 0xa5, 0x79, 0xe9, 0x99, 0x49, 0x39, 0xa9, 0x21, 0xf9, 0xd9,
-	0xa9, 0x79, 0x41, 0xa9, 0x85, 0xa5, 0xa9, 0xc5, 0x25, 0x42, 0x22, 0x5c, 0xac, 0x29, 0xa9, 0x79,
-	0xf9, 0xb9, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x10, 0x8e, 0x52, 0x26, 0x97, 0x14, 0x36,
-	0x2d, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x42, 0xde, 0x5c, 0x7c, 0x69, 0x50, 0x89, 0xf8, 0x12,
-	0x90, 0x0c, 0x58, 0x33, 0xb7, 0x91, 0x9c, 0x1e, 0x9a, 0x5f, 0xf4, 0x50, 0xf4, 0x3b, 0xb1, 0x9c,
-	0xb8, 0x27, 0xcf, 0x10, 0xc4, 0x9b, 0x86, 0x2c, 0x68, 0x34, 0x8f, 0x91, 0x8b, 0x15, 0x6c, 0x97,
-	0xd0, 0x14, 0x46, 0x2e, 0x5e, 0x14, 0x0d, 0x42, 0x5a, 0x18, 0x06, 0xe2, 0xf4, 0x88, 0x94, 0x36,
-	0x51, 0x6a, 0x21, 0x3e, 0x50, 0xd2, 0x6a, 0xba, 0xfc, 0x64, 0x32, 0x93, 0x8a, 0x90, 0x92, 0x3e,
-	0xd6, 0x80, 0x2b, 0xd6, 0x4f, 0x2b, 0xd1, 0xaf, 0x06, 0x07, 0x45, 0xad, 0x93, 0xd7, 0x89, 0x47,
-	0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85,
-	0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x19, 0xa4, 0x67, 0x96, 0x64, 0x94, 0x26, 0xe9,
-	0x25, 0xe7, 0xe7, 0xea, 0x3b, 0x83, 0xcd, 0x71, 0xcb, 0x2f, 0xcd, 0x4b, 0x01, 0xc7, 0x0c, 0xcc,
-	0xe0, 0x0a, 0xa8, 0xd1, 0x25, 0x95, 0x05, 0xa9, 0xc5, 0x49, 0x6c, 0xe0, 0x18, 0x31, 0x06, 0x04,
-	0x00, 0x00, 0xff, 0xff, 0x99, 0xd3, 0xf2, 0x41, 0x12, 0x02, 0x00, 0x00,
+	// 591 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0x8d, 0xd3, 0x06, 0xc4, 0x56, 0x2d, 0xd2, 0xaa, 0x87, 0xd4, 0x45, 0x6e, 0x65, 0x21, 0x88,
+	0x52, 0xd8, 0x6d, 0x52, 0xc4, 0xa9, 0xe2, 0x90, 0xa2, 0x20, 0xd1, 0x0b, 0x8d, 0x38, 0x71, 0x41,
+	0x6b, 0x67, 0x63, 0xac, 0x26, 0xbb, 0x6e, 0x76, 0x1d, 0x51, 0xaa, 0x72, 0xe0, 0x0b, 0x90, 0xe0,
+	0x27, 0xe0, 0xc0, 0x77, 0x94, 0x5b, 0x25, 0x2e, 0x9c, 0x00, 0x25, 0xfc, 0x05, 0x17, 0xe4, 0xdd,
+	0x75, 0x6b, 0x53, 0xa7, 0x44, 0x3d, 0x25, 0xce, 0x9b, 0x37, 0xf3, 0xe6, 0xcd, 0x73, 0xc0, 0xaa,
+	0xcf, 0x87, 0x34, 0x1e, 0x60, 0x22, 0x04, 0x95, 0x78, 0xd4, 0xc0, 0x07, 0x31, 0x1d, 0x1e, 0xa2,
+	0x68, 0xc8, 0x25, 0x87, 0x37, 0x35, 0x88, 0x14, 0x88, 0x46, 0x0d, 0x7b, 0x39, 0xe0, 0x01, 0x57,
+	0x18, 0x4e, 0xbe, 0xe9, 0x32, 0xfb, 0x56, 0xc0, 0x79, 0xd0, 0xa7, 0x98, 0x44, 0x21, 0x26, 0x8c,
+	0x71, 0x49, 0x64, 0xc8, 0x99, 0x30, 0xa8, 0xe3, 0x73, 0x31, 0xe0, 0x02, 0x7b, 0x44, 0x50, 0x3c,
+	0x6a, 0x78, 0x54, 0x92, 0x06, 0xf6, 0x79, 0xc8, 0x0c, 0x5e, 0xcf, 0xe2, 0x6a, 0xfa, 0x59, 0x55,
+	0x44, 0x82, 0x90, 0xa9, 0x66, 0xa6, 0xf6, 0x82, 0x5a, 0xad, 0x4c, 0x81, 0x6e, 0x03, 0xac, 0xec,
+	0x25, 0xf4, 0x76, 0xcc, 0x82, 0xd0, 0xeb, 0xd3, 0xe7, 0x7c, 0x9f, 0xb2, 0x0e, 0x3d, 0x88, 0xa9,
+	0x90, 0x70, 0x19, 0x54, 0xba, 0x94, 0xf1, 0x41, 0xd5, 0x5a, 0xb7, 0x6a, 0x37, 0x3a, 0xfa, 0xc1,
+	0x0d, 0x81, 0x5d, 0x44, 0x11, 0x11, 0x67, 0x82, 0xc2, 0x5d, 0xb0, 0xd4, 0x33, 0xc0, 0x4b, 0x99,
+	0x20, 0x8a, 0xbc, 0xd0, 0x74, 0xd0, 0x3f, 0xbe, 0xa0, 0x1c, 0xbf, 0x35, 0x7f, 0xf2, 0x63, 0xad,
+	0xd4, 0x59, 0xec, 0x65, 0x7f, 0x74, 0xdf, 0xa6, 0xa3, 0x86, 0xfc, 0x0d, 0x65, 0x2d, 0xd2, 0x27,
+	0xcc, 0xa7, 0x22, 0x95, 0xd7, 0x06, 0xe0, 0x7c, 0x59, 0x33, 0xe6, 0x0e, 0xd2, 0xce, 0xa0, 0xc4,
+	0x19, 0xa4, 0xef, 0x62, 0x9c, 0x41, 0xcf, 0x48, 0x40, 0x0d, 0xb7, 0x93, 0x61, 0xc2, 0x2a, 0xb8,
+	0x4e, 0x7c, 0x9f, 0xc7, 0x4c, 0x56, 0xcb, 0x6a, 0xd1, 0xf4, 0xd1, 0xfd, 0x6a, 0x81, 0xd5, 0x42,
+	0x01, 0x66, 0xd9, 0x27, 0x05, 0x0a, 0xee, 0xfe, 0x57, 0x81, 0x26, 0xe7, 0x24, 0x10, 0x50, 0x49,
+	0xae, 0x2b, 0xaa, 0xe5, 0xf5, 0xb9, 0xda, 0x42, 0x73, 0x25, 0xd7, 0x23, 0x65, 0xef, 0xf0, 0x90,
+	0xb5, 0x36, 0x13, 0x9f, 0x3e, 0xff, 0x5c, 0xab, 0x05, 0xa1, 0x7c, 0x15, 0x7b, 0xc8, 0xe7, 0x03,
+	0x6c, 0xc2, 0xa0, 0x3f, 0xee, 0x8b, 0xee, 0x3e, 0x96, 0x87, 0x11, 0x15, 0x8a, 0x20, 0x3a, 0xba,
+	0xb3, 0xbb, 0x9b, 0x5e, 0x3a, 0xbb, 0x4a, 0x6a, 0x65, 0xc6, 0x02, 0x2b, 0x67, 0xc1, 0x79, 0x06,
+	0xca, 0xd9, 0x0c, 0xec, 0x15, 0x1d, 0xe6, 0xcc, 0x96, 0x2d, 0x30, 0x9f, 0xcc, 0x34, 0x86, 0x5c,
+	0xb2, 0x8c, 0x3e, 0xba, 0x2a, 0x6e, 0xfe, 0x99, 0x03, 0x15, 0xd5, 0x13, 0x7e, 0xb4, 0xc0, 0x62,
+	0x2e, 0x1c, 0xb0, 0x7e, 0x21, 0x3c, 0x53, 0x43, 0x6b, 0x6f, 0xcc, 0x54, 0xab, 0x95, 0xba, 0xf5,
+	0x77, 0xdf, 0x7e, 0x7f, 0x28, 0xdf, 0x86, 0x2e, 0x2e, 0x7c, 0x49, 0x04, 0xee, 0x49, 0x7c, 0xa4,
+	0x56, 0x3e, 0x86, 0x9f, 0x2c, 0xb0, 0x94, 0xcf, 0x01, 0x9c, 0x36, 0xab, 0x28, 0xae, 0xf6, 0xbd,
+	0xd9, 0x8a, 0x8d, 0xb2, 0x6d, 0xa5, 0xec, 0x21, 0x7c, 0x70, 0x89, 0x32, 0xcf, 0x90, 0xf0, 0x91,
+	0xb9, 0xd6, 0x31, 0xee, 0xa9, 0x6e, 0xf0, 0x4b, 0x62, 0x61, 0xb6, 0xf1, 0x54, 0x0b, 0x0b, 0xd2,
+	0x60, 0x6f, 0xcc, 0x54, 0x6b, 0x84, 0x3e, 0x56, 0x42, 0x1f, 0xc1, 0xed, 0xab, 0x08, 0x4d, 0xcd,
+	0x6d, 0x3d, 0x3d, 0x19, 0x3b, 0xd6, 0xe9, 0xd8, 0xb1, 0x7e, 0x8d, 0x1d, 0xeb, 0xfd, 0xc4, 0x29,
+	0x9d, 0x4e, 0x9c, 0xd2, 0xf7, 0x89, 0x53, 0x7a, 0xb1, 0x99, 0x09, 0xfa, 0x8e, 0x9a, 0xd0, 0xe6,
+	0x31, 0xeb, 0xaa, 0xf7, 0x26, 0x1d, 0xf9, 0xda, 0x0c, 0x55, 0xb1, 0xf7, 0xae, 0xa9, 0xbf, 0xb6,
+	0xad, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0xd6, 0x6f, 0x67, 0x9a, 0xa7, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -164,6 +395,8 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// FungibleToken queries the fungible token of the module.
 	FungibleToken(ctx context.Context, in *QueryFungibleTokenRequest, opts ...grpc.CallOption) (*QueryFungibleTokenResponse, error)
+	FrozenBalances(ctx context.Context, in *QueryFrozenBalancesRequest, opts ...grpc.CallOption) (*QueryFrozenBalancesResponse, error)
+	FrozenBalance(ctx context.Context, in *QueryFrozenBalanceRequest, opts ...grpc.CallOption) (*QueryFrozenBalanceResponse, error)
 }
 
 type queryClient struct {
@@ -183,10 +416,30 @@ func (c *queryClient) FungibleToken(ctx context.Context, in *QueryFungibleTokenR
 	return out, nil
 }
 
+func (c *queryClient) FrozenBalances(ctx context.Context, in *QueryFrozenBalancesRequest, opts ...grpc.CallOption) (*QueryFrozenBalancesResponse, error) {
+	out := new(QueryFrozenBalancesResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Query/FrozenBalances", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) FrozenBalance(ctx context.Context, in *QueryFrozenBalanceRequest, opts ...grpc.CallOption) (*QueryFrozenBalanceResponse, error) {
+	out := new(QueryFrozenBalanceResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Query/FrozenBalance", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// FungibleToken queries the fungible token of the module.
 	FungibleToken(context.Context, *QueryFungibleTokenRequest) (*QueryFungibleTokenResponse, error)
+	FrozenBalances(context.Context, *QueryFrozenBalancesRequest) (*QueryFrozenBalancesResponse, error)
+	FrozenBalance(context.Context, *QueryFrozenBalanceRequest) (*QueryFrozenBalanceResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -195,6 +448,12 @@ type UnimplementedQueryServer struct {
 
 func (*UnimplementedQueryServer) FungibleToken(ctx context.Context, req *QueryFungibleTokenRequest) (*QueryFungibleTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FungibleToken not implemented")
+}
+func (*UnimplementedQueryServer) FrozenBalances(ctx context.Context, req *QueryFrozenBalancesRequest) (*QueryFrozenBalancesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FrozenBalances not implemented")
+}
+func (*UnimplementedQueryServer) FrozenBalance(ctx context.Context, req *QueryFrozenBalanceRequest) (*QueryFrozenBalanceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FrozenBalance not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -219,6 +478,42 @@ func _Query_FungibleToken_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_FrozenBalances_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFrozenBalancesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).FrozenBalances(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.v1.Query/FrozenBalances",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).FrozenBalances(ctx, req.(*QueryFrozenBalancesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_FrozenBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFrozenBalanceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).FrozenBalance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.v1.Query/FrozenBalance",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).FrozenBalance(ctx, req.(*QueryFrozenBalanceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "coreum.asset.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -226,6 +521,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FungibleToken",
 			Handler:    _Query_FungibleToken_Handler,
+		},
+		{
+			MethodName: "FrozenBalances",
+			Handler:    _Query_FrozenBalances_Handler,
+		},
+		{
+			MethodName: "FrozenBalance",
+			Handler:    _Query_FrozenBalance_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -295,6 +598,167 @@ func (m *QueryFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryFrozenBalancesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFrozenBalancesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFrozenBalancesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Account) > 0 {
+		i -= len(m.Account)
+		copy(dAtA[i:], m.Account)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Account)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFrozenBalancesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFrozenBalancesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFrozenBalancesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFrozenBalanceRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFrozenBalanceRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFrozenBalanceRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Denom)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Account) > 0 {
+		i -= len(m.Account)
+		copy(dAtA[i:], m.Account)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Account)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryFrozenBalanceResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryFrozenBalanceResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryFrozenBalanceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Coin.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -326,6 +790,70 @@ func (m *QueryFungibleTokenResponse) Size() (n int) {
 	var l int
 	_ = l
 	l = m.FungibleToken.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryFrozenBalancesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Account)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryFrozenBalancesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryFrozenBalanceRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Account)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Denom)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryFrozenBalanceResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Coin.Size()
 	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
@@ -477,6 +1005,441 @@ func (m *QueryFungibleTokenResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.FungibleToken.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFrozenBalancesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFrozenBalancesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFrozenBalancesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageRequest{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Account", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Account = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFrozenBalancesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFrozenBalancesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFrozenBalancesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFrozenBalanceRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFrozenBalanceRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFrozenBalanceRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Account", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Account = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Denom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryFrozenBalanceResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryFrozenBalanceResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryFrozenBalanceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coin", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Coin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

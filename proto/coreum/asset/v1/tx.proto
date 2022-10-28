@@ -40,10 +40,7 @@ message MsgIssueFungibleTokenResponse {}
 message MsgFreezeFungibleToken {
   string issuer = 1;
   string account = 2;
-  repeated cosmos.base.v1beta1.Coin coins = 3 [
-    (gogoproto.nullable) = false, 
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgFreezeFungibleTokenResponse {}
@@ -51,10 +48,7 @@ message MsgFreezeFungibleTokenResponse {}
 message MsgUnfreezeFungibleToken {
   string issuer = 1;
   string account = 2;
-  repeated cosmos.base.v1beta1.Coin coins = 3 [
-    (gogoproto.nullable) = false, 
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgUnfreezeFungibleTokenResponse {}

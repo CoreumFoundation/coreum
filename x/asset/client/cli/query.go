@@ -24,6 +24,8 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryFungibleToken())
+	cmd.AddCommand(CmdQueryFungibleTokenFrozenBalance())
+	cmd.AddCommand(CmdQueryFungibleTokenFrozenBalances())
 	return cmd
 }
 
@@ -49,6 +51,80 @@ $ %[1]s query asset ft [denom]
 			denom := args[0]
 			res, err := queryClient.FungibleToken(cmd.Context(), &types.QueryFungibleTokenRequest{
 				Denom: denom,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryFungibleTokenFrozenBalances return the QueryFungibleToken cobra command.
+func CmdQueryFungibleTokenFrozenBalances() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "ft-frozen-balances [account]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query fungible token frozen balances",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query frozen fungible token balances of an account.
+
+Example:
+$ %[1]s query asset ft-frozen-balances [account]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			account := args[0]
+			res, err := queryClient.FrozenBalances(cmd.Context(), &types.QueryFrozenBalancesRequest{
+				Account: account,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryFungibleTokenFrozenBalance return the QueryFungibleToken cobra command.
+func CmdQueryFungibleTokenFrozenBalance() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "ft-frozen-balance [account] [denom]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query fungible token frozen balance",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query frozen fungible token balance of an account.
+
+Example:
+$ %[1]s query asset ft-frozen-balance [account] [denom]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			account := args[0]
+			denom := args[1]
+			res, err := queryClient.FrozenBalance(cmd.Context(), &types.QueryFrozenBalanceRequest{
+				Account: account,
+				Denom:   denom,
 			})
 			if err != nil {
 				return err

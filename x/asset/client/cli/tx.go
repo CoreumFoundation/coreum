@@ -10,9 +10,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
+)
+
+// Flags defined on transactions
+const (
+	optionsFlag = "options"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -27,6 +33,8 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdTxIssueFungibleToken(),
+		CmdTxFreezeFungibleToken(),
+		CmdTxUnfreezeFungibleToken(),
 	)
 
 	return cmd
@@ -34,6 +42,10 @@ func GetTxCmd() *cobra.Command {
 
 // CmdTxIssueFungibleToken returns issue IssueFungibleToken cobra command.
 func CmdTxIssueFungibleToken() *cobra.Command {
+	allowedOptions := []string{}
+	for _, n := range types.FungibleTokenOption_name { //nolint:nosnakecase
+		allowedOptions = append(allowedOptions, n)
+	}
 	cmd := &cobra.Command{
 		Use:   "issue-ft [symbol] [description] [recipient_address] [initial_amount] --from [issuer]",
 		Args:  cobra.ExactArgs(4),
@@ -76,12 +88,117 @@ $ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer
 				}
 			}
 
+			optionsString, err := cmd.Flags().GetStringSlice(optionsFlag)
+			if err != nil {
+				return err
+			}
+
+			var options []types.FungibleTokenOption
+			for _, str := range optionsString {
+				option, ok := types.FungibleTokenOption_value[str] //nolint:nosnakecase
+				if !ok {
+					return errors.Errorf("Unknown option '%s',allowed options: %v", str, allowedOptions)
+				}
+				options = append(options, types.FungibleTokenOption(option))
+			}
+
 			msg := &types.MsgIssueFungibleToken{
 				Issuer:        issuer.String(),
 				Symbol:        symbol,
 				Description:   description,
 				Recipient:     recipient,
 				InitialAmount: initialAmount,
+				Options:       options,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	cmd.Flags().StringSlice(optionsFlag, []string{}, "Options to be enabled on fungible token. e.g --options=Freezable,Mintable.")
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxFreezeFungibleToken returns issue FreezeFungibleToken cobra command.
+//
+//nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
+func CmdTxFreezeFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "freeze-ft [account_address] [amount] --from [issuer]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Freeze a portion of fungible token on an account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Freeze a portion of fungible token.
+
+Example:
+$ %s tx asset freeze-ft [recipient_address] 100000BTC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [issuer]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			issuer := clientCtx.GetFromAddress()
+			account := args[0]
+			amount, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgFreezeFungibleToken{
+				Issuer:  issuer.String(),
+				Account: account,
+				Coin:    amount,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxUnfreezeFungibleToken returns issue FreezeFungibleToken cobra command.
+//
+//nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
+func CmdTxUnfreezeFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unfreeze-ft [account_address] [amount] --from [issuer]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Unfreeze a portion of the frozen fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Unfreezes a portion of the frozen fungible token.
+
+Example:
+$ %s tx asset unfreeze-ft [account_address] 100000BTC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [issuer]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			issuer := clientCtx.GetFromAddress()
+			account := args[0]
+			amount, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgUnfreezeFungibleToken{
+				Issuer:  issuer.String(),
+				Account: account,
+				Coin:    amount,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

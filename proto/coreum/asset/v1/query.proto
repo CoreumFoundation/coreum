@@ -62,5 +62,5 @@ message  QueryFrozenBalanceRequest {
 
 message  QueryFrozenBalanceResponse {
   // coins contains the frozen coin with specific account and denom 
-  cosmos.base.v1beta1.Coin coin = 1;
+  cosmos.base.v1beta1.Coin coin = 1 [(gogoproto.nullable) = false];
 }
