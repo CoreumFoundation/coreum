@@ -24,23 +24,23 @@ type InstantiateConfig struct {
 }
 
 // DeployAndInstantiate deploys, instantiate the wasm contract and returns its address.
-func DeployAndInstantiate(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte, initConfig InstantiateConfig) (string, error) {
+func DeployAndInstantiate(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte, initConfig InstantiateConfig) (string, uint64, error) {
 	codeID, err := deploy(ctx, clientCtx, txf, wasmData)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	initConfig.CodeID = codeID
 	contractAddr, err := instantiate(ctx, clientCtx, txf, initConfig)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
-	return contractAddr, nil
+	return contractAddr, codeID, nil
 }
 
 // Execute executes the wasm contract with the payload and optionally funding amount.
-func Execute(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) error {
+func Execute(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
 	funds := sdk.NewCoins()
 	if !fundAmt.Amount.IsNil() {
 		funds = funds.Add(fundAmt)
@@ -56,8 +56,11 @@ func Execute(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, co
 	txf = txf.
 		WithGasAdjustment(gasMultiplier)
 
-	_, err := tx.BroadcastTx(ctx, clientCtx, txf, msg)
-	return err
+	res, err := tx.BroadcastTx(ctx, clientCtx, txf, msg)
+	if err != nil {
+		return 0, err
+	}
+	return res.GasUsed, nil
 }
 
 // Query queries the contract with the requested payload.
@@ -70,10 +73,25 @@ func Query(ctx context.Context, clientCtx tx.ClientContext, contractAddr string,
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.SmartContractState(ctx, query)
 	if err != nil {
-		return nil, errors.Wrap(err, "WASMQueryClient returns an error after smart contract state Query")
+		return nil, errors.Wrap(err, "WASMQueryClient returned an error after smart contract state Query")
 	}
 
 	return json.RawMessage(resp.Data), nil
+}
+
+// IsPinned returns true if smart contract is pinned
+func IsPinned(ctx context.Context, clientCtx tx.ClientContext, codeID uint64) (bool, error) {
+	wasmClient := wasmtypes.NewQueryClient(clientCtx)
+	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})
+	if err != nil {
+		return false, errors.Wrap(err, "WASMQueryClient returned an error after querying pinned contracts")
+	}
+	for _, c := range resp.CodeIDs {
+		if c == codeID {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // deploys the wasm contract and returns its codeID.
