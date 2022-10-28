@@ -36,7 +36,7 @@ func Tests() []testing.TestSet {
 				feemodel.TestFeeModelProposalParamChange,
 				staking.TestStakingProposalParamChange,
 				staking.TestStaking,
-				wasm.TestSimpleStateWasmContract,
+				wasm.TestPinningAndUnpinningSmartContractUsingGovernance,
 				wasm.TestBankSendWasmContract,
 				wasm.TestGasWasmBankSendAndBankSend,
 			},
