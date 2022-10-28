@@ -99,10 +99,53 @@ func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
+		totalGasRequired += msgGas + deterministicGas.FixedGas
+	}
+
+	return totalGasRequired
+}
+
+// GasLimitByMultiSendMsgs calculates sum of gas limits required for message types passed and includes the FixedGas once.
+// It panics if unsupported message type specified.
+func (c ChainContext) GasLimitByMultiSendMsgs(msgs ...sdk.Msg) uint64 {
+	deterministicGas := c.NetworkConfig.Fee.DeterministicGas
+	var totalGasRequired uint64
+	for _, msg := range msgs {
+		msgGas, exists := deterministicGas.GasRequiredByMessage(msg)
+		if !exists {
+			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
+		}
 		totalGasRequired += msgGas
 	}
 
 	return totalGasRequired + deterministicGas.FixedGas
+}
+
+// BalancesOptions is the input type for the ComputeNeededBalanceFromOptions.
+type BalancesOptions struct {
+	Messages []sdk.Msg
+	GasPrice sdk.Dec
+	Amount   sdk.Int
+}
+
+// ComputeNeededBalanceFromOptions computes the required balance based on the input options.
+func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) sdk.Int {
+	if options.GasPrice.IsNil() {
+		options.GasPrice = c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
+	}
+
+	if options.Amount.IsNil() {
+		options.Amount = sdk.ZeroInt()
+	}
+
+	msgsGas := uint64(0)
+	if len(options.Messages) > 0 {
+		msgsGas = c.GasLimitByMsgs(options.Messages...)
+	}
+
+	// Ceil().RoundInt() is here to be compatible with the sdk's TxFactory
+	// https://github.com/cosmos/cosmos-sdk/blob/ff416ee63d32da5d520a8b2d16b00da762416146/client/tx/factory.go#L223
+	return options.GasPrice.Mul(sdk.NewDec(int64(msgsGas))).Ceil().RoundInt().Add(options.Amount)
 }
 
 // ChainConfig defines the config arguments required for the test chain initialisation.
@@ -132,13 +175,13 @@ func NewChain(cfg ChainConfig) Chain {
 		WithKeyring(keyring.NewInMemory()).
 		WithBroadcastMode(flags.BroadcastBlock)
 
-	chainContext := NewChainContext(clientCtx, cfg.NetworkConfig)
-	governance := NewGovernance(chainContext, cfg.StakerMnemonics)
+	chainCtx := NewChainContext(clientCtx, cfg.NetworkConfig)
+	governance := NewGovernance(chainCtx, cfg.StakerMnemonics)
 
-	faucetAddr := chainContext.ImportMnemonic(cfg.FundingMnemonic)
+	faucetAddr := chainCtx.ImportMnemonic(cfg.FundingMnemonic)
 	faucet := NewFaucet(NewChainContext(clientCtx.WithFromAddress(faucetAddr), cfg.NetworkConfig))
 	return Chain{
-		ChainContext: chainContext,
+		ChainContext: chainCtx,
 		Governance:   governance,
 		Faucet:       faucet,
 	}

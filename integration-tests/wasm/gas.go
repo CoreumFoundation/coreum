@@ -32,7 +32,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 
-	contractAddr, err := DeployAndInstantiate(
+	contractAddr, _, err := DeployAndInstantiate(
 		ctx,
 		clientCtx,
 		txf,
