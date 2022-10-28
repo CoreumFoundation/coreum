@@ -178,3 +178,12 @@ func (f Faucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
 
 	return nil
 }
+
+// FundAccountsWithOptions computes the needed balances and fund account with it.
+func (f Faucet) FundAccountsWithOptions(ctx context.Context, address sdk.AccAddress, options BalancesOptions) error {
+	amount := f.chainCtx.ComputeNeededBalanceFromOptions(options)
+	return f.FundAccounts(ctx, FundedAccount{
+		Address: address,
+		Amount:  f.chainCtx.NewCoin(amount),
+	})
+}

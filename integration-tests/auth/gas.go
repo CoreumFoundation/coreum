@@ -19,12 +19,10 @@ func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := chain.GenAccount()
 
 	maxBlockGas := chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-		1,
-		sdk.NewInt(maxBlockGas+100),
-	)))))
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   sdk.NewInt(maxBlockGas + 100),
+	}))
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
