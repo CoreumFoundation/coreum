@@ -108,7 +108,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Description:   "BTC Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
-		Options:       []types.FungibleTokenOption{}, //nolint:nosnakecase
+		Options:       []types.FungibleTokenOption{},
 	}
 
 	unFreezableDenom, err := assetKeeper.IssueFungibleToken(ctx, unfreezableSettings)
