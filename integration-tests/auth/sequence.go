@@ -17,17 +17,10 @@ import (
 func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := chain.GenAccount()
 
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			sender,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-				1,
-				sdk.NewInt(10),
-			)),
-		),
-	))
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   sdk.NewInt(10),
+	}))
 
 	clientCtx := chain.ClientContext
 	accInfo, err := tx.GetAccountInfo(ctx, clientCtx, sender)

@@ -22,13 +22,10 @@ func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testin
 	recipient := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		bankSendGas,
-		1,
-		amountToSend,
-	)))))
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   amountToSend,
+	}))
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -37,6 +34,7 @@ func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testin
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
+	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	res, err := tx.BroadcastTx(
 		ctx,
 		clientCtx,
@@ -50,19 +48,9 @@ func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testin
 
 // TestTransferDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
 func TestTransferDeterministicGasTwoBankSends(ctx context.Context, t testing.T, chain testing.Chain) {
-	gasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
-	senderInitialBalance := testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		gasExpected,
-		1,
-		sdk.NewInt(2000),
-	)
-
 	sender := chain.GenAccount()
 	receiver1 := chain.GenAccount()
 	receiver2 := chain.GenAccount()
-
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(senderInitialBalance))))
 
 	bankSend1 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -75,11 +63,17 @@ func TestTransferDeterministicGasTwoBankSends(ctx context.Context, t testing.T, 
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: []sdk.Msg{bankSend1, bankSend2},
+		Amount:   sdk.NewInt(2000),
+	}))
+
+	gasExpected := chain.GasLimitByMultiSendMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)
 	txf := chain.ChainContext.TxFactory().WithGas(gasExpected)
 	result, err := tx.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
 	require.NoError(t, err)
-	require.EqualValues(t, gasExpected, result.GasUsed)
+	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
 }
 
 // TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
@@ -87,13 +81,10 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		bankSendGas,
-		1,
-		amountToSend,
-	)))))
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   amountToSend,
+	}))
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -102,6 +93,7 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
+	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	_, err := tx.BroadcastTx(
 		ctx,
 		clientCtx,
@@ -117,13 +109,10 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	require.NoError(t, chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(sender, chain.NewCoin(testing.ComputeNeededBalance(
-		chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-		bankSendGas,
-		1,
-		amountToSend,
-	)))))
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   amountToSend,
+	}))
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -132,6 +121,7 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
+	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	_, estimatedGas, err := tx.CalculateGas(
 		ctx,
 		clientCtx,
