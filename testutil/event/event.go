@@ -24,7 +24,7 @@ func FindTypedEvent[T proto.Message](event T, events []tmtypes.Event) (T, error)
 
 		typedMsg, ok := msg.(T)
 		if !ok {
-			return *new(T), errors.Errorf("can't cast found event to %+v", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
+			return *new(T), errors.Errorf("can't cast found event to %T", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
 		}
 
 		return typedMsg, nil
