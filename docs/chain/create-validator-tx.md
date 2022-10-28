@@ -1,3 +1,5 @@
+# TODO(dhil) Discuss whether we need it now or "init-chain.md" is enough
+
 # Create Validator Tx Generation & Signing
 
 This doc describes commands to generate and sign CreateValidator transaction type.
@@ -13,7 +15,7 @@ echo $mnemonic | cored keys add $moniker --recover
 # Generate unsigned CreateValidator transaction.
 cored tx staking create-validator \
   --amount=10000000000000ducore \
-  --pubkey=$(cored keys show --pubkey $moniker) \
+  --pubkey=$(cored tendermint show-validator) \
   --moniker=$moniker \
   --details="" \
   --commission-rate="0.10" \
