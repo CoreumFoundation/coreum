@@ -6,7 +6,7 @@ This doc describes the steps to initiate a chain from scratch.
 
 * Prepare initial binary.
 
-  * Pass the steps in [prepare initial binary](prepare-initial-binary) doc to build the initial binary.
+  * Pass the steps in [prepare initial binary](prepare-initial-binary.md) doc to build the initial binary.
 
 * Run seed nodes.
 
@@ -14,7 +14,7 @@ This doc describes the steps to initiate a chain from scratch.
 
 * Prepare final binary.
 
-  * Pass the steps in [prepare final binary](prepare-final-binary) doc to build the final binary.
+  * Pass the steps in [prepare final binary](prepare-final-binary.md) doc to build the final binary.
 
   Now the new binary is ready to be used.
   Update the variables with the new binary version in the ["cli env"](../cli-env.md) doc.

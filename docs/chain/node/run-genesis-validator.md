@@ -4,7 +4,7 @@ The doc describes the procedure of creating and running the validator node which
 
 * The [install binaries](../install-cored.md) doc describes the installation process.
 
-* Set up the CLI environment following the [doc](cli-env.md).
+* Set up the CLI environment following the [doc](../cli-env.md).
 
 * Set up [node prerequisites](node-prerequisites.md).
 

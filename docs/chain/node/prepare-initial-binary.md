@@ -5,7 +5,7 @@ This step describes how to prepare the initial binary.
 
 *The steps should be repeated for each validator node.*
 
-* Set up the CLI environment following the [doc](cli-env.md).
+* Set up the CLI environment following the [doc](../cli-env.md).
 
 * Install the required util: "curl"
 
@@ -136,4 +136,4 @@ The output example:
 
 * Create PR and release with tag after the merge.
 
-* Update the [cli env](cli-env.md) doc with the new version.
+* Update the [cli env](../cli-env.md) doc with the new version.
