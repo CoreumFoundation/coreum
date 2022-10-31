@@ -370,7 +370,7 @@ func New(
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
 	// We set fake upgrade handler to test upgrade procedure in CI before we have real upgrade available
-	if ChosenNetwork.EnableFakeUpgradeHandler() {
+	if ChosenNetwork.IsFakeUpgradeHandlerEnabled() {
 		app.UpgradeKeeper.SetUpgradeHandler("upgrade", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			return nil, nil
 		})
