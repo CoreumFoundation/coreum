@@ -285,7 +285,7 @@ func (m *QueryFrozenBalanceRequest) GetDenom() string {
 }
 
 type QueryFrozenBalanceResponse struct {
-	// coins contains the frozen coin with specific account and denom
+	// coin contains the frozen coin with specific account and denom
 	Coin types.Coin `protobuf:"bytes,1,opt,name=coin,proto3" json:"coin"`
 }
 

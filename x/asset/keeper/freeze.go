@@ -50,7 +50,7 @@ func (k Keeper) areCoinsSpendable(ctx sdk.Context, addr sdk.AccAddress, coins sd
 		frozenBalance := k.GetFrozenBalance(ctx, addr, coin.Denom)
 		balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
 		if !balance.IsGTE(frozenBalance.Add(coin)) {
-			return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available to spend", coin)
+			return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available", coin)
 		}
 	}
 	return nil
