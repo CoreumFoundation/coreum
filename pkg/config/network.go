@@ -136,7 +136,7 @@ func init() {
 					Balances: sdk.NewCoins(sdk.NewCoin(baseDenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
 				},
 			},
-			GenTxs:                   readGenTxs(coreumDevnet1GenTxsFS),
+			GenTxs:                      readGenTxs(coreumDevnet1GenTxsFS),
 			IsFakeUpgradeHandlerEnabled: EnableFakeUpgradeHandler != "",
 		},
 	}
