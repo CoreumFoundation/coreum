@@ -9,7 +9,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
@@ -57,7 +56,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Description:   msg.Description,
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
-		Options:       []types.FungibleTokenOption{},
+		Options:       []assettypes.FungibleTokenOption{},
 	}, *fungibleTokenIssuedEvt)
 
 	denom := fungibleTokenIssuedEvt.Denom
