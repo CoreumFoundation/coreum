@@ -4,14 +4,14 @@ This doc describes the command to set up the environment depending on the type o
 
 # Network variables
 <!-- markdown-link-check-disable -->
-| \-                     | znet (localnet)           | devnet                          |
-|------------------------|---------------------------|---------------------------------|
-| **Chain ID**           | coreum-devnet-1           | coreum-devnet-1                 |
-| **Denom**              | ducore                    | ducore                          |
-| **Node URL**           | http://localhost:26657    | http://104.197.42.0:26657       |
-| **Faucet URL**         | http://localhost:8090     | https://api.devnet-1.coreum.dev |
-| **Cosmovisor version** | v1.3.0                    | v1.3.0                          |
-| **Cored version**      | already installed in znet | check the latest devnet release |
+| \-                     | znet (localnet)             | devnet                          |
+|------------------------|-----------------------------|---------------------------------|
+| **Chain ID**           | coreum-devnet-1             | coreum-devnet-1                 |
+| **Denom**              | ducore                      | ducore                          |
+| **Node URL**           | http://localhost:26657      | http://104.197.42.0:26657       |
+| **Faucet URL**         | http://localhost:8090       | https://api.devnet-1.coreum.dev |
+| **Cosmovisor version** | v1.3.0                      | v1.3.0                          |
+| **Cored version**      | already installed via crust | check the latest devnet release |
 <!-- markdown-link-check-enable -->
 
 * Set the chain env variables with the "network" corresponding values.
