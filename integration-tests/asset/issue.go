@@ -56,7 +56,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Description:   msg.Description,
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
-		Options:       []assettypes.FungibleTokenOption{},
+		Features:      []assettypes.FungibleTokenFeature{},
 	}, *fungibleTokenIssuedEvt)
 
 	denom := fungibleTokenIssuedEvt.Denom

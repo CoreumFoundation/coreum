@@ -48,13 +48,6 @@ func (msg MsgIssueFungibleToken) GetSigners() []sdk.AccAddress {
 	}
 }
 
-// GetSigners returns the required signers of this message type
-func (msg MsgFreezeFungibleToken) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Issuer),
-	}
-}
-
 // ValidateBasic checks that message fields are valid
 func (msg MsgFreezeFungibleToken) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Issuer); err != nil {
@@ -65,11 +58,15 @@ func (msg MsgFreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
+	if err := ValidateDenom(msg.Coin.Denom); err != nil {
+		return err
+	}
+
 	return msg.Coin.Validate()
 }
 
 // GetSigners returns the required signers of this message type
-func (msg MsgUnfreezeFungibleToken) GetSigners() []sdk.AccAddress {
+func (msg MsgFreezeFungibleToken) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Issuer),
 	}
@@ -85,5 +82,16 @@ func (msg MsgUnfreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
+	if err := ValidateDenom(msg.Coin.Denom); err != nil {
+		return err
+	}
+
 	return msg.Coin.Validate()
+}
+
+// GetSigners returns the required signers of this message type
+func (msg MsgUnfreezeFungibleToken) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Issuer),
+	}
 }

@@ -35,5 +35,5 @@ func GetFungibleTokenKey(denom string) []byte {
 
 // CreateFrozenBalancesPrefix creates the prefix for an account's balances.
 func CreateFrozenBalancesPrefix(addr []byte) []byte {
-	return append(FrozenBalancesPrefix, address.MustLengthPrefix(addr)...)
+	return store.JoinKeys(FrozenBalancesPrefix, address.MustLengthPrefix(addr))
 }

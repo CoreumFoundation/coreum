@@ -13,7 +13,8 @@ import (
 type MsgKeeper interface {
 	IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error)
 	GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error)
-	FreezeKeeper
+	FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
+	UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -44,7 +45,7 @@ func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueF
 		Description:   req.Description,
 		Recipient:     recipient,
 		InitialAmount: req.InitialAmount,
-		Options:       req.Options,
+		Features:      req.Features,
 	})
 	if err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func (ms MsgServer) FreezeFungibleToken(goCtx context.Context, req *types.MsgFre
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	err = ms.keeper.FreezeToken(ctx, issuer, account, req.Coin)
+	err = ms.keeper.FreezeFungibleToken(ctx, issuer, account, req.Coin)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +88,7 @@ func (ms MsgServer) UnfreezeFungibleToken(goCtx context.Context, req *types.MsgU
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	err = ms.keeper.UnfreezeToken(ctx, issuer, account, req.Coin)
+	err = ms.keeper.UnfreezeFungibleToken(ctx, issuer, account, req.Coin)
 	if err != nil {
 		return nil, err
 	}

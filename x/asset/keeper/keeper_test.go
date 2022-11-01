@@ -34,7 +34,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Description:   "BTC Desc",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
-		Options:       []types.FungibleTokenOption{types.FungibleTokenOption_Freezable}, //nolint:nosnakecase
+		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
 	}
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
@@ -48,7 +48,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Issuer:      settings.Issuer.String(),
 		Symbol:      settings.Symbol,
 		Description: settings.Description,
-		Options:     []types.FungibleTokenOption{types.FungibleTokenOption_Freezable}, //nolint:nosnakecase
+		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
 	}, gotToken)
 
 	// check the metadata
@@ -96,7 +96,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Description:   "ETH Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
-		Options:       []types.FungibleTokenOption{types.FungibleTokenOption_Freezable}, //nolint:nosnakecase
+		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
 	}
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
@@ -108,44 +108,56 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Description:   "BTC Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
-		Options:       []types.FungibleTokenOption{},
+		Features:      []types.FungibleTokenFeature{},
 	}
 
-	unFreezableDenom, err := assetKeeper.IssueFungibleToken(ctx, unfreezableSettings)
+	unfreezableDenom, err := assetKeeper.IssueFungibleToken(ctx, unfreezableSettings)
 	requireT.NoError(err)
-	_, err = assetKeeper.GetFungibleToken(ctx, unFreezableDenom)
+	_, err = assetKeeper.GetFungibleToken(ctx, unfreezableDenom)
 	requireT.NoError(err)
 
 	receiver := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = bankKeeper.SendCoins(ctx, issuer, receiver, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(100)),
-		sdk.NewCoin(unFreezableDenom, sdk.NewInt(100)),
+		sdk.NewCoin(unfreezableDenom, sdk.NewInt(100)),
 	))
 	requireT.NoError(err)
 
-	// try to freeze unFreezable token
-	err = assetKeeper.FreezeToken(ctx, issuer, receiver, sdk.NewCoin(unFreezableDenom, sdk.NewInt(10)))
+	// try to freeze non-existent denom
+	nonExistentDenom := types.BuildFungibleTokenDenom("nonexist", issuer)
+	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(nonExistentDenom, sdk.NewInt(10)))
 	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, types.ErrOptionNotActive))
+	assertT.True(sdkerrors.IsOf(err, types.ErrFungibleTokenNotFound))
+
+	// try to freeze unfreezable FT
+	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(unfreezableDenom, sdk.NewInt(10)))
+	requireT.Error(err)
+	assertT.True(sdkerrors.IsOf(err, types.ErrFeatureNotActive))
 
 	// try to freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = assetKeeper.FreezeToken(ctx, randomAddr, receiver, sdk.NewCoin(unFreezableDenom, sdk.NewInt(10)))
+	err = assetKeeper.FreezeFungibleToken(ctx, randomAddr, receiver, sdk.NewCoin(unfreezableDenom, sdk.NewInt(10)))
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
 
 	// try to freeze more than balance
-	err = assetKeeper.FreezeToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(110)))
+	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(110)))
 	requireT.Error(err)
+	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
 
 	// freeze, query frozen
-	freezeAmount := sdk.NewCoin(denom, sdk.NewInt(80))
-	err = assetKeeper.FreezeToken(ctx, issuer, receiver, freezeAmount)
+	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(40)))
 	requireT.NoError(err)
 	frozen := assetKeeper.GetFrozenBalance(ctx, receiver, denom)
-	requireT.Equal(freezeAmount, frozen)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(40)), frozen)
 
-	// try to send more than frozen
+	// increase frozen and query
+	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(40)))
+	requireT.NoError(err)
+	frozen = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(80)), frozen)
+
+	// try to send more than available
 	err = bankKeeper.SendCoins(ctx, receiver, issuer, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(80))))
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
@@ -160,17 +172,17 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(20)), balance)
 
 	// try to unfreeze from non issuer address
-	err = assetKeeper.UnfreezeToken(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
+	err = assetKeeper.UnfreezeFungibleToken(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
 
 	// try to unfreeze more than frozen
-	err = assetKeeper.UnfreezeToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(90)))
+	err = assetKeeper.UnfreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(90)))
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
 
 	// unfreeze, query frozen, and try to send
-	err = assetKeeper.UnfreezeToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
+	err = assetKeeper.UnfreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
 	requireT.NoError(err)
 	frozen = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(0)), frozen)

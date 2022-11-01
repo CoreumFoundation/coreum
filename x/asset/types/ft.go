@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -18,13 +19,37 @@ type IssueFungibleTokenSettings struct {
 	Description   string
 	Recipient     sdk.AccAddress
 	InitialAmount sdk.Int
-	Options       []FungibleTokenOption
+	Features      []FungibleTokenFeature
 }
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
 func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
 	base := fmt.Sprintf("%s-%s", symbol, issuer)
 	return fmt.Sprintf("%s-%s", base, checksum(base))
+}
+
+// ValidateDenom ensures that denom has acceptable bank format and checksum is valid
+func ValidateDenom(denom string) error {
+	if err := sdk.ValidateDenom(denom); err != nil {
+		return ErrInvalidDenomFormat
+	}
+
+	return ValidateDenomChecksum(denom)
+}
+
+// ValidateDenomChecksum ensures that the checksum value of user created denom is valid
+func ValidateDenomChecksum(denom string) error {
+	splits := strings.Split(denom, "-")
+	if len(splits) != 3 {
+		return ErrInvalidDenomFormat
+	}
+
+	cs := checksum(splits[0] + "-" + splits[1])
+	if cs != splits[2] {
+		return ErrInvalidDenomChecksum
+	}
+
+	return nil
 }
 
 func checksum(data string) string {

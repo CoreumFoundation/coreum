@@ -41,8 +41,8 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		Description:   "BTC Description",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),
-		Options: []assettypes.FungibleTokenOption{
-			assettypes.FungibleTokenOption_Freezable, //nolint:nosnakecase
+		Features: []assettypes.FungibleTokenFeature{
+			assettypes.FungibleTokenFeature_freezable, //nolint:nosnakecase
 		},
 	}
 
@@ -59,7 +59,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.True(ok)
 	denom := fungibleTokenIssuedEvt.Denom
 
-	// try to pass wrong signature to freeze msg
+	// try to pass non-issuer signature to freeze msg
 	freezeMsg := &assettypes.MsgFreezeFungibleToken{
 		Issuer:  randomAddress.String(),
 		Account: recipient.String(),
@@ -95,15 +95,15 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(500)), frozenBalance.Coin)
+	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(500)), frozenBalance.Balance)
 
 	frozenBalances, err := assetClient.FrozenBalances(ctx, &assettypes.QueryFrozenBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(500))), frozenBalances.Coins)
+	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(500))), frozenBalances.Balances)
 
-	// try to send more than allowed (600)
+	// try to send more than available (600)
 	recipient2 := chain.GenAccount()
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
@@ -119,7 +119,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
 
-	// try to send allowed tokens (500)
+	// try to send available tokens (500)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
@@ -168,7 +168,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
 
-	// send allowed tokens (200)
+	// send available tokens (200)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),

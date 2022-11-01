@@ -1,26 +1,64 @@
 package keeper
 
 import (
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// FreezeKeeper defines an interface which can be used to freeze/unfreeze balances
-type FreezeKeeper interface {
-	FreezeToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
-	UnfreezeToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
-	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+// FreezeFungibleToken freezes specified token from the specified account
+func (k Keeper) FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+	frozenStore := k.frozenBalanceStore(ctx, addr)
+
+	err := k.isFreezeAllowed(ctx, issuer, coin)
+	if err != nil {
+		return err
+	}
+
+	frozenBalance := frozenStore.getFrozenBalance(coin.Denom)
+	newFrozenBalance := frozenBalance.Add(coin)
+	bankBalance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
+	if bankBalance.IsLT(newFrozenBalance) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available", coin)
+	}
+
+	frozenStore.setFrozenBalance(newFrozenBalance)
+
+	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozen{
+		Account: addr.String(),
+		Coin:    coin,
+	})
 }
 
-// FreezeToken freezes specified token from the specified account
-func (k Keeper) FreezeToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
-	frozenStore := k.getFrozenBalanceStore(ctx, addr)
+// UnfreezeFungibleToken unfreezes specified tokens from the specified account
+func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+	frozenStore := k.frozenBalanceStore(ctx, addr)
 
-	ft, err := k.GetFungibleToken(ctx, coin.Denom)
+	err := k.isFreezeAllowed(ctx, issuer, coin)
+	if err != nil {
+		return err
+	}
+
+	frozenBalance := frozenStore.getFrozenBalance(coin.Denom)
+	if frozenBalance.IsLT(coin) {
+		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, "not enough frozen coins")
+	}
+
+	newFrozenBalance := frozenBalance.Sub(coin)
+	frozenStore.setFrozenBalance(newFrozenBalance)
+
+	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenUnfrozen{
+		Account: addr.String(),
+		Coin:    coin,
+	})
+}
+
+func (k Keeper) isFreezeAllowed(ctx sdk.Context, issuer sdk.AccAddress, coin sdk.Coin) error {
+	ft, err := k.getFungibleTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
@@ -29,17 +67,9 @@ func (k Keeper) FreezeToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.Acc
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer is authorized to perform this operation")
 	}
 
-	if err := types.FTHasOption(ft.Options, types.FungibleTokenOption_Freezable); err != nil { //nolint:nosnakecase
-		return sdkerrors.Wrapf(err, "denom:%s, option:%s", coin.Denom, types.FungibleTokenOption_Freezable) //nolint:nosnakecase
+	if err := isFeatureEnabled(ft.Features, types.FungibleTokenFeature_freezable); err != nil { //nolint:nosnakecase
+		return sdkerrors.Wrapf(err, "denom:%s, feature:%s", coin.Denom, types.FungibleTokenFeature_freezable) //nolint:nosnakecase
 	}
-
-	if err := k.areCoinsSpendable(ctx, addr, sdk.NewCoins(coin)); err != nil {
-		return err
-	}
-
-	bz := k.cdc.MustMarshal(&coin)
-
-	frozenStore.Set([]byte(coin.Denom), bz)
 
 	return nil
 }
@@ -58,60 +88,63 @@ func (k Keeper) areCoinsSpendable(ctx sdk.Context, addr sdk.AccAddress, coins sd
 
 // GetFrozenBalance returns the frozen balance of a denom on an account
 func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
-	frozenStore := k.getFrozenBalanceStore(ctx, addr)
+	return k.frozenBalanceStore(ctx, addr).getFrozenBalance(denom)
+}
+
+// GetFrozenBalances returns the frozen balance on an account
+func (k Keeper) GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
+	return k.frozenBalanceStore(ctx, addr).getFrozenBalances(pagination)
+}
+
+type frozenStore struct {
+	store prefix.Store
+	cdc   codec.BinaryCodec
+}
+
+func (s frozenStore) getFrozenBalance(denom string) sdk.Coin {
 	frozenBalance := sdk.NewCoin(denom, sdk.NewInt(0))
-	if bz := frozenStore.Get([]byte(denom)); bz != nil {
-		k.cdc.MustUnmarshal(bz, &frozenBalance)
+	if bz := s.store.Get([]byte(denom)); bz != nil {
+		s.cdc.MustUnmarshal(bz, &frozenBalance)
 	}
 
 	return frozenBalance
 }
 
-// GetFrozenBalances returns the frozen balance on an account
-func (k Keeper) GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
-	frozenStore := k.getFrozenBalanceStore(ctx, addr)
-	iterator := frozenStore.Iterator(nil, nil)
+func (s frozenStore) getFrozenBalances(pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
 	coins := sdk.NewCoins()
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		var balance sdk.Coin
-		k.cdc.MustUnmarshal(iterator.Value(), &balance)
-		coins = append(coins, balance)
-	}
-	return coins
+	pageRes, err := query.Paginate(s.store, pagination, func(key, value []byte) error {
+		var coin sdk.Coin
+		s.cdc.MustUnmarshal(value, &coin)
+		coins = append(coins, coin)
+		return nil
+	})
+	return coins, pageRes, err
 }
 
-// UnfreezeToken unfreezes specified tokens from the specified account
-func (k Keeper) UnfreezeToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
-	frozenStore := k.getFrozenBalanceStore(ctx, addr)
-
-	frozenBalance := k.GetFrozenBalance(ctx, addr, coin.Denom)
-	if frozenBalance.IsLT(coin) {
-		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, "not enough frozen coins")
-	}
-
-	ft, err := k.GetFungibleToken(ctx, coin.Denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if ft.Issuer != issuer.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer is authorized to perform this operation")
-	}
-
-	newFrozenBalance := frozenBalance.Sub(coin)
-	if newFrozenBalance.IsZero() {
-		frozenStore.Delete([]byte(coin.Denom))
+func (s frozenStore) setFrozenBalance(coin sdk.Coin) {
+	if coin.Amount.IsZero() {
+		s.store.Delete([]byte(coin.Denom))
 	} else {
-		bz := k.cdc.MustMarshal(&newFrozenBalance)
-		frozenStore.Set([]byte(coin.Denom), bz)
+		bz := s.cdc.MustMarshal(&coin)
+		s.store.Set([]byte(coin.Denom), bz)
 	}
-
-	return nil
 }
 
-// getFrozenBalanceStore get the store for the frozen balances of an account
-func (k Keeper) getFrozenBalanceStore(ctx sdk.Context, addr sdk.AccAddress) prefix.Store {
+// frozenBalanceStore get the store for the frozen balances of an account
+func (k Keeper) frozenBalanceStore(ctx sdk.Context, addr sdk.AccAddress) frozenStore {
 	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.CreateFrozenBalancesPrefix(addr))
+	return frozenStore{
+		store: prefix.NewStore(store, types.CreateFrozenBalancesPrefix(addr)),
+		cdc:   k.cdc,
+	}
+}
+
+// isFeatureEnabled checks weather a feature is present on a list of token features
+func isFeatureEnabled(features []types.FungibleTokenFeature, feature types.FungibleTokenFeature) error {
+	for _, o := range features {
+		if o == feature {
+			return nil
+		}
+	}
+	return types.ErrFeatureNotActive
 }

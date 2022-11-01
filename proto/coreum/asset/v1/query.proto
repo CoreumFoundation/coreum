@@ -46,8 +46,8 @@ message  QueryFrozenBalancesRequest {
 message  QueryFrozenBalancesResponse {
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 1;
-  // coins contains the frozen coins on the queried account
-  repeated cosmos.base.v1beta1.Coin coins = 2 [
+  // balances contains the frozen balances on the queried account
+  repeated cosmos.base.v1beta1.Coin balances = 2 [
     (gogoproto.nullable) = false, 
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
@@ -61,6 +61,6 @@ message  QueryFrozenBalanceRequest {
 }
 
 message  QueryFrozenBalanceResponse {
-  // coin contains the frozen coin with specific account and denom 
-  cosmos.base.v1beta1.Coin coin = 1 [(gogoproto.nullable) = false];
+  // balance contains the frozen balance with the queried account and denom 
+  cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
 }

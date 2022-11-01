@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
@@ -12,7 +13,8 @@ import (
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
 	GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error)
-	FreezeKeeper
+	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
 }
 
 // QueryService serves grpc query requests for assets module.
@@ -46,9 +48,14 @@ func (qs QueryService) FrozenBalances(goCtx context.Context, req *types.QueryFro
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
-	balances := qs.keeper.GetFrozenBalances(ctx, account)
+	balances, pageRes, err := qs.keeper.GetFrozenBalances(ctx, account, req.Pagination)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.QueryFrozenBalancesResponse{
-		Coins: balances,
+		Balances:   balances,
+		Pagination: pageRes,
 	}, nil
 }
 
@@ -61,6 +68,6 @@ func (qs QueryService) FrozenBalance(goCtx context.Context, req *types.QueryFroz
 	}
 	balance := qs.keeper.GetFrozenBalance(ctx, account, req.GetDenom())
 	return &types.QueryFrozenBalanceResponse{
-		Coin: balance,
+		Balance: balance,
 	}, nil
 }

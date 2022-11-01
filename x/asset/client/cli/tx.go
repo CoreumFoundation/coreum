@@ -18,7 +18,7 @@ import (
 
 // Flags defined on transactions
 const (
-	optionsFlag = "options"
+	featuresFlag = "features"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -42,12 +42,12 @@ func GetTxCmd() *cobra.Command {
 
 // CmdTxIssueFungibleToken returns issue IssueFungibleToken cobra command.
 func CmdTxIssueFungibleToken() *cobra.Command {
-	allowedOptions := []string{}
-	for _, n := range types.FungibleTokenOption_name { //nolint:nosnakecase
-		allowedOptions = append(allowedOptions, n)
+	allowedFeatures := []string{}
+	for _, n := range types.FungibleTokenFeature_name { //nolint:nosnakecase
+		allowedFeatures = append(allowedFeatures, n)
 	}
 	cmd := &cobra.Command{
-		Use:   "issue-ft [symbol] [description] [recipient_address] [initial_amount] --from [issuer]",
+		Use:   "issue-ft [symbol] [description] [recipient_address] [initial_amount] --from [issuer] --features=freezable,mintable,...",
 		Args:  cobra.ExactArgs(4),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -88,18 +88,18 @@ $ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer
 				}
 			}
 
-			optionsString, err := cmd.Flags().GetStringSlice(optionsFlag)
+			featuresString, err := cmd.Flags().GetStringSlice(featuresFlag)
 			if err != nil {
 				return err
 			}
 
-			var options []types.FungibleTokenOption
-			for _, str := range optionsString {
-				option, ok := types.FungibleTokenOption_value[str] //nolint:nosnakecase
+			var features []types.FungibleTokenFeature
+			for _, str := range featuresString {
+				feature, ok := types.FungibleTokenFeature_value[str] //nolint:nosnakecase
 				if !ok {
-					return errors.Errorf("Unknown option '%s',allowed options: %v", str, allowedOptions)
+					return errors.Errorf("Unknown feature '%s',allowed features: %v", str, allowedFeatures)
 				}
-				options = append(options, types.FungibleTokenOption(option))
+				features = append(features, types.FungibleTokenFeature(feature))
 			}
 
 			msg := &types.MsgIssueFungibleToken{
@@ -108,13 +108,13 @@ $ %s tx asset issue-ft BTC "BTC Token" [recipient_address] 100000 --from [issuer
 				Description:   description,
 				Recipient:     recipient,
 				InitialAmount: initialAmount,
-				Options:       options,
+				Features:      features,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
-	cmd.Flags().StringSlice(optionsFlag, []string{}, "Options to be enabled on fungible token. e.g --options=Freezable,Mintable.")
+	cmd.Flags().StringSlice(featuresFlag, []string{}, "Features to be enabled on fungible token. e.g --features=freezable,mintable.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -133,7 +133,7 @@ func CmdTxFreezeFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Freeze a portion of fungible token.
 
 Example:
-$ %s tx asset freeze-ft [recipient_address] 100000BTC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [issuer]
+$ %s tx asset freeze-ft [account_address] 100000BTC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [issuer]
 `,
 				version.AppName,
 			),

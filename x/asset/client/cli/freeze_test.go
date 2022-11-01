@@ -29,7 +29,7 @@ func TestFreezeFungibleToken(t *testing.T) {
 
 	// Issue token
 	args := []string{symbol, `"My Token"`, testNetwork.Validators[0].Address.String(), "777",
-		"--options", types.FungibleTokenOption_Freezable.String(), //nolint:nosnakecase
+		"--features", types.FungibleTokenFeature_freezable.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
@@ -46,7 +46,7 @@ func TestFreezeFungibleToken(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 
-	requireT.Equal(tokens, resp.Coin.String())
+	requireT.Equal(tokens, resp.Balance.String())
 	// Unfreeze part of the frozen token
 	unfreezeTokens := "75" + denom
 	args = append([]string{issuer.String(), unfreezeTokens, "--output", "json"}, txValidator1Args(testNetwork)...)
@@ -57,5 +57,5 @@ func TestFreezeFungibleToken(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 
-	requireT.Equal("25"+denom, resp.Coin.String())
+	requireT.Equal("25"+denom, resp.Balance.String())
 }

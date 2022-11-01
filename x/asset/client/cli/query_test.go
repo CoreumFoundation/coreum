@@ -1,7 +1,6 @@
 package cli_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -30,7 +29,7 @@ func TestQueryFungibleToken(t *testing.T) {
 	symbol := "l" + uuid.NewString()[:4]
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	denom := createFungibleToken(requireT, ctx, symbol, testNetwork, nil)
+	denom := createFungibleToken(requireT, ctx, symbol, testNetwork)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
@@ -43,20 +42,13 @@ func TestQueryFungibleToken(t *testing.T) {
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Symbol:      symbol,
 		Description: "",
-		Options:     []types.FungibleTokenOption{},
+		Features:    []types.FungibleTokenFeature{},
 	}, resp.FungibleToken)
 }
 
-func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbol string, testNetwork *network.Network, options []types.FungibleTokenOption) string {
+func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbol string, testNetwork *network.Network) string {
 	args := []string{symbol, "", "", ""}
 	args = append(args, txValidator1Args(testNetwork)...)
-	if len(options) > 0 {
-		var optionsStr []string
-		for _, o := range options {
-			optionsStr = append(optionsStr, o.String())
-		}
-		args = append(args, "--options", strings.Join(optionsStr, ","))
-	}
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)
 
