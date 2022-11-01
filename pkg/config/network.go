@@ -136,8 +136,8 @@ func init() {
 					Balances: sdk.NewCoins(sdk.NewCoin(baseDenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
 				},
 			},
-			GenTxs:                   readGenTxs(coreumDevnet1GenTxsFS),
-			EnableFakeUpgradeHandler: EnableFakeUpgradeHandler != "",
+			GenTxs:                      readGenTxs(coreumDevnet1GenTxsFS),
+			IsFakeUpgradeHandlerEnabled: EnableFakeUpgradeHandler != "",
 		},
 	}
 
@@ -236,7 +236,7 @@ type NetworkConfig struct {
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 	// TODO: remove this field once we have real upgrade handler
-	EnableFakeUpgradeHandler bool
+	IsFakeUpgradeHandlerEnabled bool
 }
 
 // Network holds all the configuration for different predefined networks
@@ -272,7 +272,7 @@ func NewNetwork(c NetworkConfig) Network {
 		mu:                       &sync.Mutex{},
 		fundedAccounts:           append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:                   append([]json.RawMessage{}, c.GenTxs...),
-		enableFakeUpgradeHandler: c.EnableFakeUpgradeHandler,
+		enableFakeUpgradeHandler: c.IsFakeUpgradeHandlerEnabled,
 	}
 
 	return n
@@ -481,8 +481,8 @@ func (n Network) FeeModel() feemodeltypes.Model {
 	return n.fee.FeeModel
 }
 
-// EnableFakeUpgradeHandler enables temporry fake upgrade handler until we have real one
-func (n Network) EnableFakeUpgradeHandler() bool {
+// IsFakeUpgradeHandlerEnabled enables temporary fake upgrade handler until we have real one
+func (n Network) IsFakeUpgradeHandlerEnabled() bool {
 	return n.enableFakeUpgradeHandler
 }
 
