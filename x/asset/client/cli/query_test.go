@@ -62,7 +62,7 @@ func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbo
 		if res.Events[i].Type != eventFungibleTokenIssuedName {
 			continue
 		}
-		eventFungibleTokenIssued, err := event.FindTypedEvent(&types.EventFungibleTokenIssued{}, res.Events)
+		eventFungibleTokenIssued, err := event.FindTypedEvent[*types.EventFungibleTokenIssued](res.Events)
 		requireT.NoError(err)
 		return eventFungibleTokenIssued.Denom
 	}

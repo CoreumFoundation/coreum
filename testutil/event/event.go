@@ -10,7 +10,8 @@ import (
 )
 
 // FindTypedEvent finds the event in the list of events, and set marshals it the to the event.
-func FindTypedEvent[T proto.Message](event T, events []tmtypes.Event) (T, error) {
+func FindTypedEvent[T proto.Message](events []tmtypes.Event) (T, error) {
+	event := *new(T) //nolint:gocritic // T(nil) doesn't work with the proto.Message
 	eventName := proto.MessageName(event)
 	for i := range events {
 		if events[i].Type != eventName {
@@ -30,7 +31,7 @@ func FindTypedEvent[T proto.Message](event T, events []tmtypes.Event) (T, error)
 		return typedMsg, nil
 	}
 
-	return *new(T), errors.Errorf("can't find event %+v in events", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
+	return *new(T), errors.Errorf("can't find event %T in events", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
 }
 
 // FindUint64EventAttribute finds the first event attribute by type and attribute name and convert it to the uint64 type.

@@ -53,7 +53,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	)
 
 	require.NoError(t, err)
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent(&assettypes.EventFungibleTokenIssued{}, res.Events)
+	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
 
 	require.NoError(t, err)
 	require.Equal(t, assettypes.EventFungibleTokenIssued{
