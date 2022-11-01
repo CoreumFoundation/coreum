@@ -84,9 +84,15 @@ $ %[1]s query asset ft-frozen-balances [account]
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
 			account := args[0]
 			res, err := queryClient.FrozenBalances(cmd.Context(), &types.QueryFrozenBalancesRequest{
-				Account: account,
+				Account:    account,
+				Pagination: pageReq,
 			})
 			if err != nil {
 				return err
@@ -97,6 +103,7 @@ $ %[1]s query asset ft-frozen-balances [account]
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "frozen balances")
 
 	return cmd
 }
