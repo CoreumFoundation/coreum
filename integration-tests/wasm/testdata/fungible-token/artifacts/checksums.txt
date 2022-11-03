@@ -1,0 +1,1 @@
+beec4a416c8e6f1fcef358ff0bc294ff0983e2b750a34b66a4f5f504a6a20356  fungible_token.wasm

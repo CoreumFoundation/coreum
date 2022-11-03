@@ -41,6 +41,7 @@ func Tests() []testing.TestSet {
 				wasm.TestPinningAndUnpinningSmartContractUsingGovernance,
 				wasm.TestBankSendWasmContract,
 				wasm.TestGasWasmBankSendAndBankSend,
+				wasm.TestFungibleTokenWasmContract,
 			},
 		},
 	}
