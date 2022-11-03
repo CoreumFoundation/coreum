@@ -79,7 +79,7 @@ func init() {
 	// devnet vars
 	var (
 		// 10m delegated and 1m extra to the txs
-		stakerValidatorBalance = sdk.NewCoins(sdk.NewCoin(baseDenomDev, sdk.NewInt(11_000_000_000_000)))
+		stakerValidatorBalance = sdk.NewCoins(sdk.NewCoin(denomDev, sdk.NewInt(11_000_000_000_000)))
 	)
 
 	list := []NetworkConfig{
@@ -131,7 +131,7 @@ func init() {
 				// Faucet's account storing the rest of total supply
 				{
 					Address:  "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
-					Balances: sdk.NewCoins(sdk.NewCoin(baseDenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
+					Balances: sdk.NewCoins(sdk.NewCoin(denomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
 				},
 			},
 			GenTxs:                      readGenTxs(coreumDevnet1GenTxsFS),
