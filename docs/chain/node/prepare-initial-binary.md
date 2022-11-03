@@ -7,7 +7,7 @@ This step describes how to prepare the initial binary.
 
 * Set up the CLI environment following the [doc](../cli-env.md).
 
-* Install the required util: "curl"
+* Install the required util: `curl`.
 
 * Download the binaries and put to the required folders.
 
@@ -22,7 +22,7 @@ This step describes how to prepare the initial binary.
   chmod +x cored
   ```
   
-  Validate "cored" binary.
+  Validate `cored` binary.
 
   ```
   ./cored version

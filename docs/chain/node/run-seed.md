@@ -20,7 +20,7 @@ The doc describes the procedure of creating and running the seed node.
   ```
   The command will create a default node configuration
 
-* Install the required util: "crudini"
+* Install the required util: `crudini`.
 
 * Set the common connection config using the [doc](set-connection-config.md).
 
@@ -46,15 +46,15 @@ The doc describes the procedure of creating and running the seed node.
 
 * Start the node.
 
-  * Start with "cosmovisor" (recommended)
+  * Start with `cosmovisor` (recommended)
   ```bash
   cosmovisor run start $CORED_CHAIN_ID_ARGS
   ```
 
-  * Start with "cored"
+  * Start with `cored`
    ```bash
   cored start $CORED_CHAIN_ID_ARGS
   ```
 
-  **Attention!** *Be sure that the node will be automatically started after the OS reboot. Add it as an OS "service",
+  **Attention!** *Be sure that the node will be automatically started after starting a new terminal session. Add it as an OS "service",
   or schedule the start using the tools you prefer.*

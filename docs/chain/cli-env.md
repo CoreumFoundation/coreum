@@ -30,13 +30,7 @@ This doc describes the command to set up the environment depending on the type o
     export CORED_HOME=$HOME/.core/"$CORED_CHAIN_ID"
     ```
 
-* Optionally set those variables globally to be automatically set after the OS reboot.
-
-* In case you work with the already running node, check that setup works.
-
-    ```
-    cored query bank total $CORED_NODE_ARGS
-    ```
+* Optionally set those variables globally to be automatically set after starting a new terminal session.
 
 * Optionally init the fund account function to use later.
 

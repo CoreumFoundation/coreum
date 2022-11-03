@@ -24,7 +24,7 @@ The section provides a tutorial on how to build and deploy the WASM contract to 
 
   The [install binaries](install-cored.md) doc describes the installation process.
 
-* Install the required util: "jq curl"
+* Install the required utils: `jq` and `curl`.
 
 ## Write, build and deploy WASM contract
 

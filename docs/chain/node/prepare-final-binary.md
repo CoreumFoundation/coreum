@@ -8,7 +8,7 @@ to start the peering without additional data.
     If you don't have them already, execute on each seed:
     ```bash
     echo "$(cored tendermint show-node-id)@$CORED_EXTERNAL_IP:26656"
-    ````
+    ```
   
     **Attention!** *The "$CORED_EXTERNAL_IP" is configured in the [doc](set-connection-config.md)",
     If it isn't set, set it for the node.*    

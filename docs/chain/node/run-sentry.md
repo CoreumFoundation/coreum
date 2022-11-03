@@ -22,19 +22,22 @@ The doc describes the procedure of creating and running the sentry node.
   ```
   The command will create a default node configuration
 
-* Install the required util: "crudini"
+* Install the required util: `crudini`.
 
 * Set the common connection config using the [doc](set-connection-config.md).
 
 * Capture the validator peer and ip to be used for connection to it.
+
+  **Attention!** *That command must be executed on the validator node.
+  The "$CORED_EXTERNAL_IP" is configured in the [doc](set-connection-config.md)",
+  If it isn't set, set it for the node.*
+
   ```bash
   echo "CORED_VALIDATOR_PEER=$(cored tendermint show-node-id)@$CORED_EXTERNAL_IP:26656"
   echo "CORED_VALIDATOR_ID=$(cored tendermint show-node-id)"
   ```
 
-  **Attention!** *That command must be executed on the validator node.
-  The "$CORED_EXTERNAL_IP" is configured in the [doc](set-connection-config.md)",
-  If it isn't set, set it for the node.*
+
 
 * Set the validator peer to variable
   ```
@@ -56,13 +59,14 @@ The doc describes the procedure of creating and running the sentry node.
   ```
 
 * Capture the sentry peer to be used for connection to it.
-  ```bash
-  echo "$(cored tendermint show-node-id)@$CORED_EXTERNAL_IP:26656"
-  ```
 
   **Attention!** *That command must be executed on the sentry node.
   The "$CORED_EXTERNAL_IP" is configured in the [doc](set-connection-config.md)",
   If it isn't set, set it for the node.*
+
+  ```bash
+  echo "$(cored tendermint show-node-id)@$CORED_EXTERNAL_IP:26656"
+  ```
 
 * Capture the sentry ID to be used for connection to it.
   ```bash
@@ -71,17 +75,17 @@ The doc describes the procedure of creating and running the sentry node.
 
 * Start the node.
 
-  * Start with "cosmovisor" (recommended)
+  * Start with `cosmovisor` (recommended)
   ```bash
   cosmovisor run start $CORED_CHAIN_ID_ARGS
   ```
 
-  * Start with "cored"
+  * Start with `cored`
    ```bash
   cored start $CORED_CHAIN_ID_ARGS
   ```
 
-  **Attention!** *Be sure that the node will be automatically started after the OS reboot. Add it as an OS "service",
+  **Attention!** *Be sure that the node will be automatically started after starting a new terminal session. Add it as an OS "service",
   or schedule the start using the tools you prefer.*
 
 * Repeat the operation for all senty nodes and capture the peers of them.
