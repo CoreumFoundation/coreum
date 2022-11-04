@@ -12,6 +12,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/testutil/event"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/types"
@@ -26,7 +27,7 @@ func TestQueryFungibleToken(t *testing.T) {
 	testNetwork := network.New(t)
 
 	// the denom must start from the letter
-	symbol := "l" + uuid.NewString()[:4]
+	symbol := "BTC" + uuid.NewString()[:4]
 	ctx := testNetwork.Validators[0].ClientCtx
 
 	denom := createFungibleToken(requireT, ctx, symbol, testNetwork)
@@ -61,12 +62,8 @@ func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbo
 		if res.Events[i].Type != eventFungibleTokenIssuedName {
 			continue
 		}
-		evt, err := sdk.ParseTypedEvent(res.Events[i])
+		eventFungibleTokenIssued, err := event.FindTypedEvent[*types.EventFungibleTokenIssued](res.Events)
 		requireT.NoError(err)
-		eventFungibleTokenIssued, ok := evt.(*types.EventFungibleTokenIssued)
-		if !ok {
-			break
-		}
 		return eventFungibleTokenIssued.Denom
 	}
 	requireT.Failf("event: %s not found in the create fungible token response", eventFungibleTokenIssuedName)

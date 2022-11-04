@@ -19,12 +19,12 @@ message MsgIssueFungibleToken {
   option (gogoproto.goproto_getters) = false;
   string issuer = 1;
   string symbol = 2;
-  string description = 3;
-  string recipient = 4;
-  string initial_amount = 5 [
+  string recipient = 3;
+  string initial_amount = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  string description = 5;
 }
 
 // MsgIssueFungibleTokenResponse defines message response for the IssueFungibleToken.

@@ -57,8 +57,8 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Denom:         denom,
 		Issuer:        settings.Issuer.String(),
 		Symbol:        settings.Symbol,
-		Description:   settings.Description,
 		Recipient:     settings.Recipient.String(),
+		Description:   settings.Description,
 		InitialAmount: settings.InitialAmount,
 	}); err != nil {
 		return "", sdkerrors.Wrap(err, "can't emit EventFungibleTokenIssued event")

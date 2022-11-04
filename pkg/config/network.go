@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -73,37 +74,34 @@ func init() {
 		}
 	)
 
-	// devnet constants
-	const (
-		baseDenomDev = "ducore"
-	)
+	const denomDev = "ducore"
 
 	// devnet vars
 	var (
 		// 10m delegated and 1m extra to the txs
-		stakerValidatorBalance = sdk.NewCoins(sdk.NewCoin(baseDenomDev, sdk.NewInt(11_000_000_000_000)))
+		stakerValidatorBalance = sdk.NewCoins(sdk.NewCoin(denomDev, sdk.NewInt(11_000_000_000_000)))
 	)
 
 	list := []NetworkConfig{
 		{
-			ChainID:       ChainIDMain,
-			Enabled:       false,
-			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-			AddressPrefix: "core",
-			Denom:         "core",
-			BaseDenom:     "ucore",
-			Fee:           feeConfig,
-			GovConfig:     govConfig,
-			StakingConfig: stakingConfig,
+			ChainID:              ChainIDMain,
+			Enabled:              false,
+			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+			AddressPrefix:        "core",
+			MetadataDisplayDenom: "core",
+			Denom:                "ucore",
+			Fee:                  feeConfig,
+			GovConfig:            govConfig,
+			StakingConfig:        stakingConfig,
 		},
 		{
-			ChainID:       ChainIDDev,
-			Enabled:       true,
-			GenesisTime:   time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-			AddressPrefix: "devcore",
-			Denom:         "dcore",
-			BaseDenom:     baseDenomDev,
-			Fee:           feeConfig,
+			ChainID:              ChainIDDev,
+			Enabled:              true,
+			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+			AddressPrefix:        "devcore",
+			MetadataDisplayDenom: "dcore",
+			Denom:                denomDev,
+			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@35.223.81.227:26656"},
 			},
@@ -133,7 +131,7 @@ func init() {
 				// Faucet's account storing the rest of total supply
 				{
 					Address:  "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
-					Balances: sdk.NewCoins(sdk.NewCoin(baseDenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
+					Balances: sdk.NewCoins(sdk.NewCoin(denomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
 				},
 			},
 			GenTxs:                      readGenTxs(coreumDevnet1GenTxsFS),
@@ -222,17 +220,17 @@ type StakingConfig struct {
 
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
-	ChainID        ChainID
-	GenesisTime    time.Time
-	AddressPrefix  string
-	Denom          string
-	BaseDenom      string
-	Fee            FeeConfig
-	FundedAccounts []FundedAccount
-	GenTxs         []json.RawMessage
-	NodeConfig     NodeConfig
-	GovConfig      GovConfig
-	StakingConfig  StakingConfig
+	ChainID              ChainID
+	GenesisTime          time.Time
+	AddressPrefix        string
+	MetadataDisplayDenom string
+	Denom                string
+	Fee                  FeeConfig
+	FundedAccounts       []FundedAccount
+	GenTxs               []json.RawMessage
+	NodeConfig           NodeConfig
+	GovConfig            GovConfig
+	StakingConfig        StakingConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 	// TODO: remove this field once we have real upgrade handler
@@ -244,8 +242,8 @@ type Network struct {
 	chainID                  ChainID
 	genesisTime              time.Time
 	addressPrefix            string
+	metadataDisplayDenom     string
 	denom                    string
-	baseDenom                string
 	fee                      FeeConfig
 	nodeConfig               NodeConfig
 	gov                      GovConfig
@@ -263,8 +261,8 @@ func NewNetwork(c NetworkConfig) Network {
 		genesisTime:              c.GenesisTime,
 		chainID:                  c.ChainID,
 		addressPrefix:            c.AddressPrefix,
+		metadataDisplayDenom:     c.MetadataDisplayDenom,
 		denom:                    c.Denom,
-		baseDenom:                c.BaseDenom,
 		nodeConfig:               c.NodeConfig.Clone(),
 		fee:                      c.Fee,
 		gov:                      c.GovConfig,
@@ -470,10 +468,10 @@ func (n Network) GenTxs() []json.RawMessage {
 	return genTxs
 }
 
-// BaseDenom returns the base chain denom. This is different
+// Denom returns the base chain denom. This is different
 // for each network(i.e. mainnet, testnet, etc)
-func (n Network) BaseDenom() string {
-	return n.baseDenom
+func (n Network) Denom() string {
+	return n.denom
 }
 
 // FeeModel returns fee model configuration
@@ -520,23 +518,27 @@ func NetworkByChainID(id ChainID) (Network, error) {
 var genesisTemplate string
 
 func genesis(n Network) ([]byte, error) {
+	funcMap := template.FuncMap{
+		"ToUpper": strings.ToUpper,
+	}
+
 	genesisBuf := new(bytes.Buffer)
-	err := template.Must(template.New("genesis").Parse(genesisTemplate)).Execute(genesisBuf, struct {
-		GenesisTimeUTC string
-		ChainID        ChainID
-		Denom          string
-		BaseDenom      string
-		FeeModelParams feemodeltypes.ModelParams
-		Gov            GovConfig
-		Staking        StakingConfig
+	err := template.Must(template.New("genesis").Funcs(funcMap).Parse(genesisTemplate)).Execute(genesisBuf, struct {
+		GenesisTimeUTC       string
+		ChainID              ChainID
+		MetadataDisplayDenom string
+		Denom                string
+		FeeModelParams       feemodeltypes.ModelParams
+		Gov                  GovConfig
+		Staking              StakingConfig
 	}{
-		GenesisTimeUTC: n.genesisTime.UTC().Format(time.RFC3339),
-		ChainID:        n.chainID,
-		Denom:          n.denom,
-		BaseDenom:      n.baseDenom,
-		FeeModelParams: n.FeeModel().Params(),
-		Gov:            n.gov,
-		Staking:        n.staking,
+		GenesisTimeUTC:       n.genesisTime.UTC().Format(time.RFC3339),
+		ChainID:              n.chainID,
+		MetadataDisplayDenom: n.metadataDisplayDenom,
+		Denom:                n.denom,
+		FeeModelParams:       n.FeeModel().Params(),
+		Gov:                  n.gov,
+		Staking:              n.staking,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
