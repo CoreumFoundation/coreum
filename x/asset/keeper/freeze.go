@@ -12,18 +12,21 @@ import (
 
 // FreezeFungibleToken freezes specified token from the specified account
 func (k Keeper) FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
-	frozenStore := k.frozenBalanceStore(ctx, addr)
-
 	err := k.isFreezeAllowed(ctx, issuer, coin)
 	if err != nil {
 		return err
 	}
 
+	frozenStore := k.frozenBalanceStore(ctx, addr)
 	frozenBalance := frozenStore.getFrozenBalance(coin.Denom)
 	newFrozenBalance := frozenBalance.Add(coin)
 	bankBalance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
 	if bankBalance.IsLT(newFrozenBalance) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available", coin)
+		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds,
+			"account balance %s is less that desired frozen balance %s is not available",
+			bankBalance.String(),
+			newFrozenBalance.String(),
+		)
 	}
 
 	frozenStore.setFrozenBalance(newFrozenBalance)
@@ -36,16 +39,15 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr
 
 // UnfreezeFungibleToken unfreezes specified tokens from the specified account
 func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
-	frozenStore := k.frozenBalanceStore(ctx, addr)
-
 	err := k.isFreezeAllowed(ctx, issuer, coin)
 	if err != nil {
 		return err
 	}
 
+	frozenStore := k.frozenBalanceStore(ctx, addr)
 	frozenBalance := frozenStore.getFrozenBalance(coin.Denom)
 	if frozenBalance.IsLT(coin) {
-		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFunds, "not enough frozen coins")
+		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "unfreeze amount is more the frozen balance %s", coin.String())
 	}
 
 	newFrozenBalance := frozenBalance.Sub(coin)
@@ -64,7 +66,7 @@ func (k Keeper) isFreezeAllowed(ctx sdk.Context, issuer sdk.AccAddress, coin sdk
 	}
 
 	if ft.Issuer != issuer.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer is authorized to perform this operation")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "address is unauthorized to perform this operation")
 	}
 
 	if err := isFeatureEnabled(ft.Features, types.FungibleTokenFeature_freezable); err != nil { //nolint:nosnakecase
@@ -77,13 +79,22 @@ func (k Keeper) isFreezeAllowed(ctx sdk.Context, issuer sdk.AccAddress, coin sdk
 // areCoinsSpendable returns an error is there are not enough coins balances to be spent
 func (k Keeper) areCoinsSpendable(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) error {
 	for _, coin := range coins {
-		frozenBalance := k.GetFrozenBalance(ctx, addr, coin.Denom)
-		balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
-		if !balance.IsGTE(frozenBalance.Add(coin)) {
+		availableBalance := k.availableBalance(ctx, addr, coin.Denom)
+		if !availableBalance.IsGTE(coin) {
 			return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available", coin)
 		}
 	}
 	return nil
+}
+
+func (k Keeper) availableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+	balance := k.bankKeeper.GetBalance(ctx, addr, denom)
+	if balance.IsZero() {
+		return balance
+	}
+
+	frozenBalance := k.GetFrozenBalance(ctx, addr, denom)
+	return balance.Sub(frozenBalance)
 }
 
 // GetFrozenBalance returns the frozen balance of a denom on an account
