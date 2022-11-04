@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // checksumCharset is the set of characters used for the hash
@@ -31,7 +32,7 @@ func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
 // ValidateDenom ensures that denom has acceptable bank format and checksum is valid
 func ValidateDenom(denom string) error {
 	if err := sdk.ValidateDenom(denom); err != nil {
-		return ErrInvalidDenomFormat
+		return sdkerrors.Wrap(ErrInvalidDenom, err.Error())
 	}
 
 	return ValidateDenomChecksum(denom)
@@ -39,14 +40,15 @@ func ValidateDenom(denom string) error {
 
 // ValidateDenomChecksum ensures that the checksum value of user created denom is valid
 func ValidateDenomChecksum(denom string) error {
+	// TODO use regexp to parse denom, with fixed length for different parts
 	splits := strings.Split(denom, "-")
 	if len(splits) != 3 {
-		return ErrInvalidDenomFormat
+		return ErrInvalidDenom
 	}
 
 	cs := checksum(splits[0] + "-" + splits[1])
 	if cs != splits[2] {
-		return ErrInvalidDenomChecksum
+		return sdkerrors.Wrap(ErrInvalidDenom, "checksum does not match")
 	}
 
 	return nil

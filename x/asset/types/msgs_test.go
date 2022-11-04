@@ -114,7 +114,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 					Amount: sdk.NewInt(100),
 				},
 			},
-			expectedError: types.ErrInvalidDenomFormat,
+			expectedError: types.ErrInvalidDenom,
 		},
 		{
 			name: "invalid denom checksum",
@@ -126,7 +126,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 					Amount: sdk.NewInt(100),
 				},
 			},
-			expectedError: types.ErrInvalidDenomChecksum,
+			expectedError: types.ErrInvalidDenom,
 		},
 	}
 
@@ -196,7 +196,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 					Amount: sdk.NewInt(100),
 				},
 			},
-			expectedError: types.ErrInvalidDenomFormat,
+			expectedError: types.ErrInvalidDenom,
 		},
 		{
 			name: "invalid denom checksum",
@@ -208,7 +208,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 					Amount: sdk.NewInt(100),
 				},
 			},
-			expectedError: types.ErrInvalidDenomChecksum,
+			expectedError: types.ErrInvalidDenom,
 		},
 	}
 

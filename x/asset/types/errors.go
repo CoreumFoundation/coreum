@@ -11,8 +11,6 @@ var (
 	ErrFungibleTokenNotFound = sdkerrors.Register(ModuleName, 2, "fungible token not found")
 	// ErrFeatureNotActive is returned when an operation is performed on a token which is missing a required feature
 	ErrFeatureNotActive = sdkerrors.Register(ModuleName, 3, "token feature is not active")
-	// ErrInvalidDenomChecksum is returned when the checksum on the denom is not correct
-	ErrInvalidDenomChecksum = sdkerrors.Register(ModuleName, 4, "denom checksum is not valid")
-	// ErrInvalidDenomFormat is returned when the provided denom does not match required format
-	ErrInvalidDenomFormat = sdkerrors.Register(ModuleName, 5, "denom format is not valid")
+	// ErrInvalidDenom is returned when the provided denom is not valid
+	ErrInvalidDenom = sdkerrors.Register(ModuleName, 4, "denom is not valid")
 )
