@@ -18,18 +18,22 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssue:                  80000,
-		BankSend:                    30000,
-		WithdrawDelegatorReward:     120000,
-		SetWithdrawAddress:          50000,
-		WithdrawValidatorCommission: 50000,
-		GovSubmitProposal:           150000,
-		GovVote:                     80000,
-		StakingDelegate:             51000,
-		StakingUndelegate:           51000,
-		StakingBeginRedelegate:      51000,
-		StakingCreateValidator:      50000,
-		StakingEditValidator:        50000,
+		AssetIssue: 80000,
+		BankSend:   30000,
+
+		DistributionFundCommunityPool:           50000,
+		DistributionSetWithdrawAddress:          50000,
+		DistributionWithdrawDelegatorReward:     120000,
+		DistributionWithdrawValidatorCommission: 50000,
+
+		GovSubmitProposal: 150000,
+		GovVote:           80000,
+
+		StakingDelegate:        51000,
+		StakingUndelegate:      51000,
+		StakingBeginRedelegate: 51000,
+		StakingCreateValidator: 50000,
+		StakingEditValidator:   50000,
 	}
 }
 
@@ -47,18 +51,22 @@ type DeterministicGasRequirements struct {
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
 
-	AssetIssue                  uint64
-	BankSend                    uint64
-	WithdrawDelegatorReward     uint64
-	SetWithdrawAddress          uint64
-	WithdrawValidatorCommission uint64
-	GovSubmitProposal           uint64
-	GovVote                     uint64
-	StakingDelegate             uint64
-	StakingUndelegate           uint64
-	StakingBeginRedelegate      uint64
-	StakingCreateValidator      uint64
-	StakingEditValidator        uint64
+	AssetIssue uint64
+	BankSend   uint64
+
+	DistributionFundCommunityPool           uint64
+	DistributionSetWithdrawAddress          uint64
+	DistributionWithdrawDelegatorReward     uint64
+	DistributionWithdrawValidatorCommission uint64
+
+	GovSubmitProposal uint64
+	GovVote           uint64
+
+	StakingDelegate        uint64
+	StakingUndelegate      uint64
+	StakingBeginRedelegate uint64
+	StakingCreateValidator uint64
+	StakingEditValidator   uint64
 }
 
 // GasRequiredByMessage returns gas required by a sdk.Msg.
@@ -71,18 +79,24 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	switch msg.(type) {
 	case *assettypes.MsgIssueFungibleToken:
 		return dgr.AssetIssue, true
+
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
-	case *distributiontypes.MsgWithdrawDelegatorReward:
-		return dgr.WithdrawDelegatorReward, true
+
+	case *distributiontypes.MsgFundCommunityPool:
+		return dgr.DistributionFundCommunityPool, true
 	case *distributiontypes.MsgSetWithdrawAddress:
-		return dgr.SetWithdrawAddress, true
+		return dgr.DistributionSetWithdrawAddress, true
+	case *distributiontypes.MsgWithdrawDelegatorReward:
+		return dgr.DistributionWithdrawDelegatorReward, true
 	case *distributiontypes.MsgWithdrawValidatorCommission:
-		return dgr.WithdrawValidatorCommission, true
+		return dgr.DistributionWithdrawValidatorCommission, true
+
 	case *govtypes.MsgSubmitProposal:
 		return dgr.GovSubmitProposal, true
 	case *govtypes.MsgVote:
 		return dgr.GovVote, true
+
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:
@@ -93,6 +107,7 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.StakingCreateValidator, true
 	case *stakingtypes.MsgEditValidator:
 		return dgr.StakingEditValidator, true
+
 	default:
 		return 0, false
 	}

@@ -12,14 +12,51 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TestSpendCommunityPoolProposal checks that SpendCommunityPoolProposal works correctly.
+// TestSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
 func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	distributionClient := distributiontypes.NewQueryClient(chain.ClientContext)
+
+	// *** Check the MsgFundCommunityPool ***
+
+	communityPoolFunder := chain.GenAccount()
+	fundAmount := sdk.NewInt(1_000)
+	msgFundCommunityPool := &distributiontypes.MsgFundCommunityPool{
+		Amount:    sdk.NewCoins(chain.NewCoin(fundAmount)),
+		Depositor: communityPoolFunder.String(),
+	}
+
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, communityPoolFunder, testing.BalancesOptions{
+		Messages: []sdk.Msg{
+			msgFundCommunityPool,
+		},
+		Amount: fundAmount,
+	}))
+
+	// capture the pool amount now to check it later
+	poolBeforeFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
+
+	txResult, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(communityPoolFunder),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFundCommunityPool)),
+		msgFundCommunityPool,
+	)
+	requireT.NoError(err)
+	// validate the deterministic gas
+	requireT.Equal(chain.GasLimitByMsgs(msgFundCommunityPool), uint64(txResult.GasUsed))
+
+	poolAfterFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
+
+	// check that after funding we have more than before + funding amount
+	requireT.True(poolAfterFunding.Sub(poolBeforeFunding).IsGTE(chain.NewCoin(fundAmount)))
+
+	// *** Check the CommunityPoolSpendProposal ***
 
 	// create new proposer
 	proposer := chain.GenAccount()
@@ -31,15 +68,7 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
-	// get the community pool balance
-	communityPoolRes, err := distributionClient.CommunityPool(ctx, &distributiontypes.QueryCommunityPoolRequest{})
-	requireT.NoError(err)
-
-	requireT.Equal(1, len(communityPoolRes.Pool))
-	poolDecCoin := communityPoolRes.Pool[0]
-	poolIntCoin := sdk.NewCoin(poolDecCoin.Denom, poolDecCoin.Amount.TruncateInt())
-	requireT.True(poolIntCoin.IsPositive())
-	poolIntCoins := sdk.NewCoins(poolIntCoin)
+	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
 	// create proposition to spend the community pool
 	proposalID, err := chain.Governance.Propose(
@@ -49,7 +78,7 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 			"Spend community pool",
 			"Spend community pool",
 			communityPoolRecipient,
-			poolIntCoins,
+			sdk.NewCoins(poolCoin),
 		),
 	)
 	requireT.NoError(err)
@@ -74,5 +103,17 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 		Address: communityPoolRecipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.Equal(poolIntCoins, communityPoolRecipientBalancesRes.Balances)
+	requireT.Equal(sdk.NewCoins(poolCoin), communityPoolRecipientBalancesRes.Balances)
+}
+
+func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, distributionClient distributiontypes.QueryClient) sdk.Coin {
+	communityPoolRes, err := distributionClient.CommunityPool(ctx, &distributiontypes.QueryCommunityPoolRequest{})
+	requireT.NoError(err)
+
+	requireT.Equal(1, len(communityPoolRes.Pool))
+	poolDecCoin := communityPoolRes.Pool[0]
+	poolIntCoin := sdk.NewCoin(poolDecCoin.Denom, poolDecCoin.Amount.TruncateInt())
+	requireT.True(poolIntCoin.IsPositive())
+
+	return poolIntCoin
 }
