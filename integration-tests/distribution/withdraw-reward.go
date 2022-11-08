@@ -36,6 +36,8 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 
 	delegatedCoin := chain.NewCoin(amountToDelegate)
 
+	// *** Create new validator to use it in the test and capture all required balances. ***
+
 	validatorStakerAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(1000000))
 	require.NoError(t, err)
 	defer func() {
@@ -51,8 +53,6 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 	}
 
 	clientCtx := chain.ClientContext
-
-	// *** Create new validator to use it in the test and capture all required balances. ***
 
 	logger.Get(ctx).Info("Delegating some coins to validator to withdraw later")
 	_, err = tx.BroadcastTx(

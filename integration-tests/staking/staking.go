@@ -16,10 +16,10 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TestStaking checks validator creation, delegation and undelegation operations work correctly.
+// TestValidatorCrudAndStaking checks validator creation, delegation and undelegation operations work correctly.
 //
 //nolint:funlen // this function is a long test scenario and breaking it down might not be that beneficial
-func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestValidatorCrudAndStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	const initialValidatorAmount = 1000000
 
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
@@ -38,7 +38,7 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	}))
 
 	// Setup validator
-	_, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount))
+	validatorAccAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount))
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -52,9 +52,14 @@ func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
+	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorAccAddress, testing.BalancesOptions{
+		Messages: []sdk.Msg{editValidatorMsg},
+	})
+	require.NoError(t, err)
+
 	editValidatorRes, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(sdk.AccAddress(validatorAddress)),
+		chain.ClientContext.WithFromAddress(validatorAccAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(editValidatorMsg)),
 		editValidatorMsg,
 	)

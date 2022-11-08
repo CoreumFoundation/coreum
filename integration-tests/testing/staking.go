@@ -7,7 +7,6 @@ import (
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -22,7 +21,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 
 	if err := chain.Faucet.FundAccountsWithOptions(ctx, staker, BalancesOptions{
 		Messages: []sdk.Msg{&stakingtypes.MsgCreateValidator{}, &stakingtypes.MsgUndelegate{}},
-		Amount:   initialAmount.MulRaw(2),
+		Amount:   initialAmount,
 	}); err != nil {
 		return nil, nil, nil, err
 	}
@@ -33,7 +32,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 		validatorAddr,
 		cosmosed25519.GenPrivKey().PubKey(),
 		chain.NewCoin(initialAmount),
-		stakingtypes.Description{Moniker: fmt.Sprintf("testing-staker-%s", uuid.NewString()[:4])},
+		stakingtypes.Description{Moniker: fmt.Sprintf("testing-staker-%s", staker)},
 		stakingtypes.NewCommissionRates(sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1")),
 		sdk.OneInt(),
 	)
@@ -61,10 +60,10 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 		return nil, nil, nil, err
 	}
 	if initialAmount.String() != resp.Validator.Tokens.String() {
-		return nil, nil, nil, errors.Errorf("unexpected validators tokens after creation: %s", resp.Validator.Tokens)
+		return nil, nil, nil, errors.Errorf("unexpected validator %q tokens after creation: %s", validatorAddr, resp.Validator.Tokens)
 	}
 	if stakingtypes.Bonded != resp.Validator.Status {
-		return nil, nil, nil, errors.Errorf("unexpected validators status after creation: %s", resp.Validator.Status)
+		return nil, nil, nil, errors.Errorf("unexpected validator %q status after creation: %s", validatorAddr, resp.Validator.Status)
 	}
 
 	return staker, validatorAddr, func() error {

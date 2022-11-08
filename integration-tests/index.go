@@ -40,7 +40,7 @@ func Tests() []testing.TestSet {
 				feemodel.TestQueryingMinGasPrice,
 				feemodel.TestFeeModelProposalParamChange,
 				staking.TestStakingProposalParamChange,
-				staking.TestStaking,
+				staking.TestValidatorCrudAndStaking,
 				wasm.TestPinningAndUnpinningSmartContractUsingGovernance,
 				wasm.TestBankSendWasmContract,
 				wasm.TestGasWasmBankSendAndBankSend,
