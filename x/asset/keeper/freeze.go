@@ -129,6 +129,7 @@ func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.Pag
 			// address is already on the set of accounts balances
 			balances[idx].Coins = balances[idx].Coins.Add(coin)
 			balances[idx].Coins.Sort()
+			return nil
 		}
 
 		accountBalance := types.Balance{
