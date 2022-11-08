@@ -46,7 +46,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response<FungibleTokenMsg>, ContractError> {
     match msg {
-        ExecuteMsg::Create {
+        ExecuteMsg::Issue {
             symbol,
             amount,
             recipient,
@@ -94,7 +94,7 @@ pub struct InstantiateMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Create {
+    Issue {
         symbol: String,
         amount: Uint128,
         recipient: String,

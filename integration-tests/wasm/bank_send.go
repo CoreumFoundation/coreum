@@ -20,8 +20,6 @@ var (
 	bankSendWASM []byte
 )
 
-type bankInstantiatePayload struct{}
-
 type bankWithdrawRequest struct {
 	Amount    string `json:"amount"`
 	Denom     string `json:"denom"`
@@ -34,7 +32,7 @@ const (
 	withdraw bankMethod = "withdraw"
 )
 
-// TestFungibleTokenWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
+// TestBankSendWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
 func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
 	admin := chain.GenAccount()
@@ -51,7 +49,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	// deploy and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(bankInstantiatePayload{})
+	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
 	contractAddr, _, err := DeployAndInstantiate(
 		ctx,

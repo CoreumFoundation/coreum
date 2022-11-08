@@ -9,7 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
@@ -18,8 +20,6 @@ var (
 	//go:embed testdata/fungible-token/artifacts/fungible_token.wasm
 	fungibleTokenWASM []byte
 )
-
-type fungibleTokenInstantiatePayload struct{}
 
 type fungibleTokenCreateRequest struct {
 	Symbol    string `json:"symbol"`
@@ -30,12 +30,11 @@ type fungibleTokenCreateRequest struct {
 type fungibleTokenMethod string
 
 const (
-	create fungibleTokenMethod = "create"
+	issue fungibleTokenMethod = "issue"
 )
 
-// TestFungibleTokenWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
-// to disperse the native coins.
-func TestFungibleTokenWasmContract(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
+// TestIssueFungibleTokenInWASMContract verifies that smart contract is able to issue fungible token
+func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chain testing.Chain) {
 	admin := chain.GenAccount()
 
 	requireT := require.New(t)
@@ -49,7 +48,7 @@ func TestFungibleTokenWasmContract(ctx context.Context, t testing.T, chain testi
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	// deploy and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(fungibleTokenInstantiatePayload{})
+	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
 	contractAddr, _, err := DeployAndInstantiate(
 		ctx,
@@ -68,20 +67,23 @@ func TestFungibleTokenWasmContract(ctx context.Context, t testing.T, chain testi
 
 	symbol := "mytoken"
 	denom := assettypes.BuildFungibleTokenDenom(symbol, sdk.MustAccAddressFromBech32(contractAddr))
+	initialAmount := sdk.NewInt(5000)
 
-	// create fungible token by smart contract
+	// issue fungible token by smart contract
 	createPayload, err := json.Marshal(map[fungibleTokenMethod]fungibleTokenCreateRequest{
-		create: {
+		issue: {
 			Symbol:    symbol,
-			Amount:    "5000",
+			Amount:    initialAmount.String(),
 			Recipient: recipient.String(),
 		},
 	})
 	requireT.NoError(err)
 
 	txf = txf.WithSimulateAndExecute(true)
-	_, err = Execute(ctx, clientCtx, txf, contractAddr, createPayload, sdk.Coin{})
+	gasUsed, err := Execute(ctx, clientCtx, txf, contractAddr, createPayload, sdk.Coin{})
 	requireT.NoError(err)
+
+	logger.Get(ctx).Info("Fungible token issued by smart contract", zap.Int64("gasUsed", gasUsed))
 
 	// check balance of recipient
 	recipientBalance, err := bankClient.Balance(ctx,
@@ -91,5 +93,5 @@ func TestFungibleTokenWasmContract(ctx context.Context, t testing.T, chain testi
 		})
 	requireT.NoError(err)
 	requireT.NotNil(recipientBalance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 5000).String(), recipientBalance.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, initialAmount).String(), recipientBalance.Balance.String())
 }
