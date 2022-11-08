@@ -17,18 +17,9 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr
 		return err
 	}
 
-	frozenStore := k.frozenBalanceStore(ctx, addr)
+	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
 	frozenBalance := frozenStore.getFrozenBalance(coin.Denom)
 	newFrozenBalance := frozenBalance.Add(coin)
-	bankBalance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
-	if bankBalance.IsLT(newFrozenBalance) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds,
-			"account balance %s is less that desired frozen balance %s is not available",
-			bankBalance.String(),
-			newFrozenBalance.String(),
-		)
-	}
-
 	frozenStore.setFrozenBalance(newFrozenBalance)
 
 	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozen{
@@ -44,13 +35,13 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, ad
 		return err
 	}
 
-	frozenStore := k.frozenBalanceStore(ctx, addr)
+	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
 	frozenBalance := frozenStore.getFrozenBalance(coin.Denom)
-	if frozenBalance.IsLT(coin) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "unfreeze amount is more the frozen balance %s", coin.String())
+	newFrozenBalance := sdk.NewCoin(coin.Denom, sdk.ZeroInt())
+	if frozenBalance.IsGTE(coin) {
+		newFrozenBalance = frozenBalance.Sub(coin)
 	}
 
-	newFrozenBalance := frozenBalance.Sub(coin)
 	frozenStore.setFrozenBalance(newFrozenBalance)
 
 	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenUnfrozen{
@@ -59,18 +50,26 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, ad
 	})
 }
 
+// SetFrozenBalances sets the frozen balances of a specified account
+func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
+	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
+	for _, coin := range coins {
+		frozenStore.setFrozenBalance(coin)
+	}
+}
+
 func (k Keeper) isFreezeAllowed(ctx sdk.Context, issuer sdk.AccAddress, coin sdk.Coin) error {
 	ft, err := k.getFungibleTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if ft.Issuer != issuer.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "address is unauthorized to perform this operation")
-	}
-
 	if err := isFeatureEnabled(ft.Features, types.FungibleTokenFeature_freezable); err != nil { //nolint:nosnakecase
 		return sdkerrors.Wrapf(err, "denom:%s, feature:%s", coin.Denom, types.FungibleTokenFeature_freezable) //nolint:nosnakecase
+	}
+
+	if ft.Issuer != issuer.String() {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "address is unauthorized to perform this operation")
 	}
 
 	return nil
@@ -94,26 +93,68 @@ func (k Keeper) availableBalance(ctx sdk.Context, addr sdk.AccAddress, denom str
 	}
 
 	frozenBalance := k.GetFrozenBalance(ctx, addr, denom)
+	if frozenBalance.IsGTE(balance) {
+		return sdk.NewCoin(denom, sdk.ZeroInt())
+	}
 	return balance.Sub(frozenBalance)
 }
 
-// GetFrozenBalance returns the frozen balance of a denom on an account
+// GetFrozenBalance returns the frozen balance of a denom and account
 func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
-	return k.frozenBalanceStore(ctx, addr).getFrozenBalance(denom)
+	return k.frozenAccountBalanceStore(ctx, addr).getFrozenBalance(denom)
 }
 
-// GetFrozenBalances returns the frozen balance on an account
+// GetFrozenBalances returns the frozen balance of an account
 func (k Keeper) GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
-	return k.frozenBalanceStore(ctx, addr).getFrozenBalances(pagination)
+	return k.frozenAccountBalanceStore(ctx, addr).getFrozenBalances(pagination)
 }
 
-type frozenStore struct {
+// GetAccountsFrozenBalances returns the frozen balance on all of the account
+func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
+	frozenStore := k.frozenBalancesStore(ctx)
+	balances := make([]types.Balance, 0)
+	mapAddressToBalancesIdx := make(map[string]int)
+	pageRes, err := query.Paginate(frozenStore, pagination, func(key, value []byte) error {
+		address, err := types.AddressFromBalancesStore(key)
+		if err != nil {
+			k.Logger(ctx).With("key", key, "err", err).Error("failed to get address from frozen balances store")
+			return err
+		}
+
+		var coin sdk.Coin
+		k.cdc.MustUnmarshal(value, &coin)
+
+		idx, ok := mapAddressToBalancesIdx[address.String()]
+		if ok {
+			// address is already on the set of accounts balances
+			balances[idx].Coins = balances[idx].Coins.Add(coin)
+			balances[idx].Coins.Sort()
+		}
+
+		accountBalance := types.Balance{
+			Address: address.String(),
+			Coins:   sdk.NewCoins(coin),
+		}
+		balances = append(balances, accountBalance)
+		mapAddressToBalancesIdx[address.String()] = len(balances) - 1
+		return nil
+	})
+
+	return balances, pageRes, err
+}
+
+// frozenBalancesStore get the store for the frozen balances of all accounts
+func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
+	return prefix.NewStore(ctx.KVStore(k.storeKey), types.FrozenBalancesPrefix)
+}
+
+type frozenAccountBalanceStore struct {
 	store prefix.Store
 	cdc   codec.BinaryCodec
 }
 
-func (s frozenStore) getFrozenBalance(denom string) sdk.Coin {
-	frozenBalance := sdk.NewCoin(denom, sdk.NewInt(0))
+func (s frozenAccountBalanceStore) getFrozenBalance(denom string) sdk.Coin {
+	frozenBalance := sdk.NewCoin(denom, sdk.ZeroInt())
 	if bz := s.store.Get([]byte(denom)); bz != nil {
 		s.cdc.MustUnmarshal(bz, &frozenBalance)
 	}
@@ -121,7 +162,7 @@ func (s frozenStore) getFrozenBalance(denom string) sdk.Coin {
 	return frozenBalance
 }
 
-func (s frozenStore) getFrozenBalances(pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
+func (s frozenAccountBalanceStore) getFrozenBalances(pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
 	coins := sdk.NewCoins()
 	pageRes, err := query.Paginate(s.store, pagination, func(key, value []byte) error {
 		var coin sdk.Coin
@@ -132,7 +173,7 @@ func (s frozenStore) getFrozenBalances(pagination *query.PageRequest) (sdk.Coins
 	return coins, pageRes, err
 }
 
-func (s frozenStore) setFrozenBalance(coin sdk.Coin) {
+func (s frozenAccountBalanceStore) setFrozenBalance(coin sdk.Coin) {
 	if coin.Amount.IsZero() {
 		s.store.Delete([]byte(coin.Denom))
 	} else {
@@ -141,10 +182,10 @@ func (s frozenStore) setFrozenBalance(coin sdk.Coin) {
 	}
 }
 
-// frozenBalanceStore get the store for the frozen balances of an account
-func (k Keeper) frozenBalanceStore(ctx sdk.Context, addr sdk.AccAddress) frozenStore {
+// frozenAccountBalanceStore get the store for the frozen balances of an account
+func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) frozenAccountBalanceStore {
 	store := ctx.KVStore(k.storeKey)
-	return frozenStore{
+	return frozenAccountBalanceStore{
 		store: prefix.NewStore(store, types.CreateFrozenBalancesPrefix(addr)),
 		cdc:   k.cdc,
 	}

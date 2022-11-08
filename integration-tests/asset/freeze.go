@@ -28,17 +28,38 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	randomAddress := chain.GenAccount()
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(issuer, chain.NewCoin(sdk.NewInt(1000_000))),
-		testing.NewFundedAccount(recipient, chain.NewCoin(sdk.NewInt(1000_000))),
-		testing.NewFundedAccount(randomAddress, chain.NewCoin(sdk.NewInt(100_000))),
-	))
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assettypes.MsgIssueFungibleToken{},
+				&assettypes.MsgIssueFungibleToken{},
+				&assettypes.MsgFreezeFungibleToken{},
+				&assettypes.MsgFreezeFungibleToken{},
+				&assettypes.MsgUnfreezeFungibleToken{},
+				&assettypes.MsgUnfreezeFungibleToken{},
+				&assettypes.MsgUnfreezeFungibleToken{},
+			},
+		}),
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
+			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+				&banktypes.MsgSend{},
+				&banktypes.MsgSend{},
+				&banktypes.MsgSend{},
+			},
+		}),
+		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assettypes.MsgFreezeFungibleToken{},
+			},
+		}),
+	)
 
 	// Issue the new fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
-		Symbol:        "BTC",
-		Description:   "BTC Description",
+		Symbol:        "ABC",
+		Description:   "ABC Description",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assettypes.FungibleTokenFeature{
@@ -59,8 +80,46 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.True(ok)
 	denom := fungibleTokenIssuedEvt.Denom
 
-	// try to pass non-issuer signature to freeze msg
+	// Issue an unfreezable fungible token
+	msg = &assettypes.MsgIssueFungibleToken{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCNotFreezable",
+		Description:   "ABC Description",
+		Recipient:     recipient.String(),
+		InitialAmount: sdk.NewInt(1000),
+		Features:      []assettypes.FungibleTokenFeature{},
+	}
+
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+
+	requireT.NoError(err)
+	evt = testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
+	fungibleTokenIssuedEvt, ok = evt.(*assettypes.EventFungibleTokenIssued)
+	requireT.True(ok)
+	unfreezableDenom := fungibleTokenIssuedEvt.Denom
+
+	// try to freeze unfreezable token
 	freezeMsg := &assettypes.MsgFreezeFungibleToken{
+		Issuer:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(unfreezableDenom, sdk.NewInt(1000)),
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.Error(err)
+	assertT.True(assettypes.ErrFeatureNotActive.Is(err))
+
+	// try to pass non-issuer signature to freeze msg
+	freezeMsg = &assettypes.MsgFreezeFungibleToken{
 		Issuer:  randomAddress.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
@@ -72,13 +131,13 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		freezeMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
+	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
-	// freeze 500 tokens
+	// freeze 600 tokens
 	freezeMsg = &assettypes.MsgFreezeFungibleToken{
 		Issuer:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(500)),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
 	}
 	res, err = tx.BroadcastTx(
 		ctx,
@@ -95,20 +154,20 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(500)), frozenBalance.Balance)
+	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(400)), frozenBalance.Balance)
 
 	frozenBalances, err := assetClient.FrozenBalances(ctx, &assettypes.QueryFrozenBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(500))), frozenBalances.Balances)
+	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))), frozenBalances.Balances)
 
-	// try to send more than available (600)
+	// try to send more than available (650) (600 is available)
 	recipient2 := chain.GenAccount()
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(600))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(650))),
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
@@ -117,13 +176,13 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
+	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
 
-	// try to send available tokens (500)
+	// try to send available tokens (600)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(500))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(600))),
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
@@ -137,10 +196,10 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(balance1.GetBalance().String(), sdk.NewCoin(denom, sdk.NewInt(500)).String())
+	requireT.Equal(balance1.GetBalance().String(), sdk.NewCoin(denom, sdk.NewInt(400)).String())
 
 	// unfreeze 200 tokens and try send 250 tokens
-	unFreezeMsg := &assettypes.MsgUnfreezeFungibleToken{
+	unfreezeMsg := &assettypes.MsgUnfreezeFungibleToken{
 		Issuer:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
@@ -148,11 +207,11 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	res, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unFreezeMsg)),
-		unFreezeMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
 	)
 	requireT.NoError(err)
-	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unFreezeMsg))
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
 
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
@@ -166,7 +225,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
+	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
 
 	// send available tokens (200)
 	sendMsg = &banktypes.MsgSend{
@@ -181,4 +240,33 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		sendMsg,
 	)
 	requireT.NoError(err)
+
+	// unfreeze 400 tokens (frozen balance is 200), it should work and unfreeze up to 0
+	frozenBalance, err = assetClient.FrozenBalance(ctx, &assettypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	assertT.EqualValues(frozenBalance.Balance.Amount.String(), "200")
+
+	unfreezeMsg = &assettypes.MsgUnfreezeFungibleToken{
+		Issuer:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
+	}
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
+		unfreezeMsg,
+	)
+	requireT.NoError(err)
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
+
+	frozenBalance, err = assetClient.FrozenBalance(ctx, &assettypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	assertT.EqualValues(frozenBalance.Balance.Amount.String(), "0")
 }

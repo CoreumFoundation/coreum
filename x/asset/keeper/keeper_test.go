@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,8 +31,8 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        addr,
-		Symbol:        "BTC",
-		Description:   "BTC Desc",
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
@@ -92,8 +93,8 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
-		Symbol:        "ETH",
-		Description:   "ETH Desc",
+		Symbol:        "DEF",
+		Description:   "DEF Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
@@ -104,8 +105,8 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	unfreezableSettings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
-		Symbol:        "BTC",
-		Description:   "BTC Desc",
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.FungibleTokenFeature{},
@@ -142,14 +143,29 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	// try to freeze more than balance
 	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(110)))
-	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
+	requireT.NoError(err)
+	frozenBalance := assetKeeper.GetFrozenBalance(ctx, receiver, denom)
+	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(110)), frozenBalance)
+
+	// try to freeze more than frozen balance
+	err = assetKeeper.UnfreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(130)))
+	requireT.NoError(err)
+	frozenBalance = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
+	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(0)), frozenBalance)
 
 	// freeze, query frozen
 	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(40)))
 	requireT.NoError(err)
 	frozen := assetKeeper.GetFrozenBalance(ctx, receiver, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(40)), frozen)
+
+	// test query all frozen
+	allBalances, pageRes, err := assetKeeper.GetAccountsFrozenBalances(ctx, &query.PageRequest{})
+	assertT.NoError(err)
+	assertT.Len(allBalances, 1)
+	assertT.EqualValues(1, pageRes.GetTotal())
+	assertT.EqualValues(receiver.String(), allBalances[0].Address)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(40))), allBalances[0].Coins)
 
 	// increase frozen and query
 	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(40)))
@@ -175,11 +191,6 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	err = assetKeeper.UnfreezeFungibleToken(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
-
-	// try to unfreeze more than frozen
-	err = assetKeeper.UnfreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(90)))
-	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
 
 	// unfreeze, query frozen, and try to send
 	err = assetKeeper.UnfreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))

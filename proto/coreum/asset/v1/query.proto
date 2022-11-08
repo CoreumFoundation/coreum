@@ -14,15 +14,15 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 service Query {
   // FungibleToken queries the fungible token of the module.
   rpc FungibleToken(QueryFungibleTokenRequest) returns (QueryFungibleTokenResponse) {
-    option (google.api.http).get = "/coreum/asset/v1/assets/ft/{denom}";
+    option (google.api.http).get = "/coreum/asset/v1/fts/denom/{denom}";
   }
 
   rpc FrozenBalances(QueryFrozenBalancesRequest) returns (QueryFrozenBalancesResponse) {
-    option (google.api.http).get = "/coreum/asset/v1/assets/ft/balances/{account}/frozen";
+    option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/frozen";
   }
 
   rpc FrozenBalance(QueryFrozenBalanceRequest) returns (QueryFrozenBalanceResponse) {
-    option (google.api.http).get = "/coreum/asset/v1/assets/ft/balances/{account}/frozen/{denom}";
+    option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/frozen/{denom}";
   }
 }
 

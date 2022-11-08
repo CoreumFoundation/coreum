@@ -13,4 +13,6 @@ var (
 	ErrFeatureNotActive = sdkerrors.Register(ModuleName, 3, "token feature is not active")
 	// ErrInvalidDenom is returned when the provided denom is not valid
 	ErrInvalidDenom = sdkerrors.Register(ModuleName, 4, "denom is not valid")
+	// ErrInvalidKey is returned when the provided store key is invalid
+	ErrInvalidKey = sdkerrors.Register(ModuleName, 5, "valid key")
 )

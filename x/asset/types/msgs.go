@@ -58,10 +58,6 @@ func (msg MsgFreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	if err := ValidateDenom(msg.Coin.Denom); err != nil {
-		return err
-	}
-
 	return msg.Coin.Validate()
 }
 
@@ -80,10 +76,6 @@ func (msg MsgUnfreezeFungibleToken) ValidateBasic() error {
 
 	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
-	}
-
-	if err := ValidateDenom(msg.Coin.Denom); err != nil {
-		return err
 	}
 
 	return msg.Coin.Validate()

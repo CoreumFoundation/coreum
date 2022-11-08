@@ -23,6 +23,21 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
+	cmd.AddCommand(GetFTQueryCmd())
+	return cmd
+}
+
+// GetFTQueryCmd returns the cli query commands for fungible tokens.
+func GetFTQueryCmd() *cobra.Command {
+	// Group asset queries under a subcommand
+	cmd := &cobra.Command{
+		Use:                        "ft",
+		Short:                      "Querying commands for fungible tokens",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+
 	cmd.AddCommand(CmdQueryFungibleToken())
 	cmd.AddCommand(CmdQueryFungibleTokenFrozenBalance())
 	cmd.AddCommand(CmdQueryFungibleTokenFrozenBalances())
@@ -32,14 +47,14 @@ func GetQueryCmd() *cobra.Command {
 // CmdQueryFungibleToken return the QueryFungibleToken cobra command.
 func CmdQueryFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ft [denom]",
+		Use:   "info [denom]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Query fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query fungible token details.
 
 Example:
-$ %[1]s query asset ft [denom]
+$ %[1]s query asset ft info [denom]
 `,
 				version.AppName,
 			),
@@ -68,14 +83,14 @@ $ %[1]s query asset ft [denom]
 // CmdQueryFungibleTokenFrozenBalances return the QueryFungibleToken cobra command.
 func CmdQueryFungibleTokenFrozenBalances() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ft-frozen-balances [account]",
+		Use:   "frozen-balances [account]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Query fungible token frozen balances",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query frozen fungible token balances of an account.
 
 Example:
-$ %[1]s query asset ft-frozen-balances [account]
+$ %[1]s query asset ft frozen-balances [account]
 `,
 				version.AppName,
 			),
@@ -111,14 +126,14 @@ $ %[1]s query asset ft-frozen-balances [account]
 // CmdQueryFungibleTokenFrozenBalance return the QueryFungibleToken cobra command.
 func CmdQueryFungibleTokenFrozenBalance() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ft-frozen-balance [account] [denom]",
+		Use:   "frozen-balance [account] [denom]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Query fungible token frozen balance",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query frozen fungible token balance of an account.
 
 Example:
-$ %[1]s query asset ft-frozen-balance [account] [denom]
+$ %[1]s query asset ft frozen-balance [account] [denom]
 `,
 				version.AppName,
 			),

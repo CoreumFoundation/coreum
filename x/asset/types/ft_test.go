@@ -17,12 +17,3 @@ func TestBuildFungibleTokenDenom(t *testing.T) {
 	denom := types.BuildFungibleTokenDenom(symbol, addr)
 	require.Equal(t, "CORE-cosmos1suzxj944nktr30u97g3xs3w2r8vknqnchsrg0x-cbDq", denom)
 }
-
-func TestValidateDenomChecksum(t *testing.T) {
-	symbol := "CORE"
-	addr, err := sdk.AccAddressFromBech32("cosmos1suzxj944nktr30u97g3xs3w2r8vknqnchsrg0x")
-	require.NoError(t, err)
-
-	denom := types.BuildFungibleTokenDenom(symbol, addr)
-	require.NoError(t, types.ValidateDenomChecksum(denom))
-}

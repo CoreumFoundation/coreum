@@ -24,7 +24,7 @@
   "app_state": {
     "asset": {
       "fungible_tokens": [],
-      "assets": []
+      "frozen_balances": []
     },
     "auth": {
       "params": {
