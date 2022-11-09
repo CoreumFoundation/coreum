@@ -74,7 +74,7 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 
 	// Store proposer and depositor balances before voting has finished.
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-	accBalanceF := func(prop sdk.AccAddress) sdk.Coin {
+	accBalanceFunc := func(prop sdk.AccAddress) sdk.Coin {
 		accBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: prop.String(),
 			Denom:   chain.NetworkConfig.Denom,
@@ -82,8 +82,8 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 		requireT.NoError(err)
 		return *accBalance.Balance
 	}
-	proposerBalanceBeforeVoting := accBalanceF(proposer)
-	depositorBalanceBeforeVoting := accBalanceF(depositor)
+	proposerBalanceBeforeVoting := accBalanceFunc(proposer)
+	depositorBalanceBeforeVoting := accBalanceFunc(depositor)
 
 	// Vote by all staker accounts:
 	// NoWithVeto 70% & No,Yes,Abstain 10% each.
@@ -116,8 +116,8 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	requireT.Equal(govtypes.StatusRejected, finalStatus)
 
 	// Assert that proposer & depositor deposits were not credited back.
-	proposerBalanceAfterVoting := accBalanceF(proposer)
-	depositorBalanceAfterVoting := accBalanceF(depositor)
+	proposerBalanceAfterVoting := accBalanceFunc(proposer)
+	depositorBalanceAfterVoting := accBalanceFunc(depositor)
 	requireT.Equal(proposerBalanceBeforeVoting, proposerBalanceAfterVoting)
 	requireT.Equal(depositorBalanceBeforeVoting, depositorBalanceAfterVoting)
 }
