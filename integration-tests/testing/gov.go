@@ -8,7 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
@@ -68,6 +70,8 @@ func (g Governance) ProposeV2(ctx context.Context, msg *govtypes.MsgSubmitPropos
 	if err != nil {
 		return 0, err
 	}
+
+	logger.Get(ctx).Info("proposal created", zap.Int64("gas_used", result.GasUsed))
 
 	proposalID, err := event.FindUint64EventAttribute(result.Events, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
 	if err != nil {
@@ -138,6 +142,7 @@ func (g Governance) voteAll(ctx context.Context, msgF func(sdk.AccAddress) sdk.M
 		if err != nil {
 			return err
 		}
+		logger.Get(ctx).Info("voted", zap.Int64("gas_used", res.GasUsed))
 		txHashes = append(txHashes, res.TxHash)
 	}
 

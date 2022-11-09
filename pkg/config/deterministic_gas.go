@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
@@ -81,14 +80,14 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetIssue, true
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
-	case *govtypes.MsgSubmitProposal:
-		return dgr.GovSubmitProposal, true
-	case *govtypes.MsgVote:
-		return dgr.GovVote, true
-	case *govtypes.MsgVoteWeighted:
-		return dgr.GovVoteWeighted, true
-	case *govtypes.MsgDeposit:
-		return dgr.GovDeposit, true
+	//case *govtypes.MsgSubmitProposal:
+	//	return dgr.GovSubmitProposal, true
+	//case *govtypes.MsgVote:
+	//	return dgr.GovVote, true
+	//case *govtypes.MsgVoteWeighted:
+	//	return dgr.GovVoteWeighted, true
+	//case *govtypes.MsgDeposit:
+	//	return dgr.GovDeposit, true
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:

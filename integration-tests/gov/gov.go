@@ -14,7 +14,10 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TestProposalWithDepositAndWeightedVotes - todo
+// TestProposalWithDepositAndWeightedVotes - is a complex governance test which tests:
+// 1. proposal submission without enough deposit
+// 2. depositing missing amount to proposal created on the 1st step
+// 3. voting using weighted votes
 func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 
@@ -27,22 +30,14 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	proposerBalance, err := gov.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
+	requireT.NoError(chain.Faucet.FundAccounts(ctx, testing.FundedAccount{Address: proposer, Amount: proposerBalance}))
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
-	depositorBalance := chain.NewCoin(
-		testing.ComputeNeededBalance(
-			chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-			chain.GasLimitByMsgs(&govtypes.MsgDeposit{}),
-			1,
-			missingDepositAmount.Amount,
-		),
-	)
-
-	err = chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(proposer, proposerBalance),
-		testing.NewFundedAccount(depositor, depositorBalance),
-	)
+	err = chain.Faucet.FundAccountsWithOptions(ctx, depositor, testing.BalancesOptions{
+		Messages: []sdk.Msg{&govtypes.MsgDeposit{}},
+		Amount:   missingDepositAmount.Amount,
+	})
 	requireT.NoError(err)
 
 	govParams, err := gov.QueryGovParams(ctx)
@@ -77,7 +72,7 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 		msg2,
 	)
 	requireT.NoError(err)
-	logger.Get(ctx).Info("deposited more funds to proposal", zap.String("txHash", result.TxHash))
+	logger.Get(ctx).Info("deposited more funds to proposal", zap.String("txHash", result.TxHash), zap.Int64("gas_used", result.GasUsed))
 
 	// Verify that proposal voting has started.
 	requireProposalStatusF(govtypes.StatusVotingPeriod)
@@ -87,7 +82,7 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	accBalanceF := func(address sdk.AccAddress) sdk.Coin {
 		accBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: proposer.String(),
-			Denom:   chain.NetworkConfig.BaseDenom,
+			Denom:   chain.NetworkConfig.Denom,
 		})
 		requireT.NoError(err)
 		return *accBalance.Balance
