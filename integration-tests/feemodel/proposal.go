@@ -61,6 +61,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 			),
 		},
 	))
+	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))

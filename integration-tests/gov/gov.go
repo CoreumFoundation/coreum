@@ -22,7 +22,6 @@ import (
 func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	gov := chain.Governance
-
 	missingDepositAmount := chain.NewCoin(sdk.NewInt(10))
 
 	// Create new proposer.
