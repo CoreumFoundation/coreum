@@ -66,6 +66,8 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 		depositMsg,
 	)
 	requireT.NoError(err)
+	require.Equal(t, chain.GasLimitByMsgs(depositMsg), uint64(result.GasUsed))
+
 	logger.Get(ctx).Info("deposited more funds to proposal", zap.String("txHash", result.TxHash), zap.Int64("gas_used", result.GasUsed))
 
 	// Verify that proposal voting has started.
