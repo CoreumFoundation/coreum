@@ -8,7 +8,6 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/gov"
 	"github.com/CoreumFoundation/coreum/integration-tests/staking"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/integration-tests/upgrade"
 	"github.com/CoreumFoundation/coreum/integration-tests/wasm"
 )
 
@@ -16,10 +15,10 @@ import (
 func Tests() []testing.TestSet {
 	return []testing.TestSet{
 		{
-			Name:     "Upgrade",
-			Parallel: false,
+			Name:        "Upgrade",
+			Parallel:    false,
 			SingleChain: []testing.SingleChainSignature{
-				upgrade.TestUpgrade,
+				//upgrade.TestUpgrade,
 			},
 		},
 		{

@@ -46,12 +46,14 @@ func TestUpgrade(ctx context.Context, t testing.T, chain testing.Chain) {
 	log.Info("Creating proposal for upgrading", zap.Int64("upgradeHeight", upgradeHeight))
 
 	// Create proposal to upgrade chain.
-	proposalID, err := chain.Governance.Propose(ctx, proposer, upgradetypes.NewSoftwareUpgradeProposal("Upgrade test", "Testing if new version of node is started by cosmovisor",
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, upgradetypes.NewSoftwareUpgradeProposal("Upgrade test", "Testing if new version of node is started by cosmovisor",
 		upgradetypes.Plan{
 			Name:   "upgrade",
 			Height: upgradeHeight,
 		},
 	))
+	requireT.NoError(err)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 	log.Info("Upgrade proposal has been submitted", zap.Uint64("proposalID", proposalID))
 

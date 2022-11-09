@@ -20,10 +20,9 @@ import (
 // 3. voting using weighted votes
 func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
+	gov := chain.Governance
 
 	missingDepositAmount := chain.NewCoin(sdk.NewInt(10))
-
-	gov := chain.Governance
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -40,28 +39,22 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	})
 	requireT.NoError(err)
 
-	govParams, err := gov.QueryGovParams(ctx)
-	requireT.NoError(err)
-
 	// Create proposal with deposit less than min deposit.
-	initialDeposit := govParams.DepositParams.MinDeposit[0].Sub(missingDepositAmount)
-	msg, err := govtypes.NewMsgSubmitProposal(
-		govtypes.NewTextProposal("Test proposal with weighted votes", "-"),
-		sdk.Coins{initialDeposit},
-		proposer,
-	)
-	proposalID, err := gov.ProposeV2(ctx, msg)
+	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypes.NewTextProposal("Test proposal with weighted votes", "-"))
+	requireT.NoError(err)
+	proposalMsg.InitialDeposit.Sub(sdk.Coins{missingDepositAmount})
+	proposalID, err := gov.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 
 	logger.Get(ctx).Info("proposal created", zap.Uint64("proposal_id", proposalID))
 
 	// Verify that proposal is waiting for deposit.
-	requireProposalStatusF := func(expectedStatus govtypes.ProposalStatus) {
+	requirePropStatusFunc := func(expectedStatus govtypes.ProposalStatus) {
 		proposal, err := gov.GetProposal(ctx, proposalID)
 		requireT.NoError(err)
 		requireT.Equal(expectedStatus, proposal.Status)
 	}
-	requireProposalStatusF(govtypes.StatusDepositPeriod)
+	requirePropStatusFunc(govtypes.StatusDepositPeriod)
 
 	// Deposit missing amount to proposal.
 	msg2 := govtypes.NewMsgDeposit(depositor, proposalID, sdk.Coins{missingDepositAmount})
@@ -75,7 +68,7 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	logger.Get(ctx).Info("deposited more funds to proposal", zap.String("txHash", result.TxHash), zap.Int64("gas_used", result.GasUsed))
 
 	// Verify that proposal voting has started.
-	requireProposalStatusF(govtypes.StatusVotingPeriod)
+	requirePropStatusFunc(govtypes.StatusVotingPeriod)
 
 	// Store proposer and depositor balances before voting has finished.
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)

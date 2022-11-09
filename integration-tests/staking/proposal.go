@@ -29,11 +29,13 @@ func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain test
 	requireT.NoError(err)
 
 	// Create proposition to change max validators value.
-	proposalID, err := chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyMaxValidators), strconv.Itoa(targetMaxValidators)),
 		},
 	))
+	requireT.NoError(err)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
 
@@ -49,7 +51,7 @@ func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain test
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result.
-	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, uint64(proposalID))
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
