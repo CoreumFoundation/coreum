@@ -40,7 +40,7 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	requireT.NoError(err)
 
 	// Create proposal with deposit less than min deposit.
-	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypes.NewTextProposal("Test proposal with weighted votes", strings.Repeat("Description", 200)))
+	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypes.NewTextProposal("Test proposal with weighted votes", strings.Repeat("Description", 20)))
 	requireT.NoError(err)
 	proposalMsg.InitialDeposit = proposalMsg.InitialDeposit.Sub(sdk.Coins{missingDepositAmount})
 	proposalID, err := gov.Propose(ctx, proposalMsg)
