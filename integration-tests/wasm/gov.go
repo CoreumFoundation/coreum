@@ -118,7 +118,7 @@ func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t 
 	gasUsedAfterPinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1339)
 
 	// unpin smart contract
-	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.PinCodesProposal{
+	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.UnpinCodesProposal{
 		Title:       "Unpin smart contract",
 		Description: "Testing smart contract unpinning",
 		CodeIDs:     []uint64{codeID},
