@@ -9,8 +9,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
+
+func TestMain(m *testing.M) {
+	n, err := config.NetworkByChainID(config.ChainIDDev)
+	if err != nil {
+		panic(err)
+	}
+	n.SetSDKConfig()
+	m.Run()
+}
 
 func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
@@ -72,10 +82,10 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "valid msg",
 			message: types.MsgFreezeFungibleToken{
-				Issuer:  "cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn",
-				Account: "cosmos15jlvsclyuk7ezdzylarma225phfwv8me044yn0",
+				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "symbol-cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn-JiWf",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -83,10 +93,10 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid issuer address",
 			message: types.MsgFreezeFungibleToken{
-				Issuer:  "cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn+",
-				Account: "cosmos15jlvsclyuk7ezdzylarma225phfwv8me044yn0",
+				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "symbol-cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn+-JiWf",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -95,38 +105,14 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid account",
 			message: types.MsgFreezeFungibleToken{
-				Issuer:  "cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn",
-				Account: "cosmos15jlvsclyuk7ezdzylarma225phfwv8me044yn0+",
+				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
-					Denom:  "symbol-cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn-JiWf",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
 					Amount: sdk.NewInt(100),
 				},
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
-		},
-		{
-			name: "invalid symbol",
-			message: types.MsgFreezeFungibleToken{
-				Issuer:  "cosmos1ms0g509yc38dvefpvq8nw8llv6j8mc0y8lx3yr",
-				Account: "cosmos1upnqz6yhlxx3dnrvrkraz823ces39ee345zerw",
-				Coin: sdk.Coin{
-					Denom:  "symbol+-cosmos1ms0g509yc38dvefpvq8nw8llv6j8mc0y8lx3yr-LHxh",
-					Amount: sdk.NewInt(100),
-				},
-			},
-			expectedError: types.ErrInvalidDenom,
-		},
-		{
-			name: "invalid denom checksum",
-			message: types.MsgFreezeFungibleToken{
-				Issuer:  "cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn",
-				Account: "cosmos15jlvsclyuk7ezdzylarma225phfwv8me044yn0",
-				Coin: sdk.Coin{
-					Denom:  "symbol-posmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn-JiWf",
-					Amount: sdk.NewInt(100),
-				},
-			},
-			expectedError: types.ErrInvalidDenom,
 		},
 	}
 
@@ -154,10 +140,10 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "valid msg",
 			message: types.MsgUnfreezeFungibleToken{
-				Issuer:  "cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn",
-				Account: "cosmos15jlvsclyuk7ezdzylarma225phfwv8me044yn0",
+				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "symbol-cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn-JiWf",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -165,10 +151,10 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid issuer address",
 			message: types.MsgUnfreezeFungibleToken{
-				Issuer:  "cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn+",
-				Account: "cosmos15jlvsclyuk7ezdzylarma225phfwv8me044yn0",
+				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "symbol-cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn+-JiWf",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -177,38 +163,14 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid account",
 			message: types.MsgUnfreezeFungibleToken{
-				Issuer:  "cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn",
-				Account: "cosmos15jlvsclyuk7ezdzylarma225phfwv8me044yn0+",
+				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
-					Denom:  "symbol-cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn-JiWf",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
 					Amount: sdk.NewInt(100),
 				},
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
-		},
-		{
-			name: "invalid symbol",
-			message: types.MsgUnfreezeFungibleToken{
-				Issuer:  "cosmos1ms0g509yc38dvefpvq8nw8llv6j8mc0y8lx3yr",
-				Account: "cosmos1upnqz6yhlxx3dnrvrkraz823ces39ee345zerw",
-				Coin: sdk.Coin{
-					Denom:  "symbol+-cosmos1ms0g509yc38dvefpvq8nw8llv6j8mc0y8lx3yr-LHxh",
-					Amount: sdk.NewInt(100),
-				},
-			},
-			expectedError: types.ErrInvalidDenom,
-		},
-		{
-			name: "invalid denom checksum",
-			message: types.MsgUnfreezeFungibleToken{
-				Issuer:  "cosmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn",
-				Account: "cosmos15jlvsclyuk7ezdzylarma225phfwv8me044yn0",
-				Coin: sdk.Coin{
-					Denom:  "symbol-posmos1jgfmlcywhqwctenjeljs2huxw7l4p6apgaclyn-JiWf",
-					Amount: sdk.NewInt(100),
-				},
-			},
-			expectedError: types.ErrInvalidDenom,
 		},
 	}
 

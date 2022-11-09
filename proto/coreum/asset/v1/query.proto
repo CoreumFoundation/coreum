@@ -36,14 +36,14 @@ message QueryFungibleTokenResponse {
   FungibleToken fungible_token = 1 [(gogoproto.nullable) = false];
 }
 
-message  QueryFrozenBalancesRequest {
+message QueryFrozenBalancesRequest {
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
   // account specifies the account onto which we query frozen balances
   string account = 2;
 }
   
-message  QueryFrozenBalancesResponse {
+message QueryFrozenBalancesResponse {
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 1;
   // balances contains the frozen balances on the queried account
@@ -53,14 +53,14 @@ message  QueryFrozenBalancesResponse {
   ];
 }
 
-message  QueryFrozenBalanceRequest {
+message QueryFrozenBalanceRequest {
   // account specifies the account onto which we query frozen balances
   string account = 1;
   // denom specifies frozen balances on a specific denom
   string denom = 2;
 }
 
-message  QueryFrozenBalanceResponse {
+message QueryFrozenBalanceResponse {
   // balance contains the frozen balance with the queried account and denom 
   cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
 }

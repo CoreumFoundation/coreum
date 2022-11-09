@@ -64,8 +64,8 @@ func (k Keeper) isFreezeAllowed(ctx sdk.Context, issuer sdk.AccAddress, coin sdk
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if err := isFeatureEnabled(ft.Features, types.FungibleTokenFeature_freezable); err != nil { //nolint:nosnakecase
-		return sdkerrors.Wrapf(err, "denom:%s, feature:%s", coin.Denom, types.FungibleTokenFeature_freezable) //nolint:nosnakecase
+	if !isFeatureEnabled(ft.Features, types.FungibleTokenFeature_freezable) { //nolint:nosnakecase
+		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", coin.Denom, types.FungibleTokenFeature_freezable) //nolint:nosnakecase
 	}
 
 	if ft.Issuer != issuer.String() {
@@ -193,11 +193,11 @@ func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) 
 }
 
 // isFeatureEnabled checks weather a feature is present on a list of token features
-func isFeatureEnabled(features []types.FungibleTokenFeature, feature types.FungibleTokenFeature) error {
+func isFeatureEnabled(features []types.FungibleTokenFeature, feature types.FungibleTokenFeature) bool {
 	for _, o := range features {
 		if o == feature {
-			return nil
+			return false
 		}
 	}
-	return types.ErrFeatureNotActive
+	return false
 }

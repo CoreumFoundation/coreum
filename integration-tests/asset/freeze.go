@@ -133,7 +133,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.Error(err)
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
-	// freeze 600 tokens
+	// freeze 400 tokens
 	freezeMsg = &assettypes.MsgFreezeFungibleToken{
 		Issuer:  issuer.String(),
 		Account: recipient.String(),

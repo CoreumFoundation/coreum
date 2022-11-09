@@ -25,7 +25,7 @@ func TestExportGenesis(t *testing.T) {
 	denom2 := types.BuildFungibleTokenDenom("ABC2", issuer)
 
 	var balances []types.Balance
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 20; i++ {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		coins := sdk.NewCoins(
 			sdk.NewCoin(denom, sdk.NewInt(rand.Int63())),
