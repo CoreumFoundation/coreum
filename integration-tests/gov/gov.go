@@ -102,12 +102,12 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 				Weight: sdk.MustNewDecFromStr("0.3"),
 			},
 		},
-		uint64(proposalID),
+		proposalID,
 	)
 	requireT.NoError(err)
 
 	// Wait for proposal result.
-	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, uint64(proposalID))
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusRejected, finalStatus)
 

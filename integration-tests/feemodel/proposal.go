@@ -60,10 +60,10 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 		},
 	))
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Int("proposalID", proposalID))
+	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
 
 	// Verify that voting period started.
-	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
@@ -74,7 +74,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result.
-	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, uint64(proposalID))
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
