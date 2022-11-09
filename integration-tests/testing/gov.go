@@ -58,8 +58,8 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
 }
 
-// ProposeAndVoteYes create a new proposal, votes Yes from all stakers accounts and awaits for the final status.
-func (g Governance) ProposeAndVoteYes(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) error {
+// ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
+func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) error {
 	proposalID, err := g.Propose(ctx, proposer, content)
 	if err != nil {
 		return err

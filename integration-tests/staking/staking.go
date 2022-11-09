@@ -220,7 +220,7 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testi
 
 	// TODO(dhil) refactor other tests to use that func for the standard propose + vote action.
 	// Create proposition to change max the unbonding time value.
-	err = chain.Governance.ProposeAndVoteYes(ctx, proposer,
+	err = chain.Governance.ProposeAndVote(ctx, proposer,
 		paramproposal.NewParameterChangeProposal(
 			fmt.Sprintf("Change the unbnunbondingdig time to %s", unbondingTime.String()),
 			"Changing unbonding time for the integration test",
