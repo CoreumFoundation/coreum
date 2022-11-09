@@ -160,6 +160,11 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 		ValidatorAddress: validatorAddress.String(),
 	}
 
+	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorStakerAddress, testing.BalancesOptions{
+		Messages: []sdk.Msg{withdrawCommissionMsg},
+	})
+	requireT.NoError(err)
+
 	txResult, err = tx.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(validatorStakerAddress),
