@@ -1,12 +1,12 @@
-use cosmwasm_std::{CustomMsg, entry_point};
-use cosmwasm_std::{Addr, CosmosMsg, Uint128};
+use cosmwasm_std::{entry_point};
+use cosmwasm_std::{Addr, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, StdError};
 use cw2::set_contract_version;
 use cw_storage_plus::Item;
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use crate::sdk;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:hello";
@@ -44,23 +44,23 @@ pub fn execute(
     _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response<FungibleTokenMsg>, ContractError> {
+) -> Result<Response<sdk::FungibleTokenMsg>, ContractError> {
     match msg {
         ExecuteMsg::Issue {
             symbol,
             amount,
             recipient,
-        } => create_token(deps, info, symbol, amount, recipient),
+        } => issue_token(deps, info, symbol, amount, recipient),
     }
 }
 
-fn create_token(
+fn issue_token(
     deps: DepsMut,
     info: MessageInfo,
     symbol: String,
     amount: Uint128,
     recipient: String,
-) -> Result<Response<FungibleTokenMsg>, ContractError> {
+) -> Result<Response<sdk::FungibleTokenMsg>, ContractError> {
     let recipient_addr = deps.api.addr_validate(&recipient)?;
 
     if amount == Uint128::zero() {
@@ -72,19 +72,18 @@ fn create_token(
         return Err(ContractError::Unauthorized {});
     }
 
-    let create_token_msg = FungibleTokenMsg::MsgIssueFungibleToken {
-        symbol: symbol,
+    let issue_token_msg = sdk::FungibleTokenMsg::MsgIssueFungibleToken {
+        symbol: symbol.clone(),
         recipient: recipient_addr.to_string(),
         initial_amount: amount,
     };
 
-    // let create_token_cosmos_msg: CosmosMsg<FungibleTokenMsg> = create_token_msg.into();
-
-    let res: Response<FungibleTokenMsg> = Response::new()
-        .add_attribute("method", "create_token")
+    let res: Response<sdk::FungibleTokenMsg> = Response::new()
+        .add_attribute("method", "issue_token")
+        .add_attribute("symbol", symbol)
         .add_attribute("recipient", recipient_addr)
         .add_attribute("amount", amount)
-        .add_message(create_token_msg);
+        .add_message(issue_token_msg);
     Ok(res)
 }
 
@@ -117,20 +116,3 @@ pub enum ContractError {
     // Add any other custom errors you like here.
     // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
 }
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum FungibleTokenMsg {
-    MsgIssueFungibleToken {
-        symbol: String,
-        recipient: String,
-        initial_amount: Uint128,
-    },
-}
-
-impl Into<CosmosMsg<FungibleTokenMsg>> for FungibleTokenMsg {
-    fn into(self) -> CosmosMsg<FungibleTokenMsg> {
-        CosmosMsg::Custom(self)
-    }
-}
-
-impl CustomMsg for FungibleTokenMsg {}

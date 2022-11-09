@@ -1,1 +1,1 @@
-8ceb495a4b0269832b1458574bf42e38644b34477cb67c84c33cb80fe9da4164  fungible_token.wasm
+1751fabf3113e592fe623aaacc85bb119c347fcea9eeb34401b19577628db5cb  fungible_token.wasm

@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Handler handles encoding of custom emssage
+// Handler handles encoding of custom message
 type Handler func(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]sdk.Msg, error)
 
 // NewCustomEncoder encodes custom messages received from smart contracts
