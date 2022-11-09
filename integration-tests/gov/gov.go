@@ -2,6 +2,7 @@ package gov
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -40,9 +41,9 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	requireT.NoError(err)
 
 	// Create proposal with deposit less than min deposit.
-	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypes.NewTextProposal("Test proposal with weighted votes", "-"))
+	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypes.NewTextProposal("Test proposal with weighted votes. Test proposal with weighted votes", strings.Repeat("Desc", 200)))
 	requireT.NoError(err)
-	proposalMsg.InitialDeposit.Sub(sdk.Coins{missingDepositAmount})
+	proposalMsg.InitialDeposit = proposalMsg.InitialDeposit.Sub(sdk.Coins{missingDepositAmount})
 	proposalID, err := gov.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 
@@ -57,12 +58,12 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	requirePropStatusFunc(govtypes.StatusDepositPeriod)
 
 	// Deposit missing amount to proposal.
-	msg2 := govtypes.NewMsgDeposit(depositor, proposalID, sdk.Coins{missingDepositAmount})
+	depositMsg := govtypes.NewMsgDeposit(depositor, proposalID, sdk.Coins{missingDepositAmount})
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(depositor),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg2)),
-		msg2,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(depositMsg)),
+		depositMsg,
 	)
 	requireT.NoError(err)
 	logger.Get(ctx).Info("deposited more funds to proposal", zap.String("txHash", result.TxHash), zap.Int64("gas_used", result.GasUsed))
@@ -83,7 +84,8 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	proposerBalanceBeforeVoting := accBalanceF(proposer)
 	depositorBalanceBeforeVoting := accBalanceF(depositor)
 
-	// Vote by all staker accounts 70% - NoWithVeto 30% - Yes.
+	// Vote by all staker accounts:
+	// NoWithVeto 70% & No,Yes,Abstain 10% each.
 	err = gov.VoteAllWeighted(ctx,
 		govtypes.WeightedVoteOptions{
 			govtypes.WeightedVoteOption{
@@ -91,8 +93,16 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 				Weight: sdk.MustNewDecFromStr("0.7"),
 			},
 			govtypes.WeightedVoteOption{
+				Option: govtypes.OptionNo,
+				Weight: sdk.MustNewDecFromStr("0.1"),
+			},
+			govtypes.WeightedVoteOption{
 				Option: govtypes.OptionYes,
-				Weight: sdk.MustNewDecFromStr("0.3"),
+				Weight: sdk.MustNewDecFromStr("0.1"),
+			},
+			govtypes.WeightedVoteOption{
+				Option: govtypes.OptionAbstain,
+				Weight: sdk.MustNewDecFromStr("0.1"),
 			},
 		},
 		proposalID,

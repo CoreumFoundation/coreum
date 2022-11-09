@@ -137,7 +137,7 @@ func (g Governance) voteAll(ctx context.Context, msgF func(sdk.AccAddress) sdk.M
 			WithGas(g.chainCtx.GasLimitByMsgs(msg))
 
 		clientCtx := g.chainCtx.ClientContext.
-			WithBroadcastMode(flags.BroadcastSync)
+			WithBroadcastMode(flags.BroadcastBlock)
 
 		res, err := tx.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
 		if err != nil {

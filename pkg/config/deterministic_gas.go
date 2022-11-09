@@ -80,13 +80,13 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetIssue, true
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
-	//case *govtypes.MsgSubmitProposal:
+	//case *govtypes.MsgSubmitProposal: // 200000, 200000, 200000
 	//	return dgr.GovSubmitProposal, true
 	//case *govtypes.MsgVote:
 	//	return dgr.GovVote, true
-	//case *govtypes.MsgVoteWeighted:
+	//case *govtypes.MsgVoteWeighted: // 57365 * 3, 58073 * 3, 61310 * 3
 	//	return dgr.GovVoteWeighted, true
-	//case *govtypes.MsgDeposit:
+	//case *govtypes.MsgDeposit: // 89111, 103979, 141782, 141842
 	//	return dgr.GovDeposit, true
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
