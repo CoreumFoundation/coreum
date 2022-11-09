@@ -10,7 +10,4 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 message GenesisState {
   // fungible_tokens keep the fungible token state
   repeated FungibleTokenDefinition fungible_tokens  = 1 [(gogoproto.nullable) = false];
-  // assets state
-  // TODO (dhil) used for the backward compatibility will be removed later
-  repeated string assets = 2 [(gogoproto.nullable) = false];
 }

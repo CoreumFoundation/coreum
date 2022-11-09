@@ -15,12 +15,14 @@ import (
 func Tests() []testing.TestSet {
 	return []testing.TestSet{
 		{
-			Name: "Upgrade",
+			Name:     "Upgrade",
+			Parallel: false,
 			SingleChain: []testing.SingleChainSignature{
 				upgrade.TestUpgrade,
 			},
 		},
 		{
+			Name:     "Main",
 			Parallel: true,
 			SingleChain: []testing.SingleChainSignature{
 				asset.TestIssueBasicFungibleToken,
@@ -36,7 +38,7 @@ func Tests() []testing.TestSet {
 				feemodel.TestFeeModelProposalParamChange,
 				staking.TestStakingProposalParamChange,
 				staking.TestStaking,
-				wasm.TestSimpleStateWasmContract,
+				wasm.TestPinningAndUnpinningSmartContractUsingGovernance,
 				wasm.TestBankSendWasmContract,
 				wasm.TestGasWasmBankSendAndBankSend,
 			},

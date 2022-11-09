@@ -23,21 +23,13 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	senderInitialAmount := sdk.NewInt(100)
 	recipientInitialAmount := sdk.NewInt(10)
-	require.NoError(t, chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			sender,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&banktypes.MsgSend{}),
-				1,
-				senderInitialAmount,
-			)),
-		),
-		testing.NewFundedAccount(
-			recipient,
-			chain.NewCoin(recipientInitialAmount),
-		),
-	))
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   senderInitialAmount,
+	}))
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
+		Amount: recipientInitialAmount,
+	}))
 
 	// transfer tokens from sender to recipient
 	amountToSend := sdk.NewInt(10)
@@ -62,13 +54,13 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	balancesSender, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: sender.String(),
-		Denom:   chain.NetworkConfig.BaseDenom,
+		Denom:   chain.NetworkConfig.Denom,
 	})
 	require.NoError(t, err)
 
 	balancesRecipient, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: recipient.String(),
-		Denom:   chain.NetworkConfig.BaseDenom,
+		Denom:   chain.NetworkConfig.Denom,
 	})
 	require.NoError(t, err)
 

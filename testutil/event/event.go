@@ -1,4 +1,4 @@
-package testing
+package event
 
 import (
 	"strconv"
@@ -6,12 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/abci/types"
 )
 
-// FindTypedEvent finds the event in the list of events and returns the decoded event.
-func FindTypedEvent(t T, event proto.Message, events []tmtypes.Event) interface{} {
+// FindTypedEvent finds the event in the list of events, and set marshals it the to the event.
+func FindTypedEvent[T proto.Message](events []tmtypes.Event) (T, error) {
+	event := *new(T) //nolint:gocritic // T(nil) doesn't work with the proto.Message
 	eventName := proto.MessageName(event)
 	for i := range events {
 		if events[i].Type != eventName {
@@ -19,13 +19,19 @@ func FindTypedEvent(t T, event proto.Message, events []tmtypes.Event) interface{
 		}
 
 		msg, err := sdk.ParseTypedEvent(events[i])
-		require.NoError(t, err)
+		if err != nil {
+			return *new(T), err //nolint:gocritic // T(nil) doesn't work with proto.Message
+		}
 
-		return msg
+		typedMsg, ok := msg.(T)
+		if !ok {
+			return *new(T), errors.Errorf("can't cast found event to %T", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
+		}
+
+		return typedMsg, nil
 	}
 
-	require.Failf(t, "%s event, not found in the events", eventName)
-	return nil
+	return *new(T), errors.Errorf("can't find event %T in events", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
 }
 
 // FindUint64EventAttribute finds the first event attribute by type and attribute name and convert it to the uint64 type.

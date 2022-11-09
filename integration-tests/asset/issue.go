@@ -9,6 +9,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
@@ -22,17 +23,9 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(
-			issuer,
-			chain.NewCoin(testing.ComputeNeededBalance(
-				chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice,
-				chain.GasLimitByMsgs(&assettypes.MsgIssueFungibleToken{}),
-				1,
-				sdk.NewInt(0),
-			)),
-		),
-	))
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+		Messages: []sdk.Msg{&assettypes.MsgIssueFungibleToken{}},
+	}))
 
 	// Issue the new fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
@@ -52,9 +45,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	)
 
 	require.NoError(t, err)
-	evt := testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
-	fungibleTokenIssuedEvt, ok := evt.(*assettypes.EventFungibleTokenIssued)
-	require.True(t, ok)
+	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
 
 	require.NoError(t, err)
 	require.Equal(t, assettypes.EventFungibleTokenIssued{

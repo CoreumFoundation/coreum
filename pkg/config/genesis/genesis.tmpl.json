@@ -23,8 +23,7 @@
   "app_hash": "",
   "app_state": {
     "asset": {
-      "fungible_tokens": [],
-      "assets": []
+      "fungible_tokens": []
     },
     "auth": {
       "params": {
@@ -51,20 +50,20 @@
           "description": "{{ .Denom }} coin",
           "denom_units": [
             {
-              "denom": "{{ .BaseDenom }}",
+              "denom": "{{ .Denom }}",
               "exponent": 0,
               "aliases": []
             },
             {
-              "denom": "{{ .Denom }}",
+              "denom": "{{ .MetadataDisplayDenom }}",
               "exponent": 6,
               "aliases": []
             }
           ],
-          "base": "{{ .BaseDenom }}",
-          "display": "{{ .Denom }}",
+          "base": "{{ .Denom }}",
+          "display": "{{ .MetadataDisplayDenom }}",
           "name": "{{ .Denom }}",
-          "symbol": "{{ .Denom }}"
+          "symbol": "{{ .Denom | ToUpper }}"
         }
       ]
     },
@@ -74,7 +73,7 @@
     },
     "crisis": {
       "constant_fee": {
-        "denom": "{{ .BaseDenom }}",
+        "denom": "{{ .Denom }}",
         "amount": "1000"
       }
     },
@@ -114,7 +113,7 @@
       "deposit_params": {
         "min_deposit": [
           {
-            "denom": "{{ .BaseDenom }}",
+            "denom": "{{ .Denom }}",
             "amount": "{{ .Gov.ProposalConfig.MinDepositAmount }}"
           }
         ],
@@ -168,7 +167,7 @@
         "annual_provisions": "0.000000000000000000"
       },
       "params": {
-        "mint_denom": "{{ .BaseDenom }}",
+        "mint_denom": "{{ .Denom }}",
         "inflation_rate_change": "0.130000000000000000",
         "inflation_max": "0.200000000000000000",
         "inflation_min": "0.000000000000000000",
@@ -213,7 +212,7 @@
         "max_validators": {{ .Staking.MaxValidators }},
         "max_entries": 7,
         "historical_entries": 10000,
-        "bond_denom": "{{ .BaseDenom }}"
+        "bond_denom": "{{ .Denom }}"
       },
       "last_total_power": "0",
       "last_validator_powers": [],
@@ -255,7 +254,7 @@
         }
       },
       "min_gas_price": {
-        "denom": "{{ .BaseDenom }}",
+        "denom": "{{ .Denom }}",
         "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
     }
