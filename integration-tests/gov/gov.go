@@ -53,18 +53,18 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	proposalID, err := gov.ProposeV2(ctx, msg)
 	requireT.NoError(err)
 
-	logger.Get(ctx).Info("proposal created", zap.Int("proposal_id", proposalID))
+	logger.Get(ctx).Info("proposal created", zap.Uint64("proposal_id", proposalID))
 
 	// Verify that proposal is waiting for deposit.
 	requireProposalStatusF := func(expectedStatus govtypes.ProposalStatus) {
-		proposal, err := gov.GetProposal(ctx, uint64(proposalID))
+		proposal, err := gov.GetProposal(ctx, proposalID)
 		requireT.NoError(err)
 		requireT.Equal(expectedStatus, proposal.Status)
 	}
 	requireProposalStatusF(govtypes.StatusDepositPeriod)
 
 	// Deposit missing amount to proposal.
-	msg2 := govtypes.NewMsgDeposit(depositor, uint64(proposalID), sdk.Coins{missingDepositAmount})
+	msg2 := govtypes.NewMsgDeposit(depositor, proposalID, sdk.Coins{missingDepositAmount})
 	result, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(depositor),

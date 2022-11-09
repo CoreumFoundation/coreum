@@ -58,7 +58,7 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
 }
 
-func (g Governance) ProposeV2(ctx context.Context, msg *govtypes.MsgSubmitProposal) (int, error) {
+func (g Governance) ProposeV2(ctx context.Context, msg *govtypes.MsgSubmitProposal) (uint64, error) {
 	txf := g.chainCtx.TxFactory().
 		WithGas(g.chainCtx.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}))
 	result, err := tx.BroadcastTx(
@@ -78,12 +78,11 @@ func (g Governance) ProposeV2(ctx context.Context, msg *govtypes.MsgSubmitPropos
 		return 0, err
 	}
 
-	// TODO: Change to uint
-	return int(proposalID), nil
+	return proposalID, nil
 }
 
 // Propose creates a new proposal.
-func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (int, error) {
+func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (uint64, error) {
 	govParams, err := queryGovParams(ctx, g.govClient)
 	if err != nil {
 		return 0, err
