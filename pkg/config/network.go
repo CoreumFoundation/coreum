@@ -63,7 +63,6 @@ func init() {
 		govConfig = GovConfig{
 			ProposalConfig: GovProposalConfig{
 				MinDepositAmount: "10000000",
-				MaxDepositPeriod: "120h", // 5 days
 				VotingPeriod:     "120h", // 5 days
 			},
 		}
@@ -201,9 +200,6 @@ type GovConfig struct {
 type GovProposalConfig struct {
 	// MinDepositAmount is the minimum amount needed to create a proposal. Basically anti-spam policy.
 	MinDepositAmount string
-
-	// MaxDepositPeriod is the maximum deposit period. Basically the duration when a proposal depositing is available.
-	MaxDepositPeriod string
 
 	// VotingPeriod is the proposal voting period duration.
 	VotingPeriod string

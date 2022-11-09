@@ -7,10 +7,6 @@ import (
 )
 
 const (
-	// maxDepositPeriod is the proposal deposit period duration. Deposit should be made together with the proposal
-	// so not needed to spend more time to make extra deposits.
-	maxDepositPeriod = time.Hour * 120
-
 	// votingPeriod is the proposal voting period duration
 	votingPeriod = time.Second * 15
 
@@ -26,7 +22,6 @@ func NewNetworkConfig() (config.NetworkConfig, error) {
 	}
 	networkConfig.GovConfig.ProposalConfig = config.GovProposalConfig{
 		MinDepositAmount: "1000",
-		MaxDepositPeriod: maxDepositPeriod.String(),
 		VotingPeriod:     votingPeriod.String(),
 	}
 
