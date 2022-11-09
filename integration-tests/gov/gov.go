@@ -74,9 +74,9 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 
 	// Store proposer and depositor balances before voting has finished.
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-	accBalanceF := func(address sdk.AccAddress) sdk.Coin {
+	accBalanceF := func(prop sdk.AccAddress) sdk.Coin {
 		accBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-			Address: proposer.String(),
+			Address: prop.String(),
 			Denom:   chain.NetworkConfig.Denom,
 		})
 		requireT.NoError(err)
