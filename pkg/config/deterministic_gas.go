@@ -21,7 +21,6 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 		BankSend: 30000,
 
-		// Q: Should I subtract FixedGas ?
 		GovSubmitProposal: 145000,
 		GovVote:           57000,
 		GovVoteWeighted:   61000,
