@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"reflect"
 	"sync"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
@@ -9,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -95,8 +97,7 @@ func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	for _, msg := range msgs {
 		msgGas, exists := deterministicGas.GasRequiredByMessage(msg)
 		if !exists {
-			msgGas = 150000 * 10
-			//panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
+			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
 		totalGasRequired += msgGas + deterministicGas.FixedGas
 	}
@@ -112,8 +113,7 @@ func (c ChainContext) GasLimitByMultiSendMsgs(msgs ...sdk.Msg) uint64 {
 	for _, msg := range msgs {
 		msgGas, exists := deterministicGas.GasRequiredByMessage(msg)
 		if !exists {
-			msgGas = 150000 * 10
-			//panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
+			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
 		totalGasRequired += msgGas
 	}
