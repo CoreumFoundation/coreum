@@ -2,7 +2,7 @@
 
 The doc describes the procedure of creating and running the sentry node.
 
-[Here](https://docs.tendermint.com/v0.34/tendermint-core/validators.html) you can find additional information about the sentry node.
+[Here](https://docs.tendermint.com/v0.34/tendermint-core/validators.html) you can find additional information about the node type.
 
 * The [install binaries](../install-cored.md) doc describes the installation process.
 

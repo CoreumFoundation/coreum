@@ -2,6 +2,8 @@
 
 The doc describes the procedure of creating and running the seed node.
 
+[Here](https://docs.tendermint.com/v0.34/tendermint-core/using-tendermint.html#seed) you can find additional information about the node type.
+
 * The [install binaries](../install-cored.md) doc describes the installation process.
 
 * Set up the CLI environment following the [doc](../cli-env.md).
