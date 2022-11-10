@@ -21,10 +21,10 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 		BankSend: 30000,
 
-		GovSubmitProposal: 145000,
-		GovVote:           57000,
-		GovVoteWeighted:   61000,
-		GovDeposit:        141000,
+		GovSubmitProposal: 95000,
+		GovVote:           8000,
+		GovVoteWeighted:   11000,
+		GovDeposit:        91000,
 
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
