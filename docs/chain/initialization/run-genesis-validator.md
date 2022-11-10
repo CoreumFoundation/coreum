@@ -6,7 +6,7 @@ The doc describes the procedure of creating and running the validator node which
 
 * Set up the CLI environment following the [doc](../cli-env.md).
 
-* Set up [node prerequisites](node-prerequisites.md).
+* Set up [node prerequisites](../node/node-prerequisites.md).
 
 * Set the moniker variable to reuse it in the following instructions.
   ```bash
@@ -22,9 +22,9 @@ The doc describes the procedure of creating and running the validator node which
   ```
   The command will create a default node configuration, keeping the previously generated node keys.
 
-* Set the common connection config using the [doc](set-connection-config.md).
+* Set the common connection config using the [doc](../node/set-connection-config.md).
 
-* Run sentry nodes using the [doc](run-sentry.md).
+* Run sentry nodes using the [doc](../node/run-sentry.md).
 
 * Start the node.
 

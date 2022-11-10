@@ -10,7 +10,7 @@ This doc describes the steps to initiate a chain from scratch.
 
 * Run seed nodes.
 
-  * Pass the steps in [run seed](run-seed.md) doc to run the initial seeds, at least 2 seeds are recommended.
+  * Pass the steps in [run seed](../node/run-seed.md) doc to run the initial seeds, at least 2 seeds are recommended.
 
 * Prepare final binary.
 

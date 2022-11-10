@@ -10,7 +10,7 @@ to start the peering without additional data.
     echo "$(cored tendermint show-node-id)@$CORED_EXTERNAL_IP:26656"
     ```
   
-    **Attention!** *The "$CORED_EXTERNAL_IP" is configured in the [doc](set-connection-config.md)",
+    **Attention!** *The "$CORED_EXTERNAL_IP" is configured in the [doc](../node/set-connection-config.md),
     If it isn't set, set it for the node.*    
 
     Example of output:
