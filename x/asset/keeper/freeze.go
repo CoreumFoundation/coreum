@@ -12,6 +12,10 @@ import (
 
 // FreezeFungibleToken freezes specified token from the specified account
 func (k Keeper) FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
+	}
+
 	err := k.isFreezeAllowed(ctx, issuer, coin)
 	if err != nil {
 		return err
@@ -30,6 +34,10 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr
 
 // UnfreezeFungibleToken unfreezes specified tokens from the specified account
 func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+	if !coin.IsPositive() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
+	}
+
 	err := k.isFreezeAllowed(ctx, issuer, coin)
 	if err != nil {
 		return err
@@ -37,12 +45,16 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, ad
 
 	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
 	frozenBalance := frozenStore.getFrozenBalance(coin.Denom)
-	newFrozenBalance := sdk.NewCoin(coin.Denom, sdk.ZeroInt())
 	if frozenBalance.IsGTE(coin) {
-		newFrozenBalance = frozenBalance.Sub(coin)
+		newFrozenBalance := frozenBalance.Sub(coin)
+		frozenStore.setFrozenBalance(newFrozenBalance)
+	} else {
+		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds,
+			"freeze balance %s is more than the available frozen balance %s",
+			coin.String(),
+			frozenBalance.String(),
+		)
 	}
-
-	frozenStore.setFrozenBalance(newFrozenBalance)
 
 	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenUnfrozen{
 		Account: addr.String(),
@@ -112,12 +124,11 @@ func (k Keeper) GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, paginati
 // GetAccountsFrozenBalances returns the frozen balance on all of the account
 func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
 	frozenStore := k.frozenBalancesStore(ctx)
-	balances := make([]types.Balance, 0)
+	var balances []types.Balance
 	mapAddressToBalancesIdx := make(map[string]int)
 	pageRes, err := query.Paginate(frozenStore, pagination, func(key, value []byte) error {
 		address, err := types.AddressFromBalancesStore(key)
 		if err != nil {
-			k.Logger(ctx).With("key", key, "err", err).Error("failed to get address from frozen balances store")
 			return err
 		}
 
@@ -196,7 +207,7 @@ func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) 
 func isFeatureEnabled(features []types.FungibleTokenFeature, feature types.FungibleTokenFeature) bool {
 	for _, o := range features {
 		if o == feature {
-			return false
+			return true
 		}
 	}
 	return false

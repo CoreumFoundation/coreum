@@ -14,6 +14,59 @@ import (
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+// TestFreezeUnfreezableFungibleToken checks freeze functionality on unfreezable fungible tokens.
+func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assettypes.MsgIssueFungibleToken{},
+				&assettypes.MsgFreezeFungibleToken{},
+			},
+		}),
+	)
+
+	// Issue an unfreezable fungible token
+	msg := &assettypes.MsgIssueFungibleToken{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCNotFreezable",
+		Description:   "ABC Description",
+		Recipient:     recipient.String(),
+		InitialAmount: sdk.NewInt(1000),
+		Features:      []assettypes.FungibleTokenFeature{},
+	}
+
+	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+
+	requireT.NoError(err)
+	evt := testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
+	fungibleTokenIssuedEvt, ok := evt.(*assettypes.EventFungibleTokenIssued)
+	requireT.True(ok)
+	unfreezableDenom := fungibleTokenIssuedEvt.Denom
+
+	// try to freeze unfreezable token
+	freezeMsg := &assettypes.MsgFreezeFungibleToken{
+		Issuer:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(unfreezableDenom, sdk.NewInt(1000)),
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	assertT.True(assettypes.ErrFeatureNotActive.Is(err))
+}
+
 // TestFreezeFungibleToken checks freeze functionality of fungible tokens.
 //
 //nolint:funlen // this is a single test scenario and breaking it down is not beneficial
@@ -80,46 +133,8 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.True(ok)
 	denom := fungibleTokenIssuedEvt.Denom
 
-	// Issue an unfreezable fungible token
-	msg = &assettypes.MsgIssueFungibleToken{
-		Issuer:        issuer.String(),
-		Symbol:        "ABCNotFreezable",
-		Description:   "ABC Description",
-		Recipient:     recipient.String(),
-		InitialAmount: sdk.NewInt(1000),
-		Features:      []assettypes.FungibleTokenFeature{},
-	}
-
-	res, err = tx.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
-		msg,
-	)
-
-	requireT.NoError(err)
-	evt = testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
-	fungibleTokenIssuedEvt, ok = evt.(*assettypes.EventFungibleTokenIssued)
-	requireT.True(ok)
-	unfreezableDenom := fungibleTokenIssuedEvt.Denom
-
-	// try to freeze unfreezable token
-	freezeMsg := &assettypes.MsgFreezeFungibleToken{
-		Issuer:  issuer.String(),
-		Account: recipient.String(),
-		Coin:    sdk.NewCoin(unfreezableDenom, sdk.NewInt(1000)),
-	}
-	_, err = tx.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
-		freezeMsg,
-	)
-	requireT.Error(err)
-	assertT.True(assettypes.ErrFeatureNotActive.Is(err))
-
 	// try to pass non-issuer signature to freeze msg
-	freezeMsg = &assettypes.MsgFreezeFungibleToken{
+	freezeMsg := &assettypes.MsgFreezeFungibleToken{
 		Issuer:  randomAddress.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
@@ -241,32 +256,17 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	)
 	requireT.NoError(err)
 
-	// unfreeze 400 tokens (frozen balance is 200), it should work and unfreeze up to 0
-	frozenBalance, err = assetClient.FrozenBalance(ctx, &assettypes.QueryFrozenBalanceRequest{
-		Account: recipient.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	assertT.EqualValues(frozenBalance.Balance.Amount.String(), "200")
-
+	// unfreeze 400 tokens (frozen balance is 200), it should give error
 	unfreezeMsg = &assettypes.MsgUnfreezeFungibleToken{
 		Issuer:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
 	}
-	res, err = tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
 		unfreezeMsg,
 	)
-	requireT.NoError(err)
-	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
-
-	frozenBalance, err = assetClient.FrozenBalance(ctx, &assettypes.QueryFrozenBalanceRequest{
-		Account: recipient.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	assertT.EqualValues(frozenBalance.Balance.Amount.String(), "0")
+	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
 }

@@ -189,7 +189,7 @@ $ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve
 //nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
 func CmdTxUnfreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ft unfreeze [account_address] [amount] --from [issuer]",
+		Use:   "unfreeze [account_address] [amount] --from [issuer]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Unfreeze a portion of the frozen fungible tokens",
 		Long: strings.TrimSpace(
