@@ -15,4 +15,6 @@ var (
 	ErrInvalidDenom = sdkerrors.Register(ModuleName, 4, "denom is not valid")
 	// ErrInvalidKey is returned when the provided store key is invalid
 	ErrInvalidKey = sdkerrors.Register(ModuleName, 5, "invalid key")
+	// ErrNotEnoughBalance is returned when there is not enough
+	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 6, "not enough balance")
 )

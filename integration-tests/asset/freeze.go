@@ -267,5 +267,5 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
 		unfreezeMsg,
 	)
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.True(assettypes.ErrNotEnoughBalance.Is(err))
 }

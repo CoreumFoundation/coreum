@@ -49,7 +49,7 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, ad
 		newFrozenBalance := frozenBalance.Sub(coin)
 		frozenStore.setFrozenBalance(newFrozenBalance)
 	} else {
-		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds,
+		return sdkerrors.Wrapf(types.ErrNotEnoughBalance,
 			"unfreeze request %s is greater than the available frozen balance %s",
 			coin.String(),
 			frozenBalance.String(),
