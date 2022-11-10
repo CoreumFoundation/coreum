@@ -17,11 +17,11 @@ import (
 )
 
 var (
-	//go:embed testdata/fungible-token/artifacts/fungible_token.wasm
-	fungibleTokenWASM []byte
+	//go:embed testdata/issue-fungible-token/artifacts/issue_fungible_token.wasm
+	issueFungibleTokenWASM []byte
 )
 
-type fungibleTokenCreateRequest struct {
+type issueFungibleTokenRequest struct {
 	Symbol    string `json:"symbol"`
 	Amount    string `json:"amount"`
 	Recipient string `json:"recipient"`
@@ -54,7 +54,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 		ctx,
 		clientCtx,
 		txf,
-		fungibleTokenWASM,
+		issueFungibleTokenWASM,
 		InstantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
@@ -70,7 +70,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	initialAmount := sdk.NewInt(5000)
 
 	// issue fungible token by smart contract
-	createPayload, err := json.Marshal(map[fungibleTokenMethod]fungibleTokenCreateRequest{
+	createPayload, err := json.Marshal(map[fungibleTokenMethod]issueFungibleTokenRequest{
 		issue: {
 			Symbol:    symbol,
 			Amount:    initialAmount.String(),

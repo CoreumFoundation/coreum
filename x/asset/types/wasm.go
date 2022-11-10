@@ -12,12 +12,12 @@ func WASMHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]
 	var res []sdk.Msg
 	for msgType, msg := range messages {
 		if msgType == "MsgIssueFungibleToken" {
-			var issueFungibleTokenMsg MsgIssueFungibleToken
-			if err := json.Unmarshal(msg, &issueFungibleTokenMsg); err != nil {
+			var msgIssueFungibleToken MsgIssueFungibleToken
+			if err := json.Unmarshal(msg, &msgIssueFungibleToken); err != nil {
 				return nil, errors.WithStack(err)
 			}
-			issueFungibleTokenMsg.Issuer = sender.String()
-			res = append(res, &issueFungibleTokenMsg)
+			msgIssueFungibleToken.Issuer = sender.String()
+			res = append(res, &msgIssueFungibleToken)
 		}
 	}
 	return res, nil

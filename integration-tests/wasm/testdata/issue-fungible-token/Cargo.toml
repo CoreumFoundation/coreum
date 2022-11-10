@@ -1,11 +1,11 @@
 [package]
-name = "fungible-token"
+name = "issue-fungible-token"
 version = "0.1.0"
 authors = ["Coreum"]
 edition = "2018"
 
 exclude = [
-  "fungible_token.wasm",
+  "issue_fungible_token.wasm",
   "checksums.txt",
 ]
 
