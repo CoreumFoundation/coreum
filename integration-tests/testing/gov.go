@@ -184,11 +184,12 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 			return err
 		}
 
-		if proposal.Status == govtypes.StatusPassed || proposal.Status == govtypes.StatusRejected || proposal.Status == govtypes.StatusFailed {
+		switch proposal.Status {
+		case govtypes.StatusPassed, govtypes.StatusRejected, govtypes.StatusFailed:
 			return nil
+		default:
+			return retry.Retryable(errors.Errorf("waiting for one of final statuses but current one is %s", proposal.Status))
 		}
-
-		return retry.Retryable(errors.Errorf("waiting for one of final statuses but current one is %s", proposal.Status))
 	})
 	if err != nil {
 		return proposal.Status, err
