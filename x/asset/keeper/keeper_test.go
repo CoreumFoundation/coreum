@@ -14,9 +14,19 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
+
+func TestMain(m *testing.M) {
+	n, err := config.NetworkByChainID(config.ChainIDDev)
+	if err != nil {
+		panic(err)
+	}
+	n.SetSDKConfig()
+	m.Run()
+}
 
 func TestKeeper_IssueFungibleToken(t *testing.T) {
 	requireT := require.New(t)
@@ -162,15 +172,16 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(110)), frozenBalance)
 
 	// set frozen balance back to zero
-	assetKeeper.SetFrozenBalances(ctx, receiver, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(0))))
+	err = assetKeeper.UnfreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(110)))
+	requireT.NoError(err)
 	frozenBalance = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
-	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(0)), frozenBalance)
+	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(0)).String(), frozenBalance.String())
 
 	// freeze, query frozen
 	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(40)))
 	requireT.NoError(err)
-	frozen := assetKeeper.GetFrozenBalance(ctx, receiver, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(40)), frozen)
+	frozenBalance = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(40)).String(), frozenBalance.String())
 
 	// test query all frozen
 	allBalances, pageRes, err := assetKeeper.GetAccountsFrozenBalances(ctx, &query.PageRequest{})
@@ -178,13 +189,13 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	assertT.Len(allBalances, 1)
 	assertT.EqualValues(1, pageRes.GetTotal())
 	assertT.EqualValues(receiver.String(), allBalances[0].Address)
-	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(40))), allBalances[0].Coins)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(40))).String(), allBalances[0].Coins.String())
 
 	// increase frozen and query
 	err = assetKeeper.FreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(40)))
 	requireT.NoError(err)
-	frozen = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(80)), frozen)
+	frozenBalance = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(80)), frozenBalance)
 
 	// try to send more than available
 	err = bankKeeper.SendCoins(ctx, receiver, issuer, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(80))))
@@ -208,8 +219,8 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	// unfreeze, query frozen, and try to send
 	err = assetKeeper.UnfreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
 	requireT.NoError(err)
-	frozen = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(0)), frozen)
+	frozenBalance = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(0)), frozenBalance)
 	err = bankKeeper.SendCoins(ctx, receiver, receiver2, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(80))))
 	requireT.NoError(err)
 	balance = bankKeeper.GetBalance(ctx, receiver, denom)
