@@ -66,14 +66,14 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [description] [recipient_address] [initial_amount] --from [issuer] --features=freezable,mintable,...",
+		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=freezable,mintable,...",
 		Args:  cobra.ExactArgs(4),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Issues new fungible token.
 
 Example:
-$ %s tx asset ft issue ABC "ABC Token" [recipient_address] 100000 --from [issuer]
+$ %s tx asset ft issue ABC [recipient_address] 100000 "ABC Token" --from [issuer]
 `,
 				version.AppName,
 			),
@@ -86,8 +86,7 @@ $ %s tx asset ft issue ABC "ABC Token" [recipient_address] 100000 --from [issuer
 
 			issuer := clientCtx.GetFromAddress()
 			symbol := args[0]
-			description := args[1]
-			recipient := args[2]
+			recipient := args[1]
 			// if the recipient wasn't provided the signer is the recipient
 			if recipient != "" {
 				if _, err = sdk.AccAddressFromBech32(recipient); err != nil {
@@ -99,9 +98,9 @@ $ %s tx asset ft issue ABC "ABC Token" [recipient_address] 100000 --from [issuer
 
 			// if the initial amount wasn't provided the amount is zero
 			initialAmount := sdk.ZeroInt()
-			if args[3] != "" {
+			if args[2] != "" {
 				var ok bool
-				initialAmount, ok = sdk.NewIntFromString(args[3])
+				initialAmount, ok = sdk.NewIntFromString(args[2])
 				if !ok {
 					return sdkerrors.Wrap(err, "invalid initial_amount")
 				}
@@ -120,13 +119,14 @@ $ %s tx asset ft issue ABC "ABC Token" [recipient_address] 100000 --from [issuer
 				}
 				features = append(features, types.FungibleTokenFeature(feature))
 			}
+			description := args[3]
 
 			msg := &types.MsgIssueFungibleToken{
 				Issuer:        issuer.String(),
 				Symbol:        symbol,
-				Description:   description,
 				Recipient:     recipient,
 				InitialAmount: initialAmount,
+				Description:   description,
 				Features:      features,
 			}
 

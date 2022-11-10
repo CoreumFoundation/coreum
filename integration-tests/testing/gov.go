@@ -11,6 +11,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/testutil/event"
 )
 
 // Governance keep the test chain predefined account for the governance operations.
@@ -80,7 +81,7 @@ func (g Governance) Propose(ctx context.Context, proposer sdk.AccAddress, conten
 		return 0, err
 	}
 
-	proposalID, err := FindUint64EventAttribute(result.Events, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
+	proposalID, err := event.FindUint64EventAttribute(result.Events, govtypes.EventTypeSubmitProposal, govtypes.AttributeKeyProposalID)
 	if err != nil {
 		return 0, err
 	}

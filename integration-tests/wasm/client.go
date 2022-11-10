@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/testutil/event"
 )
 
 var gasMultiplier = 1.5
@@ -109,7 +109,7 @@ func deploy(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, was
 		return 0, err
 	}
 
-	codeID, err := testing.FindUint64EventAttribute(res.Events, wasmtypes.EventTypeStoreCode, wasmtypes.AttributeKeyCodeID)
+	codeID, err := event.FindUint64EventAttribute(res.Events, wasmtypes.EventTypeStoreCode, wasmtypes.AttributeKeyCodeID)
 	if err != nil {
 		return 0, err
 	}
@@ -139,7 +139,7 @@ func instantiate(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory
 		return "", err
 	}
 
-	contractAddr, err := testing.FindStringEventAttribute(res.Events, wasmtypes.EventTypeInstantiate, wasmtypes.AttributeKeyContractAddr)
+	contractAddr, err := event.FindStringEventAttribute(res.Events, wasmtypes.EventTypeInstantiate, wasmtypes.AttributeKeyContractAddr)
 	if err != nil {
 		return "", err
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
@@ -47,9 +48,8 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 	)
 
 	requireT.NoError(err)
-	evt := testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
-	fungibleTokenIssuedEvt, ok := evt.(*assettypes.EventFungibleTokenIssued)
-	requireT.True(ok)
+	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	requireT.NoError(err)
 	unfreezableDenom := fungibleTokenIssuedEvt.Denom
 
 	// try to freeze unfreezable token
@@ -128,9 +128,8 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	)
 
 	requireT.NoError(err)
-	evt := testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
-	fungibleTokenIssuedEvt, ok := evt.(*assettypes.EventFungibleTokenIssued)
-	requireT.True(ok)
+	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvt.Denom
 
 	// try to pass non-issuer signature to freeze msg

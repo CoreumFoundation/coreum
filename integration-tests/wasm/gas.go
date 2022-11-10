@@ -51,7 +51,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
 			Amount:    "5000",
-			Denom:     chain.NetworkConfig.BaseDenom,
+			Denom:     chain.NetworkConfig.Denom,
 			Recipient: receiver.String(),
 		},
 	})
@@ -67,7 +67,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	bankSend := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   receiver.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.BaseDenom, sdk.NewInt(1000))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.NewInt(1000))),
 	}
 
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})

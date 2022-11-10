@@ -196,7 +196,7 @@ func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: addr.String(),
-		Denom:   chain.NetworkConfig.BaseDenom,
+		Denom:   chain.NetworkConfig.Denom,
 	})
 	require.NoError(t, err)
 

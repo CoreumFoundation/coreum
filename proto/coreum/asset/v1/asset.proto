@@ -13,8 +13,8 @@ enum FungibleTokenFeature {
 message FungibleTokenDefinition {
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.equal) = false;
-  string issuer = 1;
-  string denom = 2;
+  string denom = 1;
+  string issuer = 2;
   repeated FungibleTokenFeature features = 3;
 }
 
