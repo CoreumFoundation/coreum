@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: gaurav-nelson/github-action-markdown-link-check@1.0.11
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           folder-path: "docs/chain"
-          check-modified-files-only: "yes"
+          check-modified-files-only: 'yes'
