@@ -95,9 +95,9 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// wait for proposal result.
-	proposal, err = chain.Governance.GetProposal(ctx, proposalID)
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, proposal.Status)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
 	// check that recipient has received the coins
 	communityPoolRecipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
