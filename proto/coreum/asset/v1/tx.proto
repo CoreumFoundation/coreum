@@ -2,7 +2,7 @@ syntax = "proto3";
 package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
-
+import "cosmos/base/v1beta1/coin.proto";
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
@@ -11,6 +11,12 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 service Msg {
   // IssueFungibleToken defines a method to issue a new fungible token.
   rpc IssueFungibleToken(MsgIssueFungibleToken) returns (MsgIssueFungibleTokenResponse);
+  // FreezeFungibleToken freezes a part of the fungible tokens in an 
+  // account, only if the freezable feature is enabled on that token.
+  rpc FreezeFungibleToken(MsgFreezeFungibleToken) returns (MsgFreezeFungibleTokenResponse);
+  // UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an 
+  // account, only if there are such frozen tokens on that account 
+  rpc UnfreezeFungibleToken(MsgUnfreezeFungibleToken) returns (MsgUnfreezeFungibleTokenResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -25,7 +31,24 @@ message MsgIssueFungibleToken {
     (gogoproto.nullable) = false
   ];
   string description = 5;
+  repeated FungibleTokenFeature features = 6;
 }
 
 // MsgIssueFungibleTokenResponse defines message response for the IssueFungibleToken.
 message MsgIssueFungibleTokenResponse {}
+
+message MsgFreezeFungibleToken {
+  string issuer = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgFreezeFungibleTokenResponse {}
+
+message MsgUnfreezeFungibleToken {
+  string issuer = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgUnfreezeFungibleTokenResponse {}

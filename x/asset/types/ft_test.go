@@ -11,9 +11,9 @@ import (
 
 func TestBuildFungibleTokenDenom(t *testing.T) {
 	symbol := "CORE"
-	addr, err := sdk.AccAddressFromBech32("cosmos1suzxj944nktr30u97g3xs3w2r8vknqnchsrg0x")
+	addr, err := sdk.AccAddressFromBech32("devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5")
 	require.NoError(t, err)
 
 	denom := types.BuildFungibleTokenDenom(symbol, addr)
-	require.Equal(t, "CORE-cosmos1suzxj944nktr30u97g3xs3w2r8vknqnchsrg0x-cbDq", denom)
+	require.Equal(t, "CORE-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-nvR5", denom)
 }
