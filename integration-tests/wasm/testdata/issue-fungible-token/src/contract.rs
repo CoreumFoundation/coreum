@@ -1,8 +1,6 @@
 use cosmwasm_std::{entry_point};
-use cosmwasm_std::{Addr, Uint128};
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, StdError};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, StdError, Uint128};
 use cw2::set_contract_version;
-use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -12,13 +10,6 @@ use crate::sdk;
 const CONTRACT_NAME: &str = "creates.io:issue-fungible-token";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct State {
-    pub owner: Addr,
-}
-
-pub const STATE: Item<State> = Item::new("state");
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -26,12 +17,7 @@ pub fn instantiate(
     info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let state = State {
-        owner: info.sender.clone(),
-    };
-
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    STATE.save(deps.storage, &state)?;
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -42,7 +28,7 @@ pub fn instantiate(
 pub fn execute(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    _info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response<sdk::FungibleTokenMsg>, ContractError> {
     match msg {
@@ -50,13 +36,12 @@ pub fn execute(
             symbol,
             amount,
             recipient,
-        } => issue_token(deps, info, symbol, amount, recipient),
+        } => issue_token(deps, symbol, amount, recipient),
     }
 }
 
 fn issue_token(
     deps: DepsMut,
-    info: MessageInfo,
     symbol: String,
     amount: Uint128,
     recipient: String,
@@ -65,11 +50,6 @@ fn issue_token(
 
     if amount == Uint128::zero() {
         return Err(ContractError::InvalidZeroAmount {});
-    }
-
-    let state = STATE.load(deps.storage)?;
-    if info.sender != state.owner {
-        return Err(ContractError::Unauthorized {});
     }
 
     let issue_token_msg = sdk::FungibleTokenMsg::MsgIssueFungibleToken {
