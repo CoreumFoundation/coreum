@@ -27,6 +27,7 @@ func Tests() []testing.TestSet {
 			Parallel: true,
 			SingleChain: []testing.SingleChainSignature{
 				asset.TestIssueBasicFungibleToken,
+				asset.TestFreezeFungibleToken,
 				auth.TestUnexpectedSequenceNumber,
 				auth.TestFeeLimits,
 				auth.TestMultisig,

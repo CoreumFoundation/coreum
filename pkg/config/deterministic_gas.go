@@ -18,8 +18,10 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssue: 80000,
-		BankSend:   30000,
+		AssetFreeze:   55000,
+		AssetUnfreeze: 55000,
+		AssetIssue:    80000,
+		BankSend:      30000,
 
 		DistributionFundCommunityPool:           50000,
 		DistributionSetWithdrawAddress:          50000,
@@ -51,8 +53,10 @@ type DeterministicGasRequirements struct {
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
 
-	AssetIssue uint64
-	BankSend   uint64
+	AssetFreeze   uint64
+	AssetUnfreeze uint64
+	AssetIssue    uint64
+	BankSend      uint64
 
 	DistributionFundCommunityPool           uint64
 	DistributionSetWithdrawAddress          uint64
@@ -79,6 +83,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	switch msg.(type) {
 	case *assettypes.MsgIssueFungibleToken:
 		return dgr.AssetIssue, true
+	case *assettypes.MsgFreezeFungibleToken:
+		return dgr.AssetFreeze, true
+	case *assettypes.MsgUnfreezeFungibleToken:
+		return dgr.AssetUnfreeze, true
 
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
