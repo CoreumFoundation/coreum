@@ -25,11 +25,11 @@ func TestIssueFungibleToken(t *testing.T) {
 	testNetwork := network.New(t)
 
 	// the denom must start from the letter
-	symbol := "l" + uuid.NewString()[:4]
+	symbol := "BTC" + uuid.NewString()[:4]
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
 
-	args := []string{symbol, `"My Token"`, testNetwork.Validators[0].Address.String(), "777"}
+	args := []string{symbol, testNetwork.Validators[0].Address.String(), "777", `"My Token"`}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)

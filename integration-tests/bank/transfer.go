@@ -54,13 +54,13 @@ func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	balancesSender, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: sender.String(),
-		Denom:   chain.NetworkConfig.BaseDenom,
+		Denom:   chain.NetworkConfig.Denom,
 	})
 	require.NoError(t, err)
 
 	balancesRecipient, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: recipient.String(),
-		Denom:   chain.NetworkConfig.BaseDenom,
+		Denom:   chain.NetworkConfig.Denom,
 	})
 	require.NoError(t, err)
 

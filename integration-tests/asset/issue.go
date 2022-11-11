@@ -9,6 +9,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
@@ -44,9 +45,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	)
 
 	require.NoError(t, err)
-	evt := testing.FindTypedEvent(t, &assettypes.EventFungibleTokenIssued{}, res.Events)
-	fungibleTokenIssuedEvt, ok := evt.(*assettypes.EventFungibleTokenIssued)
-	require.True(t, ok)
+	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
 
 	require.NoError(t, err)
 	require.Equal(t, assettypes.EventFungibleTokenIssued{
@@ -56,6 +55,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Description:   msg.Description,
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
+		Features:      []assettypes.FungibleTokenFeature{},
 	}, *fungibleTokenIssuedEvt)
 
 	denom := fungibleTokenIssuedEvt.Denom

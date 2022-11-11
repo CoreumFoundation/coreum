@@ -9,4 +9,12 @@ var (
 	ErrInvalidFungibleToken = sdkerrors.Register(ModuleName, 1, "invalid fungible token")
 	// ErrFungibleTokenNotFound error for a fungible token not found in the store.
 	ErrFungibleTokenNotFound = sdkerrors.Register(ModuleName, 2, "fungible token not found")
+	// ErrFeatureNotActive is returned when an operation is performed on a token which is missing a required feature
+	ErrFeatureNotActive = sdkerrors.Register(ModuleName, 3, "token feature is not active")
+	// ErrInvalidDenom is returned when the provided denom is not valid
+	ErrInvalidDenom = sdkerrors.Register(ModuleName, 4, "denom is not valid")
+	// ErrInvalidKey is returned when the provided store key is invalid
+	ErrInvalidKey = sdkerrors.Register(ModuleName, 5, "invalid key")
+	// ErrNotEnoughBalance is returned when there is not enough
+	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 6, "not enough balance")
 )

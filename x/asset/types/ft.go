@@ -18,6 +18,7 @@ type IssueFungibleTokenSettings struct {
 	Description   string
 	Recipient     sdk.AccAddress
 	InitialAmount sdk.Int
+	Features      []FungibleTokenFeature
 }
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
@@ -26,6 +27,7 @@ func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
 	return fmt.Sprintf("%s-%s", base, checksum(base))
 }
 
+// TODO(dhil) revise the func later, probably it should be implemented in a different way
 func checksum(data string) string {
 	buf := make([]byte, 4)
 	binary.LittleEndian.PutUint32(buf, crc32.ChecksumIEEE([]byte(data)))
