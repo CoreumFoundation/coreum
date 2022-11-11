@@ -167,7 +167,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	// try to unfreeze more than frozen balance
 	err = assetKeeper.UnfreezeFungibleToken(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(130)))
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.True(types.ErrNotEnoughBalance.Is(err))
 	frozenBalance = assetKeeper.GetFrozenBalance(ctx, receiver, denom)
 	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(110)), frozenBalance)
 
