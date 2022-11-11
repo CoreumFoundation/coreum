@@ -9,9 +9,6 @@ import (
 const (
 	// votingPeriod is the proposal voting period duration
 	votingPeriod = time.Second * 15
-
-	// unbondingTime is the coins unbonding time
-	unbondingTime = time.Second * 5
 )
 
 // NewNetworkConfig returns the network config used by integration tests.
@@ -23,11 +20,6 @@ func NewNetworkConfig() (config.NetworkConfig, error) {
 	networkConfig.GovConfig.ProposalConfig = config.GovProposalConfig{
 		MinDepositAmount: "1000",
 		VotingPeriod:     votingPeriod.String(),
-	}
-
-	networkConfig.StakingConfig = config.StakingConfig{
-		UnbondingTime: unbondingTime.String(),
-		MaxValidators: 32,
 	}
 
 	networkConfig.FundedAccounts = nil
