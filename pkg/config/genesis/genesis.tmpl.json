@@ -23,7 +23,8 @@
   "app_hash": "",
   "app_state": {
     "asset": {
-      "fungible_tokens": []
+      "fungible_tokens": [],
+      "frozen_balances": []
     },
     "auth": {
       "params": {
