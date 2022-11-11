@@ -84,7 +84,7 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
 
 	// verify that voting period started
-	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
