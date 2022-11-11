@@ -101,5 +101,3 @@ The doc provides the instruction on how to install the release binaries of the `
 
 The [Build and Play](https://github.com/CoreumFoundation/coreum/blob/master/README.md#build-and-play) doc describes the
 process of the `cored` binary building and installation from sources.
-    
-    
