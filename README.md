@@ -84,10 +84,10 @@ Remember to replace address with the one existing in your keystore.
 
 ## Devnet
 
-You may connect to Coreum devnet network by connecting to host `35.223.81.227` on port `26657`:
+You may connect to Coreum devnet network by connecting to host `s-0.devnet-1.coreum.dev` on port `443`:
 
 ```
-$ cored status --chain-id=coreum-devnet-1 --node=tcp://35.223.81.227:26657
+$ cored status --chain-id=coreum-devnet-1 --node=https://s-0.devnet-1.coreum.dev:443
 ```
 
 Block explorer for devnet is available at [https://explorer.coreum.com](https://explorer.coreum.com)
