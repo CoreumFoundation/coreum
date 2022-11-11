@@ -25,7 +25,11 @@ import (
 var (
 	txTimeout            = time.Minute
 	txStatusPollInterval = 500 * time.Millisecond
-	requestTimeout       = 10 * time.Second
+
+	txNextBlocksTimeout      = time.Minute
+	txNextBlocksPollInterval = time.Second
+
+	requestTimeout = 10 * time.Second
 )
 
 // Factory is a re-export of the cosmos sdk tx.Factory type, to make usage of this package more convenient.
@@ -251,6 +255,39 @@ func AwaitTx(
 	}
 
 	return resultTx, nil
+}
+
+// AwaitNextBlocks waits for next blocks.
+func AwaitNextBlocks(
+	ctx context.Context,
+	clientCtx ClientContext,
+	nextBlocks int64,
+) error {
+	timeoutCtx, cancel := context.WithTimeout(ctx, txNextBlocksTimeout)
+	defer cancel()
+
+	heightToStart := int64(0)
+	return retry.Do(timeoutCtx, txNextBlocksPollInterval, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+		defer cancel()
+
+		res, err := clientCtx.Client().Status(requestCtx)
+		if err != nil {
+			return retry.Retryable(errors.WithStack(err))
+		}
+
+		currentHeight := res.SyncInfo.LatestBlockHeight
+		if heightToStart == 0 {
+			heightToStart = currentHeight
+		}
+
+		targetHeight := heightToStart + nextBlocks
+		if currentHeight < targetHeight {
+			return retry.Retryable(errors.Errorf("target block: %d hasn't been reached yet, current: %d", targetHeight, currentHeight))
+		}
+
+		return nil
+	})
 }
 
 // GetGasPrice returns the current gas price of the chain
