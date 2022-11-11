@@ -38,7 +38,7 @@ const (
 
 // TestBankSendWasmContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
-func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Chain) { //nolint:funlen // The test covers step-by step use case, no need split it
+func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Chain) {
 	admin := chain.GenAccount()
 	nativeDenom := chain.NetworkConfig.Denom
 

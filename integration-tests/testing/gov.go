@@ -8,7 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
@@ -54,6 +56,38 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	})
 
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
+}
+
+// ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
+func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) error {
+	proposalID, err := g.Propose(ctx, proposer, content)
+	if err != nil {
+		return err
+	}
+
+	proposal, err := g.GetProposal(ctx, uint64(proposalID))
+	if err != nil {
+		return err
+	}
+
+	if govtypes.StatusVotingPeriod != proposal.Status {
+		return errors.Errorf("Unexpected proposal status after creation: %s", proposal.Status)
+	}
+
+	err = g.VoteAll(ctx, option, proposal.ProposalId)
+	if err != nil {
+		return err
+	}
+	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
+
+	err = g.WaitForVotingToPass(ctx, uint64(proposalID))
+	if err != nil {
+		return err
+	}
+
+	logger.Get(ctx).Info("Proposal has been submitted", zap.Int("proposalID", proposalID))
+
+	return nil
 }
 
 // Propose creates a new proposal.
