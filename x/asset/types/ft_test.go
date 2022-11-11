@@ -15,5 +15,5 @@ func TestBuildFungibleTokenDenom(t *testing.T) {
 	require.NoError(t, err)
 
 	denom := types.BuildFungibleTokenDenom(symbol, addr)
-	require.Equal(t, "CORE-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-nvR5", denom)
+	require.Equal(t, "core-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5", denom)
 }
