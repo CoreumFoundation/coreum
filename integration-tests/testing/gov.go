@@ -60,12 +60,17 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
 func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) error {
-	proposalID, err := g.Propose(ctx, proposer, content)
+	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, content)
 	if err != nil {
 		return err
 	}
 
-	proposal, err := g.GetProposal(ctx, uint64(proposalID))
+	proposalID, err := g.Propose(ctx, proposalMsg)
+	if err != nil {
+		return err
+	}
+
+	proposal, err := g.GetProposal(ctx, proposalID)
 	if err != nil {
 		return err
 	}
@@ -80,12 +85,15 @@ func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress,
 	}
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
-	err = g.WaitForVotingToPass(ctx, uint64(proposalID))
+	finalStatus, err := g.WaitForVotingToFinalize(ctx, proposalID)
 	if err != nil {
 		return err
 	}
+	if finalStatus != govtypes.StatusPassed {
+		return errors.Errorf("Unexpected proposal status after voting: %s, expected: %s", finalStatus, govtypes.StatusPassed)
+	}
 
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Int("proposalID", proposalID))
+	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
 
 	return nil
 }

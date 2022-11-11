@@ -78,7 +78,7 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 	))
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
-	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
+	requireT.NoError(err)
 
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
