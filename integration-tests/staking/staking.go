@@ -2,10 +2,13 @@ package staking
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,10 +20,12 @@ import (
 )
 
 // TestValidatorCrudAndStaking checks validator creation, delegation and undelegation operations work correctly.
-//
-//nolint:funlen // this function is a long test scenario and breaking it down might not be that beneficial
 func TestValidatorCrudAndStaking(ctx context.Context, t testing.T, chain testing.Chain) {
-	const initialValidatorAmount = 1000000
+	const (
+		initialValidatorAmount = 1000000
+		// fastUnbondingTime is the coins unbonding time we use for the test only
+		fastUnbondingTime = time.Second * 10
+	)
 
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
@@ -124,6 +129,15 @@ func TestValidatorCrudAndStaking(ctx context.Context, t testing.T, chain testing
 	assert.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 	assert.Equal(t, validator2Address.String(), ddResp.DelegationResponses[0].GetDelegation().ValidatorAddress)
 
+	stakingParams, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	require.NoError(t, err)
+	initialUnbondingTime := stakingParams.Params.UnbondingTime
+
+	// defer to restore the time to default after the test
+	defer setUnbondingTimeViaGovernance(ctx, t, chain, initialUnbondingTime)
+	// change the unbonding time to fast time, to pass the test
+	setUnbondingTimeViaGovernance(ctx, t, chain, fastUnbondingTime)
+
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, validator2Address, chain.NewCoin(delegateAmount))
 	undelegateResult, err := tx.BroadcastTx(
@@ -137,9 +151,7 @@ func TestValidatorCrudAndStaking(ctx context.Context, t testing.T, chain testing
 	logger.Get(ctx).Info("Undelegation executed", zap.String("txHash", undelegateResult.TxHash))
 
 	// Wait for undelegation
-	unbondingTime, err := time.ParseDuration(chain.NetworkConfig.StakingConfig.UnbondingTime)
-	require.NoError(t, err)
-	time.Sleep(unbondingTime + time.Second*2)
+	time.Sleep(fastUnbondingTime + time.Second*2)
 
 	// Check delegator balance
 	delegatorBalance := getBalance(ctx, t, chain, delegator)
@@ -151,6 +163,38 @@ func TestValidatorCrudAndStaking(ctx context.Context, t testing.T, chain testing
 	})
 	require.NoError(t, err)
 	require.Equal(t, int64(initialValidatorAmount), valResp.Validator.Tokens.Int64())
+}
+
+func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testing.Chain, unbondingTime time.Duration) {
+	requireT := require.New(t)
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+
+	// Create new proposer.
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+
+	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	requireT.NoError(err)
+
+	// TODO(dhil) refactor other tests to use that func for the standard propose + vote action.
+	// Create proposition to change max the unbonding time value.
+	err = chain.Governance.ProposeAndVote(ctx, proposer,
+		paramproposal.NewParameterChangeProposal(
+			fmt.Sprintf("Change the unbnunbondingdig time to %s", unbondingTime.String()),
+			"Changing unbonding time for the integration test",
+			[]paramproposal.ParamChange{
+				paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyUnbondingTime), fmt.Sprintf("\"%d\"", unbondingTime)),
+			},
+		),
+		govtypes.OptionYes,
+	)
+	requireT.NoError(err)
+
+	// Check the proposed change is applied.
+	stakingParams, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	requireT.Equal(unbondingTime, stakingParams.Params.UnbondingTime)
 }
 
 func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.AccAddress) sdk.Coin {
