@@ -17,9 +17,16 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssue: 80000,
+		AssetIssue:    80000,
+		AssetFreeze:   55000,
+		AssetUnfreeze: 55000,
 
 		BankSend: 30000,
+
+		DistributionFundCommunityPool:           50000,
+		DistributionSetWithdrawAddress:          50000,
+		DistributionWithdrawDelegatorReward:     120000,
+		DistributionWithdrawValidatorCommission: 50000,
 
 		GovSubmitProposal: 95000,
 		GovVote:           8000,
@@ -49,10 +56,18 @@ type DeterministicGasRequirements struct {
 	FreeSignatures uint64
 
 	// x/asset
-	AssetIssue uint64
+	AssetIssue    uint64
+	AssetFreeze   uint64
+	AssetUnfreeze uint64
 
 	// x/bank
 	BankSend uint64
+
+	// x/distribution
+	DistributionFundCommunityPool           uint64
+	DistributionSetWithdrawAddress          uint64
+	DistributionWithdrawDelegatorReward     uint64
+	DistributionWithdrawValidatorCommission uint64
 
 	// x/gov
 	GovSubmitProposal uint64
