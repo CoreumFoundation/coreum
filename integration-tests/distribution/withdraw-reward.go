@@ -16,8 +16,6 @@ import (
 )
 
 // TestWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
-//
-//nolint:funlen // this test covers the full withdrawal scenario
 func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, chain testing.Chain) {
 	delegator := chain.GenAccount()
 	delegatorRewardRecipient := chain.GenAccount()
