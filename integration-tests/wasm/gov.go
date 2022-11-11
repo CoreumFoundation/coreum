@@ -35,8 +35,6 @@ const (
 
 // TestPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
 // pinning and unpinning through proposals works correctly. We also verify that pinned smart contract consumes less gas.
-//
-//nolint:funlen // this function is a long test scenario and breaking it down might not be that beneficial
 func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t testing.T, chain testing.Chain) {
 	admin := chain.GenAccount()
 	proposer := chain.GenAccount()
