@@ -68,8 +68,6 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 }
 
 // TestFreezeFungibleToken checks freeze functionality of fungible tokens.
-//
-//nolint:funlen // this is a single test scenario and breaking it down is not beneficial
 func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
