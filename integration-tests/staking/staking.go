@@ -167,57 +167,6 @@ func TestValidatorCrudAndStaking(ctx context.Context, t testing.T, chain testing
 	require.Equal(t, int64(initialValidatorAmount), valResp.Validator.Tokens.Int64())
 }
 
-func createValidator(ctx context.Context, t testing.T, chain testing.Chain, initialAmount sdk.Int) (sdk.ValAddress, func()) {
-	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
-	validator := chain.GenAccount()
-
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, validator, testing.BalancesOptions{
-		Messages: []sdk.Msg{&stakingtypes.MsgCreateValidator{}, &stakingtypes.MsgUndelegate{}},
-		Amount:   initialAmount.MulRaw(2),
-	}))
-
-	// Create validator
-	validatorAddr := sdk.ValAddress(validator)
-	msg, err := stakingtypes.NewMsgCreateValidator(
-		validatorAddr,
-		cosmosed25519.GenPrivKey().PubKey(),
-		chain.NewCoin(initialAmount),
-		stakingtypes.Description{Moniker: "TestCreateValidator"},
-		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-		sdk.OneInt(),
-	)
-	require.NoError(t, err)
-	result, err := tx.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(validator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
-		msg,
-	)
-	require.NoError(t, err)
-
-	logger.Get(ctx).Info("Validator creation executed", zap.String("txHash", result.TxHash))
-
-	// Make sure validator has been created
-	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
-		ValidatorAddr: validatorAddr.String(),
-	})
-	require.NoError(t, err)
-	require.Equal(t, initialAmount, resp.Validator.Tokens)
-	require.Equal(t, stakingtypes.Bonded, resp.Validator.Status)
-
-	return validatorAddr, func() {
-		// Undelegate coins, i.e. deactivate validator
-		undelegateMsg := stakingtypes.NewMsgUndelegate(validator, validatorAddr, chain.NewCoin(initialAmount))
-		_, err = tx.BroadcastTx(
-			ctx,
-			chain.ClientContext.WithFromAddress(validator),
-			chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
-			undelegateMsg,
-		)
-		require.NoError(t, err)
-	}
-}
-
 func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testing.Chain, unbondingTime time.Duration) {
 	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
