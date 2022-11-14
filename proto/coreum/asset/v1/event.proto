@@ -30,3 +30,21 @@ message EventFungibleTokenUnfrozen {
   string account = 1;
   cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
 }
+
+message EventFungibleTokenWhitelisted {
+  string denom = 1;
+  repeated string accounts = 2;
+}
+
+message EventFungibleTokenUnwhitelisted {
+  string denom = 1;
+  repeated string accounts = 2;
+}
+
+message EventFungibleTokenWhitelistAllSet {
+  string denom = 1;
+}
+
+message EventFungibleTokenWhitelistAllUnset {
+  string denom = 1;
+}

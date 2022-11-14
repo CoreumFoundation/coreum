@@ -52,3 +52,51 @@ message MsgUnfreezeFungibleToken {
 }
 
 message MsgUnfreezeFungibleTokenResponse {}
+
+// MsgWhitelistFungibleToken whitelists listed accounts so they are able to receive the token.
+// List of accounts might be provided to to optimize the number of transactions, the list should be limited in size.
+// After executing this transaction, key for denom-account combination is added to the store.
+message MsgWhitelistFungibleToken {
+  string issuer = 1;
+  string denom = 2;
+  repeated string accounts = 3;
+}
+
+message MsgWhitelistFungibleTokenResponse {}
+
+// MsgUnwhitelistFungibleToken unwhitelists listed accounts so they are not able to receive the token anymore. They may still
+// transfer tokens they own.
+// List of accounts might be provided to to optimize the number of transactions, the list should be limited in size.
+// After executing this transaction, key for denom-account combination (the one added by MsgWhitelistFungibleToken transaction) is removed from the store.
+message MsgUnwhitelistFungibleToken {
+  string issuer = 1;
+  string denom = 2;
+  repeated string accounts = 3;
+}
+
+message MsgUnwhitelistFungibleTokenResponse {}
+
+// MsgSetWhitelistAllFungibleToken is a mechanism allowing to whitelist everyone without adding all the accounts separately.
+// By executing this transaction "global" flag is set on token saying that everyone may receive it.
+message MsgSetWhitelistAllFungibleToken {
+  string issuer = 1;
+  string denom = 2;
+}
+
+message MsgSetWhitelistAllFungibleTokenResponse {}
+
+// MsgUnsetWhitelistAllFungibleToken unsets global whitelist flag meaning that now only accounts whitelisted explicitly may receive the token.
+// Important information: Neither MsgSetWhitelistAllFungibleToken nor MsgUnsetWhitelistAllFungibleToken affects in any way dictionary of whitelisted accounts managed by
+// MsgWhitelistFungibleToken and MsgUnwhitelistFungibleToken transactions. That list is independent. It means that after executing the series of transactions:
+// 1. MsgWhitelistFungibleToken was used to whitelist account A and B
+// 2. MsgSetWhitelistAllFungibleToken to whitelist all
+// 3. MsgUnsetWhitelistAllFungibleToken to reset global whitelist flag
+// accounts A and B are still allowed to receive the token.
+// That's why MsgSetWhitelistAllFungibleToken is not named MsgWhitelistAllFungibleToken
+// and MsgUnsetWhitelistAllFungibleToken is not named MsgUnwhitelistAllFungibleToken
+message MsgUnsetWhitelistAllFungibleToken {
+  string issuer = 1;
+  string denom = 2;
+}
+
+message MsgUnsetWhitelistAllFungibleTokenResponse {}
