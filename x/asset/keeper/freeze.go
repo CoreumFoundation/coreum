@@ -11,12 +11,12 @@ import (
 )
 
 // FreezeFungibleToken freezes specified token from the specified account
-func (k Keeper) FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	err := k.isFreezeAllowed(ctx, issuer, coin)
+	err := k.isFreezeAllowed(ctx, sender, coin)
 	if err != nil {
 		return err
 	}
@@ -33,12 +33,12 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr
 }
 
 // UnfreezeFungibleToken unfreezes specified tokens from the specified account
-func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, issuer sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	err := k.isFreezeAllowed(ctx, issuer, coin)
+	err := k.isFreezeAllowed(ctx, sender, coin)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 	}
 }
 
-func (k Keeper) isFreezeAllowed(ctx sdk.Context, issuer sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) isFreezeAllowed(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
 	ft, err := k.getFungibleTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
@@ -80,7 +80,7 @@ func (k Keeper) isFreezeAllowed(ctx sdk.Context, issuer sdk.AccAddress, coin sdk
 		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", coin.Denom, types.FungibleTokenFeature_freezable) //nolint:nosnakecase
 	}
 
-	if ft.Issuer != issuer.String() {
+	if ft.Issuer != sender.String() {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "address is unauthorized to perform this operation")
 	}
 
