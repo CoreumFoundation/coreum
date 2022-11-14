@@ -82,7 +82,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "valid msg",
 			message: types.MsgFreezeFungibleToken{
-				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
@@ -93,7 +93,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid issuer address",
 			message: types.MsgFreezeFungibleToken{
-				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
@@ -105,7 +105,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid account",
 			message: types.MsgFreezeFungibleToken{
-				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
@@ -140,7 +140,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "valid msg",
 			message: types.MsgUnfreezeFungibleToken{
-				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
@@ -151,7 +151,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid issuer address",
 			message: types.MsgUnfreezeFungibleToken{
-				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
@@ -163,7 +163,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid account",
 			message: types.MsgUnfreezeFungibleToken{
-				Issuer:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
