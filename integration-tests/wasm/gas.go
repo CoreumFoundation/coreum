@@ -25,7 +25,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	))
 
 	// deploy and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
+	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
 
 	clientCtx := chain.ClientContext.WithFromAddress(admin)
