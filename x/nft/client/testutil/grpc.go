@@ -3,11 +3,11 @@ package testutil
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/testutil/rest"
-	"github.com/cosmos/cosmos-sdk/x/nft"
+	"github.com/CoreumFoundation/coreum/testutil/rest"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-func (s *IntegrationTestSuite) TestQueryBalanceGRPC() {
+func (s *IntegrationTestSuite) TestQueryBalanceGRPC() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -26,7 +26,7 @@ func (s *IntegrationTestSuite) TestQueryBalanceGRPC() {
 				Owner   string
 			}{
 				ClassID: "invalid_class_id",
-				Owner:   s.owner.String(),
+				Owner:   s.owner,
 			},
 			expectErr:   true,
 			errMsg:      "invalid class id",
@@ -39,7 +39,7 @@ func (s *IntegrationTestSuite) TestQueryBalanceGRPC() {
 				Owner   string
 			}{
 				ClassID: ExpNFT.ClassId,
-				Owner:   s.owner.String(),
+				Owner:   s.owner,
 			},
 			expectErr:   false,
 			expectValue: 0,
@@ -57,8 +57,9 @@ func (s *IntegrationTestSuite) TestQueryBalanceGRPC() {
 			expectValue: 1,
 		},
 	}
-	balanceURL := val.APIAddress + "/cosmos/nft/v1beta1/balance/%s/%s"
+	balanceURL := val.APIAddress + "/coreum/nft/v1beta1/balance/%s/%s"
 	for _, tc := range testCases {
+		tc := tc
 		uri := fmt.Sprintf(balanceURL, tc.args.Owner, tc.args.ClassID)
 		s.Run(tc.name, func() {
 			resp, _ := rest.GetRequest(uri)
@@ -74,7 +75,7 @@ func (s *IntegrationTestSuite) TestQueryBalanceGRPC() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryOwnerGRPC() {
+func (s *IntegrationTestSuite) TestQueryOwnerGRPC() { //nolint:revive // test
 	val := s.network.Validators[0]
 
 	testCases := []struct {
@@ -149,8 +150,9 @@ func (s *IntegrationTestSuite) TestQueryOwnerGRPC() {
 			expectResult: val.Address.String(),
 		},
 	}
-	ownerURL := val.APIAddress + "/cosmos/nft/v1beta1/owner/%s/%s"
+	ownerURL := val.APIAddress + "/coreum/nft/v1beta1/owner/%s/%s"
 	for _, tc := range testCases {
+		tc := tc
 		uri := fmt.Sprintf(ownerURL, tc.args.ClassID, tc.args.ID)
 		s.Run(tc.name, func() {
 			resp, err := rest.GetRequest(uri)
@@ -167,7 +169,7 @@ func (s *IntegrationTestSuite) TestQueryOwnerGRPC() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQuerySupplyGRPC() {
+func (s *IntegrationTestSuite) TestQuerySupplyGRPC() { //nolint:revive // test
 	val := s.network.Validators[0]
 
 	testCases := []struct {
@@ -211,8 +213,9 @@ func (s *IntegrationTestSuite) TestQuerySupplyGRPC() {
 			expectResult: 1,
 		},
 	}
-	supplyURL := val.APIAddress + "/cosmos/nft/v1beta1/supply/%s"
+	supplyURL := val.APIAddress + "/coreum/nft/v1beta1/supply/%s"
 	for _, tc := range testCases {
+		tc := tc
 		uri := fmt.Sprintf(supplyURL, tc.args.ClassID)
 		s.Run(tc.name, func() {
 			resp, err := rest.GetRequest(uri)
@@ -229,7 +232,7 @@ func (s *IntegrationTestSuite) TestQuerySupplyGRPC() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryNFTsGRPC() {
+func (s *IntegrationTestSuite) TestQueryNFTsGRPC() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -308,8 +311,9 @@ func (s *IntegrationTestSuite) TestQueryNFTsGRPC() {
 			expectResult: []*nft.NFT{&ExpNFT},
 		},
 	}
-	nftsOfClassURL := val.APIAddress + "/cosmos/nft/v1beta1/nfts?class_id=%s&owner=%s"
+	nftsOfClassURL := val.APIAddress + "/coreum/nft/v1beta1/nfts?class_id=%s&owner=%s"
 	for _, tc := range testCases {
+		tc := tc
 		uri := fmt.Sprintf(nftsOfClassURL, tc.args.ClassID, tc.args.Owner)
 		s.Run(tc.name, func() {
 			resp, err := rest.GetRequest(uri)
@@ -326,7 +330,7 @@ func (s *IntegrationTestSuite) TestQueryNFTsGRPC() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryNFTGRPC() {
+func (s *IntegrationTestSuite) TestQueryNFTGRPC() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -397,8 +401,9 @@ func (s *IntegrationTestSuite) TestQueryNFTGRPC() {
 			expectErr: false,
 		},
 	}
-	nftURL := val.APIAddress + "/cosmos/nft/v1beta1/nfts/%s/%s"
+	nftURL := val.APIAddress + "/coreum/nft/v1beta1/nfts/%s/%s"
 	for _, tc := range testCases {
+		tc := tc
 		uri := fmt.Sprintf(nftURL, tc.args.ClassID, tc.args.ID)
 		s.Run(tc.name, func() {
 			resp, err := rest.GetRequest(uri)
@@ -415,7 +420,7 @@ func (s *IntegrationTestSuite) TestQueryNFTGRPC() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryClassGRPC() {
+func (s *IntegrationTestSuite) TestQueryClassGRPC() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -445,8 +450,9 @@ func (s *IntegrationTestSuite) TestQueryClassGRPC() {
 			expectErr: false,
 		},
 	}
-	classURL := val.APIAddress + "/cosmos/nft/v1beta1/classes/%s"
+	classURL := val.APIAddress + "/coreum/nft/v1beta1/classes/%s"
 	for _, tc := range testCases {
+		tc := tc
 		uri := fmt.Sprintf(classURL, tc.args.ClassID)
 		s.Run(tc.name, func() {
 			resp, err := rest.GetRequest(uri)
@@ -463,9 +469,9 @@ func (s *IntegrationTestSuite) TestQueryClassGRPC() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryClassesGRPC() {
+func (s *IntegrationTestSuite) TestQueryClassesGRPC() { //nolint:revive // test
 	val := s.network.Validators[0]
-	classURL := val.APIAddress + "/cosmos/nft/v1beta1/classes"
+	classURL := val.APIAddress + "/coreum/nft/v1beta1/classes"
 	resp, err := rest.GetRequest(classURL)
 	s.Require().NoError(err)
 	var result nft.QueryClassesResponse

@@ -1,10 +1,10 @@
 package testutil
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/nft"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-func (s *IntegrationTestSuite) TestQueryClass() {
+func (s *IntegrationTestSuite) TestQueryClass() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -33,6 +33,7 @@ func (s *IntegrationTestSuite) TestQueryClass() {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		s.Run(tc.name, func() {
 			resp, err := ExecQueryClass(val, tc.args.ClassID)
 			if tc.expectErr {
@@ -48,7 +49,7 @@ func (s *IntegrationTestSuite) TestQueryClass() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryClasses() {
+func (s *IntegrationTestSuite) TestQueryClasses() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name      string
@@ -60,6 +61,7 @@ func (s *IntegrationTestSuite) TestQueryClasses() {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		s.Run(tc.name, func() {
 			resp, err := ExecQueryClasses(val)
 			if tc.expectErr {
@@ -76,7 +78,7 @@ func (s *IntegrationTestSuite) TestQueryClasses() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryNFT() {
+func (s *IntegrationTestSuite) TestQueryNFT() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -121,6 +123,7 @@ func (s *IntegrationTestSuite) TestQueryNFT() {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		s.Run(tc.name, func() {
 			resp, err := ExecQueryNFT(val, tc.args.ClassID, tc.args.ID)
 			if tc.expectErr {
@@ -136,7 +139,7 @@ func (s *IntegrationTestSuite) TestQueryNFT() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryNFTs() {
+func (s *IntegrationTestSuite) TestQueryNFTs() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -166,7 +169,7 @@ func (s *IntegrationTestSuite) TestQueryNFTs() {
 				Owner   string
 			}{
 				ClassID: testClassID,
-				Owner:   s.owner.String(),
+				Owner:   s.owner,
 			},
 			expectErr:    false,
 			expectResult: []*nft.NFT{},
@@ -194,6 +197,7 @@ func (s *IntegrationTestSuite) TestQueryNFTs() {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		s.Run(tc.name, func() {
 			resp, err := ExecQueryNFTs(val, tc.args.ClassID, tc.args.Owner)
 			if tc.expectErr {
@@ -209,7 +213,7 @@ func (s *IntegrationTestSuite) TestQueryNFTs() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryOwner() {
+func (s *IntegrationTestSuite) TestQueryOwner() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -284,6 +288,7 @@ func (s *IntegrationTestSuite) TestQueryOwner() {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		s.Run(tc.name, func() {
 			resp, err := ExecQueryOwner(val, tc.args.ClassID, tc.args.ID)
 			if tc.expectErr {
@@ -299,7 +304,7 @@ func (s *IntegrationTestSuite) TestQueryOwner() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryBalance() {
+func (s *IntegrationTestSuite) TestQueryBalance() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -343,7 +348,7 @@ func (s *IntegrationTestSuite) TestQueryBalance() {
 				Owner   string
 			}{
 				ClassID: testClassID,
-				Owner:   s.owner.String(),
+				Owner:   s.owner,
 			},
 			expectErr:    false,
 			expectResult: 0,
@@ -362,6 +367,7 @@ func (s *IntegrationTestSuite) TestQueryBalance() {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		s.Run(tc.name, func() {
 			resp, err := ExecQueryBalance(val, tc.args.ClassID, tc.args.Owner)
 			if tc.expectErr {
@@ -377,7 +383,7 @@ func (s *IntegrationTestSuite) TestQueryBalance() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestQuerySupply() {
+func (s *IntegrationTestSuite) TestQuerySupply() { //nolint:revive // test
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -421,6 +427,7 @@ func (s *IntegrationTestSuite) TestQuerySupply() {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		s.Run(tc.name, func() {
 			resp, err := ExecQuerySupply(val, tc.args.ClassID)
 			if tc.expectErr {

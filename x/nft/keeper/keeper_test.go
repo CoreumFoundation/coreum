@@ -3,14 +3,15 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/nft"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 const (
@@ -22,20 +23,19 @@ const (
 	testClassURIHash     = "ae702cefd6b6a65fe2f991ad6d9969ed"
 	testID               = "kitty1"
 	testURI              = "kitty uri"
-	testURIHash          = "229bfd3c1b431c14a526497873897108"
 )
 
 type TestSuite struct {
 	suite.Suite
 
-	app         *simapp.SimApp
+	app         *app.App
 	ctx         sdk.Context
 	addrs       []sdk.AccAddress
 	queryClient nft.QueryClient
 }
 
 func (s *TestSuite) SetupTest() {
-	app := simapp.Setup(s.T(), false)
+	app := simapp.New()
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 	ctx = ctx.WithBlockHeader(tmproto.Header{Time: tmtime.Now()})
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())

@@ -231,6 +231,2449 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
+  '/coreum/nft/v1beta1/balance/{owner}/{class_id}':
+    get:
+      summary: >-
+        Balance queries the number of NFTs of a given class owned by the owner,
+        same as balanceOf in ERC721
+      operationId: CoreumNftV1Beta1Balance
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              amount:
+                type: string
+                format: uint64
+            title: >-
+              QueryBalanceResponse is the response type for the Query/Balance
+              RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          type: string
+        - name: class_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /coreum/nft/v1beta1/classes:
+    get:
+      summary: Classes queries all NFT classes
+      operationId: CoreumNftV1Beta1Classes
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              classes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      title: >-
+                        id defines the unique identifier of the NFT
+                        classification, similar to the contract address of
+                        ERC721
+                    name:
+                      type: string
+                      title: >-
+                        name defines the human-readable name of the NFT
+                        classification. Optional
+                    symbol:
+                      type: string
+                      title: >-
+                        symbol is an abbreviated name for nft classification.
+                        Optional
+                    description:
+                      type: string
+                      title: >-
+                        description is a brief description of nft
+                        classification. Optional
+                    uri:
+                      type: string
+                      title: >-
+                        uri for the class metadata stored off chain. It can
+                        define schema for Class and NFT `Data` attributes.
+                        Optional
+                    uri_hash:
+                      type: string
+                      title: >-
+                        uri_hash is a hash of the document pointed by uri.
+                        Optional
+                    data:
+                      type: object
+                      properties:
+                        '@type':
+                          type: string
+                          description: >-
+                            A URL/resource name that uniquely identifies the
+                            type of the serialized
+
+                            protocol buffer message. This string must contain at
+                            least
+
+                            one "/" character. The last segment of the URL's
+                            path must represent
+
+                            the fully qualified name of the type (as in
+
+                            `path/google.protobuf.Duration`). The name should be
+                            in a canonical form
+
+                            (e.g., leading "." is not accepted).
+
+
+                            In practice, teams usually precompile into the
+                            binary all types that they
+
+                            expect it to use in the context of Any. However, for
+                            URLs which use the
+
+                            scheme `http`, `https`, or no scheme, one can
+                            optionally set up a type
+
+                            server that maps type URLs to message definitions as
+                            follows:
+
+
+                            * If no scheme is provided, `https` is assumed.
+
+                            * An HTTP GET on the URL must yield a
+                            [google.protobuf.Type][]
+                              value in binary format, or produce an error.
+                            * Applications are allowed to cache lookup results
+                            based on the
+                              URL, or have them precompiled into a binary to avoid any
+                              lookup. Therefore, binary compatibility needs to be preserved
+                              on changes to types. (Use versioned type names to manage
+                              breaking changes.)
+
+                            Note: this functionality is not currently available
+                            in the official
+
+                            protobuf release, and it is not used for type URLs
+                            beginning with
+
+                            type.googleapis.com.
+
+
+                            Schemes other than `http`, `https` (or the empty
+                            scheme) might be
+
+                            used with implementation specific semantics.
+                      additionalProperties: {}
+                      description: >-
+                        `Any` contains an arbitrary serialized protocol buffer
+                        message along with a
+
+                        URL that describes the type of the serialized message.
+
+
+                        Protobuf library provides support to pack/unpack Any
+                        values in the form
+
+                        of utility functions or additional generated methods of
+                        the Any type.
+
+
+                        Example 1: Pack and unpack a message in C++.
+
+                            Foo foo = ...;
+                            Any any;
+                            any.PackFrom(foo);
+                            ...
+                            if (any.UnpackTo(&foo)) {
+                              ...
+                            }
+
+                        Example 2: Pack and unpack a message in Java.
+
+                            Foo foo = ...;
+                            Any any = Any.pack(foo);
+                            ...
+                            if (any.is(Foo.class)) {
+                              foo = any.unpack(Foo.class);
+                            }
+
+                         Example 3: Pack and unpack a message in Python.
+
+                            foo = Foo(...)
+                            any = Any()
+                            any.Pack(foo)
+                            ...
+                            if any.Is(Foo.DESCRIPTOR):
+                              any.Unpack(foo)
+                              ...
+
+                         Example 4: Pack and unpack a message in Go
+
+                             foo := &pb.Foo{...}
+                             any, err := anypb.New(foo)
+                             if err != nil {
+                               ...
+                             }
+                             ...
+                             foo := &pb.Foo{}
+                             if err := any.UnmarshalTo(foo); err != nil {
+                               ...
+                             }
+
+                        The pack methods provided by protobuf library will by
+                        default use
+
+                        'type.googleapis.com/full.type.name' as the type URL and
+                        the unpack
+
+                        methods only use the fully qualified type name after the
+                        last '/'
+
+                        in the type URL, for example "foo.bar.com/x/y.z" will
+                        yield type
+
+                        name "y.z".
+
+
+
+                        JSON
+
+                        ====
+
+                        The JSON representation of an `Any` value uses the
+                        regular
+
+                        representation of the deserialized, embedded message,
+                        with an
+
+                        additional field `@type` which contains the type URL.
+                        Example:
+
+                            package google.profile;
+                            message Person {
+                              string first_name = 1;
+                              string last_name = 2;
+                            }
+
+                            {
+                              "@type": "type.googleapis.com/google.profile.Person",
+                              "firstName": <string>,
+                              "lastName": <string>
+                            }
+
+                        If the embedded message type is well-known and has a
+                        custom JSON
+
+                        representation, that representation will be embedded
+                        adding a field
+
+                        `value` which holds the custom JSON in addition to the
+                        `@type`
+
+                        field. Example (for message
+                        [google.protobuf.Duration][]):
+
+                            {
+                              "@type": "type.googleapis.com/google.protobuf.Duration",
+                              "value": "1.212s"
+                            }
+                      title: >-
+                        data is the app specific metadata of the NFT class.
+                        Optional
+                  description: Class defines the class of the nft type.
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            title: >-
+              QueryClassesResponse is the response type for the Query/Classes
+              RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/coreum/nft/v1beta1/classes/{class_id}':
+    get:
+      summary: Class queries an NFT class based on its id
+      operationId: CoreumNftV1Beta1Class
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              class:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    title: >-
+                      id defines the unique identifier of the NFT
+                      classification, similar to the contract address of ERC721
+                  name:
+                    type: string
+                    title: >-
+                      name defines the human-readable name of the NFT
+                      classification. Optional
+                  symbol:
+                    type: string
+                    title: >-
+                      symbol is an abbreviated name for nft classification.
+                      Optional
+                  description:
+                    type: string
+                    title: >-
+                      description is a brief description of nft classification.
+                      Optional
+                  uri:
+                    type: string
+                    title: >-
+                      uri for the class metadata stored off chain. It can define
+                      schema for Class and NFT `Data` attributes. Optional
+                  uri_hash:
+                    type: string
+                    title: >-
+                      uri_hash is a hash of the document pointed by uri.
+                      Optional
+                  data:
+                    type: object
+                    properties:
+                      '@type':
+                        type: string
+                        description: >-
+                          A URL/resource name that uniquely identifies the type
+                          of the serialized
+
+                          protocol buffer message. This string must contain at
+                          least
+
+                          one "/" character. The last segment of the URL's path
+                          must represent
+
+                          the fully qualified name of the type (as in
+
+                          `path/google.protobuf.Duration`). The name should be
+                          in a canonical form
+
+                          (e.g., leading "." is not accepted).
+
+
+                          In practice, teams usually precompile into the binary
+                          all types that they
+
+                          expect it to use in the context of Any. However, for
+                          URLs which use the
+
+                          scheme `http`, `https`, or no scheme, one can
+                          optionally set up a type
+
+                          server that maps type URLs to message definitions as
+                          follows:
+
+
+                          * If no scheme is provided, `https` is assumed.
+
+                          * An HTTP GET on the URL must yield a
+                          [google.protobuf.Type][]
+                            value in binary format, or produce an error.
+                          * Applications are allowed to cache lookup results
+                          based on the
+                            URL, or have them precompiled into a binary to avoid any
+                            lookup. Therefore, binary compatibility needs to be preserved
+                            on changes to types. (Use versioned type names to manage
+                            breaking changes.)
+
+                          Note: this functionality is not currently available in
+                          the official
+
+                          protobuf release, and it is not used for type URLs
+                          beginning with
+
+                          type.googleapis.com.
+
+
+                          Schemes other than `http`, `https` (or the empty
+                          scheme) might be
+
+                          used with implementation specific semantics.
+                    additionalProperties: {}
+                    description: >-
+                      `Any` contains an arbitrary serialized protocol buffer
+                      message along with a
+
+                      URL that describes the type of the serialized message.
+
+
+                      Protobuf library provides support to pack/unpack Any
+                      values in the form
+
+                      of utility functions or additional generated methods of
+                      the Any type.
+
+
+                      Example 1: Pack and unpack a message in C++.
+
+                          Foo foo = ...;
+                          Any any;
+                          any.PackFrom(foo);
+                          ...
+                          if (any.UnpackTo(&foo)) {
+                            ...
+                          }
+
+                      Example 2: Pack and unpack a message in Java.
+
+                          Foo foo = ...;
+                          Any any = Any.pack(foo);
+                          ...
+                          if (any.is(Foo.class)) {
+                            foo = any.unpack(Foo.class);
+                          }
+
+                       Example 3: Pack and unpack a message in Python.
+
+                          foo = Foo(...)
+                          any = Any()
+                          any.Pack(foo)
+                          ...
+                          if any.Is(Foo.DESCRIPTOR):
+                            any.Unpack(foo)
+                            ...
+
+                       Example 4: Pack and unpack a message in Go
+
+                           foo := &pb.Foo{...}
+                           any, err := anypb.New(foo)
+                           if err != nil {
+                             ...
+                           }
+                           ...
+                           foo := &pb.Foo{}
+                           if err := any.UnmarshalTo(foo); err != nil {
+                             ...
+                           }
+
+                      The pack methods provided by protobuf library will by
+                      default use
+
+                      'type.googleapis.com/full.type.name' as the type URL and
+                      the unpack
+
+                      methods only use the fully qualified type name after the
+                      last '/'
+
+                      in the type URL, for example "foo.bar.com/x/y.z" will
+                      yield type
+
+                      name "y.z".
+
+
+
+                      JSON
+
+                      ====
+
+                      The JSON representation of an `Any` value uses the regular
+
+                      representation of the deserialized, embedded message, with
+                      an
+
+                      additional field `@type` which contains the type URL.
+                      Example:
+
+                          package google.profile;
+                          message Person {
+                            string first_name = 1;
+                            string last_name = 2;
+                          }
+
+                          {
+                            "@type": "type.googleapis.com/google.profile.Person",
+                            "firstName": <string>,
+                            "lastName": <string>
+                          }
+
+                      If the embedded message type is well-known and has a
+                      custom JSON
+
+                      representation, that representation will be embedded
+                      adding a field
+
+                      `value` which holds the custom JSON in addition to the
+                      `@type`
+
+                      field. Example (for message [google.protobuf.Duration][]):
+
+                          {
+                            "@type": "type.googleapis.com/google.protobuf.Duration",
+                            "value": "1.212s"
+                          }
+                    title: >-
+                      data is the app specific metadata of the NFT class.
+                      Optional
+                description: Class defines the class of the nft type.
+            title: >-
+              QueryClassResponse is the response type for the Query/Class RPC
+              method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /coreum/nft/v1beta1/nfts:
+    get:
+      summary: >-
+        NFTs queries all NFTs of a given class or owner,choose at least one of
+        the two, similar to tokenByIndex in
+
+        ERC721Enumerable
+      operationId: CoreumNftV1Beta1NFTs
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              nfts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    class_id:
+                      type: string
+                      title: >-
+                        class_id associated with the NFT, similar to the
+                        contract address of ERC721
+                    id:
+                      type: string
+                      title: id is a unique identifier of the NFT
+                    uri:
+                      type: string
+                      title: uri for the NFT metadata stored off chain
+                    uri_hash:
+                      type: string
+                      title: uri_hash is a hash of the document pointed by uri
+                    data:
+                      type: object
+                      properties:
+                        '@type':
+                          type: string
+                          description: >-
+                            A URL/resource name that uniquely identifies the
+                            type of the serialized
+
+                            protocol buffer message. This string must contain at
+                            least
+
+                            one "/" character. The last segment of the URL's
+                            path must represent
+
+                            the fully qualified name of the type (as in
+
+                            `path/google.protobuf.Duration`). The name should be
+                            in a canonical form
+
+                            (e.g., leading "." is not accepted).
+
+
+                            In practice, teams usually precompile into the
+                            binary all types that they
+
+                            expect it to use in the context of Any. However, for
+                            URLs which use the
+
+                            scheme `http`, `https`, or no scheme, one can
+                            optionally set up a type
+
+                            server that maps type URLs to message definitions as
+                            follows:
+
+
+                            * If no scheme is provided, `https` is assumed.
+
+                            * An HTTP GET on the URL must yield a
+                            [google.protobuf.Type][]
+                              value in binary format, or produce an error.
+                            * Applications are allowed to cache lookup results
+                            based on the
+                              URL, or have them precompiled into a binary to avoid any
+                              lookup. Therefore, binary compatibility needs to be preserved
+                              on changes to types. (Use versioned type names to manage
+                              breaking changes.)
+
+                            Note: this functionality is not currently available
+                            in the official
+
+                            protobuf release, and it is not used for type URLs
+                            beginning with
+
+                            type.googleapis.com.
+
+
+                            Schemes other than `http`, `https` (or the empty
+                            scheme) might be
+
+                            used with implementation specific semantics.
+                      additionalProperties: {}
+                      description: >-
+                        `Any` contains an arbitrary serialized protocol buffer
+                        message along with a
+
+                        URL that describes the type of the serialized message.
+
+
+                        Protobuf library provides support to pack/unpack Any
+                        values in the form
+
+                        of utility functions or additional generated methods of
+                        the Any type.
+
+
+                        Example 1: Pack and unpack a message in C++.
+
+                            Foo foo = ...;
+                            Any any;
+                            any.PackFrom(foo);
+                            ...
+                            if (any.UnpackTo(&foo)) {
+                              ...
+                            }
+
+                        Example 2: Pack and unpack a message in Java.
+
+                            Foo foo = ...;
+                            Any any = Any.pack(foo);
+                            ...
+                            if (any.is(Foo.class)) {
+                              foo = any.unpack(Foo.class);
+                            }
+
+                         Example 3: Pack and unpack a message in Python.
+
+                            foo = Foo(...)
+                            any = Any()
+                            any.Pack(foo)
+                            ...
+                            if any.Is(Foo.DESCRIPTOR):
+                              any.Unpack(foo)
+                              ...
+
+                         Example 4: Pack and unpack a message in Go
+
+                             foo := &pb.Foo{...}
+                             any, err := anypb.New(foo)
+                             if err != nil {
+                               ...
+                             }
+                             ...
+                             foo := &pb.Foo{}
+                             if err := any.UnmarshalTo(foo); err != nil {
+                               ...
+                             }
+
+                        The pack methods provided by protobuf library will by
+                        default use
+
+                        'type.googleapis.com/full.type.name' as the type URL and
+                        the unpack
+
+                        methods only use the fully qualified type name after the
+                        last '/'
+
+                        in the type URL, for example "foo.bar.com/x/y.z" will
+                        yield type
+
+                        name "y.z".
+
+
+
+                        JSON
+
+                        ====
+
+                        The JSON representation of an `Any` value uses the
+                        regular
+
+                        representation of the deserialized, embedded message,
+                        with an
+
+                        additional field `@type` which contains the type URL.
+                        Example:
+
+                            package google.profile;
+                            message Person {
+                              string first_name = 1;
+                              string last_name = 2;
+                            }
+
+                            {
+                              "@type": "type.googleapis.com/google.profile.Person",
+                              "firstName": <string>,
+                              "lastName": <string>
+                            }
+
+                        If the embedded message type is well-known and has a
+                        custom JSON
+
+                        representation, that representation will be embedded
+                        adding a field
+
+                        `value` which holds the custom JSON in addition to the
+                        `@type`
+
+                        field. Example (for message
+                        [google.protobuf.Duration][]):
+
+                            {
+                              "@type": "type.googleapis.com/google.protobuf.Duration",
+                              "value": "1.212s"
+                            }
+                      title: data is an app specific data of the NFT. Optional
+                  description: NFT defines the NFT.
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            title: >-
+              QueryNFTsResponse is the response type for the Query/NFTs RPC
+              methods
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: class_id
+          in: query
+          required: false
+          type: string
+        - name: owner
+          in: query
+          required: false
+          type: string
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/coreum/nft/v1beta1/nfts/{class_id}/{id}':
+    get:
+      summary: NFT queries an NFT based on its class and id.
+      operationId: CoreumNftV1Beta1NFT
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              nft:
+                type: object
+                properties:
+                  class_id:
+                    type: string
+                    title: >-
+                      class_id associated with the NFT, similar to the contract
+                      address of ERC721
+                  id:
+                    type: string
+                    title: id is a unique identifier of the NFT
+                  uri:
+                    type: string
+                    title: uri for the NFT metadata stored off chain
+                  uri_hash:
+                    type: string
+                    title: uri_hash is a hash of the document pointed by uri
+                  data:
+                    type: object
+                    properties:
+                      '@type':
+                        type: string
+                        description: >-
+                          A URL/resource name that uniquely identifies the type
+                          of the serialized
+
+                          protocol buffer message. This string must contain at
+                          least
+
+                          one "/" character. The last segment of the URL's path
+                          must represent
+
+                          the fully qualified name of the type (as in
+
+                          `path/google.protobuf.Duration`). The name should be
+                          in a canonical form
+
+                          (e.g., leading "." is not accepted).
+
+
+                          In practice, teams usually precompile into the binary
+                          all types that they
+
+                          expect it to use in the context of Any. However, for
+                          URLs which use the
+
+                          scheme `http`, `https`, or no scheme, one can
+                          optionally set up a type
+
+                          server that maps type URLs to message definitions as
+                          follows:
+
+
+                          * If no scheme is provided, `https` is assumed.
+
+                          * An HTTP GET on the URL must yield a
+                          [google.protobuf.Type][]
+                            value in binary format, or produce an error.
+                          * Applications are allowed to cache lookup results
+                          based on the
+                            URL, or have them precompiled into a binary to avoid any
+                            lookup. Therefore, binary compatibility needs to be preserved
+                            on changes to types. (Use versioned type names to manage
+                            breaking changes.)
+
+                          Note: this functionality is not currently available in
+                          the official
+
+                          protobuf release, and it is not used for type URLs
+                          beginning with
+
+                          type.googleapis.com.
+
+
+                          Schemes other than `http`, `https` (or the empty
+                          scheme) might be
+
+                          used with implementation specific semantics.
+                    additionalProperties: {}
+                    description: >-
+                      `Any` contains an arbitrary serialized protocol buffer
+                      message along with a
+
+                      URL that describes the type of the serialized message.
+
+
+                      Protobuf library provides support to pack/unpack Any
+                      values in the form
+
+                      of utility functions or additional generated methods of
+                      the Any type.
+
+
+                      Example 1: Pack and unpack a message in C++.
+
+                          Foo foo = ...;
+                          Any any;
+                          any.PackFrom(foo);
+                          ...
+                          if (any.UnpackTo(&foo)) {
+                            ...
+                          }
+
+                      Example 2: Pack and unpack a message in Java.
+
+                          Foo foo = ...;
+                          Any any = Any.pack(foo);
+                          ...
+                          if (any.is(Foo.class)) {
+                            foo = any.unpack(Foo.class);
+                          }
+
+                       Example 3: Pack and unpack a message in Python.
+
+                          foo = Foo(...)
+                          any = Any()
+                          any.Pack(foo)
+                          ...
+                          if any.Is(Foo.DESCRIPTOR):
+                            any.Unpack(foo)
+                            ...
+
+                       Example 4: Pack and unpack a message in Go
+
+                           foo := &pb.Foo{...}
+                           any, err := anypb.New(foo)
+                           if err != nil {
+                             ...
+                           }
+                           ...
+                           foo := &pb.Foo{}
+                           if err := any.UnmarshalTo(foo); err != nil {
+                             ...
+                           }
+
+                      The pack methods provided by protobuf library will by
+                      default use
+
+                      'type.googleapis.com/full.type.name' as the type URL and
+                      the unpack
+
+                      methods only use the fully qualified type name after the
+                      last '/'
+
+                      in the type URL, for example "foo.bar.com/x/y.z" will
+                      yield type
+
+                      name "y.z".
+
+
+
+                      JSON
+
+                      ====
+
+                      The JSON representation of an `Any` value uses the regular
+
+                      representation of the deserialized, embedded message, with
+                      an
+
+                      additional field `@type` which contains the type URL.
+                      Example:
+
+                          package google.profile;
+                          message Person {
+                            string first_name = 1;
+                            string last_name = 2;
+                          }
+
+                          {
+                            "@type": "type.googleapis.com/google.profile.Person",
+                            "firstName": <string>,
+                            "lastName": <string>
+                          }
+
+                      If the embedded message type is well-known and has a
+                      custom JSON
+
+                      representation, that representation will be embedded
+                      adding a field
+
+                      `value` which holds the custom JSON in addition to the
+                      `@type`
+
+                      field. Example (for message [google.protobuf.Duration][]):
+
+                          {
+                            "@type": "type.googleapis.com/google.protobuf.Duration",
+                            "value": "1.212s"
+                          }
+                    title: data is an app specific data of the NFT. Optional
+                description: NFT defines the NFT.
+            title: QueryNFTResponse is the response type for the Query/NFT RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          type: string
+        - name: id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  '/coreum/nft/v1beta1/owner/{class_id}/{id}':
+    get:
+      summary: >-
+        Owner queries the owner of the NFT based on its class and id, same as
+        ownerOf in ERC721
+      operationId: CoreumNftV1Beta1Owner
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              owner:
+                type: string
+            title: >-
+              QueryOwnerResponse is the response type for the Query/Owner RPC
+              method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          type: string
+        - name: id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  '/coreum/nft/v1beta1/supply/{class_id}':
+    get:
+      summary: >-
+        Supply queries the number of NFTs from the given class, same as
+        totalSupply of ERC721.
+      operationId: CoreumNftV1Beta1Supply
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              amount:
+                type: string
+                format: uint64
+            title: >-
+              QuerySupplyResponse is the response type for the Query/Supply RPC
+              method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: class_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /cosmos/auth/v1beta1/accounts:
     get:
       summary: Accounts returns all the existing accounts
@@ -2786,33 +5229,44 @@ paths:
                       last_commit_hash:
                         type: string
                         format: byte
+                        description: commit from validators from the last block
                         title: hashes of block data
                       data_hash:
                         type: string
                         format: byte
+                        title: transactions
                       validators_hash:
                         type: string
                         format: byte
+                        description: validators for the current block
                         title: hashes from the app output from the prev block
                       next_validators_hash:
                         type: string
                         format: byte
+                        title: validators for the next block
                       consensus_hash:
                         type: string
                         format: byte
+                        title: consensus params for current block
                       app_hash:
                         type: string
                         format: byte
+                        title: state after txs from the previous block
                       last_results_hash:
                         type: string
                         format: byte
+                        title: >-
+                          root hash of all results from the txs from the
+                          previous block
                       evidence_hash:
                         type: string
                         format: byte
+                        description: evidence included in the block
                         title: consensus info
                       proposer_address:
                         type: string
                         format: byte
+                        title: original proposer of the block
                     description: Header defines the structure of a Tendermint block header.
                   data:
                     type: object
@@ -2884,6 +5338,7 @@ paths:
                                               format: byte
                                           title: PartsetHeader
                                       title: BlockID
+                                      description: zero if vote is nil.
                                     timestamp:
                                       type: string
                                       format: date-time
@@ -2941,6 +5396,7 @@ paths:
                                               format: byte
                                           title: PartsetHeader
                                       title: BlockID
+                                      description: zero if vote is nil.
                                     timestamp:
                                       type: string
                                       format: date-time
@@ -3029,35 +5485,48 @@ paths:
                                             last_commit_hash:
                                               type: string
                                               format: byte
+                                              description: >-
+                                                commit from validators from the last
+                                                block
                                               title: hashes of block data
                                             data_hash:
                                               type: string
                                               format: byte
+                                              title: transactions
                                             validators_hash:
                                               type: string
                                               format: byte
+                                              description: validators for the current block
                                               title: >-
                                                 hashes from the app output from the prev
                                                 block
                                             next_validators_hash:
                                               type: string
                                               format: byte
+                                              title: validators for the next block
                                             consensus_hash:
                                               type: string
                                               format: byte
+                                              title: consensus params for current block
                                             app_hash:
                                               type: string
                                               format: byte
+                                              title: state after txs from the previous block
                                             last_results_hash:
                                               type: string
                                               format: byte
+                                              title: >-
+                                                root hash of all results from the txs
+                                                from the previous block
                                             evidence_hash:
                                               type: string
                                               format: byte
+                                              description: evidence included in the block
                                               title: consensus info
                                             proposer_address:
                                               type: string
                                               format: byte
+                                              title: original proposer of the block
                                           description: >-
                                             Header defines the structure of a
                                             Tendermint block header.
@@ -3540,33 +6009,44 @@ paths:
                       last_commit_hash:
                         type: string
                         format: byte
+                        description: commit from validators from the last block
                         title: hashes of block data
                       data_hash:
                         type: string
                         format: byte
+                        title: transactions
                       validators_hash:
                         type: string
                         format: byte
+                        description: validators for the current block
                         title: hashes from the app output from the prev block
                       next_validators_hash:
                         type: string
                         format: byte
+                        title: validators for the next block
                       consensus_hash:
                         type: string
                         format: byte
+                        title: consensus params for current block
                       app_hash:
                         type: string
                         format: byte
+                        title: state after txs from the previous block
                       last_results_hash:
                         type: string
                         format: byte
+                        title: >-
+                          root hash of all results from the txs from the
+                          previous block
                       evidence_hash:
                         type: string
                         format: byte
+                        description: evidence included in the block
                         title: consensus info
                       proposer_address:
                         type: string
                         format: byte
+                        title: original proposer of the block
                     description: Header defines the structure of a Tendermint block header.
                   data:
                     type: object
@@ -3638,6 +6118,7 @@ paths:
                                               format: byte
                                           title: PartsetHeader
                                       title: BlockID
+                                      description: zero if vote is nil.
                                     timestamp:
                                       type: string
                                       format: date-time
@@ -3695,6 +6176,7 @@ paths:
                                               format: byte
                                           title: PartsetHeader
                                       title: BlockID
+                                      description: zero if vote is nil.
                                     timestamp:
                                       type: string
                                       format: date-time
@@ -3783,35 +6265,48 @@ paths:
                                             last_commit_hash:
                                               type: string
                                               format: byte
+                                              description: >-
+                                                commit from validators from the last
+                                                block
                                               title: hashes of block data
                                             data_hash:
                                               type: string
                                               format: byte
+                                              title: transactions
                                             validators_hash:
                                               type: string
                                               format: byte
+                                              description: validators for the current block
                                               title: >-
                                                 hashes from the app output from the prev
                                                 block
                                             next_validators_hash:
                                               type: string
                                               format: byte
+                                              title: validators for the next block
                                             consensus_hash:
                                               type: string
                                               format: byte
+                                              title: consensus params for current block
                                             app_hash:
                                               type: string
                                               format: byte
+                                              title: state after txs from the previous block
                                             last_results_hash:
                                               type: string
                                               format: byte
+                                              title: >-
+                                                root hash of all results from the txs
+                                                from the previous block
                                             evidence_hash:
                                               type: string
                                               format: byte
+                                              description: evidence included in the block
                                               title: consensus info
                                             proposer_address:
                                               type: string
                                               format: byte
+                                              title: original proposer of the block
                                           description: >-
                                             Header defines the structure of a
                                             Tendermint block header.
@@ -11704,7 +14199,10 @@ paths:
                             description: >-
                               RedelegationEntry defines a redelegation object
                               with relevant metadata.
-                          description: entries are the redelegation entries.
+                          description: |-
+                            entries are the redelegation entries.
+
+                            redelegation entries
                       description: >-
                         Redelegation contains the list of a particular
                         delegator's redelegating bonds
@@ -12104,7 +14602,10 @@ paths:
                         description: >-
                           UnbondingDelegationEntry defines an unbonding object
                           with relevant metadata.
-                      description: entries are the unbonding delegation entries.
+                      description: |-
+                        entries are the unbonding delegation entries.
+
+                        unbonding delegation entries
                   description: >-
                     UnbondingDelegation stores all of a single delegator's
                     unbonding bonds
@@ -13556,33 +16057,44 @@ paths:
                       last_commit_hash:
                         type: string
                         format: byte
+                        description: commit from validators from the last block
                         title: hashes of block data
                       data_hash:
                         type: string
                         format: byte
+                        title: transactions
                       validators_hash:
                         type: string
                         format: byte
+                        description: validators for the current block
                         title: hashes from the app output from the prev block
                       next_validators_hash:
                         type: string
                         format: byte
+                        title: validators for the next block
                       consensus_hash:
                         type: string
                         format: byte
+                        title: consensus params for current block
                       app_hash:
                         type: string
                         format: byte
+                        title: state after txs from the previous block
                       last_results_hash:
                         type: string
                         format: byte
+                        title: >-
+                          root hash of all results from the txs from the
+                          previous block
                       evidence_hash:
                         type: string
                         format: byte
+                        description: evidence included in the block
                         title: consensus info
                       proposer_address:
                         type: string
                         format: byte
+                        title: original proposer of the block
                     description: Header defines the structure of a Tendermint block header.
                   valset:
                     type: array
@@ -16271,7 +18783,10 @@ paths:
                       description: >-
                         UnbondingDelegationEntry defines an unbonding object
                         with relevant metadata.
-                    description: entries are the unbonding delegation entries.
+                    description: |-
+                      entries are the unbonding delegation entries.
+
+                      unbonding delegation entries
                 description: >-
                   UnbondingDelegation stores all of a single delegator's
                   unbonding bonds
@@ -16537,7 +19052,10 @@ paths:
                         description: >-
                           UnbondingDelegationEntry defines an unbonding object
                           with relevant metadata.
-                      description: entries are the unbonding delegation entries.
+                      description: |-
+                        entries are the unbonding delegation entries.
+
+                        unbonding delegation entries
                   description: >-
                     UnbondingDelegation stores all of a single delegator's
                     unbonding bonds
@@ -16877,6 +19395,7 @@ paths:
                                 format: byte
                               index:
                                 type: boolean
+                                title: nondeterministic
                             description: >-
                               EventAttribute is a single key-value pair,
                               associated with an event.
@@ -17664,6 +20183,7 @@ paths:
                                 format: byte
                               index:
                                 type: boolean
+                                title: nondeterministic
                             description: >-
                               EventAttribute is a single key-value pair,
                               associated with an event.
@@ -19502,6 +22022,7 @@ paths:
                     code_id:
                       type: string
                       format: uint64
+                      title: id for legacy support
                     creator:
                       type: string
                     data_hash:
@@ -19810,6 +22331,7 @@ paths:
                   code_id:
                     type: string
                     format: uint64
+                    title: id for legacy support
                   creator:
                     type: string
                   data_hash:
@@ -20030,6 +22552,7 @@ paths:
                         }
       parameters:
         - name: code_id
+          description: grpc-gateway_out does not support Go style CodID
           in: path
           required: true
           type: string
@@ -20259,6 +22782,7 @@ paths:
                         }
       parameters:
         - name: code_id
+          description: grpc-gateway_out does not support Go style CodID
           in: path
           required: true
           type: string
@@ -33418,6 +35942,1295 @@ definitions:
 
       NOTE: The amount field is an Dec which implements the custom method
       signatures required by gogoproto.
+  coreum.nft.v1beta1.Class:
+    type: object
+    properties:
+      id:
+        type: string
+        title: >-
+          id defines the unique identifier of the NFT classification, similar to
+          the contract address of ERC721
+      name:
+        type: string
+        title: >-
+          name defines the human-readable name of the NFT classification.
+          Optional
+      symbol:
+        type: string
+        title: symbol is an abbreviated name for nft classification. Optional
+      description:
+        type: string
+        title: description is a brief description of nft classification. Optional
+      uri:
+        type: string
+        title: >-
+          uri for the class metadata stored off chain. It can define schema for
+          Class and NFT `Data` attributes. Optional
+      uri_hash:
+        type: string
+        title: uri_hash is a hash of the document pointed by uri. Optional
+      data:
+        type: object
+        properties:
+          '@type':
+            type: string
+            description: >-
+              A URL/resource name that uniquely identifies the type of the
+              serialized
+
+              protocol buffer message. This string must contain at least
+
+              one "/" character. The last segment of the URL's path must
+              represent
+
+              the fully qualified name of the type (as in
+
+              `path/google.protobuf.Duration`). The name should be in a
+              canonical form
+
+              (e.g., leading "." is not accepted).
+
+
+              In practice, teams usually precompile into the binary all types
+              that they
+
+              expect it to use in the context of Any. However, for URLs which
+              use the
+
+              scheme `http`, `https`, or no scheme, one can optionally set up a
+              type
+
+              server that maps type URLs to message definitions as follows:
+
+
+              * If no scheme is provided, `https` is assumed.
+
+              * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+                value in binary format, or produce an error.
+              * Applications are allowed to cache lookup results based on the
+                URL, or have them precompiled into a binary to avoid any
+                lookup. Therefore, binary compatibility needs to be preserved
+                on changes to types. (Use versioned type names to manage
+                breaking changes.)
+
+              Note: this functionality is not currently available in the
+              official
+
+              protobuf release, and it is not used for type URLs beginning with
+
+              type.googleapis.com.
+
+
+              Schemes other than `http`, `https` (or the empty scheme) might be
+
+              used with implementation specific semantics.
+        additionalProperties: {}
+        description: >-
+          `Any` contains an arbitrary serialized protocol buffer message along
+          with a
+
+          URL that describes the type of the serialized message.
+
+
+          Protobuf library provides support to pack/unpack Any values in the
+          form
+
+          of utility functions or additional generated methods of the Any type.
+
+
+          Example 1: Pack and unpack a message in C++.
+
+              Foo foo = ...;
+              Any any;
+              any.PackFrom(foo);
+              ...
+              if (any.UnpackTo(&foo)) {
+                ...
+              }
+
+          Example 2: Pack and unpack a message in Java.
+
+              Foo foo = ...;
+              Any any = Any.pack(foo);
+              ...
+              if (any.is(Foo.class)) {
+                foo = any.unpack(Foo.class);
+              }
+
+           Example 3: Pack and unpack a message in Python.
+
+              foo = Foo(...)
+              any = Any()
+              any.Pack(foo)
+              ...
+              if any.Is(Foo.DESCRIPTOR):
+                any.Unpack(foo)
+                ...
+
+           Example 4: Pack and unpack a message in Go
+
+               foo := &pb.Foo{...}
+               any, err := anypb.New(foo)
+               if err != nil {
+                 ...
+               }
+               ...
+               foo := &pb.Foo{}
+               if err := any.UnmarshalTo(foo); err != nil {
+                 ...
+               }
+
+          The pack methods provided by protobuf library will by default use
+
+          'type.googleapis.com/full.type.name' as the type URL and the unpack
+
+          methods only use the fully qualified type name after the last '/'
+
+          in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+          name "y.z".
+
+
+
+          JSON
+
+          ====
+
+          The JSON representation of an `Any` value uses the regular
+
+          representation of the deserialized, embedded message, with an
+
+          additional field `@type` which contains the type URL. Example:
+
+              package google.profile;
+              message Person {
+                string first_name = 1;
+                string last_name = 2;
+              }
+
+              {
+                "@type": "type.googleapis.com/google.profile.Person",
+                "firstName": <string>,
+                "lastName": <string>
+              }
+
+          If the embedded message type is well-known and has a custom JSON
+
+          representation, that representation will be embedded adding a field
+
+          `value` which holds the custom JSON in addition to the `@type`
+
+          field. Example (for message [google.protobuf.Duration][]):
+
+              {
+                "@type": "type.googleapis.com/google.protobuf.Duration",
+                "value": "1.212s"
+              }
+        title: data is the app specific metadata of the NFT class. Optional
+    description: Class defines the class of the nft type.
+  coreum.nft.v1beta1.MsgSendResponse:
+    type: object
+    description: MsgSendResponse defines the Msg/Send response type.
+  coreum.nft.v1beta1.NFT:
+    type: object
+    properties:
+      class_id:
+        type: string
+        title: >-
+          class_id associated with the NFT, similar to the contract address of
+          ERC721
+      id:
+        type: string
+        title: id is a unique identifier of the NFT
+      uri:
+        type: string
+        title: uri for the NFT metadata stored off chain
+      uri_hash:
+        type: string
+        title: uri_hash is a hash of the document pointed by uri
+      data:
+        type: object
+        properties:
+          '@type':
+            type: string
+            description: >-
+              A URL/resource name that uniquely identifies the type of the
+              serialized
+
+              protocol buffer message. This string must contain at least
+
+              one "/" character. The last segment of the URL's path must
+              represent
+
+              the fully qualified name of the type (as in
+
+              `path/google.protobuf.Duration`). The name should be in a
+              canonical form
+
+              (e.g., leading "." is not accepted).
+
+
+              In practice, teams usually precompile into the binary all types
+              that they
+
+              expect it to use in the context of Any. However, for URLs which
+              use the
+
+              scheme `http`, `https`, or no scheme, one can optionally set up a
+              type
+
+              server that maps type URLs to message definitions as follows:
+
+
+              * If no scheme is provided, `https` is assumed.
+
+              * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+                value in binary format, or produce an error.
+              * Applications are allowed to cache lookup results based on the
+                URL, or have them precompiled into a binary to avoid any
+                lookup. Therefore, binary compatibility needs to be preserved
+                on changes to types. (Use versioned type names to manage
+                breaking changes.)
+
+              Note: this functionality is not currently available in the
+              official
+
+              protobuf release, and it is not used for type URLs beginning with
+
+              type.googleapis.com.
+
+
+              Schemes other than `http`, `https` (or the empty scheme) might be
+
+              used with implementation specific semantics.
+        additionalProperties: {}
+        description: >-
+          `Any` contains an arbitrary serialized protocol buffer message along
+          with a
+
+          URL that describes the type of the serialized message.
+
+
+          Protobuf library provides support to pack/unpack Any values in the
+          form
+
+          of utility functions or additional generated methods of the Any type.
+
+
+          Example 1: Pack and unpack a message in C++.
+
+              Foo foo = ...;
+              Any any;
+              any.PackFrom(foo);
+              ...
+              if (any.UnpackTo(&foo)) {
+                ...
+              }
+
+          Example 2: Pack and unpack a message in Java.
+
+              Foo foo = ...;
+              Any any = Any.pack(foo);
+              ...
+              if (any.is(Foo.class)) {
+                foo = any.unpack(Foo.class);
+              }
+
+           Example 3: Pack and unpack a message in Python.
+
+              foo = Foo(...)
+              any = Any()
+              any.Pack(foo)
+              ...
+              if any.Is(Foo.DESCRIPTOR):
+                any.Unpack(foo)
+                ...
+
+           Example 4: Pack and unpack a message in Go
+
+               foo := &pb.Foo{...}
+               any, err := anypb.New(foo)
+               if err != nil {
+                 ...
+               }
+               ...
+               foo := &pb.Foo{}
+               if err := any.UnmarshalTo(foo); err != nil {
+                 ...
+               }
+
+          The pack methods provided by protobuf library will by default use
+
+          'type.googleapis.com/full.type.name' as the type URL and the unpack
+
+          methods only use the fully qualified type name after the last '/'
+
+          in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+          name "y.z".
+
+
+
+          JSON
+
+          ====
+
+          The JSON representation of an `Any` value uses the regular
+
+          representation of the deserialized, embedded message, with an
+
+          additional field `@type` which contains the type URL. Example:
+
+              package google.profile;
+              message Person {
+                string first_name = 1;
+                string last_name = 2;
+              }
+
+              {
+                "@type": "type.googleapis.com/google.profile.Person",
+                "firstName": <string>,
+                "lastName": <string>
+              }
+
+          If the embedded message type is well-known and has a custom JSON
+
+          representation, that representation will be embedded adding a field
+
+          `value` which holds the custom JSON in addition to the `@type`
+
+          field. Example (for message [google.protobuf.Duration][]):
+
+              {
+                "@type": "type.googleapis.com/google.protobuf.Duration",
+                "value": "1.212s"
+              }
+        title: data is an app specific data of the NFT. Optional
+    description: NFT defines the NFT.
+  coreum.nft.v1beta1.QueryBalanceResponse:
+    type: object
+    properties:
+      amount:
+        type: string
+        format: uint64
+    title: QueryBalanceResponse is the response type for the Query/Balance RPC method
+  coreum.nft.v1beta1.QueryClassResponse:
+    type: object
+    properties:
+      class:
+        type: object
+        properties:
+          id:
+            type: string
+            title: >-
+              id defines the unique identifier of the NFT classification,
+              similar to the contract address of ERC721
+          name:
+            type: string
+            title: >-
+              name defines the human-readable name of the NFT classification.
+              Optional
+          symbol:
+            type: string
+            title: symbol is an abbreviated name for nft classification. Optional
+          description:
+            type: string
+            title: description is a brief description of nft classification. Optional
+          uri:
+            type: string
+            title: >-
+              uri for the class metadata stored off chain. It can define schema
+              for Class and NFT `Data` attributes. Optional
+          uri_hash:
+            type: string
+            title: uri_hash is a hash of the document pointed by uri. Optional
+          data:
+            type: object
+            properties:
+              '@type':
+                type: string
+                description: >-
+                  A URL/resource name that uniquely identifies the type of the
+                  serialized
+
+                  protocol buffer message. This string must contain at least
+
+                  one "/" character. The last segment of the URL's path must
+                  represent
+
+                  the fully qualified name of the type (as in
+
+                  `path/google.protobuf.Duration`). The name should be in a
+                  canonical form
+
+                  (e.g., leading "." is not accepted).
+
+
+                  In practice, teams usually precompile into the binary all
+                  types that they
+
+                  expect it to use in the context of Any. However, for URLs
+                  which use the
+
+                  scheme `http`, `https`, or no scheme, one can optionally set
+                  up a type
+
+                  server that maps type URLs to message definitions as follows:
+
+
+                  * If no scheme is provided, `https` is assumed.
+
+                  * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+                    value in binary format, or produce an error.
+                  * Applications are allowed to cache lookup results based on
+                  the
+                    URL, or have them precompiled into a binary to avoid any
+                    lookup. Therefore, binary compatibility needs to be preserved
+                    on changes to types. (Use versioned type names to manage
+                    breaking changes.)
+
+                  Note: this functionality is not currently available in the
+                  official
+
+                  protobuf release, and it is not used for type URLs beginning
+                  with
+
+                  type.googleapis.com.
+
+
+                  Schemes other than `http`, `https` (or the empty scheme) might
+                  be
+
+                  used with implementation specific semantics.
+            additionalProperties: {}
+            description: >-
+              `Any` contains an arbitrary serialized protocol buffer message
+              along with a
+
+              URL that describes the type of the serialized message.
+
+
+              Protobuf library provides support to pack/unpack Any values in the
+              form
+
+              of utility functions or additional generated methods of the Any
+              type.
+
+
+              Example 1: Pack and unpack a message in C++.
+
+                  Foo foo = ...;
+                  Any any;
+                  any.PackFrom(foo);
+                  ...
+                  if (any.UnpackTo(&foo)) {
+                    ...
+                  }
+
+              Example 2: Pack and unpack a message in Java.
+
+                  Foo foo = ...;
+                  Any any = Any.pack(foo);
+                  ...
+                  if (any.is(Foo.class)) {
+                    foo = any.unpack(Foo.class);
+                  }
+
+               Example 3: Pack and unpack a message in Python.
+
+                  foo = Foo(...)
+                  any = Any()
+                  any.Pack(foo)
+                  ...
+                  if any.Is(Foo.DESCRIPTOR):
+                    any.Unpack(foo)
+                    ...
+
+               Example 4: Pack and unpack a message in Go
+
+                   foo := &pb.Foo{...}
+                   any, err := anypb.New(foo)
+                   if err != nil {
+                     ...
+                   }
+                   ...
+                   foo := &pb.Foo{}
+                   if err := any.UnmarshalTo(foo); err != nil {
+                     ...
+                   }
+
+              The pack methods provided by protobuf library will by default use
+
+              'type.googleapis.com/full.type.name' as the type URL and the
+              unpack
+
+              methods only use the fully qualified type name after the last '/'
+
+              in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+              name "y.z".
+
+
+
+              JSON
+
+              ====
+
+              The JSON representation of an `Any` value uses the regular
+
+              representation of the deserialized, embedded message, with an
+
+              additional field `@type` which contains the type URL. Example:
+
+                  package google.profile;
+                  message Person {
+                    string first_name = 1;
+                    string last_name = 2;
+                  }
+
+                  {
+                    "@type": "type.googleapis.com/google.profile.Person",
+                    "firstName": <string>,
+                    "lastName": <string>
+                  }
+
+              If the embedded message type is well-known and has a custom JSON
+
+              representation, that representation will be embedded adding a
+              field
+
+              `value` which holds the custom JSON in addition to the `@type`
+
+              field. Example (for message [google.protobuf.Duration][]):
+
+                  {
+                    "@type": "type.googleapis.com/google.protobuf.Duration",
+                    "value": "1.212s"
+                  }
+            title: data is the app specific metadata of the NFT class. Optional
+        description: Class defines the class of the nft type.
+    title: QueryClassResponse is the response type for the Query/Class RPC method
+  coreum.nft.v1beta1.QueryClassesResponse:
+    type: object
+    properties:
+      classes:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              title: >-
+                id defines the unique identifier of the NFT classification,
+                similar to the contract address of ERC721
+            name:
+              type: string
+              title: >-
+                name defines the human-readable name of the NFT classification.
+                Optional
+            symbol:
+              type: string
+              title: symbol is an abbreviated name for nft classification. Optional
+            description:
+              type: string
+              title: >-
+                description is a brief description of nft classification.
+                Optional
+            uri:
+              type: string
+              title: >-
+                uri for the class metadata stored off chain. It can define
+                schema for Class and NFT `Data` attributes. Optional
+            uri_hash:
+              type: string
+              title: uri_hash is a hash of the document pointed by uri. Optional
+            data:
+              type: object
+              properties:
+                '@type':
+                  type: string
+                  description: >-
+                    A URL/resource name that uniquely identifies the type of the
+                    serialized
+
+                    protocol buffer message. This string must contain at least
+
+                    one "/" character. The last segment of the URL's path must
+                    represent
+
+                    the fully qualified name of the type (as in
+
+                    `path/google.protobuf.Duration`). The name should be in a
+                    canonical form
+
+                    (e.g., leading "." is not accepted).
+
+
+                    In practice, teams usually precompile into the binary all
+                    types that they
+
+                    expect it to use in the context of Any. However, for URLs
+                    which use the
+
+                    scheme `http`, `https`, or no scheme, one can optionally set
+                    up a type
+
+                    server that maps type URLs to message definitions as
+                    follows:
+
+
+                    * If no scheme is provided, `https` is assumed.
+
+                    * An HTTP GET on the URL must yield a
+                    [google.protobuf.Type][]
+                      value in binary format, or produce an error.
+                    * Applications are allowed to cache lookup results based on
+                    the
+                      URL, or have them precompiled into a binary to avoid any
+                      lookup. Therefore, binary compatibility needs to be preserved
+                      on changes to types. (Use versioned type names to manage
+                      breaking changes.)
+
+                    Note: this functionality is not currently available in the
+                    official
+
+                    protobuf release, and it is not used for type URLs beginning
+                    with
+
+                    type.googleapis.com.
+
+
+                    Schemes other than `http`, `https` (or the empty scheme)
+                    might be
+
+                    used with implementation specific semantics.
+              additionalProperties: {}
+              description: >-
+                `Any` contains an arbitrary serialized protocol buffer message
+                along with a
+
+                URL that describes the type of the serialized message.
+
+
+                Protobuf library provides support to pack/unpack Any values in
+                the form
+
+                of utility functions or additional generated methods of the Any
+                type.
+
+
+                Example 1: Pack and unpack a message in C++.
+
+                    Foo foo = ...;
+                    Any any;
+                    any.PackFrom(foo);
+                    ...
+                    if (any.UnpackTo(&foo)) {
+                      ...
+                    }
+
+                Example 2: Pack and unpack a message in Java.
+
+                    Foo foo = ...;
+                    Any any = Any.pack(foo);
+                    ...
+                    if (any.is(Foo.class)) {
+                      foo = any.unpack(Foo.class);
+                    }
+
+                 Example 3: Pack and unpack a message in Python.
+
+                    foo = Foo(...)
+                    any = Any()
+                    any.Pack(foo)
+                    ...
+                    if any.Is(Foo.DESCRIPTOR):
+                      any.Unpack(foo)
+                      ...
+
+                 Example 4: Pack and unpack a message in Go
+
+                     foo := &pb.Foo{...}
+                     any, err := anypb.New(foo)
+                     if err != nil {
+                       ...
+                     }
+                     ...
+                     foo := &pb.Foo{}
+                     if err := any.UnmarshalTo(foo); err != nil {
+                       ...
+                     }
+
+                The pack methods provided by protobuf library will by default
+                use
+
+                'type.googleapis.com/full.type.name' as the type URL and the
+                unpack
+
+                methods only use the fully qualified type name after the last
+                '/'
+
+                in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+                name "y.z".
+
+
+
+                JSON
+
+                ====
+
+                The JSON representation of an `Any` value uses the regular
+
+                representation of the deserialized, embedded message, with an
+
+                additional field `@type` which contains the type URL. Example:
+
+                    package google.profile;
+                    message Person {
+                      string first_name = 1;
+                      string last_name = 2;
+                    }
+
+                    {
+                      "@type": "type.googleapis.com/google.profile.Person",
+                      "firstName": <string>,
+                      "lastName": <string>
+                    }
+
+                If the embedded message type is well-known and has a custom JSON
+
+                representation, that representation will be embedded adding a
+                field
+
+                `value` which holds the custom JSON in addition to the `@type`
+
+                field. Example (for message [google.protobuf.Duration][]):
+
+                    {
+                      "@type": "type.googleapis.com/google.protobuf.Duration",
+                      "value": "1.212s"
+                    }
+              title: data is the app specific metadata of the NFT class. Optional
+          description: Class defines the class of the nft type.
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    title: QueryClassesResponse is the response type for the Query/Classes RPC method
+  coreum.nft.v1beta1.QueryNFTResponse:
+    type: object
+    properties:
+      nft:
+        type: object
+        properties:
+          class_id:
+            type: string
+            title: >-
+              class_id associated with the NFT, similar to the contract address
+              of ERC721
+          id:
+            type: string
+            title: id is a unique identifier of the NFT
+          uri:
+            type: string
+            title: uri for the NFT metadata stored off chain
+          uri_hash:
+            type: string
+            title: uri_hash is a hash of the document pointed by uri
+          data:
+            type: object
+            properties:
+              '@type':
+                type: string
+                description: >-
+                  A URL/resource name that uniquely identifies the type of the
+                  serialized
+
+                  protocol buffer message. This string must contain at least
+
+                  one "/" character. The last segment of the URL's path must
+                  represent
+
+                  the fully qualified name of the type (as in
+
+                  `path/google.protobuf.Duration`). The name should be in a
+                  canonical form
+
+                  (e.g., leading "." is not accepted).
+
+
+                  In practice, teams usually precompile into the binary all
+                  types that they
+
+                  expect it to use in the context of Any. However, for URLs
+                  which use the
+
+                  scheme `http`, `https`, or no scheme, one can optionally set
+                  up a type
+
+                  server that maps type URLs to message definitions as follows:
+
+
+                  * If no scheme is provided, `https` is assumed.
+
+                  * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+                    value in binary format, or produce an error.
+                  * Applications are allowed to cache lookup results based on
+                  the
+                    URL, or have them precompiled into a binary to avoid any
+                    lookup. Therefore, binary compatibility needs to be preserved
+                    on changes to types. (Use versioned type names to manage
+                    breaking changes.)
+
+                  Note: this functionality is not currently available in the
+                  official
+
+                  protobuf release, and it is not used for type URLs beginning
+                  with
+
+                  type.googleapis.com.
+
+
+                  Schemes other than `http`, `https` (or the empty scheme) might
+                  be
+
+                  used with implementation specific semantics.
+            additionalProperties: {}
+            description: >-
+              `Any` contains an arbitrary serialized protocol buffer message
+              along with a
+
+              URL that describes the type of the serialized message.
+
+
+              Protobuf library provides support to pack/unpack Any values in the
+              form
+
+              of utility functions or additional generated methods of the Any
+              type.
+
+
+              Example 1: Pack and unpack a message in C++.
+
+                  Foo foo = ...;
+                  Any any;
+                  any.PackFrom(foo);
+                  ...
+                  if (any.UnpackTo(&foo)) {
+                    ...
+                  }
+
+              Example 2: Pack and unpack a message in Java.
+
+                  Foo foo = ...;
+                  Any any = Any.pack(foo);
+                  ...
+                  if (any.is(Foo.class)) {
+                    foo = any.unpack(Foo.class);
+                  }
+
+               Example 3: Pack and unpack a message in Python.
+
+                  foo = Foo(...)
+                  any = Any()
+                  any.Pack(foo)
+                  ...
+                  if any.Is(Foo.DESCRIPTOR):
+                    any.Unpack(foo)
+                    ...
+
+               Example 4: Pack and unpack a message in Go
+
+                   foo := &pb.Foo{...}
+                   any, err := anypb.New(foo)
+                   if err != nil {
+                     ...
+                   }
+                   ...
+                   foo := &pb.Foo{}
+                   if err := any.UnmarshalTo(foo); err != nil {
+                     ...
+                   }
+
+              The pack methods provided by protobuf library will by default use
+
+              'type.googleapis.com/full.type.name' as the type URL and the
+              unpack
+
+              methods only use the fully qualified type name after the last '/'
+
+              in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+              name "y.z".
+
+
+
+              JSON
+
+              ====
+
+              The JSON representation of an `Any` value uses the regular
+
+              representation of the deserialized, embedded message, with an
+
+              additional field `@type` which contains the type URL. Example:
+
+                  package google.profile;
+                  message Person {
+                    string first_name = 1;
+                    string last_name = 2;
+                  }
+
+                  {
+                    "@type": "type.googleapis.com/google.profile.Person",
+                    "firstName": <string>,
+                    "lastName": <string>
+                  }
+
+              If the embedded message type is well-known and has a custom JSON
+
+              representation, that representation will be embedded adding a
+              field
+
+              `value` which holds the custom JSON in addition to the `@type`
+
+              field. Example (for message [google.protobuf.Duration][]):
+
+                  {
+                    "@type": "type.googleapis.com/google.protobuf.Duration",
+                    "value": "1.212s"
+                  }
+            title: data is an app specific data of the NFT. Optional
+        description: NFT defines the NFT.
+    title: QueryNFTResponse is the response type for the Query/NFT RPC method
+  coreum.nft.v1beta1.QueryNFTsResponse:
+    type: object
+    properties:
+      nfts:
+        type: array
+        items:
+          type: object
+          properties:
+            class_id:
+              type: string
+              title: >-
+                class_id associated with the NFT, similar to the contract
+                address of ERC721
+            id:
+              type: string
+              title: id is a unique identifier of the NFT
+            uri:
+              type: string
+              title: uri for the NFT metadata stored off chain
+            uri_hash:
+              type: string
+              title: uri_hash is a hash of the document pointed by uri
+            data:
+              type: object
+              properties:
+                '@type':
+                  type: string
+                  description: >-
+                    A URL/resource name that uniquely identifies the type of the
+                    serialized
+
+                    protocol buffer message. This string must contain at least
+
+                    one "/" character. The last segment of the URL's path must
+                    represent
+
+                    the fully qualified name of the type (as in
+
+                    `path/google.protobuf.Duration`). The name should be in a
+                    canonical form
+
+                    (e.g., leading "." is not accepted).
+
+
+                    In practice, teams usually precompile into the binary all
+                    types that they
+
+                    expect it to use in the context of Any. However, for URLs
+                    which use the
+
+                    scheme `http`, `https`, or no scheme, one can optionally set
+                    up a type
+
+                    server that maps type URLs to message definitions as
+                    follows:
+
+
+                    * If no scheme is provided, `https` is assumed.
+
+                    * An HTTP GET on the URL must yield a
+                    [google.protobuf.Type][]
+                      value in binary format, or produce an error.
+                    * Applications are allowed to cache lookup results based on
+                    the
+                      URL, or have them precompiled into a binary to avoid any
+                      lookup. Therefore, binary compatibility needs to be preserved
+                      on changes to types. (Use versioned type names to manage
+                      breaking changes.)
+
+                    Note: this functionality is not currently available in the
+                    official
+
+                    protobuf release, and it is not used for type URLs beginning
+                    with
+
+                    type.googleapis.com.
+
+
+                    Schemes other than `http`, `https` (or the empty scheme)
+                    might be
+
+                    used with implementation specific semantics.
+              additionalProperties: {}
+              description: >-
+                `Any` contains an arbitrary serialized protocol buffer message
+                along with a
+
+                URL that describes the type of the serialized message.
+
+
+                Protobuf library provides support to pack/unpack Any values in
+                the form
+
+                of utility functions or additional generated methods of the Any
+                type.
+
+
+                Example 1: Pack and unpack a message in C++.
+
+                    Foo foo = ...;
+                    Any any;
+                    any.PackFrom(foo);
+                    ...
+                    if (any.UnpackTo(&foo)) {
+                      ...
+                    }
+
+                Example 2: Pack and unpack a message in Java.
+
+                    Foo foo = ...;
+                    Any any = Any.pack(foo);
+                    ...
+                    if (any.is(Foo.class)) {
+                      foo = any.unpack(Foo.class);
+                    }
+
+                 Example 3: Pack and unpack a message in Python.
+
+                    foo = Foo(...)
+                    any = Any()
+                    any.Pack(foo)
+                    ...
+                    if any.Is(Foo.DESCRIPTOR):
+                      any.Unpack(foo)
+                      ...
+
+                 Example 4: Pack and unpack a message in Go
+
+                     foo := &pb.Foo{...}
+                     any, err := anypb.New(foo)
+                     if err != nil {
+                       ...
+                     }
+                     ...
+                     foo := &pb.Foo{}
+                     if err := any.UnmarshalTo(foo); err != nil {
+                       ...
+                     }
+
+                The pack methods provided by protobuf library will by default
+                use
+
+                'type.googleapis.com/full.type.name' as the type URL and the
+                unpack
+
+                methods only use the fully qualified type name after the last
+                '/'
+
+                in the type URL, for example "foo.bar.com/x/y.z" will yield type
+
+                name "y.z".
+
+
+
+                JSON
+
+                ====
+
+                The JSON representation of an `Any` value uses the regular
+
+                representation of the deserialized, embedded message, with an
+
+                additional field `@type` which contains the type URL. Example:
+
+                    package google.profile;
+                    message Person {
+                      string first_name = 1;
+                      string last_name = 2;
+                    }
+
+                    {
+                      "@type": "type.googleapis.com/google.profile.Person",
+                      "firstName": <string>,
+                      "lastName": <string>
+                    }
+
+                If the embedded message type is well-known and has a custom JSON
+
+                representation, that representation will be embedded adding a
+                field
+
+                `value` which holds the custom JSON in addition to the `@type`
+
+                field. Example (for message [google.protobuf.Duration][]):
+
+                    {
+                      "@type": "type.googleapis.com/google.protobuf.Duration",
+                      "value": "1.212s"
+                    }
+              title: data is an app specific data of the NFT. Optional
+          description: NFT defines the NFT.
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    title: QueryNFTsResponse is the response type for the Query/NFTs RPC methods
+  coreum.nft.v1beta1.QueryOwnerResponse:
+    type: object
+    properties:
+      owner:
+        type: string
+    title: QueryOwnerResponse is the response type for the Query/Owner RPC method
+  coreum.nft.v1beta1.QuerySupplyResponse:
+    type: object
+    properties:
+      amount:
+        type: string
+        format: uint64
+    title: QuerySupplyResponse is the response type for the Query/Supply RPC method
+  cosmos.base.query.v1beta1.PageRequest:
+    type: object
+    properties:
+      key:
+        type: string
+        format: byte
+        description: |-
+          key is a value returned in PageResponse.next_key to begin
+          querying the next page most efficiently. Only one of offset or key
+          should be set.
+      offset:
+        type: string
+        format: uint64
+        description: |-
+          offset is a numeric offset that can be used when key is unavailable.
+          It is less efficient than using key. Only one of offset or key should
+          be set.
+      limit:
+        type: string
+        format: uint64
+        description: >-
+          limit is the total number of results to be returned in the result
+          page.
+
+          If left empty it will default to a value to be set by each app.
+      count_total:
+        type: boolean
+        description: >-
+          count_total is set to true  to indicate that the result set should
+          include
+
+          a count of the total number of items available for pagination in UIs.
+
+          count_total is only respected when offset is used. It is ignored when
+          key
+
+          is set.
+      reverse:
+        type: boolean
+        description: >-
+          reverse is set to true if results are to be returned in the descending
+          order.
+
+
+          Since: cosmos-sdk 0.43
+    description: |-
+      message SomeRequest {
+               Foo some_parameter = 1;
+               PageRequest pagination = 2;
+       }
+    title: |-
+      PageRequest is to be embedded in gRPC request messages for efficient
+      pagination. Ex:
+  cosmos.base.query.v1beta1.PageResponse:
+    type: object
+    properties:
+      next_key:
+        type: string
+        format: byte
+        title: |-
+          next_key is the key to be passed to PageRequest.key to
+          query the next page most efficiently
+      total:
+        type: string
+        format: uint64
+        title: |-
+          total is total number of results available if PageRequest.count_total
+          was set, its value is undefined otherwise
+    description: |-
+      PageResponse is to be embedded in gRPC response messages where the
+      corresponding request message has used PageRequest.
+
+       message SomeResponse {
+               repeated Bar results = 1;
+               PageResponse page = 2;
+       }
   cosmos.auth.v1beta1.Params:
     type: object
     properties:
@@ -33813,82 +37626,6 @@ definitions:
             type: string
             format: uint64
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
-  cosmos.base.query.v1beta1.PageRequest:
-    type: object
-    properties:
-      key:
-        type: string
-        format: byte
-        description: |-
-          key is a value returned in PageResponse.next_key to begin
-          querying the next page most efficiently. Only one of offset or key
-          should be set.
-      offset:
-        type: string
-        format: uint64
-        description: |-
-          offset is a numeric offset that can be used when key is unavailable.
-          It is less efficient than using key. Only one of offset or key should
-          be set.
-      limit:
-        type: string
-        format: uint64
-        description: >-
-          limit is the total number of results to be returned in the result
-          page.
-
-          If left empty it will default to a value to be set by each app.
-      count_total:
-        type: boolean
-        description: >-
-          count_total is set to true  to indicate that the result set should
-          include
-
-          a count of the total number of items available for pagination in UIs.
-
-          count_total is only respected when offset is used. It is ignored when
-          key
-
-          is set.
-      reverse:
-        type: boolean
-        description: >-
-          reverse is set to true if results are to be returned in the descending
-          order.
-
-
-          Since: cosmos-sdk 0.43
-    description: |-
-      message SomeRequest {
-               Foo some_parameter = 1;
-               PageRequest pagination = 2;
-       }
-    title: |-
-      PageRequest is to be embedded in gRPC request messages for efficient
-      pagination. Ex:
-  cosmos.base.query.v1beta1.PageResponse:
-    type: object
-    properties:
-      next_key:
-        type: string
-        format: byte
-        title: |-
-          next_key is the key to be passed to PageRequest.key to
-          query the next page most efficiently
-      total:
-        type: string
-        format: uint64
-        title: |-
-          total is total number of results available if PageRequest.count_total
-          was set, its value is undefined otherwise
-    description: |-
-      PageResponse is to be embedded in gRPC response messages where the
-      corresponding request message has used PageRequest.
-
-       message SomeResponse {
-               repeated Bar results = 1;
-               PageResponse page = 2;
-       }
   cosmos.authz.v1beta1.Grant:
     type: object
     properties:
@@ -34938,33 +38675,42 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
+                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
+                title: transactions
               validators_hash:
                 type: string
                 format: byte
+                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
+                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
+                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
+                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
+                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
+                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
+                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           data:
             type: object
@@ -35033,6 +38779,7 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
+                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -35090,6 +38837,7 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
+                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -35178,35 +38926,48 @@ definitions:
                                     last_commit_hash:
                                       type: string
                                       format: byte
+                                      description: >-
+                                        commit from validators from the last
+                                        block
                                       title: hashes of block data
                                     data_hash:
                                       type: string
                                       format: byte
+                                      title: transactions
                                     validators_hash:
                                       type: string
                                       format: byte
+                                      description: validators for the current block
                                       title: >-
                                         hashes from the app output from the prev
                                         block
                                     next_validators_hash:
                                       type: string
                                       format: byte
+                                      title: validators for the next block
                                     consensus_hash:
                                       type: string
                                       format: byte
+                                      title: consensus params for current block
                                     app_hash:
                                       type: string
                                       format: byte
+                                      title: state after txs from the previous block
                                     last_results_hash:
                                       type: string
                                       format: byte
+                                      title: >-
+                                        root hash of all results from the txs
+                                        from the previous block
                                     evidence_hash:
                                       type: string
                                       format: byte
+                                      description: evidence included in the block
                                       title: consensus info
                                     proposer_address:
                                       type: string
                                       format: byte
+                                      title: original proposer of the block
                                   description: >-
                                     Header defines the structure of a Tendermint
                                     block header.
@@ -35489,33 +39250,42 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
+                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
+                title: transactions
               validators_hash:
                 type: string
                 format: byte
+                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
+                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
+                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
+                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
+                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
+                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
+                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           data:
             type: object
@@ -35584,6 +39354,7 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
+                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -35641,6 +39412,7 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
+                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -35729,35 +39501,48 @@ definitions:
                                     last_commit_hash:
                                       type: string
                                       format: byte
+                                      description: >-
+                                        commit from validators from the last
+                                        block
                                       title: hashes of block data
                                     data_hash:
                                       type: string
                                       format: byte
+                                      title: transactions
                                     validators_hash:
                                       type: string
                                       format: byte
+                                      description: validators for the current block
                                       title: >-
                                         hashes from the app output from the prev
                                         block
                                     next_validators_hash:
                                       type: string
                                       format: byte
+                                      title: validators for the next block
                                     consensus_hash:
                                       type: string
                                       format: byte
+                                      title: consensus params for current block
                                     app_hash:
                                       type: string
                                       format: byte
+                                      title: state after txs from the previous block
                                     last_results_hash:
                                       type: string
                                       format: byte
+                                      title: >-
+                                        root hash of all results from the txs
+                                        from the previous block
                                     evidence_hash:
                                       type: string
                                       format: byte
+                                      description: evidence included in the block
                                       title: consensus info
                                     proposer_address:
                                       type: string
                                       format: byte
+                                      title: original proposer of the block
                                   description: >-
                                     Header defines the structure of a Tendermint
                                     block header.
@@ -36799,33 +40584,42 @@ definitions:
           last_commit_hash:
             type: string
             format: byte
+            description: commit from validators from the last block
             title: hashes of block data
           data_hash:
             type: string
             format: byte
+            title: transactions
           validators_hash:
             type: string
             format: byte
+            description: validators for the current block
             title: hashes from the app output from the prev block
           next_validators_hash:
             type: string
             format: byte
+            title: validators for the next block
           consensus_hash:
             type: string
             format: byte
+            title: consensus params for current block
           app_hash:
             type: string
             format: byte
+            title: state after txs from the previous block
           last_results_hash:
             type: string
             format: byte
+            title: root hash of all results from the txs from the previous block
           evidence_hash:
             type: string
             format: byte
+            description: evidence included in the block
             title: consensus info
           proposer_address:
             type: string
             format: byte
+            title: original proposer of the block
         description: Header defines the structure of a Tendermint block header.
       data:
         type: object
@@ -36894,6 +40688,7 @@ definitions:
                                   format: byte
                               title: PartsetHeader
                           title: BlockID
+                          description: zero if vote is nil.
                         timestamp:
                           type: string
                           format: date-time
@@ -36951,6 +40746,7 @@ definitions:
                                   format: byte
                               title: PartsetHeader
                           title: BlockID
+                          description: zero if vote is nil.
                         timestamp:
                           type: string
                           format: date-time
@@ -37038,35 +40834,46 @@ definitions:
                                 last_commit_hash:
                                   type: string
                                   format: byte
+                                  description: commit from validators from the last block
                                   title: hashes of block data
                                 data_hash:
                                   type: string
                                   format: byte
+                                  title: transactions
                                 validators_hash:
                                   type: string
                                   format: byte
+                                  description: validators for the current block
                                   title: >-
                                     hashes from the app output from the prev
                                     block
                                 next_validators_hash:
                                   type: string
                                   format: byte
+                                  title: validators for the next block
                                 consensus_hash:
                                   type: string
                                   format: byte
+                                  title: consensus params for current block
                                 app_hash:
                                   type: string
                                   format: byte
+                                  title: state after txs from the previous block
                                 last_results_hash:
                                   type: string
                                   format: byte
+                                  title: >-
+                                    root hash of all results from the txs from
+                                    the previous block
                                 evidence_hash:
                                   type: string
                                   format: byte
+                                  description: evidence included in the block
                                   title: consensus info
                                 proposer_address:
                                   type: string
                                   format: byte
+                                  title: original proposer of the block
                               description: >-
                                 Header defines the structure of a Tendermint
                                 block header.
@@ -37433,6 +41240,7 @@ definitions:
                     format: byte
                 title: PartsetHeader
             title: BlockID
+            description: zero if vote is nil.
           timestamp:
             type: string
             format: date-time
@@ -37489,6 +41297,7 @@ definitions:
                     format: byte
                 title: PartsetHeader
             title: BlockID
+            description: zero if vote is nil.
           timestamp:
             type: string
             format: date-time
@@ -37563,6 +41372,7 @@ definitions:
                         format: byte
                     title: PartsetHeader
                 title: BlockID
+                description: zero if vote is nil.
               timestamp:
                 type: string
                 format: date-time
@@ -37619,6 +41429,7 @@ definitions:
                         format: byte
                     title: PartsetHeader
                 title: BlockID
+                description: zero if vote is nil.
               timestamp:
                 type: string
                 format: date-time
@@ -37706,33 +41517,44 @@ definitions:
                       last_commit_hash:
                         type: string
                         format: byte
+                        description: commit from validators from the last block
                         title: hashes of block data
                       data_hash:
                         type: string
                         format: byte
+                        title: transactions
                       validators_hash:
                         type: string
                         format: byte
+                        description: validators for the current block
                         title: hashes from the app output from the prev block
                       next_validators_hash:
                         type: string
                         format: byte
+                        title: validators for the next block
                       consensus_hash:
                         type: string
                         format: byte
+                        title: consensus params for current block
                       app_hash:
                         type: string
                         format: byte
+                        title: state after txs from the previous block
                       last_results_hash:
                         type: string
                         format: byte
+                        title: >-
+                          root hash of all results from the txs from the
+                          previous block
                       evidence_hash:
                         type: string
                         format: byte
+                        description: evidence included in the block
                         title: consensus info
                       proposer_address:
                         type: string
                         format: byte
+                        title: original proposer of the block
                     description: Header defines the structure of a Tendermint block header.
                   commit:
                     type: object
@@ -37936,6 +41758,7 @@ definitions:
                               format: byte
                           title: PartsetHeader
                       title: BlockID
+                      description: zero if vote is nil.
                     timestamp:
                       type: string
                       format: date-time
@@ -37993,6 +41816,7 @@ definitions:
                               format: byte
                           title: PartsetHeader
                       title: BlockID
+                      description: zero if vote is nil.
                     timestamp:
                       type: string
                       format: date-time
@@ -38080,33 +41904,44 @@ definitions:
                             last_commit_hash:
                               type: string
                               format: byte
+                              description: commit from validators from the last block
                               title: hashes of block data
                             data_hash:
                               type: string
                               format: byte
+                              title: transactions
                             validators_hash:
                               type: string
                               format: byte
+                              description: validators for the current block
                               title: hashes from the app output from the prev block
                             next_validators_hash:
                               type: string
                               format: byte
+                              title: validators for the next block
                             consensus_hash:
                               type: string
                               format: byte
+                              title: consensus params for current block
                             app_hash:
                               type: string
                               format: byte
+                              title: state after txs from the previous block
                             last_results_hash:
                               type: string
                               format: byte
+                              title: >-
+                                root hash of all results from the txs from the
+                                previous block
                             evidence_hash:
                               type: string
                               format: byte
+                              description: evidence included in the block
                               title: consensus info
                             proposer_address:
                               type: string
                               format: byte
+                              title: original proposer of the block
                           description: >-
                             Header defines the structure of a Tendermint block
                             header.
@@ -38310,33 +42145,42 @@ definitions:
       last_commit_hash:
         type: string
         format: byte
+        description: commit from validators from the last block
         title: hashes of block data
       data_hash:
         type: string
         format: byte
+        title: transactions
       validators_hash:
         type: string
         format: byte
+        description: validators for the current block
         title: hashes from the app output from the prev block
       next_validators_hash:
         type: string
         format: byte
+        title: validators for the next block
       consensus_hash:
         type: string
         format: byte
+        title: consensus params for current block
       app_hash:
         type: string
         format: byte
+        title: state after txs from the previous block
       last_results_hash:
         type: string
         format: byte
+        title: root hash of all results from the txs from the previous block
       evidence_hash:
         type: string
         format: byte
+        description: evidence included in the block
         title: consensus info
       proposer_address:
         type: string
         format: byte
+        title: original proposer of the block
     description: Header defines the structure of a Tendermint block header.
   tendermint.types.LightBlock:
     type: object
@@ -38393,33 +42237,42 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
+                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
+                title: transactions
               validators_hash:
                 type: string
                 format: byte
+                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
+                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
+                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
+                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
+                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
+                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
+                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           commit:
             type: object
@@ -38588,33 +42441,44 @@ definitions:
                   last_commit_hash:
                     type: string
                     format: byte
+                    description: commit from validators from the last block
                     title: hashes of block data
                   data_hash:
                     type: string
                     format: byte
+                    title: transactions
                   validators_hash:
                     type: string
                     format: byte
+                    description: validators for the current block
                     title: hashes from the app output from the prev block
                   next_validators_hash:
                     type: string
                     format: byte
+                    title: validators for the next block
                   consensus_hash:
                     type: string
                     format: byte
+                    title: consensus params for current block
                   app_hash:
                     type: string
                     format: byte
+                    title: state after txs from the previous block
                   last_results_hash:
                     type: string
                     format: byte
+                    title: >-
+                      root hash of all results from the txs from the previous
+                      block
                   evidence_hash:
                     type: string
                     format: byte
+                    description: evidence included in the block
                     title: consensus info
                   proposer_address:
                     type: string
                     format: byte
+                    title: original proposer of the block
                 description: Header defines the structure of a Tendermint block header.
               commit:
                 type: object
@@ -38827,33 +42691,42 @@ definitions:
           last_commit_hash:
             type: string
             format: byte
+            description: commit from validators from the last block
             title: hashes of block data
           data_hash:
             type: string
             format: byte
+            title: transactions
           validators_hash:
             type: string
             format: byte
+            description: validators for the current block
             title: hashes from the app output from the prev block
           next_validators_hash:
             type: string
             format: byte
+            title: validators for the next block
           consensus_hash:
             type: string
             format: byte
+            title: consensus params for current block
           app_hash:
             type: string
             format: byte
+            title: state after txs from the previous block
           last_results_hash:
             type: string
             format: byte
+            title: root hash of all results from the txs from the previous block
           evidence_hash:
             type: string
             format: byte
+            description: evidence included in the block
             title: consensus info
           proposer_address:
             type: string
             format: byte
+            title: original proposer of the block
         description: Header defines the structure of a Tendermint block header.
       commit:
         type: object
@@ -39040,6 +42913,7 @@ definitions:
                 format: byte
             title: PartsetHeader
         title: BlockID
+        description: zero if vote is nil.
       timestamp:
         type: string
         format: date-time
@@ -41948,33 +45822,42 @@ definitions:
           last_commit_hash:
             type: string
             format: byte
+            description: commit from validators from the last block
             title: hashes of block data
           data_hash:
             type: string
             format: byte
+            title: transactions
           validators_hash:
             type: string
             format: byte
+            description: validators for the current block
             title: hashes from the app output from the prev block
           next_validators_hash:
             type: string
             format: byte
+            title: validators for the next block
           consensus_hash:
             type: string
             format: byte
+            title: consensus params for current block
           app_hash:
             type: string
             format: byte
+            title: state after txs from the previous block
           last_results_hash:
             type: string
             format: byte
+            title: root hash of all results from the txs from the previous block
           evidence_hash:
             type: string
             format: byte
+            description: evidence included in the block
             title: consensus info
           proposer_address:
             type: string
             format: byte
+            title: original proposer of the block
         description: Header defines the structure of a Tendermint block header.
       valset:
         type: array
@@ -42507,7 +46390,10 @@ definitions:
                 description: >-
                   UnbondingDelegationEntry defines an unbonding object with
                   relevant metadata.
-              description: entries are the unbonding delegation entries.
+              description: |-
+                entries are the unbonding delegation entries.
+
+                unbonding delegation entries
           description: >-
             UnbondingDelegation stores all of a single delegator's unbonding
             bonds
@@ -43195,33 +47081,42 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
+                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
+                title: transactions
               validators_hash:
                 type: string
                 format: byte
+                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
+                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
+                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
+                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
+                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
+                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
+                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           valset:
             type: array
@@ -43623,7 +47518,10 @@ definitions:
                     description: >-
                       RedelegationEntry defines a redelegation object with
                       relevant metadata.
-                  description: entries are the redelegation entries.
+                  description: |-
+                    entries are the redelegation entries.
+
+                    redelegation entries
               description: >-
                 Redelegation contains the list of a particular delegator's
                 redelegating bonds
@@ -43742,7 +47640,10 @@ definitions:
               description: >-
                 UnbondingDelegationEntry defines an unbonding object with
                 relevant metadata.
-            description: entries are the unbonding delegation entries.
+            description: |-
+              entries are the unbonding delegation entries.
+
+              unbonding delegation entries
         description: |-
           UnbondingDelegation stores all of a single delegator's unbonding bonds
           for a single validator in an time-ordered list.
@@ -44154,7 +48055,10 @@ definitions:
                 description: >-
                   UnbondingDelegationEntry defines an unbonding object with
                   relevant metadata.
-              description: entries are the unbonding delegation entries.
+              description: |-
+                entries are the unbonding delegation entries.
+
+                unbonding delegation entries
           description: >-
             UnbondingDelegation stores all of a single delegator's unbonding
             bonds
@@ -44543,7 +48447,10 @@ definitions:
           description: >-
             RedelegationEntry defines a redelegation object with relevant
             metadata.
-        description: entries are the redelegation entries.
+        description: |-
+          entries are the redelegation entries.
+
+          redelegation entries
     description: >-
       Redelegation contains the list of a particular delegator's redelegating
       bonds
@@ -44656,7 +48563,10 @@ definitions:
               description: >-
                 RedelegationEntry defines a redelegation object with relevant
                 metadata.
-            description: entries are the redelegation entries.
+            description: |-
+              entries are the redelegation entries.
+
+              redelegation entries
         description: >-
           Redelegation contains the list of a particular delegator's
           redelegating bonds
@@ -44746,7 +48656,10 @@ definitions:
           description: >-
             UnbondingDelegationEntry defines an unbonding object with relevant
             metadata.
-        description: entries are the unbonding delegation entries.
+        description: |-
+          entries are the unbonding delegation entries.
+
+          unbonding delegation entries
     description: |-
       UnbondingDelegation stores all of a single delegator's unbonding bonds
       for a single validator in an time-ordered list.
@@ -45141,6 +49054,7 @@ definitions:
                     format: byte
                   index:
                     type: boolean
+                    title: nondeterministic
                 description: >-
                   EventAttribute is a single key-value pair, associated with an
                   event.
@@ -45448,6 +49362,7 @@ definitions:
                     format: byte
                   index:
                     type: boolean
+                    title: nondeterministic
                 description: >-
                   EventAttribute is a single key-value pair, associated with an
                   event.
@@ -45931,6 +49846,7 @@ definitions:
                         format: byte
                       index:
                         type: boolean
+                        title: nondeterministic
                     description: >-
                       EventAttribute is a single key-value pair, associated with
                       an event.
@@ -46095,33 +50011,42 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
+                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
+                title: transactions
               validators_hash:
                 type: string
                 format: byte
+                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
+                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
+                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
+                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
+                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
+                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
+                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           data:
             type: object
@@ -46190,6 +50115,7 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
+                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -46247,6 +50173,7 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
+                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -46335,35 +50262,48 @@ definitions:
                                     last_commit_hash:
                                       type: string
                                       format: byte
+                                      description: >-
+                                        commit from validators from the last
+                                        block
                                       title: hashes of block data
                                     data_hash:
                                       type: string
                                       format: byte
+                                      title: transactions
                                     validators_hash:
                                       type: string
                                       format: byte
+                                      description: validators for the current block
                                       title: >-
                                         hashes from the app output from the prev
                                         block
                                     next_validators_hash:
                                       type: string
                                       format: byte
+                                      title: validators for the next block
                                     consensus_hash:
                                       type: string
                                       format: byte
+                                      title: consensus params for current block
                                     app_hash:
                                       type: string
                                       format: byte
+                                      title: state after txs from the previous block
                                     last_results_hash:
                                       type: string
                                       format: byte
+                                      title: >-
+                                        root hash of all results from the txs
+                                        from the previous block
                                     evidence_hash:
                                       type: string
                                       format: byte
+                                      description: evidence included in the block
                                       title: consensus info
                                     proposer_address:
                                       type: string
                                       format: byte
+                                      title: original proposer of the block
                                   description: >-
                                     Header defines the structure of a Tendermint
                                     block header.
@@ -46878,6 +50818,7 @@ definitions:
                         format: byte
                       index:
                         type: boolean
+                        title: nondeterministic
                     description: >-
                       EventAttribute is a single key-value pair, associated with
                       an event.
@@ -47200,6 +51141,7 @@ definitions:
                           format: byte
                         index:
                           type: boolean
+                          title: nondeterministic
                       description: >-
                         EventAttribute is a single key-value pair, associated
                         with an event.
@@ -47648,6 +51590,7 @@ definitions:
                         format: byte
                       index:
                         type: boolean
+                        title: nondeterministic
                     description: >-
                       EventAttribute is a single key-value pair, associated with
                       an event.
@@ -48806,6 +52749,7 @@ definitions:
               format: byte
             index:
               type: boolean
+              title: nondeterministic
           description: 'EventAttribute is a single key-value pair, associated with an event.'
     description: >-
       Event allows application developers to attach additional information to
@@ -48825,6 +52769,7 @@ definitions:
         format: byte
       index:
         type: boolean
+        title: nondeterministic
     description: 'EventAttribute is a single key-value pair, associated with an event.'
   cosmos.upgrade.v1beta1.ModuleVersion:
     type: object
@@ -49383,6 +53328,7 @@ definitions:
       code_id:
         type: string
         format: uint64
+        title: id for legacy support
       creator:
         type: string
       data_hash:
@@ -49773,6 +53719,7 @@ definitions:
           code_id:
             type: string
             format: uint64
+            title: id for legacy support
           creator:
             type: string
           data_hash:
@@ -49815,6 +53762,7 @@ definitions:
             code_id:
               type: string
               format: uint64
+              title: id for legacy support
             creator:
               type: string
             data_hash:

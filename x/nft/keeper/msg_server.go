@@ -5,7 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/nft"
+
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 var _ nft.MsgServer = Keeper{}
@@ -32,11 +33,15 @@ func (k Keeper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendRespo
 		return nil, err
 	}
 
-	ctx.EventManager().EmitTypedEvent(&nft.EventSend{
+	err = ctx.EventManager().EmitTypedEvent(&nft.EventSend{
 		ClassId:  msg.ClassId,
 		Id:       msg.Id,
 		Sender:   msg.Sender,
 		Receiver: msg.Receiver,
 	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &nft.MsgSendResponse{}, nil
 }
