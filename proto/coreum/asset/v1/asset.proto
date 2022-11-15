@@ -7,7 +7,7 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
 enum FungibleTokenFeature {
   freezable = 0 [(gogoproto.enumvalue_customname) = "freezable"];
-  whitelistable = 0 [(gogoproto.enumvalue_customname) = "whitelistable"];
+  whitelistable = 1 [(gogoproto.enumvalue_customname) = "whitelistable"];
 }
 
 // FungibleTokenDefinition defines the fungible token settings to store.
@@ -16,7 +16,6 @@ message FungibleTokenDefinition {
   option (gogoproto.equal) = false;
   string denom = 1;
   string issuer = 2;
-  bool whitelist_all = 3;
   repeated FungibleTokenFeature features = 4;
 }
 

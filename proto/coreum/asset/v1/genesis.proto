@@ -9,35 +9,31 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
 // GenesisState defines the asset module's genesis state.
 message GenesisState {
-  // fungible_tokens keep the fungible token state
-  repeated FungibleTokenDefinition fungible_tokens  = 1 [(gogoproto.nullable) = false];
-  // accounts contains the state of assets for accounts
-  repeated AccountAssetState accounts = 2 [(gogoproto.nullable) = false];
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  FungibleTokenState fungible_tokens = 1 [(gogoproto.nullable) = false];
+}
+
+message FungibleTokenState {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  repeated FungibleTokenDefinition tokens  = 1 [(gogoproto.nullable) = false];
+  repeated FungibleTokenBalance frozen_balances = 2 [(gogoproto.nullable) = false];
+  repeated FungibleTokenBalance whitelisted_balances = 3 [(gogoproto.nullable) = false];
 }
 
 // Balance defines an account address and balance pair used in the bank module's
 // genesis state.
-message AccountAssetState {
+message FungibleTokenBalance {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // address is the address of the balance holder.
   string address = 1;
 
-  // fungible_tokens is the state of fungible tokens owned by account.
-  repeated AccountFungibleTokenState fungible_tokens = 2 [(gogoproto.nullable) = false];
-}
-
-message AccountFungibleTokenState {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string denom = 1;
-
-  bool whitelisted = 2;
-
-  string frozen_amount = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
+  // coins defines the different coins this balance holds.
+  repeated cosmos.base.v1beta1.Coin coins = 2
+  [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.nullable) = false];
 }
