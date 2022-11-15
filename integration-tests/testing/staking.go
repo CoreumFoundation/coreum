@@ -47,7 +47,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 		msg,
 	)
 	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
+		return nil, nil, nil, err
 	}
 
 	logger.Get(ctx).Info("Validator creation executed", zap.String("txHash", result.TxHash))
@@ -76,7 +76,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 			undelegateMsg,
 		)
 		if err != nil {
-			return errors.WithStack(err)
+			return err
 		}
 
 		// make sure the validator isn't bonded now
