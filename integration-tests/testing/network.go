@@ -8,7 +8,7 @@ import (
 
 const (
 	// votingPeriod is the proposal voting period duration
-	votingPeriod = time.Second * 15
+	votingPeriod = time.Minute * 2
 )
 
 // NewNetworkConfig returns the network config used by integration tests.

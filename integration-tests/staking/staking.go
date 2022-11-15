@@ -19,8 +19,8 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TestValidatorCrudAndStaking checks validator creation, delegation and undelegation operations work correctly.
-func TestValidatorCrudAndStaking(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
+func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	const (
 		initialValidatorAmount = 1000000
 		// fastUnbondingTime is the coins unbonding time we use for the test only
