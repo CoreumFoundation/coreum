@@ -70,22 +70,21 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 
 	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
-	// create proposition to spend the community pool
-	proposalID, err := chain.Governance.Propose(
-		ctx,
-		proposer,
-		distributiontypes.NewCommunityPoolSpendProposal(
-			"Spend community pool",
-			"Spend community pool",
-			communityPoolRecipient,
-			sdk.NewCoins(poolCoin),
-		),
-	)
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, distributiontypes.NewCommunityPoolSpendProposal(
+		"Spend community pool",
+		"Spend community pool",
+		communityPoolRecipient,
+		sdk.NewCoins(poolCoin),
+	))
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Int("proposalID", proposalID))
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
 
 	// verify that voting period started
-	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
@@ -96,7 +95,9 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// wait for proposal result.
-	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
 	// check that recipient has received the coins
 	communityPoolRecipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
