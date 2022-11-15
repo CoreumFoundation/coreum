@@ -47,6 +47,7 @@ func Tests() []testing.TestSet {
 				wasm.TestBankSendWasmContract,
 				wasm.TestGasWasmBankSendAndBankSend,
 				gov.TestProposalWithDepositAndWeightedVotes,
+				wasm.TestIssueFungibleTokenInWASMContract,
 			},
 		},
 	}
