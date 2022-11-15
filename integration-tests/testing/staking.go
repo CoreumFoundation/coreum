@@ -47,7 +47,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 		msg,
 	)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, errors.WithStack(err)
 	}
 
 	logger.Get(ctx).Info("Validator creation executed", zap.String("txHash", result.TxHash))
@@ -57,7 +57,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 		ValidatorAddr: validatorAddr.String(),
 	})
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, errors.WithStack(err)
 	}
 	if initialAmount.String() != resp.Validator.Tokens.String() {
 		return nil, nil, nil, errors.Errorf("unexpected validator %q tokens after creation: %s", validatorAddr, resp.Validator.Tokens)
@@ -77,6 +77,18 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 		)
 		if err != nil {
 			return errors.WithStack(err)
+		}
+
+		// make sure the validator isn't bonded now
+		resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
+			ValidatorAddr: validatorAddr.String(),
+		})
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if stakingtypes.Bonded == resp.Validator.Status {
+			return errors.Errorf("unexpected validator %q status after removal: %s", validatorAddr, resp.Validator.Status)
 		}
 
 		return nil
