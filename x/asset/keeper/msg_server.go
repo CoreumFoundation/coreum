@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
@@ -16,6 +15,8 @@ type MsgKeeper interface {
 	GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error)
 	FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
 	UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
+	MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
+	BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -99,10 +100,32 @@ func (ms MsgServer) UnfreezeFungibleToken(goCtx context.Context, req *types.MsgU
 
 // MintFungibleToken mints new fungible tokens.
 func (ms MsgServer) MintFungibleToken(goCtx context.Context, req *types.MsgMintFungibleToken) (*types.EmptyResponse, error) {
-	return nil, errors.New("Unimplemented")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	err = ms.keeper.MintFungibleToken(ctx, sender, req.Coin)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
 }
 
 // BurnFungibleToken a part of the token
 func (ms MsgServer) BurnFungibleToken(goCtx context.Context, req *types.MsgBurnFungibleToken) (*types.EmptyResponse, error) {
-	return nil, errors.New("Unimplemented")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	err = ms.keeper.BurnFungibleToken(ctx, sender, req.Coin)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
 }

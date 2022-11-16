@@ -88,3 +88,35 @@ func (msg MsgUnfreezeFungibleToken) GetSigners() []sdk.AccAddress {
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}
 }
+
+// ValidateBasic checks that message fields are valid
+func (msg MsgMintFungibleToken) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	return msg.Coin.Validate()
+}
+
+// GetSigners returns the required signers of this message type
+func (msg MsgMintFungibleToken) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Sender),
+	}
+}
+
+// ValidateBasic checks that message fields are valid
+func (msg MsgBurnFungibleToken) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	return msg.Coin.Validate()
+}
+
+// GetSigners returns the required signers of this message type
+func (msg MsgBurnFungibleToken) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Sender),
+	}
+}
