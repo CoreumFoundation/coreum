@@ -8,6 +8,7 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
@@ -30,7 +31,9 @@ type issueFungibleTokenRequest struct {
 type fungibleTokenMethod string
 
 const (
-	issue fungibleTokenMethod = "issue"
+	ftIssue    fungibleTokenMethod = "issue"
+	ftGetCount fungibleTokenMethod = "get_count"
+	ftGetInfo  fungibleTokenMethod = "get_info"
 )
 
 // TestIssueFungibleTokenInWASMContract verifies that smart contract is able to issue fungible token
@@ -66,12 +69,13 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	recipient := chain.GenAccount()
 
 	symbol := "mytoken"
-	denom := assettypes.BuildFungibleTokenDenom(symbol, sdk.MustAccAddressFromBech32(contractAddr))
+	denom1 := assettypes.BuildFungibleTokenDenom(symbol+"1", sdk.MustAccAddressFromBech32(contractAddr))
+	denom2 := assettypes.BuildFungibleTokenDenom(symbol+"2", sdk.MustAccAddressFromBech32(contractAddr))
 	initialAmount := sdk.NewInt(5000)
 
 	// issue fungible token by smart contract
 	createPayload, err := json.Marshal(map[fungibleTokenMethod]issueFungibleTokenRequest{
-		issue: {
+		ftIssue: {
 			Symbol:    symbol,
 			Amount:    initialAmount.String(),
 			Recipient: recipient.String(),
@@ -86,12 +90,46 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	logger.Get(ctx).Info("Fungible token issued by smart contract", zap.Int64("gasUsed", gasUsed))
 
 	// check balance of recipient
-	recipientBalance, err := bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
+	recipientBalance, err := bankClient.AllBalances(ctx,
+		&banktypes.QueryAllBalancesRequest{
 			Address: recipient.String(),
-			Denom:   denom,
 		})
 	requireT.NoError(err)
-	requireT.NotNil(recipientBalance.Balance)
-	requireT.Equal(sdk.NewCoin(denom, initialAmount).String(), recipientBalance.Balance.String())
+
+	assertT := assert.New(t)
+	assertT.Equal(initialAmount.String(), recipientBalance.Balances.AmountOf(denom1).String())
+	assertT.Equal(initialAmount.String(), recipientBalance.Balances.AmountOf(denom2).String())
+
+	// check the counter
+	getCountPayload, err := json.Marshal(map[fungibleTokenMethod]struct{}{
+		ftGetCount: {},
+	})
+	requireT.NoError(err)
+	queryOut, err := Query(ctx, clientCtx, contractAddr, getCountPayload)
+	requireT.NoError(err)
+
+	counterResponse := struct {
+		Count int `json:"count"`
+	}{}
+	err = json.Unmarshal(queryOut, &counterResponse)
+	requireT.NoError(err)
+	assertT.Equal(2, counterResponse.Count)
+
+	// query from smart contract
+	getInfoPayload, err := json.Marshal(map[fungibleTokenMethod]interface{}{
+		ftGetInfo: struct {
+			Denom string `json:"denom"`
+		}{
+			Denom: denom1,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = Query(ctx, clientCtx, contractAddr, getInfoPayload)
+	requireT.NoError(err)
+
+	infoResponse := struct {
+		Issuer string `json:"issuer"`
+	}{}
+	requireT.NoError(json.Unmarshal(queryOut, &infoResponse))
+	assertT.Equal(contractAddr, infoResponse.Issuer)
 }
