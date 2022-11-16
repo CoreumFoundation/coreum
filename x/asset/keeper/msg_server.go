@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
@@ -94,4 +95,14 @@ func (ms MsgServer) UnfreezeFungibleToken(goCtx context.Context, req *types.MsgU
 	}
 
 	return &types.MsgUnfreezeFungibleTokenResponse{}, nil
+}
+
+// MintFungibleToken mints new fungible tokens.
+func (ms MsgServer) MintFungibleToken(goCtx context.Context, req *types.MsgMintFungibleToken) (*types.EmptyResponse, error) {
+	return nil, errors.New("Unimplemented")
+}
+
+// BurnFungibleToken a part of the token
+func (ms MsgServer) BurnFungibleToken(goCtx context.Context, req *types.MsgBurnFungibleToken) (*types.EmptyResponse, error) {
+	return nil, errors.New("Unimplemented")
 }

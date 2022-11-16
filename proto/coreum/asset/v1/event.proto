@@ -30,13 +30,3 @@ message EventFungibleTokenUnfrozen {
   string account = 1;
   cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
 }
-
-message EventFungibleTokenMinted {
-  string account = 1;
-  cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
-}
-
-message EventFungibleTokenBurnt {
-  string account = 1;
-  cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
-}
