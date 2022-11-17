@@ -62,8 +62,8 @@ func init() {
 
 		govConfig = GovConfig{
 			ProposalConfig: GovProposalConfig{
-				MinDepositAmount: "10000000",
-				VotingPeriod:     "120h", // 5 days
+				MinDepositAmount: "4000000000", // 4,000 CORE
+				VotingPeriod:     "120h",       // 5 days
 			},
 		}
 
