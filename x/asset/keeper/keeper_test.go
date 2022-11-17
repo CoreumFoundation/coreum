@@ -15,12 +15,13 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 func TestMain(m *testing.M) {
-	n, err := config.NetworkByChainID(config.ChainIDDev)
+	n, err := config.NetworkByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}

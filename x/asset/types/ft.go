@@ -4,8 +4,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
 )
 
 var (
@@ -35,7 +37,16 @@ func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
 // ValidateSymbol checks the provide symbol is valid
 func ValidateSymbol(symbol string) error {
 	symbol = strings.ToLower(symbol)
-	if symbol == "core" || symbol == "ucore" {
+	reserved := []string{
+		strings.ToLower(constant.DenomDev),
+		strings.ToLower(constant.DenomDevDisplay),
+		strings.ToLower(constant.DenomTest),
+		strings.ToLower(constant.DenomTestDisplay),
+		strings.ToLower(constant.DenomMain),
+		strings.ToLower(constant.DenomMainDisplay),
+	}
+
+	if lo.Contains(reserved, symbol) {
 		return sdkerrors.Wrapf(ErrInvalidSymbol, "%s is a reserved symbol", symbol)
 	}
 

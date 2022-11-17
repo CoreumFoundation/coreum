@@ -11,12 +11,13 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/feemodel/client/cli"
 )
 
 func TestMinGasPrice(t *testing.T) {
-	networkCfg, err := config.NetworkByChainID(config.ChainIDDev)
+	networkCfg, err := config.NetworkByChainID(constant.ChainIDDev)
 	require.NoError(t, err)
 	app.ChosenNetwork = networkCfg
 
