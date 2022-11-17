@@ -10,12 +10,12 @@ import (
 )
 
 func TestBuildFungibleTokenDenom(t *testing.T) {
-	symbol := "CORE"
+	symbol := "ABC"
 	addr, err := sdk.AccAddressFromBech32("devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5")
 	require.NoError(t, err)
 
 	denom := types.BuildFungibleTokenDenom(symbol, addr)
-	require.Equal(t, "core-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5", denom)
+	require.Equal(t, "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5", denom)
 }
 
 func TestValidateSymbol(t *testing.T) {
