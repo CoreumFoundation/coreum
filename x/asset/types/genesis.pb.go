@@ -27,7 +27,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines the asset module's genesis state.
 type GenesisState struct {
-	// fungible_tokens keep the fungible token state
+	// fungible_token_definitions keep the fungible token state
 	FungibleTokenDefinitions []FungibleTokenDefinition `protobuf:"bytes,1,rep,name=fungible_token_definitions,json=fungibleTokenDefinitions,proto3" json:"fungible_token_definitions"`
 	// frozen_balances contains the frozen balances on all of the accounts
 	FrozenBalances []Balance `protobuf:"bytes,2,rep,name=frozen_balances,json=frozenBalances,proto3" json:"frozen_balances"`
