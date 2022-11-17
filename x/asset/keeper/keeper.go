@@ -58,7 +58,7 @@ func (k Keeper) BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin s
 }
 
 func (k Keeper) checkFeatureAllowed(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin, feature types.FungibleTokenFeature) error {
-	ft, err := k.getFungibleTokenDefinition(ctx, coin.Denom)
+	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
