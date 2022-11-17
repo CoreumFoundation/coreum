@@ -31,7 +31,6 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 				&assettypes.MsgBurnFungibleToken{},
 				&assettypes.MsgBurnFungibleToken{},
 			},
-			Amount: sdk.NewInt(1),
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
