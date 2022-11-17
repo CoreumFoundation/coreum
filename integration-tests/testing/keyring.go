@@ -13,15 +13,19 @@ import (
 // Since we run our integration tests in parallel from time to time we get: "concurrent map read and map write"
 // so concurrentSafeKeyring wraps all methods of keyring and locks mutex before calling method.
 type concurrentSafeKeyring struct {
-	kr keyring.Keyring
 	mu *sync.RWMutex
+	kr keyring.Keyring
 }
 
 func newConcurrentSafeKeyring(kr keyring.Keyring) concurrentSafeKeyring {
 	return concurrentSafeKeyring{
-		kr: kr,
 		mu: &sync.RWMutex{},
+		kr: kr,
 	}
+}
+
+func (csk concurrentSafeKeyring) SupportedAlgorithms() (keyring.SigningAlgoList, keyring.SigningAlgoList) {
+	return csk.kr.SupportedAlgorithms()
 }
 
 // Read operations:
@@ -31,13 +35,6 @@ func (csk concurrentSafeKeyring) List() ([]keyring.Info, error) {
 	defer csk.mu.RUnlock()
 
 	return csk.kr.List()
-}
-
-func (csk concurrentSafeKeyring) SupportedAlgorithms() (keyring.SigningAlgoList, keyring.SigningAlgoList) {
-	csk.mu.RLock()
-	defer csk.mu.RUnlock()
-
-	return csk.kr.SupportedAlgorithms()
 }
 
 func (csk concurrentSafeKeyring) Key(uid string) (keyring.Info, error) {
@@ -80,6 +77,20 @@ func (csk concurrentSafeKeyring) ExportPrivKeyArmorByAddress(address sdk.Address
 	defer csk.mu.RUnlock()
 
 	return csk.kr.ExportPrivKeyArmorByAddress(address, encryptPassphrase)
+}
+
+func (csk concurrentSafeKeyring) Sign(uid string, msg []byte) ([]byte, types.PubKey, error) {
+	csk.mu.RLock()
+	defer csk.mu.RUnlock()
+
+	return csk.kr.Sign(uid, msg)
+}
+
+func (csk concurrentSafeKeyring) SignByAddress(address sdk.Address, msg []byte) ([]byte, types.PubKey, error) {
+	csk.mu.RLock()
+	defer csk.mu.RUnlock()
+
+	return csk.kr.SignByAddress(address, msg)
 }
 
 // Write operations:
@@ -131,20 +142,6 @@ func (csk concurrentSafeKeyring) SaveMultisig(uid string, pubkey types.PubKey) (
 	defer csk.mu.Unlock()
 
 	return csk.kr.SaveMultisig(uid, pubkey)
-}
-
-func (csk concurrentSafeKeyring) Sign(uid string, msg []byte) ([]byte, types.PubKey, error) {
-	csk.mu.Lock()
-	defer csk.mu.Unlock()
-
-	return csk.kr.Sign(uid, msg)
-}
-
-func (csk concurrentSafeKeyring) SignByAddress(address sdk.Address, msg []byte) ([]byte, types.PubKey, error) {
-	csk.mu.Lock()
-	defer csk.mu.Unlock()
-
-	return csk.kr.SignByAddress(address, msg)
 }
 
 func (csk concurrentSafeKeyring) ImportPrivKey(uid, armor, passphrase string) error {
