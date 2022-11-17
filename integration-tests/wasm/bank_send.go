@@ -20,10 +20,6 @@ var (
 	bankSendWASM []byte
 )
 
-type bankInstantiatePayload struct {
-	Count int `json:"count"`
-}
-
 type bankWithdrawRequest struct {
 	Amount    string `json:"amount"`
 	Denom     string `json:"denom"`
@@ -53,7 +49,7 @@ func TestBankSendWasmContract(ctx context.Context, t testing.T, chain testing.Ch
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	// deploy and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
+	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
 	contractAddr, _, err := DeployAndInstantiate(
 		ctx,

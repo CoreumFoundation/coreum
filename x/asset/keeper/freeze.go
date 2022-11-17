@@ -140,7 +140,7 @@ func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.Pag
 
 // frozenBalancesStore get the store for the frozen balances of all accounts
 func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.FrozenBalancesPrefix)
+	return prefix.NewStore(ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
 }
 
 type frozenAccountBalanceStore struct {

@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
@@ -26,13 +28,12 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		return "", err
 	}
 
-	store := ctx.KVStore(k.storeKey)
 	definition := types.FungibleTokenDefinition{
 		Denom:    denom,
 		Issuer:   settings.Issuer.String(),
 		Features: settings.Features,
 	}
-	store.Set(types.GetFungibleTokenKey(denom), k.cdc.MustMarshal(&definition))
+	k.SetFungibleTokenDefinition(ctx, definition)
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenIssued{
 		Denom:         denom,
@@ -51,20 +52,9 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	return denom, nil
 }
 
-func (k Keeper) getFungibleTokenDefinition(ctx sdk.Context, denom string) (types.FungibleTokenDefinition, error) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetFungibleTokenKey(denom))
-	if bz == nil {
-		return types.FungibleTokenDefinition{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "denom: %s", denom)
-	}
-	var definition types.FungibleTokenDefinition
-	k.cdc.MustUnmarshal(bz, &definition)
-	return definition, nil
-}
-
 // GetFungibleToken return the fungible token by its denom.
 func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error) {
-	definition, err := k.getFungibleTokenDefinition(ctx, denom)
+	definition, err := k.GetFungibleTokenDefinition(ctx, denom)
 	if err != nil {
 		return types.FungibleToken{}, err
 	}
@@ -81,6 +71,54 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		Description: metadata.Description,
 		Features:    definition.Features,
 	}, nil
+}
+
+// GetFungibleTokenDefinitions returns all fungible token definitions.
+func (k Keeper) GetFungibleTokenDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.FungibleTokenDefinition, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.FungibleTokenKeyPrefix)
+	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
+		k.cdc,
+		store,
+		pagination,
+		// builder
+		func(key []byte, definition *types.FungibleTokenDefinition) (*types.FungibleTokenDefinition, error) {
+			return definition, nil
+		},
+		// constructor
+		func() *types.FungibleTokenDefinition {
+			return &types.FungibleTokenDefinition{}
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	definitions := make([]types.FungibleTokenDefinition, 0, len(definitionsPointers))
+	for _, definition := range definitionsPointers {
+		definitions = append(definitions, *definition)
+	}
+
+	return definitions, pageRes, err
+}
+
+// GetFungibleTokenDefinition returns the FungibleTokenDefinition by the denom.
+func (k Keeper) GetFungibleTokenDefinition(ctx sdk.Context, denom string) (types.FungibleTokenDefinition, error) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetFungibleTokenKey(denom))
+	if bz == nil {
+		return types.FungibleTokenDefinition{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "denom: %s", denom)
+	}
+	var definition types.FungibleTokenDefinition
+	k.cdc.MustUnmarshal(bz, &definition)
+
+	return definition, nil
+}
+
+// SetFungibleTokenDefinition stores the FungibleTokenDefinition.
+func (k Keeper) SetFungibleTokenDefinition(ctx sdk.Context, definition types.FungibleTokenDefinition) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetFungibleTokenKey(definition.Denom), k.cdc.MustMarshal(&definition))
 }
 
 func (k Keeper) setFungibleTokenDenomMetadata(ctx sdk.Context, symbol, denom, description string) {

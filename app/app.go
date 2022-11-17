@@ -105,12 +105,13 @@ import (
 	assetkeeper "github.com/CoreumFoundation/coreum/x/asset/keeper"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
-	wbank "github.com/CoreumFoundation/coreum/x/bank"
-	wbankkeeper "github.com/CoreumFoundation/coreum/x/bank/keeper"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/x/deterministicgas/types"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
+	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
+	"github.com/CoreumFoundation/coreum/x/wbank"
+	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -427,7 +428,9 @@ func New(
 		panic(errors.Wrapf(err, "error while reading wasm config"))
 	}
 
-	var wasmOpts []wasm.Option
+	wasmOpts := []wasm.Option{
+		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(assettypes.WASMHandler)),
+	}
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
