@@ -34,18 +34,18 @@ func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
 	return strings.ToLower(symbol) + "-" + issuer.String()
 }
 
+var reserved = []string{
+	strings.ToLower(constant.DenomDev),
+	strings.ToLower(constant.DenomDevDisplay),
+	strings.ToLower(constant.DenomTest),
+	strings.ToLower(constant.DenomTestDisplay),
+	strings.ToLower(constant.DenomMain),
+	strings.ToLower(constant.DenomMainDisplay),
+}
+
 // ValidateSymbol checks the provide symbol is valid
 func ValidateSymbol(symbol string) error {
 	symbol = strings.ToLower(symbol)
-	reserved := []string{
-		strings.ToLower(constant.DenomDev),
-		strings.ToLower(constant.DenomDevDisplay),
-		strings.ToLower(constant.DenomTest),
-		strings.ToLower(constant.DenomTestDisplay),
-		strings.ToLower(constant.DenomMain),
-		strings.ToLower(constant.DenomMainDisplay),
-	}
-
 	if lo.Contains(reserved, symbol) {
 		return sdkerrors.Wrapf(ErrInvalidSymbol, "%s is a reserved symbol", symbol)
 	}
