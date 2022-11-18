@@ -236,9 +236,9 @@ func CmdTxMintFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
-		Short: "mint new supply of fungible token",
+		Short: "mint new amount of fungible token",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Mint new supply of fungible token.
+			fmt.Sprintf(`Mint new amount of fungible token.
 
 Example:
 $ %s tx asset ft mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
@@ -277,9 +277,9 @@ func CmdTxBurnFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
-		Short: "burn some of the supply of fungible token",
+		Short: "burn some amount of fungible token",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Burn some of the supply of fungible token.
+			fmt.Sprintf(`Burn some amount of fungible token.
 
 Example:
 $ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]

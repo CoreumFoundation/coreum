@@ -187,3 +187,97 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		})
 	}
 }
+
+//nolint:dupl // tests and mint tests are identical, but merging them is not beneficial
+func TestMsgMintFungibleToken_ValidateBasic(t *testing.T) {
+	type M = types.MsgMintFungibleToken
+
+	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	defaultMsg := func() M {
+		return M{
+			Sender: acc.String(),
+			Coin:   sdk.NewCoin("ABC", sdk.NewInt(100)),
+		}
+	}
+
+	testCases := []struct {
+		name        string
+		modifyMsg   func(M) M
+		expectError bool
+	}{
+		{
+			name:      "all is good",
+			modifyMsg: func(m M) M { return m },
+		},
+		{
+			name:        "invalid sender address",
+			modifyMsg:   func(m M) M { m.Sender = "invalid sender"; return m },
+			expectError: true,
+		},
+		{
+			name:        "invalid coin",
+			modifyMsg:   func(m M) M { m.Coin = sdk.Coin{}; return m },
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			msg := tc.modifyMsg(defaultMsg())
+			if tc.expectError {
+				requireT.Error(msg.ValidateBasic())
+			} else {
+				requireT.NoError(msg.ValidateBasic())
+			}
+		})
+	}
+}
+
+//nolint:dupl // tests and mint tests are identical, but merging them is not beneficial
+func TestMsgBurnFungibleToken_ValidateBasic(t *testing.T) {
+	type M = types.MsgBurnFungibleToken
+
+	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	defaultMsg := func() M {
+		return M{
+			Sender: acc.String(),
+			Coin:   sdk.NewCoin("ABC", sdk.NewInt(100)),
+		}
+	}
+
+	testCases := []struct {
+		name        string
+		modifyMsg   func(M) M
+		expectError bool
+	}{
+		{
+			name:      "all is good",
+			modifyMsg: func(m M) M { return m },
+		},
+		{
+			name:        "invalid sender address",
+			modifyMsg:   func(m M) M { m.Sender = "invalid sender"; return m },
+			expectError: true,
+		},
+		{
+			name:        "invalid coin",
+			modifyMsg:   func(m M) M { m.Coin = sdk.Coin{}; return m },
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			msg := tc.modifyMsg(defaultMsg())
+			if tc.expectError {
+				requireT.Error(msg.ValidateBasic())
+			} else {
+				requireT.NoError(msg.ValidateBasic())
+			}
+		})
+	}
+}

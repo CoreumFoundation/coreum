@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -25,7 +24,7 @@ func TestMintBurnFungibleToken(t *testing.T) {
 	testNetwork := network.New(t)
 
 	// the denom must start from the letter
-	symbol := "l" + uuid.NewString()[:4]
+	symbol := "abc"
 	ctx := testNetwork.Validators[0].ClientCtx
 	issuer := testNetwork.Validators[0].Address
 	denom := types.BuildFungibleTokenDenom(symbol, issuer)
