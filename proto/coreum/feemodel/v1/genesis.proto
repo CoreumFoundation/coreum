@@ -7,9 +7,9 @@ import "coreum/feemodel/v1/params.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/feemodel/types";
 
-// GenesisState defines the auth module's genesis state.
+// GenesisState defines the module's genesis state.
 message GenesisState {
-  // params defines all the paramaters of the module.
+  // params defines all the parameters of the module.
   Params params = 1 [(gogoproto.nullable) = false];
 
   // min_gas_price is the current minimum gas price required by the chain.

@@ -112,6 +112,9 @@ import (
 	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/x/wstaking"
+	wstakingkeeper "github.com/CoreumFoundation/coreum/x/wstaking/keeper"
+	wstakingtypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -163,6 +166,7 @@ var (
 		genutil.AppModuleBasic{},
 		wbank.AppModuleBasic{},
 		capability.AppModuleBasic{},
+		// the original staking is used since we don't wrap this part
 		staking.AppModuleBasic{},
 		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
@@ -180,6 +184,7 @@ var (
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
 		asset.AppModuleBasic{},
+		wstaking.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -251,6 +256,7 @@ type App struct {
 	AssetKeeper    assetkeeper.Keeper
 	FeeModelKeeper feemodelkeeper.Keeper
 	BankKeeper     wbankkeeper.BaseKeeperWrapper
+	WStakingKeeper wstakingkeeper.Keeper
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper        capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper   capabilitykeeper.ScopedKeeper
@@ -389,6 +395,8 @@ func New(
 		tkeys[feemodeltypes.TransientStoreKey],
 	)
 
+	app.WStakingKeeper = wstakingkeeper.NewKeeper(app.GetSubspace(wstakingtypes.ModuleName))
+
 	// ... other modules keepers
 
 	// Create IBC Keeper
@@ -498,6 +506,12 @@ func New(
 	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
+	// FIXME init above and move to the simulation
+	// this the wstaking not wrapped module which provides the param for the
+	wrappedStakingModule := wstaking.NewAppModule(app.WStakingKeeper)
+	// we don't include the staking module since we use the wrapped version of the module
+	wstakingModule := wstaking.NewAppWModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.WStakingKeeper)
+
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
@@ -517,7 +531,8 @@ func New(
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
+		wrappedStakingModule,
+		wstakingModule,
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
@@ -557,6 +572,7 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		wstakingtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -583,6 +599,7 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		wstakingtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -614,6 +631,7 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		wstakingtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -631,7 +649,8 @@ func New(
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
+		wrappedStakingModule,
+		wstakingModule,
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		params.NewAppModule(app.ParamsKeeper),
@@ -745,7 +764,7 @@ func (app *App) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
-// LegacyAmino returns SimApp's amino codec.
+// LegacyAmino returns App's amino codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
@@ -832,6 +851,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 
 	paramsKeeper.Subspace(authtypes.ModuleName)
 	paramsKeeper.Subspace(banktypes.ModuleName)
+	paramsKeeper.Subspace(wstakingtypes.ModuleName)
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
 	paramsKeeper.Subspace(minttypes.ModuleName)
 	paramsKeeper.Subspace(distrtypes.ModuleName)

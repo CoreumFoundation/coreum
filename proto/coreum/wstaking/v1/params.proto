@@ -1,0 +1,17 @@
+syntax = "proto3";
+package coreum.wstaking.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/wstaking/types";
+
+// Params defines the set of params for the module.
+message Params {
+  // min_self_delegation is the validators global self declared minimum for delegation.
+  string min_self_delegation = 1 [
+    (gogoproto.moretags) = "yaml:\"min_self_delegation\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
