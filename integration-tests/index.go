@@ -6,6 +6,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/distribution"
 	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
+	"github.com/CoreumFoundation/coreum/integration-tests/gov"
 	"github.com/CoreumFoundation/coreum/integration-tests/staking"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/integration-tests/upgrade"
@@ -41,10 +42,12 @@ func Tests() []testing.TestSet {
 				feemodel.TestQueryingMinGasPrice,
 				feemodel.TestFeeModelProposalParamChange,
 				staking.TestStakingProposalParamChange,
-				staking.TestValidatorCrudAndStaking,
+				staking.TestValidatorCRUDAndStaking,
 				wasm.TestPinningAndUnpinningSmartContractUsingGovernance,
-				wasm.TestBankSendWasmContract,
-				wasm.TestGasWasmBankSendAndBankSend,
+				wasm.TestBankSendWASMContract,
+				wasm.TestGasWASMBankSendAndBankSend,
+				gov.TestProposalWithDepositAndWeightedVotes,
+				wasm.TestIssueFungibleTokenInWASMContract,
 			},
 		},
 	}

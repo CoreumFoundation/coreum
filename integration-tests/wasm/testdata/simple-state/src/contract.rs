@@ -1,6 +1,6 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
 use cw2::set_contract_version;
 use cw_storage_plus::Item;
@@ -10,13 +10,12 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:hello";
+const CONTRACT_NAME: &str = "creates.io:simple-state";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub count: i32,
-    pub owner: Addr,
 }
 
 pub const STATE: Item<State> = Item::new("state");
@@ -30,7 +29,6 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let state = State {
         count: msg.count,
-        owner: info.sender.clone(),
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &state)?;

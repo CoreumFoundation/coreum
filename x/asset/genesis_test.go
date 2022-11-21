@@ -1,6 +1,7 @@
 package asset_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -15,63 +16,73 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-func TestExportGenesis(t *testing.T) {
-	assertT := assert.New(t)
-	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-	assetKeeper := testApp.AssetKeeper
-	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	denom := types.BuildFungibleTokenDenom("ABC", issuer)
-	denom2 := types.BuildFungibleTokenDenom("ABC2", issuer)
-
-	var balances []types.Balance
-	for i := 0; i < 20; i++ {
-		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-		coins := sdk.NewCoins(
-			sdk.NewCoin(denom, sdk.NewInt(rand.Int63())),
-			sdk.NewCoin(denom2, sdk.NewInt(rand.Int63())),
-		)
-		balances = append(balances, types.Balance{Address: addr.String(), Coins: coins})
-		assetKeeper.SetFrozenBalances(ctx, addr, coins)
-	}
-
-	genState := asset.ExportGenesis(ctx, assetKeeper)
-	assertT.ElementsMatch(balances, genState.FrozenBalances)
-}
-
-func TestImportGenesis(t *testing.T) {
+func TestImportAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
+
 	testApp := simapp.New()
+
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 	assetKeeper := testApp.AssetKeeper
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	denom := types.BuildFungibleTokenDenom("ABC", issuer)
-	denom2 := types.BuildFungibleTokenDenom("ABC2", issuer)
 
-	var balances []types.Balance
-	for i := 0; i < 20; i++ {
+	// prepare the genesis data
+
+	// fungible token definitions
+	var fungibleTokenDefinitions []types.FungibleTokenDefinition
+	for i := 0; i < 5; i++ {
+		fungibleTokenDefinitions = append(fungibleTokenDefinitions,
+			types.FungibleTokenDefinition{
+				Denom:  types.BuildFungibleTokenDenom(fmt.Sprintf("ABC%d", i), issuer),
+				Issuer: issuer.String(),
+				Features: []types.FungibleTokenFeature{
+					types.FungibleTokenFeature_freezable, //nolint:nosnakecase // proto enum
+				},
+			})
+	}
+
+	// fungible token frozen balances
+	var fungibleTokenFrozenBalances []types.Balance
+	for i := 0; i < 5; i++ {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-		balances = append(balances,
+		fungibleTokenFrozenBalances = append(fungibleTokenFrozenBalances,
 			types.Balance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
-					sdk.NewCoin(denom, sdk.NewInt(rand.Int63())),
-					sdk.NewCoin(denom2, sdk.NewInt(rand.Int63())),
-				)})
+					sdk.NewCoin(fungibleTokenDefinitions[0].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(fungibleTokenDefinitions[1].Denom, sdk.NewInt(rand.Int63())),
+				),
+			})
 	}
 
 	genState := types.GenesisState{
-		FrozenBalances: balances,
+		FrozenBalances:           fungibleTokenFrozenBalances,
+		FungibleTokenDefinitions: fungibleTokenDefinitions,
 	}
 
+	// init the keeper
 	asset.InitGenesis(ctx, assetKeeper, genState)
 
-	for _, balance := range balances {
+	// assert the keeper state
+
+	// fungible token definitions
+	for _, definition := range fungibleTokenDefinitions {
+		storedDefinition, err := assetKeeper.GetFungibleTokenDefinition(ctx, definition.Denom)
+		requireT.NoError(err)
+		assertT.EqualValues(definition, storedDefinition)
+	}
+
+	// fungible token frozen balances
+	for _, balance := range fungibleTokenFrozenBalances {
 		address, err := sdk.AccAddressFromBech32(balance.Address)
 		requireT.NoError(err)
 		coins, _, err := assetKeeper.GetFrozenBalances(ctx, address, nil)
 		requireT.NoError(err)
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
+
+	// check that export is equal import
+	exportedGenState := asset.ExportGenesis(ctx, assetKeeper)
+	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
+	assertT.ElementsMatch(genState.FungibleTokenDefinitions, exportedGenState.FungibleTokenDefinitions)
 }

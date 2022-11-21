@@ -9,8 +9,8 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
 // GenesisState defines the asset module's genesis state.
 message GenesisState {
-  // fungible_tokens keep the fungible token state
-  repeated FungibleTokenDefinition fungible_tokens  = 1 [(gogoproto.nullable) = false];
+  // fungible_token_definitions keep the fungible token state
+  repeated FungibleTokenDefinition fungible_token_definitions  = 1 [(gogoproto.nullable) = false];
   // frozen_balances contains the frozen balances on all of the accounts
   repeated Balance frozen_balances = 2 [(gogoproto.nullable) = false];
 }
