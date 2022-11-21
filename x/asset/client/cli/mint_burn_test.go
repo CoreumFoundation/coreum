@@ -11,6 +11,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/types"
@@ -18,7 +19,7 @@ import (
 
 func TestMintBurnFungibleToken(t *testing.T) {
 	requireT := require.New(t)
-	networkCfg, err := config.NetworkByChainID(config.ChainIDDev)
+	networkCfg, err := config.NetworkByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
 	app.ChosenNetwork = networkCfg
 	testNetwork := network.New(t)
