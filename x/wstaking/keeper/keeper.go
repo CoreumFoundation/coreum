@@ -25,7 +25,8 @@ func NewKeeper(paramSubspace paramtypes.Subspace) Keeper {
 }
 
 // GetParams returns the total set of module parameters.
-func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	var params types.Params
 	k.paramSpace.GetParamSet(ctx, &params)
 	return params
 }

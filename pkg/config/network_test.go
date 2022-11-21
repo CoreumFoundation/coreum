@@ -61,8 +61,9 @@ func testNetwork() config.Network {
 			},
 		},
 		StakingConfig: config.StakingConfig{
-			UnbondingTime: "1814400s",
-			MaxValidators: 32,
+			UnbondingTime:     "1814400s",
+			MaxValidators:     32,
+			MinSelfDelegation: sdk.NewInt(1_000_000), // one core
 		},
 	})
 }

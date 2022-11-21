@@ -15,7 +15,7 @@ import (
 )
 
 // CreateValidator creates a new validator on the chain and returns the staker addresses, validator addresses and callback function to deactivate it.
-func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (sdk.AccAddress, sdk.ValAddress, func() error, error) {
+func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int, selfDelegation sdk.Int) (sdk.AccAddress, sdk.ValAddress, func() error, error) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 	staker := chain.GenAccount()
 
@@ -34,7 +34,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 		chain.NewCoin(initialAmount),
 		stakingtypes.Description{Moniker: fmt.Sprintf("testing-staker-%s", staker)},
 		stakingtypes.NewCommissionRates(sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1")),
-		sdk.OneInt(),
+		selfDelegation,
 	)
 	if err != nil {
 		return nil, nil, nil, err

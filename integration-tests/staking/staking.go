@@ -43,7 +43,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	}))
 
 	// Setup validator
-	validatorAccAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount))
+	validatorAccAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount), sdk.NewInt(initialValidatorAmount))
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -98,7 +98,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	require.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 
 	// Redelegate Coins
-	_, validator2Address, deactivateValidator2, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount))
+	_, validator2Address, deactivateValidator2, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount), sdk.NewInt(initialValidatorAmount))
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator2()
@@ -163,6 +163,31 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	})
 	require.NoError(t, err)
 	require.Equal(t, int64(initialValidatorAmount), valResp.Validator.Tokens.Int64())
+}
+
+// TestValidatorMinParamsSelfDelegation checks validator mas set the self delegation below the limit.
+func TestValidatorMinParamsSelfDelegation(ctx context.Context, t testing.T, chain testing.Chain) {
+	const initialValidatorAmount = 1000000
+
+	//stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+	//wtakingClient := wstakingtypes.NewQueryClient(chain.ClientContext)
+
+	// Setup delegator
+	delegator := chain.GenAccount()
+	delegateAmount := sdk.NewInt(100)
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, delegator, testing.BalancesOptions{
+		Messages: []sdk.Msg{
+			&stakingtypes.MsgDelegate{},
+			&stakingtypes.MsgUndelegate{},
+			&stakingtypes.MsgBeginRedelegate{},
+			&stakingtypes.MsgEditValidator{},
+		},
+		Amount: delegateAmount,
+	}))
+
+	// Setup validator
+	_, _, _, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount), sdk.NewInt(1))
+	require.NoError(t, err)
 }
 
 func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testing.Chain, unbondingTime time.Duration) {

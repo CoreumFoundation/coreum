@@ -38,7 +38,7 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 
 	// *** Create new validator to use it in the test and capture all required balances. ***
 
-	validatorStakerAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(1000000))
+	validatorStakerAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(1000000), sdk.NewInt(1000000))
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()

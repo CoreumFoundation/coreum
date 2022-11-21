@@ -220,6 +220,11 @@
       "redelegations": [],
       "exported": false
     },
+    "wstaking": {
+      "params": {
+          "min_self_delegation": "{{ .Staking.MinSelfDelegation }}"
+       }
+    },
     "transfer": {
       "port_id": "transfer",
       "denom_traces": [],

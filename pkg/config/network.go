@@ -58,8 +58,9 @@ func init() {
 		}
 
 		stakingConfig = StakingConfig{
-			UnbondingTime: "168h", // 7 days
-			MaxValidators: 32,
+			UnbondingTime:     "168h", // 7 days
+			MaxValidators:     32,
+			MinSelfDelegation: sdk.NewInt(20_000_000_000), // 20k core
 		}
 	)
 
@@ -202,6 +203,9 @@ type StakingConfig struct {
 
 	// MaxValidators is the maximum number of validators that could be created
 	MaxValidators int
+
+	// MinSelfDelegation is the minimum allowed amount of the stake coin for the validator to be created
+	MinSelfDelegation sdk.Int
 }
 
 // NetworkConfig helps initialize Network instance
