@@ -54,7 +54,7 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 
 	// try to freeze unfreezable token
 	freezeMsg := &assettypes.MsgFreezeFungibleToken{
-		Issuer:  issuer.String(),
+		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(unfreezableDenom, sdk.NewInt(1000)),
 	}
@@ -132,7 +132,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 
 	// try to pass non-issuer signature to freeze msg
 	freezeMsg := &assettypes.MsgFreezeFungibleToken{
-		Issuer:  randomAddress.String(),
+		Sender:  randomAddress.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
 	}
@@ -147,7 +147,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 
 	// freeze 400 tokens
 	freezeMsg = &assettypes.MsgFreezeFungibleToken{
-		Issuer:  issuer.String(),
+		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
 	}
@@ -212,7 +212,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 
 	// unfreeze 200 tokens and try send 250 tokens
 	unfreezeMsg := &assettypes.MsgUnfreezeFungibleToken{
-		Issuer:  issuer.String(),
+		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
 	}
@@ -255,7 +255,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 
 	// unfreeze 400 tokens (frozen balance is 200), it should give error
 	unfreezeMsg = &assettypes.MsgUnfreezeFungibleToken{
-		Issuer:  issuer.String(),
+		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
 	}

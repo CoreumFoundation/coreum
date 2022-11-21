@@ -145,14 +145,14 @@ $ %s tx asset ft issue ABC [recipient_address] 100000 "ABC Token" --from [issuer
 //nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
 func CmdTxFreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "freeze [account_address] [amount] --from [issuer]",
+		Use:   "freeze [account_address] [amount] --from [sender]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Freeze a portion of fungible token on an account",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Freeze a portion of fungible token.
 
 Example:
-$ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [issuer]
+$ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
 `,
 				version.AppName,
 			),
@@ -163,7 +163,7 @@ $ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve
 				return errors.WithStack(err)
 			}
 
-			issuer := clientCtx.GetFromAddress()
+			sender := clientCtx.GetFromAddress()
 			account := args[0]
 			amount, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
@@ -171,7 +171,7 @@ $ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve
 			}
 
 			msg := &types.MsgFreezeFungibleToken{
-				Issuer:  issuer.String(),
+				Sender:  sender.String(),
 				Account: account,
 				Coin:    amount,
 			}
@@ -189,14 +189,14 @@ $ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve
 //nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
 func CmdTxUnfreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "unfreeze [account_address] [amount] --from [issuer]",
+		Use:   "unfreeze [account_address] [amount] --from [sender]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Unfreeze a portion of the frozen fungible tokens",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Unfreezes a portion of the frozen fungible token.
 
 Example:
-$ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [issuer]
+$ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
 `,
 				version.AppName,
 			),
@@ -207,7 +207,7 @@ $ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6
 				return errors.WithStack(err)
 			}
 
-			issuer := clientCtx.GetFromAddress()
+			sender := clientCtx.GetFromAddress()
 			account := args[0]
 			amount, err := sdk.ParseCoinNormalized(args[1])
 			if err != nil {
@@ -215,7 +215,7 @@ $ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6
 			}
 
 			msg := &types.MsgUnfreezeFungibleToken{
-				Issuer:  issuer.String(),
+				Sender:  sender.String(),
 				Account: account,
 				Coin:    amount,
 			}

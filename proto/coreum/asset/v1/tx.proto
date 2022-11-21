@@ -38,7 +38,7 @@ message MsgIssueFungibleToken {
 message MsgIssueFungibleTokenResponse {}
 
 message MsgFreezeFungibleToken {
-  string issuer = 1;
+  string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
@@ -46,7 +46,7 @@ message MsgFreezeFungibleToken {
 message MsgFreezeFungibleTokenResponse {}
 
 message MsgUnfreezeFungibleToken {
-  string issuer = 1;
+  string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
