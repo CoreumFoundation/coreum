@@ -161,6 +161,10 @@ func (k Keeper) burnFungibleToken(ctx sdk.Context, coin sdk.Coin, account sdk.Ac
 	}
 
 	coinsToBurn := sdk.NewCoins(coin)
+	if err := k.areCoinsSpendable(ctx, account, coinsToBurn); err != nil {
+		return sdkerrors.Wrapf(err, "coins are not spendable")
+	}
+
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coinsToBurn); err != nil {
 		return sdkerrors.Wrapf(err, "can't send  coins from account %s to module %s", account.String(), types.ModuleName)
 	}
