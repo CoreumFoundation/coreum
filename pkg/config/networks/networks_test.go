@@ -10,6 +10,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -79,7 +80,7 @@ var invalidSignatureTx = []byte(`
 `)
 
 func init() {
-	network, _ := config.NetworkByChainID(config.ChainIDDev)
+	network, _ := config.NetworkByChainID(constant.ChainIDDev)
 	// Since we have a single network currently (devnet) we can seal config here.
 	// The idea is to add SetSDKConfigNoSeal to Network once we need to validate txs for multiple networks.
 	network.SetSDKConfig()
@@ -89,7 +90,7 @@ func init() {
 // Because invalidSignatureTx passes cosmos SDK `tx validate-signatures --offline` successfully even though
 // the signature is obviously invalid.
 func TestInvalidTxSignature(t *testing.T) {
-	network, err := config.NetworkByChainID(config.ChainIDDev)
+	network, err := config.NetworkByChainID(constant.ChainIDDev)
 	assert.NoError(t, err)
 
 	clientCtx := tx.NewClientContext(app.ModuleBasics).WithChainID(string(network.ChainID()))
@@ -101,7 +102,7 @@ func TestInvalidTxSignature(t *testing.T) {
 }
 
 func TestNetworkTxSignatures(t *testing.T) {
-	network, err := config.NetworkByChainID(config.ChainIDDev)
+	network, err := config.NetworkByChainID(constant.ChainIDDev)
 	assert.NoError(t, err)
 
 	clientCtx := tx.NewClientContext(app.ModuleBasics).WithChainID(string(network.ChainID()))

@@ -71,7 +71,7 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 }
 
 func (k Keeper) isFreezeAllowed(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	ft, err := k.getFungibleTokenDefinition(ctx, coin.Denom)
+	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
@@ -157,7 +157,7 @@ func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.Pag
 
 // frozenBalancesStore get the store for the frozen balances of all accounts
 func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.FrozenBalancesPrefix)
+	return prefix.NewStore(ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
 }
 
 type frozenAccountBalanceStore struct {
