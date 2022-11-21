@@ -12,6 +12,10 @@ import (
 
 // IssueFungibleToken issues new fungible token and returns it's denom.
 func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error) {
+	if err := types.ValidateSymbol(settings.Symbol); err != nil {
+		return "", err
+	}
+
 	denom := types.BuildFungibleTokenDenom(settings.Symbol, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
