@@ -8,6 +8,13 @@ use thiserror::Error;
 use crate::sdk;
 use crate::sdk::FungibleTokenResponse;
 
+// Flow of the smart contract:
+// - `ExecuteMsg::Issue` call is sent to smart contract
+// - smart contract creates two fungible tokens by executing native message delivered by the `asset` module
+// - after creation of each fungible token, `reply` callback is executed
+// - inside `reply` counter is incremented
+// - caller queries the smart contract to verify the correct value of the counter
+
 // version info for migration info
 const CONTRACT_NAME: &str = "creates.io:issue-fungible-token";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -72,6 +79,9 @@ fn issue_tokens(
     let mut symbol2 = symbol.clone();
     symbol2.push('2');
 
+    // Send two submessages handled by the asset module to create two fungible tokens.
+    // ReplyOn::Always means that we want `reply` to be called after each submessage execution.
+
     let mut msg1 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
         symbol: symbol1,
         recipient: recipient_addr.to_string(),
@@ -86,6 +96,9 @@ fn issue_tokens(
     });
     msg2.reply_on = ReplyOn::Always;
 
+    // As a part of the response we send two submessages which are then forwarded to the parser
+    // in go.
+
     let res: Response<sdk::FungibleTokenMsg> = Response::new()
         .add_attribute("method", "issue_token")
         .add_attribute("symbol", symbol)
@@ -97,6 +110,9 @@ fn issue_tokens(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, _msg: Reply) -> Result<Response, ContractError> {
+    // After execution of each submessage this function is called.
+    // Counter is incremented to confirm that callback is received.
+
     STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
         state.count += 1;
         Ok(state)
