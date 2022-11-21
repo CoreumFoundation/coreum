@@ -15,6 +15,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 var defaultConsensusParams = &abci.ConsensusParams{
@@ -39,7 +40,7 @@ func New() *app.App {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
-	network, err := config.NetworkByChainID(config.ChainIDDev)
+	network, err := config.NetworkByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}

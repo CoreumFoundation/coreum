@@ -12,6 +12,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
@@ -20,7 +21,7 @@ import (
 
 func TestQueryFungibleToken(t *testing.T) {
 	requireT := require.New(t)
-	networkCfg, err := config.NetworkByChainID(config.ChainIDDev)
+	networkCfg, err := config.NetworkByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
 	app.ChosenNetwork = networkCfg
 

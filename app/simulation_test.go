@@ -11,6 +11,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 func init() {
@@ -36,7 +37,7 @@ func BenchmarkSimulation(b *testing.B) {
 	})
 
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
-	network, err := config.NetworkByChainID(config.ChainIDDev)
+	network, err := config.NetworkByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
