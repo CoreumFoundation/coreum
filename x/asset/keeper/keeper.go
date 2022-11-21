@@ -68,7 +68,7 @@ func (k Keeper) checkFeatureAllowed(ctx sdk.Context, sender sdk.AccAddress, coin
 	}
 
 	if ft.Issuer != sender.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "address is unauthorized to perform this operation")
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform this operation", sender.String())
 	}
 
 	return nil
