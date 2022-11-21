@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 
 // NewNetworkConfig returns the network config used by integration tests.
 func NewNetworkConfig() (config.NetworkConfig, error) {
-	networkConfig, err := config.NetworkConfigByChainID(config.ChainIDDev)
+	networkConfig, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		return config.NetworkConfig{}, err
 	}

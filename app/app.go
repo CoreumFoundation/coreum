@@ -101,6 +101,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset"
 	assetkeeper "github.com/CoreumFoundation/coreum/x/asset/keeper"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
@@ -120,7 +121,7 @@ const (
 	Name = "core"
 
 	// DefaultChainID is the default chain id of the network
-	DefaultChainID = config.ChainIDDev
+	DefaultChainID = constant.ChainIDDev
 )
 
 // ChosenNetwork is a hacky solution to pass network config

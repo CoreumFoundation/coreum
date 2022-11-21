@@ -14,6 +14,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -39,7 +40,7 @@ var feeConfig = config.FeeConfig{
 
 func testNetwork() config.Network {
 	return config.NewNetwork(config.NetworkConfig{
-		ChainID:              config.ChainIDDev,
+		ChainID:              constant.ChainIDDev,
 		GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 		AddressPrefix:        "devcore",
 		MetadataDisplayDenom: "dcore",
@@ -197,7 +198,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	n, err := config.NetworkByChainID(config.ChainIDDev)
+	n, err := config.NetworkByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
 
 	pubKey := cosmossecp256k1.GenPrivKey().PubKey()
@@ -207,7 +208,7 @@ func TestNetworkSlicesNotMutable(t *testing.T) {
 	assertT.Len(n.FundedAccounts(), 6)
 	assertT.Len(n.GenTxs(), 5)
 
-	n, err = config.NetworkByChainID(config.ChainIDDev)
+	n, err = config.NetworkByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
 	assertT.Len(n.FundedAccounts(), 5)
 	assertT.Len(n.GenTxs(), 4)
