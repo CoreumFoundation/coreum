@@ -73,7 +73,7 @@ func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 		},
 	}
 
-	res, err = tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
