@@ -4,10 +4,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/samber/lo"
+
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 var (

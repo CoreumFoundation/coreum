@@ -24,6 +24,7 @@ const (
 	DenomMainDisplay = "ucore"
 )
 
+// Address prefixes
 const (
 	AddressPrefixDev  = "devcore"
 	AddressPrefixMain = "core"

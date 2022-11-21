@@ -30,6 +30,7 @@ import (
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
+// ChainID represents predefined Chain ID
 type ChainID = constant.ChainID
 
 // EnableFakeUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
