@@ -24,6 +24,8 @@ func init() {
 type IssueFungibleTokenSettings struct {
 	Issuer        sdk.AccAddress
 	Symbol        string
+	Subunit       string
+	Precision     uint32
 	Description   string
 	Recipient     sdk.AccAddress
 	InitialAmount sdk.Int
@@ -31,8 +33,8 @@ type IssueFungibleTokenSettings struct {
 }
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
-func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
-	return strings.ToLower(symbol) + "-" + issuer.String()
+func BuildFungibleTokenDenom(prefix string, issuer sdk.AccAddress) string {
+	return strings.ToLower(prefix) + "-" + issuer.String()
 }
 
 var reserved = []string{

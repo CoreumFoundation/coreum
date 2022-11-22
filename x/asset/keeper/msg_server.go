@@ -42,6 +42,8 @@ func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueF
 	_, err = ms.keeper.IssueFungibleToken(sdk.UnwrapSDKContext(ctx), types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        req.Symbol,
+		Subunit:       req.SubUnit,
+		Precision:     req.Precision,
 		Description:   req.Description,
 		Recipient:     recipient,
 		InitialAmount: req.InitialAmount,
