@@ -17,7 +17,7 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer %s", msg.Issuer)
 	}
 
-	if err := ValidateSymbol(msg.Symbol); err != nil {
+	if err := ValidateSubunit(msg.Symbol); err != nil {
 		return err
 	}
 

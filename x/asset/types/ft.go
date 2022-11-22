@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	symbolRegexStr = `^[a-z][a-z0-9]{2,70}$`
-	symbolRegex    *regexp.Regexp
+	subunitRegexStr = `^[a-z][a-z0-9]{2,70}$`
+	subunitRegex    *regexp.Regexp
 )
 
 func init() {
-	symbolRegex = regexp.MustCompile(symbolRegexStr)
+	subunitRegex = regexp.MustCompile(subunitRegexStr)
 }
 
 // IssueFungibleTokenSettings is the model which represents the params for the fungible token issuance.
@@ -46,15 +46,15 @@ var reserved = []string{
 	strings.ToLower(constant.DenomMainDisplay),
 }
 
-// ValidateSymbol checks the provide symbol is valid
-func ValidateSymbol(symbol string) error {
-	symbol = strings.ToLower(symbol)
-	if lo.Contains(reserved, symbol) {
-		return sdkerrors.Wrapf(ErrInvalidSymbol, "%s is a reserved symbol", symbol)
+// ValidateSubunit checks the provide symbol is valid
+func ValidateSubunit(subunit string) error {
+	subunit = strings.ToLower(subunit)
+	if lo.Contains(reserved, subunit) {
+		return sdkerrors.Wrapf(ErrInvalidSubunit, "%s is a reserved symbol", subunit)
 	}
 
-	if !symbolRegex.MatchString(symbol) {
-		return sdkerrors.Wrapf(ErrInvalidSymbol, "symbol must match regex format '%s'", symbolRegexStr)
+	if !subunitRegex.MatchString(subunit) {
+		return sdkerrors.Wrapf(ErrInvalidSubunit, "subunit must match regex format '%s'", subunitRegexStr)
 	}
 
 	return nil

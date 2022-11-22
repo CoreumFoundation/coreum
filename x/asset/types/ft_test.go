@@ -47,11 +47,11 @@ func TestValidateSymbol(t *testing.T) {
 	}
 
 	assertValidSymbol := func(symbol string, isValid bool) {
-		err := types.ValidateSymbol(symbol)
+		err := types.ValidateSubunit(symbol)
 		if isValid {
 			requireT.NoError(err)
 		} else {
-			requireT.True(types.ErrInvalidSymbol.Is(err))
+			requireT.True(types.ErrInvalidSubunit.Is(err))
 		}
 	}
 

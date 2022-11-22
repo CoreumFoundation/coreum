@@ -14,7 +14,7 @@ import (
 
 // IssueFungibleToken issues new fungible token and returns it's denom.
 func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error) {
-	if err := types.ValidateSymbol(settings.Subunit); err != nil {
+	if err := types.ValidateSubunit(settings.Subunit); err != nil {
 		return "", err
 	}
 
@@ -69,7 +69,7 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 
 	denomParts := strings.Split(definition.Denom, "-")
 	if len(denomParts) != 2 {
-		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidSymbol, "symbol must match format [subunit]-[issuer-address]")
+		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidSubunit, "symbol must match format [subunit]-[issuer-address]")
 	}
 
 	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, denom)

@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -34,12 +35,14 @@ func TestKeeper_LowercaseSymbol(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 	assetKeeper := testApp.AssetKeeper
-	symbol := "Coreum"
+	subunit := "Coreum"
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        addr,
-		Symbol:        symbol,
+		Subunit:       subunit,
+		Precision:     6,
+		Symbol:        "Core",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
@@ -50,13 +53,13 @@ func TestKeeper_LowercaseSymbol(t *testing.T) {
 	requireT.EqualValues("coreum"+"-"+addr.String(), denom)
 }
 
-func TestKeeper_ValidateSymbol(t *testing.T) {
+func TestKeeper_ValidateSubunit(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 	assetKeeper := testApp.AssetKeeper
 
-	unacceptableSymbols := []string{
+	unacceptableSubunits := []string{
 		"ABC-1",
 		"ABC/1",
 		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
@@ -72,7 +75,7 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 		"AB1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
-	acceptableSymbols := []string{
+	acceptableSubunits := []string{
 		"ABC1",
 		"coreum",
 		"ucoreum",
@@ -82,11 +85,12 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 		"A1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
-	assertValidSymbol := func(symbol string, isValid bool) {
+	assertValidSubunit := func(symbol string, isValid bool) {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		settings := types.IssueFungibleTokenSettings{
 			Issuer:        addr,
-			Symbol:        symbol,
+			Symbol:        "symbol",
+			Subunit:       symbol,
 			Description:   "ABC Desc",
 			Recipient:     addr,
 			InitialAmount: sdk.NewInt(777),
@@ -94,15 +98,15 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 		}
 
 		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
-		requireT.Equal(types.ErrInvalidSymbol.Is(err), !isValid)
+		requireT.Equal(types.ErrInvalidSubunit.Is(err), !isValid)
 	}
 
-	for _, symbol := range unacceptableSymbols {
-		assertValidSymbol(symbol, false)
+	for _, symbol := range unacceptableSubunits {
+		assertValidSubunit(symbol, false)
 	}
 
-	for _, symbol := range acceptableSymbols {
-		assertValidSymbol(symbol, true)
+	for _, symbol := range acceptableSubunits {
+		assertValidSubunit(symbol, true)
 	}
 }
 
@@ -121,6 +125,8 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "ABC",
 		Description:   "ABC Desc",
+		Subunit:       "ABC",
+		Precision:     8,
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
@@ -128,7 +134,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
 	requireT.NoError(err)
-	requireT.Equal(types.BuildFungibleTokenDenom(settings.Symbol, settings.Issuer), denom)
+	requireT.Equal(types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer), denom)
 
 	gotToken, err := assetKeeper.GetFungibleToken(ctx, denom)
 	requireT.NoError(err)
@@ -137,6 +143,8 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Issuer:      settings.Issuer.String(),
 		Symbol:      settings.Symbol,
 		Description: settings.Description,
+		SubUnit:     strings.ToLower(settings.Subunit),
+		Precision:   settings.Precision,
 		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
 	}, gotToken)
 
@@ -144,17 +152,21 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 	storedMetadata, found := bankKeeper.GetDenomMetaData(ctx, denom)
 	requireT.True(found)
 	requireT.Equal(banktypes.Metadata{
-		Name:        denom,
+		Name:        settings.Symbol,
 		Symbol:      settings.Symbol,
 		Description: settings.Description,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
+				Denom:    settings.Symbol,
+				Exponent: settings.Precision,
+			},
+			{
 				Denom:    denom,
-				Exponent: uint32(0),
+				Exponent: 0,
 			},
 		},
 		Base:    denom,
-		Display: denom,
+		Display: settings.Symbol,
 	}, storedMetadata)
 
 	// check the account state
@@ -182,6 +194,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
+		Subunit:       "DEF",
 		Description:   "DEF Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
@@ -194,6 +207,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	unfreezableSettings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
+		Subunit:       "ABC",
 		Description:   "ABC Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
