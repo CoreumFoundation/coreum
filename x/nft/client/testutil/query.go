@@ -1,10 +1,11 @@
+//nolint:revive // test
 package testutil
 
 import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-func (s *IntegrationTestSuite) TestQueryClass() { //nolint:revive // test
+func (s *IntegrationTestSuite) TestQueryClass() {
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -49,7 +50,7 @@ func (s *IntegrationTestSuite) TestQueryClass() { //nolint:revive // test
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryClasses() { //nolint:revive // test
+func (s *IntegrationTestSuite) TestQueryClasses() {
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name      string
@@ -78,7 +79,7 @@ func (s *IntegrationTestSuite) TestQueryClasses() { //nolint:revive // test
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryNFT() { //nolint:revive // test
+func (s *IntegrationTestSuite) TestQueryNFT() {
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -139,7 +140,7 @@ func (s *IntegrationTestSuite) TestQueryNFT() { //nolint:revive // test
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryNFTs() { //nolint:revive // test
+func (s *IntegrationTestSuite) TestQueryNFTs() {
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -213,7 +214,7 @@ func (s *IntegrationTestSuite) TestQueryNFTs() { //nolint:revive // test
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryOwner() { //nolint:revive // test
+func (s *IntegrationTestSuite) TestQueryOwner() {
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -304,7 +305,7 @@ func (s *IntegrationTestSuite) TestQueryOwner() { //nolint:revive // test
 	}
 }
 
-func (s *IntegrationTestSuite) TestQueryBalance() { //nolint:revive // test
+func (s *IntegrationTestSuite) TestQueryBalance() {
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string
@@ -383,7 +384,7 @@ func (s *IntegrationTestSuite) TestQueryBalance() { //nolint:revive // test
 	}
 }
 
-func (s *IntegrationTestSuite) TestQuerySupply() { //nolint:revive // test
+func (s *IntegrationTestSuite) TestQuerySupply() {
 	val := s.network.Validators[0]
 	testCases := []struct {
 		name string

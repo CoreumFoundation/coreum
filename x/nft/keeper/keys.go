@@ -11,14 +11,21 @@ import (
 )
 
 var (
-	ClassKey             = []byte{0x01} //nolint:revive // store key
-	NFTKey               = []byte{0x02} //nolint:revive // store key
-	NFTOfClassByOwnerKey = []byte{0x03} //nolint:revive // store key
-	OwnerKey             = []byte{0x04} //nolint:revive // store key
-	ClassTotalSupply     = []byte{0x05} //nolint:revive // store key
+	// ClassKey is store prefix of the Class
+	ClassKey = []byte{0x01}
+	// NFTKey is store prefix of the NFT
+	NFTKey = []byte{0x02}
+	// NFTOfClassByOwnerKey is store prefix of the NFTOfClassByOwner
+	NFTOfClassByOwnerKey = []byte{0x03}
+	// OwnerKey is store prefix of the Owner
+	OwnerKey = []byte{0x04}
+	// ClassTotalSupply is store prefix of the ClassTotalSupply
+	ClassTotalSupply = []byte{0x05}
 
-	Delimiter   = []byte{0x00} //nolint:revive // store key
-	Placeholder = []byte{0x01} //nolint:revive // store key
+	// Delimiter is store key Delimiter
+	Delimiter = []byte{0x00}
+	// Placeholder is store key Placeholder
+	Placeholder = []byte{0x01}
 )
 
 // StoreKey is the store key string for nft
