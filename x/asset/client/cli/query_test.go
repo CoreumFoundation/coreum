@@ -29,9 +29,11 @@ func TestQueryFungibleToken(t *testing.T) {
 
 	// the denom must start from the letter
 	symbol := "BTC" + uuid.NewString()[:4]
+	subunit := symbol
+	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	denom := createFungibleToken(requireT, ctx, symbol, testNetwork)
+	denom := createFungibleToken(requireT, ctx, symbol, subunit, precision, testNetwork)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
@@ -43,13 +45,15 @@ func TestQueryFungibleToken(t *testing.T) {
 		Denom:       denom,
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Symbol:      symbol,
+		SubUnit:     subunit,
+		Precision:   8,
 		Description: "",
 		Features:    []types.FungibleTokenFeature{},
 	}, resp.FungibleToken)
 }
 
-func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbol string, testNetwork *network.Network) string {
-	args := []string{symbol, "", "", ""}
+func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbol, subunit, precision string, testNetwork *network.Network) string {
+	args := []string{symbol, subunit, precision, "", "", ""}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)
