@@ -32,7 +32,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "WBTC",
-		SubUnit:       "wsatoshi",
+		Subunit:       "wsatoshi",
 		Precision:     8,
 		Description:   "Wrapped BTC",
 		Recipient:     recipient.String(),
@@ -52,11 +52,11 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 
 	require.NoError(t, err)
 	require.Equal(t, assettypes.EventFungibleTokenIssued{
-		Denom:         assettypes.BuildFungibleTokenDenom(msg.SubUnit, issuer),
+		Denom:         assettypes.BuildFungibleTokenDenom(msg.Subunit, issuer),
 		Issuer:        msg.Issuer,
 		Symbol:        msg.Symbol,
 		Precision:     msg.Precision,
-		SubUnit:       msg.SubUnit,
+		SubUnit:       msg.Subunit,
 		Description:   msg.Description,
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,

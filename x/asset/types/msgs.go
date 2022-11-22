@@ -12,6 +12,7 @@ var (
 // ValidateBasic validates the message.
 func (msg MsgIssueFungibleToken) ValidateBasic() error {
 	const maxDescriptionLength = 200
+	const maxSymbolLength = 200
 
 	if _, err := sdk.AccAddressFromBech32(msg.Issuer); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer %s", msg.Issuer)
@@ -32,6 +33,10 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 
 	if len(msg.Description) > maxDescriptionLength {
 		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid description %q, the length must less than %d", msg.Description, maxDescriptionLength)
+	}
+
+	if len(msg.Symbol) > maxSymbolLength {
+		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid symbol %q, the length must less than %d", msg.Symbol, maxSymbolLength)
 	}
 
 	return nil

@@ -1,10 +1,10 @@
-use cosmwasm_std::{entry_point};
+use crate::sdk;
+use cosmwasm_std::entry_point;
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, StdError, Uint128};
 use cw2::set_contract_version;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use crate::sdk;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "creates.io:issue-fungible-token";
@@ -34,15 +34,19 @@ pub fn execute(
     match msg {
         ExecuteMsg::Issue {
             symbol,
+            subunit,
+            precision,
             amount,
             recipient,
-        } => issue_token(deps, symbol, amount, recipient),
+        } => issue_token(deps, symbol, subunit, precision, amount, recipient),
     }
 }
 
 fn issue_token(
     deps: DepsMut,
     symbol: String,
+    subunit: String,
+    precision: u32,
     amount: Uint128,
     recipient: String,
 ) -> Result<Response<sdk::FungibleTokenMsg>, ContractError> {
@@ -54,6 +58,8 @@ fn issue_token(
 
     let issue_token_msg = sdk::FungibleTokenMsg::MsgIssueFungibleToken {
         symbol: symbol.clone(),
+        subunit: subunit.clone(),
+        precision: precision,
         recipient: recipient_addr.to_string(),
         initial_amount: amount,
     };
@@ -75,6 +81,8 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     Issue {
         symbol: String,
+        subunit: String,
+        precision: u32,
         amount: Uint128,
         recipient: String,
     },

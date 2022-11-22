@@ -110,6 +110,8 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
+		Subunit:       "ABC",
+		Precision:     6,
 		Description:   "ABC Description",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),

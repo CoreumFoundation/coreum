@@ -15,7 +15,7 @@ import (
 // IssueFungibleToken issues new fungible token and returns it's denom.
 func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error) {
 	if err := types.ValidateSubunit(settings.Subunit); err != nil {
-		return "", err
+		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
 
 	denom := types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer)

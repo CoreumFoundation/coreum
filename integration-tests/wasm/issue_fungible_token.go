@@ -23,6 +23,8 @@ var (
 
 type issueFungibleTokenRequest struct {
 	Symbol    string `json:"symbol"`
+	Subunit   string `json:"subunit"`
+	Precision uint32 `json:"precision"`
 	Amount    string `json:"amount"`
 	Recipient string `json:"recipient"`
 }
@@ -46,6 +48,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 	bankClient := banktypes.NewQueryClient(clientCtx)
+	assetClient := assettypes.NewQueryClient(clientCtx)
 
 	// deploy and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(struct{}{})
@@ -65,14 +68,18 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 
 	recipient := chain.GenAccount()
 
-	symbol := "mytoken"
-	denom := assettypes.BuildFungibleTokenDenom(symbol, sdk.MustAccAddressFromBech32(contractAddr))
+	subunit := "mysatoshi"
+	var precision uint32 = 8
+	denom := assettypes.BuildFungibleTokenDenom(subunit, sdk.MustAccAddressFromBech32(contractAddr))
 	initialAmount := sdk.NewInt(5000)
+	symbol := "mytoken"
 
 	// issue fungible token by smart contract
 	createPayload, err := json.Marshal(map[fungibleTokenMethod]issueFungibleTokenRequest{
 		issue: {
 			Symbol:    symbol,
+			Subunit:   subunit,
+			Precision: precision,
 			Amount:    initialAmount.String(),
 			Recipient: recipient.String(),
 		},
@@ -94,4 +101,14 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	requireT.NoError(err)
 	requireT.NotNil(recipientBalance.Balance)
 	requireT.Equal(sdk.NewCoin(denom, initialAmount).String(), recipientBalance.Balance.String())
+
+	ft, err := assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{Denom: denom})
+	requireT.NoError(err)
+	requireT.EqualValues(assettypes.FungibleToken{
+		Denom:     denom,
+		Issuer:    contractAddr,
+		Symbol:    symbol,
+		SubUnit:   subunit,
+		Precision: precision,
+	}, ft.GetFungibleToken())
 }

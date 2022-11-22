@@ -130,7 +130,7 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 			msg := &types.MsgIssueFungibleToken{
 				Issuer:        issuer.String(),
 				Symbol:        symbol,
-				SubUnit:       subunit,
+				Subunit:       subunit,
 				Precision:     uint32(precision),
 				Recipient:     recipient,
 				InitialAmount: initialAmount,

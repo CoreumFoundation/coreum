@@ -25,7 +25,7 @@ message MsgIssueFungibleToken {
   option (gogoproto.goproto_getters) = false;
   string issuer = 1;
   string symbol = 2;
-  string sub_unit = 3;
+  string subunit = 3;
   uint32 precision = 4;
   string recipient = 5;
   string initial_amount = 6 [
