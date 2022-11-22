@@ -20,7 +20,7 @@ func MsgHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]s
 			if err := json.Unmarshal(msg, &msgIssueFungibleToken); err != nil {
 				return nil, errors.WithStack(err)
 			}
-			msgIssueFungibleToken.Issuer = sender.String()
+			msgIssueFungibleToken.Issuer = sender.String() // sender is the address of smart contract
 			res = append(res, &msgIssueFungibleToken)
 		}
 	}
