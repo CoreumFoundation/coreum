@@ -26,22 +26,12 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
-// ChainID represents predefined chain ID
-type ChainID string
-
-// Predefined chain ids
-const (
-	ChainIDMain ChainID = "coreum-mainnet-1"
-	ChainIDDev  ChainID = "coreum-devnet-1"
-)
-
-const (
-	// CoinType is the CORE coin type as defined in SLIP44 (https://github.com/satoshilabs/slips/blob/master/slip-0044.md)
-	CoinType uint32 = 990
-)
+// ChainID represents predefined Chain ID
+type ChainID = constant.ChainID
 
 // EnableFakeUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
 // It is string, not bool, because -X flag supports strings only.
@@ -83,23 +73,23 @@ func init() {
 
 	list := []NetworkConfig{
 		{
-			ChainID:              ChainIDMain,
+			ChainID:              constant.ChainIDMain,
 			Enabled:              false,
 			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-			AddressPrefix:        "core",
-			MetadataDisplayDenom: "core",
-			Denom:                "ucore",
+			AddressPrefix:        constant.AddressPrefixMain,
+			MetadataDisplayDenom: constant.DenomMainDisplay,
+			Denom:                constant.DenomMain,
 			Fee:                  feeConfig,
 			GovConfig:            govConfig,
 			StakingConfig:        stakingConfig,
 		},
 		{
-			ChainID:              ChainIDDev,
+			ChainID:              constant.ChainIDDev,
 			Enabled:              true,
 			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-			AddressPrefix:        "devcore",
-			MetadataDisplayDenom: "dcore",
-			Denom:                denomDev,
+			AddressPrefix:        constant.AddressPrefixDev,
+			MetadataDisplayDenom: constant.DenomDevDisplay,
+			Denom:                constant.DenomDev,
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@35.223.81.227:26656"},
@@ -424,7 +414,7 @@ func (n Network) SetSDKConfig() {
 	config.SetBech32PrefixForConsensusNode(n.addressPrefix+"valcons", n.addressPrefix+"valconspub")
 
 	// Set BIP44 coin type corresponding to CORE
-	config.SetCoinType(CoinType)
+	config.SetCoinType(constant.CoinType)
 
 	config.Seal()
 }
@@ -504,7 +494,7 @@ func NetworkByChainID(id ChainID) (Network, error) {
 
 	// TODO: remove this check once all preconfigured networkConfigs are enabled
 	if !nc.Enabled {
-		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(ChainIDDev))
+		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(constant.ChainIDDev))
 	}
 
 	return NewNetwork(nc), nil

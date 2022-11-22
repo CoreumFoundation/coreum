@@ -1,15 +1,24 @@
 package types
 
 import (
-	"encoding/binary"
-	"fmt"
-	"hash/crc32"
+	"regexp"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
+
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
-// checksumCharset is the set of characters used for the hash
-const checksumCharset = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+var (
+	symbolRegexStr = `^[a-z][a-z0-9]{2,70}$`
+	symbolRegex    *regexp.Regexp
+)
+
+func init() {
+	symbolRegex = regexp.MustCompile(symbolRegexStr)
+}
 
 // IssueFungibleTokenSettings is the model which represents the params for the fungible token issuance.
 type IssueFungibleTokenSettings struct {
@@ -23,17 +32,28 @@ type IssueFungibleTokenSettings struct {
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
 func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
-	base := fmt.Sprintf("%s-%s", symbol, issuer)
-	return fmt.Sprintf("%s-%s", base, checksum(base))
+	return strings.ToLower(symbol) + "-" + issuer.String()
 }
 
-// TODO(dhil) revise the func later, probably it should be implemented in a different way
-func checksum(data string) string {
-	buf := make([]byte, 4)
-	binary.LittleEndian.PutUint32(buf, crc32.ChecksumIEEE([]byte(data)))
-	for i, b := range buf {
-		buf[i] = checksumCharset[int(b)%len(checksumCharset)]
+var reserved = []string{
+	strings.ToLower(constant.DenomDev),
+	strings.ToLower(constant.DenomDevDisplay),
+	strings.ToLower(constant.DenomTest),
+	strings.ToLower(constant.DenomTestDisplay),
+	strings.ToLower(constant.DenomMain),
+	strings.ToLower(constant.DenomMainDisplay),
+}
+
+// ValidateSymbol checks the provide symbol is valid
+func ValidateSymbol(symbol string) error {
+	symbol = strings.ToLower(symbol)
+	if lo.Contains(reserved, symbol) {
+		return sdkerrors.Wrapf(ErrInvalidSymbol, "%s is a reserved symbol", symbol)
 	}
 
-	return string(buf)
+	if !symbolRegex.MatchString(symbol) {
+		return sdkerrors.Wrapf(ErrInvalidSymbol, "symbol must match regex format '%s'", symbolRegexStr)
+	}
+
+	return nil
 }

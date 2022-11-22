@@ -15,17 +15,95 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 func TestMain(m *testing.M) {
-	n, err := config.NetworkByChainID(config.ChainIDDev)
+	n, err := config.NetworkByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
 	n.SetSDKConfig()
 	m.Run()
+}
+
+func TestKeeper_LowercaseSymbol(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	assetKeeper := testApp.AssetKeeper
+	symbol := "Coreum"
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.IssueFungibleTokenSettings{
+		Issuer:        addr,
+		Symbol:        symbol,
+		Recipient:     addr,
+		InitialAmount: sdk.NewInt(777),
+		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
+	}
+
+	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	requireT.NoError(err)
+	requireT.EqualValues("coreum"+"-"+addr.String(), denom)
+}
+
+func TestKeeper_ValidateSymbol(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	assetKeeper := testApp.AssetKeeper
+
+	unacceptableSymbols := []string{
+		"ABC-1",
+		"ABC/1",
+		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
+		"BTC-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
+		"core",
+		"ucore",
+		"Core",
+		"uCore",
+		"CORE",
+		"UCORE",
+		"3abc",
+		"3ABC",
+		"AB1234567890123456789012345678901234567890123456789012345678901234567890",
+	}
+
+	acceptableSymbols := []string{
+		"ABC1",
+		"coreum",
+		"ucoreum",
+		"Coreum",
+		"uCoreum",
+		"COREeum",
+		"A1234567890123456789012345678901234567890123456789012345678901234567890",
+	}
+
+	assertValidSymbol := func(symbol string, isValid bool) {
+		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		settings := types.IssueFungibleTokenSettings{
+			Issuer:        addr,
+			Symbol:        symbol,
+			Description:   "ABC Desc",
+			Recipient:     addr,
+			InitialAmount: sdk.NewInt(777),
+			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
+		}
+
+		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
+		requireT.Equal(types.ErrInvalidSymbol.Is(err), !isValid)
+	}
+
+	for _, symbol := range unacceptableSymbols {
+		assertValidSymbol(symbol, false)
+	}
+
+	for _, symbol := range acceptableSymbols {
+		assertValidSymbol(symbol, true)
+	}
 }
 
 func TestKeeper_IssueFungibleToken(t *testing.T) {
