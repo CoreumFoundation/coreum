@@ -54,6 +54,10 @@ func (msg MsgFreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
+	if err := ValidateSymbol(msg.Coin.Denom); err != nil {
+		return err
+	}
+
 	return msg.Coin.Validate()
 }
 
@@ -74,6 +78,10 @@ func (msg MsgUnfreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
+	if err := ValidateSymbol(msg.Coin.Denom); err != nil {
+		return err
+	}
+
 	return msg.Coin.Validate()
 }
 
@@ -90,6 +98,10 @@ func (msg MsgMintFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
+	if err := ValidateSymbol(msg.Coin.Denom); err != nil {
+		return err
+	}
+
 	return msg.Coin.Validate()
 }
 
@@ -104,6 +116,10 @@ func (msg MsgMintFungibleToken) GetSigners() []sdk.AccAddress {
 func (msg MsgBurnFungibleToken) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	if err := ValidateSymbol(msg.Coin.Denom); err != nil {
+		return err
 	}
 
 	return msg.Coin.Validate()
