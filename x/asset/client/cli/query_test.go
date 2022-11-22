@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -45,7 +46,7 @@ func TestQueryFungibleToken(t *testing.T) {
 		Denom:       denom,
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Symbol:      symbol,
-		SubUnit:     subunit,
+		SubUnit:     strings.ToLower(subunit),
 		Precision:   8,
 		Description: "",
 		Features:    []types.FungibleTokenFeature{},
