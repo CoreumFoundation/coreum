@@ -11,6 +11,9 @@ import (
 // Handler handles encoding of custom message
 type Handler func(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]sdk.Msg, error)
 
+// Querier handles custom queries
+type Querier func(ctx sdk.Context, queries map[string]json.RawMessage) ([]byte, bool, error)
+
 // NewCustomEncoder encodes custom messages received from smart contracts
 func NewCustomEncoder(handlers ...Handler) *wasmkeeper.MessageEncoders {
 	return &wasmkeeper.MessageEncoders{
@@ -29,6 +32,28 @@ func NewCustomEncoder(handlers ...Handler) *wasmkeeper.MessageEncoders {
 				res = append(res, msgs...)
 			}
 			return res, nil
+		},
+	}
+}
+
+// NewCustomQuerier handles custom queries
+func NewCustomQuerier(queriers ...Querier) *wasmkeeper.QueryPlugins {
+	return &wasmkeeper.QueryPlugins{
+		Custom: func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
+			queries := map[string]json.RawMessage{}
+			if err := json.Unmarshal(request, &queries); err != nil {
+				return nil, errors.WithStack(err)
+			}
+			for _, q := range queriers {
+				res, ok, err := q(ctx, queries)
+				if err != nil {
+					return nil, err
+				}
+				if ok {
+					return res, nil
+				}
+			}
+			return nil, errors.New("query not supported")
 		},
 	}
 }
