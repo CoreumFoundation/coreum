@@ -39,7 +39,7 @@ func TestKeeper_LowercaseSymbol(t *testing.T) {
 		Symbol:        symbol,
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
-		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
+		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
@@ -87,7 +87,7 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 			Description:   "ABC Desc",
 			Recipient:     addr,
 			InitialAmount: sdk.NewInt(777),
-			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
+			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 		}
 
 		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
@@ -120,7 +120,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Description:   "ABC Desc",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
-		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
+		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
@@ -134,7 +134,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Issuer:      settings.Issuer.String(),
 		Symbol:      settings.Symbol,
 		Description: settings.Description,
-		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
+		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}, gotToken)
 
 	// check the metadata
@@ -181,8 +181,8 @@ func TestKeeper_Mint(t *testing.T) {
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
-			types.FungibleTokenFeature_freezable, //nolint:nosnakecase
-			types.FungibleTokenFeature_burnable,  //nolint:nosnakecase
+			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
+			types.FungibleTokenFeature_burn,   //nolint:nosnakecase
 		},
 	}
 
@@ -202,7 +202,7 @@ func TestKeeper_Mint(t *testing.T) {
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
-			types.FungibleTokenFeature_mintable, //nolint:nosnakecase
+			types.FungibleTokenFeature_mint, //nolint:nosnakecase
 		},
 	}
 
@@ -245,8 +245,8 @@ func TestKeeper_Burn(t *testing.T) {
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
-			types.FungibleTokenFeature_freezable, //nolint:nosnakecase
-			types.FungibleTokenFeature_mintable,  //nolint:nosnakecase
+			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
+			types.FungibleTokenFeature_mint,   //nolint:nosnakecase
 		},
 	}
 
@@ -266,8 +266,8 @@ func TestKeeper_Burn(t *testing.T) {
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
-			types.FungibleTokenFeature_burnable,  //nolint:nosnakecase
-			types.FungibleTokenFeature_freezable, //nolint:nosnakecase
+			types.FungibleTokenFeature_burn,   //nolint:nosnakecase
+			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 

@@ -16,7 +16,7 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_freezable) //nolint:nosnakecase
+	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, ad
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_freezable) //nolint:nosnakecase
+	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}

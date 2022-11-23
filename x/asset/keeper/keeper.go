@@ -39,7 +39,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // MintFungibleToken mints new fungible token
 func (k Keeper) MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_mintable) //nolint:nosnakecase
+	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_mint) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (k Keeper) MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin s
 
 // BurnFungibleToken burns fungible token
 func (k Keeper) BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_burnable) //nolint:nosnakecase
+	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_burn) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}

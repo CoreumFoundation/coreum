@@ -32,8 +32,8 @@ func TestMintBurnFungibleToken(t *testing.T) {
 
 	// Issue token
 	args := []string{symbol, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
-		"--features", types.FungibleTokenFeature_mintable.String(), //nolint:nosnakecase
-		"--features", types.FungibleTokenFeature_burnable.String(), //nolint:nosnakecase
+		"--features", types.FungibleTokenFeature_mint.String(), //nolint:nosnakecase
+		"--features", types.FungibleTokenFeature_burn.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)

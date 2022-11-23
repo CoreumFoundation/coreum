@@ -47,8 +47,8 @@ func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assettypes.FungibleTokenFeature{
-			assettypes.FungibleTokenFeature_burnable,  //nolint:nosnakecase
-			assettypes.FungibleTokenFeature_freezable, //nolint:nosnakecase
+			assettypes.FungibleTokenFeature_burn,   //nolint:nosnakecase
+			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 
@@ -88,7 +88,7 @@ func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 		Description:   "ABC Description",
 		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []assettypes.FungibleTokenFeature{assettypes.FungibleTokenFeature_mintable}, //nolint:nosnakecase
+		Features:      []assettypes.FungibleTokenFeature{assettypes.FungibleTokenFeature_mint}, //nolint:nosnakecase
 	}
 
 	res, err = tx.BroadcastTx(

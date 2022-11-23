@@ -34,7 +34,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Description:   "DEF Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
-		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
+		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
