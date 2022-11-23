@@ -35,7 +35,7 @@ func TestKeeper_LowercaseSymbol(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 	assetKeeper := testApp.AssetKeeper
-	subunit := "Coreum"
+	subunit := "uCoreum"
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	settings := types.IssueFungibleTokenSettings{
@@ -50,7 +50,7 @@ func TestKeeper_LowercaseSymbol(t *testing.T) {
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
 	requireT.NoError(err)
-	requireT.EqualValues("coreum"+"-"+addr.String(), denom)
+	requireT.EqualValues("ucoreum"+"-"+addr.String(), denom)
 }
 
 func TestKeeper_ValidateSubunit(t *testing.T) {
@@ -143,7 +143,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Issuer:      settings.Issuer.String(),
 		Symbol:      settings.Symbol,
 		Description: settings.Description,
-		SubUnit:     strings.ToLower(settings.Subunit),
+		Subunit:     strings.ToLower(settings.Subunit),
 		Precision:   settings.Precision,
 		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freezable}, //nolint:nosnakecase
 	}, gotToken)

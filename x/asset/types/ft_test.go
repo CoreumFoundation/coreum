@@ -18,9 +18,9 @@ func TestBuildFungibleTokenDenom(t *testing.T) {
 	require.Equal(t, "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5", denom)
 }
 
-func TestValidateSymbol(t *testing.T) {
+func TestValidateSubunit(t *testing.T) {
 	requireT := require.New(t)
-	unacceptableSymbols := []string{
+	unacceptableSubunits := []string{
 		"ABC-1",
 		"ABC/1",
 		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
@@ -36,7 +36,7 @@ func TestValidateSymbol(t *testing.T) {
 		"AB1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
-	acceptableSymbols := []string{
+	acceptableSubunits := []string{
 		"ABC1",
 		"coreum",
 		"ucoreum",
@@ -46,7 +46,7 @@ func TestValidateSymbol(t *testing.T) {
 		"A1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
-	assertValidSymbol := func(symbol string, isValid bool) {
+	assertValidSubunit := func(symbol string, isValid bool) {
 		err := types.ValidateSubunit(symbol)
 		if isValid {
 			requireT.NoError(err)
@@ -55,11 +55,11 @@ func TestValidateSymbol(t *testing.T) {
 		}
 	}
 
-	for _, symbol := range unacceptableSymbols {
-		assertValidSymbol(symbol, false)
+	for _, symbol := range unacceptableSubunits {
+		assertValidSubunit(symbol, false)
 	}
 
-	for _, symbol := range acceptableSymbols {
-		assertValidSymbol(symbol, true)
+	for _, symbol := range acceptableSubunits {
+		assertValidSubunit(symbol, true)
 	}
 }

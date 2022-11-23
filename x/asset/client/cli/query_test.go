@@ -30,7 +30,7 @@ func TestQueryFungibleToken(t *testing.T) {
 
 	// the denom must start from the letter
 	symbol := "BTC" + uuid.NewString()[:4]
-	subunit := symbol
+	subunit := "sub" + symbol
 	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 
@@ -46,7 +46,7 @@ func TestQueryFungibleToken(t *testing.T) {
 		Denom:       denom,
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Symbol:      symbol,
-		SubUnit:     strings.ToLower(subunit),
+		Subunit:     strings.ToLower(subunit),
 		Precision:   8,
 		Description: "",
 		Features:    []types.FungibleTokenFeature{},

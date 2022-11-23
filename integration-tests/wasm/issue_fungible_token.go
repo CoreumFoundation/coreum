@@ -69,7 +69,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	recipient := chain.GenAccount()
 
 	subunit := "mysatoshi"
-	var precision uint32 = 8
+	precision := uint32(8)
 	denom := assettypes.BuildFungibleTokenDenom(subunit, sdk.MustAccAddressFromBech32(contractAddr))
 	initialAmount := sdk.NewInt(5000)
 	symbol := "mytoken"
@@ -108,7 +108,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 		Denom:     denom,
 		Issuer:    contractAddr,
 		Symbol:    symbol,
-		SubUnit:   subunit,
+		Subunit:   subunit,
 		Precision: precision,
 	}, ft.GetFungibleToken())
 }

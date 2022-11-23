@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"strings"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -45,7 +43,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Denom:         denom,
 		Issuer:        settings.Issuer.String(),
 		Symbol:        settings.Symbol,
-		SubUnit:       settings.Subunit,
+		Subunit:       settings.Subunit,
 		Precision:     settings.Precision,
 		Description:   settings.Description,
 		Recipient:     settings.Recipient.String(),
@@ -67,9 +65,9 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		return types.FungibleToken{}, err
 	}
 
-	denomParts := strings.Split(definition.Denom, "-")
-	if len(denomParts) != 2 {
-		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidSubunit, "symbol must match format [subunit]-[issuer-address]")
+	subunit, _, err := types.DeconstructFungibleTokenDenom(definition.Denom)
+	if err != nil {
+		return types.FungibleToken{}, err
 	}
 
 	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, denom)
@@ -78,10 +76,17 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 	}
 
 	var precision uint32
+	precisionFound := false
 	for _, unit := range metadata.DenomUnits {
 		if unit.Denom == metadata.Symbol {
 			precision = unit.Exponent
+			precisionFound = true
+			break
 		}
+	}
+
+	if !precisionFound {
+		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "precision not found")
 	}
 
 	return types.FungibleToken{
@@ -89,7 +94,7 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		Issuer:      definition.Issuer,
 		Symbol:      metadata.Symbol,
 		Precision:   precision,
-		SubUnit:     denomParts[0],
+		Subunit:     subunit,
 		Description: metadata.Description,
 		Features:    definition.Features,
 	}, nil

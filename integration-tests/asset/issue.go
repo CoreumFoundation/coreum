@@ -56,7 +56,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Issuer:        msg.Issuer,
 		Symbol:        msg.Symbol,
 		Precision:     msg.Precision,
-		SubUnit:       msg.Subunit,
+		Subunit:       msg.Subunit,
 		Description:   msg.Description,
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
@@ -75,7 +75,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Denom:       denom,
 		Issuer:      msg.Issuer,
 		Symbol:      msg.Symbol,
-		SubUnit:     "wsatoshi",
+		Subunit:     "wsatoshi",
 		Precision:   8,
 		Description: msg.Description,
 	}, gotToken.FungibleToken)

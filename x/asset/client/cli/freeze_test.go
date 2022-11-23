@@ -24,11 +24,11 @@ func TestFreezeFungibleToken(t *testing.T) {
 
 	// the denom must start from the letter
 	symbol := "l" + uuid.NewString()[:4]
-	subunit := symbol
+	subunit := "sub" + symbol
 	precision := "6"
 	ctx := testNetwork.Validators[0].ClientCtx
 	issuer := testNetwork.Validators[0].Address
-	denom := types.BuildFungibleTokenDenom(symbol, issuer)
+	denom := types.BuildFungibleTokenDenom(subunit, issuer)
 
 	// Issue token
 	args := []string{symbol, subunit, precision, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
@@ -53,8 +53,8 @@ func TestFreezeFungibleToken(t *testing.T) {
 	// test pagination
 	for i := 0; i < 2; i++ {
 		symbol := "l" + uuid.NewString()[:4]
-		subunit := symbol
-		denom := types.BuildFungibleTokenDenom(symbol, issuer)
+		subunit := "sub" + symbol
+		denom := types.BuildFungibleTokenDenom(subunit, issuer)
 		args := []string{symbol, subunit, precision, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
 			"--features", types.FungibleTokenFeature_freezable.String(), //nolint:nosnakecase
 		}
