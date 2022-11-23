@@ -1,4 +1,4 @@
-use cosmwasm_std::{CosmosMsg, CustomMsg, Uint128};
+use cosmwasm_std::{CosmosMsg, CustomMsg, CustomQuery, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -18,3 +18,16 @@ impl Into<CosmosMsg<FungibleTokenMsg>> for FungibleTokenMsg {
 }
 
 impl CustomMsg for FungibleTokenMsg {}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum FungibleTokenQuery {
+    FungibleToken { denom: String },
+}
+
+impl CustomQuery for FungibleTokenQuery {}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct FungibleTokenResponse {
+    pub issuer: String,
+}
