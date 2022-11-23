@@ -38,7 +38,7 @@ func NewAppModule(
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	stakingKeeperMsgSrv := stakingkeeper.NewMsgServerImpl(am.stakingKeeper)
-	// wrap the staking keeper message servet to intersect the messages
+	// wrap the staking keeper message server to intersect the messages
 	stakingtypes.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(stakingKeeperMsgSrv, am.customParamsKeeper))
 	querier := stakingkeeper.Querier{Keeper: am.stakingKeeper}
 	stakingtypes.RegisterQueryServer(cfg.QueryServer(), querier)
