@@ -1,3 +1,4 @@
+// Package conv is copy of the sdk https://github.com/cosmos/cosmos-sdk/blob/2582f0aab7b2cbf66ade066fe570a4622cf0b098/internal/conv/string.go
 package conv
 
 import (
