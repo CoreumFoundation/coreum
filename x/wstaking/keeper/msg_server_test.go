@@ -1,13 +1,15 @@
 package keeper_test
 
 import (
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	wstakingtypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/CoreumFoundation/coreum/testutil/simapp"
+	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
 func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
@@ -16,7 +18,7 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 	// set min delegation param to 10k
 	ctx := simApp.BeginNextBlock()
 	minSelfDelegation := sdk.NewInt(10_000)
-	simApp.WStakingKeeper.SetParams(ctx, wstakingtypes.Params{
+	simApp.CustomParamsKeeper.SetStakingParams(ctx, customparamstypes.StakingParams{
 		MinSelfDelegation: minSelfDelegation,
 	})
 	simApp.EndBlockAndCommit(ctx)
@@ -50,6 +52,7 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(
 		sdk.ValAddress(accountAddress), ed25519.GenPrivKey().PubKey(), selfDelegation, description, commission, sdk.OneInt(),
 	)
+	require.NoError(t, err)
 	_, _, err = simApp.SendTx(ctx, feeAmt, gas, privateKey, createValidatorMsg)
 	require.Error(t, err)
 
@@ -57,9 +60,9 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 	createValidatorMsg, err = stakingtypes.NewMsgCreateValidator(
 		sdk.ValAddress(accountAddress), ed25519.GenPrivKey().PubKey(), selfDelegation, description, commission, minSelfDelegation,
 	)
+	require.NoError(t, err)
 	_, _, err = simApp.SendTx(ctx, feeAmt, gas, privateKey, createValidatorMsg)
 	require.NoError(t, err)
 
 	simApp.EndBlockAndCommit(ctx)
-
 }

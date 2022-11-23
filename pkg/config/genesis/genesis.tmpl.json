@@ -220,11 +220,6 @@
       "redelegations": [],
       "exported": false
     },
-    "wstaking": {
-      "params": {
-          "min_self_delegation": "{{ .Staking.MinSelfDelegation }}"
-       }
-    },
     "transfer": {
       "port_id": "transfer",
       "denom_traces": [],
@@ -260,6 +255,11 @@
         "denom": "{{ .Denom }}",
         "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
+    },
+    "customparams": {
+      "staking_params": {
+        "min_self_delegation": "{{ .CustomParamsConfig.Staking.MinSelfDelegation }}"
+      }
     }
-  }
+}
 }

@@ -1,28 +1,30 @@
 package keeper_test
 
 import (
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/x/wstaking/types"
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"testing"
+
+	"github.com/CoreumFoundation/coreum/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
 func TestKeeper_InitAndExportGenesis(t *testing.T) {
 	testApp := simapp.New()
-	keeper := testApp.WStakingKeeper
+	keeper := testApp.CustomParamsKeeper
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
 	getState := types.GenesisState{
-		Params: types.Params{
+		StakingParams: types.StakingParams{
 			MinSelfDelegation: sdk.OneInt(),
 		},
 	}
 	keeper.InitGenesis(ctx, getState)
 
 	requireT := require.New(t)
-	requireT.Equal(sdk.OneInt().String(), keeper.GetParams(ctx).MinSelfDelegation.String())
+	requireT.Equal(sdk.OneInt().String(), keeper.GetStakingParams(ctx).MinSelfDelegation.String())
 
 	exportedGetState := keeper.ExportGenesis(ctx)
 	requireT.Equal(getState, *exportedGetState)

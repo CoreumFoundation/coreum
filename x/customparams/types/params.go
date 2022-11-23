@@ -1,11 +1,9 @@
 package types
 
 import (
-	"fmt"
-	"github.com/pkg/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -13,45 +11,41 @@ var (
 	ParamStoreKeyMinSelfDelegation = []byte("minselfdelegation")
 )
 
-// ParamKeyTable returns the parameter key table.
-func ParamKeyTable() paramtypes.KeyTable {
-	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
+// StakingParamKeyTable returns the parameter key table.
+func StakingParamKeyTable() paramtypes.KeyTable {
+	return paramtypes.NewKeyTable().RegisterParamSet(&StakingParams{})
 }
 
-// DefaultParams returns default distribution parameters
-func DefaultParams() Params {
-	return Params{
+// DefaultStakingParams returns default staking parameters.
+func DefaultStakingParams() StakingParams {
+	return StakingParams{
 		MinSelfDelegation: sdk.OneInt(),
 	}
 }
 
 // ParamSetPairs returns the parameter set pairs.
-func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
+func (p *StakingParams) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamStoreKeyMinSelfDelegation, &p.MinSelfDelegation, validateMinSelfDelegation),
 	}
 }
 
-// ValidateBasic performs basic validation on distribution parameters.
-func (p Params) ValidateBasic() error {
-	if err := validateMinSelfDelegation(p.MinSelfDelegation); err != nil {
-		return err
-	}
-
-	return nil
+// ValidateBasic performs basic validation on staking parameters.
+func (p StakingParams) ValidateBasic() error {
+	return validateMinSelfDelegation(p.MinSelfDelegation)
 }
 
 func validateMinSelfDelegation(i interface{}) error {
 	v, ok := i.(sdk.Int)
 	if !ok {
-		return errors.New(fmt.Sprintf("invalid parameter type: %T", i))
+		return errors.Errorf("invalid parameter type: %T", i)
 	}
 
 	if v.IsNil() {
 		return errors.New("param min_self_delegation tax must be not nil")
 	}
 	if v.IsNegative() {
-		return errors.New(fmt.Sprintf("param min_self_delegation must be positive: %s", v))
+		return errors.Errorf("param min_self_delegation must be positive: %s", v)
 	}
 
 	return nil

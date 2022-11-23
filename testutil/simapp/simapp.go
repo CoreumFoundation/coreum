@@ -3,17 +3,17 @@ package simapp
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/ibc-go/v3/testing/simapp/helpers"
 	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"github.com/pkg/errors"
-	"time"
-
-	"github.com/cosmos/cosmos-sdk/simapp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
@@ -43,6 +43,7 @@ var defaultConsensusParams = &abci.ConsensusParams{
 	},
 }
 
+// App is a simulation app wrapper.
 type App struct {
 	app.App
 }
@@ -125,7 +126,7 @@ func (s *App) SendTx(
 	signerAddress := sdk.AccAddress(priv.PubKey().Address())
 	account := s.AccountKeeper.GetAccount(ctx, signerAddress)
 	if account == nil {
-		return sdk.GasInfo{}, nil, errors.New(fmt.Sprintf("the account %s doesn't exist, check that it's created or state commited", signerAddress))
+		return sdk.GasInfo{}, nil, errors.Errorf("the account %s doesn't exist, check that it's created or state committed", signerAddress)
 	}
 	accountNum := account.GetAccountNumber()
 	accountSeq := account.GetSequence()
