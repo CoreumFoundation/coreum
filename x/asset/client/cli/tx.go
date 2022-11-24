@@ -53,6 +53,8 @@ func FTCmd() *cobra.Command {
 		CmdTxIssueFungibleToken(),
 		CmdTxFreezeFungibleToken(),
 		CmdTxUnfreezeFungibleToken(),
+		CmdTxMintFungibleToken(),
+		CmdTxBurnFungibleToken(),
 	)
 
 	return cmd
@@ -218,6 +220,88 @@ $ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6
 				Sender:  sender.String(),
 				Account: account,
 				Coin:    amount,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxMintFungibleToken returns MintFungibleToken cobra command.
+func CmdTxMintFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "mint [amount] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "mint new amount of fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Mint new amount of fungible token.
+
+Example:
+$ %s tx asset ft mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			amount, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgMintFungibleToken{
+				Sender: sender.String(),
+				Coin:   amount,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxBurnFungibleToken returns BurnFungibleToken cobra command.
+func CmdTxBurnFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burn [amount] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "burn some amount of fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Burn some amount of fungible token.
+
+Example:
+$ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			amount, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgBurnFungibleToken{
+				Sender: sender.String(),
+				Coin:   amount,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

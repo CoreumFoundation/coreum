@@ -6,7 +6,9 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
 enum FungibleTokenFeature {
-  freezable = 0 [(gogoproto.enumvalue_customname) = "freezable"];
+  freeze = 0;
+  mint = 1;
+  burn = 2;
 }
 
 // FungibleTokenDefinition defines the fungible token settings to store.
