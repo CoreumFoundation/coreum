@@ -111,6 +111,9 @@ import (
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
+	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
+	nftmodule "github.com/CoreumFoundation/coreum/x/nft/module"
 	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
@@ -182,6 +185,7 @@ var (
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
 		asset.AppModuleBasic{},
+		nftmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -253,6 +257,7 @@ type App struct {
 	AssetKeeper    assetkeeper.Keeper
 	FeeModelKeeper feemodelkeeper.Keeper
 	BankKeeper     wbankkeeper.BaseKeeperWrapper
+	NFTKeeper      nftkeeper.Keeper
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper        capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper   capabilitykeeper.ScopedKeeper
@@ -297,7 +302,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
-		wasm.StoreKey, feemodeltypes.StoreKey, assettypes.StoreKey,
+		wasm.StoreKey, feemodeltypes.StoreKey, assettypes.StoreKey, nftkeeper.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
@@ -390,6 +395,8 @@ func New(
 		keys[feemodeltypes.StoreKey],
 		tkeys[feemodeltypes.TransientStoreKey],
 	)
+
+	app.NFTKeeper = nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
 
 	// ... other modules keepers
 
@@ -500,7 +507,7 @@ func New(
 
 	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
-
+	nftModule := nftmodule.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
@@ -530,6 +537,7 @@ func New(
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
 		assetModule,
+		nftModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -560,6 +568,7 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		nft.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -586,6 +595,7 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		nft.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -617,6 +627,7 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assettypes.ModuleName,
+		nft.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -644,6 +655,7 @@ func New(
 		monitoringModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 		assetModule,
+		nftModule,
 	)
 	app.sm.RegisterStoreDecoders()
 

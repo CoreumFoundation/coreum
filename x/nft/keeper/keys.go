@@ -3,20 +3,28 @@ package keeper
 import (
 	"bytes"
 
-	"github.com/cosmos/cosmos-sdk/internal/conv"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/x/nft"
+
+	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/x/nft/conv"
 )
 
 var (
-	ClassKey             = []byte{0x01}
-	NFTKey               = []byte{0x02}
+	// ClassKey is store prefix of the Class
+	ClassKey = []byte{0x01}
+	// NFTKey is store prefix of the NFT
+	NFTKey = []byte{0x02}
+	// NFTOfClassByOwnerKey is store prefix of the NFTOfClassByOwner
 	NFTOfClassByOwnerKey = []byte{0x03}
-	OwnerKey             = []byte{0x04}
-	ClassTotalSupply     = []byte{0x05}
+	// OwnerKey is store prefix of the Owner
+	OwnerKey = []byte{0x04}
+	// ClassTotalSupply is store prefix of the ClassTotalSupply
+	ClassTotalSupply = []byte{0x05}
 
-	Delimiter   = []byte{0x00}
+	// Delimiter is store key Delimiter
+	Delimiter = []byte{0x00}
+	// Placeholder is store key Placeholder
 	Placeholder = []byte{0x01}
 )
 
@@ -86,7 +94,7 @@ func parseNftOfClassByOwnerStoreKey(key []byte) (classID, nftID string) {
 	}
 	classID = conv.UnsafeBytesToStr(ret[0])
 	nftID = string(ret[1])
-	return
+	return classID, nftID
 }
 
 // ownerStoreKey returns the byte representation of the nft owner
