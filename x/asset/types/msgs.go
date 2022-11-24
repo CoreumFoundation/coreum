@@ -54,7 +54,7 @@ func (msg MsgFreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	if err := ValidateSymbol(msg.Coin.Denom); err != nil {
+	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
 		return err
 	}
 
@@ -78,7 +78,7 @@ func (msg MsgUnfreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	if err := ValidateSymbol(msg.Coin.Denom); err != nil {
+	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
 		return err
 	}
 
@@ -98,7 +98,7 @@ func (msg MsgMintFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if err := ValidateSymbol(msg.Coin.Denom); err != nil {
+	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
 		return err
 	}
 
@@ -118,7 +118,7 @@ func (msg MsgBurnFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if err := ValidateSymbol(msg.Coin.Denom); err != nil {
+	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
 		return err
 	}
 

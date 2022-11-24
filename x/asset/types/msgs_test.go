@@ -86,7 +86,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -97,7 +97,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -109,7 +109,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -144,7 +144,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -155,7 +155,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -167,7 +167,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -197,7 +197,7 @@ func TestMsgMintFungibleToken_ValidateBasic(t *testing.T) {
 	defaultMsg := func() M {
 		return M{
 			Sender: acc.String(),
-			Coin:   sdk.NewCoin("ABC", sdk.NewInt(100)),
+			Coin:   sdk.NewCoin("ABC"+"-"+acc.String(), sdk.NewInt(100)),
 		}
 	}
 
@@ -244,7 +244,7 @@ func TestMsgBurnFungibleToken_ValidateBasic(t *testing.T) {
 	defaultMsg := func() M {
 		return M{
 			Sender: acc.String(),
-			Coin:   sdk.NewCoin("ABC", sdk.NewInt(100)),
+			Coin:   sdk.NewCoin("ABC"+"-"+acc.String(), sdk.NewInt(100)),
 		}
 	}
 
