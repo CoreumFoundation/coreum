@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	// DefaultGenTxGas defines the default gas tp spend on tx.
+	// DefaultGenTxGas defines the default gas to spend on tx.
 	DefaultGenTxGas = 10000000
 )
 
