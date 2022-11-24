@@ -24,6 +24,7 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
 type (
@@ -126,6 +127,12 @@ func DefaultConfig() network.Config {
 	}
 
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
+
+	var customParamsTypesState customparamstypes.GenesisState
+	encoding.Codec.MustUnmarshalJSON(genesisAppState[customparamstypes.ModuleName], &customParamsTypesState)
+	// we define it to 1 as default behavior in order not to rewrite the network creation functions
+	customParamsTypesState.StakingParams.MinSelfDelegation = sdk.NewInt(1)
+	genesisAppState[customparamstypes.ModuleName] = encoding.Codec.MustMarshalJSON(&customParamsTypesState)
 
 	return network.Config{
 		Codec:             encoding.Codec,

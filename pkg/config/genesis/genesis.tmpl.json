@@ -262,4 +262,5 @@
         "min_self_delegation": "{{ .CustomParamsConfig.Staking.MinSelfDelegation }}"
       }
     }
+  }
 }
