@@ -304,6 +304,146 @@ func (m *MsgUnfreezeFungibleTokenResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUnfreezeFungibleTokenResponse proto.InternalMessageInfo
 
+type EmptyResponse struct {
+}
+
+func (m *EmptyResponse) Reset()         { *m = EmptyResponse{} }
+func (m *EmptyResponse) String() string { return proto.CompactTextString(m) }
+func (*EmptyResponse) ProtoMessage()    {}
+func (*EmptyResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_67f41154fcbb1ebe, []int{6}
+}
+func (m *EmptyResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EmptyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EmptyResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EmptyResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EmptyResponse.Merge(m, src)
+}
+func (m *EmptyResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *EmptyResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_EmptyResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EmptyResponse proto.InternalMessageInfo
+
+type MsgMintFungibleToken struct {
+	Sender string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Coin   types.Coin `protobuf:"bytes,2,opt,name=coin,proto3" json:"coin"`
+}
+
+func (m *MsgMintFungibleToken) Reset()         { *m = MsgMintFungibleToken{} }
+func (m *MsgMintFungibleToken) String() string { return proto.CompactTextString(m) }
+func (*MsgMintFungibleToken) ProtoMessage()    {}
+func (*MsgMintFungibleToken) Descriptor() ([]byte, []int) {
+	return fileDescriptor_67f41154fcbb1ebe, []int{7}
+}
+func (m *MsgMintFungibleToken) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgMintFungibleToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgMintFungibleToken.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgMintFungibleToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgMintFungibleToken.Merge(m, src)
+}
+func (m *MsgMintFungibleToken) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgMintFungibleToken) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgMintFungibleToken.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgMintFungibleToken proto.InternalMessageInfo
+
+func (m *MsgMintFungibleToken) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgMintFungibleToken) GetCoin() types.Coin {
+	if m != nil {
+		return m.Coin
+	}
+	return types.Coin{}
+}
+
+type MsgBurnFungibleToken struct {
+	Sender string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Coin   types.Coin `protobuf:"bytes,3,opt,name=coin,proto3" json:"coin"`
+}
+
+func (m *MsgBurnFungibleToken) Reset()         { *m = MsgBurnFungibleToken{} }
+func (m *MsgBurnFungibleToken) String() string { return proto.CompactTextString(m) }
+func (*MsgBurnFungibleToken) ProtoMessage()    {}
+func (*MsgBurnFungibleToken) Descriptor() ([]byte, []int) {
+	return fileDescriptor_67f41154fcbb1ebe, []int{8}
+}
+func (m *MsgBurnFungibleToken) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgBurnFungibleToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgBurnFungibleToken.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgBurnFungibleToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgBurnFungibleToken.Merge(m, src)
+}
+func (m *MsgBurnFungibleToken) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgBurnFungibleToken) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgBurnFungibleToken.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgBurnFungibleToken proto.InternalMessageInfo
+
+func (m *MsgBurnFungibleToken) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+func (m *MsgBurnFungibleToken) GetCoin() types.Coin {
+	if m != nil {
+		return m.Coin
+	}
+	return types.Coin{}
+}
+
 func init() {
 	proto.RegisterType((*MsgIssueFungibleToken)(nil), "coreum.asset.v1.MsgIssueFungibleToken")
 	proto.RegisterType((*MsgIssueFungibleTokenResponse)(nil), "coreum.asset.v1.MsgIssueFungibleTokenResponse")
@@ -311,6 +451,9 @@ func init() {
 	proto.RegisterType((*MsgFreezeFungibleTokenResponse)(nil), "coreum.asset.v1.MsgFreezeFungibleTokenResponse")
 	proto.RegisterType((*MsgUnfreezeFungibleToken)(nil), "coreum.asset.v1.MsgUnfreezeFungibleToken")
 	proto.RegisterType((*MsgUnfreezeFungibleTokenResponse)(nil), "coreum.asset.v1.MsgUnfreezeFungibleTokenResponse")
+	proto.RegisterType((*EmptyResponse)(nil), "coreum.asset.v1.EmptyResponse")
+	proto.RegisterType((*MsgMintFungibleToken)(nil), "coreum.asset.v1.MsgMintFungibleToken")
+	proto.RegisterType((*MsgBurnFungibleToken)(nil), "coreum.asset.v1.MsgBurnFungibleToken")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/tx.proto", fileDescriptor_67f41154fcbb1ebe) }
@@ -374,6 +517,10 @@ type MsgClient interface {
 	// UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an
 	// account, only if there are such frozen tokens on that account
 	UnfreezeFungibleToken(ctx context.Context, in *MsgUnfreezeFungibleToken, opts ...grpc.CallOption) (*MsgUnfreezeFungibleTokenResponse, error)
+	// MintFungibleToken mints new fungible tokens
+	MintFungibleToken(ctx context.Context, in *MsgMintFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
+	// BurnFungibleToken burns the specified fungible tokens from senders balance if the sender has enough balance
+	BurnFungibleToken(ctx context.Context, in *MsgBurnFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
 type msgClient struct {
@@ -411,6 +558,24 @@ func (c *msgClient) UnfreezeFungibleToken(ctx context.Context, in *MsgUnfreezeFu
 	return out, nil
 }
 
+func (c *msgClient) MintFungibleToken(ctx context.Context, in *MsgMintFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/MintFungibleToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) BurnFungibleToken(ctx context.Context, in *MsgBurnFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/BurnFungibleToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// IssueFungibleToken defines a method to issue a new fungible token.
@@ -421,6 +586,10 @@ type MsgServer interface {
 	// UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an
 	// account, only if there are such frozen tokens on that account
 	UnfreezeFungibleToken(context.Context, *MsgUnfreezeFungibleToken) (*MsgUnfreezeFungibleTokenResponse, error)
+	// MintFungibleToken mints new fungible tokens
+	MintFungibleToken(context.Context, *MsgMintFungibleToken) (*EmptyResponse, error)
+	// BurnFungibleToken burns the specified fungible tokens from senders balance if the sender has enough balance
+	BurnFungibleToken(context.Context, *MsgBurnFungibleToken) (*EmptyResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -435,6 +604,12 @@ func (*UnimplementedMsgServer) FreezeFungibleToken(ctx context.Context, req *Msg
 }
 func (*UnimplementedMsgServer) UnfreezeFungibleToken(ctx context.Context, req *MsgUnfreezeFungibleToken) (*MsgUnfreezeFungibleTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnfreezeFungibleToken not implemented")
+}
+func (*UnimplementedMsgServer) MintFungibleToken(ctx context.Context, req *MsgMintFungibleToken) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MintFungibleToken not implemented")
+}
+func (*UnimplementedMsgServer) BurnFungibleToken(ctx context.Context, req *MsgBurnFungibleToken) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BurnFungibleToken not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -495,6 +670,42 @@ func _Msg_UnfreezeFungibleToken_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_MintFungibleToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgMintFungibleToken)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).MintFungibleToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.v1.Msg/MintFungibleToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).MintFungibleToken(ctx, req.(*MsgMintFungibleToken))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_BurnFungibleToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgBurnFungibleToken)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).BurnFungibleToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.v1.Msg/BurnFungibleToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).BurnFungibleToken(ctx, req.(*MsgBurnFungibleToken))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "coreum.asset.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -510,6 +721,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UnfreezeFungibleToken",
 			Handler:    _Msg_UnfreezeFungibleToken_Handler,
+		},
+		{
+			MethodName: "MintFungibleToken",
+			Handler:    _Msg_MintFungibleToken_Handler,
+		},
+		{
+			MethodName: "BurnFungibleToken",
+			Handler:    _Msg_BurnFungibleToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -770,6 +989,109 @@ func (m *MsgUnfreezeFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (in
 	return len(dAtA) - i, nil
 }
 
+func (m *EmptyResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EmptyResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EmptyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgMintFungibleToken) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgMintFungibleToken) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgMintFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Coin.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgBurnFungibleToken) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgBurnFungibleToken) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgBurnFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Coin.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -884,6 +1206,45 @@ func (m *MsgUnfreezeFungibleTokenResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *EmptyResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgMintFungibleToken) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Coin.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgBurnFungibleToken) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Coin.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -1648,6 +2009,286 @@ func (m *MsgUnfreezeFungibleTokenResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgUnfreezeFungibleTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EmptyResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EmptyResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EmptyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgMintFungibleToken) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgMintFungibleToken: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgMintFungibleToken: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coin", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Coin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgBurnFungibleToken) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgBurnFungibleToken: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgBurnFungibleToken: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coin", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Coin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

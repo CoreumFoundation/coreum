@@ -29,8 +29,8 @@ type simpleState struct {
 type simpleStateMethod string
 
 const (
-	getCount  simpleStateMethod = "get_count"
-	increment simpleStateMethod = "increment"
+	simpleGetCount  simpleStateMethod = "get_count"
+	simpleIncrement simpleStateMethod = "increment"
 )
 
 // TestPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
@@ -74,7 +74,7 @@ func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t 
 	requireT.NoError(err)
 
 	// get the current counter state
-	getCountPayload, err := methodToEmptyBodyPayload(getCount)
+	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
 	requireT.NoError(err)
 	queryOut, err := Query(ctx, clientCtx, contractAddr, getCountPayload)
 	requireT.NoError(err)
@@ -163,13 +163,13 @@ func incrementAndVerify(
 	expectedValue int,
 ) int64 {
 	// execute contract to increment the count
-	incrementPayload, err := methodToEmptyBodyPayload(increment)
+	incrementPayload, err := methodToEmptyBodyPayload(simpleIncrement)
 	requireT.NoError(err)
 	gasUsed, err := Execute(ctx, clientCtx, txf, contractAddr, incrementPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check the update count
-	getCountPayload, err := methodToEmptyBodyPayload(getCount)
+	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
 	requireT.NoError(err)
 	queryOut, err := Query(ctx, clientCtx, contractAddr, getCountPayload)
 	requireT.NoError(err)

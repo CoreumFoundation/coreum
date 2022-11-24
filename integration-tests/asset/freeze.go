@@ -117,7 +117,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assettypes.FungibleTokenFeature{
-			assettypes.FungibleTokenFeature_freezable, //nolint:nosnakecase
+			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 

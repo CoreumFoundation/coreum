@@ -26,15 +26,21 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type FungibleTokenFeature int32
 
 const (
-	FungibleTokenFeature_freezable FungibleTokenFeature = 0
+	FungibleTokenFeature_freeze FungibleTokenFeature = 0
+	FungibleTokenFeature_mint   FungibleTokenFeature = 1
+	FungibleTokenFeature_burn   FungibleTokenFeature = 2
 )
 
 var FungibleTokenFeature_name = map[int32]string{
-	0: "freezable",
+	0: "freeze",
+	1: "mint",
+	2: "burn",
 }
 
 var FungibleTokenFeature_value = map[string]int32{
-	"freezable": 0,
+	"freeze": 0,
+	"mint":   1,
+	"burn":   2,
 }
 
 func (x FungibleTokenFeature) String() string {
