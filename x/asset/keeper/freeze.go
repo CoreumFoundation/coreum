@@ -16,7 +16,7 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	err := k.isFreezeAllowed(ctx, sender, coin)
+	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, ad
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	err := k.isFreezeAllowed(ctx, sender, coin)
+	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -68,23 +68,6 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 	for _, coin := range coins {
 		frozenStore.setFrozenBalance(coin)
 	}
-}
-
-func (k Keeper) isFreezeAllowed(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if !isFeatureEnabled(ft.Features, types.FungibleTokenFeature_freezable) { //nolint:nosnakecase
-		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", coin.Denom, types.FungibleTokenFeature_freezable) //nolint:nosnakecase
-	}
-
-	if ft.Issuer != sender.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "address is unauthorized to perform this operation")
-	}
-
-	return nil
 }
 
 // areCoinsSpendable returns an error is there are not enough coins balances to be spent

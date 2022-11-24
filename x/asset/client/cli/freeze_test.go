@@ -30,7 +30,7 @@ func TestFreezeFungibleToken(t *testing.T) {
 
 	// Issue token
 	args := []string{symbol, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
-		"--features", types.FungibleTokenFeature_freezable.String(), //nolint:nosnakecase
+		"--features", types.FungibleTokenFeature_freeze.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
@@ -53,7 +53,7 @@ func TestFreezeFungibleToken(t *testing.T) {
 		symbol := "l" + uuid.NewString()[:4]
 		denom := types.BuildFungibleTokenDenom(symbol, issuer)
 		args := []string{symbol, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
-			"--features", types.FungibleTokenFeature_freezable.String(), //nolint:nosnakecase
+			"--features", types.FungibleTokenFeature_freeze.String(), //nolint:nosnakecase
 		}
 		args = append(args, txValidator1Args(testNetwork)...)
 		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
