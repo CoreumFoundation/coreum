@@ -168,7 +168,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	require.Equal(t, validatorStakingAmount.String(), valResp.Validator.Tokens.String())
 }
 
-// TestValidatorMinParamsSelfDelegation checks validator mas set the self delegation below the limit.
+// TestValidatorMinParamsSelfDelegation checks validator may set the self delegation below the limit.
 func TestValidatorMinParamsSelfDelegation(ctx context.Context, t testing.T, chain testing.Chain) {
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
