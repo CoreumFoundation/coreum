@@ -39,7 +39,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // MintFungibleToken mints new fungible token
 func (k Keeper) MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_mint) //nolint:nosnakecase
+	err := k.checkFeatureAllowed(ctx, sender, coin.Denom, types.FungibleTokenFeature_mint) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (k Keeper) MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin s
 
 // BurnFungibleToken burns fungible token
 func (k Keeper) BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_burn) //nolint:nosnakecase
+	err := k.checkFeatureAllowed(ctx, sender, coin.Denom, types.FungibleTokenFeature_burn) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -57,14 +57,14 @@ func (k Keeper) BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin s
 	return k.burnFungibleToken(ctx, coin, sender)
 }
 
-func (k Keeper) checkFeatureAllowed(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin, feature types.FungibleTokenFeature) error {
-	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+func (k Keeper) checkFeatureAllowed(ctx sdk.Context, sender sdk.AccAddress, denom string, feature types.FungibleTokenFeature) error {
+	ft, err := k.GetFungibleTokenDefinition(ctx, denom)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
 	if !isFeatureEnabled(ft.Features, feature) {
-		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", coin.Denom, feature)
+		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", denom, feature)
 	}
 
 	if ft.Issuer != sender.String() {

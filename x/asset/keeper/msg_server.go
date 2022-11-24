@@ -17,6 +17,7 @@ type MsgKeeper interface {
 	UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
 	MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
+	SetGlobalFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -137,6 +138,10 @@ func (ms MsgServer) GlobalFreezeFungibleToken(goCtx context.Context, req *types.
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
+	if err := ms.keeper.SetGlobalFreeze(ctx, sender, req.Denom); err != nil {
+		return nil, err
+	}
+
 	return &types.EmptyResponse{}, nil
 }
 
@@ -145,6 +150,10 @@ func (ms MsgServer) GlobalUnfreezeFungibleToken(goCtx context.Context, req *type
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	if err := ms.keeper.SetGlobalFreeze(ctx, sender, req.Denom); err != nil {
+		return nil, err
 	}
 
 	return &types.EmptyResponse{}, nil

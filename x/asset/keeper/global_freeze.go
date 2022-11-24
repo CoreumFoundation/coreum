@@ -7,9 +7,15 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string) {
+func (k Keeper) SetGlobalFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
+	if err := k.checkFeatureAllowed(ctx, sender, denom, types.FungibleTokenFeature_freeze); err != nil {
+		return err
+	}
+
 	globalFrozenStore := k.globalFrozenBalancesStore(ctx)
 	globalFrozenStore.Set([]byte(denom), []byte("true"))
+
+	return nil
 }
 
 // globalFrozenBalancesStore get the store for the frozen balances of all accounts
