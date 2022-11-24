@@ -73,43 +73,6 @@ func (m *MsgIssueFungibleToken) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgIssueFungibleToken proto.InternalMessageInfo
 
-// MsgIssueFungibleTokenResponse defines message response for the IssueFungibleToken.
-type MsgIssueFungibleTokenResponse struct {
-}
-
-func (m *MsgIssueFungibleTokenResponse) Reset()         { *m = MsgIssueFungibleTokenResponse{} }
-func (m *MsgIssueFungibleTokenResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgIssueFungibleTokenResponse) ProtoMessage()    {}
-func (*MsgIssueFungibleTokenResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{1}
-}
-func (m *MsgIssueFungibleTokenResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgIssueFungibleTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgIssueFungibleTokenResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgIssueFungibleTokenResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgIssueFungibleTokenResponse.Merge(m, src)
-}
-func (m *MsgIssueFungibleTokenResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgIssueFungibleTokenResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgIssueFungibleTokenResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgIssueFungibleTokenResponse proto.InternalMessageInfo
-
 type MsgFreezeFungibleToken struct {
 	Sender  string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Account string     `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
@@ -120,7 +83,7 @@ func (m *MsgFreezeFungibleToken) Reset()         { *m = MsgFreezeFungibleToken{}
 func (m *MsgFreezeFungibleToken) String() string { return proto.CompactTextString(m) }
 func (*MsgFreezeFungibleToken) ProtoMessage()    {}
 func (*MsgFreezeFungibleToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{2}
+	return fileDescriptor_67f41154fcbb1ebe, []int{1}
 }
 func (m *MsgFreezeFungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -170,42 +133,6 @@ func (m *MsgFreezeFungibleToken) GetCoin() types.Coin {
 	return types.Coin{}
 }
 
-type MsgFreezeFungibleTokenResponse struct {
-}
-
-func (m *MsgFreezeFungibleTokenResponse) Reset()         { *m = MsgFreezeFungibleTokenResponse{} }
-func (m *MsgFreezeFungibleTokenResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgFreezeFungibleTokenResponse) ProtoMessage()    {}
-func (*MsgFreezeFungibleTokenResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{3}
-}
-func (m *MsgFreezeFungibleTokenResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgFreezeFungibleTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgFreezeFungibleTokenResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgFreezeFungibleTokenResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgFreezeFungibleTokenResponse.Merge(m, src)
-}
-func (m *MsgFreezeFungibleTokenResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgFreezeFungibleTokenResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgFreezeFungibleTokenResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgFreezeFungibleTokenResponse proto.InternalMessageInfo
-
 type MsgUnfreezeFungibleToken struct {
 	Sender  string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Account string     `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
@@ -216,7 +143,7 @@ func (m *MsgUnfreezeFungibleToken) Reset()         { *m = MsgUnfreezeFungibleTok
 func (m *MsgUnfreezeFungibleToken) String() string { return proto.CompactTextString(m) }
 func (*MsgUnfreezeFungibleToken) ProtoMessage()    {}
 func (*MsgUnfreezeFungibleToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{4}
+	return fileDescriptor_67f41154fcbb1ebe, []int{2}
 }
 func (m *MsgUnfreezeFungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -266,42 +193,6 @@ func (m *MsgUnfreezeFungibleToken) GetCoin() types.Coin {
 	return types.Coin{}
 }
 
-type MsgUnfreezeFungibleTokenResponse struct {
-}
-
-func (m *MsgUnfreezeFungibleTokenResponse) Reset()         { *m = MsgUnfreezeFungibleTokenResponse{} }
-func (m *MsgUnfreezeFungibleTokenResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgUnfreezeFungibleTokenResponse) ProtoMessage()    {}
-func (*MsgUnfreezeFungibleTokenResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{5}
-}
-func (m *MsgUnfreezeFungibleTokenResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgUnfreezeFungibleTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgUnfreezeFungibleTokenResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgUnfreezeFungibleTokenResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUnfreezeFungibleTokenResponse.Merge(m, src)
-}
-func (m *MsgUnfreezeFungibleTokenResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgUnfreezeFungibleTokenResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUnfreezeFungibleTokenResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgUnfreezeFungibleTokenResponse proto.InternalMessageInfo
-
 type MsgMintFungibleToken struct {
 	Sender string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Coin   types.Coin `protobuf:"bytes,2,opt,name=coin,proto3" json:"coin"`
@@ -311,7 +202,7 @@ func (m *MsgMintFungibleToken) Reset()         { *m = MsgMintFungibleToken{} }
 func (m *MsgMintFungibleToken) String() string { return proto.CompactTextString(m) }
 func (*MsgMintFungibleToken) ProtoMessage()    {}
 func (*MsgMintFungibleToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{6}
+	return fileDescriptor_67f41154fcbb1ebe, []int{3}
 }
 func (m *MsgMintFungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -363,7 +254,7 @@ func (m *MsgBurnFungibleToken) Reset()         { *m = MsgBurnFungibleToken{} }
 func (m *MsgBurnFungibleToken) String() string { return proto.CompactTextString(m) }
 func (*MsgBurnFungibleToken) ProtoMessage()    {}
 func (*MsgBurnFungibleToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{7}
+	return fileDescriptor_67f41154fcbb1ebe, []int{4}
 }
 func (m *MsgBurnFungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -415,7 +306,7 @@ func (m *MsgGlobalFreezeFungibleToken) Reset()         { *m = MsgGlobalFreezeFun
 func (m *MsgGlobalFreezeFungibleToken) String() string { return proto.CompactTextString(m) }
 func (*MsgGlobalFreezeFungibleToken) ProtoMessage()    {}
 func (*MsgGlobalFreezeFungibleToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{8}
+	return fileDescriptor_67f41154fcbb1ebe, []int{5}
 }
 func (m *MsgGlobalFreezeFungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -467,7 +358,7 @@ func (m *MsgGlobalUnfreezeFungibleToken) Reset()         { *m = MsgGlobalUnfreez
 func (m *MsgGlobalUnfreezeFungibleToken) String() string { return proto.CompactTextString(m) }
 func (*MsgGlobalUnfreezeFungibleToken) ProtoMessage()    {}
 func (*MsgGlobalUnfreezeFungibleToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{9}
+	return fileDescriptor_67f41154fcbb1ebe, []int{6}
 }
 func (m *MsgGlobalUnfreezeFungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -517,7 +408,7 @@ func (m *EmptyResponse) Reset()         { *m = EmptyResponse{} }
 func (m *EmptyResponse) String() string { return proto.CompactTextString(m) }
 func (*EmptyResponse) ProtoMessage()    {}
 func (*EmptyResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{10}
+	return fileDescriptor_67f41154fcbb1ebe, []int{7}
 }
 func (m *EmptyResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -548,11 +439,8 @@ var xxx_messageInfo_EmptyResponse proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterType((*MsgIssueFungibleToken)(nil), "coreum.asset.v1.MsgIssueFungibleToken")
-	proto.RegisterType((*MsgIssueFungibleTokenResponse)(nil), "coreum.asset.v1.MsgIssueFungibleTokenResponse")
 	proto.RegisterType((*MsgFreezeFungibleToken)(nil), "coreum.asset.v1.MsgFreezeFungibleToken")
-	proto.RegisterType((*MsgFreezeFungibleTokenResponse)(nil), "coreum.asset.v1.MsgFreezeFungibleTokenResponse")
 	proto.RegisterType((*MsgUnfreezeFungibleToken)(nil), "coreum.asset.v1.MsgUnfreezeFungibleToken")
-	proto.RegisterType((*MsgUnfreezeFungibleTokenResponse)(nil), "coreum.asset.v1.MsgUnfreezeFungibleTokenResponse")
 	proto.RegisterType((*MsgMintFungibleToken)(nil), "coreum.asset.v1.MsgMintFungibleToken")
 	proto.RegisterType((*MsgBurnFungibleToken)(nil), "coreum.asset.v1.MsgBurnFungibleToken")
 	proto.RegisterType((*MsgGlobalFreezeFungibleToken)(nil), "coreum.asset.v1.MsgGlobalFreezeFungibleToken")
@@ -563,48 +451,46 @@ func init() {
 func init() { proto.RegisterFile("coreum/asset/v1/tx.proto", fileDescriptor_67f41154fcbb1ebe) }
 
 var fileDescriptor_67f41154fcbb1ebe = []byte{
-	// 654 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x55, 0x3f, 0x4f, 0x1b, 0x4f,
-	0x10, 0xb5, 0xf9, 0xf7, 0x83, 0x41, 0x80, 0x7e, 0x17, 0x40, 0x87, 0x21, 0x67, 0xcb, 0x12, 0x84,
-	0x14, 0xec, 0xc6, 0xd0, 0xa5, 0xc3, 0x28, 0x8e, 0x88, 0x72, 0x29, 0xac, 0xd0, 0xd0, 0x44, 0x77,
-	0xe7, 0xe5, 0xb2, 0xc1, 0xb7, 0x6b, 0xdd, 0xee, 0x21, 0x48, 0x13, 0xa5, 0x4b, 0x99, 0x8f, 0x40,
-	0x9f, 0x2f, 0x42, 0x49, 0x19, 0xa5, 0x40, 0x11, 0x34, 0xe9, 0xf2, 0x15, 0xa2, 0xdb, 0x3d, 0x9b,
-	0x3f, 0xb7, 0x8e, 0xed, 0x2a, 0x95, 0x3d, 0x33, 0xcf, 0xef, 0xcd, 0xbd, 0x99, 0xf3, 0x80, 0x1d,
-	0xf0, 0x98, 0x24, 0x11, 0xf6, 0x84, 0x20, 0x12, 0x9f, 0xd4, 0xb0, 0x3c, 0x45, 0x9d, 0x98, 0x4b,
-	0x6e, 0x2d, 0xe8, 0x0a, 0x52, 0x15, 0x74, 0x52, 0x2b, 0x2d, 0x86, 0x3c, 0xe4, 0xaa, 0x86, 0xd3,
-	0x6f, 0x1a, 0x56, 0x72, 0x02, 0x2e, 0x22, 0x2e, 0xb0, 0xef, 0x09, 0x82, 0x4f, 0x6a, 0x3e, 0x91,
-	0x5e, 0x0d, 0x07, 0x9c, 0xb2, 0xac, 0xbe, 0xfa, 0x50, 0x40, 0xf3, 0xa9, 0x62, 0xf5, 0xdb, 0x18,
-	0x2c, 0xb9, 0x22, 0xdc, 0x17, 0x22, 0x21, 0x8d, 0x84, 0x85, 0xd4, 0x6f, 0x93, 0xb7, 0xfc, 0x98,
-	0x30, 0x6b, 0x19, 0xa6, 0x68, 0x9a, 0x8d, 0xed, 0x62, 0xa5, 0xb8, 0x39, 0xd3, 0xcc, 0xa2, 0x34,
-	0x2f, 0xce, 0x22, 0x9f, 0xb7, 0xed, 0x31, 0x9d, 0xd7, 0x91, 0xb5, 0x06, 0x33, 0x31, 0x09, 0x68,
-	0x87, 0x12, 0x26, 0xed, 0x71, 0x55, 0xba, 0x4d, 0x58, 0x07, 0x30, 0x4f, 0x19, 0x95, 0xd4, 0x6b,
-	0xbf, 0xf3, 0x22, 0x9e, 0x30, 0x69, 0x4f, 0xa4, 0x90, 0x3a, 0xba, 0xb8, 0x2a, 0x17, 0x7e, 0x5c,
-	0x95, 0x37, 0x42, 0x2a, 0xdf, 0x27, 0x3e, 0x0a, 0x78, 0x84, 0xb3, 0xe7, 0xd1, 0x1f, 0x5b, 0xa2,
-	0x75, 0x8c, 0xe5, 0x59, 0x87, 0x08, 0xb4, 0xcf, 0x64, 0x73, 0x2e, 0x63, 0xd9, 0x55, 0x24, 0x56,
-	0x05, 0x66, 0x5b, 0x44, 0x04, 0x31, 0xed, 0x48, 0xca, 0x99, 0x3d, 0xa9, 0x64, 0xef, 0xa6, 0xac,
-	0x5d, 0x98, 0x3e, 0x22, 0x9e, 0x4c, 0x62, 0x22, 0xec, 0xa9, 0xca, 0xf8, 0xe6, 0xfc, 0xf6, 0x3a,
-	0x7a, 0xe0, 0x2b, 0xba, 0xf7, 0xe0, 0x0d, 0x8d, 0x6e, 0xf6, 0x7e, 0xf6, 0x7c, 0xfa, 0xcb, 0x79,
-	0xb9, 0xf0, 0xeb, 0xbc, 0x5c, 0xa8, 0x96, 0xe1, 0xb1, 0xd1, 0xac, 0x26, 0x11, 0x1d, 0xce, 0x04,
-	0xa9, 0x7e, 0x82, 0x65, 0x57, 0x84, 0x8d, 0x98, 0x90, 0x8f, 0x79, 0x3b, 0x05, 0x61, 0xad, 0x5b,
-	0x3b, 0x75, 0x64, 0xd9, 0xf0, 0x9f, 0x17, 0x04, 0xca, 0x11, 0xed, 0x67, 0x37, 0xb4, 0x76, 0x60,
-	0x22, 0x9d, 0xa2, 0xf2, 0x72, 0x76, 0x7b, 0x05, 0x69, 0x3f, 0x50, 0x3a, 0x66, 0x94, 0x8d, 0x19,
-	0xed, 0x71, 0xca, 0xea, 0x13, 0xa9, 0x87, 0x4d, 0x05, 0xae, 0x56, 0xc0, 0x31, 0x37, 0xd0, 0x6b,
-	0xf1, 0x73, 0x11, 0x6c, 0x57, 0x84, 0x07, 0xec, 0xe8, 0xdf, 0x75, 0x59, 0x85, 0x4a, 0xbf, 0x16,
-	0x7a, 0x7d, 0x06, 0xb0, 0xe8, 0x8a, 0xd0, 0xa5, 0x4c, 0x0e, 0xd7, 0x62, 0xb7, 0x91, 0xb1, 0x51,
-	0x1a, 0xd1, 0x22, 0xf5, 0x24, 0x66, 0xa3, 0x89, 0x8c, 0xf4, 0xb4, 0xaf, 0x61, 0xcd, 0x15, 0xe1,
-	0xcb, 0x36, 0xf7, 0xbd, 0xf6, 0x28, 0xab, 0xb1, 0x08, 0x93, 0x2d, 0xc2, 0x78, 0x94, 0x59, 0xae,
-	0x83, 0xea, 0x1b, 0x35, 0x61, 0xcd, 0x36, 0xda, 0x10, 0xcd, 0x7c, 0x0b, 0x30, 0xf7, 0x22, 0xea,
-	0xc8, 0xb3, 0xae, 0xf1, 0xdb, 0xbf, 0x27, 0x61, 0xdc, 0x15, 0xa1, 0xd5, 0x06, 0xcb, 0xf0, 0xb7,
-	0xb0, 0x91, 0x7b, 0x7b, 0x8c, 0x6f, 0x44, 0x09, 0x0d, 0x87, 0xeb, 0xaa, 0x5a, 0x1c, 0x1e, 0x99,
-	0xbc, 0x79, 0x62, 0xa2, 0x31, 0x00, 0x4b, 0x78, 0x48, 0x60, 0x4f, 0x30, 0x81, 0x25, 0xb3, 0x7d,
-	0x4f, 0x4d, 0x4c, 0x46, 0x68, 0xa9, 0x36, 0x34, 0xb4, 0x27, 0x7b, 0x08, 0xff, 0xe7, 0x77, 0x7a,
-	0xdd, 0xc4, 0x93, 0x83, 0x95, 0x9c, 0x1c, 0xec, 0xde, 0xe4, 0x52, 0xee, 0xfc, 0x2a, 0x1b, 0xb9,
-	0x73, 0xb0, 0x81, 0xdc, 0x1f, 0x60, 0xa5, 0xff, 0x06, 0x6f, 0x99, 0x34, 0xfa, 0xc2, 0x07, 0x6a,
-	0x31, 0x58, 0xfd, 0xdb, 0x7e, 0xe3, 0xfe, 0x6a, 0xe6, 0x31, 0x0d, 0xd0, 0xab, 0xbf, 0xba, 0xb8,
-	0x76, 0x8a, 0x97, 0xd7, 0x4e, 0xf1, 0xe7, 0xb5, 0x53, 0xfc, 0x7a, 0xe3, 0x14, 0x2e, 0x6f, 0x9c,
-	0xc2, 0xf7, 0x1b, 0xa7, 0x70, 0xf8, 0xec, 0xce, 0x59, 0xda, 0x53, 0x1c, 0x0d, 0x9e, 0xb0, 0x96,
-	0x97, 0x9e, 0x16, 0x9c, 0xdd, 0xd5, 0xd3, 0xec, 0xb2, 0xaa, 0x23, 0xe5, 0x4f, 0xa9, 0xbb, 0xba,
-	0xf3, 0x27, 0x00, 0x00, 0xff, 0xff, 0x29, 0xaf, 0xbc, 0xfa, 0xd7, 0x07, 0x00, 0x00,
+	// 617 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x55, 0xcd, 0x6e, 0xd3, 0x40,
+	0x10, 0xb6, 0xf3, 0x47, 0xbb, 0x55, 0x5b, 0x61, 0xd2, 0xca, 0x4d, 0x2b, 0x27, 0x8a, 0xd4, 0x52,
+	0x0e, 0x5d, 0x93, 0xf4, 0xc6, 0xad, 0xa9, 0x08, 0x2a, 0xc2, 0x1c, 0x22, 0x7a, 0xa9, 0x10, 0xc8,
+	0x76, 0xb6, 0x66, 0x69, 0xbc, 0x6b, 0x79, 0xd7, 0x51, 0xc3, 0x05, 0x71, 0xe3, 0xc8, 0x23, 0xf4,
+	0xce, 0x23, 0xf0, 0x02, 0x3d, 0xf6, 0x88, 0x38, 0x54, 0x28, 0xb9, 0xf0, 0x18, 0xc8, 0x6b, 0xf7,
+	0xd7, 0x1b, 0xd2, 0x70, 0xe9, 0x29, 0x99, 0x99, 0x2f, 0xdf, 0x97, 0xf9, 0x66, 0xec, 0x01, 0xba,
+	0x4b, 0x43, 0x14, 0xf9, 0xa6, 0xcd, 0x18, 0xe2, 0x66, 0xbf, 0x61, 0xf2, 0x63, 0x18, 0x84, 0x94,
+	0x53, 0x6d, 0x31, 0xa9, 0x40, 0x51, 0x81, 0xfd, 0x46, 0xa5, 0xec, 0x51, 0x8f, 0x8a, 0x9a, 0x19,
+	0x7f, 0x4b, 0x60, 0x15, 0xc3, 0xa5, 0xcc, 0xa7, 0xcc, 0x74, 0x6c, 0x86, 0xcc, 0x7e, 0xc3, 0x41,
+	0xdc, 0x6e, 0x98, 0x2e, 0xc5, 0x24, 0xad, 0xaf, 0xde, 0x16, 0x48, 0xf8, 0x44, 0xb1, 0xfe, 0x3d,
+	0x07, 0x96, 0x2c, 0xe6, 0xed, 0x31, 0x16, 0xa1, 0x76, 0x44, 0x3c, 0xec, 0xf4, 0xd0, 0x1b, 0x7a,
+	0x84, 0x88, 0xb6, 0x0c, 0x4a, 0x38, 0xce, 0x86, 0xba, 0x5a, 0x53, 0x37, 0x67, 0x3b, 0x69, 0x14,
+	0xe7, 0xd9, 0xc0, 0x77, 0x68, 0x4f, 0xcf, 0x25, 0xf9, 0x24, 0xd2, 0xd6, 0xc0, 0x6c, 0x88, 0x5c,
+	0x1c, 0x60, 0x44, 0xb8, 0x9e, 0x17, 0xa5, 0xab, 0x84, 0xb6, 0x0f, 0x16, 0x30, 0xc1, 0x1c, 0xdb,
+	0xbd, 0xf7, 0xb6, 0x4f, 0x23, 0xc2, 0xf5, 0x42, 0x0c, 0x69, 0xc1, 0xd3, 0xf3, 0xaa, 0xf2, 0xeb,
+	0xbc, 0xba, 0xe1, 0x61, 0xfe, 0x21, 0x72, 0xa0, 0x4b, 0x7d, 0x33, 0xed, 0x27, 0xf9, 0xd8, 0x62,
+	0xdd, 0x23, 0x93, 0x0f, 0x02, 0xc4, 0xe0, 0x1e, 0xe1, 0x9d, 0xf9, 0x94, 0x65, 0x47, 0x90, 0x68,
+	0x35, 0x30, 0xd7, 0x45, 0xcc, 0x0d, 0x71, 0xc0, 0x31, 0x25, 0x7a, 0x51, 0xc8, 0x5e, 0x4f, 0x69,
+	0x3b, 0x60, 0xe6, 0x10, 0xd9, 0x3c, 0x0a, 0x11, 0xd3, 0x4b, 0xb5, 0xfc, 0xe6, 0x42, 0x73, 0x1d,
+	0xde, 0xf2, 0x15, 0xde, 0x68, 0xbc, 0x9d, 0xa0, 0x3b, 0x97, 0x3f, 0x7b, 0x36, 0xf3, 0xf5, 0xa4,
+	0xaa, 0xfc, 0x39, 0xa9, 0x2a, 0xf5, 0xcf, 0x60, 0xd9, 0x62, 0x5e, 0x3b, 0x44, 0xe8, 0x53, 0xd6,
+	0x2d, 0x86, 0x48, 0xf7, 0xca, 0xad, 0x24, 0xd2, 0x74, 0xf0, 0xc0, 0x76, 0x5d, 0xd1, 0x70, 0x62,
+	0xd7, 0x45, 0xa8, 0x6d, 0x83, 0x42, 0x3c, 0x24, 0x61, 0xd5, 0x5c, 0x73, 0x05, 0x26, 0xed, 0xc2,
+	0x78, 0x8a, 0x30, 0x9d, 0x22, 0xdc, 0xa5, 0x98, 0xb4, 0x0a, 0xb1, 0x45, 0x1d, 0x01, 0xae, 0x7f,
+	0x51, 0x81, 0x6e, 0x31, 0x6f, 0x9f, 0x1c, 0xde, 0xdf, 0x7f, 0x70, 0x41, 0xd9, 0x62, 0x9e, 0x85,
+	0x09, 0xbf, 0x9b, 0xfc, 0x85, 0x48, 0x6e, 0x7a, 0x91, 0x56, 0x14, 0x92, 0xe9, 0x44, 0xa6, 0xea,
+	0xe4, 0x15, 0x58, 0xb3, 0x98, 0xf7, 0xa2, 0x47, 0x1d, 0xbb, 0x37, 0xcd, 0x50, 0xcb, 0xa0, 0xd8,
+	0x45, 0x84, 0xfa, 0xa9, 0x9d, 0x49, 0x50, 0x7f, 0x0d, 0x8c, 0x4b, 0xb6, 0xe9, 0x06, 0x24, 0xe7,
+	0x5b, 0x04, 0xf3, 0xcf, 0xfd, 0x80, 0x0f, 0x3a, 0x88, 0x05, 0x94, 0x30, 0xd4, 0xfc, 0x51, 0x04,
+	0x79, 0x8b, 0x79, 0xda, 0x5b, 0xa0, 0x49, 0x9e, 0xd7, 0x8d, 0xcc, 0x5a, 0x4b, 0x9f, 0xeb, 0x8a,
+	0x91, 0xc1, 0xdd, 0x50, 0xd1, 0xde, 0x81, 0x47, 0x32, 0x2f, 0x1e, 0xcb, 0xe8, 0x25, 0xc0, 0x89,
+	0xfc, 0x0e, 0x58, 0x92, 0xbb, 0xf3, 0x44, 0xa6, 0x20, 0x85, 0x4e, 0xd4, 0x38, 0x00, 0x0f, 0xb3,
+	0xfb, 0xb9, 0x2e, 0xe3, 0xcf, 0xc0, 0xee, 0xc2, 0x9d, 0x5d, 0x4b, 0x29, 0x77, 0x06, 0x36, 0x91,
+	0xfb, 0x23, 0x58, 0x19, 0xbf, 0x8d, 0x5b, 0x32, 0x8d, 0xb1, 0xf0, 0x89, 0x5a, 0x04, 0xac, 0xfe,
+	0x6b, 0x57, 0xcd, 0xf1, 0x6a, 0xff, 0x35, 0x93, 0xd6, 0xcb, 0xd3, 0xa1, 0xa1, 0x9e, 0x0d, 0x0d,
+	0xf5, 0xf7, 0xd0, 0x50, 0xbf, 0x8d, 0x0c, 0xe5, 0x6c, 0x64, 0x28, 0x3f, 0x47, 0x86, 0x72, 0xf0,
+	0xf4, 0xda, 0xbb, 0x7f, 0x57, 0x70, 0xb4, 0x69, 0x44, 0xba, 0x76, 0xfc, 0xfe, 0x36, 0xd3, 0xe3,
+	0x75, 0x9c, 0x9e, 0x2f, 0x71, 0x09, 0x9c, 0x92, 0x38, 0x5e, 0xdb, 0x7f, 0x03, 0x00, 0x00, 0xff,
+	0xff, 0xe5, 0xe1, 0xba, 0x03, 0x3c, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -620,13 +506,13 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	// IssueFungibleToken defines a method to issue a new fungible token.
-	IssueFungibleToken(ctx context.Context, in *MsgIssueFungibleToken, opts ...grpc.CallOption) (*MsgIssueFungibleTokenResponse, error)
+	IssueFungibleToken(ctx context.Context, in *MsgIssueFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// FreezeFungibleToken freezes a part of the fungible tokens in an
 	// account, only if the freezable feature is enabled on that token.
-	FreezeFungibleToken(ctx context.Context, in *MsgFreezeFungibleToken, opts ...grpc.CallOption) (*MsgFreezeFungibleTokenResponse, error)
+	FreezeFungibleToken(ctx context.Context, in *MsgFreezeFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an
 	// account, only if there are such frozen tokens on that account
-	UnfreezeFungibleToken(ctx context.Context, in *MsgUnfreezeFungibleToken, opts ...grpc.CallOption) (*MsgUnfreezeFungibleTokenResponse, error)
+	UnfreezeFungibleToken(ctx context.Context, in *MsgUnfreezeFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// MintFungibleToken mints new fungible tokens
 	MintFungibleToken(ctx context.Context, in *MsgMintFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// BurnFungibleToken burns the specified fungible tokens from senders balance if the sender has enough balance
@@ -643,8 +529,8 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) IssueFungibleToken(ctx context.Context, in *MsgIssueFungibleToken, opts ...grpc.CallOption) (*MsgIssueFungibleTokenResponse, error) {
-	out := new(MsgIssueFungibleTokenResponse)
+func (c *msgClient) IssueFungibleToken(ctx context.Context, in *MsgIssueFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
 	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/IssueFungibleToken", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -652,8 +538,8 @@ func (c *msgClient) IssueFungibleToken(ctx context.Context, in *MsgIssueFungible
 	return out, nil
 }
 
-func (c *msgClient) FreezeFungibleToken(ctx context.Context, in *MsgFreezeFungibleToken, opts ...grpc.CallOption) (*MsgFreezeFungibleTokenResponse, error) {
-	out := new(MsgFreezeFungibleTokenResponse)
+func (c *msgClient) FreezeFungibleToken(ctx context.Context, in *MsgFreezeFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
 	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/FreezeFungibleToken", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -661,8 +547,8 @@ func (c *msgClient) FreezeFungibleToken(ctx context.Context, in *MsgFreezeFungib
 	return out, nil
 }
 
-func (c *msgClient) UnfreezeFungibleToken(ctx context.Context, in *MsgUnfreezeFungibleToken, opts ...grpc.CallOption) (*MsgUnfreezeFungibleTokenResponse, error) {
-	out := new(MsgUnfreezeFungibleTokenResponse)
+func (c *msgClient) UnfreezeFungibleToken(ctx context.Context, in *MsgUnfreezeFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
 	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/UnfreezeFungibleToken", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -709,13 +595,13 @@ func (c *msgClient) GlobalUnfreezeFungibleToken(ctx context.Context, in *MsgGlob
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// IssueFungibleToken defines a method to issue a new fungible token.
-	IssueFungibleToken(context.Context, *MsgIssueFungibleToken) (*MsgIssueFungibleTokenResponse, error)
+	IssueFungibleToken(context.Context, *MsgIssueFungibleToken) (*EmptyResponse, error)
 	// FreezeFungibleToken freezes a part of the fungible tokens in an
 	// account, only if the freezable feature is enabled on that token.
-	FreezeFungibleToken(context.Context, *MsgFreezeFungibleToken) (*MsgFreezeFungibleTokenResponse, error)
+	FreezeFungibleToken(context.Context, *MsgFreezeFungibleToken) (*EmptyResponse, error)
 	// UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an
 	// account, only if there are such frozen tokens on that account
-	UnfreezeFungibleToken(context.Context, *MsgUnfreezeFungibleToken) (*MsgUnfreezeFungibleTokenResponse, error)
+	UnfreezeFungibleToken(context.Context, *MsgUnfreezeFungibleToken) (*EmptyResponse, error)
 	// MintFungibleToken mints new fungible tokens
 	MintFungibleToken(context.Context, *MsgMintFungibleToken) (*EmptyResponse, error)
 	// BurnFungibleToken burns the specified fungible tokens from senders balance if the sender has enough balance
@@ -728,13 +614,13 @@ type MsgServer interface {
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) IssueFungibleToken(ctx context.Context, req *MsgIssueFungibleToken) (*MsgIssueFungibleTokenResponse, error) {
+func (*UnimplementedMsgServer) IssueFungibleToken(ctx context.Context, req *MsgIssueFungibleToken) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IssueFungibleToken not implemented")
 }
-func (*UnimplementedMsgServer) FreezeFungibleToken(ctx context.Context, req *MsgFreezeFungibleToken) (*MsgFreezeFungibleTokenResponse, error) {
+func (*UnimplementedMsgServer) FreezeFungibleToken(ctx context.Context, req *MsgFreezeFungibleToken) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FreezeFungibleToken not implemented")
 }
-func (*UnimplementedMsgServer) UnfreezeFungibleToken(ctx context.Context, req *MsgUnfreezeFungibleToken) (*MsgUnfreezeFungibleTokenResponse, error) {
+func (*UnimplementedMsgServer) UnfreezeFungibleToken(ctx context.Context, req *MsgUnfreezeFungibleToken) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnfreezeFungibleToken not implemented")
 }
 func (*UnimplementedMsgServer) MintFungibleToken(ctx context.Context, req *MsgMintFungibleToken) (*EmptyResponse, error) {
@@ -996,29 +882,6 @@ func (m *MsgIssueFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgIssueFungibleTokenResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgIssueFungibleTokenResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgIssueFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
 func (m *MsgFreezeFungibleToken) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1066,29 +929,6 @@ func (m *MsgFreezeFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgFreezeFungibleTokenResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgFreezeFungibleTokenResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgFreezeFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
 func (m *MsgUnfreezeFungibleToken) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1133,29 +973,6 @@ func (m *MsgUnfreezeFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error
 		i--
 		dAtA[i] = 0xa
 	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgUnfreezeFungibleTokenResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgUnfreezeFungibleTokenResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgUnfreezeFungibleTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
 	return len(dAtA) - i, nil
 }
 
@@ -1381,15 +1198,6 @@ func (m *MsgIssueFungibleToken) Size() (n int) {
 	return n
 }
 
-func (m *MsgIssueFungibleTokenResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
 func (m *MsgFreezeFungibleToken) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1409,15 +1217,6 @@ func (m *MsgFreezeFungibleToken) Size() (n int) {
 	return n
 }
 
-func (m *MsgFreezeFungibleTokenResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
 func (m *MsgUnfreezeFungibleToken) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1434,15 +1233,6 @@ func (m *MsgUnfreezeFungibleToken) Size() (n int) {
 	}
 	l = m.Coin.Size()
 	n += 1 + l + sovTx(uint64(l))
-	return n
-}
-
-func (m *MsgUnfreezeFungibleTokenResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
 	return n
 }
 
@@ -1806,56 +1596,6 @@ func (m *MsgIssueFungibleToken) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgIssueFungibleTokenResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgIssueFungibleTokenResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgIssueFungibleTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *MsgFreezeFungibleToken) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2003,56 +1743,6 @@ func (m *MsgFreezeFungibleToken) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgFreezeFungibleTokenResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgFreezeFungibleTokenResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgFreezeFungibleTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *MsgUnfreezeFungibleToken) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2179,56 +1869,6 @@ func (m *MsgUnfreezeFungibleToken) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgUnfreezeFungibleTokenResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUnfreezeFungibleTokenResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUnfreezeFungibleTokenResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

@@ -32,7 +32,7 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 }
 
 // IssueFungibleToken defines a tx handler to issue a new fungible token.
-func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueFungibleToken) (*types.MsgIssueFungibleTokenResponse, error) {
+func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueFungibleToken) (*types.EmptyResponse, error) {
 	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid issuer in MsgIssueFungibleToken")
@@ -53,11 +53,11 @@ func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueF
 		return nil, err
 	}
 
-	return &types.MsgIssueFungibleTokenResponse{}, nil
+	return &types.EmptyResponse{}, nil
 }
 
 // FreezeFungibleToken freezes coins on an account.
-func (ms MsgServer) FreezeFungibleToken(goCtx context.Context, req *types.MsgFreezeFungibleToken) (*types.MsgFreezeFungibleTokenResponse, error) {
+func (ms MsgServer) FreezeFungibleToken(goCtx context.Context, req *types.MsgFreezeFungibleToken) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
@@ -74,11 +74,11 @@ func (ms MsgServer) FreezeFungibleToken(goCtx context.Context, req *types.MsgFre
 		return nil, err
 	}
 
-	return &types.MsgFreezeFungibleTokenResponse{}, nil
+	return &types.EmptyResponse{}, nil
 }
 
 // UnfreezeFungibleToken unfreezes coins on an account.
-func (ms MsgServer) UnfreezeFungibleToken(goCtx context.Context, req *types.MsgUnfreezeFungibleToken) (*types.MsgUnfreezeFungibleTokenResponse, error) {
+func (ms MsgServer) UnfreezeFungibleToken(goCtx context.Context, req *types.MsgUnfreezeFungibleToken) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
@@ -95,7 +95,7 @@ func (ms MsgServer) UnfreezeFungibleToken(goCtx context.Context, req *types.MsgU
 		return nil, err
 	}
 
-	return &types.MsgUnfreezeFungibleTokenResponse{}, nil
+	return &types.EmptyResponse{}, nil
 }
 
 // MintFungibleToken mints new fungible tokens.
@@ -131,9 +131,21 @@ func (ms MsgServer) BurnFungibleToken(goCtx context.Context, req *types.MsgBurnF
 }
 
 func (ms MsgServer) GlobalFreezeFungibleToken(goCtx context.Context, req *types.MsgGlobalFreezeFungibleToken) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
 	return &types.EmptyResponse{}, nil
 }
 
 func (ms MsgServer) GlobalUnfreezeFungibleToken(goCtx context.Context, req *types.MsgGlobalUnfreezeFungibleToken) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
 	return &types.EmptyResponse{}, nil
 }
