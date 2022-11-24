@@ -1,4 +1,4 @@
-package bank
+package wbank
 
 import (
 	"testing"

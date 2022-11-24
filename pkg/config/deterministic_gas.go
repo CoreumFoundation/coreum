@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -17,10 +18,22 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssue:             80000,
-		BankSend:               30000,
-		GovSubmitProposal:      150000,
-		GovVote:                80000,
+		AssetIssueFungibleToken:    80000,
+		AssetFreezeFungibleToken:   55000,
+		AssetUnfreezeFungibleToken: 55000,
+
+		BankSend: 30000,
+
+		DistributionFundCommunityPool:           50000,
+		DistributionSetWithdrawAddress:          50000,
+		DistributionWithdrawDelegatorReward:     120000,
+		DistributionWithdrawValidatorCommission: 50000,
+
+		GovSubmitProposal: 95000,
+		GovVote:           8000,
+		GovVoteWeighted:   11000,
+		GovDeposit:        91000,
+
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
 		StakingBeginRedelegate: 51000,
@@ -43,10 +56,27 @@ type DeterministicGasRequirements struct {
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
 
-	AssetIssue             uint64
-	BankSend               uint64
-	GovSubmitProposal      uint64
-	GovVote                uint64
+	// x/asset
+	AssetIssueFungibleToken    uint64
+	AssetFreezeFungibleToken   uint64
+	AssetUnfreezeFungibleToken uint64
+
+	// x/bank
+	BankSend uint64
+
+	// x/distribution
+	DistributionFundCommunityPool           uint64
+	DistributionSetWithdrawAddress          uint64
+	DistributionWithdrawDelegatorReward     uint64
+	DistributionWithdrawValidatorCommission uint64
+
+	// x/gov
+	GovSubmitProposal uint64
+	GovVote           uint64
+	GovVoteWeighted   uint64
+	GovDeposit        uint64
+
+	// x/staking
 	StakingDelegate        uint64
 	StakingUndelegate      uint64
 	StakingBeginRedelegate uint64
@@ -63,13 +93,29 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 
 	switch msg.(type) {
 	case *assettypes.MsgIssueFungibleToken:
-		return dgr.AssetIssue, true
+		return dgr.AssetIssueFungibleToken, true
+	case *assettypes.MsgFreezeFungibleToken:
+		return dgr.AssetFreezeFungibleToken, true
+	case *assettypes.MsgUnfreezeFungibleToken:
+		return dgr.AssetUnfreezeFungibleToken, true
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
+	case *distributiontypes.MsgFundCommunityPool:
+		return dgr.DistributionFundCommunityPool, true
+	case *distributiontypes.MsgSetWithdrawAddress:
+		return dgr.DistributionSetWithdrawAddress, true
+	case *distributiontypes.MsgWithdrawDelegatorReward:
+		return dgr.DistributionWithdrawDelegatorReward, true
+	case *distributiontypes.MsgWithdrawValidatorCommission:
+		return dgr.DistributionWithdrawValidatorCommission, true
 	case *govtypes.MsgSubmitProposal:
 		return dgr.GovSubmitProposal, true
 	case *govtypes.MsgVote:
 		return dgr.GovVote, true
+	case *govtypes.MsgVoteWeighted:
+		return dgr.GovVoteWeighted, true
+	case *govtypes.MsgDeposit:
+		return dgr.GovDeposit, true
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:

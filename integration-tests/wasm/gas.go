@@ -14,9 +14,9 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TestGasWasmBankSendAndBankSend checks that a message containing a deterministic and a
+// TestGasWASMBankSendAndBankSend checks that a message containing a deterministic and a
 // non-deterministic transaction takes gas within appropriate limits.
-func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestGasWASMBankSendAndBankSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	admin := chain.GenAccount()
 
@@ -25,7 +25,7 @@ func TestGasWasmBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 	))
 
 	// deploy and init contract with the initial coins amount
-	initialPayload, err := json.Marshal(bankInstantiatePayload{Count: 0})
+	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
 
 	clientCtx := chain.ClientContext.WithFromAddress(admin)

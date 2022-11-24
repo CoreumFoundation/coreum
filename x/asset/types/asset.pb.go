@@ -23,10 +23,33 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+type FungibleTokenFeature int32
+
+const (
+	FungibleTokenFeature_freezable FungibleTokenFeature = 0
+)
+
+var FungibleTokenFeature_name = map[int32]string{
+	0: "freezable",
+}
+
+var FungibleTokenFeature_value = map[string]int32{
+	"freezable": 0,
+}
+
+func (x FungibleTokenFeature) String() string {
+	return proto.EnumName(FungibleTokenFeature_name, int32(x))
+}
+
+func (FungibleTokenFeature) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_4597e399dbd6e434, []int{0}
+}
+
 // FungibleTokenDefinition defines the fungible token settings to store.
 type FungibleTokenDefinition struct {
-	Denom  string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
-	Issuer string `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Denom    string                 `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Issuer   string                 `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Features []FungibleTokenFeature `protobuf:"varint,3,rep,packed,name=features,proto3,enum=coreum.asset.v1.FungibleTokenFeature" json:"features,omitempty"`
 }
 
 func (m *FungibleTokenDefinition) Reset()         { *m = FungibleTokenDefinition{} }
@@ -64,10 +87,11 @@ var xxx_messageInfo_FungibleTokenDefinition proto.InternalMessageInfo
 
 // FungibleToken is a full representation of the fungible token.
 type FungibleToken struct {
-	Denom       string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
-	Issuer      string `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	Symbol      string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Denom       string                 `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Issuer      string                 `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Symbol      string                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Description string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Features    []FungibleTokenFeature `protobuf:"varint,5,rep,packed,name=features,proto3,enum=coreum.asset.v1.FungibleTokenFeature" json:"features,omitempty"`
 }
 
 func (m *FungibleToken) Reset()         { *m = FungibleToken{} }
@@ -104,6 +128,7 @@ func (m *FungibleToken) XXX_DiscardUnknown() {
 var xxx_messageInfo_FungibleToken proto.InternalMessageInfo
 
 func init() {
+	proto.RegisterEnum("coreum.asset.v1.FungibleTokenFeature", FungibleTokenFeature_name, FungibleTokenFeature_value)
 	proto.RegisterType((*FungibleTokenDefinition)(nil), "coreum.asset.v1.FungibleTokenDefinition")
 	proto.RegisterType((*FungibleToken)(nil), "coreum.asset.v1.FungibleToken")
 }
@@ -111,23 +136,28 @@ func init() {
 func init() { proto.RegisterFile("coreum/asset/v1/asset.proto", fileDescriptor_4597e399dbd6e434) }
 
 var fileDescriptor_4597e399dbd6e434 = []byte{
-	// 255 bytes of a gzipped FileDescriptorProto
+	// 322 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4e, 0xce, 0x2f, 0x4a,
 	0x2d, 0xcd, 0xd5, 0x4f, 0x2c, 0x2e, 0x4e, 0x2d, 0xd1, 0x2f, 0x33, 0x84, 0x30, 0xf4, 0x0a, 0x8a,
 	0xf2, 0x4b, 0xf2, 0x85, 0xf8, 0x21, 0x92, 0x7a, 0x10, 0xb1, 0x32, 0x43, 0x29, 0x91, 0xf4, 0xfc,
-	0xf4, 0x7c, 0xb0, 0x9c, 0x3e, 0x88, 0x05, 0x51, 0xa6, 0x14, 0xc8, 0x25, 0xee, 0x56, 0x9a, 0x97,
-	0x9e, 0x99, 0x94, 0x93, 0x1a, 0x92, 0x9f, 0x9d, 0x9a, 0xe7, 0x92, 0x9a, 0x96, 0x99, 0x97, 0x59,
-	0x92, 0x99, 0x9f, 0x27, 0x24, 0xc2, 0xc5, 0x9a, 0x92, 0x9a, 0x97, 0x9f, 0x2b, 0xc1, 0xa8, 0xc0,
-	0xa8, 0xc1, 0x19, 0x04, 0xe1, 0x08, 0x89, 0x71, 0xb1, 0x65, 0x16, 0x17, 0x97, 0xa6, 0x16, 0x49,
-	0x30, 0x81, 0x85, 0xa1, 0x3c, 0x2b, 0x8e, 0x8e, 0x05, 0xf2, 0x0c, 0x2f, 0x16, 0xc8, 0x33, 0x28,
-	0x35, 0x32, 0x72, 0xf1, 0xa2, 0x98, 0x49, 0x9a, 0x49, 0x20, 0xf1, 0xe2, 0xca, 0xdc, 0xa4, 0xfc,
-	0x1c, 0x09, 0x66, 0x88, 0x38, 0x84, 0x27, 0xa4, 0xc0, 0xc5, 0x9d, 0x92, 0x5a, 0x9c, 0x5c, 0x94,
-	0x59, 0x00, 0x72, 0x9e, 0x04, 0x0b, 0x58, 0x12, 0x59, 0x08, 0xe1, 0x06, 0x27, 0xaf, 0x13, 0x8f,
-	0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b,
-	0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x48, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2,
-	0x4b, 0xce, 0xcf, 0xd5, 0x77, 0x06, 0x07, 0x91, 0x5b, 0x7e, 0x69, 0x5e, 0x4a, 0x22, 0xc8, 0x00,
-	0x7d, 0x68, 0x80, 0x56, 0x40, 0x83, 0xb4, 0xa4, 0xb2, 0x20, 0xb5, 0x38, 0x89, 0x0d, 0x1c, 0x52,
-	0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xac, 0x0f, 0x45, 0x39, 0x6f, 0x01, 0x00, 0x00,
+	0xf4, 0x7c, 0xb0, 0x9c, 0x3e, 0x88, 0x05, 0x51, 0xa6, 0x34, 0x85, 0x91, 0x4b, 0xdc, 0xad, 0x34,
+	0x2f, 0x3d, 0x33, 0x29, 0x27, 0x35, 0x24, 0x3f, 0x3b, 0x35, 0xcf, 0x25, 0x35, 0x2d, 0x33, 0x2f,
+	0xb3, 0x24, 0x33, 0x3f, 0x4f, 0x48, 0x84, 0x8b, 0x35, 0x25, 0x35, 0x2f, 0x3f, 0x57, 0x82, 0x51,
+	0x81, 0x51, 0x83, 0x33, 0x08, 0xc2, 0x11, 0x12, 0xe3, 0x62, 0xcb, 0x2c, 0x2e, 0x2e, 0x4d, 0x2d,
+	0x92, 0x60, 0x02, 0x0b, 0x43, 0x79, 0x42, 0x8e, 0x5c, 0x1c, 0x69, 0xa9, 0x89, 0x25, 0xa5, 0x45,
+	0xa9, 0xc5, 0x12, 0xcc, 0x0a, 0xcc, 0x1a, 0x7c, 0x46, 0xaa, 0x7a, 0x68, 0x6e, 0xd0, 0x43, 0xb1,
+	0xc9, 0x0d, 0xa2, 0x3a, 0x08, 0xae, 0xcd, 0x8a, 0xa3, 0x63, 0x81, 0x3c, 0xc3, 0x8b, 0x05, 0xf2,
+	0x0c, 0x4a, 0x47, 0x18, 0xb9, 0x78, 0x51, 0x14, 0x93, 0xe8, 0x18, 0x31, 0x2e, 0xb6, 0xe2, 0xca,
+	0xdc, 0xa4, 0xfc, 0x1c, 0x09, 0x66, 0x88, 0x38, 0x84, 0x27, 0xa4, 0xc0, 0xc5, 0x9d, 0x92, 0x5a,
+	0x9c, 0x5c, 0x94, 0x59, 0x00, 0xf2, 0xa1, 0x04, 0x0b, 0x58, 0x12, 0x59, 0x08, 0xc5, 0x1b, 0xac,
+	0x14, 0x7a, 0x43, 0xcb, 0x84, 0x4b, 0x04, 0x9b, 0x5a, 0x21, 0x19, 0x2e, 0xce, 0xb4, 0xa2, 0xd4,
+	0xd4, 0xaa, 0xc4, 0xa4, 0x9c, 0x54, 0x01, 0x06, 0x29, 0xde, 0xae, 0xb9, 0x0a, 0x08, 0x01, 0x27,
+	0xaf, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63,
+	0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x48, 0xcf, 0x2c, 0xc9,
+	0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x77, 0x06, 0x3b, 0xca, 0x2d, 0xbf, 0x34, 0x2f, 0x25,
+	0x11, 0xe4, 0x72, 0x7d, 0x68, 0x6a, 0xa8, 0x80, 0xa6, 0x87, 0x92, 0xca, 0x82, 0xd4, 0xe2, 0x24,
+	0x36, 0x70, 0x34, 0x1b, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x8a, 0x0a, 0x01, 0x89, 0x2c, 0x02,
+	0x00, 0x00,
 }
 
 func (m *FungibleTokenDefinition) Marshal() (dAtA []byte, err error) {
@@ -150,6 +180,24 @@ func (m *FungibleTokenDefinition) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	_ = i
 	var l int
 	_ = l
+	if len(m.Features) > 0 {
+		dAtA2 := make([]byte, len(m.Features)*10)
+		var j1 int
+		for _, num := range m.Features {
+			for num >= 1<<7 {
+				dAtA2[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA2[j1] = uint8(num)
+			j1++
+		}
+		i -= j1
+		copy(dAtA[i:], dAtA2[:j1])
+		i = encodeVarintAsset(dAtA, i, uint64(j1))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.Issuer) > 0 {
 		i -= len(m.Issuer)
 		copy(dAtA[i:], m.Issuer)
@@ -187,6 +235,24 @@ func (m *FungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Features) > 0 {
+		dAtA4 := make([]byte, len(m.Features)*10)
+		var j3 int
+		for _, num := range m.Features {
+			for num >= 1<<7 {
+				dAtA4[j3] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j3++
+			}
+			dAtA4[j3] = uint8(num)
+			j3++
+		}
+		i -= j3
+		copy(dAtA[i:], dAtA4[:j3])
+		i = encodeVarintAsset(dAtA, i, uint64(j3))
+		i--
+		dAtA[i] = 0x2a
+	}
 	if len(m.Description) > 0 {
 		i -= len(m.Description)
 		copy(dAtA[i:], m.Description)
@@ -243,6 +309,13 @@ func (m *FungibleTokenDefinition) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovAsset(uint64(l))
 	}
+	if len(m.Features) > 0 {
+		l = 0
+		for _, e := range m.Features {
+			l += sovAsset(uint64(e))
+		}
+		n += 1 + sovAsset(uint64(l)) + l
+	}
 	return n
 }
 
@@ -267,6 +340,13 @@ func (m *FungibleToken) Size() (n int) {
 	l = len(m.Description)
 	if l > 0 {
 		n += 1 + l + sovAsset(uint64(l))
+	}
+	if len(m.Features) > 0 {
+		l = 0
+		for _, e := range m.Features {
+			l += sovAsset(uint64(e))
+		}
+		n += 1 + sovAsset(uint64(l)) + l
 	}
 	return n
 }
@@ -370,6 +450,75 @@ func (m *FungibleTokenDefinition) Unmarshal(dAtA []byte) error {
 			}
 			m.Issuer = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 3:
+			if wireType == 0 {
+				var v FungibleTokenFeature
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowAsset
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= FungibleTokenFeature(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Features = append(m.Features, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowAsset
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthAsset
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthAsset
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				if elementCount != 0 && len(m.Features) == 0 {
+					m.Features = make([]FungibleTokenFeature, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v FungibleTokenFeature
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowAsset
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= FungibleTokenFeature(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Features = append(m.Features, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Features", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipAsset(dAtA[iNdEx:])
@@ -548,6 +697,75 @@ func (m *FungibleToken) Unmarshal(dAtA []byte) error {
 			}
 			m.Description = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 5:
+			if wireType == 0 {
+				var v FungibleTokenFeature
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowAsset
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= FungibleTokenFeature(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Features = append(m.Features, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowAsset
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthAsset
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthAsset
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				if elementCount != 0 && len(m.Features) == 0 {
+					m.Features = make([]FungibleTokenFeature, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v FungibleTokenFeature
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowAsset
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= FungibleTokenFeature(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Features = append(m.Features, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Features", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipAsset(dAtA[iNdEx:])

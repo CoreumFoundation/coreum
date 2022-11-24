@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:hello";
+const CONTRACT_NAME: &str = "creates.io:bank-send";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

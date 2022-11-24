@@ -15,6 +15,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 func createSimApp(b *testing.B) *app.App {
@@ -30,7 +31,7 @@ func createSimApp(b *testing.B) *app.App {
 	})
 
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
-	network, err := config.NetworkByChainID(config.ChainIDDev)
+	network, err := config.NetworkByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +56,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 	simApp := createSimApp(b)
 	bankKeeper := simApp.BankKeeper
 	sdkContext := simApp.NewUncachedContext(false, types.Header{})
-	chainConfig, err := config.NetworkByChainID(config.ChainIDDev)
+	chainConfig, err := config.NetworkByChainID(constant.ChainIDDev)
 	require.NoError(b, err)
 	singleCoinDenom := chainConfig.Denom()
 	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000)))
@@ -109,7 +110,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	bankKeeper := simApp.BankKeeper
 	sdkContext := simApp.NewUncachedContext(false, types.Header{})
 
-	chainConfig, err := config.NetworkByChainID(config.ChainIDDev)
+	chainConfig, err := config.NetworkByChainID(constant.ChainIDDev)
 	require.NoError(b, err)
 	singleCoinDenom := chainConfig.Denom()
 	coin := sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000))

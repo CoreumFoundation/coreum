@@ -8,7 +8,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/CoreumFoundation/coreum/x/bank/types"
+	"github.com/CoreumFoundation/coreum/x/wbank/types"
 )
 
 // BaseKeeperWrapper is a wrapper of the cosmos-sdk bank module.
@@ -83,6 +83,9 @@ func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(ctx sdk.Context, senderA
 
 // SendCoins is a BaseKeeper SendCoins wrapped method.
 func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	// TODO integrate the locked coins interaction here
+	if err := k.ftProvider.IsSendAllowed(ctx, fromAddr, toAddr, amt); err != nil {
+		return err
+	}
+
 	return k.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }

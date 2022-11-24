@@ -2,7 +2,6 @@ package testing
 
 import (
 	"reflect"
-	"sync"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -21,7 +20,6 @@ import (
 type ChainContext struct {
 	ClientContext tx.ClientContext
 	NetworkConfig config.NetworkConfig
-	keyringMu     *sync.RWMutex
 }
 
 // NewChainContext returns a new instance if the ChainContext.
@@ -29,7 +27,6 @@ func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig
 	return ChainContext{
 		ClientContext: clientCtx,
 		NetworkConfig: networkCfg,
-		keyringMu:     &sync.RWMutex{},
 	}
 }
 
@@ -53,9 +50,6 @@ func (c ChainContext) GenAccount() sdk.AccAddress {
 
 // ImportMnemonic imports the mnemonic into the ClientContext Keyring and return its address.
 func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
-	c.keyringMu.Lock()
-	defer c.keyringMu.Unlock()
-
 	keyInfo, err := c.ClientContext.Keyring().NewAccount(
 		uuid.New().String(),
 		mnemonic,
@@ -172,7 +166,7 @@ func NewChain(cfg ChainConfig) Chain {
 	clientCtx := tx.NewClientContext(app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
 		WithClient(rpcClient).
-		WithKeyring(keyring.NewInMemory()).
+		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
 		WithBroadcastMode(flags.BroadcastBlock)
 
 	chainCtx := NewChainContext(clientCtx, cfg.NetworkConfig)

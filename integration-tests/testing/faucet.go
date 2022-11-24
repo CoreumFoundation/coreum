@@ -183,6 +183,7 @@ func (f Faucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
 func (f Faucet) FundAccountsWithOptions(ctx context.Context, address sdk.AccAddress, options BalancesOptions) error {
 	amount := f.chainCtx.ComputeNeededBalanceFromOptions(options)
 	return f.FundAccounts(ctx, FundedAccount{
+		// TODO(dhil) refactor to use multiple accounts
 		Address: address,
 		Amount:  f.chainCtx.NewCoin(amount),
 	})

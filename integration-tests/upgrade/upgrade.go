@@ -45,18 +45,20 @@ func TestUpgrade(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	log.Info("Creating proposal for upgrading", zap.Int64("upgradeHeight", upgradeHeight))
 
-	// Create proposition to upgrade chain.
-	proposalID, err := chain.Governance.Propose(ctx, proposer, upgradetypes.NewSoftwareUpgradeProposal("Upgrade test", "Testing if new version of node is started by cosmovisor",
+	// Create proposal to upgrade chain.
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, upgradetypes.NewSoftwareUpgradeProposal("Upgrade test", "Testing if new version of node is started by cosmovisor",
 		upgradetypes.Plan{
 			Name:   "upgrade",
 			Height: upgradeHeight,
 		},
 	))
 	requireT.NoError(err)
-	log.Info("Upgrade proposal has been submitted", zap.Int("proposalID", proposalID))
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	requireT.NoError(err)
+	log.Info("Upgrade proposal has been submitted", zap.Uint64("proposalID", proposalID))
 
 	// Verify that voting period started.
-	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
@@ -67,7 +69,9 @@ func TestUpgrade(ctx context.Context, t testing.T, chain testing.Chain) {
 	log.Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result.
-	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
 	// Verify that upgrade plan is there waiting to be applied.
 	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})

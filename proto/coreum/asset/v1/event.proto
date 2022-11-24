@@ -2,6 +2,8 @@ syntax = "proto3";
 package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
@@ -14,6 +16,17 @@ message EventFungibleTokenIssued {
   string initial_amount = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
-    ];
+  ];
   string description = 6;
+  repeated FungibleTokenFeature features = 7;
+}
+
+message EventFungibleTokenFrozen {
+  string account = 1;
+  cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
+}
+
+message EventFungibleTokenUnfrozen {
+  string account = 1;
+  cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
 }

@@ -101,12 +101,12 @@ import (
 
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset"
 	assetkeeper "github.com/CoreumFoundation/coreum/x/asset/keeper"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	assetwasm "github.com/CoreumFoundation/coreum/x/asset/wasm"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
-	wbank "github.com/CoreumFoundation/coreum/x/bank"
-	wbankkeeper "github.com/CoreumFoundation/coreum/x/bank/keeper"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/x/deterministicgas/types"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
@@ -114,6 +114,9 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
 	nftmodule "github.com/CoreumFoundation/coreum/x/nft/module"
+	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
+	"github.com/CoreumFoundation/coreum/x/wbank"
+	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -122,7 +125,7 @@ const (
 	Name = "core"
 
 	// DefaultChainID is the default chain id of the network
-	DefaultChainID = config.ChainIDDev
+	DefaultChainID = constant.ChainIDDev
 )
 
 // ChosenNetwork is a hacky solution to pass network config
@@ -434,7 +437,10 @@ func New(
 		panic(errors.Wrapf(err, "error while reading wasm config"))
 	}
 
-	var wasmOpts []wasm.Option
+	wasmOpts := []wasm.Option{
+		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(assetwasm.MsgHandler)),
+		wasmkeeper.WithQueryPlugins(wasmtypes.NewCustomQuerier(assetwasm.QueryHandler(app.AssetKeeper))),
+	}
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}

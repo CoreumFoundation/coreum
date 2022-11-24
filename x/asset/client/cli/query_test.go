@@ -38,6 +38,7 @@ func TestQueryFungibleToken(t *testing.T) {
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Symbol:      symbol,
 		Description: "",
+		Features:    []types.FungibleTokenFeature{},
 	}, resp.FungibleToken)
 }
 

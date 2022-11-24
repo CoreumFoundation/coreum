@@ -1,12 +1,12 @@
 # WASM
 
-The doc provides the brief overview of the integrated WASM module with the tutorial how to build and deploy simple
+The doc provides a brief overview of the integrated WASM module with a tutorial on how to build and deploy simple
 WASM contract.
 
 # Overview
 
-WASM module is a Cosmos SDK based module which is plugged into the coreum chain.
-This module allows to build, deploy and use the WASM contracts on the coreum chain.
+WASM module is a Cosmos SDK-based module that is plugged into the coreum chain.
+This module allows us to build, deploy and use the WASM contracts on the coreum chain.
 Currently, it supports the Rust language as a language of the contracts.
 
 The detailed module architecture overview can be
@@ -14,34 +14,17 @@ found [here](https://docs.cosmwasm.com/docs/1.0/architecture/multichain).
 
 The contract semantics is [here](https://docs.cosmwasm.com/docs/1.0/smart-contracts/contract-semantics).
 
-# Write and deploy first contract
+# Write and deploy the first contract
 
-The section provides the tutorial how to build and deploy the WASM contract to the coreum chain.
+The section provides a tutorial on how to build and deploy the WASM contract to the coreum chain.
 
-## Set up environment
+## Set up the environment
 
-### Build the cored
+* Install binaries
 
-The [Build and Play](https://github.com/CoreumFoundation/coreum/blob/master/README.md#build-and-play) doc describes the
-process of the cored binary building and installation.
+  The [install binaries](install-cored.md) doc describes the installation process.
 
-### Set up the CLI environment
-
-Set up the CLI environment following the [doc](cli-env.md).
-
-### Install the CLI utils
-
-* Mac OS.
-
-```bash
-brew install jq curl
-```
-
-* Linux (Ubuntu and Debian).
-
-```bash
-apt install jq curl
-```
+* Install the required utils: `jq` and `curl`.
 
 ## Write, build and deploy WASM contract
 
@@ -58,6 +41,8 @@ cd cw-contracts
 git checkout main
 cd contracts/nameservice
 ```
+
+* Set up the CLI environment following the [doc](cli-env.md).
 
 * Generate a new wallet for testing.
 
@@ -85,7 +70,7 @@ docker run --rm -v "$(pwd)":/code \
   cosmwasm/rust-optimizer:0.12.6
 ```
 
-This operation might take the significant amount of time.
+This operation might take a significant amount of time.
 
 * List the already deployed contract codes.
 

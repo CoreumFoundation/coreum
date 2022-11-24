@@ -5,12 +5,17 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
+enum FungibleTokenFeature {
+  freezable = 0 [(gogoproto.enumvalue_customname) = "freezable"];
+}
+
 // FungibleTokenDefinition defines the fungible token settings to store.
 message FungibleTokenDefinition {
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.equal) = false;
   string denom = 1;
   string issuer = 2;
+  repeated FungibleTokenFeature features = 3;
 }
 
 // FungibleToken is a full representation of the fungible token.
@@ -21,4 +26,5 @@ message FungibleToken {
   string issuer = 2;
   string symbol = 3;
   string description = 4;
+  repeated FungibleTokenFeature features = 5;
 }

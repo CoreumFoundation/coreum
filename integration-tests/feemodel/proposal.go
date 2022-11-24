@@ -37,13 +37,15 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	// Create invalid proposal MaxGasPrice = InitialGasPrice.
 	feeModelParams := feeModelParamsRes.Params.Model
 	feeModelParams.MaxGasPriceMultiplier = sdk.OneDec()
-	_, err = chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Invalid proposal", "-",
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Invalid proposal", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
 				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
 			),
 		},
 	))
+	requireT.NoError(err)
+	_, err = chain.Governance.Propose(ctx, proposalMsg)
 	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
 
 	// Create proposal to change MaxDiscount.
@@ -52,7 +54,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	feeModelParams = feeModelParamsRes.Params.Model
 	feeModelParams.MaxDiscount = targetMaxDiscount
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxDiscount", "-",
+	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxDiscount", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
 				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
@@ -60,10 +62,12 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 		},
 	))
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Int("proposalID", proposalID))
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	requireT.NoError(err)
+	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
 
 	// Verify that voting period started.
-	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
@@ -74,7 +78,9 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
 
 	// Wait for proposal result.
-	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
 	// Check the proposed change is applied.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})

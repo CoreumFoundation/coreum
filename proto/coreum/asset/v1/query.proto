@@ -3,6 +3,8 @@ package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 
 import "coreum/asset/v1/asset.proto";
 
@@ -12,7 +14,15 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 service Query {
   // FungibleToken queries the fungible token of the module.
   rpc FungibleToken(QueryFungibleTokenRequest) returns (QueryFungibleTokenResponse) {
-    option (google.api.http).get = "/coreum/asset/v1/assets/ft/{denom}";
+    option (google.api.http).get = "/coreum/asset/v1/fts/denom/{denom}";
+  }
+
+  rpc FrozenBalances(QueryFrozenBalancesRequest) returns (QueryFrozenBalancesResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/frozen";
+  }
+
+  rpc FrozenBalance(QueryFrozenBalanceRequest) returns (QueryFrozenBalanceResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/frozen/{denom}";
   }
 }
 
@@ -24,4 +34,33 @@ message QueryFungibleTokenRequest {
 // QueryFungibleTokenResponse is response type for the Query/FungibleToken RPC method.
 message QueryFungibleTokenResponse {
   FungibleToken fungible_token = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryFrozenBalancesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // account specifies the account onto which we query frozen balances
+  string account = 2;
+}
+  
+message QueryFrozenBalancesResponse {
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  // balances contains the frozen balances on the queried account
+  repeated cosmos.base.v1beta1.Coin balances = 2 [
+    (gogoproto.nullable) = false, 
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message QueryFrozenBalanceRequest {
+  // account specifies the account onto which we query frozen balances
+  string account = 1;
+  // denom specifies frozen balances on a specific denom
+  string denom = 2;
+}
+
+message QueryFrozenBalanceResponse {
+  // balance contains the frozen balance with the queried account and denom 
+  cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
 }

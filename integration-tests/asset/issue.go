@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
@@ -45,6 +46,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	)
 
 	require.NoError(t, err)
+	assert.Equal(t, chain.GasLimitByMsgs(&assettypes.MsgIssueFungibleToken{}), uint64(res.GasUsed))
 	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
 
 	require.NoError(t, err)
@@ -55,6 +57,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Description:   msg.Description,
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
+		Features:      []assettypes.FungibleTokenFeature{},
 	}, *fungibleTokenIssuedEvt)
 
 	denom := fungibleTokenIssuedEvt.Denom

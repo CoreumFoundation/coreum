@@ -29,8 +29,8 @@ type simpleState struct {
 type simpleStateMethod string
 
 const (
-	getCount  simpleStateMethod = "get_count"
-	increment simpleStateMethod = "increment"
+	simpleGetCount  simpleStateMethod = "get_count"
+	simpleIncrement simpleStateMethod = "increment"
 )
 
 // TestPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
@@ -74,7 +74,7 @@ func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t 
 	requireT.NoError(err)
 
 	// get the current counter state
-	getCountPayload, err := methodToEmptyBodyPayload(getCount)
+	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
 	requireT.NoError(err)
 	queryOut, err := Query(ctx, clientCtx, contractAddr, getCountPayload)
 	requireT.NoError(err)
@@ -90,40 +90,50 @@ func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t 
 	requireT.False(IsPinned(ctx, clientCtx, codeID))
 
 	// pin smart contract
-	proposalID, err := chain.Governance.Propose(ctx, proposer, &wasmtypes.PinCodesProposal{
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.PinCodesProposal{
 		Title:       "Pin smart contract",
 		Description: "Testing smart contract pinning",
 		CodeIDs:     []uint64{codeID},
 	})
 	requireT.NoError(err)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	requireT.NoError(err)
 
-	proposal, err := chain.Governance.GetProposal(ctx, uint64(proposalID))
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
 	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
-	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
+
+	// Wait for proposal result.
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
 	requireT.True(IsPinned(ctx, clientCtx, codeID))
 
 	gasUsedAfterPinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1339)
 
 	// unpin smart contract
-	proposalID, err = chain.Governance.Propose(ctx, proposer, &wasmtypes.UnpinCodesProposal{
+	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.UnpinCodesProposal{
 		Title:       "Unpin smart contract",
 		Description: "Testing smart contract unpinning",
 		CodeIDs:     []uint64{codeID},
 	})
 	requireT.NoError(err)
+	proposalID, err = chain.Governance.Propose(ctx, proposalMsg)
+	requireT.NoError(err)
 
-	proposal, err = chain.Governance.GetProposal(ctx, uint64(proposalID))
+	proposal, err = chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
 
 	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
-	requireT.NoError(chain.Governance.WaitForVotingToPass(ctx, uint64(proposalID)))
+	finalStatus, err = chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
 	requireT.False(IsPinned(ctx, clientCtx, codeID))
 
@@ -153,13 +163,13 @@ func incrementAndVerify(
 	expectedValue int,
 ) int64 {
 	// execute contract to increment the count
-	incrementPayload, err := methodToEmptyBodyPayload(increment)
+	incrementPayload, err := methodToEmptyBodyPayload(simpleIncrement)
 	requireT.NoError(err)
 	gasUsed, err := Execute(ctx, clientCtx, txf, contractAddr, incrementPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check the update count
-	getCountPayload, err := methodToEmptyBodyPayload(getCount)
+	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
 	requireT.NoError(err)
 	queryOut, err := Query(ctx, clientCtx, contractAddr, getCountPayload)
 	requireT.NoError(err)
