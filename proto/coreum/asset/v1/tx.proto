@@ -21,8 +21,8 @@ service Msg {
   rpc MintFungibleToken(MsgMintFungibleToken) returns (EmptyResponse);
   // BurnFungibleToken burns the specified fungible tokens from senders balance if the sender has enough balance
   rpc BurnFungibleToken(MsgBurnFungibleToken) returns (EmptyResponse);
-  // SetWhitelistLimitFungibleToken sets the limit of how many tokens account may hold
-  rpc SetWhitelistLimitFungibleToken(MsgSetWhitelistLimitFungibleToken) returns (EmptyResponse);
+  // SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
+  rpc SetWhitelistedLimitFungibleToken(MsgSetWhitelistedLimitFungibleToken) returns (EmptyResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -72,7 +72,7 @@ message MsgBurnFungibleToken {
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
-message MsgSetWhitelistLimitFungibleToken {
+message MsgSetWhitelistedLimitFungibleToken {
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];

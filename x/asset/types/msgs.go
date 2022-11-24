@@ -131,3 +131,27 @@ func (msg MsgBurnFungibleToken) GetSigners() []sdk.AccAddress {
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}
 }
+
+// ValidateBasic checks that message fields are valid
+func (msg MsgSetWhitelistedLimitFungibleToken) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
+		return err
+	}
+
+	return msg.Coin.Validate()
+}
+
+// GetSigners returns the required signers of this message type
+func (msg MsgSetWhitelistedLimitFungibleToken) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Sender),
+	}
+}

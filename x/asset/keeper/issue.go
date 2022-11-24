@@ -28,16 +28,22 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 
 	k.setFungibleTokenDenomMetadata(ctx, settings.Symbol, denom, settings.Description)
 
-	if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
-		return "", err
-	}
-
 	definition := types.FungibleTokenDefinition{
 		Denom:    denom,
 		Issuer:   settings.Issuer.String(),
 		Features: settings.Features,
 	}
 	k.SetFungibleTokenDefinition(ctx, definition)
+
+	if isFeatureEnabled(settings.Features, types.FungibleTokenFeature_whitelist) {
+		if err := k.SetWhitelistedBalance(ctx, settings.Issuer, settings.Recipient, sdk.NewCoin(denom, settings.InitialAmount)); err != nil {
+			return "", err
+		}
+	}
+
+	if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
+		return "", err
+	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenIssued{
 		Denom:         denom,
@@ -148,6 +154,10 @@ func (k Keeper) mintFungibleToken(ctx sdk.Context, denom string, amount sdk.Int,
 		return nil
 	}
 	coinsToMint := sdk.NewCoins(sdk.NewCoin(denom, amount))
+	if err := k.areCoinsReceivable(ctx, recipient, coinsToMint); err != nil {
+		return sdkerrors.Wrapf(err, "coins are not receivable")
+	}
+
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coinsToMint); err != nil {
 		return sdkerrors.Wrapf(err, "can't mint %s for the module %s", coinsToMint.String(), types.ModuleName)
 	}

@@ -29,7 +29,10 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 
 // IsSendAllowed checks that a transfer request is allowed or not
 func (k Keeper) IsSendAllowed(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
-	return k.areCoinsSpendable(ctx, fromAddress, coins)
+	if err := k.areCoinsSpendable(ctx, fromAddress, coins); err != nil {
+		return err
+	}
+	return k.areCoinsReceivable(ctx, toAddress, coins)
 }
 
 // Logger returns the Keeper logger.

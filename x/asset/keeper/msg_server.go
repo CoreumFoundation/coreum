@@ -17,6 +17,7 @@ type MsgKeeper interface {
 	UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
 	MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
+	SetWhitelistedBalance(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -123,6 +124,27 @@ func (ms MsgServer) BurnFungibleToken(goCtx context.Context, req *types.MsgBurnF
 	}
 
 	err = ms.keeper.BurnFungibleToken(ctx, sender, req.Coin)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
+func (ms MsgServer) SetWhitelistedLimitFungibleToken(goCtx context.Context, req *types.MsgSetWhitelistedLimitFungibleToken) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	err = ms.keeper.SetWhitelistedBalance(ctx, sender, account, req.Coin)
 	if err != nil {
 		return nil, err
 	}

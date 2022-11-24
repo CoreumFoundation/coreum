@@ -282,3 +282,61 @@ func TestMsgBurnFungibleToken_ValidateBasic(t *testing.T) {
 		})
 	}
 }
+
+//nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
+func TestMsgSetWhitelistedLimitFungibleToken_ValidateBasic(t *testing.T) {
+	testCases := []struct {
+		name          string
+		message       types.MsgSetWhitelistedLimitFungibleToken
+		expectedError error
+	}{
+		{
+			name: "valid msg",
+			message: types.MsgSetWhitelistedLimitFungibleToken{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+		},
+		{
+			name: "invalid issuer address",
+			message: types.MsgSetWhitelistedLimitFungibleToken{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid account",
+			message: types.MsgSetWhitelistedLimitFungibleToken{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := tc.message.ValidateBasic()
+			if tc.expectedError == nil {
+				assertT.NoError(err)
+			} else {
+				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}

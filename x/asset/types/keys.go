@@ -27,6 +27,8 @@ var (
 	FungibleTokenKeyPrefix = []byte{0x01}
 	// FrozenBalancesKeyPrefix defines the key prefix to track frozen balances
 	FrozenBalancesKeyPrefix = []byte{0x02}
+	// WhitelistedBalancesKeyPrefix defines the key prefix to track whitelisted balances
+	WhitelistedBalancesKeyPrefix = []byte{0x03}
 )
 
 // GetFungibleTokenKey constructs the key for the fungible token.
@@ -34,9 +36,14 @@ func GetFungibleTokenKey(denom string) []byte {
 	return store.JoinKeysWithLength(FungibleTokenKeyPrefix, []byte(denom))
 }
 
-// CreateFrozenBalancesPrefix creates the prefix for an account's balances.
+// CreateFrozenBalancesPrefix creates the prefix for an account's frozen balances.
 func CreateFrozenBalancesPrefix(addr []byte) []byte {
 	return store.JoinKeys(FrozenBalancesKeyPrefix, address.MustLengthPrefix(addr))
+}
+
+// CreateWhitelistedBalancesPrefix creates the prefix for an account's whitelisted balances.
+func CreateWhitelistedBalancesPrefix(addr []byte) []byte {
+	return store.JoinKeys(WhitelistedBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
 // AddressFromBalancesStore returns an account address from a balances prefix
