@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -16,10 +18,14 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
 
+	if err := k.checkAndStoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
+		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
+	}
+
 	denom := types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
-			types.ErrInvalidFungibleToken,
+			types.ErrInvalidSubunit,
 			"subunit %s already registered for the address %s",
 			settings.Subunit,
 			settings.Issuer.String(),
@@ -56,6 +62,23 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	k.Logger(ctx).Debug("issued new fungible token with denom %d", denom)
 
 	return denom, nil
+}
+
+func (k Keeper) checkAndStoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
+	err := types.ValidateSymbol(symbol)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "provided symbol: %s", symbol)
+	}
+
+	symbol = strings.ToLower(symbol)
+	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
+	bytes := symbolStore.Get([]byte(symbol))
+	if bytes != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol")
+	}
+
+	symbolStore.Set([]byte(symbol), []byte{0x01})
+	return nil
 }
 
 // GetFungibleToken return the fungible token by its denom.

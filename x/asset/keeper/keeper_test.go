@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestKeeper_LowercaseSymbol(t *testing.T) {
+func TestKeeper_LowercaseSubunit(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
@@ -39,7 +39,7 @@ func TestKeeper_LowercaseSymbol(t *testing.T) {
 		Issuer:        addr,
 		Subunit:       subunit,
 		Precision:     6,
-		Symbol:        "Core",
+		Symbol:        "Coreum",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
@@ -48,6 +48,65 @@ func TestKeeper_LowercaseSymbol(t *testing.T) {
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
 	requireT.NoError(err)
 	requireT.EqualValues("ucoreum"+"-"+addr.String(), denom)
+}
+
+func TestKeeper_ValidateSymbol(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	assetKeeper := testApp.AssetKeeper
+
+	unacceptableSymbols := []string{
+		"ABC/1",
+		"core",
+		"ucore",
+		"Core",
+		"uCore",
+		"CORE",
+		"UCORE",
+		"3abc",
+		"3ABC",
+	}
+
+	acceptableSymbols := []string{
+		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
+		"BTC-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
+		"ABC-1",
+		"ABC1",
+		"coreum",
+		"ucoreum",
+		"Coreum",
+		"uCoreum",
+		"COREeum",
+		"A1234567890123456789012345678901234567890123456789012345678901234567890",
+		"AB1234567890123456789012345678901234567890123456789012345678901234567890",
+	}
+
+	assertValidSymbol := func(symbol string, isValid bool) {
+		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		settings := types.IssueFungibleTokenSettings{
+			Issuer:        addr,
+			Symbol:        symbol,
+			Subunit:       "subunit",
+			Description:   "ABC Desc",
+			Recipient:     addr,
+			InitialAmount: sdk.NewInt(777),
+			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
+		}
+
+		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
+		if types.ErrInvalidSymbol.Is(err) == isValid {
+			requireT.Equal(types.ErrInvalidSymbol.Is(err), !isValid)
+		}
+	}
+
+	for _, symbol := range unacceptableSymbols {
+		assertValidSymbol(symbol, false)
+	}
+
+	for _, symbol := range acceptableSymbols {
+		assertValidSymbol(symbol, true)
+	}
 }
 
 func TestKeeper_ValidateSubunit(t *testing.T) {
@@ -82,12 +141,12 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 		"A1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
-	assertValidSubunit := func(symbol string, isValid bool) {
+	assertValidSubunit := func(subunit string, isValid bool) {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		settings := types.IssueFungibleTokenSettings{
 			Issuer:        addr,
 			Symbol:        "symbol",
-			Subunit:       symbol,
+			Subunit:       subunit,
 			Description:   "ABC Desc",
 			Recipient:     addr,
 			InitialAmount: sdk.NewInt(777),
@@ -98,12 +157,12 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 		requireT.Equal(types.ErrInvalidSubunit.Is(err), !isValid)
 	}
 
-	for _, symbol := range unacceptableSubunits {
-		assertValidSubunit(symbol, false)
+	for _, su := range unacceptableSubunits {
+		assertValidSubunit(su, false)
 	}
 
-	for _, symbol := range acceptableSubunits {
-		assertValidSubunit(symbol, true)
+	for _, su := range acceptableSubunits {
+		assertValidSubunit(su, true)
 	}
 }
 
@@ -170,9 +229,18 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 	issuedAssetBalance := bankKeeper.GetBalance(ctx, addr, denom)
 	requireT.Equal(sdk.NewCoin(denom, settings.InitialAmount).String(), issuedAssetBalance.String())
 
-	// issue one more time check the double issue validation
-	_, err = assetKeeper.IssueFungibleToken(ctx, settings)
-	requireT.True(errors.Is(types.ErrInvalidFungibleToken, err))
+	// check duplicate subunit
+	st := settings
+	st.Symbol = "test-symbol"
+	_, err = assetKeeper.IssueFungibleToken(ctx, st)
+	requireT.True(errors.Is(types.ErrInvalidSubunit, err))
+
+	// check duplicate symbol
+	st = settings
+	st.Subunit = "test-subunit"
+	st.Symbol = "aBc"
+	_, err = assetKeeper.IssueFungibleToken(ctx, st)
+	requireT.True(errors.Is(types.ErrInvalidSubunit, err))
 }
 
 func TestKeeper_Mint(t *testing.T) {

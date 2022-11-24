@@ -17,6 +17,8 @@ var (
 	ErrInvalidKey = sdkerrors.Register(ModuleName, 5, "invalid key")
 	// ErrNotEnoughBalance is returned when there is not enough
 	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 6, "not enough balance")
-	// ErrInvalidSubunit is returned when the provided symbol is not of valid format
+	// ErrInvalidSubunit is returned when the provided subunit is not of valid format
 	ErrInvalidSubunit = sdkerrors.Register(ModuleName, 7, "subunit format is not valid")
+	// ErrInvalidSymbol is returned when the provided symbol is not of valid format
+	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 8, "symbol format is not valid")
 )
