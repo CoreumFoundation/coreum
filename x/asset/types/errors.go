@@ -21,5 +21,5 @@ var (
 	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 7, "symbol format is not valid")
 
 	ErrGlobalFreezeEnabled  = sdkerrors.Register(ModuleName, 8, "global freeze enabled")
-	ErrGlobalFreezeDisabled = sdkerrors.Register(ModuleName, 8, "global freeze disabled")
+	ErrGlobalFreezeDisabled = sdkerrors.Register(ModuleName, 9, "global freeze disabled")
 )

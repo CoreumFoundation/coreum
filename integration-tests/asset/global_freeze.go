@@ -2,7 +2,6 @@ package asset
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -88,6 +87,4 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 		globFreezeMsg,
 	)
 	requireT.NoError(err)
-	fmt.Println(res)
-	fmt.Println("-------------------------------------------")
 }

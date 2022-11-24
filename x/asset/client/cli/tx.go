@@ -322,7 +322,7 @@ func CmdTxGlobalFreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "global-freeze [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Fully freeze fungible token",
+		Short: "Globally freeze fungible token on all accounts",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Fully freeze fungible token.
 
@@ -361,7 +361,7 @@ func CmdTxGlobalUnfreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "global-unfreeze [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Fully unfreeze fungible token",
+		Short: "Globally unfreeze fungible token on all accounts",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Fully unfreeze fungible token.
 
