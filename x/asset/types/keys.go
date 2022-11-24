@@ -27,8 +27,6 @@ var (
 	FungibleTokenKeyPrefix = []byte{0x01}
 	// FrozenBalancesKeyPrefix defines the key prefix to track frozen balances.
 	FrozenBalancesKeyPrefix = []byte{0x02}
-	// GlobalFrozenBalancesKeyPrefix defines the key prefix to track asset global freeze.
-	GlobalFrozenBalancesKeyPrefix = []byte{0x03}
 )
 
 // GetFungibleTokenKey constructs the key for the fungible token.

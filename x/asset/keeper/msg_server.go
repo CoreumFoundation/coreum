@@ -17,7 +17,7 @@ type MsgKeeper interface {
 	UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
 	MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
-	SetGlobalFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
+	SetGlobalFreezeEnabled(ctx sdk.Context, sender sdk.AccAddress, denom string, enabled bool) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -132,27 +132,21 @@ func (ms MsgServer) BurnFungibleToken(goCtx context.Context, req *types.MsgBurnF
 }
 
 func (ms MsgServer) GlobalFreezeFungibleToken(goCtx context.Context, req *types.MsgGlobalFreezeFungibleToken) (*types.EmptyResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	if err := ms.keeper.SetGlobalFreeze(ctx, sender, req.Denom); err != nil {
-		return nil, err
-	}
-
-	return &types.EmptyResponse{}, nil
+	return ms.setFungibleTokenGlobalFreezeEnabled(goCtx, req.Sender, req.Denom, true)
 }
 
 func (ms MsgServer) GlobalUnfreezeFungibleToken(goCtx context.Context, req *types.MsgGlobalUnfreezeFungibleToken) (*types.EmptyResponse, error) {
+	return ms.setFungibleTokenGlobalFreezeEnabled(goCtx, req.Sender, req.Denom, false)
+}
+
+func (ms MsgServer) setFungibleTokenGlobalFreezeEnabled(goCtx context.Context, senderStr, denom string, enabled bool) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	sender, err := sdk.AccAddressFromBech32(senderStr)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if err := ms.keeper.SetGlobalFreeze(ctx, sender, req.Denom); err != nil {
+	if err := ms.keeper.SetGlobalFreezeEnabled(ctx, sender, denom, enabled); err != nil {
 		return nil, err
 	}
 

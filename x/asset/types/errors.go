@@ -19,4 +19,7 @@ var (
 	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 6, "not enough balance")
 	// ErrInvalidSymbol is returned when the provided symbol is not of valid format
 	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 7, "symbol format is not valid")
+
+	ErrGlobalFreezeEnabled  = sdkerrors.Register(ModuleName, 8, "global freeze enabled")
+	ErrGlobalFreezeDisabled = sdkerrors.Register(ModuleName, 8, "global freeze disabled")
 )
