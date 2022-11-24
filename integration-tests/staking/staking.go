@@ -18,8 +18,6 @@ import (
 )
 
 // TestStaking checks validator creation, delegation and undelegation operations work correctly.
-//
-//nolint:funlen // this function is a long test scenario and breaking it down might not be that beneficial
 func TestStaking(ctx context.Context, t testing.T, chain testing.Chain) {
 	const initialValidatorAmount = 1000000
 

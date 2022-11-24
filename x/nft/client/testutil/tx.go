@@ -3,29 +3,18 @@ package testutil
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/testutil/network"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
-
-	"github.com/cosmos/cosmos-sdk/x/nft"
+	"github.com/CoreumFoundation/coreum/testutil/network"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 const (
-	OwnerName  = "owner"
-	Owner      = "cosmos1kznrznww4pd6gx0zwrpthjk68fdmqypjpkj5hp"
-	OwnerArmor = `-----BEGIN TENDERMINT PRIVATE KEY-----
-salt: C3586B75587D2824187D2CDA22B6AFB6
-type: secp256k1
-kdf: bcrypt
-
-1+15OrCKgjnwym1zO3cjo/SGe3PPqAYChQ5wMHjdUbTZM7mWsH3/ueL6swgjzI3b
-DDzEQAPXBQflzNW6wbne9IfT651zCSm+j1MWaGk=
-=wEHs
------END TENDERMINT PRIVATE KEY-----`
-
 	testClassID          = "kitty"
 	testClassName        = "Crypto Kitty"
 	testClassSymbol      = "kitty"
@@ -36,7 +25,7 @@ DDzEQAPXBQflzNW6wbne9IfT651zCSm+j1MWaGk=
 )
 
 var (
-	ExpClass = nft.Class{
+	ExpClass = nft.Class{ //nolint:revive // test constants
 		Id:          testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
@@ -51,57 +40,76 @@ var (
 	}
 )
 
-type IntegrationTestSuite struct {
+type IntegrationTestSuite struct { //nolint:revive // test helper
 	suite.Suite
 
 	cfg     network.Config
 	network *network.Network
-	owner   sdk.AccAddress
+	owner   string
 }
 
-func NewIntegrationTestSuite(cfg network.Config) *IntegrationTestSuite {
-	return &IntegrationTestSuite{cfg: cfg}
+func NewIntegrationTestSuite() *IntegrationTestSuite { //nolint:revive // test helper
+	return &IntegrationTestSuite{
+		cfg: network.DefaultConfig(),
+	}
 }
 
-func (s *IntegrationTestSuite) SetupSuite() {
+func (s *IntegrationTestSuite) SetupSuite() { //nolint:revive // test helper
 	s.T().Log("setting up integration test suite")
 
+	// gen account to use as nft owner
+	keyInfo, mnemonic := genAccount(s)
+	s.T().Logf("Created new account address:%s", keyInfo.GetAddress())
+
+	// fund account to pay for the transactions
+	cfg, err := network.ApplyConfigOptions(s.cfg, network.WithChainDenomFundedAccounts(
+		[]network.FundedAccount{
+			{
+				Address: keyInfo.GetAddress(),
+				Amount:  sdk.NewInt(10_000_000),
+			},
+		}))
+	s.Require().NoError(err)
+	s.cfg = cfg
+	s.owner = keyInfo.GetAddress().String()
+
+	// set owner in the genesis
 	genesisState := s.cfg.GenesisState
 	nftGenesis := nft.GenesisState{
 		Classes: []*nft.Class{&ExpClass},
 		Entries: []*nft.Entry{{
-			Owner: Owner,
+			Owner: s.owner,
 			Nfts:  []*nft.NFT{&ExpNFT},
 		}},
 	}
-
 	nftDataBz, err := s.cfg.Codec.MarshalJSON(&nftGenesis)
 	s.Require().NoError(err)
 	genesisState[nft.ModuleName] = nftDataBz
 	s.cfg.GenesisState = genesisState
-	s.network, err = network.New(s.T(), s.T().TempDir(), s.cfg)
+
+	// start simapp network
+	s.network = network.New(s.T(), s.cfg)
 	s.Require().NoError(err)
 
-	_, err = s.network.WaitForHeight(1)
-	s.Require().NoError(err)
+	// import key
+	s.owner = keyInfo.GetAddress().String()
+	s.importMnemonic(s.owner, mnemonic, s.network.Validators[0].ClientCtx)
 
-	s.initAccount()
 	_, err = s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 }
 
-func (s *IntegrationTestSuite) TearDownSuite() {
+func (s *IntegrationTestSuite) TearDownSuite() { //nolint:revive // test helper
 	s.T().Log("tearing down integration test suite")
-	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestCLITxSend() {
+func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 	val := s.network.Validators[0]
 	args := []string{
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, OwnerName),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.owner),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10000))).String()),
 	}
 	testCases := []struct {
 		name         string
@@ -142,25 +150,27 @@ func (s *IntegrationTestSuite) TestCLITxSend() {
 	}
 }
 
-func (s *IntegrationTestSuite) initAccount() {
-	val := s.network.Validators[0]
-	ctx := val.ClientCtx
-	err := ctx.Keyring.ImportPrivKey(OwnerName, OwnerArmor, "1234567890")
+func genAccount(s *IntegrationTestSuite) (keyring.Info, string) {
+	// Generate and store a new mnemonic using temporary keyring
+	keyInfo, mnemonic, err := keyring.NewInMemory().NewMnemonic(
+		"tmp",
+		keyring.English,
+		sdk.GetConfig().GetFullBIP44Path(),
+		"",
+		hd.Secp256k1,
+	)
 	s.Require().NoError(err)
 
-	keyinfo, err := ctx.Keyring.Key(OwnerName)
-	s.Require().NoError(err)
+	return keyInfo, mnemonic
+}
 
-	args := []string{
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
-	}
-
-	s.owner, err = keyinfo.GetAddress()
-	s.Require().NoError(err)
-
-	amount := sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(200)))
-	_, err = banktestutil.MsgSendExec(ctx, val.Address, s.owner, amount, args...)
+func (s *IntegrationTestSuite) importMnemonic(name, mnemonic string, clientCtx client.Context) {
+	_, err := clientCtx.Keyring.NewAccount(
+		name,
+		mnemonic,
+		"",
+		sdk.GetConfig().GetFullBIP44Path(),
+		hd.Secp256k1,
+	)
 	s.Require().NoError(err)
 }

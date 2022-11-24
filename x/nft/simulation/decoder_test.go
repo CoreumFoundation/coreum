@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
-	"github.com/cosmos/cosmos-sdk/x/nft"
-	"github.com/cosmos/cosmos-sdk/x/nft/keeper"
-	"github.com/cosmos/cosmos-sdk/x/nft/simulation"
+	"github.com/stretchr/testify/require"
+
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/x/nft/simulation"
 )
 
 var (
@@ -21,7 +22,7 @@ var (
 )
 
 func TestDecodeStore(t *testing.T) {
-	cdc := simapp.MakeTestEncodingConfig().Codec
+	cdc := config.NewEncodingConfig(app.ModuleBasics).Codec
 	dec := simulation.NewDecodeStore(cdc)
 
 	class := nft.Class{
@@ -49,11 +50,11 @@ func TestDecodeStore(t *testing.T) {
 
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
-			{Key: []byte(keeper.ClassKey), Value: classBz},
-			{Key: []byte(keeper.NFTKey), Value: nftBz},
-			{Key: []byte(keeper.NFTOfClassByOwnerKey), Value: nftOfClassByOwnerValue},
-			{Key: []byte(keeper.OwnerKey), Value: ownerAddr1},
-			{Key: []byte(keeper.ClassTotalSupply), Value: totalSupplyBz},
+			{Key: keeper.ClassKey, Value: classBz},
+			{Key: keeper.NFTKey, Value: nftBz},
+			{Key: keeper.NFTOfClassByOwnerKey, Value: nftOfClassByOwnerValue},
+			{Key: keeper.OwnerKey, Value: ownerAddr1},
+			{Key: keeper.ClassTotalSupply, Value: totalSupplyBz},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
 		},
 	}
