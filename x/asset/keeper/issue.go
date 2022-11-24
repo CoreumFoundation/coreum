@@ -158,3 +158,24 @@ func (k Keeper) mintFungibleToken(ctx sdk.Context, denom string, amount sdk.Int,
 
 	return nil
 }
+
+func (k Keeper) burnFungibleToken(ctx sdk.Context, coin sdk.Coin, account sdk.AccAddress) error {
+	if err := coin.Validate(); err != nil {
+		return err
+	}
+
+	coinsToBurn := sdk.NewCoins(coin)
+	if err := k.areCoinsSpendable(ctx, account, coinsToBurn); err != nil {
+		return sdkerrors.Wrapf(err, "coins are not spendable")
+	}
+
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coinsToBurn); err != nil {
+		return sdkerrors.Wrapf(err, "can't send  coins from account %s to module %s", account.String(), types.ModuleName)
+	}
+
+	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+		return sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
+	}
+
+	return nil
+}

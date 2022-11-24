@@ -132,14 +132,19 @@ func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) s
 		options.Amount = sdk.ZeroInt()
 	}
 
-	msgsGas := uint64(0)
-	if len(options.Messages) > 0 {
-		msgsGas = c.GasLimitByMsgs(options.Messages...)
+	// NOTE: we assume that each message goes to one transaction, which is not
+	// very accurate and may cause some over funding in cases that there are multiple
+	// messages in a single transaction
+	totalAmount := sdk.ZeroInt()
+	for _, msg := range options.Messages {
+		gas := c.GasLimitByMsgs(msg)
+		// Ceil().RoundInt() is here to be compatible with the sdk's TxFactory
+		// https://github.com/cosmos/cosmos-sdk/blob/ff416ee63d32da5d520a8b2d16b00da762416146/client/tx/factory.go#L223
+		amt := options.GasPrice.Mul(sdk.NewDec(int64(gas))).Ceil().RoundInt()
+		totalAmount = totalAmount.Add(amt)
 	}
 
-	// Ceil().RoundInt() is here to be compatible with the sdk's TxFactory
-	// https://github.com/cosmos/cosmos-sdk/blob/ff416ee63d32da5d520a8b2d16b00da762416146/client/tx/factory.go#L223
-	return options.GasPrice.Mul(sdk.NewDec(int64(msgsGas))).Ceil().RoundInt().Add(options.Amount)
+	return totalAmount.Add(options.Amount)
 }
 
 // ChainConfig defines the config arguments required for the test chain initialisation.

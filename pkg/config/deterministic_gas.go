@@ -21,6 +21,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		AssetIssueFungibleToken:    80000,
 		AssetFreezeFungibleToken:   55000,
 		AssetUnfreezeFungibleToken: 55000,
+		AssetMintFungibleToken:     35000,
+		AssetBurnFungibleToken:     35000,
 
 		BankSend: 30000,
 
@@ -60,6 +62,8 @@ type DeterministicGasRequirements struct {
 	AssetIssueFungibleToken    uint64
 	AssetFreezeFungibleToken   uint64
 	AssetUnfreezeFungibleToken uint64
+	AssetMintFungibleToken     uint64
+	AssetBurnFungibleToken     uint64
 
 	// x/bank
 	BankSend uint64
@@ -98,6 +102,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetFreezeFungibleToken, true
 	case *assettypes.MsgUnfreezeFungibleToken:
 		return dgr.AssetUnfreezeFungibleToken, true
+	case *assettypes.MsgMintFungibleToken:
+		return dgr.AssetMintFungibleToken, true
+	case *assettypes.MsgBurnFungibleToken:
+		return dgr.AssetBurnFungibleToken, true
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
 	case *distributiontypes.MsgFundCommunityPool:

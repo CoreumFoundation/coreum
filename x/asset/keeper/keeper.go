@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
@@ -34,4 +35,41 @@ func (k Keeper) IsSendAllowed(ctx sdk.Context, fromAddress, toAddress sdk.AccAdd
 // Logger returns the Keeper logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// MintFungibleToken mints new fungible token
+func (k Keeper) MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
+	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_mint) //nolint:nosnakecase
+	if err != nil {
+		return err
+	}
+
+	return k.mintFungibleToken(ctx, coin.Denom, coin.Amount, sender)
+}
+
+// BurnFungibleToken burns fungible token
+func (k Keeper) BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
+	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_burn) //nolint:nosnakecase
+	if err != nil {
+		return err
+	}
+
+	return k.burnFungibleToken(ctx, coin, sender)
+}
+
+func (k Keeper) checkFeatureAllowed(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin, feature types.FungibleTokenFeature) error {
+	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	if !isFeatureEnabled(ft.Features, feature) {
+		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", coin.Denom, feature)
+	}
+
+	if ft.Issuer != sender.String() {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform this operation", sender.String())
+	}
+
+	return nil
 }

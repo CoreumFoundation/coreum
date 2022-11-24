@@ -36,7 +36,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 				Denom:  types.BuildFungibleTokenDenom(fmt.Sprintf("ABC%d", i), issuer),
 				Issuer: issuer.String(),
 				Features: []types.FungibleTokenFeature{
-					types.FungibleTokenFeature_freezable, //nolint:nosnakecase // proto enum
+					types.FungibleTokenFeature_freeze, //nolint:nosnakecase // proto enum
 				},
 			})
 	}

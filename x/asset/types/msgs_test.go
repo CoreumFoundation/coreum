@@ -86,7 +86,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -97,7 +97,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -109,7 +109,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -144,7 +144,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -155,7 +155,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -167,7 +167,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
-					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5-2J7e",
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 					Amount: sdk.NewInt(100),
 				},
 			},
@@ -184,6 +184,100 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 				assertT.NoError(err)
 			} else {
 				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
+//nolint:dupl // tests and mint tests are identical, but merging them is not beneficial
+func TestMsgMintFungibleToken_ValidateBasic(t *testing.T) {
+	type M = types.MsgMintFungibleToken
+
+	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	defaultMsg := func() M {
+		return M{
+			Sender: acc.String(),
+			Coin:   sdk.NewCoin("ABC"+"-"+acc.String(), sdk.NewInt(100)),
+		}
+	}
+
+	testCases := []struct {
+		name        string
+		modifyMsg   func(M) M
+		expectError bool
+	}{
+		{
+			name:      "all is good",
+			modifyMsg: func(m M) M { return m },
+		},
+		{
+			name:        "invalid sender address",
+			modifyMsg:   func(m M) M { m.Sender = "invalid sender"; return m },
+			expectError: true,
+		},
+		{
+			name:        "invalid coin",
+			modifyMsg:   func(m M) M { m.Coin = sdk.Coin{}; return m },
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			msg := tc.modifyMsg(defaultMsg())
+			if tc.expectError {
+				requireT.Error(msg.ValidateBasic())
+			} else {
+				requireT.NoError(msg.ValidateBasic())
+			}
+		})
+	}
+}
+
+//nolint:dupl // tests and mint tests are identical, but merging them is not beneficial
+func TestMsgBurnFungibleToken_ValidateBasic(t *testing.T) {
+	type M = types.MsgBurnFungibleToken
+
+	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	defaultMsg := func() M {
+		return M{
+			Sender: acc.String(),
+			Coin:   sdk.NewCoin("ABC"+"-"+acc.String(), sdk.NewInt(100)),
+		}
+	}
+
+	testCases := []struct {
+		name        string
+		modifyMsg   func(M) M
+		expectError bool
+	}{
+		{
+			name:      "all is good",
+			modifyMsg: func(m M) M { return m },
+		},
+		{
+			name:        "invalid sender address",
+			modifyMsg:   func(m M) M { m.Sender = "invalid sender"; return m },
+			expectError: true,
+		},
+		{
+			name:        "invalid coin",
+			modifyMsg:   func(m M) M { m.Coin = sdk.Coin{}; return m },
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
+			msg := tc.modifyMsg(defaultMsg())
+			if tc.expectError {
+				requireT.Error(msg.ValidateBasic())
+			} else {
+				requireT.NoError(msg.ValidateBasic())
 			}
 		})
 	}

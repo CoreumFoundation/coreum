@@ -29,6 +29,9 @@ func Tests() []testing.TestSet {
 			SingleChain: []testing.SingleChainSignature{
 				asset.TestIssueBasicFungibleToken,
 				asset.TestFreezeFungibleToken,
+				asset.TestFreezeUnfreezableFungibleToken,
+				asset.TestMintFungibleToken,
+				asset.TestBurnFungibleToken,
 				auth.TestUnexpectedSequenceNumber,
 				auth.TestFeeLimits,
 				auth.TestMultisig,

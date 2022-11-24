@@ -16,6 +16,10 @@ var (
 	symbolRegex    *regexp.Regexp
 )
 
+const (
+	denomSeparator = "-"
+)
+
 func init() {
 	symbolRegex = regexp.MustCompile(symbolRegexStr)
 }
@@ -33,6 +37,21 @@ type IssueFungibleTokenSettings struct {
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
 func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
 	return strings.ToLower(symbol) + "-" + issuer.String()
+}
+
+// DeconstructFungibleTokenDenom splits the denom string into the symbol and issuer address.
+func DeconstructFungibleTokenDenom(denom string) (prefix string, issuer sdk.Address, err error) {
+	denomParts := strings.Split(denom, denomSeparator)
+	if len(denomParts) != 2 {
+		return "", nil, sdkerrors.Wrap(ErrInvalidDenom, "symbol must match format [subunit]-[issuer-address]")
+	}
+
+	address, err := sdk.AccAddressFromBech32(denomParts[1])
+	if err != nil {
+		return "", nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address in denom,err:%s", err)
+	}
+
+	return denomParts[0], address, nil
 }
 
 var reserved = []string{
