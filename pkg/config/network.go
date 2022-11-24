@@ -313,8 +313,8 @@ func applyFundedAccountToGenesis(
 	return accountState
 }
 
-// genesisDoc returns the genesis doc of the network
-func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
+// GenesisDoc returns the genesis doc of the network
+func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	codec := NewEncodingConfig(module.NewBasicManager(
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
@@ -375,7 +375,7 @@ func (n Network) genesisDoc() (*tmtypes.GenesisDoc, error) {
 
 // EncodeGenesis returns the json encoded representation of the genesis file
 func (n Network) EncodeGenesis() ([]byte, error) {
-	genesisDoc, err := n.genesisDoc()
+	genesisDoc, err := n.GenesisDoc()
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to get genesis doc")
 	}

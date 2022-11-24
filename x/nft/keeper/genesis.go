@@ -4,7 +4,8 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/nft"
+
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 // InitGenesis new nft genesis

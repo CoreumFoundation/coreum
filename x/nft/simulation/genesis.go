@@ -5,7 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/nft"
+
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 // genClasses returns a slice of nft class.

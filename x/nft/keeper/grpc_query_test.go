@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/x/nft"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 func TestGRPCQuery(t *testing.T) {
@@ -62,6 +62,8 @@ func (s *TestSuite) TestBalance() {
 		},
 	}
 	for index, tc := range testCases {
+		index := index
+		tc := tc
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
@@ -151,6 +153,8 @@ func (s *TestSuite) TestOwner() {
 		},
 	}
 	for index, tc := range testCases {
+		index := index
+		tc := tc
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
@@ -234,6 +238,8 @@ func (s *TestSuite) TestSupply() {
 		},
 	}
 	for index, tc := range testCases {
+		index := index
+		tc := tc
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
@@ -249,7 +255,7 @@ func (s *TestSuite) TestSupply() {
 	}
 }
 
-func (s *TestSuite) TestNFTs() {
+func (s *TestSuite) TestNFTs() { //nolint:funlen // the default sdk test
 	var (
 		req  *nft.QueryNFTsRequest
 		nfts []*nft.NFT
@@ -362,6 +368,8 @@ func (s *TestSuite) TestNFTs() {
 		},
 	}
 	for index, tc := range testCases {
+		index := index
+		tc := tc
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
@@ -449,6 +457,8 @@ func (s *TestSuite) TestNFT() {
 		},
 	}
 	for index, tc := range testCases {
+		index := index
+		tc := tc
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
@@ -516,6 +526,8 @@ func (s *TestSuite) TestClass() {
 		},
 	}
 	for index, tc := range testCases {
+		index := index
+		tc := tc
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)
@@ -576,6 +588,8 @@ func (s *TestSuite) TestClasses() {
 		},
 	}
 	for index, tc := range testCases {
+		index := index
+		tc := tc
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			require := s.Require()
 			tc.malleate(index, require)

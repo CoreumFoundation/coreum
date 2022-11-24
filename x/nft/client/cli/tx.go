@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/nft"
+	"github.com/spf13/cobra"
+
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -31,6 +31,7 @@ func GetTxCmd() *cobra.Command {
 	return nftTxCmd
 }
 
+// NewCmdSend returns send NFT command.
 func NewCmdSend() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send [class-id] [nft-id] [receiver] --from [sender]",

@@ -3,7 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/nft"
+
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 // SaveClass defines a method for creating a new nft class
@@ -57,7 +58,7 @@ func (k Keeper) GetClasses(ctx sdk.Context) (classes []*nft.Class) {
 		k.cdc.MustUnmarshal(iterator.Value(), &class)
 		classes = append(classes, &class)
 	}
-	return
+	return classes
 }
 
 // HasClass determines whether the specified classID exist

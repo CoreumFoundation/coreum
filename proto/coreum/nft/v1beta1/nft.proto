@@ -1,9 +1,9 @@
 syntax = "proto3";
-package cosmos.nft.v1beta1;
+package coreum.nft.v1beta1;
 
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/nft";
+option go_package = "github.com/CoreumFoundation/coreum/x/nft";
 
 // Class defines the class of the nft type.
 message Class {

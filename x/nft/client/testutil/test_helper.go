@@ -3,20 +3,20 @@ package testutil
 import (
 	"fmt"
 
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	"github.com/cosmos/cosmos-sdk/testutil/network"
-	"github.com/cosmos/cosmos-sdk/x/nft/client/cli"
+	sdknetwork "github.com/cosmos/cosmos-sdk/testutil/network"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
+
+	"github.com/CoreumFoundation/coreum/x/nft/client/cli"
 )
 
-func ExecSend(val *network.Validator, args []string) (testutil.BufferWriter, error) {
+func ExecSend(val *sdknetwork.Validator, args []string) (testutil.BufferWriter, error) { //nolint:revive // test helper
 	cmd := cli.NewCmdSend()
 	return clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 }
 
-func ExecQueryClass(val *network.Validator, classID string) (testutil.BufferWriter, error) {
+func ExecQueryClass(val *sdknetwork.Validator, classID string) (testutil.BufferWriter, error) { //nolint:revive // test helper
 	cmd := cli.GetCmdQueryClass()
 	var args []string
 	args = append(args, classID)
@@ -24,14 +24,14 @@ func ExecQueryClass(val *network.Validator, classID string) (testutil.BufferWrit
 	return clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 }
 
-func ExecQueryClasses(val *network.Validator) (testutil.BufferWriter, error) {
+func ExecQueryClasses(val *sdknetwork.Validator) (testutil.BufferWriter, error) { //nolint:revive // test helper
 	cmd := cli.GetCmdQueryClasses()
 	var args []string
 	args = append(args, fmt.Sprintf("--%s=json", tmcli.OutputFlag))
 	return clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 }
 
-func ExecQueryNFT(val *network.Validator, classID, nftID string) (testutil.BufferWriter, error) {
+func ExecQueryNFT(val *sdknetwork.Validator, classID, nftID string) (testutil.BufferWriter, error) { //nolint:revive // test helper
 	cmd := cli.GetCmdQueryNFT()
 	var args []string
 	args = append(args, classID)
@@ -40,7 +40,7 @@ func ExecQueryNFT(val *network.Validator, classID, nftID string) (testutil.Buffe
 	return clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 }
 
-func ExecQueryNFTs(val *network.Validator, classID, owner string) (testutil.BufferWriter, error) {
+func ExecQueryNFTs(val *sdknetwork.Validator, classID, owner string) (testutil.BufferWriter, error) { //nolint:revive // test helper
 	cmd := cli.GetCmdQueryNFTs()
 	var args []string
 	args = append(args, fmt.Sprintf("--%s=%s", cli.FlagClassID, classID))
@@ -49,7 +49,7 @@ func ExecQueryNFTs(val *network.Validator, classID, owner string) (testutil.Buff
 	return clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 }
 
-func ExecQueryOwner(val *network.Validator, classID, nftID string) (testutil.BufferWriter, error) {
+func ExecQueryOwner(val *sdknetwork.Validator, classID, nftID string) (testutil.BufferWriter, error) { //nolint:revive // test helper
 	cmd := cli.GetCmdQueryOwner()
 	var args []string
 	args = append(args, classID)
@@ -58,7 +58,7 @@ func ExecQueryOwner(val *network.Validator, classID, nftID string) (testutil.Buf
 	return clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 }
 
-func ExecQueryBalance(val *network.Validator, classID, owner string) (testutil.BufferWriter, error) {
+func ExecQueryBalance(val *sdknetwork.Validator, classID, owner string) (testutil.BufferWriter, error) { //nolint:revive // test helper
 	cmd := cli.GetCmdQueryBalance()
 	var args []string
 	args = append(args, owner)
@@ -67,7 +67,7 @@ func ExecQueryBalance(val *network.Validator, classID, owner string) (testutil.B
 	return clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 }
 
-func ExecQuerySupply(val *network.Validator, classID string) (testutil.BufferWriter, error) {
+func ExecQuerySupply(val *sdknetwork.Validator, classID string) (testutil.BufferWriter, error) { //nolint:revive // test helper
 	cmd := cli.GetCmdQuerySupply()
 	var args []string
 	args = append(args, classID)
