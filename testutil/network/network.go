@@ -23,6 +23,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 type (
@@ -99,7 +100,7 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 // DefaultConfig will initialize config for the network with custom application,
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
 func DefaultConfig() network.Config {
-	devCfg, err := config.NetworkConfigByChainID(config.ChainIDDev)
+	devCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(errors.Wrap(err, "can't get network config"))
 	}

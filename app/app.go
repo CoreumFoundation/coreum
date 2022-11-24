@@ -200,6 +200,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		assettypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		nft.ModuleName:                 {}, // the line is required by the nft module to have the module account stored in the account keeper
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
