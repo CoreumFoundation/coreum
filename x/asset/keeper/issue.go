@@ -98,17 +98,15 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadata for %s denom not found", denom)
 	}
 
-	var precision uint32
-	precisionFound := false
+	precision := -1
 	for _, unit := range metadata.DenomUnits {
 		if unit.Denom == metadata.Symbol {
-			precision = unit.Exponent
-			precisionFound = true
+			precision = int(unit.Exponent)
 			break
 		}
 	}
 
-	if !precisionFound {
+	if precision < 0 {
 		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "precision not found")
 	}
 
@@ -116,7 +114,7 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		Denom:       definition.Denom,
 		Issuer:      definition.Issuer,
 		Symbol:      metadata.Symbol,
-		Precision:   precision,
+		Precision:   uint32(precision),
 		Subunit:     subunit,
 		Description: metadata.Description,
 		Features:    definition.Features,
