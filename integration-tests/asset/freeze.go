@@ -160,6 +160,14 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(freezeMsg))
 
+	fungibleTokenFreezeEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenFreezeAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assettypes.EventFungibleTokenFreezeAmountChanged{
+		Account:        recipient.String(),
+		PreviousAmount: sdk.NewCoin(denom, sdk.NewInt(0)),
+		CurrentAmount:  sdk.NewCoin(denom, sdk.NewInt(400)),
+	}, fungibleTokenFreezeEvt)
+
 	// query frozen tokens
 	frozenBalance, err := assetClient.FrozenBalance(ctx, &assettypes.QueryFrozenBalanceRequest{
 		Account: recipient.String(),
@@ -224,6 +232,14 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	)
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
+
+	fungibleTokenFreezeEvt, err = event.FindTypedEvent[*assettypes.EventFungibleTokenFreezeAmountChanged](res.Events)
+	requireT.NoError(err)
+	assertT.EqualValues(&assettypes.EventFungibleTokenFreezeAmountChanged{
+		Account:        recipient.String(),
+		PreviousAmount: sdk.NewCoin(denom, sdk.NewInt(400)),
+		CurrentAmount:  sdk.NewCoin(denom, sdk.NewInt(200)),
+	}, fungibleTokenFreezeEvt)
 
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
