@@ -1,1 +1,1 @@
-371b58ec162343fc7d0a8dd543138e40fdad5fc469293676d3ae7948a90ef7f1  issue_fungible_token.wasm
+98cdc8a84b17171372692a24445385fe2fc355f14999e259abed015a6b0a49b8  issue_fungible_token.wasm

@@ -77,28 +77,21 @@ fn issue_tokens(
     let state = State { count: 0 };
     STATE.save(deps.storage, &state)?;
 
-    let mut subunit1 = subunit.clone();
-    subunit1.push('1');
-
-    let mut subunit2 = subunit.clone();
-    subunit2.push('2');
-
     // Send two submessages handled by the asset module to create two fungible tokens.
     // ReplyOn::Always means that we want `reply` to be called after each submessage execution.
-
     let mut msg1 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
-        symbol: symbol.clone(),
-        subunit: subunit1,
-        precision: precision,
+        symbol: symbol.clone() + "1",
+        subunit: subunit.clone() + "1",
+        precision,
         recipient: recipient_addr.to_string(),
         initial_amount: amount,
     });
     msg1.reply_on = ReplyOn::Always;
 
     let mut msg2 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
-        symbol: symbol.clone(),
-        subunit: subunit2,
-        precision: precision,
+        symbol: symbol.clone() + "2",
+        subunit: subunit.clone() + "2",
+        precision,
         recipient: recipient_addr.to_string(),
         initial_amount: amount,
     });

@@ -258,6 +258,7 @@ func TestKeeper_Mint(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        addr,
 		Symbol:        "NotMintable",
+		Subunit:       "NotMintable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -279,6 +280,7 @@ func TestKeeper_Mint(t *testing.T) {
 	settings = types.IssueFungibleTokenSettings{
 		Issuer:        addr,
 		Symbol:        "Mintable",
+		Subunit:       "Mintable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -322,6 +324,7 @@ func TestKeeper_Burn(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        addr,
 		Symbol:        "NotBurnable",
+		Subunit:       "NotBurnable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -343,6 +346,7 @@ func TestKeeper_Burn(t *testing.T) {
 	settings = types.IssueFungibleTokenSettings{
 		Issuer:        addr,
 		Symbol:        "Burnable",
+		Subunit:       "Burnable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{

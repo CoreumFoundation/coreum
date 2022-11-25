@@ -73,8 +73,8 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 
 	symbol := "mytoken"
 	subunit := "mysatoshi"
-	subunit1 := "mysatoshi" + "1"
-	subunit2 := "mysatoshi" + "2"
+	subunit1 := subunit + "1"
+	subunit2 := subunit + "2"
 	precision := uint32(8)
 	denom1 := assettypes.BuildFungibleTokenDenom(subunit1, sdk.MustAccAddressFromBech32(contractAddr))
 	denom2 := assettypes.BuildFungibleTokenDenom(subunit2, sdk.MustAccAddressFromBech32(contractAddr))
@@ -114,7 +114,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	requireT.EqualValues(assettypes.FungibleToken{
 		Denom:     denom1,
 		Issuer:    contractAddr,
-		Symbol:    symbol,
+		Symbol:    symbol + "1",
 		Subunit:   subunit1,
 		Precision: precision,
 	}, ft.GetFungibleToken())
@@ -124,7 +124,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	requireT.EqualValues(assettypes.FungibleToken{
 		Denom:     denom2,
 		Issuer:    contractAddr,
-		Symbol:    symbol,
+		Symbol:    symbol + "2",
 		Subunit:   subunit2,
 		Precision: precision,
 	}, ft.GetFungibleToken())
