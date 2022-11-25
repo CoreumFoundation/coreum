@@ -74,7 +74,7 @@ func (k Keeper) checkAndStoreSymbol(ctx sdk.Context, symbol string, issuer sdk.A
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
 	bytes := symbolStore.Get([]byte(symbol))
 	if bytes != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol")
+		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
 	}
 
 	symbolStore.Set([]byte(symbol), []byte{0x01})
