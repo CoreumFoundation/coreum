@@ -7,17 +7,17 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	customparamstypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
+	wstakingtypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
 )
 
 // MsgServer is wrapper staking customParamsKeeper message server.
 type MsgServer struct {
 	stakingtypes.MsgServer
-	customParamsKeeper customparamstypes.CustomParamsKeeper
+	customParamsKeeper wstakingtypes.CustomParamsKeeper
 }
 
 // NewMsgServerImpl returns an implementation of the staking wrapped MsgServer.
-func NewMsgServerImpl(stakingMsgSrv stakingtypes.MsgServer, customParamsKeeper customparamstypes.CustomParamsKeeper) stakingtypes.MsgServer {
+func NewMsgServerImpl(stakingMsgSrv stakingtypes.MsgServer, customParamsKeeper wstakingtypes.CustomParamsKeeper) stakingtypes.MsgServer {
 	return MsgServer{
 		MsgServer:          stakingMsgSrv,
 		customParamsKeeper: customParamsKeeper,

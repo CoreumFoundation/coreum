@@ -9,14 +9,14 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/wstaking/keeper"
-	customparamstypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
+	wstakingtypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
 )
 
 // AppModule implements an application module for the wrapped staking module.
 type AppModule struct {
 	staking.AppModule
 	stakingKeeper      stakingkeeper.Keeper
-	customParamsKeeper customparamstypes.CustomParamsKeeper
+	customParamsKeeper wstakingtypes.CustomParamsKeeper
 }
 
 // NewAppModule creates a new AppModule object
@@ -25,7 +25,7 @@ func NewAppModule(
 	stakingKeeper stakingkeeper.Keeper,
 	ak stakingtypes.AccountKeeper,
 	bk stakingtypes.BankKeeper,
-	customParamsKeeper customparamstypes.CustomParamsKeeper,
+	customParamsKeeper wstakingtypes.CustomParamsKeeper,
 ) AppModule {
 	stakingAppModule := staking.NewAppModule(cdc, stakingKeeper, ak, bk)
 	return AppModule{
