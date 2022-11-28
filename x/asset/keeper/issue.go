@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -72,7 +71,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 
 // GetAllSymbols returns all the symbols saved in the store
 func (k Keeper) GetAllSymbols(ctx sdk.Context, pagination *query.PageRequest) ([]*types.SymbolIndex, *query.PageResponse, error) {
-	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.FungibleTokenSymbolPrefix)
+	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.FungibleTokenSymbolKeyPrefix)
 	var symbols []*types.SymbolIndex
 	mapAddressToSymbolsIdx := make(map[string]int)
 	pageRes, err := query.Paginate(symbolStore, pagination, func(key, value []byte) error {
@@ -103,7 +102,7 @@ func (k Keeper) GetAllSymbols(ctx sdk.Context, pagination *query.PageRequest) ([
 
 // DoesSymbolExist checks symbol exists in the store
 func (k Keeper) DoesSymbolExist(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
-	symbol = strings.ToLower(symbol)
+	symbol = types.NormalizeSymbol(symbol)
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
 	bytes := symbolStore.Get([]byte(symbol))
 	return bytes != nil
@@ -115,7 +114,7 @@ func (k Keeper) StoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddres
 		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
 	}
 
-	symbol = strings.ToLower(symbol)
+	symbol = types.NormalizeSymbol(symbol)
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
 	symbolStore.Set([]byte(symbol), []byte{0x01})
 	return nil

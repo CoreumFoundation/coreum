@@ -25,8 +25,8 @@ const (
 var (
 	// FungibleTokenKeyPrefix defines the key prefix for the fungible token.
 	FungibleTokenKeyPrefix = []byte{0x01}
-	// FungibleTokenSymbolPrefix defines the key prefix for the fungible token by Symbol.
-	FungibleTokenSymbolPrefix = []byte{0x02}
+	// FungibleTokenSymbolKeyPrefix defines the key prefix for the fungible token by Symbol.
+	FungibleTokenSymbolKeyPrefix = []byte{0x02}
 	// FrozenBalancesKeyPrefix defines the key prefix to track frozen balances
 	FrozenBalancesKeyPrefix = []byte{0x03}
 )
@@ -60,7 +60,7 @@ func AddressFromBalancesStore(key []byte) (sdk.AccAddress, error) {
 
 // CreateSymbolPrefix creates the prefix for an ft symbol.
 func CreateSymbolPrefix(addr []byte) []byte {
-	return store.JoinKeys(FungibleTokenSymbolPrefix, address.MustLengthPrefix(addr))
+	return store.JoinKeys(FungibleTokenSymbolKeyPrefix, address.MustLengthPrefix(addr))
 }
 
 // AccountFromSymbolStore returns account address symbol from a symbol prefix

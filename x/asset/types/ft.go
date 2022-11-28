@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	subunitRegexStr = `^[a-z][a-z0-9]{2,70}$`
+	subunitRegexStr = `^[a-z][a-z0-9]{0,70}$`
 	subunitRegex    *regexp.Regexp
 
-	symbolRegexStr = `^[a-z][a-z0-9-]{2,127}$`
+	symbolRegexStr = `^[a-zA-Z][a-zA-Z0-9]{0,127}$`
 	symbolRegex    *regexp.Regexp
 )
 
@@ -71,8 +71,7 @@ var reserved = []string{
 
 // ValidateSubunit checks the provide subunit is valid
 func ValidateSubunit(subunit string) error {
-	subunit = strings.ToLower(subunit)
-	if lo.Contains(reserved, subunit) {
+	if lo.Contains(reserved, strings.ToLower(subunit)) {
 		return sdkerrors.Wrapf(ErrInvalidSubunit, "%s is a reserved subunit", subunit)
 	}
 
@@ -85,8 +84,7 @@ func ValidateSubunit(subunit string) error {
 
 // ValidateSymbol checks the provide symbol is valid
 func ValidateSymbol(symbol string) error {
-	symbol = strings.ToLower(symbol)
-	if lo.Contains(reserved, symbol) {
+	if lo.Contains(reserved, strings.ToLower(symbol)) {
 		return sdkerrors.Wrapf(ErrInvalidSymbol, "%s is a reserved symbol", symbol)
 	}
 
@@ -95,4 +93,9 @@ func ValidateSymbol(symbol string) error {
 	}
 
 	return nil
+}
+
+// NormalizeSymbol normalizes the symbol string
+func NormalizeSymbol(in string) string {
+	return strings.ToLower(in)
 }
