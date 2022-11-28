@@ -21,12 +21,8 @@ message EventFungibleTokenIssued {
   repeated FungibleTokenFeature features = 7;
 }
 
-message EventFungibleTokenFrozen {
+message EventFungibleTokenFrozenAmountChanged {
   string account = 1;
-  cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
-}
-
-message EventFungibleTokenUnfrozen {
-  string account = 1;
-  cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin previous_amount = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin current_amount = 3 [(gogoproto.nullable) = false];
 }
