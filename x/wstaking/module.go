@@ -8,15 +8,15 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 
-	customparamskeeper "github.com/CoreumFoundation/coreum/x/customparams/keeper"
 	"github.com/CoreumFoundation/coreum/x/wstaking/keeper"
+	customparamstypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
 )
 
 // AppModule implements an application module for the wrapped staking module.
 type AppModule struct {
 	staking.AppModule
 	stakingKeeper      stakingkeeper.Keeper
-	customParamsKeeper customparamskeeper.Keeper
+	customParamsKeeper customparamstypes.CustomParamsKeeper
 }
 
 // NewAppModule creates a new AppModule object
@@ -25,7 +25,7 @@ func NewAppModule(
 	stakingKeeper stakingkeeper.Keeper,
 	ak stakingtypes.AccountKeeper,
 	bk stakingtypes.BankKeeper,
-	customParamsKeeper customparamskeeper.Keeper,
+	customParamsKeeper customparamstypes.CustomParamsKeeper,
 ) AppModule {
 	stakingAppModule := staking.NewAppModule(cdc, stakingKeeper, ak, bk)
 	return AppModule{
