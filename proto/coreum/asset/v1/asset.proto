@@ -18,7 +18,6 @@ message FungibleTokenDefinition {
   string denom = 1;
   string issuer = 2;
   repeated FungibleTokenFeature features = 3;
-  bool global_freeze_enabled = 4;
 }
 
 // FungibleToken is a full representation of the fungible token.
@@ -30,4 +29,5 @@ message FungibleToken {
   string symbol = 3;
   string description = 4;
   repeated FungibleTokenFeature features = 5;
+  bool global_freeze_enabled = 6;
 }

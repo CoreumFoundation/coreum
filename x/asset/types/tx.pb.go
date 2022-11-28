@@ -401,6 +401,7 @@ func (m *MsgGlobalUnfreezeFungibleToken) GetDenom() string {
 	return ""
 }
 
+// TODO: Define global EmptyResponse
 type EmptyResponse struct {
 }
 
