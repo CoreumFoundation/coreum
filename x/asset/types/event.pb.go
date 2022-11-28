@@ -127,23 +127,24 @@ func (m *EventFungibleTokenIssued) GetFeatures() []FungibleTokenFeature {
 	return nil
 }
 
-type EventFungibleTokenFrozen struct {
-	Account string     `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
-	Coin    types.Coin `protobuf:"bytes,2,opt,name=coin,proto3" json:"coin"`
+type EventFungibleTokenFrozenAmountChanged struct {
+	Account        string     `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	PreviousAmount types.Coin `protobuf:"bytes,2,opt,name=previous_amount,json=previousAmount,proto3" json:"previous_amount"`
+	CurrentAmount  types.Coin `protobuf:"bytes,3,opt,name=current_amount,json=currentAmount,proto3" json:"current_amount"`
 }
 
-func (m *EventFungibleTokenFrozen) Reset()         { *m = EventFungibleTokenFrozen{} }
-func (m *EventFungibleTokenFrozen) String() string { return proto.CompactTextString(m) }
-func (*EventFungibleTokenFrozen) ProtoMessage()    {}
-func (*EventFungibleTokenFrozen) Descriptor() ([]byte, []int) {
+func (m *EventFungibleTokenFrozenAmountChanged) Reset()         { *m = EventFungibleTokenFrozenAmountChanged{} }
+func (m *EventFungibleTokenFrozenAmountChanged) String() string { return proto.CompactTextString(m) }
+func (*EventFungibleTokenFrozenAmountChanged) ProtoMessage()    {}
+func (*EventFungibleTokenFrozenAmountChanged) Descriptor() ([]byte, []int) {
 	return fileDescriptor_aede4b64fdc52aa3, []int{1}
 }
-func (m *EventFungibleTokenFrozen) XXX_Unmarshal(b []byte) error {
+func (m *EventFungibleTokenFrozenAmountChanged) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EventFungibleTokenFrozen) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *EventFungibleTokenFrozenAmountChanged) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EventFungibleTokenFrozen.Marshal(b, m, deterministic)
+		return xxx_messageInfo_EventFungibleTokenFrozenAmountChanged.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -153,123 +154,78 @@ func (m *EventFungibleTokenFrozen) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *EventFungibleTokenFrozen) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventFungibleTokenFrozen.Merge(m, src)
+func (m *EventFungibleTokenFrozenAmountChanged) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventFungibleTokenFrozenAmountChanged.Merge(m, src)
 }
-func (m *EventFungibleTokenFrozen) XXX_Size() int {
+func (m *EventFungibleTokenFrozenAmountChanged) XXX_Size() int {
 	return m.Size()
 }
-func (m *EventFungibleTokenFrozen) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventFungibleTokenFrozen.DiscardUnknown(m)
+func (m *EventFungibleTokenFrozenAmountChanged) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventFungibleTokenFrozenAmountChanged.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EventFungibleTokenFrozen proto.InternalMessageInfo
+var xxx_messageInfo_EventFungibleTokenFrozenAmountChanged proto.InternalMessageInfo
 
-func (m *EventFungibleTokenFrozen) GetAccount() string {
+func (m *EventFungibleTokenFrozenAmountChanged) GetAccount() string {
 	if m != nil {
 		return m.Account
 	}
 	return ""
 }
 
-func (m *EventFungibleTokenFrozen) GetCoin() types.Coin {
+func (m *EventFungibleTokenFrozenAmountChanged) GetPreviousAmount() types.Coin {
 	if m != nil {
-		return m.Coin
+		return m.PreviousAmount
 	}
 	return types.Coin{}
 }
 
-type EventFungibleTokenUnfrozen struct {
-	Account string     `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
-	Coin    types.Coin `protobuf:"bytes,2,opt,name=coin,proto3" json:"coin"`
-}
-
-func (m *EventFungibleTokenUnfrozen) Reset()         { *m = EventFungibleTokenUnfrozen{} }
-func (m *EventFungibleTokenUnfrozen) String() string { return proto.CompactTextString(m) }
-func (*EventFungibleTokenUnfrozen) ProtoMessage()    {}
-func (*EventFungibleTokenUnfrozen) Descriptor() ([]byte, []int) {
-	return fileDescriptor_aede4b64fdc52aa3, []int{2}
-}
-func (m *EventFungibleTokenUnfrozen) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *EventFungibleTokenUnfrozen) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_EventFungibleTokenUnfrozen.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *EventFungibleTokenUnfrozen) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventFungibleTokenUnfrozen.Merge(m, src)
-}
-func (m *EventFungibleTokenUnfrozen) XXX_Size() int {
-	return m.Size()
-}
-func (m *EventFungibleTokenUnfrozen) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventFungibleTokenUnfrozen.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EventFungibleTokenUnfrozen proto.InternalMessageInfo
-
-func (m *EventFungibleTokenUnfrozen) GetAccount() string {
+func (m *EventFungibleTokenFrozenAmountChanged) GetCurrentAmount() types.Coin {
 	if m != nil {
-		return m.Account
-	}
-	return ""
-}
-
-func (m *EventFungibleTokenUnfrozen) GetCoin() types.Coin {
-	if m != nil {
-		return m.Coin
+		return m.CurrentAmount
 	}
 	return types.Coin{}
 }
 
 func init() {
 	proto.RegisterType((*EventFungibleTokenIssued)(nil), "coreum.asset.v1.EventFungibleTokenIssued")
-	proto.RegisterType((*EventFungibleTokenFrozen)(nil), "coreum.asset.v1.EventFungibleTokenFrozen")
-	proto.RegisterType((*EventFungibleTokenUnfrozen)(nil), "coreum.asset.v1.EventFungibleTokenUnfrozen")
+	proto.RegisterType((*EventFungibleTokenFrozenAmountChanged)(nil), "coreum.asset.v1.EventFungibleTokenFrozenAmountChanged")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/event.proto", fileDescriptor_aede4b64fdc52aa3) }
 
 var fileDescriptor_aede4b64fdc52aa3 = []byte{
-	// 453 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x52, 0xcd, 0x6e, 0x13, 0x31,
-	0x10, 0xce, 0xb6, 0x69, 0xda, 0xb8, 0x6a, 0x91, 0xac, 0x0a, 0x99, 0x80, 0xb6, 0x51, 0x24, 0x50,
-	0x2e, 0xd8, 0xa4, 0x7d, 0x82, 0xa6, 0x22, 0x52, 0x39, 0xae, 0xe8, 0x85, 0x0b, 0xda, 0x9f, 0x69,
-	0xb0, 0x92, 0xf5, 0xac, 0xd6, 0xf6, 0x8a, 0xf2, 0x14, 0x3c, 0x56, 0x8f, 0x3d, 0x22, 0x0e, 0x15,
-	0x4a, 0xde, 0x80, 0x27, 0x40, 0xb6, 0xb7, 0xb4, 0x10, 0xae, 0x9c, 0xd6, 0xf3, 0x7d, 0xe3, 0xf9,
-	0xd6, 0xdf, 0x37, 0xe4, 0x79, 0x8e, 0x35, 0xd8, 0x52, 0xa4, 0x5a, 0x83, 0x11, 0xcd, 0x44, 0x40,
-	0x03, 0xca, 0xf0, 0xaa, 0x46, 0x83, 0xf4, 0x49, 0x20, 0xb9, 0x27, 0x79, 0x33, 0x19, 0x1c, 0xcd,
-	0x71, 0x8e, 0x9e, 0x13, 0xee, 0x14, 0xda, 0x06, 0x71, 0x8e, 0xba, 0x44, 0x2d, 0xb2, 0x54, 0x83,
-	0x68, 0x26, 0x19, 0x98, 0x74, 0x22, 0x72, 0x94, 0xaa, 0xe5, 0x37, 0x34, 0xc2, 0x3c, 0x4f, 0x8e,
-	0x7e, 0x6e, 0x11, 0xf6, 0xd6, 0x69, 0xce, 0xac, 0x9a, 0xcb, 0x6c, 0x09, 0xef, 0x71, 0x01, 0xea,
-	0x42, 0x6b, 0x0b, 0x05, 0x3d, 0x22, 0x3b, 0x05, 0x28, 0x2c, 0x59, 0x34, 0x8c, 0xc6, 0xfd, 0x24,
-	0x14, 0xf4, 0x29, 0xe9, 0x49, 0xc7, 0xd7, 0x6c, 0xcb, 0xc3, 0x6d, 0xe5, 0x70, 0x7d, 0x5d, 0x66,
-	0xb8, 0x64, 0xdb, 0x01, 0x0f, 0x15, 0x65, 0x64, 0x57, 0xdb, 0xcc, 0x2a, 0x69, 0x58, 0xd7, 0x13,
-	0xf7, 0x25, 0x7d, 0x41, 0xfa, 0x55, 0x0d, 0xb9, 0xd4, 0x12, 0x15, 0xdb, 0x19, 0x46, 0xe3, 0x83,
-	0xe4, 0x01, 0x70, 0xac, 0x3b, 0x57, 0x12, 0x94, 0x61, 0x3d, 0x7f, 0xf3, 0x01, 0xa0, 0x97, 0xe4,
-	0x50, 0x2a, 0x69, 0x64, 0xba, 0xfc, 0x98, 0x96, 0x68, 0x95, 0x61, 0xbb, 0xae, 0x65, 0xca, 0x6f,
-	0xee, 0x8e, 0x3b, 0xdf, 0xef, 0x8e, 0x5f, 0xcd, 0xa5, 0xf9, 0x64, 0x33, 0x9e, 0x63, 0x29, 0x5a,
-	0x83, 0xc2, 0xe7, 0xb5, 0x2e, 0x16, 0xc2, 0x5c, 0x57, 0xa0, 0xf9, 0x85, 0x32, 0xc9, 0x41, 0x3b,
-	0xe5, 0xcc, 0x0f, 0xa1, 0x43, 0xb2, 0x5f, 0x80, 0xce, 0x6b, 0x59, 0x19, 0xf7, 0x53, 0x7b, 0x5e,
-	0xf6, 0x31, 0x44, 0xcf, 0xc8, 0xde, 0x15, 0xa4, 0xc6, 0xd6, 0xa0, 0x59, 0x7f, 0xb8, 0x3d, 0x3e,
-	0x3c, 0x79, 0xc9, 0xff, 0x0a, 0x8a, 0xff, 0x61, 0xe6, 0x2c, 0x74, 0x27, 0xbf, 0xaf, 0x8d, 0xe4,
-	0xbf, 0x3c, 0x9f, 0xd5, 0xf8, 0x05, 0x94, 0x73, 0x2b, 0xcd, 0x73, 0xff, 0xa0, 0xe0, 0xfa, 0x7d,
-	0x49, 0x4f, 0x49, 0xd7, 0xa5, 0xea, 0x5d, 0xdf, 0x3f, 0x79, 0xc6, 0xc3, 0x73, 0xb8, 0x8b, 0x9d,
-	0xb7, 0xb1, 0xf3, 0x73, 0x94, 0x6a, 0xda, 0x75, 0x16, 0x24, 0xbe, 0x79, 0xb4, 0x20, 0x83, 0x4d,
-	0xa9, 0x4b, 0x75, 0xf5, 0x3f, 0xc4, 0xa6, 0xef, 0x6e, 0x56, 0x71, 0x74, 0xbb, 0x8a, 0xa3, 0x1f,
-	0xab, 0x38, 0xfa, 0xba, 0x8e, 0x3b, 0xb7, 0xeb, 0xb8, 0xf3, 0x6d, 0x1d, 0x77, 0x3e, 0xbc, 0x79,
-	0x94, 0xc6, 0xb9, 0x37, 0x6b, 0x86, 0x56, 0x15, 0xa9, 0x73, 0x54, 0xb4, 0xfb, 0xf9, 0xb9, 0xdd,
-	0x50, 0x9f, 0x4d, 0xd6, 0xf3, 0xfb, 0x79, 0xfa, 0x2b, 0x00, 0x00, 0xff, 0xff, 0x0a, 0x2e, 0x27,
-	0xaa, 0x22, 0x03, 0x00, 0x00,
+	// 479 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0xcd, 0x6e, 0xd3, 0x40,
+	0x10, 0x8e, 0x9b, 0x36, 0x6d, 0xb6, 0x4a, 0x2a, 0x59, 0x15, 0x5a, 0x0a, 0x72, 0xa3, 0x4a, 0x45,
+	0xb9, 0xb0, 0x4b, 0xca, 0x13, 0x34, 0x11, 0x16, 0xe5, 0x68, 0xc1, 0x85, 0x0b, 0xf2, 0xcf, 0xe0,
+	0xae, 0x1a, 0xef, 0x5a, 0xfb, 0x63, 0x51, 0x9e, 0x82, 0xc7, 0xea, 0xb1, 0x12, 0x17, 0xc4, 0xa1,
+	0x42, 0xc9, 0x1b, 0xf0, 0x04, 0x68, 0x77, 0x6d, 0x5a, 0xc8, 0xa5, 0x27, 0x7b, 0xbe, 0x6f, 0xe6,
+	0x9b, 0x9d, 0x6f, 0x06, 0x3d, 0xcb, 0x85, 0x04, 0x53, 0xd1, 0x54, 0x29, 0xd0, 0xb4, 0x99, 0x51,
+	0x68, 0x80, 0x6b, 0x52, 0x4b, 0xa1, 0x45, 0x78, 0xe0, 0x49, 0xe2, 0x48, 0xd2, 0xcc, 0x8e, 0x0e,
+	0x4b, 0x51, 0x0a, 0xc7, 0x51, 0xfb, 0xe7, 0xd3, 0x8e, 0xa2, 0x5c, 0xa8, 0x4a, 0x28, 0x9a, 0xa5,
+	0x0a, 0x68, 0x33, 0xcb, 0x40, 0xa7, 0x33, 0x9a, 0x0b, 0xc6, 0x5b, 0x7e, 0xa3, 0x87, 0xd7, 0x73,
+	0xe4, 0xc9, 0xef, 0x2d, 0x84, 0xdf, 0xd8, 0x9e, 0xb1, 0xe1, 0x25, 0xcb, 0x96, 0xf0, 0x5e, 0x5c,
+	0x01, 0xbf, 0x50, 0xca, 0x40, 0x11, 0x1e, 0xa2, 0x9d, 0x02, 0xb8, 0xa8, 0x70, 0x30, 0x09, 0xa6,
+	0xc3, 0xc4, 0x07, 0xe1, 0x13, 0x34, 0x60, 0x96, 0x97, 0x78, 0xcb, 0xc1, 0x6d, 0x64, 0x71, 0x75,
+	0x5d, 0x65, 0x62, 0x89, 0xfb, 0x1e, 0xf7, 0x51, 0x88, 0xd1, 0xae, 0x32, 0x99, 0xe1, 0x4c, 0xe3,
+	0x6d, 0x47, 0x74, 0x61, 0xf8, 0x1c, 0x0d, 0x6b, 0x09, 0x39, 0x53, 0x4c, 0x70, 0xbc, 0x33, 0x09,
+	0xa6, 0xa3, 0xe4, 0x1e, 0xb0, 0xac, 0xfd, 0xaf, 0x19, 0x70, 0x8d, 0x07, 0xae, 0xf2, 0x1e, 0x08,
+	0x3f, 0xa0, 0x31, 0xe3, 0x4c, 0xb3, 0x74, 0xf9, 0x29, 0xad, 0x84, 0xe1, 0x1a, 0xef, 0xda, 0x94,
+	0x39, 0xb9, 0xb9, 0x3b, 0xee, 0xfd, 0xbc, 0x3b, 0x7e, 0x51, 0x32, 0x7d, 0x69, 0x32, 0x92, 0x8b,
+	0x8a, 0xb6, 0x06, 0xf9, 0xcf, 0x4b, 0x55, 0x5c, 0x51, 0x7d, 0x5d, 0x83, 0x22, 0x17, 0x5c, 0x27,
+	0xa3, 0x56, 0xe5, 0xdc, 0x89, 0x84, 0x13, 0xb4, 0x5f, 0x80, 0xca, 0x25, 0xab, 0xb5, 0x7d, 0xd4,
+	0x9e, 0x6b, 0xfb, 0x10, 0x0a, 0xcf, 0xd1, 0xde, 0x67, 0x48, 0xb5, 0x91, 0xa0, 0xf0, 0x70, 0xd2,
+	0x9f, 0x8e, 0xcf, 0x4e, 0xc9, 0x7f, 0x8b, 0x22, 0xff, 0x98, 0x19, 0xfb, 0xec, 0xe4, 0x6f, 0xd9,
+	0xc9, 0xf7, 0x00, 0x9d, 0x6e, 0x9a, 0x1e, 0x4b, 0xf1, 0x15, 0xb8, 0x7f, 0xc7, 0xe2, 0x32, 0xe5,
+	0x25, 0x14, 0xd6, 0xbb, 0x34, 0xcf, 0xdd, 0x78, 0x7e, 0x07, 0x5d, 0x18, 0xbe, 0x45, 0x07, 0xb5,
+	0x84, 0x86, 0x09, 0xa3, 0x3a, 0x03, 0xec, 0x3a, 0xf6, 0xcf, 0x9e, 0x12, 0x3f, 0x27, 0xb1, 0xf7,
+	0x40, 0xda, 0x7b, 0x20, 0x0b, 0xc1, 0xf8, 0x7c, 0xdb, 0x7a, 0x93, 0x8c, 0xbb, 0xba, 0x76, 0xe4,
+	0x18, 0x8d, 0x73, 0x23, 0x25, 0x70, 0xdd, 0x09, 0xf5, 0x1f, 0x27, 0x34, 0x6a, 0xcb, 0xbc, 0xce,
+	0xfc, 0xdd, 0xcd, 0x2a, 0x0a, 0x6e, 0x57, 0x51, 0xf0, 0x6b, 0x15, 0x05, 0xdf, 0xd6, 0x51, 0xef,
+	0x76, 0x1d, 0xf5, 0x7e, 0xac, 0xa3, 0xde, 0xc7, 0x57, 0x0f, 0x76, 0xb1, 0x70, 0x56, 0xc5, 0xc2,
+	0xf0, 0x22, 0xb5, 0x7e, 0xd2, 0xf6, 0x3a, 0xbf, 0xb4, 0xf7, 0xe9, 0x36, 0x93, 0x0d, 0xdc, 0x75,
+	0xbe, 0xfe, 0x13, 0x00, 0x00, 0xff, 0xff, 0x1a, 0xfb, 0x37, 0x5c, 0x20, 0x03, 0x00, 0x00,
 }
 
 func (m *EventFungibleTokenIssued) Marshal() (dAtA []byte, err error) {
@@ -370,7 +326,7 @@ func (m *EventFungibleTokenIssued) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *EventFungibleTokenFrozen) Marshal() (dAtA []byte, err error) {
+func (m *EventFungibleTokenFrozenAmountChanged) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -380,18 +336,18 @@ func (m *EventFungibleTokenFrozen) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EventFungibleTokenFrozen) MarshalTo(dAtA []byte) (int, error) {
+func (m *EventFungibleTokenFrozenAmountChanged) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EventFungibleTokenFrozen) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *EventFungibleTokenFrozenAmountChanged) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	{
-		size, err := m.Coin.MarshalToSizedBuffer(dAtA[:i])
+		size, err := m.CurrentAmount.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -399,39 +355,9 @@ func (m *EventFungibleTokenFrozen) MarshalToSizedBuffer(dAtA []byte) (int, error
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x12
-	if len(m.Account) > 0 {
-		i -= len(m.Account)
-		copy(dAtA[i:], m.Account)
-		i = encodeVarintEvent(dAtA, i, uint64(len(m.Account)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *EventFungibleTokenUnfrozen) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *EventFungibleTokenUnfrozen) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *EventFungibleTokenUnfrozen) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
+	dAtA[i] = 0x1a
 	{
-		size, err := m.Coin.MarshalToSizedBuffer(dAtA[:i])
+		size, err := m.PreviousAmount.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -506,7 +432,7 @@ func (m *EventFungibleTokenIssued) Size() (n int) {
 	return n
 }
 
-func (m *EventFungibleTokenFrozen) Size() (n int) {
+func (m *EventFungibleTokenFrozenAmountChanged) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -516,22 +442,9 @@ func (m *EventFungibleTokenFrozen) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovEvent(uint64(l))
 	}
-	l = m.Coin.Size()
+	l = m.PreviousAmount.Size()
 	n += 1 + l + sovEvent(uint64(l))
-	return n
-}
-
-func (m *EventFungibleTokenUnfrozen) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Account)
-	if l > 0 {
-		n += 1 + l + sovEvent(uint64(l))
-	}
-	l = m.Coin.Size()
+	l = m.CurrentAmount.Size()
 	n += 1 + l + sovEvent(uint64(l))
 	return n
 }
@@ -906,7 +819,7 @@ func (m *EventFungibleTokenIssued) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EventFungibleTokenFrozen) Unmarshal(dAtA []byte) error {
+func (m *EventFungibleTokenFrozenAmountChanged) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -929,10 +842,10 @@ func (m *EventFungibleTokenFrozen) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EventFungibleTokenFrozen: wiretype end group for non-group")
+			return fmt.Errorf("proto: EventFungibleTokenFrozenAmountChanged: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventFungibleTokenFrozen: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: EventFungibleTokenFrozenAmountChanged: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -969,7 +882,7 @@ func (m *EventFungibleTokenFrozen) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Coin", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PreviousAmount", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -996,95 +909,13 @@ func (m *EventFungibleTokenFrozen) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Coin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.PreviousAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipEvent(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthEvent
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *EventFungibleTokenUnfrozen) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowEvent
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: EventFungibleTokenUnfrozen: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventFungibleTokenUnfrozen: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Account", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvent
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthEvent
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvent
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Account = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Coin", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CurrentAmount", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1111,7 +942,7 @@ func (m *EventFungibleTokenUnfrozen) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Coin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.CurrentAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

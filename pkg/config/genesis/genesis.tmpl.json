@@ -255,6 +255,7 @@
         "denom": "{{ .Denom }}",
         "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
-    }
+    },
+    "cnft": {}
   }
 }
