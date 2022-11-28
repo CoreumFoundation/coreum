@@ -97,7 +97,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 		address, err := sdk.AccAddressFromBech32(idx.Address)
 		requireT.NoError(err)
 		for _, sl := range idx.Symbols {
-			exists := assetKeeper.DoesSymbolExist(ctx, sl, address)
+			exists := assetKeeper.IsSymbolDuplicate(ctx, sl, address)
 			requireT.True(exists)
 		}
 	}

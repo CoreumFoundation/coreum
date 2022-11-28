@@ -95,7 +95,7 @@ func ValidateSymbol(symbol string) error {
 	return nil
 }
 
-// NormalizeSymbol normalizes the symbol string
-func NormalizeSymbol(in string) string {
+// NormalizeSymbolForKey normalizes the symbol string
+func NormalizeSymbolForKey(in string) string {
 	return strings.ToLower(in)
 }

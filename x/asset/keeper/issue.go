@@ -100,9 +100,9 @@ func (k Keeper) GetAllSymbols(ctx sdk.Context, pagination *query.PageRequest) ([
 	return symbols, pageRes, err
 }
 
-// DoesSymbolExist checks symbol exists in the store
-func (k Keeper) DoesSymbolExist(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
-	symbol = types.NormalizeSymbol(symbol)
+// IsSymbolDuplicate checks symbol exists in the store
+func (k Keeper) IsSymbolDuplicate(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
+	symbol = types.NormalizeSymbolForKey(symbol)
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
 	bytes := symbolStore.Get([]byte(symbol))
 	return bytes != nil
@@ -110,11 +110,11 @@ func (k Keeper) DoesSymbolExist(ctx sdk.Context, symbol string, issuer sdk.AccAd
 
 // StoreSymbol saves the symbol to store
 func (k Keeper) StoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
-	if k.DoesSymbolExist(ctx, symbol, issuer) {
+	if k.IsSymbolDuplicate(ctx, symbol, issuer) {
 		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
 	}
 
-	symbol = types.NormalizeSymbol(symbol)
+	symbol = types.NormalizeSymbolForKey(symbol)
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
 	symbolStore.Set([]byte(symbol), []byte{0x01})
 	return nil
