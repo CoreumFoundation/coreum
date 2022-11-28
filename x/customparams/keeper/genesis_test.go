@@ -16,16 +16,16 @@ func TestKeeper_InitAndExportGenesis(t *testing.T) {
 	keeper := testApp.CustomParamsKeeper
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
-	getState := types.GenesisState{
+	genState := types.GenesisState{
 		StakingParams: types.StakingParams{
 			MinSelfDelegation: sdk.OneInt(),
 		},
 	}
-	keeper.InitGenesis(ctx, getState)
+	keeper.InitGenesis(ctx, genState)
 
 	requireT := require.New(t)
 	requireT.Equal(sdk.OneInt().String(), keeper.GetStakingParams(ctx).MinSelfDelegation.String())
 
 	exportedGetState := keeper.ExportGenesis(ctx)
-	requireT.Equal(getState, *exportedGetState)
+	requireT.Equal(genState, *exportedGetState)
 }
