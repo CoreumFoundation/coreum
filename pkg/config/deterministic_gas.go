@@ -24,7 +24,10 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		AssetMintFungibleToken:     35000,
 		AssetBurnFungibleToken:     35000,
 
-		BankSend: 30000,
+		BankSendTokenNumberLimit:   5,
+		BankSendAdditionalTransfer: 5000,
+		BankSend:                   30000,
+		BankMultiSend:              50000,
 
 		DistributionFundCommunityPool:           50000,
 		DistributionSetWithdrawAddress:          50000,
@@ -66,7 +69,10 @@ type DeterministicGasRequirements struct {
 	AssetBurnFungibleToken     uint64
 
 	// x/bank
-	BankSend uint64
+	BankSendTokenNumberLimit   int
+	BankSendAdditionalTransfer uint64
+	BankSend                   uint64
+	BankMultiSend              uint64
 
 	// x/distribution
 	DistributionFundCommunityPool           uint64
@@ -95,7 +101,7 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	// To test the real gas usage return `false` and run an integration test which reports the used gas.
 	// Then define a reasonable value for the message and return `true` again.
 
-	switch msg.(type) {
+	switch m := msg.(type) {
 	case *assettypes.MsgIssueFungibleToken:
 		return dgr.AssetIssueFungibleToken, true
 	case *assettypes.MsgFreezeFungibleToken:
@@ -107,7 +113,30 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	case *assettypes.MsgBurnFungibleToken:
 		return dgr.AssetBurnFungibleToken, true
 	case *banktypes.MsgSend:
-		return dgr.BankSend, true
+		gas := dgr.BankSend
+		if len(m.Amount) > dgr.BankSendTokenNumberLimit {
+			gas += uint64(len(m.Amount)-dgr.BankSendTokenNumberLimit) * dgr.BankSendAdditionalTransfer
+		}
+		return gas, true
+	case *banktypes.MsgMultiSend:
+		gas := dgr.BankMultiSend
+		var numOfCoins int
+		for _, i := range m.Inputs {
+			numOfCoins += len(i.Coins)
+		}
+
+		var numOfOutputCoins int
+		for _, o := range m.Outputs {
+			numOfOutputCoins += len(o.Coins)
+		}
+		if numOfOutputCoins > numOfCoins {
+			numOfCoins = numOfOutputCoins
+		}
+
+		if numOfCoins > dgr.BankSendTokenNumberLimit {
+			gas += uint64(numOfCoins-dgr.BankSendTokenNumberLimit) * dgr.BankSendAdditionalTransfer
+		}
+		return gas, true
 	case *distributiontypes.MsgFundCommunityPool:
 		return dgr.DistributionFundCommunityPool, true
 	case *distributiontypes.MsgSetWithdrawAddress:

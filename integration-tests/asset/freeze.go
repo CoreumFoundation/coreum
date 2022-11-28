@@ -48,9 +48,9 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	unfreezableDenom := fungibleTokenIssuedEvt.Denom
+	unfreezableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to freeze unfreezable token
 	freezeMsg := &assettypes.MsgFreezeFungibleToken{
@@ -126,9 +126,9 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	denom := fungibleTokenIssuedEvt.Denom
+	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to freeze msg
 	freezeMsg := &assettypes.MsgFreezeFungibleToken{
