@@ -26,7 +26,7 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr
 	newFrozenBalance := frozenBalance.Add(coin)
 	frozenStore.setFrozenBalance(newFrozenBalance)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFreezeAmountChanged{
+	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozenAmountChanged{
 		Account:        addr.String(),
 		PreviousAmount: frozenBalance,
 		CurrentAmount:  newFrozenBalance,
@@ -57,7 +57,7 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, ad
 	newFrozenBalance := frozenBalance.Sub(coin)
 	frozenStore.setFrozenBalance(newFrozenBalance)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFreezeAmountChanged{
+	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozenAmountChanged{
 		Account:        addr.String(),
 		PreviousAmount: frozenBalance,
 		CurrentAmount:  newFrozenBalance,
