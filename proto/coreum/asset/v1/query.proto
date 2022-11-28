@@ -24,6 +24,12 @@ service Query {
   rpc FrozenBalance(QueryFrozenBalanceRequest) returns (QueryFrozenBalanceResponse) {
     option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/frozen/{denom}";
   }
+
+  // NonFungibleToken queries the noe fungible token of the module.
+  rpc NonFungibleToken(QueryNonFungibleTokenRequest) returns (QueryNonFungibleTokenResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/nfts/{id}";
+  }
+
 }
 
 // QueryFungibleTokenRequest is request type for the Query/FungibleToken RPC method.
@@ -63,4 +69,14 @@ message QueryFrozenBalanceRequest {
 message QueryFrozenBalanceResponse {
   // balance contains the frozen balance with the queried account and denom 
   cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryNoneFungibleTokenRequest is request type for the Query/NonFungibleToken RPC method.
+message QueryNoneFungibleTokenRequest {
+  string id = 1;
+}
+
+// QueryNoneFungibleTokenResponse is response type for the Query/NonFungibleToken RPC method.
+message QueryNoneFungibleTokenResponse {
+  NonFungibleToken non_fungible_token = 1 [(gogoproto.nullable) = false];
 }

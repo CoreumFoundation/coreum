@@ -64,8 +64,20 @@ message MsgMintFungibleToken {
   cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
 }
 
-
 message MsgBurnFungibleToken {
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+// NonFungibleToken is a full representation of the non fungible token.
+message MsgIssueNonFungibleToken {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  string issuer = 2; // TODO - what if the rule of the issuance limit, one symbol per address or no limits?
+  string name = 3;
+  string symbol = 4; // TODO -> how do we form the ID (prefix+sequence or symbol+address) ?
+  string description = 5;
+  string uri = 6;
+  string uri_hash = 7;
+  google.protobuf.Any data = 8; // TODO - because of the any here the issuance is conditionally deterministic
 }
