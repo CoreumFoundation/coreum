@@ -73,6 +73,10 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 // areCoinsSpendable returns an error is there are not enough coins balances to be spent
 func (k Keeper) areCoinsSpendable(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) error {
 	for _, coin := range coins {
+		if ctx.KVStore(k.storeKey).Has(types.CreateGlobalFreezePrefix(coin.Denom)) {
+			return sdkerrors.Wrapf(types.ErrGlobalFreezeEnabled, "%s is globally frozen", coin.Denom)
+		}
+
 		availableBalance := k.availableBalance(ctx, addr, coin.Denom)
 		if !availableBalance.IsGTE(coin) {
 			return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available", coin)

@@ -69,11 +69,12 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 	}
 
 	return types.FungibleToken{
-		Denom:       definition.Denom,
-		Issuer:      definition.Issuer,
-		Symbol:      metadata.Symbol,
-		Description: metadata.Description,
-		Features:    definition.Features,
+		Denom:               definition.Denom,
+		Issuer:              definition.Issuer,
+		Symbol:              metadata.Symbol,
+		Description:         metadata.Description,
+		Features:            definition.Features,
+		GlobalFreezeEnabled: ctx.KVStore(k.storeKey).Has(types.CreateGlobalFreezePrefix(denom)),
 	}, nil
 }
 

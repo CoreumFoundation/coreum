@@ -322,9 +322,10 @@ func CmdTxGlobalFreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "global-freeze [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Globally freeze fungible token on all accounts",
+		Short: "freezes FungibleToken so no operations are allowed with it before unfrozen",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Fully freeze fungible token.
+			fmt.Sprintf(`Freezes fungible token so no operations are allowed with it before unfrozen.
+This operation is idempotent so global freeze of already frozen token does nothing.
 
 Example:
 $ %s tx asset ft global-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
@@ -361,9 +362,10 @@ func CmdTxGlobalUnfreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "global-unfreeze [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Globally unfreeze fungible token on all accounts",
+		Short: "unfreezes fungible token and unblocks basic operations on it",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Fully unfreeze fungible token.
+			fmt.Sprintf(`Unfreezes fungible token and unblocks basic operations on it.
+This operation is idempotent so global unfreezing of non-frozen token does nothing.
 
 Example:
 $ %s tx asset ft global-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
