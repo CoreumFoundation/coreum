@@ -34,7 +34,6 @@ service Msg {
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
 message MsgIssueFungibleToken {
-  option (gogoproto.equal) = false; // Why do we need this ?
   option (gogoproto.goproto_getters) = false;
   string issuer = 1;
   string symbol = 2;
