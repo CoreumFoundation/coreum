@@ -51,10 +51,10 @@ func FTCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdTxIssueFungibleToken(),
-		CmdTxFreezeFungibleToken(),
-		CmdTxUnfreezeFungibleToken(),
 		CmdTxMintFungibleToken(),
 		CmdTxBurnFungibleToken(),
+		CmdTxFreezeFungibleToken(),
+		CmdTxUnfreezeFungibleToken(),
 		CmdTxGlobalFreezeFungibleToken(),
 		CmdTxGlobalUnfreezeFungibleToken(),
 	)

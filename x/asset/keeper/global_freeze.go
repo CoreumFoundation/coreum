@@ -2,15 +2,19 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 func (k Keeper) SetGlobalFreezeEnabled(ctx sdk.Context, sender sdk.AccAddress, denom string, enabled bool) error {
-	// FIXME: Fungible token is read from store twice. Refactor checkFeatureAllowed
-	// checkFeatureAllowed should be moved to FungibleTokenDefinition or at lest func should receive it.
-	// same for available balance.
-	if err := k.checkFeatureAllowed(ctx, sender, denom, types.FungibleTokenFeature_freeze); err != nil {
+	ft, err := k.GetFungibleTokenDefinition(ctx, denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
+	}
+
+	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
+	if err != nil {
 		return err
 	}
 

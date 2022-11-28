@@ -76,3 +76,7 @@ func ValidateSymbol(symbol string) error {
 
 	return nil
 }
+
+func (ftd *FungibleTokenDefinition) IsFeatureEnabled(feature FungibleTokenFeature) bool {
+	return lo.Contains(ftd.Features, feature)
+}
