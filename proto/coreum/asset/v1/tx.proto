@@ -81,3 +81,27 @@ message MsgIssueNonFungibleToken {
   string uri_hash = 7;
   google.protobuf.Any data = 8; // TODO - because of the any here the issuance is conditionally deterministic
 }
+
+message MsgIssueNonFungibleToken {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  string issuer = 1; // TODO - what if the rule of the issuance limit, one symbol per address or no limits?
+  string name = 2;
+  string symbol = 3; // TODO -> how do we form the ID (prefix+sequence or symbol+address) ?
+  string description = 4;
+  string uri = 5;
+  string uri_hash = 6;
+  google.protobuf.Any data = 7; // TODO - because of the any here the issuance is conditionally deterministic
+}
+message MsgMintNonFungibleToken {
+  // class_id associated with the NFT, similar to the contract address of ERC721
+  string class_id = 1;
+  // id is a unique identifier of the NFT
+  // string id = 2;
+  // uri for the NFT metadata stored off chain
+  string uri = 3;
+  // uri_hash is a hash of the document pointed by uri
+  string uri_hash = 4;
+  // data is an app specific data of the NFT. Optional
+  google.protobuf.Any data = 10;
+}
