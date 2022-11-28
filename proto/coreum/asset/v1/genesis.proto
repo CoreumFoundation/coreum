@@ -13,6 +13,8 @@ message GenesisState {
   repeated FungibleTokenDefinition fungible_token_definitions  = 1 [(gogoproto.nullable) = false];
   // frozen_balances contains the frozen balances on all of the accounts
   repeated Balance frozen_balances = 2 [(gogoproto.nullable) = false];
+  // symbols contains the list symols created by each account
+  repeated SymbolIndex symbols = 3;
 }
 
 // Balance defines an account address and balance pair used in the bank module's
@@ -27,4 +29,11 @@ message Balance {
   // coins defines the different coins this balance holds.
   repeated cosmos.base.v1beta1.Coin coins = 2
       [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.nullable) = false];
+}
+
+message SymbolIndex {
+  // address is the address of the balance holder.
+  string address = 1;
+  // symbols tracks the symbols created by that address
+  repeated string symbols = 2;
 }

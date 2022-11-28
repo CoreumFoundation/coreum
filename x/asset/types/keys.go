@@ -41,11 +41,6 @@ func CreateFrozenBalancesPrefix(addr []byte) []byte {
 	return store.JoinKeys(FrozenBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
-// CreateSymbolPrefix creates the prefix for an ft symbol.
-func CreateSymbolPrefix(addr []byte) []byte {
-	return store.JoinKeys(FungibleTokenSymbolPrefix, address.MustLengthPrefix(addr))
-}
-
 // AddressFromBalancesStore returns an account address from a balances prefix
 // store. The key must not contain the prefix BalancesPrefix as the prefix store
 // iterator discards the actual prefix.
@@ -61,4 +56,24 @@ func AddressFromBalancesStore(key []byte) (sdk.AccAddress, error) {
 		return nil, ErrInvalidKey
 	}
 	return key[1 : bound+1], nil
+}
+
+// CreateSymbolPrefix creates the prefix for an ft symbol.
+func CreateSymbolPrefix(addr []byte) []byte {
+	return store.JoinKeys(FungibleTokenSymbolPrefix, address.MustLengthPrefix(addr))
+}
+
+// AccountFromSymbolStore returns account address symbol from a symbol prefix
+// store. The key must not contain the prefix FungibleTokenSymbolPrefix as the prefix store
+// iterator discards the actual prefix.
+func AccountFromSymbolStore(key []byte) (sdk.AccAddress, string, error) {
+	if len(key) == 0 {
+		return nil, "", ErrInvalidKey
+	}
+	addrLen := key[0]
+	bound := int(addrLen)
+	if len(key)-1 < bound {
+		return nil, "", ErrInvalidKey
+	}
+	return key[1 : bound+1], string(key[bound+1:]), nil
 }

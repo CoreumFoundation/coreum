@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -18,7 +19,12 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
 
-	if err := k.checkAndStoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
+	err := types.ValidateSymbol(settings.Symbol)
+	if err != nil {
+		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
+	}
+
+	if err := k.StoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
 	}
 
@@ -64,19 +70,53 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	return denom, nil
 }
 
-func (k Keeper) checkAndStoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
-	err := types.ValidateSymbol(symbol)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "provided symbol: %s", symbol)
+// GetAllSymbols returns all the symbols saved in the store
+func (k Keeper) GetAllSymbols(ctx sdk.Context, pagination *query.PageRequest) ([]*types.SymbolIndex, *query.PageResponse, error) {
+	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.FungibleTokenSymbolPrefix)
+	var symbols []*types.SymbolIndex
+	mapAddressToSymbolsIdx := make(map[string]int)
+	pageRes, err := query.Paginate(symbolStore, pagination, func(key, value []byte) error {
+		address, symbol, err := types.AccountFromSymbolStore(key)
+		if err != nil {
+			return err
+		}
+
+		idx, ok := mapAddressToSymbolsIdx[address.String()]
+		if ok {
+			// address is already on the set of accounts balances
+			symbols[idx].Symbols = append(symbols[idx].Symbols, symbol)
+			sort.Strings(symbols[idx].Symbols)
+			return nil
+		}
+
+		symbolIndex := &types.SymbolIndex{
+			Address: address.String(),
+			Symbols: []string{symbol},
+		}
+		symbols = append(symbols, symbolIndex)
+		mapAddressToSymbolsIdx[address.String()] = len(symbols) - 1
+		return nil
+	})
+
+	return symbols, pageRes, err
+}
+
+// DoesSymbolExist checks symbol exists in the store
+func (k Keeper) DoesSymbolExist(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
+	symbol = strings.ToLower(symbol)
+	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
+	bytes := symbolStore.Get([]byte(symbol))
+	return bytes != nil
+}
+
+// StoreSymbol saves the symbol to store
+func (k Keeper) StoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
+	if k.DoesSymbolExist(ctx, symbol, issuer) {
+		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
 	}
 
 	symbol = strings.ToLower(symbol)
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
-	bytes := symbolStore.Get([]byte(symbol))
-	if bytes != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
-	}
-
 	symbolStore.Set([]byte(symbol), []byte{0x01})
 	return nil
 }

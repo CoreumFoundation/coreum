@@ -55,9 +55,20 @@ func TestImportAndExportGenesis(t *testing.T) {
 			})
 	}
 
+	// symbolsIndex
+	var symbolsIndex []*types.SymbolIndex
+	for i := 0; i < 5; i++ {
+		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		symbolsIndex = append(symbolsIndex, &types.SymbolIndex{
+			Address: addr.String(),
+			Symbols: []string{"symbol" + fmt.Sprint(rand.Int63n(100))},
+		})
+	}
+
 	genState := types.GenesisState{
 		FrozenBalances:           fungibleTokenFrozenBalances,
 		FungibleTokenDefinitions: fungibleTokenDefinitions,
+		Symbols:                  symbolsIndex,
 	}
 
 	// init the keeper
@@ -81,8 +92,19 @@ func TestImportAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
+	// symbols
+	for _, idx := range symbolsIndex {
+		address, err := sdk.AccAddressFromBech32(idx.Address)
+		requireT.NoError(err)
+		for _, sl := range idx.Symbols {
+			exists := assetKeeper.DoesSymbolExist(ctx, sl, address)
+			requireT.True(exists)
+		}
+	}
+
 	// check that export is equal import
 	exportedGenState := asset.ExportGenesis(ctx, assetKeeper)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.FungibleTokenDefinitions, exportedGenState.FungibleTokenDefinitions)
+	assertT.ElementsMatch(genState.Symbols, exportedGenState.Symbols)
 }
