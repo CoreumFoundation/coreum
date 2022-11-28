@@ -29,5 +29,5 @@ message FungibleToken {
   string symbol = 3;
   string description = 4;
   repeated FungibleTokenFeature features = 5;
-  bool global_freeze_enabled = 6;
+  bool globally_frozen = 6;
 }

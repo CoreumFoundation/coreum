@@ -86,7 +86,7 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 func (k Keeper) areCoinsSpendable(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) error {
 	for _, coin := range coins {
 		if ctx.KVStore(k.storeKey).Has(types.CreateGlobalFreezePrefix(coin.Denom)) {
-			return sdkerrors.Wrapf(types.ErrGlobalFreezeEnabled, "%s is globally frozen", coin.Denom)
+			return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", coin.Denom)
 		}
 
 		availableBalance := k.availableBalance(ctx, addr, coin.Denom)
