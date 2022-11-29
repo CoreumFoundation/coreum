@@ -4,6 +4,8 @@ package coreum.asset.v1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
@@ -77,8 +79,6 @@ message MsgBurnFungibleToken {
 
 // MsgCreateNonFungibleTokenClass defines message for the CreateNonFungibleTokenClass method.
 message MsgCreateNonFungibleTokenClass {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
   string creator = 1;
   string name = 2;
   string symbol = 3;
@@ -90,8 +90,6 @@ message MsgCreateNonFungibleTokenClass {
 
 // MsgMintNonFungibleToken defines message for the MintNonFungibleToken method.
 message MsgMintNonFungibleToken {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
   string sender = 1;
   string class_id = 2;
   string uri = 3;
