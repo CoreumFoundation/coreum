@@ -29,16 +29,20 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// prepare the genesis data
 
 	// fungible token definitions
-	var fungibleTokenDefinitions []types.FungibleTokenDefinition
+	var fungibleTokens []types.FungibleToken
 	for i := 0; i < 5; i++ {
-		fungibleTokenDefinitions = append(fungibleTokenDefinitions,
-			types.FungibleTokenDefinition{
-				Denom:  types.BuildFungibleTokenDenom(fmt.Sprintf("ABC%d", i), issuer),
-				Issuer: issuer.String(),
-				Features: []types.FungibleTokenFeature{
-					types.FungibleTokenFeature_freeze, //nolint:nosnakecase // proto enum
-				},
-			})
+		ft := types.FungibleToken{
+			Denom:     types.BuildFungibleTokenDenom(fmt.Sprintf("abc%d", i), issuer),
+			Issuer:    issuer.String(),
+			Symbol:    fmt.Sprintf("ABC%d", i),
+			Subunit:   fmt.Sprintf("abc%d", i),
+			Precision: uint32(rand.Int31n(100)),
+			Features: []types.FungibleTokenFeature{
+				types.FungibleTokenFeature_freeze, //nolint:nosnakecase // proto enum
+			},
+		}
+		fungibleTokens = append(fungibleTokens, ft)
+		assetKeeper.SetFungibleTokenDenomMetadata(ctx, ft.Denom, ft.Symbol, ft.Description, ft.Precision)
 	}
 
 	// fungible token frozen balances
@@ -49,26 +53,15 @@ func TestImportAndExportGenesis(t *testing.T) {
 			types.Balance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
-					sdk.NewCoin(fungibleTokenDefinitions[0].Denom, sdk.NewInt(rand.Int63())),
-					sdk.NewCoin(fungibleTokenDefinitions[1].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(fungibleTokens[0].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(fungibleTokens[1].Denom, sdk.NewInt(rand.Int63())),
 				),
 			})
 	}
 
-	// symbolsIndex
-	var symbolsIndex []*types.SymbolIndex
-	for i := 0; i < 5; i++ {
-		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-		symbolsIndex = append(symbolsIndex, &types.SymbolIndex{
-			Address: addr.String(),
-			Symbols: []string{"symbol" + fmt.Sprint(rand.Int63n(100))},
-		})
-	}
-
 	genState := types.GenesisState{
-		FrozenBalances:           fungibleTokenFrozenBalances,
-		FungibleTokenDefinitions: fungibleTokenDefinitions,
-		Symbols:                  symbolsIndex,
+		FrozenBalances: fungibleTokenFrozenBalances,
+		FungibleTokens: fungibleTokens,
 	}
 
 	// init the keeper
@@ -77,10 +70,10 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// assert the keeper state
 
 	// fungible token definitions
-	for _, definition := range fungibleTokenDefinitions {
-		storedDefinition, err := assetKeeper.GetFungibleTokenDefinition(ctx, definition.Denom)
+	for _, definition := range fungibleTokens {
+		storedFT, err := assetKeeper.GetFungibleToken(ctx, definition.Denom)
 		requireT.NoError(err)
-		assertT.EqualValues(definition, storedDefinition)
+		assertT.EqualValues(definition, storedFT)
 	}
 
 	// fungible token frozen balances
@@ -92,19 +85,8 @@ func TestImportAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
-	// symbols
-	for _, idx := range symbolsIndex {
-		address, err := sdk.AccAddressFromBech32(idx.Address)
-		requireT.NoError(err)
-		for _, sl := range idx.Symbols {
-			exists := assetKeeper.IsSymbolDuplicate(ctx, sl, address)
-			requireT.True(exists)
-		}
-	}
-
 	// check that export is equal import
 	exportedGenState := asset.ExportGenesis(ctx, assetKeeper)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
-	assertT.ElementsMatch(genState.FungibleTokenDefinitions, exportedGenState.FungibleTokenDefinitions)
-	assertT.ElementsMatch(genState.Symbols, exportedGenState.Symbols)
+	assertT.ElementsMatch(genState.FungibleTokens, exportedGenState.FungibleTokens)
 }

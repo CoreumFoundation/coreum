@@ -15,7 +15,7 @@ var (
 	subunitRegexStr = `^[a-z][a-z0-9]{0,70}$`
 	subunitRegex    *regexp.Regexp
 
-	symbolRegexStr = `^[a-zA-Z][a-zA-Z0-9]{0,127}$`
+	symbolRegexStr = `^[a-zA-Z][a-zA-Z0-9-.]{0,127}$`
 	symbolRegex    *regexp.Regexp
 )
 

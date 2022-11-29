@@ -77,10 +77,14 @@ func TestValidateSymbol(t *testing.T) {
 	assertT := assert.New(t)
 	unacceptableSymbols := []string{
 		"",
-		"ABC-1",
+		".",
+		"-",
+		"t$",
+		"t ",
+		"t=",
+		"t@",
+		"t!",
 		"ABC/1",
-		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
-		"BTC-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
 		"core",
 		"ucore",
 		"Core",
@@ -93,6 +97,11 @@ func TestValidateSymbol(t *testing.T) {
 
 	acceptableSymbols := []string{
 		"t",
+		"t.",
+		"t-",
+		"ABC-1",
+		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
+		"BTC-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
 		"abc1",
 		"T",
 		"ABC1",

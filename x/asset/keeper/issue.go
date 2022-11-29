@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"sort"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -37,7 +35,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		)
 	}
 
-	k.setFungibleTokenDenomMetadata(ctx, denom, settings)
+	k.SetFungibleTokenDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 
 	if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
 		return "", err
@@ -67,37 +65,6 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	k.Logger(ctx).Debug("issued new fungible token with denom %d", denom)
 
 	return denom, nil
-}
-
-// GetAllSymbols returns all the symbols saved in the store
-func (k Keeper) GetAllSymbols(ctx sdk.Context, pagination *query.PageRequest) ([]*types.SymbolIndex, *query.PageResponse, error) {
-	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.FungibleTokenSymbolKeyPrefix)
-	var symbols []*types.SymbolIndex
-	mapAddressToSymbolsIdx := make(map[string]int)
-	pageRes, err := query.Paginate(symbolStore, pagination, func(key, value []byte) error {
-		address, symbol, err := types.AccountFromSymbolStore(key)
-		if err != nil {
-			return err
-		}
-
-		idx, ok := mapAddressToSymbolsIdx[address.String()]
-		if ok {
-			// address is already on the set of accounts balances
-			symbols[idx].Symbols = append(symbols[idx].Symbols, symbol)
-			sort.Strings(symbols[idx].Symbols)
-			return nil
-		}
-
-		symbolIndex := &types.SymbolIndex{
-			Address: address.String(),
-			Symbols: []string{symbol},
-		}
-		symbols = append(symbols, symbolIndex)
-		mapAddressToSymbolsIdx[address.String()] = len(symbols) - 1
-		return nil
-	})
-
-	return symbols, pageRes, err
 }
 
 // IsSymbolDuplicate checks symbol exists in the store
@@ -160,6 +127,26 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 	}, nil
 }
 
+// GetFungibleTokens returns all fungible tokens.
+func (k Keeper) GetFungibleTokens(ctx sdk.Context, pagination *query.PageRequest) ([]types.FungibleToken, *query.PageResponse, error) {
+	definitions, pageResponse, err := k.GetFungibleTokenDefinitions(ctx, pagination)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var tokens []types.FungibleToken
+	for _, definition := range definitions {
+		token, err := k.GetFungibleToken(ctx, definition.Denom)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		tokens = append(tokens, token)
+	}
+
+	return tokens, pageResponse, nil
+}
+
 // GetFungibleTokenDefinitions returns all fungible token definitions.
 func (k Keeper) GetFungibleTokenDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.FungibleTokenDefinition, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.FungibleTokenKeyPrefix)
@@ -208,15 +195,16 @@ func (k Keeper) SetFungibleTokenDefinition(ctx sdk.Context, definition types.Fun
 	store.Set(types.GetFungibleTokenKey(definition.Denom), k.cdc.MustMarshal(&definition))
 }
 
-func (k Keeper) setFungibleTokenDenomMetadata(ctx sdk.Context, denom string, st types.IssueFungibleTokenSettings) {
+// SetFungibleTokenDenomMetadata registers denom metadata on the bank keeper
+func (k Keeper) SetFungibleTokenDenomMetadata(ctx sdk.Context, denom, symbol, description string, precision uint32) {
 	denomMetadata := banktypes.Metadata{
-		Name:        st.Symbol,
-		Symbol:      st.Symbol,
-		Description: st.Description,
+		Name:        symbol,
+		Symbol:      symbol,
+		Description: description,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    st.Symbol,
-				Exponent: st.Precision,
+				Denom:    symbol,
+				Exponent: precision,
 			},
 			{
 				Denom:    denom,
@@ -224,7 +212,7 @@ func (k Keeper) setFungibleTokenDenomMetadata(ctx sdk.Context, denom string, st 
 			},
 		},
 		Base:    denom,
-		Display: st.Symbol,
+		Display: symbol,
 	}
 
 	k.bankKeeper.SetDenomMetaData(ctx, denomMetadata)
