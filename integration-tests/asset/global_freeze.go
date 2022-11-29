@@ -34,7 +34,7 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 	)
 
 	// Issue the new fungible token
-	msg := &assettypes.MsgIssueFungibleToken{
+	issueMsg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "FREEZE",
 		Description:   "FREEZE Description",
@@ -44,12 +44,11 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
-
 	res, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
-		msg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
 	)
 
 	requireT.NoError(err)
@@ -65,7 +64,7 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 	res, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globFreezeMsg)),
 		globFreezeMsg,
 	)
 	requireT.NoError(err)
@@ -78,7 +77,7 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(recipient),
+		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
@@ -93,7 +92,7 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 	res, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globUnfreezeMsg)),
 		globUnfreezeMsg,
 	)
 	requireT.NoError(err)
@@ -106,8 +105,8 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(recipient),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg2)),
 		sendMsg2,
 	)
 	requireT.NoError(err)

@@ -106,6 +106,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetFreezeFungibleToken, true
 	case *assettypes.MsgUnfreezeFungibleToken:
 		return dgr.AssetUnfreezeFungibleToken, true
+	case *assettypes.MsgGlobalFreezeFungibleToken:
+		return dgr.AssetFreezeFungibleToken, true
+	case *assettypes.MsgGlobalUnfreezeFungibleToken:
+		return dgr.AssetUnfreezeFungibleToken, true
 	case *assettypes.MsgMintFungibleToken:
 		return dgr.AssetMintFungibleToken, true
 	case *assettypes.MsgBurnFungibleToken:
