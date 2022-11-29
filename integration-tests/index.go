@@ -4,6 +4,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/asset"
 	"github.com/CoreumFoundation/coreum/integration-tests/auth"
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
+	"github.com/CoreumFoundation/coreum/integration-tests/customparams"
 	"github.com/CoreumFoundation/coreum/integration-tests/distribution"
 	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
 	"github.com/CoreumFoundation/coreum/integration-tests/gov"
@@ -40,12 +41,14 @@ func Tests() []testing.TestSet {
 				bank.TestTransferDeterministicGas,
 				bank.TestTransferDeterministicGasTwoBankSends,
 				bank.TestTransferGasEstimation,
+				customparams.TestStakingProposalParamChange,
 				distribution.TestWithdrawRewardWithDeterministicGas,
 				distribution.TestSpendCommunityPoolProposal,
 				feemodel.TestQueryingMinGasPrice,
 				feemodel.TestFeeModelProposalParamChange,
 				staking.TestStakingProposalParamChange,
 				staking.TestValidatorCRUDAndStaking,
+				staking.TestValidatorMinParamsSelfDelegation,
 				wasm.TestPinningAndUnpinningSmartContractUsingGovernance,
 				wasm.TestBankSendWASMContract,
 				wasm.TestGasWASMBankSendAndBankSend,

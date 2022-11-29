@@ -14,7 +14,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/nft"
 	"github.com/CoreumFoundation/coreum/x/nft/simulation"
@@ -24,7 +23,7 @@ type SimTestSuite struct {
 	suite.Suite
 
 	ctx sdk.Context
-	app *app.App
+	app *simapp.App
 }
 
 func (suite *SimTestSuite) SetupTest() {

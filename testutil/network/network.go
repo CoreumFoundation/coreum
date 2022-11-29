@@ -107,6 +107,7 @@ func DefaultConfig() network.Config {
 	// set to nil the devnet config we don't need
 	devCfg.FundedAccounts = nil
 	devCfg.GenTxs = nil
+	devCfg.CustomParamsConfig.Staking.MinSelfDelegation = sdk.NewInt(1)
 
 	// init the network and set params
 	devNetwork := config.NewNetwork(devCfg)
