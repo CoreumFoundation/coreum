@@ -38,7 +38,7 @@ func GetFungibleTokenKey(denom string) []byte {
 
 // CreateFrozenBalancesPrefix creates the prefix for an account's balances.
 func CreateFrozenBalancesPrefix(addr []byte) []byte {
-	return store.JoinKeys(FrozenBalancesKeyPrefix, address.MustLengthPrefix(addr)) // todo: Why don't we use JoinKeysWithLength here ?
+	return store.JoinKeys(FrozenBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
 // CreateGlobalFreezePrefix creates the prefix for fungible token global freeze key.

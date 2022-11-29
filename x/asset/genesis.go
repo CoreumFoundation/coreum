@@ -8,7 +8,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// TODO: Add global freezing here after coreum #268 is merged.
+// TODO(yaroslav): Add global freezing logic to genesis once coreum #268 is merged.
 
 // InitGenesis initializes the asset module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {

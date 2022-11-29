@@ -78,5 +78,4 @@ message MsgGlobalUnfreezeFungibleToken {
   string denom = 2;
 }
 
-// TODO: Define global EmptyResponse
 message EmptyResponse {}
