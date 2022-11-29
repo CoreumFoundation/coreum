@@ -25,7 +25,7 @@ service Msg {
 
   // CreateNonFungibleTokenClass creates new non-fungible token class.
   rpc CreateNonFungibleTokenClass(MsgCreateNonFungibleTokenClass) returns (EmptyResponse);
-  // MintNonFungibleToken creates new non-fungible token in a class.
+  // MintNonFungibleToken mints new non-fungible token in the class.
   rpc MintNonFungibleToken(MsgMintNonFungibleToken) returns (EmptyResponse);
 }
 
@@ -79,7 +79,7 @@ message MsgBurnFungibleToken {
 message MsgCreateNonFungibleTokenClass {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
-  string issuer = 1;
+  string sender = 1;
   string name = 2;
   string symbol = 3;
   string description = 4;
@@ -90,8 +90,11 @@ message MsgCreateNonFungibleTokenClass {
 
 // MsgMintNonFungibleToken defines message for the MintNonFungibleToken method.
 message MsgMintNonFungibleToken {
-  string class_id = 1;
-  string uri = 2;
-  string uri_hash = 3;
-  google.protobuf.Any data = 4;
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  string sender = 1;
+  string class_id = 2;
+  string uri = 3;
+  string uri_hash = 4;
+  google.protobuf.Any data = 5;
 }
