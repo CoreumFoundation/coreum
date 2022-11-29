@@ -7,6 +7,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+// SetGlobalFreezeEnabled enables or disables global freeze on a fungible token depending on enabled arg.
 func (k Keeper) SetGlobalFreezeEnabled(ctx sdk.Context, sender sdk.AccAddress, denom string, enabled bool) error {
 	ft, err := k.GetFungibleTokenDefinition(ctx, denom)
 	if err != nil {

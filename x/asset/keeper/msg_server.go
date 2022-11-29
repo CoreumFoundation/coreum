@@ -131,10 +131,12 @@ func (ms MsgServer) BurnFungibleToken(goCtx context.Context, req *types.MsgBurnF
 	return &types.EmptyResponse{}, nil
 }
 
+// GlobalFreezeFungibleToken globally freezes fungible token
 func (ms MsgServer) GlobalFreezeFungibleToken(goCtx context.Context, req *types.MsgGlobalFreezeFungibleToken) (*types.EmptyResponse, error) {
 	return ms.setFungibleTokenGlobalFreezeEnabled(goCtx, req.Sender, req.Denom, true)
 }
 
+// GlobalUnfreezeFungibleToken globally unfreezes fungible token
 func (ms MsgServer) GlobalUnfreezeFungibleToken(goCtx context.Context, req *types.MsgGlobalUnfreezeFungibleToken) (*types.EmptyResponse, error) {
 	return ms.setFungibleTokenGlobalFreezeEnabled(goCtx, req.Sender, req.Denom, false)
 }

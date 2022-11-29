@@ -61,7 +61,7 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 		Sender: issuer.String(),
 		Denom:  denom,
 	}
-	res, err = tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globFreezeMsg)),
@@ -89,7 +89,7 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 		Sender: issuer.String(),
 		Denom:  denom,
 	}
-	res, err = tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globUnfreezeMsg)),

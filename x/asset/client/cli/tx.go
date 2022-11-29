@@ -316,8 +316,6 @@ $ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 -
 }
 
 // CmdTxGlobalFreezeFungibleToken returns GlobalFreezeFungibleToken cobra command.
-//
-//nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
 func CmdTxGlobalFreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "global-freeze [denom] --from [sender]",
@@ -356,8 +354,6 @@ $ %s tx asset ft global-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a
 }
 
 // CmdTxGlobalUnfreezeFungibleToken returns GlobalUnfreezeFungibleToken cobra command.
-//
-//nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
 func CmdTxGlobalUnfreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "global-unfreeze [denom] --from [sender]",

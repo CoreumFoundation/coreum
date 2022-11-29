@@ -41,6 +41,7 @@ func CreateFrozenBalancesPrefix(addr []byte) []byte {
 	return store.JoinKeys(FrozenBalancesKeyPrefix, address.MustLengthPrefix(addr)) // todo: Why don't we use JoinKeysWithLength here ?
 }
 
+// CreateGlobalFreezePrefix creates the prefix for fungible token global freeze key.
 func CreateGlobalFreezePrefix(denom string) []byte {
 	return store.JoinKeysWithLength(GlobalFreezeKeyPrefix, []byte(denom))
 }
