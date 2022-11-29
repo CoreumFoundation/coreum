@@ -79,7 +79,7 @@ message MsgBurnFungibleToken {
 message MsgCreateNonFungibleTokenClass {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
-  string sender = 1;
+  string creator = 1;
   string name = 2;
   string symbol = 3;
   string description = 4;
