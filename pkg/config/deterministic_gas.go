@@ -18,11 +18,13 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssueFungibleToken:    80000,
-		AssetFreezeFungibleToken:   55000,
-		AssetUnfreezeFungibleToken: 55000,
-		AssetMintFungibleToken:     35000,
-		AssetBurnFungibleToken:     35000,
+		AssetIssueFungibleToken:          80000,
+		AssetMintFungibleToken:           35000,
+		AssetBurnFungibleToken:           35000,
+		AssetFreezeFungibleToken:         55000,
+		AssetUnfreezeFungibleToken:       55000,
+		AssetGlobalFreezeFungibleToken:   5000,
+		AssetGlobalUnfreezeFungibleToken: 5000,
 
 		BankSend: 30000,
 
@@ -59,11 +61,13 @@ type DeterministicGasRequirements struct {
 	FreeSignatures uint64
 
 	// x/asset
-	AssetIssueFungibleToken    uint64
-	AssetFreezeFungibleToken   uint64
-	AssetUnfreezeFungibleToken uint64
-	AssetMintFungibleToken     uint64
-	AssetBurnFungibleToken     uint64
+	AssetIssueFungibleToken          uint64
+	AssetMintFungibleToken           uint64
+	AssetBurnFungibleToken           uint64
+	AssetFreezeFungibleToken         uint64
+	AssetUnfreezeFungibleToken       uint64
+	AssetGlobalFreezeFungibleToken   uint64
+	AssetGlobalUnfreezeFungibleToken uint64
 
 	// x/bank
 	BankSend uint64
