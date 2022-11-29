@@ -26,9 +26,10 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr
 	newFrozenBalance := frozenBalance.Add(coin)
 	frozenStore.setFrozenBalance(newFrozenBalance)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozen{
-		Account: addr.String(),
-		Coin:    coin,
+	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozenAmountChanged{
+		Account:        addr.String(),
+		PreviousAmount: frozenBalance,
+		CurrentAmount:  newFrozenBalance,
 	})
 }
 
@@ -45,10 +46,7 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, ad
 
 	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
 	frozenBalance := frozenStore.getFrozenBalance(coin.Denom)
-	if frozenBalance.IsGTE(coin) {
-		newFrozenBalance := frozenBalance.Sub(coin)
-		frozenStore.setFrozenBalance(newFrozenBalance)
-	} else {
+	if !frozenBalance.IsGTE(coin) {
 		return sdkerrors.Wrapf(types.ErrNotEnoughBalance,
 			"unfreeze request %s is greater than the available frozen balance %s",
 			coin.String(),
@@ -56,9 +54,13 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, ad
 		)
 	}
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenUnfrozen{
-		Account: addr.String(),
-		Coin:    coin,
+	newFrozenBalance := frozenBalance.Sub(coin)
+	frozenStore.setFrozenBalance(newFrozenBalance)
+
+	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozenAmountChanged{
+		Account:        addr.String(),
+		PreviousAmount: frozenBalance,
+		CurrentAmount:  newFrozenBalance,
 	})
 }
 
