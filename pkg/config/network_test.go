@@ -64,6 +64,11 @@ func testNetwork() config.Network {
 			UnbondingTime: "1814400s",
 			MaxValidators: 32,
 		},
+		CustomParamsConfig: config.CustomParamsConfig{
+			Staking: config.CustomParamsStakingConfig{
+				MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+			},
+		},
 	})
 }
 

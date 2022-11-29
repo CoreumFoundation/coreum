@@ -13,7 +13,7 @@ type ParamSubspace interface {
 	SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
 }
 
-// Keeper manages transfers between accounts. It implements the Keeper interface.
+// Keeper is a fee model keeper.
 type Keeper struct {
 	paramSubspace     ParamSubspace
 	storeKey          sdk.StoreKey

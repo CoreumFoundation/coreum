@@ -3,6 +3,8 @@ package testing
 import (
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
@@ -25,6 +27,12 @@ func NewNetworkConfig() (config.NetworkConfig, error) {
 
 	networkConfig.FundedAccounts = nil
 	networkConfig.GenTxs = nil
+
+	networkConfig.CustomParamsConfig = config.CustomParamsConfig{
+		Staking: config.CustomParamsStakingConfig{
+			MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+		},
+	}
 
 	return networkConfig, nil
 }

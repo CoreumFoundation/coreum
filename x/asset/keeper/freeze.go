@@ -91,7 +91,7 @@ func (k Keeper) areCoinsSpendable(ctx sdk.Context, addr sdk.AccAddress, coins sd
 
 		availableBalance := k.availableBalance(ctx, addr, coin.Denom)
 		if !availableBalance.IsGTE(coin) {
-			return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available", coin)
+			return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available, available %s", coin, availableBalance)
 		}
 	}
 	return nil
