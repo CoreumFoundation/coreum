@@ -28,10 +28,3 @@ message Balance {
   repeated cosmos.base.v1beta1.Coin coins = 2
       [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.nullable) = false];
 }
-
-message SymbolIndex {
-  // address is the address of the balance holder.
-  string address = 1;
-  // symbols tracks the symbols created by that address
-  repeated string symbols = 2;
-}
