@@ -2,6 +2,7 @@ syntax = "proto3";
 package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "coreum/asset/v1/asset.proto";
 
@@ -21,6 +22,11 @@ service Msg {
   rpc MintFungibleToken(MsgMintFungibleToken) returns (EmptyResponse);
   // BurnFungibleToken burns the specified fungible tokens from senders balance if the sender has enough balance
   rpc BurnFungibleToken(MsgBurnFungibleToken) returns (EmptyResponse);
+
+  // CreateNonFungibleTokenClass creates new non-fungible token class.
+  rpc CreateNonFungibleTokenClass(MsgCreateNonFungibleTokenClass) returns (EmptyResponse);
+  // MintNonFungibleToken creates new non-fungible token in a class.
+  rpc MintNonFungibleToken(MsgMintNonFungibleToken) returns (EmptyResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -69,39 +75,23 @@ message MsgBurnFungibleToken {
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
-// NonFungibleToken is a full representation of the non fungible token.
-message MsgIssueNonFungibleToken {
+// MsgCreateNonFungibleTokenClass defines message for the CreateNonFungibleTokenClass method.
+message MsgCreateNonFungibleTokenClass {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
-  string issuer = 2; // TODO - what if the rule of the issuance limit, one symbol per address or no limits?
-  string name = 3;
-  string symbol = 4; // TODO -> how do we form the ID (prefix+sequence or symbol+address) ?
-  string description = 5;
-  string uri = 6;
-  string uri_hash = 7;
-  google.protobuf.Any data = 8; // TODO - because of the any here the issuance is conditionally deterministic
-}
-
-message MsgIssueNonFungibleToken {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
-  string issuer = 1; // TODO - what if the rule of the issuance limit, one symbol per address or no limits?
+  string issuer = 1;
   string name = 2;
-  string symbol = 3; // TODO -> how do we form the ID (prefix+sequence or symbol+address) ?
+  string symbol = 3;
   string description = 4;
   string uri = 5;
   string uri_hash = 6;
-  google.protobuf.Any data = 7; // TODO - because of the any here the issuance is conditionally deterministic
+  google.protobuf.Any data = 7;
 }
+
+// MsgMintNonFungibleToken defines message for the MintNonFungibleToken method.
 message MsgMintNonFungibleToken {
-  // class_id associated with the NFT, similar to the contract address of ERC721
   string class_id = 1;
-  // id is a unique identifier of the NFT
-  // string id = 2;
-  // uri for the NFT metadata stored off chain
-  string uri = 3;
-  // uri_hash is a hash of the document pointed by uri
-  string uri_hash = 4;
-  // data is an app specific data of the NFT. Optional
-  google.protobuf.Any data = 10;
+  string uri = 2;
+  string uri_hash = 3;
+  google.protobuf.Any data = 4;
 }

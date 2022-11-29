@@ -30,18 +30,3 @@ message FungibleToken {
   string description = 4;
   repeated FungibleTokenFeature features = 5;
 }
-
-// NonFungibleToken is a full representation of the non fungible token.
-message NonFungibleToken {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
-  string id = 1;
-  string issuer = 2;
-  string name = 3;
-  string symbol = 4;
-  string description = 5;
-  string uri = 6;
-  string uri_hash = 7;
-  google.protobuf.Any data = 8;
-}
-
