@@ -22,10 +22,10 @@ func (k Keeper) SetGlobalFreezeEnabled(ctx sdk.Context, sender sdk.AccAddress, d
 	store := ctx.KVStore(k.storeKey)
 	// Global freeze implemented in an idempotent way, so it is allowed to freeze/unfreeze multiple times without effect.
 	if enabled {
-		store.Set(types.CreateGlobalFreezePrefix(denom), []byte{0x01})
-	} else {
-		store.Delete(types.CreateGlobalFreezePrefix(denom))
+		store.Set(types.CreateGlobalFreezePrefix(denom), globalFreezeEnabledStoreVal)
+		return nil
 	}
 
+	store.Delete(types.CreateGlobalFreezePrefix(denom))
 	return nil
 }
