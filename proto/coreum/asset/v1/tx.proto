@@ -3,9 +3,11 @@ package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
+option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.
 service Msg {
@@ -24,17 +26,18 @@ service Msg {
   // account, only if there are such frozen tokens on that account 
   rpc UnfreezeFungibleToken(MsgUnfreezeFungibleToken) returns (EmptyResponse);
 
-  // GlobalFreezeFungibleToken freezes fungible token so no operations are allowed with it before unfrozen.
+  // GloballyFreezeFungibleToken freezes fungible token so no operations are allowed with it before unfrozen.
   // This operation is idempotent so global freeze of already frozen token does nothing.
-  rpc GlobalFreezeFungibleToken(MsgGlobalFreezeFungibleToken) returns (EmptyResponse);
-  // GlobalUnfreezeFungibleToken unfreezes fungible token and unblocks basic operations on it.
+  rpc GloballyFreezeFungibleToken(MsgGloballyFreezeFungibleToken) returns (EmptyResponse);
+  // GloballyUnfreezeFungibleToken unfreezes fungible token and unblocks basic operations on it.
   // This operation is idempotent so global unfreezing of non-frozen token does nothing.
-  rpc GlobalUnfreezeFungibleToken(MsgGlobalUnfreezeFungibleToken) returns (EmptyResponse);
+  rpc GloballyUnfreezeFungibleToken(MsgGloballyUnfreezeFungibleToken) returns (EmptyResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
 message MsgIssueFungibleToken {
-  option (gogoproto.goproto_getters) = false;
+  option (cosmos.msg.v1.signer) = "issuer";
+
   string issuer = 1;
   string symbol = 2;
   string recipient = 3;
@@ -47,33 +50,45 @@ message MsgIssueFungibleToken {
 }
 
 message MsgFreezeFungibleToken {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgUnfreezeFungibleToken {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgMintFungibleToken {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
 }
 
 message MsgBurnFungibleToken {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
-message MsgGlobalFreezeFungibleToken {
+message MsgGloballyFreezeFungibleToken {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1;
   string denom = 2;
 }
 
-message MsgGlobalUnfreezeFungibleToken {
+message MsgGloballyUnfreezeFungibleToken {
+  option (cosmos.msg.v1.signer) = "sender";
+
   string sender = 1;
   string denom = 2;
 }

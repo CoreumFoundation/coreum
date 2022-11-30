@@ -14,8 +14,8 @@ import (
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// TestGlobalFreezeFungibleToken checks global freeze functionality of fungible tokens.
-func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestGloballyFreezeFungibleToken checks global freeze functionality of fungible tokens.
+func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 
@@ -25,9 +25,9 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
-				&assettypes.MsgGlobalFreezeFungibleToken{},
+				&assettypes.MsgGloballyFreezeFungibleToken{},
 				&banktypes.MsgSend{},
-				&assettypes.MsgGlobalUnfreezeFungibleToken{},
+				&assettypes.MsgGloballyUnfreezeFungibleToken{},
 				&banktypes.MsgSend{},
 			},
 		}),
@@ -57,7 +57,7 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 	denom := fungibleTokenIssuedEvt.Denom
 
 	// Globally freeze FT.
-	globFreezeMsg := &assettypes.MsgGlobalFreezeFungibleToken{
+	globFreezeMsg := &assettypes.MsgGloballyFreezeFungibleToken{
 		Sender: issuer.String(),
 		Denom:  denom,
 	}
@@ -85,7 +85,7 @@ func TestGlobalFreezeFungibleToken(ctx context.Context, t testing.T, chain testi
 	assertT.True(assettypes.ErrGloballyFrozen.Is(err))
 
 	// Globally unfreeze FT.
-	globUnfreezeMsg := &assettypes.MsgGlobalUnfreezeFungibleToken{
+	globUnfreezeMsg := &assettypes.MsgGloballyUnfreezeFungibleToken{
 		Sender: issuer.String(),
 		Denom:  denom,
 	}

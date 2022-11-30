@@ -25,9 +25,9 @@ func NewHandler(ms keeper.MsgServer) sdk.Handler {
 			res, err = ms.FreezeFungibleToken(goCtx, msg)
 		case *types.MsgUnfreezeFungibleToken:
 			res, err = ms.UnfreezeFungibleToken(goCtx, msg)
-		case *types.MsgGlobalFreezeFungibleToken:
+		case *types.MsgGloballyFreezeFungibleToken:
 			res, err = ms.GlobalFreezeFungibleToken(goCtx, msg)
-		case *types.MsgGlobalUnfreezeFungibleToken:
+		case *types.MsgGloballyUnfreezeFungibleToken:
 			res, err = ms.GlobalUnfreezeFungibleToken(goCtx, msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)

@@ -15,7 +15,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-func TestGlobalFreezeFungibleToken(t *testing.T) {
+func TestGloballyFreezeUnfreezeFungibleToken(t *testing.T) {
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
@@ -38,7 +38,7 @@ func TestGlobalFreezeFungibleToken(t *testing.T) {
 
 	// Globally freeze the token
 	args = append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGlobalFreezeFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyFreezeFungibleToken(), args)
 	requireT.NoError(err)
 
 	var resp types.QueryFungibleTokenResponse
@@ -49,7 +49,7 @@ func TestGlobalFreezeFungibleToken(t *testing.T) {
 
 	// Globally unfreeze the token
 	args = append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGlobalUnfreezeFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreezeFungibleToken(), args)
 	requireT.NoError(err)
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})

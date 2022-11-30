@@ -55,8 +55,8 @@ func FTCmd() *cobra.Command {
 		CmdTxBurnFungibleToken(),
 		CmdTxFreezeFungibleToken(),
 		CmdTxUnfreezeFungibleToken(),
-		CmdTxGlobalFreezeFungibleToken(),
-		CmdTxGlobalUnfreezeFungibleToken(),
+		CmdTxGloballyFreezeFungibleToken(),
+		CmdTxGloballyUnfreezeFungibleToken(),
 	)
 
 	return cmd
@@ -315,18 +315,18 @@ $ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 -
 	return cmd
 }
 
-// CmdTxGlobalFreezeFungibleToken returns GlobalFreezeFungibleToken cobra command.
-func CmdTxGlobalFreezeFungibleToken() *cobra.Command {
+// CmdTxGloballyFreezeFungibleToken returns GlobalFreezeFungibleToken cobra command.
+func CmdTxGloballyFreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "global-freeze [denom] --from [sender]",
+		Use:   "globally-freeze [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
-		Short: "freezes FungibleToken so no operations are allowed with it before unfrozen",
+		Short: "freezes fungible token so no operations are allowed with it before unfrozen",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Freezes fungible token so no operations are allowed with it before unfrozen.
 This operation is idempotent so global freeze of already frozen token does nothing.
 
 Example:
-$ %s tx asset ft global-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx asset ft globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -340,7 +340,7 @@ $ %s tx asset ft global-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a
 			sender := clientCtx.GetFromAddress()
 			denom := args[0]
 
-			msg := &types.MsgGlobalFreezeFungibleToken{
+			msg := &types.MsgGloballyFreezeFungibleToken{
 				Sender: sender.String(),
 				Denom:  denom,
 			}
@@ -353,10 +353,10 @@ $ %s tx asset ft global-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a
 	return cmd
 }
 
-// CmdTxGlobalUnfreezeFungibleToken returns GlobalUnfreezeFungibleToken cobra command.
-func CmdTxGlobalUnfreezeFungibleToken() *cobra.Command {
+// CmdTxGloballyUnfreezeFungibleToken returns GlobalUnfreezeFungibleToken cobra command.
+func CmdTxGloballyUnfreezeFungibleToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "global-unfreeze [denom] --from [sender]",
+		Use:   "globally-unfreeze [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
 		Short: "unfreezes fungible token and unblocks basic operations on it",
 		Long: strings.TrimSpace(
@@ -364,7 +364,7 @@ func CmdTxGlobalUnfreezeFungibleToken() *cobra.Command {
 This operation is idempotent so global unfreezing of non-frozen token does nothing.
 
 Example:
-$ %s tx asset ft global-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx asset ft globally-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -378,7 +378,7 @@ $ %s tx asset ft global-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk
 			sender := clientCtx.GetFromAddress()
 			denom := args[0]
 
-			msg := &types.MsgGlobalUnfreezeFungibleToken{
+			msg := &types.MsgGloballyUnfreezeFungibleToken{
 				Sender: sender.String(),
 				Denom:  denom,
 			}

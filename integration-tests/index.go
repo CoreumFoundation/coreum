@@ -31,7 +31,7 @@ func Tests() []testing.TestSet {
 				asset.TestIssueBasicFungibleToken,
 				asset.TestFreezeFungibleToken,
 				asset.TestFreezeUnfreezableFungibleToken,
-				asset.TestGlobalFreezeFungibleToken,
+				asset.TestGloballyFreezeFungibleToken,
 				asset.TestMintFungibleToken,
 				asset.TestBurnFungibleToken,
 				auth.TestUnexpectedSequenceNumber,
