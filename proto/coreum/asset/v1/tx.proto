@@ -36,8 +36,6 @@ service Msg {
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
 message MsgIssueFungibleToken {
-  option (cosmos.msg.v1.signer) = "issuer";
-
   string issuer = 1;
   string symbol = 2;
   string recipient = 3;
@@ -50,45 +48,33 @@ message MsgIssueFungibleToken {
 }
 
 message MsgFreezeFungibleToken {
-  option (cosmos.msg.v1.signer) = "sender";
-
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgUnfreezeFungibleToken {
-  option (cosmos.msg.v1.signer) = "sender";
-
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgMintFungibleToken {
-  option (cosmos.msg.v1.signer) = "sender";
-
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
 }
 
 message MsgBurnFungibleToken {
-  option (cosmos.msg.v1.signer) = "sender";
-
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
 message MsgGloballyFreezeFungibleToken {
-  option (cosmos.msg.v1.signer) = "sender";
-
   string sender = 1;
   string denom = 2;
 }
 
 message MsgGloballyUnfreezeFungibleToken {
-  option (cosmos.msg.v1.signer) = "sender";
-
   string sender = 1;
   string denom = 2;
 }
