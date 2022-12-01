@@ -162,7 +162,7 @@ func (f Faucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for tests, it might take a while...")
 	// FIXME (wojtek): use estimation once it is available in `tx` package
-	gasLimit := uint64(len(msgs)) * f.chainCtx.GasLimitByMsgs(&banktypes.MsgSend{})
+	gasLimit := uint64(len(msgs)) * f.chainCtx.GasLimitByMsgs(&banktypes.MsgSend{Amount: make(sdk.Coins, 1)})
 
 	// Transaction is broadcasted and awaited
 	_, err := tx.BroadcastTx(

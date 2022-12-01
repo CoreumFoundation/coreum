@@ -39,7 +39,10 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	}
 
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
-		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{}}, issueMsgs...),
+		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{Outputs: []banktypes.Output{
+			{Coins: make(sdk.Coins, 2)},
+			{Coins: make(sdk.Coins, 2)},
+		}}}, issueMsgs...),
 	}))
 
 	// Issue fungible tokens
@@ -87,16 +90,16 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
-	bankMultiSend := chain.GasLimitByMsgs(&banktypes.MsgMultiSend{})
+	bankMultiSendGas := chain.GasLimitByMsgs(msg)
 	res, err = tx.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
 			WithMemo(maxMemo). // memo is set to max length here to charge as much gas as possible
-			WithGas(bankMultiSend),
+			WithGas(bankMultiSendGas),
 		msg)
 	require.NoError(t, err)
-	require.Equal(t, bankMultiSend, uint64(res.GasUsed))
+	require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 

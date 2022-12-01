@@ -93,10 +93,10 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
+				&banktypes.MsgSend{Amount: make(sdk.Coins, 1)},
+				&banktypes.MsgSend{Amount: make(sdk.Coins, 1)},
+				&banktypes.MsgSend{Amount: make(sdk.Coins, 1)},
+				&banktypes.MsgSend{Amount: make(sdk.Coins, 1)},
 			},
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{

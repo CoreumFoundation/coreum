@@ -24,7 +24,7 @@ func TestCoreSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	senderInitialAmount := sdk.NewInt(100)
 	recipientInitialAmount := sdk.NewInt(10)
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Messages: []sdk.Msg{&banktypes.MsgSend{Amount: make(sdk.Coins, 1)}},
 		Amount:   senderInitialAmount,
 	}))
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
