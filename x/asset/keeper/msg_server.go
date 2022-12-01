@@ -17,7 +17,8 @@ type MsgKeeper interface {
 	UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
 	MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
-	SetGlobalFreezeEnabled(ctx sdk.Context, sender sdk.AccAddress, denom string, enabled bool) error
+	GloballyFreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, denom string) error
+	GloballyUnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -133,22 +134,28 @@ func (ms MsgServer) BurnFungibleToken(goCtx context.Context, req *types.MsgBurnF
 
 // GloballyFreezeFungibleToken globally freezes fungible token
 func (ms MsgServer) GloballyFreezeFungibleToken(goCtx context.Context, req *types.MsgGloballyFreezeFungibleToken) (*types.EmptyResponse, error) {
-	return ms.setFungibleTokenGlobalFreezeEnabled(goCtx, req.Sender, req.Denom, true)
-}
-
-// GloballyUnfreezeFungibleToken globally unfreezes fungible token
-func (ms MsgServer) GloballyUnfreezeFungibleToken(goCtx context.Context, req *types.MsgGloballyUnfreezeFungibleToken) (*types.EmptyResponse, error) {
-	return ms.setFungibleTokenGlobalFreezeEnabled(goCtx, req.Sender, req.Denom, false)
-}
-
-func (ms MsgServer) setFungibleTokenGlobalFreezeEnabled(goCtx context.Context, senderStr, denom string, enabled bool) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	sender, err := sdk.AccAddressFromBech32(senderStr)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if err := ms.keeper.SetGlobalFreezeEnabled(ctx, sender, denom, enabled); err != nil {
+	if err := ms.keeper.GloballyFreezeFungibleToken(ctx, sender, req.Denom); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// GloballyUnfreezeFungibleToken globally unfreezes fungible token
+func (ms MsgServer) GloballyUnfreezeFungibleToken(goCtx context.Context, req *types.MsgGloballyUnfreezeFungibleToken) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	if err := ms.keeper.GloballyUnfreezeFungibleToken(ctx, sender, req.Denom); err != nil {
 		return nil, err
 	}
 

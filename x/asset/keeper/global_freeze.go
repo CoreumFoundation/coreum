@@ -7,8 +7,8 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// SetGlobalFreezeEnabled enables or disables global freeze on a fungible token depending on enabled arg.
-func (k Keeper) SetGlobalFreezeEnabled(ctx sdk.Context, sender sdk.AccAddress, denom string, enabled bool) error {
+// GloballyFreezeFungibleToken enables global freeze on a fungible token. This function is idempotent.
+func (k Keeper) GloballyFreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
 	ft, err := k.GetFungibleTokenDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
@@ -19,13 +19,22 @@ func (k Keeper) SetGlobalFreezeEnabled(ctx sdk.Context, sender sdk.AccAddress, d
 		return err
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	// Global freeze implemented in an idempotent way, so it is allowed to freeze/unfreeze multiple times without effect.
-	if enabled {
-		store.Set(types.CreateGlobalFreezePrefix(denom), globalFreezeEnabledStoreVal)
-		return nil
+	ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezePrefix(denom), globalFreezeEnabledStoreVal)
+	return nil
+}
+
+// GloballyUnfreezeFungibleToken disables global freeze on a fungible token. This function is idempotent.
+func (k Keeper) GloballyUnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
+	ft, err := k.GetFungibleTokenDefinition(ctx, denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	store.Delete(types.CreateGlobalFreezePrefix(denom))
+	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
+	if err != nil {
+		return err
+	}
+
+	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezePrefix(denom))
 	return nil
 }

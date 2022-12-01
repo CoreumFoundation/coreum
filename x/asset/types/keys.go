@@ -43,7 +43,7 @@ func CreateFrozenBalancesPrefix(addr []byte) []byte {
 
 // CreateGlobalFreezePrefix creates the prefix for fungible token global freeze key.
 func CreateGlobalFreezePrefix(denom string) []byte {
-	return store.JoinKeysWithLength(GlobalFreezeKeyPrefix, []byte(denom))
+	return store.JoinKeys(GlobalFreezeKeyPrefix, []byte(denom))
 }
 
 // AddressFromBalancesStore returns an account address from a balances prefix

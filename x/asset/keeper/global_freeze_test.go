@@ -61,46 +61,46 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 
 	// try to global-freeze non-existent
 	nonExistentDenom := types.BuildFungibleTokenDenom("nonexist", issuer)
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, issuer, nonExistentDenom, true)
+	err = assetKeeper.GloballyFreezeFungibleToken(ctx, issuer, nonExistentDenom)
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, types.ErrFungibleTokenNotFound))
 
 	// try to global-freeze unfreezable FT
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, issuer, unfreezableDenom, true)
+	err = assetKeeper.GloballyFreezeFungibleToken(ctx, issuer, unfreezableDenom)
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, types.ErrFeatureNotActive))
 
 	// try to global-freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, randomAddr, freezableDenom, true)
+	err = assetKeeper.GloballyFreezeFungibleToken(ctx, randomAddr, freezableDenom)
 	requireT.Error(err)
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// freeze twice to check global-freeze idempotence
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, issuer, freezableDenom, true)
+	err = assetKeeper.GloballyFreezeFungibleToken(ctx, issuer, freezableDenom)
 	requireT.NoError(err)
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, issuer, freezableDenom, true)
+	err = assetKeeper.GloballyFreezeFungibleToken(ctx, issuer, freezableDenom)
 	requireT.NoError(err)
 	frozenFt, err := assetKeeper.GetFungibleToken(ctx, freezableDenom)
 	requireT.NoError(err)
 	assertT.True(frozenFt.GloballyFrozen)
 
 	// try to global-unfreeze from non issuer address
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, randomAddr, freezableDenom, false)
+	err = assetKeeper.GloballyUnfreezeFungibleToken(ctx, randomAddr, freezableDenom)
 	requireT.Error(err)
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// unfreeze twice to check global-unfreeze idempotence
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, issuer, freezableDenom, false)
+	err = assetKeeper.GloballyUnfreezeFungibleToken(ctx, issuer, freezableDenom)
 	requireT.NoError(err)
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, issuer, freezableDenom, false)
+	err = assetKeeper.GloballyUnfreezeFungibleToken(ctx, issuer, freezableDenom)
 	requireT.NoError(err)
 	unfrozenFt, err := assetKeeper.GetFungibleToken(ctx, freezableDenom)
 	requireT.NoError(err)
 	assertT.False(unfrozenFt.GloballyFrozen)
 
 	// freeze, try to send & verify balance
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, issuer, freezableDenom, true)
+	err = assetKeeper.GloballyFreezeFungibleToken(ctx, issuer, freezableDenom)
 	requireT.NoError(err)
 	err = bankKeeper.SendCoins(ctx, receiver, randomAddr, sdk.Coins{sdk.NewCoin(freezableDenom, sdk.NewInt(10))})
 	requireT.Error(err)
@@ -109,7 +109,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(freezableDenom, sdk.NewInt(0)), balance)
 
 	// unfreeze, try to send & verify balance
-	err = assetKeeper.SetGlobalFreezeEnabled(ctx, issuer, freezableDenom, false)
+	err = assetKeeper.GloballyUnfreezeFungibleToken(ctx, issuer, freezableDenom)
 	requireT.NoError(err)
 	err = bankKeeper.SendCoins(ctx, receiver, randomAddr, sdk.Coins{sdk.NewCoin(freezableDenom, sdk.NewInt(12))})
 	requireT.NoError(err)
