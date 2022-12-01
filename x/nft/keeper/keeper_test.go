@@ -9,7 +9,6 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -28,7 +27,7 @@ const (
 type TestSuite struct {
 	suite.Suite
 
-	app         *app.App
+	app         *simapp.App
 	ctx         sdk.Context
 	addrs       []sdk.AccAddress
 	queryClient nft.QueryClient

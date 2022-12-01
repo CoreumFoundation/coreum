@@ -256,6 +256,11 @@
         "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
     },
-    "cnft": {}
+    "cnft": {},
+    "customparams": {
+      "staking_params": {
+        "min_self_delegation": "{{ .CustomParamsConfig.Staking.MinSelfDelegation }}"
+      }
+    }
   }
 }

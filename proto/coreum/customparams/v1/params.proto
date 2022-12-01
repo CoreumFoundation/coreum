@@ -1,0 +1,17 @@
+syntax = "proto3";
+package coreum.customparams.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/customparams/types";
+
+// StakingParams defines the set of additional staking params for the staking module wrapper.
+message StakingParams {
+  // min_self_delegation is the validators global self declared minimum for delegation.
+  string min_self_delegation = 1 [
+    (gogoproto.moretags) = "yaml:\"min_self_delegation\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}

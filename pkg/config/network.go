@@ -61,6 +61,12 @@ func init() {
 			UnbondingTime: "168h", // 7 days
 			MaxValidators: 32,
 		}
+
+		customParamsConfig = CustomParamsConfig{
+			Staking: CustomParamsStakingConfig{
+				MinSelfDelegation: sdk.NewInt(20_000_000_000), // 20k core
+			},
+		}
 	)
 
 	const denomDev = "ducore"
@@ -82,6 +88,7 @@ func init() {
 			Fee:                  feeConfig,
 			GovConfig:            govConfig,
 			StakingConfig:        stakingConfig,
+			CustomParamsConfig:   customParamsConfig,
 		},
 		{
 			ChainID:              constant.ChainIDDev,
@@ -94,8 +101,9 @@ func init() {
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@35.223.81.227:26656"},
 			},
-			GovConfig:     govConfig,
-			StakingConfig: stakingConfig,
+			GovConfig:          govConfig,
+			StakingConfig:      stakingConfig,
+			CustomParamsConfig: customParamsConfig,
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
 				{
@@ -204,6 +212,17 @@ type StakingConfig struct {
 	MaxValidators int
 }
 
+// CustomParamsStakingConfig contains custom params for the staking module configuration.
+type CustomParamsStakingConfig struct {
+	// MinSelfDelegation is the minimum allowed amount of the stake coin for the validator to be created.
+	MinSelfDelegation sdk.Int
+}
+
+// CustomParamsConfig contains custom params module configuration.
+type CustomParamsConfig struct {
+	Staking CustomParamsStakingConfig
+}
+
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID              ChainID
@@ -217,6 +236,7 @@ type NetworkConfig struct {
 	NodeConfig           NodeConfig
 	GovConfig            GovConfig
 	StakingConfig        StakingConfig
+	CustomParamsConfig   CustomParamsConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 	// TODO: remove this field once we have real upgrade handler
@@ -234,6 +254,7 @@ type Network struct {
 	nodeConfig               NodeConfig
 	gov                      GovConfig
 	staking                  StakingConfig
+	customParams             CustomParamsConfig
 	enableFakeUpgradeHandler bool
 
 	mu             *sync.Mutex
@@ -253,6 +274,7 @@ func NewNetwork(c NetworkConfig) Network {
 		fee:                      c.Fee,
 		gov:                      c.GovConfig,
 		staking:                  c.StakingConfig,
+		customParams:             c.CustomParamsConfig,
 		mu:                       &sync.Mutex{},
 		fundedAccounts:           append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:                   append([]json.RawMessage{}, c.GenTxs...),
@@ -517,6 +539,7 @@ func genesis(n Network) ([]byte, error) {
 		FeeModelParams       feemodeltypes.ModelParams
 		Gov                  GovConfig
 		Staking              StakingConfig
+		CustomParamsConfig   CustomParamsConfig
 	}{
 		GenesisTimeUTC:       n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:              n.chainID,
@@ -525,6 +548,7 @@ func genesis(n Network) ([]byte, error) {
 		FeeModelParams:       n.FeeModel().Params(),
 		Gov:                  n.gov,
 		Staking:              n.staking,
+		CustomParamsConfig:   n.customParams,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
