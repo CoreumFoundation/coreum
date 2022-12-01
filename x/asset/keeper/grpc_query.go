@@ -10,6 +10,8 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+var _ types.QueryServer = QueryService{}
+
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
 	GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error)

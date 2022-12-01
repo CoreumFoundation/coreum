@@ -9,6 +9,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 // DefaultDeterministicGasRequirements returns default config for deterministic gas
@@ -18,11 +19,13 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssueFungibleToken:    80000,
-		AssetFreezeFungibleToken:   55000,
-		AssetUnfreezeFungibleToken: 55000,
-		AssetMintFungibleToken:     35000,
-		AssetBurnFungibleToken:     35000,
+		AssetIssueFungibleToken:          80000,
+		AssetFreezeFungibleToken:         55000,
+		AssetUnfreezeFungibleToken:       55000,
+		AssetMintFungibleToken:           35000,
+		AssetBurnFungibleToken:           35000,
+		AssetCreateNonFungibleTokenClass: 20000,
+		AssetMintNonFungibleToken:        30000,
 
 		BankSend: 30000,
 
@@ -35,6 +38,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		GovVote:           8000,
 		GovVoteWeighted:   11000,
 		GovDeposit:        91000,
+
+		NFTSend: 20000,
 
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
@@ -59,11 +64,13 @@ type DeterministicGasRequirements struct {
 	FreeSignatures uint64
 
 	// x/asset
-	AssetIssueFungibleToken    uint64
-	AssetFreezeFungibleToken   uint64
-	AssetUnfreezeFungibleToken uint64
-	AssetMintFungibleToken     uint64
-	AssetBurnFungibleToken     uint64
+	AssetIssueFungibleToken          uint64
+	AssetFreezeFungibleToken         uint64
+	AssetUnfreezeFungibleToken       uint64
+	AssetMintFungibleToken           uint64
+	AssetBurnFungibleToken           uint64
+	AssetCreateNonFungibleTokenClass uint64
+	AssetMintNonFungibleToken        uint64
 
 	// x/bank
 	BankSend uint64
@@ -79,6 +86,9 @@ type DeterministicGasRequirements struct {
 	GovVote           uint64
 	GovVoteWeighted   uint64
 	GovDeposit        uint64
+
+	// x/nft
+	NFTSend uint64
 
 	// x/staking
 	StakingDelegate        uint64
@@ -106,6 +116,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetMintFungibleToken, true
 	case *assettypes.MsgBurnFungibleToken:
 		return dgr.AssetBurnFungibleToken, true
+	case *assettypes.MsgCreateNonFungibleTokenClass:
+		return dgr.AssetCreateNonFungibleTokenClass, true
+	case *assettypes.MsgMintNonFungibleToken:
+		return dgr.AssetMintNonFungibleToken, true
 	case *banktypes.MsgSend:
 		return dgr.BankSend, true
 	case *distributiontypes.MsgFundCommunityPool:
@@ -124,6 +138,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.GovVoteWeighted, true
 	case *govtypes.MsgDeposit:
 		return dgr.GovDeposit, true
+	case *nft.MsgSend:
+		return dgr.NFTSend, true
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:

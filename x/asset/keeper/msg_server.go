@@ -9,6 +9,8 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+var _ types.MsgServer = MsgServer{}
+
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
 	IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error)
@@ -19,15 +21,23 @@ type MsgKeeper interface {
 	BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 }
 
+// NonFungibleTokeMsgKeeper defines subscope of non-fungible toke keeper methods required by msg service.
+type NonFungibleTokeMsgKeeper interface {
+	CreateClass(ctx sdk.Context, settings types.CreateNonFungibleTokenClassSettings) (string, error)
+	Mint(ctx sdk.Context, settings types.MintNonFungibleTokenSettings) error
+}
+
 // MsgServer serves grpc tx requests for assets module.
 type MsgServer struct {
-	keeper MsgKeeper
+	keeper    MsgKeeper
+	nftKeeper NonFungibleTokeMsgKeeper
 }
 
 // NewMsgServer returns a new instance of the MsgServer.
-func NewMsgServer(keeper MsgKeeper) MsgServer {
+func NewMsgServer(keeper MsgKeeper, nftKeeper NonFungibleTokeMsgKeeper) MsgServer {
 	return MsgServer{
-		keeper: keeper,
+		keeper:    keeper,
+		nftKeeper: nftKeeper,
 	}
 }
 
@@ -124,6 +134,54 @@ func (ms MsgServer) BurnFungibleToken(goCtx context.Context, req *types.MsgBurnF
 
 	err = ms.keeper.BurnFungibleToken(ctx, sender, req.Coin)
 	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// CreateNonFungibleTokenClass create new non-fungible token class.
+func (ms MsgServer) CreateNonFungibleTokenClass(ctx context.Context, req *types.MsgCreateNonFungibleTokenClass) (*types.EmptyResponse, error) {
+	creator, err := sdk.AccAddressFromBech32(req.Creator)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid creator in MsgCreateNonFungibleTokenClass")
+	}
+	if _, err := ms.nftKeeper.CreateClass(
+		sdk.UnwrapSDKContext(ctx),
+		types.CreateNonFungibleTokenClassSettings{
+			Creator:     creator,
+			Name:        req.Name,
+			Symbol:      req.Symbol,
+			Description: req.Description,
+			URI:         req.Uri,
+			URIHash:     req.UriHash,
+			Data:        req.Data,
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// MintNonFungibleToken mints non-fungible token.
+func (ms MsgServer) MintNonFungibleToken(ctx context.Context, req *types.MsgMintNonFungibleToken) (*types.EmptyResponse, error) {
+	sdk.UnwrapSDKContext(ctx)
+	owner, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid sender in MsgMintNonFungibleToken")
+	}
+	if err := ms.nftKeeper.Mint(
+		sdk.UnwrapSDKContext(ctx),
+		types.MintNonFungibleTokenSettings{
+			Sender:  owner,
+			ClassID: req.ClassId,
+			ID:      req.Id,
+			URI:     req.Uri,
+			URIHash: req.UriHash,
+			Data:    req.Data,
+		},
+	); err != nil {
 		return nil, err
 	}
 

@@ -2,7 +2,10 @@ syntax = "proto3";
 package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
@@ -21,6 +24,11 @@ service Msg {
   rpc MintFungibleToken(MsgMintFungibleToken) returns (EmptyResponse);
   // BurnFungibleToken burns the specified fungible tokens from senders balance if the sender has enough balance
   rpc BurnFungibleToken(MsgBurnFungibleToken) returns (EmptyResponse);
+
+  // CreateNonFungibleTokenClass creates new non-fungible token class.
+  rpc CreateNonFungibleTokenClass(MsgCreateNonFungibleTokenClass) returns (EmptyResponse);
+  // MintNonFungibleToken mints new non-fungible token in the class.
+  rpc MintNonFungibleToken(MsgMintNonFungibleToken) returns (EmptyResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -64,8 +72,28 @@ message MsgMintFungibleToken {
   cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
 }
 
-
 message MsgBurnFungibleToken {
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+// MsgCreateNonFungibleTokenClass defines message for the CreateNonFungibleTokenClass method.
+message MsgCreateNonFungibleTokenClass {
+  string creator = 1;
+  string symbol = 2;
+  string name = 3;
+  string description = 4;
+  string uri = 5;
+  string uri_hash = 6;
+  google.protobuf.Any data = 7;
+}
+
+// MsgMintNonFungibleToken defines message for the MintNonFungibleToken method.
+message MsgMintNonFungibleToken {
+  string sender = 1;
+  string class_id = 2;
+  string id = 3;
+  string uri = 4;
+  string uri_hash = 5;
+  google.protobuf.Any data = 6;
 }

@@ -19,4 +19,10 @@ var (
 	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 6, "not enough balance")
 	// ErrInvalidSymbol is returned when the provided symbol is not of valid format
 	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 7, "symbol format is not valid")
+	// ErrInvalidID is returned when the provided id is not of valid format
+	ErrInvalidID = sdkerrors.Register(ModuleName, 8, "id format is not valid")
+	// ErrInvalidNonFungibleTokenClass defines the common error for the invalid non-fungible token class.
+	ErrInvalidNonFungibleTokenClass = sdkerrors.Register(ModuleName, 9, "invalid non-fungible token class")
+	// ErrInvalidNonFungibleToken defines the common error for the invalid non-fungible token.
+	ErrInvalidNonFungibleToken = sdkerrors.Register(ModuleName, 10, "invalid non-fungible token")
 )

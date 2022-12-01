@@ -7,6 +7,10 @@ import (
 
 var (
 	_ sdk.Msg = &MsgIssueFungibleToken{}
+	_ sdk.Msg = &MsgFreezeFungibleToken{}
+	_ sdk.Msg = &MsgUnfreezeFungibleToken{}
+	_ sdk.Msg = &MsgMintFungibleToken{}
+	_ sdk.Msg = &MsgBurnFungibleToken{}
 )
 
 // ValidateBasic validates the message.
@@ -31,7 +35,7 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 	}
 
 	if len(msg.Description) > maxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid description %q, the length must less than %d", msg.Description, maxDescriptionLength)
+		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid description %q, the length must be less than %d", msg.Description, maxDescriptionLength)
 	}
 
 	return nil
@@ -54,7 +58,7 @@ func (msg MsgFreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
+	if _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
 		return err
 	}
 
@@ -78,7 +82,7 @@ func (msg MsgUnfreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
+	if _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
 		return err
 	}
 
@@ -98,7 +102,7 @@ func (msg MsgMintFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
+	if _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
 		return err
 	}
 
@@ -118,7 +122,7 @@ func (msg MsgBurnFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
+	if _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
 		return err
 	}
 

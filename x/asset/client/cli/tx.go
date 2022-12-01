@@ -34,6 +34,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		FTCmd(),
+		NFTCmd(),
 	)
 
 	return cmd
