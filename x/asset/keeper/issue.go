@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"bytes"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -70,14 +68,13 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadata for %s denom not found", denom)
 	}
 
-	globFreezeVal := ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezePrefix(denom))
 	return types.FungibleToken{
 		Denom:          definition.Denom,
 		Issuer:         definition.Issuer,
 		Symbol:         metadata.Symbol,
 		Description:    metadata.Description,
 		Features:       definition.Features,
-		GloballyFrozen: bytes.Equal(globFreezeVal, globalFreezeEnabledStoreVal),
+		GloballyFrozen: k.isGloballyFrozen(ctx, denom),
 	}, nil
 }
 

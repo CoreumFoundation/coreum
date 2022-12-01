@@ -11,10 +11,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-var (
-	globalFreezeEnabledStoreVal = []byte{0x01}
-)
-
 // Keeper is the asset module keeper.
 type Keeper struct {
 	cdc        codec.BinaryCodec
