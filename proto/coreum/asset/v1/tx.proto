@@ -3,30 +3,39 @@ package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
+option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.
 service Msg {
   // IssueFungibleToken defines a method to issue a new fungible token.
-  rpc IssueFungibleToken(MsgIssueFungibleToken) returns (MsgIssueFungibleTokenResponse);
-  // FreezeFungibleToken freezes a part of the fungible tokens in an 
-  // account, only if the freezable feature is enabled on that token.
-  rpc FreezeFungibleToken(MsgFreezeFungibleToken) returns (MsgFreezeFungibleTokenResponse);
-  // UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an 
-  // account, only if there are such frozen tokens on that account 
-  rpc UnfreezeFungibleToken(MsgUnfreezeFungibleToken) returns (MsgUnfreezeFungibleTokenResponse);
-  // MintFungibleToken mints new fungible tokens  
+  rpc IssueFungibleToken(MsgIssueFungibleToken) returns (EmptyResponse);
+
+  // MintFungibleToken mints new fungible tokens
   rpc MintFungibleToken(MsgMintFungibleToken) returns (EmptyResponse);
   // BurnFungibleToken burns the specified fungible tokens from senders balance if the sender has enough balance
   rpc BurnFungibleToken(MsgBurnFungibleToken) returns (EmptyResponse);
+
+  // FreezeFungibleToken freezes a part of the fungible tokens in an
+  // account, only if the freezable feature is enabled on that token.
+  rpc FreezeFungibleToken(MsgFreezeFungibleToken) returns (EmptyResponse);
+  // UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an 
+  // account, only if there are such frozen tokens on that account 
+  rpc UnfreezeFungibleToken(MsgUnfreezeFungibleToken) returns (EmptyResponse);
+
+  // GloballyFreezeFungibleToken freezes fungible token so no operations are allowed with it before unfrozen.
+  // This operation is idempotent so global freeze of already frozen token does nothing.
+  rpc GloballyFreezeFungibleToken(MsgGloballyFreezeFungibleToken) returns (EmptyResponse);
+  // GloballyUnfreezeFungibleToken unfreezes fungible token and unblocks basic operations on it.
+  // This operation is idempotent so global unfreezing of non-frozen token does nothing.
+  rpc GloballyUnfreezeFungibleToken(MsgGloballyUnfreezeFungibleToken) returns (EmptyResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
 message MsgIssueFungibleToken {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
   string issuer = 1;
   string symbol = 2;
   string recipient = 3;
@@ -38,16 +47,11 @@ message MsgIssueFungibleToken {
   repeated FungibleTokenFeature features = 6;
 }
 
-// MsgIssueFungibleTokenResponse defines message response for the IssueFungibleToken.
-message MsgIssueFungibleTokenResponse {}
-
 message MsgFreezeFungibleToken {
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
-
-message MsgFreezeFungibleTokenResponse {}
 
 message MsgUnfreezeFungibleToken {
   string sender = 1;
@@ -55,17 +59,24 @@ message MsgUnfreezeFungibleToken {
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
-message MsgUnfreezeFungibleTokenResponse {}
-
-message EmptyResponse {}
-
 message MsgMintFungibleToken {
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
 }
 
-
 message MsgBurnFungibleToken {
   string sender = 1;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
+
+message MsgGloballyFreezeFungibleToken {
+  string sender = 1;
+  string denom = 2;
+}
+
+message MsgGloballyUnfreezeFungibleToken {
+  string sender = 1;
+  string denom = 2;
+}
+
+message EmptyResponse {}
