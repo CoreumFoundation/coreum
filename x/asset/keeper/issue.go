@@ -94,14 +94,19 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		return types.FungibleToken{}, err
 	}
 
+	return k.getFungibleTokenFullInfo(ctx, definition)
+}
+
+// getFungibleTokenFullInfo return the fungible token info from bank, given its definition.
+func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.FungibleTokenDefinition) (types.FungibleToken, error) {
 	subunit, _, err := types.DeconstructFungibleTokenDenom(definition.Denom)
 	if err != nil {
 		return types.FungibleToken{}, err
 	}
 
-	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, denom)
+	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, definition.Denom)
 	if !found {
-		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadata for %s denom not found", denom)
+		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadata for %s denom not found", definition.Denom)
 	}
 
 	precision := -1
@@ -136,7 +141,7 @@ func (k Keeper) GetFungibleTokens(ctx sdk.Context, pagination *query.PageRequest
 
 	var tokens []types.FungibleToken
 	for _, definition := range definitions {
-		token, err := k.GetFungibleToken(ctx, definition.Denom)
+		token, err := k.getFungibleTokenFullInfo(ctx, definition)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -211,6 +216,8 @@ func (k Keeper) SetFungibleTokenDenomMetadata(ctx sdk.Context, denom, symbol, de
 				Exponent: uint32(0),
 			},
 		},
+		// here take subunit provided by the user, generate the denom and used it as base,
+		// and we take the symbol provided by the user and use it as symbol
 		Base:    denom,
 		Display: symbol,
 	}
