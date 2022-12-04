@@ -8,7 +8,7 @@ The node docs section provides documentation on how to run all types of coreum n
 
 1. [Run seed node.](node/run-seed.md)
 2. [Run sentry node.](node/run-sentry.md)
-3. [Run full node.](node/run-full.md)
+3. [Run full node.](./node/run-full.md)
 4. [Run validator node.](node/run-validator.md)
 
 ## User docs
