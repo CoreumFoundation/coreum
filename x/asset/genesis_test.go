@@ -3,8 +3,6 @@ package asset_test
 import (
 	"fmt"
 	"math/rand"
-	"sort"
-	"strings"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -114,47 +112,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// check that export is equal import
 	exportedGenState := asset.ExportGenesis(ctx, assetKeeper)
 
-	sort.Slice(genState.FungibleTokens.TokenDefinitions, func(i, j int) bool {
-		return strings.Compare(
-			genState.FungibleTokens.TokenDefinitions[i].Denom,
-			genState.FungibleTokens.TokenDefinitions[j].Denom,
-		) < 0
-	})
-
-	sort.Slice(genState.FungibleTokens.FrozenBalances, func(i, j int) bool {
-		return strings.Compare(
-			genState.FungibleTokens.FrozenBalances[i].Coins.String()+genState.FungibleTokens.FrozenBalances[i].Address,
-			genState.FungibleTokens.FrozenBalances[j].Coins.String()+genState.FungibleTokens.FrozenBalances[j].Address,
-		) < 0
-	})
-
-	sort.Slice(genState.FungibleTokens.WhitelistedBalances, func(i, j int) bool {
-		return strings.Compare(
-			genState.FungibleTokens.WhitelistedBalances[i].Coins.String()+genState.FungibleTokens.WhitelistedBalances[i].Address,
-			genState.FungibleTokens.WhitelistedBalances[j].Coins.String()+genState.FungibleTokens.WhitelistedBalances[j].Address,
-		) < 0
-	})
-
-	sort.Slice(exportedGenState.FungibleTokens.TokenDefinitions, func(i, j int) bool {
-		return strings.Compare(
-			exportedGenState.FungibleTokens.TokenDefinitions[i].Denom,
-			exportedGenState.FungibleTokens.TokenDefinitions[j].Denom,
-		) < 0
-	})
-
-	sort.Slice(exportedGenState.FungibleTokens.FrozenBalances, func(i, j int) bool {
-		return strings.Compare(
-			exportedGenState.FungibleTokens.FrozenBalances[i].Coins.String()+exportedGenState.FungibleTokens.FrozenBalances[i].Address,
-			exportedGenState.FungibleTokens.FrozenBalances[j].Coins.String()+exportedGenState.FungibleTokens.FrozenBalances[j].Address,
-		) < 0
-	})
-
-	sort.Slice(exportedGenState.FungibleTokens.WhitelistedBalances, func(i, j int) bool {
-		return strings.Compare(
-			exportedGenState.FungibleTokens.WhitelistedBalances[i].Coins.String()+exportedGenState.FungibleTokens.WhitelistedBalances[i].Address,
-			exportedGenState.FungibleTokens.WhitelistedBalances[j].Coins.String()+exportedGenState.FungibleTokens.WhitelistedBalances[j].Address,
-		) < 0
-	})
-
-	assertT.EqualValues(genState.FungibleTokens, exportedGenState.FungibleTokens)
+	assertT.ElementsMatch(genState.FungibleTokens.TokenDefinitions, exportedGenState.FungibleTokens.TokenDefinitions)
+	assertT.ElementsMatch(genState.FungibleTokens.FrozenBalances, exportedGenState.FungibleTokens.FrozenBalances)
+	assertT.ElementsMatch(genState.FungibleTokens.WhitelistedBalances, exportedGenState.FungibleTokens.WhitelistedBalances)
 }
