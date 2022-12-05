@@ -35,13 +35,14 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	}
 	k.SetFungibleTokenDefinition(ctx, definition)
 
-	if isFeatureEnabled(settings.Features, types.FungibleTokenFeature_whitelist) {
+	//nolint:nosnakecase
+	if definition.IsFeatureEnabled(types.FungibleTokenFeature_whitelist) && settings.InitialAmount.IsPositive() {
 		if err := k.SetWhitelistedBalance(ctx, settings.Issuer, settings.Recipient, sdk.NewCoin(denom, settings.InitialAmount)); err != nil {
 			return "", err
 		}
 	}
 
-	if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
+	if err := k.mintFungibleToken(ctx, definition, settings.InitialAmount, settings.Recipient); err != nil {
 		return "", err
 	}
 
@@ -150,11 +151,11 @@ func (k Keeper) setFungibleTokenDenomMetadata(ctx sdk.Context, symbol, denom, de
 	k.bankKeeper.SetDenomMetaData(ctx, denomMetadata)
 }
 
-func (k Keeper) mintFungibleToken(ctx sdk.Context, denom string, amount sdk.Int, recipient sdk.AccAddress) error {
+func (k Keeper) mintFungibleToken(ctx sdk.Context, ft types.FungibleTokenDefinition, amount sdk.Int, recipient sdk.AccAddress) error {
 	if !amount.IsPositive() {
 		return nil
 	}
-	coinsToMint := sdk.NewCoins(sdk.NewCoin(denom, amount))
+	coinsToMint := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
 	if err := k.areCoinsReceivable(ctx, recipient, coinsToMint); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not receivable")
 	}

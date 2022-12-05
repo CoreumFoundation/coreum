@@ -18,6 +18,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+//nolint:funlen
 func TestImportAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)

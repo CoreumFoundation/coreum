@@ -119,6 +119,16 @@ paths:
           in: query
           required: false
           type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   '/coreum/asset/v1/fts/balance/{account}/frozen/{denom}':
@@ -298,6 +308,16 @@ paths:
           in: query
           required: false
           type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   '/coreum/asset/v1/fts/balance/{account}/whitelisted/{denom}':
@@ -381,6 +401,8 @@ paths:
                     type: string
                   description:
                     type: string
+                  globally_frozen:
+                    type: boolean
                   features:
                     type: array
                     items:
@@ -36493,6 +36515,8 @@ definitions:
         type: string
       description:
         type: string
+      globally_frozen:
+        type: boolean
       features:
         type: array
         items:
@@ -36512,15 +36536,6 @@ definitions:
       - burn
       - whitelist
     default: freeze
-  coreum.asset.v1.MsgFreezeFungibleTokenResponse:
-    type: object
-  coreum.asset.v1.MsgIssueFungibleTokenResponse:
-    type: object
-    description: >-
-      MsgIssueFungibleTokenResponse defines message response for the
-      IssueFungibleToken.
-  coreum.asset.v1.MsgUnfreezeFungibleTokenResponse:
-    type: object
   coreum.asset.v1.QueryFrozenBalanceResponse:
     type: object
     properties:
@@ -36587,6 +36602,8 @@ definitions:
             type: string
           description:
             type: string
+          globally_frozen:
+            type: boolean
           features:
             type: array
             items:
@@ -38605,82 +38622,6 @@ definitions:
         type: string
         format: uint64
     title: QuerySupplyResponse is the response type for the Query/Supply RPC method
-  cosmos.base.query.v1beta1.PageRequest:
-    type: object
-    properties:
-      key:
-        type: string
-        format: byte
-        description: |-
-          key is a value returned in PageResponse.next_key to begin
-          querying the next page most efficiently. Only one of offset or key
-          should be set.
-      offset:
-        type: string
-        format: uint64
-        description: |-
-          offset is a numeric offset that can be used when key is unavailable.
-          It is less efficient than using key. Only one of offset or key should
-          be set.
-      limit:
-        type: string
-        format: uint64
-        description: >-
-          limit is the total number of results to be returned in the result
-          page.
-
-          If left empty it will default to a value to be set by each app.
-      count_total:
-        type: boolean
-        description: >-
-          count_total is set to true  to indicate that the result set should
-          include
-
-          a count of the total number of items available for pagination in UIs.
-
-          count_total is only respected when offset is used. It is ignored when
-          key
-
-          is set.
-      reverse:
-        type: boolean
-        description: >-
-          reverse is set to true if results are to be returned in the descending
-          order.
-
-
-          Since: cosmos-sdk 0.43
-    description: |-
-      message SomeRequest {
-               Foo some_parameter = 1;
-               PageRequest pagination = 2;
-       }
-    title: |-
-      PageRequest is to be embedded in gRPC request messages for efficient
-      pagination. Ex:
-  cosmos.base.query.v1beta1.PageResponse:
-    type: object
-    properties:
-      next_key:
-        type: string
-        format: byte
-        title: |-
-          next_key is the key to be passed to PageRequest.key to
-          query the next page most efficiently
-      total:
-        type: string
-        format: uint64
-        title: |-
-          total is total number of results available if PageRequest.count_total
-          was set, its value is undefined otherwise
-    description: |-
-      PageResponse is to be embedded in gRPC response messages where the
-      corresponding request message has used PageRequest.
-
-       message SomeResponse {
-               repeated Bar results = 1;
-               PageResponse page = 2;
-       }
   cosmos.auth.v1beta1.Params:
     type: object
     properties:

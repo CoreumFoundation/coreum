@@ -15,7 +15,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-//nolint:funlen // this is complex test scenario and breaking it down is not helpful
 func TestKeeper_Whitelist(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -57,12 +56,17 @@ func TestKeeper_Whitelist(t *testing.T) {
 		Features:      []types.FungibleTokenFeature{},
 	}
 
+	receiver := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
 	unwhitelistableDenom, err := assetKeeper.IssueFungibleToken(ctx, unwhitelistableSettings)
 	requireT.NoError(err)
 	_, err = assetKeeper.GetFungibleToken(ctx, unwhitelistableDenom)
 	requireT.NoError(err)
 
-	receiver := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	// whitelisting fails on unwhitelistable token
+	err = assetKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(unwhitelistableDenom, sdk.NewInt(1)))
+	requireT.Error(err)
+	requireT.True(types.ErrFeatureNotActive.Is(err))
 
 	// try to whitelist non-existent denom
 	nonExistentDenom := types.BuildFungibleTokenDenom("nonexist", issuer)

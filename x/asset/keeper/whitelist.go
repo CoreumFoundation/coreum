@@ -15,7 +15,12 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender sdk.AccAddress, ad
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
 	}
 
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_whitelist) //nolint:nosnakecase
+	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_whitelist) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -78,7 +83,8 @@ func (k Keeper) areCoinsReceivable(ctx sdk.Context, addr sdk.AccAddress, coins s
 			return err
 		}
 
-		if !isFeatureEnabled(definition.Features, types.FungibleTokenFeature_whitelist) {
+		//nolint:nosnakecase
+		if !definition.IsFeatureEnabled(types.FungibleTokenFeature_whitelist) {
 			continue
 		}
 

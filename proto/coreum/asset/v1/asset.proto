@@ -18,7 +18,7 @@ message FungibleTokenDefinition {
   option (gogoproto.equal) = false;
   string denom = 1;
   string issuer = 2;
-  repeated FungibleTokenFeature features = 4;
+  repeated FungibleTokenFeature features = 3;
 }
 
 // FungibleToken is a full representation of the fungible token.

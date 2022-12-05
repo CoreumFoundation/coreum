@@ -52,7 +52,7 @@ func (k Keeper) MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin s
 		return err
 	}
 
-	return k.mintFungibleToken(ctx, coin.Denom, coin.Amount, sender)
+	return k.mintFungibleToken(ctx, ft, coin.Amount, sender)
 }
 
 // BurnFungibleToken burns fungible token

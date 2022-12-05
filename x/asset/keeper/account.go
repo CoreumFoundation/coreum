@@ -31,13 +31,29 @@ func (s balanceStore) Balance(denom string) sdk.Coin {
 }
 
 func (s balanceStore) Balances(pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
-	coins := sdk.NewCoins()
-	pageRes, err := query.Paginate(s.store, pagination, func(key, value []byte) error {
-		var coin sdk.Coin
-		s.cdc.MustUnmarshal(value, &coin)
-		coins = append(coins, coin)
-		return nil
-	})
+	coinPointers, pageRes, err := query.GenericFilteredPaginate(
+		s.cdc,
+		s.store,
+		pagination,
+		// builder
+		func(key []byte, coin *sdk.Coin) (*sdk.Coin, error) {
+			return coin, nil
+		},
+		// constructor
+		func() *sdk.Coin {
+			return &sdk.Coin{}
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	coins := make(sdk.Coins, 0, len(coinPointers))
+	for _, c := range coinPointers {
+		coins = append(coins, *c)
+	}
+
 	return coins, pageRes, err
 }
 
