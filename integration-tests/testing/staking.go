@@ -15,13 +15,13 @@ import (
 )
 
 // CreateValidator creates a new validator on the chain and returns the staker addresses, validator addresses and callback function to deactivate it.
-func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (sdk.AccAddress, sdk.ValAddress, func() error, error) {
+func CreateValidator(ctx context.Context, chain Chain, stakingAmount sdk.Int, selfDelegationAmount sdk.Int) (sdk.AccAddress, sdk.ValAddress, func() error, error) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 	staker := chain.GenAccount()
 
 	if err := chain.Faucet.FundAccountsWithOptions(ctx, staker, BalancesOptions{
 		Messages: []sdk.Msg{&stakingtypes.MsgCreateValidator{}, &stakingtypes.MsgUndelegate{}},
-		Amount:   initialAmount,
+		Amount:   stakingAmount,
 	}); err != nil {
 		return nil, nil, nil, err
 	}
@@ -31,10 +31,10 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 	msg, err := stakingtypes.NewMsgCreateValidator(
 		validatorAddr,
 		cosmosed25519.GenPrivKey().PubKey(),
-		chain.NewCoin(initialAmount),
+		chain.NewCoin(stakingAmount),
 		stakingtypes.Description{Moniker: fmt.Sprintf("testing-staker-%s", staker)},
 		stakingtypes.NewCommissionRates(sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1")),
-		sdk.OneInt(),
+		selfDelegationAmount,
 	)
 	if err != nil {
 		return nil, nil, nil, err
@@ -59,7 +59,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}
-	if initialAmount.String() != resp.Validator.Tokens.String() {
+	if stakingAmount.String() != resp.Validator.Tokens.String() {
 		return nil, nil, nil, errors.Errorf("unexpected validator %q tokens after creation: %s", validatorAddr, resp.Validator.Tokens)
 	}
 	if stakingtypes.Bonded != resp.Validator.Status {
@@ -68,7 +68,7 @@ func CreateValidator(ctx context.Context, chain Chain, initialAmount sdk.Int) (s
 
 	return staker, validatorAddr, func() error {
 		// Undelegate coins, i.e. deactivate staker
-		undelegateMsg := stakingtypes.NewMsgUndelegate(staker, validatorAddr, chain.NewCoin(initialAmount))
+		undelegateMsg := stakingtypes.NewMsgUndelegate(staker, validatorAddr, chain.NewCoin(stakingAmount))
 		_, err = tx.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(staker),

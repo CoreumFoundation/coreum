@@ -255,6 +255,12 @@
         "denom": "{{ .Denom }}",
         "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
+    },
+    "cnft": {},
+    "customparams": {
+      "staking_params": {
+        "min_self_delegation": "{{ .CustomParamsConfig.Staking.MinSelfDelegation }}"
+      }
     }
   }
 }
