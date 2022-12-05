@@ -13,20 +13,27 @@ import (
 // NewHandler return tx handler of the asset module.
 func NewHandler(ms keeper.MsgServer) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		ctx = ctx.WithEventManager(sdk.NewEventManager())
+		var (
+			goCtx = sdk.WrapSDKContext(ctx.WithEventManager(sdk.NewEventManager()))
+			res   *types.EmptyResponse
+			err   error
+		)
 		switch msg := msg.(type) {
 		case *types.MsgIssueFungibleToken:
-			res, err := ms.IssueFungibleToken(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
+			res, err = ms.IssueFungibleToken(goCtx, msg)
 		case *types.MsgFreezeFungibleToken:
-			res, err := ms.FreezeFungibleToken(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
+			res, err = ms.FreezeFungibleToken(goCtx, msg)
 		case *types.MsgUnfreezeFungibleToken:
-			res, err := ms.UnfreezeFungibleToken(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
+			res, err = ms.UnfreezeFungibleToken(goCtx, msg)
+		case *types.MsgGloballyFreezeFungibleToken:
+			res, err = ms.GloballyFreezeFungibleToken(goCtx, msg)
+		case *types.MsgGloballyUnfreezeFungibleToken:
+			res, err = ms.GloballyUnfreezeFungibleToken(goCtx, msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 		}
+
+		return sdk.WrapServiceResult(ctx, res, err)
 	}
 }
