@@ -26,9 +26,9 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		AssetGloballyFreezeFungibleToken:   5000,
 		AssetGloballyUnfreezeFungibleToken: 5000,
 
-		BankSendAdditionalTransfer: 5000,
-		BankSend:                   25000,
-		BankMultiSend:              25000,
+		BankSendPerTransfer: 22000,
+		BankSend:            50000,
+		BankMultiSend:       50000,
 
 		DistributionFundCommunityPool:           50000,
 		DistributionSetWithdrawAddress:          50000,
@@ -72,9 +72,9 @@ type DeterministicGasRequirements struct {
 	AssetGloballyUnfreezeFungibleToken uint64
 
 	// x/bank
-	BankSendAdditionalTransfer uint64
-	BankSend                   uint64
-	BankMultiSend              uint64
+	BankSendPerTransfer uint64
+	BankSend            uint64
+	BankMultiSend       uint64
 
 	// x/distribution
 	DistributionFundCommunityPool           uint64
@@ -119,7 +119,7 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	case *assettypes.MsgBurnFungibleToken:
 		return dgr.AssetBurnFungibleToken, true
 	case *banktypes.MsgSend:
-		return dgr.BankSend + uint64(len(m.Amount))*dgr.BankSendAdditionalTransfer, true
+		return dgr.BankSend + uint64(len(m.Amount))*dgr.BankSendPerTransfer, true
 	case *banktypes.MsgMultiSend:
 		var numOfCoins int
 		for _, i := range m.Inputs {
@@ -134,7 +134,7 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 			numOfCoins = numOfOutputCoins
 		}
 
-		return dgr.BankMultiSend + uint64(numOfCoins)*dgr.BankSendAdditionalTransfer, true
+		return dgr.BankMultiSend + uint64(numOfCoins)*dgr.BankSendPerTransfer, true
 	case *distributiontypes.MsgFundCommunityPool:
 		return dgr.DistributionFundCommunityPool, true
 	case *distributiontypes.MsgSetWithdrawAddress:

@@ -143,7 +143,7 @@ func TestSendDeterministicGasManyCoins(ctx context.Context, t testing.T, chain t
 		msg)
 	require.NoError(t, err)
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
-	require.Equal(t, zeroBankSendGas+numOfTokens*deterministicGasConfig.BankSendAdditionalTransfer, bankSendGas)
+	require.Equal(t, zeroBankSendGas+numOfTokens*deterministicGasConfig.BankSendPerTransfer, bankSendGas)
 }
 
 // TestSendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
@@ -284,5 +284,5 @@ func TestMultiSendDeterministicGasManyCoins(ctx context.Context, t testing.T, ch
 		msg)
 	require.NoError(t, err)
 	require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
-	require.Equal(t, zeroBankMultiSendGas+numOfTokens*deterministicGasConfig.BankSendAdditionalTransfer, bankMultiSendGas)
+	require.Equal(t, zeroBankMultiSendGas+numOfTokens*deterministicGasConfig.BankSendPerTransfer, bankMultiSendGas)
 }
