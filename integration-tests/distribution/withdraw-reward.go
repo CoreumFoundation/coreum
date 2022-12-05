@@ -42,7 +42,7 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 	// *** Create new validator to use it in the test and capture all required balances. ***
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
 	validatorStakerAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
