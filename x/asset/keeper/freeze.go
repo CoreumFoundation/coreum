@@ -16,7 +16,12 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
+	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -39,7 +44,12 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, ad
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	err := k.checkFeatureAllowed(ctx, sender, coin, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
+	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -75,6 +85,10 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 // areCoinsSpendable returns an error is there are not enough coins balances to be spent
 func (k Keeper) areCoinsSpendable(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) error {
 	for _, coin := range coins {
+		if k.isGloballyFrozen(ctx, coin.Denom) {
+			return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", coin.Denom)
+		}
+
 		availableBalance := k.availableBalance(ctx, addr, coin.Denom)
 		if !availableBalance.IsGTE(coin) {
 			return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available, available %s", coin, availableBalance)
@@ -186,14 +200,4 @@ func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) 
 		store: prefix.NewStore(store, types.CreateFrozenBalancesPrefix(addr)),
 		cdc:   k.cdc,
 	}
-}
-
-// isFeatureEnabled checks weather a feature is present on a list of token features
-func isFeatureEnabled(features []types.FungibleTokenFeature, feature types.FungibleTokenFeature) bool {
-	for _, o := range features {
-		if o == feature {
-			return true
-		}
-	}
-	return false
 }
