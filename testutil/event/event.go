@@ -9,29 +9,33 @@ import (
 	tmtypes "github.com/tendermint/tendermint/abci/types"
 )
 
-// FindTypedEvent finds the event in the list of events, and set marshals it the to the event.
-func FindTypedEvent[T proto.Message](events []tmtypes.Event) (T, error) {
+// FindTypedEvents finds events in the list of events, and marshals them to the event type.
+func FindTypedEvents[T proto.Message](events []tmtypes.Event) ([]T, error) {
+	var res []T
+
 	event := *new(T) //nolint:gocritic // T(nil) doesn't work with the proto.Message
 	eventName := proto.MessageName(event)
-	for i := range events {
-		if events[i].Type != eventName {
+	for _, e := range events {
+		if e.Type != eventName {
 			continue
 		}
 
-		msg, err := sdk.ParseTypedEvent(events[i])
+		msg, err := sdk.ParseTypedEvent(e)
 		if err != nil {
-			return *new(T), err //nolint:gocritic // T(nil) doesn't work with proto.Message
+			return nil, err
 		}
 
 		typedMsg, ok := msg.(T)
 		if !ok {
-			return *new(T), errors.Errorf("can't cast found event to %T", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
+			return nil, errors.Errorf("can't cast found event to %T", event)
 		}
 
-		return typedMsg, nil
+		res = append(res, typedMsg)
 	}
-
-	return *new(T), errors.Errorf("can't find event %T in events", event) //nolint:gocritic // T(nil) doesn't work with the proto.Message
+	if len(res) == 0 {
+		return nil, errors.Errorf("can't find event %T in events", event)
+	}
+	return res, nil
 }
 
 // FindUint64EventAttribute finds the first event attribute by type and attribute name and convert it to the uint64 type.
