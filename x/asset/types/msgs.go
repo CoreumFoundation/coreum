@@ -7,6 +7,11 @@ import (
 
 var (
 	_ sdk.Msg = &MsgIssueFungibleToken{}
+	_ sdk.Msg = &MsgFreezeFungibleToken{}
+	_ sdk.Msg = &MsgUnfreezeFungibleToken{}
+	_ sdk.Msg = &MsgMintFungibleToken{}
+	_ sdk.Msg = &MsgBurnFungibleToken{}
+	_ sdk.Msg = &MsgSetWhitelistedLimitFungibleToken{}
 )
 
 // ValidateBasic validates the message.
