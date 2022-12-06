@@ -8,7 +8,7 @@ This doc describes the command to set up the environment depending on the type o
 |------------------------|-----------------------------|---------------------------------|
 | **Chain ID**           | coreum-devnet-1             | coreum-devnet-1                 |
 | **Denom**              | ducore                      | ducore                          |
-| **Node URL**           | http://localhost:26657      | http://104.197.42.0:26657       |
+| **Node URL**           | http://localhost:26657      | https://s-0.devnet-1.coreum.dev     |
 | **Faucet URL**         | http://localhost:8090       | https://api.devnet-1.coreum.dev |
 | **Cosmovisor version** | v1.3.0                      | v1.3.0                          |
 | **Cored version**      | already installed via crust | check the latest devnet release |
