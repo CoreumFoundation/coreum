@@ -26,8 +26,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		AssetGloballyFreezeFungibleToken:   5000,
 		AssetGloballyUnfreezeFungibleToken: 5000,
 
-		BankSendPerTransfer:      22000,
-		BankMultiSendPerTransfer: 27000,
+		BankSendPerEntry:      22000,
+		BankMultiSendPerEntry: 27000,
 
 		DistributionFundCommunityPool:           50000,
 		DistributionSetWithdrawAddress:          50000,
@@ -71,8 +71,8 @@ type DeterministicGasRequirements struct {
 	AssetGloballyUnfreezeFungibleToken uint64
 
 	// x/bank
-	BankSendPerTransfer      uint64
-	BankMultiSendPerTransfer uint64
+	BankSendPerEntry      uint64
+	BankMultiSendPerEntry uint64
 
 	// x/distribution
 	DistributionFundCommunityPool           uint64
@@ -117,28 +117,29 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	case *assettypes.MsgBurnFungibleToken:
 		return dgr.AssetBurnFungibleToken, true
 	case *banktypes.MsgSend:
+		entriesNum := len(m.Amount)
 		if len(m.Amount) == 0 {
-			return dgr.BankSendPerTransfer, true
+			entriesNum = 1
 		}
-		return uint64(len(m.Amount)) * dgr.BankSendPerTransfer, true
+		return uint64(entriesNum) * dgr.BankSendPerEntry, true
 	case *banktypes.MsgMultiSend:
-		numOfCoins := 0
+		entriesNum := 0
 		for _, i := range m.Inputs {
-			numOfCoins += len(i.Coins)
+			entriesNum += len(i.Coins)
 		}
 
-		var numOfOutputCoins int
+		var outputEntriesNum int
 		for _, o := range m.Outputs {
-			numOfOutputCoins += len(o.Coins)
+			outputEntriesNum += len(o.Coins)
 		}
-		if numOfOutputCoins > numOfCoins {
-			numOfCoins = numOfOutputCoins
+		if outputEntriesNum > entriesNum {
+			entriesNum = outputEntriesNum
 		}
 
-		if numOfCoins == 0 {
-			return dgr.BankMultiSendPerTransfer, true
+		if entriesNum == 0 {
+			entriesNum = 1
 		}
-		return uint64(numOfCoins) * dgr.BankMultiSendPerTransfer, true
+		return uint64(entriesNum) * dgr.BankMultiSendPerEntry, true
 	case *distributiontypes.MsgFundCommunityPool:
 		return dgr.DistributionFundCommunityPool, true
 	case *distributiontypes.MsgSetWithdrawAddress:
