@@ -29,8 +29,7 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgFreezeFungibleToken{},
 			},
-		}),
-	)
+		}))
 
 	// Issue an unfreezable fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
@@ -92,7 +91,8 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 				&assettypes.MsgUnfreezeFungibleToken{},
 				&assettypes.MsgUnfreezeFungibleToken{},
 			},
-		}),
+		}))
+	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
@@ -100,13 +100,13 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 			},
-		}),
+		}))
+	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgFreezeFungibleToken{},
 			},
-		}),
-	)
+		}))
 
 	// Issue the new fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
@@ -218,7 +218,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(balance1.GetBalance().String(), sdk.NewCoin(denom, sdk.NewInt(400)).String())
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(400)).String(), balance1.GetBalance().String())
 
 	// unfreeze 200 tokens and try send 250 tokens
 	unfreezeMsg := &assettypes.MsgUnfreezeFungibleToken{

@@ -29,8 +29,7 @@ func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T,
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
 			},
-		}),
-	)
+		}))
 
 	// Issue an unwhitelistable fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
@@ -87,8 +86,11 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
+				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
+				&banktypes.MsgSend{},
 			},
-		}),
+		}))
+	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
@@ -99,13 +101,13 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 			},
-		}),
+		}))
+	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAccount, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
 			},
-		}),
-	)
+		}))
 
 	// Issue the new fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
@@ -207,7 +209,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(balance.GetBalance().String(), sdk.NewCoin(denom, sdk.NewInt(400)).String())
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(400)).String(), balance.GetBalance().String())
 
 	// try to send one more
 	sendMsg = &banktypes.MsgSend{
@@ -264,7 +266,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(balance.GetBalance().String(), sdk.NewCoin(denom, sdk.NewInt(401)).String())
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(401)).String(), balance.GetBalance().String())
 
 	// Verify that issuer has no whitelisted balance
 	whitelistedBalance, err = assetClient.WhitelistedBalance(ctx, &assettypes.QueryWhitelistedBalanceRequest{
@@ -278,7 +280,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   issuer.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(19599))),
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
@@ -293,5 +295,41 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(balance.GetBalance().String(), sdk.NewCoin(denom, sdk.NewInt(1)).String())
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(19599)).String(), balance.GetBalance().String())
+
+	// Ensure that recipient holds 0
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdk.ZeroInt()).String(), balance.GetBalance().String())
+
+	// Set whitelisted balance to 0 for recipient
+	whitelistMsg = &assettypes.MsgSetWhitelistedLimitFungibleToken{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.ZeroInt()),
+	}
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	requireT.NoError(err)
+
+	// Transfer to recipient should fail now
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt())),
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	assertT.True(assettypes.ErrWhitelistedLimitExceeded.Is(err))
 }
