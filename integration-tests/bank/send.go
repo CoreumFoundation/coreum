@@ -16,8 +16,8 @@ import (
 
 // FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
 
-// TestCoreTransfer checks that core is transferred correctly between wallets
-func TestCoreTransfer(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestCoreSend checks that core is transferred correctly between wallets
+func TestCoreSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 

@@ -60,9 +60,9 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	unburnable := fungibleTokenIssuedEvt.Denom
+	unburnable := fungibleTokenIssuedEvts[0].Denom
 
 	// try to burn unburnable token
 	burnMsg := &assettypes.MsgBurnFungibleToken{
@@ -99,9 +99,9 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err = event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	burnableDenom := fungibleTokenIssuedEvt.Denom
+	burnableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to msg
 	burnMsg = &assettypes.MsgBurnFungibleToken{

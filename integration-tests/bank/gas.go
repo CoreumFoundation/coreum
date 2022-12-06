@@ -2,6 +2,7 @@ package bank
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,12 +13,14 @@ import (
 
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/testutil/event"
+	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
-// TestTransferDeterministicGas checks that transfer takes the deterministic amount of gas
-func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestSendDeterministicGas checks that transfer takes the deterministic amount of gas
+func TestSendDeterministicGas(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
@@ -46,8 +49,8 @@ func TestTransferDeterministicGas(ctx context.Context, t testing.T, chain testin
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
-// TestTransferDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
-func TestTransferDeterministicGasTwoBankSends(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
+func TestSendDeterministicGasTwoBankSends(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := chain.GenAccount()
 	receiver1 := chain.GenAccount()
 	receiver2 := chain.GenAccount()
@@ -76,8 +79,78 @@ func TestTransferDeterministicGasTwoBankSends(ctx context.Context, t testing.T, 
 	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
 }
 
-// TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
-func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
+func TestSendDeterministicGasManyCoins(ctx context.Context, t testing.T, chain testing.Chain) {
+	const numOfTokens = 3
+
+	sender := chain.GenAccount()
+	recipient := chain.GenAccount()
+	deterministicGasConfig := chain.DeterministicGas()
+
+	amountToSend := sdk.NewInt(1000)
+
+	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
+	for i := 0; i < numOfTokens; i++ {
+		issueMsgs = append(issueMsgs, &assettypes.MsgIssueFungibleToken{
+			Issuer:        sender.String(),
+			Symbol:        fmt.Sprintf("TOK%d", i),
+			Description:   fmt.Sprintf("TOK%d Description", i),
+			Recipient:     sender.String(),
+			InitialAmount: amountToSend,
+		})
+	}
+
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: append([]sdk.Msg{&banktypes.MsgSend{
+			Amount: make(sdk.Coins, numOfTokens),
+		}}, issueMsgs...),
+	}))
+
+	// Issue fungible tokens
+	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsgs...)),
+		issueMsgs...,
+	)
+	require.NoError(t, err)
+
+	coinsToSend := sdk.NewCoins()
+
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	require.NoError(t, err)
+	require.Equal(t, numOfTokens, len(fungibleTokenIssuedEvts))
+
+	for _, e := range fungibleTokenIssuedEvts {
+		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
+	}
+
+	msg := &banktypes.MsgSend{
+		FromAddress: sender.String(),
+		ToAddress:   recipient.String(),
+		Amount:      coinsToSend,
+	}
+
+	clientCtx := chain.ClientContext.WithFromAddress(sender)
+	zeroBankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
+	require.Equal(t, deterministicGasConfig.FixedGas+deterministicGasConfig.BankSendPerEntry, zeroBankSendGas)
+
+	bankSendGas := chain.GasLimitByMsgs(msg)
+	require.Equal(t, deterministicGasConfig.FixedGas+numOfTokens*deterministicGasConfig.BankSendPerEntry, bankSendGas)
+
+	res, err = tx.BroadcastTx(
+		ctx,
+		clientCtx,
+		chain.TxFactory().
+			WithMemo(maxMemo). // memo is set to max length here to charge as much gas as possible
+			WithGas(bankSendGas),
+		msg)
+	require.NoError(t, err)
+	require.Equal(t, bankSendGas, uint64(res.GasUsed))
+}
+
+// TestSendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
+func TestSendFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
@@ -104,8 +177,8 @@ func TestTransferFailsIfNotEnoughGasIsProvided(ctx context.Context, t testing.T,
 	require.True(t, cosmoserrors.ErrOutOfGas.Is(err))
 }
 
-// TestTransferGasEstimation checks that gas is correctly estimated for send message
-func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestSendGasEstimation checks that gas is correctly estimated for send message
+func TestSendGasEstimation(ctx context.Context, t testing.T, chain testing.Chain) {
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
@@ -130,4 +203,93 @@ func TestTransferGasEstimation(ctx context.Context, t testing.T, chain testing.C
 		msg)
 	require.NoError(t, err)
 	assert.Equal(t, bankSendGas, estimatedGas)
+}
+
+// TestMultiSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
+func TestMultiSendDeterministicGasManyCoins(ctx context.Context, t testing.T, chain testing.Chain) {
+	const numOfTokens = 3
+
+	sender := chain.GenAccount()
+	recipient := chain.GenAccount()
+	deterministicGasConfig := chain.DeterministicGas()
+
+	amountToSend := sdk.NewInt(1000)
+
+	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
+	for i := 0; i < numOfTokens; i++ {
+		issueMsgs = append(issueMsgs, &assettypes.MsgIssueFungibleToken{
+			Issuer:        sender.String(),
+			Symbol:        fmt.Sprintf("TOK%d", i),
+			Description:   fmt.Sprintf("TOK%d Description", i),
+			Recipient:     sender.String(),
+			InitialAmount: amountToSend,
+		})
+	}
+
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
+			Inputs: []banktypes.Input{
+				{
+					Coins: make(sdk.Coins, numOfTokens),
+				},
+			},
+			Outputs: []banktypes.Output{
+				{
+					Coins: make(sdk.Coins, numOfTokens),
+				},
+			},
+		}}, issueMsgs...),
+	}))
+
+	// Issue fungible tokens
+	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsgs...)),
+		issueMsgs...,
+	)
+	require.NoError(t, err)
+
+	coinsToSend := sdk.NewCoins()
+
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	require.NoError(t, err)
+	require.Equal(t, numOfTokens, len(fungibleTokenIssuedEvts))
+
+	for _, e := range fungibleTokenIssuedEvts {
+		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
+	}
+
+	msg := &banktypes.MsgMultiSend{
+		Inputs: []banktypes.Input{
+			{
+				Address: sender.String(),
+				Coins:   coinsToSend,
+			},
+		},
+		Outputs: []banktypes.Output{
+			{
+				Address: recipient.String(),
+				Coins:   coinsToSend,
+			},
+		},
+	}
+
+	clientCtx := chain.ClientContext.WithFromAddress(sender)
+
+	zeroBankMultiSendGas := chain.GasLimitByMsgs(&banktypes.MsgMultiSend{})
+	require.Equal(t, deterministicGasConfig.FixedGas+deterministicGasConfig.BankMultiSendPerEntry, zeroBankMultiSendGas)
+
+	bankMultiSendGas := chain.GasLimitByMsgs(msg)
+	require.Equal(t, deterministicGasConfig.FixedGas+numOfTokens*deterministicGasConfig.BankMultiSendPerEntry, bankMultiSendGas)
+
+	res, err = tx.BroadcastTx(
+		ctx,
+		clientCtx,
+		chain.TxFactory().
+			WithMemo(maxMemo). // memo is set to max length here to charge as much gas as possible
+			WithGas(bankMultiSendGas),
+		msg)
+	require.NoError(t, err)
+	require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
 }
