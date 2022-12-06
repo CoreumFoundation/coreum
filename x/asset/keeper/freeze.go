@@ -82,16 +82,15 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 }
 
 // areCoinsSpendable returns an error if there are not enough coins balances to be spent
-func (k Keeper) areCoinsSpendable(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) error {
-	for _, coin := range coins {
-		if k.isGloballyFrozen(ctx, coin.Denom) {
-			return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", coin.Denom)
-		}
+func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, ft types.FungibleTokenDefinition, amount sdk.Int) error {
+	if k.isGloballyFrozen(ctx, ft.Denom) {
+		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", ft.Denom)
+	}
 
-		availableBalance := k.availableBalance(ctx, addr, coin.Denom)
-		if !availableBalance.IsGTE(coin) {
-			return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available, available %s", coin, availableBalance)
-		}
+	availableBalance := k.availableBalance(ctx, addr, ft.Denom)
+	if !availableBalance.Amount.GTE(amount) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available, available %s",
+			sdk.NewCoin(ft.Denom, amount), availableBalance)
 	}
 	return nil
 }

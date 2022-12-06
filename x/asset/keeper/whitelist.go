@@ -72,29 +72,19 @@ func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddr
 }
 
 // areCoinsReceivable returns an error if whitelisted amount is too low to receive coins
-func (k Keeper) areCoinsReceivable(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) error {
-	for _, coin := range coins {
-		definition, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
-		if err != nil {
-			if types.ErrFungibleTokenNotFound.Is(err) {
-				// This is not a fungible token
-				continue
-			}
-			return err
-		}
+func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, ft types.FungibleTokenDefinition, amount sdk.Int) error {
+	//nolint:nosnakecase
+	if !ft.IsFeatureEnabled(types.FungibleTokenFeature_whitelist) {
+		return nil
+	}
 
-		//nolint:nosnakecase
-		if !definition.IsFeatureEnabled(types.FungibleTokenFeature_whitelist) {
-			continue
-		}
+	balance := k.bankKeeper.GetBalance(ctx, addr, ft.Denom)
+	whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, ft.Denom)
 
-		balance := k.bankKeeper.GetBalance(ctx, addr, coin.Denom)
-		whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, coin.Denom)
-
-		finalBalance := balance.Amount.Add(coin.Amount)
-		if finalBalance.GT(whitelistedBalance.Amount) {
-			return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s", addr, coin, whitelistedBalance)
-		}
+	finalBalance := balance.Amount.Add(amount)
+	if finalBalance.GT(whitelistedBalance.Amount) {
+		return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
+			addr, sdk.NewCoin(ft.Denom, amount), whitelistedBalance)
 	}
 	return nil
 }

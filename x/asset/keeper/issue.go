@@ -35,6 +35,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	}
 	k.SetFungibleTokenDefinition(ctx, definition)
 
+	// TODO: Delete this once recipient is removed
 	//nolint:nosnakecase
 	if definition.IsFeatureEnabled(types.FungibleTokenFeature_whitelist) && settings.InitialAmount.IsPositive() {
 		if err := k.SetWhitelistedBalance(ctx, settings.Issuer, settings.Recipient, sdk.NewCoin(denom, settings.InitialAmount)); err != nil {
@@ -155,11 +156,11 @@ func (k Keeper) mintFungibleToken(ctx sdk.Context, ft types.FungibleTokenDefinit
 	if !amount.IsPositive() {
 		return nil
 	}
-	coinsToMint := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
-	if err := k.areCoinsReceivable(ctx, recipient, coinsToMint); err != nil {
+	if err := k.isCoinReceivable(ctx, recipient, ft, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not receivable")
 	}
 
+	coinsToMint := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coinsToMint); err != nil {
 		return sdkerrors.Wrapf(err, "can't mint %s for the module %s", coinsToMint.String(), types.ModuleName)
 	}
@@ -171,16 +172,12 @@ func (k Keeper) mintFungibleToken(ctx sdk.Context, ft types.FungibleTokenDefinit
 	return nil
 }
 
-func (k Keeper) burnFungibleToken(ctx sdk.Context, coin sdk.Coin, account sdk.AccAddress) error {
-	if err := coin.Validate(); err != nil {
-		return err
-	}
-
-	coinsToBurn := sdk.NewCoins(coin)
-	if err := k.areCoinsSpendable(ctx, account, coinsToBurn); err != nil {
+func (k Keeper) burnFungibleToken(ctx sdk.Context, account sdk.AccAddress, ft types.FungibleTokenDefinition, amount sdk.Int) error {
+	if err := k.isCoinSpendable(ctx, account, ft, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}
 
+	coinsToBurn := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coinsToBurn); err != nil {
 		return sdkerrors.Wrapf(err, "can't send  coins from account %s to module %s", account.String(), types.ModuleName)
 	}

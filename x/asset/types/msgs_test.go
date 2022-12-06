@@ -73,7 +73,6 @@ func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 	requireT.Error(msg.ValidateBasic())
 }
 
-//nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
 func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name          string
