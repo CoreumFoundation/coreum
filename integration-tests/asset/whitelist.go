@@ -97,6 +97,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
+				&banktypes.MsgSend{},
 			},
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAccount, testing.BalancesOptions{
@@ -264,4 +265,33 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 	})
 	requireT.NoError(err)
 	requireT.Equal(balance.GetBalance().String(), sdk.NewCoin(denom, sdk.NewInt(401)).String())
+
+	// Verify that issuer has no whitelisted balance
+	whitelistedBalance, err = assetClient.WhitelistedBalance(ctx, &assettypes.QueryWhitelistedBalanceRequest{
+		Account: issuer.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(sdk.NewCoin(denom, sdk.ZeroInt()), whitelistedBalance.Balance)
+
+	// Send something to issuer, it should succeed despite the fact that issuer is not whitelisted
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   issuer.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))),
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	balance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: issuer.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(balance.GetBalance().String(), sdk.NewCoin(denom, sdk.NewInt(1)).String())
 }
