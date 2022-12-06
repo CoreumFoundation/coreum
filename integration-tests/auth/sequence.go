@@ -18,7 +18,7 @@ func TestUnexpectedSequenceNumber(ctx context.Context, t testing.T, chain testin
 	sender := chain.GenAccount()
 
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{Amount: make(sdk.Coins, 1)}},
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(10),
 	}))
 

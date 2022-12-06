@@ -54,7 +54,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// fund the multisig account
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, testing.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{Amount: make(sdk.Coins, 1)}},
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
 	}))
 
@@ -67,7 +67,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
 	multisigAccInfo, err := tx.GetAccountInfo(ctx, clientCtx, multisigAddress)
 	requireT.NoError(err)
 	txF := chain.TxFactory().
-		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{Amount: make(sdk.Coins, 1)})).
+		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
 		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
 		WithSequence(multisigAccInfo.GetSequence()).
 		WithKeybase(kr).

@@ -70,7 +70,7 @@ func TestGasWASMBankSendAndBankSend(ctx context.Context, t testing.T, chain test
 		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.NewInt(1000))),
 	}
 
-	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{Amount: make(sdk.Coins, 1)}, &banktypes.MsgSend{Amount: make(sdk.Coins, 1)})
+	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	maxGasExpected := minGasExpected * 10
 
 	clientCtx = chain.ChainContext.ClientContext.WithFromAddress(admin)
