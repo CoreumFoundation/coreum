@@ -174,7 +174,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 	requireT.NoError(err)
 	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))), whitelistedBalances.Balances)
 
-	// try to send more than whitelisted (600) (possible 400)
+	// try to receive more than whitelisted (600) (possible 400)
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   randomAccount.String(),
