@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/CoreumFoundation/coreum/pkg/store"
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
@@ -70,8 +71,8 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 // IsSymbolDuplicate checks symbol exists in the store
 func (k Keeper) IsSymbolDuplicate(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
 	symbol = types.NormalizeSymbolForKey(symbol)
-	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
-	bytes := symbolStore.Get([]byte(symbol))
+	compositeKey := store.JoinKeys(types.CreateSymbolPrefix(issuer), []byte(symbol))
+	bytes := ctx.KVStore(k.storeKey).Get(compositeKey)
 	return bytes != nil
 }
 
@@ -81,9 +82,8 @@ func (k Keeper) StoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddres
 		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
 	}
 
-	symbol = types.NormalizeSymbolForKey(symbol)
-	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateSymbolPrefix(issuer))
-	symbolStore.Set([]byte(symbol), []byte{0x01})
+	compositeKey := store.JoinKeys(types.CreateSymbolPrefix(issuer), []byte(symbol))
+	ctx.KVStore(k.storeKey).Set(compositeKey, []byte{0x01})
 	return nil
 }
 
