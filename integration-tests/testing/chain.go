@@ -83,6 +83,11 @@ func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
 	return sdk.NewDecCoinFromDec(c.NetworkConfig.Denom, amount)
 }
 
+// DeterministicGas returns deterministic gas config
+func (c ChainContext) DeterministicGas() config.DeterministicGasRequirements {
+	return c.NetworkConfig.Fee.DeterministicGas
+}
+
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
 // It panics if unsupported message type specified.
 func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {

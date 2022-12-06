@@ -52,9 +52,9 @@ func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain tes
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	denom := fungibleTokenIssuedEvt.Denom
+	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// Globally freeze FT.
 	globFreezeMsg := &assettypes.MsgGloballyFreezeFungibleToken{
