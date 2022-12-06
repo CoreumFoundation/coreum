@@ -99,3 +99,8 @@ func ValidateSymbol(symbol string) error {
 func NormalizeSymbolForKey(in string) string {
 	return strings.ToLower(in)
 }
+
+// IsFeatureEnabled returns true if feature is enabled for a fungible token.
+func (ftd *FungibleTokenDefinition) IsFeatureEnabled(feature FungibleTokenFeature) bool {
+	return lo.Contains(ftd.Features, feature)
+}

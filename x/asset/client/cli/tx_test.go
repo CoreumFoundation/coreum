@@ -10,19 +10,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
 )
 
 func TestIssueFungibleToken(t *testing.T) {
 	requireT := require.New(t)
-	networkCfg, err := config.NetworkByChainID(constant.ChainIDDev)
-	requireT.NoError(err)
-	app.ChosenNetwork = networkCfg
-
 	testNetwork := network.New(t)
 
 	// the denom must start from the letter

@@ -24,9 +24,9 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// GenesisState defines the auth module's genesis state.
+// GenesisState defines the module's genesis state.
 type GenesisState struct {
-	// params defines all the paramaters of the module.
+	// params defines all the parameters of the module.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 	// min_gas_price is the current minimum gas price required by the chain.
 	MinGasPrice types.DecCoin `protobuf:"bytes,2,opt,name=min_gas_price,json=minGasPrice,proto3" json:"min_gas_price"`

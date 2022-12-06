@@ -21,4 +21,6 @@ var (
 	ErrInvalidSubunit = sdkerrors.Register(ModuleName, 7, "subunit format is not valid")
 	// ErrInvalidSymbol is returned when the provided symbol is not of valid format
 	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 8, "symbol format is not valid")
+	// ErrGloballyFrozen is returned when token is globally frozen so all operations with it are blocked
+	ErrGloballyFrozen = sdkerrors.Register(ModuleName, 9, "token is globally frozen")
 )

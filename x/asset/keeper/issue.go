@@ -122,13 +122,14 @@ func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.Fungi
 	}
 
 	return types.FungibleToken{
-		Denom:       definition.Denom,
-		Issuer:      definition.Issuer,
-		Symbol:      metadata.Symbol,
-		Precision:   uint32(precision),
-		Subunit:     subunit,
-		Description: metadata.Description,
-		Features:    definition.Features,
+		Denom:          definition.Denom,
+		Issuer:         definition.Issuer,
+		Symbol:         metadata.Symbol,
+		Precision:      uint32(precision),
+		Subunit:        subunit,
+		Description:    metadata.Description,
+		Features:       definition.Features,
+		GloballyFrozen: k.isGloballyFrozen(ctx, definition.Denom),
 	}, nil
 }
 

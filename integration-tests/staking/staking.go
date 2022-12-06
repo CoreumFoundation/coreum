@@ -17,18 +17,21 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
+	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
 // TestValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
 func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing.Chain) {
-	const (
-		initialValidatorAmount = 1000000
-		// fastUnbondingTime is the coins unbonding time we use for the test only
-		fastUnbondingTime = time.Second * 10
-	)
+	// fastUnbondingTime is the coins unbonding time we use for the test only
+	const fastUnbondingTime = time.Second * 10
 
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	require.NoError(t, err)
+	// we stake the minimum possible staking amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation
 	// Setup delegator
 	delegator := chain.GenAccount()
 	delegateAmount := sdk.NewInt(100)
@@ -43,7 +46,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	}))
 
 	// Setup validator
-	validatorAccAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount))
+	validatorAccAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -98,7 +101,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	require.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 
 	// Redelegate Coins
-	_, validator2Address, deactivateValidator2, err := testing.CreateValidator(ctx, chain, sdk.NewInt(initialValidatorAmount))
+	_, validator2Address, deactivateValidator2, err := testing.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator2()
@@ -162,7 +165,23 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 		ValidatorAddr: validatorAddress.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, int64(initialValidatorAmount), valResp.Validator.Tokens.Int64())
+	require.Equal(t, validatorStakingAmount.String(), valResp.Validator.Tokens.String())
+}
+
+// TestValidatorMinParamsSelfDelegation checks validator may set the self delegation below the limit.
+func TestValidatorMinParamsSelfDelegation(ctx context.Context, t testing.T, chain testing.Chain) {
+	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
+
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	require.NoError(t, err)
+
+	initialValidatorAmount := customStakingParams.Params.MinSelfDelegation
+
+	notEnoughValidatorAmount := initialValidatorAmount.Quo(sdk.NewInt(2))
+
+	// Try to create a validator with the amount less than the minimum
+	_, _, _, err = testing.CreateValidator(ctx, chain, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
+	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
 }
 
 func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testing.Chain, unbondingTime time.Duration) {

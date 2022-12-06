@@ -30,5 +30,6 @@ message FungibleToken {
   string subunit = 4;
   uint32 precision = 5;
   string description = 6;
-  repeated FungibleTokenFeature features = 7;
+  bool globally_frozen = 7;
+  repeated FungibleTokenFeature features = 8;
 }

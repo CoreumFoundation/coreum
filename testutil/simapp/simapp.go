@@ -5,7 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/cosmos/ibc-go/v3/testing/simapp/helpers"
+	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
+	"github.com/pkg/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
@@ -35,8 +43,13 @@ var defaultConsensusParams = &abci.ConsensusParams{
 	},
 }
 
+// App is a simulation app wrapper.
+type App struct {
+	app.App
+}
+
 // New creates application instance with in-memory database and disabled logging.
-func New() *app.App {
+func New() *App {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
 
@@ -61,5 +74,78 @@ func New() *app.App {
 		AppStateBytes:   stateBytes,
 	})
 
-	return coreApp
+	return &App{*coreApp}
+}
+
+// BeginNextBlock begins new SimApp block and returns the ctx of the new block.
+func (s *App) BeginNextBlock() sdk.Context {
+	header := tmproto.Header{Height: s.LastBlockHeight() + 1}
+	s.BeginBlock(abci.RequestBeginBlock{Header: header})
+	return s.BaseApp.NewContext(false, header)
+}
+
+// EndBlockAndCommit ends the current block and commit the state.
+func (s *App) EndBlockAndCommit(ctx sdk.Context) {
+	s.EndBlocker(ctx, abci.RequestEndBlock{Height: ctx.BlockHeight()})
+	s.Commit()
+}
+
+// GenAccount creates a new account and registers it in the App.
+func (s *App) GenAccount(ctx sdk.Context) (sdk.AccAddress, *secp256k1.PrivKey) {
+	privateKey := secp256k1.GenPrivKey()
+	accountAddress := sdk.AccAddress(privateKey.PubKey().Address())
+	account := s.AccountKeeper.NewAccount(ctx, &authtypes.BaseAccount{
+		Address: accountAddress.String(),
+	})
+	s.AccountKeeper.SetAccount(ctx, account)
+
+	return accountAddress, privateKey
+}
+
+// FundAccount mints and sends the coins to the provided App account.
+func (s *App) FundAccount(ctx sdk.Context, address sdk.AccAddress, balances sdk.Coins) error {
+	if err := s.BankKeeper.MintCoins(ctx, minttypes.ModuleName, balances); err != nil {
+		return errors.Wrap(err, "can't mint in simapp")
+	}
+
+	if err := s.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, address, balances); err != nil {
+		return errors.Wrap(err, "can't send funding coins in simapp")
+	}
+
+	return nil
+}
+
+// SendTx sends the tx to the simApp.
+func (s *App) SendTx(
+	ctx sdk.Context,
+	feeAmt sdk.Coin,
+	gas uint64,
+	priv cryptotypes.PrivKey,
+	messages ...sdk.Msg,
+) (sdk.GasInfo, *sdk.Result, error) {
+	signerAddress := sdk.AccAddress(priv.PubKey().Address())
+	account := s.AccountKeeper.GetAccount(ctx, signerAddress)
+	if account == nil {
+		return sdk.GasInfo{}, nil, errors.Errorf("the account %s doesn't exist, check that it's created or state committed", signerAddress)
+	}
+	accountNum := account.GetAccountNumber()
+	accountSeq := account.GetSequence()
+
+	txGen := cosmoscmd.MakeEncodingConfig(app.ModuleBasics).TxConfig
+
+	tx, err := helpers.GenTx(
+		txGen,
+		messages,
+		sdk.NewCoins(feeAmt),
+		gas,
+		"",
+		[]uint64{accountNum},
+		[]uint64{accountSeq},
+		priv,
+	)
+	if err != nil {
+		return sdk.GasInfo{}, nil, err
+	}
+
+	return s.Deliver(txGen.TxEncoder(), tx)
 }

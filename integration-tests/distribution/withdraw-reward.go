@@ -13,6 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
+	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
 // TestWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
@@ -21,9 +22,11 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 	delegatorRewardRecipient := chain.GenAccount()
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-	requireT := require.New(t)
+	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
-	amountToDelegate := sdk.NewInt(10000)
+	requireT := require.New(t)
+	// the amount of the delegation should be big enough to get at least some reward for the few blocks
+	amountToDelegate := sdk.NewInt(1_000_000)
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, delegator, testing.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
@@ -37,8 +40,10 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 	delegatedCoin := chain.NewCoin(amountToDelegate)
 
 	// *** Create new validator to use it in the test and capture all required balances. ***
-
-	validatorStakerAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, sdk.NewInt(1000000))
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	require.NoError(t, err)
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation
+	validatorStakerAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
