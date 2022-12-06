@@ -43,7 +43,7 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	issueMsg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotBurnable",
-		Subunit:       "uABCNotBurnable",
+		Subunit:       "uabcnotburnable",
 		Precision:     6,
 		Description:   "ABC Description",
 		Recipient:     issuer.String(),
@@ -87,7 +87,7 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	issueMsg = &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCBurnable",
-		Subunit:       "uABCBurnable",
+		Subunit:       "uabcburnable",
 		Precision:     6,
 		Description:   "ABC Description",
 		Recipient:     issuer.String(),

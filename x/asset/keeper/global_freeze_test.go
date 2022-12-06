@@ -29,6 +29,8 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	freezableSettings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "FREEZE",
+		Subunit:       "freeze",
+		Precision:     6,
 		Description:   "FREEZE Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(777),
@@ -41,6 +43,8 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	unfreezableSettings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "NOFREEZE",
+		Subunit:       "nofreeze",
+		Precision:     6,
 		Description:   "NOFREEZE Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(777),

@@ -43,7 +43,7 @@ func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	issueMsg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotMintable",
-		Subunit:       "uABCNotMintable",
+		Subunit:       "uabcnotmintable",
 		Precision:     6,
 		Description:   "ABC Description",
 		Recipient:     issuer.String(),
@@ -87,7 +87,7 @@ func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	issueMsg = &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCMintable",
-		Subunit:       "uABCMintable",
+		Subunit:       "uabcmintable",
 		Precision:     6,
 		Description:   "ABC Description",
 		Recipient:     issuer.String(),

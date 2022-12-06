@@ -23,7 +23,7 @@ func TestQueryFungibleToken(t *testing.T) {
 	testNetwork := network.New(t)
 
 	// the denom must start from the letter
-	symbol := "BTC" + uuid.NewString()[:4]
+	symbol := "btc" + uuid.NewString()[:4]
 	subunit := "sub" + symbol
 	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx

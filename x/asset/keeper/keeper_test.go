@@ -27,29 +27,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestKeeper_LowercaseSubunit(t *testing.T) {
-	requireT := require.New(t)
-	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-	assetKeeper := testApp.AssetKeeper
-	subunit := "uCoreum"
-
-	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	settings := types.IssueFungibleTokenSettings{
-		Issuer:        addr,
-		Subunit:       subunit,
-		Precision:     6,
-		Symbol:        "Coreum",
-		Recipient:     addr,
-		InitialAmount: sdk.NewInt(777),
-		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
-	}
-
-	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
-	requireT.NoError(err)
-	requireT.EqualValues("ucoreum"+"-"+addr.String(), denom)
-}
-
 func TestKeeper_ValidateSymbol(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
@@ -128,17 +105,17 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 		"UCORE",
 		"3abc",
 		"3ABC",
+		"uCoreum",
+		"Coreum",
+		"COREeum",
 		"AB1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
 	acceptableSubunits := []string{
-		"ABC1",
+		"abc1",
 		"coreum",
 		"ucoreum",
-		"Coreum",
-		"uCoreum",
-		"COREeum",
-		"A1234567890123456789012345678901234567890123456789012345678901234567890",
+		"a1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
 	assertValidSubunit := func(subunit string, isValid bool) {
@@ -154,7 +131,11 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 		}
 
 		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
-		requireT.Equal(types.ErrInvalidSubunit.Is(err), !isValid)
+		if isValid {
+			requireT.NoError(err)
+		} else {
+			requireT.ErrorIs(types.ErrInvalidSubunit, err, "subunit", subunit)
+		}
 	}
 
 	for _, su := range unacceptableSubunits {
@@ -181,7 +162,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "ABC",
 		Description:   "ABC Desc",
-		Subunit:       "ABC",
+		Subunit:       "abc",
 		Precision:     8,
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
@@ -258,7 +239,7 @@ func TestKeeper_Mint(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        addr,
 		Symbol:        "NotMintable",
-		Subunit:       "NotMintable",
+		Subunit:       "notmintable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -279,8 +260,8 @@ func TestKeeper_Mint(t *testing.T) {
 	// Issue a mintable fungible token
 	settings = types.IssueFungibleTokenSettings{
 		Issuer:        addr,
-		Symbol:        "Mintable",
-		Subunit:       "Mintable",
+		Symbol:        "mintable",
+		Subunit:       "mintable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -324,7 +305,7 @@ func TestKeeper_Burn(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        addr,
 		Symbol:        "NotBurnable",
-		Subunit:       "NotBurnable",
+		Subunit:       "notburnable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -345,8 +326,8 @@ func TestKeeper_Burn(t *testing.T) {
 	// Issue a burnable fungible token
 	settings = types.IssueFungibleTokenSettings{
 		Issuer:        addr,
-		Symbol:        "Burnable",
-		Subunit:       "Burnable",
+		Symbol:        "burnable",
+		Subunit:       "burnable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
