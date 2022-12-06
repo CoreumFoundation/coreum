@@ -24,7 +24,7 @@ func TestGloballyFreezeUnfreezeFungibleToken(t *testing.T) {
 
 	// the denom must start from the letter
 	symbol := "l" + uuid.NewString()[:4]
-	subunit := "sub" + "symbol"
+	subunit := "sub" + symbol
 	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 	issuer := testNetwork.Validators[0].Address
