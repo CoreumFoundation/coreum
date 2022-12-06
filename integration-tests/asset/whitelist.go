@@ -50,9 +50,9 @@ func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T,
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	unwhitelistableDenom := fungibleTokenIssuedEvt.Denom
+	unwhitelistableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to whitelist unwhitelistable token
 	whitelistMsg := &assettypes.MsgSetWhitelistedLimitFungibleToken{
@@ -127,9 +127,9 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	denom := fungibleTokenIssuedEvt.Denom
+	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to whitelist msg
 	whitelistMsg := &assettypes.MsgSetWhitelistedLimitFungibleToken{
