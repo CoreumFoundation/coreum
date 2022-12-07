@@ -77,6 +77,8 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     6,
 		Description:   "DEF Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(600),
@@ -92,6 +94,8 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	settings = types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     6,
 		Description:   "DEF Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(600),
