@@ -29,16 +29,20 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// prepare the genesis data
 
 	// fungible token definitions
-	var fungibleTokenDefinitions []types.FungibleTokenDefinition
+	var fungibleTokens []types.FungibleToken
 	for i := 0; i < 5; i++ {
-		fungibleTokenDefinitions = append(fungibleTokenDefinitions,
-			types.FungibleTokenDefinition{
-				Denom:  types.BuildFungibleTokenDenom(fmt.Sprintf("ABC%d", i), issuer),
-				Issuer: issuer.String(),
-				Features: []types.FungibleTokenFeature{
-					types.FungibleTokenFeature_freeze, //nolint:nosnakecase // proto enum
-				},
-			})
+		ft := types.FungibleToken{
+			Denom:     types.BuildFungibleTokenDenom(fmt.Sprintf("abc%d", i), issuer),
+			Issuer:    issuer.String(),
+			Symbol:    fmt.Sprintf("ABC%d", i),
+			Subunit:   fmt.Sprintf("abc%d", i),
+			Precision: uint32(rand.Int31n(100)),
+			Features: []types.FungibleTokenFeature{
+				types.FungibleTokenFeature_freeze, //nolint:nosnakecase // proto enum
+			},
+		}
+		fungibleTokens = append(fungibleTokens, ft)
+		assetKeeper.SetFungibleTokenDenomMetadata(ctx, ft.Denom, ft.Symbol, ft.Description, ft.Precision)
 	}
 
 	// fungible token frozen balances
@@ -49,15 +53,15 @@ func TestImportAndExportGenesis(t *testing.T) {
 			types.Balance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
-					sdk.NewCoin(fungibleTokenDefinitions[0].Denom, sdk.NewInt(rand.Int63())),
-					sdk.NewCoin(fungibleTokenDefinitions[1].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(fungibleTokens[0].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(fungibleTokens[1].Denom, sdk.NewInt(rand.Int63())),
 				),
 			})
 	}
 
 	genState := types.GenesisState{
-		FrozenBalances:           fungibleTokenFrozenBalances,
-		FungibleTokenDefinitions: fungibleTokenDefinitions,
+		FrozenBalances: fungibleTokenFrozenBalances,
+		FungibleTokens: fungibleTokens,
 	}
 
 	// init the keeper
@@ -66,10 +70,10 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// assert the keeper state
 
 	// fungible token definitions
-	for _, definition := range fungibleTokenDefinitions {
-		storedDefinition, err := assetKeeper.GetFungibleTokenDefinition(ctx, definition.Denom)
+	for _, definition := range fungibleTokens {
+		storedFT, err := assetKeeper.GetFungibleToken(ctx, definition.Denom)
 		requireT.NoError(err)
-		assertT.EqualValues(definition, storedDefinition)
+		assertT.EqualValues(definition, storedFT)
 	}
 
 	// fungible token frozen balances
@@ -84,5 +88,5 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// check that export is equal import
 	exportedGenState := asset.ExportGenesis(ctx, assetKeeper)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
-	assertT.ElementsMatch(genState.FungibleTokenDefinitions, exportedGenState.FungibleTokenDefinitions)
+	assertT.ElementsMatch(genState.FungibleTokens, exportedGenState.FungibleTokens)
 }
