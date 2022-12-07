@@ -6,6 +6,7 @@ info:
 paths:
   '/coreum/asset/v1/fts/balance/{account}/frozen':
     get:
+      summary: FrozenBalances returns all the frozen balances for the account
       operationId: CoreumAssetV1FrozenBalances
       responses:
         '200':
@@ -133,6 +134,7 @@ paths:
         - Query
   '/coreum/asset/v1/fts/balance/{account}/frozen/{denom}':
     get:
+      summary: FrozenBalance returns frozen balance of the denom for the account
       operationId: CoreumAssetV1FrozenBalance
       responses:
         '200':
@@ -191,6 +193,7 @@ paths:
         - Query
   '/coreum/asset/v1/fts/balance/{account}/whitelisted':
     get:
+      summary: WhitelistedBalances returns all the whitelisted balances for the account
       operationId: CoreumAssetV1WhitelistedBalances
       responses:
         '200':
@@ -322,6 +325,9 @@ paths:
         - Query
   '/coreum/asset/v1/fts/balance/{account}/whitelisted/{denom}':
     get:
+      summary: >-
+        WhitelistedBalance returns whitelisted balance of the denom for the
+        account
       operationId: CoreumAssetV1WhitelistedBalance
       responses:
         '200':
@@ -399,6 +405,11 @@ paths:
                     type: string
                   symbol:
                     type: string
+                  subunit:
+                    type: string
+                  precision:
+                    type: integer
+                    format: int64
                   description:
                     type: string
                   globally_frozen:
@@ -36513,6 +36524,11 @@ definitions:
         type: string
       symbol:
         type: string
+      subunit:
+        type: string
+      precision:
+        type: integer
+        format: int64
       description:
         type: string
       globally_frozen:
@@ -36600,6 +36616,11 @@ definitions:
             type: string
           symbol:
             type: string
+          subunit:
+            type: string
+          precision:
+            type: integer
+            format: int64
           description:
             type: string
           globally_frozen:

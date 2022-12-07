@@ -16,6 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+//nolint:funlen
 func TestImportAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
@@ -38,7 +39,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 			Subunit:   fmt.Sprintf("abc%d", i),
 			Precision: uint32(rand.Int31n(100)),
 			Features: []types.FungibleTokenFeature{
-				types.FungibleTokenFeature_freeze, //nolint:nosnakecase // proto enum
+				types.FungibleTokenFeature_freeze,    //nolint:nosnakecase // proto enum
 				types.FungibleTokenFeature_whitelist, //nolint:nosnakecase // proto enum
 			},
 		}
@@ -54,8 +55,8 @@ func TestImportAndExportGenesis(t *testing.T) {
 			types.FungibleTokenBalance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
-					sdk.NewCoin(fungibleTokenDefinitions[0].Denom, sdk.NewInt(rand.Int63())),
-					sdk.NewCoin(fungibleTokenDefinitions[1].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(fungibleTokens[0].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(fungibleTokens[1].Denom, sdk.NewInt(rand.Int63())),
 				),
 			})
 	}
@@ -76,7 +77,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 
 	genState := types.GenesisState{
 		FungibleTokens: types.FungibleTokenState{
-			FungibleTokens:      fungibleTokens,
+			Tokens:              fungibleTokens,
 			FrozenBalances:      fungibleTokenFrozenBalances,
 			WhitelistedBalances: fungibleTokenWhitelistedBalances,
 		},
@@ -115,7 +116,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// check that export is equal import
 	exportedGenState := asset.ExportGenesis(ctx, assetKeeper)
 
-	assertT.ElementsMatch(genState.FungibleTokens.FungibleTokens, exportedGenState.FungibleTokens.TokenDefinitions)
+	assertT.ElementsMatch(genState.FungibleTokens.Tokens, exportedGenState.FungibleTokens.Tokens)
 	assertT.ElementsMatch(genState.FungibleTokens.FrozenBalances, exportedGenState.FungibleTokens.FrozenBalances)
 	assertT.ElementsMatch(genState.FungibleTokens.WhitelistedBalances, exportedGenState.FungibleTokens.WhitelistedBalances)
 }

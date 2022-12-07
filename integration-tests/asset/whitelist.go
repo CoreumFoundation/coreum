@@ -16,8 +16,6 @@ import (
 )
 
 // TestWhitelistUnwhitelistableFungibleToken checks whitelist functionality on unwhitelistable fungible tokens.
-//
-//nolint:dupl // code duplication is detected between whitelisting and freezing but trying to fix this is not really helpful
 func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -35,6 +33,7 @@ func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T,
 	msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotWhitelistable",
+		Subunit:       "uabcnotwhitelistable",
 		Description:   "ABC Description",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),
@@ -113,6 +112,8 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 	msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
 		Description:   "ABC Description",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(20000),

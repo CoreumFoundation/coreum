@@ -613,9 +613,13 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// FungibleToken queries the fungible token of the module.
 	FungibleToken(ctx context.Context, in *QueryFungibleTokenRequest, opts ...grpc.CallOption) (*QueryFungibleTokenResponse, error)
+	// FrozenBalances returns all the frozen balances for the account
 	FrozenBalances(ctx context.Context, in *QueryFrozenBalancesRequest, opts ...grpc.CallOption) (*QueryFrozenBalancesResponse, error)
+	// FrozenBalance returns frozen balance of the denom for the account
 	FrozenBalance(ctx context.Context, in *QueryFrozenBalanceRequest, opts ...grpc.CallOption) (*QueryFrozenBalanceResponse, error)
+	// WhitelistedBalances returns all the whitelisted balances for the account
 	WhitelistedBalances(ctx context.Context, in *QueryWhitelistedBalancesRequest, opts ...grpc.CallOption) (*QueryWhitelistedBalancesResponse, error)
+	// WhitelistedBalance returns whitelisted balance of the denom for the account
 	WhitelistedBalance(ctx context.Context, in *QueryWhitelistedBalanceRequest, opts ...grpc.CallOption) (*QueryWhitelistedBalanceResponse, error)
 }
 
@@ -676,9 +680,13 @@ func (c *queryClient) WhitelistedBalance(ctx context.Context, in *QueryWhitelist
 type QueryServer interface {
 	// FungibleToken queries the fungible token of the module.
 	FungibleToken(context.Context, *QueryFungibleTokenRequest) (*QueryFungibleTokenResponse, error)
+	// FrozenBalances returns all the frozen balances for the account
 	FrozenBalances(context.Context, *QueryFrozenBalancesRequest) (*QueryFrozenBalancesResponse, error)
+	// FrozenBalance returns frozen balance of the denom for the account
 	FrozenBalance(context.Context, *QueryFrozenBalanceRequest) (*QueryFrozenBalanceResponse, error)
+	// WhitelistedBalances returns all the whitelisted balances for the account
 	WhitelistedBalances(context.Context, *QueryWhitelistedBalancesRequest) (*QueryWhitelistedBalancesResponse, error)
+	// WhitelistedBalance returns whitelisted balance of the denom for the account
 	WhitelistedBalance(context.Context, *QueryWhitelistedBalanceRequest) (*QueryWhitelistedBalanceResponse, error)
 }
 

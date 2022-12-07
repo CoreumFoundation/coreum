@@ -13,7 +13,7 @@ import (
 // InitGenesis initializes the asset module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// Init fungible token definitions
-	for _, ft := range genState.FungibleTokens.FungibleTokens {
+	for _, ft := range genState.FungibleTokens.Tokens {
 		issuerAddress := sdk.MustAccAddressFromBech32(ft.Issuer)
 		definition := types.FungibleTokenDefinition{
 			Denom:    ft.Denom,
@@ -62,7 +62,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	return &types.GenesisState{
 		FungibleTokens: types.FungibleTokenState{
-			FungibleTokens:      fungibleTokens,
+			Tokens:              fungibleTokens,
 			FrozenBalances:      frozenBalances,
 			WhitelistedBalances: whitelistedBalances,
 		},
