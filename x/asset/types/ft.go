@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+	"math/big"
 	"regexp"
 	"strings"
 
@@ -32,6 +34,7 @@ type IssueFungibleTokenSettings struct {
 	Recipient     sdk.AccAddress
 	InitialAmount sdk.Int
 	Features      []FungibleTokenFeature
+	BurnRate      float32
 }
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
@@ -80,4 +83,41 @@ func ValidateSymbol(symbol string) error {
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
 func (ftd *FungibleTokenDefinition) IsFeatureEnabled(feature FungibleTokenFeature) bool {
 	return lo.Contains(ftd.Features, feature)
+}
+
+// ValidateBurnRate checks the provide burn rate is valid
+func ValidateBurnRate(burnRate float32) error {
+	if burnRate < 0 || burnRate > 1 {
+		return sdkerrors.Wrap(ErrInvalidBurnRate, "burn rate is not within acceptable rate")
+	}
+
+	return nil
+}
+
+// CalculateBurnCoin returns the coins to be burned
+func (ftd FungibleTokenDefinition) CalculateBurnCoin(coin sdk.Coin) sdk.Coin {
+	if ftd.BurnRate > 1 {
+		panic("burn rate cannot be bigger than 1")
+	}
+
+	// limit precision to 4 decimal places
+	burnRateStr := fmt.Sprintf("%.4f", ftd.BurnRate)
+	// we convert float32 to string and parse it to big.Float because direct conversion from
+	// float32 to big.Float leads to some rounding errors
+	burnRate, _, err := big.ParseFloat(burnRateStr, 10, 100, big.ToNearestAway)
+	if err != nil {
+		panic(err)
+	}
+
+	amount := big.NewFloat(0).SetInt(coin.Amount.BigInt())
+	burnAmountFloat := big.NewFloat(0).Mul(amount, burnRate)
+	burnAmount, accuracy := burnAmountFloat.Int(nil)
+	str := burnAmountFloat.String()
+	burnRateStr = burnRate.String()
+	fmt.Print(str, burnRateStr)
+	if accuracy != big.Exact {
+		burnAmount = big.NewInt(0).Add(burnAmount, big.NewInt(1))
+	}
+
+	return sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(burnAmount))
 }

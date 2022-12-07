@@ -21,6 +21,10 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 		return err
 	}
 
+	if err := ValidateBurnRate(msg.BurnRate); err != nil {
+		return err
+	}
+
 	if _, err := sdk.AccAddressFromBech32(msg.Recipient); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid recipient %s", msg.Recipient)
 	}

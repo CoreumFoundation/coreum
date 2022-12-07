@@ -16,6 +16,10 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		return "", err
 	}
 
+	if err := types.ValidateBurnRate(settings.BurnRate); err != nil {
+		return "", err
+	}
+
 	denom := types.BuildFungibleTokenDenom(settings.Symbol, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
@@ -36,6 +40,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Denom:    denom,
 		Issuer:   settings.Issuer.String(),
 		Features: settings.Features,
+		BurnRate: settings.BurnRate,
 	}
 	k.SetFungibleTokenDefinition(ctx, definition)
 
@@ -47,6 +52,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Recipient:     settings.Recipient.String(),
 		InitialAmount: settings.InitialAmount,
 		Features:      settings.Features,
+		BurnRate:      settings.BurnRate,
 	}); err != nil {
 		return "", sdkerrors.Wrap(err, "can't emit EventFungibleTokenIssued event")
 	}
@@ -74,6 +80,7 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		Symbol:         metadata.Symbol,
 		Description:    metadata.Description,
 		Features:       definition.Features,
+		BurnRate:       definition.BurnRate,
 		GloballyFrozen: k.isGloballyFrozen(ctx, denom),
 	}, nil
 }

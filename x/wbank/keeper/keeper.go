@@ -89,3 +89,12 @@ func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 
 	return k.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
+
+// InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
+func (k BaseKeeperWrapper) InputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	if err := k.ftProvider.InterceptInputOutputCoins(ctx, inputs, outputs); err != nil {
+		return err
+	}
+
+	return k.BaseKeeper.InputOutputCoins(ctx, inputs, outputs)
+}

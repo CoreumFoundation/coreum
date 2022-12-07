@@ -45,6 +45,9 @@ message MsgIssueFungibleToken {
   ];
   string description = 5;
   repeated FungibleTokenFeature features = 6;
+  // burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
+  // burn_amount. This value will be burnt on top of the send amount.
+  float burn_rate = 7;
 }
 
 message MsgFreezeFungibleToken {

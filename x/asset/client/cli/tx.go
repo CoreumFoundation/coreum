@@ -20,6 +20,7 @@ import (
 // Flags defined on transactions
 const (
 	featuresFlag = "features"
+	burnRateFlag = "burn_rate"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -70,7 +71,7 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ","),
+		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + "--burn_rate=0.12",
 		Args:  cobra.ExactArgs(4),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -115,6 +116,11 @@ $ %s tx asset ft issue ABC [recipient_address] 100000 "ABC Token" --from [issuer
 				return errors.WithStack(err)
 			}
 
+			burnRate, err := cmd.Flags().GetFloat32(burnRateFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
 			var features []types.FungibleTokenFeature
 			for _, str := range featuresString {
 				feature, ok := types.FungibleTokenFeature_value[str] //nolint:nosnakecase
@@ -132,12 +138,14 @@ $ %s tx asset ft issue ABC [recipient_address] 100000 "ABC Token" --from [issuer
 				InitialAmount: initialAmount,
 				Description:   description,
 				Features:      features,
+				BurnRate:      burnRate,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	cmd.Flags().StringSlice(featuresFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
+	cmd.Flags().Float32(burnRateFlag, 0, "Burn rate indicates the rate at which coins will be burned on top of the send amount in every send action. must be between 0 and 1.")
 
 	flags.AddTxFlagsToCmd(cmd)
 

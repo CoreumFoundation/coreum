@@ -19,6 +19,7 @@ message EventFungibleTokenIssued {
   ];
   string description = 6;
   repeated FungibleTokenFeature features = 7;
+  float burn_rate = 8;
 }
 
 message EventFungibleTokenFrozenAmountChanged {

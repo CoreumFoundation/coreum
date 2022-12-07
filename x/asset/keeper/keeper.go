@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
@@ -29,7 +30,60 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 
 // IsSendAllowed checks that a transfer request is allowed or not
 func (k Keeper) IsSendAllowed(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
-	return k.areCoinsSpendable(ctx, fromAddress, coins)
+	if err := k.areCoinsSpendable(ctx, fromAddress, coins); err != nil {
+		return err
+	}
+
+	for _, coin := range coins {
+		ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+		if types.ErrFungibleTokenNotFound.Is(err) {
+			continue
+		}
+
+		if err != nil {
+			return err
+		}
+
+		if ft.BurnRate > 0 && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
+			coinsToBurn := ft.CalculateBurnCoin(coin)
+			err = k.burnFungibleToken(ctx, coinsToBurn, fromAddress)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// InterceptInputOutputCoins extends InputOutputCoins method of the bank keeper
+func (k Keeper) InterceptInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	for _, in := range inputs {
+		inAddress, err := sdk.AccAddressFromBech32(in.Address)
+		if err != nil {
+			return err
+		}
+
+		for _, coin := range in.Coins {
+			ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+			if types.ErrFungibleTokenNotFound.Is(err) {
+				continue
+			}
+
+			if err != nil {
+				return err
+			}
+
+			if ft.BurnRate > 0 && ft.Issuer != inAddress.String() {
+				coinsToBurn := ft.CalculateBurnCoin(coin)
+				err = k.burnFungibleToken(ctx, coinsToBurn, inAddress)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // Logger returns the Keeper logger.

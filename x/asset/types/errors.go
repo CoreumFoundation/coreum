@@ -21,4 +21,6 @@ var (
 	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 7, "symbol format is not valid")
 	// ErrGloballyFrozen is returned when token is globally frozen so all operations with it are blocked
 	ErrGloballyFrozen = sdkerrors.Register(ModuleName, 8, "token is globally frozen")
+	// ErrInvalidBurnRate is returned when the provided symbol is not of valid format
+	ErrInvalidBurnRate = sdkerrors.Register(ModuleName, 9, "burn rate is not valid")
 )

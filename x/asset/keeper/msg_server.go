@@ -50,6 +50,7 @@ func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueF
 		Recipient:     recipient,
 		InitialAmount: req.InitialAmount,
 		Features:      req.Features,
+		BurnRate:      req.BurnRate,
 	})
 	if err != nil {
 		return nil, err
