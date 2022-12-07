@@ -38,13 +38,15 @@ service Msg {
 message MsgIssueFungibleToken {
   string issuer = 1;
   string symbol = 2;
-  string recipient = 3;
-  string initial_amount = 4 [
+  string subunit = 3;
+  uint32 precision = 4;
+  string recipient = 5;
+  string initial_amount = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string description = 5;
-  repeated FungibleTokenFeature features = 6;
+  string description = 7;
+  repeated FungibleTokenFeature features = 8;
 }
 
 message MsgFreezeFungibleToken {

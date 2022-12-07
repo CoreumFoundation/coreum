@@ -24,6 +24,8 @@ var (
 
 type issueFungibleTokenRequest struct {
 	Symbol    string `json:"symbol"`
+	Subunit   string `json:"subunit"`
+	Precision uint32 `json:"precision"`
 	Amount    string `json:"amount"`
 	Recipient string `json:"recipient"`
 }
@@ -49,6 +51,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 	bankClient := banktypes.NewQueryClient(clientCtx)
+	assetClient := assettypes.NewQueryClient(clientCtx)
 
 	// deploy and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(struct{}{})
@@ -69,14 +72,20 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	recipient := chain.GenAccount()
 
 	symbol := "mytoken"
-	denom1 := assettypes.BuildFungibleTokenDenom(symbol+"1", sdk.MustAccAddressFromBech32(contractAddr))
-	denom2 := assettypes.BuildFungibleTokenDenom(symbol+"2", sdk.MustAccAddressFromBech32(contractAddr))
+	subunit := "mysatoshi"
+	subunit1 := subunit + "1"
+	subunit2 := subunit + "2"
+	precision := uint32(8)
+	denom1 := assettypes.BuildFungibleTokenDenom(subunit1, sdk.MustAccAddressFromBech32(contractAddr))
+	denom2 := assettypes.BuildFungibleTokenDenom(subunit2, sdk.MustAccAddressFromBech32(contractAddr))
 	initialAmount := sdk.NewInt(5000)
 
 	// issue fungible token by smart contract
 	createPayload, err := json.Marshal(map[fungibleTokenMethod]issueFungibleTokenRequest{
 		ftIssue: {
 			Symbol:    symbol,
+			Subunit:   subunit,
+			Precision: precision,
 			Amount:    initialAmount.String(),
 			Recipient: recipient.String(),
 		},
@@ -99,6 +108,26 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	assertT := assert.New(t)
 	assertT.Equal(initialAmount.String(), recipientBalance.Balances.AmountOf(denom1).String())
 	assertT.Equal(initialAmount.String(), recipientBalance.Balances.AmountOf(denom2).String())
+
+	ft, err := assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{Denom: denom1})
+	requireT.NoError(err)
+	requireT.EqualValues(assettypes.FungibleToken{
+		Denom:     denom1,
+		Issuer:    contractAddr,
+		Symbol:    symbol + "1",
+		Subunit:   subunit1,
+		Precision: precision,
+	}, ft.GetFungibleToken())
+
+	ft, err = assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{Denom: denom2})
+	requireT.NoError(err)
+	requireT.EqualValues(assettypes.FungibleToken{
+		Denom:     denom2,
+		Issuer:    contractAddr,
+		Symbol:    symbol + "2",
+		Subunit:   subunit2,
+		Precision: precision,
+	}, ft.GetFungibleToken())
 
 	// check the counter
 	getCountPayload, err := json.Marshal(map[fungibleTokenMethod]struct{}{
