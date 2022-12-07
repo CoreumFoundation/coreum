@@ -47,6 +47,8 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 	issueMsg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     6,
 		Description:   "ABC Description",
 		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(1000),

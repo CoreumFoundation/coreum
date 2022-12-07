@@ -25,7 +25,9 @@ func TestBurnRate(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 	// the denom must start from the letter
-	symbol := "abc"
+	symbol := "ABC"
+	subunit := "abc"
+	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 	issuer := testNetwork.Validators[0].Address
 	recipient1, err := createAccount(ctx)
@@ -35,7 +37,7 @@ func TestBurnRate(t *testing.T) {
 	denom := types.BuildFungibleTokenDenom(symbol, issuer)
 
 	// Issue token
-	args := []string{symbol, testNetwork.Validators[0].Address.String(), "777", `"My Token"`, "--burn_rate", "0.5"}
+	args := []string{symbol, subunit, precision, testNetwork.Validators[0].Address.String(), "777", `"My Token"`, "--burn_rate", "0.5"}
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)
