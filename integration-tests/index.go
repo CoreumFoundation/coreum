@@ -45,6 +45,7 @@ func Tests() []testing.TestSet {
 				bank.TestSendGasEstimation,
 				bank.TestMultiSendDeterministicGasManyCoins,
 				bank.TestMultiSend,
+				bank.TestMultiSendFromMultipleAccounts,
 				customparams.TestStakingProposalParamChange,
 				distribution.TestWithdrawRewardWithDeterministicGas,
 				distribution.TestSpendCommunityPoolProposal,
