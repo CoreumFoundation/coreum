@@ -30,10 +30,12 @@ message FungibleToken {
   string denom = 1;
   string issuer = 2;
   string symbol = 3;
-  string description = 4;
-  bool globally_frozen = 5;
-  repeated FungibleTokenFeature features = 6;
+  string subunit = 4;
+  uint32 precision = 5;
+  string description = 6;
+  bool globally_frozen = 7;
+  repeated FungibleTokenFeature features = 8;
   // burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
   // burn_amount. This value will be burnt on top of the send amount.
-  float burn_rate = 7;
+  float burn_rate = 9;
 }

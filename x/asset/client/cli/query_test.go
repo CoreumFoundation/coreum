@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -22,10 +23,12 @@ func TestQueryFungibleToken(t *testing.T) {
 	testNetwork := network.New(t)
 
 	// the denom must start from the letter
-	symbol := "BTC" + uuid.NewString()[:4]
+	symbol := "btc" + uuid.NewString()[:4]
+	subunit := "sub" + symbol
+	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	denom := createFungibleToken(requireT, ctx, symbol, testNetwork)
+	denom := createFungibleToken(requireT, ctx, symbol, subunit, precision, testNetwork)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
@@ -37,13 +40,15 @@ func TestQueryFungibleToken(t *testing.T) {
 		Denom:       denom,
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Symbol:      symbol,
+		Subunit:     strings.ToLower(subunit),
+		Precision:   8,
 		Description: "",
 		Features:    []types.FungibleTokenFeature{},
 	}, resp.FungibleToken)
 }
 
-func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbol string, testNetwork *network.Network) string {
-	args := []string{symbol, "", "", ""}
+func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbol, subunit, precision string, testNetwork *network.Network) string {
+	args := []string{symbol, subunit, precision, "", "", ""}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)
@@ -58,9 +63,9 @@ func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbo
 		if res.Events[i].Type != eventFungibleTokenIssuedName {
 			continue
 		}
-		eventFungibleTokenIssued, err := event.FindTypedEvent[*types.EventFungibleTokenIssued](res.Events)
+		eventsFungibleTokenIssued, err := event.FindTypedEvents[*types.EventFungibleTokenIssued](res.Events)
 		requireT.NoError(err)
-		return eventFungibleTokenIssued.Denom
+		return eventsFungibleTokenIssued[0].Denom
 	}
 	requireT.Failf("event: %s not found in the create fungible token response", eventFungibleTokenIssuedName)
 
