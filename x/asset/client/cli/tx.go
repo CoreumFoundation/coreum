@@ -51,10 +51,12 @@ func FTCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdTxIssueFungibleToken(),
-		CmdTxFreezeFungibleToken(),
-		CmdTxUnfreezeFungibleToken(),
 		CmdTxMintFungibleToken(),
 		CmdTxBurnFungibleToken(),
+		CmdTxFreezeFungibleToken(),
+		CmdTxUnfreezeFungibleToken(),
+		CmdTxGloballyFreezeFungibleToken(),
+		CmdTxGloballyUnfreezeFungibleToken(),
 	)
 
 	return cmd
@@ -68,7 +70,7 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=freezable,mintable,...",
+		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ","),
 		Args:  cobra.ExactArgs(4),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -135,7 +137,7 @@ $ %s tx asset ft issue ABC [recipient_address] 100000 "ABC Token" --from [issuer
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
-	cmd.Flags().StringSlice(featuresFlag, []string{}, "Features to be enabled on fungible token. e.g --features=freezable,mintable.")
+	cmd.Flags().StringSlice(featuresFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -154,7 +156,7 @@ func CmdTxFreezeFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Freeze a portion of fungible token.
 
 Example:
-$ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
+$ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -198,7 +200,7 @@ func CmdTxUnfreezeFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Unfreezes a portion of the frozen fungible token.
 
 Example:
-$ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
+$ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -304,6 +306,82 @@ $ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 -
 				Coin:   amount,
 			}
 
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxGloballyFreezeFungibleToken returns GlobalFreezeFungibleToken cobra command.
+func CmdTxGloballyFreezeFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "globally-freeze [denom] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "freezes fungible token so no operations are allowed with it before unfrozen",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Freezes fungible token so no operations are allowed with it before unfrozen.
+This operation is idempotent so global freeze of already frozen token does nothing.
+
+Example:
+$ %s tx asset ft globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			denom := args[0]
+
+			msg := &types.MsgGloballyFreezeFungibleToken{
+				Sender: sender.String(),
+				Denom:  denom,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxGloballyUnfreezeFungibleToken returns GlobalUnfreezeFungibleToken cobra command.
+func CmdTxGloballyUnfreezeFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "globally-unfreeze [denom] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "unfreezes fungible token and unblocks basic operations on it",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Unfreezes fungible token and unblocks basic operations on it.
+This operation is idempotent so global unfreezing of non-frozen token does nothing.
+
+Example:
+$ %s tx asset ft globally-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			denom := args[0]
+
+			msg := &types.MsgGloballyUnfreezeFungibleToken{
+				Sender: sender.String(),
+				Denom:  denom,
+			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

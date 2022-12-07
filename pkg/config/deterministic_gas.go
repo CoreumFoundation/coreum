@@ -18,13 +18,16 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssueFungibleToken:    80000,
-		AssetFreezeFungibleToken:   55000,
-		AssetUnfreezeFungibleToken: 55000,
-		AssetMintFungibleToken:     35000,
-		AssetBurnFungibleToken:     35000,
+		AssetIssueFungibleToken:            80000,
+		AssetMintFungibleToken:             35000,
+		AssetBurnFungibleToken:             35000,
+		AssetFreezeFungibleToken:           55000,
+		AssetUnfreezeFungibleToken:         55000,
+		AssetGloballyFreezeFungibleToken:   5000,
+		AssetGloballyUnfreezeFungibleToken: 5000,
 
-		BankSend: 30000,
+		BankSendPerEntry:      22000,
+		BankMultiSendPerEntry: 27000,
 
 		DistributionFundCommunityPool:           50000,
 		DistributionSetWithdrawAddress:          50000,
@@ -59,14 +62,17 @@ type DeterministicGasRequirements struct {
 	FreeSignatures uint64
 
 	// x/asset
-	AssetIssueFungibleToken    uint64
-	AssetFreezeFungibleToken   uint64
-	AssetUnfreezeFungibleToken uint64
-	AssetMintFungibleToken     uint64
-	AssetBurnFungibleToken     uint64
+	AssetIssueFungibleToken            uint64
+	AssetMintFungibleToken             uint64
+	AssetBurnFungibleToken             uint64
+	AssetFreezeFungibleToken           uint64
+	AssetUnfreezeFungibleToken         uint64
+	AssetGloballyFreezeFungibleToken   uint64
+	AssetGloballyUnfreezeFungibleToken uint64
 
 	// x/bank
-	BankSend uint64
+	BankSendPerEntry      uint64
+	BankMultiSendPerEntry uint64
 
 	// x/distribution
 	DistributionFundCommunityPool           uint64
@@ -95,19 +101,45 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	// To test the real gas usage return `false` and run an integration test which reports the used gas.
 	// Then define a reasonable value for the message and return `true` again.
 
-	switch msg.(type) {
+	switch m := msg.(type) {
 	case *assettypes.MsgIssueFungibleToken:
 		return dgr.AssetIssueFungibleToken, true
 	case *assettypes.MsgFreezeFungibleToken:
 		return dgr.AssetFreezeFungibleToken, true
 	case *assettypes.MsgUnfreezeFungibleToken:
 		return dgr.AssetUnfreezeFungibleToken, true
+	case *assettypes.MsgGloballyFreezeFungibleToken:
+		return dgr.AssetFreezeFungibleToken, true
+	case *assettypes.MsgGloballyUnfreezeFungibleToken:
+		return dgr.AssetUnfreezeFungibleToken, true
 	case *assettypes.MsgMintFungibleToken:
 		return dgr.AssetMintFungibleToken, true
 	case *assettypes.MsgBurnFungibleToken:
 		return dgr.AssetBurnFungibleToken, true
 	case *banktypes.MsgSend:
-		return dgr.BankSend, true
+		entriesNum := len(m.Amount)
+		if len(m.Amount) == 0 {
+			entriesNum = 1
+		}
+		return uint64(entriesNum) * dgr.BankSendPerEntry, true
+	case *banktypes.MsgMultiSend:
+		entriesNum := 0
+		for _, i := range m.Inputs {
+			entriesNum += len(i.Coins)
+		}
+
+		var outputEntriesNum int
+		for _, o := range m.Outputs {
+			outputEntriesNum += len(o.Coins)
+		}
+		if outputEntriesNum > entriesNum {
+			entriesNum = outputEntriesNum
+		}
+
+		if entriesNum == 0 {
+			entriesNum = 1
+		}
+		return uint64(entriesNum) * dgr.BankMultiSendPerEntry, true
 	case *distributiontypes.MsgFundCommunityPool:
 		return dgr.DistributionFundCommunityPool, true
 	case *distributiontypes.MsgSetWithdrawAddress:

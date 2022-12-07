@@ -28,5 +28,6 @@ message FungibleToken {
   string issuer = 2;
   string symbol = 3;
   string description = 4;
-  repeated FungibleTokenFeature features = 5;
+  bool globally_frozen = 5;
+  repeated FungibleTokenFeature features = 6;
 }

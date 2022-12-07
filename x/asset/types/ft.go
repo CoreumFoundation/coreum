@@ -76,3 +76,8 @@ func ValidateSymbol(symbol string) error {
 
 	return nil
 }
+
+// IsFeatureEnabled returns true if feature is enabled for a fungible token.
+func (ftd *FungibleTokenDefinition) IsFeatureEnabled(feature FungibleTokenFeature) bool {
+	return lo.Contains(ftd.Features, feature)
+}

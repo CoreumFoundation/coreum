@@ -47,7 +47,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 
 	require.NoError(t, err)
 	assert.Equal(t, chain.GasLimitByMsgs(&assettypes.MsgIssueFungibleToken{}), uint64(res.GasUsed))
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 
 	require.NoError(t, err)
 	require.Equal(t, assettypes.EventFungibleTokenIssued{
@@ -58,9 +58,9 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
 		Features:      []assettypes.FungibleTokenFeature{},
-	}, *fungibleTokenIssuedEvt)
+	}, *fungibleTokenIssuedEvts[0])
 
-	denom := fungibleTokenIssuedEvt.Denom
+	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// query for the token to check what is stored
 	gotToken, err := assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{
