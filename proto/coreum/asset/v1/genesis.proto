@@ -13,8 +13,8 @@ message GenesisState {
 }
 
 message FungibleTokenState {
-  // token_definitions keep the fungible token state
-  repeated FungibleTokenDefinition token_definitions  = 1 [(gogoproto.nullable) = false];
+  // fungible_tokens keep the fungible token state
+  repeated FungibleToken fungible_tokens  = 1 [(gogoproto.nullable) = false];
   // frozen_balances contains the frozen balances on all of the accounts
   repeated FungibleTokenBalance frozen_balances = 2 [(gogoproto.nullable) = false];
   // whitelisted_balances contains the whitelisted balances on all of the accounts

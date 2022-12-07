@@ -30,10 +30,11 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 
 	// Issue the new fungible token
 	msg := &assettypes.MsgIssueFungibleToken{
-		Issuer:      issuer.String(),
-		Symbol:      "BTC",
-		Description: "BTC Description",
-		// the custom receiver
+		Issuer:        issuer.String(),
+		Symbol:        "WBTC",
+		Subunit:       "wsatoshi",
+		Precision:     8,
+		Description:   "Wrapped BTC",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(777),
 	}
@@ -51,9 +52,11 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 
 	require.NoError(t, err)
 	require.Equal(t, assettypes.EventFungibleTokenIssued{
-		Denom:         assettypes.BuildFungibleTokenDenom(msg.Symbol, issuer),
+		Denom:         assettypes.BuildFungibleTokenDenom(msg.Subunit, issuer),
 		Issuer:        msg.Issuer,
 		Symbol:        msg.Symbol,
+		Precision:     msg.Precision,
+		Subunit:       msg.Subunit,
 		Description:   msg.Description,
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
@@ -72,6 +75,8 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Denom:       denom,
 		Issuer:      msg.Issuer,
 		Symbol:      msg.Symbol,
+		Subunit:     "wsatoshi",
+		Precision:   8,
 		Description: msg.Description,
 	}, gotToken.FungibleToken)
 

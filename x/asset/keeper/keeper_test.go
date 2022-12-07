@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -26,27 +27,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestKeeper_LowercaseSymbol(t *testing.T) {
-	requireT := require.New(t)
-	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-	assetKeeper := testApp.AssetKeeper
-	symbol := "Coreum"
-
-	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	settings := types.IssueFungibleTokenSettings{
-		Issuer:        addr,
-		Symbol:        symbol,
-		Recipient:     addr,
-		InitialAmount: sdk.NewInt(777),
-		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
-	}
-
-	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
-	requireT.NoError(err)
-	requireT.EqualValues("coreum"+"-"+addr.String(), denom)
-}
-
 func TestKeeper_ValidateSymbol(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
@@ -54,6 +34,65 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 	assetKeeper := testApp.AssetKeeper
 
 	unacceptableSymbols := []string{
+		"ABC/1",
+		"core",
+		"ucore",
+		"Core",
+		"uCore",
+		"CORE",
+		"UCORE",
+		"3abc",
+		"3ABC",
+	}
+
+	acceptableSymbols := []string{
+		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
+		"BTC-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
+		"ABC-1",
+		"ABC1",
+		"coreum",
+		"ucoreum",
+		"Coreum",
+		"uCoreum",
+		"COREeum",
+		"A1234567890123456789012345678901234567890123456789012345678901234567890",
+		"AB1234567890123456789012345678901234567890123456789012345678901234567890",
+	}
+
+	assertValidSymbol := func(symbol string, isValid bool) {
+		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		settings := types.IssueFungibleTokenSettings{
+			Issuer:        addr,
+			Symbol:        symbol,
+			Subunit:       "subunit",
+			Description:   "ABC Desc",
+			Recipient:     addr,
+			InitialAmount: sdk.NewInt(777),
+			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
+		}
+
+		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
+		if types.ErrInvalidSymbol.Is(err) == isValid {
+			requireT.Equal(types.ErrInvalidSymbol.Is(err), !isValid)
+		}
+	}
+
+	for _, symbol := range unacceptableSymbols {
+		assertValidSymbol(symbol, false)
+	}
+
+	for _, symbol := range acceptableSymbols {
+		assertValidSymbol(symbol, true)
+	}
+}
+
+func TestKeeper_ValidateSubunit(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+	assetKeeper := testApp.AssetKeeper
+
+	unacceptableSubunits := []string{
 		"ABC-1",
 		"ABC/1",
 		"btc-devcore1phjrez5j2wp5qzp0zvlqavasvw60mkp2zmfe6h",
@@ -66,24 +105,25 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 		"UCORE",
 		"3abc",
 		"3ABC",
+		"uCoreum",
+		"Coreum",
+		"COREeum",
 		"AB1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
-	acceptableSymbols := []string{
-		"ABC1",
+	acceptableSubunits := []string{
+		"abc1",
 		"coreum",
 		"ucoreum",
-		"Coreum",
-		"uCoreum",
-		"COREeum",
-		"A1234567890123456789012345678901234567890123456789012345678901234567890",
+		"a1234567890123456789012345678901234567890123456789012345678901234567890",
 	}
 
-	assertValidSymbol := func(symbol string, isValid bool) {
+	assertValidSubunit := func(subunit string, isValid bool) {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		settings := types.IssueFungibleTokenSettings{
 			Issuer:        addr,
-			Symbol:        symbol,
+			Symbol:        "symbol",
+			Subunit:       subunit,
 			Description:   "ABC Desc",
 			Recipient:     addr,
 			InitialAmount: sdk.NewInt(777),
@@ -91,15 +131,19 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 		}
 
 		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
-		requireT.Equal(types.ErrInvalidSymbol.Is(err), !isValid)
+		if isValid {
+			requireT.NoError(err)
+		} else {
+			requireT.ErrorIs(types.ErrInvalidSubunit, err, "subunit", subunit)
+		}
 	}
 
-	for _, symbol := range unacceptableSymbols {
-		assertValidSymbol(symbol, false)
+	for _, su := range unacceptableSubunits {
+		assertValidSubunit(su, false)
 	}
 
-	for _, symbol := range acceptableSymbols {
-		assertValidSymbol(symbol, true)
+	for _, su := range acceptableSubunits {
+		assertValidSubunit(su, true)
 	}
 }
 
@@ -118,6 +162,8 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "ABC",
 		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
@@ -125,7 +171,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
 	requireT.NoError(err)
-	requireT.Equal(types.BuildFungibleTokenDenom(settings.Symbol, settings.Issuer), denom)
+	requireT.Equal(types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer), denom)
 
 	gotToken, err := assetKeeper.GetFungibleToken(ctx, denom)
 	requireT.NoError(err)
@@ -134,6 +180,8 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Issuer:      settings.Issuer.String(),
 		Symbol:      settings.Symbol,
 		Description: settings.Description,
+		Subunit:     strings.ToLower(settings.Subunit),
+		Precision:   settings.Precision,
 		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}, gotToken)
 
@@ -141,26 +189,39 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 	storedMetadata, found := bankKeeper.GetDenomMetaData(ctx, denom)
 	requireT.True(found)
 	requireT.Equal(banktypes.Metadata{
-		Name:        denom,
+		Name:        settings.Symbol,
 		Symbol:      settings.Symbol,
 		Description: settings.Description,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
+				Denom:    settings.Symbol,
+				Exponent: settings.Precision,
+			},
+			{
 				Denom:    denom,
-				Exponent: uint32(0),
+				Exponent: 0,
 			},
 		},
 		Base:    denom,
-		Display: denom,
+		Display: settings.Symbol,
 	}, storedMetadata)
 
 	// check the account state
 	issuedAssetBalance := bankKeeper.GetBalance(ctx, addr, denom)
 	requireT.Equal(sdk.NewCoin(denom, settings.InitialAmount).String(), issuedAssetBalance.String())
 
-	// issue one more time check the double issue validation
-	_, err = assetKeeper.IssueFungibleToken(ctx, settings)
-	requireT.True(errors.Is(types.ErrInvalidFungibleToken, err))
+	// check duplicate subunit
+	st := settings
+	st.Symbol = "test-symbol"
+	_, err = assetKeeper.IssueFungibleToken(ctx, st)
+	requireT.True(errors.Is(types.ErrInvalidSubunit, err))
+
+	// check duplicate symbol
+	st = settings
+	st.Subunit = "test-subunit"
+	st.Symbol = "aBc"
+	_, err = assetKeeper.IssueFungibleToken(ctx, st)
+	requireT.True(errors.Is(types.ErrInvalidSubunit, err))
 }
 
 func TestKeeper_Mint(t *testing.T) {
@@ -178,6 +239,7 @@ func TestKeeper_Mint(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        addr,
 		Symbol:        "NotMintable",
+		Subunit:       "notmintable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -198,7 +260,8 @@ func TestKeeper_Mint(t *testing.T) {
 	// Issue a mintable fungible token
 	settings = types.IssueFungibleTokenSettings{
 		Issuer:        addr,
-		Symbol:        "Mintable",
+		Symbol:        "mintable",
+		Subunit:       "mintable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -242,6 +305,7 @@ func TestKeeper_Burn(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        addr,
 		Symbol:        "NotBurnable",
+		Subunit:       "notburnable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
@@ -262,7 +326,8 @@ func TestKeeper_Burn(t *testing.T) {
 	// Issue a burnable fungible token
 	settings = types.IssueFungibleTokenSettings{
 		Issuer:        addr,
-		Symbol:        "Burnable",
+		Symbol:        "burnable",
+		Subunit:       "burnable",
 		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{

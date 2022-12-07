@@ -12,13 +12,15 @@ message EventFungibleTokenIssued {
   string denom = 1;
   string issuer = 2;
   string symbol = 3;
-  string recipient = 4;
-  string initial_amount = 5 [
+  string subunit = 4;
+  uint32 precision = 5;
+  string recipient = 6;
+  string initial_amount = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string description = 6;
-  repeated FungibleTokenFeature features = 7;
+  string description = 8;
+  repeated FungibleTokenFeature features = 9;
 }
 
 message EventFungibleTokenFrozenAmountChanged {

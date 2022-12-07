@@ -31,6 +31,7 @@ func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 		return types.MsgIssueFungibleToken{
 			Issuer:        acc.String(),
 			Symbol:        "BTC",
+			Subunit:       "btc",
 			Description:   "BTC Description",
 			Recipient:     acc.String(),
 			InitialAmount: sdk.NewInt(777),
@@ -70,6 +71,10 @@ func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 
 	msg = msgF()
 	msg.Description = string(make([]byte, 10000))
+	requireT.Error(msg.ValidateBasic())
+
+	msg = msgF()
+	msg.Subunit = ""
 	requireT.Error(msg.ValidateBasic())
 }
 

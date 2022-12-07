@@ -12,7 +12,10 @@ import (
 )
 
 var (
-	symbolRegexStr = `^[a-z][a-z0-9]{2,70}$`
+	subunitRegexStr = `^[a-z][a-z0-9]{0,70}$`
+	subunitRegex    *regexp.Regexp
+
+	symbolRegexStr = `^[a-zA-Z][a-zA-Z0-9-.]{0,127}$`
 	symbolRegex    *regexp.Regexp
 )
 
@@ -21,6 +24,7 @@ const (
 )
 
 func init() {
+	subunitRegex = regexp.MustCompile(subunitRegexStr)
 	symbolRegex = regexp.MustCompile(symbolRegexStr)
 }
 
@@ -28,6 +32,8 @@ func init() {
 type IssueFungibleTokenSettings struct {
 	Issuer        sdk.AccAddress
 	Symbol        string
+	Subunit       string
+	Precision     uint32
 	Description   string
 	Recipient     sdk.AccAddress
 	InitialAmount sdk.Int
@@ -35,8 +41,8 @@ type IssueFungibleTokenSettings struct {
 }
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
-func BuildFungibleTokenDenom(symbol string, issuer sdk.AccAddress) string {
-	return strings.ToLower(symbol) + "-" + issuer.String()
+func BuildFungibleTokenDenom(prefix string, issuer sdk.AccAddress) string {
+	return strings.ToLower(prefix) + denomSeparator + issuer.String()
 }
 
 // DeconstructFungibleTokenDenom splits the denom string into the symbol and issuer address.
@@ -63,10 +69,22 @@ var reserved = []string{
 	strings.ToLower(constant.DenomMainDisplay),
 }
 
+// ValidateSubunit checks the provide subunit is valid
+func ValidateSubunit(subunit string) error {
+	if lo.Contains(reserved, strings.ToLower(subunit)) {
+		return sdkerrors.Wrapf(ErrInvalidSubunit, "%s is a reserved subunit", subunit)
+	}
+
+	if !subunitRegex.MatchString(subunit) {
+		return sdkerrors.Wrapf(ErrInvalidSubunit, "subunit must match regex format '%s'", subunitRegexStr)
+	}
+
+	return nil
+}
+
 // ValidateSymbol checks the provide symbol is valid
 func ValidateSymbol(symbol string) error {
-	symbol = strings.ToLower(symbol)
-	if lo.Contains(reserved, symbol) {
+	if lo.Contains(reserved, strings.ToLower(symbol)) {
 		return sdkerrors.Wrapf(ErrInvalidSymbol, "%s is a reserved symbol", symbol)
 	}
 
@@ -75,6 +93,11 @@ func ValidateSymbol(symbol string) error {
 	}
 
 	return nil
+}
+
+// NormalizeSymbolForKey normalizes the symbol string
+func NormalizeSymbolForKey(in string) string {
+	return strings.ToLower(in)
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.

@@ -35,6 +35,7 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 	msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotFreezable",
+		Subunit:       "uabcnotfreezable",
 		Description:   "ABC Description",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),
@@ -112,6 +113,8 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
 		Description:   "ABC Description",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),
