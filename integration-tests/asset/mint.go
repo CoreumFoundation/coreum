@@ -62,9 +62,9 @@ func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err := event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	unmintableDenom := fungibleTokenIssuedEvt.Denom
+	unmintableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to mint unmintable token
 	mintMsg := &assettypes.MsgMintFungibleToken{
@@ -103,9 +103,9 @@ func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvt, err = event.FindTypedEvent[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	mintableDenom := fungibleTokenIssuedEvt.Denom
+	mintableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to msg
 	mintMsg = &assettypes.MsgMintFungibleToken{
