@@ -94,6 +94,7 @@ func TestSendDeterministicGasManyCoins(ctx context.Context, t testing.T, chain t
 		issueMsgs = append(issueMsgs, &assettypes.MsgIssueFungibleToken{
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),
+			Subunit:       fmt.Sprintf("tok%d", i),
 			Description:   fmt.Sprintf("TOK%d Description", i),
 			Recipient:     sender.String(),
 			InitialAmount: amountToSend,
@@ -220,6 +221,7 @@ func TestMultiSendDeterministicGasManyCoins(ctx context.Context, t testing.T, ch
 		issueMsgs = append(issueMsgs, &assettypes.MsgIssueFungibleToken{
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),
+			Subunit:       fmt.Sprintf("tok%d", i),
 			Description:   fmt.Sprintf("TOK%d Description", i),
 			Recipient:     sender.String(),
 			InitialAmount: amountToSend,
