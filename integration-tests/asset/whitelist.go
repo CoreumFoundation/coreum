@@ -16,6 +16,8 @@ import (
 )
 
 // TestWhitelistUnwhitelistableFungibleToken checks whitelist functionality on unwhitelistable fungible tokens.
+//
+//nolint:dupl
 func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
