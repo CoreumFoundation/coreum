@@ -14,6 +14,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+//nolint:funlen // this is complex tests scenario and breaking it down is not beneficial
 func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
