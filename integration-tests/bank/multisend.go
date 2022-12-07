@@ -25,6 +25,7 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 		&assettypes.MsgIssueFungibleToken{
 			Issuer:        sender.String(),
 			Symbol:        "TOK1",
+			Subunit:       "tok1",
 			Description:   "TOK1 Description",
 			Recipient:     sender.String(),
 			InitialAmount: amount,
@@ -32,6 +33,7 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 		&assettypes.MsgIssueFungibleToken{
 			Issuer:        sender.String(),
 			Symbol:        "TOK2",
+			Subunit:       "tok2",
 			Description:   "TOK2 Description",
 			Recipient:     sender.String(),
 			InitialAmount: amount,

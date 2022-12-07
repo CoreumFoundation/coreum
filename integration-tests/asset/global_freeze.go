@@ -37,6 +37,8 @@ func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain tes
 	issueMsg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
 		Symbol:        "FREEZE",
+		Subunit:       "freeze",
+		Precision:     6,
 		Description:   "FREEZE Description",
 		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(1000),

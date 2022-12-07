@@ -27,7 +27,9 @@ message FungibleToken {
   string denom = 1;
   string issuer = 2;
   string symbol = 3;
-  string description = 4;
-  bool globally_frozen = 5;
-  repeated FungibleTokenFeature features = 6;
+  string subunit = 4;
+  uint32 precision = 5;
+  string description = 6;
+  bool globally_frozen = 7;
+  repeated FungibleTokenFeature features = 8;
 }
