@@ -19,7 +19,7 @@ var (
 	nftIDRegexStr = `^[a-zA-Z][a-zA-Z0-9/:-]{2,100}$`
 	nftIDRegex    = regexp.MustCompile(nftIDRegexStr)
 
-	nfClassIDSeparator = "-"
+	nftClassIDSeparator = "-"
 )
 
 // CreateNonFungibleTokenClassSettings is the model which represents the params for the non-fungible token class creation.
@@ -45,19 +45,19 @@ type MintNonFungibleTokenSettings struct {
 
 // BuildNonFungibleTokenClassID builds the non-fungible token id string from the symbol and issuer address.
 func BuildNonFungibleTokenClassID(symbol string, creator sdk.AccAddress) string {
-	return strings.ToLower(symbol) + nfClassIDSeparator + creator.String()
+	return strings.ToLower(symbol) + nftClassIDSeparator + creator.String()
 }
 
 // DeconstructNonFungibleTokenClassID splits the classID string into the symbol and issuer address.
 func DeconstructNonFungibleTokenClassID(classID string) (issuer sdk.Address, err error) {
-	classIDParts := strings.Split(classID, nfClassIDSeparator)
-	if len(classIDParts) < 2 {
-		return nil, sdkerrors.Wrap(ErrInvalidDenom, "classID must match format [subunit]-[issuer-address]")
+	classIDParts := strings.Split(classID, nftClassIDSeparator)
+	if len(classIDParts) != 2 {
+		return nil, sdkerrors.Wrap(ErrInvalidDenom, "classID must match format [symbol]-[issuer-address]")
 	}
 
 	address, err := sdk.AccAddressFromBech32(classIDParts[len(classIDParts)-1])
 	if err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address in denom,err:%s", err)
+		return nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address in classID,err:%s", err)
 	}
 
 	return address, nil

@@ -25,7 +25,7 @@ func (msg *MsgCreateNonFungibleTokenClass) ValidateBasic() error {
 	}
 
 	if len(msg.Name) > nftClassMaxNameLength {
-		return sdkerrors.Wrapf(ErrInvalidNonFungibleTokenClass, "invalid name %q, the length must be less than %d", msg.Name, nftClassMaxNameLength)
+		return sdkerrors.Wrapf(ErrInvalidNonFungibleTokenClass, "invalid name %q, the length must be less than or equal %d", msg.Name, nftClassMaxNameLength)
 	}
 
 	if err := ValidateNonFungibleTokenClassSymbol(msg.Symbol); err != nil {
@@ -33,15 +33,15 @@ func (msg *MsgCreateNonFungibleTokenClass) ValidateBasic() error {
 	}
 
 	if len(msg.Description) > nftClassMaxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidNonFungibleTokenClass, "invalid description %q, the length must be less than %d", msg.Description, nftClassMaxDescriptionLength)
+		return sdkerrors.Wrapf(ErrInvalidNonFungibleTokenClass, "invalid description %q, the length must be less than or equal %d", msg.Description, nftClassMaxDescriptionLength)
 	}
 
 	if len(msg.Uri) > nftMaxURILength {
-		return sdkerrors.Wrapf(ErrInvalidNonFungibleTokenClass, "invalid URI %q, the length must be less than %d", len(msg.Uri), nftMaxURILength)
+		return sdkerrors.Wrapf(ErrInvalidNonFungibleTokenClass, "invalid URI %q, the length must be less than or equal %d", len(msg.Uri), nftMaxURILength)
 	}
 
 	if len(msg.UriHash) > nftMaxURIHashLength {
-		return sdkerrors.Wrapf(ErrInvalidNonFungibleTokenClass, "invalid URI hash %q, the length must be less than %d", len(msg.UriHash), nftMaxURIHashLength)
+		return sdkerrors.Wrapf(ErrInvalidNonFungibleTokenClass, "invalid URI hash %q, the length must be less than or equal %d", len(msg.UriHash), nftMaxURIHashLength)
 	}
 
 	if msg.Data != nil && len(msg.Data.Value) > nftMaxDataSize {
@@ -73,11 +73,11 @@ func (msg *MsgMintNonFungibleToken) ValidateBasic() error {
 	}
 
 	if len(msg.Uri) > nftMaxURILength {
-		return sdkerrors.Wrapf(ErrInvalidNonFungibleToken, "invalid URI %q, the length must be less than %d", len(msg.Uri), nftMaxURILength)
+		return sdkerrors.Wrapf(ErrInvalidNonFungibleToken, "invalid URI %q, the length must be less than or equal %d", len(msg.Uri), nftMaxURILength)
 	}
 
 	if len(msg.UriHash) > nftMaxURIHashLength {
-		return sdkerrors.Wrapf(ErrInvalidNonFungibleToken, "invalid URI hash %q, the length must be less than %d", len(msg.UriHash), nftMaxURIHashLength)
+		return sdkerrors.Wrapf(ErrInvalidNonFungibleToken, "invalid URI hash %q, the length must be less than or equal %d", len(msg.UriHash), nftMaxURIHashLength)
 	}
 
 	if msg.Data != nil && len(msg.Data.Value) > nftMaxDataSize {

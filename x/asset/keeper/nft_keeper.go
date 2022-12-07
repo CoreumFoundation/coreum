@@ -42,7 +42,7 @@ func (k NonFungibleTokenKeeper) CreateClass(ctx sdk.Context, settings types.Crea
 			types.ErrInvalidNonFungibleTokenClass,
 			"symbol %q already used for the address %q",
 			settings.Symbol,
-			settings.Creator.String(),
+			settings.Creator,
 		)
 	}
 
@@ -55,7 +55,7 @@ func (k NonFungibleTokenKeeper) CreateClass(ctx sdk.Context, settings types.Crea
 		UriHash:     settings.URIHash,
 		Data:        settings.Data,
 	}); err != nil {
-		return "", sdkerrors.Wrap(types.ErrInvalidNonFungibleTokenClass, "can't save non-fungible token")
+		return "", sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't save non-fungible token: %s", err)
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventNonFungibleTokenClassCreated{
@@ -67,7 +67,7 @@ func (k NonFungibleTokenKeeper) CreateClass(ctx sdk.Context, settings types.Crea
 		Uri:         settings.URI,
 		UriHash:     settings.URIHash,
 	}); err != nil {
-		return "", sdkerrors.Wrap(types.ErrInvalidNonFungibleTokenClass, "can't emit event EventNonFungibleTokenClassCreated")
+		return "", sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't emit event EventNonFungibleTokenClassCreated: %s", err)
 	}
 
 	return id, nil
@@ -83,24 +83,21 @@ func (k NonFungibleTokenKeeper) Mint(ctx sdk.Context, settings types.MintNonFung
 		return err
 	}
 
-	classFound := k.nftKeeper.HasClass(ctx, settings.ClassID)
-	if !classFound {
+	if classFound := k.nftKeeper.HasClass(ctx, settings.ClassID); !classFound {
 		return sdkerrors.Wrapf(types.ErrInvalidNonFungibleToken, "classID %q not found", settings.ClassID)
 	}
 
-	nftFound := k.nftKeeper.HasNFT(ctx, settings.ClassID, settings.ID)
-	if nftFound {
+	if nftFound := k.nftKeeper.HasNFT(ctx, settings.ClassID, settings.ID); nftFound {
 		return sdkerrors.Wrapf(types.ErrInvalidNonFungibleToken, "ID %q already defined for the class", settings.ID)
 	}
 
-	err := k.nftKeeper.Mint(ctx, nft.NFT{
+	if err := k.nftKeeper.Mint(ctx, nft.NFT{
 		ClassId: settings.ClassID,
 		Id:      settings.ID,
 		Uri:     settings.URI,
 		UriHash: settings.URIHash,
 		Data:    settings.Data,
-	}, settings.Sender)
-	if err != nil {
+	}, settings.Sender); err != nil {
 		return sdkerrors.Wrap(types.ErrInvalidNonFungibleTokenClass, "can't save non-fungible token")
 	}
 
