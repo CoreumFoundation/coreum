@@ -47,10 +47,10 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 	classID := assettypes.BuildNonFungibleTokenClassID(createMsg.Symbol, sender)
 	mintMsg := &assettypes.MsgMintNonFungibleToken{
 		Sender:  sender.String(),
-		Id:      "id-1",
-		ClassId: classID,
-		Uri:     "https://my-class-meta.int/1",
-		UriHash: "35b326a2b3b605270c26185c38d2581e937b2eae0418b4964ef521efe79cdf34",
+		ID:      "id-1",
+		ClassID: classID,
+		URI:     "https://my-class-meta.int/1",
+		URIHash: "35b326a2b3b605270c26185c38d2581e937b2eae0418b4964ef521efe79cdf34",
 	}
 	res, err := tx.BroadcastTx(
 		ctx,
@@ -78,8 +78,8 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 	requireT.Equal(&nft.NFT{
 		ClassId: classID,
 		Id:      "id-1",
-		Uri:     mintMsg.Uri,
-		UriHash: mintMsg.UriHash,
+		Uri:     mintMsg.URI,
+		UriHash: mintMsg.URIHash,
 	}, nftRes.Nft)
 
 	// check the owner

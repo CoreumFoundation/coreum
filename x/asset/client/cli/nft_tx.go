@@ -65,8 +65,8 @@ $ %s tx asset nft create-class abc "ABC Name" "ABC token description." metada-ur
 				Symbol:      symbol,
 				Name:        name,
 				Description: description,
-				Uri:         uri,
-				UriHash:     uriHash,
+				URI:         uri,
+				URIHash:     uriHash,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -107,10 +107,10 @@ $ %s tx asset nft mint abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 me
 
 			msg := &types.MsgMintNonFungibleToken{
 				Sender:  sender.String(),
-				ClassId: classID,
-				Id:      ID,
-				Uri:     uri,
-				UriHash: uriHash,
+				ClassID: classID,
+				ID:      ID,
+				URI:     uri,
+				URIHash: uriHash,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

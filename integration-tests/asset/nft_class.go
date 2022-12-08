@@ -33,8 +33,8 @@ func TestCreateNonFungibleTokenClass(ctx context.Context, t testing.T, chain tes
 		Symbol:      "symbol",
 		Name:        "name",
 		Description: "description",
-		Uri:         "https://my-class-meta.int/1",
-		UriHash:     "35b326a2b3b605270c26185c38d2581e937b2eae0418b4964ef521efe79cdf34",
+		URI:         "https://my-class-meta.int/1",
+		URIHash:     "35b326a2b3b605270c26185c38d2581e937b2eae0418b4964ef521efe79cdf34",
 	}
 	res, err := tx.BroadcastTx(
 		ctx,
@@ -47,18 +47,18 @@ func TestCreateNonFungibleTokenClass(ctx context.Context, t testing.T, chain tes
 	nonFungibleTokenCreatedEvt, err := event.FindTypedEvent[*assettypes.EventNonFungibleTokenClassCreated](res.Events)
 	requireT.NoError(err)
 	requireT.Equal(&assettypes.EventNonFungibleTokenClassCreated{
-		Id:          assettypes.BuildNonFungibleTokenClassID(createMsg.Symbol, creator),
+		ID:          assettypes.BuildNonFungibleTokenClassID(createMsg.Symbol, creator),
 		Creator:     creator.String(),
 		Symbol:      createMsg.Symbol,
 		Name:        createMsg.Name,
 		Description: createMsg.Description,
-		Uri:         createMsg.Uri,
-		UriHash:     createMsg.UriHash,
+		URI:         createMsg.URI,
+		URIHash:     createMsg.URIHash,
 	}, nonFungibleTokenCreatedEvt)
 
 	// check that class is present in the nft module
 	nftClassRes, err := nftClient.Class(ctx, &nft.QueryClassRequest{
-		ClassId: nonFungibleTokenCreatedEvt.Id,
+		ClassId: nonFungibleTokenCreatedEvt.ID,
 	})
 	requireT.NoError(err)
 
@@ -67,7 +67,7 @@ func TestCreateNonFungibleTokenClass(ctx context.Context, t testing.T, chain tes
 		Symbol:      createMsg.Symbol,
 		Name:        createMsg.Name,
 		Description: createMsg.Description,
-		Uri:         createMsg.Uri,
-		UriHash:     createMsg.UriHash,
+		Uri:         createMsg.URI,
+		UriHash:     createMsg.URIHash,
 	}, nftClassRes.Class)
 }

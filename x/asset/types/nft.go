@@ -55,7 +55,7 @@ func DeconstructNonFungibleTokenClassID(classID string) (issuer sdk.Address, err
 		return nil, sdkerrors.Wrap(ErrInvalidDenom, "classID must match format [symbol]-[issuer-address]")
 	}
 
-	address, err := sdk.AccAddressFromBech32(classIDParts[len(classIDParts)-1])
+	address, err := sdk.AccAddressFromBech32(classIDParts[1])
 	if err != nil {
 		return nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address in classID,err:%s", err)
 	}

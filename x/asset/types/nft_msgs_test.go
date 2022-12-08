@@ -25,8 +25,8 @@ func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 		Name:        "name",
 		Symbol:      "symbol",
 		Description: "description",
-		Uri:         "https://my.uri",
-		UriHash:     "sha-hash",
+		URI:         "https://my.uri",
+		URIHash:     "sha-hash",
 		Data:        dataValue,
 	}
 	testCases := []struct {
@@ -90,7 +90,7 @@ func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 			name: "invalid uri",
 			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
 				msg := validaMessage
-				msg.Uri = string(make([]byte, 257))
+				msg.URI = string(make([]byte, 257))
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleTokenClass,
@@ -99,7 +99,7 @@ func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 			name: "invalid uri hash",
 			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
 				msg := validaMessage
-				msg.UriHash = string(make([]byte, 129))
+				msg.URIHash = string(make([]byte, 129))
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleTokenClass,
@@ -141,10 +141,10 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 
 	validaMessage := types.MsgMintNonFungibleToken{
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-		Id:      "my-id",
-		ClassId: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-		Uri:     "https://my.uri",
-		UriHash: "sha-hash",
+		ID:      "my-id",
+		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		URI:     "https://my.uri",
+		URIHash: "sha-hash",
 		Data:    dataValue,
 	}
 	testCases := []struct {
@@ -163,7 +163,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 			name: "invalid id",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
 				msg := validaMessage
-				msg.Id = "id?"
+				msg.ID = "id?"
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleToken,
@@ -181,7 +181,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 			name: "invalid classID",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
 				msg := validaMessage
-				msg.ClassId = "x"
+				msg.ClassID = "x"
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleToken,
@@ -190,7 +190,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 			name: "invalid uri",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
 				msg := validaMessage
-				msg.Uri = string(make([]byte, 257))
+				msg.URI = string(make([]byte, 257))
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleToken,
@@ -199,7 +199,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 			name: "invalid uri hash",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
 				msg := validaMessage
-				msg.UriHash = string(make([]byte, 129))
+				msg.URIHash = string(make([]byte, 129))
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleToken,

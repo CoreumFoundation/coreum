@@ -59,13 +59,13 @@ func (k NonFungibleTokenKeeper) CreateClass(ctx sdk.Context, settings types.Crea
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventNonFungibleTokenClassCreated{
-		Id:          id,
+		ID:          id,
 		Creator:     settings.Creator.String(),
 		Symbol:      settings.Symbol,
 		Name:        settings.Name,
 		Description: settings.Description,
-		Uri:         settings.URI,
-		UriHash:     settings.URIHash,
+		URI:         settings.URI,
+		URIHash:     settings.URIHash,
 	}); err != nil {
 		return "", sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't emit event EventNonFungibleTokenClassCreated: %s", err)
 	}
@@ -83,7 +83,7 @@ func (k NonFungibleTokenKeeper) Mint(ctx sdk.Context, settings types.MintNonFung
 		return err
 	}
 
-	if classFound := k.nftKeeper.HasClass(ctx, settings.ClassID); !classFound {
+	if !k.nftKeeper.HasClass(ctx, settings.ClassID) {
 		return sdkerrors.Wrapf(types.ErrInvalidNonFungibleToken, "classID %q not found", settings.ClassID)
 	}
 
@@ -98,7 +98,7 @@ func (k NonFungibleTokenKeeper) Mint(ctx sdk.Context, settings types.MintNonFung
 		UriHash: settings.URIHash,
 		Data:    settings.Data,
 	}, settings.Sender); err != nil {
-		return sdkerrors.Wrap(types.ErrInvalidNonFungibleTokenClass, "can't save non-fungible token")
+		return sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't save non-fungible token: %s", err)
 	}
 
 	return nil

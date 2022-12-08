@@ -153,8 +153,8 @@ func (ms MsgServer) CreateNonFungibleTokenClass(ctx context.Context, req *types.
 			Name:        req.Name,
 			Symbol:      req.Symbol,
 			Description: req.Description,
-			URI:         req.Uri,
-			URIHash:     req.UriHash,
+			URI:         req.URI,
+			URIHash:     req.URIHash,
 			Data:        req.Data,
 		},
 	); err != nil {
@@ -175,10 +175,10 @@ func (ms MsgServer) MintNonFungibleToken(ctx context.Context, req *types.MsgMint
 		sdk.UnwrapSDKContext(ctx),
 		types.MintNonFungibleTokenSettings{
 			Sender:  owner,
-			ClassID: req.ClassId,
-			ID:      req.Id,
-			URI:     req.Uri,
-			URIHash: req.UriHash,
+			ClassID: req.ClassID,
+			ID:      req.ID,
+			URI:     req.URI,
+			URIHash: req.URIHash,
 			Data:    req.Data,
 		},
 	); err != nil {

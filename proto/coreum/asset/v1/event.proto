@@ -29,11 +29,11 @@ message EventFungibleTokenFrozenAmountChanged {
 
 // EventNonFungibleTokenClassCreated is emitted on MsgCreateNonFungibleTokenClass.
 message EventNonFungibleTokenClassCreated {
-  string id = 1;
+  string id = 1 [(gogoproto.customname) = "ID"];
   string creator = 2;
   string symbol = 3;
   string name = 4;
   string description = 5;
-  string uri = 6;
-  string uri_hash = 7;
+  string uri = 6 [(gogoproto.customname) = "URI"];
+  string uri_hash = 7 [(gogoproto.customname) = "URIHash"];
 }
