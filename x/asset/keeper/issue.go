@@ -7,26 +7,36 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/CoreumFoundation/coreum/pkg/store"
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 // IssueFungibleToken issues new fungible token and returns it's denom.
 func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error) {
-	if err := types.ValidateSymbol(settings.Symbol); err != nil {
-		return "", err
+	if err := types.ValidateSubunit(settings.Subunit); err != nil {
+		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
 
-	denom := types.BuildFungibleTokenDenom(settings.Symbol, settings.Issuer)
+	err := types.ValidateSymbol(settings.Symbol)
+	if err != nil {
+		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
+	}
+
+	if err := k.StoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
+		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
+	}
+
+	denom := types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
-			types.ErrInvalidFungibleToken,
-			"symbol %s already registered for the address %s",
-			settings.Symbol,
+			types.ErrInvalidSubunit,
+			"subunit %s already registered for the address %s",
+			settings.Subunit,
 			settings.Issuer.String(),
 		)
 	}
 
-	k.setFungibleTokenDenomMetadata(ctx, settings.Symbol, denom, settings.Description)
+	k.SetFungibleTokenDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 
 	if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
 		return "", err
@@ -43,6 +53,8 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Denom:         denom,
 		Issuer:        settings.Issuer.String(),
 		Symbol:        settings.Symbol,
+		Subunit:       settings.Subunit,
+		Precision:     settings.Precision,
 		Description:   settings.Description,
 		Recipient:     settings.Recipient.String(),
 		InitialAmount: settings.InitialAmount,
@@ -56,6 +68,25 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	return denom, nil
 }
 
+// IsSymbolDuplicate checks symbol exists in the store
+func (k Keeper) IsSymbolDuplicate(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
+	symbol = types.NormalizeSymbolForKey(symbol)
+	compositeKey := store.JoinKeys(types.CreateSymbolPrefix(issuer), []byte(symbol))
+	bytes := ctx.KVStore(k.storeKey).Get(compositeKey)
+	return bytes != nil
+}
+
+// StoreSymbol saves the symbol to store
+func (k Keeper) StoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
+	if k.IsSymbolDuplicate(ctx, symbol, issuer) {
+		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
+	}
+
+	compositeKey := store.JoinKeys(types.CreateSymbolPrefix(issuer), []byte(symbol))
+	ctx.KVStore(k.storeKey).Set(compositeKey, []byte{0x01})
+	return nil
+}
+
 // GetFungibleToken return the fungible token by its denom.
 func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error) {
 	definition, err := k.GetFungibleTokenDefinition(ctx, denom)
@@ -63,19 +94,63 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 		return types.FungibleToken{}, err
 	}
 
-	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, denom)
+	return k.getFungibleTokenFullInfo(ctx, definition)
+}
+
+// getFungibleTokenFullInfo return the fungible token info from bank, given its definition.
+func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.FungibleTokenDefinition) (types.FungibleToken, error) {
+	subunit, _, err := types.DeconstructFungibleTokenDenom(definition.Denom)
+	if err != nil {
+		return types.FungibleToken{}, err
+	}
+
+	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, definition.Denom)
 	if !found {
-		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadata for %s denom not found", denom)
+		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadata for %s denom not found", definition.Denom)
+	}
+
+	precision := -1
+	for _, unit := range metadata.DenomUnits {
+		if unit.Denom == metadata.Symbol {
+			precision = int(unit.Exponent)
+			break
+		}
+	}
+
+	if precision < 0 {
+		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "precision not found")
 	}
 
 	return types.FungibleToken{
 		Denom:          definition.Denom,
 		Issuer:         definition.Issuer,
 		Symbol:         metadata.Symbol,
+		Precision:      uint32(precision),
+		Subunit:        subunit,
 		Description:    metadata.Description,
 		Features:       definition.Features,
-		GloballyFrozen: k.isGloballyFrozen(ctx, denom),
+		GloballyFrozen: k.isGloballyFrozen(ctx, definition.Denom),
 	}, nil
+}
+
+// GetFungibleTokens returns all fungible tokens.
+func (k Keeper) GetFungibleTokens(ctx sdk.Context, pagination *query.PageRequest) ([]types.FungibleToken, *query.PageResponse, error) {
+	definitions, pageResponse, err := k.GetFungibleTokenDefinitions(ctx, pagination)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var tokens []types.FungibleToken
+	for _, definition := range definitions {
+		token, err := k.getFungibleTokenFullInfo(ctx, definition)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		tokens = append(tokens, token)
+	}
+
+	return tokens, pageResponse, nil
 }
 
 // GetFungibleTokenDefinitions returns all fungible token definitions.
@@ -126,19 +201,26 @@ func (k Keeper) SetFungibleTokenDefinition(ctx sdk.Context, definition types.Fun
 	store.Set(types.GetFungibleTokenKey(definition.Denom), k.cdc.MustMarshal(&definition))
 }
 
-func (k Keeper) setFungibleTokenDenomMetadata(ctx sdk.Context, symbol, denom, description string) {
+// SetFungibleTokenDenomMetadata registers denom metadata on the bank keeper
+func (k Keeper) SetFungibleTokenDenomMetadata(ctx sdk.Context, denom, symbol, description string, precision uint32) {
 	denomMetadata := banktypes.Metadata{
-		Name:        denom,
+		Name:        symbol,
 		Symbol:      symbol,
 		Description: description,
 		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    symbol,
+				Exponent: precision,
+			},
 			{
 				Denom:    denom,
 				Exponent: uint32(0),
 			},
 		},
+		// here take subunit provided by the user, generate the denom and used it as base,
+		// and we take the symbol provided by the user and use it as symbol
 		Base:    denom,
-		Display: denom,
+		Display: symbol,
 	}
 
 	k.bankKeeper.SetDenomMetaData(ctx, denomMetadata)

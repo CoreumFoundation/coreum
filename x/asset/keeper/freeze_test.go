@@ -31,6 +31,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	settings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
+		Subunit:       "def",
 		Description:   "DEF Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
@@ -43,6 +44,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	unfreezableSettings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
+		Subunit:       "abc",
 		Description:   "ABC Desc",
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
