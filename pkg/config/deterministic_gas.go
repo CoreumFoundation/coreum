@@ -48,6 +48,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 }
 
 // DeterministicGasRequirements specifies gas required by some transaction types
+// Crisis module is intentionally skipped here because it is already deterministic by design and fee is specified
+// using `consume_fee` param in genesis.
 type DeterministicGasRequirements struct {
 	// FixedGas is the fixed amount of gas charged on each transaction as a payment for executing ante handler. This includes:
 	// - most of the stuff done by ante decorators
