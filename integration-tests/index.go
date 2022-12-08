@@ -1,64 +1,102 @@
+//go:build integration
+
 package tests
 
 import (
-	"github.com/CoreumFoundation/coreum/integration-tests/asset"
-	"github.com/CoreumFoundation/coreum/integration-tests/auth"
-	"github.com/CoreumFoundation/coreum/integration-tests/bank"
-	"github.com/CoreumFoundation/coreum/integration-tests/customparams"
-	"github.com/CoreumFoundation/coreum/integration-tests/distribution"
-	"github.com/CoreumFoundation/coreum/integration-tests/feemodel"
-	"github.com/CoreumFoundation/coreum/integration-tests/gov"
-	"github.com/CoreumFoundation/coreum/integration-tests/staking"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/integration-tests/upgrade"
-	"github.com/CoreumFoundation/coreum/integration-tests/wasm"
+	"context"
+	"flag"
+	"fmt"
+	"testing"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
-// Tests returns testing environment and tests
-func Tests() []testing.TestSet {
-	return []testing.TestSet{
-		{
-			Name:     "Upgrade",
-			Parallel: false,
-			SingleChain: []testing.SingleChainSignature{
-				upgrade.TestUpgrade,
-			},
-		},
-		{
-			Name:     "Main",
-			Parallel: true,
-			SingleChain: []testing.SingleChainSignature{
-				asset.TestIssueBasicFungibleToken,
-				asset.TestFreezeFungibleToken,
-				asset.TestFreezeUnfreezableFungibleToken,
-				asset.TestGloballyFreezeFungibleToken,
-				asset.TestMintFungibleToken,
-				asset.TestBurnFungibleToken,
-				auth.TestUnexpectedSequenceNumber,
-				auth.TestFeeLimits,
-				auth.TestMultisig,
-				bank.TestCoreSend,
-				bank.TestSendFailsIfNotEnoughGasIsProvided,
-				bank.TestSendDeterministicGas,
-				bank.TestSendDeterministicGasTwoBankSends,
-				bank.TestSendDeterministicGasManyCoins,
-				bank.TestSendGasEstimation,
-				bank.TestMultiSendDeterministicGasManyCoins,
-				bank.TestMultiSend,
-				customparams.TestStakingProposalParamChange,
-				distribution.TestWithdrawRewardWithDeterministicGas,
-				distribution.TestSpendCommunityPoolProposal,
-				feemodel.TestQueryingMinGasPrice,
-				feemodel.TestFeeModelProposalParamChange,
-				staking.TestStakingProposalParamChange,
-				staking.TestValidatorCRUDAndStaking,
-				staking.TestValidatorMinParamsSelfDelegation,
-				wasm.TestPinningAndUnpinningSmartContractUsingGovernance,
-				wasm.TestBankSendWASMContract,
-				wasm.TestGasWASMBankSendAndBankSend,
-				gov.TestProposalWithDepositAndWeightedVotes,
-				wasm.TestIssueFungibleTokenInWASMContract,
-			},
-		},
+// stringsFlag allows setting a value multiple times to collect a list, as in -I=val1 -I=val2.
+type stringsFlag []string
+
+func (m *stringsFlag) String() string {
+	if len(*m) == 0 {
+		return ""
 	}
+	return fmt.Sprint(*m)
+}
+
+func (m *stringsFlag) Set(val string) error {
+	*m = append(*m, val)
+	return nil
+}
+
+type testingConfig struct {
+	RPCAddress      string
+	NetworkConfig   config.NetworkConfig
+	FundingMnemonic string
+	StakerMnemonics []string
+	LogFormat       logger.Format
+	LogVerbose      bool
+}
+
+var (
+	cfg   testingConfig
+	chain coreumtesting.Chain
+)
+
+// Command to run the integration tests: go test -v --tags=integration -parallel 5 ./...
+func init() {
+	var fundingMnemonic, coredAddress, logFormat string
+	var stakerMnemonics stringsFlag
+
+	flag.StringVar(&coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
+	flag.StringVar(&fundingMnemonic, "funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
+	flag.Var(&stakerMnemonics, "staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
+	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
+
+	// accept testing flags
+	testing.Init()
+	// parse additional flags
+	flag.Parse()
+	// set the default staker mnemonic used in the dev znet by default
+	if len(stakerMnemonics) == 0 {
+		stakerMnemonics = []string{
+			"biology rigid design broccoli adult hood modify tissue swallow arctic option improve quiz cliff inject soup ozone suffer fantasy layer negative eagle leader priority",
+		}
+	}
+
+	networkConfig, err := coreumtesting.NewNetworkConfig()
+	if err != nil {
+		panic(fmt.Sprintf("can't create network config for the integration tests: %s", err))
+	}
+	cfg = testingConfig{
+		RPCAddress:      coredAddress,
+		NetworkConfig:   networkConfig,
+		FundingMnemonic: fundingMnemonic,
+		StakerMnemonics: stakerMnemonics,
+		// FIXME(dhil) check that we need or we can use the go testing logger instead
+		LogFormat:  logger.Format(logFormat),
+		LogVerbose: flag.Lookup("test.v").Value.String() == "true",
+	}
+
+	// FIXME (wojtek): remove this once we have our own address encoder
+	config.NewNetwork(cfg.NetworkConfig).SetSDKConfig()
+
+	chain = coreumtesting.NewChain(coreumtesting.ChainConfig{
+		RPCAddress:      cfg.RPCAddress,
+		NetworkConfig:   cfg.NetworkConfig,
+		FundingMnemonic: cfg.FundingMnemonic,
+		StakerMnemonics: cfg.StakerMnemonics,
+	})
+}
+
+// NewTestingContext returns the configured chain and new context for the integration tests.
+func NewTestingContext(t *testing.T) (context.Context, coreumtesting.Chain) {
+	loggerConfig := logger.Config{
+		Format:  cfg.LogFormat,
+		Verbose: cfg.LogVerbose,
+	}
+
+	ctx, cancel := context.WithCancel(logger.WithLogger(context.Background(), logger.New(loggerConfig)))
+	t.Cleanup(cancel)
+
+	return ctx, chain
 }

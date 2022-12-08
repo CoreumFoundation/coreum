@@ -1,3 +1,6 @@
+//go:build integration_upgrade
+
+// FIXME(dhil) here we set the profile integration_upgrade since we run that test separately from other tests
 package upgrade
 
 import (

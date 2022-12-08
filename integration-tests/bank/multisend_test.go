@@ -1,20 +1,27 @@
+//go:build integration
+
 package bank
 
 import (
-	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	integrationtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 // TestMultiSend tests MultiSend message
-func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestMultiSend(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	sender := chain.GenAccount()
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
@@ -40,7 +47,7 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 		},
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{Outputs: []banktypes.Output{
 			{Coins: make(sdk.Coins, 2)},
 			{Coins: make(sdk.Coins, 2)},

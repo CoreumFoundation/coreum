@@ -1,7 +1,10 @@
+//go:build integration
+
+// FIXME(dhil) here we set the profile integration since we don't run the tests by default
 package bank
 
 import (
-	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -10,24 +13,30 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	integrationtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
 
 // TestCoreSend checks that core is transferred correctly between wallets
-func TestCoreSend(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestCoreSend(t *testing.T) {
+	t.Parallel()
+
+	// FIXME(dhil) Additionally we can rename integration-tests -> integration-tests
+	// and move integration-tests/testing to integration-tests root  to simplify the imports
+	ctx, chain := integrationtests.NewTestingContext(t)
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
 	senderInitialAmount := sdk.NewInt(100)
 	recipientInitialAmount := sdk.NewInt(10)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   senderInitialAmount,
 	}))
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtesting.BalancesOptions{
 		Amount: recipientInitialAmount,
 	}))
 
