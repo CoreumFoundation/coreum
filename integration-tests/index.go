@@ -42,7 +42,7 @@ var (
 	chain coreumtesting.Chain
 )
 
-// Command to run the integration tests: go test -v --tags=integration -parallel 5 ./...
+// Command to run the integration tests: go test -v --tags=integration -parallel 5 ./... --log-format=yaml
 func init() {
 	var fundingMnemonic, coredAddress, logFormat string
 	var stakerMnemonics stringsFlag
