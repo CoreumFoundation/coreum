@@ -20,7 +20,7 @@ func TestCmdTxCreateNonFungibleTokenClass(t *testing.T) {
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
 
-	args := []string{symbol, "NFT name", "My NFT class description.", "my-uri", "my-hash"}
+	args := []string{symbol, "class name", "class description", "https://my-class-meta.int/1", "35b326a2b3b605270c26185c38d2581e937b2eae0418b4964ef521efe79cdf34"}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxCreateNonFungibleTokenClass(), args)
 	requireT.NoError(err)

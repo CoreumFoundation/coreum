@@ -45,7 +45,7 @@ type MintNonFungibleTokenSettings struct {
 
 // BuildNonFungibleTokenClassID builds the non-fungible token id string from the symbol and issuer address.
 func BuildNonFungibleTokenClassID(symbol string, creator sdk.AccAddress) string {
-	return strings.ToLower(symbol) + nftClassIDSeparator + creator.String()
+	return symbol + nftClassIDSeparator + creator.String()
 }
 
 // DeconstructNonFungibleTokenClassID splits the classID string into the symbol and issuer address.

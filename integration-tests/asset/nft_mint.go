@@ -16,12 +16,12 @@ import (
 // TestMintNonFungibleToken tests non-fungible token minting.
 func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
-	sender := chain.GenAccount()
+	creator := chain.GenAccount()
 	receiver := chain.GenAccount()
 
 	nftClient := nft.NewQueryClient(chain.ClientContext)
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, creator, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgCreateNonFungibleTokenClass{},
 				&assettypes.MsgMintNonFungibleToken{},
@@ -32,21 +32,21 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 
 	// create new NFT class
 	createMsg := &assettypes.MsgCreateNonFungibleTokenClass{
-		Creator: sender.String(),
+		Creator: creator.String(),
 		Symbol:  "nftsymbol",
 	}
 	_, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(sender),
+		chain.ClientContext.WithFromAddress(creator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createMsg)),
 		createMsg,
 	)
 	requireT.NoError(err)
 
 	// mint new token in that class
-	classID := assettypes.BuildNonFungibleTokenClassID(createMsg.Symbol, sender)
+	classID := assettypes.BuildNonFungibleTokenClassID(createMsg.Symbol, creator)
 	mintMsg := &assettypes.MsgMintNonFungibleToken{
-		Sender:  sender.String(),
+		Sender:  creator.String(),
 		ID:      "id-1",
 		ClassID: classID,
 		URI:     "https://my-class-meta.int/1",
@@ -54,7 +54,7 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 	}
 	res, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(sender),
+		chain.ClientContext.WithFromAddress(creator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
@@ -65,8 +65,8 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 	requireT.NoError(err)
 	requireT.Equal(&nft.EventMint{
 		ClassId: classID,
-		Id:      "id-1",
-		Owner:   sender.String(),
+		Id:      mintMsg.ID,
+		Owner:   creator.String(),
 	}, nftMintedEvt)
 
 	// check that token is present in the nft module
@@ -77,7 +77,7 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 	requireT.NoError(err)
 	requireT.Equal(&nft.NFT{
 		ClassId: classID,
-		Id:      "id-1",
+		Id:      mintMsg.ID,
 		Uri:     mintMsg.URI,
 		UriHash: mintMsg.URIHash,
 	}, nftRes.Nft)
@@ -88,18 +88,18 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 		Id:      nftMintedEvt.Id,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sender.String(), ownerRes.Owner)
+	requireT.Equal(creator.String(), ownerRes.Owner)
 
 	// change the owner
 	sendMsg := &nft.MsgSend{
-		Sender:   sender.String(),
+		Sender:   creator.String(),
 		Receiver: receiver.String(),
-		Id:       "id-1",
+		Id:       mintMsg.ID,
 		ClassId:  classID,
 	}
 	res, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(sender),
+		chain.ClientContext.WithFromAddress(creator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
