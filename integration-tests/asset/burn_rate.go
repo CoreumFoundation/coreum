@@ -66,7 +66,7 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvents[0].Denom
 
-	// send from issuer to recipient 1 (burn must not apply)
+	// send from issuer to recipient1 (burn must not apply)
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient1.String(),
@@ -85,7 +85,7 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 		&recipient1: 400,
 	})
 
-	// send from recipient 1 to recipient 2 (burn must apply)
+	// send from recipient1 to recipient2 (burn must apply)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
@@ -105,7 +105,7 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 		&recipient2: 100,
 	})
 
-	// send from recipient 2 to issuer (burn must not apply)
+	// send from recipient2 to issuer (burn must not apply)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient2.String(),
 		ToAddress:   issuer.String(),
@@ -125,7 +125,7 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 		&recipient2: 0,
 	})
 
-	// multi send from recipient 1 to issuer and recipient2
+	// multi send from recipient1 to issuer and recipient2
 	// (burn must apply to both transfers. will be fixed later to apply to one transfer)
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{

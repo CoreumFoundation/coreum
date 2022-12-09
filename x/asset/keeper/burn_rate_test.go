@@ -88,7 +88,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 
 	_, err := assetKeeper.IssueFungibleToken(ctx, settings)
 	requireT.Error(err)
-	requireT.True(types.ErrInvalidBurnRate.Is(err))
+	requireT.True(types.ErrInvalidFungibleToken.Is(err))
 
 	// issue token
 	settings = types.IssueFungibleTokenSettings{

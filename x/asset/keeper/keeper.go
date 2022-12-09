@@ -28,8 +28,8 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 	}
 }
 
-// IsSendAllowed checks that a transfer request is allowed or not
-func (k Keeper) IsSendAllowed(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
+// InterceptSendCoins checks that a transfer request is allowed or not
+func (k Keeper) InterceptSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
 	if err := k.areCoinsSpendable(ctx, fromAddress, coins); err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (k Keeper) IsSendAllowed(ctx sdk.Context, fromAddress, toAddress sdk.AccAdd
 
 		if ft.BurnRate > 0 && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
 			coinsToBurn := ft.CalculateBurnCoin(coin)
-			err = k.burnFungibleToken(ctx, coinsToBurn, fromAddress)
+			err := k.burnFungibleToken(ctx, coinsToBurn, fromAddress)
 			if err != nil {
 				return err
 			}

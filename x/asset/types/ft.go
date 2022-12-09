@@ -111,7 +111,7 @@ func (ftd *FungibleTokenDefinition) IsFeatureEnabled(feature FungibleTokenFeatur
 // ValidateBurnRate checks the provide burn rate is valid
 func ValidateBurnRate(burnRate float32) error {
 	if burnRate < 0 || burnRate > 1 {
-		return sdkerrors.Wrap(ErrInvalidBurnRate, "burn rate is not within acceptable rate")
+		return sdkerrors.Wrap(ErrInvalidFungibleToken, "burn rate is not within acceptable range")
 	}
 
 	return nil
@@ -119,10 +119,6 @@ func ValidateBurnRate(burnRate float32) error {
 
 // CalculateBurnCoin returns the coins to be burned
 func (ftd FungibleTokenDefinition) CalculateBurnCoin(coin sdk.Coin) sdk.Coin {
-	if ftd.BurnRate > 1 {
-		panic("burn rate cannot be bigger than 1")
-	}
-
 	// limit precision to 4 decimal places
 	burnRateStr := fmt.Sprintf("%.4f", ftd.BurnRate)
 	// we convert float32 to string and parse it to big.Float because direct conversion from
