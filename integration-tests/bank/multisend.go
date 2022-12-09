@@ -143,6 +143,7 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 	issue1Msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        sender1.String(),
 		Symbol:        "TOK1",
+		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		Recipient:     sender1.String(),
 		InitialAmount: amount,
@@ -151,13 +152,14 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 	issue2Msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        sender2.String(),
 		Symbol:        "TOK2",
+		Subunit:       "tok2",
 		Description:   "TOK2 Description",
 		Recipient:     sender2.String(),
 		InitialAmount: amount,
 	}
 
-	denom1 := assettypes.BuildFungibleTokenDenom(issue1Msg.Symbol, sender1)
-	denom2 := assettypes.BuildFungibleTokenDenom(issue2Msg.Symbol, sender2)
+	denom1 := assettypes.BuildFungibleTokenDenom(issue1Msg.Subunit, sender1)
+	denom2 := assettypes.BuildFungibleTokenDenom(issue2Msg.Subunit, sender2)
 
 	// define the message to send from multiple accounts to multiple
 	multiSendMsg := &banktypes.MsgMultiSend{
