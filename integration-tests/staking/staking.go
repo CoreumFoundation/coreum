@@ -12,6 +12,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -31,7 +32,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	// we stake the minimum possible staking amount
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
 	// Setup delegator
 	delegator := chain.GenAccount()
 	delegateAmount := sdk.NewInt(100)
@@ -168,8 +169,8 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	require.Equal(t, validatorStakingAmount.String(), valResp.Validator.Tokens.String())
 }
 
-// TestValidatorMinParamsSelfDelegation checks validator may set the self delegation below the limit.
-func TestValidatorMinParamsSelfDelegation(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestValidatorCreationWithLowMinSelfDelegation checks validator can't set the self delegation less than min limit.
+func TestValidatorCreationWithLowMinSelfDelegation(ctx context.Context, t testing.T, chain testing.Chain) {
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
@@ -182,6 +183,109 @@ func TestValidatorMinParamsSelfDelegation(ctx context.Context, t testing.T, chai
 	// Try to create a validator with the amount less than the minimum
 	_, _, _, err = testing.CreateValidator(ctx, chain, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
 	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
+}
+
+// TestValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
+// delegation is higher than current validator self delegation.
+func TestValidatorUpdateWithLowMinSelfDelegation(ctx context.Context, t testing.T, chain testing.Chain) {
+	requireT := require.New(t)
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
+
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	require.NoError(t, err)
+	initialValidatorAmount := customStakingParams.Params.MinSelfDelegation
+
+	// create new validator with min allowed self delegation
+	validatorAccAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, initialValidatorAmount, initialValidatorAmount)
+	require.NoError(t, err)
+	defer func() {
+		err := deactivateValidator()
+		require.NoError(t, err)
+	}()
+
+	customStakingParams, err = customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	requireT.NoError(err)
+	minSelfDelegation := customStakingParams.Params.MinSelfDelegation
+	// we increase it here to test the update of the validators with the current min self delegation less than new param
+	newMinSelfDelegation := minSelfDelegation.Add(sdk.NewInt(1))
+
+	err = changeMinSelfDelegationCustomParam(ctx, requireT, chain, customParamsClient, newMinSelfDelegation)
+	requireT.NoError(err)
+	defer func() {
+		// return the initial state back
+		err = changeMinSelfDelegationCustomParam(ctx, requireT, chain, customParamsClient, initialValidatorAmount)
+		require.NoError(t, err)
+	}()
+
+	// try to create a validator with the initial amount which we have increased
+	_, _, _, err = testing.CreateValidator(ctx, chain, initialValidatorAmount, initialValidatorAmount) //nolint:dogsled // we await for the error only
+	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
+
+	// edit validator
+	editValidatorMsg := &stakingtypes.MsgEditValidator{
+		Description: stakingtypes.Description{
+			Details: "updated details",
+		},
+		ValidatorAddress: validatorAddress.String(),
+	}
+	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorAccAddress, testing.BalancesOptions{
+		Messages: []sdk.Msg{editValidatorMsg},
+	})
+	require.NoError(t, err)
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(validatorAccAddress),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(editValidatorMsg)),
+		editValidatorMsg,
+	)
+	require.NoError(t, err)
+
+	valResp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validatorAddress.String(),
+	})
+
+	require.NoError(t, err)
+	assert.EqualValues(t, editValidatorMsg.Description.Details, valResp.GetValidator().Description.Details)
+}
+
+func changeMinSelfDelegationCustomParam(
+	ctx context.Context,
+	requireT *require.Assertions,
+	chain testing.Chain,
+	customParamsClient customparamstypes.QueryClient,
+	newMinSelfDelegation sdk.Int,
+) error {
+	// create new proposer
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+
+	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	requireT.NoError(err)
+
+	marshalledMinSelfDelegation, err := tmjson.Marshal(newMinSelfDelegation)
+	requireT.NoError(err)
+	// apply proposal
+	err = chain.Governance.ProposeAndVote(ctx, proposer,
+		paramproposal.NewParameterChangeProposal(
+			"Custom staking params change proposal", "-",
+			[]paramproposal.ParamChange{
+				paramproposal.NewParamChange(
+					customparamstypes.CustomParamsStaking, string(customparamstypes.ParamStoreKeyMinSelfDelegation), string(marshalledMinSelfDelegation),
+				),
+			},
+		),
+		govtypes.OptionYes,
+	)
+	requireT.NoError(err)
+
+	// check the proposed change is applied
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	requireT.NoError(err)
+	requireT.Equal(newMinSelfDelegation.String(), customStakingParams.Params.MinSelfDelegation.String())
+	return err
 }
 
 func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testing.Chain, unbondingTime time.Duration) {
