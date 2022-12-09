@@ -110,17 +110,13 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	require.NoError(t, err)
 	require.Empty(t, qres.Balances)
 
-	qres, err = bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient1.String()})
+	recipient1AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient1.String()})
 	require.NoError(t, err)
-	require.Len(t, qres.Balances, 2)
-	require.EqualValues(t, 600, qres.Balances.AmountOf(denom1).Uint64())
-	require.EqualValues(t, 400, qres.Balances.AmountOf(denom2).Uint64())
+	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin(denom1, 600), sdk.NewInt64Coin(denom2, 400)), recipient1AllBalancesRes.Balances)
 
-	qres, err = bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient2.String()})
+	recipient2AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient2.String()})
 	require.NoError(t, err)
-	require.Len(t, qres.Balances, 2)
-	require.EqualValues(t, 400, qres.Balances.AmountOf(denom1).Uint64())
-	require.EqualValues(t, 600, qres.Balances.AmountOf(denom2).Uint64())
+	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin(denom1, 400), sdk.NewInt64Coin(denom2, 600)), recipient2AllBalancesRes.Balances)
 }
 
 // TestMultiSendFromMultipleAccounts tests MultiSend message form multiple accounts.
@@ -277,13 +273,9 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 
 	recipient1AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient1.String()})
 	requireT.NoError(err)
-	requireT.Len(recipient1AllBalancesRes.Balances, 2)
-	requireT.EqualValues(600, recipient1AllBalancesRes.Balances.AmountOf(denom1).Uint64())
-	requireT.EqualValues(400, recipient1AllBalancesRes.Balances.AmountOf(denom2).Uint64())
+	requireT.Equal(sdk.NewCoins(sdk.NewInt64Coin(denom1, 600), sdk.NewInt64Coin(denom2, 400)), recipient1AllBalancesRes.Balances)
 
 	recipient2AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient2.String()})
 	requireT.NoError(err)
-	requireT.Len(recipient2AllBalancesRes.Balances, 2)
-	requireT.EqualValues(400, recipient2AllBalancesRes.Balances.AmountOf(denom1).Uint64())
-	requireT.EqualValues(600, recipient2AllBalancesRes.Balances.AmountOf(denom2).Uint64())
+	requireT.Equal(sdk.NewCoins(sdk.NewInt64Coin(denom1, 400), sdk.NewInt64Coin(denom2, 600)), recipient2AllBalancesRes.Balances)
 }
