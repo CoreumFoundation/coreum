@@ -133,29 +133,30 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
+	recipient3 := chain.GenAccount()
 
-	amount := sdk.NewInt(1000)
-
+	assetAmount := sdk.NewInt(1000)
 	issue1Msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        sender1.String(),
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		Recipient:     sender1.String(),
-		InitialAmount: amount,
+		InitialAmount: assetAmount,
 	}
-
 	issue2Msg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        sender2.String(),
 		Symbol:        "TOK2",
 		Subunit:       "tok2",
 		Description:   "TOK2 Description",
 		Recipient:     sender2.String(),
-		InitialAmount: amount,
+		InitialAmount: assetAmount,
 	}
 
 	denom1 := assettypes.BuildFungibleTokenDenom(issue1Msg.Subunit, sender1)
 	denom2 := assettypes.BuildFungibleTokenDenom(issue2Msg.Subunit, sender2)
+
+	nativeAmountToSend := chain.NewCoin(sdk.NewInt(100))
 
 	// define the message to send from multiple accounts to multiple
 	multiSendMsg := &banktypes.MsgMultiSend{
@@ -164,6 +165,7 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 				Address: sender1.String(),
 				Coins: sdk.NewCoins(
 					sdk.NewInt64Coin(denom1, 1000),
+					chain.NewCoin(sdk.NewInt(100)),
 				),
 			},
 			{
@@ -177,6 +179,7 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 			{
 				Address: recipient1.String(),
 				Coins: sdk.NewCoins(
+					chain.NewCoin(sdk.NewInt(30)),
 					sdk.NewInt64Coin(denom1, 600),
 					sdk.NewInt64Coin(denom2, 400),
 				),
@@ -188,6 +191,12 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 					sdk.NewInt64Coin(denom2, 600),
 				),
 			},
+			{
+				Address: recipient3.String(),
+				Coins: sdk.NewCoins(
+					chain.NewCoin(sdk.NewInt(70)),
+				),
+			},
 		},
 	}
 
@@ -197,6 +206,7 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 			multiSendMsg,
 			issue1Msg,
 		},
+		Amount: nativeAmountToSend.Amount,
 	}))
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender2, testing.BalancesOptions{
 		Messages: []sdk.Msg{issue2Msg},
@@ -263,19 +273,9 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 	// check the received balances
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	sender1AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: sender1.String()})
-	requireT.NoError(err)
-	requireT.Empty(sender1AllBalancesRes.Balances)
-
-	sender2AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: sender2.String()})
-	requireT.NoError(err)
-	requireT.Empty(sender2AllBalancesRes.Balances)
-
-	recipient1AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient1.String()})
-	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoins(sdk.NewInt64Coin(denom1, 600), sdk.NewInt64Coin(denom2, 400)), recipient1AllBalancesRes.Balances)
-
-	recipient2AllBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: recipient2.String()})
-	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoins(sdk.NewInt64Coin(denom1, 400), sdk.NewInt64Coin(denom2, 600)), recipient2AllBalancesRes.Balances)
+	for _, output := range multiSendMsg.Outputs {
+		res, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: output.Address})
+		requireT.NoError(err)
+		requireT.Equal(output.Coins, res.Balances)
+	}
 }
