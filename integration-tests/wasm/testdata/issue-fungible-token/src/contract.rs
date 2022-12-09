@@ -1,12 +1,14 @@
-use cosmwasm_std::{Binary, Deps, entry_point, QueryRequest, Reply, ReplyOn, StdResult, SubMsg, to_binary};
+use crate::sdk;
+use crate::sdk::FungibleTokenResponse;
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, QueryRequest, Reply, ReplyOn, StdResult, SubMsg,
+};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, StdError, Uint128};
 use cw2::set_contract_version;
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use crate::sdk;
-use crate::sdk::FungibleTokenResponse;
 
 // Flow of the smart contract:
 // - `ExecuteMsg::Issue` call is sent to smart contract
@@ -50,15 +52,19 @@ pub fn execute(
     match msg {
         ExecuteMsg::Issue {
             symbol,
+            subunit,
+            precision,
             amount,
             recipient,
-        } => issue_tokens(deps, symbol, amount, recipient),
+        } => issue_tokens(deps, symbol, subunit, precision, amount, recipient),
     }
 }
 
 fn issue_tokens(
     deps: DepsMut,
     symbol: String,
+    subunit: String,
+    precision: u32,
     amount: Uint128,
     recipient: String,
 ) -> Result<Response<sdk::FungibleTokenMsg>, ContractError> {
@@ -68,29 +74,24 @@ fn issue_tokens(
         return Err(ContractError::InvalidZeroAmount {});
     }
 
-    let state = State {
-        count: 0,
-    };
+    let state = State { count: 0 };
     STATE.save(deps.storage, &state)?;
-
-    let mut symbol1 = symbol.clone();
-    symbol1.push('1');
-
-    let mut symbol2 = symbol.clone();
-    symbol2.push('2');
 
     // Send two submessages handled by the asset module to create two fungible tokens.
     // ReplyOn::Always means that we want `reply` to be called after each submessage execution.
-
     let mut msg1 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
-        symbol: symbol1,
+        symbol: symbol.clone() + "1",
+        subunit: subunit.clone() + "1",
+        precision,
         recipient: recipient_addr.to_string(),
         initial_amount: amount,
     });
     msg1.reply_on = ReplyOn::Always;
 
     let mut msg2 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
-        symbol: symbol2,
+        symbol: symbol.clone() + "2",
+        subunit: subunit.clone() + "2",
+        precision,
         recipient: recipient_addr.to_string(),
         initial_amount: amount,
     });
@@ -125,7 +126,7 @@ pub fn reply(deps: DepsMut, _env: Env, _msg: Reply) -> Result<Response, Contract
 pub fn query(deps: Deps<sdk::FungibleTokenQuery>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount {} => to_binary(&query_count(deps)?),
-        QueryMsg::GetInfo {denom} => to_binary(&query_info(deps, denom)?),
+        QueryMsg::GetInfo { denom } => to_binary(&query_info(deps, denom)?),
     }
 }
 
@@ -135,9 +136,8 @@ fn query_count(deps: Deps<sdk::FungibleTokenQuery>) -> StdResult<CountResponse> 
 }
 
 fn query_info(deps: Deps<sdk::FungibleTokenQuery>, denom: String) -> StdResult<InfoResponse> {
-    let request : QueryRequest<sdk::FungibleTokenQuery> = sdk::FungibleTokenQuery::FungibleToken {
-        denom: denom,
-    }.into();
+    let request: QueryRequest<sdk::FungibleTokenQuery> =
+        sdk::FungibleTokenQuery::FungibleToken { denom: denom }.into();
     let res: FungibleTokenResponse = deps.querier.query(&request)?;
     Ok(InfoResponse { issuer: res.issuer })
 }
@@ -150,6 +150,8 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     Issue {
         symbol: String,
+        subunit: String,
+        precision: u32,
         amount: Uint128,
         recipient: String,
     },
@@ -161,9 +163,7 @@ pub enum QueryMsg {
     // GetCount returns the current count as a json-encoded number
     GetCount {},
     // GetInfo returns information about fungible token
-    GetInfo {
-        denom: String,
-    },
+    GetInfo { denom: String },
 }
 
 // We define a custom struct for each query response
@@ -176,7 +176,6 @@ pub struct CountResponse {
 pub struct InfoResponse {
     pub issuer: String,
 }
-
 
 #[derive(Error, Debug)]
 pub enum ContractError {
