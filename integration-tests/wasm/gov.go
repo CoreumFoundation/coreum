@@ -139,7 +139,7 @@ func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t 
 
 	gasUsedAfterUnpinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1340)
 
-	logger.Get(ctx).Info("Gas saved on poinned contract",
+	logger.Get(ctx).Info("Gas saved on pinned contract",
 		zap.Int64("gasBeforePinning", gasUsedBeforePinning),
 		zap.Int64("gasAfterPinning", gasUsedAfterPinning))
 
