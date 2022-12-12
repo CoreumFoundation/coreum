@@ -31,13 +31,13 @@ func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 				&assettypes.MsgMintFungibleToken{},
 				&assettypes.MsgMintFungibleToken{},
 			},
-		}),
+		}))
+	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgMintFungibleToken{},
 			},
-		}),
-	)
+		}))
 
 	// Issue an unmintable fungible token
 	issueMsg := &assettypes.MsgIssueFungibleToken{

@@ -17,12 +17,24 @@ service Query {
     option (google.api.http).get = "/coreum/asset/v1/fts/denom/{denom}";
   }
 
+  // FrozenBalances returns all the frozen balances for the account
   rpc FrozenBalances(QueryFrozenBalancesRequest) returns (QueryFrozenBalancesResponse) {
     option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/frozen";
   }
 
+  // FrozenBalance returns frozen balance of the denom for the account
   rpc FrozenBalance(QueryFrozenBalanceRequest) returns (QueryFrozenBalanceResponse) {
     option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/frozen/{denom}";
+  }
+
+  // WhitelistedBalances returns all the whitelisted balances for the account
+  rpc WhitelistedBalances(QueryWhitelistedBalancesRequest) returns (QueryWhitelistedBalancesResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/whitelisted";
+  }
+
+  // WhitelistedBalance returns whitelisted balance of the denom for the account
+  rpc WhitelistedBalance(QueryWhitelistedBalanceRequest) returns (QueryWhitelistedBalanceResponse) {
+    option (google.api.http).get = "/coreum/asset/v1/fts/balance/{account}/whitelisted/{denom}";
   }
 }
 
@@ -62,5 +74,34 @@ message QueryFrozenBalanceRequest {
 
 message QueryFrozenBalanceResponse {
   // balance contains the frozen balance with the queried account and denom 
+  cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryWhitelistedBalancesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // account specifies the account onto which we query whitelisted balances
+  string account = 2;
+}
+
+message QueryWhitelistedBalancesResponse {
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  // balances contains the whitelisted balances on the queried account
+  repeated cosmos.base.v1beta1.Coin balances = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message QueryWhitelistedBalanceRequest {
+  // account specifies the account onto which we query whitelisted balances
+  string account = 1;
+  // denom specifies whitelisted balances on a specific denom
+  string denom = 2;
+}
+
+message QueryWhitelistedBalanceResponse {
+  // balance contains the whitelisted balance with the queried account and denom
   cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
 }
