@@ -42,7 +42,7 @@ type IssueFungibleTokenSettings struct {
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
 func BuildFungibleTokenDenom(subunit string, issuer sdk.AccAddress) string {
-	return subunit + denomSeparator + issuer.String()
+	return strings.ToLower(subunit) + denomSeparator + issuer.String()
 }
 
 // DeconstructFungibleTokenDenom splits the denom string into the symbol and issuer address.

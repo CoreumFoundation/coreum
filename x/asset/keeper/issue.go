@@ -107,7 +107,7 @@ func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleT
 
 // getFungibleTokenFullInfo return the fungible token info from bank, given its definition.
 func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.FungibleTokenDefinition) (types.FungibleToken, error) {
-	_, err := types.DeconstructFungibleTokenDenom(definition.Denom)
+	subunit, _, err := types.DeconstructFungibleTokenDenom(definition.Denom)
 	if err != nil {
 		return types.FungibleToken{}, err
 	}
@@ -134,7 +134,7 @@ func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.Fungi
 		Issuer:         definition.Issuer,
 		Symbol:         metadata.Symbol,
 		Precision:      uint32(precision),
-		Subunit:        metadata.Base,
+		Subunit:        subunit,
 		Description:    metadata.Description,
 		Features:       definition.Features,
 		GloballyFrozen: k.isGloballyFrozen(ctx, definition.Denom),

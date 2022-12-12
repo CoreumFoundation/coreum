@@ -16,27 +16,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-func TestKeeper_LowercaseSymbol(t *testing.T) {
-	requireT := require.New(t)
-	testApp := simapp.New()
-	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-	assetKeeper := testApp.AssetKeeper
-	symbol := "Coreum"
-
-	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	settings := types.IssueFungibleTokenSettings{
-		Issuer:        addr,
-		Symbol:        symbol,
-		Recipient:     addr,
-		InitialAmount: sdk.NewInt(777),
-		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
-	}
-
-	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
-	requireT.NoError(err)
-	requireT.EqualValues("coreum"+"-"+addr.String(), denom)
-}
-
 func TestKeeper_ValidateSymbol(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
