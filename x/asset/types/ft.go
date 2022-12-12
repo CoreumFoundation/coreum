@@ -35,7 +35,6 @@ type IssueFungibleTokenSettings struct {
 	Subunit       string
 	Precision     uint32
 	Description   string
-	Recipient     sdk.AccAddress
 	InitialAmount sdk.Int
 	Features      []FungibleTokenFeature
 }

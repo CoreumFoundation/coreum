@@ -27,7 +27,6 @@ type issueFungibleTokenRequest struct {
 	Subunit   string `json:"subunit"`
 	Precision uint32 `json:"precision"`
 	Amount    string `json:"amount"`
-	Recipient string `json:"recipient"`
 }
 
 type fungibleTokenMethod string
@@ -69,8 +68,6 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	)
 	requireT.NoError(err)
 
-	recipient := chain.GenAccount()
-
 	symbol := "mytoken"
 	subunit := "mysatoshi"
 	subunit1 := subunit + "1"
@@ -87,7 +84,6 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 			Subunit:   subunit,
 			Precision: precision,
 			Amount:    initialAmount.String(),
-			Recipient: recipient.String(),
 		},
 	})
 	requireT.NoError(err)
@@ -99,15 +95,15 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	logger.Get(ctx).Info("Fungible token issued by smart contract", zap.Int64("gasUsed", gasUsed))
 
 	// check balance of recipient
-	recipientBalance, err := bankClient.AllBalances(ctx,
+	balance, err := bankClient.AllBalances(ctx,
 		&banktypes.QueryAllBalancesRequest{
-			Address: recipient.String(),
+			Address: contractAddr,
 		})
 	requireT.NoError(err)
 
 	assertT := assert.New(t)
-	assertT.Equal(initialAmount.String(), recipientBalance.Balances.AmountOf(denom1).String())
-	assertT.Equal(initialAmount.String(), recipientBalance.Balances.AmountOf(denom2).String())
+	assertT.Equal(initialAmount.String(), balance.Balances.AmountOf(denom1).String())
+	assertT.Equal(initialAmount.String(), balance.Balances.AmountOf(denom2).String())
 
 	ft, err := assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{Denom: denom1})
 	requireT.NoError(err)

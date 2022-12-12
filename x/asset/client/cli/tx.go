@@ -71,14 +71,14 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [subunit] [precision] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ","),
+		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ","),
 		Args:  cobra.ExactArgs(6),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Issues new fungible token.
 
 Example:
-$ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitcoin Token" --from [issuer]
+$ %s tx asset ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 `,
 				version.AppName,
 			),
@@ -95,15 +95,6 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 			precision, err := strconv.ParseUint(args[2], 10, 32)
 			if err != nil {
 				return sdkerrors.Wrap(err, "invalid precision")
-			}
-			recipient := args[3]
-			// if the recipient wasn't provided the signer is the recipient
-			if recipient != "" {
-				if _, err = sdk.AccAddressFromBech32(recipient); err != nil {
-					return sdkerrors.Wrap(err, "invalid recipient")
-				}
-			} else {
-				recipient = issuer.String()
 			}
 
 			// if the initial amount wasn't provided the amount is zero
@@ -136,7 +127,6 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 				Symbol:        symbol,
 				Subunit:       subunit,
 				Precision:     uint32(precision),
-				Recipient:     recipient,
 				InitialAmount: initialAmount,
 				Description:   description,
 				Features:      features,

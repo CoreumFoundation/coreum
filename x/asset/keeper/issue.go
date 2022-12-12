@@ -38,7 +38,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 
 	k.SetFungibleTokenDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 
-	if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Recipient); err != nil {
+	if err := k.mintFungibleToken(ctx, denom, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
 	}
 
@@ -56,7 +56,6 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Subunit:       settings.Subunit,
 		Precision:     settings.Precision,
 		Description:   settings.Description,
-		Recipient:     settings.Recipient.String(),
 		InitialAmount: settings.InitialAmount,
 		Features:      settings.Features,
 	}); err != nil {

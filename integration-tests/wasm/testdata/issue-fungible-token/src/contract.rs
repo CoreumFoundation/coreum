@@ -55,8 +55,7 @@ pub fn execute(
             subunit,
             precision,
             amount,
-            recipient,
-        } => issue_tokens(deps, symbol, subunit, precision, amount, recipient),
+        } => issue_tokens(deps, symbol, subunit, precision, amount),
     }
 }
 
@@ -66,10 +65,7 @@ fn issue_tokens(
     subunit: String,
     precision: u32,
     amount: Uint128,
-    recipient: String,
 ) -> Result<Response<sdk::FungibleTokenMsg>, ContractError> {
-    let recipient_addr = deps.api.addr_validate(&recipient)?;
-
     if amount == Uint128::zero() {
         return Err(ContractError::InvalidZeroAmount {});
     }
@@ -83,7 +79,6 @@ fn issue_tokens(
         symbol: symbol.clone() + "1",
         subunit: subunit.clone() + "1",
         precision,
-        recipient: recipient_addr.to_string(),
         initial_amount: amount,
     });
     msg1.reply_on = ReplyOn::Always;
@@ -92,7 +87,6 @@ fn issue_tokens(
         symbol: symbol.clone() + "2",
         subunit: subunit.clone() + "2",
         precision,
-        recipient: recipient_addr.to_string(),
         initial_amount: amount,
     });
     msg2.reply_on = ReplyOn::Always;
@@ -103,7 +97,6 @@ fn issue_tokens(
     let res: Response<sdk::FungibleTokenMsg> = Response::new()
         .add_attribute("method", "issue_token")
         .add_attribute("symbol", symbol)
-        .add_attribute("recipient", recipient_addr)
         .add_attribute("amount", amount)
         .add_submessages([msg1, msg2]);
     Ok(res)
@@ -153,7 +146,6 @@ pub enum ExecuteMsg {
         subunit: String,
         precision: u32,
         amount: Uint128,
-        recipient: String,
     },
 }
 
