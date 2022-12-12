@@ -22,8 +22,8 @@ service Msg {
   // FreezeFungibleToken freezes a part of the fungible tokens in an
   // account, only if the freezable feature is enabled on that token.
   rpc FreezeFungibleToken(MsgFreezeFungibleToken) returns (EmptyResponse);
-  // UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an 
-  // account, only if there are such frozen tokens on that account 
+  // UnfreezeFungibleToken unfreezes a part of the frozen fungible tokens in an
+  // account, only if there are such frozen tokens on that account
   rpc UnfreezeFungibleToken(MsgUnfreezeFungibleToken) returns (EmptyResponse);
 
   // GloballyFreezeFungibleToken freezes fungible token so no operations are allowed with it before unfrozen.
@@ -32,6 +32,9 @@ service Msg {
   // GloballyUnfreezeFungibleToken unfreezes fungible token and unblocks basic operations on it.
   // This operation is idempotent so global unfreezing of non-frozen token does nothing.
   rpc GloballyUnfreezeFungibleToken(MsgGloballyUnfreezeFungibleToken) returns (EmptyResponse);
+
+  // SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
+  rpc SetWhitelistedLimitFungibleToken(MsgSetWhitelistedLimitFungibleToken) returns (EmptyResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -82,3 +85,9 @@ message MsgGloballyUnfreezeFungibleToken {
 }
 
 message EmptyResponse {}
+
+message MsgSetWhitelistedLimitFungibleToken {
+  string sender = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}

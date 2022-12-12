@@ -58,6 +58,7 @@ func FTCmd() *cobra.Command {
 		CmdTxUnfreezeFungibleToken(),
 		CmdTxGloballyFreezeFungibleToken(),
 		CmdTxGloballyUnfreezeFungibleToken(),
+		CmdTxSetWhitelistedLimitFungibleToken(),
 	)
 
 	return cmd
@@ -314,6 +315,50 @@ $ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 -
 				Coin:   amount,
 			}
 
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxSetWhitelistedLimitFungibleToken returns SetWhitelistedLimitFungibleToken cobra command.
+//
+//nolint:dupl // most code is identical, but reusing logic is not beneficial here.
+func CmdTxSetWhitelistedLimitFungibleToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-whitelisted-limit [account_address] [amount] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Set whitelisted limit on an account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Set whitelisted limit on an account.
+
+Example:
+$ %s tx asset ft set-whitelisted-limit [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			account := args[0]
+			amount, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgSetWhitelistedLimitFungibleToken{
+				Sender:  sender.String(),
+				Account: account,
+				Coin:    amount,
+			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
