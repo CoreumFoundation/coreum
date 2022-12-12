@@ -23,4 +23,6 @@ var (
 	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 8, "symbol format is not valid")
 	// ErrGloballyFrozen is returned when token is globally frozen so all operations with it are blocked
 	ErrGloballyFrozen = sdkerrors.Register(ModuleName, 9, "token is globally frozen")
+	// ErrWhitelistedLimitExceeded is returned when new balance after receiving coins exceeds the whitelisted limit
+	ErrWhitelistedLimitExceeded = sdkerrors.Register(ModuleName, 10, "whitelisted limit exceeded")
 )

@@ -9,6 +9,9 @@ option go_package = "github.com/CoreumFoundation/coreum/x/feemodel/types";
 
 // GenesisState defines the module's genesis state.
 message GenesisState {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
   // params defines all the parameters of the module.
   Params params = 1 [(gogoproto.nullable) = false];
 

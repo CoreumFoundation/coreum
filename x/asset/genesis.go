@@ -13,7 +13,7 @@ import (
 // InitGenesis initializes the asset module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// Init fungible token definitions
-	for _, ft := range genState.FungibleTokens {
+	for _, ft := range genState.FungibleTokens.Tokens {
 		issuerAddress := sdk.MustAccAddressFromBech32(ft.Issuer)
 		definition := types.FungibleTokenDefinition{
 			Denom:    ft.Denom,
@@ -28,9 +28,15 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	// Init frozen balances
-	for _, frozenBalance := range genState.FrozenBalances {
+	for _, frozenBalance := range genState.FungibleTokens.FrozenBalances {
 		address := sdk.MustAccAddressFromBech32(frozenBalance.Address)
 		k.SetFrozenBalances(ctx, address, frozenBalance.Coins)
+	}
+
+	// Init whitelisted balances
+	for _, whitelistedBalance := range genState.FungibleTokens.WhitelistedBalances {
+		address := sdk.MustAccAddressFromBech32(whitelistedBalance.Address)
+		k.SetWhitelistedBalances(ctx, address, whitelistedBalance.Coins)
 	}
 }
 
@@ -43,13 +49,22 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 
 	// Export frozen balances
-	balances, _, err := k.GetAccountsFrozenBalances(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	frozenBalances, _, err := k.GetAccountsFrozenBalances(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	if err != nil {
+		panic(err)
+	}
+
+	// Export whitelisted balances
+	whitelistedBalances, _, err := k.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
 	return &types.GenesisState{
-		FungibleTokens: fungibleTokens,
-		FrozenBalances: balances,
+		FungibleTokens: types.FungibleTokenState{
+			Tokens:              fungibleTokens,
+			FrozenBalances:      frozenBalances,
+			WhitelistedBalances: whitelistedBalances,
+		},
 	}
 }
