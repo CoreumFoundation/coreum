@@ -35,6 +35,9 @@ service Msg {
   // This operation is idempotent so global unfreezing of non-frozen token does nothing.
   rpc GloballyUnfreezeFungibleToken(MsgGloballyUnfreezeFungibleToken) returns (EmptyResponse);
 
+  // SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
+  rpc SetWhitelistedLimitFungibleToken(MsgSetWhitelistedLimitFungibleToken) returns (EmptyResponse);
+
   // IssueNonFungibleTokenClass creates new non-fungible token class.
   rpc IssueNonFungibleTokenClass(MsgIssueNonFungibleTokenClass) returns (EmptyResponse);
   // MintNonFungibleToken mints new non-fungible token in the class.
@@ -110,3 +113,9 @@ message MsgMintNonFungibleToken {
 }
 
 message EmptyResponse {}
+
+message MsgSetWhitelistedLimitFungibleToken {
+  string sender = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}

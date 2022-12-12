@@ -23,10 +23,12 @@ var (
 	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 8, "symbol format is not valid")
 	// ErrGloballyFrozen is returned when token is globally frozen so all operations with it are blocked
 	ErrGloballyFrozen = sdkerrors.Register(ModuleName, 9, "token is globally frozen")
+	// ErrWhitelistedLimitExceeded is returned when new balance after receiving coins exceeds the whitelisted limit
+	ErrWhitelistedLimitExceeded = sdkerrors.Register(ModuleName, 10, "whitelisted limit exceeded")
 	// ErrInvalidID is returned when the provided id is not of valid format
-	ErrInvalidID = sdkerrors.Register(ModuleName, 10, "id format is not valid")
+	ErrInvalidID = sdkerrors.Register(ModuleName, 11, "id format is not valid")
 	// ErrInvalidNonFungibleTokenClass defines the common error for the invalid non-fungible token class.
-	ErrInvalidNonFungibleTokenClass = sdkerrors.Register(ModuleName, 11, "invalid non-fungible token class")
+	ErrInvalidNonFungibleTokenClass = sdkerrors.Register(ModuleName, 12, "invalid non-fungible token class")
 	// ErrInvalidNonFungibleToken defines the common error for the invalid non-fungible token.
-	ErrInvalidNonFungibleToken = sdkerrors.Register(ModuleName, 12, "invalid non-fungible token")
+	ErrInvalidNonFungibleToken = sdkerrors.Register(ModuleName, 13, "invalid non-fungible token")
 )

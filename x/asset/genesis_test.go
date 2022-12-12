@@ -16,6 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+//nolint:funlen
 func TestImportAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
@@ -38,7 +39,8 @@ func TestImportAndExportGenesis(t *testing.T) {
 			Subunit:   fmt.Sprintf("abc%d", i),
 			Precision: uint32(rand.Int31n(100)),
 			Features: []types.FungibleTokenFeature{
-				types.FungibleTokenFeature_freeze, //nolint:nosnakecase // proto enum
+				types.FungibleTokenFeature_freeze,    //nolint:nosnakecase // proto enum
+				types.FungibleTokenFeature_whitelist, //nolint:nosnakecase // proto enum
 			},
 		}
 		fungibleTokens = append(fungibleTokens, ft)
@@ -46,11 +48,25 @@ func TestImportAndExportGenesis(t *testing.T) {
 	}
 
 	// fungible token frozen balances
-	var fungibleTokenFrozenBalances []types.Balance
+	var fungibleTokenFrozenBalances []types.FungibleTokenBalance
 	for i := 0; i < 5; i++ {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 		fungibleTokenFrozenBalances = append(fungibleTokenFrozenBalances,
-			types.Balance{
+			types.FungibleTokenBalance{
+				Address: addr.String(),
+				Coins: sdk.NewCoins(
+					sdk.NewCoin(fungibleTokens[0].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(fungibleTokens[1].Denom, sdk.NewInt(rand.Int63())),
+				),
+			})
+	}
+
+	// fungible token whitelisted balances
+	var fungibleTokenWhitelistedBalances []types.FungibleTokenBalance
+	for i := 0; i < 5; i++ {
+		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		fungibleTokenWhitelistedBalances = append(fungibleTokenWhitelistedBalances,
+			types.FungibleTokenBalance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
 					sdk.NewCoin(fungibleTokens[0].Denom, sdk.NewInt(rand.Int63())),
@@ -60,8 +76,11 @@ func TestImportAndExportGenesis(t *testing.T) {
 	}
 
 	genState := types.GenesisState{
-		FrozenBalances: fungibleTokenFrozenBalances,
-		FungibleTokens: fungibleTokens,
+		FungibleTokens: types.FungibleTokenState{
+			Tokens:              fungibleTokens,
+			FrozenBalances:      fungibleTokenFrozenBalances,
+			WhitelistedBalances: fungibleTokenWhitelistedBalances,
+		},
 	}
 
 	// init the keeper
@@ -85,8 +104,19 @@ func TestImportAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
+	// fungible token whitelisted balances
+	for _, balance := range fungibleTokenWhitelistedBalances {
+		address, err := sdk.AccAddressFromBech32(balance.Address)
+		requireT.NoError(err)
+		coins, _, err := assetKeeper.GetWhitelistedBalances(ctx, address, nil)
+		requireT.NoError(err)
+		assertT.EqualValues(balance.Coins.String(), coins.String())
+	}
+
 	// check that export is equal import
 	exportedGenState := asset.ExportGenesis(ctx, assetKeeper)
-	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
-	assertT.ElementsMatch(genState.FungibleTokens, exportedGenState.FungibleTokens)
+
+	assertT.ElementsMatch(genState.FungibleTokens.Tokens, exportedGenState.FungibleTokens.Tokens)
+	assertT.ElementsMatch(genState.FungibleTokens.FrozenBalances, exportedGenState.FungibleTokens.FrozenBalances)
+	assertT.ElementsMatch(genState.FungibleTokens.WhitelistedBalances, exportedGenState.FungibleTokens.WhitelistedBalances)
 }
