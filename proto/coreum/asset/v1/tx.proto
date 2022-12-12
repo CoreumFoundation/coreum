@@ -49,7 +49,10 @@ message MsgIssueFungibleToken {
   repeated FungibleTokenFeature features = 8;
   // burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
   // burn_amount. This value will be burnt on top of the send amount.
-  float burn_rate = 9;
+  string burn_rate = 9 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
 }
 
 message MsgFreezeFungibleToken {

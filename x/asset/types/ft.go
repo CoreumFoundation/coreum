@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"math/big"
 	"regexp"
 	"strings"
 
@@ -40,7 +39,7 @@ type IssueFungibleTokenSettings struct {
 	Recipient     sdk.AccAddress
 	InitialAmount sdk.Int
 	Features      []FungibleTokenFeature
-	BurnRate      float32
+	BurnRate      sdk.Dec
 }
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
@@ -109,8 +108,12 @@ func (ftd *FungibleTokenDefinition) IsFeatureEnabled(feature FungibleTokenFeatur
 }
 
 // ValidateBurnRate checks the provide burn rate is valid
-func ValidateBurnRate(burnRate float32) error {
-	if burnRate < 0 || burnRate > 1 {
+func ValidateBurnRate(burnRate sdk.Dec) error {
+	if burnRate.IsNil() {
+		return nil
+	}
+
+	if burnRate.LT(sdk.NewDec(0)) || burnRate.GT(sdk.NewDec(1)) {
 		return sdkerrors.Wrap(ErrInvalidFungibleToken, "burn rate is not within acceptable range")
 	}
 
@@ -121,22 +124,12 @@ func ValidateBurnRate(burnRate float32) error {
 func (ftd FungibleTokenDefinition) CalculateBurnCoin(coin sdk.Coin) sdk.Coin {
 	// limit precision to 4 decimal places
 	burnRateStr := fmt.Sprintf("%.4f", ftd.BurnRate)
-	// we convert float32 to string and parse it to big.Float because direct conversion from
-	// float32 to big.Float leads to some rounding errors
-	burnRate, _, err := big.ParseFloat(burnRateStr, 10, 100, big.ToNearestAway)
+	burnRate, err := sdk.NewDecFromStr(burnRateStr)
+	burnRate.TruncateDec()
 	if err != nil {
 		panic(err)
 	}
+	burnAmount := burnRate.MulInt(coin.Amount).Ceil().RoundInt()
 
-	amount := big.NewFloat(0).SetInt(coin.Amount.BigInt())
-	burnAmountFloat := big.NewFloat(0).Mul(amount, burnRate)
-	burnAmount, accuracy := burnAmountFloat.Int(nil)
-	str := burnAmountFloat.String()
-	burnRateStr = burnRate.String()
-	fmt.Print(str, burnRateStr)
-	if accuracy != big.Exact {
-		burnAmount = big.NewInt(0).Add(burnAmount, big.NewInt(1))
-	}
-
-	return sdk.NewCoin(coin.Denom, sdk.NewIntFromBigInt(burnAmount))
+	return sdk.NewCoin(coin.Denom, burnAmount)
 }

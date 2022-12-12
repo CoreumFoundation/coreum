@@ -183,6 +183,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Subunit:     strings.ToLower(settings.Subunit),
 		Precision:   settings.Precision,
 		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
+		BurnRate:    sdk.NewDec(0),
 	}, gotToken)
 
 	// check the metadata

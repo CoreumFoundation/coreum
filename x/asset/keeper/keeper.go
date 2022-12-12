@@ -44,7 +44,7 @@ func (k Keeper) InterceptSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.A
 			return err
 		}
 
-		if ft.BurnRate > 0 && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
+		if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
 			coinsToBurn := ft.CalculateBurnCoin(coin)
 			err := k.burnFungibleToken(ctx, coinsToBurn, fromAddress)
 			if err != nil {
@@ -74,7 +74,7 @@ func (k Keeper) InterceptInputOutputCoins(ctx sdk.Context, inputs []banktypes.In
 				return err
 			}
 
-			if ft.BurnRate > 0 && ft.Issuer != inAddress.String() {
+			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != inAddress.String() {
 				coinsToBurn := ft.CalculateBurnCoin(coin)
 				err = k.burnFungibleToken(ctx, coinsToBurn, inAddress)
 				if err != nil {

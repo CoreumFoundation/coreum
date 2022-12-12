@@ -17,32 +17,32 @@ import (
 
 func TestKeeperCalculateBurnCoin(t *testing.T) {
 	testCases := []struct {
-		rate     float32
+		rate     string
 		input    int64
 		expected int64
 	}{
 		{
-			rate:     0,
+			rate:     "0",
 			input:    1,
 			expected: 0,
 		},
 		{
-			rate:     0.01,
+			rate:     "0.01",
 			input:    1,
 			expected: 1,
 		},
 		{
-			rate:     0.01,
+			rate:     "0.01",
 			input:    101,
 			expected: 2,
 		},
 		{
-			rate:     0.01,
+			rate:     "0.01",
 			input:    100,
 			expected: 1,
 		},
 		{
-			rate:     0.1,
+			rate:     "0.1",
 			input:    100,
 			expected: 10,
 		},
@@ -54,7 +54,7 @@ func TestKeeperCalculateBurnCoin(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assertT := assert.New(t)
 			definition := types.FungibleTokenDefinition{
-				BurnRate: tc.rate,
+				BurnRate: sdk.MustNewDecFromStr(tc.rate),
 			}
 			burnCoin := definition.CalculateBurnCoin(sdk.NewCoin("test", sdk.NewInt(tc.input)))
 			assertT.EqualValues(sdk.NewInt(tc.expected).String(), burnCoin.Amount.String())
@@ -83,7 +83,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(600),
 		Features:      []types.FungibleTokenFeature{},
-		BurnRate:      1.01,
+		BurnRate:      sdk.MustNewDecFromStr("1.01"),
 	}
 
 	_, err := assetKeeper.IssueFungibleToken(ctx, settings)
@@ -100,7 +100,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(600),
 		Features:      []types.FungibleTokenFeature{},
-		BurnRate:      0.25,
+		BurnRate:      sdk.MustNewDecFromStr("0.25"),
 	}
 
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)

@@ -122,9 +122,16 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 				return errors.WithStack(err)
 			}
 
-			burnRate, err := cmd.Flags().GetFloat32(burnRateFlag)
+			burnRate := sdk.NewDec(0)
+			burnRateStr, err := cmd.Flags().GetString(burnRateFlag)
 			if err != nil {
 				return errors.WithStack(err)
+			}
+			if len(burnRateStr) > 0 {
+				burnRate, err = sdk.NewDecFromStr(burnRateStr)
+				if err != nil || len(burnRateStr) > 6 {
+					return errors.Wrapf(err, "burn rate must be a float value between 0 and 1, with max 4 decimal places")
+				}
 			}
 
 			var features []types.FungibleTokenFeature
@@ -153,7 +160,7 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 		},
 	}
 	cmd.Flags().StringSlice(featuresFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
-	cmd.Flags().Float32(burnRateFlag, 0, "Burn rate indicates the rate at which coins will be burned on top of the send amount in every send action. Must be between 0 and 1.")
+	cmd.Flags().String(burnRateFlag, "0", "Burn rate indicates the rate at which coins will be burned on top of the send amount in every send action. Must be between 0 and 1.")
 
 	flags.AddTxFlagsToCmd(cmd)
 

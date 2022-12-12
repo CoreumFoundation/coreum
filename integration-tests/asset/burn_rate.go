@@ -47,12 +47,11 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 		Symbol:        "ABC",
 		Subunit:       "abc",
 		Precision:     6,
-		Description:   "ABC Description",
 		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(1000),
+		Description:   "ABC Description",
 		Features:      []assettypes.FungibleTokenFeature{},
-		BurnRate:      0.10,
-	}
+		BurnRate:      sdk.MustNewDecFromStr("0.10")}
 
 	res, err := tx.BroadcastTx(
 		ctx,
