@@ -20,9 +20,9 @@ func TestCmdTxMintNonFungibleToken(t *testing.T) {
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
 
-	args := []string{symbol, "class name", "class description", "https://my-class-meta.int/1", "35b326a2b3b605270c26185c38d2581e937b2eae0418b4964ef521efe79cdf34"}
+	args := []string{symbol, "class name", "class description", "https://my-class-meta.int/1", "content-hash"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxCreateNonFungibleTokenClass(), args)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueNonFungibleTokenClass(), args)
 	requireT.NoError(err)
 
 	classID := types.BuildNonFungibleTokenClassID(symbol, validator.Address)

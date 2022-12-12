@@ -146,7 +146,7 @@ func (msg MsgGloballyFreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Denom); err != nil {
+	if _, err := DeconstructFungibleTokenDenom(msg.Denom); err != nil {
 		return err
 	}
 
@@ -166,7 +166,7 @@ func (msg MsgGloballyUnfreezeFungibleToken) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Denom); err != nil {
+	if _, err := DeconstructFungibleTokenDenom(msg.Denom); err != nil {
 		return err
 	}
 

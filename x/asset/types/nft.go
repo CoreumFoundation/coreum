@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	// TODO(dhil) discuss with team the regex, probably we need uppercase as well, if yes what we do with the uniqueness?
-	nftSymbolRegexStr = `^[a-z][a-z0-9]{0,40}$`
+	nftSymbolRegexStr = `^[a-zA-Z][a-zA-Z0-9]{0,40}$`
 	nftSymbolRegex    = regexp.MustCompile(nftSymbolRegexStr)
 	// the regexp is same as for the nft module
 	nftIDRegexStr = `^[a-zA-Z][a-zA-Z0-9/:-]{2,100}$`
@@ -22,9 +21,9 @@ var (
 	nftClassIDSeparator = "-"
 )
 
-// CreateNonFungibleTokenClassSettings is the model which represents the params for the non-fungible token class creation.
-type CreateNonFungibleTokenClassSettings struct {
-	Creator     sdk.AccAddress
+// IssueNonFungibleTokenClassSettings is the model which represents the params for the non-fungible token class creation.
+type IssueNonFungibleTokenClassSettings struct {
+	Issuer      sdk.AccAddress
 	Name        string
 	Symbol      string
 	Description string
@@ -44,8 +43,8 @@ type MintNonFungibleTokenSettings struct {
 }
 
 // BuildNonFungibleTokenClassID builds the non-fungible token id string from the symbol and issuer address.
-func BuildNonFungibleTokenClassID(symbol string, creator sdk.AccAddress) string {
-	return symbol + nftClassIDSeparator + creator.String()
+func BuildNonFungibleTokenClassID(symbol string, issuer sdk.AccAddress) string {
+	return strings.ToLower(symbol) + nftClassIDSeparator + issuer.String()
 }
 
 // DeconstructNonFungibleTokenClassID splits the classID string into the symbol and issuer address.

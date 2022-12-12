@@ -29,10 +29,10 @@ message EventFungibleTokenFrozenAmountChanged {
   cosmos.base.v1beta1.Coin current_amount = 3 [(gogoproto.nullable) = false];
 }
 
-// EventNonFungibleTokenClassCreated is emitted on MsgCreateNonFungibleTokenClass.
-message EventNonFungibleTokenClassCreated {
+// EventNonFungibleTokenClassIssued is emitted on MsgIssueNonFungibleTokenClass.
+message EventNonFungibleTokenClassIssued {
   string id = 1 [(gogoproto.customname) = "ID"];
-  string creator = 2;
+  string issuer = 2;
   string symbol = 3;
   string name = 4;
   string description = 5;

@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	_ sdk.Msg = &MsgCreateNonFungibleTokenClass{}
+	_ sdk.Msg = &MsgIssueNonFungibleTokenClass{}
 	_ sdk.Msg = &MsgMintNonFungibleToken{}
 )
 
@@ -19,9 +19,9 @@ const (
 )
 
 // ValidateBasic checks that message fields are valid.
-func (msg *MsgCreateNonFungibleTokenClass) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator account %s", msg.Creator)
+func (msg *MsgIssueNonFungibleTokenClass) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Issuer); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer account %s", msg.Issuer)
 	}
 
 	if len(msg.Name) > nftClassMaxNameLength {
@@ -52,9 +52,9 @@ func (msg *MsgCreateNonFungibleTokenClass) ValidateBasic() error {
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg *MsgCreateNonFungibleTokenClass) GetSigners() []sdk.AccAddress {
+func (msg *MsgIssueNonFungibleTokenClass) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Creator),
+		sdk.MustAccAddressFromBech32(msg.Issuer),
 	}
 }
 

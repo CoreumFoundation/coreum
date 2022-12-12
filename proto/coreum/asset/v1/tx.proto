@@ -35,8 +35,8 @@ service Msg {
   // This operation is idempotent so global unfreezing of non-frozen token does nothing.
   rpc GloballyUnfreezeFungibleToken(MsgGloballyUnfreezeFungibleToken) returns (EmptyResponse);
 
-  // CreateNonFungibleTokenClass creates new non-fungible token class.
-  rpc CreateNonFungibleTokenClass(MsgCreateNonFungibleTokenClass) returns (EmptyResponse);
+  // IssueNonFungibleTokenClass creates new non-fungible token class.
+  rpc IssueNonFungibleTokenClass(MsgIssueNonFungibleTokenClass) returns (EmptyResponse);
   // MintNonFungibleToken mints new non-fungible token in the class.
   rpc MintNonFungibleToken(MsgMintNonFungibleToken) returns (EmptyResponse);
 }
@@ -88,9 +88,9 @@ message MsgGloballyUnfreezeFungibleToken {
   string denom = 2;
 }
 
-// MsgCreateNonFungibleTokenClass defines message for the CreateNonFungibleTokenClass method.
-message MsgCreateNonFungibleTokenClass {
-  string creator = 1;
+// MsgIssueNonFungibleTokenClass defines message for the IssueNonFungibleTokenClass method.
+message MsgIssueNonFungibleTokenClass {
+  string issuer = 1;
   string symbol = 2;
   string name = 3;
   string description = 4;

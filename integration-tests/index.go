@@ -33,7 +33,7 @@ func Tests() []testing.TestSet {
 				asset.TestGloballyFreezeFungibleToken,
 				asset.TestMintFungibleToken,
 				asset.TestBurnFungibleToken,
-				asset.TestCreateNonFungibleTokenClass,
+				asset.TestIssueNonFungibleTokenClass,
 				asset.TestMintNonFungibleToken,
 				auth.TestUnexpectedSequenceNumber,
 				auth.TestFeeLimits,

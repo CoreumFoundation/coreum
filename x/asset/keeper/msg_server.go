@@ -25,7 +25,7 @@ type MsgKeeper interface {
 
 // NonFungibleTokeMsgKeeper defines subscope of non-fungible toke keeper methods required by msg service.
 type NonFungibleTokeMsgKeeper interface {
-	CreateClass(ctx sdk.Context, settings types.CreateNonFungibleTokenClassSettings) (string, error)
+	IssueClass(ctx sdk.Context, settings types.IssueNonFungibleTokenClassSettings) (string, error)
 	Mint(ctx sdk.Context, settings types.MintNonFungibleTokenSettings) error
 }
 
@@ -174,16 +174,16 @@ func (ms MsgServer) GloballyUnfreezeFungibleToken(goCtx context.Context, req *ty
 	return &types.EmptyResponse{}, nil
 }
 
-// CreateNonFungibleTokenClass create new non-fungible token class.
-func (ms MsgServer) CreateNonFungibleTokenClass(ctx context.Context, req *types.MsgCreateNonFungibleTokenClass) (*types.EmptyResponse, error) {
-	creator, err := sdk.AccAddressFromBech32(req.Creator)
+// IssueNonFungibleTokenClass issues new non-fungible token class.
+func (ms MsgServer) IssueNonFungibleTokenClass(ctx context.Context, req *types.MsgIssueNonFungibleTokenClass) (*types.EmptyResponse, error) {
+	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid creator in MsgCreateNonFungibleTokenClass")
+		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid issuer in MsgIssueNonFungibleTokenClass")
 	}
-	if _, err := ms.nftKeeper.CreateClass(
+	if _, err := ms.nftKeeper.IssueClass(
 		sdk.UnwrapSDKContext(ctx),
-		types.CreateNonFungibleTokenClassSettings{
-			Creator:     creator,
+		types.IssueNonFungibleTokenClassSettings{
+			Issuer:      issuer,
 			Name:        req.Name,
 			Symbol:      req.Symbol,
 			Description: req.Description,
@@ -200,10 +200,9 @@ func (ms MsgServer) CreateNonFungibleTokenClass(ctx context.Context, req *types.
 
 // MintNonFungibleToken mints non-fungible token.
 func (ms MsgServer) MintNonFungibleToken(ctx context.Context, req *types.MsgMintNonFungibleToken) (*types.EmptyResponse, error) {
-	sdk.UnwrapSDKContext(ctx)
 	owner, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid sender in MsgMintNonFungibleToken")
+		return nil, sdkerrors.Wrap(types.ErrInvalidNonFungibleToken, "invalid sender")
 	}
 	if err := ms.nftKeeper.Mint(
 		sdk.UnwrapSDKContext(ctx),

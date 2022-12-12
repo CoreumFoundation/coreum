@@ -19,14 +19,14 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssueFungibleToken:          80000,
-		AssetMintFungibleToken:             35000,
-		AssetBurnFungibleToken:             35000,AssetFreezeFungibleToken:         55000,
-		AssetUnfreezeFungibleToken:       55000,
+		AssetIssueFungibleToken: 80000,
+		AssetMintFungibleToken:  35000,
+		AssetBurnFungibleToken:  35000, AssetFreezeFungibleToken: 55000,
+		AssetUnfreezeFungibleToken:         55000,
 		AssetGloballyFreezeFungibleToken:   5000,
 		AssetGloballyUnfreezeFungibleToken: 5000,
-		AssetCreateNonFungibleTokenClass: 20000,
-		AssetMintNonFungibleToken:        30000,
+		AssetIssueNonFungibleTokenClass:    20000,
+		AssetMintNonFungibleToken:          30000,
 
 		BankSendPerEntry:      22000,
 		BankMultiSendPerEntry: 27000,
@@ -66,14 +66,15 @@ type DeterministicGasRequirements struct {
 	FreeSignatures uint64
 
 	// x/asset
-	AssetIssueFungibleToken          uint64
+	AssetIssueFungibleToken            uint64
 	AssetMintFungibleToken             uint64
-	AssetBurnFungibleToken             uint64AssetFreezeFungibleToken         uint64
-	AssetUnfreezeFungibleToken       uint64
-	AssetGloballyFreezeFungibleToken           uint64
-	AssetGloballyUnfreezeFungibleToken           uint64
-	AssetCreateNonFungibleTokenClass uint64
-	AssetMintNonFungibleToken        uint64
+	AssetBurnFungibleToken             uint64
+	AssetFreezeFungibleToken           uint64
+	AssetUnfreezeFungibleToken         uint64
+	AssetGloballyFreezeFungibleToken   uint64
+	AssetGloballyUnfreezeFungibleToken uint64
+	AssetIssueNonFungibleTokenClass    uint64
+	AssetMintNonFungibleToken          uint64
 
 	// x/bank
 	BankSendPerEntry      uint64
@@ -124,8 +125,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetMintFungibleToken, true
 	case *assettypes.MsgBurnFungibleToken:
 		return dgr.AssetBurnFungibleToken, true
-	case *assettypes.MsgCreateNonFungibleTokenClass:
-		return dgr.AssetCreateNonFungibleTokenClass, true
+	case *assettypes.MsgIssueNonFungibleTokenClass:
+		return dgr.AssetIssueNonFungibleTokenClass, true
 	case *assettypes.MsgMintNonFungibleToken:
 		return dgr.AssetMintNonFungibleToken, true
 	case *banktypes.MsgSend:

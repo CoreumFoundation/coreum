@@ -25,13 +25,13 @@ func NewNonFungibleTokenKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, nft
 	}
 }
 
-// CreateClass creates new non-fungible token class and returns its id.
-func (k NonFungibleTokenKeeper) CreateClass(ctx sdk.Context, settings types.CreateNonFungibleTokenClassSettings) (string, error) {
+// IssueClass issues new non-fungible token class and returns its id.
+func (k NonFungibleTokenKeeper) IssueClass(ctx sdk.Context, settings types.IssueNonFungibleTokenClassSettings) (string, error) {
 	if err := types.ValidateNonFungibleTokenClassSymbol(settings.Symbol); err != nil {
 		return "", err
 	}
 
-	id := types.BuildNonFungibleTokenClassID(settings.Symbol, settings.Creator)
+	id := types.BuildNonFungibleTokenClassID(settings.Symbol, settings.Issuer)
 	if err := nft.ValidateClassID(id); err != nil {
 		return "", sdkerrors.Wrap(types.ErrInvalidNonFungibleTokenClass, err.Error())
 	}
@@ -42,7 +42,7 @@ func (k NonFungibleTokenKeeper) CreateClass(ctx sdk.Context, settings types.Crea
 			types.ErrInvalidNonFungibleTokenClass,
 			"symbol %q already used for the address %q",
 			settings.Symbol,
-			settings.Creator,
+			settings.Issuer,
 		)
 	}
 
@@ -58,16 +58,16 @@ func (k NonFungibleTokenKeeper) CreateClass(ctx sdk.Context, settings types.Crea
 		return "", sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't save non-fungible token: %s", err)
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventNonFungibleTokenClassCreated{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventNonFungibleTokenClassIssued{
 		ID:          id,
-		Creator:     settings.Creator.String(),
+		Issuer:      settings.Issuer.String(),
 		Symbol:      settings.Symbol,
 		Name:        settings.Name,
 		Description: settings.Description,
 		URI:         settings.URI,
 		URIHash:     settings.URIHash,
 	}); err != nil {
-		return "", sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't emit event EventNonFungibleTokenClassCreated: %s", err)
+		return "", sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't emit event EventNonFungibleTokenClassIssued: %s", err)
 	}
 
 	return id, nil
@@ -105,23 +105,23 @@ func (k NonFungibleTokenKeeper) Mint(ctx sdk.Context, settings types.MintNonFung
 }
 
 func validateMintingAllowed(sender sdk.AccAddress, classID string) error {
-	isCreator, err := isCreator(sender, classID)
+	isIssuer, err := isIssuer(sender, classID)
 	if err != nil {
 		return err
 	}
 
-	if !isCreator {
+	if !isIssuer {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", sender.String())
 	}
 
 	return nil
 }
 
-func isCreator(sender sdk.AccAddress, classID string) (bool, error) {
-	creator, err := types.DeconstructNonFungibleTokenClassID(classID)
+func isIssuer(sender sdk.AccAddress, classID string) (bool, error) {
+	issuer, err := types.DeconstructNonFungibleTokenClassID(classID)
 	if err != nil {
 		return false, err
 	}
 
-	return creator.String() == sender.String(), nil
+	return issuer.String() == sender.String(), nil
 }

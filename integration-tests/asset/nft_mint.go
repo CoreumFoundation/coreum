@@ -16,63 +16,64 @@ import (
 // TestMintNonFungibleToken tests non-fungible token minting.
 func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
-	creator := chain.GenAccount()
+	issuer := chain.GenAccount()
 	receiver := chain.GenAccount()
 
 	nftClient := nft.NewQueryClient(chain.ClientContext)
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, creator, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgCreateNonFungibleTokenClass{},
+				&assettypes.MsgIssueNonFungibleTokenClass{},
 				&assettypes.MsgMintNonFungibleToken{},
 				&nft.MsgSend{},
 			},
 		}),
 	)
 
-	// create new NFT class
-	createMsg := &assettypes.MsgCreateNonFungibleTokenClass{
-		Creator: creator.String(),
-		Symbol:  "nftsymbol",
+	// issue new NFT class
+	issueMsg := &assettypes.MsgIssueNonFungibleTokenClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
 	}
 	_, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(creator),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createMsg)),
-		createMsg,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
 	)
 	requireT.NoError(err)
 
 	// mint new token in that class
-	classID := assettypes.BuildNonFungibleTokenClassID(createMsg.Symbol, creator)
+	classID := assettypes.BuildNonFungibleTokenClassID(issueMsg.Symbol, issuer)
 	mintMsg := &assettypes.MsgMintNonFungibleToken{
-		Sender:  creator.String(),
+		Sender:  issuer.String(),
 		ID:      "id-1",
 		ClassID: classID,
 		URI:     "https://my-class-meta.int/1",
-		URIHash: "35b326a2b3b605270c26185c38d2581e937b2eae0418b4964ef521efe79cdf34",
+		URIHash: "content-hash",
 	}
 	res, err := tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(creator),
+		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
 	requireT.NoError(err)
 	requireT.Equal(chain.GasLimitByMsgs(mintMsg), uint64(res.GasUsed))
 
-	nftMintedEvt, err := event.FindTypedEvent[*nft.EventMint](res.Events)
+	nftMintedEvents, err := event.FindTypedEvents[*nft.EventMint](res.Events)
 	requireT.NoError(err)
+	nftMintedEvent := nftMintedEvents[0]
 	requireT.Equal(&nft.EventMint{
 		ClassId: classID,
 		Id:      mintMsg.ID,
-		Owner:   creator.String(),
-	}, nftMintedEvt)
+		Owner:   issuer.String(),
+	}, nftMintedEvent)
 
 	// check that token is present in the nft module
 	nftRes, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{
 		ClassId: classID,
-		Id:      nftMintedEvt.Id,
+		Id:      nftMintedEvent.Id,
 	})
 	requireT.NoError(err)
 	requireT.Equal(&nft.NFT{
@@ -85,38 +86,39 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 	// check the owner
 	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
-		Id:      nftMintedEvt.Id,
+		Id:      nftMintedEvent.Id,
 	})
 	requireT.NoError(err)
-	requireT.Equal(creator.String(), ownerRes.Owner)
+	requireT.Equal(issuer.String(), ownerRes.Owner)
 
 	// change the owner
 	sendMsg := &nft.MsgSend{
-		Sender:   creator.String(),
+		Sender:   issuer.String(),
 		Receiver: receiver.String(),
 		Id:       mintMsg.ID,
 		ClassId:  classID,
 	}
 	res, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(creator),
+		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
 	requireT.NoError(err)
 	requireT.Equal(chain.GasLimitByMsgs(sendMsg), uint64(res.GasUsed))
-	nftSentEvt, err := event.FindTypedEvent[*nft.EventSend](res.Events)
+	nftSentEvents, err := event.FindTypedEvents[*nft.EventSend](res.Events)
 	requireT.NoError(err)
+	nftSentEvent := nftSentEvents[0]
 	requireT.Equal(&nft.EventSend{
 		Sender:   sendMsg.Sender,
 		Receiver: sendMsg.Receiver,
 		ClassId:  sendMsg.ClassId,
 		Id:       sendMsg.Id,
-	}, nftSentEvt)
+	}, nftSentEvent)
 	// check new owner
 	ownerRes, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
-		Id:      nftMintedEvt.Id,
+		Id:      nftMintedEvent.Id,
 	})
 	requireT.NoError(err)
 	requireT.Equal(receiver.String(), ownerRes.Owner)

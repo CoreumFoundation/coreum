@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"strings"
 	"testing"
 
 	codetypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -13,17 +14,17 @@ import (
 )
 
 //nolint:funlen // many test cases
-func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
+func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 
 	dataString := "metadata"
 	dataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
 	requireT.NoError(err)
 
-	validaMessage := types.MsgCreateNonFungibleTokenClass{
-		Creator:     "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+	validMessage := types.MsgIssueNonFungibleTokenClass{
+		Issuer:      "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 		Name:        "name",
-		Symbol:      "symbol",
+		Symbol:      "Symbol",
 		Description: "description",
 		URI:         "https://my.uri",
 		URIHash:     "sha-hash",
@@ -31,38 +32,38 @@ func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 	}
 	testCases := []struct {
 		name          string
-		messageFunc   func() *types.MsgCreateNonFungibleTokenClass
+		messageFunc   func() *types.MsgIssueNonFungibleTokenClass
 		expectedError error
 	}{
 		{
 			name: "valid msg",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
-				msg := validaMessage
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
+				msg := validMessage
 				return &msg
 			},
 		},
 		{
-			name: "invalid creator",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
-				msg := validaMessage
-				msg.Creator = "devcore172rc5sz2uc"
+			name: "invalid issuer",
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
+				msg := validMessage
+				msg.Issuer = "devcore172rc5sz2uc"
 				return &msg
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid name",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
-				msg := validaMessage
-				msg.Name = string(make([]byte, 129))
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
+				msg := validMessage
+				msg.Name = strings.Repeat("x", 129)
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleTokenClass,
 		},
 		{
 			name: "invalid empty symbol",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
-				msg := validaMessage
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
+				msg := validMessage
 				msg.Symbol = ""
 				return &msg
 			},
@@ -70,8 +71,8 @@ func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid char symbol",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
-				msg := validaMessage
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
+				msg := validMessage
 				msg.Symbol = "#x#"
 				return &msg
 			},
@@ -79,8 +80,8 @@ func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid description",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
-				msg := validaMessage
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
+				msg := validMessage
 				msg.Description = string(make([]byte, 257))
 				return &msg
 			},
@@ -88,8 +89,8 @@ func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid uri",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
-				msg := validaMessage
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
+				msg := validMessage
 				msg.URI = string(make([]byte, 257))
 				return &msg
 			},
@@ -97,20 +98,20 @@ func TestMsgCreateNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid uri hash",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
-				msg := validaMessage
-				msg.URIHash = string(make([]byte, 129))
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
+				msg := validMessage
+				msg.URIHash = strings.Repeat("x", 129)
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleTokenClass,
 		},
 		{
 			name: "invalid data",
-			messageFunc: func() *types.MsgCreateNonFungibleTokenClass {
+			messageFunc: func() *types.MsgIssueNonFungibleTokenClass {
 				longDataString := string(make([]byte, 5001))
 				longDataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(longDataString)})
 				requireT.NoError(err)
-				msg := validaMessage
+				msg := validMessage
 				msg.Data = longDataValue
 				return &msg
 			},
@@ -139,12 +140,12 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 	dataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
 	requireT.NoError(err)
 
-	validaMessage := types.MsgMintNonFungibleToken{
+	validMessage := types.MsgMintNonFungibleToken{
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 		ID:      "my-id",
 		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 		URI:     "https://my.uri",
-		URIHash: "sha-hash",
+		URIHash: "content-hash",
 		Data:    dataValue,
 	}
 	testCases := []struct {
@@ -155,14 +156,14 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "valid msg",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
-				msg := validaMessage
+				msg := validMessage
 				return &msg
 			},
 		},
 		{
 			name: "invalid id",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
-				msg := validaMessage
+				msg := validMessage
 				msg.ID = "id?"
 				return &msg
 			},
@@ -171,7 +172,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid sender",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
-				msg := validaMessage
+				msg := validMessage
 				msg.Sender = "devcore172rc5sz2uc"
 				return &msg
 			},
@@ -180,7 +181,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid classID",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
-				msg := validaMessage
+				msg := validMessage
 				msg.ClassID = "x"
 				return &msg
 			},
@@ -189,7 +190,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid uri",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
-				msg := validaMessage
+				msg := validMessage
 				msg.URI = string(make([]byte, 257))
 				return &msg
 			},
@@ -198,8 +199,8 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid uri hash",
 			messageFunc: func() *types.MsgMintNonFungibleToken {
-				msg := validaMessage
-				msg.URIHash = string(make([]byte, 129))
+				msg := validMessage
+				msg.URIHash = strings.Repeat("x", 129)
 				return &msg
 			},
 			expectedError: types.ErrInvalidNonFungibleToken,
@@ -210,7 +211,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 				longDataString := string(make([]byte, 5001))
 				longDataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(longDataString)})
 				requireT.NoError(err)
-				msg := validaMessage
+				msg := validMessage
 				msg.Data = longDataValue
 				return &msg
 			},
