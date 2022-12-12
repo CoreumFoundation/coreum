@@ -27,11 +27,14 @@ func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		Recipient:     issuer.String(),
-		InitialAmount: sdk.NewInt(1_000_000_000_000),
+		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
+		Features: []assettypes.FungibleTokenFeature{
+			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
+		},
 	}
 
-	numAccountsToFund := 1200 // 1700 was the max accepted
-	interactionsToFund := 5
+	numAccountsToFund := 1000 // 1700 was the max accepted
+	interactionsToFund := 2
 
 	inputItem := banktypes.Input{
 		Address: issuer.String(),
@@ -40,7 +43,8 @@ func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 	denom := assettypes.BuildFungibleTokenDenom(issueMsg.Subunit, issuer)
 	outputItems := make([]banktypes.Output, 0, numAccountsToFund)
 	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
-	coinToFund := sdk.NewCoin(denom, sdk.NewInt(1))
+	coinToFund := sdk.NewCoin(denom, sdk.NewInt(10_000_000_000))
+
 	for i := 0; i < numAccountsToFund; i++ {
 		inputItem.Coins = inputItem.Coins.Add(coinToFund)
 		recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -51,9 +55,9 @@ func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 		})
 	}
 	// prepare MultiSend messages
-	multiSendSendMsgs := make([]sdk.Msg, 0, interactionsToFund)
+	multiSendMsgs := make([]sdk.Msg, 0, interactionsToFund)
 	for i := 0; i < interactionsToFund; i++ {
-		multiSendSendMsgs = append(multiSendSendMsgs, &banktypes.MsgMultiSend{
+		multiSendMsgs = append(multiSendMsgs, &banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				inputItem,
 			},
@@ -62,8 +66,8 @@ func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 	}
 
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
-		Messages: append([]sdk.Msg{issueMsg}, multiSendSendMsgs...),
-		Amount:   sdk.NewInt(1_000_000), // add more coins to cover nondeterministic part
+		Messages: append([]sdk.Msg{issueMsg}, multiSendMsgs...),
+		Amount:   sdk.NewInt(10_000_000), // add more coins to cover nondeterministic part
 	}))
 
 	// issue fungible tokens
@@ -77,8 +81,8 @@ func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// send coins in loop
 	start := time.Now()
-	for _, msg := range multiSendSendMsgs {
-		_, err := tx.BroadcastTx(
+	for _, msg := range multiSendMsgs {
+		res, err := tx.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(issuer),
 			// we estimate here since the th size is grater then allowed for the deterministic fee
@@ -86,6 +90,7 @@ func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 			msg,
 		)
 		requireT.NoError(err)
+		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch MultiSend tx, hash: %s", res.TxHash))
 	}
 	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with MultiSend", time.Since(start), numAccountsToFund*interactionsToFund))
 
@@ -103,15 +108,18 @@ func TestBankSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		Recipient:     issuer.String(),
-		InitialAmount: sdk.NewInt(1_000_000_000_000),
+		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
+		Features: []assettypes.FungibleTokenFeature{
+			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
+		},
 	}
 
-	numAccountsToFund := 500 // 600 was the max accepted
+	numAccountsToFund := 400 // 600 was the max accepted
 	interactionsToFund := 3
 
 	denom := assettypes.BuildFungibleTokenDenom(issueMsg.Subunit, issuer)
 	bankSendSendMsgs := make([]sdk.Msg, 0, numAccountsToFund)
-	coinToFund := sdk.NewCoin(denom, sdk.NewInt(1))
+	coinToFund := sdk.NewCoin(denom, sdk.NewInt(10_000_000_000))
 	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
 	for i := 0; i < numAccountsToFund; i++ {
 		recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -144,12 +152,13 @@ func TestBankSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 	// send coins in loop
 	start := time.Now()
 	for i := 0; i < interactionsToFund; i++ {
-		_, err := tx.BroadcastTx(
+		res, err := tx.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(issuer),
 			chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendSendMsgs...)),
 			bankSendSendMsgs...)
 		requireT.NoError(err)
+		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch BankSend tx, hash: %s", res.TxHash))
 	}
 	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with BankSend", time.Since(start), numAccountsToFund*interactionsToFund))
 
