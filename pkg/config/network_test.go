@@ -34,7 +34,7 @@ var feeConfig = config.FeeConfig{
 		LongEmaBlockLength:      5,
 	}),
 	DeterministicGas: config.DeterministicGasRequirements{
-		BankSend: 10,
+		BankSendPerEntry: 10,
 	},
 }
 
@@ -195,7 +195,7 @@ func TestAddFundsToGenesis(t *testing.T) {
 
 func TestDeterministicGas(t *testing.T) {
 	assert.Equal(t, config.DeterministicGasRequirements{
-		BankSend: 10,
+		BankSendPerEntry: 10,
 	}, testNetwork().DeterministicGas())
 }
 
@@ -308,6 +308,8 @@ func TestNetworkConfigConditions(t *testing.T) {
 	assertT := assert.New(t)
 	for _, n := range config.EnabledNetworks() {
 		assert.NoError(t, n.FeeModel().Params().ValidateBasic())
-		assertT.Greater(n.DeterministicGas().BankSend, uint64(0))
+
+		// FIXME (wojtek): add all the deterministic gas fields here
+		assertT.Greater(n.DeterministicGas().BankSendPerEntry, uint64(0))
 	}
 }

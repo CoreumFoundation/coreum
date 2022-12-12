@@ -17,12 +17,16 @@ var (
 	ErrInvalidKey = sdkerrors.Register(ModuleName, 5, "invalid key")
 	// ErrNotEnoughBalance is returned when there is not enough
 	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 6, "not enough balance")
+	// ErrInvalidSubunit is returned when the provided subunit is not of valid format
+	ErrInvalidSubunit = sdkerrors.Register(ModuleName, 7, "subunit format is not valid")
 	// ErrInvalidSymbol is returned when the provided symbol is not of valid format
-	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 7, "symbol format is not valid")
+	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 8, "symbol format is not valid")
+	// ErrGloballyFrozen is returned when token is globally frozen so all operations with it are blocked
+	ErrGloballyFrozen = sdkerrors.Register(ModuleName, 9, "token is globally frozen")
 	// ErrInvalidID is returned when the provided id is not of valid format
-	ErrInvalidID = sdkerrors.Register(ModuleName, 8, "id format is not valid")
+	ErrInvalidID = sdkerrors.Register(ModuleName, 10, "id format is not valid")
 	// ErrInvalidNonFungibleTokenClass defines the common error for the invalid non-fungible token class.
-	ErrInvalidNonFungibleTokenClass = sdkerrors.Register(ModuleName, 9, "invalid non-fungible token class")
+	ErrInvalidNonFungibleTokenClass = sdkerrors.Register(ModuleName, 11, "invalid non-fungible token class")
 	// ErrInvalidNonFungibleToken defines the common error for the invalid non-fungible token.
-	ErrInvalidNonFungibleToken = sdkerrors.Register(ModuleName, 10, "invalid non-fungible token")
+	ErrInvalidNonFungibleToken = sdkerrors.Register(ModuleName, 12, "invalid non-fungible token")
 )

@@ -30,10 +30,12 @@ type EventFungibleTokenIssued struct {
 	Denom         string                                 `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
 	Issuer        string                                 `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
 	Symbol        string                                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Recipient     string                                 `protobuf:"bytes,4,opt,name=recipient,proto3" json:"recipient,omitempty"`
-	InitialAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,5,opt,name=initial_amount,json=initialAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"initial_amount"`
-	Description   string                                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	Features      []FungibleTokenFeature                 `protobuf:"varint,7,rep,packed,name=features,proto3,enum=coreum.asset.v1.FungibleTokenFeature" json:"features,omitempty"`
+	Subunit       string                                 `protobuf:"bytes,4,opt,name=subunit,proto3" json:"subunit,omitempty"`
+	Precision     uint32                                 `protobuf:"varint,5,opt,name=precision,proto3" json:"precision,omitempty"`
+	Recipient     string                                 `protobuf:"bytes,6,opt,name=recipient,proto3" json:"recipient,omitempty"`
+	InitialAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,7,opt,name=initial_amount,json=initialAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"initial_amount"`
+	Description   string                                 `protobuf:"bytes,8,opt,name=description,proto3" json:"description,omitempty"`
+	Features      []FungibleTokenFeature                 `protobuf:"varint,9,rep,packed,name=features,proto3,enum=coreum.asset.v1.FungibleTokenFeature" json:"features,omitempty"`
 }
 
 func (m *EventFungibleTokenIssued) Reset()         { *m = EventFungibleTokenIssued{} }
@@ -88,6 +90,20 @@ func (m *EventFungibleTokenIssued) GetSymbol() string {
 		return m.Symbol
 	}
 	return ""
+}
+
+func (m *EventFungibleTokenIssued) GetSubunit() string {
+	if m != nil {
+		return m.Subunit
+	}
+	return ""
+}
+
+func (m *EventFungibleTokenIssued) GetPrecision() uint32 {
+	if m != nil {
+		return m.Precision
+	}
+	return 0
 }
 
 func (m *EventFungibleTokenIssued) GetRecipient() string {
@@ -348,14 +364,14 @@ func (m *EventFungibleTokenIssued) MarshalToSizedBuffer(dAtA []byte) (int, error
 		copy(dAtA[i:], dAtA2[:j1])
 		i = encodeVarintEvent(dAtA, i, uint64(j1))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x4a
 	}
 	if len(m.Description) > 0 {
 		i -= len(m.Description)
 		copy(dAtA[i:], m.Description)
 		i = encodeVarintEvent(dAtA, i, uint64(len(m.Description)))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x42
 	}
 	{
 		size := m.InitialAmount.Size()
@@ -366,11 +382,23 @@ func (m *EventFungibleTokenIssued) MarshalToSizedBuffer(dAtA []byte) (int, error
 		i = encodeVarintEvent(dAtA, i, uint64(size))
 	}
 	i--
-	dAtA[i] = 0x2a
+	dAtA[i] = 0x3a
 	if len(m.Recipient) > 0 {
 		i -= len(m.Recipient)
 		copy(dAtA[i:], m.Recipient)
 		i = encodeVarintEvent(dAtA, i, uint64(len(m.Recipient)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.Precision != 0 {
+		i = encodeVarintEvent(dAtA, i, uint64(m.Precision))
+		i--
+		dAtA[i] = 0x28
+	}
+	if len(m.Subunit) > 0 {
+		i -= len(m.Subunit)
+		copy(dAtA[i:], m.Subunit)
+		i = encodeVarintEvent(dAtA, i, uint64(len(m.Subunit)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -548,6 +576,13 @@ func (m *EventFungibleTokenIssued) Size() (n int) {
 	l = len(m.Symbol)
 	if l > 0 {
 		n += 1 + l + sovEvent(uint64(l))
+	}
+	l = len(m.Subunit)
+	if l > 0 {
+		n += 1 + l + sovEvent(uint64(l))
+	}
+	if m.Precision != 0 {
+		n += 1 + sovEvent(uint64(m.Precision))
 	}
 	l = len(m.Recipient)
 	if l > 0 {
@@ -756,6 +791,57 @@ func (m *EventFungibleTokenIssued) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Subunit", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEvent
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvent
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Subunit = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Precision", wireType)
+			}
+			m.Precision = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Precision |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Recipient", wireType)
 			}
 			var stringLen uint64
@@ -786,7 +872,7 @@ func (m *EventFungibleTokenIssued) Unmarshal(dAtA []byte) error {
 			}
 			m.Recipient = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field InitialAmount", wireType)
 			}
@@ -820,7 +906,7 @@ func (m *EventFungibleTokenIssued) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
 			}
@@ -852,7 +938,7 @@ func (m *EventFungibleTokenIssued) Unmarshal(dAtA []byte) error {
 			}
 			m.Description = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 7:
+		case 9:
 			if wireType == 0 {
 				var v FungibleTokenFeature
 				for shift := uint(0); ; shift += 7 {

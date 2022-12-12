@@ -20,12 +20,14 @@ func TestMintBurnFungibleToken(t *testing.T) {
 
 	// the denom must start from the letter
 	symbol := "abc"
+	subunit := "subunit"
+	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 	issuer := testNetwork.Validators[0].Address
-	denom := types.BuildFungibleTokenDenom(symbol, issuer)
+	denom := types.BuildFungibleTokenDenom(subunit, issuer)
 
 	// Issue token
-	args := []string{symbol, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
+	args := []string{symbol, subunit, precision, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
 		"--features", types.FungibleTokenFeature_mint.String(), //nolint:nosnakecase
 		"--features", types.FungibleTokenFeature_burn.String(), //nolint:nosnakecase
 	}
@@ -43,7 +45,7 @@ func TestMintBurnFungibleToken(t *testing.T) {
 	buf, err := clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balanceRsp))
-	requireT.Equal("877"+denom, balanceRsp.Balances[0].String())
+	requireT.Equal("877", balanceRsp.Balances.AmountOf(denom).String())
 
 	var supplyRsp sdk.Coin
 	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetCmdQueryTotalSupply(), []string{issuer.String(), "--denom", denom, "--output", "json"})
@@ -61,7 +63,7 @@ func TestMintBurnFungibleToken(t *testing.T) {
 	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balanceRsp))
-	requireT.Equal("677"+denom, balanceRsp.Balances[0].String())
+	requireT.Equal("677", balanceRsp.Balances.AmountOf(denom).String())
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetCmdQueryTotalSupply(), []string{issuer.String(), "--denom", denom, "--output", "json"})
 	requireT.NoError(err)
