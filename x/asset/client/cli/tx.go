@@ -126,7 +126,7 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 			for _, str := range featuresString {
 				feature, ok := types.FungibleTokenFeature_value[str] //nolint:nosnakecase
 				if !ok {
-					return errors.Errorf("Unknown feature '%s',allowed features: %s", str, strings.Join(allowedFeatures, ","))
+					return errors.Errorf("unknown feature '%s',allowed features: %s", str, strings.Join(allowedFeatures, ","))
 				}
 				features = append(features, types.FungibleTokenFeature(feature))
 			}
