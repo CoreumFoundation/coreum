@@ -15,6 +15,56 @@ import (
 	"github.com/CoreumFoundation/coreum/x/wbank/keeper"
 )
 
+func TestValidateBurnRate(t *testing.T) {
+	testCases := []struct {
+		rate    string
+		invalid bool
+	}{
+		{
+			rate: "0",
+		},
+		{
+			rate: "1.00",
+		},
+		{
+			rate: "0.10",
+		},
+		{
+			rate: "0.10000",
+		},
+		{
+			rate: "0.0001",
+		},
+		{
+			rate:    "0.00001",
+			invalid: true,
+		},
+		{
+			rate:    "-0.01",
+			invalid: true,
+		},
+		{
+			rate:    "-1.0",
+			invalid: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		name := fmt.Sprintf("%+v", tc)
+		t.Run(name, func(t *testing.T) {
+			assertT := assert.New(t)
+			rate := sdk.MustNewDecFromStr(tc.rate)
+			err := types.ValidateBurnRate(rate)
+			if tc.invalid {
+				assertT.Error(err)
+			} else {
+				assertT.NoError(err)
+			}
+		})
+	}
+}
+
 func TestKeeperCalculateBurnCoin(t *testing.T) {
 	testCases := []struct {
 		rate     string
@@ -106,41 +156,41 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
 	requireT.NoError(err)
 
-	receiver := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	// send from issuer to recipient (burn must not apply)
-	err = bankKeeper.SendCoins(ctx, issuer, receiver, sdk.NewCoins(
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(500)),
 	))
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&receiver: 500,
-		&issuer:   100,
+		&recipient: 500,
+		&issuer:    100,
 	})
 
-	// send from issuer to recipient to another account (burn must apply)
-	receiver2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, receiver, receiver2, sdk.NewCoins(
+	// send from recipient1 to recipient2 (burn must apply)
+	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(100)),
 	))
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&receiver:  375,
-		&receiver2: 100,
-		&issuer:    100,
+		&recipient:  375,
+		&recipient2: 100,
+		&issuer:     100,
 	})
 
 	// send from recipient to issuer account (burn must not apply)
-	err = bankKeeper.SendCoins(ctx, receiver, issuer, sdk.NewCoins(
+	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(375)),
 	))
 	requireT.NoError(err)
 
 	ba.assertCoinDistribution(denom, map[*sdk.AccAddress]int64{
-		&receiver2: 100,
-		&issuer:    475,
+		&recipient2: 100,
+		&issuer:     475,
 	})
 }
 
