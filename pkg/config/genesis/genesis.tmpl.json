@@ -72,7 +72,7 @@
     "crisis": {
       "constant_fee": {
         "denom": "{{ .Denom }}",
-        "amount": "500000"
+        "amount": "500000000000"
       }
     },
     "distribution": {
