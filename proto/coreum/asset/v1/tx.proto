@@ -91,6 +91,12 @@ message MsgGloballyUnfreezeFungibleToken {
   string denom = 2;
 }
 
+message MsgSetWhitelistedLimitFungibleToken {
+  string sender = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
 // MsgIssueNonFungibleTokenClass defines message for the IssueNonFungibleTokenClass method.
 message MsgIssueNonFungibleTokenClass {
   string issuer = 1;
@@ -113,9 +119,3 @@ message MsgMintNonFungibleToken {
 }
 
 message EmptyResponse {}
-
-message MsgSetWhitelistedLimitFungibleToken {
-  string sender = 1;
-  string account = 2;
-  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
-}
