@@ -1,19 +1,25 @@
+//go:build integrationtests
+
 package feemodel
 
 import (
-	"context"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 // TestQueryingMinGasPrice check that it's possible to query current minimum gas price required by the network.
-func TestQueryingMinGasPrice(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestQueryingMinGasPrice(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	feemodelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 	res, err := feemodelClient.MinGasPrice(ctx, &feemodeltypes.QueryMinGasPriceRequest{})
 	require.NoError(t, err)

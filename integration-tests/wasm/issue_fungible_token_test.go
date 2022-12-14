@@ -1,9 +1,11 @@
+//go:build integrationtests
+
 package wasm
 
 import (
-	"context"
 	_ "embed"
 	"encoding/json"
+	"testing"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
@@ -39,12 +41,16 @@ const (
 )
 
 // TestIssueFungibleTokenInWASMContract verifies that smart contract is able to issue fungible token
-func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestIssueFungibleTokenInWASMContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	admin := chain.GenAccount()
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
 	))
 
 	clientCtx := chain.ClientContext.WithFromAddress(admin)

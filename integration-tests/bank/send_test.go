@@ -1,6 +1,5 @@
-//go:build integration
+//go:build integrationtests
 
-// FIXME(dhil) here we set the profile integration since we don't run the tests by default
 package bank
 
 import (
@@ -14,7 +13,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	integrationtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -24,19 +22,18 @@ import (
 func TestCoreSend(t *testing.T) {
 	t.Parallel()
 
-	// FIXME(dhil) Additionally we can rename integration-tests -> integration-tests
-	// and move integration-tests/testing to integration-tests root  to simplify the imports
 	ctx, chain := integrationtests.NewTestingContext(t)
+
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
 	senderInitialAmount := sdk.NewInt(100)
 	recipientInitialAmount := sdk.NewInt(10)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   senderInitialAmount,
 	}))
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 		Amount: recipientInitialAmount,
 	}))
 

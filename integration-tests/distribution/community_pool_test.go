@@ -1,7 +1,10 @@
+//go:build integrationtests
+
 package distribution
 
 import (
 	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -11,12 +14,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // TestSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
-func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestSpendCommunityPoolProposal(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
@@ -31,7 +38,7 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 		Depositor: communityPoolFunder.String(),
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, communityPoolFunder, testing.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, communityPoolFunder, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgFundCommunityPool,
 		},
@@ -65,7 +72,7 @@ func TestSpendCommunityPoolProposal(ctx context.Context, t testing.T, chain test
 
 	communityPoolRecipient := chain.GenAccount()
 
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
 	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)

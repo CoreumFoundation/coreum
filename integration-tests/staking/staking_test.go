@@ -1,8 +1,11 @@
+//go:build integrationtests
+
 package staking
 
 import (
 	"context"
 	"fmt"
+	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,13 +19,17 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
 // TestValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
-func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestValidatorCRUDAndStaking(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	// fastUnbondingTime is the coins unbonding time we use for the test only
 	const fastUnbondingTime = time.Second * 10
 
@@ -36,7 +43,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	// Setup delegator
 	delegator := chain.GenAccount()
 	delegateAmount := sdk.NewInt(100)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, delegator, testing.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&stakingtypes.MsgUndelegate{},
@@ -47,7 +54,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	}))
 
 	// Setup validator
-	validatorAccAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
+	validatorAccAddress, validatorAddress, deactivateValidator, err := integrationtests.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -61,7 +68,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorAccAddress, testing.BalancesOptions{
+	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorAccAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
 	require.NoError(t, err)
@@ -102,7 +109,7 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 	require.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 
 	// Redelegate Coins
-	_, validator2Address, deactivateValidator2, err := testing.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
+	_, validator2Address, deactivateValidator2, err := integrationtests.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator2()
@@ -170,7 +177,11 @@ func TestValidatorCRUDAndStaking(ctx context.Context, t testing.T, chain testing
 }
 
 // TestValidatorCreationWithLowMinSelfDelegation checks validator can't set the self delegation less than min limit.
-func TestValidatorCreationWithLowMinSelfDelegation(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
@@ -181,13 +192,17 @@ func TestValidatorCreationWithLowMinSelfDelegation(ctx context.Context, t testin
 	notEnoughValidatorAmount := initialValidatorAmount.Quo(sdk.NewInt(2))
 
 	// Try to create a validator with the amount less than the minimum
-	_, _, _, err = testing.CreateValidator(ctx, chain, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
+	_, _, _, err = integrationtests.CreateValidator(ctx, chain, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
 	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
 }
 
 // TestValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
 // delegation is higher than current validator self delegation.
-func TestValidatorUpdateWithLowMinSelfDelegation(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
@@ -197,7 +212,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(ctx context.Context, t testing.
 	initialValidatorAmount := customStakingParams.Params.MinSelfDelegation
 
 	// create new validator with min allowed self delegation
-	validatorAccAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, initialValidatorAmount, initialValidatorAmount)
+	validatorAccAddress, validatorAddress, deactivateValidator, err := integrationtests.CreateValidator(ctx, chain, initialValidatorAmount, initialValidatorAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -219,7 +234,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(ctx context.Context, t testing.
 	}()
 
 	// try to create a validator with the initial amount which we have increased
-	_, _, _, err = testing.CreateValidator(ctx, chain, initialValidatorAmount, initialValidatorAmount) //nolint:dogsled // we await for the error only
+	_, _, _, err = integrationtests.CreateValidator(ctx, chain, initialValidatorAmount, initialValidatorAmount) //nolint:dogsled // we await for the error only
 	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
 
 	// edit validator
@@ -229,7 +244,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(ctx context.Context, t testing.
 		},
 		ValidatorAddress: validatorAddress.String(),
 	}
-	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorAccAddress, testing.BalancesOptions{
+	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorAccAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
 	require.NoError(t, err)
@@ -253,7 +268,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(ctx context.Context, t testing.
 func changeMinSelfDelegationCustomParam(
 	ctx context.Context,
 	requireT *require.Assertions,
-	chain testing.Chain,
+	chain integrationtests.Chain,
 	customParamsClient customparamstypes.QueryClient,
 	newMinSelfDelegation sdk.Int,
 ) error {
@@ -262,7 +277,7 @@ func changeMinSelfDelegationCustomParam(
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
 	marshalledMinSelfDelegation, err := tmjson.Marshal(newMinSelfDelegation)
@@ -288,7 +303,7 @@ func changeMinSelfDelegationCustomParam(
 	return err
 }
 
-func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testing.Chain, unbondingTime time.Duration) {
+func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain integrationtests.Chain, unbondingTime time.Duration) {
 	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
@@ -297,10 +312,10 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testi
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
-	// TODO(dhil) refactor other tests to use that func for the standard propose + vote action.
+	// TODO(dhil) refactor other integrationtests to use that func for the standard propose + vote action.
 	// Create proposition to change max the unbonding time value.
 	err = chain.Governance.ProposeAndVote(ctx, proposer,
 		paramproposal.NewParameterChangeProposal(
@@ -320,7 +335,7 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t testing.T, chain testi
 	requireT.Equal(unbondingTime, stakingParams.Params.UnbondingTime)
 }
 
-func getBalance(ctx context.Context, t testing.T, chain testing.Chain, addr sdk.AccAddress) sdk.Coin {
+func getBalance(ctx context.Context, t *testing.T, chain integrationtests.Chain, addr sdk.AccAddress) sdk.Coin {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: addr.String(),

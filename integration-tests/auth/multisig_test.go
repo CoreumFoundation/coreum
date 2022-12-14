@@ -1,7 +1,9 @@
+//go:build integrationtests
+
 package auth
 
 import (
-	"context"
+	"testing"
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
@@ -16,12 +18,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // TestMultisig tests the cosmos-sdk multisig accounts and API.
-func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestMultisig(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 
 	signer1KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
@@ -53,7 +59,7 @@ func TestMultisig(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(err)
 
 	// fund the multisig account
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, testing.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
 	}))

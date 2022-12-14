@@ -1,6 +1,5 @@
-//go:build integration_upgrade
+//go:build integrationtests_upgrade
 
-// FIXME(dhil) here we set the profile integration_upgrade since we run that test separately from other tests
 package upgrade
 
 import (
@@ -19,11 +18,12 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 )
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
-func TestUpgrade(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestUpgrade(t *testing.T) {
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	log := logger.Get(ctx)
 	requireT := require.New(t)
 	upgradeClient := upgradetypes.NewQueryClient(chain.ClientContext)

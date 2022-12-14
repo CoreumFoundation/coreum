@@ -1,7 +1,9 @@
+//go:build integrationtests
+
 package feemodel
 
 import (
-	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -11,12 +13,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
-func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestFeeModelProposalParamChange(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
 
 	requireT := require.New(t)
@@ -28,7 +34,7 @@ func TestFeeModelProposalParamChange(ctx context.Context, t testing.T, chain tes
 	// For the test we need to create the proposal twice.
 	proposerBalance = proposerBalance.Add(proposerBalance)
 	requireT.NoError(err)
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
 	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})

@@ -1,8 +1,10 @@
+//go:build integrationtests
+
 package staking
 
 import (
-	"context"
 	"strconv"
+	"testing"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
@@ -11,11 +13,15 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 )
 
 // TestStakingProposalParamChange checks that staking param change proposal works correctly.
-func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestStakingProposalParamChange(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	targetMaxValidators := 2 * chain.NetworkConfig.StakingConfig.MaxValidators
 	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
@@ -25,7 +31,7 @@ func TestStakingProposalParamChange(ctx context.Context, t testing.T, chain test
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
 	// Create proposition to change max validators value.

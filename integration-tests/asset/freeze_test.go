@@ -1,7 +1,9 @@
+//go:build integrationtests
+
 package asset
 
 import (
-	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -9,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
@@ -18,13 +20,17 @@ import (
 // TestFreezeUnfreezableFungibleToken checks freeze functionality on unfreezable fungible tokens.
 //
 //nolint:dupl
-func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestFreezeUnfreezableFungibleToken(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgFreezeFungibleToken{},
@@ -70,7 +76,11 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 }
 
 // TestFreezeFungibleToken checks freeze functionality of fungible tokens.
-func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestFreezeFungibleToken(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	clientCtx := chain.ClientContext
@@ -82,7 +92,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	recipient := chain.GenAccount()
 	randomAddress := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgIssueFungibleToken{},
@@ -94,7 +104,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 			},
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
@@ -103,7 +113,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 			},
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgFreezeFungibleToken{},
 			},

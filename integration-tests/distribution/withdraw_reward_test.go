@@ -1,7 +1,9 @@
+//go:build integrationtests
+
 package distribution
 
 import (
-	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -11,13 +13,17 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
 // TestWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
-func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestWithdrawRewardWithDeterministicGas(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	delegator := chain.GenAccount()
 	delegatorRewardRecipient := chain.GenAccount()
 
@@ -27,7 +33,7 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 	requireT := require.New(t)
 	// the amount of the delegation should be big enough to get at least some reward for the few blocks
 	amountToDelegate := sdk.NewInt(1_000_000)
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, delegator, testing.BalancesOptions{
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&distributiontypes.MsgWithdrawDelegatorReward{},
@@ -42,8 +48,8 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 	// *** Create new validator to use it in the test and capture all required balances. ***
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
-	validatorStakerAddress, validatorAddress, deactivateValidator, err := testing.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the integrationtests which increases the min amount
+	validatorStakerAddress, validatorAddress, deactivateValidator, err := integrationtests.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -113,7 +119,7 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 	requireT.NoError(err)
 	delegatorBalanceAfterWithdrawal := delegatorBalanceRes.Balance
 
-	feeSpentOnWithdrawReward := chain.ComputeNeededBalanceFromOptions(testing.BalancesOptions{
+	feeSpentOnWithdrawReward := chain.ComputeNeededBalanceFromOptions(integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{withdrawRewardMsg},
 	})
 
@@ -165,7 +171,7 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorStakerAddress, testing.BalancesOptions{
+	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorStakerAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
 	requireT.NoError(err)
@@ -187,7 +193,7 @@ func TestWithdrawRewardWithDeterministicGas(ctx context.Context, t testing.T, ch
 	requireT.NoError(err)
 	validatorStakerBalanceAfterWithdrawal := validatorStakerBalanceRes.Balance
 
-	feeSpentOnWithdrawCommission := chain.ComputeNeededBalanceFromOptions(testing.BalancesOptions{
+	feeSpentOnWithdrawCommission := chain.ComputeNeededBalanceFromOptions(integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
 

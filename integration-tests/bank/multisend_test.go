@@ -1,4 +1,4 @@
-//go:build integration
+//go:build integrationtests
 
 package bank
 
@@ -11,13 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	integrationtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// TestMultiSend tests MultiSend message
+// TestMultiSend integrationtests MultiSend message
 func TestMultiSend(t *testing.T) {
 	t.Parallel()
 
@@ -48,7 +47,7 @@ func TestMultiSend(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{Outputs: []banktypes.Output{
 			{Coins: make(sdk.Coins, 2)},
 			{Coins: make(sdk.Coins, 2)},
@@ -126,8 +125,12 @@ func TestMultiSend(t *testing.T) {
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin(denom1, 400), sdk.NewInt64Coin(denom2, 600)), recipient2AllBalancesRes.Balances)
 }
 
-// TestMultiSendFromMultipleAccounts tests MultiSend message form multiple accounts.
-func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestMultiSendFromMultipleAccounts integrationtests MultiSend message form multiple accounts.
+func TestMultiSendFromMultipleAccounts(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 
 	sender1 := chain.GenAccount()
@@ -208,14 +211,14 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 	}
 
 	// fund accounts
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender1, testing.BalancesOptions{
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			multiSendMsg,
 			issue1Msg,
 		},
 		Amount: nativeAmountToSend.Amount,
 	}))
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender2, testing.BalancesOptions{
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{issue2Msg},
 	}))
 

@@ -1,9 +1,10 @@
-//go:build integration
+//go:build integrationtests
 
 package bank
 
 import (
 	"fmt"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"strings"
 	"testing"
 
@@ -13,8 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	integrationtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
@@ -22,8 +21,8 @@ import (
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
-// TestSendDeterministicGas checks that transfer takes the deterministic amount of gas
-func TestSendDeterministicGas(t *testing.T) {
+// integrationtestsendDeterministicGas checks that transfer takes the deterministic amount of gas
+func integrationtestsendDeterministicGas(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -32,7 +31,7 @@ func TestSendDeterministicGas(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	}))
@@ -56,8 +55,8 @@ func TestSendDeterministicGas(t *testing.T) {
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
-// TestSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
-func TestSendDeterministicGasTwoBankSends(t *testing.T) {
+// integrationtestsendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
+func integrationtestsendDeterministicGasTwoBankSends(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -77,7 +76,7 @@ func TestSendDeterministicGasTwoBankSends(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{bankSend1, bankSend2},
 		Amount:   sdk.NewInt(2000),
 	}))
@@ -90,8 +89,8 @@ func TestSendDeterministicGasTwoBankSends(t *testing.T) {
 	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
 }
 
-// TestSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
-func TestSendDeterministicGasManyCoins(t *testing.T) {
+// integrationtestsendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
+func integrationtestsendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -116,7 +115,7 @@ func TestSendDeterministicGasManyCoins(t *testing.T) {
 		})
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgSend{
 			Amount: make(sdk.Coins, numOfTokens),
 		}}, issueMsgs...),
@@ -165,8 +164,8 @@ func TestSendDeterministicGasManyCoins(t *testing.T) {
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
-// TestSendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
-func TestSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
+// integrationtestsendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
+func integrationtestsendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -174,7 +173,7 @@ func TestSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	}))
@@ -197,8 +196,8 @@ func TestSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	require.True(t, cosmoserrors.ErrOutOfGas.Is(err))
 }
 
-// TestSendGasEstimation checks that gas is correctly estimated for send message
-func TestSendGasEstimation(t *testing.T) {
+// integrationtestsendGasEstimation checks that gas is correctly estimated for send message
+func integrationtestsendGasEstimation(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -206,7 +205,7 @@ func TestSendGasEstimation(t *testing.T) {
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	}))
@@ -255,7 +254,7 @@ func TestMultiSendDeterministicGasManyCoins(t *testing.T) {
 		})
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtesting.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				{

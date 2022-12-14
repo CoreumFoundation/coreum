@@ -1,7 +1,9 @@
+//go:build integrationtests
+
 package asset
 
 import (
-	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -9,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
@@ -18,13 +20,17 @@ import (
 // TestWhitelistUnwhitelistableFungibleToken checks whitelist functionality on unwhitelistable fungible tokens.
 //
 //nolint:dupl
-func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestWhitelistUnwhitelistableFungibleToken(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
@@ -70,7 +76,11 @@ func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T,
 }
 
 // TestWhitelistFungibleToken checks whitelist functionality of fungible tokens.
-func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestWhitelistFungibleToken(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	clientCtx := chain.ClientContext
@@ -82,7 +92,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 	recipient := chain.GenAccount()
 	randomAccount := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
@@ -92,7 +102,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 			},
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
 				&banktypes.MsgSend{},
@@ -104,7 +114,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 			},
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, randomAccount, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, randomAccount, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
 			},

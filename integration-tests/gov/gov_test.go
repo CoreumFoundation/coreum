@@ -1,8 +1,10 @@
+//go:build integrationtests
+
 package gov
 
 import (
-	"context"
 	"strings"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -11,7 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -19,7 +21,11 @@ import (
 // 1. proposal submission without enough deposit
 // 2. depositing missing amount to proposal created on the 1st step
 // 3. voting using weighted votes
-func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestProposalWithDepositAndWeightedVotes(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 	gov := chain.Governance
 	missingDepositAmount := chain.NewCoin(sdk.NewInt(10))
@@ -29,11 +35,11 @@ func TestProposalWithDepositAndWeightedVotes(ctx context.Context, t testing.T, c
 	proposerBalance, err := gov.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx, testing.FundedAccount{Address: proposer, Amount: proposerBalance}))
+	requireT.NoError(chain.Faucet.FundAccounts(ctx, integrationtests.FundedAccount{Address: proposer, Amount: proposerBalance}))
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
-	err = chain.Faucet.FundAccountsWithOptions(ctx, depositor, testing.BalancesOptions{
+	err = chain.Faucet.FundAccountsWithOptions(ctx, depositor, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&govtypes.MsgDeposit{}},
 		Amount:   missingDepositAmount.Amount,
 	})

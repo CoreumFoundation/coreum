@@ -1,6 +1,4 @@
-//go:build integration
-
-package tests
+package integrationtests
 
 import (
 	"context"
@@ -9,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
@@ -39,13 +36,15 @@ type testingConfig struct {
 
 var (
 	cfg   testingConfig
-	chain coreumtesting.Chain
+	chain Chain
 )
 
-// Command to run the integration tests: go test -v --tags=integration -parallel 5 ./... --log-format=yaml
+// Command to run the integration tests: go test --tags=integrationtests -p 1 -parallel 20 ./... --log-format=yaml --cored-address="http://localhost:26657"
 func init() {
-	var fundingMnemonic, coredAddress, logFormat string
-	var stakerMnemonics stringsFlag
+	var (
+		fundingMnemonic, coredAddress, logFormat string
+		stakerMnemonics                          stringsFlag
+	)
 
 	flag.StringVar(&coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
 	flag.StringVar(&fundingMnemonic, "funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
@@ -56,6 +55,9 @@ func init() {
 	testing.Init()
 	// parse additional flags
 	flag.Parse()
+
+	// parse additional flags
+	flag.Parse()
 	// set the default staker mnemonic used in the dev znet by default
 	if len(stakerMnemonics) == 0 {
 		stakerMnemonics = []string{
@@ -63,7 +65,7 @@ func init() {
 		}
 	}
 
-	networkConfig, err := coreumtesting.NewNetworkConfig()
+	networkConfig, err := NewNetworkConfig()
 	if err != nil {
 		panic(fmt.Sprintf("can't create network config for the integration tests: %s", err))
 	}
@@ -72,15 +74,14 @@ func init() {
 		NetworkConfig:   networkConfig,
 		FundingMnemonic: fundingMnemonic,
 		StakerMnemonics: stakerMnemonics,
-		// FIXME(dhil) check that we need or we can use the go testing logger instead
-		LogFormat:  logger.Format(logFormat),
-		LogVerbose: flag.Lookup("test.v").Value.String() == "true",
+		LogFormat:       logger.Format(logFormat),
+		LogVerbose:      flag.Lookup("test.v").Value.String() == "true",
 	}
 
 	// FIXME (wojtek): remove this once we have our own address encoder
 	config.NewNetwork(cfg.NetworkConfig).SetSDKConfig()
 
-	chain = coreumtesting.NewChain(coreumtesting.ChainConfig{
+	chain = NewChain(ChainConfig{
 		RPCAddress:      cfg.RPCAddress,
 		NetworkConfig:   cfg.NetworkConfig,
 		FundingMnemonic: cfg.FundingMnemonic,
@@ -89,7 +90,7 @@ func init() {
 }
 
 // NewTestingContext returns the configured chain and new context for the integration tests.
-func NewTestingContext(t *testing.T) (context.Context, coreumtesting.Chain) {
+func NewTestingContext(t *testing.T) (context.Context, Chain) {
 	loggerConfig := logger.Config{
 		Format:  cfg.LogFormat,
 		Verbose: cfg.LogVerbose,

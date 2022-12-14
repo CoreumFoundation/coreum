@@ -1,9 +1,11 @@
+//go:build integrationtests
+
 package wasm
 
 import (
-	"context"
 	_ "embed"
 	"encoding/json"
+	"testing"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,7 +13,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -34,13 +36,17 @@ const (
 
 // TestBankSendWASMContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
-func TestBankSendWASMContract(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestBankSendWASMContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	admin := chain.GenAccount()
 	nativeDenom := chain.NetworkConfig.Denom
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
 	))
 
 	clientCtx := chain.ClientContext.WithFromAddress(admin)

@@ -1,21 +1,27 @@
+//go:build integrationtests
+
 package asset
 
 import (
-	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
 // TestIssueBasicFungibleToken checks that fungible token is issued.
-func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestIssueBasicFungibleToken(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 	clientCtx := chain.ClientContext
 
@@ -24,7 +30,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assettypes.MsgIssueFungibleToken{}},
 	}))
 

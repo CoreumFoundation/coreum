@@ -1,8 +1,10 @@
+//go:build integrationtests
+
 package wasm
 
 import (
-	"context"
 	"encoding/json"
+	"testing"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,18 +12,22 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // TestGasWASMBankSendAndBankSend checks that a message containing a deterministic and a
 // non-deterministic transaction takes gas within appropriate limits.
-func TestGasWASMBankSendAndBankSend(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestGasWASMBankSendAndBankSend(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	requireT := require.New(t)
 	admin := chain.GenAccount()
 
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
 	))
 
 	// deploy and init contract with the initial coins amount

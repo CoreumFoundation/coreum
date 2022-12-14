@@ -1,25 +1,31 @@
+//go:build integrationtests
+
 package auth
 
 import (
-	"context"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other then CORE is rejected
 
 // TestFeeLimits verifies that invalid message gas won't be accepted.
-func TestFeeLimits(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestFeeLimits(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	sender := chain.GenAccount()
 
 	maxBlockGas := chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, testing.BalancesOptions{
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(maxBlockGas + 100),
 	}))

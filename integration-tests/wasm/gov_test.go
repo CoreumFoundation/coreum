@@ -1,9 +1,12 @@
+//go:build integrationtests
+
 package wasm
 
 import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"testing"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
@@ -35,7 +38,11 @@ const (
 
 // TestPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
 // pinning and unpinning through proposals works correctly. We also verify that pinned smart contract consumes less gas.
-func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t testing.T, chain testing.Chain) {
+func TestPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
 	admin := chain.GenAccount()
 	proposer := chain.GenAccount()
 
@@ -46,8 +53,8 @@ func TestPinningAndUnpinningSmartContractUsingGovernance(ctx context.Context, t 
 	proposerBalance.Amount = proposerBalance.Amount.MulRaw(2)
 
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
-		testing.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-		testing.NewFundedAccount(proposer, proposerBalance),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(proposer, proposerBalance),
 	))
 
 	// instantiate the contract and set the initial counter state.
