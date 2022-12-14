@@ -6,6 +6,7 @@ info:
 paths:
   '/coreum/asset/v1/fts/balance/{account}/frozen':
     get:
+      summary: FrozenBalances returns all the frozen balances for the account
       operationId: CoreumAssetV1FrozenBalances
       responses:
         '200':
@@ -119,10 +120,21 @@ paths:
           in: query
           required: false
           type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   '/coreum/asset/v1/fts/balance/{account}/frozen/{denom}':
     get:
+      summary: FrozenBalance returns frozen balance of the denom for the account
       operationId: CoreumAssetV1FrozenBalance
       responses:
         '200':
@@ -179,6 +191,201 @@ paths:
           type: string
       tags:
         - Query
+  '/coreum/asset/v1/fts/balance/{account}/whitelisted':
+    get:
+      summary: WhitelistedBalances returns all the whitelisted balances for the account
+      operationId: CoreumAssetV1WhitelistedBalances
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              pagination:
+                description: pagination defines the pagination in the response.
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+              balances:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                title: >-
+                  balances contains the whitelisted balances on the queried
+                  account
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: account
+          description: >-
+            account specifies the account onto which we query whitelisted
+            balances
+          in: path
+          required: true
+          type: string
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/coreum/asset/v1/fts/balance/{account}/whitelisted/{denom}':
+    get:
+      summary: >-
+        WhitelistedBalance returns whitelisted balance of the denom for the
+        account
+      operationId: CoreumAssetV1WhitelistedBalance
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              balance:
+                type: object
+                properties:
+                  denom:
+                    type: string
+                  amount:
+                    type: string
+                description: >-
+                  Coin defines a token with a denomination and an amount.
+
+
+                  NOTE: The amount field is an Int which implements the custom
+                  method
+
+                  signatures required by gogoproto.
+                title: >-
+                  balance contains the whitelisted balance with the queried
+                  account and denom
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: account
+          description: >-
+            account specifies the account onto which we query whitelisted
+            balances
+          in: path
+          required: true
+          type: string
+        - name: denom
+          description: denom specifies whitelisted balances on a specific denom
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   '/coreum/asset/v1/fts/denom/{denom}':
     get:
       summary: FungibleToken queries the fungible token of the module.
@@ -198,15 +405,25 @@ paths:
                     type: string
                   symbol:
                     type: string
+                  subunit:
+                    type: string
+                  precision:
+                    type: integer
+                    format: int64
                   description:
                     type: string
+                  globally_frozen:
+                    type: boolean
                   features:
                     type: array
                     items:
                       type: string
                       enum:
-                        - freezable
-                      default: freezable
+                        - freeze
+                        - mint
+                        - burn
+                        - whitelist
+                      default: freeze
                 description: FungibleToken is a full representation of the fungible token.
             description: >-
               QueryFungibleTokenResponse is response type for the
@@ -5376,6 +5593,871 @@ paths:
           type: boolean
       tags:
         - Query
+  '/cosmos/bank/v1beta1/balances/{address}':
+    get:
+      summary: AllBalances queries the balance of all coins for a single account.
+      operationId: CosmosBankV1Beta1AllBalances
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              balances:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                description: balances is the balances of all the coins.
+              pagination:
+                description: pagination defines the pagination in the response.
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+            description: >-
+              QueryAllBalancesResponse is the response type for the
+              Query/AllBalances RPC
+
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: address
+          description: address is the address to query balances for.
+          in: path
+          required: true
+          type: string
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/cosmos/bank/v1beta1/balances/{address}/by_denom':
+    get:
+      summary: Balance queries the balance of a single coin for a single account.
+      operationId: CosmosBankV1Beta1Balance
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              balance:
+                type: object
+                properties:
+                  denom:
+                    type: string
+                  amount:
+                    type: string
+                description: >-
+                  Coin defines a token with a denomination and an amount.
+
+
+                  NOTE: The amount field is an Int which implements the custom
+                  method
+
+                  signatures required by gogoproto.
+            description: >-
+              QueryBalanceResponse is the response type for the Query/Balance
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: address
+          description: address is the address to query balances for.
+          in: path
+          required: true
+          type: string
+        - name: denom
+          description: denom is the coin denom to query balances for.
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
+  /cosmos/bank/v1beta1/denoms_metadata:
+    get:
+      summary: >-
+        DenomsMetadata queries the client metadata for all registered coin
+        denominations.
+      operationId: CosmosBankV1Beta1DenomsMetadata
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              metadatas:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    description:
+                      type: string
+                    denom_units:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          denom:
+                            type: string
+                            description: >-
+                              denom represents the string name of the given
+                              denom unit (e.g uatom).
+                          exponent:
+                            type: integer
+                            format: int64
+                            description: >-
+                              exponent represents power of 10 exponent that one
+                              must
+
+                              raise the base_denom to in order to equal the
+                              given DenomUnit's denom
+
+                              1 denom = 1^exponent base_denom
+
+                              (e.g. with a base_denom of uatom, one can create a
+                              DenomUnit of 'atom' with
+
+                              exponent = 6, thus: 1 atom = 10^6 uatom).
+                          aliases:
+                            type: array
+                            items:
+                              type: string
+                            title: >-
+                              aliases is a list of string aliases for the given
+                              denom
+                        description: |-
+                          DenomUnit represents a struct that describes a given
+                          denomination unit of the basic token.
+                      title: >-
+                        denom_units represents the list of DenomUnit's for a
+                        given coin
+                    base:
+                      type: string
+                      description: >-
+                        base represents the base denom (should be the DenomUnit
+                        with exponent = 0).
+                    display:
+                      type: string
+                      description: |-
+                        display indicates the suggested denom that should be
+                        displayed in clients.
+                    name:
+                      type: string
+                      description: 'Since: cosmos-sdk 0.43'
+                      title: 'name defines the name of the token (eg: Cosmos Atom)'
+                    symbol:
+                      type: string
+                      description: >-
+                        symbol is the token symbol usually shown on exchanges
+                        (eg: ATOM). This can
+
+                        be the same as the display.
+
+
+                        Since: cosmos-sdk 0.43
+                  description: |-
+                    Metadata represents a struct that describes
+                    a basic token.
+                description: >-
+                  metadata provides the client information for all the
+                  registered tokens.
+              pagination:
+                description: pagination defines the pagination in the response.
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+            description: >-
+              QueryDenomsMetadataResponse is the response type for the
+              Query/DenomsMetadata RPC
+
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/cosmos/bank/v1beta1/denoms_metadata/{denom}':
+    get:
+      summary: DenomsMetadata queries the client metadata of a given coin denomination.
+      operationId: CosmosBankV1Beta1DenomMetadata
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              metadata:
+                type: object
+                properties:
+                  description:
+                    type: string
+                  denom_units:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                          description: >-
+                            denom represents the string name of the given denom
+                            unit (e.g uatom).
+                        exponent:
+                          type: integer
+                          format: int64
+                          description: >-
+                            exponent represents power of 10 exponent that one
+                            must
+
+                            raise the base_denom to in order to equal the given
+                            DenomUnit's denom
+
+                            1 denom = 1^exponent base_denom
+
+                            (e.g. with a base_denom of uatom, one can create a
+                            DenomUnit of 'atom' with
+
+                            exponent = 6, thus: 1 atom = 10^6 uatom).
+                        aliases:
+                          type: array
+                          items:
+                            type: string
+                          title: >-
+                            aliases is a list of string aliases for the given
+                            denom
+                      description: |-
+                        DenomUnit represents a struct that describes a given
+                        denomination unit of the basic token.
+                    title: >-
+                      denom_units represents the list of DenomUnit's for a given
+                      coin
+                  base:
+                    type: string
+                    description: >-
+                      base represents the base denom (should be the DenomUnit
+                      with exponent = 0).
+                  display:
+                    type: string
+                    description: |-
+                      display indicates the suggested denom that should be
+                      displayed in clients.
+                  name:
+                    type: string
+                    description: 'Since: cosmos-sdk 0.43'
+                    title: 'name defines the name of the token (eg: Cosmos Atom)'
+                  symbol:
+                    type: string
+                    description: >-
+                      symbol is the token symbol usually shown on exchanges (eg:
+                      ATOM). This can
+
+                      be the same as the display.
+
+
+                      Since: cosmos-sdk 0.43
+                description: |-
+                  Metadata represents a struct that describes
+                  a basic token.
+            description: >-
+              QueryDenomMetadataResponse is the response type for the
+              Query/DenomMetadata RPC
+
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: denom
+          description: denom is the coin denom to query the metadata for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /cosmos/bank/v1beta1/params:
+    get:
+      summary: Params queries the parameters of x/bank module.
+      operationId: CosmosBankV1Beta1Params
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                type: object
+                properties:
+                  send_enabled:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                        enabled:
+                          type: boolean
+                      description: >-
+                        SendEnabled maps coin denom to a send_enabled status
+                        (whether a denom is
+
+                        sendable).
+                  default_send_enabled:
+                    type: boolean
+                description: Params defines the parameters for the bank module.
+            description: >-
+              QueryParamsResponse defines the response type for querying x/bank
+              parameters.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
+  '/cosmos/bank/v1beta1/spendable_balances/{address}':
+    get:
+      summary: |-
+        SpendableBalances queries the spenable balance of all coins for a single
+        account.
+      operationId: CosmosBankV1Beta1SpendableBalances
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              balances:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                description: balances is the spendable balances of all the coins.
+              pagination:
+                description: pagination defines the pagination in the response.
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+            description: >-
+              QuerySpendableBalancesResponse defines the gRPC response structure
+              for querying
+
+              an account's spendable balances.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: address
+          description: address is the address to query spendable balances for.
+          in: path
+          required: true
+          type: string
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  /cosmos/bank/v1beta1/supply:
+    get:
+      summary: TotalSupply queries the total supply of all coins.
+      operationId: CosmosBankV1Beta1TotalSupply
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              supply:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                title: supply is the supply of the coins
+              pagination:
+                description: |-
+                  pagination defines the pagination in the response.
+
+                  Since: cosmos-sdk 0.43
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+            title: >-
+              QueryTotalSupplyResponse is the response type for the
+              Query/TotalSupply RPC
+
+              method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/cosmos/bank/v1beta1/supply/{denom}':
+    get:
+      summary: SupplyOf queries the supply of a single coin.
+      operationId: CosmosBankV1Beta1SupplyOf
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              amount:
+                type: object
+                properties:
+                  denom:
+                    type: string
+                  amount:
+                    type: string
+                description: >-
+                  Coin defines a token with a denomination and an amount.
+
+
+                  NOTE: The amount field is an Int which implements the custom
+                  method
+
+                  signatures required by gogoproto.
+            description: >-
+              QuerySupplyOfResponse is the response type for the Query/SupplyOf
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: denom
+          description: denom is the coin denom to query balances for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /cosmos/base/tendermint/v1beta1/blocks/latest:
     get:
       summary: GetLatestBlock returns the latest block.
@@ -5455,44 +6537,33 @@ paths:
                       last_commit_hash:
                         type: string
                         format: byte
-                        description: commit from validators from the last block
                         title: hashes of block data
                       data_hash:
                         type: string
                         format: byte
-                        title: transactions
                       validators_hash:
                         type: string
                         format: byte
-                        description: validators for the current block
                         title: hashes from the app output from the prev block
                       next_validators_hash:
                         type: string
                         format: byte
-                        title: validators for the next block
                       consensus_hash:
                         type: string
                         format: byte
-                        title: consensus params for current block
                       app_hash:
                         type: string
                         format: byte
-                        title: state after txs from the previous block
                       last_results_hash:
                         type: string
                         format: byte
-                        title: >-
-                          root hash of all results from the txs from the
-                          previous block
                       evidence_hash:
                         type: string
                         format: byte
-                        description: evidence included in the block
                         title: consensus info
                       proposer_address:
                         type: string
                         format: byte
-                        title: original proposer of the block
                     description: Header defines the structure of a Tendermint block header.
                   data:
                     type: object
@@ -5564,7 +6635,6 @@ paths:
                                               format: byte
                                           title: PartsetHeader
                                       title: BlockID
-                                      description: zero if vote is nil.
                                     timestamp:
                                       type: string
                                       format: date-time
@@ -5622,7 +6692,6 @@ paths:
                                               format: byte
                                           title: PartsetHeader
                                       title: BlockID
-                                      description: zero if vote is nil.
                                     timestamp:
                                       type: string
                                       format: date-time
@@ -5711,48 +6780,35 @@ paths:
                                             last_commit_hash:
                                               type: string
                                               format: byte
-                                              description: >-
-                                                commit from validators from the last
-                                                block
                                               title: hashes of block data
                                             data_hash:
                                               type: string
                                               format: byte
-                                              title: transactions
                                             validators_hash:
                                               type: string
                                               format: byte
-                                              description: validators for the current block
                                               title: >-
                                                 hashes from the app output from the prev
                                                 block
                                             next_validators_hash:
                                               type: string
                                               format: byte
-                                              title: validators for the next block
                                             consensus_hash:
                                               type: string
                                               format: byte
-                                              title: consensus params for current block
                                             app_hash:
                                               type: string
                                               format: byte
-                                              title: state after txs from the previous block
                                             last_results_hash:
                                               type: string
                                               format: byte
-                                              title: >-
-                                                root hash of all results from the txs
-                                                from the previous block
                                             evidence_hash:
                                               type: string
                                               format: byte
-                                              description: evidence included in the block
                                               title: consensus info
                                             proposer_address:
                                               type: string
                                               format: byte
-                                              title: original proposer of the block
                                           description: >-
                                             Header defines the structure of a
                                             Tendermint block header.
@@ -6235,44 +7291,33 @@ paths:
                       last_commit_hash:
                         type: string
                         format: byte
-                        description: commit from validators from the last block
                         title: hashes of block data
                       data_hash:
                         type: string
                         format: byte
-                        title: transactions
                       validators_hash:
                         type: string
                         format: byte
-                        description: validators for the current block
                         title: hashes from the app output from the prev block
                       next_validators_hash:
                         type: string
                         format: byte
-                        title: validators for the next block
                       consensus_hash:
                         type: string
                         format: byte
-                        title: consensus params for current block
                       app_hash:
                         type: string
                         format: byte
-                        title: state after txs from the previous block
                       last_results_hash:
                         type: string
                         format: byte
-                        title: >-
-                          root hash of all results from the txs from the
-                          previous block
                       evidence_hash:
                         type: string
                         format: byte
-                        description: evidence included in the block
                         title: consensus info
                       proposer_address:
                         type: string
                         format: byte
-                        title: original proposer of the block
                     description: Header defines the structure of a Tendermint block header.
                   data:
                     type: object
@@ -6344,7 +7389,6 @@ paths:
                                               format: byte
                                           title: PartsetHeader
                                       title: BlockID
-                                      description: zero if vote is nil.
                                     timestamp:
                                       type: string
                                       format: date-time
@@ -6402,7 +7446,6 @@ paths:
                                               format: byte
                                           title: PartsetHeader
                                       title: BlockID
-                                      description: zero if vote is nil.
                                     timestamp:
                                       type: string
                                       format: date-time
@@ -6491,48 +7534,35 @@ paths:
                                             last_commit_hash:
                                               type: string
                                               format: byte
-                                              description: >-
-                                                commit from validators from the last
-                                                block
                                               title: hashes of block data
                                             data_hash:
                                               type: string
                                               format: byte
-                                              title: transactions
                                             validators_hash:
                                               type: string
                                               format: byte
-                                              description: validators for the current block
                                               title: >-
                                                 hashes from the app output from the prev
                                                 block
                                             next_validators_hash:
                                               type: string
                                               format: byte
-                                              title: validators for the next block
                                             consensus_hash:
                                               type: string
                                               format: byte
-                                              title: consensus params for current block
                                             app_hash:
                                               type: string
                                               format: byte
-                                              title: state after txs from the previous block
                                             last_results_hash:
                                               type: string
                                               format: byte
-                                              title: >-
-                                                root hash of all results from the txs
-                                                from the previous block
                                             evidence_hash:
                                               type: string
                                               format: byte
-                                              description: evidence included in the block
                                               title: consensus info
                                             proposer_address:
                                               type: string
                                               format: byte
-                                              title: original proposer of the block
                                           description: >-
                                             Header defines the structure of a
                                             Tendermint block header.
@@ -14425,10 +15455,7 @@ paths:
                             description: >-
                               RedelegationEntry defines a redelegation object
                               with relevant metadata.
-                          description: |-
-                            entries are the redelegation entries.
-
-                            redelegation entries
+                          description: entries are the redelegation entries.
                       description: >-
                         Redelegation contains the list of a particular
                         delegator's redelegating bonds
@@ -14828,10 +15855,7 @@ paths:
                         description: >-
                           UnbondingDelegationEntry defines an unbonding object
                           with relevant metadata.
-                      description: |-
-                        entries are the unbonding delegation entries.
-
-                        unbonding delegation entries
+                      description: entries are the unbonding delegation entries.
                   description: >-
                     UnbondingDelegation stores all of a single delegator's
                     unbonding bonds
@@ -16283,44 +17307,33 @@ paths:
                       last_commit_hash:
                         type: string
                         format: byte
-                        description: commit from validators from the last block
                         title: hashes of block data
                       data_hash:
                         type: string
                         format: byte
-                        title: transactions
                       validators_hash:
                         type: string
                         format: byte
-                        description: validators for the current block
                         title: hashes from the app output from the prev block
                       next_validators_hash:
                         type: string
                         format: byte
-                        title: validators for the next block
                       consensus_hash:
                         type: string
                         format: byte
-                        title: consensus params for current block
                       app_hash:
                         type: string
                         format: byte
-                        title: state after txs from the previous block
                       last_results_hash:
                         type: string
                         format: byte
-                        title: >-
-                          root hash of all results from the txs from the
-                          previous block
                       evidence_hash:
                         type: string
                         format: byte
-                        description: evidence included in the block
                         title: consensus info
                       proposer_address:
                         type: string
                         format: byte
-                        title: original proposer of the block
                     description: Header defines the structure of a Tendermint block header.
                   valset:
                     type: array
@@ -19009,10 +20022,7 @@ paths:
                       description: >-
                         UnbondingDelegationEntry defines an unbonding object
                         with relevant metadata.
-                    description: |-
-                      entries are the unbonding delegation entries.
-
-                      unbonding delegation entries
+                    description: entries are the unbonding delegation entries.
                 description: >-
                   UnbondingDelegation stores all of a single delegator's
                   unbonding bonds
@@ -19278,10 +20288,7 @@ paths:
                         description: >-
                           UnbondingDelegationEntry defines an unbonding object
                           with relevant metadata.
-                      description: |-
-                        entries are the unbonding delegation entries.
-
-                        unbonding delegation entries
+                      description: entries are the unbonding delegation entries.
                   description: >-
                     UnbondingDelegation stores all of a single delegator's
                     unbonding bonds
@@ -19621,7 +20628,6 @@ paths:
                                 format: byte
                               index:
                                 type: boolean
-                                title: nondeterministic
                             description: >-
                               EventAttribute is a single key-value pair,
                               associated with an event.
@@ -20409,7 +21415,6 @@ paths:
                                 format: byte
                               index:
                                 type: boolean
-                                title: nondeterministic
                             description: >-
                               EventAttribute is a single key-value pair,
                               associated with an event.
@@ -22248,7 +23253,6 @@ paths:
                     code_id:
                       type: string
                       format: uint64
-                      title: id for legacy support
                     creator:
                       type: string
                     data_hash:
@@ -22557,7 +23561,6 @@ paths:
                   code_id:
                     type: string
                     format: uint64
-                    title: id for legacy support
                   creator:
                     type: string
                   data_hash:
@@ -22778,7 +23781,6 @@ paths:
                         }
       parameters:
         - name: code_id
-          description: grpc-gateway_out does not support Go style CodID
           in: path
           required: true
           type: string
@@ -23008,7 +24010,6 @@ paths:
                         }
       parameters:
         - name: code_id
-          description: grpc-gateway_out does not support Go style CodID
           in: path
           required: true
           type: string
@@ -35512,6 +36513,8 @@ paths:
       tags:
         - Query
 definitions:
+  coreum.asset.v1.EmptyResponse:
+    type: object
   coreum.asset.v1.FungibleToken:
     type: object
     properties:
@@ -35521,30 +36524,34 @@ definitions:
         type: string
       symbol:
         type: string
+      subunit:
+        type: string
+      precision:
+        type: integer
+        format: int64
       description:
         type: string
+      globally_frozen:
+        type: boolean
       features:
         type: array
         items:
           type: string
           enum:
-            - freezable
-          default: freezable
+            - freeze
+            - mint
+            - burn
+            - whitelist
+          default: freeze
     description: FungibleToken is a full representation of the fungible token.
   coreum.asset.v1.FungibleTokenFeature:
     type: string
     enum:
-      - freezable
-    default: freezable
-  coreum.asset.v1.MsgFreezeFungibleTokenResponse:
-    type: object
-  coreum.asset.v1.MsgIssueFungibleTokenResponse:
-    type: object
-    description: >-
-      MsgIssueFungibleTokenResponse defines message response for the
-      IssueFungibleToken.
-  coreum.asset.v1.MsgUnfreezeFungibleTokenResponse:
-    type: object
+      - freeze
+      - mint
+      - burn
+      - whitelist
+    default: freeze
   coreum.asset.v1.QueryFrozenBalanceResponse:
     type: object
     properties:
@@ -35609,19 +36616,83 @@ definitions:
             type: string
           symbol:
             type: string
+          subunit:
+            type: string
+          precision:
+            type: integer
+            format: int64
           description:
             type: string
+          globally_frozen:
+            type: boolean
           features:
             type: array
             items:
               type: string
               enum:
-                - freezable
-              default: freezable
+                - freeze
+                - mint
+                - burn
+                - whitelist
+              default: freeze
         description: FungibleToken is a full representation of the fungible token.
     description: >-
       QueryFungibleTokenResponse is response type for the Query/FungibleToken
       RPC method.
+  coreum.asset.v1.QueryWhitelistedBalanceResponse:
+    type: object
+    properties:
+      balance:
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+        description: |-
+          Coin defines a token with a denomination and an amount.
+
+          NOTE: The amount field is an Int which implements the custom method
+          signatures required by gogoproto.
+        title: >-
+          balance contains the whitelisted balance with the queried account and
+          denom
+  coreum.asset.v1.QueryWhitelistedBalancesResponse:
+    type: object
+    properties:
+      pagination:
+        description: pagination defines the pagination in the response.
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+      balances:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: balances contains the whitelisted balances on the queried account
   cosmos.base.query.v1beta1.PageRequest:
     type: object
     properties:
@@ -37572,82 +38643,6 @@ definitions:
         type: string
         format: uint64
     title: QuerySupplyResponse is the response type for the Query/Supply RPC method
-  cosmos.base.query.v1beta1.PageRequest:
-    type: object
-    properties:
-      key:
-        type: string
-        format: byte
-        description: |-
-          key is a value returned in PageResponse.next_key to begin
-          querying the next page most efficiently. Only one of offset or key
-          should be set.
-      offset:
-        type: string
-        format: uint64
-        description: |-
-          offset is a numeric offset that can be used when key is unavailable.
-          It is less efficient than using key. Only one of offset or key should
-          be set.
-      limit:
-        type: string
-        format: uint64
-        description: >-
-          limit is the total number of results to be returned in the result
-          page.
-
-          If left empty it will default to a value to be set by each app.
-      count_total:
-        type: boolean
-        description: >-
-          count_total is set to true  to indicate that the result set should
-          include
-
-          a count of the total number of items available for pagination in UIs.
-
-          count_total is only respected when offset is used. It is ignored when
-          key
-
-          is set.
-      reverse:
-        type: boolean
-        description: >-
-          reverse is set to true if results are to be returned in the descending
-          order.
-
-
-          Since: cosmos-sdk 0.43
-    description: |-
-      message SomeRequest {
-               Foo some_parameter = 1;
-               PageRequest pagination = 2;
-       }
-    title: |-
-      PageRequest is to be embedded in gRPC request messages for efficient
-      pagination. Ex:
-  cosmos.base.query.v1beta1.PageResponse:
-    type: object
-    properties:
-      next_key:
-        type: string
-        format: byte
-        title: |-
-          next_key is the key to be passed to PageRequest.key to
-          query the next page most efficiently
-      total:
-        type: string
-        format: uint64
-        title: |-
-          total is total number of results available if PageRequest.count_total
-          was set, its value is undefined otherwise
-    description: |-
-      PageResponse is to be embedded in gRPC response messages where the
-      corresponding request message has used PageRequest.
-
-       message SomeResponse {
-               repeated Bar results = 1;
-               PageResponse page = 2;
-       }
   cosmos.auth.v1beta1.Params:
     type: object
     properties:
@@ -39020,6 +40015,535 @@ definitions:
     description: >-
       QueryGrantsResponse is the response type for the Query/Authorizations RPC
       method.
+  cosmos.bank.v1beta1.DenomUnit:
+    type: object
+    properties:
+      denom:
+        type: string
+        description: denom represents the string name of the given denom unit (e.g uatom).
+      exponent:
+        type: integer
+        format: int64
+        description: >-
+          exponent represents power of 10 exponent that one must
+
+          raise the base_denom to in order to equal the given DenomUnit's denom
+
+          1 denom = 1^exponent base_denom
+
+          (e.g. with a base_denom of uatom, one can create a DenomUnit of 'atom'
+          with
+
+          exponent = 6, thus: 1 atom = 10^6 uatom).
+      aliases:
+        type: array
+        items:
+          type: string
+        title: aliases is a list of string aliases for the given denom
+    description: |-
+      DenomUnit represents a struct that describes a given
+      denomination unit of the basic token.
+  cosmos.bank.v1beta1.Input:
+    type: object
+    properties:
+      address:
+        type: string
+      coins:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+    description: Input models transaction input.
+  cosmos.bank.v1beta1.Metadata:
+    type: object
+    properties:
+      description:
+        type: string
+      denom_units:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+              description: >-
+                denom represents the string name of the given denom unit (e.g
+                uatom).
+            exponent:
+              type: integer
+              format: int64
+              description: >-
+                exponent represents power of 10 exponent that one must
+
+                raise the base_denom to in order to equal the given DenomUnit's
+                denom
+
+                1 denom = 1^exponent base_denom
+
+                (e.g. with a base_denom of uatom, one can create a DenomUnit of
+                'atom' with
+
+                exponent = 6, thus: 1 atom = 10^6 uatom).
+            aliases:
+              type: array
+              items:
+                type: string
+              title: aliases is a list of string aliases for the given denom
+          description: |-
+            DenomUnit represents a struct that describes a given
+            denomination unit of the basic token.
+        title: denom_units represents the list of DenomUnit's for a given coin
+      base:
+        type: string
+        description: >-
+          base represents the base denom (should be the DenomUnit with exponent
+          = 0).
+      display:
+        type: string
+        description: |-
+          display indicates the suggested denom that should be
+          displayed in clients.
+      name:
+        type: string
+        description: 'Since: cosmos-sdk 0.43'
+        title: 'name defines the name of the token (eg: Cosmos Atom)'
+      symbol:
+        type: string
+        description: >-
+          symbol is the token symbol usually shown on exchanges (eg: ATOM). This
+          can
+
+          be the same as the display.
+
+
+          Since: cosmos-sdk 0.43
+    description: |-
+      Metadata represents a struct that describes
+      a basic token.
+  cosmos.bank.v1beta1.MsgMultiSendResponse:
+    type: object
+    description: MsgMultiSendResponse defines the Msg/MultiSend response type.
+  cosmos.bank.v1beta1.MsgSendResponse:
+    type: object
+    description: MsgSendResponse defines the Msg/Send response type.
+  cosmos.bank.v1beta1.Output:
+    type: object
+    properties:
+      address:
+        type: string
+      coins:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+    description: Output models transaction outputs.
+  cosmos.bank.v1beta1.Params:
+    type: object
+    properties:
+      send_enabled:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            enabled:
+              type: boolean
+          description: >-
+            SendEnabled maps coin denom to a send_enabled status (whether a
+            denom is
+
+            sendable).
+      default_send_enabled:
+        type: boolean
+    description: Params defines the parameters for the bank module.
+  cosmos.bank.v1beta1.QueryAllBalancesResponse:
+    type: object
+    properties:
+      balances:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        description: balances is the balances of all the coins.
+      pagination:
+        description: pagination defines the pagination in the response.
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+    description: >-
+      QueryAllBalancesResponse is the response type for the Query/AllBalances
+      RPC
+
+      method.
+  cosmos.bank.v1beta1.QueryBalanceResponse:
+    type: object
+    properties:
+      balance:
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+        description: |-
+          Coin defines a token with a denomination and an amount.
+
+          NOTE: The amount field is an Int which implements the custom method
+          signatures required by gogoproto.
+    description: >-
+      QueryBalanceResponse is the response type for the Query/Balance RPC
+      method.
+  cosmos.bank.v1beta1.QueryDenomMetadataResponse:
+    type: object
+    properties:
+      metadata:
+        type: object
+        properties:
+          description:
+            type: string
+          denom_units:
+            type: array
+            items:
+              type: object
+              properties:
+                denom:
+                  type: string
+                  description: >-
+                    denom represents the string name of the given denom unit
+                    (e.g uatom).
+                exponent:
+                  type: integer
+                  format: int64
+                  description: >-
+                    exponent represents power of 10 exponent that one must
+
+                    raise the base_denom to in order to equal the given
+                    DenomUnit's denom
+
+                    1 denom = 1^exponent base_denom
+
+                    (e.g. with a base_denom of uatom, one can create a DenomUnit
+                    of 'atom' with
+
+                    exponent = 6, thus: 1 atom = 10^6 uatom).
+                aliases:
+                  type: array
+                  items:
+                    type: string
+                  title: aliases is a list of string aliases for the given denom
+              description: |-
+                DenomUnit represents a struct that describes a given
+                denomination unit of the basic token.
+            title: denom_units represents the list of DenomUnit's for a given coin
+          base:
+            type: string
+            description: >-
+              base represents the base denom (should be the DenomUnit with
+              exponent = 0).
+          display:
+            type: string
+            description: |-
+              display indicates the suggested denom that should be
+              displayed in clients.
+          name:
+            type: string
+            description: 'Since: cosmos-sdk 0.43'
+            title: 'name defines the name of the token (eg: Cosmos Atom)'
+          symbol:
+            type: string
+            description: >-
+              symbol is the token symbol usually shown on exchanges (eg: ATOM).
+              This can
+
+              be the same as the display.
+
+
+              Since: cosmos-sdk 0.43
+        description: |-
+          Metadata represents a struct that describes
+          a basic token.
+    description: >-
+      QueryDenomMetadataResponse is the response type for the
+      Query/DenomMetadata RPC
+
+      method.
+  cosmos.bank.v1beta1.QueryDenomsMetadataResponse:
+    type: object
+    properties:
+      metadatas:
+        type: array
+        items:
+          type: object
+          properties:
+            description:
+              type: string
+            denom_units:
+              type: array
+              items:
+                type: object
+                properties:
+                  denom:
+                    type: string
+                    description: >-
+                      denom represents the string name of the given denom unit
+                      (e.g uatom).
+                  exponent:
+                    type: integer
+                    format: int64
+                    description: >-
+                      exponent represents power of 10 exponent that one must
+
+                      raise the base_denom to in order to equal the given
+                      DenomUnit's denom
+
+                      1 denom = 1^exponent base_denom
+
+                      (e.g. with a base_denom of uatom, one can create a
+                      DenomUnit of 'atom' with
+
+                      exponent = 6, thus: 1 atom = 10^6 uatom).
+                  aliases:
+                    type: array
+                    items:
+                      type: string
+                    title: aliases is a list of string aliases for the given denom
+                description: |-
+                  DenomUnit represents a struct that describes a given
+                  denomination unit of the basic token.
+              title: denom_units represents the list of DenomUnit's for a given coin
+            base:
+              type: string
+              description: >-
+                base represents the base denom (should be the DenomUnit with
+                exponent = 0).
+            display:
+              type: string
+              description: |-
+                display indicates the suggested denom that should be
+                displayed in clients.
+            name:
+              type: string
+              description: 'Since: cosmos-sdk 0.43'
+              title: 'name defines the name of the token (eg: Cosmos Atom)'
+            symbol:
+              type: string
+              description: >-
+                symbol is the token symbol usually shown on exchanges (eg:
+                ATOM). This can
+
+                be the same as the display.
+
+
+                Since: cosmos-sdk 0.43
+          description: |-
+            Metadata represents a struct that describes
+            a basic token.
+        description: >-
+          metadata provides the client information for all the registered
+          tokens.
+      pagination:
+        description: pagination defines the pagination in the response.
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+    description: >-
+      QueryDenomsMetadataResponse is the response type for the
+      Query/DenomsMetadata RPC
+
+      method.
+  cosmos.bank.v1beta1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        type: object
+        properties:
+          send_enabled:
+            type: array
+            items:
+              type: object
+              properties:
+                denom:
+                  type: string
+                enabled:
+                  type: boolean
+              description: >-
+                SendEnabled maps coin denom to a send_enabled status (whether a
+                denom is
+
+                sendable).
+          default_send_enabled:
+            type: boolean
+        description: Params defines the parameters for the bank module.
+    description: >-
+      QueryParamsResponse defines the response type for querying x/bank
+      parameters.
+  cosmos.bank.v1beta1.QuerySpendableBalancesResponse:
+    type: object
+    properties:
+      balances:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        description: balances is the spendable balances of all the coins.
+      pagination:
+        description: pagination defines the pagination in the response.
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+    description: >-
+      QuerySpendableBalancesResponse defines the gRPC response structure for
+      querying
+
+      an account's spendable balances.
+  cosmos.bank.v1beta1.QuerySupplyOfResponse:
+    type: object
+    properties:
+      amount:
+        type: object
+        properties:
+          denom:
+            type: string
+          amount:
+            type: string
+        description: |-
+          Coin defines a token with a denomination and an amount.
+
+          NOTE: The amount field is an Int which implements the custom method
+          signatures required by gogoproto.
+    description: >-
+      QuerySupplyOfResponse is the response type for the Query/SupplyOf RPC
+      method.
+  cosmos.bank.v1beta1.QueryTotalSupplyResponse:
+    type: object
+    properties:
+      supply:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: supply is the supply of the coins
+      pagination:
+        description: |-
+          pagination defines the pagination in the response.
+
+          Since: cosmos-sdk 0.43
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+    title: >-
+      QueryTotalSupplyResponse is the response type for the Query/TotalSupply
+      RPC
+
+      method
+  cosmos.bank.v1beta1.SendEnabled:
+    type: object
+    properties:
+      denom:
+        type: string
+      enabled:
+        type: boolean
+    description: |-
+      SendEnabled maps coin denom to a send_enabled status (whether a denom is
+      sendable).
   cosmos.base.tendermint.v1beta1.GetBlockByHeightResponse:
     type: object
     properties:
@@ -39092,42 +40616,33 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
-                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
-                title: transactions
               validators_hash:
                 type: string
                 format: byte
-                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
-                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
-                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
-                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
-                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
-                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
-                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           data:
             type: object
@@ -39196,7 +40711,6 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
-                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -39254,7 +40768,6 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
-                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -39343,48 +40856,35 @@ definitions:
                                     last_commit_hash:
                                       type: string
                                       format: byte
-                                      description: >-
-                                        commit from validators from the last
-                                        block
                                       title: hashes of block data
                                     data_hash:
                                       type: string
                                       format: byte
-                                      title: transactions
                                     validators_hash:
                                       type: string
                                       format: byte
-                                      description: validators for the current block
                                       title: >-
                                         hashes from the app output from the prev
                                         block
                                     next_validators_hash:
                                       type: string
                                       format: byte
-                                      title: validators for the next block
                                     consensus_hash:
                                       type: string
                                       format: byte
-                                      title: consensus params for current block
                                     app_hash:
                                       type: string
                                       format: byte
-                                      title: state after txs from the previous block
                                     last_results_hash:
                                       type: string
                                       format: byte
-                                      title: >-
-                                        root hash of all results from the txs
-                                        from the previous block
                                     evidence_hash:
                                       type: string
                                       format: byte
-                                      description: evidence included in the block
                                       title: consensus info
                                     proposer_address:
                                       type: string
                                       format: byte
-                                      title: original proposer of the block
                                   description: >-
                                     Header defines the structure of a Tendermint
                                     block header.
@@ -39667,42 +41167,33 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
-                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
-                title: transactions
               validators_hash:
                 type: string
                 format: byte
-                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
-                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
-                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
-                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
-                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
-                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
-                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           data:
             type: object
@@ -39771,7 +41262,6 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
-                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -39829,7 +41319,6 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
-                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -39918,48 +41407,35 @@ definitions:
                                     last_commit_hash:
                                       type: string
                                       format: byte
-                                      description: >-
-                                        commit from validators from the last
-                                        block
                                       title: hashes of block data
                                     data_hash:
                                       type: string
                                       format: byte
-                                      title: transactions
                                     validators_hash:
                                       type: string
                                       format: byte
-                                      description: validators for the current block
                                       title: >-
                                         hashes from the app output from the prev
                                         block
                                     next_validators_hash:
                                       type: string
                                       format: byte
-                                      title: validators for the next block
                                     consensus_hash:
                                       type: string
                                       format: byte
-                                      title: consensus params for current block
                                     app_hash:
                                       type: string
                                       format: byte
-                                      title: state after txs from the previous block
                                     last_results_hash:
                                       type: string
                                       format: byte
-                                      title: >-
-                                        root hash of all results from the txs
-                                        from the previous block
                                     evidence_hash:
                                       type: string
                                       format: byte
-                                      description: evidence included in the block
                                       title: consensus info
                                     proposer_address:
                                       type: string
                                       format: byte
-                                      title: original proposer of the block
                                   description: >-
                                     Header defines the structure of a Tendermint
                                     block header.
@@ -41001,42 +42477,33 @@ definitions:
           last_commit_hash:
             type: string
             format: byte
-            description: commit from validators from the last block
             title: hashes of block data
           data_hash:
             type: string
             format: byte
-            title: transactions
           validators_hash:
             type: string
             format: byte
-            description: validators for the current block
             title: hashes from the app output from the prev block
           next_validators_hash:
             type: string
             format: byte
-            title: validators for the next block
           consensus_hash:
             type: string
             format: byte
-            title: consensus params for current block
           app_hash:
             type: string
             format: byte
-            title: state after txs from the previous block
           last_results_hash:
             type: string
             format: byte
-            title: root hash of all results from the txs from the previous block
           evidence_hash:
             type: string
             format: byte
-            description: evidence included in the block
             title: consensus info
           proposer_address:
             type: string
             format: byte
-            title: original proposer of the block
         description: Header defines the structure of a Tendermint block header.
       data:
         type: object
@@ -41105,7 +42572,6 @@ definitions:
                                   format: byte
                               title: PartsetHeader
                           title: BlockID
-                          description: zero if vote is nil.
                         timestamp:
                           type: string
                           format: date-time
@@ -41163,7 +42629,6 @@ definitions:
                                   format: byte
                               title: PartsetHeader
                           title: BlockID
-                          description: zero if vote is nil.
                         timestamp:
                           type: string
                           format: date-time
@@ -41251,46 +42716,35 @@ definitions:
                                 last_commit_hash:
                                   type: string
                                   format: byte
-                                  description: commit from validators from the last block
                                   title: hashes of block data
                                 data_hash:
                                   type: string
                                   format: byte
-                                  title: transactions
                                 validators_hash:
                                   type: string
                                   format: byte
-                                  description: validators for the current block
                                   title: >-
                                     hashes from the app output from the prev
                                     block
                                 next_validators_hash:
                                   type: string
                                   format: byte
-                                  title: validators for the next block
                                 consensus_hash:
                                   type: string
                                   format: byte
-                                  title: consensus params for current block
                                 app_hash:
                                   type: string
                                   format: byte
-                                  title: state after txs from the previous block
                                 last_results_hash:
                                   type: string
                                   format: byte
-                                  title: >-
-                                    root hash of all results from the txs from
-                                    the previous block
                                 evidence_hash:
                                   type: string
                                   format: byte
-                                  description: evidence included in the block
                                   title: consensus info
                                 proposer_address:
                                   type: string
                                   format: byte
-                                  title: original proposer of the block
                               description: >-
                                 Header defines the structure of a Tendermint
                                 block header.
@@ -41657,7 +43111,6 @@ definitions:
                     format: byte
                 title: PartsetHeader
             title: BlockID
-            description: zero if vote is nil.
           timestamp:
             type: string
             format: date-time
@@ -41714,7 +43167,6 @@ definitions:
                     format: byte
                 title: PartsetHeader
             title: BlockID
-            description: zero if vote is nil.
           timestamp:
             type: string
             format: date-time
@@ -41789,7 +43241,6 @@ definitions:
                         format: byte
                     title: PartsetHeader
                 title: BlockID
-                description: zero if vote is nil.
               timestamp:
                 type: string
                 format: date-time
@@ -41846,7 +43297,6 @@ definitions:
                         format: byte
                     title: PartsetHeader
                 title: BlockID
-                description: zero if vote is nil.
               timestamp:
                 type: string
                 format: date-time
@@ -41934,44 +43384,33 @@ definitions:
                       last_commit_hash:
                         type: string
                         format: byte
-                        description: commit from validators from the last block
                         title: hashes of block data
                       data_hash:
                         type: string
                         format: byte
-                        title: transactions
                       validators_hash:
                         type: string
                         format: byte
-                        description: validators for the current block
                         title: hashes from the app output from the prev block
                       next_validators_hash:
                         type: string
                         format: byte
-                        title: validators for the next block
                       consensus_hash:
                         type: string
                         format: byte
-                        title: consensus params for current block
                       app_hash:
                         type: string
                         format: byte
-                        title: state after txs from the previous block
                       last_results_hash:
                         type: string
                         format: byte
-                        title: >-
-                          root hash of all results from the txs from the
-                          previous block
                       evidence_hash:
                         type: string
                         format: byte
-                        description: evidence included in the block
                         title: consensus info
                       proposer_address:
                         type: string
                         format: byte
-                        title: original proposer of the block
                     description: Header defines the structure of a Tendermint block header.
                   commit:
                     type: object
@@ -42175,7 +43614,6 @@ definitions:
                               format: byte
                           title: PartsetHeader
                       title: BlockID
-                      description: zero if vote is nil.
                     timestamp:
                       type: string
                       format: date-time
@@ -42233,7 +43671,6 @@ definitions:
                               format: byte
                           title: PartsetHeader
                       title: BlockID
-                      description: zero if vote is nil.
                     timestamp:
                       type: string
                       format: date-time
@@ -42321,44 +43758,33 @@ definitions:
                             last_commit_hash:
                               type: string
                               format: byte
-                              description: commit from validators from the last block
                               title: hashes of block data
                             data_hash:
                               type: string
                               format: byte
-                              title: transactions
                             validators_hash:
                               type: string
                               format: byte
-                              description: validators for the current block
                               title: hashes from the app output from the prev block
                             next_validators_hash:
                               type: string
                               format: byte
-                              title: validators for the next block
                             consensus_hash:
                               type: string
                               format: byte
-                              title: consensus params for current block
                             app_hash:
                               type: string
                               format: byte
-                              title: state after txs from the previous block
                             last_results_hash:
                               type: string
                               format: byte
-                              title: >-
-                                root hash of all results from the txs from the
-                                previous block
                             evidence_hash:
                               type: string
                               format: byte
-                              description: evidence included in the block
                               title: consensus info
                             proposer_address:
                               type: string
                               format: byte
-                              title: original proposer of the block
                           description: >-
                             Header defines the structure of a Tendermint block
                             header.
@@ -42562,42 +43988,33 @@ definitions:
       last_commit_hash:
         type: string
         format: byte
-        description: commit from validators from the last block
         title: hashes of block data
       data_hash:
         type: string
         format: byte
-        title: transactions
       validators_hash:
         type: string
         format: byte
-        description: validators for the current block
         title: hashes from the app output from the prev block
       next_validators_hash:
         type: string
         format: byte
-        title: validators for the next block
       consensus_hash:
         type: string
         format: byte
-        title: consensus params for current block
       app_hash:
         type: string
         format: byte
-        title: state after txs from the previous block
       last_results_hash:
         type: string
         format: byte
-        title: root hash of all results from the txs from the previous block
       evidence_hash:
         type: string
         format: byte
-        description: evidence included in the block
         title: consensus info
       proposer_address:
         type: string
         format: byte
-        title: original proposer of the block
     description: Header defines the structure of a Tendermint block header.
   tendermint.types.LightBlock:
     type: object
@@ -42654,42 +44071,33 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
-                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
-                title: transactions
               validators_hash:
                 type: string
                 format: byte
-                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
-                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
-                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
-                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
-                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
-                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
-                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           commit:
             type: object
@@ -42858,44 +44266,33 @@ definitions:
                   last_commit_hash:
                     type: string
                     format: byte
-                    description: commit from validators from the last block
                     title: hashes of block data
                   data_hash:
                     type: string
                     format: byte
-                    title: transactions
                   validators_hash:
                     type: string
                     format: byte
-                    description: validators for the current block
                     title: hashes from the app output from the prev block
                   next_validators_hash:
                     type: string
                     format: byte
-                    title: validators for the next block
                   consensus_hash:
                     type: string
                     format: byte
-                    title: consensus params for current block
                   app_hash:
                     type: string
                     format: byte
-                    title: state after txs from the previous block
                   last_results_hash:
                     type: string
                     format: byte
-                    title: >-
-                      root hash of all results from the txs from the previous
-                      block
                   evidence_hash:
                     type: string
                     format: byte
-                    description: evidence included in the block
                     title: consensus info
                   proposer_address:
                     type: string
                     format: byte
-                    title: original proposer of the block
                 description: Header defines the structure of a Tendermint block header.
               commit:
                 type: object
@@ -43108,42 +44505,33 @@ definitions:
           last_commit_hash:
             type: string
             format: byte
-            description: commit from validators from the last block
             title: hashes of block data
           data_hash:
             type: string
             format: byte
-            title: transactions
           validators_hash:
             type: string
             format: byte
-            description: validators for the current block
             title: hashes from the app output from the prev block
           next_validators_hash:
             type: string
             format: byte
-            title: validators for the next block
           consensus_hash:
             type: string
             format: byte
-            title: consensus params for current block
           app_hash:
             type: string
             format: byte
-            title: state after txs from the previous block
           last_results_hash:
             type: string
             format: byte
-            title: root hash of all results from the txs from the previous block
           evidence_hash:
             type: string
             format: byte
-            description: evidence included in the block
             title: consensus info
           proposer_address:
             type: string
             format: byte
-            title: original proposer of the block
         description: Header defines the structure of a Tendermint block header.
       commit:
         type: object
@@ -43330,7 +44718,6 @@ definitions:
                 format: byte
             title: PartsetHeader
         title: BlockID
-        description: zero if vote is nil.
       timestamp:
         type: string
         format: date-time
@@ -46227,42 +47614,33 @@ definitions:
           last_commit_hash:
             type: string
             format: byte
-            description: commit from validators from the last block
             title: hashes of block data
           data_hash:
             type: string
             format: byte
-            title: transactions
           validators_hash:
             type: string
             format: byte
-            description: validators for the current block
             title: hashes from the app output from the prev block
           next_validators_hash:
             type: string
             format: byte
-            title: validators for the next block
           consensus_hash:
             type: string
             format: byte
-            title: consensus params for current block
           app_hash:
             type: string
             format: byte
-            title: state after txs from the previous block
           last_results_hash:
             type: string
             format: byte
-            title: root hash of all results from the txs from the previous block
           evidence_hash:
             type: string
             format: byte
-            description: evidence included in the block
             title: consensus info
           proposer_address:
             type: string
             format: byte
-            title: original proposer of the block
         description: Header defines the structure of a Tendermint block header.
       valset:
         type: array
@@ -46795,10 +48173,7 @@ definitions:
                 description: >-
                   UnbondingDelegationEntry defines an unbonding object with
                   relevant metadata.
-              description: |-
-                entries are the unbonding delegation entries.
-
-                unbonding delegation entries
+              description: entries are the unbonding delegation entries.
           description: >-
             UnbondingDelegation stores all of a single delegator's unbonding
             bonds
@@ -47486,42 +48861,33 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
-                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
-                title: transactions
               validators_hash:
                 type: string
                 format: byte
-                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
-                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
-                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
-                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
-                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
-                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
-                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           valset:
             type: array
@@ -47923,10 +49289,7 @@ definitions:
                     description: >-
                       RedelegationEntry defines a redelegation object with
                       relevant metadata.
-                  description: |-
-                    entries are the redelegation entries.
-
-                    redelegation entries
+                  description: entries are the redelegation entries.
               description: >-
                 Redelegation contains the list of a particular delegator's
                 redelegating bonds
@@ -48045,10 +49408,7 @@ definitions:
               description: >-
                 UnbondingDelegationEntry defines an unbonding object with
                 relevant metadata.
-            description: |-
-              entries are the unbonding delegation entries.
-
-              unbonding delegation entries
+            description: entries are the unbonding delegation entries.
         description: |-
           UnbondingDelegation stores all of a single delegator's unbonding bonds
           for a single validator in an time-ordered list.
@@ -48460,10 +49820,7 @@ definitions:
                 description: >-
                   UnbondingDelegationEntry defines an unbonding object with
                   relevant metadata.
-              description: |-
-                entries are the unbonding delegation entries.
-
-                unbonding delegation entries
+              description: entries are the unbonding delegation entries.
           description: >-
             UnbondingDelegation stores all of a single delegator's unbonding
             bonds
@@ -48852,10 +50209,7 @@ definitions:
           description: >-
             RedelegationEntry defines a redelegation object with relevant
             metadata.
-        description: |-
-          entries are the redelegation entries.
-
-          redelegation entries
+        description: entries are the redelegation entries.
     description: >-
       Redelegation contains the list of a particular delegator's redelegating
       bonds
@@ -48968,10 +50322,7 @@ definitions:
               description: >-
                 RedelegationEntry defines a redelegation object with relevant
                 metadata.
-            description: |-
-              entries are the redelegation entries.
-
-              redelegation entries
+            description: entries are the redelegation entries.
         description: >-
           Redelegation contains the list of a particular delegator's
           redelegating bonds
@@ -49061,10 +50412,7 @@ definitions:
           description: >-
             UnbondingDelegationEntry defines an unbonding object with relevant
             metadata.
-        description: |-
-          entries are the unbonding delegation entries.
-
-          unbonding delegation entries
+        description: entries are the unbonding delegation entries.
     description: |-
       UnbondingDelegation stores all of a single delegator's unbonding bonds
       for a single validator in an time-ordered list.
@@ -49459,7 +50807,6 @@ definitions:
                     format: byte
                   index:
                     type: boolean
-                    title: nondeterministic
                 description: >-
                   EventAttribute is a single key-value pair, associated with an
                   event.
@@ -49767,7 +51114,6 @@ definitions:
                     format: byte
                   index:
                     type: boolean
-                    title: nondeterministic
                 description: >-
                   EventAttribute is a single key-value pair, associated with an
                   event.
@@ -50251,7 +51597,6 @@ definitions:
                         format: byte
                       index:
                         type: boolean
-                        title: nondeterministic
                     description: >-
                       EventAttribute is a single key-value pair, associated with
                       an event.
@@ -50416,42 +51761,33 @@ definitions:
               last_commit_hash:
                 type: string
                 format: byte
-                description: commit from validators from the last block
                 title: hashes of block data
               data_hash:
                 type: string
                 format: byte
-                title: transactions
               validators_hash:
                 type: string
                 format: byte
-                description: validators for the current block
                 title: hashes from the app output from the prev block
               next_validators_hash:
                 type: string
                 format: byte
-                title: validators for the next block
               consensus_hash:
                 type: string
                 format: byte
-                title: consensus params for current block
               app_hash:
                 type: string
                 format: byte
-                title: state after txs from the previous block
               last_results_hash:
                 type: string
                 format: byte
-                title: root hash of all results from the txs from the previous block
               evidence_hash:
                 type: string
                 format: byte
-                description: evidence included in the block
                 title: consensus info
               proposer_address:
                 type: string
                 format: byte
-                title: original proposer of the block
             description: Header defines the structure of a Tendermint block header.
           data:
             type: object
@@ -50520,7 +51856,6 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
-                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -50578,7 +51913,6 @@ definitions:
                                       format: byte
                                   title: PartsetHeader
                               title: BlockID
-                              description: zero if vote is nil.
                             timestamp:
                               type: string
                               format: date-time
@@ -50667,48 +52001,35 @@ definitions:
                                     last_commit_hash:
                                       type: string
                                       format: byte
-                                      description: >-
-                                        commit from validators from the last
-                                        block
                                       title: hashes of block data
                                     data_hash:
                                       type: string
                                       format: byte
-                                      title: transactions
                                     validators_hash:
                                       type: string
                                       format: byte
-                                      description: validators for the current block
                                       title: >-
                                         hashes from the app output from the prev
                                         block
                                     next_validators_hash:
                                       type: string
                                       format: byte
-                                      title: validators for the next block
                                     consensus_hash:
                                       type: string
                                       format: byte
-                                      title: consensus params for current block
                                     app_hash:
                                       type: string
                                       format: byte
-                                      title: state after txs from the previous block
                                     last_results_hash:
                                       type: string
                                       format: byte
-                                      title: >-
-                                        root hash of all results from the txs
-                                        from the previous block
                                     evidence_hash:
                                       type: string
                                       format: byte
-                                      description: evidence included in the block
                                       title: consensus info
                                     proposer_address:
                                       type: string
                                       format: byte
-                                      title: original proposer of the block
                                   description: >-
                                     Header defines the structure of a Tendermint
                                     block header.
@@ -51223,7 +52544,6 @@ definitions:
                         format: byte
                       index:
                         type: boolean
-                        title: nondeterministic
                     description: >-
                       EventAttribute is a single key-value pair, associated with
                       an event.
@@ -51546,7 +52866,6 @@ definitions:
                           format: byte
                         index:
                           type: boolean
-                          title: nondeterministic
                       description: >-
                         EventAttribute is a single key-value pair, associated
                         with an event.
@@ -51995,7 +53314,6 @@ definitions:
                         format: byte
                       index:
                         type: boolean
-                        title: nondeterministic
                     description: >-
                       EventAttribute is a single key-value pair, associated with
                       an event.
@@ -53154,7 +54472,6 @@ definitions:
               format: byte
             index:
               type: boolean
-              title: nondeterministic
           description: 'EventAttribute is a single key-value pair, associated with an event.'
     description: >-
       Event allows application developers to attach additional information to
@@ -53174,7 +54491,6 @@ definitions:
         format: byte
       index:
         type: boolean
-        title: nondeterministic
     description: 'EventAttribute is a single key-value pair, associated with an event.'
   cosmos.upgrade.v1beta1.ModuleVersion:
     type: object
@@ -53733,7 +55049,6 @@ definitions:
       code_id:
         type: string
         format: uint64
-        title: id for legacy support
       creator:
         type: string
       data_hash:
@@ -54124,7 +55439,6 @@ definitions:
           code_id:
             type: string
             format: uint64
-            title: id for legacy support
           creator:
             type: string
           data_hash:
@@ -54167,7 +55481,6 @@ definitions:
             code_id:
               type: string
               format: uint64
-              title: id for legacy support
             creator:
               type: string
             data_hash:
