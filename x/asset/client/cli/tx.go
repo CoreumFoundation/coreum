@@ -72,7 +72,7 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
 		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ","),
-		Args:  cobra.ExactArgs(6),
+		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Issues new fungible token.
@@ -99,9 +99,9 @@ $ %s tx asset ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [is
 
 			// if the initial amount wasn't provided the amount is zero
 			initialAmount := sdk.ZeroInt()
-			if args[4] != "" {
+			if args[3] != "" {
 				var ok bool
-				initialAmount, ok = sdk.NewIntFromString(args[4])
+				initialAmount, ok = sdk.NewIntFromString(args[3])
 				if !ok {
 					return sdkerrors.Wrap(err, "invalid initial_amount")
 				}
@@ -120,7 +120,7 @@ $ %s tx asset ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [is
 				}
 				features = append(features, types.FungibleTokenFeature(feature))
 			}
-			description := args[5]
+			description := args[4]
 
 			msg := &types.MsgIssueFungibleToken{
 				Issuer:        issuer.String(),
