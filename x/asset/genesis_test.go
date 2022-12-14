@@ -43,6 +43,10 @@ func TestImportAndExportGenesis(t *testing.T) {
 				types.FungibleTokenFeature_whitelist, //nolint:nosnakecase // proto enum
 			},
 		}
+		// Globally freeze some FTs.
+		if i%2 == 0 {
+			ft.GloballyFrozen = true
+		}
 		fungibleTokens = append(fungibleTokens, ft)
 		assetKeeper.SetFungibleTokenDenomMetadata(ctx, ft.Denom, ft.Symbol, ft.Description, ft.Precision)
 	}

@@ -25,6 +25,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		if err != nil {
 			panic(err)
 		}
+		if ft.GloballyFrozen {
+			k.SetFungibleTokenGlobalFreeze(ctx, ft.Denom, true)
+		}
 	}
 
 	// Init frozen balances
