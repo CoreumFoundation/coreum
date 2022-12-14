@@ -78,7 +78,6 @@ func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 	requireT.Error(msg.ValidateBasic())
 }
 
-//nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
 func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name          string
@@ -97,7 +96,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid issuer address",
+			name: "invalid sender address",
 			message: types.MsgFreezeFungibleToken{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
@@ -139,9 +138,10 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 //nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
 func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 	testCases := []struct {
-		name          string
-		message       types.MsgUnfreezeFungibleToken
-		expectedError error
+		name                string
+		message             types.MsgUnfreezeFungibleToken
+		expectedError       error
+		expectedErrorString string
 	}{
 		{
 			name: "valid msg",
@@ -155,7 +155,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid issuer address",
+			name: "invalid sender address",
 			message: types.MsgUnfreezeFungibleToken{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
@@ -178,6 +178,18 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
 		},
+		{
+			name: "invalid denom",
+			message: types.MsgUnfreezeFungibleToken{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Coin: sdk.Coin{
+					Denom:  "0abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedErrorString: "invalid denom",
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -185,9 +197,12 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assertT := assert.New(t)
 			err := tc.message.ValidateBasic()
-			if tc.expectedError == nil {
+			switch {
+			case tc.expectedError == nil && tc.expectedErrorString == "":
 				assertT.NoError(err)
-			} else {
+			case tc.expectedErrorString != "":
+				assertT.Contains(err.Error(), tc.expectedErrorString)
+			default:
 				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
@@ -283,6 +298,80 @@ func TestMsgBurnFungibleToken_ValidateBasic(t *testing.T) {
 				requireT.Error(msg.ValidateBasic())
 			} else {
 				requireT.NoError(msg.ValidateBasic())
+			}
+		})
+	}
+}
+
+//nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
+func TestMsgSetWhitelistedLimitFungibleToken_ValidateBasic(t *testing.T) {
+	testCases := []struct {
+		name                string
+		message             types.MsgSetWhitelistedLimitFungibleToken
+		expectedError       error
+		expectedErrorString string
+	}{
+		{
+			name: "valid msg",
+			message: types.MsgSetWhitelistedLimitFungibleToken{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+		},
+		{
+			name: "invalid sender address",
+			message: types.MsgSetWhitelistedLimitFungibleToken{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid account",
+			message: types.MsgSetWhitelistedLimitFungibleToken{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid denom",
+			message: types.MsgSetWhitelistedLimitFungibleToken{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
+				Coin: sdk.Coin{
+					Denom:  "0abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedErrorString: "invalid denom",
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := tc.message.ValidateBasic()
+			switch {
+			case tc.expectedError == nil && tc.expectedErrorString == "":
+				assertT.NoError(err)
+			case tc.expectedErrorString != "":
+				assertT.Contains(err.Error(), tc.expectedErrorString)
+			default:
+				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
 		})
 	}
