@@ -73,7 +73,7 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + "burn-rate=0.12",
+		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + "--burn-rate=0.12",
 		Args:  cobra.ExactArgs(6),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(

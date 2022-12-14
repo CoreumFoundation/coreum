@@ -7,6 +7,6 @@ import (
 
 // FungibleTokenProvider defines an interface to interact with the fungible token functionality.
 type FungibleTokenProvider interface {
-	InterceptSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error
-	InterceptInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error
+	BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error
+	BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error
 }

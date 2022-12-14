@@ -33,7 +33,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	denom := types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
-			types.ErrInvalidSubunit,
+			types.ErrInvalidInput,
 			"subunit %s already registered for the address %s",
 			settings.Subunit,
 			settings.Issuer.String(),
@@ -93,7 +93,7 @@ func (k Keeper) IsSymbolDuplicate(ctx sdk.Context, symbol string, issuer sdk.Acc
 // StoreSymbol saves the symbol to store
 func (k Keeper) StoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
 	if k.IsSymbolDuplicate(ctx, symbol, issuer) {
-		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
 
 	compositeKey := store.JoinKeys(types.CreateSymbolPrefix(issuer), []byte(symbol))
@@ -132,7 +132,7 @@ func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.Fungi
 	}
 
 	if precision < 0 {
-		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "precision not found")
+		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidInput, "precision not found")
 	}
 
 	return types.FungibleToken{

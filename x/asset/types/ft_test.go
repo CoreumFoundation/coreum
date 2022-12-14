@@ -60,7 +60,7 @@ func TestValidateSubunit(t *testing.T) {
 		if isValid {
 			requireT.NoError(err)
 		} else {
-			requireT.True(types.ErrInvalidSubunit.Is(err))
+			requireT.True(types.ErrInvalidInput.Is(err))
 		}
 	}
 
@@ -119,7 +119,7 @@ func TestValidateSymbol(t *testing.T) {
 
 	assertValidSymbol := func(symbol string, isValid bool) {
 		err := types.ValidateSymbol(symbol)
-		if types.ErrInvalidSymbol.Is(err) == isValid {
+		if types.ErrInvalidInput.Is(err) == isValid {
 			assertT.Failf("", "case: %s", symbol)
 		}
 	}

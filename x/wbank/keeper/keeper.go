@@ -83,7 +83,7 @@ func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(ctx sdk.Context, senderA
 
 // SendCoins is a BaseKeeper SendCoins wrapped method.
 func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	if err := k.ftProvider.InterceptSendCoins(ctx, fromAddr, toAddr, amt); err != nil {
+	if err := k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt); err != nil {
 		return err
 	}
 
@@ -92,7 +92,7 @@ func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 
 // InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
 func (k BaseKeeperWrapper) InputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	if err := k.ftProvider.InterceptInputOutputCoins(ctx, inputs, outputs); err != nil {
+	if err := k.ftProvider.BeforeInputOutputCoins(ctx, inputs, outputs); err != nil {
 		return err
 	}
 

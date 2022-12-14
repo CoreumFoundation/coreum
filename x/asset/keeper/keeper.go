@@ -28,8 +28,8 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 	}
 }
 
-// InterceptSendCoins checks that a transfer request is allowed or not
-func (k Keeper) InterceptSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
+// BeforeSendCoins checks that a transfer request is allowed or not
+func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
 	for _, coin := range coins {
 		ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
 		if err != nil {
@@ -56,8 +56,8 @@ func (k Keeper) InterceptSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.A
 	return nil
 }
 
-// InterceptInputOutputCoins extends InputOutputCoins method of the bank keeper
-func (k Keeper) InterceptInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+// BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper
+func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
 	for _, in := range inputs {
 		inAddress, err := sdk.AccAddressFromBech32(in.Address)
 		if err != nil {

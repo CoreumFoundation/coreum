@@ -40,11 +40,11 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 
 	// we allow zero initial amount, in that case we won't mint it initially
 	if msg.InitialAmount.IsNil() || msg.InitialAmount.IsNegative() {
-		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid initial amount %s, can't be negative", msg.InitialAmount.String())
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid initial amount %s, can't be negative", msg.InitialAmount.String())
 	}
 
 	if len(msg.Description) > maxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidFungibleToken, "invalid description %q, the length must less than %d", msg.Description, maxDescriptionLength)
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must less than %d", msg.Description, maxDescriptionLength)
 	}
 
 	return nil
