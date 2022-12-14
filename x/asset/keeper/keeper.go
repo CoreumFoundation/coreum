@@ -30,23 +30,23 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 
 // InterceptSendCoins checks that a transfer request is allowed or not
 func (k Keeper) InterceptSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
-	if err := k.areCoinsSpendable(ctx, fromAddress, coins); err != nil {
-		return err
-	}
-
 	for _, coin := range coins {
 		ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
-		if types.ErrFungibleTokenNotFound.Is(err) {
-			continue
-		}
-
 		if err != nil {
+			if types.ErrFungibleTokenNotFound.Is(err) {
+				continue
+			}
 			return err
 		}
-
+		if err := k.isCoinSpendable(ctx, fromAddress, ft, coin.Amount); err != nil {
+			return err
+		}
+		if err := k.isCoinReceivable(ctx, toAddress, ft, coin.Amount); err != nil {
+			return err
+		}
 		if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
-			coinsToBurn := ft.CalculateBurnCoin(coin)
-			err := k.burnFungibleToken(ctx, coinsToBurn, fromAddress)
+			coinToBurn := ft.CalculateBurnRateAmount(coin)
+			err := k.burnFungibleToken(ctx, fromAddress, ft, coinToBurn)
 			if err != nil {
 				return err
 			}
@@ -75,8 +75,8 @@ func (k Keeper) InterceptInputOutputCoins(ctx sdk.Context, inputs []banktypes.In
 			}
 
 			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != inAddress.String() {
-				coinsToBurn := ft.CalculateBurnCoin(coin)
-				err = k.burnFungibleToken(ctx, coinsToBurn, inAddress)
+				coinsToBurn := ft.CalculateBurnRateAmount(coin)
+				err = k.burnFungibleToken(ctx, inAddress, ft, coinsToBurn)
 				if err != nil {
 					return err
 				}
@@ -103,7 +103,7 @@ func (k Keeper) MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin s
 		return err
 	}
 
-	return k.mintFungibleToken(ctx, coin.Denom, coin.Amount, sender)
+	return k.mintFungibleToken(ctx, ft, coin.Amount, sender)
 }
 
 // BurnFungibleToken burns fungible token
@@ -118,7 +118,7 @@ func (k Keeper) BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin s
 		return err
 	}
 
-	return k.burnFungibleToken(ctx, coin, sender)
+	return k.burnFungibleToken(ctx, sender, ft, coin.Amount)
 }
 
 func (k Keeper) checkFeatureAllowed(sender sdk.AccAddress, ft types.FungibleTokenDefinition, feature types.FungibleTokenFeature) error {

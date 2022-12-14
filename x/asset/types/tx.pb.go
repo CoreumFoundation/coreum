@@ -345,6 +345,45 @@ func (m *EmptyResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EmptyResponse proto.InternalMessageInfo
 
+type MsgSetWhitelistedLimitFungibleToken struct {
+	Sender  string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Account string     `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
+	Coin    types.Coin `protobuf:"bytes,3,opt,name=coin,proto3" json:"coin"`
+}
+
+func (m *MsgSetWhitelistedLimitFungibleToken) Reset()         { *m = MsgSetWhitelistedLimitFungibleToken{} }
+func (m *MsgSetWhitelistedLimitFungibleToken) String() string { return proto.CompactTextString(m) }
+func (*MsgSetWhitelistedLimitFungibleToken) ProtoMessage()    {}
+func (*MsgSetWhitelistedLimitFungibleToken) Descriptor() ([]byte, []int) {
+	return fileDescriptor_67f41154fcbb1ebe, []int{8}
+}
+func (m *MsgSetWhitelistedLimitFungibleToken) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetWhitelistedLimitFungibleToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetWhitelistedLimitFungibleToken.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetWhitelistedLimitFungibleToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetWhitelistedLimitFungibleToken.Merge(m, src)
+}
+func (m *MsgSetWhitelistedLimitFungibleToken) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetWhitelistedLimitFungibleToken) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetWhitelistedLimitFungibleToken.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetWhitelistedLimitFungibleToken proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgIssueFungibleToken)(nil), "coreum.asset.v1.MsgIssueFungibleToken")
 	proto.RegisterType((*MsgFreezeFungibleToken)(nil), "coreum.asset.v1.MsgFreezeFungibleToken")
@@ -354,6 +393,7 @@ func init() {
 	proto.RegisterType((*MsgGloballyFreezeFungibleToken)(nil), "coreum.asset.v1.MsgGloballyFreezeFungibleToken")
 	proto.RegisterType((*MsgGloballyUnfreezeFungibleToken)(nil), "coreum.asset.v1.MsgGloballyUnfreezeFungibleToken")
 	proto.RegisterType((*EmptyResponse)(nil), "coreum.asset.v1.EmptyResponse")
+	proto.RegisterType((*MsgSetWhitelistedLimitFungibleToken)(nil), "coreum.asset.v1.MsgSetWhitelistedLimitFungibleToken")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/tx.proto", fileDescriptor_67f41154fcbb1ebe) }
@@ -434,6 +474,8 @@ type MsgClient interface {
 	// GloballyUnfreezeFungibleToken unfreezes fungible token and unblocks basic operations on it.
 	// This operation is idempotent so global unfreezing of non-frozen token does nothing.
 	GloballyUnfreezeFungibleToken(ctx context.Context, in *MsgGloballyUnfreezeFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
+	// SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
+	SetWhitelistedLimitFungibleToken(ctx context.Context, in *MsgSetWhitelistedLimitFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
 type msgClient struct {
@@ -507,6 +549,15 @@ func (c *msgClient) GloballyUnfreezeFungibleToken(ctx context.Context, in *MsgGl
 	return out, nil
 }
 
+func (c *msgClient) SetWhitelistedLimitFungibleToken(ctx context.Context, in *MsgSetWhitelistedLimitFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/SetWhitelistedLimitFungibleToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// IssueFungibleToken defines a method to issue a new fungible token.
@@ -527,6 +578,8 @@ type MsgServer interface {
 	// GloballyUnfreezeFungibleToken unfreezes fungible token and unblocks basic operations on it.
 	// This operation is idempotent so global unfreezing of non-frozen token does nothing.
 	GloballyUnfreezeFungibleToken(context.Context, *MsgGloballyUnfreezeFungibleToken) (*EmptyResponse, error)
+	// SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
+	SetWhitelistedLimitFungibleToken(context.Context, *MsgSetWhitelistedLimitFungibleToken) (*EmptyResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -553,6 +606,9 @@ func (*UnimplementedMsgServer) GloballyFreezeFungibleToken(ctx context.Context, 
 }
 func (*UnimplementedMsgServer) GloballyUnfreezeFungibleToken(ctx context.Context, req *MsgGloballyUnfreezeFungibleToken) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GloballyUnfreezeFungibleToken not implemented")
+}
+func (*UnimplementedMsgServer) SetWhitelistedLimitFungibleToken(ctx context.Context, req *MsgSetWhitelistedLimitFungibleToken) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetWhitelistedLimitFungibleToken not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -685,6 +741,24 @@ func _Msg_GloballyUnfreezeFungibleToken_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_SetWhitelistedLimitFungibleToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetWhitelistedLimitFungibleToken)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetWhitelistedLimitFungibleToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.v1.Msg/SetWhitelistedLimitFungibleToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetWhitelistedLimitFungibleToken(ctx, req.(*MsgSetWhitelistedLimitFungibleToken))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "coreum.asset.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -716,6 +790,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GloballyUnfreezeFungibleToken",
 			Handler:    _Msg_GloballyUnfreezeFungibleToken_Handler,
+		},
+		{
+			MethodName: "SetWhitelistedLimitFungibleToken",
+			Handler:    _Msg_SetWhitelistedLimitFungibleToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1094,6 +1172,53 @@ func (m *EmptyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgSetWhitelistedLimitFungibleToken) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetWhitelistedLimitFungibleToken) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetWhitelistedLimitFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Coin.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if len(m.Account) > 0 {
+		i -= len(m.Account)
+		copy(dAtA[i:], m.Account)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Account)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -1256,6 +1381,25 @@ func (m *EmptyResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *MsgSetWhitelistedLimitFungibleToken) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Account)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Coin.Size()
+	n += 1 + l + sovTx(uint64(l))
 	return n
 }
 
@@ -2412,6 +2556,153 @@ func (m *EmptyResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: EmptyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSetWhitelistedLimitFungibleToken) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetWhitelistedLimitFungibleToken: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetWhitelistedLimitFungibleToken: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Account", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Account = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coin", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Coin.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

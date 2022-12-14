@@ -106,8 +106,8 @@ func TestKeeperCalculateBurnCoin(t *testing.T) {
 			definition := types.FungibleTokenDefinition{
 				BurnRate: sdk.MustNewDecFromStr(tc.rate),
 			}
-			burnCoin := definition.CalculateBurnCoin(sdk.NewCoin("test", sdk.NewInt(tc.input)))
-			assertT.EqualValues(sdk.NewInt(tc.expected).String(), burnCoin.Amount.String())
+			burnCoin := definition.CalculateBurnRateAmount(sdk.NewCoin("test", sdk.NewInt(tc.input)))
+			assertT.EqualValues(sdk.NewInt(tc.expected).String(), burnCoin.String())
 		})
 	}
 }

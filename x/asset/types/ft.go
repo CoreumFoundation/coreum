@@ -1,6 +1,7 @@
 package types
 
 import (
+	"math"
 	"regexp"
 	"strings"
 
@@ -112,8 +113,7 @@ func ValidateBurnRate(burnRate sdk.Dec) error {
 		return nil
 	}
 
-	// we check that there is only 4 precision in burn rate in a rather creative way.
-	if !burnRate.Mul(sdk.NewDecFromInt(sdk.NewInt(10000))).IsInteger() {
+	if !isDecPrecisionValid(burnRate, 4) {
 		return sdkerrors.Wrap(ErrInvalidFungibleToken, "burn rate precision should not be more than 4 decimal places")
 	}
 
@@ -124,8 +124,12 @@ func ValidateBurnRate(burnRate sdk.Dec) error {
 	return nil
 }
 
-// CalculateBurnCoin returns the coins to be burned
-func (ftd FungibleTokenDefinition) CalculateBurnCoin(coin sdk.Coin) sdk.Coin {
-	burnAmount := ftd.BurnRate.MulInt(coin.Amount).Ceil().RoundInt()
-	return sdk.NewCoin(coin.Denom, burnAmount)
+// checks that dec precision is limited to the provided value
+func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
+	return dec.Mul(sdk.NewDecFromInt(sdk.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
+}
+
+// CalculateBurnRateAmount returns the coins to be burned
+func (ftd FungibleTokenDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
+	return ftd.BurnRate.MulInt(coin.Amount).Ceil().RoundInt()
 }
