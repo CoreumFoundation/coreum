@@ -30,7 +30,7 @@ func DefaultParams() Params {
 			EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
 			// TODO: adjust MaxBlockGas before creating testnet & mainnet
 			MaxBlockGas:         50000000, // 400 * BankSend message
-			ShortEmaBlockLength: 10,
+			ShortEmaBlockLength: 50,
 			LongEmaBlockLength:  1000,
 		},
 	}
