@@ -1,6 +1,6 @@
 //go:build integrationtests
 
-package feemodel
+package modules
 
 import (
 	"testing"
@@ -8,14 +8,36 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests"
+	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
+
+// TestQueryingMinGasPrice check that it's possible to query current minimum gas price required by the network.
+func TestQueryingMinGasPrice(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	feemodelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
+	res, err := feemodelClient.MinGasPrice(ctx, &feemodeltypes.QueryMinGasPriceRequest{})
+	require.NoError(t, err)
+
+	logger.Get(ctx).Info("Queried minimum gas price required", zap.Stringer("gasPrice", res.MinGasPrice))
+
+	params := chain.NetworkConfig.Fee.FeeModel.Params()
+	model := feemodeltypes.NewModel(params)
+
+	require.False(t, res.MinGasPrice.Amount.IsNil())
+	assert.True(t, res.MinGasPrice.Amount.GTE(model.CalculateGasPriceWithMaxDiscount()))
+	assert.True(t, res.MinGasPrice.Amount.LTE(model.CalculateMaxGasPrice()))
+	assert.Equal(t, chain.NetworkConfig.Denom, res.MinGasPrice.Denom)
+}
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
 func TestFeeModelProposalParamChange(t *testing.T) {

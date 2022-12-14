@@ -1,6 +1,6 @@
 //go:build integrationtests
 
-package gov
+package modules
 
 import (
 	"strings"
@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/integration-tests"
+	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 

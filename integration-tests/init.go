@@ -39,7 +39,7 @@ var (
 	chain Chain
 )
 
-// Command to run the integration tests: go test --tags=integrationtests -p 1 -parallel 20 ./... --log-format=yaml --cored-address="http://localhost:26657"
+// Command to run the integration tests: go test -v --tags=integrationtests -p 1 -parallel 20 ./... --log-format=yaml --cored-address="http://localhost:26657"
 func init() {
 	var (
 		fundingMnemonic, coredAddress, logFormat string

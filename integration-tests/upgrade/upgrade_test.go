@@ -18,6 +18,8 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 )
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
