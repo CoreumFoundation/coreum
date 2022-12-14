@@ -25,7 +25,7 @@ func TestIssueFungibleToken(t *testing.T) {
 	subunit := "wsatoshi"
 	precision := "8"
 
-	args := []string{symbol, subunit, precision, testNetwork.Validators[0].Address.String(), "777", `"My Token"`}
+	args := []string{symbol, subunit, precision, "777", `"My Token"`}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)

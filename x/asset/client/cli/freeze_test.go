@@ -25,7 +25,7 @@ func TestFreezeFungibleToken(t *testing.T) {
 	denom := types.BuildFungibleTokenDenom(subunit, issuer)
 
 	// Issue token
-	args := []string{symbol, subunit, precision, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
+	args := []string{symbol, subunit, precision, "777", `"My Token"`,
 		"--features", types.FungibleTokenFeature_freeze.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
@@ -49,7 +49,7 @@ func TestFreezeFungibleToken(t *testing.T) {
 		symbol := "l" + uuid.NewString()[:4]
 		subunit := "sub" + symbol
 		denom := types.BuildFungibleTokenDenom(subunit, issuer)
-		args := []string{symbol, subunit, precision, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
+		args := []string{symbol, subunit, precision, "777", `"My Token"`,
 			"--features", types.FungibleTokenFeature_freeze.String(), //nolint:nosnakecase
 		}
 		args = append(args, txValidator1Args(testNetwork)...)
