@@ -16,8 +16,8 @@ import (
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// TestMultiSendBatch tests MultiSend message with maximum amount of addresses.
-func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestMultiSendBatchOutputs tests MultiSend message with maximum amount of addresses.
+func TestMultiSendBatchOutputs(ctx context.Context, t testing.T, chain testing.Chain) {
 	issuer := chain.GenAccount()
 	requireT := require.New(t)
 
@@ -67,7 +67,7 @@ func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 		Messages: append([]sdk.Msg{issueMsg}, multiSendMsgs...),
-		Amount:   sdk.NewInt(10_000_000), // add more coins to cover nondeterministic part
+		Amount:   sdk.NewInt(10_000_000), // add more coins to cover extra bytes because of the message size
 	}))
 
 	// issue fungible tokens
@@ -90,15 +90,15 @@ func TestMultiSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 			msg,
 		)
 		requireT.NoError(err)
-		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch MultiSend tx, hash: %s", res.TxHash))
+		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch MultiSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed))
 	}
 	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with MultiSend", time.Since(start), numAccountsToFund*interactionsToFund))
 
 	assertBatchAccounts(ctx, chain, coinToFund, interactionsToFund, fundedAccounts, denom, requireT)
 }
 
-// TestBankSendBatch tests BankSend message with maximum amount of accounts.
-func TestBankSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestSendBatchMsgs tests BankSend message with maximum amount of accounts.
+func TestSendBatchMsgs(ctx context.Context, t testing.T, chain testing.Chain) {
 	issuer := chain.GenAccount()
 	requireT := require.New(t)
 
@@ -158,7 +158,7 @@ func TestBankSendBatch(ctx context.Context, t testing.T, chain testing.Chain) {
 			chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendSendMsgs...)),
 			bankSendSendMsgs...)
 		requireT.NoError(err)
-		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch BankSend tx, hash: %s", res.TxHash))
+		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch BankSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed))
 	}
 	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with BankSend", time.Since(start), numAccountsToFund*interactionsToFund))
 
