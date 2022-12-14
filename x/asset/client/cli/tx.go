@@ -131,7 +131,7 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 			if len(burnRateStr) > 0 {
 				burnRate, err = sdk.NewDecFromStr(burnRateStr)
 				if err != nil {
-					return errors.Wrapf(err, "burn rate must be a float value between 0 and 1, with max 4 decimal places")
+					return errors.Wrapf(err, "invalid burn_rate")
 				}
 			}
 

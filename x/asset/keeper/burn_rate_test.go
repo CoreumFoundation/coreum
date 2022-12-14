@@ -15,86 +15,56 @@ import (
 	"github.com/CoreumFoundation/coreum/x/wbank/keeper"
 )
 
-func TestValidateBurnRate(t *testing.T) {
-	testCases := []struct {
-		rate    string
-		invalid bool
-	}{
-		{
-			rate: "0",
-		},
-		{
-			rate: "1.00",
-		},
-		{
-			rate: "0.10",
-		},
-		{
-			rate: "0.10000",
-		},
-		{
-			rate: "0.0001",
-		},
-		{
-			rate:    "0.00001",
-			invalid: true,
-		},
-		{
-			rate:    "-0.01",
-			invalid: true,
-		},
-		{
-			rate:    "-1.0",
-			invalid: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		name := fmt.Sprintf("%+v", tc)
-		t.Run(name, func(t *testing.T) {
-			assertT := assert.New(t)
-			rate := sdk.MustNewDecFromStr(tc.rate)
-			err := types.ValidateBurnRate(rate)
-			if tc.invalid {
-				assertT.Error(err)
-			} else {
-				assertT.NoError(err)
-			}
-		})
-	}
-}
-
 func TestKeeperCalculateBurnCoin(t *testing.T) {
 	testCases := []struct {
-		rate     string
-		input    int64
-		expected int64
+		rate       string
+		sendAmount int64
+		burnAmount int64
 	}{
 		{
-			rate:     "0",
-			input:    1,
-			expected: 0,
+			rate:       "0",
+			sendAmount: 1,
+			burnAmount: 0,
 		},
 		{
-			rate:     "0.01",
-			input:    1,
-			expected: 1,
+			rate:       "0.01",
+			sendAmount: 1,
+			burnAmount: 1,
 		},
 		{
-			rate:     "0.01",
-			input:    101,
-			expected: 2,
+			rate:       "0.01",
+			sendAmount: 101,
+			burnAmount: 2,
 		},
 		{
-			rate:     "0.01",
-			input:    100,
-			expected: 1,
+			rate:       "0.01",
+			sendAmount: 100,
+			burnAmount: 1,
 		},
 		{
-			rate:     "0.1",
-			input:    100,
-			expected: 10,
+			rate:       "0.1",
+			sendAmount: 100,
+			burnAmount: 10,
+		},
+		{
+			rate:       "1.0",
+			sendAmount: 73,
+			burnAmount: 73,
+		},
+		{
+			rate:       "0.1234",
+			sendAmount: 97,
+			burnAmount: 12,
+		},
+		{
+			rate:       "0.0003",
+			sendAmount: 492301,
+			burnAmount: 148,
+		},
+		{
+			rate:       "0.0103",
+			sendAmount: 492301,
+			burnAmount: 5071,
 		},
 	}
 
@@ -106,8 +76,8 @@ func TestKeeperCalculateBurnCoin(t *testing.T) {
 			definition := types.FungibleTokenDefinition{
 				BurnRate: sdk.MustNewDecFromStr(tc.rate),
 			}
-			burnCoin := definition.CalculateBurnRateAmount(sdk.NewCoin("test", sdk.NewInt(tc.input)))
-			assertT.EqualValues(sdk.NewInt(tc.expected).String(), burnCoin.String())
+			burnCoin := definition.CalculateBurnRateAmount(sdk.NewCoin("test", sdk.NewInt(tc.sendAmount)))
+			assertT.EqualValues(sdk.NewInt(tc.burnAmount).String(), burnCoin.String())
 		})
 	}
 }

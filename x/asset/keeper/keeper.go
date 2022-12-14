@@ -29,6 +29,9 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 }
 
 // BeforeSendCoins checks that a transfer request is allowed or not
+//
+// TODO: we should try to express this function in terms of BeforeInputOutputCoins so
+// we will have a single place to enforce our logic
 func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
 	for _, coin := range coins {
 		ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
