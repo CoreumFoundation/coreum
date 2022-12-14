@@ -34,7 +34,7 @@ func TestMultiSendBatchOutputs(ctx context.Context, t testing.T, chain testing.C
 	}
 
 	numAccountsToFund := 1000 // 1700 was the max accepted
-	interactionsToFund := 2
+	iterationsToFund := 2
 
 	inputItem := banktypes.Input{
 		Address: issuer.String(),
@@ -55,8 +55,8 @@ func TestMultiSendBatchOutputs(ctx context.Context, t testing.T, chain testing.C
 		})
 	}
 	// prepare MultiSend messages
-	multiSendMsgs := make([]sdk.Msg, 0, interactionsToFund)
-	for i := 0; i < interactionsToFund; i++ {
+	multiSendMsgs := make([]sdk.Msg, 0, iterationsToFund)
+	for i := 0; i < iterationsToFund; i++ {
 		multiSendMsgs = append(multiSendMsgs, &banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				inputItem,
@@ -92,9 +92,9 @@ func TestMultiSendBatchOutputs(ctx context.Context, t testing.T, chain testing.C
 		requireT.NoError(err)
 		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch MultiSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed))
 	}
-	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with MultiSend", time.Since(start), numAccountsToFund*interactionsToFund))
+	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with MultiSend", time.Since(start), numAccountsToFund*iterationsToFund))
 
-	assertBatchAccounts(ctx, chain, coinToFund, interactionsToFund, fundedAccounts, denom, requireT)
+	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
 }
 
 // TestSendBatchMsgs tests BankSend message with maximum amount of accounts.
@@ -115,7 +115,7 @@ func TestSendBatchMsgs(ctx context.Context, t testing.T, chain testing.Chain) {
 	}
 
 	numAccountsToFund := 400 // 600 was the max accepted
-	interactionsToFund := 3
+	iterationsToFund := 3
 
 	denom := assettypes.BuildFungibleTokenDenom(issueMsg.Subunit, issuer)
 	bankSendSendMsgs := make([]sdk.Msg, 0, numAccountsToFund)
@@ -133,7 +133,7 @@ func TestSendBatchMsgs(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	fundMsgs := make([]sdk.Msg, 0)
 	fundMsgs = append(fundMsgs, issueMsg)
-	for i := 0; i < interactionsToFund; i++ {
+	for i := 0; i < iterationsToFund; i++ {
 		fundMsgs = append(fundMsgs, bankSendSendMsgs...)
 	}
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
@@ -151,7 +151,7 @@ func TestSendBatchMsgs(ctx context.Context, t testing.T, chain testing.Chain) {
 
 	// send coins in loop
 	start := time.Now()
-	for i := 0; i < interactionsToFund; i++ {
+	for i := 0; i < iterationsToFund; i++ {
 		res, err := tx.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(issuer),
@@ -160,28 +160,25 @@ func TestSendBatchMsgs(ctx context.Context, t testing.T, chain testing.Chain) {
 		requireT.NoError(err)
 		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch BankSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed))
 	}
-	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with BankSend", time.Since(start), numAccountsToFund*interactionsToFund))
+	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with BankSend", time.Since(start), numAccountsToFund*iterationsToFund))
 
-	assertBatchAccounts(ctx, chain, coinToFund, interactionsToFund, fundedAccounts, denom, requireT)
+	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
 }
 
 func assertBatchAccounts(
 	ctx context.Context,
 	chain testing.Chain,
-	coinToFund sdk.Coin,
-	interactionsToFund int,
+	expectedCoins sdk.Coins,
 	fundedAccounts []sdk.AccAddress,
 	denom string,
 	requireT *require.Assertions) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-
-	coinOnAcc := sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(interactionsToFund)))
 	for _, acc := range fundedAccounts {
 		res, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: acc.String(),
 			Denom:   denom,
 		})
 		requireT.NoError(err)
-		requireT.Equal(coinOnAcc.String(), res.Balance.String())
+		requireT.Equal(expectedCoins.String(), res.Balance.String())
 	}
 }
