@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/grpc"
 	googlegrpc "google.golang.org/grpc"
@@ -37,7 +38,7 @@ func (r *deterministicGasRouter) Route(ctx sdk.Context, path string) sdk.Handler
 
 func (r *deterministicGasRouter) handler(baseHandler sdk.Handler) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		ctx = ctxForDeterministicGas(ctx, msg, r.deterministicGasRequirements)
+		ctx, _, _ = ctxForDeterministicGas(ctx, msg, r.deterministicGasRequirements)
 		return baseHandler(ctx, msg)
 	}
 }
@@ -89,10 +90,13 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 			return method.Handler(srv, ctx, dec, func(ctx context.Context, req interface{}, info *googlegrpc.UnaryServerInfo, handler googlegrpc.UnaryHandler) (resp interface{}, err error) {
 				return interceptor(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
 					sdkCtx := sdk.UnwrapSDKContext(ctx)
-					sdkCtx = ctxForDeterministicGas(sdkCtx, req.(sdk.Msg), s.deterministicGasRequirements)
-					ctx = sdk.WrapSDKContext(sdkCtx)
+					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, req.(sdk.Msg), s.deterministicGasRequirements)
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
-					return handler(ctx, req)
+					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
+					if isDeterministic {
+						gasMetric(sdkCtx, newSDKCtx, gasBefore, method.MethodName)
+					}
+					return res, err
 				})
 			})
 		}
@@ -100,15 +104,26 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 	s.baseServer.RegisterService(sd, handler)
 }
 
-func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequirements config.DeterministicGasRequirements) sdk.Context {
+func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequirements config.DeterministicGasRequirements) (sdk.Context, sdk.Gas, bool) {
 	gasRequired, exists := deterministicGasRequirements.GasRequiredByMessage(msg)
+	gasBefore := ctx.GasMeter().GasConsumed()
 	if exists {
 		// Fixed gas is consumed on original gas meter to require and report deterministic gas amount
 		ctx.GasMeter().ConsumeGas(gasRequired, fmt.Sprintf("DeterministicGas (gas required: %d, message type: %T)", gasRequired, msg))
 
-		// We pass much higher amount of gas to handler to be sure that it succeeds.
+		// We pass much higher amount of gas to hanfdler to be sure that it succeeds.
 		// We want to avoid passing infinite gas meter to always have a limit in case of mistake.
 		ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMultiplier * gasRequired))
 	}
-	return ctx
+	return ctx, gasBefore, exists
+}
+
+func gasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgType string) {
+	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
+	nondeterministicGas := newCtx.GasMeter().GasConsumed()
+
+	gasFactor := (float32(deterministicGas) - float32(nondeterministicGas)) / float32(nondeterministicGas)
+	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
+		{Name: "tx_type", Value: msgType},
+	})
 }
