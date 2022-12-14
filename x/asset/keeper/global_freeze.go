@@ -45,6 +45,7 @@ func (k Keeper) GloballyUnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAdd
 	return nil
 }
 
+// SetFungibleTokenGlobalFreeze enables/disables global freeze on a fungible token depending on frozen arg.
 func (k Keeper) SetFungibleTokenGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 	if frozen {
 		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezePrefix(denom), globalFreezeEnabledStoreVal)
