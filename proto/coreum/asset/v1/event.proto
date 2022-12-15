@@ -21,6 +21,10 @@ message EventFungibleTokenIssued {
   ];
   string description = 8;
   repeated FungibleTokenFeature features = 9;
+  string burn_rate = 10 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
 }
 
 message EventFungibleTokenFrozenAmountChanged {

@@ -83,9 +83,18 @@ func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(ctx sdk.Context, senderA
 
 // SendCoins is a BaseKeeper SendCoins wrapped method.
 func (k BaseKeeperWrapper) SendCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	if err := k.ftProvider.IsSendAllowed(ctx, fromAddr, toAddr, amt); err != nil {
+	if err := k.ftProvider.BeforeSendCoins(ctx, fromAddr, toAddr, amt); err != nil {
 		return err
 	}
 
 	return k.BaseKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
+}
+
+// InputOutputCoins is a BaseKeeper InputOutputCoins wrapped method.
+func (k BaseKeeperWrapper) InputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	if err := k.ftProvider.BeforeInputOutputCoins(ctx, inputs, outputs); err != nil {
+		return err
+	}
+
+	return k.BaseKeeper.InputOutputCoins(ctx, inputs, outputs)
 }

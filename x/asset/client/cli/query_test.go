@@ -44,6 +44,7 @@ func TestQueryFungibleToken(t *testing.T) {
 		Precision:   8,
 		Description: "",
 		Features:    []types.FungibleTokenFeature{},
+		BurnRate:    sdk.NewDec(0),
 	}, resp.FungibleToken)
 }
 

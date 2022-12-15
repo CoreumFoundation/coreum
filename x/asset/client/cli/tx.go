@@ -21,6 +21,7 @@ import (
 // Flags defined on transactions
 const (
 	featuresFlag = "features"
+	burnRateFlag = "burn-rate"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -72,7 +73,7 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [subunit] [precision] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ","),
+		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12",
 		Args:  cobra.ExactArgs(6),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -122,6 +123,18 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 				return errors.WithStack(err)
 			}
 
+			burnRate := sdk.NewDec(0)
+			burnRateStr, err := cmd.Flags().GetString(burnRateFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			if len(burnRateStr) > 0 {
+				burnRate, err = sdk.NewDecFromStr(burnRateStr)
+				if err != nil {
+					return errors.Wrapf(err, "invalid burn-rate")
+				}
+			}
+
 			var features []types.FungibleTokenFeature
 			for _, str := range featuresString {
 				feature, ok := types.FungibleTokenFeature_value[str] //nolint:nosnakecase
@@ -141,12 +154,14 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 				InitialAmount: initialAmount,
 				Description:   description,
 				Features:      features,
+				BurnRate:      burnRate,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	cmd.Flags().StringSlice(featuresFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
+	cmd.Flags().String(burnRateFlag, "0", "Burn rate indicates the rate at which coins will be burned on top of the send amount in every send action. Must be between 0 and 1.")
 
 	flags.AddTxFlagsToCmd(cmd)
 
