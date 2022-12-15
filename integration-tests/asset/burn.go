@@ -31,13 +31,13 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 				&assettypes.MsgBurnFungibleToken{},
 				&assettypes.MsgBurnFungibleToken{},
 			},
-		}),
+		}))
+	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgBurnFungibleToken{},
 			},
-		}),
-	)
+		}))
 
 	// Issue an unburnable fungible token
 	issueMsg := &assettypes.MsgIssueFungibleToken{

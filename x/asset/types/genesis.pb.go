@@ -27,10 +27,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines the asset module's genesis state.
 type GenesisState struct {
-	// fungible_tokens keep the fungible token state
-	FungibleTokens []FungibleToken `protobuf:"bytes,1,rep,name=fungible_tokens,json=fungibleTokens,proto3" json:"fungible_tokens"`
-	// frozen_balances contains the frozen balances on all of the accounts
-	FrozenBalances []Balance `protobuf:"bytes,2,rep,name=frozen_balances,json=frozenBalances,proto3" json:"frozen_balances"`
+	FungibleTokens FungibleTokenState `protobuf:"bytes,1,opt,name=fungible_tokens,json=fungibleTokens,proto3" json:"fungible_tokens"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -66,41 +63,34 @@ func (m *GenesisState) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GenesisState proto.InternalMessageInfo
 
-func (m *GenesisState) GetFungibleTokens() []FungibleToken {
+func (m *GenesisState) GetFungibleTokens() FungibleTokenState {
 	if m != nil {
 		return m.FungibleTokens
 	}
-	return nil
+	return FungibleTokenState{}
 }
 
-func (m *GenesisState) GetFrozenBalances() []Balance {
-	if m != nil {
-		return m.FrozenBalances
-	}
-	return nil
+type FungibleTokenState struct {
+	// fungible_tokens keep the fungible token state
+	Tokens []FungibleToken `protobuf:"bytes,1,rep,name=tokens,proto3" json:"tokens"`
+	// frozen_balances contains the frozen balances on all of the accounts
+	FrozenBalances []FungibleTokenBalance `protobuf:"bytes,2,rep,name=frozen_balances,json=frozenBalances,proto3" json:"frozen_balances"`
+	// whitelisted_balances contains the whitelisted balances on all of the accounts
+	WhitelistedBalances []FungibleTokenBalance `protobuf:"bytes,3,rep,name=whitelisted_balances,json=whitelistedBalances,proto3" json:"whitelisted_balances"`
 }
 
-// Balance defines an account address and balance pair used in the bank module's
-// genesis state.
-type Balance struct {
-	// address is the address of the balance holder.
-	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	// coins defines the different coins this balance holds.
-	Coins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
-}
-
-func (m *Balance) Reset()         { *m = Balance{} }
-func (m *Balance) String() string { return proto.CompactTextString(m) }
-func (*Balance) ProtoMessage()    {}
-func (*Balance) Descriptor() ([]byte, []int) {
+func (m *FungibleTokenState) Reset()         { *m = FungibleTokenState{} }
+func (m *FungibleTokenState) String() string { return proto.CompactTextString(m) }
+func (*FungibleTokenState) ProtoMessage()    {}
+func (*FungibleTokenState) Descriptor() ([]byte, []int) {
 	return fileDescriptor_c106c943c1ca7f27, []int{1}
 }
-func (m *Balance) XXX_Unmarshal(b []byte) error {
+func (m *FungibleTokenState) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Balance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *FungibleTokenState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Balance.Marshal(b, m, deterministic)
+		return xxx_messageInfo_FungibleTokenState.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -110,50 +100,130 @@ func (m *Balance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Balance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Balance.Merge(m, src)
+func (m *FungibleTokenState) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FungibleTokenState.Merge(m, src)
 }
-func (m *Balance) XXX_Size() int {
+func (m *FungibleTokenState) XXX_Size() int {
 	return m.Size()
 }
-func (m *Balance) XXX_DiscardUnknown() {
-	xxx_messageInfo_Balance.DiscardUnknown(m)
+func (m *FungibleTokenState) XXX_DiscardUnknown() {
+	xxx_messageInfo_FungibleTokenState.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Balance proto.InternalMessageInfo
+var xxx_messageInfo_FungibleTokenState proto.InternalMessageInfo
+
+func (m *FungibleTokenState) GetTokens() []FungibleToken {
+	if m != nil {
+		return m.Tokens
+	}
+	return nil
+}
+
+func (m *FungibleTokenState) GetFrozenBalances() []FungibleTokenBalance {
+	if m != nil {
+		return m.FrozenBalances
+	}
+	return nil
+}
+
+func (m *FungibleTokenState) GetWhitelistedBalances() []FungibleTokenBalance {
+	if m != nil {
+		return m.WhitelistedBalances
+	}
+	return nil
+}
+
+// Balance defines an account address and balance pair used in the bank module's
+// genesis state.
+type FungibleTokenBalance struct {
+	// address is the address of the balance holder.
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	// coins defines the different coins this balance holds.
+	Coins github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`
+}
+
+func (m *FungibleTokenBalance) Reset()         { *m = FungibleTokenBalance{} }
+func (m *FungibleTokenBalance) String() string { return proto.CompactTextString(m) }
+func (*FungibleTokenBalance) ProtoMessage()    {}
+func (*FungibleTokenBalance) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c106c943c1ca7f27, []int{2}
+}
+func (m *FungibleTokenBalance) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *FungibleTokenBalance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_FungibleTokenBalance.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *FungibleTokenBalance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FungibleTokenBalance.Merge(m, src)
+}
+func (m *FungibleTokenBalance) XXX_Size() int {
+	return m.Size()
+}
+func (m *FungibleTokenBalance) XXX_DiscardUnknown() {
+	xxx_messageInfo_FungibleTokenBalance.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FungibleTokenBalance proto.InternalMessageInfo
+
+func (m *FungibleTokenBalance) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+func (m *FungibleTokenBalance) GetCoins() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
 
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "coreum.asset.v1.GenesisState")
-	proto.RegisterType((*Balance)(nil), "coreum.asset.v1.Balance")
+	proto.RegisterType((*FungibleTokenState)(nil), "coreum.asset.v1.FungibleTokenState")
+	proto.RegisterType((*FungibleTokenBalance)(nil), "coreum.asset.v1.FungibleTokenBalance")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/genesis.proto", fileDescriptor_c106c943c1ca7f27) }
 
 var fileDescriptor_c106c943c1ca7f27 = []byte{
-	// 362 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x51, 0xbd, 0x4e, 0xf3, 0x30,
-	0x14, 0x4d, 0xbe, 0xbf, 0x7e, 0x04, 0x44, 0xa5, 0x88, 0x21, 0x14, 0xe1, 0xa0, 0x4e, 0x5d, 0xb0,
-	0x1b, 0xd8, 0x18, 0x53, 0xa9, 0x95, 0x90, 0x58, 0x0a, 0x13, 0x4b, 0xe5, 0x24, 0x6e, 0x88, 0xda,
-	0xda, 0x55, 0xae, 0x53, 0x01, 0x4f, 0xc0, 0xd8, 0x47, 0xe8, 0xc4, 0xc0, 0x93, 0x74, 0xec, 0xc8,
-	0x04, 0xa8, 0x5d, 0x78, 0x0c, 0x14, 0xdb, 0x45, 0x55, 0x99, 0x12, 0xdf, 0x73, 0xee, 0x39, 0xf7,
-	0x9e, 0xeb, 0x1c, 0xc7, 0x22, 0x67, 0xc5, 0x88, 0x50, 0x00, 0x26, 0xc9, 0x24, 0x20, 0x29, 0xe3,
-	0x0c, 0x32, 0xc0, 0xe3, 0x5c, 0x48, 0xe1, 0x56, 0x35, 0x8c, 0x15, 0x8c, 0x27, 0x41, 0xed, 0x20,
-	0x15, 0xa9, 0x50, 0x18, 0x29, 0xff, 0x34, 0xad, 0x86, 0x62, 0x01, 0x23, 0x01, 0x24, 0xa2, 0xc0,
-	0xc8, 0x24, 0x88, 0x98, 0xa4, 0x01, 0x89, 0x45, 0xc6, 0x0d, 0x7e, 0xb4, 0xed, 0xa2, 0xf5, 0x14,
-	0x58, 0x7f, 0xb6, 0x9d, 0xbd, 0x8e, 0x76, 0xbd, 0x96, 0x54, 0x32, 0xf7, 0xca, 0xa9, 0xf6, 0x0b,
-	0x9e, 0x66, 0xd1, 0x90, 0xf5, 0xa4, 0x18, 0x30, 0x0e, 0x9e, 0x7d, 0xf2, 0xbb, 0xb1, 0x7b, 0x86,
-	0xf0, 0xd6, 0x38, 0xb8, 0x6d, 0x78, 0x37, 0x25, 0x2d, 0xfc, 0x33, 0x7f, 0xf3, 0xad, 0xee, 0x7e,
-	0x7f, 0xb3, 0x08, 0x6e, 0xc7, 0xa9, 0xf6, 0x73, 0xf1, 0xc8, 0x78, 0x2f, 0xa2, 0x43, 0xca, 0x63,
-	0x06, 0xde, 0x2f, 0x25, 0xe7, 0xfd, 0x90, 0x0b, 0x35, 0xe1, 0x5b, 0x48, 0xb5, 0x99, 0x22, 0xd4,
-	0xa7, 0xb6, 0x53, 0x31, 0x0f, 0xd7, 0x73, 0x2a, 0x34, 0x49, 0x72, 0x06, 0xe5, 0x6c, 0x76, 0x63,
-	0xa7, 0xbb, 0x7e, 0xba, 0xd4, 0xf9, 0x5b, 0x6e, 0xbe, 0x36, 0x39, 0xc4, 0x3a, 0x1b, 0x5c, 0x66,
-	0x83, 0x4d, 0x36, 0xb8, 0x25, 0x32, 0x1e, 0x36, 0x4b, 0x97, 0x97, 0x77, 0xbf, 0x91, 0x66, 0xf2,
-	0xae, 0x88, 0x70, 0x2c, 0x46, 0xc4, 0x04, 0xa9, 0x3f, 0xa7, 0x90, 0x0c, 0x88, 0x7c, 0x18, 0x33,
-	0x50, 0x0d, 0xd0, 0xd5, 0xca, 0x17, 0xff, 0x9f, 0x66, 0xbe, 0xf5, 0x39, 0xf3, 0xad, 0xf0, 0x72,
-	0xbe, 0x44, 0xf6, 0x62, 0x89, 0xec, 0x8f, 0x25, 0xb2, 0xa7, 0x2b, 0x64, 0x2d, 0x56, 0xc8, 0x7a,
-	0x5d, 0x21, 0xeb, 0xb6, 0xb9, 0x21, 0xda, 0x52, 0x6b, 0xb6, 0x45, 0xc1, 0x13, 0x2a, 0x33, 0xc1,
-	0x89, 0x39, 0xc7, 0xbd, 0x39, 0x88, 0xb2, 0x88, 0xfe, 0xa9, 0x73, 0x9c, 0x7f, 0x05, 0x00, 0x00,
-	0xff, 0xff, 0xe0, 0x9e, 0x32, 0xf8, 0x13, 0x02, 0x00, 0x00,
+	// 398 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0xcd, 0xee, 0x12, 0x31,
+	0x14, 0xc5, 0x67, 0xfe, 0x7f, 0xc5, 0x58, 0x8c, 0x24, 0x95, 0x05, 0x62, 0x2c, 0x06, 0x63, 0xc2,
+	0xc6, 0x96, 0xc1, 0xad, 0x2b, 0x48, 0x30, 0x71, 0x39, 0xb2, 0x72, 0x21, 0xe9, 0xcc, 0x94, 0xa1,
+	0x01, 0x5a, 0x32, 0xb7, 0x83, 0x1f, 0x4f, 0xe0, 0xd2, 0xc4, 0xb7, 0xf0, 0x49, 0x58, 0xb2, 0x74,
+	0xa5, 0x06, 0x5e, 0xc4, 0x4c, 0x5b, 0x90, 0xa0, 0xd1, 0xb8, 0x9a, 0x8f, 0x73, 0xee, 0xef, 0xf4,
+	0xf6, 0x5e, 0xf4, 0x30, 0xd5, 0x85, 0x28, 0x57, 0x8c, 0x03, 0x08, 0xc3, 0x36, 0x11, 0xcb, 0x85,
+	0x12, 0x20, 0x81, 0xae, 0x0b, 0x6d, 0x34, 0x6e, 0x38, 0x99, 0x5a, 0x99, 0x6e, 0xa2, 0x76, 0x33,
+	0xd7, 0xb9, 0xb6, 0x1a, 0xab, 0xde, 0x9c, 0xad, 0x4d, 0x52, 0x0d, 0x2b, 0x0d, 0x2c, 0xe1, 0x20,
+	0xd8, 0x26, 0x4a, 0x84, 0xe1, 0x11, 0x4b, 0xb5, 0x54, 0x5e, 0x7f, 0x70, 0x99, 0xe2, 0x78, 0x56,
+	0xec, 0x26, 0xe8, 0xce, 0x0b, 0x17, 0xfa, 0xca, 0x70, 0x23, 0x70, 0x8c, 0x1a, 0xb3, 0x52, 0xe5,
+	0x32, 0x59, 0x8a, 0xa9, 0xd1, 0x0b, 0xa1, 0xa0, 0x15, 0x3e, 0x0a, 0x7b, 0xf5, 0xc1, 0x63, 0x7a,
+	0x71, 0x1a, 0x3a, 0xf6, 0xbe, 0x49, 0x65, 0xb3, 0xd5, 0xc3, 0x1b, 0xdb, 0x6f, 0x9d, 0x20, 0xbe,
+	0x3b, 0x3b, 0x57, 0xa0, 0xfb, 0xf1, 0x0a, 0xe1, 0xdf, 0xcd, 0xf8, 0x39, 0xaa, 0x9d, 0x12, 0xae,
+	0x7b, 0xf5, 0x01, 0xf9, 0x7b, 0x82, 0x87, 0xfb, 0x1a, 0x3c, 0x41, 0x8d, 0x59, 0xa1, 0x3f, 0x08,
+	0x35, 0x4d, 0xf8, 0x92, 0xab, 0x54, 0x40, 0xeb, 0xca, 0x62, 0x9e, 0xfc, 0x03, 0xe3, 0xdc, 0xa7,
+	0xa3, 0x5a, 0x86, 0xff, 0x09, 0xf8, 0x0d, 0x6a, 0xbe, 0x9d, 0x4b, 0x23, 0x96, 0x12, 0x8c, 0xc8,
+	0x7e, 0xa1, 0xaf, 0xff, 0x1f, 0x7d, 0xef, 0x0c, 0x74, 0xe4, 0x77, 0x3f, 0x87, 0xa8, 0xf9, 0xa7,
+	0x1a, 0xdc, 0x42, 0xb7, 0x78, 0x96, 0x15, 0x02, 0xdc, 0x7d, 0xdf, 0x8e, 0x8f, 0x9f, 0x98, 0xa3,
+	0x9b, 0xd5, 0x30, 0x8f, 0xed, 0xdd, 0xa7, 0x6e, 0xdc, 0xb4, 0x1a, 0x37, 0xf5, 0xe3, 0xa6, 0x23,
+	0x2d, 0xd5, 0xb0, 0x5f, 0xe5, 0x7e, 0xf9, 0xde, 0xe9, 0xe5, 0xd2, 0xcc, 0xcb, 0x84, 0xa6, 0x7a,
+	0xc5, 0xfc, 0x6e, 0xb8, 0xc7, 0x53, 0xc8, 0x16, 0xcc, 0xbc, 0x5f, 0x0b, 0xb0, 0x05, 0x10, 0x3b,
+	0xf2, 0xf0, 0xe5, 0x76, 0x4f, 0xc2, 0xdd, 0x9e, 0x84, 0x3f, 0xf6, 0x24, 0xfc, 0x74, 0x20, 0xc1,
+	0xee, 0x40, 0x82, 0xaf, 0x07, 0x12, 0xbc, 0xee, 0x9f, 0xa1, 0x46, 0xb6, 0xf7, 0xb1, 0x2e, 0x55,
+	0xc6, 0x8d, 0xd4, 0x8a, 0xf9, 0xbd, 0x7a, 0xe7, 0x37, 0xcb, 0x82, 0x93, 0x9a, 0xdd, 0xab, 0x67,
+	0x3f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x91, 0xe8, 0x2c, 0xd3, 0xdc, 0x02, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -176,6 +246,53 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	{
+		size, err := m.FungibleTokens.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *FungibleTokenState) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FungibleTokenState) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FungibleTokenState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.WhitelistedBalances) > 0 {
+		for iNdEx := len(m.WhitelistedBalances) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.WhitelistedBalances[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
 	if len(m.FrozenBalances) > 0 {
 		for iNdEx := len(m.FrozenBalances) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -190,10 +307,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x12
 		}
 	}
-	if len(m.FungibleTokens) > 0 {
-		for iNdEx := len(m.FungibleTokens) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Tokens) > 0 {
+		for iNdEx := len(m.Tokens) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.FungibleTokens[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Tokens[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -207,7 +324,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Balance) Marshal() (dAtA []byte, err error) {
+func (m *FungibleTokenBalance) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -217,12 +334,12 @@ func (m *Balance) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Balance) MarshalTo(dAtA []byte) (int, error) {
+func (m *FungibleTokenBalance) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Balance) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *FungibleTokenBalance) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -268,8 +385,19 @@ func (m *GenesisState) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.FungibleTokens) > 0 {
-		for _, e := range m.FungibleTokens {
+	l = m.FungibleTokens.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	return n
+}
+
+func (m *FungibleTokenState) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Tokens) > 0 {
+		for _, e := range m.Tokens {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
@@ -280,10 +408,16 @@ func (m *GenesisState) Size() (n int) {
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
+	if len(m.WhitelistedBalances) > 0 {
+		for _, e := range m.WhitelistedBalances {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
 	return n
 }
 
-func (m *Balance) Size() (n int) {
+func (m *FungibleTokenBalance) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -366,8 +500,91 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.FungibleTokens = append(m.FungibleTokens, FungibleToken{})
-			if err := m.FungibleTokens[len(m.FungibleTokens)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.FungibleTokens.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FungibleTokenState) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FungibleTokenState: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FungibleTokenState: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tokens", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Tokens = append(m.Tokens, FungibleToken{})
+			if err := m.Tokens[len(m.Tokens)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -400,8 +617,42 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.FrozenBalances = append(m.FrozenBalances, Balance{})
+			m.FrozenBalances = append(m.FrozenBalances, FungibleTokenBalance{})
 			if err := m.FrozenBalances[len(m.FrozenBalances)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WhitelistedBalances", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WhitelistedBalances = append(m.WhitelistedBalances, FungibleTokenBalance{})
+			if err := m.WhitelistedBalances[len(m.WhitelistedBalances)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -426,7 +677,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Balance) Unmarshal(dAtA []byte) error {
+func (m *FungibleTokenBalance) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -449,10 +700,10 @@ func (m *Balance) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Balance: wiretype end group for non-group")
+			return fmt.Errorf("proto: FungibleTokenBalance: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Balance: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: FungibleTokenBalance: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

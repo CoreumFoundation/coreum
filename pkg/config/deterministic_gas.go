@@ -18,13 +18,14 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssueFungibleToken:            80000,
-		AssetMintFungibleToken:             35000,
-		AssetBurnFungibleToken:             35000,
-		AssetFreezeFungibleToken:           55000,
-		AssetUnfreezeFungibleToken:         55000,
-		AssetGloballyFreezeFungibleToken:   5000,
-		AssetGloballyUnfreezeFungibleToken: 5000,
+		AssetIssueFungibleToken:               80000,
+		AssetMintFungibleToken:                35000,
+		AssetBurnFungibleToken:                35000,
+		AssetFreezeFungibleToken:              55000,
+		AssetUnfreezeFungibleToken:            55000,
+		AssetGloballyFreezeFungibleToken:      5000,
+		AssetGloballyUnfreezeFungibleToken:    5000,
+		AssetSetWhitelistedLimitFungibleToken: 35000,
 
 		BankSendPerEntry:      22000,
 		BankMultiSendPerEntry: 27000,
@@ -64,13 +65,14 @@ type DeterministicGasRequirements struct {
 	FreeSignatures uint64
 
 	// x/asset
-	AssetIssueFungibleToken            uint64
-	AssetMintFungibleToken             uint64
-	AssetBurnFungibleToken             uint64
-	AssetFreezeFungibleToken           uint64
-	AssetUnfreezeFungibleToken         uint64
-	AssetGloballyFreezeFungibleToken   uint64
-	AssetGloballyUnfreezeFungibleToken uint64
+	AssetIssueFungibleToken               uint64
+	AssetMintFungibleToken                uint64
+	AssetBurnFungibleToken                uint64
+	AssetFreezeFungibleToken              uint64
+	AssetUnfreezeFungibleToken            uint64
+	AssetGloballyFreezeFungibleToken      uint64
+	AssetGloballyUnfreezeFungibleToken    uint64
+	AssetSetWhitelistedLimitFungibleToken uint64
 
 	// x/bank
 	BankSendPerEntry      uint64
@@ -98,6 +100,8 @@ type DeterministicGasRequirements struct {
 
 // GasRequiredByMessage returns gas required by a sdk.Msg.
 // If fixed gas is not specified for the message type it returns 0.
+//
+//nolint:funlen // it doesn't make sense to split entries
 func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
 	// Following is the list of messages having deterministic gas amount defined.
 	// To test the real gas usage return `false` and run an integration test which reports the used gas.
@@ -118,6 +122,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetMintFungibleToken, true
 	case *assettypes.MsgBurnFungibleToken:
 		return dgr.AssetBurnFungibleToken, true
+	case *assettypes.MsgSetWhitelistedLimitFungibleToken:
+		return dgr.AssetSetWhitelistedLimitFungibleToken, true
 	case *banktypes.MsgSend:
 		entriesNum := len(m.Amount)
 		if len(m.Amount) == 0 {

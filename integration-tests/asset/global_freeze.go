@@ -30,8 +30,7 @@ func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain tes
 				&assettypes.MsgGloballyUnfreezeFungibleToken{},
 				&banktypes.MsgSend{},
 			},
-		}),
-	)
+		}))
 
 	// Issue the new fungible token
 	issueMsg := &assettypes.MsgIssueFungibleToken{
