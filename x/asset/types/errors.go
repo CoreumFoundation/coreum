@@ -20,5 +20,5 @@ var (
 	// ErrWhitelistedLimitExceeded is returned when new balance after receiving coins exceeds the whitelisted limit
 	ErrWhitelistedLimitExceeded = sdkerrors.Register(ModuleName, 7, "whitelisted limit exceeded")
 	// ErrInvalidID is returned when the provided id is not of valid format
-	ErrInvalidID = sdkerrors.Register(ModuleName, 11, "id format is not valid")
+	ErrInvalidID = sdkerrors.Register(ModuleName, 8, "id format is not valid")
 )
