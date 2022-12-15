@@ -27,6 +27,8 @@ func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T,
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
+				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
+				&banktypes.MsgSend{},
 			},
 		}))
 
@@ -92,6 +94,8 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
+				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
+				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 			},
 		}))
@@ -129,6 +133,11 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 			assettypes.FungibleTokenFeature_whitelist, //nolint:nosnakecase
 		},
 	},
+		&assettypes.MsgSetWhitelistedLimitFungibleToken{
+			Sender:  issuer.String(),
+			Account: recipient.String(),
+			Coin:    sdk.NewCoin(denom, amount),
+		},
 		&banktypes.MsgSend{
 			FromAddress: issuer.String(),
 			ToAddress:   recipient.String(),
