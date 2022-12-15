@@ -33,7 +33,7 @@ func TestIssueNonFungibleTokenClass(ctx context.Context, t testing.T, chain test
 		Symbol:      "symbol",
 		Name:        "name",
 		Description: "description",
-		URI:         "https://my-class-meta.int/1",
+		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
 	}
 	res, err := tx.BroadcastTx(

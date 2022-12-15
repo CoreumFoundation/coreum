@@ -20,7 +20,7 @@ func TestCmdTxIssueNonFungibleTokenClass(t *testing.T) {
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
 
-	args := []string{symbol, "class name", "class description", "https://my-class-meta.int/1", "content-hash"}
+	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueNonFungibleTokenClass(), args)
 	requireT.NoError(err)

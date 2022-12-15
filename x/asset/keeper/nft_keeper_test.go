@@ -32,7 +32,7 @@ func TestNonFungibleTokenKeeper_IssueNonFungibleTokenClass(t *testing.T) {
 		Name:        "name",
 		Symbol:      "Symbol",
 		Description: "description",
-		URI:         "https://my-class-meta.int/1",
+		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
 		Data:        dataValue,
 	}
@@ -80,7 +80,7 @@ func TestNonFungibleTokenKeeper_MintNonFungibleToken(t *testing.T) {
 		Sender:  addr,
 		ClassID: classID,
 		ID:      "my-id",
-		URI:     "https://my-nft-meta.int/1",
+		URI:     "https://my-nft-meta.invalid/1",
 		URIHash: "content-hash",
 		Data:    dataValue,
 	}

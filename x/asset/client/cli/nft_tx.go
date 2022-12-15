@@ -42,7 +42,7 @@ func CmdTxIssueNonFungibleTokenClass() *cobra.Command {
 			fmt.Sprintf(`Issue new non-fungible token class.
 
 Example:
-$ %s tx asset nft issue-class abc "ABC Name" "ABC class description." https://my-class-meta.int/1 e000624 --from [issuer]
+$ %s tx asset nft issue-class abc "ABC Name" "ABC class description." https://my-class-meta.invalid/1 e000624 --from [issuer]
 `,
 				version.AppName,
 			),
@@ -88,7 +88,7 @@ func CmdTxMintNonFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Mint new non-fungible token.
 
 Example:
-$ %s tx asset nft mint abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 https://my-nft-meta.int/1 e000624 --from [sender]
+$ %s tx asset nft mint abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
 `,
 				version.AppName,
 			),

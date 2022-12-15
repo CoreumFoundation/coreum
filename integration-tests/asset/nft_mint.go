@@ -49,7 +49,7 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 		Sender:  issuer.String(),
 		ID:      "id-1",
 		ClassID: classID,
-		URI:     "https://my-class-meta.int/1",
+		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
 	}
 	res, err := tx.BroadcastTx(
