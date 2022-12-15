@@ -5,6 +5,7 @@ package upgrade
 import (
 	"context"
 	"strings"
+	"testing"
 	"time"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -19,7 +20,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 )
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
@@ -45,7 +45,7 @@ func TestUpgrade(t *testing.T) {
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, testing.NewFundedAccount(proposer, proposerBalance))
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
 	log.Info("Creating proposal for upgrading", zap.Int64("upgradeHeight", upgradeHeight))

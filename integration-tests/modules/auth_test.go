@@ -25,8 +25,8 @@ import (
 
 // TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other then CORE is rejected
 
-// TestFeeLimits verifies that invalid message gas won't be accepted.
-func TestFeeLimits(t *testing.T) {
+// TestAuthFeeLimits verifies that invalid message gas won't be accepted.
+func TestAuthFeeLimits(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -84,8 +84,8 @@ func TestFeeLimits(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestMultisig tests the cosmos-sdk multisig accounts and API.
-func TestMultisig(t *testing.T) {
+// TestAuthMultisig tests the cosmos-sdk multisig accounts and API.
+func TestAuthMultisig(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -181,9 +181,9 @@ func TestMultisig(t *testing.T) {
 	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
 }
 
-// TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
+// TestAuthUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
 // used to sign transaction
-func TestUnexpectedSequenceNumber(t *testing.T) {
+func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

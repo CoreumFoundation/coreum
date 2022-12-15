@@ -24,8 +24,8 @@ import (
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
-// TestSendDeterministicGas checks that transfer takes the deterministic amount of gas
-func TestSendDeterministicGas(t *testing.T) {
+// TestBankSendDeterministicGas checks that transfer takes the deterministic amount of gas
+func TestBankSendDeterministicGas(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -58,8 +58,8 @@ func TestSendDeterministicGas(t *testing.T) {
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
-// TestSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
-func TestSendDeterministicGasTwoBankSends(t *testing.T) {
+// TestBankSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
+func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -92,8 +92,8 @@ func TestSendDeterministicGasTwoBankSends(t *testing.T) {
 	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
 }
 
-// TestSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
-func TestSendDeterministicGasManyCoins(t *testing.T) {
+// TestBankSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
+func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -167,8 +167,8 @@ func TestSendDeterministicGasManyCoins(t *testing.T) {
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
-// TestSendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
-func TestSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
+// TestBankSendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
+func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -199,8 +199,8 @@ func TestSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	require.True(t, cosmoserrors.ErrOutOfGas.Is(err))
 }
 
-// TestSendGasEstimation checks that gas is correctly estimated for send message
-func TestSendGasEstimation(t *testing.T) {
+// TestBankSendGasEstimation checks that gas is correctly estimated for send message
+func TestBankSendGasEstimation(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -231,8 +231,8 @@ func TestSendGasEstimation(t *testing.T) {
 	assert.Equal(t, bankSendGas, estimatedGas)
 }
 
-// TestMultiSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
-func TestMultiSendDeterministicGasManyCoins(t *testing.T) {
+// TestBankMultiSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
+func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -325,8 +325,8 @@ func TestMultiSendDeterministicGasManyCoins(t *testing.T) {
 	require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
 }
 
-// TestMultiSend tests MultiSend message
-func TestMultiSend(t *testing.T) {
+// TestBankMultiSend tests MultiSend message
+func TestBankMultiSend(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -434,8 +434,8 @@ func TestMultiSend(t *testing.T) {
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin(denom1, 400), sdk.NewInt64Coin(denom2, 600)), recipient2AllBalancesRes.Balances)
 }
 
-// TestMultiSendFromMultipleAccounts tests MultiSend message form multiple accounts.
-func TestMultiSendFromMultipleAccounts(t *testing.T) {
+// TestBankMultiSendFromMultipleAccounts tests MultiSend message form multiple accounts.
+func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -601,8 +601,8 @@ func TestMultiSendFromMultipleAccounts(t *testing.T) {
 
 // FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
 
-// TestCoreSend checks that core is transferred correctly between wallets
-func TestCoreSend(t *testing.T) {
+// TestBankCoreSend checks that core is transferred correctly between wallets
+func TestBankCoreSend(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

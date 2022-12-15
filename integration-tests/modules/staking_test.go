@@ -25,8 +25,8 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
-// TestValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
-func TestValidatorCRUDAndStaking(t *testing.T) {
+// TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
+func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -177,8 +177,8 @@ func TestValidatorCRUDAndStaking(t *testing.T) {
 	require.Equal(t, validatorStakingAmount.String(), valResp.Validator.Tokens.String())
 }
 
-// TestValidatorCreationWithLowMinSelfDelegation checks validator can't set the self delegation less than min limit.
-func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
+// TestStakingValidatorCreationWithLowMinSelfDelegation checks validator can't set the self delegation less than min limit.
+func TestStakingValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -197,9 +197,9 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
 }
 
-// TestValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
+// TestStakingValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
 // delegation is higher than current validator self delegation.
-func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
+func TestStakingValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

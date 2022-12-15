@@ -20,8 +20,8 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
-// TestSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
-func TestSpendCommunityPoolProposal(t *testing.T) {
+// TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
+func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -116,8 +116,8 @@ func TestSpendCommunityPoolProposal(t *testing.T) {
 	requireT.Equal(sdk.NewCoins(poolCoin), communityPoolRecipientBalancesRes.Balances)
 }
 
-// TestWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
-func TestWithdrawRewardWithDeterministicGas(t *testing.T) {
+// TestDistributionWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
+func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

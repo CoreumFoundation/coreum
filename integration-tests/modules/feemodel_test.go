@@ -18,8 +18,8 @@ import (
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
-// TestQueryingMinGasPrice check that it's possible to query current minimum gas price required by the network.
-func TestQueryingMinGasPrice(t *testing.T) {
+// TestFeeModelQueryingMinGasPrice check that it's possible to query current minimum gas price required by the network.
+func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

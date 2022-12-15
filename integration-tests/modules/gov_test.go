@@ -17,11 +17,11 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TestProposalWithDepositAndWeightedVotes - is a complex governance test which tests:
+// TestGovProposalWithDepositAndWeightedVotes - is a complex governance test which tests:
 // 1. proposal submission without enough deposit
 // 2. depositing missing amount to proposal created on the 1st step
 // 3. voting using weighted votes
-func TestProposalWithDepositAndWeightedVotes(t *testing.T) {
+func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
