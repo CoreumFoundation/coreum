@@ -44,3 +44,14 @@ message EventFungibleTokenWhitelistedAmountChanged {
     (gogoproto.nullable) = false
   ];
 }
+
+// EventNonFungibleTokenClassIssued is emitted on MsgIssueNonFungibleTokenClass.
+message EventNonFungibleTokenClassIssued {
+  string id = 1 [(gogoproto.customname) = "ID"];
+  string issuer = 2;
+  string symbol = 3;
+  string name = 4;
+  string description = 5;
+  string uri = 6 [(gogoproto.customname) = "URI"];
+  string uri_hash = 7 [(gogoproto.customname) = "URIHash"];
+}

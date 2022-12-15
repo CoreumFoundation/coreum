@@ -9,6 +9,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 // DefaultDeterministicGasRequirements returns default config for deterministic gas
@@ -26,6 +27,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		AssetGloballyFreezeFungibleToken:      5000,
 		AssetGloballyUnfreezeFungibleToken:    5000,
 		AssetSetWhitelistedLimitFungibleToken: 35000,
+		AssetIssueNonFungibleTokenClass:       20000,
+		AssetMintNonFungibleToken:             30000,
 
 		BankSendPerEntry:      22000,
 		BankMultiSendPerEntry: 27000,
@@ -39,6 +42,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		GovVote:           8000,
 		GovVoteWeighted:   11000,
 		GovDeposit:        91000,
+
+		NFTSend: 20000,
 
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
@@ -73,6 +78,8 @@ type DeterministicGasRequirements struct {
 	AssetGloballyFreezeFungibleToken      uint64
 	AssetGloballyUnfreezeFungibleToken    uint64
 	AssetSetWhitelistedLimitFungibleToken uint64
+	AssetIssueNonFungibleTokenClass       uint64
+	AssetMintNonFungibleToken             uint64
 
 	// x/bank
 	BankSendPerEntry      uint64
@@ -90,6 +97,9 @@ type DeterministicGasRequirements struct {
 	GovVoteWeighted   uint64
 	GovDeposit        uint64
 
+	// x/nft
+	NFTSend uint64
+
 	// x/staking
 	StakingDelegate        uint64
 	StakingUndelegate      uint64
@@ -102,7 +112,7 @@ type DeterministicGasRequirements struct {
 // If fixed gas is not specified for the message type it returns 0.
 //
 //nolint:funlen // it doesn't make sense to split entries
-func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
+func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) { //nolint:gocyclo // team decided to have flat structure
 	// Following is the list of messages having deterministic gas amount defined.
 	// To test the real gas usage return `false` and run an integration test which reports the used gas.
 	// Then define a reasonable value for the message and return `true` again.
@@ -124,6 +134,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetBurnFungibleToken, true
 	case *assettypes.MsgSetWhitelistedLimitFungibleToken:
 		return dgr.AssetSetWhitelistedLimitFungibleToken, true
+	case *assettypes.MsgIssueNonFungibleTokenClass:
+		return dgr.AssetIssueNonFungibleTokenClass, true
+	case *assettypes.MsgMintNonFungibleToken:
+		return dgr.AssetMintNonFungibleToken, true
 	case *banktypes.MsgSend:
 		entriesNum := len(m.Amount)
 		if len(m.Amount) == 0 {
@@ -164,6 +178,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.GovVoteWeighted, true
 	case *govtypes.MsgDeposit:
 		return dgr.GovDeposit, true
+	case *nft.MsgSend:
+		return dgr.NFTSend, true
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:

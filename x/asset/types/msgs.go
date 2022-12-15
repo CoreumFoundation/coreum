@@ -40,7 +40,7 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 	}
 
 	if len(msg.Description) > maxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must less than %d", msg.Description, maxDescriptionLength)
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", msg.Description, maxDescriptionLength)
 	}
 
 	return nil

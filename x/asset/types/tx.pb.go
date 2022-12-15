@@ -6,6 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	types1 "github.com/cosmos/cosmos-sdk/codec/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
@@ -308,42 +309,6 @@ func (m *MsgGloballyUnfreezeFungibleToken) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgGloballyUnfreezeFungibleToken proto.InternalMessageInfo
 
-type EmptyResponse struct {
-}
-
-func (m *EmptyResponse) Reset()         { *m = EmptyResponse{} }
-func (m *EmptyResponse) String() string { return proto.CompactTextString(m) }
-func (*EmptyResponse) ProtoMessage()    {}
-func (*EmptyResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{7}
-}
-func (m *EmptyResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *EmptyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_EmptyResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *EmptyResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EmptyResponse.Merge(m, src)
-}
-func (m *EmptyResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *EmptyResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_EmptyResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EmptyResponse proto.InternalMessageInfo
-
 type MsgSetWhitelistedLimitFungibleToken struct {
 	Sender  string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Account string     `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
@@ -354,7 +319,7 @@ func (m *MsgSetWhitelistedLimitFungibleToken) Reset()         { *m = MsgSetWhite
 func (m *MsgSetWhitelistedLimitFungibleToken) String() string { return proto.CompactTextString(m) }
 func (*MsgSetWhitelistedLimitFungibleToken) ProtoMessage()    {}
 func (*MsgSetWhitelistedLimitFungibleToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_67f41154fcbb1ebe, []int{8}
+	return fileDescriptor_67f41154fcbb1ebe, []int{7}
 }
 func (m *MsgSetWhitelistedLimitFungibleToken) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -383,6 +348,129 @@ func (m *MsgSetWhitelistedLimitFungibleToken) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSetWhitelistedLimitFungibleToken proto.InternalMessageInfo
 
+// MsgIssueNonFungibleTokenClass defines message for the IssueNonFungibleTokenClass method.
+type MsgIssueNonFungibleTokenClass struct {
+	Issuer      string      `protobuf:"bytes,1,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Symbol      string      `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Name        string      `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description string      `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	URI         string      `protobuf:"bytes,5,opt,name=uri,proto3" json:"uri,omitempty"`
+	URIHash     string      `protobuf:"bytes,6,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
+	Data        *types1.Any `protobuf:"bytes,7,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (m *MsgIssueNonFungibleTokenClass) Reset()         { *m = MsgIssueNonFungibleTokenClass{} }
+func (m *MsgIssueNonFungibleTokenClass) String() string { return proto.CompactTextString(m) }
+func (*MsgIssueNonFungibleTokenClass) ProtoMessage()    {}
+func (*MsgIssueNonFungibleTokenClass) Descriptor() ([]byte, []int) {
+	return fileDescriptor_67f41154fcbb1ebe, []int{8}
+}
+func (m *MsgIssueNonFungibleTokenClass) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgIssueNonFungibleTokenClass) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgIssueNonFungibleTokenClass.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgIssueNonFungibleTokenClass) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgIssueNonFungibleTokenClass.Merge(m, src)
+}
+func (m *MsgIssueNonFungibleTokenClass) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgIssueNonFungibleTokenClass) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgIssueNonFungibleTokenClass.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgIssueNonFungibleTokenClass proto.InternalMessageInfo
+
+// MsgMintNonFungibleToken defines message for the MintNonFungibleToken method.
+type MsgMintNonFungibleToken struct {
+	Sender  string      `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	ClassID string      `protobuf:"bytes,2,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
+	ID      string      `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	URI     string      `protobuf:"bytes,4,opt,name=uri,proto3" json:"uri,omitempty"`
+	URIHash string      `protobuf:"bytes,5,opt,name=uri_hash,json=uriHash,proto3" json:"uri_hash,omitempty"`
+	Data    *types1.Any `protobuf:"bytes,6,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (m *MsgMintNonFungibleToken) Reset()         { *m = MsgMintNonFungibleToken{} }
+func (m *MsgMintNonFungibleToken) String() string { return proto.CompactTextString(m) }
+func (*MsgMintNonFungibleToken) ProtoMessage()    {}
+func (*MsgMintNonFungibleToken) Descriptor() ([]byte, []int) {
+	return fileDescriptor_67f41154fcbb1ebe, []int{9}
+}
+func (m *MsgMintNonFungibleToken) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgMintNonFungibleToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgMintNonFungibleToken.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgMintNonFungibleToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgMintNonFungibleToken.Merge(m, src)
+}
+func (m *MsgMintNonFungibleToken) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgMintNonFungibleToken) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgMintNonFungibleToken.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgMintNonFungibleToken proto.InternalMessageInfo
+
+type EmptyResponse struct {
+}
+
+func (m *EmptyResponse) Reset()         { *m = EmptyResponse{} }
+func (m *EmptyResponse) String() string { return proto.CompactTextString(m) }
+func (*EmptyResponse) ProtoMessage()    {}
+func (*EmptyResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_67f41154fcbb1ebe, []int{10}
+}
+func (m *EmptyResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EmptyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EmptyResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EmptyResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EmptyResponse.Merge(m, src)
+}
+func (m *EmptyResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *EmptyResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_EmptyResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EmptyResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgIssueFungibleToken)(nil), "coreum.asset.v1.MsgIssueFungibleToken")
 	proto.RegisterType((*MsgFreezeFungibleToken)(nil), "coreum.asset.v1.MsgFreezeFungibleToken")
@@ -391,58 +479,73 @@ func init() {
 	proto.RegisterType((*MsgBurnFungibleToken)(nil), "coreum.asset.v1.MsgBurnFungibleToken")
 	proto.RegisterType((*MsgGloballyFreezeFungibleToken)(nil), "coreum.asset.v1.MsgGloballyFreezeFungibleToken")
 	proto.RegisterType((*MsgGloballyUnfreezeFungibleToken)(nil), "coreum.asset.v1.MsgGloballyUnfreezeFungibleToken")
-	proto.RegisterType((*EmptyResponse)(nil), "coreum.asset.v1.EmptyResponse")
 	proto.RegisterType((*MsgSetWhitelistedLimitFungibleToken)(nil), "coreum.asset.v1.MsgSetWhitelistedLimitFungibleToken")
+	proto.RegisterType((*MsgIssueNonFungibleTokenClass)(nil), "coreum.asset.v1.MsgIssueNonFungibleTokenClass")
+	proto.RegisterType((*MsgMintNonFungibleToken)(nil), "coreum.asset.v1.MsgMintNonFungibleToken")
+	proto.RegisterType((*EmptyResponse)(nil), "coreum.asset.v1.EmptyResponse")
 }
 
 func init() { proto.RegisterFile("coreum/asset/v1/tx.proto", fileDescriptor_67f41154fcbb1ebe) }
 
 var fileDescriptor_67f41154fcbb1ebe = []byte{
-	// 699 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x56, 0x4d, 0x4f, 0xdb, 0x4a,
-	0x14, 0x8d, 0x09, 0x04, 0xb8, 0x08, 0xd0, 0xf3, 0x03, 0x9e, 0x1f, 0xbc, 0x67, 0xa2, 0x54, 0x50,
-	0xba, 0xa8, 0xdd, 0x40, 0xff, 0x00, 0xa1, 0x4d, 0x85, 0x5a, 0xa3, 0xca, 0x2d, 0xaa, 0x84, 0xaa,
-	0x22, 0xdb, 0x19, 0xcc, 0x08, 0x7b, 0x26, 0xf2, 0x1d, 0x23, 0xd2, 0x4d, 0xd5, 0x5d, 0x17, 0x5d,
-	0xf4, 0x0f, 0x75, 0xcf, 0x92, 0x65, 0xd5, 0x05, 0x6a, 0xe1, 0x8f, 0x54, 0xfe, 0xa0, 0x7c, 0x78,
-	0x14, 0x93, 0x6e, 0x58, 0x25, 0xf7, 0xde, 0x33, 0xe7, 0xcc, 0xcc, 0x3d, 0xe3, 0x19, 0xd0, 0x3c,
-	0x1e, 0x91, 0x38, 0x34, 0x1d, 0x44, 0x22, 0xcc, 0xc3, 0xa6, 0x29, 0x8e, 0x8c, 0x6e, 0xc4, 0x05,
-	0x57, 0xa7, 0xb3, 0x8a, 0x91, 0x56, 0x8c, 0xc3, 0xe6, 0xfc, 0x8c, 0xcf, 0x7d, 0x9e, 0xd6, 0xcc,
-	0xe4, 0x5f, 0x06, 0x9b, 0xd7, 0x3d, 0x8e, 0x21, 0x47, 0xd3, 0x75, 0x90, 0x98, 0x87, 0x4d, 0x97,
-	0x08, 0xa7, 0x69, 0x7a, 0x9c, 0xb2, 0xbc, 0xfe, 0x4f, 0x5e, 0x0f, 0xd1, 0x4f, 0xe8, 0x43, 0xf4,
-	0xf3, 0xc2, 0xc2, 0x4d, 0xe5, 0x4c, 0x28, 0x2d, 0x36, 0x3e, 0x55, 0x61, 0xd6, 0x42, 0x7f, 0x13,
-	0x31, 0x26, 0xed, 0x98, 0xf9, 0xd4, 0x0d, 0xc8, 0x6b, 0x7e, 0x40, 0x98, 0x3a, 0x07, 0x35, 0x9a,
-	0x64, 0x23, 0x4d, 0xa9, 0x2b, 0x2b, 0xe3, 0x76, 0x1e, 0x25, 0x79, 0xec, 0x85, 0x2e, 0x0f, 0xb4,
-	0xa1, 0x2c, 0x9f, 0x45, 0xaa, 0x06, 0xa3, 0x18, 0xbb, 0x31, 0xa3, 0x42, 0xab, 0xa6, 0x85, 0x8b,
-	0x50, 0xfd, 0x0f, 0xc6, 0xbb, 0x11, 0xf1, 0x28, 0x52, 0xce, 0xb4, 0xe1, 0xba, 0xb2, 0x32, 0x69,
-	0x5f, 0x26, 0xd4, 0x6d, 0x98, 0xa2, 0x8c, 0x0a, 0xea, 0x04, 0xbb, 0x4e, 0xc8, 0x63, 0x26, 0xb4,
-	0x91, 0x64, 0x78, 0xcb, 0x38, 0x3e, 0x5d, 0xac, 0x7c, 0x3f, 0x5d, 0x5c, 0xf6, 0xa9, 0xd8, 0x8f,
-	0x5d, 0xc3, 0xe3, 0xa1, 0x99, 0x2f, 0x31, 0xfb, 0x79, 0x88, 0x9d, 0x03, 0x53, 0xf4, 0xba, 0x04,
-	0x8d, 0x4d, 0x26, 0xec, 0xc9, 0x9c, 0x65, 0x3d, 0x25, 0x51, 0xeb, 0x30, 0xd1, 0x21, 0xe8, 0x45,
-	0xb4, 0x2b, 0x12, 0xd9, 0x5a, 0x3a, 0xa5, 0xab, 0x29, 0x75, 0x1d, 0xc6, 0xf6, 0x88, 0x23, 0xe2,
-	0x88, 0xa0, 0x36, 0x5a, 0xaf, 0xae, 0x4c, 0xad, 0x2e, 0x19, 0x37, 0x5a, 0x61, 0x5c, 0xdb, 0x92,
-	0x76, 0x86, 0xb6, 0x7f, 0x0f, 0x53, 0x9f, 0xc3, 0xb8, 0x1b, 0x47, 0x6c, 0x37, 0x72, 0x04, 0xd1,
-	0xc6, 0x06, 0x9e, 0xf6, 0x13, 0xe2, 0xd9, 0x63, 0x09, 0x81, 0xed, 0x08, 0xd2, 0xf8, 0x00, 0x73,
-	0x16, 0xfa, 0xed, 0x88, 0x90, 0xf7, 0xc5, 0x56, 0x20, 0x61, 0x9d, 0xcb, 0x56, 0x64, 0x51, 0xb2,
-	0xe5, 0x8e, 0xe7, 0xa5, 0x7b, 0x96, 0xf5, 0xe2, 0x22, 0x54, 0xd7, 0x60, 0x38, 0xb1, 0x46, 0xda,
-	0x89, 0x89, 0xd5, 0x7f, 0x8d, 0x4c, 0xda, 0x48, 0xbc, 0x63, 0xe4, 0xde, 0x31, 0x36, 0x38, 0x65,
-	0xad, 0xe1, 0x64, 0xba, 0x76, 0x0a, 0x6e, 0x7c, 0x54, 0x40, 0xb3, 0xd0, 0xdf, 0x66, 0x7b, 0x77,
-	0x37, 0x07, 0x0f, 0x66, 0x2c, 0xf4, 0x2d, 0xca, 0xc4, 0xed, 0xe4, 0x2f, 0x44, 0x86, 0x06, 0x17,
-	0x69, 0xc5, 0x11, 0x1b, 0x4c, 0x64, 0xa0, 0x95, 0x6c, 0x81, 0x6e, 0xa1, 0xff, 0x2c, 0xe0, 0xae,
-	0x13, 0x04, 0xbd, 0x41, 0xda, 0x3a, 0x03, 0x23, 0x1d, 0xc2, 0x78, 0x98, 0x6f, 0x68, 0x16, 0x34,
-	0x5e, 0x42, 0xfd, 0x0a, 0xdf, 0x60, 0x4d, 0x92, 0x33, 0x4e, 0xc3, 0xe4, 0xd3, 0xb0, 0x2b, 0x7a,
-	0x36, 0xc1, 0x2e, 0x67, 0x48, 0x1a, 0x9f, 0x15, 0xb8, 0x67, 0xa1, 0xff, 0x8a, 0x88, 0x37, 0xfb,
-	0x54, 0x90, 0x80, 0xa2, 0x20, 0x9d, 0x17, 0x34, 0xa4, 0xe2, 0x2e, 0xbc, 0xb0, 0xfa, 0xb5, 0x06,
-	0x55, 0x0b, 0x7d, 0xf5, 0x2d, 0xa8, 0x92, 0xef, 0xd3, 0x72, 0xe1, 0xb0, 0x4a, 0xbf, 0x63, 0xf3,
-	0x7a, 0x01, 0x77, 0x6d, 0xd1, 0xea, 0x0e, 0xfc, 0x55, 0xb4, 0xdb, 0x92, 0x8c, 0xbc, 0x00, 0xbb,
-	0x0d, 0x77, 0xd1, 0x65, 0x52, 0xee, 0x02, 0xac, 0x94, 0xfb, 0x1d, 0xfc, 0x2d, 0x33, 0xd5, 0x7d,
-	0x19, 0xbb, 0x04, 0x58, 0xca, 0xef, 0xc2, 0xac, 0xdc, 0x64, 0x0f, 0x64, 0x0a, 0x52, 0x68, 0xa9,
-	0x06, 0x83, 0x85, 0x7e, 0x07, 0xc4, 0x94, 0x29, 0xf5, 0x19, 0x50, 0xaa, 0x17, 0xc1, 0xff, 0xfd,
-	0x0f, 0x50, 0xb3, 0x9f, 0xe2, 0x9f, 0xad, 0xf1, 0x08, 0xea, 0xa5, 0x07, 0xea, 0xb1, 0x4c, 0xb6,
-	0x6c, 0x54, 0x99, 0x72, 0x6b, 0xeb, 0xf8, 0xa7, 0x5e, 0x39, 0x3e, 0xd3, 0x95, 0x93, 0x33, 0x5d,
-	0xf9, 0x71, 0xa6, 0x2b, 0x5f, 0xce, 0xf5, 0xca, 0xc9, 0xb9, 0x5e, 0xf9, 0x76, 0xae, 0x57, 0x76,
-	0x1e, 0x5d, 0xb9, 0xa0, 0x36, 0x52, 0x9e, 0x36, 0x8f, 0x59, 0xc7, 0x49, 0xee, 0x46, 0x33, 0x7f,
-	0x32, 0x1c, 0xe5, 0x8f, 0x86, 0xf4, 0xba, 0x72, 0x6b, 0xe9, 0x93, 0x61, 0xed, 0x57, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0x44, 0x30, 0x56, 0x0f, 0xcb, 0x08, 0x00, 0x00,
+	// 902 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x56, 0x4f, 0x6f, 0xe3, 0x44,
+	0x14, 0x8f, 0x93, 0x34, 0x49, 0x5f, 0xd5, 0x5d, 0x61, 0xb2, 0x5d, 0xb7, 0xcb, 0x3a, 0x51, 0xd0,
+	0x96, 0x70, 0xc0, 0x26, 0x5d, 0xbe, 0x40, 0xd3, 0x52, 0x88, 0x20, 0x15, 0x32, 0x54, 0x48, 0x2b,
+	0x44, 0x18, 0xdb, 0x53, 0x67, 0xb4, 0xf6, 0x4c, 0xe4, 0x19, 0x57, 0x0d, 0x17, 0xc4, 0x8d, 0x03,
+	0x48, 0x7c, 0xac, 0x1e, 0xf7, 0x88, 0x38, 0x44, 0x90, 0x7e, 0x03, 0x3e, 0x01, 0xf2, 0xd8, 0x61,
+	0xdb, 0xd8, 0x8d, 0x1b, 0x2e, 0x3d, 0x65, 0xde, 0xbc, 0x37, 0xbf, 0xdf, 0xfb, 0x33, 0xf9, 0x79,
+	0x40, 0x73, 0x58, 0x88, 0xa3, 0xc0, 0x44, 0x9c, 0x63, 0x61, 0x5e, 0xf4, 0x4c, 0x71, 0x69, 0x4c,
+	0x42, 0x26, 0x98, 0xfa, 0x38, 0xf1, 0x18, 0xd2, 0x63, 0x5c, 0xf4, 0xf6, 0x9a, 0x1e, 0xf3, 0x98,
+	0xf4, 0x99, 0xf1, 0x2a, 0x09, 0xdb, 0xdb, 0xf5, 0x18, 0xf3, 0x7c, 0x6c, 0x4a, 0xcb, 0x8e, 0xce,
+	0x4d, 0x44, 0xa7, 0xa9, 0x4b, 0x77, 0x18, 0x0f, 0x18, 0x37, 0x6d, 0xc4, 0xb1, 0x79, 0xd1, 0xb3,
+	0xb1, 0x40, 0x3d, 0xd3, 0x61, 0x84, 0xa6, 0xfe, 0xa7, 0xa9, 0x3f, 0xe0, 0x5e, 0xcc, 0x1c, 0x70,
+	0x2f, 0x75, 0x3c, 0x5b, 0x4e, 0x2a, 0xc9, 0x41, 0x3a, 0x3b, 0xbf, 0x54, 0xe0, 0xc9, 0x90, 0x7b,
+	0x03, 0xce, 0x23, 0x7c, 0x12, 0x51, 0x8f, 0xd8, 0x3e, 0xfe, 0x86, 0xbd, 0xc6, 0x54, 0xdd, 0x81,
+	0x1a, 0x89, 0x77, 0x43, 0x4d, 0x69, 0x2b, 0xdd, 0x4d, 0x2b, 0xb5, 0xe2, 0x7d, 0x3e, 0x0d, 0x6c,
+	0xe6, 0x6b, 0xe5, 0x64, 0x3f, 0xb1, 0x54, 0x0d, 0xea, 0x3c, 0xb2, 0x23, 0x4a, 0x84, 0x56, 0x91,
+	0x8e, 0x85, 0xa9, 0xbe, 0x07, 0x9b, 0x93, 0x10, 0x3b, 0x84, 0x13, 0x46, 0xb5, 0x6a, 0x5b, 0xe9,
+	0x6e, 0x5b, 0x6f, 0x37, 0xd4, 0x33, 0x78, 0x44, 0x28, 0x11, 0x04, 0xf9, 0x23, 0x14, 0xb0, 0x88,
+	0x0a, 0x6d, 0x23, 0x3e, 0xde, 0x37, 0xae, 0x66, 0xad, 0xd2, 0x9f, 0xb3, 0xd6, 0xbe, 0x47, 0xc4,
+	0x38, 0xb2, 0x0d, 0x87, 0x05, 0x66, 0x5a, 0x62, 0xf2, 0xf3, 0x11, 0x77, 0x5f, 0x9b, 0x62, 0x3a,
+	0xc1, 0xdc, 0x18, 0x50, 0x61, 0x6d, 0xa7, 0x28, 0x87, 0x12, 0x44, 0x6d, 0xc3, 0x96, 0x8b, 0xb9,
+	0x13, 0x92, 0x89, 0x88, 0x69, 0x6b, 0x32, 0xa5, 0x9b, 0x5b, 0xea, 0x21, 0x34, 0xce, 0x31, 0x12,
+	0x51, 0x88, 0xb9, 0x56, 0x6f, 0x57, 0xba, 0x8f, 0x0e, 0x5e, 0x18, 0x4b, 0x53, 0x32, 0x6e, 0xb5,
+	0xe4, 0x24, 0x89, 0xb6, 0xfe, 0x3b, 0xa6, 0x7e, 0x01, 0x9b, 0x76, 0x14, 0xd2, 0x51, 0x88, 0x04,
+	0xd6, 0x1a, 0x6b, 0xa7, 0x7d, 0x8c, 0x1d, 0xab, 0x11, 0x03, 0x58, 0x48, 0xe0, 0xce, 0x4f, 0xb0,
+	0x33, 0xe4, 0xde, 0x49, 0x88, 0xf1, 0x8f, 0xd9, 0x51, 0x70, 0x4c, 0xdd, 0xb7, 0xa3, 0x48, 0xac,
+	0xb8, 0xe5, 0xc8, 0x71, 0x64, 0xcf, 0x92, 0x59, 0x2c, 0x4c, 0xf5, 0x25, 0x54, 0xe3, 0xab, 0x21,
+	0x27, 0xb1, 0x75, 0xb0, 0x6b, 0x24, 0xd4, 0x46, 0x7c, 0x77, 0x8c, 0xf4, 0xee, 0x18, 0x47, 0x8c,
+	0xd0, 0x7e, 0x35, 0x4e, 0xd7, 0x92, 0xc1, 0x9d, 0x9f, 0x15, 0xd0, 0x86, 0xdc, 0x3b, 0xa3, 0xe7,
+	0x0f, 0x97, 0x83, 0x03, 0xcd, 0x21, 0xf7, 0x86, 0x84, 0x8a, 0xfb, 0xd1, 0x2f, 0x48, 0xca, 0xeb,
+	0x93, 0xf4, 0xa3, 0x90, 0xae, 0x47, 0xb2, 0x56, 0x25, 0xa7, 0xa0, 0x0f, 0xb9, 0xf7, 0x99, 0xcf,
+	0x6c, 0xe4, 0xfb, 0xd3, 0x75, 0xc6, 0xda, 0x84, 0x0d, 0x17, 0x53, 0x16, 0xa4, 0x0d, 0x4d, 0x8c,
+	0xce, 0x57, 0xd0, 0xbe, 0x81, 0xb7, 0xde, 0x90, 0xf2, 0x11, 0x7f, 0x55, 0xe0, 0xfd, 0x21, 0xf7,
+	0xbe, 0xc6, 0xe2, 0xdb, 0x31, 0x11, 0xd8, 0x27, 0x5c, 0x60, 0xf7, 0x4b, 0x12, 0x10, 0xf1, 0x20,
+	0xa3, 0xff, 0x47, 0x81, 0xe7, 0x0b, 0x29, 0x3a, 0x65, 0xb7, 0x47, 0x73, 0xe4, 0x23, 0xce, 0xd7,
+	0x96, 0x24, 0x15, 0xaa, 0x14, 0x05, 0x38, 0xd5, 0x23, 0xb9, 0x5e, 0xd6, 0x85, 0x6a, 0x56, 0x17,
+	0x76, 0xa1, 0x12, 0x85, 0x24, 0x55, 0xa1, 0xfa, 0x7c, 0xd6, 0xaa, 0x9c, 0x59, 0x03, 0x2b, 0xde,
+	0x53, 0xf7, 0xa1, 0x11, 0x85, 0x64, 0x34, 0x46, 0x7c, 0x9c, 0x28, 0x4a, 0x7f, 0x6b, 0x3e, 0x6b,
+	0xd5, 0xcf, 0xac, 0xc1, 0xe7, 0x88, 0x8f, 0xad, 0x7a, 0x14, 0x92, 0x78, 0xa1, 0x76, 0xa1, 0xea,
+	0x22, 0x81, 0xb4, 0xba, 0xac, 0xbf, 0x69, 0x24, 0xaa, 0x6e, 0x2c, 0x54, 0xdd, 0x38, 0xa4, 0x53,
+	0x4b, 0x46, 0x74, 0x66, 0x0a, 0x3c, 0x4d, 0x2f, 0xfc, 0x72, 0xcd, 0x77, 0xf6, 0x7d, 0x1f, 0x1a,
+	0x4e, 0xdc, 0x8f, 0x11, 0x71, 0x93, 0x82, 0x93, 0x2c, 0x64, 0x8f, 0x06, 0xc7, 0x56, 0x5d, 0x3a,
+	0x07, 0xae, 0xba, 0x03, 0x65, 0xe2, 0x26, 0xc5, 0xf7, 0x6b, 0xf3, 0x59, 0xab, 0x3c, 0x38, 0xb6,
+	0xca, 0xc4, 0x5d, 0x14, 0x58, 0x2d, 0x28, 0x70, 0xe3, 0x1e, 0x05, 0xd6, 0x0a, 0x0b, 0x7c, 0x0c,
+	0xdb, 0x9f, 0x06, 0x13, 0x31, 0xb5, 0x30, 0x9f, 0x30, 0xca, 0xf1, 0xc1, 0x6f, 0x0d, 0xa8, 0x0c,
+	0xb9, 0xa7, 0x7e, 0x07, 0x6a, 0xce, 0x57, 0x67, 0x3f, 0x23, 0xc1, 0xb9, 0x5f, 0xa7, 0x3d, 0x3d,
+	0x13, 0x77, 0x8b, 0x45, 0x7d, 0x05, 0xef, 0x64, 0x45, 0xe4, 0x45, 0x1e, 0x78, 0x26, 0xec, 0x3e,
+	0xd8, 0x59, 0xed, 0xc8, 0xc5, 0xce, 0x84, 0x15, 0x62, 0x7f, 0x0f, 0xef, 0xe6, 0x49, 0xc5, 0x07,
+	0x79, 0xe8, 0x39, 0x81, 0x85, 0xf8, 0x36, 0x3c, 0xc9, 0x97, 0x8e, 0x0f, 0xf3, 0x18, 0x72, 0x43,
+	0x0b, 0x39, 0x28, 0x3c, 0x5b, 0x25, 0x7b, 0x66, 0x1e, 0xd3, 0x8a, 0x03, 0x85, 0x7c, 0x21, 0x3c,
+	0x5f, 0x2d, 0x8b, 0xbd, 0x55, 0x8c, 0xff, 0xaf, 0xc6, 0x4b, 0x68, 0x17, 0xea, 0xe6, 0x27, 0x79,
+	0xb4, 0x45, 0xa7, 0x0a, 0x99, 0x7d, 0xd8, 0x5b, 0x21, 0x91, 0xc6, 0x9d, 0xff, 0x9f, 0xdc, 0xf8,
+	0x42, 0xb6, 0x1f, 0xa0, 0x99, 0xab, 0x4d, 0xdd, 0xbb, 0xfe, 0x4a, 0xcb, 0x91, 0x45, 0x0c, 0xfd,
+	0xd3, 0xab, 0xbf, 0xf5, 0xd2, 0xd5, 0x5c, 0x57, 0xde, 0xcc, 0x75, 0xe5, 0xaf, 0xb9, 0xae, 0xfc,
+	0x7e, 0xad, 0x97, 0xde, 0x5c, 0xeb, 0xa5, 0x3f, 0xae, 0xf5, 0xd2, 0xab, 0x8f, 0x6f, 0x3c, 0xa3,
+	0x8e, 0x24, 0xce, 0x09, 0x8b, 0xa8, 0x8b, 0x62, 0xa5, 0x36, 0xd3, 0x87, 0xed, 0x65, 0xfa, 0xb4,
+	0x95, 0x8f, 0x2a, 0xbb, 0x26, 0x45, 0xe8, 0xe5, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x10, 0xd1,
+	0x4f, 0xc3, 0x8c, 0x0b, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -477,6 +580,10 @@ type MsgClient interface {
 	GloballyUnfreezeFungibleToken(ctx context.Context, in *MsgGloballyUnfreezeFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
 	SetWhitelistedLimitFungibleToken(ctx context.Context, in *MsgSetWhitelistedLimitFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
+	// IssueNonFungibleTokenClass creates new non-fungible token class.
+	IssueNonFungibleTokenClass(ctx context.Context, in *MsgIssueNonFungibleTokenClass, opts ...grpc.CallOption) (*EmptyResponse, error)
+	// MintNonFungibleToken mints new non-fungible token in the class.
+	MintNonFungibleToken(ctx context.Context, in *MsgMintNonFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
 type msgClient struct {
@@ -559,6 +666,24 @@ func (c *msgClient) SetWhitelistedLimitFungibleToken(ctx context.Context, in *Ms
 	return out, nil
 }
 
+func (c *msgClient) IssueNonFungibleTokenClass(ctx context.Context, in *MsgIssueNonFungibleTokenClass, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/IssueNonFungibleTokenClass", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) MintNonFungibleToken(ctx context.Context, in *MsgMintNonFungibleToken, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.v1.Msg/MintNonFungibleToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// IssueFungibleToken defines a method to issue a new fungible token.
@@ -581,6 +706,10 @@ type MsgServer interface {
 	GloballyUnfreezeFungibleToken(context.Context, *MsgGloballyUnfreezeFungibleToken) (*EmptyResponse, error)
 	// SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
 	SetWhitelistedLimitFungibleToken(context.Context, *MsgSetWhitelistedLimitFungibleToken) (*EmptyResponse, error)
+	// IssueNonFungibleTokenClass creates new non-fungible token class.
+	IssueNonFungibleTokenClass(context.Context, *MsgIssueNonFungibleTokenClass) (*EmptyResponse, error)
+	// MintNonFungibleToken mints new non-fungible token in the class.
+	MintNonFungibleToken(context.Context, *MsgMintNonFungibleToken) (*EmptyResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -610,6 +739,12 @@ func (*UnimplementedMsgServer) GloballyUnfreezeFungibleToken(ctx context.Context
 }
 func (*UnimplementedMsgServer) SetWhitelistedLimitFungibleToken(ctx context.Context, req *MsgSetWhitelistedLimitFungibleToken) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetWhitelistedLimitFungibleToken not implemented")
+}
+func (*UnimplementedMsgServer) IssueNonFungibleTokenClass(ctx context.Context, req *MsgIssueNonFungibleTokenClass) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IssueNonFungibleTokenClass not implemented")
+}
+func (*UnimplementedMsgServer) MintNonFungibleToken(ctx context.Context, req *MsgMintNonFungibleToken) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MintNonFungibleToken not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -760,6 +895,42 @@ func _Msg_SetWhitelistedLimitFungibleToken_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_IssueNonFungibleTokenClass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgIssueNonFungibleTokenClass)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).IssueNonFungibleTokenClass(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.v1.Msg/IssueNonFungibleTokenClass",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).IssueNonFungibleTokenClass(ctx, req.(*MsgIssueNonFungibleTokenClass))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_MintNonFungibleToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgMintNonFungibleToken)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).MintNonFungibleToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.v1.Msg/MintNonFungibleToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).MintNonFungibleToken(ctx, req.(*MsgMintNonFungibleToken))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "coreum.asset.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -795,6 +966,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetWhitelistedLimitFungibleToken",
 			Handler:    _Msg_SetWhitelistedLimitFungibleToken_Handler,
+		},
+		{
+			MethodName: "IssueNonFungibleTokenClass",
+			Handler:    _Msg_IssueNonFungibleTokenClass_Handler,
+		},
+		{
+			MethodName: "MintNonFungibleToken",
+			Handler:    _Msg_MintNonFungibleToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1143,29 +1322,6 @@ func (m *MsgGloballyUnfreezeFungibleToken) MarshalToSizedBuffer(dAtA []byte) (in
 	return len(dAtA) - i, nil
 }
 
-func (m *EmptyResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *EmptyResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *EmptyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
 func (m *MsgSetWhitelistedLimitFungibleToken) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1210,6 +1366,176 @@ func (m *MsgSetWhitelistedLimitFungibleToken) MarshalToSizedBuffer(dAtA []byte) 
 		i--
 		dAtA[i] = 0xa
 	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgIssueNonFungibleTokenClass) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgIssueNonFungibleTokenClass) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgIssueNonFungibleTokenClass) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Data != nil {
+		{
+			size, err := m.Data.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.URIHash) > 0 {
+		i -= len(m.URIHash)
+		copy(dAtA[i:], m.URIHash)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.URIHash)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.URI) > 0 {
+		i -= len(m.URI)
+		copy(dAtA[i:], m.URI)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.URI)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.Description) > 0 {
+		i -= len(m.Description)
+		copy(dAtA[i:], m.Description)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Description)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Symbol)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Issuer) > 0 {
+		i -= len(m.Issuer)
+		copy(dAtA[i:], m.Issuer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Issuer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgMintNonFungibleToken) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgMintNonFungibleToken) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgMintNonFungibleToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Data != nil {
+		{
+			size, err := m.Data.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.URIHash) > 0 {
+		i -= len(m.URIHash)
+		copy(dAtA[i:], m.URIHash)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.URIHash)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.URI) > 0 {
+		i -= len(m.URI)
+		copy(dAtA[i:], m.URI)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.URI)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.ID) > 0 {
+		i -= len(m.ID)
+		copy(dAtA[i:], m.ID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ID)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ClassID) > 0 {
+		i -= len(m.ClassID)
+		copy(dAtA[i:], m.ClassID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ClassID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EmptyResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EmptyResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EmptyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
 	return len(dAtA) - i, nil
 }
 
@@ -1365,15 +1691,6 @@ func (m *MsgGloballyUnfreezeFungibleToken) Size() (n int) {
 	return n
 }
 
-func (m *EmptyResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
 func (m *MsgSetWhitelistedLimitFungibleToken) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1390,6 +1707,85 @@ func (m *MsgSetWhitelistedLimitFungibleToken) Size() (n int) {
 	}
 	l = m.Coin.Size()
 	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgIssueNonFungibleTokenClass) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Issuer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Symbol)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Description)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.URI)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.URIHash)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Data != nil {
+		l = m.Data.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgMintNonFungibleToken) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ClassID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.URI)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.URIHash)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Data != nil {
+		l = m.Data.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *EmptyResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	return n
 }
 
@@ -2485,56 +2881,6 @@ func (m *MsgGloballyUnfreezeFungibleToken) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EmptyResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: EmptyResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EmptyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *MsgSetWhitelistedLimitFungibleToken) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2661,6 +3007,580 @@ func (m *MsgSetWhitelistedLimitFungibleToken) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgIssueNonFungibleTokenClass) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgIssueNonFungibleTokenClass: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgIssueNonFungibleTokenClass: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Issuer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Issuer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Symbol = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Description = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field URI", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.URI = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field URIHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.URIHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Data == nil {
+				m.Data = &types1.Any{}
+			}
+			if err := m.Data.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgMintNonFungibleToken) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgMintNonFungibleToken: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgMintNonFungibleToken: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClassID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClassID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field URI", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.URI = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field URIHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.URIHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Data == nil {
+				m.Data = &types1.Any{}
+			}
+			if err := m.Data.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EmptyResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EmptyResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EmptyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

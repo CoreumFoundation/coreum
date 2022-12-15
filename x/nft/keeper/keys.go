@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 
+	"github.com/CoreumFoundation/coreum/pkg/store"
 	"github.com/CoreumFoundation/coreum/x/nft"
-	"github.com/CoreumFoundation/coreum/x/nft/conv"
 )
 
 var (
@@ -61,7 +61,7 @@ func classTotalSupply(classID string) []byte {
 // 0x03<owner><Delimiter(1 Byte)><classID><Delimiter(1 Byte)>
 func nftOfClassByOwnerStoreKey(owner sdk.AccAddress, classID string) []byte {
 	owner = address.MustLengthPrefix(owner)
-	classIDBz := conv.UnsafeStrToBytes(classID)
+	classIDBz := store.UnsafeStrToBytes(classID)
 
 	key := make([]byte, len(NFTOfClassByOwnerKey)+len(owner)+len(Delimiter)+len(classIDBz)+len(Delimiter))
 	copy(key, NFTOfClassByOwnerKey)
@@ -92,7 +92,7 @@ func parseNftOfClassByOwnerStoreKey(key []byte) (classID, nftID string) {
 	if len(ret) != 2 {
 		panic("invalid nftOfClassByOwnerStoreKey")
 	}
-	classID = conv.UnsafeBytesToStr(ret[0])
+	classID = store.UnsafeBytesToStr(ret[0])
 	nftID = string(ret[1])
 	return classID, nftID
 }
@@ -102,8 +102,8 @@ func parseNftOfClassByOwnerStoreKey(key []byte) (classID, nftID string) {
 // 0x04<classID><Delimiter(1 Byte)><nftID>
 func ownerStoreKey(classID, nftID string) []byte {
 	// key is of format:
-	classIDBz := conv.UnsafeStrToBytes(classID)
-	nftIDBz := conv.UnsafeStrToBytes(nftID)
+	classIDBz := store.UnsafeStrToBytes(classID)
+	nftIDBz := store.UnsafeStrToBytes(nftID)
 
 	key := make([]byte, len(OwnerKey)+len(classIDBz)+len(Delimiter)+len(nftIDBz))
 	copy(key, OwnerKey)

@@ -98,6 +98,7 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper     keeper.Keeper
+	nftKeeper  keeper.NonFungibleTokenKeeper
 	bankKeeper types.BankKeeper
 }
 
@@ -105,11 +106,13 @@ type AppModule struct {
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
+	nftKeeper keeper.NonFungibleTokenKeeper,
 	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		nftKeeper:      nftKeeper,
 		bankKeeper:     bankKeeper,
 	}
 }
@@ -121,7 +124,7 @@ func (am AppModule) Name() string {
 
 // Route returns the asset module's message routing key.
 func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(keeper.NewMsgServer(am.keeper)))
+	return sdk.Route{}
 }
 
 // QuerierRoute returns the asset module's query routing key.
@@ -135,7 +138,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper, am.nftKeeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 }
 

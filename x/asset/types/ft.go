@@ -42,8 +42,8 @@ type IssueFungibleTokenSettings struct {
 }
 
 // BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
-func BuildFungibleTokenDenom(prefix string, issuer sdk.AccAddress) string {
-	return strings.ToLower(prefix) + denomSeparator + issuer.String()
+func BuildFungibleTokenDenom(subunit string, issuer sdk.AccAddress) string {
+	return strings.ToLower(subunit) + denomSeparator + issuer.String()
 }
 
 // DeconstructFungibleTokenDenom splits the denom string into the symbol and issuer address.
@@ -83,7 +83,7 @@ func ValidateSubunit(subunit string) error {
 	return nil
 }
 
-// ValidateSymbol checks the provide symbol is valid
+// ValidateSymbol checks the provided symbol is valid
 func ValidateSymbol(symbol string) error {
 	if lo.Contains(reserved, strings.ToLower(symbol)) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "%s is a reserved symbol", symbol)

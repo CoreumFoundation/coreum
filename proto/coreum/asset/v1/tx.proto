@@ -2,8 +2,10 @@ syntax = "proto3";
 package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
+
 import "coreum/asset/v1/asset.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
@@ -35,6 +37,11 @@ service Msg {
 
   // SetWhitelistedLimitFungibleToken sets the limit of how many tokens account may hold
   rpc SetWhitelistedLimitFungibleToken(MsgSetWhitelistedLimitFungibleToken) returns (EmptyResponse);
+
+  // IssueNonFungibleTokenClass creates new non-fungible token class.
+  rpc IssueNonFungibleTokenClass(MsgIssueNonFungibleTokenClass) returns (EmptyResponse);
+  // MintNonFungibleToken mints new non-fungible token in the class.
+  rpc MintNonFungibleToken(MsgMintNonFungibleToken) returns (EmptyResponse);
 }
 
 // MsgIssueFungibleToken defines message to issue new fungible token.
@@ -89,10 +96,31 @@ message MsgGloballyUnfreezeFungibleToken {
   string denom = 2;
 }
 
-message EmptyResponse {}
-
 message MsgSetWhitelistedLimitFungibleToken {
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
+
+// MsgIssueNonFungibleTokenClass defines message for the IssueNonFungibleTokenClass method.
+message MsgIssueNonFungibleTokenClass {
+  string issuer = 1;
+  string symbol = 2;
+  string name = 3;
+  string description = 4;
+  string uri = 5 [(gogoproto.customname) = "URI"];
+  string uri_hash = 6 [(gogoproto.customname) = "URIHash"];
+  google.protobuf.Any data = 7;
+}
+
+// MsgMintNonFungibleToken defines message for the MintNonFungibleToken method.
+message MsgMintNonFungibleToken {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+  string uri = 4 [(gogoproto.customname) = "URI"];
+  string uri_hash = 5 [(gogoproto.customname) = "URIHash"];
+  google.protobuf.Any data = 6;
+}
+
+message EmptyResponse {}
