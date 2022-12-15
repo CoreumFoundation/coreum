@@ -19,6 +19,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			Denom:    ft.Denom,
 			Issuer:   ft.Issuer,
 			Features: ft.Features,
+			BurnRate: ft.BurnRate,
 		}
 		k.SetFungibleTokenDefinition(ctx, definition)
 		err := k.StoreSymbol(ctx, ft.Symbol, issuerAddress)

@@ -38,6 +38,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 			Symbol:    fmt.Sprintf("ABC%d", i),
 			Subunit:   fmt.Sprintf("abc%d", i),
 			Precision: uint32(rand.Int31n(100)),
+			BurnRate:  sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
 			Features: []types.FungibleTokenFeature{
 				types.FungibleTokenFeature_freeze,    //nolint:nosnakecase // proto enum
 				types.FungibleTokenFeature_whitelist, //nolint:nosnakecase // proto enum

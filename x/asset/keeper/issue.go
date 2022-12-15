@@ -17,6 +17,10 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
 
+	if err := types.ValidateBurnRate(settings.BurnRate); err != nil {
+		return "", err
+	}
+
 	err := types.ValidateSymbol(settings.Symbol)
 	if err != nil {
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
@@ -29,7 +33,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	denom := types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
-			types.ErrInvalidSubunit,
+			types.ErrInvalidInput,
 			"subunit %s already registered for the address %s",
 			settings.Subunit,
 			settings.Issuer.String(),
@@ -42,6 +46,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Denom:    denom,
 		Issuer:   settings.Issuer.String(),
 		Features: settings.Features,
+		BurnRate: settings.BurnRate,
 	}
 	k.SetFungibleTokenDefinition(ctx, definition)
 
@@ -67,6 +72,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Recipient:     settings.Recipient.String(),
 		InitialAmount: settings.InitialAmount,
 		Features:      settings.Features,
+		BurnRate:      settings.BurnRate,
 	}); err != nil {
 		return "", sdkerrors.Wrap(err, "can't emit EventFungibleTokenIssued event")
 	}
@@ -87,7 +93,7 @@ func (k Keeper) IsSymbolDuplicate(ctx sdk.Context, symbol string, issuer sdk.Acc
 // StoreSymbol saves the symbol to store
 func (k Keeper) StoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
 	if k.IsSymbolDuplicate(ctx, symbol, issuer) {
-		return sdkerrors.Wrapf(types.ErrInvalidSymbol, "duplicate symbol %s", symbol)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
 
 	compositeKey := store.JoinKeys(types.CreateSymbolPrefix(issuer), []byte(symbol))
@@ -126,7 +132,7 @@ func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.Fungi
 	}
 
 	if precision < 0 {
-		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "precision not found")
+		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidInput, "precision not found")
 	}
 
 	return types.FungibleToken{
@@ -137,6 +143,7 @@ func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.Fungi
 		Subunit:        subunit,
 		Description:    metadata.Description,
 		Features:       definition.Features,
+		BurnRate:       definition.BurnRate,
 		GloballyFrozen: k.isGloballyFrozen(ctx, definition.Denom),
 	}, nil
 }

@@ -37,6 +37,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Description:   "Wrapped BTC",
 		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(777),
+		BurnRate:      sdk.NewDec(0),
 	}
 
 	res, err := tx.BroadcastTx(
@@ -61,6 +62,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
 		Features:      []assettypes.FungibleTokenFeature{},
+		BurnRate:      msg.BurnRate,
 	}, *fungibleTokenIssuedEvts[0])
 
 	denom := fungibleTokenIssuedEvts[0].Denom
@@ -78,6 +80,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Subunit:     "wsatoshi",
 		Precision:   8,
 		Description: msg.Description,
+		BurnRate:    msg.BurnRate,
 	}, gotToken.FungibleToken)
 
 	// query balance

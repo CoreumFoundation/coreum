@@ -2,6 +2,7 @@ syntax = "proto3";
 package coreum.asset.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/types";
 
@@ -19,6 +20,12 @@ message FungibleTokenDefinition {
   string denom = 1;
   string issuer = 2;
   repeated FungibleTokenFeature features = 3;
+  // burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
+  // burn_amount. This value will be burnt on top of the send amount.
+  string burn_rate = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
 }
 
 // FungibleToken is a full representation of the fungible token.
@@ -33,4 +40,10 @@ message FungibleToken {
   string description = 6;
   bool globally_frozen = 7;
   repeated FungibleTokenFeature features = 8;
+  // burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
+  // burn_amount. This value will be burnt on top of the send amount.
+  string burn_rate = 9 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
 }
