@@ -16,8 +16,6 @@ import (
 )
 
 // TestFreezeUnfreezableFungibleToken checks freeze functionality on unfreezable fungible tokens.
-//
-//nolint:dupl
 func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
