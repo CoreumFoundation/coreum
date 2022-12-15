@@ -56,8 +56,15 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 }
 
 func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FungibleTokenDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
-	coinToBurn := ft.CalculateBurnRateAmount(coin)
-	return k.burnFungibleToken(ctx, fromAddress, ft, coinToBurn)
+	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
+		coinToBurn := ft.CalculateBurnRateAmount(coin)
+		err := k.burnFungibleToken(ctx, fromAddress, ft, coinToBurn)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper
