@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -60,7 +61,7 @@ func TestValidateSubunit(t *testing.T) {
 		if isValid {
 			requireT.NoError(err)
 		} else {
-			requireT.True(types.ErrInvalidSubunit.Is(err))
+			requireT.True(types.ErrInvalidInput.Is(err))
 		}
 	}
 
@@ -119,7 +120,7 @@ func TestValidateSymbol(t *testing.T) {
 
 	assertValidSymbol := func(symbol string, isValid bool) {
 		err := types.ValidateSymbol(symbol)
-		if types.ErrInvalidSymbol.Is(err) == isValid {
+		if types.ErrInvalidInput.Is(err) == isValid {
 			assertT.Failf("", "case: %s", symbol)
 		}
 	}
@@ -130,5 +131,87 @@ func TestValidateSymbol(t *testing.T) {
 
 	for _, symbol := range acceptableSymbols {
 		assertValidSymbol(symbol, true)
+	}
+}
+
+func TestValidateBurnRate(t *testing.T) {
+	testCases := []struct {
+		rate    string
+		invalid bool
+	}{
+		{
+			rate: "0",
+		},
+		{
+			rate: "0.00",
+		},
+		{
+			rate: "1.00",
+		},
+		{
+			rate: "0.10",
+		},
+		{
+			rate: "0.10000",
+		},
+		{
+			rate: "0.0001",
+		},
+		{
+			rate:    "0.00001",
+			invalid: true,
+		},
+		{
+			rate:    "-0.01",
+			invalid: true,
+		},
+		{
+			rate:    "-1.0",
+			invalid: true,
+		},
+		{
+			rate:    "1.0002",
+			invalid: true,
+		},
+		{
+			rate:    "1.00023",
+			invalid: true,
+		},
+		{
+			rate:    "0.12345",
+			invalid: true,
+		},
+		{
+			rate:    "0.000000000000000001",
+			invalid: true,
+		},
+		{
+			rate:    "0.0000000000000000001",
+			invalid: true,
+		},
+	}
+
+	parseAndValidate := func(in string) error {
+		rate, err := sdk.NewDecFromStr(in)
+		if err != nil {
+			return err
+		}
+
+		err = types.ValidateBurnRate(rate)
+		return err
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		name := fmt.Sprintf("%+v", tc)
+		t.Run(name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := parseAndValidate(tc.rate)
+			if tc.invalid {
+				assertT.Error(err)
+			} else {
+				assertT.NoError(err)
+			}
+		})
 	}
 }

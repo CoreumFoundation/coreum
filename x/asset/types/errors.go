@@ -5,24 +5,18 @@ import (
 )
 
 var (
-	// ErrInvalidFungibleToken defines the common error for the invalid fungible tokens.
-	ErrInvalidFungibleToken = sdkerrors.Register(ModuleName, 1, "invalid fungible token")
+	// ErrInvalidInput defines the common error for the invalid input.
+	ErrInvalidInput = sdkerrors.Register(ModuleName, 1, "invalid input")
 	// ErrFungibleTokenNotFound error for a fungible token not found in the store.
 	ErrFungibleTokenNotFound = sdkerrors.Register(ModuleName, 2, "fungible token not found")
 	// ErrFeatureNotActive is returned when an operation is performed on a token which is missing a required feature
 	ErrFeatureNotActive = sdkerrors.Register(ModuleName, 3, "token feature is not active")
-	// ErrInvalidDenom is returned when the provided denom is not valid
-	ErrInvalidDenom = sdkerrors.Register(ModuleName, 4, "denom is not valid")
 	// ErrInvalidKey is returned when the provided store key is invalid
-	ErrInvalidKey = sdkerrors.Register(ModuleName, 5, "invalid key")
+	ErrInvalidKey = sdkerrors.Register(ModuleName, 4, "invalid key")
 	// ErrNotEnoughBalance is returned when there is not enough
-	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 6, "not enough balance")
-	// ErrInvalidSubunit is returned when the provided subunit is not of valid format
-	ErrInvalidSubunit = sdkerrors.Register(ModuleName, 7, "subunit format is not valid")
-	// ErrInvalidSymbol is returned when the provided symbol is not of valid format
-	ErrInvalidSymbol = sdkerrors.Register(ModuleName, 8, "symbol format is not valid")
+	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 5, "not enough balance")
 	// ErrGloballyFrozen is returned when token is globally frozen so all operations with it are blocked
-	ErrGloballyFrozen = sdkerrors.Register(ModuleName, 9, "token is globally frozen")
+	ErrGloballyFrozen = sdkerrors.Register(ModuleName, 6, "token is globally frozen")
 	// ErrWhitelistedLimitExceeded is returned when new balance after receiving coins exceeds the whitelisted limit
-	ErrWhitelistedLimitExceeded = sdkerrors.Register(ModuleName, 10, "whitelisted limit exceeded")
+	ErrWhitelistedLimitExceeded = sdkerrors.Register(ModuleName, 7, "whitelisted limit exceeded")
 )

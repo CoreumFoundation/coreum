@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset/types"
@@ -27,8 +28,11 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 	}
 }
 
-// IsSendAllowed checks that a transfer request is allowed or not
-func (k Keeper) IsSendAllowed(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
+// BeforeSendCoins checks that a transfer request is allowed or not
+//
+// TODO: we should try to express this function in terms of BeforeInputOutputCoins so
+// we will have a single place to enforce our logic
+func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
 	for _, coin := range coins {
 		ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
 		if err != nil {
@@ -42,6 +46,52 @@ func (k Keeper) IsSendAllowed(ctx sdk.Context, fromAddress, toAddress sdk.AccAdd
 		}
 		if err := k.isCoinReceivable(ctx, toAddress, ft, coin.Amount); err != nil {
 			return err
+		}
+		if err := k.applyBurnRate(ctx, ft, fromAddress, toAddress, coin); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FungibleTokenDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
+	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
+		coinToBurn := ft.CalculateBurnRateAmount(coin)
+		err := k.burnFungibleToken(ctx, fromAddress, ft, coinToBurn)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper
+func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	for _, in := range inputs {
+		inAddress, err := sdk.AccAddressFromBech32(in.Address)
+		if err != nil {
+			return err
+		}
+
+		for _, coin := range in.Coins {
+			ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+			if types.ErrFungibleTokenNotFound.Is(err) {
+				continue
+			}
+
+			if err != nil {
+				return err
+			}
+
+			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != inAddress.String() {
+				coinsToBurn := ft.CalculateBurnRateAmount(coin)
+				err = k.burnFungibleToken(ctx, inAddress, ft, coinsToBurn)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
