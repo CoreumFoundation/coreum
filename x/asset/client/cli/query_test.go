@@ -44,11 +44,12 @@ func TestQueryFungibleToken(t *testing.T) {
 		Precision:   8,
 		Description: "",
 		Features:    []types.FungibleTokenFeature{},
+		BurnRate:    sdk.NewDec(0),
 	}, resp.FungibleToken)
 }
 
 func issueFungibleToken(requireT *require.Assertions, ctx client.Context, symbol, subunit, precision string, testNetwork *network.Network) string {
-	args := []string{symbol, subunit, precision, "", "", ""}
+	args := []string{symbol, subunit, precision, "", ""}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)

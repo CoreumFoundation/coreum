@@ -33,7 +33,6 @@ func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 			Symbol:        "BTC",
 			Subunit:       "btc",
 			Description:   "BTC Description",
-			Recipient:     acc.String(),
 			InitialAmount: sdk.NewInt(777),
 		}
 	}
@@ -55,10 +54,6 @@ func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 
 	msg = msgF()
 	msg.Symbol = "1BT"
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.Recipient = "invalid"
 	requireT.Error(msg.ValidateBasic())
 
 	msg = msgF()

@@ -48,11 +48,7 @@ func NewMsgServer(keeper MsgKeeper, nftKeeper NonFungibleTokeMsgKeeper) MsgServe
 func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueFungibleToken) (*types.EmptyResponse, error) {
 	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid issuer in MsgIssueFungibleToken")
-	}
-	recipient, err := sdk.AccAddressFromBech32(req.Recipient)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid recipient in MsgIssueFungibleToken")
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid issuer in MsgIssueFungibleToken")
 	}
 	_, err = ms.keeper.IssueFungibleToken(sdk.UnwrapSDKContext(ctx), types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
@@ -60,9 +56,9 @@ func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueF
 		Subunit:       req.Subunit,
 		Precision:     req.Precision,
 		Description:   req.Description,
-		Recipient:     recipient,
 		InitialAmount: req.InitialAmount,
 		Features:      req.Features,
+		BurnRate:      req.BurnRate,
 	})
 	if err != nil {
 		return nil, err

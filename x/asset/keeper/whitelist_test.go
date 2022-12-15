@@ -32,7 +32,6 @@ func TestKeeper_Whitelist(t *testing.T) {
 		Symbol:        "DEF",
 		Subunit:       "def",
 		Description:   "DEF Desc",
-		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_whitelist}, //nolint:nosnakecase
 	}
@@ -40,20 +39,11 @@ func TestKeeper_Whitelist(t *testing.T) {
 	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
 	requireT.NoError(err)
 
-	// test query all whitelisted balances
-	allBalances, pageRes, err := assetKeeper.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{})
-	assertT.NoError(err)
-	assertT.Len(allBalances, 1)
-	assertT.EqualValues(1, pageRes.GetTotal())
-	assertT.EqualValues(issuer.String(), allBalances[0].Address)
-	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(666))).String(), allBalances[0].Coins.String())
-
 	unwhitelistableSettings := types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
 		Subunit:       "abc",
 		Description:   "ABC Desc",
-		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.FungibleTokenFeature{},
 	}
@@ -97,6 +87,14 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.NoError(assetKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(100))))
 	whitelistedBalance = assetKeeper.GetWhitelistedBalance(ctx, receiver, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(100)).String(), whitelistedBalance.String())
+
+	// test query all whitelisted balances
+	allBalances, pageRes, err := assetKeeper.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{})
+	assertT.NoError(err)
+	assertT.Len(allBalances, 1)
+	assertT.EqualValues(1, pageRes.GetTotal())
+	assertT.EqualValues(receiver.String(), allBalances[0].Address)
+	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))).String(), allBalances[0].Coins.String())
 
 	// send
 	err = bankKeeper.SendCoins(ctx, issuer, receiver, sdk.NewCoins(

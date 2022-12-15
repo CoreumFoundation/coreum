@@ -55,14 +55,13 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 			Symbol:        symbol,
 			Subunit:       "subunit",
 			Description:   "ABC Desc",
-			Recipient:     addr,
 			InitialAmount: sdk.NewInt(777),
 			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 		}
 
 		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
-		if types.ErrInvalidSymbol.Is(err) == isValid {
-			requireT.Equal(types.ErrInvalidSymbol.Is(err), !isValid)
+		if types.ErrInvalidInput.Is(err) == isValid {
+			requireT.Equal(types.ErrInvalidInput.Is(err), !isValid)
 		}
 	}
 
@@ -114,7 +113,6 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 			Symbol:        "symbol",
 			Subunit:       subunit,
 			Description:   "ABC Desc",
-			Recipient:     addr,
 			InitialAmount: sdk.NewInt(777),
 			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 		}
@@ -123,7 +121,7 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 		if isValid {
 			requireT.NoError(err)
 		} else {
-			requireT.ErrorIs(types.ErrInvalidSubunit, err, "subunit", subunit)
+			requireT.ErrorIs(types.ErrInvalidInput, err, "subunit", subunit)
 		}
 	}
 
@@ -153,7 +151,6 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Description:   "ABC Desc",
 		Subunit:       "abc",
 		Precision:     8,
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}
@@ -172,6 +169,7 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Subunit:     strings.ToLower(settings.Subunit),
 		Precision:   settings.Precision,
 		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
+		BurnRate:    sdk.NewDec(0),
 	}, gotToken)
 
 	// check the metadata
@@ -203,14 +201,14 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 	st := settings
 	st.Symbol = "test-symbol"
 	_, err = assetKeeper.IssueFungibleToken(ctx, st)
-	requireT.True(errors.Is(types.ErrInvalidSubunit, err))
+	requireT.True(errors.Is(types.ErrInvalidInput, err))
 
 	// check duplicate symbol
 	st = settings
 	st.Subunit = "test-subunit"
 	st.Symbol = "aBc"
 	_, err = assetKeeper.IssueFungibleToken(ctx, st)
-	requireT.True(errors.Is(types.ErrInvalidSubunit, err))
+	requireT.True(errors.Is(types.ErrInvalidInput, err))
 }
 
 func TestKeeper_Mint(t *testing.T) {
@@ -229,7 +227,6 @@ func TestKeeper_Mint(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "NotMintable",
 		Subunit:       "notmintable",
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
 			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
@@ -251,7 +248,6 @@ func TestKeeper_Mint(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "mintable",
 		Subunit:       "mintable",
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
 			types.FungibleTokenFeature_mint, //nolint:nosnakecase
@@ -295,7 +291,6 @@ func TestKeeper_Burn(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "NotBurnable",
 		Subunit:       "notburnable",
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
 			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
@@ -317,7 +312,6 @@ func TestKeeper_Burn(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "burnable",
 		Subunit:       "burnable",
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
 			types.FungibleTokenFeature_burn,   //nolint:nosnakecase

@@ -39,7 +39,6 @@ func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain tes
 		Subunit:       "freeze",
 		Precision:     6,
 		Description:   "FREEZE Description",
-		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assettypes.FungibleTokenFeature{
 			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
