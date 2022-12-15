@@ -51,12 +51,12 @@ func BuildNonFungibleTokenClassID(symbol string, issuer sdk.AccAddress) string {
 func DeconstructNonFungibleTokenClassID(classID string) (issuer sdk.Address, err error) {
 	classIDParts := strings.Split(classID, nftClassIDSeparator)
 	if len(classIDParts) != 2 {
-		return nil, sdkerrors.Wrap(ErrInvalidDenom, "classID must match format [symbol]-[issuer-address]")
+		return nil, sdkerrors.Wrap(ErrInvalidInput, "classID must match format [symbol]-[issuer-address]")
 	}
 
 	address, err := sdk.AccAddressFromBech32(classIDParts[1])
 	if err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address in classID,err:%s", err)
+		return nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid issuer address in classID,err:%s", err)
 	}
 
 	return address, nil
@@ -65,7 +65,7 @@ func DeconstructNonFungibleTokenClassID(classID string) (issuer sdk.Address, err
 // ValidateNonFungibleTokenClassSymbol checks the provided non-fungible token class symbol is valid.
 func ValidateNonFungibleTokenClassSymbol(symbol string) error {
 	if !nftSymbolRegex.MatchString(symbol) {
-		return sdkerrors.Wrapf(ErrInvalidSymbol, "symbol must match regex format '%s'", nftSymbolRegexStr)
+		return sdkerrors.Wrapf(ErrInvalidInput, "symbol must match regex format '%s'", nftSymbolRegexStr)
 	}
 
 	return nil

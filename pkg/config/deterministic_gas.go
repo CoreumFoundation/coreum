@@ -112,7 +112,7 @@ type DeterministicGasRequirements struct {
 // If fixed gas is not specified for the message type it returns 0.
 //
 //nolint:funlen // it doesn't make sense to split entries
-func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
+func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) { //nolint:gocyclo // team decided to have flat structure
 	// Following is the list of messages having deterministic gas amount defined.
 	// To test the real gas usage return `false` and run an integration test which reports the used gas.
 	// Then define a reasonable value for the message and return `true` again.

@@ -54,7 +54,7 @@ func TestNonFungibleTokenKeeper_IssueNonFungibleTokenClass(t *testing.T) {
 	// try to duplicate
 	settings.Symbol = "SYMBOL"
 	_, err = nftKeeper.IssueClass(ctx, settings)
-	requireT.True(types.ErrInvalidNonFungibleTokenClass.Is(err))
+	requireT.True(types.ErrInvalidInput.Is(err))
 }
 
 func TestNonFungibleTokenKeeper_MintNonFungibleToken(t *testing.T) {
@@ -103,7 +103,7 @@ func TestNonFungibleTokenKeeper_MintNonFungibleToken(t *testing.T) {
 
 	// mint second NFT with the same ID
 	err = nftKeeper.Mint(ctx, settings)
-	requireT.True(types.ErrInvalidNonFungibleToken.Is(err))
+	requireT.True(types.ErrInvalidInput.Is(err))
 
 	// try to min from not issuer account
 	settings.Sender = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())

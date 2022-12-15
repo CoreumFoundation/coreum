@@ -196,7 +196,7 @@ func (ms MsgServer) SetWhitelistedLimitFungibleToken(goCtx context.Context, req 
 func (ms MsgServer) IssueNonFungibleTokenClass(ctx context.Context, req *types.MsgIssueNonFungibleTokenClass) (*types.EmptyResponse, error) {
 	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid issuer in MsgIssueNonFungibleTokenClass")
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid issuer in MsgIssueNonFungibleTokenClass")
 	}
 	if _, err := ms.nftKeeper.IssueClass(
 		sdk.UnwrapSDKContext(ctx),
@@ -220,7 +220,7 @@ func (ms MsgServer) IssueNonFungibleTokenClass(ctx context.Context, req *types.M
 func (ms MsgServer) MintNonFungibleToken(ctx context.Context, req *types.MsgMintNonFungibleToken) (*types.EmptyResponse, error) {
 	owner, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidNonFungibleToken, "invalid sender")
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
 	}
 	if err := ms.nftKeeper.Mint(
 		sdk.UnwrapSDKContext(ctx),

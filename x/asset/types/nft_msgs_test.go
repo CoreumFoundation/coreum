@@ -58,7 +58,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 				msg.Name = strings.Repeat("x", 129)
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleTokenClass,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid empty symbol",
@@ -67,7 +67,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 				msg.Symbol = ""
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleTokenClass,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid char symbol",
@@ -76,7 +76,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 				msg.Symbol = "#x#"
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleTokenClass,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid description",
@@ -85,7 +85,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 				msg.Description = string(make([]byte, 257))
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleTokenClass,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid uri",
@@ -94,7 +94,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 				msg.URI = string(make([]byte, 257))
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleTokenClass,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid uri hash",
@@ -103,7 +103,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 				msg.URIHash = strings.Repeat("x", 129)
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleTokenClass,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid data",
@@ -115,7 +115,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 				msg.Data = longDataValue
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleTokenClass,
+			expectedError: types.ErrInvalidInput,
 		},
 	}
 
@@ -167,7 +167,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 				msg.ID = "id?"
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleToken,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid sender",
@@ -185,7 +185,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 				msg.ClassID = "x"
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleToken,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid uri",
@@ -194,7 +194,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 				msg.URI = string(make([]byte, 257))
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleToken,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid uri hash",
@@ -203,7 +203,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 				msg.URIHash = strings.Repeat("x", 129)
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleToken,
+			expectedError: types.ErrInvalidInput,
 		},
 		{
 			name: "invalid data",
@@ -215,7 +215,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 				msg.Data = longDataValue
 				return &msg
 			},
-			expectedError: types.ErrInvalidNonFungibleToken,
+			expectedError: types.ErrInvalidInput,
 		},
 	}
 

@@ -33,13 +33,13 @@ func (k NonFungibleTokenKeeper) IssueClass(ctx sdk.Context, settings types.Issue
 
 	id := types.BuildNonFungibleTokenClassID(settings.Symbol, settings.Issuer)
 	if err := nft.ValidateClassID(id); err != nil {
-		return "", sdkerrors.Wrap(types.ErrInvalidNonFungibleTokenClass, err.Error())
+		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
 	found := k.nftKeeper.HasClass(ctx, id)
 	if found {
 		return "", sdkerrors.Wrapf(
-			types.ErrInvalidNonFungibleTokenClass,
+			types.ErrInvalidInput,
 			"symbol %q already used for the address %q",
 			settings.Symbol,
 			settings.Issuer,
@@ -55,7 +55,7 @@ func (k NonFungibleTokenKeeper) IssueClass(ctx sdk.Context, settings types.Issue
 		UriHash:     settings.URIHash,
 		Data:        settings.Data,
 	}); err != nil {
-		return "", sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't save non-fungible token: %s", err)
+		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't save non-fungible token: %s", err)
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventNonFungibleTokenClassIssued{
@@ -67,7 +67,7 @@ func (k NonFungibleTokenKeeper) IssueClass(ctx sdk.Context, settings types.Issue
 		URI:         settings.URI,
 		URIHash:     settings.URIHash,
 	}); err != nil {
-		return "", sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't emit event EventNonFungibleTokenClassIssued: %s", err)
+		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't emit event EventNonFungibleTokenClassIssued: %s", err)
 	}
 
 	return id, nil
@@ -76,7 +76,7 @@ func (k NonFungibleTokenKeeper) IssueClass(ctx sdk.Context, settings types.Issue
 // Mint mints new non-fungible token.
 func (k NonFungibleTokenKeeper) Mint(ctx sdk.Context, settings types.MintNonFungibleTokenSettings) error {
 	if err := types.ValidateNonFungibleTokenID(settings.ID); err != nil {
-		return sdkerrors.Wrap(types.ErrInvalidNonFungibleToken, err.Error())
+		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
 	if err := validateMintingAllowed(settings.Sender, settings.ClassID); err != nil {
@@ -84,11 +84,11 @@ func (k NonFungibleTokenKeeper) Mint(ctx sdk.Context, settings types.MintNonFung
 	}
 
 	if !k.nftKeeper.HasClass(ctx, settings.ClassID) {
-		return sdkerrors.Wrapf(types.ErrInvalidNonFungibleToken, "classID %q not found", settings.ClassID)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "classID %q not found", settings.ClassID)
 	}
 
 	if nftFound := k.nftKeeper.HasNFT(ctx, settings.ClassID, settings.ID); nftFound {
-		return sdkerrors.Wrapf(types.ErrInvalidNonFungibleToken, "ID %q already defined for the class", settings.ID)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q already defined for the class", settings.ID)
 	}
 
 	if err := k.nftKeeper.Mint(ctx, nft.NFT{
@@ -98,7 +98,7 @@ func (k NonFungibleTokenKeeper) Mint(ctx sdk.Context, settings types.MintNonFung
 		UriHash: settings.URIHash,
 		Data:    settings.Data,
 	}, settings.Sender); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidNonFungibleTokenClass, "can't save non-fungible token: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "can't save non-fungible token: %s", err)
 	}
 
 	return nil

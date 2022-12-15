@@ -287,6 +287,16 @@ paths:
           in: query
           required: false
           type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   '/coreum/asset/v1/fts/balance/{account}/frozen/{denom}':
@@ -802,6 +812,16 @@ paths:
           in: query
           required: false
           type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   '/coreum/asset/v1/fts/balance/{account}/whitelisted/{denom}':
@@ -1072,6 +1092,14 @@ paths:
                         - burn
                         - whitelist
                       default: freeze
+                  burn_rate:
+                    type: string
+                    description: >-
+                      burn_rate is a number between 0 and 1 which will be
+                      multiplied by send amount to determine
+
+                      burn_amount. This value will be burnt on top of the send
+                      amount.
                 description: FungibleToken is a full representation of the fungible token.
             description: >-
               QueryFungibleTokenResponse is response type for the
@@ -35950,6 +35978,13 @@ definitions:
             - burn
             - whitelist
           default: freeze
+      burn_rate:
+        type: string
+        description: >-
+          burn_rate is a number between 0 and 1 which will be multiplied by send
+          amount to determine
+
+          burn_amount. This value will be burnt on top of the send amount.
     description: FungibleToken is a full representation of the fungible token.
   coreum.asset.v1.FungibleTokenFeature:
     type: string
@@ -36042,6 +36077,13 @@ definitions:
                 - burn
                 - whitelist
               default: freeze
+          burn_rate:
+            type: string
+            description: >-
+              burn_rate is a number between 0 and 1 which will be multiplied by
+              send amount to determine
+
+              burn_amount. This value will be burnt on top of the send amount.
         description: FungibleToken is a full representation of the fungible token.
     description: >-
       QueryFungibleTokenResponse is response type for the Query/FungibleToken
