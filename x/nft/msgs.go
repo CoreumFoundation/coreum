@@ -15,21 +15,21 @@ var _ sdk.Msg = &MsgSend{}
 // ValidateBasic implements the Msg.ValidateBasic method.
 func (m MsgSend) ValidateBasic() error {
 	if err := ValidateClassID(m.ClassId); err != nil {
-		return sdkerrors.Wrapf(ErrInvalidID, "Invalid class id (%s)", m.ClassId)
+		return sdkerrors.Wrapf(ErrInvalidID, "invalid class id (%s)", m.ClassId)
 	}
 
 	if err := ValidateNFTID(m.Id); err != nil {
-		return sdkerrors.Wrapf(ErrInvalidID, "Invalid nft id (%s)", m.Id)
+		return sdkerrors.Wrapf(ErrInvalidID, "invalid nft id (%s)", m.Id)
 	}
 
 	_, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid sender address (%s)", m.Sender)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", m.Sender)
 	}
 
 	_, err = sdk.AccAddressFromBech32(m.Receiver)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid receiver address (%s)", m.Receiver)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", m.Receiver)
 	}
 	return nil
 }

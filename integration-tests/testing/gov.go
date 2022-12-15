@@ -76,7 +76,7 @@ func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress,
 	}
 
 	if govtypes.StatusVotingPeriod != proposal.Status {
-		return errors.Errorf("Unexpected proposal status after creation: %s", proposal.Status)
+		return errors.Errorf("unexpected proposal status after creation: %s", proposal.Status)
 	}
 
 	err = g.VoteAll(ctx, option, proposal.ProposalId)
@@ -90,7 +90,7 @@ func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress,
 		return err
 	}
 	if finalStatus != govtypes.StatusPassed {
-		return errors.Errorf("Unexpected proposal status after voting: %s, expected: %s", finalStatus, govtypes.StatusPassed)
+		return errors.Errorf("unexpected proposal status after voting: %s, expected: %s", finalStatus, govtypes.StatusPassed)
 	}
 
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
