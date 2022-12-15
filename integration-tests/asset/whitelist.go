@@ -145,6 +145,20 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 	requireT.Error(err)
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
+	// try to send to recipient before it is whitelisted (balance 0, whitelist limit 0)
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	assertT.True(assettypes.ErrWhitelistedLimitExceeded.Is(err))
+
 	// whitelist 400 tokens
 	whitelistMsg = &assettypes.MsgSetWhitelistedLimitFungibleToken{
 		Sender:  issuer.String(),
@@ -175,7 +189,7 @@ func TestWhitelistFungibleToken(ctx context.Context, t testing.T, chain testing.
 	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))), whitelistedBalances.Balances)
 
 	// try to receive more than whitelisted (600) (possible 400)
-	sendMsg := &banktypes.MsgSend{
+	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(600))),
