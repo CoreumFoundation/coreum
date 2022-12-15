@@ -26,7 +26,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 		Name:        "name",
 		Symbol:      "Symbol",
 		Description: "description",
-		URI:         "https://my.uri",
+		URI:         "https://my.invalid",
 		URIHash:     "sha-hash",
 		Data:        dataValue,
 	}
@@ -144,7 +144,7 @@ func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 		ID:      "my-id",
 		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-		URI:     "https://my.uri",
+		URI:     "https://my.invalid",
 		URIHash: "content-hash",
 		Data:    dataValue,
 	}
