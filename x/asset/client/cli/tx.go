@@ -73,7 +73,7 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + "--burn-rate=0.12",
+		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12",
 		Args:  cobra.ExactArgs(6),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -131,7 +131,7 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 			if len(burnRateStr) > 0 {
 				burnRate, err = sdk.NewDecFromStr(burnRateStr)
 				if err != nil {
-					return errors.Wrapf(err, "invalid burn_rate")
+					return errors.Wrapf(err, "invalid burn-rate")
 				}
 			}
 

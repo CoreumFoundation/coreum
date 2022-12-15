@@ -22,6 +22,11 @@ func TestKeeperCalculateBurnCoin(t *testing.T) {
 		burnAmount int64
 	}{
 		{
+			rate:       "0.5",
+			sendAmount: 0,
+			burnAmount: 0,
+		},
+		{
 			rate:       "0",
 			sendAmount: 1,
 			burnAmount: 0,

@@ -24,13 +24,11 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
-				&assettypes.MsgIssueFungibleToken{},
 				&banktypes.MsgSend{},
 			},
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 			},
 		}),
