@@ -16,8 +16,6 @@ import (
 )
 
 // TestFreezeUnfreezableFungibleToken checks freeze functionality on unfreezable fungible tokens.
-//
-//nolint:dupl
 func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -37,7 +35,6 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 		Symbol:        "ABCNotFreezable",
 		Subunit:       "uabcnotfreezable",
 		Description:   "ABC Description",
-		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),
 		Features:      []assettypes.FungibleTokenFeature{},
 	}
@@ -86,6 +83,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgIssueFungibleToken{},
+				&banktypes.MsgSend{},
 				&assettypes.MsgFreezeFungibleToken{},
 				&assettypes.MsgFreezeFungibleToken{},
 				&assettypes.MsgUnfreezeFungibleToken{},
@@ -116,18 +114,29 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
-		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assettypes.FungibleTokenFeature{
 			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(assettypes.BuildFungibleTokenDenom(msg.Subunit, issuer), sdk.NewInt(1000)),
+		),
+	}
+
+	msgList := []sdk.Msg{
+		msg, msgSend,
+	}
+
 	res, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
-		msg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
 	)
 
 	requireT.NoError(err)

@@ -43,16 +43,15 @@ message MsgIssueFungibleToken {
   string symbol = 2;
   string subunit = 3;
   uint32 precision = 4;
-  string recipient = 5;
-  string initial_amount = 6 [
+  string initial_amount = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string description = 7;
-  repeated FungibleTokenFeature features = 8;
+  string description = 6;
+  repeated FungibleTokenFeature features = 7;
   // burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
   // burn_amount. This value will be burnt on top of the send amount.
-  string burn_rate = 9 [
+  string burn_rate = 8 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];

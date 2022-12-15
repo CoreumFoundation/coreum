@@ -34,10 +34,6 @@ func (msg MsgIssueFungibleToken) ValidateBasic() error {
 		return err
 	}
 
-	if _, err := sdk.AccAddressFromBech32(msg.Recipient); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid recipient %s", msg.Recipient)
-	}
-
 	// we allow zero initial amount, in that case we won't mint it initially
 	if msg.InitialAmount.IsNil() || msg.InitialAmount.IsNegative() {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid initial amount %s, can't be negative", msg.InitialAmount.String())

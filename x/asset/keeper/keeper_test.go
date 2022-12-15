@@ -66,7 +66,6 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 			Symbol:        symbol,
 			Subunit:       "subunit",
 			Description:   "ABC Desc",
-			Recipient:     addr,
 			InitialAmount: sdk.NewInt(777),
 			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 		}
@@ -125,7 +124,6 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 			Symbol:        "symbol",
 			Subunit:       subunit,
 			Description:   "ABC Desc",
-			Recipient:     addr,
 			InitialAmount: sdk.NewInt(777),
 			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 		}
@@ -164,7 +162,6 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 		Description:   "ABC Desc",
 		Subunit:       "abc",
 		Precision:     8,
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}
@@ -241,7 +238,6 @@ func TestKeeper_Mint(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "NotMintable",
 		Subunit:       "notmintable",
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
 			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
@@ -263,7 +259,6 @@ func TestKeeper_Mint(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "mintable",
 		Subunit:       "mintable",
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
 			types.FungibleTokenFeature_mint, //nolint:nosnakecase
@@ -307,7 +302,6 @@ func TestKeeper_Burn(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "NotBurnable",
 		Subunit:       "notburnable",
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
 			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
@@ -329,7 +323,6 @@ func TestKeeper_Burn(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "burnable",
 		Subunit:       "burnable",
-		Recipient:     addr,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.FungibleTokenFeature{
 			types.FungibleTokenFeature_burn,   //nolint:nosnakecase

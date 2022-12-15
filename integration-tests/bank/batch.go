@@ -26,7 +26,6 @@ func TestMultiSendBatchOutputs(ctx context.Context, t testing.T, chain testing.C
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
-		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
 		Features: []assettypes.FungibleTokenFeature{
 			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
@@ -107,7 +106,6 @@ func TestSendBatchMsgs(ctx context.Context, t testing.T, chain testing.Chain) {
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
-		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
 		Features: []assettypes.FungibleTokenFeature{
 			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated

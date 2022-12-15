@@ -46,7 +46,6 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 		Subunit:       "uabcnotburnable",
 		Precision:     6,
 		Description:   "ABC Description",
-		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assettypes.FungibleTokenFeature{
 			assettypes.FungibleTokenFeature_mint,   //nolint:nosnakecase
@@ -90,7 +89,6 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 		Subunit:       "uabcburnable",
 		Precision:     6,
 		Description:   "ABC Description",
-		Recipient:     issuer.String(),
 		InitialAmount: sdk.NewInt(1000),
 		Features:      []assettypes.FungibleTokenFeature{assettypes.FungibleTokenFeature_burn}, //nolint:nosnakecase
 	}

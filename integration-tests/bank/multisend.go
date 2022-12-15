@@ -28,7 +28,6 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 			Symbol:        "TOK1",
 			Subunit:       "tok1",
 			Description:   "TOK1 Description",
-			Recipient:     sender.String(),
 			InitialAmount: amount,
 		},
 		&assettypes.MsgIssueFungibleToken{
@@ -36,7 +35,6 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 			Symbol:        "TOK2",
 			Subunit:       "tok2",
 			Description:   "TOK2 Description",
-			Recipient:     sender.String(),
 			InitialAmount: amount,
 		},
 	}
@@ -141,7 +139,6 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
-		Recipient:     sender1.String(),
 		InitialAmount: assetAmount,
 	}
 	issue2Msg := &assettypes.MsgIssueFungibleToken{
@@ -149,7 +146,6 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 		Symbol:        "TOK2",
 		Subunit:       "tok2",
 		Description:   "TOK2 Description",
-		Recipient:     sender2.String(),
 		InitialAmount: assetAmount,
 	}
 

@@ -14,14 +14,13 @@ message EventFungibleTokenIssued {
   string symbol = 3;
   string subunit = 4;
   uint32 precision = 5;
-  string recipient = 6;
-  string initial_amount = 7 [
+  string initial_amount = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string description = 8;
-  repeated FungibleTokenFeature features = 9;
-  string burn_rate = 10 [
+  string description = 7;
+  repeated FungibleTokenFeature features = 8;
+  string burn_rate = 9 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];

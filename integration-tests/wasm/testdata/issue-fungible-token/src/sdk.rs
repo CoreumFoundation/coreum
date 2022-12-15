@@ -8,7 +8,6 @@ pub enum FungibleTokenMsg {
         symbol: String,
         subunit: String,
         precision: u32,
-        recipient: String,
         initial_amount: Uint128,
     },
 }

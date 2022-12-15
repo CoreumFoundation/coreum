@@ -73,14 +73,14 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [recipient_address] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12",
-		Args:  cobra.ExactArgs(6),
+		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12",
+		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Issues new fungible token.
 
 Example:
-$ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitcoin Token" --from [issuer]
+$ %s tx asset ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 `,
 				version.AppName,
 			),
@@ -98,21 +98,12 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 			if err != nil {
 				return sdkerrors.Wrap(err, "invalid precision")
 			}
-			recipient := args[3]
-			// if the recipient wasn't provided the signer is the recipient
-			if recipient != "" {
-				if _, err = sdk.AccAddressFromBech32(recipient); err != nil {
-					return sdkerrors.Wrap(err, "invalid recipient")
-				}
-			} else {
-				recipient = issuer.String()
-			}
 
 			// if the initial amount wasn't provided the amount is zero
 			initialAmount := sdk.ZeroInt()
-			if args[4] != "" {
+			if args[3] != "" {
 				var ok bool
-				initialAmount, ok = sdk.NewIntFromString(args[4])
+				initialAmount, ok = sdk.NewIntFromString(args[3])
 				if !ok {
 					return sdkerrors.Wrap(err, "invalid initial_amount")
 				}
@@ -143,14 +134,13 @@ $ %s tx asset ft issue WBTC wsatoshi 8 [recipient_address] 100000 "Wrapped Bitco
 				}
 				features = append(features, types.FungibleTokenFeature(feature))
 			}
-			description := args[5]
+			description := args[4]
 
 			msg := &types.MsgIssueFungibleToken{
 				Issuer:        issuer.String(),
 				Symbol:        symbol,
 				Subunit:       subunit,
 				Precision:     uint32(precision),
-				Recipient:     recipient,
 				InitialAmount: initialAmount,
 				Description:   description,
 				Features:      features,

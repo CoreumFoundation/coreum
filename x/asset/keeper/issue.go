@@ -50,15 +50,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 	}
 	k.SetFungibleTokenDefinition(ctx, definition)
 
-	// TODO: Delete this once recipient is removed
-	//nolint:nosnakecase
-	if definition.IsFeatureEnabled(types.FungibleTokenFeature_whitelist) && settings.InitialAmount.IsPositive() {
-		if err := k.SetWhitelistedBalance(ctx, settings.Issuer, settings.Recipient, sdk.NewCoin(denom, settings.InitialAmount)); err != nil {
-			return "", err
-		}
-	}
-
-	if err := k.mintFungibleToken(ctx, definition, settings.InitialAmount, settings.Recipient); err != nil {
+	if err := k.mintFungibleToken(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
 	}
 
@@ -69,7 +61,6 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Subunit:       settings.Subunit,
 		Precision:     settings.Precision,
 		Description:   settings.Description,
-		Recipient:     settings.Recipient.String(),
 		InitialAmount: settings.InitialAmount,
 		Features:      settings.Features,
 		BurnRate:      settings.BurnRate,
