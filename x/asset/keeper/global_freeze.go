@@ -25,7 +25,7 @@ func (k Keeper) GloballyFreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddre
 		return err
 	}
 
-	ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezePrefix(denom), globalFreezeEnabledStoreVal)
+	k.SetFungibleTokenGlobalFreeze(ctx, denom, true)
 	return nil
 }
 
@@ -41,8 +41,17 @@ func (k Keeper) GloballyUnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAdd
 		return err
 	}
 
-	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezePrefix(denom))
+	k.SetFungibleTokenGlobalFreeze(ctx, denom, false)
 	return nil
+}
+
+// SetFungibleTokenGlobalFreeze enables/disables global freeze on a fungible token depending on frozen arg.
+func (k Keeper) SetFungibleTokenGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
+	if frozen {
+		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezePrefix(denom), globalFreezeEnabledStoreVal)
+		return
+	}
+	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezePrefix(denom))
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
