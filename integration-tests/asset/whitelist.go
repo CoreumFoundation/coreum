@@ -25,8 +25,6 @@ func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T,
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
-				&assettypes.MsgSetWhitelistedLimitFungibleToken{},
-				&banktypes.MsgSend{},
 			},
 		}))
 
@@ -42,11 +40,6 @@ func TestWhitelistUnwhitelistableFungibleToken(ctx context.Context, t testing.T,
 		InitialAmount: amount,
 		Features:      []assettypes.FungibleTokenFeature{},
 	},
-		&banktypes.MsgSend{
-			FromAddress: issuer.String(),
-			ToAddress:   recipient.String(),
-			Amount:      []sdk.Coin{sdk.NewCoin(unwhitelistableDenom, amount)},
-		},
 	}
 
 	_, err := tx.BroadcastTx(
