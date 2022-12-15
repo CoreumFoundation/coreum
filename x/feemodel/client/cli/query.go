@@ -54,3 +54,16 @@ func GetMinGasPriceCmd() *cobra.Command {
 
 	return cmd
 }
+
+// QueryGasPriceHelper queries the gas price
+func QueryGasPriceHelper(cmd *cobra.Command) (*types.QueryMinGasPriceResponse, error) {
+	clientCtx, err := client.GetClientQueryContext(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	queryClient := types.NewQueryClient(clientCtx)
+
+	ctx := cmd.Context()
+	return queryClient.MinGasPrice(ctx, &types.QueryMinGasPriceRequest{})
+}
