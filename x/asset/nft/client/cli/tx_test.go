@@ -11,29 +11,26 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
 )
 
-func TestIssueFungibleToken(t *testing.T) {
+func TestCmdTxIssueNonFungibleTokenClass(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
-	// the denom must start from the letter
-	symbol := "BTC" + uuid.NewString()[:4]
+	symbol := "nft" + uuid.NewString()[:4]
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
-	subunit := "wsatoshi"
-	precision := "8"
 
-	args := []string{symbol, subunit, precision, "777", `"My Token"`}
+	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
 	var res sdk.TxResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
-	requireT.Equal(uint32(0), res.Code, "can't submit IssueFungibleToken tx", res)
+	requireT.Equal(uint32(0), res.Code, "can't submit IssueNonFungibleTokenClass tx", res)
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {

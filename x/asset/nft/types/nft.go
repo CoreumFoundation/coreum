@@ -21,8 +21,8 @@ var (
 	nftClassIDSeparator = "-"
 )
 
-// IssueNonFungibleTokenClassSettings is the model which represents the params for the non-fungible token class creation.
-type IssueNonFungibleTokenClassSettings struct {
+// IssueClassSettings is the model which represents the params for the non-fungible token class creation.
+type IssueClassSettings struct {
 	Issuer      sdk.AccAddress
 	Name        string
 	Symbol      string
@@ -32,8 +32,8 @@ type IssueNonFungibleTokenClassSettings struct {
 	Data        *codetypes.Any
 }
 
-// MintNonFungibleTokenSettings is the model which represents the params for the non-fungible token minting.
-type MintNonFungibleTokenSettings struct {
+// MintSettings is the model which represents the params for the non-fungible token minting.
+type MintSettings struct {
 	Sender  sdk.AccAddress
 	ClassID string
 	ID      string
@@ -42,13 +42,13 @@ type MintNonFungibleTokenSettings struct {
 	Data    *codetypes.Any
 }
 
-// BuildNonFungibleTokenClassID builds the non-fungible token id string from the symbol and issuer address.
-func BuildNonFungibleTokenClassID(symbol string, issuer sdk.AccAddress) string {
+// BuildClassID builds the non-fungible token id string from the symbol and issuer address.
+func BuildClassID(symbol string, issuer sdk.AccAddress) string {
 	return strings.ToLower(symbol) + nftClassIDSeparator + issuer.String()
 }
 
-// DeconstructNonFungibleTokenClassID splits the classID string into the symbol and issuer address.
-func DeconstructNonFungibleTokenClassID(classID string) (issuer sdk.Address, err error) {
+// DeconstructClassID splits the classID string into the symbol and issuer address.
+func DeconstructClassID(classID string) (issuer sdk.Address, err error) {
 	classIDParts := strings.Split(classID, nftClassIDSeparator)
 	if len(classIDParts) != 2 {
 		return nil, sdkerrors.Wrap(ErrInvalidInput, "classID must match format [symbol]-[issuer-address]")
@@ -62,8 +62,8 @@ func DeconstructNonFungibleTokenClassID(classID string) (issuer sdk.Address, err
 	return address, nil
 }
 
-// ValidateNonFungibleTokenClassSymbol checks the provided non-fungible token class symbol is valid.
-func ValidateNonFungibleTokenClassSymbol(symbol string) error {
+// ValidateClassSymbol checks the provided non-fungible token class symbol is valid.
+func ValidateClassSymbol(symbol string) error {
 	if !nftSymbolRegex.MatchString(symbol) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "symbol must match regex format '%s'", nftSymbolRegexStr)
 	}
@@ -71,8 +71,8 @@ func ValidateNonFungibleTokenClassSymbol(symbol string) error {
 	return nil
 }
 
-// ValidateNonFungibleTokenID checks the provided non-fungible token class symbol is valid.
-func ValidateNonFungibleTokenID(id string) error {
+// ValidateTokenID checks the provided non-fungible token class symbol is valid.
+func ValidateTokenID(id string) error {
 	if !nftIDRegex.MatchString(id) {
 		return sdkerrors.Wrapf(ErrInvalidID, "id must match regex format '%s'", nftIDRegexStr)
 	}

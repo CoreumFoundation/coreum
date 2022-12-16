@@ -1,145 +1,127 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// Keeper is the asset module keeper.
+// Keeper is the asset module non-fungible token nftKeeper.
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   sdk.StoreKey
-	bankKeeper types.BankKeeper
+	cdc       codec.BinaryCodec
+	storeKey  sdk.StoreKey
+	nftKeeper types.NFTKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.BankKeeper) Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, nftKeeper types.NFTKeeper) Keeper {
 	return Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		bankKeeper: bankKeeper,
+		cdc:       cdc,
+		storeKey:  storeKey,
+		nftKeeper: nftKeeper,
 	}
 }
 
-// BeforeSendCoins checks that a transfer request is allowed or not
-//
-// TODO: we should try to express this function in terms of BeforeInputOutputCoins so
-// we will have a single place to enforce our logic
-func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
-	for _, coin := range coins {
-		ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
-		if err != nil {
-			if types.ErrFungibleTokenNotFound.Is(err) {
-				continue
-			}
-			return err
-		}
-		if err := k.isCoinSpendable(ctx, fromAddress, ft, coin.Amount); err != nil {
-			return err
-		}
-		if err := k.isCoinReceivable(ctx, toAddress, ft, coin.Amount); err != nil {
-			return err
-		}
-		if err := k.applyBurnRate(ctx, ft, fromAddress, toAddress, coin); err != nil {
-			return err
-		}
+// IssueClass issues new non-fungible token class and returns its id.
+func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (string, error) {
+	if err := types.ValidateClassSymbol(settings.Symbol); err != nil {
+		return "", err
+	}
+
+	id := types.BuildClassID(settings.Symbol, settings.Issuer)
+	if err := nft.ValidateClassID(id); err != nil {
+		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
+	}
+
+	found := k.nftKeeper.HasClass(ctx, id)
+	if found {
+		return "", sdkerrors.Wrapf(
+			types.ErrInvalidInput,
+			"symbol %q already used for the address %q",
+			settings.Symbol,
+			settings.Issuer,
+		)
+	}
+
+	if err := k.nftKeeper.SaveClass(ctx, nft.Class{
+		Id:          id,
+		Symbol:      settings.Symbol,
+		Name:        settings.Name,
+		Description: settings.Description,
+		Uri:         settings.URI,
+		UriHash:     settings.URIHash,
+		Data:        settings.Data,
+	}); err != nil {
+		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't save non-fungible token: %s", err)
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventClassIssued{
+		ID:          id,
+		Issuer:      settings.Issuer.String(),
+		Symbol:      settings.Symbol,
+		Name:        settings.Name,
+		Description: settings.Description,
+		URI:         settings.URI,
+		URIHash:     settings.URIHash,
+	}); err != nil {
+		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't emit event EventNonFungibleTokenClassIssued: %s", err)
+	}
+
+	return id, nil
+}
+
+// Mint mints new non-fungible token.
+func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
+	if err := types.ValidateTokenID(settings.ID); err != nil {
+		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
+	}
+
+	if err := validateMintingAllowed(settings.Sender, settings.ClassID); err != nil {
+		return err
+	}
+
+	if !k.nftKeeper.HasClass(ctx, settings.ClassID) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "classID %q not found", settings.ClassID)
+	}
+
+	if nftFound := k.nftKeeper.HasNFT(ctx, settings.ClassID, settings.ID); nftFound {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q already defined for the class", settings.ID)
+	}
+
+	if err := k.nftKeeper.Mint(ctx, nft.NFT{
+		ClassId: settings.ClassID,
+		Id:      settings.ID,
+		Uri:     settings.URI,
+		UriHash: settings.URIHash,
+		Data:    settings.Data,
+	}, settings.Sender); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "can't save non-fungible token: %s", err)
 	}
 
 	return nil
 }
 
-func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FungibleTokenDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
-	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
-		coinToBurn := ft.CalculateBurnRateAmount(coin)
-		err := k.burnFungibleToken(ctx, fromAddress, ft, coinToBurn)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper
-func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	for _, in := range inputs {
-		inAddress, err := sdk.AccAddressFromBech32(in.Address)
-		if err != nil {
-			return err
-		}
-
-		for _, coin := range in.Coins {
-			ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
-			if types.ErrFungibleTokenNotFound.Is(err) {
-				continue
-			}
-
-			if err != nil {
-				return err
-			}
-
-			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != inAddress.String() {
-				coinsToBurn := ft.CalculateBurnRateAmount(coin)
-				err = k.burnFungibleToken(ctx, inAddress, ft, coinsToBurn)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
-}
-
-// Logger returns the Keeper logger.
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// MintFungibleToken mints new fungible token
-func (k Keeper) MintFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_mint) //nolint:nosnakecase
+func validateMintingAllowed(sender sdk.AccAddress, classID string) error {
+	isIssuer, err := isIssuer(sender, classID)
 	if err != nil {
 		return err
 	}
 
-	return k.mintFungibleToken(ctx, ft, coin.Amount, sender)
-}
-
-// BurnFungibleToken burns fungible token
-func (k Keeper) BurnFungibleToken(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_burn) //nolint:nosnakecase
-	if err != nil {
-		return err
-	}
-
-	return k.burnFungibleToken(ctx, sender, ft, coin.Amount)
-}
-
-func (k Keeper) checkFeatureAllowed(sender sdk.AccAddress, ft types.FungibleTokenDefinition, feature types.FungibleTokenFeature) error {
-	if !ft.IsFeatureEnabled(feature) {
-		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", ft.Denom, feature)
-	}
-
-	if ft.Issuer != sender.String() {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform this operation", sender.String())
+	if !isIssuer {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", sender.String())
 	}
 
 	return nil
+}
+
+func isIssuer(sender sdk.AccAddress, classID string) (bool, error) {
+	issuer, err := types.DeconstructClassID(classID)
+	if err != nil {
+		return false, err
+	}
+
+	return issuer.String() == sender.String(), nil
 }

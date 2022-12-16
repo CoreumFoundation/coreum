@@ -1,9 +1,7 @@
-package ft
+package nft
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -17,9 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/keeper"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
 var (
@@ -56,16 +54,12 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 
 // DefaultGenesis returns the asset module's default genesis state.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(types.DefaultGenesis())
+	return nil
 }
 
 // ValidateGenesis performs genesis state validation for the asset module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
-	var genState types.GenesisState
-	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
-	}
-	return genState.Validate()
+	return nil
 }
 
 // RegisterRESTRoutes registers the asset module's REST service handlers.
@@ -73,11 +67,7 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
-		panic(err)
-	}
-}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
 
 // GetTxCmd returns the asset module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
@@ -86,7 +76,7 @@ func (a AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // GetQueryCmd returns the asset module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd()
+	return nil
 }
 
 // ----------------------------------------------------------------------------
@@ -97,23 +87,17 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper     keeper.Keeper
-	nftKeeper  keeper.NonFungibleTokenKeeper
-	bankKeeper types.BankKeeper
+	keeper keeper.Keeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	nftKeeper keeper.NonFungibleTokenKeeper,
-	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
-		nftKeeper:      nftKeeper,
-		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -138,8 +122,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper, am.nftKeeper))
-	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 }
 
 // RegisterInvariants registers the asset module's invariants.
@@ -148,19 +131,12 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 // InitGenesis performs the asset module's genesis initialization It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
-	var genState types.GenesisState
-	// Initialize global index to index in genesis state
-	cdc.MustUnmarshalJSON(gs, &genState)
-
-	InitGenesis(ctx, am.keeper, genState)
-
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the asset module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	genState := ExportGenesis(ctx, am.keeper)
-	return cdc.MustMarshalJSON(genState)
+	return nil
 }
 
 // ConsensusVersion implements ConsensusVersion.

@@ -6,200 +6,89 @@ import (
 )
 
 var (
-	_ sdk.Msg = &MsgIssueFungibleToken{}
-	_ sdk.Msg = &MsgFreezeFungibleToken{}
-	_ sdk.Msg = &MsgUnfreezeFungibleToken{}
-	_ sdk.Msg = &MsgMintFungibleToken{}
-	_ sdk.Msg = &MsgBurnFungibleToken{}
-	_ sdk.Msg = &MsgSetWhitelistedLimitFungibleToken{}
+	_ sdk.Msg = &MsgIssueClass{}
+	_ sdk.Msg = &MsgMint{}
 )
 
-// ValidateBasic validates the message.
-func (msg MsgIssueFungibleToken) ValidateBasic() error {
-	const maxDescriptionLength = 200
+const (
+	nftClassMaxNameLength        = 128
+	nftClassMaxDescriptionLength = 256
+	nftMaxURILength              = 256
+	nftMaxURIHashLength          = 128
+	nftMaxDataSize               = 5 * 1000 // 5kb
+)
 
+// ValidateBasic checks that message fields are valid.
+func (msg *MsgIssueClass) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Issuer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer %s", msg.Issuer)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer account %s", msg.Issuer)
 	}
 
-	if err := ValidateSubunit(msg.Subunit); err != nil {
-		return err
+	if len(msg.Name) > nftClassMaxNameLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid name %q, the length must be less than or equal %d", msg.Name, nftClassMaxNameLength)
 	}
 
-	if err := ValidateSymbol(msg.Symbol); err != nil {
-		return err
+	if err := ValidateClassSymbol(msg.Symbol); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if err := ValidateBurnRate(msg.BurnRate); err != nil {
-		return err
+	if len(msg.Description) > nftClassMaxDescriptionLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than or equal %d", msg.Description, nftClassMaxDescriptionLength)
 	}
 
-	// we allow zero initial amount, in that case we won't mint it initially
-	if msg.InitialAmount.IsNil() || msg.InitialAmount.IsNegative() {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid initial amount %s, can't be negative", msg.InitialAmount.String())
+	if len(msg.URI) > nftMaxURILength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(msg.URI), nftMaxURILength)
 	}
 
-	if len(msg.Description) > maxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", msg.Description, maxDescriptionLength)
+	if len(msg.URIHash) > nftMaxURIHashLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), nftMaxURIHashLength)
+	}
+
+	if msg.Data != nil && len(msg.Data.Value) > nftMaxDataSize {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", nftMaxDataSize)
 	}
 
 	return nil
 }
 
-// GetSigners MsgIssueFungibleToken the message signers.
-func (msg MsgIssueFungibleToken) GetSigners() []sdk.AccAddress {
+// GetSigners returns the required signers of this message type.
+func (msg *MsgIssueClass) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Issuer),
 	}
 }
 
-// ValidateBasic checks that message fields are valid
-func (msg MsgFreezeFungibleToken) ValidateBasic() error {
+// ValidateBasic checks that message fields are valid.
+func (msg *MsgMint) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
 
-	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+	if err := ValidateTokenID(msg.ID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
-		return err
+	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	return msg.Coin.Validate()
-}
-
-// GetSigners returns the required signers of this message type
-func (msg MsgFreezeFungibleToken) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
-	}
-}
-
-// ValidateBasic checks that message fields are valid
-func (msg MsgUnfreezeFungibleToken) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	if len(msg.URI) > nftMaxURILength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(msg.URI), nftMaxURILength)
 	}
 
-	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+	if len(msg.URIHash) > nftMaxURIHashLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), nftMaxURIHashLength)
 	}
 
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
-		return err
-	}
-
-	return msg.Coin.Validate()
-}
-
-// GetSigners returns the required signers of this message type
-func (msg MsgUnfreezeFungibleToken) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
-	}
-}
-
-// ValidateBasic checks that message fields are valid
-func (msg MsgMintFungibleToken) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
-		return err
-	}
-
-	return msg.Coin.Validate()
-}
-
-// GetSigners returns the required signers of this message type
-func (msg MsgMintFungibleToken) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
-	}
-}
-
-// ValidateBasic checks that message fields are valid
-func (msg MsgBurnFungibleToken) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
-		return err
-	}
-
-	return msg.Coin.Validate()
-}
-
-// GetSigners returns the required signers of this message type
-func (msg MsgBurnFungibleToken) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
-	}
-}
-
-// ValidateBasic checks that message fields are valid
-func (msg MsgGloballyFreezeFungibleToken) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Denom); err != nil {
-		return err
+	if msg.Data != nil && len(msg.Data.Value) > nftMaxDataSize {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", nftMaxDataSize)
 	}
 
 	return nil
 }
 
-// GetSigners returns the required signers of this message type
-func (msg MsgGloballyFreezeFungibleToken) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
-	}
-}
-
-// ValidateBasic checks that message fields are valid
-func (msg MsgGloballyUnfreezeFungibleToken) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Denom); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// GetSigners returns the required signers of this message type
-func (msg MsgGloballyUnfreezeFungibleToken) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
-	}
-}
-
-// ValidateBasic checks that message fields are valid
-func (msg MsgSetWhitelistedLimitFungibleToken) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
-	}
-
-	if _, _, err := DeconstructFungibleTokenDenom(msg.Coin.Denom); err != nil {
-		return err
-	}
-
-	return msg.Coin.Validate()
-}
-
-// GetSigners returns the required signers of this message type
-func (msg MsgSetWhitelistedLimitFungibleToken) GetSigners() []sdk.AccAddress {
+// GetSigners returns the required signers of this message type.
+func (msg *MsgMint) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}

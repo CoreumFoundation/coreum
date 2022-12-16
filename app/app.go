@@ -94,6 +94,7 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	assetftwasm "github.com/CoreumFoundation/coreum/x/asset/ft/wasm"
 	ft "github.com/CoreumFoundation/coreum/x/asset/nft"
+	assetnftkeeper "github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	"github.com/CoreumFoundation/coreum/x/customparams"
 	customparamskeeper "github.com/CoreumFoundation/coreum/x/customparams/keeper"

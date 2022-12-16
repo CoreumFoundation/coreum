@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
-func TestCmdTxIssueNonFungibleTokenClass(t *testing.T) {
+func TestCmdTxMint(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
@@ -22,11 +22,12 @@ func TestCmdTxIssueNonFungibleTokenClass(t *testing.T) {
 
 	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueNonFungibleTokenClass(), args)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
-	var res sdk.TxResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
-	requireT.NotEmpty(res.TxHash)
-	requireT.Equal(uint32(0), res.Code, "can't submit IssueNonFungibleTokenClass tx", res)
+	classID := types.BuildClassID(symbol, validator.Address)
+	args = []string{classID, "nft-1", "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
+	requireT.NoError(err)
 }
