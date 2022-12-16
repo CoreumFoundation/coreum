@@ -13,14 +13,14 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 func TestKeeper_ValidateSymbol(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-	assetKeeper := testApp.AssetKeeper
+	ftKeeper := testApp.AssetFTKeeper
 
 	unacceptableSymbols := []string{
 		"ABC/1",
@@ -50,16 +50,16 @@ func TestKeeper_ValidateSymbol(t *testing.T) {
 
 	assertValidSymbol := func(symbol string, isValid bool) {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-		settings := types.IssueFungibleTokenSettings{
+		settings := types.IssueSettings{
 			Issuer:        addr,
 			Symbol:        symbol,
 			Subunit:       "subunit",
 			Description:   "ABC Desc",
 			InitialAmount: sdk.NewInt(777),
-			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
+			Features:      []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
 		}
 
-		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
+		_, err := ftKeeper.Issue(ctx, settings)
 		if types.ErrInvalidInput.Is(err) == isValid {
 			requireT.Equal(types.ErrInvalidInput.Is(err), !isValid)
 		}
@@ -78,7 +78,7 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
-	assetKeeper := testApp.AssetKeeper
+	ftKeeper := testApp.AssetFTKeeper
 
 	unacceptableSubunits := []string{
 		"ABC-1",
@@ -108,16 +108,16 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 
 	assertValidSubunit := func(subunit string, isValid bool) {
 		addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-		settings := types.IssueFungibleTokenSettings{
+		settings := types.IssueSettings{
 			Issuer:        addr,
 			Symbol:        "symbol",
 			Subunit:       subunit,
 			Description:   "ABC Desc",
 			InitialAmount: sdk.NewInt(777),
-			Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
+			Features:      []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
 		}
 
-		_, err := assetKeeper.IssueFungibleToken(ctx, settings)
+		_, err := ftKeeper.Issue(ctx, settings)
 		if isValid {
 			requireT.NoError(err)
 		} else {
@@ -134,41 +134,41 @@ func TestKeeper_ValidateSubunit(t *testing.T) {
 	}
 }
 
-func TestKeeper_IssueFungibleToken(t *testing.T) {
+func TestKeeper_Issue(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
-	assetKeeper := testApp.AssetKeeper
+	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	settings := types.IssueFungibleTokenSettings{
+	settings := types.IssueSettings{
 		Issuer:        addr,
 		Symbol:        "ABC",
 		Description:   "ABC Desc",
 		Subunit:       "abc",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(777),
-		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
+		Features:      []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
 	}
 
-	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	denom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
-	requireT.Equal(types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer), denom)
+	requireT.Equal(types.BuildDenom(settings.Subunit, settings.Issuer), denom)
 
-	gotToken, err := assetKeeper.GetFungibleToken(ctx, denom)
+	gotToken, err := ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
-	requireT.Equal(types.FungibleToken{
+	requireT.Equal(types.Token{
 		Denom:       denom,
 		Issuer:      settings.Issuer.String(),
 		Symbol:      settings.Symbol,
 		Description: settings.Description,
 		Subunit:     strings.ToLower(settings.Subunit),
 		Precision:   settings.Precision,
-		Features:    []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
+		Features:    []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
 		BurnRate:    sdk.NewDec(0),
 	}, gotToken)
 
@@ -200,14 +200,14 @@ func TestKeeper_IssueFungibleToken(t *testing.T) {
 	// check duplicate subunit
 	st := settings
 	st.Symbol = "test-symbol"
-	_, err = assetKeeper.IssueFungibleToken(ctx, st)
+	_, err = ftKeeper.Issue(ctx, st)
 	requireT.True(errors.Is(types.ErrInvalidInput, err))
 
 	// check duplicate symbol
 	st = settings
 	st.Subunit = "test-subunit"
 	st.Symbol = "aBc"
-	_, err = assetKeeper.IssueFungibleToken(ctx, st)
+	_, err = ftKeeper.Issue(ctx, st)
 	requireT.True(errors.Is(types.ErrInvalidInput, err))
 }
 
@@ -217,54 +217,54 @@ func TestKeeper_Mint(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
-	assetKeeper := testApp.AssetKeeper
+	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	// Issue an unmintable fungible token
-	settings := types.IssueFungibleTokenSettings{
+	settings := types.IssueSettings{
 		Issuer:        addr,
 		Symbol:        "NotMintable",
 		Subunit:       "notmintable",
 		InitialAmount: sdk.NewInt(777),
-		Features: []types.FungibleTokenFeature{
-			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
-			types.FungibleTokenFeature_burn,   //nolint:nosnakecase
+		Features: []types.TokenFeature{
+			types.TokenFeature_freeze, //nolint:nosnakecase
+			types.TokenFeature_burn,   //nolint:nosnakecase
 		},
 	}
 
-	unmintableDenom, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	unmintableDenom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
-	requireT.Equal(types.BuildFungibleTokenDenom(settings.Symbol, settings.Issuer), unmintableDenom)
+	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unmintableDenom)
 
 	// try to mint unmintable token
-	err = assetKeeper.MintFungibleToken(ctx, addr, sdk.NewCoin(unmintableDenom, sdk.NewInt(100)))
+	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(unmintableDenom, sdk.NewInt(100)))
 	requireT.Error(err)
 	requireT.True(types.ErrFeatureNotActive.Is(err))
 
 	// Issue a mintable fungible token
-	settings = types.IssueFungibleTokenSettings{
+	settings = types.IssueSettings{
 		Issuer:        addr,
 		Symbol:        "mintable",
 		Subunit:       "mintable",
 		InitialAmount: sdk.NewInt(777),
-		Features: []types.FungibleTokenFeature{
-			types.FungibleTokenFeature_mint, //nolint:nosnakecase
+		Features: []types.TokenFeature{
+			types.TokenFeature_mint, //nolint:nosnakecase
 		},
 	}
 
-	mintableDenom, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	mintableDenom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
 	// try to mint as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	err = assetKeeper.MintFungibleToken(ctx, randomAddr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
+	err = ftKeeper.Mint(ctx, randomAddr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
 	requireT.Error(err)
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// mint tokens and check balance and total supply
-	err = assetKeeper.MintFungibleToken(ctx, addr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
+	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 
 	balance := bankKeeper.GetBalance(ctx, addr, mintableDenom)
@@ -281,55 +281,55 @@ func TestKeeper_Burn(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
-	assetKeeper := testApp.AssetKeeper
+	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	// Issue an unburnable fungible token
-	settings := types.IssueFungibleTokenSettings{
+	settings := types.IssueSettings{
 		Issuer:        addr,
 		Symbol:        "NotBurnable",
 		Subunit:       "notburnable",
 		InitialAmount: sdk.NewInt(777),
-		Features: []types.FungibleTokenFeature{
-			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
-			types.FungibleTokenFeature_mint,   //nolint:nosnakecase
+		Features: []types.TokenFeature{
+			types.TokenFeature_freeze, //nolint:nosnakecase
+			types.TokenFeature_mint,   //nolint:nosnakecase
 		},
 	}
 
-	unburnableDenom, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	unburnableDenom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
-	requireT.Equal(types.BuildFungibleTokenDenom(settings.Symbol, settings.Issuer), unburnableDenom)
+	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unburnableDenom)
 
 	// try to burn unburnable token
-	err = assetKeeper.BurnFungibleToken(ctx, addr, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
+	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
 	requireT.Error(err)
 	requireT.True(types.ErrFeatureNotActive.Is(err))
 
 	// Issue a burnable fungible token
-	settings = types.IssueFungibleTokenSettings{
+	settings = types.IssueSettings{
 		Issuer:        addr,
 		Symbol:        "burnable",
 		Subunit:       "burnable",
 		InitialAmount: sdk.NewInt(777),
-		Features: []types.FungibleTokenFeature{
-			types.FungibleTokenFeature_burn,   //nolint:nosnakecase
-			types.FungibleTokenFeature_freeze, //nolint:nosnakecase
+		Features: []types.TokenFeature{
+			types.TokenFeature_burn,   //nolint:nosnakecase
+			types.TokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 
-	burnableDenom, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	burnableDenom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
 	// try to burn as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	err = assetKeeper.BurnFungibleToken(ctx, randomAddr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
+	err = ftKeeper.Burn(ctx, randomAddr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.Error(err)
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// burn tokens and check balance and total supply
-	err = assetKeeper.BurnFungibleToken(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
+	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 
 	balance := bankKeeper.GetBalance(ctx, addr, burnableDenom)
@@ -340,9 +340,9 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.EqualValues(sdk.NewInt(677), totalSupply.Supply.AmountOf(burnableDenom))
 
 	// try to burn frozen amount
-	err = assetKeeper.FreezeFungibleToken(ctx, addr, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(600)))
+	err = ftKeeper.Freeze(ctx, addr, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(600)))
 	requireT.NoError(err)
 
-	err = assetKeeper.BurnFungibleToken(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
+	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
 }

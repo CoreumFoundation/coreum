@@ -8,11 +8,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/store"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// IssueFungibleToken issues new fungible token and returns it's denom.
-func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error) {
+// Issue issues new fungible token and returns it's denom.
+func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, error) {
 	if err := types.ValidateSubunit(settings.Subunit); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
@@ -30,7 +30,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
 	}
 
-	denom := types.BuildFungibleTokenDenom(settings.Subunit, settings.Issuer)
+	denom := types.BuildDenom(settings.Subunit, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
 			types.ErrInvalidInput,
@@ -40,21 +40,21 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		)
 	}
 
-	k.SetFungibleTokenDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
+	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 
-	definition := types.FungibleTokenDefinition{
+	definition := types.TokenDefinition{
 		Denom:    denom,
 		Issuer:   settings.Issuer.String(),
 		Features: settings.Features,
 		BurnRate: settings.BurnRate,
 	}
-	k.SetFungibleTokenDefinition(ctx, definition)
+	k.SetTokenDefinition(ctx, definition)
 
-	if err := k.mintFungibleToken(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
+	if err := k.mint(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
 	}
 
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenIssued{
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventTokenIssued{
 		Denom:         denom,
 		Issuer:        settings.Issuer.String(),
 		Symbol:        settings.Symbol,
@@ -65,7 +65,7 @@ func (k Keeper) IssueFungibleToken(ctx sdk.Context, settings types.IssueFungible
 		Features:      settings.Features,
 		BurnRate:      settings.BurnRate,
 	}); err != nil {
-		return "", sdkerrors.Wrap(err, "can't emit EventFungibleTokenIssued event")
+		return "", sdkerrors.Wrap(err, "can't emit EventTokenIssued event")
 	}
 
 	k.Logger(ctx).Debug("issued new fungible token with denom %d", denom)
@@ -92,26 +92,26 @@ func (k Keeper) StoreSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddres
 	return nil
 }
 
-// GetFungibleToken return the fungible token by its denom.
-func (k Keeper) GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error) {
-	definition, err := k.GetFungibleTokenDefinition(ctx, denom)
+// GetToken return the fungible token by its denom.
+func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
+	definition, err := k.GetTokenDefinition(ctx, denom)
 	if err != nil {
-		return types.FungibleToken{}, err
+		return types.Token{}, err
 	}
 
-	return k.getFungibleTokenFullInfo(ctx, definition)
+	return k.getTokenFullInfo(ctx, definition)
 }
 
-// getFungibleTokenFullInfo return the fungible token info from bank, given its definition.
-func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.FungibleTokenDefinition) (types.FungibleToken, error) {
-	subunit, _, err := types.DeconstructFungibleTokenDenom(definition.Denom)
+// getTokenFullInfo return the fungible token info from bank, given its definition.
+func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.TokenDefinition) (types.Token, error) {
+	subunit, _, err := types.DeconstructDenom(definition.Denom)
 	if err != nil {
-		return types.FungibleToken{}, err
+		return types.Token{}, err
 	}
 
 	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, definition.Denom)
 	if !found {
-		return types.FungibleToken{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "metadata for %s denom not found", definition.Denom)
+		return types.Token{}, sdkerrors.Wrapf(types.ErrTokenNotFound, "metadata for %s denom not found", definition.Denom)
 	}
 
 	precision := -1
@@ -123,10 +123,10 @@ func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.Fungi
 	}
 
 	if precision < 0 {
-		return types.FungibleToken{}, sdkerrors.Wrap(types.ErrInvalidInput, "precision not found")
+		return types.Token{}, sdkerrors.Wrap(types.ErrInvalidInput, "precision not found")
 	}
 
-	return types.FungibleToken{
+	return types.Token{
 		Denom:          definition.Denom,
 		Issuer:         definition.Issuer,
 		Symbol:         metadata.Symbol,
@@ -139,16 +139,16 @@ func (k Keeper) getFungibleTokenFullInfo(ctx sdk.Context, definition types.Fungi
 	}, nil
 }
 
-// GetFungibleTokens returns all fungible tokens.
-func (k Keeper) GetFungibleTokens(ctx sdk.Context, pagination *query.PageRequest) ([]types.FungibleToken, *query.PageResponse, error) {
-	definitions, pageResponse, err := k.GetFungibleTokenDefinitions(ctx, pagination)
+// GetTokens returns all fungible tokens.
+func (k Keeper) GetTokens(ctx sdk.Context, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error) {
+	definitions, pageResponse, err := k.GetTokenDefinitions(ctx, pagination)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var tokens []types.FungibleToken
+	var tokens []types.Token
 	for _, definition := range definitions {
-		token, err := k.getFungibleTokenFullInfo(ctx, definition)
+		token, err := k.getTokenFullInfo(ctx, definition)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -159,20 +159,20 @@ func (k Keeper) GetFungibleTokens(ctx sdk.Context, pagination *query.PageRequest
 	return tokens, pageResponse, nil
 }
 
-// GetFungibleTokenDefinitions returns all fungible token definitions.
-func (k Keeper) GetFungibleTokenDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.FungibleTokenDefinition, *query.PageResponse, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.FungibleTokenKeyPrefix)
+// GetTokenDefinitions returns all fungible token definitions.
+func (k Keeper) GetTokenDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.TokenDefinition, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix)
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,
 		pagination,
 		// builder
-		func(key []byte, definition *types.FungibleTokenDefinition) (*types.FungibleTokenDefinition, error) {
+		func(key []byte, definition *types.TokenDefinition) (*types.TokenDefinition, error) {
 			return definition, nil
 		},
 		// constructor
-		func() *types.FungibleTokenDefinition {
-			return &types.FungibleTokenDefinition{}
+		func() *types.TokenDefinition {
+			return &types.TokenDefinition{}
 		},
 	)
 
@@ -180,7 +180,7 @@ func (k Keeper) GetFungibleTokenDefinitions(ctx sdk.Context, pagination *query.P
 		return nil, nil, err
 	}
 
-	definitions := make([]types.FungibleTokenDefinition, 0, len(definitionsPointers))
+	definitions := make([]types.TokenDefinition, 0, len(definitionsPointers))
 	for _, definition := range definitionsPointers {
 		definitions = append(definitions, *definition)
 	}
@@ -188,27 +188,27 @@ func (k Keeper) GetFungibleTokenDefinitions(ctx sdk.Context, pagination *query.P
 	return definitions, pageRes, err
 }
 
-// GetFungibleTokenDefinition returns the FungibleTokenDefinition by the denom.
-func (k Keeper) GetFungibleTokenDefinition(ctx sdk.Context, denom string) (types.FungibleTokenDefinition, error) {
+// GetTokenDefinition returns the TokenDefinition by the denom.
+func (k Keeper) GetTokenDefinition(ctx sdk.Context, denom string) (types.TokenDefinition, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetFungibleTokenKey(denom))
+	bz := store.Get(types.GetTokenKey(denom))
 	if bz == nil {
-		return types.FungibleTokenDefinition{}, sdkerrors.Wrapf(types.ErrFungibleTokenNotFound, "denom: %s", denom)
+		return types.TokenDefinition{}, sdkerrors.Wrapf(types.ErrTokenNotFound, "denom: %s", denom)
 	}
-	var definition types.FungibleTokenDefinition
+	var definition types.TokenDefinition
 	k.cdc.MustUnmarshal(bz, &definition)
 
 	return definition, nil
 }
 
-// SetFungibleTokenDefinition stores the FungibleTokenDefinition.
-func (k Keeper) SetFungibleTokenDefinition(ctx sdk.Context, definition types.FungibleTokenDefinition) {
+// SetTokenDefinition stores the TokenDefinition.
+func (k Keeper) SetTokenDefinition(ctx sdk.Context, definition types.TokenDefinition) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetFungibleTokenKey(definition.Denom), k.cdc.MustMarshal(&definition))
+	store.Set(types.GetTokenKey(definition.Denom), k.cdc.MustMarshal(&definition))
 }
 
-// SetFungibleTokenDenomMetadata registers denom metadata on the bank keeper
-func (k Keeper) SetFungibleTokenDenomMetadata(ctx sdk.Context, denom, symbol, description string, precision uint32) {
+// SetDenomMetadata registers denom metadata on the bank keeper
+func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description string, precision uint32) {
 	denomMetadata := banktypes.Metadata{
 		Name:        symbol,
 		Symbol:      symbol,
@@ -232,7 +232,7 @@ func (k Keeper) SetFungibleTokenDenomMetadata(ctx sdk.Context, denom, symbol, de
 	k.bankKeeper.SetDenomMetaData(ctx, denomMetadata)
 }
 
-func (k Keeper) mintFungibleToken(ctx sdk.Context, ft types.FungibleTokenDefinition, amount sdk.Int, recipient sdk.AccAddress) error {
+func (k Keeper) mint(ctx sdk.Context, ft types.TokenDefinition, amount sdk.Int, recipient sdk.AccAddress) error {
 	if !amount.IsPositive() {
 		return nil
 	}
@@ -252,7 +252,7 @@ func (k Keeper) mintFungibleToken(ctx sdk.Context, ft types.FungibleTokenDefinit
 	return nil
 }
 
-func (k Keeper) burnFungibleToken(ctx sdk.Context, account sdk.AccAddress, ft types.FungibleTokenDefinition, amount sdk.Int) error {
+func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, ft types.TokenDefinition, amount sdk.Int) error {
 	if err := k.isCoinSpendable(ctx, account, ft, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}

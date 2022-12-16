@@ -6,7 +6,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // SetWhitelistedBalance sets whitelisted limit for the account
@@ -15,12 +15,12 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender sdk.AccAddress, ad
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
 	}
 
-	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+	ft, err := k.GetTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_whitelist) //nolint:nosnakecase
+	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_whitelist) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender sdk.AccAddress, ad
 	previousWhitelistedBalance := whitelistedStore.Balance(coin.Denom)
 	whitelistedStore.SetBalance(coin)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenWhitelistedAmountChanged{
+	return ctx.EventManager().EmitTypedEvent(&types.EventWhitelistedAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: previousWhitelistedBalance.Amount,
@@ -56,7 +56,7 @@ func (k Keeper) GetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, pag
 }
 
 // GetAccountsWhitelistedBalances returns the whitelisted balance of all the account
-func (k Keeper) GetAccountsWhitelistedBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.FungibleTokenBalance, *query.PageResponse, error) {
+func (k Keeper) GetAccountsWhitelistedBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
 	return collectBalances(k.cdc, k.whitelistedBalancesStore(ctx), pagination)
 }
 
@@ -72,9 +72,9 @@ func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddr
 }
 
 // areCoinsReceivable returns an error if whitelisted amount is too low to receive coins
-func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, ft types.FungibleTokenDefinition, amount sdk.Int) error {
+func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, ft types.TokenDefinition, amount sdk.Int) error {
 	//nolint:nosnakecase
-	if !ft.IsFeatureEnabled(types.FungibleTokenFeature_whitelist) || ft.Issuer == addr.String() {
+	if !ft.IsFeatureEnabled(types.TokenFeature_whitelist) || ft.Issuer == addr.String() {
 		return nil
 	}
 

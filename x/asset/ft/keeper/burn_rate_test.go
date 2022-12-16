@@ -11,7 +11,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/x/wbank/keeper"
 )
 
@@ -78,7 +78,7 @@ func TestKeeperCalculateBurnCoin(t *testing.T) {
 		name := fmt.Sprintf("%+v", tc)
 		t.Run(name, func(t *testing.T) {
 			assertT := assert.New(t)
-			definition := types.FungibleTokenDefinition{
+			definition := types.TokenDefinition{
 				BurnRate: sdk.MustNewDecFromStr(tc.rate),
 			}
 			burnCoin := definition.CalculateBurnRateAmount(sdk.NewCoin("test", sdk.NewInt(tc.sendAmount)))
@@ -93,40 +93,40 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
-	assetKeeper := testApp.AssetKeeper
+	assetKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 	ba := newBankAsserter(ctx, t, bankKeeper)
 
 	// issue with more than 1 burn rate
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	settings := types.IssueFungibleTokenSettings{
+	settings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
 		Precision:     6,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(600),
-		Features:      []types.FungibleTokenFeature{},
+		Features:      []types.TokenFeature{},
 		BurnRate:      sdk.MustNewDecFromStr("1.01"),
 	}
 
-	_, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	_, err := assetKeeper.Issue(ctx, settings)
 	requireT.Error(err)
 	requireT.True(types.ErrInvalidInput.Is(err))
 
 	// issue token
-	settings = types.IssueFungibleTokenSettings{
+	settings = types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
 		Precision:     6,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(600),
-		Features:      []types.FungibleTokenFeature{},
+		Features:      []types.TokenFeature{},
 		BurnRate:      sdk.MustNewDecFromStr("0.25"),
 	}
 
-	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	denom, err := assetKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())

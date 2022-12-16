@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // GetQueryCmd returns the cli query commands for the module.
@@ -23,31 +23,16 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(GetFTQueryCmd())
+	cmd.AddCommand(CmdQueryToken())
+	cmd.AddCommand(CmdQueryFrozenBalance())
+	cmd.AddCommand(CmdQueryFrozenBalances())
+	cmd.AddCommand(CmdQueryWhitelistedBalance())
+	cmd.AddCommand(CmdQueryWhitelistedBalances())
 	return cmd
 }
 
-// GetFTQueryCmd returns the cli query commands for fungible tokens.
-func GetFTQueryCmd() *cobra.Command {
-	// Group asset queries under a subcommand
-	cmd := &cobra.Command{
-		Use:                        "ft",
-		Short:                      "Querying commands for fungible tokens",
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-
-	cmd.AddCommand(CmdQueryFungibleToken())
-	cmd.AddCommand(CmdQueryFungibleTokenFrozenBalance())
-	cmd.AddCommand(CmdQueryFungibleTokenFrozenBalances())
-	cmd.AddCommand(CmdQueryFungibleTokenWhitelistedBalance())
-	cmd.AddCommand(CmdQueryFungibleTokenWhitelistedBalances())
-	return cmd
-}
-
-// CmdQueryFungibleToken return the QueryFungibleToken cobra command.
-func CmdQueryFungibleToken() *cobra.Command {
+// CmdQueryToken return the QueryToken cobra command.
+func CmdQueryToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "info [denom]",
 		Args:  cobra.ExactArgs(1),
@@ -56,7 +41,7 @@ func CmdQueryFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Query fungible token details.
 
 Example:
-$ %[1]s query asset ft info [denom]
+$ %[1]s query asset-ft info [denom]
 `,
 				version.AppName,
 			),
@@ -66,7 +51,7 @@ $ %[1]s query asset ft info [denom]
 			queryClient := types.NewQueryClient(clientCtx)
 
 			denom := args[0]
-			res, err := queryClient.FungibleToken(cmd.Context(), &types.QueryFungibleTokenRequest{
+			res, err := queryClient.Token(cmd.Context(), &types.QueryTokenRequest{
 				Denom: denom,
 			})
 			if err != nil {
@@ -82,10 +67,10 @@ $ %[1]s query asset ft info [denom]
 	return cmd
 }
 
-// CmdQueryFungibleTokenFrozenBalances return the QueryFungibleTokenFrozenBalances cobra command.
+// CmdQueryFrozenBalances return the QueryFrozenBalances cobra command.
 //
 //nolint:dupl // most code is identical, but reusing logic is not beneficial here.
-func CmdQueryFungibleTokenFrozenBalances() *cobra.Command {
+func CmdQueryFrozenBalances() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "frozen-balances [account]",
 		Args:  cobra.ExactArgs(1),
@@ -94,7 +79,7 @@ func CmdQueryFungibleTokenFrozenBalances() *cobra.Command {
 			fmt.Sprintf(`Query frozen fungible token balances of an account.
 
 Example:
-$ %[1]s query asset ft frozen-balances [account]
+$ %[1]s query asset-ft frozen-balances [account]
 `,
 				version.AppName,
 			),
@@ -127,8 +112,8 @@ $ %[1]s query asset ft frozen-balances [account]
 	return cmd
 }
 
-// CmdQueryFungibleTokenFrozenBalance return the QueryFungibleTokenFrozenBalance cobra command.
-func CmdQueryFungibleTokenFrozenBalance() *cobra.Command {
+// CmdQueryFrozenBalance return the QueryFrozenBalance cobra command.
+func CmdQueryFrozenBalance() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "frozen-balance [account] [denom]",
 		Args:  cobra.ExactArgs(2),
@@ -137,7 +122,7 @@ func CmdQueryFungibleTokenFrozenBalance() *cobra.Command {
 			fmt.Sprintf(`Query frozen fungible token balance of an account.
 
 Example:
-$ %[1]s query asset ft frozen-balance [account] [denom]
+$ %[1]s query asset-ft frozen-balance [account] [denom]
 `,
 				version.AppName,
 			),
@@ -165,10 +150,10 @@ $ %[1]s query asset ft frozen-balance [account] [denom]
 	return cmd
 }
 
-// CmdQueryFungibleTokenWhitelistedBalances return the QueryFungibleTokenWhitelistedBalances cobra command.
+// CmdQueryWhitelistedBalances return the QueryWhitelistedBalances cobra command.
 //
 //nolint:dupl // most code is identical, but reusing logic is not beneficial here.
-func CmdQueryFungibleTokenWhitelistedBalances() *cobra.Command {
+func CmdQueryWhitelistedBalances() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "whitelisted-balances [account]",
 		Args:  cobra.ExactArgs(1),
@@ -177,7 +162,7 @@ func CmdQueryFungibleTokenWhitelistedBalances() *cobra.Command {
 			fmt.Sprintf(`Query whitelisted fungible token balances of an account.
 
 Example:
-$ %[1]s query asset ft whitelisted-balances [account]
+$ %[1]s query asset-ft whitelisted-balances [account]
 `,
 				version.AppName,
 			),
@@ -210,8 +195,8 @@ $ %[1]s query asset ft whitelisted-balances [account]
 	return cmd
 }
 
-// CmdQueryFungibleTokenWhitelistedBalance return the QueryFungibleTokenWhitelistedBalance cobra command.
-func CmdQueryFungibleTokenWhitelistedBalance() *cobra.Command {
+// CmdQueryWhitelistedBalance return the QueryWhitelistedBalance cobra command.
+func CmdQueryWhitelistedBalance() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "whitelisted-balance [account] [denom]",
 		Args:  cobra.ExactArgs(2),
@@ -220,7 +205,7 @@ func CmdQueryFungibleTokenWhitelistedBalance() *cobra.Command {
 			fmt.Sprintf(`Query whitelisted fungible token balance of an account.
 
 Example:
-$ %[1]s query asset ft whitelisted-balance [account] [denom]
+$ %[1]s query asset-ft whitelisted-balance [account] [denom]
 `,
 				version.AppName,
 			),

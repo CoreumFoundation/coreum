@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func TestFreezeFungibleToken(t *testing.T) {
+func TestFreeze(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
@@ -22,24 +22,24 @@ func TestFreezeFungibleToken(t *testing.T) {
 	precision := "6"
 	ctx := testNetwork.Validators[0].ClientCtx
 	issuer := testNetwork.Validators[0].Address
-	denom := types.BuildFungibleTokenDenom(subunit, issuer)
+	denom := types.BuildDenom(subunit, issuer)
 
 	// Issue token
 	args := []string{symbol, subunit, precision, "777", `"My Token"`,
-		"--features", types.FungibleTokenFeature_freeze.String(), //nolint:nosnakecase
+		"--features", types.TokenFeature_freeze.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
 	requireT.NoError(err)
 
 	// Freeze part of the token
 	token := "100" + denom
 	args = append([]string{issuer.String(), token, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreezeFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
 	requireT.NoError(err)
 
 	var resp types.QueryFrozenBalanceResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleTokenFrozenBalance(), []string{issuer.String(), denom, "--output", "json"})
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{issuer.String(), denom, "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 	requireT.Equal(token, resp.Balance.String())
@@ -48,28 +48,28 @@ func TestFreezeFungibleToken(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		symbol := "l" + uuid.NewString()[:4]
 		subunit := "sub" + symbol
-		denom := types.BuildFungibleTokenDenom(subunit, issuer)
+		denom := types.BuildDenom(subunit, issuer)
 		args := []string{symbol, subunit, precision, "777", `"My Token"`,
-			"--features", types.FungibleTokenFeature_freeze.String(), //nolint:nosnakecase
+			"--features", types.TokenFeature_freeze.String(), //nolint:nosnakecase
 		}
 		args = append(args, txValidator1Args(testNetwork)...)
-		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
 		requireT.NoError(err)
 
 		// Freeze part of the token
 		tokens := "100" + denom
 		args = append([]string{issuer.String(), tokens, "--output", "json"}, txValidator1Args(testNetwork)...)
-		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreezeFungibleToken(), args)
+		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
 		requireT.NoError(err)
 	}
 
 	var balancesResp types.QueryFrozenBalancesResponse
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleTokenFrozenBalances(), []string{issuer.String(), "--output", "json"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalances(), []string{issuer.String(), "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 3)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleTokenFrozenBalances(), []string{issuer.String(), "--output", "json", "--limit", "1"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalances(), []string{issuer.String(), "--output", "json", "--limit", "1"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 1)
@@ -77,10 +77,10 @@ func TestFreezeFungibleToken(t *testing.T) {
 	// Unfreeze part of the frozen token
 	unfreezeTokens := "75" + denom
 	args = append([]string{issuer.String(), unfreezeTokens, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreezeFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args)
 	requireT.NoError(err)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleTokenFrozenBalance(), []string{issuer.String(), denom, "--output", "json"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{issuer.String(), denom, "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 

@@ -9,7 +9,7 @@ import (
 
 const (
 	// ModuleName defines the module name
-	ModuleName = "asset"
+	ModuleName = "asset-ft"
 
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName
@@ -23,10 +23,10 @@ const (
 
 // Store key prefixes
 var (
-	// FungibleTokenKeyPrefix defines the key prefix for the fungible token.
-	FungibleTokenKeyPrefix = []byte{0x01}
-	// FungibleTokenSymbolKeyPrefix defines the key prefix for the fungible token by Symbol.
-	FungibleTokenSymbolKeyPrefix = []byte{0x02}
+	// TokenKeyPrefix defines the key prefix for the fungible token.
+	TokenKeyPrefix = []byte{0x01}
+	// SymbolKeyPrefix defines the key prefix for the fungible token by Symbol.
+	SymbolKeyPrefix = []byte{0x02}
 	// FrozenBalancesKeyPrefix defines the key prefix to track frozen balances
 	FrozenBalancesKeyPrefix = []byte{0x03}
 	// GlobalFreezeKeyPrefix defines the key prefix to track global freezing of a Fungible Token.
@@ -35,9 +35,9 @@ var (
 	WhitelistedBalancesKeyPrefix = []byte{0x05}
 )
 
-// GetFungibleTokenKey constructs the key for the fungible token.
-func GetFungibleTokenKey(denom string) []byte {
-	return store.JoinKeysWithLength(FungibleTokenKeyPrefix, []byte(denom))
+// GetTokenKey constructs the key for the fungible token.
+func GetTokenKey(denom string) []byte {
+	return store.JoinKeysWithLength(TokenKeyPrefix, []byte(denom))
 }
 
 // CreateFrozenBalancesPrefix creates the prefix for an account's frozen balances.
@@ -74,5 +74,5 @@ func AddressFromBalancesStore(key []byte) (sdk.AccAddress, error) {
 
 // CreateSymbolPrefix creates the prefix for an ft symbol.
 func CreateSymbolPrefix(addr []byte) []byte {
-	return store.JoinKeys(FungibleTokenSymbolKeyPrefix, addr)
+	return store.JoinKeys(SymbolKeyPrefix, addr)
 }

@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func TestMintBurnFungibleToken(t *testing.T) {
+func TestMintBurn(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
@@ -24,21 +24,21 @@ func TestMintBurnFungibleToken(t *testing.T) {
 	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 	issuer := testNetwork.Validators[0].Address
-	denom := types.BuildFungibleTokenDenom(subunit, issuer)
+	denom := types.BuildDenom(subunit, issuer)
 
 	// Issue token
 	args := []string{symbol, subunit, precision, "777", `"My Token"`,
-		"--features", types.FungibleTokenFeature_mint.String(), //nolint:nosnakecase
-		"--features", types.FungibleTokenFeature_burn.String(), //nolint:nosnakecase
+		"--features", types.TokenFeature_mint.String(), //nolint:nosnakecase
+		"--features", types.TokenFeature_burn.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
 	requireT.NoError(err)
 
 	// mint new tokens
 	token := "100" + denom
 	args = append([]string{token, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMintFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
 	requireT.NoError(err)
 
 	var balanceRsp banktypes.QueryAllBalancesResponse
@@ -57,7 +57,7 @@ func TestMintBurnFungibleToken(t *testing.T) {
 	// burn tokens
 	token = "200" + denom
 	args = append([]string{token, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurnFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args)
 	requireT.NoError(err)
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})

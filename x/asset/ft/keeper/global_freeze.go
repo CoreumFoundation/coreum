@@ -6,47 +6,47 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 var (
 	globalFreezeEnabledStoreVal = []byte{0x00}
 )
 
-// GloballyFreezeFungibleToken enables global freeze on a fungible token. This function is idempotent.
-func (k Keeper) GloballyFreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
-	ft, err := k.GetFungibleTokenDefinition(ctx, denom)
+// GloballyFreeze enables global freeze on a fungible token. This function is idempotent.
+func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
+	ft, err := k.GetTokenDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
+	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
 
-	k.SetFungibleTokenGlobalFreeze(ctx, denom, true)
+	k.SetGlobalFreeze(ctx, denom, true)
 	return nil
 }
 
-// GloballyUnfreezeFungibleToken disables global freeze on a fungible token. This function is idempotent.
-func (k Keeper) GloballyUnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
-	ft, err := k.GetFungibleTokenDefinition(ctx, denom)
+// GloballyUnfreeze disables global freeze on a fungible token. This function is idempotent.
+func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
+	ft, err := k.GetTokenDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
+	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
 
-	k.SetFungibleTokenGlobalFreeze(ctx, denom, false)
+	k.SetGlobalFreeze(ctx, denom, false)
 	return nil
 }
 
-// SetFungibleTokenGlobalFreeze enables/disables global freeze on a fungible token depending on frozen arg.
-func (k Keeper) SetFungibleTokenGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
+// SetGlobalFreeze enables/disables global freeze on a fungible token depending on frozen arg.
+func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 	if frozen {
 		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezePrefix(denom), globalFreezeEnabledStoreVal)
 		return

@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
 )
 
-func TestIssueFungibleToken(t *testing.T) {
+func TestIssue(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
@@ -27,13 +27,13 @@ func TestIssueFungibleToken(t *testing.T) {
 
 	args := []string{symbol, subunit, precision, "777", `"My Token"`}
 	args = append(args, txValidator1Args(testNetwork)...)
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
 	requireT.NoError(err)
 
 	var res sdk.TxResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
-	requireT.Equal(uint32(0), res.Code, "can't submit IssueFungibleToken tx", res)
+	requireT.Equal(uint32(0), res.Code, "can't submit Issue tx", res)
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {

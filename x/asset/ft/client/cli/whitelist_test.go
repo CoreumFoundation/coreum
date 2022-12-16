@@ -10,11 +10,11 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func TestWhitelistFungibleToken(t *testing.T) {
+func TestWhitelist(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
@@ -28,10 +28,10 @@ func TestWhitelistFungibleToken(t *testing.T) {
 
 	// Issue token
 	args := []string{symbol, subunit, precision, "777", `"My Token"`,
-		"--features", types.FungibleTokenFeature_whitelist.String(), //nolint:nosnakecase
+		"--features", types.TokenFeature_whitelist.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
 	requireT.NoError(err)
 
 	// test pagination
@@ -39,26 +39,26 @@ func TestWhitelistFungibleToken(t *testing.T) {
 		symbol := "l" + uuid.NewString()[:4]
 		subunit := "sub" + symbol
 		args := []string{symbol, subunit, precision, "777", `"My Token"`,
-			"--features", types.FungibleTokenFeature_whitelist.String(), //nolint:nosnakecase
+			"--features", types.TokenFeature_whitelist.String(), //nolint:nosnakecase
 		}
 		args = append(args, txValidator1Args(testNetwork)...)
-		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
 		requireT.NoError(err)
 
-		denom := types.BuildFungibleTokenDenom(subunit, issuer)
+		denom := types.BuildDenom(subunit, issuer)
 		token := "75" + denom
 		args = append([]string{recipient.String(), token, "--output", "json"}, txValidator1Args(testNetwork)...)
-		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxSetWhitelistedLimitFungibleToken(), args)
+		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxSetWhitelistedLimit(), args)
 		requireT.NoError(err)
 	}
 
 	var balancesResp types.QueryWhitelistedBalancesResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleTokenWhitelistedBalances(), []string{recipient.String(), "--output", "json"})
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelistedBalances(), []string{recipient.String(), "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 2)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleTokenWhitelistedBalances(), []string{recipient.String(), "--output", "json", "--limit", "1"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelistedBalances(), []string{recipient.String(), "--output", "json", "--limit", "1"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 1)

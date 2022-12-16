@@ -13,11 +13,11 @@ import (
 
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func TestQueryFungibleToken(t *testing.T) {
+func TestQueryToken(t *testing.T) {
 	requireT := require.New(t)
 
 	testNetwork := network.New(t)
@@ -28,47 +28,47 @@ func TestQueryFungibleToken(t *testing.T) {
 	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	denom := issueFungibleToken(requireT, ctx, symbol, subunit, precision, testNetwork)
+	denom := issue(requireT, ctx, symbol, subunit, precision, testNetwork)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
 
-	var resp types.QueryFungibleTokenResponse
+	var resp types.QueryTokenResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 
-	requireT.Equal(types.FungibleToken{
+	requireT.Equal(types.Token{
 		Denom:       denom,
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Symbol:      symbol,
 		Subunit:     strings.ToLower(subunit),
 		Precision:   8,
 		Description: "",
-		Features:    []types.FungibleTokenFeature{},
+		Features:    []types.TokenFeature{},
 		BurnRate:    sdk.NewDec(0),
-	}, resp.FungibleToken)
+	}, resp.Token)
 }
 
-func issueFungibleToken(requireT *require.Assertions, ctx client.Context, symbol, subunit, precision string, testNetwork *network.Network) string {
+func issue(requireT *require.Assertions, ctx client.Context, symbol, subunit, precision string, testNetwork *network.Network) string {
 	args := []string{symbol, subunit, precision, "", ""}
 	args = append(args, txValidator1Args(testNetwork)...)
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
 	requireT.NoError(err)
 
 	var res sdk.TxResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
-	requireT.Equal(uint32(0), res.Code, "can't submit IssueFungibleToken tx for query", res)
+	requireT.Equal(uint32(0), res.Code, "can't submit Issue tx for query", res)
 
-	eventFungibleTokenIssuedName := proto.MessageName(&types.EventFungibleTokenIssued{})
+	eventIssuedName := proto.MessageName(&types.EventTokenIssued{})
 	for i := range res.Events {
-		if res.Events[i].Type != eventFungibleTokenIssuedName {
+		if res.Events[i].Type != eventIssuedName {
 			continue
 		}
-		eventsFungibleTokenIssued, err := event.FindTypedEvents[*types.EventFungibleTokenIssued](res.Events)
+		eventsTokenIssued, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 		requireT.NoError(err)
-		return eventsFungibleTokenIssued[0].Denom
+		return eventsTokenIssued[0].Denom
 	}
-	requireT.Failf("event: %s not found in the issue fungible token response", eventFungibleTokenIssuedName)
+	requireT.Failf("event: %s not found in the issue response", eventIssuedName)
 
 	return ""
 }

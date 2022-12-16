@@ -12,7 +12,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 func TestKeeper_Whitelist(t *testing.T) {
@@ -22,59 +22,59 @@ func TestKeeper_Whitelist(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
 
-	assetKeeper := testApp.AssetKeeper
+	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	settings := types.IssueFungibleTokenSettings{
+	settings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(666),
-		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_whitelist}, //nolint:nosnakecase
+		Features:      []types.TokenFeature{types.TokenFeature_whitelist}, //nolint:nosnakecase
 	}
 
-	denom, err := assetKeeper.IssueFungibleToken(ctx, settings)
+	denom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
-	unwhitelistableSettings := types.IssueFungibleTokenSettings{
+	unwhitelistableSettings := types.IssueSettings{
 		Issuer:        issuer,
 		Symbol:        "ABC",
 		Subunit:       "abc",
 		Description:   "ABC Desc",
 		InitialAmount: sdk.NewInt(666),
-		Features:      []types.FungibleTokenFeature{},
+		Features:      []types.TokenFeature{},
 	}
 
 	receiver := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	unwhitelistableDenom, err := assetKeeper.IssueFungibleToken(ctx, unwhitelistableSettings)
+	unwhitelistableDenom, err := ftKeeper.Issue(ctx, unwhitelistableSettings)
 	requireT.NoError(err)
-	_, err = assetKeeper.GetFungibleToken(ctx, unwhitelistableDenom)
+	_, err = ftKeeper.GetToken(ctx, unwhitelistableDenom)
 	requireT.NoError(err)
 
 	// whitelisting fails on unwhitelistable token
-	err = assetKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(unwhitelistableDenom, sdk.NewInt(1)))
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(unwhitelistableDenom, sdk.NewInt(1)))
 	requireT.Error(err)
 	requireT.True(types.ErrFeatureNotActive.Is(err))
 
 	// try to whitelist non-existent denom
-	nonExistentDenom := types.BuildFungibleTokenDenom("nonexist", issuer)
-	err = assetKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(nonExistentDenom, sdk.NewInt(10)))
+	nonExistentDenom := types.BuildDenom("nonexist", issuer)
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(nonExistentDenom, sdk.NewInt(10)))
 	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, types.ErrFungibleTokenNotFound))
+	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
 
 	// try to whitelist from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = assetKeeper.SetWhitelistedBalance(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(10)))
+	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(10)))
 	requireT.Error(err)
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// set whitelisted balance to 0
-	requireT.NoError(assetKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(0))))
-	whitelistedBalance := assetKeeper.GetWhitelistedBalance(ctx, receiver, denom)
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(0))))
+	whitelistedBalance := ftKeeper.GetWhitelistedBalance(ctx, receiver, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(0)).String(), whitelistedBalance.String())
 
 	// try to send
@@ -84,12 +84,12 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.True(types.ErrWhitelistedLimitExceeded.Is(err))
 
 	// set whitelisted balance to 100
-	requireT.NoError(assetKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(100))))
-	whitelistedBalance = assetKeeper.GetWhitelistedBalance(ctx, receiver, denom)
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(100))))
+	whitelistedBalance = ftKeeper.GetWhitelistedBalance(ctx, receiver, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(100)).String(), whitelistedBalance.String())
 
 	// test query all whitelisted balances
-	allBalances, pageRes, err := assetKeeper.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{})
+	allBalances, pageRes, err := ftKeeper.GetAccountsWhitelistedBalances(ctx, &query.PageRequest{})
 	assertT.NoError(err)
 	assertT.Len(allBalances, 1)
 	assertT.EqualValues(1, pageRes.GetTotal())
@@ -110,7 +110,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.True(types.ErrWhitelistedLimitExceeded.Is(err))
 
 	// try to whitelist from non issuer address
-	err = assetKeeper.SetWhitelistedBalance(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
+	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
 	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
 }

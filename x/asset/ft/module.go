@@ -17,9 +17,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/keeper"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 var (
@@ -98,7 +98,6 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper     keeper.Keeper
-	nftKeeper  keeper.NonFungibleTokenKeeper
 	bankKeeper types.BankKeeper
 }
 
@@ -106,13 +105,11 @@ type AppModule struct {
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	nftKeeper keeper.NonFungibleTokenKeeper,
 	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
-		nftKeeper:      nftKeeper,
 		bankKeeper:     bankKeeper,
 	}
 }
@@ -138,7 +135,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper, am.nftKeeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 }
 

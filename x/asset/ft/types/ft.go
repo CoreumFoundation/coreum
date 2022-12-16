@@ -29,25 +29,25 @@ func init() {
 	symbolRegex = regexp.MustCompile(symbolRegexStr)
 }
 
-// IssueFungibleTokenSettings is the model which represents the params for the fungible token issuance.
-type IssueFungibleTokenSettings struct {
+// IssueSettings is the model which represents the params for the fungible token issuance.
+type IssueSettings struct {
 	Issuer        sdk.AccAddress
 	Symbol        string
 	Subunit       string
 	Precision     uint32
 	Description   string
 	InitialAmount sdk.Int
-	Features      []FungibleTokenFeature
+	Features      []TokenFeature
 	BurnRate      sdk.Dec
 }
 
-// BuildFungibleTokenDenom builds the denom string from the symbol and issuer address.
-func BuildFungibleTokenDenom(subunit string, issuer sdk.AccAddress) string {
+// BuildDenom builds the denom string from the symbol and issuer address.
+func BuildDenom(subunit string, issuer sdk.AccAddress) string {
 	return strings.ToLower(subunit) + denomSeparator + issuer.String()
 }
 
-// DeconstructFungibleTokenDenom splits the denom string into the symbol and issuer address.
-func DeconstructFungibleTokenDenom(denom string) (prefix string, issuer sdk.Address, err error) {
+// DeconstructDenom splits the denom string into the symbol and issuer address.
+func DeconstructDenom(denom string) (prefix string, issuer sdk.Address, err error) {
 	denomParts := strings.Split(denom, denomSeparator)
 	if len(denomParts) != 2 {
 		return "", nil, sdkerrors.Wrap(ErrInvalidInput, "symbol must match format [subunit]-[issuer-address]")
@@ -102,7 +102,7 @@ func NormalizeSymbolForKey(in string) string {
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
-func (ftd *FungibleTokenDefinition) IsFeatureEnabled(feature FungibleTokenFeature) bool {
+func (ftd *TokenDefinition) IsFeatureEnabled(feature TokenFeature) bool {
 	return lo.Contains(ftd.Features, feature)
 }
 
@@ -129,6 +129,6 @@ func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 }
 
 // CalculateBurnRateAmount returns the coins to be burned
-func (ftd FungibleTokenDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
+func (ftd TokenDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
 	return ftd.BurnRate.MulInt(coin.Amount).Ceil().RoundInt()
 }

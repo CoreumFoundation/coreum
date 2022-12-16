@@ -11,7 +11,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 func TestMain(m *testing.M) {
@@ -23,12 +23,12 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
+func TestMsgIssue_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	msgF := func() types.MsgIssueFungibleToken {
-		return types.MsgIssueFungibleToken{
+	msgF := func() types.MsgIssue {
+		return types.MsgIssue{
 			Issuer:        acc.String(),
 			Symbol:        "BTC",
 			Subunit:       "btc",
@@ -73,15 +73,15 @@ func TestMsgIssueFungibleToken_ValidateBasic(t *testing.T) {
 	requireT.Error(msg.ValidateBasic())
 }
 
-func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
+func TestMsgFreeze_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name          string
-		message       types.MsgFreezeFungibleToken
+		message       types.MsgFreeze
 		expectedError error
 	}{
 		{
 			name: "valid msg",
-			message: types.MsgFreezeFungibleToken{
+			message: types.MsgFreeze{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
@@ -92,7 +92,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid sender address",
-			message: types.MsgFreezeFungibleToken{
+			message: types.MsgFreeze{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
@@ -104,7 +104,7 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid account",
-			message: types.MsgFreezeFungibleToken{
+			message: types.MsgFreeze{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
@@ -131,16 +131,16 @@ func TestMsgFreezeFungibleToken_ValidateBasic(t *testing.T) {
 }
 
 //nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
-func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
+func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name                string
-		message             types.MsgUnfreezeFungibleToken
+		message             types.MsgUnfreeze
 		expectedError       error
 		expectedErrorString string
 	}{
 		{
 			name: "valid msg",
-			message: types.MsgUnfreezeFungibleToken{
+			message: types.MsgUnfreeze{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
@@ -151,7 +151,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid sender address",
-			message: types.MsgUnfreezeFungibleToken{
+			message: types.MsgUnfreeze{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
@@ -163,7 +163,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid account",
-			message: types.MsgUnfreezeFungibleToken{
+			message: types.MsgUnfreeze{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
@@ -175,7 +175,7 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid denom",
-			message: types.MsgUnfreezeFungibleToken{
+			message: types.MsgUnfreeze{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
@@ -205,8 +205,8 @@ func TestMsgUnfreezeFungibleToken_ValidateBasic(t *testing.T) {
 }
 
 //nolint:dupl // tests and mint tests are identical, but merging them is not beneficial
-func TestMsgMintFungibleToken_ValidateBasic(t *testing.T) {
-	type M = types.MsgMintFungibleToken
+func TestMsgMint_ValidateBasic(t *testing.T) {
+	type M = types.MsgMint
 
 	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	defaultMsg := func() M {
@@ -252,8 +252,8 @@ func TestMsgMintFungibleToken_ValidateBasic(t *testing.T) {
 }
 
 //nolint:dupl // tests and mint tests are identical, but merging them is not beneficial
-func TestMsgBurnFungibleToken_ValidateBasic(t *testing.T) {
-	type M = types.MsgBurnFungibleToken
+func TestMsgBurn_ValidateBasic(t *testing.T) {
+	type M = types.MsgBurn
 
 	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	defaultMsg := func() M {
@@ -299,16 +299,16 @@ func TestMsgBurnFungibleToken_ValidateBasic(t *testing.T) {
 }
 
 //nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
-func TestMsgSetWhitelistedLimitFungibleToken_ValidateBasic(t *testing.T) {
+func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name                string
-		message             types.MsgSetWhitelistedLimitFungibleToken
+		message             types.MsgSetWhitelistedLimit
 		expectedError       error
 		expectedErrorString string
 	}{
 		{
 			name: "valid msg",
-			message: types.MsgSetWhitelistedLimitFungibleToken{
+			message: types.MsgSetWhitelistedLimit{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
@@ -319,7 +319,7 @@ func TestMsgSetWhitelistedLimitFungibleToken_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid sender address",
-			message: types.MsgSetWhitelistedLimitFungibleToken{
+			message: types.MsgSetWhitelistedLimit{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5+",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
@@ -331,7 +331,7 @@ func TestMsgSetWhitelistedLimitFungibleToken_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid account",
-			message: types.MsgSetWhitelistedLimitFungibleToken{
+			message: types.MsgSetWhitelistedLimit{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
@@ -343,7 +343,7 @@ func TestMsgSetWhitelistedLimitFungibleToken_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid denom",
-			message: types.MsgSetWhitelistedLimitFungibleToken{
+			message: types.MsgSetWhitelistedLimit{
 				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{

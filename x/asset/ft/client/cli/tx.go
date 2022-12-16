@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // Flags defined on transactions
@@ -35,41 +35,23 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		FTCmd(),
-		NFTCmd(),
+		CmdTxIssue(),
+		CmdTxMint(),
+		CmdTxBurn(),
+		CmdTxFreeze(),
+		CmdTxUnfreeze(),
+		CmdTxGloballyFreeze(),
+		CmdTxGloballyUnfreeze(),
+		CmdTxSetWhitelistedLimit(),
 	)
 
 	return cmd
 }
 
-// FTCmd returns the subcommands for the fungible tokens
-func FTCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:                        "ft",
-		Short:                      "fungible token transactions subcommands",
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-
-	cmd.AddCommand(
-		CmdTxIssueFungibleToken(),
-		CmdTxMintFungibleToken(),
-		CmdTxBurnFungibleToken(),
-		CmdTxFreezeFungibleToken(),
-		CmdTxUnfreezeFungibleToken(),
-		CmdTxGloballyFreezeFungibleToken(),
-		CmdTxGloballyUnfreezeFungibleToken(),
-		CmdTxSetWhitelistedLimitFungibleToken(),
-	)
-
-	return cmd
-}
-
-// CmdTxIssueFungibleToken returns IssueFungibleToken cobra command.
-func CmdTxIssueFungibleToken() *cobra.Command {
+// CmdTxIssue returns Issue cobra command.
+func CmdTxIssue() *cobra.Command {
 	allowedFeatures := []string{}
-	for _, n := range types.FungibleTokenFeature_name { //nolint:nosnakecase
+	for _, n := range types.TokenFeature_name { //nolint:nosnakecase
 		allowedFeatures = append(allowedFeatures, n)
 	}
 	sort.Strings(allowedFeatures)
@@ -81,7 +63,7 @@ func CmdTxIssueFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Issues new fungible token.
 
 Example:
-$ %s tx asset ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
+$ %s tx asset-ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 `,
 				version.AppName,
 			),
@@ -127,17 +109,17 @@ $ %s tx asset ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [is
 				}
 			}
 
-			var features []types.FungibleTokenFeature
+			var features []types.TokenFeature
 			for _, str := range featuresString {
-				feature, ok := types.FungibleTokenFeature_value[str] //nolint:nosnakecase
+				feature, ok := types.TokenFeature_value[str] //nolint:nosnakecase
 				if !ok {
 					return errors.Errorf("unknown feature '%s',allowed features: %s", str, strings.Join(allowedFeatures, ","))
 				}
-				features = append(features, types.FungibleTokenFeature(feature))
+				features = append(features, types.TokenFeature(feature))
 			}
 			description := args[4]
 
-			msg := &types.MsgIssueFungibleToken{
+			msg := &types.MsgIssue{
 				Issuer:        issuer.String(),
 				Symbol:        symbol,
 				Subunit:       subunit,
@@ -159,10 +141,10 @@ $ %s tx asset ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [is
 	return cmd
 }
 
-// CmdTxFreezeFungibleToken returns FreezeFungibleToken cobra command.
+// CmdTxFreeze returns Freeze cobra command.
 //
 //nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
-func CmdTxFreezeFungibleToken() *cobra.Command {
+func CmdTxFreeze() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "freeze [account_address] [amount] --from [sender]",
 		Args:  cobra.ExactArgs(2),
@@ -171,7 +153,7 @@ func CmdTxFreezeFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Freeze a portion of fungible token.
 
 Example:
-$ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx asset-ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -189,7 +171,7 @@ $ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve
 				return sdkerrors.Wrap(err, "invalid amount")
 			}
 
-			msg := &types.MsgFreezeFungibleToken{
+			msg := &types.MsgFreeze{
 				Sender:  sender.String(),
 				Account: account,
 				Coin:    amount,
@@ -203,10 +185,10 @@ $ %s tx asset ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve
 	return cmd
 }
 
-// CmdTxUnfreezeFungibleToken returns FreezeFungibleToken cobra command.
+// CmdTxUnfreeze returns Unfreeze cobra command.
 //
 //nolint:dupl // most code is identical between Freeze/Unfreeze cmd, but reusing logic is not beneficial here.
-func CmdTxUnfreezeFungibleToken() *cobra.Command {
+func CmdTxUnfreeze() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unfreeze [account_address] [amount] --from [sender]",
 		Args:  cobra.ExactArgs(2),
@@ -215,7 +197,7 @@ func CmdTxUnfreezeFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Unfreezes a portion of the frozen fungible token.
 
 Example:
-$ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx asset-ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -233,7 +215,7 @@ $ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6
 				return sdkerrors.Wrap(err, "invalid amount")
 			}
 
-			msg := &types.MsgUnfreezeFungibleToken{
+			msg := &types.MsgUnfreeze{
 				Sender:  sender.String(),
 				Account: account,
 				Coin:    amount,
@@ -248,8 +230,8 @@ $ %s tx asset ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6
 	return cmd
 }
 
-// CmdTxMintFungibleToken returns MintFungibleToken cobra command.
-func CmdTxMintFungibleToken() *cobra.Command {
+// CmdTxMint returns Mint cobra command.
+func CmdTxMint() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
@@ -258,7 +240,7 @@ func CmdTxMintFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Mint new amount of fungible token.
 
 Example:
-$ %s tx asset ft mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx asset-ft mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -275,7 +257,7 @@ $ %s tx asset ft mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 -
 				return sdkerrors.Wrap(err, "invalid amount")
 			}
 
-			msg := &types.MsgMintFungibleToken{
+			msg := &types.MsgMint{
 				Sender: sender.String(),
 				Coin:   amount,
 			}
@@ -289,8 +271,8 @@ $ %s tx asset ft mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 -
 	return cmd
 }
 
-// CmdTxBurnFungibleToken returns BurnFungibleToken cobra command.
-func CmdTxBurnFungibleToken() *cobra.Command {
+// CmdTxBurn returns Burn cobra command.
+func CmdTxBurn() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
@@ -299,7 +281,7 @@ func CmdTxBurnFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Burn some amount of fungible token.
 
 Example:
-$ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx asset-ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -316,7 +298,7 @@ $ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 -
 				return sdkerrors.Wrap(err, "invalid amount")
 			}
 
-			msg := &types.MsgBurnFungibleToken{
+			msg := &types.MsgBurn{
 				Sender: sender.String(),
 				Coin:   amount,
 			}
@@ -330,10 +312,10 @@ $ %s tx asset ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 -
 	return cmd
 }
 
-// CmdTxSetWhitelistedLimitFungibleToken returns SetWhitelistedLimitFungibleToken cobra command.
+// CmdTxSetWhitelistedLimit returns SetWhitelistedLimit cobra command.
 //
 //nolint:dupl // most code is identical, but reusing logic is not beneficial here.
-func CmdTxSetWhitelistedLimitFungibleToken() *cobra.Command {
+func CmdTxSetWhitelistedLimit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-whitelisted-limit [account_address] [amount] --from [sender]",
 		Args:  cobra.ExactArgs(2),
@@ -342,7 +324,7 @@ func CmdTxSetWhitelistedLimitFungibleToken() *cobra.Command {
 			fmt.Sprintf(`Set whitelisted limit on an account.
 
 Example:
-$ %s tx asset ft set-whitelisted-limit [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
+$ %s tx asset-ft set-whitelisted-limit [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
 `,
 				version.AppName,
 			),
@@ -360,7 +342,7 @@ $ %s tx asset ft set-whitelisted-limit [account_address] 100000ABC-devcore1tr3w8
 				return sdkerrors.Wrap(err, "invalid amount")
 			}
 
-			msg := &types.MsgSetWhitelistedLimitFungibleToken{
+			msg := &types.MsgSetWhitelistedLimit{
 				Sender:  sender.String(),
 				Account: account,
 				Coin:    amount,
@@ -374,8 +356,8 @@ $ %s tx asset ft set-whitelisted-limit [account_address] 100000ABC-devcore1tr3w8
 	return cmd
 }
 
-// CmdTxGloballyFreezeFungibleToken returns GlobalFreezeFungibleToken cobra command.
-func CmdTxGloballyFreezeFungibleToken() *cobra.Command {
+// CmdTxGloballyFreeze returns GlobalFreeze cobra command.
+func CmdTxGloballyFreeze() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "globally-freeze [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
@@ -385,7 +367,7 @@ func CmdTxGloballyFreezeFungibleToken() *cobra.Command {
 This operation is idempotent so global freeze of already frozen token does nothing.
 
 Example:
-$ %s tx asset ft globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx asset-ft globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -399,7 +381,7 @@ $ %s tx asset ft globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk
 			sender := clientCtx.GetFromAddress()
 			denom := args[0]
 
-			msg := &types.MsgGloballyFreezeFungibleToken{
+			msg := &types.MsgGloballyFreeze{
 				Sender: sender.String(),
 				Denom:  denom,
 			}
@@ -412,8 +394,8 @@ $ %s tx asset ft globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk
 	return cmd
 }
 
-// CmdTxGloballyUnfreezeFungibleToken returns GlobalUnfreezeFungibleToken cobra command.
-func CmdTxGloballyUnfreezeFungibleToken() *cobra.Command {
+// CmdTxGloballyUnfreeze returns GlobalUnfreeze cobra command.
+func CmdTxGloballyUnfreeze() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "globally-unfreeze [denom] --from [sender]",
 		Args:  cobra.ExactArgs(1),
@@ -423,7 +405,7 @@ func CmdTxGloballyUnfreezeFungibleToken() *cobra.Command {
 This operation is idempotent so global unfreezing of non-frozen token does nothing.
 
 Example:
-$ %s tx asset ft globally-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx asset-ft globally-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
 				version.AppName,
 			),
@@ -437,7 +419,7 @@ $ %s tx asset ft globally-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0
 			sender := clientCtx.GetFromAddress()
 			denom := args[0]
 
-			msg := &types.MsgGloballyUnfreezeFungibleToken{
+			msg := &types.MsgGloballyUnfreeze{
 				Sender: sender.String(),
 				Denom:  denom,
 			}

@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/x/asset/keeper"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
 )
 
@@ -15,13 +15,13 @@ import (
 func MsgHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]sdk.Msg, error) {
 	var res []sdk.Msg
 	for msgType, msg := range messages {
-		if msgType == "MsgIssueFungibleToken" {
-			var msgIssueFungibleToken types.MsgIssueFungibleToken
-			if err := json.Unmarshal(msg, &msgIssueFungibleToken); err != nil {
+		if msgType == "MsgIssue" {
+			var msgIssue types.MsgIssue
+			if err := json.Unmarshal(msg, &msgIssue); err != nil {
 				return nil, errors.WithStack(err)
 			}
-			msgIssueFungibleToken.Issuer = sender.String() // sender is the address of smart contract
-			res = append(res, &msgIssueFungibleToken)
+			msgIssue.Issuer = sender.String() // sender is the address of smart contract
+			res = append(res, &msgIssue)
 		}
 	}
 	return res, nil
@@ -31,15 +31,15 @@ func MsgHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]s
 func QueryHandler(keeper keeper.Keeper) wasmtypes.Querier {
 	return func(ctx sdk.Context, queries map[string]json.RawMessage) ([]byte, bool, error) {
 		for qType, q := range queries {
-			if qType == "FungibleToken" {
-				qFungibleToken := struct {
+			if qType == "Token" {
+				qToken := struct {
 					Denom string `json:"denom"`
 				}{}
-				if err := json.Unmarshal(q, &qFungibleToken); err != nil {
+				if err := json.Unmarshal(q, &qToken); err != nil {
 					return nil, false, errors.WithStack(err)
 				}
 
-				ft, err := keeper.GetFungibleToken(ctx, qFungibleToken.Denom)
+				ft, err := keeper.GetToken(ctx, qToken.Denom)
 				if err != nil {
 					return nil, false, errors.WithStack(err)
 				}

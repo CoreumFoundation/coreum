@@ -11,11 +11,11 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func TestGloballyFreezeUnfreezeFungibleToken(t *testing.T) {
+func TestGloballyFreezeUnfreeze(t *testing.T) {
 	requireT := require.New(t)
 	networkCfg, err := config.NetworkByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
@@ -28,34 +28,34 @@ func TestGloballyFreezeUnfreezeFungibleToken(t *testing.T) {
 	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 	issuer := testNetwork.Validators[0].Address
-	denom := types.BuildFungibleTokenDenom(subunit, issuer)
+	denom := types.BuildDenom(subunit, issuer)
 
 	// Issue token
 	args := []string{symbol, subunit, precision, "777", `"My Token"`,
-		"--features", types.FungibleTokenFeature_freeze.String(), //nolint:nosnakecase
+		"--features", types.TokenFeature_freeze.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
 	requireT.NoError(err)
 
 	// Globally freeze the token
 	args = append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyFreezeFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyFreeze(), args)
 	requireT.NoError(err)
 
-	var resp types.QueryFungibleTokenResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})
+	var resp types.QueryTokenResponse
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
-	requireT.True(resp.FungibleToken.GloballyFrozen)
+	requireT.True(resp.Token.GloballyFrozen)
 
 	// Globally unfreeze the token
 	args = append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreezeFungibleToken(), args)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreeze(), args)
 	requireT.NoError(err)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
-	requireT.False(resp.FungibleToken.GloballyFrozen)
+	requireT.False(resp.Token.GloballyFrozen)
 }

@@ -7,14 +7,14 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
-	GetFungibleToken(ctx sdk.Context, denom string) (types.FungibleToken, error)
+	GetToken(ctx sdk.Context, denom string) (types.Token, error)
 	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
@@ -33,15 +33,15 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 	}
 }
 
-// FungibleToken queries an fungible token.
-func (qs QueryService) FungibleToken(ctx context.Context, req *types.QueryFungibleTokenRequest) (*types.QueryFungibleTokenResponse, error) {
-	token, err := qs.keeper.GetFungibleToken(sdk.UnwrapSDKContext(ctx), req.GetDenom())
+// Token queries an fungible token.
+func (qs QueryService) Token(ctx context.Context, req *types.QueryTokenRequest) (*types.QueryTokenResponse, error) {
+	token, err := qs.keeper.GetToken(sdk.UnwrapSDKContext(ctx), req.GetDenom())
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryFungibleTokenResponse{
-		FungibleToken: token,
+	return &types.QueryTokenResponse{
+		Token: token,
 	}, nil
 }
 

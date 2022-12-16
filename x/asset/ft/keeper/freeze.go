@@ -6,21 +6,21 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// FreezeFungibleToken freezes specified token from the specified account
-func (k Keeper) FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+// Freeze freezes specified token from the specified account
+func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+	ft, err := k.GetTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
+	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -30,25 +30,25 @@ func (k Keeper) FreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr
 	newFrozenBalance := frozenBalance.Add(coin)
 	frozenStore.SetBalance(newFrozenBalance)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozenAmountChanged{
+	return ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
 		Account:        addr.String(),
 		PreviousAmount: frozenBalance,
 		CurrentAmount:  newFrozenBalance,
 	})
 }
 
-// UnfreezeFungibleToken unfreezes specified tokens from the specified account
-func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+// Unfreeze unfreezes specified tokens from the specified account
+func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	ft, err := k.GetFungibleTokenDefinition(ctx, coin.Denom)
+	ft, err := k.GetTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.FungibleTokenFeature_freeze) //nolint:nosnakecase
+	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (k Keeper) UnfreezeFungibleToken(ctx sdk.Context, sender sdk.AccAddress, ad
 	newFrozenBalance := frozenBalance.Sub(coin)
 	frozenStore.SetBalance(newFrozenBalance)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFungibleTokenFrozenAmountChanged{
+	return ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
 		Account:        addr.String(),
 		PreviousAmount: frozenBalance,
 		CurrentAmount:  newFrozenBalance,
@@ -82,7 +82,7 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 }
 
 // areCoinsSpendable returns an error if there are not enough coins balances to be spent
-func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, ft types.FungibleTokenDefinition, amount sdk.Int) error {
+func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, ft types.TokenDefinition, amount sdk.Int) error {
 	if k.isGloballyFrozen(ctx, ft.Denom) {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", ft.Denom)
 	}
@@ -119,7 +119,7 @@ func (k Keeper) GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, paginati
 }
 
 // GetAccountsFrozenBalances returns the frozen balance on all the account
-func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.FungibleTokenBalance, *query.PageResponse, error) {
+func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
 	return collectBalances(k.cdc, k.frozenBalancesStore(ctx), pagination)
 }
 

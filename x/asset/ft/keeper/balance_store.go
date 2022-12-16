@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 func newBalanceStore(cdc codec.BinaryCodec, store sdk.KVStore, pref []byte) balanceStore {
@@ -67,8 +67,8 @@ func (s balanceStore) SetBalance(coin sdk.Coin) {
 	}
 }
 
-func collectBalances(cdc codec.BinaryCodec, store sdk.KVStore, pagination *query.PageRequest) ([]types.FungibleTokenBalance, *query.PageResponse, error) {
-	var balances []types.FungibleTokenBalance
+func collectBalances(cdc codec.BinaryCodec, store sdk.KVStore, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
+	var balances []types.Balance
 	mapAddressToBalancesIdx := make(map[string]int)
 	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
 		address, err := types.AddressFromBalancesStore(key)
@@ -87,7 +87,7 @@ func collectBalances(cdc codec.BinaryCodec, store sdk.KVStore, pagination *query
 			return nil
 		}
 
-		accountBalance := types.FungibleTokenBalance{
+		accountBalance := types.Balance{
 			Address: address.String(),
 			Coins:   sdk.NewCoins(coin),
 		}
