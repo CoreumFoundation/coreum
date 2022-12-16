@@ -10,8 +10,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
+
+func TestMain(m *testing.M) {
+	n, err := config.NetworkByChainID(constant.ChainIDDev)
+	if err != nil {
+		panic(err)
+	}
+	n.SetSDKConfig()
+	m.Run()
+}
 
 //nolint:funlen // many test cases
 func TestMsgIssueClass_ValidateBasic(t *testing.T) {
