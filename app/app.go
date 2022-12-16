@@ -173,6 +173,7 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
+		nftmodule.AppModuleBasic{},
 		assetft.AppModuleBasic{},
 		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
