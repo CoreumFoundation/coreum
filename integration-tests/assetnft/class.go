@@ -1,4 +1,4 @@
-package asset
+package assetnft
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package asset
+package assetft
 
 import (
 	"context"
@@ -15,8 +15,8 @@ import (
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
-// TestBurnFungibleToken tests burn functionality of fungible tokens.
-func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestMintFungibleToken tests mint functionality of fungible tokens.
+func TestMintFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
@@ -28,27 +28,27 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 			Messages: []sdk.Msg{
 				&assettypes.MsgIssueFungibleToken{},
 				&assettypes.MsgIssueFungibleToken{},
-				&assettypes.MsgBurnFungibleToken{},
-				&assettypes.MsgBurnFungibleToken{},
+				&assettypes.MsgMintFungibleToken{},
+				&assettypes.MsgMintFungibleToken{},
 			},
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgBurnFungibleToken{},
+				&assettypes.MsgMintFungibleToken{},
 			},
 		}))
 
-	// Issue an unburnable fungible token
+	// Issue an unmintable fungible token
 	issueMsg := &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
-		Symbol:        "ABCNotBurnable",
-		Subunit:       "uabcnotburnable",
+		Symbol:        "ABCNotMintable",
+		Subunit:       "uabcnotmintable",
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assettypes.FungibleTokenFeature{
-			assettypes.FungibleTokenFeature_mint,   //nolint:nosnakecase
+			assettypes.FungibleTokenFeature_burn,   //nolint:nosnakecase
 			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
@@ -63,13 +63,13 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	requireT.NoError(err)
 	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	unburnable := fungibleTokenIssuedEvts[0].Denom
+	unmintableDenom := fungibleTokenIssuedEvts[0].Denom
 
-	// try to burn unburnable token
-	burnMsg := &assettypes.MsgBurnFungibleToken{
+	// try to mint unmintable token
+	mintMsg := &assettypes.MsgMintFungibleToken{
 		Sender: issuer.String(),
 		Coin: sdk.Coin{
-			Denom:  unburnable,
+			Denom:  unmintableDenom,
 			Amount: sdk.NewInt(1000),
 		},
 	}
@@ -77,20 +77,20 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
-		burnMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
 	)
 	requireT.True(assettypes.ErrFeatureNotActive.Is(err))
 
-	// Issue a burnable fungible token
+	// Issue a mintable fungible token
 	issueMsg = &assettypes.MsgIssueFungibleToken{
 		Issuer:        issuer.String(),
-		Symbol:        "ABCBurnable",
-		Subunit:       "uabcburnable",
+		Symbol:        "ABCMintable",
+		Subunit:       "uabcmintable",
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []assettypes.FungibleTokenFeature{assettypes.FungibleTokenFeature_burn}, //nolint:nosnakecase
+		Features:      []assettypes.FungibleTokenFeature{assettypes.FungibleTokenFeature_mint}, //nolint:nosnakecase
 	}
 
 	res, err = tx.BroadcastTx(
@@ -103,44 +103,43 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	requireT.NoError(err)
 	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
 	requireT.NoError(err)
-	burnableDenom := fungibleTokenIssuedEvts[0].Denom
+	mintableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to msg
-	burnMsg = &assettypes.MsgBurnFungibleToken{
+	mintMsg = &assettypes.MsgMintFungibleToken{
 		Sender: randomAddress.String(),
-		Coin:   sdk.NewCoin(burnableDenom, sdk.NewInt(1000)),
+		Coin:   sdk.NewCoin(mintableDenom, sdk.NewInt(1000)),
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(randomAddress),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
-		burnMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
 	)
 	requireT.Error(err)
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
-	// burn tokens and check balance and total supply
-	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
+	// mint tokens and check balance and total supply
+	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(burnableDenom, sdk.NewInt(600))
-
-	burnMsg = &assettypes.MsgBurnFungibleToken{
+	mintCoin := sdk.NewCoin(mintableDenom, sdk.NewInt(1600))
+	mintMsg = &assettypes.MsgMintFungibleToken{
 		Sender: issuer.String(),
-		Coin:   burnCoin,
+		Coin:   mintCoin,
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
-		burnMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
 	)
 	requireT.NoError(err)
 
-	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: burnableDenom})
+	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdk.NewInt(1000)).Sub(burnCoin).String(), balance.GetBalance().String())
+	assertT.EqualValues(mintCoin.Add(sdk.NewCoin(mintableDenom, sdk.NewInt(1000))).String(), balance.GetBalance().String())
 
-	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
+	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
+	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 }
