@@ -11,24 +11,24 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// TestIssueBasicFungibleToken checks that fungible token is issued.
-func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestIssueBasic checks that fungible token is issued.
+func TestIssueBasic(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	clientCtx := chain.ClientContext
 
-	assetClient := assettypes.NewQueryClient(clientCtx)
+	ftClient := types.NewQueryClient(clientCtx)
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	issuer := chain.GenAccount()
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
-		Messages: []sdk.Msg{&assettypes.MsgIssueFungibleToken{}},
+		Messages: []sdk.Msg{&types.MsgIssue{}},
 	}))
 
 	// Issue the new fungible token
-	msg := &assettypes.MsgIssueFungibleToken{
+	msg := &types.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "WBTC",
 		Subunit:       "wsatoshi",
@@ -46,31 +46,31 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	)
 
 	require.NoError(t, err)
-	assert.Equal(t, chain.GasLimitByMsgs(&assettypes.MsgIssueFungibleToken{}), uint64(res.GasUsed))
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	assert.Equal(t, chain.GasLimitByMsgs(&types.MsgIssue{}), uint64(res.GasUsed))
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 
 	require.NoError(t, err)
-	require.Equal(t, assettypes.EventFungibleTokenIssued{
-		Denom:         assettypes.BuildFungibleTokenDenom(msg.Subunit, issuer),
+	require.Equal(t, types.EventTokenIssued{
+		Denom:         types.BuildDenom(msg.Subunit, issuer),
 		Issuer:        msg.Issuer,
 		Symbol:        msg.Symbol,
 		Precision:     msg.Precision,
 		Subunit:       msg.Subunit,
 		Description:   msg.Description,
 		InitialAmount: msg.InitialAmount,
-		Features:      []assettypes.FungibleTokenFeature{},
+		Features:      []types.TokenFeature{},
 		BurnRate:      msg.BurnRate,
 	}, *fungibleTokenIssuedEvts[0])
 
 	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// query for the token to check what is stored
-	gotToken, err := assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{
+	gotToken, err := ftClient.Token(ctx, &types.QueryTokenRequest{
 		Denom: denom,
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(assettypes.FungibleToken{
+	requireT.Equal(types.Token{
 		Denom:       denom,
 		Issuer:      msg.Issuer,
 		Symbol:      msg.Symbol,
@@ -78,7 +78,7 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Precision:   8,
 		Description: msg.Description,
 		BurnRate:    msg.BurnRate,
-	}, gotToken.FungibleToken)
+	}, gotToken.Token)
 
 	// query balance
 	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{

@@ -9,12 +9,12 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// TestMintNonFungibleToken tests non-fungible token minting.
-func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestMint tests non-fungible token minting.
+func TestMint(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	receiver := chain.GenAccount()
@@ -23,15 +23,15 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgIssueNonFungibleTokenClass{},
-				&assettypes.MsgMintNonFungibleToken{},
+				&types.MsgIssueClass{},
+				&types.MsgMint{},
 				&nft.MsgSend{},
 			},
 		}),
 	)
 
 	// issue new NFT class
-	issueMsg := &assettypes.MsgIssueNonFungibleTokenClass{
+	issueMsg := &types.MsgIssueClass{
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 	}
@@ -44,8 +44,8 @@ func TestMintNonFungibleToken(ctx context.Context, t testing.T, chain testing.Ch
 	requireT.NoError(err)
 
 	// mint new token in that class
-	classID := assettypes.BuildNonFungibleTokenClassID(issueMsg.Symbol, issuer)
-	mintMsg := &assettypes.MsgMintNonFungibleToken{
+	classID := types.BuildClassID(issueMsg.Symbol, issuer)
+	mintMsg := &types.MsgMint{
 		Sender:  issuer.String(),
 		ID:      "id-1",
 		ClassID: classID,

@@ -12,11 +12,11 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// TestBurnFungibleToken tests burn functionality of fungible tokens.
-func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestBurn tests burn functionality of fungible tokens.
+func TestBurn(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
@@ -26,30 +26,30 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgIssueFungibleToken{},
-				&assettypes.MsgIssueFungibleToken{},
-				&assettypes.MsgBurnFungibleToken{},
-				&assettypes.MsgBurnFungibleToken{},
+				&types.MsgIssue{},
+				&types.MsgIssue{},
+				&types.MsgBurn{},
+				&types.MsgBurn{},
 			},
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgBurnFungibleToken{},
+				&types.MsgBurn{},
 			},
 		}))
 
 	// Issue an unburnable fungible token
-	issueMsg := &assettypes.MsgIssueFungibleToken{
+	issueMsg := &types.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotBurnable",
 		Subunit:       "uabcnotburnable",
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []assettypes.FungibleTokenFeature{
-			assettypes.FungibleTokenFeature_mint,   //nolint:nosnakecase
-			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
+		Features: []types.TokenFeature{
+			types.TokenFeature_mint,   //nolint:nosnakecase
+			types.TokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 
@@ -61,12 +61,12 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	unburnable := fungibleTokenIssuedEvts[0].Denom
 
 	// try to burn unburnable token
-	burnMsg := &assettypes.MsgBurnFungibleToken{
+	burnMsg := &types.MsgBurn{
 		Sender: issuer.String(),
 		Coin: sdk.Coin{
 			Denom:  unburnable,
@@ -80,17 +80,17 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.True(assettypes.ErrFeatureNotActive.Is(err))
+	requireT.True(types.ErrFeatureNotActive.Is(err))
 
 	// Issue a burnable fungible token
-	issueMsg = &assettypes.MsgIssueFungibleToken{
+	issueMsg = &types.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCBurnable",
 		Subunit:       "uabcburnable",
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []assettypes.FungibleTokenFeature{assettypes.FungibleTokenFeature_burn}, //nolint:nosnakecase
+		Features:      []types.TokenFeature{types.TokenFeature_burn}, //nolint:nosnakecase
 	}
 
 	res, err = tx.BroadcastTx(
@@ -101,12 +101,12 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	burnableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to msg
-	burnMsg = &assettypes.MsgBurnFungibleToken{
+	burnMsg = &types.MsgBurn{
 		Sender: randomAddress.String(),
 		Coin:   sdk.NewCoin(burnableDenom, sdk.NewInt(1000)),
 	}
@@ -124,7 +124,7 @@ func TestBurnFungibleToken(ctx context.Context, t testing.T, chain testing.Chain
 	requireT.NoError(err)
 	burnCoin := sdk.NewCoin(burnableDenom, sdk.NewInt(600))
 
-	burnMsg = &assettypes.MsgBurnFungibleToken{
+	burnMsg = &types.MsgBurn{
 		Sender: issuer.String(),
 		Coin:   burnCoin,
 	}

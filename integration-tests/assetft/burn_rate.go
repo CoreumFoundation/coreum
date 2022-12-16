@@ -10,11 +10,11 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// TestBurnRateFungibleToken tests burn rate functionality of fungible tokens.
-func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestBurnRate tests burn rate functionality of fungible tokens.
+func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	recipient1 := chain.GenAccount()
@@ -23,7 +23,7 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgIssueFungibleToken{},
+				&types.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
 		}),
@@ -40,14 +40,14 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 	)
 
 	// Issue an fungible token
-	issueMsg := &assettypes.MsgIssueFungibleToken{
+	issueMsg := &types.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
 		Subunit:       "abc",
 		Precision:     6,
 		InitialAmount: sdk.NewInt(1000),
 		Description:   "ABC Description",
-		Features:      []assettypes.FungibleTokenFeature{},
+		Features:      []types.TokenFeature{},
 		BurnRate:      sdk.MustNewDecFromStr("0.10")}
 
 	res, err := tx.BroadcastTx(
@@ -58,7 +58,7 @@ func TestBurnRateFungibleToken(ctx context.Context, t testing.T, chain testing.C
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvents, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvents, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvents[0].Denom
 

@@ -9,12 +9,12 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// TestIssueNonFungibleTokenClass tests non-fungible token class creation.
-func TestIssueNonFungibleTokenClass(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestIssueClass tests non-fungible token class creation.
+func TestIssueClass(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 
@@ -22,13 +22,13 @@ func TestIssueNonFungibleTokenClass(ctx context.Context, t testing.T, chain test
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgIssueNonFungibleTokenClass{},
+				&types.MsgIssueClass{},
 			},
 		}),
 	)
 
 	// issue new NFT class
-	issueMsg := &assettypes.MsgIssueNonFungibleTokenClass{
+	issueMsg := &types.MsgIssueClass{
 		Issuer:      issuer.String(),
 		Symbol:      "symbol",
 		Name:        "name",
@@ -44,11 +44,11 @@ func TestIssueNonFungibleTokenClass(ctx context.Context, t testing.T, chain test
 	)
 	requireT.NoError(err)
 	requireT.Equal(chain.GasLimitByMsgs(issueMsg), uint64(res.GasUsed))
-	nonFungibleTokenIssuedEvents, err := event.FindTypedEvents[*assettypes.EventNonFungibleTokenClassIssued](res.Events)
+	nonFungibleTokenIssuedEvents, err := event.FindTypedEvents[*types.EventClassIssued](res.Events)
 	requireT.NoError(err)
 	nonFungibleTokenIssuedEvent := nonFungibleTokenIssuedEvents[0]
-	requireT.Equal(&assettypes.EventNonFungibleTokenClassIssued{
-		ID:          assettypes.BuildNonFungibleTokenClassID(issueMsg.Symbol, issuer),
+	requireT.Equal(&types.EventClassIssued{
+		ID:          types.BuildClassID(issueMsg.Symbol, issuer),
 		Issuer:      issuer.String(),
 		Symbol:      issueMsg.Symbol,
 		Name:        issueMsg.Name,
@@ -64,7 +64,7 @@ func TestIssueNonFungibleTokenClass(ctx context.Context, t testing.T, chain test
 	requireT.NoError(err)
 
 	requireT.Equal(&nft.Class{
-		Id:          assettypes.BuildNonFungibleTokenClassID(issueMsg.Symbol, issuer),
+		Id:          types.BuildClassID(issueMsg.Symbol, issuer),
 		Symbol:      issueMsg.Symbol,
 		Name:        issueMsg.Name,
 		Description: issueMsg.Description,

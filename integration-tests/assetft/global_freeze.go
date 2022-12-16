@@ -11,11 +11,11 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// TestGloballyFreezeFungibleToken checks global freeze functionality of fungible tokens.
-func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestGloballyFreeze checks global freeze functionality of fungible tokens.
+func TestGloballyFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 
@@ -24,24 +24,24 @@ func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain tes
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgIssueFungibleToken{},
-				&assettypes.MsgGloballyFreezeFungibleToken{},
+				&types.MsgIssue{},
+				&types.MsgGloballyFreeze{},
 				&banktypes.MsgSend{},
-				&assettypes.MsgGloballyUnfreezeFungibleToken{},
+				&types.MsgGloballyUnfreeze{},
 				&banktypes.MsgSend{},
 			},
 		}))
 
 	// Issue the new fungible token
-	issueMsg := &assettypes.MsgIssueFungibleToken{
+	issueMsg := &types.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "FREEZE",
 		Subunit:       "freeze",
 		Precision:     6,
 		Description:   "FREEZE Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []assettypes.FungibleTokenFeature{
-			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
+		Features: []types.TokenFeature{
+			types.TokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 	res, err := tx.BroadcastTx(
@@ -52,12 +52,12 @@ func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain tes
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// Globally freeze FT.
-	globFreezeMsg := &assettypes.MsgGloballyFreezeFungibleToken{
+	globFreezeMsg := &types.MsgGloballyFreeze{
 		Sender: issuer.String(),
 		Denom:  denom,
 	}
@@ -82,10 +82,10 @@ func TestGloballyFreezeFungibleToken(ctx context.Context, t testing.T, chain tes
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(assettypes.ErrGloballyFrozen.Is(err))
+	assertT.True(types.ErrGloballyFrozen.Is(err))
 
 	// Globally unfreeze FT.
-	globUnfreezeMsg := &assettypes.MsgGloballyUnfreezeFungibleToken{
+	globUnfreezeMsg := &types.MsgGloballyUnfreeze{
 		Sender: issuer.String(),
 		Denom:  denom,
 	}

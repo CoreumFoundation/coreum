@@ -12,11 +12,11 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// TestFreezeUnfreezableFungibleToken checks freeze functionality on unfreezable fungible tokens.
-func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestFreezeUnfreezable checks freeze functionality on unfreezable fungible tokens.
+func TestFreezeUnfreezable(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
@@ -24,19 +24,19 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgIssueFungibleToken{},
-				&assettypes.MsgFreezeFungibleToken{},
+				&types.MsgIssue{},
+				&types.MsgFreeze{},
 			},
 		}))
 
 	// Issue an unfreezable fungible token
-	msg := &assettypes.MsgIssueFungibleToken{
+	msg := &types.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotFreezable",
 		Subunit:       "uabcnotfreezable",
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []assettypes.FungibleTokenFeature{},
+		Features:      []types.TokenFeature{},
 	}
 
 	res, err := tx.BroadcastTx(
@@ -47,12 +47,12 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	unfreezableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to freeze unfreezable token
-	freezeMsg := &assettypes.MsgFreezeFungibleToken{
+	freezeMsg := &types.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(unfreezableDenom, sdk.NewInt(1000)),
@@ -63,16 +63,16 @@ func TestFreezeUnfreezableFungibleToken(ctx context.Context, t testing.T, chain 
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
 		freezeMsg,
 	)
-	assertT.True(assettypes.ErrFeatureNotActive.Is(err))
+	assertT.True(types.ErrFeatureNotActive.Is(err))
 }
 
-// TestFreezeFungibleToken checks freeze functionality of fungible tokens.
-func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestFreeze checks freeze functionality of fungible tokens.
+func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	clientCtx := chain.ClientContext
 
-	assetClient := assettypes.NewQueryClient(clientCtx)
+	ftClient := types.NewQueryClient(clientCtx)
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	issuer := chain.GenAccount()
@@ -81,14 +81,14 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgIssueFungibleToken{},
-				&assettypes.MsgIssueFungibleToken{},
+				&types.MsgIssue{},
+				&types.MsgIssue{},
 				&banktypes.MsgSend{},
-				&assettypes.MsgFreezeFungibleToken{},
-				&assettypes.MsgFreezeFungibleToken{},
-				&assettypes.MsgUnfreezeFungibleToken{},
-				&assettypes.MsgUnfreezeFungibleToken{},
-				&assettypes.MsgUnfreezeFungibleToken{},
+				&types.MsgFreeze{},
+				&types.MsgFreeze{},
+				&types.MsgUnfreeze{},
+				&types.MsgUnfreeze{},
+				&types.MsgUnfreeze{},
 			},
 		}))
 	requireT.NoError(
@@ -103,20 +103,20 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assettypes.MsgFreezeFungibleToken{},
+				&types.MsgFreeze{},
 			},
 		}))
 
 	// Issue the new fungible token
-	msg := &assettypes.MsgIssueFungibleToken{
+	msg := &types.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []assettypes.FungibleTokenFeature{
-			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase
+		Features: []types.TokenFeature{
+			types.TokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 
@@ -124,7 +124,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(assettypes.BuildFungibleTokenDenom(msg.Subunit, issuer), sdk.NewInt(1000)),
+			sdk.NewCoin(types.BuildDenom(msg.Subunit, issuer), sdk.NewInt(1000)),
 		),
 	}
 
@@ -140,12 +140,12 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to freeze msg
-	freezeMsg := &assettypes.MsgFreezeFungibleToken{
+	freezeMsg := &types.MsgFreeze{
 		Sender:  randomAddress.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
@@ -160,7 +160,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// freeze 400 tokens
-	freezeMsg = &assettypes.MsgFreezeFungibleToken{
+	freezeMsg = &types.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
@@ -174,23 +174,23 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(freezeMsg))
 
-	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenFrozenAmountChanged](res.Events)
+	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*types.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assettypes.EventFungibleTokenFrozenAmountChanged{
+	assertT.EqualValues(&types.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		PreviousAmount: sdk.NewCoin(denom, sdk.NewInt(0)),
 		CurrentAmount:  sdk.NewCoin(denom, sdk.NewInt(400)),
 	}, fungibleTokenFreezeEvts[0])
 
 	// query frozen tokens
-	frozenBalance, err := assetClient.FrozenBalance(ctx, &assettypes.QueryFrozenBalanceRequest{
+	frozenBalance, err := ftClient.FrozenBalance(ctx, &types.QueryFrozenBalanceRequest{
 		Account: recipient.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
 	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(400)), frozenBalance.Balance)
 
-	frozenBalances, err := assetClient.FrozenBalances(ctx, &assettypes.QueryFrozenBalancesRequest{
+	frozenBalances, err := ftClient.FrozenBalances(ctx, &types.QueryFrozenBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
@@ -233,7 +233,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(400)).String(), balance1.GetBalance().String())
 
 	// unfreeze 200 tokens and try send 250 tokens
-	unfreezeMsg := &assettypes.MsgUnfreezeFungibleToken{
+	unfreezeMsg := &types.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
@@ -247,9 +247,9 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
 
-	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assettypes.EventFungibleTokenFrozenAmountChanged](res.Events)
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*types.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assettypes.EventFungibleTokenFrozenAmountChanged{
+	assertT.EqualValues(&types.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		PreviousAmount: sdk.NewCoin(denom, sdk.NewInt(400)),
 		CurrentAmount:  sdk.NewCoin(denom, sdk.NewInt(200)),
@@ -284,7 +284,7 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.NoError(err)
 
 	// unfreeze 400 tokens (frozen balance is 200), it should give error
-	unfreezeMsg = &assettypes.MsgUnfreezeFungibleToken{
+	unfreezeMsg = &types.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
@@ -295,10 +295,10 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
 		unfreezeMsg,
 	)
-	requireT.True(assettypes.ErrNotEnoughBalance.Is(err))
+	requireT.True(types.ErrNotEnoughBalance.Is(err))
 
 	// unfreeze 200 tokens and observer current frozen amount is zero
-	unfreezeMsg = &assettypes.MsgUnfreezeFungibleToken{
+	unfreezeMsg = &types.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
@@ -312,9 +312,9 @@ func TestFreezeFungibleToken(ctx context.Context, t testing.T, chain testing.Cha
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
 
-	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assettypes.EventFungibleTokenFrozenAmountChanged](res.Events)
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*types.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&assettypes.EventFungibleTokenFrozenAmountChanged{
+	assertT.EqualValues(&types.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		PreviousAmount: sdk.NewCoin(denom, sdk.NewInt(200)),
 		CurrentAmount:  sdk.NewCoin(denom, sdk.NewInt(0)),
