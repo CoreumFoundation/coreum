@@ -33,7 +33,7 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 func (ms MsgServer) IssueClass(ctx context.Context, req *types.MsgIssueClass) (*types.EmptyResponse, error) {
 	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid issuer in MsgIssueNonFungibleTokenClass")
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid issuer in MsgIssueClass")
 	}
 	if _, err := ms.keeper.IssueClass(
 		sdk.UnwrapSDKContext(ctx),

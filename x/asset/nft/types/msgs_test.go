@@ -14,7 +14,7 @@ import (
 )
 
 //nolint:funlen // many test cases
-func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
+func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 
 	dataString := "metadata"
@@ -133,7 +133,7 @@ func TestMsgIssueNonFungibleTokenClass_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgMintNonFungibleToken_ValidateBasic(t *testing.T) {
+func TestMsgMint_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 
 	dataString := "metadata"

@@ -55,12 +55,12 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	require.NoError(t, err)
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, len(issueMsgs), len(fungibleTokenIssuedEvts))
+	require.Equal(t, len(issueMsgs), len(tokenIssuedEvts))
 
-	denom1 := fungibleTokenIssuedEvts[0].Denom
-	denom2 := fungibleTokenIssuedEvts[1].Denom
+	denom1 := tokenIssuedEvts[0].Denom
+	denom2 := tokenIssuedEvts[1].Denom
 
 	msg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{

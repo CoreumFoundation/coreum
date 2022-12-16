@@ -58,9 +58,9 @@ func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvents, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
+	tokenIssuedEvents, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 	requireT.NoError(err)
-	denom := fungibleTokenIssuedEvents[0].Denom
+	denom := tokenIssuedEvents[0].Denom
 
 	// send from issuer to recipient1 (burn must not apply)
 	sendMsg := &banktypes.MsgSend{

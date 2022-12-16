@@ -117,11 +117,11 @@ func TestSendDeterministicGasManyCoins(ctx context.Context, t testing.T, chain t
 
 	coinsToSend := sdk.NewCoins()
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, numOfTokens, len(fungibleTokenIssuedEvts))
+	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
 
-	for _, e := range fungibleTokenIssuedEvts {
+	for _, e := range tokenIssuedEvts {
 		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
 	}
 
@@ -252,11 +252,11 @@ func TestMultiSendDeterministicGasManyCoins(ctx context.Context, t testing.T, ch
 
 	coinsToSend := sdk.NewCoins()
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, numOfTokens, len(fungibleTokenIssuedEvts))
+	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
 
-	for _, e := range fungibleTokenIssuedEvts {
+	for _, e := range tokenIssuedEvts {
 		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
 	}
 

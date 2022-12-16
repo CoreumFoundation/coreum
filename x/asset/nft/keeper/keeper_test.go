@@ -16,7 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
-func TestNonFungibleTokenKeeper_IssueNonFungibleTokenClass(t *testing.T) {
+func TestKeeper_IssueClass(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.NewContext(false, tmproto.Header{})
@@ -57,7 +57,7 @@ func TestNonFungibleTokenKeeper_IssueNonFungibleTokenClass(t *testing.T) {
 	requireT.True(types.ErrInvalidInput.Is(err))
 }
 
-func TestNonFungibleTokenKeeper_MintNonFungibleToken(t *testing.T) {
+func TestKeeper_Mint(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.NewContext(false, tmproto.Header{})

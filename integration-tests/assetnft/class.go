@@ -44,9 +44,9 @@ func TestIssueClass(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	requireT.NoError(err)
 	requireT.Equal(chain.GasLimitByMsgs(issueMsg), uint64(res.GasUsed))
-	nonFungibleTokenIssuedEvents, err := event.FindTypedEvents[*types.EventClassIssued](res.Events)
+	tokenIssuedEvents, err := event.FindTypedEvents[*types.EventClassIssued](res.Events)
 	requireT.NoError(err)
-	nonFungibleTokenIssuedEvent := nonFungibleTokenIssuedEvents[0]
+	tokenIssuedEvent := tokenIssuedEvents[0]
 	requireT.Equal(&types.EventClassIssued{
 		ID:          types.BuildClassID(issueMsg.Symbol, issuer),
 		Issuer:      issuer.String(),
@@ -55,11 +55,11 @@ func TestIssueClass(ctx context.Context, t testing.T, chain testing.Chain) {
 		Description: issueMsg.Description,
 		URI:         issueMsg.URI,
 		URIHash:     issueMsg.URIHash,
-	}, nonFungibleTokenIssuedEvent)
+	}, tokenIssuedEvent)
 
 	// check that class is present in the nft module
 	nftClassRes, err := nftClient.Class(ctx, &nft.QueryClassRequest{
-		ClassId: nonFungibleTokenIssuedEvent.ID,
+		ClassId: tokenIssuedEvent.ID,
 	})
 	requireT.NoError(err)
 

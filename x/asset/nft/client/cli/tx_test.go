@@ -14,7 +14,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
 )
 
-func TestCmdTxIssueNonFungibleTokenClass(t *testing.T) {
+func TestCmdTxIssueClass(t *testing.T) {
 	requireT := require.New(t)
 	testNetwork := network.New(t)
 
@@ -30,7 +30,7 @@ func TestCmdTxIssueNonFungibleTokenClass(t *testing.T) {
 	var res sdk.TxResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
-	requireT.Equal(uint32(0), res.Code, "can't submit IssueNonFungibleTokenClass tx", res)
+	requireT.Equal(uint32(0), res.Code, "can't submit IssueClass tx", res)
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {
