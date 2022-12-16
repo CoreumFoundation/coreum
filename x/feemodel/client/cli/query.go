@@ -34,15 +34,12 @@ func GetMinGasPriceCmd() *cobra.Command {
 		Short: "Query for minimum gas price for current block required by the network",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
+			res, err := QueryGasPriceHelper(cmd)
 			if err != nil {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
-
-			ctx := cmd.Context()
-			res, err := queryClient.MinGasPrice(ctx, &types.QueryMinGasPriceRequest{})
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
