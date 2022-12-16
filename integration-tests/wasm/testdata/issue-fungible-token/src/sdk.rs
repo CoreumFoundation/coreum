@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum FungibleTokenMsg {
-    MsgIssueFungibleToken {
+    MsgIssue {
         symbol: String,
         subunit: String,
         precision: u32,
@@ -22,7 +22,7 @@ impl CustomMsg for FungibleTokenMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum FungibleTokenQuery {
-    FungibleToken { denom: String },
+    Token { denom: String },
 }
 
 impl CustomQuery for FungibleTokenQuery {}

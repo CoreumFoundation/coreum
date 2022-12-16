@@ -75,7 +75,7 @@ fn issue_tokens(
 
     // Send two submessages handled by the asset module to create two fungible tokens.
     // ReplyOn::Always means that we want `reply` to be called after each submessage execution.
-    let mut msg1 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
+    let mut msg1 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssue {
         symbol: symbol.clone() + "1",
         subunit: subunit.clone() + "1",
         precision,
@@ -83,7 +83,7 @@ fn issue_tokens(
     });
     msg1.reply_on = ReplyOn::Always;
 
-    let mut msg2 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
+    let mut msg2 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssue {
         symbol: symbol.clone() + "2",
         subunit: subunit.clone() + "2",
         precision,
@@ -130,7 +130,7 @@ fn query_count(deps: Deps<sdk::FungibleTokenQuery>) -> StdResult<CountResponse> 
 
 fn query_info(deps: Deps<sdk::FungibleTokenQuery>, denom: String) -> StdResult<InfoResponse> {
     let request: QueryRequest<sdk::FungibleTokenQuery> =
-        sdk::FungibleTokenQuery::FungibleToken { denom: denom }.into();
+        sdk::FungibleTokenQuery::Token { denom: denom }.into();
     let res: FungibleTokenResponse = deps.querier.query(&request)?;
     Ok(InfoResponse { issuer: res.issuer })
 }
