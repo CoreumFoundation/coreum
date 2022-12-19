@@ -10,11 +10,11 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// TestBurnRate tests burn rate functionality of fungible tokens.
-func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
+// TestSendFee tests send fee functionality of fungible tokens.
+func TestSendFee(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	recipient1 := chain.GenAccount()
@@ -23,7 +23,7 @@ func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
+				&types.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
 		}),
@@ -40,16 +40,16 @@ func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	// Issue an fungible token
-	issueMsg := &assetfttypes.MsgIssue{
+	issueMsg := &types.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
 		Subunit:       "abc",
 		Precision:     6,
 		InitialAmount: sdk.NewInt(1000),
 		Description:   "ABC Description",
-		Features:      []assetfttypes.TokenFeature{},
-		BurnRate:      sdk.MustNewDecFromStr("0.10"),
-		SendFee:       sdk.NewDec(0),
+		Features:      []types.TokenFeature{},
+		BurnRate:      sdk.NewDec(0),
+		SendFee:       sdk.MustNewDecFromStr("0.10"),
 	}
 
 	res, err := tx.BroadcastTx(
@@ -60,11 +60,11 @@ func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	requireT.NoError(err)
-	tokenIssuedEvents, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
+	tokenIssuedEvents, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	denom := tokenIssuedEvents[0].Denom
 
-	// send from issuer to recipient1 (burn must not apply)
+	// send from issuer to recipient1 (send fee must not apply)
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient1.String(),
@@ -83,7 +83,7 @@ func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 		&recipient1: 400,
 	})
 
-	// send from recipient1 to recipient2 (burn must apply)
+	// send from recipient1 to recipient2 (send fee must apply)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
@@ -98,12 +98,12 @@ func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     600,
+		&issuer:     610,
 		&recipient1: 290,
 		&recipient2: 100,
 	})
 
-	// send from recipient2 to issuer (burn must not apply)
+	// send from recipient2 to issuer (send fee must not apply)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient2.String(),
 		ToAddress:   issuer.String(),
@@ -118,13 +118,13 @@ func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     700,
+		&issuer:     710,
 		&recipient1: 290,
 		&recipient2: 0,
 	})
 
 	// multi send from recipient1 to issuer and recipient2
-	// (burn must apply to both transfers. will be fixed later to apply to one transfer)
+	// (send fee must apply to both transfers. will be fixed later to apply to one transfer)
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
 			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200)))},
@@ -150,25 +150,8 @@ func TestBurnRate(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     800,
+		&issuer:     830,
 		&recipient1: 70,
 		&recipient2: 100,
 	})
-}
-
-func assertCoinDistribution(ctx context.Context, clientCtx tx.ClientContext, t testing.T, denom string, dist map[*sdk.AccAddress]int64) {
-	bankClient := banktypes.NewQueryClient(clientCtx)
-	requireT := require.New(t)
-
-	total := int64(0)
-	for acc, expectedBalance := range dist {
-		total += expectedBalance
-		getBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: acc.String(), Denom: denom})
-		requireT.NoError(err)
-		requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(expectedBalance)).String(), getBalance.Balance.String())
-	}
-
-	supply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
-	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(total)).String(), supply.Amount.String())
 }

@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -39,6 +40,7 @@ type IssueSettings struct {
 	InitialAmount sdk.Int
 	Features      []TokenFeature
 	BurnRate      sdk.Dec
+	SendFee       sdk.Dec
 }
 
 // BuildDenom builds the denom string from the symbol and issuer address.
@@ -106,18 +108,33 @@ func (ftd *FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
 	return lo.Contains(ftd.Features, feature)
 }
 
-// ValidateBurnRate checks the provide burn rate is valid
+// ValidateBurnRate checks that provided burn rate is valid
 func ValidateBurnRate(burnRate sdk.Dec) error {
-	if burnRate.IsNil() {
+	if err := validateRate(burnRate); err != nil {
+		return errors.Wrap(err, "burn rate is invalid")
+	}
+	return nil
+}
+
+// ValidateSendFee checks that provided burn rate is valid
+func ValidateSendFee(sendFee sdk.Dec) error {
+	if err := validateRate(sendFee); err != nil {
+		return errors.Wrap(err, "send fee is invalid")
+	}
+	return nil
+}
+
+func validateRate(rate sdk.Dec) error {
+	if rate.IsNil() {
 		return nil
 	}
 
-	if !isDecPrecisionValid(burnRate, 4) {
-		return sdkerrors.Wrap(ErrInvalidInput, "burn rate precision should not be more than 4 decimal places")
+	if !isDecPrecisionValid(rate, 4) {
+		return sdkerrors.Wrap(ErrInvalidInput, "rate precision should not be more than 4 decimal places")
 	}
 
-	if burnRate.LT(sdk.NewDec(0)) || burnRate.GT(sdk.NewDec(1)) {
-		return sdkerrors.Wrap(ErrInvalidInput, "burn rate is not within acceptable range")
+	if rate.LT(sdk.NewDec(0)) || rate.GT(sdk.NewDec(1)) {
+		return sdkerrors.Wrap(ErrInvalidInput, "rate is not within acceptable range")
 	}
 
 	return nil
@@ -130,5 +147,14 @@ func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 
 // CalculateBurnRateAmount returns the coins to be burned
 func (ftd FTDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
-	return ftd.BurnRate.MulInt(coin.Amount).Ceil().RoundInt()
+	return calculateRate(coin.Amount, ftd.BurnRate)
+}
+
+// CalculateSendFeeAmount returns the coins to be sent to issuer as a sending fee
+func (ftd FTDefinition) CalculateSendFeeAmount(coin sdk.Coin) sdk.Int {
+	return calculateRate(coin.Amount, ftd.SendFee)
+}
+
+func calculateRate(amount sdk.Int, rate sdk.Dec) sdk.Int {
+	return rate.MulInt(amount).Ceil().RoundInt()
 }

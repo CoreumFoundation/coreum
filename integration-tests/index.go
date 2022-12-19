@@ -37,6 +37,7 @@ func Tests() []testing.TestSet {
 				assetft.TestMint,
 				assetft.TestBurn,
 				assetft.TestBurnRate,
+				assetft.TestSendFee,
 				assetnft.TestIssueClass,
 				assetnft.TestMint,
 				auth.TestUnexpectedSequenceNumber,

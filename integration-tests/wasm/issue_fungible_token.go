@@ -114,6 +114,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 		Subunit:   subunit1,
 		Precision: precision,
 		BurnRate:  sdk.NewDec(0),
+		SendFee:   sdk.NewDec(0),
 	}, ft.GetToken())
 
 	ft, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom2})
@@ -125,6 +126,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 		Subunit:   subunit2,
 		Precision: precision,
 		BurnRate:  sdk.NewDec(0),
+		SendFee:   sdk.NewDec(0),
 	}, ft.GetToken())
 
 	// check the counter

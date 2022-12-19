@@ -20,6 +20,9 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	if err := types.ValidateBurnRate(settings.BurnRate); err != nil {
 		return "", err
 	}
+	if err := types.ValidateSendFee(settings.SendFee); err != nil {
+		return "", err
+	}
 
 	err := types.ValidateSymbol(settings.Symbol)
 	if err != nil {
@@ -47,6 +50,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		Issuer:   settings.Issuer.String(),
 		Features: settings.Features,
 		BurnRate: settings.BurnRate,
+		SendFee:  settings.SendFee,
 	}
 	k.SetTokenDefinition(ctx, definition)
 
@@ -64,6 +68,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		InitialAmount: settings.InitialAmount,
 		Features:      settings.Features,
 		BurnRate:      settings.BurnRate,
+		SendFee:       settings.SendFee,
 	}); err != nil {
 		return "", sdkerrors.Wrap(err, "can't emit EventTokenIssued event")
 	}
@@ -135,6 +140,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.FTDefinition)
 		Description:    metadata.Description,
 		Features:       definition.Features,
 		BurnRate:       definition.BurnRate,
+		SendFee:        definition.SendFee,
 		GloballyFrozen: k.isGloballyFrozen(ctx, definition.Denom),
 	}, nil
 }
