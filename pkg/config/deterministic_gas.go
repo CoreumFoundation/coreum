@@ -7,6 +7,8 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/golang/protobuf/proto"
+	"github.com/samber/lo"
 
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
@@ -198,4 +200,68 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 // TxBaseGas is the free gas we give to every transaction to cover costs of tx size and signature verification
 func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint64 {
 	return dgr.FreeBytes*params.TxSizeCostPerByte + dgr.FreeSignatures*params.SigVerifyCostSecp256k1
+}
+
+type DeterministicGasRequirementsV2 struct {
+	FixedGas       uint64
+	FreeBytes      uint64
+	FreeSignatures uint64
+
+	// Msg types which implement custom logic.
+	BankSendPerEntry      uint64
+	BankMultiSendPerEntry uint64
+
+	// Map of deterministic msg types and their gas requirements.
+	FixedGasMsgs map[string]uint64
+
+	// List of known undeterministic msg types.
+	UndeterministicMsgs []string
+}
+
+func DefaultDeterministicGasRequirementsV2() DeterministicGasRequirementsV2 {
+	return DeterministicGasRequirementsV2{
+		FixedGas:       50000,
+		FreeBytes:      2048,
+		FreeSignatures: 1,
+
+		BankSendPerEntry:      22000,
+		BankMultiSendPerEntry: 27000,
+
+		FixedGasMsgs: map[string]uint64{
+			"cosmos.distribution.v1beta1.MsgFundCommunityPool": 50000,
+
+			"coreum.asset.v1.MsgBurnFungibleToken": 35000,
+		},
+
+		UndeterministicMsgs: []string{
+			"cosmwasm.wasm.v1.MsgExecuteContract",
+		},
+	}
+}
+
+func (dgr DeterministicGasRequirementsV2) GasRequiredByMessageV2(msg sdk.Msg) (uint64, bool) {
+	switch m := msg.(type) {
+	case *banktypes.MsgSend:
+		entriesNum := len(m.Amount)
+		if len(m.Amount) == 0 {
+			entriesNum = 1
+		}
+		return uint64(entriesNum) * dgr.BankSendPerEntry, true
+	case *banktypes.MsgMultiSend:
+		// TODO: Copy me.
+	default:
+		msgName := proto.MessageName(msg) // TODO: Replace with non-deprecated func.
+
+		if lo.Contains(dgr.UndeterministicMsgs, msgName) {
+			return 0, true
+		}
+
+		gas, ok := dgr.FixedGasMsgs[msgName]
+		if ok {
+			return gas, true
+		}
+	}
+
+	// Unknown msg type
+	return 0, false
 }
