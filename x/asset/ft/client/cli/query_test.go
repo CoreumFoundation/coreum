@@ -45,6 +45,7 @@ func TestQueryToken(t *testing.T) {
 		Description: "",
 		Features:    []types.TokenFeature{},
 		BurnRate:    sdk.NewDec(0),
+		SendFee:     sdk.NewDec(0),
 	}, resp.Token)
 }
 

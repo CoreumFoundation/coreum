@@ -649,15 +649,15 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Token_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 4}, []string{"coreum", "asset", "v1", "fts", "denom"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Token_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 4}, []string{"coreum", "asset", "ft", "v1", "denom"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_FrozenBalances_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"coreum", "asset", "v1", "fts", "balance", "account", "frozen"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_FrozenBalances_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"coreum", "asset", "ft", "v1", "balance", "account", "frozen"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_FrozenBalance_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7}, []string{"coreum", "asset", "v1", "fts", "balance", "account", "frozen", "denom"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_FrozenBalance_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7}, []string{"coreum", "asset", "ft", "v1", "balance", "account", "frozen", "denom"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_WhitelistedBalances_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"coreum", "asset", "v1", "fts", "balance", "account", "whitelisted"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_WhitelistedBalances_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"coreum", "asset", "ft", "v1", "balance", "account", "whitelisted"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_WhitelistedBalance_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7}, []string{"coreum", "asset", "v1", "fts", "balance", "account", "whitelisted", "denom"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_WhitelistedBalance_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7}, []string{"coreum", "asset", "ft", "v1", "balance", "account", "whitelisted", "denom"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

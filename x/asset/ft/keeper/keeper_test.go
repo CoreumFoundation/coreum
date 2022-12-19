@@ -170,6 +170,7 @@ func TestKeeper_Issue(t *testing.T) {
 		Precision:   settings.Precision,
 		Features:    []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
 		BurnRate:    sdk.NewDec(0),
+		SendFee:     sdk.NewDec(0),
 	}, gotToken)
 
 	// check the metadata
