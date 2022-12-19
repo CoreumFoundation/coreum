@@ -39,7 +39,6 @@ var (
 	chain Chain
 )
 
-// Command to run the integration tests: go test -v --tags=integrationtests -p 1 -parallel 20 ./... --log-format=yaml --cored-address="http://localhost:26657"
 func init() {
 	var (
 		fundingMnemonic, coredAddress, logFormat string
@@ -56,8 +55,6 @@ func init() {
 	// parse additional flags
 	flag.Parse()
 
-	// parse additional flags
-	flag.Parse()
 	// set the default staker mnemonic used in the dev znet by default
 	if len(stakerMnemonics) == 0 {
 		stakerMnemonics = []string{

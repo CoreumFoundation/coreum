@@ -49,7 +49,19 @@ func (c ChainContext) GenAccount() sdk.AccAddress {
 }
 
 // ImportMnemonic imports the mnemonic into the ClientContext Keyring and return its address.
+// If the mnemonic is already imported the method will just return the address.
 func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
+	// prevent double import
+	derivedPriv, err := hd.Secp256k1.Derive()(mnemonic, "", sdk.GetConfig().GetFullBIP44Path())
+	if err != nil {
+		panic(err)
+	}
+	address := sdk.AccAddress(hd.Secp256k1.Generate()(derivedPriv).PubKey().Address())
+	if _, err := c.ClientContext.Keyring().KeyByAddress(address); err == nil {
+		return address
+	}
+
+	// import
 	keyInfo, err := c.ClientContext.Keyring().NewAccount(
 		uuid.New().String(),
 		mnemonic,

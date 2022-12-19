@@ -1,4 +1,4 @@
-//go:build integrationtests_upgrade
+//go:build integrationtests
 
 package upgrade
 
