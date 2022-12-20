@@ -21,8 +21,8 @@ func mergeRunEs(runEs ...func(cmd *cobra.Command, args []string) error) func(cmd
 }
 
 func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
-	if flag := cmd.LocalFlags().Lookup(flags.FlagGasPrices); flag != nil && flag.Changed && flag.Value.String() == "auto" {
-		gasPrice, err := feecli.QueryGasPriceHelper(cmd)
+	if flag := cmd.LocalFlags().Lookup(flags.FlagGasPrices); flag != nil && !flag.Changed {
+		gasPrice, err := feecli.QueryGasPrice(cmd)
 		if err != nil {
 			return err
 		}
