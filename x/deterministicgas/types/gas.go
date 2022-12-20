@@ -94,7 +94,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
 					if isDeterministic {
-						gasMetric(sdkCtx, newSDKCtx, gasBefore, method.MethodName)
+						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, method.MethodName)
 					}
 					return res, err
 				})
@@ -118,12 +118,16 @@ func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequir
 	return ctx, gasBefore, exists
 }
 
-func gasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgType string) {
-	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
+func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgType string) {
 	nondeterministicGas := newCtx.GasMeter().GasConsumed()
+	if nondeterministicGas == 0 {
+		return
+	}
+
+	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
 
 	gasFactor := (float32(deterministicGas) - float32(nondeterministicGas)) / float32(nondeterministicGas)
 	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
-		{Name: "tx_type", Value: msgType},
+		{Name: "msg_method", Value: msgType},
 	})
 }
