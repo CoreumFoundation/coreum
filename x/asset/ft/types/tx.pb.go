@@ -476,7 +476,7 @@ type MsgClient interface {
 	// GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it.
 	// This operation is idempotent so global unfreezing of non-frozen token does nothing.
 	GloballyUnfreeze(ctx context.Context, in *MsgGloballyUnfreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
-	// SetWhitelistedLimit sets the limit of how many tokens account may hold
+	// SetWhitelistedLimit sets the limit of how many tokens a specific account may hold
 	SetWhitelistedLimit(ctx context.Context, in *MsgSetWhitelistedLimit, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
@@ -580,7 +580,7 @@ type MsgServer interface {
 	// GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it.
 	// This operation is idempotent so global unfreezing of non-frozen token does nothing.
 	GloballyUnfreeze(context.Context, *MsgGloballyUnfreeze) (*EmptyResponse, error)
-	// SetWhitelistedLimit sets the limit of how many tokens account may hold
+	// SetWhitelistedLimit sets the limit of how many tokens a specific account may hold
 	SetWhitelistedLimit(context.Context, *MsgSetWhitelistedLimit) (*EmptyResponse, error)
 }
 
