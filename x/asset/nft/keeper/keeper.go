@@ -67,7 +67,7 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		URI:         settings.URI,
 		URIHash:     settings.URIHash,
 	}); err != nil {
-		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't emit event EventNonFungibleTokenClassIssued: %s", err)
+		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't emit event EventClassIssued: %s", err)
 	}
 
 	return id, nil

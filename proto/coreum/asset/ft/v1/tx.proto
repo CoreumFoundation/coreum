@@ -35,7 +35,7 @@ service Msg {
   // This operation is idempotent so global unfreezing of non-frozen token does nothing.
   rpc GloballyUnfreeze(MsgGloballyUnfreeze) returns (EmptyResponse);
 
-  // SetWhitelistedLimit sets the limit of how many tokens account may hold
+  // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold
   rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
 }
 

@@ -9,7 +9,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
@@ -22,13 +22,13 @@ func TestIssueClass(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgIssueClass{},
+				&assetnfttypes.MsgIssueClass{},
 			},
 		}),
 	)
 
 	// issue new NFT class
-	issueMsg := &types.MsgIssueClass{
+	issueMsg := &assetnfttypes.MsgIssueClass{
 		Issuer:      issuer.String(),
 		Symbol:      "symbol",
 		Name:        "name",
@@ -44,11 +44,11 @@ func TestIssueClass(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	requireT.NoError(err)
 	requireT.Equal(chain.GasLimitByMsgs(issueMsg), uint64(res.GasUsed))
-	tokenIssuedEvents, err := event.FindTypedEvents[*types.EventClassIssued](res.Events)
+	tokenIssuedEvents, err := event.FindTypedEvents[*assetnfttypes.EventClassIssued](res.Events)
 	requireT.NoError(err)
 	tokenIssuedEvent := tokenIssuedEvents[0]
-	requireT.Equal(&types.EventClassIssued{
-		ID:          types.BuildClassID(issueMsg.Symbol, issuer),
+	requireT.Equal(&assetnfttypes.EventClassIssued{
+		ID:          assetnfttypes.BuildClassID(issueMsg.Symbol, issuer),
 		Issuer:      issuer.String(),
 		Symbol:      issueMsg.Symbol,
 		Name:        issueMsg.Name,
@@ -64,7 +64,7 @@ func TestIssueClass(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(err)
 
 	requireT.Equal(&nft.Class{
-		Id:          types.BuildClassID(issueMsg.Symbol, issuer),
+		Id:          assetnfttypes.BuildClassID(issueMsg.Symbol, issuer),
 		Symbol:      issueMsg.Symbol,
 		Name:        issueMsg.Name,
 		Description: issueMsg.Description,

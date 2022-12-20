@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // TestMint tests mint functionality of fungible tokens.
@@ -26,30 +26,30 @@ func TestMint(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgIssue{},
-				&types.MsgIssue{},
-				&types.MsgMint{},
-				&types.MsgMint{},
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgMint{},
+				&assetfttypes.MsgMint{},
 			},
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgMint{},
+				&assetfttypes.MsgMint{},
 			},
 		}))
 
 	// Issue an unmintable fungible token
-	issueMsg := &types.MsgIssue{
+	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotMintable",
 		Subunit:       "uabcnotmintable",
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []types.TokenFeature{
-			types.TokenFeature_burn,   //nolint:nosnakecase
-			types.TokenFeature_freeze, //nolint:nosnakecase
+		Features: []assetfttypes.TokenFeature{
+			assetfttypes.TokenFeature_burn,   //nolint:nosnakecase
+			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 
@@ -61,12 +61,12 @@ func TestMint(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	unmintableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to mint unmintable token
-	mintMsg := &types.MsgMint{
+	mintMsg := &assetfttypes.MsgMint{
 		Sender: issuer.String(),
 		Coin: sdk.Coin{
 			Denom:  unmintableDenom,
@@ -80,17 +80,17 @@ func TestMint(ctx context.Context, t testing.T, chain testing.Chain) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
-	requireT.True(types.ErrFeatureNotActive.Is(err))
+	requireT.True(assetfttypes.ErrFeatureNotActive.Is(err))
 
 	// Issue a mintable fungible token
-	issueMsg = &types.MsgIssue{
+	issueMsg = &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCMintable",
 		Subunit:       "uabcmintable",
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []types.TokenFeature{types.TokenFeature_mint}, //nolint:nosnakecase
+		Features:      []assetfttypes.TokenFeature{assetfttypes.TokenFeature_mint}, //nolint:nosnakecase
 	}
 
 	res, err = tx.BroadcastTx(
@@ -101,12 +101,12 @@ func TestMint(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*types.EventTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err = event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	mintableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to msg
-	mintMsg = &types.MsgMint{
+	mintMsg = &assetfttypes.MsgMint{
 		Sender: randomAddress.String(),
 		Coin:   sdk.NewCoin(mintableDenom, sdk.NewInt(1000)),
 	}
@@ -123,7 +123,7 @@ func TestMint(ctx context.Context, t testing.T, chain testing.Chain) {
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
 	mintCoin := sdk.NewCoin(mintableDenom, sdk.NewInt(1600))
-	mintMsg = &types.MsgMint{
+	mintMsg = &assetfttypes.MsgMint{
 		Sender: issuer.String(),
 		Coin:   mintCoin,
 	}

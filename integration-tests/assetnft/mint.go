@@ -9,7 +9,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
@@ -23,15 +23,15 @@ func TestMint(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgIssueClass{},
-				&types.MsgMint{},
+				&assetnfttypes.MsgIssueClass{},
+				&assetnfttypes.MsgMint{},
 				&nft.MsgSend{},
 			},
 		}),
 	)
 
 	// issue new NFT class
-	issueMsg := &types.MsgIssueClass{
+	issueMsg := &assetnfttypes.MsgIssueClass{
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 	}
@@ -44,8 +44,8 @@ func TestMint(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(err)
 
 	// mint new token in that class
-	classID := types.BuildClassID(issueMsg.Symbol, issuer)
-	mintMsg := &types.MsgMint{
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	mintMsg := &assetnfttypes.MsgMint{
 		Sender:  issuer.String(),
 		ID:      "id-1",
 		ClassID: classID,

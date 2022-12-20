@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // TestIssueBasic checks that fungible token is issued.
@@ -19,16 +19,16 @@ func TestIssueBasic(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT := require.New(t)
 	clientCtx := chain.ClientContext
 
-	ftClient := types.NewQueryClient(clientCtx)
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	issuer := chain.GenAccount()
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
-		Messages: []sdk.Msg{&types.MsgIssue{}},
+		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
 	}))
 
 	// Issue the new fungible token
-	msg := &types.MsgIssue{
+	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "WBTC",
 		Subunit:       "wsatoshi",
@@ -46,31 +46,31 @@ func TestIssueBasic(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	require.NoError(t, err)
-	assert.Equal(t, chain.GasLimitByMsgs(&types.MsgIssue{}), uint64(res.GasUsed))
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
+	assert.Equal(t, chain.GasLimitByMsgs(&assetfttypes.MsgIssue{}), uint64(res.GasUsed))
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 
 	require.NoError(t, err)
-	require.Equal(t, types.EventTokenIssued{
-		Denom:         types.BuildDenom(msg.Subunit, issuer),
+	require.Equal(t, assetfttypes.EventTokenIssued{
+		Denom:         assetfttypes.BuildDenom(msg.Subunit, issuer),
 		Issuer:        msg.Issuer,
 		Symbol:        msg.Symbol,
 		Precision:     msg.Precision,
 		Subunit:       msg.Subunit,
 		Description:   msg.Description,
 		InitialAmount: msg.InitialAmount,
-		Features:      []types.TokenFeature{},
+		Features:      []assetfttypes.TokenFeature{},
 		BurnRate:      msg.BurnRate,
 	}, *fungibleTokenIssuedEvts[0])
 
 	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// query for the token to check what is stored
-	gotToken, err := ftClient.Token(ctx, &types.QueryTokenRequest{
+	gotToken, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
 		Denom: denom,
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(types.Token{
+	requireT.Equal(assetfttypes.Token{
 		Denom:       denom,
 		Issuer:      msg.Issuer,
 		Symbol:      msg.Symbol,

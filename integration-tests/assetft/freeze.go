@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // TestFreezeUnfreezable checks freeze functionality on unfreezable fungible tokens.
@@ -24,19 +24,19 @@ func TestFreezeUnfreezable(ctx context.Context, t testing.T, chain testing.Chain
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgIssue{},
-				&types.MsgFreeze{},
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgFreeze{},
 			},
 		}))
 
 	// Issue an unfreezable fungible token
-	msg := &types.MsgIssue{
+	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotFreezable",
 		Subunit:       "uabcnotfreezable",
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []types.TokenFeature{},
+		Features:      []assetfttypes.TokenFeature{},
 	}
 
 	res, err := tx.BroadcastTx(
@@ -47,12 +47,12 @@ func TestFreezeUnfreezable(ctx context.Context, t testing.T, chain testing.Chain
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	unfreezableDenom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to freeze unfreezable token
-	freezeMsg := &types.MsgFreeze{
+	freezeMsg := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(unfreezableDenom, sdk.NewInt(1000)),
@@ -63,7 +63,7 @@ func TestFreezeUnfreezable(ctx context.Context, t testing.T, chain testing.Chain
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
 		freezeMsg,
 	)
-	assertT.True(types.ErrFeatureNotActive.Is(err))
+	assertT.True(assetfttypes.ErrFeatureNotActive.Is(err))
 }
 
 // TestFreeze checks freeze functionality of fungible tokens.
@@ -72,7 +72,7 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	assertT := assert.New(t)
 	clientCtx := chain.ClientContext
 
-	ftClient := types.NewQueryClient(clientCtx)
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	issuer := chain.GenAccount()
@@ -81,14 +81,14 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgIssue{},
-				&types.MsgIssue{},
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
-				&types.MsgFreeze{},
-				&types.MsgFreeze{},
-				&types.MsgUnfreeze{},
-				&types.MsgUnfreeze{},
-				&types.MsgUnfreeze{},
+				&assetfttypes.MsgFreeze{},
+				&assetfttypes.MsgFreeze{},
+				&assetfttypes.MsgUnfreeze{},
+				&assetfttypes.MsgUnfreeze{},
+				&assetfttypes.MsgUnfreeze{},
 			},
 		}))
 	requireT.NoError(
@@ -103,20 +103,20 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgFreeze{},
+				&assetfttypes.MsgFreeze{},
 			},
 		}))
 
 	// Issue the new fungible token
-	msg := &types.MsgIssue{
+	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []types.TokenFeature{
-			types.TokenFeature_freeze, //nolint:nosnakecase
+		Features: []assetfttypes.TokenFeature{
+			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 
@@ -124,7 +124,7 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(types.BuildDenom(msg.Subunit, issuer), sdk.NewInt(1000)),
+			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdk.NewInt(1000)),
 		),
 	}
 
@@ -140,12 +140,12 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// try to pass non-issuer signature to freeze msg
-	freezeMsg := &types.MsgFreeze{
+	freezeMsg := &assetfttypes.MsgFreeze{
 		Sender:  randomAddress.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
@@ -160,7 +160,7 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// freeze 400 tokens
-	freezeMsg = &types.MsgFreeze{
+	freezeMsg = &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
@@ -174,23 +174,23 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(freezeMsg))
 
-	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*types.EventFrozenAmountChanged](res.Events)
+	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&types.EventFrozenAmountChanged{
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		PreviousAmount: sdk.NewCoin(denom, sdk.NewInt(0)),
 		CurrentAmount:  sdk.NewCoin(denom, sdk.NewInt(400)),
 	}, fungibleTokenFreezeEvts[0])
 
 	// query frozen tokens
-	frozenBalance, err := ftClient.FrozenBalance(ctx, &types.QueryFrozenBalanceRequest{
+	frozenBalance, err := ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
 		Account: recipient.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
 	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(400)), frozenBalance.Balance)
 
-	frozenBalances, err := ftClient.FrozenBalances(ctx, &types.QueryFrozenBalancesRequest{
+	frozenBalances, err := ftClient.FrozenBalances(ctx, &assetfttypes.QueryFrozenBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
@@ -233,7 +233,7 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(400)).String(), balance1.GetBalance().String())
 
 	// unfreeze 200 tokens and try send 250 tokens
-	unfreezeMsg := &types.MsgUnfreeze{
+	unfreezeMsg := &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
@@ -247,9 +247,9 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
 
-	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*types.EventFrozenAmountChanged](res.Events)
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&types.EventFrozenAmountChanged{
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		PreviousAmount: sdk.NewCoin(denom, sdk.NewInt(400)),
 		CurrentAmount:  sdk.NewCoin(denom, sdk.NewInt(200)),
@@ -284,7 +284,7 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(err)
 
 	// unfreeze 400 tokens (frozen balance is 200), it should give error
-	unfreezeMsg = &types.MsgUnfreeze{
+	unfreezeMsg = &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
@@ -295,10 +295,10 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
 		unfreezeMsg,
 	)
-	requireT.True(types.ErrNotEnoughBalance.Is(err))
+	requireT.True(assetfttypes.ErrNotEnoughBalance.Is(err))
 
 	// unfreeze 200 tokens and observer current frozen amount is zero
-	unfreezeMsg = &types.MsgUnfreeze{
+	unfreezeMsg = &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
@@ -312,9 +312,9 @@ func TestFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(err)
 	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
 
-	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*types.EventFrozenAmountChanged](res.Events)
+	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
-	assertT.EqualValues(&types.EventFrozenAmountChanged{
+	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		PreviousAmount: sdk.NewCoin(denom, sdk.NewInt(200)),
 		CurrentAmount:  sdk.NewCoin(denom, sdk.NewInt(0)),

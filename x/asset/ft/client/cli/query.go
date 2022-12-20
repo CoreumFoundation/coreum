@@ -23,7 +23,7 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryToken())
+	cmd.AddCommand(CmdQueryTokenInfo())
 	cmd.AddCommand(CmdQueryFrozenBalance())
 	cmd.AddCommand(CmdQueryFrozenBalances())
 	cmd.AddCommand(CmdQueryWhitelistedBalance())
@@ -31,8 +31,8 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// CmdQueryToken return the QueryToken cobra command.
-func CmdQueryToken() *cobra.Command {
+// CmdQueryTokenInfo return the QueryToken cobra command.
+func CmdQueryTokenInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "info [denom]",
 		Args:  cobra.ExactArgs(1),

@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // TestGloballyFreeze checks global freeze functionality of fungible tokens.
@@ -24,24 +24,24 @@ func TestGloballyFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgIssue{},
-				&types.MsgGloballyFreeze{},
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgGloballyFreeze{},
 				&banktypes.MsgSend{},
-				&types.MsgGloballyUnfreeze{},
+				&assetfttypes.MsgGloballyUnfreeze{},
 				&banktypes.MsgSend{},
 			},
 		}))
 
 	// Issue the new fungible token
-	issueMsg := &types.MsgIssue{
+	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "FREEZE",
 		Subunit:       "freeze",
 		Precision:     6,
 		Description:   "FREEZE Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []types.TokenFeature{
-			types.TokenFeature_freeze, //nolint:nosnakecase
+		Features: []assetfttypes.TokenFeature{
+			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase
 		},
 	}
 	res, err := tx.BroadcastTx(
@@ -52,12 +52,12 @@ func TestGloballyFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 
 	requireT.NoError(err)
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
+	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	denom := fungibleTokenIssuedEvts[0].Denom
 
 	// Globally freeze FT.
-	globFreezeMsg := &types.MsgGloballyFreeze{
+	globFreezeMsg := &assetfttypes.MsgGloballyFreeze{
 		Sender: issuer.String(),
 		Denom:  denom,
 	}
@@ -82,10 +82,10 @@ func TestGloballyFreeze(ctx context.Context, t testing.T, chain testing.Chain) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(types.ErrGloballyFrozen.Is(err))
+	assertT.True(assetfttypes.ErrGloballyFrozen.Is(err))
 
 	// Globally unfreeze FT.
-	globUnfreezeMsg := &types.MsgGloballyUnfreeze{
+	globUnfreezeMsg := &assetfttypes.MsgGloballyUnfreeze{
 		Sender: issuer.String(),
 		Denom:  denom,
 	}

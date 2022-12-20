@@ -28,8 +28,9 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		AssetFTGloballyFreeze:      5000,
 		AssetFTGloballyUnfreeze:    5000,
 		AssetFTSetWhitelistedLimit: 35000,
-		AssetNFTIssueClass:         20000,
-		AssetNFTMint:               30000,
+
+		AssetNFTIssueClass: 20000,
+		AssetNFTMint:       30000,
 
 		BankSendPerEntry:      22000,
 		BankMultiSendPerEntry: 27000,

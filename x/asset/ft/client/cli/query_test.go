@@ -30,7 +30,7 @@ func TestQueryToken(t *testing.T) {
 
 	denom := issue(requireT, ctx, symbol, subunit, precision, testNetwork)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryTokenInfo(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
 
 	var resp types.QueryTokenResponse
