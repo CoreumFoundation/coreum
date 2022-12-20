@@ -46,7 +46,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 		NFTSend: 20000,
 
-		SlashingUnjail: 80000,
+		SlashingUnjail: 25000,
 
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
