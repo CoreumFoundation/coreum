@@ -15,7 +15,7 @@ import (
 func MsgHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]sdk.Msg, error) {
 	var res []sdk.Msg
 	for msgType, msg := range messages {
-		if msgType == "MsgIssue" {
+		if msgType == "AssetFTMsgIssue" {
 			var msgIssue types.MsgIssue
 			if err := json.Unmarshal(msg, &msgIssue); err != nil {
 				return nil, errors.WithStack(err)
@@ -31,7 +31,7 @@ func MsgHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]s
 func QueryHandler(keeper keeper.Keeper) wasmtypes.Querier {
 	return func(ctx sdk.Context, queries map[string]json.RawMessage) ([]byte, bool, error) {
 		for qType, q := range queries {
-			if qType == "Token" {
+			if qType == "AssetFTGetToken" {
 				qToken := struct {
 					Denom string `json:"denom"`
 				}{}
