@@ -64,7 +64,7 @@ func PreProcessFlags() (config.Network, error) {
 	return network, nil
 }
 
-func appendStringFlag(args []string, flag string, newVal string) error {
+func appendStringFlag(args []string, flag, newVal string) error {
 	for pos, arg := range args {
 		if !(arg == "--"+flag || strings.HasPrefix(arg, "--"+flag+"=")) {
 			continue

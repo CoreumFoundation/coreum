@@ -5,19 +5,23 @@ package types
 
 import (
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/regen-network/cosmos-proto"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -37,9 +41,11 @@ func (*StakingParams) ProtoMessage()    {}
 func (*StakingParams) Descriptor() ([]byte, []int) {
 	return fileDescriptor_957be068a77b113f, []int{0}
 }
+
 func (m *StakingParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *StakingParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StakingParams.Marshal(b, m, deterministic)
@@ -52,12 +58,15 @@ func (m *StakingParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
+
 func (m *StakingParams) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StakingParams.Merge(m, src)
 }
+
 func (m *StakingParams) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *StakingParams) XXX_DiscardUnknown() {
 	xxx_messageInfo_StakingParams.DiscardUnknown(m)
 }
@@ -137,6 +146,7 @@ func encodeVarintParams(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *StakingParams) Size() (n int) {
 	if m == nil {
 		return 0
@@ -151,9 +161,11 @@ func (m *StakingParams) Size() (n int) {
 func sovParams(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozParams(x uint64) (n int) {
 	return sovParams(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *StakingParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -238,6 +250,7 @@ func (m *StakingParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipParams(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

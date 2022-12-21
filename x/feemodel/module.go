@@ -42,8 +42,7 @@ type Keeper interface {
 }
 
 // AppModuleBasic defines the basic application module used by the fee module.
-type AppModuleBasic struct {
-}
+type AppModuleBasic struct{}
 
 // Name returns the fee module's name.
 func (AppModuleBasic) Name() string { return types.ModuleName }

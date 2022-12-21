@@ -3,10 +3,13 @@
 package modules
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -19,10 +22,165 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
+
+// TestBankMultiSendBatchOutputs tests MultiSend message with maximum amount of addresses.
+func TestBankMultiSendBatchOutputs(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	issuer := chain.GenAccount()
+	requireT := require.New(t)
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "TOK1",
+		Subunit:       "tok1",
+		Description:   "TOK1 Description",
+		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
+		Features: []assetfttypes.TokenFeature{
+			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
+		},
+	}
+
+	numAccountsToFund := 1000 // 1700 was the max accepted
+	iterationsToFund := 2
+
+	inputItem := banktypes.Input{
+		Address: issuer.String(),
+		Coins:   sdk.NewCoins(),
+	}
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+	outputItems := make([]banktypes.Output, 0, numAccountsToFund)
+	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
+	coinToFund := sdk.NewCoin(denom, sdk.NewInt(10_000_000_000))
+
+	for i := 0; i < numAccountsToFund; i++ {
+		inputItem.Coins = inputItem.Coins.Add(coinToFund)
+		recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		fundedAccounts = append(fundedAccounts, recipient)
+		outputItems = append(outputItems, banktypes.Output{
+			Address: recipient.String(),
+			Coins:   sdk.NewCoins(coinToFund),
+		})
+	}
+	// prepare MultiSend messages
+	multiSendMsgs := make([]sdk.Msg, 0, iterationsToFund)
+	for i := 0; i < iterationsToFund; i++ {
+		multiSendMsgs = append(multiSendMsgs, &banktypes.MsgMultiSend{
+			Inputs: []banktypes.Input{
+				inputItem,
+			},
+			Outputs: outputItems,
+		})
+	}
+
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		Messages: append([]sdk.Msg{issueMsg}, multiSendMsgs...),
+		Amount:   sdk.NewInt(10_000_000), // add more coins to cover extra bytes because of the message size
+	}))
+
+	// issue fungible tokens
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	// send coins in loop
+	start := time.Now()
+	for _, msg := range multiSendMsgs {
+		res, err := tx.BroadcastTx(
+			ctx,
+			chain.ClientContext.WithFromAddress(issuer),
+			// we estimate here since the th size is grater then allowed for the deterministic fee
+			chain.TxFactory().WithSimulateAndExecute(true),
+			msg,
+		)
+		requireT.NoError(err)
+		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch MultiSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed))
+	}
+	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with MultiSend", time.Since(start), numAccountsToFund*iterationsToFund))
+
+	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
+}
+
+// TestBankSendBatchMsgs tests BankSend message with maximum amount of accounts.
+func TestBankSendBatchMsgs(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	issuer := chain.GenAccount()
+	requireT := require.New(t)
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "TOK1",
+		Subunit:       "tok1",
+		Description:   "TOK1 Description",
+		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
+		Features: []assetfttypes.TokenFeature{
+			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
+		},
+	}
+
+	numAccountsToFund := 400 // 600 was the max accepted
+	iterationsToFund := 3
+
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+	bankSendSendMsgs := make([]sdk.Msg, 0, numAccountsToFund)
+	coinToFund := sdk.NewCoin(denom, sdk.NewInt(10_000_000_000))
+	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
+	for i := 0; i < numAccountsToFund; i++ {
+		recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+		fundedAccounts = append(fundedAccounts, recipient)
+		bankSendSendMsgs = append(bankSendSendMsgs, &banktypes.MsgSend{
+			FromAddress: issuer.String(),
+			ToAddress:   recipient.String(),
+			Amount:      sdk.NewCoins(coinToFund),
+		})
+	}
+
+	fundMsgs := make([]sdk.Msg, 0)
+	fundMsgs = append(fundMsgs, issueMsg)
+	for i := 0; i < iterationsToFund; i++ {
+		fundMsgs = append(fundMsgs, bankSendSendMsgs...)
+	}
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		Messages: fundMsgs,
+	}))
+
+	// issue fungible tokens
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	// send coins in loop
+	start := time.Now()
+	for i := 0; i < iterationsToFund; i++ {
+		res, err := tx.BroadcastTx(
+			ctx,
+			chain.ClientContext.WithFromAddress(issuer),
+			chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendSendMsgs...)),
+			bankSendSendMsgs...)
+		requireT.NoError(err)
+		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch BankSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed))
+	}
+	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with BankSend", time.Since(start), numAccountsToFund*iterationsToFund))
+
+	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
+}
 
 // TestBankSendDeterministicGas checks that transfer takes the deterministic amount of gas
 func TestBankSendDeterministicGas(t *testing.T) {
@@ -108,12 +266,11 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 
 	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
 	for i := 0; i < numOfTokens; i++ {
-		issueMsgs = append(issueMsgs, &assettypes.MsgIssueFungibleToken{
+		issueMsgs = append(issueMsgs, &assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),
 			Subunit:       fmt.Sprintf("tok%d", i),
 			Description:   fmt.Sprintf("TOK%d Description", i),
-			Recipient:     sender.String(),
 			InitialAmount: amountToSend,
 		})
 	}
@@ -135,11 +292,11 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 
 	coinsToSend := sdk.NewCoins()
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, numOfTokens, len(fungibleTokenIssuedEvts))
+	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
 
-	for _, e := range fungibleTokenIssuedEvts {
+	for _, e := range tokenIssuedEvts {
 		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
 	}
 
@@ -247,12 +404,11 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 
 	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
 	for i := 0; i < numOfTokens; i++ {
-		issueMsgs = append(issueMsgs, &assettypes.MsgIssueFungibleToken{
+		issueMsgs = append(issueMsgs, &assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),
 			Subunit:       fmt.Sprintf("tok%d", i),
 			Description:   fmt.Sprintf("TOK%d Description", i),
-			Recipient:     sender.String(),
 			InitialAmount: amountToSend,
 		})
 	}
@@ -283,11 +439,11 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 
 	coinsToSend := sdk.NewCoins()
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, numOfTokens, len(fungibleTokenIssuedEvts))
+	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
 
-	for _, e := range fungibleTokenIssuedEvts {
+	for _, e := range tokenIssuedEvts {
 		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
 	}
 
@@ -338,20 +494,18 @@ func TestBankMultiSend(t *testing.T) {
 	amount := sdk.NewInt(1000)
 
 	issueMsgs := []sdk.Msg{
-		&assettypes.MsgIssueFungibleToken{
+		&assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        "TOK1",
 			Subunit:       "tok1",
 			Description:   "TOK1 Description",
-			Recipient:     sender.String(),
 			InitialAmount: amount,
 		},
-		&assettypes.MsgIssueFungibleToken{
+		&assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        "TOK2",
 			Subunit:       "tok2",
 			Description:   "TOK2 Description",
-			Recipient:     sender.String(),
 			InitialAmount: amount,
 		},
 	}
@@ -372,12 +526,12 @@ func TestBankMultiSend(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, len(issueMsgs), len(fungibleTokenIssuedEvts))
+	require.Equal(t, len(issueMsgs), len(tokenIssuedEvts))
 
-	denom1 := fungibleTokenIssuedEvts[0].Denom
-	denom2 := fungibleTokenIssuedEvts[1].Denom
+	denom1 := tokenIssuedEvts[0].Denom
+	denom2 := tokenIssuedEvts[1].Denom
 
 	msg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
@@ -455,25 +609,23 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	recipient3 := chain.GenAccount()
 
 	assetAmount := sdk.NewInt(1000)
-	issue1Msg := &assettypes.MsgIssueFungibleToken{
+	issue1Msg := &assetfttypes.MsgIssue{
 		Issuer:        sender1.String(),
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
-		Recipient:     sender1.String(),
 		InitialAmount: assetAmount,
 	}
-	issue2Msg := &assettypes.MsgIssueFungibleToken{
+	issue2Msg := &assetfttypes.MsgIssue{
 		Issuer:        sender2.String(),
 		Symbol:        "TOK2",
 		Subunit:       "tok2",
 		Description:   "TOK2 Description",
-		Recipient:     sender2.String(),
 		InitialAmount: assetAmount,
 	}
 
-	denom1 := assettypes.BuildFungibleTokenDenom(issue1Msg.Subunit, sender1)
-	denom2 := assettypes.BuildFungibleTokenDenom(issue2Msg.Subunit, sender2)
+	denom1 := assetfttypes.BuildDenom(issue1Msg.Subunit, sender1)
+	denom2 := assetfttypes.BuildDenom(issue2Msg.Subunit, sender2)
 
 	nativeAmountToSend := chain.NewCoin(sdk.NewInt(100))
 
@@ -655,4 +807,23 @@ func TestBankCoreSend(t *testing.T) {
 
 	assert.Equal(t, senderInitialAmount.Sub(amountToSend).String(), balancesSender.Balance.Amount.String())
 	assert.Equal(t, recipientInitialAmount.Add(amountToSend).String(), balancesRecipient.Balance.Amount.String())
+}
+
+func assertBatchAccounts(
+	ctx context.Context,
+	chain integrationtests.Chain,
+	expectedCoins sdk.Coins,
+	fundedAccounts []sdk.AccAddress,
+	denom string,
+	requireT *require.Assertions,
+) {
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	for _, acc := range fundedAccounts {
+		res, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: acc.String(),
+			Denom:   denom,
+		})
+		requireT.NoError(err)
+		requireT.Equal(expectedCoins.String(), res.Balance.String())
+	}
 }

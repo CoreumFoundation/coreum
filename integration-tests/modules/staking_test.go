@@ -25,6 +25,57 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
+// TestStakingProposalParamChange checks that staking param change proposal works correctly.
+func TestStakingProposalParamChange(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	targetMaxValidators := 2 * chain.NetworkConfig.StakingConfig.MaxValidators
+	requireT := require.New(t)
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+
+	// Create new proposer.
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
+	requireT.NoError(err)
+
+	// Create proposition to change max validators value.
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
+		[]paramproposal.ParamChange{
+			paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyMaxValidators), strconv.Itoa(targetMaxValidators)),
+		},
+	))
+	requireT.NoError(err)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	requireT.NoError(err)
+	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
+
+	// Verify that voting period started.
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+
+	// Vote yes from all vote accounts.
+	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	requireT.NoError(err)
+
+	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
+
+	// Wait for proposal result.
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
+
+	// Check the proposed change is applied.
+	stakingParams, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	requireT.Equal(uint32(targetMaxValidators), stakingParams.Params.MaxValidators)
+}
+
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	t.Parallel()
@@ -177,8 +228,8 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	require.Equal(t, validatorStakingAmount.String(), valResp.Validator.Tokens.String())
 }
 
-// TestStakingValidatorCreationWithLowMinSelfDelegation checks validator can't set the self delegation less than min limit.
-func TestStakingValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
+// TestValidatorCreationWithLowMinSelfDelegation checks validator can't set the self delegation less than min limit.
+func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -197,9 +248,9 @@ func TestStakingValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
 }
 
-// TestStakingValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
+// TestValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
 // delegation is higher than current validator self delegation.
-func TestStakingValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
+func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -264,57 +315,6 @@ func TestStakingValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.EqualValues(t, editValidatorMsg.Description.Details, valResp.GetValidator().Description.Details)
-}
-
-// TestStakingProposalParamChange checks that staking param change proposal works correctly.
-func TestStakingProposalParamChange(t *testing.T) {
-	t.Parallel()
-
-	ctx, chain := integrationtests.NewTestingContext(t)
-
-	targetMaxValidators := 2 * chain.NetworkConfig.StakingConfig.MaxValidators
-	requireT := require.New(t)
-	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
-
-	// Create new proposer.
-	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-	requireT.NoError(err)
-
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
-
-	// Create proposition to change max validators value.
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyMaxValidators), strconv.Itoa(targetMaxValidators)),
-		},
-	))
-	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
-	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
-
-	// Verify that voting period started.
-	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
-	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
-
-	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
-	requireT.NoError(err)
-
-	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
-
-	// Wait for proposal result.
-	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
-	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
-
-	// Check the proposed change is applied.
-	stakingParams, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
-	requireT.NoError(err)
-	requireT.Equal(uint32(targetMaxValidators), stakingParams.Params.MaxValidators)
 }
 
 func changeMinSelfDelegationCustomParam(

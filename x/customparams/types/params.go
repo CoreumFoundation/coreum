@@ -6,10 +6,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	// ParamStoreKeyMinSelfDelegation defines the param key for the min_self_delegation param.
-	ParamStoreKeyMinSelfDelegation = []byte("minselfdelegation")
-)
+// ParamStoreKeyMinSelfDelegation defines the param key for the min_self_delegation param.
+var ParamStoreKeyMinSelfDelegation = []byte("minselfdelegation")
 
 // StakingParamKeyTable returns the parameter key table.
 func StakingParamKeyTable() paramtypes.KeyTable {

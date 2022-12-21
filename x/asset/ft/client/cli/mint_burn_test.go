@@ -27,7 +27,8 @@ func TestMintBurn(t *testing.T) {
 	denom := types.BuildDenom(subunit, issuer)
 
 	// Issue token
-	args := []string{symbol, subunit, precision, "777", `"My Token"`,
+	args := []string{
+		symbol, subunit, precision, "777", `"My Token"`,
 		"--features", types.TokenFeature_mint.String(), //nolint:nosnakecase
 		"--features", types.TokenFeature_burn.String(), //nolint:nosnakecase
 	}
