@@ -107,7 +107,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 
 	ft, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom1})
 	requireT.NoError(err)
-	requireT.EqualValues(assetfttypes.Token{
+	requireT.EqualValues(assetfttypes.FT{
 		Denom:     denom1,
 		Issuer:    contractAddr,
 		Symbol:    symbol + "1",
@@ -118,7 +118,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 
 	ft, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom2})
 	requireT.NoError(err)
-	requireT.EqualValues(assetfttypes.Token{
+	requireT.EqualValues(assetfttypes.FT{
 		Denom:     denom2,
 		Issuer:    contractAddr,
 		Symbol:    symbol + "2",

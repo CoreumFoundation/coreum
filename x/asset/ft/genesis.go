@@ -15,7 +15,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// Init fungible token definitions
 	for _, ft := range genState.Tokens {
 		issuerAddress := sdk.MustAccAddressFromBech32(ft.Issuer)
-		definition := types.TokenDefinition{
+		definition := types.FTDefinition{
 			Denom:    ft.Denom,
 			Issuer:   ft.Issuer,
 			Features: ft.Features,

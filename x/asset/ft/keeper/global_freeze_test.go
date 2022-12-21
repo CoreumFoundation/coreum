@@ -66,7 +66,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)
 	err = ftKeeper.GloballyFreeze(ctx, issuer, nonExistentDenom)
 	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
+	assertT.True(sdkerrors.IsOf(err, types.ErrFTNotFound))
 
 	// try to global-freeze unfreezable FT
 	err = ftKeeper.GloballyFreeze(ctx, issuer, unfreezableDenom)

@@ -30,9 +30,9 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// prepare the genesis data
 
 	// token definitions
-	var tokens []types.Token
+	var tokens []types.FT
 	for i := 0; i < 5; i++ {
-		ft := types.Token{
+		ft := types.FT{
 			Denom:     types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
 			Issuer:    issuer.String(),
 			Symbol:    fmt.Sprintf("ABC%d", i),

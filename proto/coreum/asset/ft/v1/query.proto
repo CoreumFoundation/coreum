@@ -45,7 +45,7 @@ message QueryTokenRequest {
 
 // QueryTokenResponse is response type for the Query/Token RPC method.
 message QueryTokenResponse {
-  Token token = 1 [(gogoproto.nullable) = false];
+  FT token = 1 [(gogoproto.nullable) = false];
 }
 
 message QueryFrozenBalancesRequest {

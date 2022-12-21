@@ -36,7 +36,7 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 	for _, coin := range coins {
 		ft, err := k.GetTokenDefinition(ctx, coin.Denom)
 		if err != nil {
-			if types.ErrTokenNotFound.Is(err) {
+			if types.ErrFTNotFound.Is(err) {
 				continue
 			}
 			return err
@@ -55,7 +55,7 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 	return nil
 }
 
-func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.TokenDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FTDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
 	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
 		coinToBurn := ft.CalculateBurnRateAmount(coin)
 		err := k.burn(ctx, fromAddress, ft, coinToBurn)
@@ -77,7 +77,7 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 
 		for _, coin := range in.Coins {
 			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-			if types.ErrTokenNotFound.Is(err) {
+			if types.ErrFTNotFound.Is(err) {
 				continue
 			}
 
@@ -132,7 +132,7 @@ func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 	return k.burn(ctx, sender, ft, coin.Amount)
 }
 
-func (k Keeper) checkFeatureAllowed(sender sdk.AccAddress, ft types.TokenDefinition, feature types.TokenFeature) error {
+func (k Keeper) checkFeatureAllowed(sender sdk.AccAddress, ft types.FTDefinition, feature types.TokenFeature) error {
 	if !ft.IsFeatureEnabled(feature) {
 		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", ft.Denom, feature)
 	}

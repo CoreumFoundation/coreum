@@ -64,7 +64,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)
 	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, receiver, sdk.NewCoin(nonExistentDenom, sdk.NewInt(10)))
 	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
+	assertT.True(sdkerrors.IsOf(err, types.ErrFTNotFound))
 
 	// try to whitelist from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())

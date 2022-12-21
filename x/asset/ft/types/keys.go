@@ -23,8 +23,8 @@ const (
 
 // Store key prefixes
 var (
-	// TokenKeyPrefix defines the key prefix for the fungible token.
-	TokenKeyPrefix = []byte{0x01}
+	// FTKeyPrefix defines the key prefix for the fungible token.
+	FTKeyPrefix = []byte{0x01}
 	// SymbolKeyPrefix defines the key prefix for the fungible token by Symbol.
 	SymbolKeyPrefix = []byte{0x02}
 	// FrozenBalancesKeyPrefix defines the key prefix to track frozen balances
@@ -37,7 +37,7 @@ var (
 
 // GetTokenKey constructs the key for the fungible token.
 func GetTokenKey(denom string) []byte {
-	return store.JoinKeysWithLength(TokenKeyPrefix, []byte(denom))
+	return store.JoinKeysWithLength(FTKeyPrefix, []byte(denom))
 }
 
 // CreateFrozenBalancesPrefix creates the prefix for an account's frozen balances.

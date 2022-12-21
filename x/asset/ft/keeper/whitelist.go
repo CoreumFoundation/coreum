@@ -72,7 +72,7 @@ func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddr
 }
 
 // areCoinsReceivable returns an error if whitelisted amount is too low to receive coins
-func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, ft types.TokenDefinition, amount sdk.Int) error {
+func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, ft types.FTDefinition, amount sdk.Int) error {
 	//nolint:nosnakecase
 	if !ft.IsFeatureEnabled(types.TokenFeature_whitelist) || ft.Issuer == addr.String() {
 		return nil

@@ -161,7 +161,7 @@ func TestKeeper_Issue(t *testing.T) {
 
 	gotToken, err := ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
-	requireT.Equal(types.Token{
+	requireT.Equal(types.FT{
 		Denom:       denom,
 		Issuer:      settings.Issuer.String(),
 		Symbol:      settings.Symbol,

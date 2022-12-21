@@ -36,7 +36,7 @@ func TestQueryToken(t *testing.T) {
 	var resp types.QueryTokenResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 
-	requireT.Equal(types.Token{
+	requireT.Equal(types.FT{
 		Denom:       denom,
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Symbol:      symbol,

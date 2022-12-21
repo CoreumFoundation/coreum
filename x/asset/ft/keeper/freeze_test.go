@@ -65,7 +65,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)
 	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(nonExistentDenom, sdk.NewInt(10)))
 	requireT.Error(err)
-	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
+	assertT.True(sdkerrors.IsOf(err, types.ErrFTNotFound))
 
 	// try to freeze unfreezable FT
 	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(unfreezableDenom, sdk.NewInt(10)))

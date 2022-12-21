@@ -7,8 +7,8 @@ import (
 var (
 	// ErrInvalidInput defines the common error for the invalid input.
 	ErrInvalidInput = sdkerrors.Register(ModuleName, 1, "invalid input")
-	// ErrTokenNotFound error for a fungible token not found in the store.
-	ErrTokenNotFound = sdkerrors.Register(ModuleName, 2, "fungible token not found")
+	// ErrFTNotFound error for a fungible token not found in the store.
+	ErrFTNotFound = sdkerrors.Register(ModuleName, 2, "fungible token not found")
 	// ErrFeatureNotActive is returned when an operation is performed on a token which is missing a required feature
 	ErrFeatureNotActive = sdkerrors.Register(ModuleName, 3, "token feature is not active")
 	// ErrInvalidKey is returned when the provided store key is invalid

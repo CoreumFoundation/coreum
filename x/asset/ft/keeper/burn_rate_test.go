@@ -78,7 +78,7 @@ func TestKeeperCalculateBurnCoin(t *testing.T) {
 		name := fmt.Sprintf("%+v", tc)
 		t.Run(name, func(t *testing.T) {
 			assertT := assert.New(t)
-			definition := types.TokenDefinition{
+			definition := types.FTDefinition{
 				BurnRate: sdk.MustNewDecFromStr(tc.rate),
 			}
 			burnCoin := definition.CalculateBurnRateAmount(sdk.NewCoin("test", sdk.NewInt(tc.sendAmount)))

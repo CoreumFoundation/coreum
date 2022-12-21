@@ -102,7 +102,7 @@ func NormalizeSymbolForKey(in string) string {
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
-func (ftd *TokenDefinition) IsFeatureEnabled(feature TokenFeature) bool {
+func (ftd *FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
 	return lo.Contains(ftd.Features, feature)
 }
 
@@ -129,6 +129,6 @@ func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 }
 
 // CalculateBurnRateAmount returns the coins to be burned
-func (ftd TokenDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
+func (ftd FTDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
 	return ftd.BurnRate.MulInt(coin.Amount).Ceil().RoundInt()
 }

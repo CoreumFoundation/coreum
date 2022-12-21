@@ -14,7 +14,7 @@ var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
-	GetToken(ctx sdk.Context, denom string) (types.Token, error)
+	GetToken(ctx sdk.Context, denom string) (types.FT, error)
 	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin

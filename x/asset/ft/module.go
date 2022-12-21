@@ -36,7 +36,7 @@ type AppModuleBasic struct {
 	cdc codec.BinaryCodec
 }
 
-// NewAppModuleBasic return the asset AppModuleBasic.
+// NewAppModuleBasic return the assetft AppModuleBasic.
 func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
 	return AppModuleBasic{cdc: cdc}
 }

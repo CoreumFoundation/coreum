@@ -70,7 +70,7 @@ func TestIssueBasic(ctx context.Context, t testing.T, chain testing.Chain) {
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(assetfttypes.Token{
+	requireT.Equal(assetfttypes.FT{
 		Denom:       denom,
 		Issuer:      msg.Issuer,
 		Symbol:      msg.Symbol,
