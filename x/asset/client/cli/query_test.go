@@ -28,7 +28,7 @@ func TestQueryFungibleToken(t *testing.T) {
 	precision := "8"
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	denom := createFungibleToken(requireT, ctx, symbol, subunit, precision, testNetwork)
+	denom := issueFungibleToken(requireT, ctx, symbol, subunit, precision, testNetwork)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFungibleToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
@@ -44,11 +44,12 @@ func TestQueryFungibleToken(t *testing.T) {
 		Precision:   8,
 		Description: "",
 		Features:    []types.FungibleTokenFeature{},
+		BurnRate:    sdk.NewDec(0),
 	}, resp.FungibleToken)
 }
 
-func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbol, subunit, precision string, testNetwork *network.Network) string {
-	args := []string{symbol, subunit, precision, "", "", ""}
+func issueFungibleToken(requireT *require.Assertions, ctx client.Context, symbol, subunit, precision string, testNetwork *network.Network) string {
+	args := []string{symbol, subunit, precision, "", ""}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueFungibleToken(), args)
 	requireT.NoError(err)
@@ -67,7 +68,7 @@ func createFungibleToken(requireT *require.Assertions, ctx client.Context, symbo
 		requireT.NoError(err)
 		return eventsFungibleTokenIssued[0].Denom
 	}
-	requireT.Failf("event: %s not found in the create fungible token response", eventFungibleTokenIssuedName)
+	requireT.Failf("event: %s not found in the issue fungible token response", eventFungibleTokenIssuedName)
 
 	return ""
 }

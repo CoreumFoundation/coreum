@@ -33,7 +33,6 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 		Subunit:       "freeze",
 		Precision:     6,
 		Description:   "FREEZE Desc",
-		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}
@@ -47,7 +46,6 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 		Subunit:       "nofreeze",
 		Precision:     6,
 		Description:   "NOFREEZE Desc",
-		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(777),
 		Features:      []types.FungibleTokenFeature{},
 	}

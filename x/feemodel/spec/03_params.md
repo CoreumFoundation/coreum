@@ -13,7 +13,7 @@ The feemodel module contains the following parameters:
 | MaxDiscount             | string (dec) | "0.5"    |
 | EscalationStartFraction | string (dec) | "0.8"    |
 | MaxBlockGas             | int64        | 50000000 |
-| ShortEmaBlockLength     | uint32       | 10       |
+| ShortEmaBlockLength     | uint32       | 50       |
 | LongEmaBlockLength      | uint32       | 1000     |
 
 

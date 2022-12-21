@@ -27,7 +27,7 @@ func TestMintBurnFungibleToken(t *testing.T) {
 	denom := types.BuildFungibleTokenDenom(subunit, issuer)
 
 	// Issue token
-	args := []string{symbol, subunit, precision, testNetwork.Validators[0].Address.String(), "777", `"My Token"`,
+	args := []string{symbol, subunit, precision, "777", `"My Token"`,
 		"--features", types.FungibleTokenFeature_mint.String(), //nolint:nosnakecase
 		"--features", types.FungibleTokenFeature_burn.String(), //nolint:nosnakecase
 	}

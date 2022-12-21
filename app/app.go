@@ -238,11 +238,12 @@ type App struct {
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	WASMKeeper       wasm.Keeper
 
-	AssetKeeper        assetkeeper.Keeper
-	FeeModelKeeper     feemodelkeeper.Keeper
-	BankKeeper         wbankkeeper.BaseKeeperWrapper
-	NFTKeeper          nftkeeper.Keeper
-	CustomParamsKeeper customparamskeeper.Keeper
+	AssetKeeper                 assetkeeper.Keeper
+	AssetNonFungibleTokenKeeper assetkeeper.NonFungibleTokenKeeper
+	FeeModelKeeper              feemodelkeeper.Keeper
+	BankKeeper                  wbankkeeper.BaseKeeperWrapper
+	NFTKeeper                   nftkeeper.Keeper
+	CustomParamsKeeper          customparamskeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -376,6 +377,8 @@ func New(
 
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
 
+	app.AssetNonFungibleTokenKeeper = assetkeeper.NewNonFungibleTokenKeeper(appCodec, keys[assettypes.StoreKey], app.NFTKeeper)
+
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
@@ -443,8 +446,7 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
-
+	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.AssetNonFungibleTokenKeeper, app.BankKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
 	nftModule := nftmodule.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
@@ -563,8 +565,8 @@ func New(
 		feegrant.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
-		assettypes.ModuleName,
 		nft.ModuleName,
+		assettypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 

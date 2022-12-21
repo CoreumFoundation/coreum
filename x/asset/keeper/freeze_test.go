@@ -33,7 +33,6 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Symbol:        "DEF",
 		Subunit:       "def",
 		Description:   "DEF Desc",
-		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.FungibleTokenFeature{types.FungibleTokenFeature_freeze}, //nolint:nosnakecase
 	}
@@ -46,7 +45,6 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Symbol:        "ABC",
 		Subunit:       "abc",
 		Description:   "ABC Desc",
-		Recipient:     issuer,
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.FungibleTokenFeature{},
 	}

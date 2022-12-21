@@ -9,6 +9,8 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/types"
 )
 
+var _ types.MsgServer = MsgServer{}
+
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
 	IssueFungibleToken(ctx sdk.Context, settings types.IssueFungibleTokenSettings) (string, error)
@@ -22,15 +24,23 @@ type MsgKeeper interface {
 	SetWhitelistedBalance(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
 }
 
+// NonFungibleTokeMsgKeeper defines subscope of non-fungible toke keeper methods required by msg service.
+type NonFungibleTokeMsgKeeper interface {
+	IssueClass(ctx sdk.Context, settings types.IssueNonFungibleTokenClassSettings) (string, error)
+	Mint(ctx sdk.Context, settings types.MintNonFungibleTokenSettings) error
+}
+
 // MsgServer serves grpc tx requests for assets module.
 type MsgServer struct {
-	keeper MsgKeeper
+	keeper    MsgKeeper
+	nftKeeper NonFungibleTokeMsgKeeper
 }
 
 // NewMsgServer returns a new instance of the MsgServer.
-func NewMsgServer(keeper MsgKeeper) MsgServer {
+func NewMsgServer(keeper MsgKeeper, nftKeeper NonFungibleTokeMsgKeeper) MsgServer {
 	return MsgServer{
-		keeper: keeper,
+		keeper:    keeper,
+		nftKeeper: nftKeeper,
 	}
 }
 
@@ -38,11 +48,7 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueFungibleToken) (*types.EmptyResponse, error) {
 	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid issuer in MsgIssueFungibleToken")
-	}
-	recipient, err := sdk.AccAddressFromBech32(req.Recipient)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidFungibleToken, "invalid recipient in MsgIssueFungibleToken")
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid issuer in MsgIssueFungibleToken")
 	}
 	_, err = ms.keeper.IssueFungibleToken(sdk.UnwrapSDKContext(ctx), types.IssueFungibleTokenSettings{
 		Issuer:        issuer,
@@ -50,9 +56,9 @@ func (ms MsgServer) IssueFungibleToken(ctx context.Context, req *types.MsgIssueF
 		Subunit:       req.Subunit,
 		Precision:     req.Precision,
 		Description:   req.Description,
-		Recipient:     recipient,
 		InitialAmount: req.InitialAmount,
 		Features:      req.Features,
+		BurnRate:      req.BurnRate,
 	})
 	if err != nil {
 		return nil, err
@@ -180,6 +186,53 @@ func (ms MsgServer) SetWhitelistedLimitFungibleToken(goCtx context.Context, req 
 
 	err = ms.keeper.SetWhitelistedBalance(ctx, sender, account, req.Coin)
 	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// IssueNonFungibleTokenClass issues new non-fungible token class.
+func (ms MsgServer) IssueNonFungibleTokenClass(ctx context.Context, req *types.MsgIssueNonFungibleTokenClass) (*types.EmptyResponse, error) {
+	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid issuer in MsgIssueNonFungibleTokenClass")
+	}
+	if _, err := ms.nftKeeper.IssueClass(
+		sdk.UnwrapSDKContext(ctx),
+		types.IssueNonFungibleTokenClassSettings{
+			Issuer:      issuer,
+			Name:        req.Name,
+			Symbol:      req.Symbol,
+			Description: req.Description,
+			URI:         req.URI,
+			URIHash:     req.URIHash,
+			Data:        req.Data,
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// MintNonFungibleToken mints non-fungible token.
+func (ms MsgServer) MintNonFungibleToken(ctx context.Context, req *types.MsgMintNonFungibleToken) (*types.EmptyResponse, error) {
+	owner, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+	if err := ms.nftKeeper.Mint(
+		sdk.UnwrapSDKContext(ctx),
+		types.MintNonFungibleTokenSettings{
+			Sender:  owner,
+			ClassID: req.ClassID,
+			ID:      req.ID,
+			URI:     req.URI,
+			URIHash: req.URIHash,
+			Data:    req.Data,
+		},
+	); err != nil {
 		return nil, err
 	}
 

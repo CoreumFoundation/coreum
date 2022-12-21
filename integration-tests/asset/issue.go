@@ -23,7 +23,6 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 	bankClient := banktypes.NewQueryClient(clientCtx)
 
 	issuer := chain.GenAccount()
-	recipient := chain.GenAccount()
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
 		Messages: []sdk.Msg{&assettypes.MsgIssueFungibleToken{}},
 	}))
@@ -35,8 +34,8 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Subunit:       "wsatoshi",
 		Precision:     8,
 		Description:   "Wrapped BTC",
-		Recipient:     recipient.String(),
 		InitialAmount: sdk.NewInt(777),
+		BurnRate:      sdk.NewDec(0),
 	}
 
 	res, err := tx.BroadcastTx(
@@ -58,9 +57,9 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Precision:     msg.Precision,
 		Subunit:       msg.Subunit,
 		Description:   msg.Description,
-		Recipient:     msg.Recipient,
 		InitialAmount: msg.InitialAmount,
 		Features:      []assettypes.FungibleTokenFeature{},
+		BurnRate:      msg.BurnRate,
 	}, *fungibleTokenIssuedEvts[0])
 
 	denom := fungibleTokenIssuedEvts[0].Denom
@@ -78,22 +77,14 @@ func TestIssueBasicFungibleToken(ctx context.Context, t testing.T, chain testing
 		Subunit:     "wsatoshi",
 		Precision:   8,
 		Description: msg.Description,
+		BurnRate:    msg.BurnRate,
 	}, gotToken.FungibleToken)
 
 	// query balance
-	// check the recipient balance
-	recipientBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: recipient.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, msg.InitialAmount).String(), recipientBalanceRes.Balance.String())
-
-	// check the issuer balance
-	issuerBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: issuer.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.True(issuerBalanceRes.Balance.Amount.IsZero())
+	requireT.Equal(sdk.NewCoin(denom, msg.InitialAmount).String(), balanceRes.Balance.String())
 }
