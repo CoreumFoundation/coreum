@@ -6,6 +6,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -46,6 +47,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		GovDeposit:        91000,
 
 		NFTSend: 20000,
+
+		SlashingUnjail: 25000,
 
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
@@ -103,6 +106,9 @@ type DeterministicGasRequirements struct {
 
 	// x/nft
 	NFTSend uint64
+
+	// x/slashing
+	SlashingUnjail uint64
 
 	// x/staking
 	StakingDelegate        uint64
@@ -184,6 +190,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.GovDeposit, true
 	case *nft.MsgSend:
 		return dgr.NFTSend, true
+	case *slashingtypes.MsgUnjail:
+		return dgr.SlashingUnjail, true
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:
