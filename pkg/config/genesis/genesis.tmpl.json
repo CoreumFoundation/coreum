@@ -22,7 +22,8 @@
   },
   "app_hash": "",
   "app_state": {
-    "asset": {},
+    "assetft": {},
+    "assetnft": {},
     "auth": {
       "params": {
         "max_memo_characters": "256",

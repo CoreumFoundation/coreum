@@ -14,7 +14,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
@@ -91,7 +91,7 @@ func TestSendDeterministicGasManyCoins(ctx context.Context, t testing.T, chain t
 
 	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
 	for i := 0; i < numOfTokens; i++ {
-		issueMsgs = append(issueMsgs, &assettypes.MsgIssueFungibleToken{
+		issueMsgs = append(issueMsgs, &assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),
 			Subunit:       fmt.Sprintf("tok%d", i),
@@ -117,11 +117,11 @@ func TestSendDeterministicGasManyCoins(ctx context.Context, t testing.T, chain t
 
 	coinsToSend := sdk.NewCoins()
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, numOfTokens, len(fungibleTokenIssuedEvts))
+	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
 
-	for _, e := range fungibleTokenIssuedEvts {
+	for _, e := range tokenIssuedEvts {
 		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
 	}
 
@@ -217,7 +217,7 @@ func TestMultiSendDeterministicGasManyCoins(ctx context.Context, t testing.T, ch
 
 	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
 	for i := 0; i < numOfTokens; i++ {
-		issueMsgs = append(issueMsgs, &assettypes.MsgIssueFungibleToken{
+		issueMsgs = append(issueMsgs, &assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),
 			Subunit:       fmt.Sprintf("tok%d", i),
@@ -252,11 +252,11 @@ func TestMultiSendDeterministicGasManyCoins(ctx context.Context, t testing.T, ch
 
 	coinsToSend := sdk.NewCoins()
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, numOfTokens, len(fungibleTokenIssuedEvts))
+	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
 
-	for _, e := range fungibleTokenIssuedEvts {
+	for _, e := range tokenIssuedEvts {
 		coinsToSend = coinsToSend.Add(sdk.NewCoin(e.Denom, amountToSend))
 	}
 

@@ -1,7 +1,8 @@
 package tests
 
 import (
-	"github.com/CoreumFoundation/coreum/integration-tests/asset"
+	"github.com/CoreumFoundation/coreum/integration-tests/assetft"
+	"github.com/CoreumFoundation/coreum/integration-tests/assetnft"
 	"github.com/CoreumFoundation/coreum/integration-tests/auth"
 	"github.com/CoreumFoundation/coreum/integration-tests/bank"
 	"github.com/CoreumFoundation/coreum/integration-tests/distribution"
@@ -27,17 +28,17 @@ func Tests() []testing.TestSet {
 			Name:     "Main",
 			Parallel: true,
 			SingleChain: []testing.SingleChainSignature{
-				asset.TestIssueBasicFungibleToken,
-				asset.TestFreezeFungibleToken,
-				asset.TestFreezeUnfreezableFungibleToken,
-				asset.TestGloballyFreezeFungibleToken,
-				asset.TestWhitelistUnwhitelistableFungibleToken,
-				asset.TestWhitelistFungibleToken,
-				asset.TestMintFungibleToken,
-				asset.TestBurnFungibleToken,
-				asset.TestBurnRateFungibleToken,
-				asset.TestIssueNonFungibleTokenClass,
-				asset.TestMintNonFungibleToken,
+				assetft.TestIssueBasic,
+				assetft.TestFreeze,
+				assetft.TestFreezeUnfreezable,
+				assetft.TestGloballyFreeze,
+				assetft.TestWhitelistUnwhitelistable,
+				assetft.TestWhitelist,
+				assetft.TestMint,
+				assetft.TestBurn,
+				assetft.TestBurnRate,
+				assetnft.TestIssueClass,
+				assetnft.TestMint,
 				auth.TestUnexpectedSequenceNumber,
 				auth.TestFeeLimits,
 				auth.TestMultisig,
