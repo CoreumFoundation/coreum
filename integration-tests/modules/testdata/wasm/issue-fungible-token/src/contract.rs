@@ -48,15 +48,14 @@ pub fn execute(
     _env: Env,
     _info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response<sdk::FungibleTokenMsg>, ContractError> {
+) -> Result<Response<sdk::Messages>, ContractError> {
     match msg {
         ExecuteMsg::Issue {
             symbol,
             subunit,
             precision,
             amount,
-            recipient,
-        } => issue_tokens(deps, symbol, subunit, precision, amount, recipient),
+        } => issue_tokens(deps, symbol, subunit, precision, amount),
     }
 }
 
@@ -66,10 +65,7 @@ fn issue_tokens(
     subunit: String,
     precision: u32,
     amount: Uint128,
-    recipient: String,
-) -> Result<Response<sdk::FungibleTokenMsg>, ContractError> {
-    let recipient_addr = deps.api.addr_validate(&recipient)?;
-
+) -> Result<Response<sdk::Messages>, ContractError> {
     if amount == Uint128::zero() {
         return Err(ContractError::InvalidZeroAmount {});
     }
@@ -79,20 +75,18 @@ fn issue_tokens(
 
     // Send two submessages handled by the asset module to create two fungible tokens.
     // ReplyOn::Always means that we want `reply` to be called after each submessage execution.
-    let mut msg1 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
+    let mut msg1 = SubMsg::new(sdk::Messages::AssetFTMsgIssue {
         symbol: symbol.clone() + "1",
         subunit: subunit.clone() + "1",
         precision,
-        recipient: recipient_addr.to_string(),
         initial_amount: amount,
     });
     msg1.reply_on = ReplyOn::Always;
 
-    let mut msg2 = SubMsg::new(sdk::FungibleTokenMsg::MsgIssueFungibleToken {
+    let mut msg2 = SubMsg::new(sdk::Messages::AssetFTMsgIssue {
         symbol: symbol.clone() + "2",
         subunit: subunit.clone() + "2",
         precision,
-        recipient: recipient_addr.to_string(),
         initial_amount: amount,
     });
     msg2.reply_on = ReplyOn::Always;
@@ -100,10 +94,9 @@ fn issue_tokens(
     // As a part of the response we send two submessages which are then forwarded to the parser
     // in go.
 
-    let res: Response<sdk::FungibleTokenMsg> = Response::new()
+    let res: Response<sdk::Messages> = Response::new()
         .add_attribute("method", "issue_token")
         .add_attribute("symbol", symbol)
-        .add_attribute("recipient", recipient_addr)
         .add_attribute("amount", amount)
         .add_submessages([msg1, msg2]);
     Ok(res)
@@ -123,21 +116,21 @@ pub fn reply(deps: DepsMut, _env: Env, _msg: Reply) -> Result<Response, Contract
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps<sdk::FungibleTokenQuery>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps<sdk::Queries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetCount {} => to_binary(&query_count(deps)?),
         QueryMsg::GetInfo { denom } => to_binary(&query_info(deps, denom)?),
     }
 }
 
-fn query_count(deps: Deps<sdk::FungibleTokenQuery>) -> StdResult<CountResponse> {
+fn query_count(deps: Deps<sdk::Queries>) -> StdResult<CountResponse> {
     let state = STATE.load(deps.storage)?;
     Ok(CountResponse { count: state.count })
 }
 
-fn query_info(deps: Deps<sdk::FungibleTokenQuery>, denom: String) -> StdResult<InfoResponse> {
-    let request: QueryRequest<sdk::FungibleTokenQuery> =
-        sdk::FungibleTokenQuery::FungibleToken { denom: denom }.into();
+fn query_info(deps: Deps<sdk::Queries>, denom: String) -> StdResult<InfoResponse> {
+    let request: QueryRequest<sdk::Queries> =
+        sdk::Queries::AssetFTGetToken { denom: denom }.into();
     let res: FungibleTokenResponse = deps.querier.query(&request)?;
     Ok(InfoResponse { issuer: res.issuer })
 }
@@ -153,7 +146,6 @@ pub enum ExecuteMsg {
         subunit: String,
         precision: u32,
         amount: Uint128,
-        recipient: String,
     },
 }
 

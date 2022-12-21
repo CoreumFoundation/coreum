@@ -4,10 +4,10 @@ info:
   name: ''
   description: ''
 paths:
-  '/coreum/asset/v1/fts/balance/{account}/frozen':
+  '/coreum/asset/ft/v1/balance/{account}/frozen':
     get:
       summary: FrozenBalances returns all the frozen balances for the account
-      operationId: CoreumAssetV1FrozenBalances
+      operationId: CoreumAssetFtV1FrozenBalances
       responses:
         '200':
           description: A successful response.
@@ -67,7 +67,174 @@ paths:
                   properties:
                     '@type':
                       type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
                   additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
       parameters:
         - name: account
           description: account specifies the account onto which we query frozen balances
@@ -132,10 +299,10 @@ paths:
           type: boolean
       tags:
         - Query
-  '/coreum/asset/v1/fts/balance/{account}/frozen/{denom}':
+  '/coreum/asset/ft/v1/balance/{account}/frozen/{denom}':
     get:
       summary: FrozenBalance returns frozen balance of the denom for the account
-      operationId: CoreumAssetV1FrozenBalance
+      operationId: CoreumAssetFtV1FrozenBalance
       responses:
         '200':
           description: A successful response.
@@ -177,7 +344,174 @@ paths:
                   properties:
                     '@type':
                       type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
                   additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
       parameters:
         - name: account
           description: account specifies the account onto which we query frozen balances
@@ -191,10 +525,10 @@ paths:
           type: string
       tags:
         - Query
-  '/coreum/asset/v1/fts/balance/{account}/whitelisted':
+  '/coreum/asset/ft/v1/balance/{account}/whitelisted':
     get:
       summary: WhitelistedBalances returns all the whitelisted balances for the account
-      operationId: CoreumAssetV1WhitelistedBalances
+      operationId: CoreumAssetFtV1WhitelistedBalances
       responses:
         '200':
           description: A successful response.
@@ -256,7 +590,174 @@ paths:
                   properties:
                     '@type':
                       type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
                   additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
       parameters:
         - name: account
           description: >-
@@ -323,12 +824,12 @@ paths:
           type: boolean
       tags:
         - Query
-  '/coreum/asset/v1/fts/balance/{account}/whitelisted/{denom}':
+  '/coreum/asset/ft/v1/balance/{account}/whitelisted/{denom}':
     get:
       summary: >-
         WhitelistedBalance returns whitelisted balance of the denom for the
         account
-      operationId: CoreumAssetV1WhitelistedBalance
+      operationId: CoreumAssetFtV1WhitelistedBalance
       responses:
         '200':
           description: A successful response.
@@ -370,7 +871,174 @@ paths:
                   properties:
                     '@type':
                       type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
                   additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
       parameters:
         - name: account
           description: >-
@@ -386,17 +1054,17 @@ paths:
           type: string
       tags:
         - Query
-  '/coreum/asset/v1/fts/denom/{denom}':
+  '/coreum/asset/ft/v1/denom/{denom}':
     get:
-      summary: FungibleToken queries the fungible token of the module.
-      operationId: CoreumAssetV1FungibleToken
+      summary: Token queries the fungible token of the module.
+      operationId: CoreumAssetFtV1Token
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              fungible_token:
+              token:
                 type: object
                 properties:
                   denom:
@@ -424,10 +1092,19 @@ paths:
                         - burn
                         - whitelist
                       default: freeze
-                description: FungibleToken is a full representation of the fungible token.
+                      title: TokenFeature defines possible features of fungible token
+                  burn_rate:
+                    type: string
+                    description: >-
+                      burn_rate is a number between 0 and 1 which will be
+                      multiplied by send amount to determine
+
+                      burn_amount. This value will be burnt on top of the send
+                      amount.
+                description: FT is a full representation of the fungible token.
             description: >-
-              QueryFungibleTokenResponse is response type for the
-              Query/FungibleToken RPC method.
+              QueryTokenResponse is response type for the Query/Token RPC
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -445,7 +1122,174 @@ paths:
                   properties:
                     '@type':
                       type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
                   additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
       parameters:
         - name: denom
           in: path
@@ -35888,634 +36732,10 @@ paths:
           format: uint64
       tags:
         - Query
-  /tendermint/spn/claim/airdrop_supply:
-    get:
-      summary: Queries a AirdropSupply by index.
-      operationId: TendermintSpnClaimAirdropSupply
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              AirdropSupply:
-                type: object
-                properties:
-                  denom:
-                    type: string
-                  amount:
-                    type: string
-                description: >-
-                  Coin defines a token with a denomination and an amount.
-
-
-                  NOTE: The amount field is an Int which implements the custom
-                  method
-
-                  signatures required by gogoproto.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      tags:
-        - Query
-  /tendermint/spn/claim/claim_record:
-    get:
-      summary: Queries a list of ClaimRecord items.
-      operationId: TendermintSpnClaimClaimRecordAll
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              claimRecord:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    address:
-                      type: string
-                    claimable:
-                      type: string
-                    completedMissions:
-                      type: array
-                      items:
-                        type: string
-                        format: uint64
-              pagination:
-                type: object
-                properties:
-                  next_key:
-                    type: string
-                    format: byte
-                    title: |-
-                      next_key is the key to be passed to PageRequest.key to
-                      query the next page most efficiently
-                  total:
-                    type: string
-                    format: uint64
-                    title: >-
-                      total is total number of results available if
-                      PageRequest.count_total
-
-                      was set, its value is undefined otherwise
-                description: >-
-                  PageResponse is to be embedded in gRPC response messages where
-                  the
-
-                  corresponding request message has used PageRequest.
-
-                   message SomeResponse {
-                           repeated Bar results = 1;
-                           PageResponse page = 2;
-                   }
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      parameters:
-        - name: pagination.key
-          description: |-
-            key is a value returned in PageResponse.next_key to begin
-            querying the next page most efficiently. Only one of offset or key
-            should be set.
-          in: query
-          required: false
-          type: string
-          format: byte
-        - name: pagination.offset
-          description: >-
-            offset is a numeric offset that can be used when key is unavailable.
-
-            It is less efficient than using key. Only one of offset or key
-            should
-
-            be set.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.limit
-          description: >-
-            limit is the total number of results to be returned in the result
-            page.
-
-            If left empty it will default to a value to be set by each app.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.count_total
-          description: >-
-            count_total is set to true  to indicate that the result set should
-            include
-
-            a count of the total number of items available for pagination in
-            UIs.
-
-            count_total is only respected when offset is used. It is ignored
-            when key
-
-            is set.
-          in: query
-          required: false
-          type: boolean
-        - name: pagination.reverse
-          description: >-
-            reverse is set to true if results are to be returned in the
-            descending order.
-
-
-            Since: cosmos-sdk 0.43
-          in: query
-          required: false
-          type: boolean
-      tags:
-        - Query
-  '/tendermint/spn/claim/claim_record/{address}':
-    get:
-      summary: Queries a ClaimRecord by address.
-      operationId: TendermintSpnClaimClaimRecord
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              claimRecord:
-                type: object
-                properties:
-                  address:
-                    type: string
-                  claimable:
-                    type: string
-                  completedMissions:
-                    type: array
-                    items:
-                      type: string
-                      format: uint64
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      parameters:
-        - name: address
-          in: path
-          required: true
-          type: string
-      tags:
-        - Query
-  /tendermint/spn/claim/mission:
-    get:
-      summary: Queries a list of Mission items.
-      operationId: TendermintSpnClaimMissionAll
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              Mission:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    missionID:
-                      type: string
-                      format: uint64
-                    description:
-                      type: string
-                    weight:
-                      type: string
-              pagination:
-                type: object
-                properties:
-                  next_key:
-                    type: string
-                    format: byte
-                    title: |-
-                      next_key is the key to be passed to PageRequest.key to
-                      query the next page most efficiently
-                  total:
-                    type: string
-                    format: uint64
-                    title: >-
-                      total is total number of results available if
-                      PageRequest.count_total
-
-                      was set, its value is undefined otherwise
-                description: >-
-                  PageResponse is to be embedded in gRPC response messages where
-                  the
-
-                  corresponding request message has used PageRequest.
-
-                   message SomeResponse {
-                           repeated Bar results = 1;
-                           PageResponse page = 2;
-                   }
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      parameters:
-        - name: pagination.key
-          description: |-
-            key is a value returned in PageResponse.next_key to begin
-            querying the next page most efficiently. Only one of offset or key
-            should be set.
-          in: query
-          required: false
-          type: string
-          format: byte
-        - name: pagination.offset
-          description: >-
-            offset is a numeric offset that can be used when key is unavailable.
-
-            It is less efficient than using key. Only one of offset or key
-            should
-
-            be set.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.limit
-          description: >-
-            limit is the total number of results to be returned in the result
-            page.
-
-            If left empty it will default to a value to be set by each app.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.count_total
-          description: >-
-            count_total is set to true  to indicate that the result set should
-            include
-
-            a count of the total number of items available for pagination in
-            UIs.
-
-            count_total is only respected when offset is used. It is ignored
-            when key
-
-            is set.
-          in: query
-          required: false
-          type: boolean
-        - name: pagination.reverse
-          description: >-
-            reverse is set to true if results are to be returned in the
-            descending order.
-
-
-            Since: cosmos-sdk 0.43
-          in: query
-          required: false
-          type: boolean
-      tags:
-        - Query
-  '/tendermint/spn/claim/mission/{missionID}':
-    get:
-      summary: Queries a Mission by ID.
-      operationId: TendermintSpnClaimMission
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              Mission:
-                type: object
-                properties:
-                  missionID:
-                    type: string
-                    format: uint64
-                  description:
-                    type: string
-                  weight:
-                    type: string
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      parameters:
-        - name: missionID
-          in: path
-          required: true
-          type: string
-          format: uint64
-      tags:
-        - Query
-  /tendermint/spn/claim/params:
-    get:
-      summary: Parameters queries the parameters of the module
-      operationId: TendermintSpnClaimParams
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              params:
-                description: params holds all the parameters of this module.
-                type: object
-            description: >-
-              QueryParamsResponse is response type for the Query/Params RPC
-              method.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      tags:
-        - Query
-  /tendermint/spn/monitoringp/connection_channel_id:
-    get:
-      summary: Queries a ConnectionChannelID by index.
-      operationId: TendermintSpnMonitoringpConnectionChannelID
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              ConnectionChannelID:
-                type: object
-                properties:
-                  channelID:
-                    type: string
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      tags:
-        - Query
-  /tendermint/spn/monitoringp/consumer_client_id:
-    get:
-      summary: Queries a ConsumerClientID by index.
-      operationId: TendermintSpnMonitoringpConsumerClientID
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              ConsumerClientID:
-                type: object
-                properties:
-                  clientID:
-                    type: string
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      tags:
-        - Query
-  /tendermint/spn/monitoringp/monitoring_info:
-    get:
-      summary: Queries a MonitoringInfo by index.
-      operationId: TendermintSpnMonitoringpMonitoringInfo
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              MonitoringInfo:
-                type: object
-                properties:
-                  transmitted:
-                    type: boolean
-                  signatureCounts:
-                    type: object
-                    properties:
-                      blockCount:
-                        type: string
-                        format: uint64
-                      counts:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            opAddress:
-                              type: string
-                            RelativeSignatures:
-                              type: string
-                          title: >-
-                            SignatureCount contains information of signature
-                            reporting for one specific validator with consensus
-                            address
-
-                            RelativeSignatures is the sum of all signatures
-                            relative to the validator set size
-                    title: >-
-                      SignatureCounts contains information about signature
-                      reporting for a number of blocks
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      tags:
-        - Query
-  /tendermint/spn/monitoringp/params:
-    get:
-      summary: Params queries the parameters of the module.
-      operationId: TendermintSpnMonitoringpParams
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              params:
-                type: object
-                properties:
-                  lastBlockHeight:
-                    type: string
-                    format: int64
-                  consumerChainID:
-                    type: string
-                  consumerConsensusState:
-                    type: object
-                    properties:
-                      nextValidatorsHash:
-                        type: string
-                      timestamp:
-                        type: string
-                      root:
-                        type: object
-                        properties:
-                          hash:
-                            type: string
-                        title: MerkleRoot represents a Merkle Root in ConsensusState
-                    title: >-
-                      ConsensusState represents a Consensus State
-
-                      it is compatible with the dumped state from `appd q ibc
-                      client self-consensus-state` command
-                  consumerUnbondingPeriod:
-                    type: string
-                    format: int64
-                  consumerRevisionHeight:
-                    type: string
-                    format: uint64
-                description: Params defines the parameters for the module.
-            description: >-
-              QueryParamsResponse is response type for the Query/Params RPC
-              method.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      tags:
-        - Query
 definitions:
-  coreum.asset.v1.EmptyResponse:
+  coreum.asset.ft.v1.EmptyResponse:
     type: object
-  coreum.asset.v1.FungibleToken:
+  coreum.asset.ft.v1.FT:
     type: object
     properties:
       denom:
@@ -36543,16 +36763,16 @@ definitions:
             - burn
             - whitelist
           default: freeze
-    description: FungibleToken is a full representation of the fungible token.
-  coreum.asset.v1.FungibleTokenFeature:
-    type: string
-    enum:
-      - freeze
-      - mint
-      - burn
-      - whitelist
-    default: freeze
-  coreum.asset.v1.QueryFrozenBalanceResponse:
+          title: TokenFeature defines possible features of fungible token
+      burn_rate:
+        type: string
+        description: >-
+          burn_rate is a number between 0 and 1 which will be multiplied by send
+          amount to determine
+
+          burn_amount. This value will be burnt on top of the send amount.
+    description: FT is a full representation of the fungible token.
+  coreum.asset.ft.v1.QueryFrozenBalanceResponse:
     type: object
     properties:
       balance:
@@ -36568,7 +36788,7 @@ definitions:
           NOTE: The amount field is an Int which implements the custom method
           signatures required by gogoproto.
         title: balance contains the frozen balance with the queried account and denom
-  coreum.asset.v1.QueryFrozenBalancesResponse:
+  coreum.asset.ft.v1.QueryFrozenBalancesResponse:
     type: object
     properties:
       pagination:
@@ -36604,10 +36824,10 @@ definitions:
             NOTE: The amount field is an Int which implements the custom method
             signatures required by gogoproto.
         title: balances contains the frozen balances on the queried account
-  coreum.asset.v1.QueryFungibleTokenResponse:
+  coreum.asset.ft.v1.QueryTokenResponse:
     type: object
     properties:
-      fungible_token:
+      token:
         type: object
         properties:
           denom:
@@ -36635,11 +36855,17 @@ definitions:
                 - burn
                 - whitelist
               default: freeze
-        description: FungibleToken is a full representation of the fungible token.
-    description: >-
-      QueryFungibleTokenResponse is response type for the Query/FungibleToken
-      RPC method.
-  coreum.asset.v1.QueryWhitelistedBalanceResponse:
+              title: TokenFeature defines possible features of fungible token
+          burn_rate:
+            type: string
+            description: >-
+              burn_rate is a number between 0 and 1 which will be multiplied by
+              send amount to determine
+
+              burn_amount. This value will be burnt on top of the send amount.
+        description: FT is a full representation of the fungible token.
+    description: QueryTokenResponse is response type for the Query/Token RPC method.
+  coreum.asset.ft.v1.QueryWhitelistedBalanceResponse:
     type: object
     properties:
       balance:
@@ -36657,7 +36883,7 @@ definitions:
         title: >-
           balance contains the whitelisted balance with the queried account and
           denom
-  coreum.asset.v1.QueryWhitelistedBalancesResponse:
+  coreum.asset.ft.v1.QueryWhitelistedBalancesResponse:
     type: object
     properties:
       pagination:
@@ -36693,6 +36919,15 @@ definitions:
             NOTE: The amount field is an Int which implements the custom method
             signatures required by gogoproto.
         title: balances contains the whitelisted balances on the queried account
+  coreum.asset.ft.v1.TokenFeature:
+    type: string
+    enum:
+      - freeze
+      - mint
+      - burn
+      - whitelist
+    default: freeze
+    title: TokenFeature defines possible features of fungible token
   cosmos.base.query.v1beta1.PageRequest:
     type: object
     properties:
@@ -37104,6 +37339,8 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
+  coreum.asset.nft.v1.EmptyResponse:
+    type: object
   coreum.customparams.v1.QueryStakingParamsResponse:
     type: object
     properties:
@@ -60312,378 +60549,3 @@ definitions:
     description: |-
       Version defines the versioning scheme used to negotiate the IBC verison in
       the connection handshake.
-  tendermint.spn.claim.ClaimRecord:
-    type: object
-    properties:
-      address:
-        type: string
-      claimable:
-        type: string
-      completedMissions:
-        type: array
-        items:
-          type: string
-          format: uint64
-  tendermint.spn.claim.Mission:
-    type: object
-    properties:
-      missionID:
-        type: string
-        format: uint64
-      description:
-        type: string
-      weight:
-        type: string
-  tendermint.spn.claim.Params:
-    type: object
-    description: Params defines the parameters for the module.
-  tendermint.spn.claim.QueryAllClaimRecordResponse:
-    type: object
-    properties:
-      claimRecord:
-        type: array
-        items:
-          type: object
-          properties:
-            address:
-              type: string
-            claimable:
-              type: string
-            completedMissions:
-              type: array
-              items:
-                type: string
-                format: uint64
-      pagination:
-        type: object
-        properties:
-          next_key:
-            type: string
-            format: byte
-            title: |-
-              next_key is the key to be passed to PageRequest.key to
-              query the next page most efficiently
-          total:
-            type: string
-            format: uint64
-            title: >-
-              total is total number of results available if
-              PageRequest.count_total
-
-              was set, its value is undefined otherwise
-        description: |-
-          PageResponse is to be embedded in gRPC response messages where the
-          corresponding request message has used PageRequest.
-
-           message SomeResponse {
-                   repeated Bar results = 1;
-                   PageResponse page = 2;
-           }
-  tendermint.spn.claim.QueryAllMissionResponse:
-    type: object
-    properties:
-      Mission:
-        type: array
-        items:
-          type: object
-          properties:
-            missionID:
-              type: string
-              format: uint64
-            description:
-              type: string
-            weight:
-              type: string
-      pagination:
-        type: object
-        properties:
-          next_key:
-            type: string
-            format: byte
-            title: |-
-              next_key is the key to be passed to PageRequest.key to
-              query the next page most efficiently
-          total:
-            type: string
-            format: uint64
-            title: >-
-              total is total number of results available if
-              PageRequest.count_total
-
-              was set, its value is undefined otherwise
-        description: |-
-          PageResponse is to be embedded in gRPC response messages where the
-          corresponding request message has used PageRequest.
-
-           message SomeResponse {
-                   repeated Bar results = 1;
-                   PageResponse page = 2;
-           }
-  tendermint.spn.claim.QueryGetAirdropSupplyResponse:
-    type: object
-    properties:
-      AirdropSupply:
-        type: object
-        properties:
-          denom:
-            type: string
-          amount:
-            type: string
-        description: |-
-          Coin defines a token with a denomination and an amount.
-
-          NOTE: The amount field is an Int which implements the custom method
-          signatures required by gogoproto.
-  tendermint.spn.claim.QueryGetClaimRecordResponse:
-    type: object
-    properties:
-      claimRecord:
-        type: object
-        properties:
-          address:
-            type: string
-          claimable:
-            type: string
-          completedMissions:
-            type: array
-            items:
-              type: string
-              format: uint64
-  tendermint.spn.claim.QueryGetMissionResponse:
-    type: object
-    properties:
-      Mission:
-        type: object
-        properties:
-          missionID:
-            type: string
-            format: uint64
-          description:
-            type: string
-          weight:
-            type: string
-  tendermint.spn.claim.QueryParamsResponse:
-    type: object
-    properties:
-      params:
-        description: params holds all the parameters of this module.
-        type: object
-    description: QueryParamsResponse is response type for the Query/Params RPC method.
-  tendermint.spn.monitoringp.ConnectionChannelID:
-    type: object
-    properties:
-      channelID:
-        type: string
-  tendermint.spn.monitoringp.ConsumerClientID:
-    type: object
-    properties:
-      clientID:
-        type: string
-  tendermint.spn.monitoringp.MonitoringInfo:
-    type: object
-    properties:
-      transmitted:
-        type: boolean
-      signatureCounts:
-        type: object
-        properties:
-          blockCount:
-            type: string
-            format: uint64
-          counts:
-            type: array
-            items:
-              type: object
-              properties:
-                opAddress:
-                  type: string
-                RelativeSignatures:
-                  type: string
-              title: >-
-                SignatureCount contains information of signature reporting for
-                one specific validator with consensus address
-
-                RelativeSignatures is the sum of all signatures relative to the
-                validator set size
-        title: >-
-          SignatureCounts contains information about signature reporting for a
-          number of blocks
-  tendermint.spn.monitoringp.Params:
-    type: object
-    properties:
-      lastBlockHeight:
-        type: string
-        format: int64
-      consumerChainID:
-        type: string
-      consumerConsensusState:
-        type: object
-        properties:
-          nextValidatorsHash:
-            type: string
-          timestamp:
-            type: string
-          root:
-            type: object
-            properties:
-              hash:
-                type: string
-            title: MerkleRoot represents a Merkle Root in ConsensusState
-        title: >-
-          ConsensusState represents a Consensus State
-
-          it is compatible with the dumped state from `appd q ibc client
-          self-consensus-state` command
-      consumerUnbondingPeriod:
-        type: string
-        format: int64
-      consumerRevisionHeight:
-        type: string
-        format: uint64
-    description: Params defines the parameters for the module.
-  tendermint.spn.monitoringp.QueryGetConnectionChannelIDResponse:
-    type: object
-    properties:
-      ConnectionChannelID:
-        type: object
-        properties:
-          channelID:
-            type: string
-  tendermint.spn.monitoringp.QueryGetConsumerClientIDResponse:
-    type: object
-    properties:
-      ConsumerClientID:
-        type: object
-        properties:
-          clientID:
-            type: string
-  tendermint.spn.monitoringp.QueryGetMonitoringInfoResponse:
-    type: object
-    properties:
-      MonitoringInfo:
-        type: object
-        properties:
-          transmitted:
-            type: boolean
-          signatureCounts:
-            type: object
-            properties:
-              blockCount:
-                type: string
-                format: uint64
-              counts:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    opAddress:
-                      type: string
-                    RelativeSignatures:
-                      type: string
-                  title: >-
-                    SignatureCount contains information of signature reporting
-                    for one specific validator with consensus address
-
-                    RelativeSignatures is the sum of all signatures relative to
-                    the validator set size
-            title: >-
-              SignatureCounts contains information about signature reporting for
-              a number of blocks
-  tendermint.spn.monitoringp.QueryParamsResponse:
-    type: object
-    properties:
-      params:
-        type: object
-        properties:
-          lastBlockHeight:
-            type: string
-            format: int64
-          consumerChainID:
-            type: string
-          consumerConsensusState:
-            type: object
-            properties:
-              nextValidatorsHash:
-                type: string
-              timestamp:
-                type: string
-              root:
-                type: object
-                properties:
-                  hash:
-                    type: string
-                title: MerkleRoot represents a Merkle Root in ConsensusState
-            title: >-
-              ConsensusState represents a Consensus State
-
-              it is compatible with the dumped state from `appd q ibc client
-              self-consensus-state` command
-          consumerUnbondingPeriod:
-            type: string
-            format: int64
-          consumerRevisionHeight:
-            type: string
-            format: uint64
-        description: Params defines the parameters for the module.
-    description: QueryParamsResponse is response type for the Query/Params RPC method.
-  tendermint.spn.types.ConsensusState:
-    type: object
-    properties:
-      nextValidatorsHash:
-        type: string
-      timestamp:
-        type: string
-      root:
-        type: object
-        properties:
-          hash:
-            type: string
-        title: MerkleRoot represents a Merkle Root in ConsensusState
-    title: >-
-      ConsensusState represents a Consensus State
-
-      it is compatible with the dumped state from `appd q ibc client
-      self-consensus-state` command
-  tendermint.spn.types.MerkleRoot:
-    type: object
-    properties:
-      hash:
-        type: string
-    title: MerkleRoot represents a Merkle Root in ConsensusState
-  tendermint.spn.types.SignatureCount:
-    type: object
-    properties:
-      opAddress:
-        type: string
-      RelativeSignatures:
-        type: string
-    title: >-
-      SignatureCount contains information of signature reporting for one
-      specific validator with consensus address
-
-      RelativeSignatures is the sum of all signatures relative to the validator
-      set size
-  tendermint.spn.types.SignatureCounts:
-    type: object
-    properties:
-      blockCount:
-        type: string
-        format: uint64
-      counts:
-        type: array
-        items:
-          type: object
-          properties:
-            opAddress:
-              type: string
-            RelativeSignatures:
-              type: string
-          title: >-
-            SignatureCount contains information of signature reporting for one
-            specific validator with consensus address
-
-            RelativeSignatures is the sum of all signatures relative to the
-            validator set size
-    title: >-
-      SignatureCounts contains information about signature reporting for a
-      number of blocks

@@ -75,7 +75,6 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	"github.com/ignite/cli/ignite/pkg/openapiconsole"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cast"
@@ -86,13 +85,17 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CoreumFoundation/coreum/app/openapi"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/x/asset"
-	assetkeeper "github.com/CoreumFoundation/coreum/x/asset/keeper"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
-	assetwasm "github.com/CoreumFoundation/coreum/x/asset/wasm"
+	assetft "github.com/CoreumFoundation/coreum/x/asset/ft"
+	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	assetftwasm "github.com/CoreumFoundation/coreum/x/asset/ft/wasm"
+	assetnft "github.com/CoreumFoundation/coreum/x/asset/nft"
+	assetnftkeeper "github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	"github.com/CoreumFoundation/coreum/x/customparams"
 	customparamskeeper "github.com/CoreumFoundation/coreum/x/customparams/keeper"
@@ -170,8 +173,9 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
-		asset.AppModuleBasic{},
 		nftmodule.AppModuleBasic{},
+		assetft.AppModuleBasic{},
+		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
@@ -185,7 +189,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
-		assettypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		assetfttypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
 		nft.ModuleName:                 {}, // the line is required by the nft module to have the module account stored in the account keeper
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
@@ -238,7 +242,8 @@ type App struct {
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	WASMKeeper       wasm.Keeper
 
-	AssetKeeper        assetkeeper.Keeper
+	AssetFTKeeper      assetftkeeper.Keeper
+	AssetNFTKeeper     assetnftkeeper.Keeper
 	FeeModelKeeper     feemodelkeeper.Keeper
 	BankKeeper         wbankkeeper.BaseKeeperWrapper
 	NFTKeeper          nftkeeper.Keeper
@@ -282,7 +287,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
-		wasm.StoreKey, feemodeltypes.StoreKey, assettypes.StoreKey, nftkeeper.StoreKey,
+		wasm.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
@@ -319,18 +324,18 @@ func New(
 		keys[authz.ModuleName], appCodec, app.MsgServiceRouter(),
 	)
 
-	assetKeeper := assetkeeper.NewKeeper(
+	assetFTKeeper := assetftkeeper.NewKeeper(
 		appCodec,
-		keys[assettypes.StoreKey],
+		keys[assetfttypes.StoreKey],
 		// for the asset we use the clear bank keeper without the assets integration to prevent cycling calls.
 		bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs()),
 	)
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), assetKeeper,
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), assetFTKeeper,
 	)
 
-	app.AssetKeeper = assetKeeper
+	app.AssetFTKeeper = assetFTKeeper
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
@@ -376,6 +381,8 @@ func New(
 
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
 
+	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(appCodec, keys[assetnfttypes.StoreKey], app.NFTKeeper)
+
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
@@ -397,8 +404,8 @@ func New(
 	}
 
 	wasmOpts := []wasm.Option{
-		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(assetwasm.MsgHandler)),
-		wasmkeeper.WithQueryPlugins(wasmtypes.NewCustomQuerier(assetwasm.QueryHandler(app.AssetKeeper))),
+		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(assetftwasm.MsgHandler)),
+		wasmkeeper.WithQueryPlugins(wasmtypes.NewCustomQuerier(assetftwasm.QueryHandler(app.AssetFTKeeper))),
 	}
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
@@ -443,8 +450,8 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	assetModule := asset.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
-
+	assetFTModule := assetft.NewAppModule(appCodec, app.AssetFTKeeper, app.BankKeeper)
+	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
 	nftModule := nftmodule.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
@@ -478,7 +485,8 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
-		assetModule,
+		assetFTModule,
+		assetNFTModule,
 		nftModule,
 		customParamsModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
@@ -508,7 +516,8 @@ func New(
 		paramstypes.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
-		assettypes.ModuleName,
+		assetfttypes.ModuleName,
+		assetnfttypes.ModuleName,
 		nft.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
@@ -533,7 +542,8 @@ func New(
 		upgradetypes.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
-		assettypes.ModuleName,
+		assetfttypes.ModuleName,
+		assetnfttypes.ModuleName,
 		nft.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
@@ -563,8 +573,9 @@ func New(
 		feegrant.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
-		assettypes.ModuleName,
 		nft.ModuleName,
+		assetfttypes.ModuleName,
+		assetnfttypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -587,7 +598,8 @@ func New(
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		assetModule,
+		assetFTModule,
+		assetNFTModule,
 		nftModule,
 		customParamsModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
@@ -758,7 +770,7 @@ func (app *App) RegisterAPIRoutes(apiSvr *serverapi.Server, _ serverconfig.APICo
 
 	// register app's OpenAPI routes.
 	apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(http.FS(docs.Docs)))
-	apiSvr.Router.HandleFunc("/", openapiconsole.Handler(Name, "/static/openapi.yml"))
+	apiSvr.Router.HandleFunc("/", openapi.Handler(Name, "/static/openapi.yml"))
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
