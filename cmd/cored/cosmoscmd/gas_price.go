@@ -7,6 +7,10 @@ import (
 	feecli "github.com/CoreumFoundation/coreum/x/feemodel/client/cli"
 )
 
+const (
+	autoValue = "auto"
+)
+
 func mergeRunEs(runEs ...func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		for _, runE := range runEs {
@@ -21,7 +25,7 @@ func mergeRunEs(runEs ...func(cmd *cobra.Command, args []string) error) func(cmd
 }
 
 func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
-	if flag := cmd.LocalFlags().Lookup(flags.FlagGasPrices); flag != nil && !flag.Changed {
+	if flag := cmd.LocalFlags().Lookup(flags.FlagGasPrices); flag != nil && (!flag.Changed || flag.Value.String() == autoValue) {
 		gasPrice, err := feecli.QueryGasPrice(cmd)
 		if err != nil {
 			return err
@@ -35,7 +39,7 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 }
 
 func addQueryGasPriceToAllLeafs(cmd *cobra.Command) {
-	if !cmd.HasSubCommands() {
+	if cmd.Run != nil || cmd.RunE != nil {
 		cmd.PreRunE = mergeRunEs(queryGasPriceRunE, cmd.PreRunE)
 		return
 	}
