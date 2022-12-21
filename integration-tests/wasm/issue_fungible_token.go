@@ -14,7 +14,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 var (
@@ -50,7 +50,7 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 	bankClient := banktypes.NewQueryClient(clientCtx)
-	assetClient := assettypes.NewQueryClient(clientCtx)
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
 
 	// deploy and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(struct{}{})
@@ -73,8 +73,8 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	subunit1 := subunit + "1"
 	subunit2 := subunit + "2"
 	precision := uint32(8)
-	denom1 := assettypes.BuildFungibleTokenDenom(subunit1, sdk.MustAccAddressFromBech32(contractAddr))
-	denom2 := assettypes.BuildFungibleTokenDenom(subunit2, sdk.MustAccAddressFromBech32(contractAddr))
+	denom1 := assetfttypes.BuildDenom(subunit1, sdk.MustAccAddressFromBech32(contractAddr))
+	denom2 := assetfttypes.BuildDenom(subunit2, sdk.MustAccAddressFromBech32(contractAddr))
 	initialAmount := sdk.NewInt(5000)
 
 	// issue fungible token by smart contract
@@ -105,27 +105,27 @@ func TestIssueFungibleTokenInWASMContract(ctx context.Context, t testing.T, chai
 	assertT.Equal(initialAmount.String(), balance.Balances.AmountOf(denom1).String())
 	assertT.Equal(initialAmount.String(), balance.Balances.AmountOf(denom2).String())
 
-	ft, err := assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{Denom: denom1})
+	ft, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom1})
 	requireT.NoError(err)
-	requireT.EqualValues(assettypes.FungibleToken{
+	requireT.EqualValues(assetfttypes.FT{
 		Denom:     denom1,
 		Issuer:    contractAddr,
 		Symbol:    symbol + "1",
 		Subunit:   subunit1,
 		Precision: precision,
 		BurnRate:  sdk.NewDec(0),
-	}, ft.GetFungibleToken())
+	}, ft.GetToken())
 
-	ft, err = assetClient.FungibleToken(ctx, &assettypes.QueryFungibleTokenRequest{Denom: denom2})
+	ft, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom2})
 	requireT.NoError(err)
-	requireT.EqualValues(assettypes.FungibleToken{
+	requireT.EqualValues(assetfttypes.FT{
 		Denom:     denom2,
 		Issuer:    contractAddr,
 		Symbol:    symbol + "2",
 		Subunit:   subunit2,
 		Precision: precision,
 		BurnRate:  sdk.NewDec(0),
-	}, ft.GetFungibleToken())
+	}, ft.GetToken())
 
 	// check the counter
 	getCountPayload, err := json.Marshal(map[fungibleTokenMethod]struct{}{

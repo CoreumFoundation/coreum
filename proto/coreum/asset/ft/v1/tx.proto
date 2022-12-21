@@ -1,0 +1,100 @@
+syntax = "proto3";
+package coreum.asset.ft.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+
+import "coreum/asset/ft/v1/token.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
+option (gogoproto.goproto_getters_all) = false;
+
+// Msg defines the Msg service.
+service Msg {
+  // Issue defines a method to issue a new fungible token.
+  rpc Issue(MsgIssue) returns (EmptyResponse);
+
+  // Mint mints new fungible tokens
+  rpc Mint(MsgMint) returns (EmptyResponse);
+  // Burn burns the specified fungible tokens from senders balance if the sender has enough balance
+  rpc Burn(MsgBurn) returns (EmptyResponse);
+
+  // Freeze freezes a part of the fungible tokens in an
+  // account, only if the freezable feature is enabled on that token.
+  rpc Freeze(MsgFreeze) returns (EmptyResponse);
+  // Unfreeze unfreezes a part of the frozen fungible tokens in an
+  // account, only if there are such frozen tokens on that account
+  rpc Unfreeze(MsgUnfreeze) returns (EmptyResponse);
+
+  // GloballyFreeze freezes fungible token so no operations are allowed with it before unfrozen.
+  // This operation is idempotent so global freeze of already frozen token does nothing.
+  rpc GloballyFreeze(MsgGloballyFreeze) returns (EmptyResponse);
+  // GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it.
+  // This operation is idempotent so global unfreezing of non-frozen token does nothing.
+  rpc GloballyUnfreeze(MsgGloballyUnfreeze) returns (EmptyResponse);
+
+  // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold
+  rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
+}
+
+// MsgIssue defines message to issue new fungible token.
+message MsgIssue {
+  string issuer = 1;
+  string symbol = 2;
+  string subunit = 3;
+  uint32 precision = 4;
+  string initial_amount = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string description = 6;
+  repeated TokenFeature features = 7;
+  // burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
+  // burn_amount. This value will be burnt on top of the send amount.
+  string burn_rate = 8 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
+}
+
+message MsgFreeze {
+  string sender = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgUnfreeze {
+  string sender = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgMint {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin coin = 2 [(gogoproto.nullable) = false];
+}
+
+message MsgBurn {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message MsgGloballyFreeze {
+  string sender = 1;
+  string denom = 2;
+}
+
+message MsgGloballyUnfreeze {
+  string sender = 1;
+  string denom = 2;
+}
+
+message MsgSetWhitelistedLimit {
+  string sender = 1;
+  string account = 2;
+  cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+message EmptyResponse {}

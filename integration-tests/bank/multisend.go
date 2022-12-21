@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // TestMultiSend tests MultiSend message
@@ -23,14 +23,14 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	amount := sdk.NewInt(1000)
 
 	issueMsgs := []sdk.Msg{
-		&assettypes.MsgIssueFungibleToken{
+		&assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        "TOK1",
 			Subunit:       "tok1",
 			Description:   "TOK1 Description",
 			InitialAmount: amount,
 		},
-		&assettypes.MsgIssueFungibleToken{
+		&assetfttypes.MsgIssue{
 			Issuer:        sender.String(),
 			Symbol:        "TOK2",
 			Subunit:       "tok2",
@@ -55,12 +55,12 @@ func TestMultiSend(ctx context.Context, t testing.T, chain testing.Chain) {
 	)
 	require.NoError(t, err)
 
-	fungibleTokenIssuedEvts, err := event.FindTypedEvents[*assettypes.EventFungibleTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	require.NoError(t, err)
-	require.Equal(t, len(issueMsgs), len(fungibleTokenIssuedEvts))
+	require.Equal(t, len(issueMsgs), len(tokenIssuedEvts))
 
-	denom1 := fungibleTokenIssuedEvts[0].Denom
-	denom2 := fungibleTokenIssuedEvts[1].Denom
+	denom1 := tokenIssuedEvts[0].Denom
+	denom2 := tokenIssuedEvts[1].Denom
 
 	msg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
@@ -134,14 +134,14 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 	recipient3 := chain.GenAccount()
 
 	assetAmount := sdk.NewInt(1000)
-	issue1Msg := &assettypes.MsgIssueFungibleToken{
+	issue1Msg := &assetfttypes.MsgIssue{
 		Issuer:        sender1.String(),
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		InitialAmount: assetAmount,
 	}
-	issue2Msg := &assettypes.MsgIssueFungibleToken{
+	issue2Msg := &assetfttypes.MsgIssue{
 		Issuer:        sender2.String(),
 		Symbol:        "TOK2",
 		Subunit:       "tok2",
@@ -149,8 +149,8 @@ func TestMultiSendFromMultipleAccounts(ctx context.Context, t testing.T, chain t
 		InitialAmount: assetAmount,
 	}
 
-	denom1 := assettypes.BuildFungibleTokenDenom(issue1Msg.Subunit, sender1)
-	denom2 := assettypes.BuildFungibleTokenDenom(issue2Msg.Subunit, sender2)
+	denom1 := assetfttypes.BuildDenom(issue1Msg.Subunit, sender1)
+	denom2 := assetfttypes.BuildDenom(issue2Msg.Subunit, sender2)
 
 	nativeAmountToSend := chain.NewCoin(sdk.NewInt(100))
 
