@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -94,7 +95,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
 					if isDeterministic {
-						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, method.MethodName)
+						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, req)
 					}
 					return res, err
 				})
@@ -118,7 +119,7 @@ func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequir
 	return ctx, gasBefore, exists
 }
 
-func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgType string) {
+func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msg interface{}) {
 	nondeterministicGas := newCtx.GasMeter().GasConsumed()
 	if nondeterministicGas == 0 {
 		return
@@ -128,6 +129,6 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 
 	gasFactor := (float32(deterministicGas) - float32(nondeterministicGas)) / float32(nondeterministicGas)
 	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
-		{Name: "msg_method", Value: msgType},
+		{Name: "msg_type", Value: reflect.TypeOf(msg).String()},
 	})
 }
