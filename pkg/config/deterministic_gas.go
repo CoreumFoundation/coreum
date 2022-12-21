@@ -1,13 +1,14 @@
 package config
 
 import (
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/samber/lo"
 
 	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
@@ -202,44 +203,66 @@ func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint6
 	return dgr.FreeBytes*params.TxSizeCostPerByte + dgr.FreeSignatures*params.SigVerifyCostSecp256k1
 }
 
-type DeterministicGasRequirementsV2 struct {
+// V2
+
+type GasRequirementsV2 struct {
 	FixedGas       uint64
 	FreeBytes      uint64
 	FreeSignatures uint64
 
+	determGasRequirements   determGasRequirements
+	undetermGasRequirements undetermGasRequirements
+}
+
+func DefaultGasRequirementsV2() GasRequirementsV2 {
+	return GasRequirementsV2{
+		FixedGas:       50000,
+		FreeBytes:      2048,
+		FreeSignatures: 1,
+
+		determGasRequirements: determGasRequirements{
+			BankSendPerEntry:      22000,
+			BankMultiSendPerEntry: 27000,
+			FixedGasMsgs: map[string]uint64{
+				messageName(&distributiontypes.MsgFundCommunityPool{}): 50000,
+				messageName(&assettypes.MsgBurnFungibleToken{}):        35000,
+			},
+		},
+		undetermGasRequirements: undetermGasRequirements{
+			messageName(&wasmtypes.MsgExecuteContract{}),
+		},
+	}
+}
+
+func (gr GasRequirementsV2) GasRequiredByMessageV2(msg sdk.Msg) (uint64, bool) {
+	if gr.undetermGasRequirements.isUndetermMessage(msg) {
+		return 0, true
+	}
+
+	if gas, ok := gr.determGasRequirements.determGasByMessage(msg); ok {
+		return gas, true
+	}
+
+	// Msg type not defined neither as undeterministic nor deterministic.
+	return 0, false
+}
+
+type undetermGasRequirements []string
+
+func (ugr undetermGasRequirements) isUndetermMessage(msg sdk.Msg) bool {
+	return lo.Contains(ugr, messageName(msg))
+}
+
+type determGasRequirements struct {
 	// Msg types which implement custom logic.
 	BankSendPerEntry      uint64
 	BankMultiSendPerEntry uint64
 
 	// Map of deterministic msg types and their gas requirements.
 	FixedGasMsgs map[string]uint64
-
-	// List of known undeterministic msg types.
-	UndeterministicMsgs []string
 }
 
-func DefaultDeterministicGasRequirementsV2() DeterministicGasRequirementsV2 {
-	return DeterministicGasRequirementsV2{
-		FixedGas:       50000,
-		FreeBytes:      2048,
-		FreeSignatures: 1,
-
-		BankSendPerEntry:      22000,
-		BankMultiSendPerEntry: 27000,
-
-		FixedGasMsgs: map[string]uint64{
-			"cosmos.distribution.v1beta1.MsgFundCommunityPool": 50000,
-
-			"coreum.asset.v1.MsgBurnFungibleToken": 35000,
-		},
-
-		UndeterministicMsgs: []string{
-			"cosmwasm.wasm.v1.MsgExecuteContract",
-		},
-	}
-}
-
-func (dgr DeterministicGasRequirementsV2) GasRequiredByMessageV2(msg sdk.Msg) (uint64, bool) {
+func (dgr determGasRequirements) determGasByMessage(msg sdk.Msg) (uint64, bool) {
 	switch m := msg.(type) {
 	case *banktypes.MsgSend:
 		entriesNum := len(m.Amount)
@@ -248,20 +271,33 @@ func (dgr DeterministicGasRequirementsV2) GasRequiredByMessageV2(msg sdk.Msg) (u
 		}
 		return uint64(entriesNum) * dgr.BankSendPerEntry, true
 	case *banktypes.MsgMultiSend:
-		// TODO: Copy me.
-	default:
-		msgName := proto.MessageName(msg) // TODO: Replace with non-deprecated func.
-
-		if lo.Contains(dgr.UndeterministicMsgs, msgName) {
-			return 0, true
+		entriesNum := 0
+		for _, i := range m.Inputs {
+			entriesNum += len(i.Coins)
 		}
 
+		var outputEntriesNum int
+		for _, o := range m.Outputs {
+			outputEntriesNum += len(o.Coins)
+		}
+		if outputEntriesNum > entriesNum {
+			entriesNum = outputEntriesNum
+		}
+
+		if entriesNum == 0 {
+			entriesNum = 1
+		}
+		return uint64(entriesNum) * dgr.BankMultiSendPerEntry, true
+	default:
+		msgName := messageName(msg)
 		gas, ok := dgr.FixedGasMsgs[msgName]
 		if ok {
 			return gas, true
 		}
+		return 0, false
 	}
+}
 
-	// Unknown msg type
-	return 0, false
+func messageName(msg sdk.Msg) string {
+	return proto.MessageName(msg)
 }

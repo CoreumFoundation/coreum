@@ -13,6 +13,9 @@ import (
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 )
 
+// To access private variable from github.com/gogo/protobuf we link it to local variable.
+// This is needed to iterate through all registered protobuf types.
+//
 //go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
@@ -32,7 +35,7 @@ func TestDeterministicGasRequirements(t *testing.T) {
 		}
 
 		fmt.Printf("%T => %v\n", sdkMsg, name)
-		_, ok = config.DefaultDeterministicGasRequirementsV2().GasRequiredByMessageV2(sdkMsg)
+		_, ok = config.DefaultGasRequirementsV2().GasRequiredByMessageV2(sdkMsg)
 		assert.True(t, ok)
 	}
 }
