@@ -125,11 +125,13 @@ func ValidateSendFee(sendFee sdk.Dec) error {
 }
 
 func validateRate(rate sdk.Dec) error {
+	const maxRatePrecisionAllowed = 4
+
 	if rate.IsNil() {
 		return nil
 	}
 
-	if !isDecPrecisionValid(rate, 4) {
+	if !isDecPrecisionValid(rate, maxRatePrecisionAllowed) {
 		return sdkerrors.Wrap(ErrInvalidInput, "rate precision should not be more than 4 decimal places")
 	}
 
