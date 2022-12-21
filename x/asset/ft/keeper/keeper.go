@@ -70,7 +70,7 @@ func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FTDefinition, fromAddres
 	return nil
 }
 
-func (k Keeper) applySendFee(ctx sdk.Context, ft types.TokenDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) applySendFee(ctx sdk.Context, ft types.FTDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
 	if !ft.SendFee.IsNil() && ft.SendFee.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
 		sendFee := ft.CalculateSendFeeAmount(coin)
 		err := k.bankKeeper.SendCoins(ctx, fromAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendFee)))

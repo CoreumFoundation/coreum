@@ -1108,7 +1108,7 @@ paths:
                       multiplied by send amount to determine
 
                       amount sent to the token issuer account.
-                description: Token is a full representation of the fungible token.
+                description: FT is a full representation of the fungible token.
             description: >-
               QueryTokenResponse is response type for the Query/Token RPC
               method.
@@ -36742,6 +36742,50 @@ paths:
 definitions:
   coreum.asset.ft.v1.EmptyResponse:
     type: object
+  coreum.asset.ft.v1.FT:
+    type: object
+    properties:
+      denom:
+        type: string
+      issuer:
+        type: string
+      symbol:
+        type: string
+      subunit:
+        type: string
+      precision:
+        type: integer
+        format: int64
+      description:
+        type: string
+      globally_frozen:
+        type: boolean
+      features:
+        type: array
+        items:
+          type: string
+          enum:
+            - freeze
+            - mint
+            - burn
+            - whitelist
+          default: freeze
+          title: TokenFeature defines possible features of fungible token
+      burn_rate:
+        type: string
+        description: >-
+          burn_rate is a number between 0 and 1 which will be multiplied by send
+          amount to determine
+
+          burn_amount. This value will be burnt on top of the send amount.
+      send_fee:
+        type: string
+        description: >-
+          send_fee is a number between 0 and 1 which will be multiplied by send
+          amount to determine
+
+          amount sent to the token issuer account.
+    description: FT is a full representation of the fungible token.
   coreum.asset.ft.v1.QueryFrozenBalanceResponse:
     type: object
     properties:
@@ -36840,7 +36884,7 @@ definitions:
               send amount to determine
 
               amount sent to the token issuer account.
-        description: Token is a full representation of the fungible token.
+        description: FT is a full representation of the fungible token.
     description: QueryTokenResponse is response type for the Query/Token RPC method.
   coreum.asset.ft.v1.QueryWhitelistedBalanceResponse:
     type: object
@@ -36896,50 +36940,6 @@ definitions:
             NOTE: The amount field is an Int which implements the custom method
             signatures required by gogoproto.
         title: balances contains the whitelisted balances on the queried account
-  coreum.asset.ft.v1.Token:
-    type: object
-    properties:
-      denom:
-        type: string
-      issuer:
-        type: string
-      symbol:
-        type: string
-      subunit:
-        type: string
-      precision:
-        type: integer
-        format: int64
-      description:
-        type: string
-      globally_frozen:
-        type: boolean
-      features:
-        type: array
-        items:
-          type: string
-          enum:
-            - freeze
-            - mint
-            - burn
-            - whitelist
-          default: freeze
-          title: TokenFeature defines possible features of fungible token
-      burn_rate:
-        type: string
-        description: >-
-          burn_rate is a number between 0 and 1 which will be multiplied by send
-          amount to determine
-
-          burn_amount. This value will be burnt on top of the send amount.
-      send_fee:
-        type: string
-        description: >-
-          send_fee is a number between 0 and 1 which will be multiplied by send
-          amount to determine
-
-          amount sent to the token issuer account.
-    description: Token is a full representation of the fungible token.
   coreum.asset.ft.v1.TokenFeature:
     type: string
     enum:
