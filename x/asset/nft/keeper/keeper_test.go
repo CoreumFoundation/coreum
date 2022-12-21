@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	codetypes "github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -25,7 +25,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	dataString := "metadata"
-	dataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
+	dataValue, err := codectypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
 	requireT.NoError(err)
 	settings := types.IssueClassSettings{
 		Issuer:      addr,
@@ -74,7 +74,7 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
 
 	dataString := "metadata"
-	dataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
+	dataValue, err := codectypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
 	requireT.NoError(err)
 	settings := types.MintSettings{
 		Sender:  addr,

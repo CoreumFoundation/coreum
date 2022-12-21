@@ -5,7 +5,9 @@ package modules
 import (
 	"testing"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
@@ -33,7 +35,11 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		}),
 	)
 
-	// issue new NFT class
+	// issue new NFT class with invalid data type
+
+	data, err := codectypes.NewAnyWithValue(&assetnfttypes.MsgMint{})
+	requireT.NoError(err)
+
 	issueMsg := &assetnfttypes.MsgIssueClass{
 		Issuer:      issuer.String(),
 		Symbol:      "symbol",
@@ -41,8 +47,52 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		Description: "description",
 		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
+		Data:        data,
 	}
 	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
+
+	// issue new NFT class with too long data
+
+	data, err = codectypes.NewAnyWithValue(&gogotypes.BytesValue{Value: make([]byte, assetnfttypes.MaxDataSize+1)})
+	requireT.NoError(err)
+
+	issueMsg = &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		Data:        data,
+	}
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
+
+	// issue new NFT class
+	data, err = codectypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte{0x00, 0x01}})
+	requireT.NoError(err)
+
+	issueMsg = &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		Data:        data,
+	}
+	res, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -76,6 +126,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		Description: issueMsg.Description,
 		Uri:         issueMsg.URI,
 		UriHash:     issueMsg.URIHash,
+		Data:        data,
 	}, nftClassRes.Class)
 }
 

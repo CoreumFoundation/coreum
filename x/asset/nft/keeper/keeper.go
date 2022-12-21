@@ -36,6 +36,10 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
+	if err := types.ValidateData(settings.Data); err != nil {
+		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
+	}
+
 	found := k.nftKeeper.HasClass(ctx, id)
 	if found {
 		return "", sdkerrors.Wrapf(
