@@ -24,12 +24,12 @@ jobs:
             linter-cache: false
             docker-cache: false
           - ci_step: "build"
-            command: "crust test/coreum --log-format=yaml" # FIXME replace with -> crust build --log-format=yaml
+            command: "crust build --log-format=yaml"
             go-cache: true
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests"
-            command: "crust test/coreum --log-format=yaml" # FIXME(dhil uncomment) -> crust build/integration-tests images --log-format=yaml && crust znet test --log-format=yaml
+            command: "crust build/integration-tests images --log-format=yaml && crust znet test --log-format=yaml"
             go-cache: true
             linter-cache: false
             docker-cache: true
