@@ -10,7 +10,6 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -55,7 +54,7 @@ func TestAuthFeeLimits(t *testing.T) {
 			WithGas(chain.GasLimitByMsgs(msg)).
 			WithGasPrices(chain.NewDecCoin(gasPriceWithMaxDiscount.QuoInt64(2)).String()),
 		msg)
-	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
+	require.True(t, sdkerrors.ErrInsufficientFee.Is(err))
 
 	// no gas price
 	_, err = tx.BroadcastTx(ctx,
@@ -64,7 +63,7 @@ func TestAuthFeeLimits(t *testing.T) {
 			WithGas(chain.GasLimitByMsgs(msg)).
 			WithGasPrices(""),
 		msg)
-	require.True(t, cosmoserrors.ErrInsufficientFee.Is(err))
+	require.True(t, sdkerrors.ErrInsufficientFee.Is(err))
 
 	// more gas than MaxBlockGas
 	_, err = tx.BroadcastTx(ctx,
@@ -212,7 +211,7 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 			WithAccountNumber(accInfo.GetAccountNumber()).
 			WithGas(chain.GasLimitByMsgs(msg)),
 		msg)
-	require.True(t, cosmoserrors.ErrWrongSequence.Is(err))
+	require.True(t, sdkerrors.ErrWrongSequence.Is(err))
 }
 
 func createMulisignTx(requireT *require.Assertions, txBuilder sdkclient.TxBuilder, accSec uint64, multisigPublicKey *sdkmultisig.LegacyAminoPubKey) authsigning.Tx {
