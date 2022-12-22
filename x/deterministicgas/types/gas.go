@@ -3,11 +3,11 @@ package types
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/grpc"
+	"github.com/gogo/protobuf/proto"
 	googlegrpc "google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -91,11 +91,12 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 			return method.Handler(srv, ctx, dec, func(ctx context.Context, req interface{}, info *googlegrpc.UnaryServerInfo, handler googlegrpc.UnaryHandler) (resp interface{}, err error) {
 				return interceptor(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
 					sdkCtx := sdk.UnwrapSDKContext(ctx)
-					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, req.(sdk.Msg), s.deterministicGasRequirements)
+					msg := req.(sdk.Msg)
+					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, msg, s.deterministicGasRequirements)
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
 					if isDeterministic {
-						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, req)
+						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg))
 					}
 					return res, err
 				})
@@ -119,16 +120,16 @@ func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequir
 	return ctx, gasBefore, exists
 }
 
-func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msg interface{}) {
-	nondeterministicGas := newCtx.GasMeter().GasConsumed()
-	if nondeterministicGas == 0 {
+func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgName string) {
+	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
+	if deterministicGas == 0 {
 		return
 	}
 
-	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
+	nondeterministicGas := newCtx.GasMeter().GasConsumed()
 
 	gasFactor := (float32(nondeterministicGas) - float32(deterministicGas)) / float32(deterministicGas)
 	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
-		{Name: "msg_type", Value: reflect.TypeOf(msg).String()},
+		{Name: "msg_name", Value: msgName},
 	})
 }
