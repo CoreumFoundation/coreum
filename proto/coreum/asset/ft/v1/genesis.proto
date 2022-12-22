@@ -1,0 +1,29 @@
+syntax = "proto3";
+package coreum.asset.ft.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "coreum/asset/ft/v1/token.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
+
+// GenesisState defines the asset module's genesis state.
+message GenesisState {
+  // tokens keep the fungible token state
+  repeated FT tokens  = 1 [(gogoproto.nullable) = false];
+  // frozen_balances contains the frozen balances on all of the accounts
+  repeated Balance frozen_balances = 2 [(gogoproto.nullable) = false];
+  // whitelisted_balances contains the whitelisted balances on all of the accounts
+  repeated Balance whitelisted_balances = 3 [(gogoproto.nullable) = false];
+}
+
+// Balance defines an account address and balance pair used in the bank module's
+// genesis state.
+message Balance {
+  // address is the address of the balance holder.
+  string address = 1;
+
+  // coins defines the different coins this balance holds.
+  repeated cosmos.base.v1beta1.Coin coins = 2
+  [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.nullable) = false];
+}

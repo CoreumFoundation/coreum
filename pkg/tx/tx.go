@@ -134,6 +134,12 @@ func BroadcastRawTx(ctx context.Context, clientCtx ClientContext, txBytes []byte
 		if err != nil {
 			return nil, err
 		}
+
+		if res.Code != 0 {
+			return nil, errors.Wrapf(sdkerrors.ABCIError(res.Codespace, res.Code, res.Log),
+				"transaction '%s' failed", res.Hash.String())
+		}
+
 		return sdk.NewResponseFormatBroadcastTx(res), nil
 
 	case flags.BroadcastAsync:

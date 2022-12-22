@@ -6,6 +6,10 @@ package nft
 import (
 	context "context"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
@@ -13,15 +17,15 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -41,9 +45,11 @@ func (*QueryBalanceRequest) ProtoMessage()    {}
 func (*QueryBalanceRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{0}
 }
+
 func (m *QueryBalanceRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryBalanceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryBalanceRequest.Marshal(b, m, deterministic)
@@ -56,12 +62,15 @@ func (m *QueryBalanceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
+
 func (m *QueryBalanceRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryBalanceRequest.Merge(m, src)
 }
+
 func (m *QueryBalanceRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryBalanceRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryBalanceRequest.DiscardUnknown(m)
 }
@@ -93,9 +102,11 @@ func (*QueryBalanceResponse) ProtoMessage()    {}
 func (*QueryBalanceResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{1}
 }
+
 func (m *QueryBalanceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryBalanceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryBalanceResponse.Marshal(b, m, deterministic)
@@ -108,12 +119,15 @@ func (m *QueryBalanceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
+
 func (m *QueryBalanceResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryBalanceResponse.Merge(m, src)
 }
+
 func (m *QueryBalanceResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryBalanceResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryBalanceResponse.DiscardUnknown(m)
 }
@@ -139,9 +153,11 @@ func (*QueryOwnerRequest) ProtoMessage()    {}
 func (*QueryOwnerRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{2}
 }
+
 func (m *QueryOwnerRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryOwnerRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryOwnerRequest.Marshal(b, m, deterministic)
@@ -154,12 +170,15 @@ func (m *QueryOwnerRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
+
 func (m *QueryOwnerRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryOwnerRequest.Merge(m, src)
 }
+
 func (m *QueryOwnerRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryOwnerRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryOwnerRequest.DiscardUnknown(m)
 }
@@ -191,9 +210,11 @@ func (*QueryOwnerResponse) ProtoMessage()    {}
 func (*QueryOwnerResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{3}
 }
+
 func (m *QueryOwnerResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryOwnerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryOwnerResponse.Marshal(b, m, deterministic)
@@ -206,12 +227,15 @@ func (m *QueryOwnerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *QueryOwnerResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryOwnerResponse.Merge(m, src)
 }
+
 func (m *QueryOwnerResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryOwnerResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryOwnerResponse.DiscardUnknown(m)
 }
@@ -236,9 +260,11 @@ func (*QuerySupplyRequest) ProtoMessage()    {}
 func (*QuerySupplyRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{4}
 }
+
 func (m *QuerySupplyRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QuerySupplyRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QuerySupplyRequest.Marshal(b, m, deterministic)
@@ -251,12 +277,15 @@ func (m *QuerySupplyRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *QuerySupplyRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QuerySupplyRequest.Merge(m, src)
 }
+
 func (m *QuerySupplyRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QuerySupplyRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QuerySupplyRequest.DiscardUnknown(m)
 }
@@ -281,9 +310,11 @@ func (*QuerySupplyResponse) ProtoMessage()    {}
 func (*QuerySupplyResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{5}
 }
+
 func (m *QuerySupplyResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QuerySupplyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QuerySupplyResponse.Marshal(b, m, deterministic)
@@ -296,12 +327,15 @@ func (m *QuerySupplyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
+
 func (m *QuerySupplyResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QuerySupplyResponse.Merge(m, src)
 }
+
 func (m *QuerySupplyResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QuerySupplyResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QuerySupplyResponse.DiscardUnknown(m)
 }
@@ -328,9 +362,11 @@ func (*QueryNFTsRequest) ProtoMessage()    {}
 func (*QueryNFTsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{6}
 }
+
 func (m *QueryNFTsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryNFTsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryNFTsRequest.Marshal(b, m, deterministic)
@@ -343,12 +379,15 @@ func (m *QueryNFTsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
+
 func (m *QueryNFTsRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryNFTsRequest.Merge(m, src)
 }
+
 func (m *QueryNFTsRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryNFTsRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryNFTsRequest.DiscardUnknown(m)
 }
@@ -388,9 +427,11 @@ func (*QueryNFTsResponse) ProtoMessage()    {}
 func (*QueryNFTsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{7}
 }
+
 func (m *QueryNFTsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryNFTsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryNFTsResponse.Marshal(b, m, deterministic)
@@ -403,12 +444,15 @@ func (m *QueryNFTsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
+
 func (m *QueryNFTsResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryNFTsResponse.Merge(m, src)
 }
+
 func (m *QueryNFTsResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryNFTsResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryNFTsResponse.DiscardUnknown(m)
 }
@@ -441,9 +485,11 @@ func (*QueryNFTRequest) ProtoMessage()    {}
 func (*QueryNFTRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{8}
 }
+
 func (m *QueryNFTRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryNFTRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryNFTRequest.Marshal(b, m, deterministic)
@@ -456,12 +502,15 @@ func (m *QueryNFTRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
+
 func (m *QueryNFTRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryNFTRequest.Merge(m, src)
 }
+
 func (m *QueryNFTRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryNFTRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryNFTRequest.DiscardUnknown(m)
 }
@@ -493,9 +542,11 @@ func (*QueryNFTResponse) ProtoMessage()    {}
 func (*QueryNFTResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{9}
 }
+
 func (m *QueryNFTResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryNFTResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryNFTResponse.Marshal(b, m, deterministic)
@@ -508,12 +559,15 @@ func (m *QueryNFTResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
+
 func (m *QueryNFTResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryNFTResponse.Merge(m, src)
 }
+
 func (m *QueryNFTResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryNFTResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryNFTResponse.DiscardUnknown(m)
 }
@@ -538,9 +592,11 @@ func (*QueryClassRequest) ProtoMessage()    {}
 func (*QueryClassRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{10}
 }
+
 func (m *QueryClassRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryClassRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryClassRequest.Marshal(b, m, deterministic)
@@ -553,12 +609,15 @@ func (m *QueryClassRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
+
 func (m *QueryClassRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryClassRequest.Merge(m, src)
 }
+
 func (m *QueryClassRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryClassRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryClassRequest.DiscardUnknown(m)
 }
@@ -583,9 +642,11 @@ func (*QueryClassResponse) ProtoMessage()    {}
 func (*QueryClassResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{11}
 }
+
 func (m *QueryClassResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryClassResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryClassResponse.Marshal(b, m, deterministic)
@@ -598,12 +659,15 @@ func (m *QueryClassResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *QueryClassResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryClassResponse.Merge(m, src)
 }
+
 func (m *QueryClassResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryClassResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryClassResponse.DiscardUnknown(m)
 }
@@ -629,9 +693,11 @@ func (*QueryClassesRequest) ProtoMessage()    {}
 func (*QueryClassesRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{12}
 }
+
 func (m *QueryClassesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryClassesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryClassesRequest.Marshal(b, m, deterministic)
@@ -644,12 +710,15 @@ func (m *QueryClassesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
+
 func (m *QueryClassesRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryClassesRequest.Merge(m, src)
 }
+
 func (m *QueryClassesRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryClassesRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryClassesRequest.DiscardUnknown(m)
 }
@@ -675,9 +744,11 @@ func (*QueryClassesResponse) ProtoMessage()    {}
 func (*QueryClassesResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_531d9ac0c4020f3e, []int{13}
 }
+
 func (m *QueryClassesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryClassesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryClassesResponse.Marshal(b, m, deterministic)
@@ -690,12 +761,15 @@ func (m *QueryClassesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
+
 func (m *QueryClassesResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryClassesResponse.Merge(m, src)
 }
+
 func (m *QueryClassesResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryClassesResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryClassesResponse.DiscardUnknown(m)
 }
@@ -906,27 +980,32 @@ type QueryServer interface {
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
-type UnimplementedQueryServer struct {
-}
+type UnimplementedQueryServer struct{}
 
 func (*UnimplementedQueryServer) Balance(ctx context.Context, req *QueryBalanceRequest) (*QueryBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Balance not implemented")
 }
+
 func (*UnimplementedQueryServer) Owner(ctx context.Context, req *QueryOwnerRequest) (*QueryOwnerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Owner not implemented")
 }
+
 func (*UnimplementedQueryServer) Supply(ctx context.Context, req *QuerySupplyRequest) (*QuerySupplyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Supply not implemented")
 }
+
 func (*UnimplementedQueryServer) NFTs(ctx context.Context, req *QueryNFTsRequest) (*QueryNFTsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NFTs not implemented")
 }
+
 func (*UnimplementedQueryServer) NFT(ctx context.Context, req *QueryNFTRequest) (*QueryNFTResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NFT not implemented")
 }
+
 func (*UnimplementedQueryServer) Class(ctx context.Context, req *QueryClassRequest) (*QueryClassResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Class not implemented")
 }
+
 func (*UnimplementedQueryServer) Classes(ctx context.Context, req *QueryClassesRequest) (*QueryClassesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Classes not implemented")
 }
@@ -1618,6 +1697,7 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *QueryBalanceRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1833,9 +1913,11 @@ func (m *QueryClassesResponse) Size() (n int) {
 func sovQuery(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *QueryBalanceRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1950,6 +2032,7 @@ func (m *QueryBalanceRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryBalanceResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2019,6 +2102,7 @@ func (m *QueryBalanceResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryOwnerRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2133,6 +2217,7 @@ func (m *QueryOwnerRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryOwnerResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2215,6 +2300,7 @@ func (m *QueryOwnerResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QuerySupplyRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2297,6 +2383,7 @@ func (m *QuerySupplyRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QuerySupplyResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2366,6 +2453,7 @@ func (m *QuerySupplyResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryNFTsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2516,6 +2604,7 @@ func (m *QueryNFTsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryNFTsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2636,6 +2725,7 @@ func (m *QueryNFTsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryNFTRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2750,6 +2840,7 @@ func (m *QueryNFTRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryNFTResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2836,6 +2927,7 @@ func (m *QueryNFTResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryClassRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2918,6 +3010,7 @@ func (m *QueryClassRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryClassResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3004,6 +3097,7 @@ func (m *QueryClassResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryClassesRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3090,6 +3184,7 @@ func (m *QueryClassesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryClassesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3210,6 +3305,7 @@ func (m *QueryClassesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipQuery(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
