@@ -8,7 +8,7 @@ import (
 	nft "github.com/CoreumFoundation/coreum/x/nft/module"
 )
 
-// TestOriginalNFTModuleConsensusVersion tests the the original nft module has not increased its consensus version
+// TestOriginalNFTModuleConsensusVersion tests the original nft module has not increased its consensus version
 // if this tests fails, it means that we need to register the new migration handlers of the original nft module.
 func TestNFTModuleConsensusVersion(t *testing.T) {
 	nftModule := nft.AppModule{}
