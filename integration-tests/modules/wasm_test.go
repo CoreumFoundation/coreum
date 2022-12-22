@@ -95,12 +95,12 @@ func TestWASMBankSendContract(t *testing.T) {
 	// deployWASMContract and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
-	contractAddr, _, err := DeployAndInstantiateWASMContract(
+	contractAddr, _, err := deployAndInstantiateWASMContract(
 		ctx,
 		clientCtx,
 		txf,
 		bankSendWASM,
-		InstantiateConfig{
+		instantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
 			amount:     chain.NewCoin(sdk.NewInt(10000)),
@@ -148,7 +148,7 @@ func TestWASMBankSendContract(t *testing.T) {
 		WithSimulateAndExecute(false).
 		// the gas here is to try to execute the tx and don't fail on the gas estimation
 		WithGas(uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
-	_, err = ExecuteWASMContract(ctx, clientCtx, txf, contractAddr, withdrawPayload, sdk.Coin{})
+	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, withdrawPayload, sdk.Coin{})
 	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// send coin from the contract to test wallet
@@ -162,7 +162,7 @@ func TestWASMBankSendContract(t *testing.T) {
 	requireT.NoError(err)
 
 	txf = txf.WithSimulateAndExecute(true)
-	_, err = ExecuteWASMContract(ctx, clientCtx, txf, contractAddr, withdrawPayload, sdk.Coin{})
+	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, withdrawPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check contract and wallet balances
@@ -207,12 +207,12 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 
-	contractAddr, _, err := DeployAndInstantiateWASMContract(
+	contractAddr, _, err := deployAndInstantiateWASMContract(
 		ctx,
 		clientCtx,
 		txf,
 		bankSendWASM,
-		InstantiateConfig{
+		instantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
 			amount:     chain.NewCoin(sdk.NewInt(10000)),
@@ -289,12 +289,12 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 
-	contractAddr, codeID, err := DeployAndInstantiateWASMContract(
+	contractAddr, codeID, err := deployAndInstantiateWASMContract(
 		ctx,
 		clientCtx,
 		txf,
 		simpleStateWASM,
-		InstantiateConfig{
+		instantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
 			label:      "simple_state",
@@ -305,7 +305,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	// get the current counter state
 	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
 	requireT.NoError(err)
-	queryOut, err := QueryWASMContract(ctx, clientCtx, contractAddr, getCountPayload)
+	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, getCountPayload)
 	requireT.NoError(err)
 	var response simpleState
 	err = json.Unmarshal(queryOut, &response)
@@ -316,7 +316,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	gasUsedBeforePinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1338)
 
 	// verify that smart contract is not pinned
-	requireT.False(IsWASMContractPinned(ctx, clientCtx, codeID))
+	requireT.False(isWASMContractPinned(ctx, clientCtx, codeID))
 
 	// pin smart contract
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.PinCodesProposal{
@@ -340,7 +340,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
-	requireT.True(IsWASMContractPinned(ctx, clientCtx, codeID))
+	requireT.True(isWASMContractPinned(ctx, clientCtx, codeID))
 
 	gasUsedAfterPinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1339)
 
@@ -364,7 +364,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
-	requireT.False(IsWASMContractPinned(ctx, clientCtx, codeID))
+	requireT.False(isWASMContractPinned(ctx, clientCtx, codeID))
 
 	gasUsedAfterUnpinning := incrementAndVerify(ctx, clientCtx, txf, contractAddr, requireT, 1340)
 
@@ -399,12 +399,12 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 	// deployWASMContract and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
-	contractAddr, _, err := DeployAndInstantiateWASMContract(
+	contractAddr, _, err := deployAndInstantiateWASMContract(
 		ctx,
 		clientCtx,
 		txf,
 		issueFungibleTokenWASM,
-		InstantiateConfig{
+		instantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
 			label:      "fungible_token",
@@ -433,7 +433,7 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	txf = txf.WithSimulateAndExecute(true)
-	gasUsed, err := ExecuteWASMContract(ctx, clientCtx, txf, contractAddr, createPayload, sdk.Coin{})
+	gasUsed, err := executeWASMContract(ctx, clientCtx, txf, contractAddr, createPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	logger.Get(ctx).Info("Fungible token issued by smart contract", zap.Int64("gasUsed", gasUsed))
@@ -476,7 +476,7 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 		ftGetCount: {},
 	})
 	requireT.NoError(err)
-	queryOut, err := QueryWASMContract(ctx, clientCtx, contractAddr, getCountPayload)
+	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, getCountPayload)
 	requireT.NoError(err)
 
 	counterResponse := struct {
@@ -495,7 +495,7 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	queryOut, err = QueryWASMContract(ctx, clientCtx, contractAddr, getInfoPayload)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, getInfoPayload)
 	requireT.NoError(err)
 
 	infoResponse := struct {
@@ -522,13 +522,13 @@ func incrementAndVerify(
 	// execute contract to increment the count
 	incrementPayload, err := methodToEmptyBodyPayload(simpleIncrement)
 	requireT.NoError(err)
-	gasUsed, err := ExecuteWASMContract(ctx, clientCtx, txf, contractAddr, incrementPayload, sdk.Coin{})
+	gasUsed, err := executeWASMContract(ctx, clientCtx, txf, contractAddr, incrementPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check the update count
 	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
 	requireT.NoError(err)
-	queryOut, err := QueryWASMContract(ctx, clientCtx, contractAddr, getCountPayload)
+	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, getCountPayload)
 	requireT.NoError(err)
 
 	var response simpleState
@@ -543,8 +543,8 @@ func incrementAndVerify(
 
 var gasMultiplier = 1.5
 
-// InstantiateConfig contains params specific to contract instantiation.
-type InstantiateConfig struct {
+// instantiateConfig contains params specific to contract instantiation.
+type instantiateConfig struct {
 	accessType wasmtypes.AccessType
 	payload    json.RawMessage
 	amount     sdk.Coin
@@ -552,8 +552,8 @@ type InstantiateConfig struct {
 	CodeID     uint64
 }
 
-// DeployAndInstantiateWASMContract deploys, instantiateWASMContract the wasm contract and returns its address.
-func DeployAndInstantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte, initConfig InstantiateConfig) (string, uint64, error) {
+// deployAndInstantiateWASMContract deploys, instantiateWASMContract the wasm contract and returns its address.
+func deployAndInstantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte, initConfig instantiateConfig) (string, uint64, error) {
 	codeID, err := deployWASMContract(ctx, clientCtx, txf, wasmData)
 	if err != nil {
 		return "", 0, err
@@ -568,8 +568,8 @@ func DeployAndInstantiateWASMContract(ctx context.Context, clientCtx tx.ClientCo
 	return contractAddr, codeID, nil
 }
 
-// ExecuteWASMContract executes the wasm contract with the payload and optionally funding amount.
-func ExecuteWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
+// executeWASMContract executes the wasm contract with the payload and optionally funding amount.
+func executeWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
 	funds := sdk.NewCoins()
 	if !fundAmt.Amount.IsNil() {
 		funds = funds.Add(fundAmt)
@@ -592,8 +592,8 @@ func ExecuteWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx
 	return res.GasUsed, nil
 }
 
-// QueryWASMContract queries the contract with the requested payload.
-func QueryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
+// queryWASMContract queries the contract with the requested payload.
+func queryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
 	query := &wasmtypes.QuerySmartContractStateRequest{
 		Address:   contractAddr,
 		QueryData: wasmtypes.RawContractMessage(payload),
@@ -602,14 +602,14 @@ func QueryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contract
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.SmartContractState(ctx, query)
 	if err != nil {
-		return nil, errors.Wrap(err, "WASMQueryClient returned an error after smart contract state QueryWASMContract")
+		return nil, errors.Wrap(err, "WASMQueryClient returned an error after smart contract state queryWASMContract")
 	}
 
 	return json.RawMessage(resp.Data), nil
 }
 
-// IsWASMContractPinned returns true if smart contract is pinned
-func IsWASMContractPinned(ctx context.Context, clientCtx tx.ClientContext, codeID uint64) (bool, error) {
+// isWASMContractPinned returns true if smart contract is pinned
+func isWASMContractPinned(ctx context.Context, clientCtx tx.ClientContext, codeID uint64) (bool, error) {
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})
 	if err != nil {
@@ -647,7 +647,7 @@ func deployWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.
 }
 
 // instantiates the contract and returns the contract address.
-func instantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, req InstantiateConfig) (string, error) {
+func instantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, req instantiateConfig) (string, error) {
 	funds := sdk.NewCoins()
 	if amount := req.amount; !amount.Amount.IsNil() {
 		funds = funds.Add(amount)
