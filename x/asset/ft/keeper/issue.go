@@ -175,7 +175,6 @@ func (k Keeper) GetTokenDefinitions(ctx sdk.Context, pagination *query.PageReque
 			return &types.FTDefinition{}
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}

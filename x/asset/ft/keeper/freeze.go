@@ -10,7 +10,7 @@ import (
 )
 
 // Freeze freezes specified token from the specified account
-func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
@@ -38,7 +38,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddre
 }
 
 // Unfreeze unfreezes specified tokens from the specified account
-func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}

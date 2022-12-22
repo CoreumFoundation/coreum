@@ -25,7 +25,8 @@ func TestFreeze(t *testing.T) {
 	denom := types.BuildDenom(subunit, issuer)
 
 	// Issue token
-	args := []string{symbol, subunit, precision, "777", `"My Token"`,
+	args := []string{
+		symbol, subunit, precision, "777", `"My Token"`,
 		"--features", types.TokenFeature_freeze.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
@@ -49,7 +50,8 @@ func TestFreeze(t *testing.T) {
 		symbol := "l" + uuid.NewString()[:4]
 		subunit := "sub" + symbol
 		denom := types.BuildDenom(subunit, issuer)
-		args := []string{symbol, subunit, precision, "777", `"My Token"`,
+		args := []string{
+			symbol, subunit, precision, "777", `"My Token"`,
 			"--features", types.TokenFeature_freeze.String(), //nolint:nosnakecase
 		}
 		args = append(args, txValidator1Args(testNetwork)...)

@@ -9,9 +9,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-var (
-	globalFreezeEnabledStoreVal = []byte{0x00}
-)
+var globalFreezeEnabledStoreVal = []byte{0x00}
 
 // GloballyFreeze enables global freeze on a fungible token. This function is idempotent.
 func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
