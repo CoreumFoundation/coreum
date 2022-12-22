@@ -127,7 +127,7 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 
 	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
 
-	gasFactor := (float32(deterministicGas) - float32(nondeterministicGas)) / float32(nondeterministicGas)
+	gasFactor := (float32(nondeterministicGas) - float32(deterministicGas)) / float32(deterministicGas)
 	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
 		{Name: "msg_type", Value: reflect.TypeOf(msg).String()},
 	})
