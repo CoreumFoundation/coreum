@@ -7,7 +7,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/gogo/protobuf/proto"
-	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -30,7 +29,7 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 
 	dataString := "metadata"
-	dataValue, err := codectypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
+	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
 	requireT.NoError(err)
 
 	validMessage := types.MsgIssueClass{
@@ -59,7 +58,7 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 			messageFunc: func() *types.MsgIssueClass {
 				msg := validMessage
 				msg.Data = &codectypes.Any{
-					TypeUrl: "/" + proto.MessageName(&gogotypes.BytesValue{}),
+					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
 					Value:   make([]byte, types.MaxDataSize),
 				}
 				return &msg
@@ -141,7 +140,7 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 			messageFunc: func() *types.MsgIssueClass {
 				msg := validMessage
 				msg.Data = &codectypes.Any{
-					TypeUrl: "/" + proto.MessageName(&gogotypes.BytesValue{}),
+					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
 					Value:   make([]byte, types.MaxDataSize+1),
 				}
 				return &msg
@@ -175,11 +174,12 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func TestMsgMint_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 
 	dataString := "metadata"
-	dataValue, err := codectypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
+	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
 	requireT.NoError(err)
 
 	validMessage := types.MsgMint{
@@ -207,7 +207,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			messageFunc: func() *types.MsgMint {
 				msg := validMessage
 				msg.Data = &codectypes.Any{
-					TypeUrl: "/" + proto.MessageName(&gogotypes.BytesValue{}),
+					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
 					Value:   make([]byte, types.MaxDataSize),
 				}
 				return &msg
@@ -271,7 +271,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			messageFunc: func() *types.MsgMint {
 				msg := validMessage
 				msg.Data = &codectypes.Any{
-					TypeUrl: "/" + proto.MessageName(&gogotypes.BytesValue{}),
+					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
 					Value:   make([]byte, types.MaxDataSize+1),
 				}
 				return &msg

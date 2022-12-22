@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/gogo/protobuf/proto"
-	gogotypes "github.com/gogo/protobuf/types"
 
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -92,7 +91,7 @@ func ValidateData(data *codectypes.Any) error {
 		if len(data.Value) > MaxDataSize {
 			return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", MaxDataSize)
 		}
-		if data.TypeUrl != "/"+proto.MessageName(&gogotypes.BytesValue{}) {
+		if data.TypeUrl != "/"+proto.MessageName((*DataBytes)(nil)) {
 			return sdkerrors.Wrap(ErrInvalidInput, "data field must contain NFTDataArray type")
 		}
 	}

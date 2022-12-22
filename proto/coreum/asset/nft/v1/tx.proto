@@ -38,3 +38,7 @@ message MsgMint {
 }
 
 message EmptyResponse {}
+
+message DataBytes {
+  bytes Data = 1;
+}

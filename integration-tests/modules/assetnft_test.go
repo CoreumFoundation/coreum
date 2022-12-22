@@ -7,7 +7,6 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
@@ -59,7 +58,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 
 	// issue new NFT class with too long data
 
-	data, err = codectypes.NewAnyWithValue(&gogotypes.BytesValue{Value: make([]byte, assetnfttypes.MaxDataSize+1)})
+	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: make([]byte, assetnfttypes.MaxDataSize+1)})
 	requireT.NoError(err)
 
 	issueMsg = &assetnfttypes.MsgIssueClass{
@@ -80,8 +79,14 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
 
 	// issue new NFT class
-	data, err = codectypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte{0x00, 0x01}})
+	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte{0x00, 0x01}})
 	requireT.NoError(err)
+
+	// we need to do this, otherwise assertion fails because some private fields are set differently
+	dataToCompare := &codectypes.Any{
+		TypeUrl: data.TypeUrl,
+		Value:   data.Value,
+	}
 
 	issueMsg = &assetnfttypes.MsgIssueClass{
 		Issuer:      issuer.String(),
@@ -126,7 +131,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		Description: issueMsg.Description,
 		Uri:         issueMsg.URI,
 		UriHash:     issueMsg.URIHash,
-		Data:        data,
+		Data:        dataToCompare,
 	}, nftClassRes.Class)
 }
 
@@ -164,16 +169,69 @@ func TestAssetNFTMint(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// mint new token in that class
 	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+
+	// mint with invalid data type
+
+	data, err := codectypes.NewAnyWithValue(&assetnfttypes.MsgMint{})
+	requireT.NoError(err)
+
 	mintMsg := &assetnfttypes.MsgMint{
 		Sender:  issuer.String(),
 		ID:      "id-1",
 		ClassID: classID,
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
+		Data:    data,
 	}
 	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
+
+	// mint with too long data
+
+	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: make([]byte, assetnfttypes.MaxDataSize+1)})
+	requireT.NoError(err)
+
+	mintMsg = &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      "id-1",
+		ClassID: classID,
+		URI:     "https://my-class-meta.invalid/1",
+		URIHash: "content-hash",
+		Data:    data,
+	}
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
+
+	// mint new token in that class
+	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte{0x00, 0x01}})
+	requireT.NoError(err)
+
+	// we need to do this, otherwise assertion fails because some private fields are set differently
+	dataToCompare := &codectypes.Any{
+		TypeUrl: data.TypeUrl,
+		Value:   data.Value,
+	}
+
+	mintMsg = &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      "id-1",
+		ClassID: classID,
+		URI:     "https://my-class-meta.invalid/1",
+		URIHash: "content-hash",
+		Data:    data,
+	}
+	res, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -202,6 +260,7 @@ func TestAssetNFTMint(t *testing.T) {
 		Id:      mintMsg.ID,
 		Uri:     mintMsg.URI,
 		UriHash: mintMsg.URIHash,
+		Data:    dataToCompare,
 	}, nftRes.Nft)
 
 	// check the owner

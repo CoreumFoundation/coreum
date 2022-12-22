@@ -83,6 +83,10 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
+	if err := types.ValidateData(settings.Data); err != nil {
+		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
+	}
+
 	if err := validateMintingAllowed(settings.Sender, settings.ClassID); err != nil {
 		return err
 	}
