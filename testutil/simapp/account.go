@@ -67,7 +67,7 @@ func createIncrementalAccounts(accNum int) []sdk.AccAddress {
 	return addresses
 }
 
-func testAddr(addr string, bech string) (sdk.AccAddress, error) {
+func testAddr(addr, bech string) (sdk.AccAddress, error) {
 	res, err := sdk.AccAddressFromHex(addr)
 	if err != nil {
 		return nil, err

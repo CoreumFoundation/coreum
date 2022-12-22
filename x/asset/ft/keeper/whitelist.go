@@ -10,7 +10,7 @@ import (
 )
 
 // SetWhitelistedBalance sets whitelisted limit for the account
-func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error {
+func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if coin.IsNil() || coin.IsNegative() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
 	}
