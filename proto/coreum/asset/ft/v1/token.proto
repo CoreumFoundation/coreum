@@ -27,9 +27,9 @@ message FTDefinition {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
-  // send_fee is a number between 0 and 1 which will be multiplied by send amount to determine
+  // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
   // amount sent to the token issuer account.
-  string send_fee = 5 [
+  string send_commission_rate = 5 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
@@ -53,9 +53,9 @@ message FT {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
-  // send_fee is a number between 0 and 1 which will be multiplied by send amount to determine
+  // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
   // amount sent to the token issuer account.
-  string send_fee = 10 [
+  string send_commission_rate = 10 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];

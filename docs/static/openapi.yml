@@ -1101,11 +1101,11 @@ paths:
 
                       burn_amount. This value will be burnt on top of the send
                       amount.
-                  send_fee:
+                  send_commission_rate:
                     type: string
                     description: >-
-                      send_fee is a number between 0 and 1 which will be
-                      multiplied by send amount to determine
+                      send_commission_rate is a number between 0 and 1 which
+                      will be multiplied by send amount to determine
 
                       amount sent to the token issuer account.
                 description: FT is a full representation of the fungible token.
@@ -26863,11 +26863,11 @@ definitions:
           amount to determine
 
           burn_amount. This value will be burnt on top of the send amount.
-      send_fee:
+      send_commission_rate:
         type: string
         description: >-
-          send_fee is a number between 0 and 1 which will be multiplied by send
-          amount to determine
+          send_commission_rate is a number between 0 and 1 which will be
+          multiplied by send amount to determine
 
           amount sent to the token issuer account.
     description: FT is a full representation of the fungible token.
@@ -26962,11 +26962,11 @@ definitions:
               send amount to determine
 
               burn_amount. This value will be burnt on top of the send amount.
-          send_fee:
+          send_commission_rate:
             type: string
             description: >-
-              send_fee is a number between 0 and 1 which will be multiplied by
-              send amount to determine
+              send_commission_rate is a number between 0 and 1 which will be
+              multiplied by send amount to determine
 
               amount sent to the token issuer account.
         description: FT is a full representation of the fungible token.

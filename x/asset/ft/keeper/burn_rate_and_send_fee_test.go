@@ -89,61 +89,61 @@ func TestKeeperCalculateBurnCoin(t *testing.T) {
 }
 
 //nolint:dupl // We don't care
-func TestKeeperCalculateSendFee(t *testing.T) {
+func TestKeeperCalculateSendCommissionRate(t *testing.T) {
 	testCases := []struct {
-		rate       string
-		sendAmount int64
-		sendFee    int64
+		rate               string
+		sendAmount         int64
+		sendCommissionRate int64
 	}{
 		{
-			rate:       "0.5",
-			sendAmount: 0,
-			sendFee:    0,
+			rate:               "0.5",
+			sendAmount:         0,
+			sendCommissionRate: 0,
 		},
 		{
-			rate:       "0",
-			sendAmount: 1,
-			sendFee:    0,
+			rate:               "0",
+			sendAmount:         1,
+			sendCommissionRate: 0,
 		},
 		{
-			rate:       "0.01",
-			sendAmount: 1,
-			sendFee:    1,
+			rate:               "0.01",
+			sendAmount:         1,
+			sendCommissionRate: 1,
 		},
 		{
-			rate:       "0.01",
-			sendAmount: 101,
-			sendFee:    2,
+			rate:               "0.01",
+			sendAmount:         101,
+			sendCommissionRate: 2,
 		},
 		{
-			rate:       "0.01",
-			sendAmount: 100,
-			sendFee:    1,
+			rate:               "0.01",
+			sendAmount:         100,
+			sendCommissionRate: 1,
 		},
 		{
-			rate:       "0.1",
-			sendAmount: 100,
-			sendFee:    10,
+			rate:               "0.1",
+			sendAmount:         100,
+			sendCommissionRate: 10,
 		},
 		{
-			rate:       "1.0",
-			sendAmount: 73,
-			sendFee:    73,
+			rate:               "1.0",
+			sendAmount:         73,
+			sendCommissionRate: 73,
 		},
 		{
-			rate:       "0.1234",
-			sendAmount: 97,
-			sendFee:    12,
+			rate:               "0.1234",
+			sendAmount:         97,
+			sendCommissionRate: 12,
 		},
 		{
-			rate:       "0.0003",
-			sendAmount: 492301,
-			sendFee:    148,
+			rate:               "0.0003",
+			sendAmount:         492301,
+			sendCommissionRate: 148,
 		},
 		{
-			rate:       "0.0103",
-			sendAmount: 492301,
-			sendFee:    5071,
+			rate:               "0.0103",
+			sendAmount:         492301,
+			sendCommissionRate: 5071,
 		},
 	}
 
@@ -153,10 +153,10 @@ func TestKeeperCalculateSendFee(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assertT := assert.New(t)
 			definition := types.FTDefinition{
-				SendFee: sdk.MustNewDecFromStr(tc.rate),
+				SendCommissionRate: sdk.MustNewDecFromStr(tc.rate),
 			}
-			sendFee := definition.CalculateSendFeeAmount(sdk.NewCoin("test", sdk.NewInt(tc.sendAmount)))
-			assertT.EqualValues(sdk.NewInt(tc.sendFee).String(), sendFee.String())
+			sendCommissionRate := definition.CalculateSendCommissionRateAmountAmount(sdk.NewCoin("test", sdk.NewInt(tc.sendAmount)))
+			assertT.EqualValues(sdk.NewInt(tc.sendCommissionRate).String(), sendCommissionRate.String())
 		})
 	}
 }
@@ -243,7 +243,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 }
 
 //nolint:dupl // We don't care
-func TestKeeper_SendFee_BankSend(t *testing.T) {
+func TestKeeper_SendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -253,17 +253,17 @@ func TestKeeper_SendFee_BankSend(t *testing.T) {
 	bankKeeper := testApp.BankKeeper
 	ba := newBankAsserter(ctx, t, bankKeeper)
 
-	// issue with more than 1 send fee
+	// issue with more than 1 send commission rate
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	settings := types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "DEF",
-		Subunit:       "def",
-		Precision:     6,
-		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(600),
-		Features:      []types.TokenFeature{},
-		SendFee:       sdk.MustNewDecFromStr("1.01"),
+		Issuer:             issuer,
+		Symbol:             "DEF",
+		Subunit:            "def",
+		Precision:          6,
+		Description:        "DEF Desc",
+		InitialAmount:      sdk.NewInt(600),
+		Features:           []types.TokenFeature{},
+		SendCommissionRate: sdk.MustNewDecFromStr("1.01"),
 	}
 
 	_, err := assetKeeper.Issue(ctx, settings)
@@ -272,14 +272,14 @@ func TestKeeper_SendFee_BankSend(t *testing.T) {
 
 	// issue token
 	settings = types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "DEF",
-		Subunit:       "def",
-		Precision:     6,
-		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(600),
-		Features:      []types.TokenFeature{},
-		SendFee:       sdk.MustNewDecFromStr("0.25"),
+		Issuer:             issuer,
+		Symbol:             "DEF",
+		Subunit:            "def",
+		Precision:          6,
+		Description:        "DEF Desc",
+		InitialAmount:      sdk.NewInt(600),
+		Features:           []types.TokenFeature{},
+		SendCommissionRate: sdk.MustNewDecFromStr("0.25"),
 	}
 
 	denom, err := assetKeeper.Issue(ctx, settings)
@@ -287,7 +287,7 @@ func TestKeeper_SendFee_BankSend(t *testing.T) {
 
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	// send from issuer to recipient (send fee must not apply)
+	// send from issuer to recipient (send commission rate must not apply)
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(500)),
 	))
@@ -298,7 +298,7 @@ func TestKeeper_SendFee_BankSend(t *testing.T) {
 		&issuer:    100,
 	})
 
-	// send from recipient1 to recipient2 (send fee must apply)
+	// send from recipient1 to recipient2 (send commission rate must apply)
 	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(100)),
@@ -311,7 +311,7 @@ func TestKeeper_SendFee_BankSend(t *testing.T) {
 		&issuer:     125,
 	})
 
-	// send from recipient to issuer account (send fee must not apply)
+	// send from recipient to issuer account (send commission rate must not apply)
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(375)),
 	))
@@ -323,7 +323,7 @@ func TestKeeper_SendFee_BankSend(t *testing.T) {
 	})
 }
 
-func TestKeeper_BurnRateAndSendFee_BankSend(t *testing.T) {
+func TestKeeper_BurnRateAndSendCommissionRate_BankSend(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()
@@ -336,15 +336,15 @@ func TestKeeper_BurnRateAndSendFee_BankSend(t *testing.T) {
 	// issue token
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	settings := types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        "DEF",
-		Subunit:       "def",
-		Precision:     6,
-		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(600),
-		Features:      []types.TokenFeature{},
-		BurnRate:      sdk.MustNewDecFromStr("0.5"),
-		SendFee:       sdk.MustNewDecFromStr("0.25"),
+		Issuer:             issuer,
+		Symbol:             "DEF",
+		Subunit:            "def",
+		Precision:          6,
+		Description:        "DEF Desc",
+		InitialAmount:      sdk.NewInt(600),
+		Features:           []types.TokenFeature{},
+		BurnRate:           sdk.MustNewDecFromStr("0.5"),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.25"),
 	}
 
 	denom, err := assetKeeper.Issue(ctx, settings)

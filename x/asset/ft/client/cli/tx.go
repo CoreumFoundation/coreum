@@ -20,9 +20,9 @@ import (
 
 // Flags defined on transactions
 const (
-	featuresFlag = "features"
-	burnRateFlag = "burn-rate"
-	sendFeeFlag  = "send-fee"
+	featuresFlag           = "features"
+	burnRateFlag           = "burn-rate"
+	sendCommissionRateFlag = "send-commission-rate"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -59,7 +59,7 @@ func CmdTxIssue() *cobra.Command {
 	}
 	sort.Strings(allowedFeatures)
 	cmd := &cobra.Command{
-		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12 --send-fee=0.2",
+		Use:   "issue [symbol] [subunit] [precision] [initial_amount] [description] --from [issuer] --features=" + strings.Join(allowedFeatures, ",") + " --burn-rate=0.12 --send-commission-rate=0.2",
 		Args:  cobra.ExactArgs(5),
 		Short: "Issue new fungible token",
 		Long: strings.TrimSpace(
@@ -112,15 +112,15 @@ $ %s tx asset-ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [is
 				}
 			}
 
-			sendFee := sdk.NewDec(0)
-			sendFeeStr, err := cmd.Flags().GetString(sendFeeFlag)
+			sendCommissionRate := sdk.NewDec(0)
+			sendCommissionFeeStr, err := cmd.Flags().GetString(sendCommissionRateFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			if len(sendFeeStr) > 0 {
-				sendFee, err = sdk.NewDecFromStr(sendFeeStr)
+			if len(sendCommissionFeeStr) > 0 {
+				sendCommissionRate, err = sdk.NewDecFromStr(sendCommissionFeeStr)
 				if err != nil {
-					return errors.Wrapf(err, "invalid send-fee")
+					return errors.Wrapf(err, "invalid send-commission-rate")
 				}
 			}
 
@@ -135,23 +135,23 @@ $ %s tx asset-ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [is
 			description := args[4]
 
 			msg := &types.MsgIssue{
-				Issuer:        issuer.String(),
-				Symbol:        symbol,
-				Subunit:       subunit,
-				Precision:     uint32(precision),
-				InitialAmount: initialAmount,
-				Description:   description,
-				Features:      features,
-				BurnRate:      burnRate,
-				SendFee:       sendFee,
+				Issuer:             issuer.String(),
+				Symbol:             symbol,
+				Subunit:            subunit,
+				Precision:          uint32(precision),
+				InitialAmount:      initialAmount,
+				Description:        description,
+				Features:           features,
+				BurnRate:           burnRate,
+				SendCommissionRate: sendCommissionRate,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	cmd.Flags().StringSlice(featuresFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
-	cmd.Flags().String(burnRateFlag, "0", "Burn rate indicates the rate at which coins will be burned on top of the sent amount in every send action. Must be between 0 and 1.")
-	cmd.Flags().String(sendFeeFlag, "0", "Send fee indicates the rate at which coins will be sent to the issuer on top of the sent amount in every send action. Must be between 0 and 1.")
+	cmd.Flags().String(burnRateFlag, "0", "Indicates the rate at which coins will be burned on top of the sent amount in every send action. Must be between 0 and 1.")
+	cmd.Flags().String(sendCommissionRateFlag, "0", "Indicates the rate at which coins will be sent to the issuer on top of the sent amount in every send action. Must be between 0 and 1.")
 
 	flags.AddTxFlagsToCmd(cmd)
 

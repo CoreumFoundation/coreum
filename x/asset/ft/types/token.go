@@ -32,15 +32,15 @@ func init() {
 
 // IssueSettings is the model which represents the params for the fungible token issuance.
 type IssueSettings struct {
-	Issuer        sdk.AccAddress
-	Symbol        string
-	Subunit       string
-	Precision     uint32
-	Description   string
-	InitialAmount sdk.Int
-	Features      []TokenFeature
-	BurnRate      sdk.Dec
-	SendFee       sdk.Dec
+	Issuer             sdk.AccAddress
+	Symbol             string
+	Subunit            string
+	Precision          uint32
+	Description        string
+	InitialAmount      sdk.Int
+	Features           []TokenFeature
+	BurnRate           sdk.Dec
+	SendCommissionRate sdk.Dec
 }
 
 // BuildDenom builds the denom string from the symbol and issuer address.
@@ -116,10 +116,10 @@ func ValidateBurnRate(burnRate sdk.Dec) error {
 	return nil
 }
 
-// ValidateSendFee checks that provided burn rate is valid
-func ValidateSendFee(sendFee sdk.Dec) error {
-	if err := validateRate(sendFee); err != nil {
-		return errors.Wrap(err, "send fee is invalid")
+// ValidateSendCommissionFee checks that provided send commission fee is valid
+func ValidateSendCommissionFee(sendCommissionRate sdk.Dec) error {
+	if err := validateRate(sendCommissionRate); err != nil {
+		return errors.Wrap(err, "send commission rate is invalid")
 	}
 	return nil
 }
@@ -152,9 +152,9 @@ func (ftd FTDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
 	return calculateRate(coin.Amount, ftd.BurnRate)
 }
 
-// CalculateSendFeeAmount returns the coins to be sent to issuer as a sending fee
-func (ftd FTDefinition) CalculateSendFeeAmount(coin sdk.Coin) sdk.Int {
-	return calculateRate(coin.Amount, ftd.SendFee)
+// CalculateSendCommissionRateAmountAmount returns the coins to be sent to issuer as a sending commission
+func (ftd FTDefinition) CalculateSendCommissionRateAmountAmount(coin sdk.Coin) sdk.Int {
+	return calculateRate(coin.Amount, ftd.SendCommissionRate)
 }
 
 func calculateRate(amount sdk.Int, rate sdk.Dec) sdk.Int {

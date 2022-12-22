@@ -77,7 +77,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 	requireT.Error(msg.ValidateBasic())
 
 	msg = msgF()
-	msg.SendFee = sdk.MustNewDecFromStr("-0.1")
+	msg.SendCommissionRate = sdk.MustNewDecFromStr("-0.1")
 	requireT.Error(msg.ValidateBasic())
 }
 

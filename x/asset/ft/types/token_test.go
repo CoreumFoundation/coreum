@@ -218,7 +218,7 @@ func TestValidateBurnRate(t *testing.T) {
 }
 
 //nolint:dupl // We don't care
-func TestValidateSendFee(t *testing.T) {
+func TestValidateSendCommissionRate(t *testing.T) {
 	testCases := []struct {
 		rate    string
 		invalid bool
@@ -281,7 +281,7 @@ func TestValidateSendFee(t *testing.T) {
 			return err
 		}
 
-		err = types.ValidateSendFee(rate)
+		err = types.ValidateSendCommissionFee(rate)
 		return err
 	}
 

@@ -34,7 +34,7 @@ func (msg MsgIssue) ValidateBasic() error {
 		return err
 	}
 
-	if err := ValidateSendFee(msg.SendFee); err != nil {
+	if err := ValidateSendCommissionFee(msg.SendCommissionRate); err != nil {
 		return err
 	}
 
