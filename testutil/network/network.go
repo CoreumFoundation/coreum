@@ -38,9 +38,7 @@ type (
 	ConfigOption func(cfg network.Config) (network.Config, error)
 )
 
-var (
-	setNetworkConfigOnce = sync.Once{}
-)
+var setNetworkConfigOnce = sync.Once{}
 
 // FundedAccount is struct used for WithChainDenomFundedAccounts function.
 type FundedAccount struct {

@@ -12,7 +12,7 @@ import "github.com/gogo/protobuf/proto"
 // Example with the usage of the func
 // prefix + ab + c = prefix2ab1c
 // prefix + a + bc = prefix1a2bc
-func JoinKeysWithLength(prefix []byte, key []byte) []byte {
+func JoinKeysWithLength(prefix, key []byte) []byte {
 	compositeKey := make([]byte, 0)
 	compositeKey = append(compositeKey, prefix...)
 	if len(key) == 0 {

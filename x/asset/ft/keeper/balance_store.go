@@ -45,7 +45,6 @@ func (s balanceStore) Balances(pagination *query.PageRequest) (sdk.Coins, *query
 			return &sdk.Coin{}
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}

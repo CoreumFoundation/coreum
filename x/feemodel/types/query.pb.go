@@ -6,6 +6,10 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
@@ -14,15 +18,15 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -31,8 +35,7 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // QueryMinGasPriceRequest is the request type for the Query/MinGasPrice RPC method.
-type QueryMinGasPriceRequest struct {
-}
+type QueryMinGasPriceRequest struct{}
 
 func (m *QueryMinGasPriceRequest) Reset()         { *m = QueryMinGasPriceRequest{} }
 func (m *QueryMinGasPriceRequest) String() string { return proto.CompactTextString(m) }
@@ -40,9 +43,11 @@ func (*QueryMinGasPriceRequest) ProtoMessage()    {}
 func (*QueryMinGasPriceRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d2036651e57006ae, []int{0}
 }
+
 func (m *QueryMinGasPriceRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryMinGasPriceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryMinGasPriceRequest.Marshal(b, m, deterministic)
@@ -55,12 +60,15 @@ func (m *QueryMinGasPriceRequest) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
+
 func (m *QueryMinGasPriceRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryMinGasPriceRequest.Merge(m, src)
 }
+
 func (m *QueryMinGasPriceRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryMinGasPriceRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryMinGasPriceRequest.DiscardUnknown(m)
 }
@@ -79,9 +87,11 @@ func (*QueryMinGasPriceResponse) ProtoMessage()    {}
 func (*QueryMinGasPriceResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d2036651e57006ae, []int{1}
 }
+
 func (m *QueryMinGasPriceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryMinGasPriceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryMinGasPriceResponse.Marshal(b, m, deterministic)
@@ -94,12 +104,15 @@ func (m *QueryMinGasPriceResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
+
 func (m *QueryMinGasPriceResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryMinGasPriceResponse.Merge(m, src)
 }
+
 func (m *QueryMinGasPriceResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryMinGasPriceResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryMinGasPriceResponse.DiscardUnknown(m)
 }
@@ -114,8 +127,7 @@ func (m *QueryMinGasPriceResponse) GetMinGasPrice() types.DecCoin {
 }
 
 // QueryParamsRequest defines the request type for querying x/feemodel parameters.
-type QueryParamsRequest struct {
-}
+type QueryParamsRequest struct{}
 
 func (m *QueryParamsRequest) Reset()         { *m = QueryParamsRequest{} }
 func (m *QueryParamsRequest) String() string { return proto.CompactTextString(m) }
@@ -123,9 +135,11 @@ func (*QueryParamsRequest) ProtoMessage()    {}
 func (*QueryParamsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d2036651e57006ae, []int{2}
 }
+
 func (m *QueryParamsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryParamsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryParamsRequest.Marshal(b, m, deterministic)
@@ -138,12 +152,15 @@ func (m *QueryParamsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *QueryParamsRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryParamsRequest.Merge(m, src)
 }
+
 func (m *QueryParamsRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryParamsRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryParamsRequest.DiscardUnknown(m)
 }
@@ -161,9 +178,11 @@ func (*QueryParamsResponse) ProtoMessage()    {}
 func (*QueryParamsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d2036651e57006ae, []int{3}
 }
+
 func (m *QueryParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *QueryParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryParamsResponse.Marshal(b, m, deterministic)
@@ -176,12 +195,15 @@ func (m *QueryParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
+
 func (m *QueryParamsResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryParamsResponse.Merge(m, src)
 }
+
 func (m *QueryParamsResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *QueryParamsResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryParamsResponse.DiscardUnknown(m)
 }
@@ -286,12 +308,12 @@ type QueryServer interface {
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
-type UnimplementedQueryServer struct {
-}
+type UnimplementedQueryServer struct{}
 
 func (*UnimplementedQueryServer) MinGasPrice(ctx context.Context, req *QueryMinGasPriceRequest) (*QueryMinGasPriceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MinGasPrice not implemented")
 }
+
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
@@ -476,6 +498,7 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *QueryMinGasPriceRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -519,9 +542,11 @@ func (m *QueryParamsResponse) Size() (n int) {
 func sovQuery(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *QueryMinGasPriceRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -572,6 +597,7 @@ func (m *QueryMinGasPriceRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryMinGasPriceResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -655,6 +681,7 @@ func (m *QueryMinGasPriceResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryParamsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -705,6 +732,7 @@ func (m *QueryParamsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -788,6 +816,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipQuery(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

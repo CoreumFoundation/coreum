@@ -1,4 +1,4 @@
-package testing
+package integrationtests
 
 import (
 	"sync"
@@ -151,7 +151,7 @@ func (csk concurrentSafeKeyring) ImportPrivKey(uid, armor, passphrase string) er
 	return csk.kr.ImportPrivKey(uid, armor, passphrase)
 }
 
-func (csk concurrentSafeKeyring) ImportPubKey(uid string, armor string) error {
+func (csk concurrentSafeKeyring) ImportPubKey(uid, armor string) error {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
 

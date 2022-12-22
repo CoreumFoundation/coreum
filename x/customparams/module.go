@@ -28,8 +28,7 @@ var (
 )
 
 // AppModuleBasic defines the basic application module used by the customparams module.
-type AppModuleBasic struct {
-}
+type AppModuleBasic struct{}
 
 // Name returns the customparams module's name.
 func (AppModuleBasic) Name() string { return types.ModuleName }

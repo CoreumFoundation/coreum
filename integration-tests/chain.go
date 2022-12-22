@@ -1,4 +1,4 @@
-package testing
+package integrationtests
 
 import (
 	"reflect"
@@ -49,6 +49,7 @@ func (c ChainContext) GenAccount() sdk.AccAddress {
 }
 
 // ImportMnemonic imports the mnemonic into the ClientContext Keyring and return its address.
+// If the mnemonic is already imported the method will just return the address.
 func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 	keyInfo, err := c.ClientContext.Keyring().NewAccount(
 		uuid.New().String(),

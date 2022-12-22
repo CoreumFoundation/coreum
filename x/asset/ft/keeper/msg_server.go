@@ -15,13 +15,13 @@ var _ types.MsgServer = MsgServer{}
 type MsgKeeper interface {
 	Issue(ctx sdk.Context, settings types.IssueSettings) (string, error)
 	GetToken(ctx sdk.Context, denom string) (types.FT, error)
-	Freeze(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
-	Unfreeze(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
+	Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
+	Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
-	SetWhitelistedBalance(ctx sdk.Context, sender sdk.AccAddress, addr sdk.AccAddress, coin sdk.Coin) error
+	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
