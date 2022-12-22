@@ -6,10 +6,6 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	query "github.com/cosmos/cosmos-sdk/types/query"
@@ -20,15 +16,15 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -47,11 +43,9 @@ func (*QueryTokenRequest) ProtoMessage()    {}
 func (*QueryTokenRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{0}
 }
-
 func (m *QueryTokenRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryTokenRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryTokenRequest.Marshal(b, m, deterministic)
@@ -64,15 +58,12 @@ func (m *QueryTokenRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
-
 func (m *QueryTokenRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryTokenRequest.Merge(m, src)
 }
-
 func (m *QueryTokenRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryTokenRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryTokenRequest.DiscardUnknown(m)
 }
@@ -97,11 +88,9 @@ func (*QueryTokenResponse) ProtoMessage()    {}
 func (*QueryTokenResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{1}
 }
-
 func (m *QueryTokenResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryTokenResponse.Marshal(b, m, deterministic)
@@ -114,15 +103,12 @@ func (m *QueryTokenResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-
 func (m *QueryTokenResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryTokenResponse.Merge(m, src)
 }
-
 func (m *QueryTokenResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryTokenResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryTokenResponse.DiscardUnknown(m)
 }
@@ -149,11 +135,9 @@ func (*QueryFrozenBalancesRequest) ProtoMessage()    {}
 func (*QueryFrozenBalancesRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{2}
 }
-
 func (m *QueryFrozenBalancesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryFrozenBalancesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryFrozenBalancesRequest.Marshal(b, m, deterministic)
@@ -166,15 +150,12 @@ func (m *QueryFrozenBalancesRequest) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-
 func (m *QueryFrozenBalancesRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryFrozenBalancesRequest.Merge(m, src)
 }
-
 func (m *QueryFrozenBalancesRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryFrozenBalancesRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryFrozenBalancesRequest.DiscardUnknown(m)
 }
@@ -208,11 +189,9 @@ func (*QueryFrozenBalancesResponse) ProtoMessage()    {}
 func (*QueryFrozenBalancesResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{3}
 }
-
 func (m *QueryFrozenBalancesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryFrozenBalancesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryFrozenBalancesResponse.Marshal(b, m, deterministic)
@@ -225,15 +204,12 @@ func (m *QueryFrozenBalancesResponse) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
-
 func (m *QueryFrozenBalancesResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryFrozenBalancesResponse.Merge(m, src)
 }
-
 func (m *QueryFrozenBalancesResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryFrozenBalancesResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryFrozenBalancesResponse.DiscardUnknown(m)
 }
@@ -267,11 +243,9 @@ func (*QueryFrozenBalanceRequest) ProtoMessage()    {}
 func (*QueryFrozenBalanceRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{4}
 }
-
 func (m *QueryFrozenBalanceRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryFrozenBalanceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryFrozenBalanceRequest.Marshal(b, m, deterministic)
@@ -284,15 +258,12 @@ func (m *QueryFrozenBalanceRequest) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-
 func (m *QueryFrozenBalanceRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryFrozenBalanceRequest.Merge(m, src)
 }
-
 func (m *QueryFrozenBalanceRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryFrozenBalanceRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryFrozenBalanceRequest.DiscardUnknown(m)
 }
@@ -324,11 +295,9 @@ func (*QueryFrozenBalanceResponse) ProtoMessage()    {}
 func (*QueryFrozenBalanceResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{5}
 }
-
 func (m *QueryFrozenBalanceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryFrozenBalanceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryFrozenBalanceResponse.Marshal(b, m, deterministic)
@@ -341,15 +310,12 @@ func (m *QueryFrozenBalanceResponse) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-
 func (m *QueryFrozenBalanceResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryFrozenBalanceResponse.Merge(m, src)
 }
-
 func (m *QueryFrozenBalanceResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryFrozenBalanceResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryFrozenBalanceResponse.DiscardUnknown(m)
 }
@@ -376,11 +342,9 @@ func (*QueryWhitelistedBalancesRequest) ProtoMessage()    {}
 func (*QueryWhitelistedBalancesRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{6}
 }
-
 func (m *QueryWhitelistedBalancesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryWhitelistedBalancesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryWhitelistedBalancesRequest.Marshal(b, m, deterministic)
@@ -393,15 +357,12 @@ func (m *QueryWhitelistedBalancesRequest) XXX_Marshal(b []byte, deterministic bo
 		return b[:n], nil
 	}
 }
-
 func (m *QueryWhitelistedBalancesRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryWhitelistedBalancesRequest.Merge(m, src)
 }
-
 func (m *QueryWhitelistedBalancesRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryWhitelistedBalancesRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryWhitelistedBalancesRequest.DiscardUnknown(m)
 }
@@ -435,11 +396,9 @@ func (*QueryWhitelistedBalancesResponse) ProtoMessage()    {}
 func (*QueryWhitelistedBalancesResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{7}
 }
-
 func (m *QueryWhitelistedBalancesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryWhitelistedBalancesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryWhitelistedBalancesResponse.Marshal(b, m, deterministic)
@@ -452,15 +411,12 @@ func (m *QueryWhitelistedBalancesResponse) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-
 func (m *QueryWhitelistedBalancesResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryWhitelistedBalancesResponse.Merge(m, src)
 }
-
 func (m *QueryWhitelistedBalancesResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryWhitelistedBalancesResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryWhitelistedBalancesResponse.DiscardUnknown(m)
 }
@@ -494,11 +450,9 @@ func (*QueryWhitelistedBalanceRequest) ProtoMessage()    {}
 func (*QueryWhitelistedBalanceRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{8}
 }
-
 func (m *QueryWhitelistedBalanceRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryWhitelistedBalanceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryWhitelistedBalanceRequest.Marshal(b, m, deterministic)
@@ -511,15 +465,12 @@ func (m *QueryWhitelistedBalanceRequest) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-
 func (m *QueryWhitelistedBalanceRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryWhitelistedBalanceRequest.Merge(m, src)
 }
-
 func (m *QueryWhitelistedBalanceRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryWhitelistedBalanceRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryWhitelistedBalanceRequest.DiscardUnknown(m)
 }
@@ -551,11 +502,9 @@ func (*QueryWhitelistedBalanceResponse) ProtoMessage()    {}
 func (*QueryWhitelistedBalanceResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e9fe336d9bdb8f05, []int{9}
 }
-
 func (m *QueryWhitelistedBalanceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryWhitelistedBalanceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryWhitelistedBalanceResponse.Marshal(b, m, deterministic)
@@ -568,15 +517,12 @@ func (m *QueryWhitelistedBalanceResponse) XXX_Marshal(b []byte, deterministic bo
 		return b[:n], nil
 	}
 }
-
 func (m *QueryWhitelistedBalanceResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryWhitelistedBalanceResponse.Merge(m, src)
 }
-
 func (m *QueryWhitelistedBalanceResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryWhitelistedBalanceResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryWhitelistedBalanceResponse.DiscardUnknown(m)
 }
@@ -745,24 +691,21 @@ type QueryServer interface {
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
-type UnimplementedQueryServer struct{}
+type UnimplementedQueryServer struct {
+}
 
 func (*UnimplementedQueryServer) Token(ctx context.Context, req *QueryTokenRequest) (*QueryTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Token not implemented")
 }
-
 func (*UnimplementedQueryServer) FrozenBalances(ctx context.Context, req *QueryFrozenBalancesRequest) (*QueryFrozenBalancesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FrozenBalances not implemented")
 }
-
 func (*UnimplementedQueryServer) FrozenBalance(ctx context.Context, req *QueryFrozenBalanceRequest) (*QueryFrozenBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FrozenBalance not implemented")
 }
-
 func (*UnimplementedQueryServer) WhitelistedBalances(ctx context.Context, req *QueryWhitelistedBalancesRequest) (*QueryWhitelistedBalancesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WhitelistedBalances not implemented")
 }
-
 func (*UnimplementedQueryServer) WhitelistedBalance(ctx context.Context, req *QueryWhitelistedBalanceRequest) (*QueryWhitelistedBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WhitelistedBalance not implemented")
 }
@@ -1286,7 +1229,6 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *QueryTokenRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1442,11 +1384,9 @@ func (m *QueryWhitelistedBalanceResponse) Size() (n int) {
 func sovQuery(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *QueryTokenRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1529,7 +1469,6 @@ func (m *QueryTokenRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryTokenResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1613,7 +1552,6 @@ func (m *QueryTokenResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryFrozenBalancesRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1732,7 +1670,6 @@ func (m *QueryFrozenBalancesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryFrozenBalancesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1853,7 +1790,6 @@ func (m *QueryFrozenBalancesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryFrozenBalanceRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1968,7 +1904,6 @@ func (m *QueryFrozenBalanceRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryFrozenBalanceResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2052,7 +1987,6 @@ func (m *QueryFrozenBalanceResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryWhitelistedBalancesRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2171,7 +2105,6 @@ func (m *QueryWhitelistedBalancesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryWhitelistedBalancesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2292,7 +2225,6 @@ func (m *QueryWhitelistedBalancesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryWhitelistedBalanceRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2407,7 +2339,6 @@ func (m *QueryWhitelistedBalanceRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryWhitelistedBalanceResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2491,7 +2422,6 @@ func (m *QueryWhitelistedBalanceResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipQuery(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

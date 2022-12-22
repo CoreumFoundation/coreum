@@ -5,23 +5,19 @@ package types
 
 import (
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	_ "github.com/cosmos/cosmos-sdk/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -80,11 +76,9 @@ func (*FTDefinition) ProtoMessage()    {}
 func (*FTDefinition) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fe80c7a2c55589e7, []int{0}
 }
-
 func (m *FTDefinition) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *FTDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_FTDefinition.Marshal(b, m, deterministic)
@@ -97,15 +91,12 @@ func (m *FTDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-
 func (m *FTDefinition) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_FTDefinition.Merge(m, src)
 }
-
 func (m *FTDefinition) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *FTDefinition) XXX_DiscardUnknown() {
 	xxx_messageInfo_FTDefinition.DiscardUnknown(m)
 }
@@ -136,11 +127,9 @@ func (*FT) ProtoMessage()    {}
 func (*FT) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fe80c7a2c55589e7, []int{1}
 }
-
 func (m *FT) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *FT) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_FT.Marshal(b, m, deterministic)
@@ -153,15 +142,12 @@ func (m *FT) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *FT) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_FT.Merge(m, src)
 }
-
 func (m *FT) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *FT) XXX_DiscardUnknown() {
 	xxx_messageInfo_FT.DiscardUnknown(m)
 }
@@ -408,7 +394,6 @@ func encodeVarintToken(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *FTDefinition) Size() (n int) {
 	if m == nil {
 		return 0
@@ -486,11 +471,9 @@ func (m *FT) Size() (n int) {
 func sovToken(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozToken(x uint64) (n int) {
 	return sovToken(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *FTDefinition) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -742,7 +725,6 @@ func (m *FTDefinition) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *FT) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1129,7 +1111,6 @@ func (m *FT) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipToken(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

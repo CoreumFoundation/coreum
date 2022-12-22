@@ -6,10 +6,6 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	_ "github.com/cosmos/cosmos-sdk/codec/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
@@ -20,15 +16,15 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -59,11 +55,9 @@ func (*MsgIssue) ProtoMessage()    {}
 func (*MsgIssue) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{0}
 }
-
 func (m *MsgIssue) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgIssue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgIssue.Marshal(b, m, deterministic)
@@ -76,15 +70,12 @@ func (m *MsgIssue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *MsgIssue) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgIssue.Merge(m, src)
 }
-
 func (m *MsgIssue) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgIssue) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgIssue.DiscardUnknown(m)
 }
@@ -103,11 +94,9 @@ func (*MsgFreeze) ProtoMessage()    {}
 func (*MsgFreeze) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{1}
 }
-
 func (m *MsgFreeze) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgFreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgFreeze.Marshal(b, m, deterministic)
@@ -120,15 +109,12 @@ func (m *MsgFreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *MsgFreeze) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgFreeze.Merge(m, src)
 }
-
 func (m *MsgFreeze) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgFreeze) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgFreeze.DiscardUnknown(m)
 }
@@ -147,11 +133,9 @@ func (*MsgUnfreeze) ProtoMessage()    {}
 func (*MsgUnfreeze) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{2}
 }
-
 func (m *MsgUnfreeze) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgUnfreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgUnfreeze.Marshal(b, m, deterministic)
@@ -164,15 +148,12 @@ func (m *MsgUnfreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-
 func (m *MsgUnfreeze) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgUnfreeze.Merge(m, src)
 }
-
 func (m *MsgUnfreeze) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgUnfreeze) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgUnfreeze.DiscardUnknown(m)
 }
@@ -190,11 +171,9 @@ func (*MsgMint) ProtoMessage()    {}
 func (*MsgMint) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{3}
 }
-
 func (m *MsgMint) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgMint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgMint.Marshal(b, m, deterministic)
@@ -207,15 +186,12 @@ func (m *MsgMint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *MsgMint) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgMint.Merge(m, src)
 }
-
 func (m *MsgMint) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgMint) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgMint.DiscardUnknown(m)
 }
@@ -233,11 +209,9 @@ func (*MsgBurn) ProtoMessage()    {}
 func (*MsgBurn) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{4}
 }
-
 func (m *MsgBurn) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgBurn) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgBurn.Marshal(b, m, deterministic)
@@ -250,15 +224,12 @@ func (m *MsgBurn) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *MsgBurn) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgBurn.Merge(m, src)
 }
-
 func (m *MsgBurn) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgBurn) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgBurn.DiscardUnknown(m)
 }
@@ -276,11 +247,9 @@ func (*MsgGloballyFreeze) ProtoMessage()    {}
 func (*MsgGloballyFreeze) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{5}
 }
-
 func (m *MsgGloballyFreeze) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgGloballyFreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgGloballyFreeze.Marshal(b, m, deterministic)
@@ -293,15 +262,12 @@ func (m *MsgGloballyFreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
-
 func (m *MsgGloballyFreeze) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgGloballyFreeze.Merge(m, src)
 }
-
 func (m *MsgGloballyFreeze) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgGloballyFreeze) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgGloballyFreeze.DiscardUnknown(m)
 }
@@ -319,11 +285,9 @@ func (*MsgGloballyUnfreeze) ProtoMessage()    {}
 func (*MsgGloballyUnfreeze) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{6}
 }
-
 func (m *MsgGloballyUnfreeze) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgGloballyUnfreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgGloballyUnfreeze.Marshal(b, m, deterministic)
@@ -336,15 +300,12 @@ func (m *MsgGloballyUnfreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-
 func (m *MsgGloballyUnfreeze) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgGloballyUnfreeze.Merge(m, src)
 }
-
 func (m *MsgGloballyUnfreeze) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgGloballyUnfreeze) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgGloballyUnfreeze.DiscardUnknown(m)
 }
@@ -363,11 +324,9 @@ func (*MsgSetWhitelistedLimit) ProtoMessage()    {}
 func (*MsgSetWhitelistedLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{7}
 }
-
 func (m *MsgSetWhitelistedLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgSetWhitelistedLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgSetWhitelistedLimit.Marshal(b, m, deterministic)
@@ -380,22 +339,20 @@ func (m *MsgSetWhitelistedLimit) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-
 func (m *MsgSetWhitelistedLimit) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgSetWhitelistedLimit.Merge(m, src)
 }
-
 func (m *MsgSetWhitelistedLimit) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgSetWhitelistedLimit) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgSetWhitelistedLimit.DiscardUnknown(m)
 }
 
 var xxx_messageInfo_MsgSetWhitelistedLimit proto.InternalMessageInfo
 
-type EmptyResponse struct{}
+type EmptyResponse struct {
+}
 
 func (m *EmptyResponse) Reset()         { *m = EmptyResponse{} }
 func (m *EmptyResponse) String() string { return proto.CompactTextString(m) }
@@ -403,11 +360,9 @@ func (*EmptyResponse) ProtoMessage()    {}
 func (*EmptyResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e54b0962ccfc4ca0, []int{8}
 }
-
 func (m *EmptyResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *EmptyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_EmptyResponse.Marshal(b, m, deterministic)
@@ -420,15 +375,12 @@ func (m *EmptyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *EmptyResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_EmptyResponse.Merge(m, src)
 }
-
 func (m *EmptyResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *EmptyResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_EmptyResponse.DiscardUnknown(m)
 }
@@ -637,36 +589,30 @@ type MsgServer interface {
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
-type UnimplementedMsgServer struct{}
+type UnimplementedMsgServer struct {
+}
 
 func (*UnimplementedMsgServer) Issue(ctx context.Context, req *MsgIssue) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Issue not implemented")
 }
-
 func (*UnimplementedMsgServer) Mint(ctx context.Context, req *MsgMint) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Mint not implemented")
 }
-
 func (*UnimplementedMsgServer) Burn(ctx context.Context, req *MsgBurn) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Burn not implemented")
 }
-
 func (*UnimplementedMsgServer) Freeze(ctx context.Context, req *MsgFreeze) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Freeze not implemented")
 }
-
 func (*UnimplementedMsgServer) Unfreeze(ctx context.Context, req *MsgUnfreeze) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unfreeze not implemented")
 }
-
 func (*UnimplementedMsgServer) GloballyFreeze(ctx context.Context, req *MsgGloballyFreeze) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GloballyFreeze not implemented")
 }
-
 func (*UnimplementedMsgServer) GloballyUnfreeze(ctx context.Context, req *MsgGloballyUnfreeze) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GloballyUnfreeze not implemented")
 }
-
 func (*UnimplementedMsgServer) SetWhitelistedLimit(ctx context.Context, req *MsgSetWhitelistedLimit) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetWhitelistedLimit not implemented")
 }
@@ -1293,7 +1239,6 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *MsgIssue) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1468,11 +1413,9 @@ func (m *EmptyResponse) Size() (n int) {
 func sovTx(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *MsgIssue) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1841,7 +1784,6 @@ func (m *MsgIssue) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgFreeze) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1989,7 +1931,6 @@ func (m *MsgFreeze) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgUnfreeze) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2137,7 +2078,6 @@ func (m *MsgUnfreeze) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgMint) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2253,7 +2193,6 @@ func (m *MsgMint) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgBurn) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2369,7 +2308,6 @@ func (m *MsgBurn) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgGloballyFreeze) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2484,7 +2422,6 @@ func (m *MsgGloballyFreeze) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgGloballyUnfreeze) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2599,7 +2536,6 @@ func (m *MsgGloballyUnfreeze) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgSetWhitelistedLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2747,7 +2683,6 @@ func (m *MsgSetWhitelistedLimit) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *EmptyResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2798,7 +2733,6 @@ func (m *EmptyResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipTx(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

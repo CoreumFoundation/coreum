@@ -51,6 +51,7 @@ func (ms MsgServer) Issue(ctx context.Context, req *types.MsgIssue) (*types.Empt
 		InitialAmount: req.InitialAmount,
 		Features:      req.Features,
 		BurnRate:      req.BurnRate,
+		SendFee:       req.SendFee,
 	})
 	if err != nil {
 		return nil, err

@@ -153,6 +153,8 @@ func TestAssetFTBurn(t *testing.T) {
 }
 
 // TestAssetFTBurnRate tests burn rate functionality of fungible tokens.
+//
+//nolint:dupl
 func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
 
@@ -301,6 +303,8 @@ func TestAssetFTBurnRate(t *testing.T) {
 }
 
 // TestAssetFTSendFee tests send fee functionality of fungible tokens.
+//
+//nolint:dupl
 func TestAssetFTSendFee(t *testing.T) {
 	t.Parallel()
 
@@ -312,18 +316,18 @@ func TestAssetFTSendFee(t *testing.T) {
 	recipient2 := chain.GenAccount()
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
-				&types.MsgIssue{},
+				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
 		}),
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 			},
 		}),
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient2, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 			},
@@ -331,14 +335,14 @@ func TestAssetFTSendFee(t *testing.T) {
 	)
 
 	// Issue an fungible token
-	issueMsg := &types.MsgIssue{
+	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
 		Subunit:       "abc",
 		Precision:     6,
 		InitialAmount: sdk.NewInt(1000),
 		Description:   "ABC Description",
-		Features:      []types.TokenFeature{},
+		Features:      []assetfttypes.TokenFeature{},
 		BurnRate:      sdk.NewDec(0),
 		SendFee:       sdk.MustNewDecFromStr("0.10"),
 	}
@@ -351,7 +355,7 @@ func TestAssetFTSendFee(t *testing.T) {
 	)
 
 	requireT.NoError(err)
-	tokenIssuedEvents, err := event.FindTypedEvents[*types.EventTokenIssued](res.Events)
+	tokenIssuedEvents, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
 	requireT.NoError(err)
 	denom := tokenIssuedEvents[0].Denom
 
@@ -427,7 +431,7 @@ func TestAssetFTSendFee(t *testing.T) {
 	}
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, testing.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				multiSendMsg,
 			}}),
