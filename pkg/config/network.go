@@ -37,10 +37,8 @@ type ChainID = constant.ChainID
 // It is string, not bool, because -X flag supports strings only.
 var EnableFakeUpgradeHandler string
 
-var (
-	//go:embed networks/coreum-devnet-1
-	coreumDevnet1GenTxsFS embed.FS
-)
+//go:embed networks/coreum-devnet-1
+var coreumDevnet1GenTxsFS embed.FS
 
 func init() {
 	// common vars
@@ -72,10 +70,9 @@ func init() {
 	const denomDev = "ducore"
 
 	// devnet vars
-	var (
-		// 10m delegated and 1m extra to the txs
-		stakerValidatorBalance = sdk.NewCoins(sdk.NewCoin(denomDev, sdk.NewInt(11_000_000_000_000)))
-	)
+
+	// 10m delegated and 1m extra to the txs
+	stakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(denomDev, sdk.NewInt(11_000_000_000_000)))
 
 	list := []NetworkConfig{
 		{

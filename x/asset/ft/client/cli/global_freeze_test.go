@@ -31,7 +31,8 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 	denom := types.BuildDenom(subunit, issuer)
 
 	// Issue token
-	args := []string{symbol, subunit, precision, "777", `"My Token"`,
+	args := []string{
+		symbol, subunit, precision, "777", `"My Token"`,
 		"--features", types.TokenFeature_freeze.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
