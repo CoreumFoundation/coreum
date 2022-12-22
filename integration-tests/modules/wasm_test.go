@@ -458,6 +458,7 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 		Subunit:   subunit1,
 		Precision: precision,
 		BurnRate:  sdk.NewDec(0),
+		SendFee:   sdk.NewDec(0),
 	}, ft.GetToken())
 
 	ft, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom2})
@@ -469,6 +470,7 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 		Subunit:   subunit2,
 		Precision: precision,
 		BurnRate:  sdk.NewDec(0),
+		SendFee:   sdk.NewDec(0),
 	}, ft.GetToken())
 
 	// check the counter
