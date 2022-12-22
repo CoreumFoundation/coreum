@@ -1,0 +1,107 @@
+syntax = "proto3";
+package coreum.asset.ft.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+
+import "coreum/asset/ft/v1/token.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Token queries the fungible token of the module.
+  rpc Token(QueryTokenRequest) returns (QueryTokenResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/denom/{denom}";
+  }
+
+  // FrozenBalances returns all the frozen balances for the account
+  rpc FrozenBalances(QueryFrozenBalancesRequest) returns (QueryFrozenBalancesResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/balance/{account}/frozen";
+  }
+
+  // FrozenBalance returns frozen balance of the denom for the account
+  rpc FrozenBalance(QueryFrozenBalanceRequest) returns (QueryFrozenBalanceResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/balance/{account}/frozen/{denom}";
+  }
+
+  // WhitelistedBalances returns all the whitelisted balances for the account
+  rpc WhitelistedBalances(QueryWhitelistedBalancesRequest) returns (QueryWhitelistedBalancesResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/balance/{account}/whitelisted";
+  }
+
+  // WhitelistedBalance returns whitelisted balance of the denom for the account
+  rpc WhitelistedBalance(QueryWhitelistedBalanceRequest) returns (QueryWhitelistedBalanceResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/balance/{account}/whitelisted/{denom}";
+  }
+}
+
+// QueryTokenRequest is request type for the Query/Token RPC method.
+message QueryTokenRequest {
+  string denom = 1;
+}
+
+// QueryTokenResponse is response type for the Query/Token RPC method.
+message QueryTokenResponse {
+  FT token = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryFrozenBalancesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // account specifies the account onto which we query frozen balances
+  string account = 2;
+}
+  
+message QueryFrozenBalancesResponse {
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  // balances contains the frozen balances on the queried account
+  repeated cosmos.base.v1beta1.Coin balances = 2 [
+    (gogoproto.nullable) = false, 
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message QueryFrozenBalanceRequest {
+  // account specifies the account onto which we query frozen balances
+  string account = 1;
+  // denom specifies frozen balances on a specific denom
+  string denom = 2;
+}
+
+message QueryFrozenBalanceResponse {
+  // balance contains the frozen balance with the queried account and denom 
+  cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryWhitelistedBalancesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // account specifies the account onto which we query whitelisted balances
+  string account = 2;
+}
+
+message QueryWhitelistedBalancesResponse {
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  // balances contains the whitelisted balances on the queried account
+  repeated cosmos.base.v1beta1.Coin balances = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message QueryWhitelistedBalanceRequest {
+  // account specifies the account onto which we query whitelisted balances
+  string account = 1;
+  // denom specifies whitelisted balances on a specific denom
+  string denom = 2;
+}
+
+message QueryWhitelistedBalanceResponse {
+  // balance contains the whitelisted balance with the queried account and denom
+  cosmos.base.v1beta1.Coin balance = 1 [(gogoproto.nullable) = false];
+}
