@@ -11,8 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/ibc-go/v3/testing/simapp/helpers"
-	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
+	"github.com/cosmos/ibc-go/v4/testing/simapp/helpers"
 	"github.com/pkg/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/json"
@@ -131,7 +130,7 @@ func (s *App) SendTx(
 	accountNum := account.GetAccountNumber()
 	accountSeq := account.GetSequence()
 
-	txGen := cosmoscmd.MakeEncodingConfig(app.ModuleBasics).TxConfig
+	txGen := config.NewEncodingConfig(app.ModuleBasics).TxConfig
 
 	tx, err := helpers.GenTx(
 		txGen,
