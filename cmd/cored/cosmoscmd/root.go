@@ -20,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simdcmd "github.com/cosmos/cosmos-sdk/simapp/simd/cmd"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,7 +30,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -130,13 +130,7 @@ func NewRootCmd(
 
 			customAppTemplate, customAppConfig := initAppConfig()
 
-			if err := server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig); err != nil {
-				return err
-			}
-
-			startProxyForTunneledPeers(initClientCtx, cmd)
-
-			return nil
+			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig)
 		},
 	}
 
@@ -174,7 +168,7 @@ func initRootCmd(
 			defaultNodeHome,
 		),
 		genutilcli.ValidateGenesisCmd(moduleBasics),
-		cosmoscmd.AddGenesisAccountCmd(defaultNodeHome),
+		simdcmd.AddGenesisAccountCmd(defaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
 		clientconfig.Cmd(),

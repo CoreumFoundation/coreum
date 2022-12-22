@@ -15,7 +15,7 @@
           "max_rate": "0.200000000000000000",
           "max_change_rate": "0.010000000000000000"
         },
-        "min_self_delegation": "1",
+        "min_self_delegation": "20000000000",
         "delegator_address": "devcore14x46r5eflga696sd5my900euvlplu2prhny5ae",
         "validator_address": "devcorevaloper14x46r5eflga696sd5my900euvlplu2prwv63jv",
         "pubkey": {
@@ -56,6 +56,6 @@
     }
   },
   "signatures": [
-    "UifrpOMB4/Z7SFY34wBEF7bq9RXxYsIALhv6G0DkZVEUs9XIVdWUgMVhoVU3gHS9y9kxpdLmDRORoTpW4QqkFA=="
+    "tRX2Bbx8a4TUBy+0vB8caYzS4Tm0UcgVt2bP4+6N5g8Knhq1g21FsInRrYK3YQ/FyMLxRoN11V6BBmTAzrTmKQ=="
   ]
 }

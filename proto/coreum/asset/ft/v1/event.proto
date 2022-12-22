@@ -1,0 +1,46 @@
+syntax = "proto3";
+package coreum.asset.ft.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "coreum/asset/ft/v1/token.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
+
+// EventTokenIssued is emitted on MsgIssueToken.
+message EventTokenIssued {
+  string denom = 1;
+  string issuer = 2;
+  string symbol = 3;
+  string subunit = 4;
+  uint32 precision = 5;
+  string initial_amount = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string description = 7;
+  repeated TokenFeature features = 8;
+  string burn_rate = 9 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
+}
+
+message EventFrozenAmountChanged {
+  string account = 1;
+  cosmos.base.v1beta1.Coin previous_amount = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin current_amount = 3 [(gogoproto.nullable) = false];
+}
+
+message EventWhitelistedAmountChanged {
+  string account = 1;
+  string denom  = 2;
+  string previous_amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string current_amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}

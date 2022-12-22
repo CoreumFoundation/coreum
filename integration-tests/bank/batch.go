@@ -13,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // TestMultiSendBatchOutputs tests MultiSend message with maximum amount of addresses.
@@ -21,14 +21,14 @@ func TestMultiSendBatchOutputs(ctx context.Context, t testing.T, chain testing.C
 	issuer := chain.GenAccount()
 	requireT := require.New(t)
 
-	issueMsg := &assettypes.MsgIssueFungibleToken{
+	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
-		Features: []assettypes.FungibleTokenFeature{
-			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
+		Features: []assetfttypes.TokenFeature{
+			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
 		},
 	}
 
@@ -39,7 +39,7 @@ func TestMultiSendBatchOutputs(ctx context.Context, t testing.T, chain testing.C
 		Address: issuer.String(),
 		Coins:   sdk.NewCoins(),
 	}
-	denom := assettypes.BuildFungibleTokenDenom(issueMsg.Subunit, issuer)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 	outputItems := make([]banktypes.Output, 0, numAccountsToFund)
 	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
 	coinToFund := sdk.NewCoin(denom, sdk.NewInt(10_000_000_000))
@@ -101,21 +101,21 @@ func TestSendBatchMsgs(ctx context.Context, t testing.T, chain testing.Chain) {
 	issuer := chain.GenAccount()
 	requireT := require.New(t)
 
-	issueMsg := &assettypes.MsgIssueFungibleToken{
+	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
-		Features: []assettypes.FungibleTokenFeature{
-			assettypes.FungibleTokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
+		Features: []assetfttypes.TokenFeature{
+			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
 		},
 	}
 
 	numAccountsToFund := 400 // 600 was the max accepted
 	iterationsToFund := 3
 
-	denom := assettypes.BuildFungibleTokenDenom(issueMsg.Subunit, issuer)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 	bankSendSendMsgs := make([]sdk.Msg, 0, numAccountsToFund)
 	coinToFund := sdk.NewCoin(denom, sdk.NewInt(10_000_000_000))
 	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
