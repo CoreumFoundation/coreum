@@ -39,7 +39,7 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 }
 
 func addQueryGasPriceToAllLeafs(cmd *cobra.Command) {
-	if cmd.Run != nil || cmd.RunE != nil {
+	if !cmd.HasSubCommands() {
 		cmd.PreRunE = mergeRunEs(queryGasPriceRunE, cmd.PreRunE)
 		return
 	}
