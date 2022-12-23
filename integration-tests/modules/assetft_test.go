@@ -387,7 +387,9 @@ func TestAssetFTFreeze(t *testing.T) {
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
+				&banktypes.MsgMultiSend{},
 				&banktypes.MsgSend{},
+				&banktypes.MsgMultiSend{},
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 			},
@@ -490,10 +492,12 @@ func TestAssetFTFreeze(t *testing.T) {
 
 	// try to send more than available (650) (600 is available)
 	recipient2 := chain.GenAccount()
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(650)))
+	// send
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(650))),
+		Amount:      coinsToSend,
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
@@ -503,12 +507,27 @@ func TestAssetFTFreeze(t *testing.T) {
 	)
 	requireT.Error(err)
 	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	// multi-send
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}},
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.Error(err)
+	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
 
-	// try to send available tokens (600)
+	// try to send available tokens (300 + 300)
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(300)))
+	// send
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(600))),
+		Amount:      coinsToSend,
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
@@ -522,9 +541,27 @@ func TestAssetFTFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(700)).String(), balance1.GetBalance().String())
+	// multi-send
+	multiSendMsg = &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}},
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.NoError(err)
+	balance1, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(400)).String(), balance1.GetBalance().String())
 
-	// unfreeze 200 tokens and try send 250 tokens
+	// unfreeze 200 tokens and try to send 250 tokens
 	unfreezeMsg := &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
@@ -630,6 +667,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgGloballyFreeze{},
 				&banktypes.MsgSend{},
+				&banktypes.MsgMultiSend{},
 				&assetfttypes.MsgGloballyUnfreeze{},
 				&banktypes.MsgSend{},
 			},
@@ -673,10 +711,12 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 	requireT.NoError(err)
 
 	// Try to send FT.
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(50)))
+	// send
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(50))),
+		Amount:      coinsToSend,
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
@@ -684,7 +724,19 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	requireT.Error(err)
+	assertT.True(assetfttypes.ErrGloballyFrozen.Is(err))
+
+	// multi-send
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
 	assertT.True(assetfttypes.ErrGloballyFrozen.Is(err))
 
 	// Globally unfreeze FT.
@@ -1006,6 +1058,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 				&assetfttypes.MsgSetWhitelistedLimit{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
 				&banktypes.MsgSend{},
+				&banktypes.MsgMultiSend{},
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
@@ -1063,20 +1116,34 @@ func TestAssetFTWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
-	requireT.Error(err)
 	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// try to send to recipient before it is whitelisted (balance 0, whitelist limit 0)
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
+	// send
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+		Amount:      coinsToSend,
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
+	)
+	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+
+	// multi-send
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
 	)
 	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
 

@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -54,8 +55,8 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	_, err = ftKeeper.GetToken(ctx, unfreezableDenom)
 	requireT.NoError(err)
 
-	receiver := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, issuer, receiver, sdk.NewCoins(
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(100)),
 		sdk.NewCoin(unfreezableDenom, sdk.NewInt(100)),
 	))
@@ -63,51 +64,48 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	// try to freeze non-existent denom
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)
-	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(nonExistentDenom, sdk.NewInt(10)))
-	requireT.Error(err)
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(nonExistentDenom, sdk.NewInt(10)))
 	assertT.True(sdkerrors.IsOf(err, types.ErrFTNotFound))
 
 	// try to freeze unfreezable FT
-	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(unfreezableDenom, sdk.NewInt(10)))
-	requireT.Error(err)
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(unfreezableDenom, sdk.NewInt(10)))
 	assertT.True(sdkerrors.IsOf(err, types.ErrFeatureNotActive))
 
 	// try to freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = ftKeeper.Freeze(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(10)))
-	requireT.Error(err)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	err = ftKeeper.Freeze(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdk.NewInt(10)))
+	assertT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// try to freeze 0 balance
-	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(0)))
-	requireT.True(sdkerrors.ErrInvalidCoins.Is(err))
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(0)))
+	requireT.ErrorIs(sdkerrors.ErrInvalidCoins, err)
 
 	// try to unfreeze 0 balance
-	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(0)))
-	requireT.True(sdkerrors.ErrInvalidCoins.Is(err))
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(0)))
+	requireT.ErrorIs(sdkerrors.ErrInvalidCoins, err)
 
 	// try to freeze more than balance
-	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(110)))
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(110)))
 	requireT.NoError(err)
-	frozenBalance := ftKeeper.GetFrozenBalance(ctx, receiver, denom)
+	frozenBalance := ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(110)), frozenBalance)
 
 	// try to unfreeze more than frozen balance
-	err = ftKeeper.Unfreeze(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(130)))
-	requireT.True(types.ErrNotEnoughBalance.Is(err))
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, receiver, denom)
+	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(130)))
+	requireT.ErrorIs(types.ErrNotEnoughBalance, err)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(110)), frozenBalance)
 
 	// set frozen balance back to zero
-	err = ftKeeper.Unfreeze(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(110)))
+	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(110)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, receiver, denom)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(0)).String(), frozenBalance.String())
 
 	// freeze, query frozen
-	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(40)))
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(40)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, receiver, denom)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(40)).String(), frozenBalance.String())
 
 	// test query all frozen
@@ -115,43 +113,70 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	assertT.NoError(err)
 	assertT.Len(allBalances, 1)
 	assertT.EqualValues(1, pageRes.GetTotal())
-	assertT.EqualValues(receiver.String(), allBalances[0].Address)
+	assertT.EqualValues(recipient.String(), allBalances[0].Address)
 	requireT.Equal(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(40))).String(), allBalances[0].Coins.String())
 
 	// increase frozen and query
-	err = ftKeeper.Freeze(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(40)))
+	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(40)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, receiver, denom)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(80)), frozenBalance)
 
 	// try to send more than available
-	err = bankKeeper.SendCoins(ctx, receiver, issuer, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(80))))
-	requireT.Error(err)
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(80)))
+	// send
+	err = bankKeeper.SendCoins(ctx, recipient, issuer, coinsToSend)
+	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: issuer.String(), Coins: coinsToSend}})
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrInsufficientFunds))
 
 	// try to send unfrozen balance
-	receiver2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, receiver, receiver2, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(20))))
+	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
+	// send
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, coinsToSend)
 	requireT.NoError(err)
-	balance := bankKeeper.GetBalance(ctx, receiver, denom)
+	balance := bankKeeper.GetBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(90)), balance)
+	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(10)), balance)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}})
+	requireT.NoError(err)
+	balance = bankKeeper.GetBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(80)), balance)
-	balance = bankKeeper.GetBalance(ctx, receiver2, denom)
+	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(20)), balance)
 
 	// try to unfreeze from non issuer address
-	err = ftKeeper.Unfreeze(ctx, randomAddr, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
-	requireT.Error(err)
+	err = ftKeeper.Unfreeze(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdk.NewInt(80)))
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
 
 	// unfreeze, query frozen, and try to send
-	err = ftKeeper.Unfreeze(ctx, issuer, receiver, sdk.NewCoin(denom, sdk.NewInt(80)))
+	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(80)))
 	requireT.NoError(err)
-	frozenBalance = ftKeeper.GetFrozenBalance(ctx, receiver, denom)
+	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(0)), frozenBalance)
-	err = bankKeeper.SendCoins(ctx, receiver, receiver2, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(80))))
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(40)))
+	// send
+	err = bankKeeper.SendCoins(ctx, recipient, recipient2, coinsToSend)
 	requireT.NoError(err)
-	balance = bankKeeper.GetBalance(ctx, receiver, denom)
+	balance = bankKeeper.GetBalance(ctx, recipient, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(40)), balance)
+	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(60)), balance)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}})
+	requireT.NoError(err)
+	balance = bankKeeper.GetBalance(ctx, recipient, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(0)), balance)
-	balance = bankKeeper.GetBalance(ctx, receiver2, denom)
+	balance = bankKeeper.GetBalance(ctx, recipient2, denom)
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(100)), balance)
 }
