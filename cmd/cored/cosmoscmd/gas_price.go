@@ -2,6 +2,7 @@ package cosmoscmd
 
 import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	feecli "github.com/CoreumFoundation/coreum/x/feemodel/client/cli"
@@ -25,17 +26,32 @@ func mergeRunEs(runEs ...func(cmd *cobra.Command, args []string) error) func(cmd
 }
 
 func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
-	if flag := cmd.LocalFlags().Lookup(flags.FlagGasPrices); flag != nil && (!flag.Changed || flag.Value.String() == autoValue) {
-		gasPrice, err := feecli.QueryGasPrice(cmd)
-		if err != nil {
-			return err
+	gasPriceFlag := cmd.LocalFlags().Lookup(flags.FlagGasPrices)
+	if gasPriceFlag == nil {
+		return nil
+	}
+
+	if gasPriceFlag.Changed || gasPriceFlag.Value.String() != autoValue {
+		return nil
+	}
+
+	feeFlag := cmd.LocalFlags().Lookup(flags.FlagFees)
+	if feeFlag != nil && feeFlag.Changed {
+		// if both fee flag and gas price flag is provided, it is an error
+		if gasPriceFlag.Changed {
+			return errors.New("cannot provide both fees and gas prices")
 		}
 
-		if err = flag.Value.Set(gasPrice.MinGasPrice.String()); err != nil {
-			return err
-		}
+		// if only fee flag is provided, we should not query for gas prices
+		return nil
 	}
-	return nil
+
+	gasPrice, err := feecli.QueryGasPrice(cmd)
+	if err != nil {
+		return err
+	}
+
+	return gasPriceFlag.Value.Set(gasPrice.MinGasPrice.String())
 }
 
 func addQueryGasPriceToAllLeafs(cmd *cobra.Command) {
