@@ -96,7 +96,7 @@ func init() {
 			Denom:                constant.DenomDev,
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
-				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@35.223.81.227:26656"},
+				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.68.221.216:26656"},
 			},
 			GovConfig:          govConfig,
 			StakingConfig:      stakingConfig,
