@@ -17,7 +17,7 @@ import (
 )
 
 //nolint:funlen
-func TestImportAndExportGenesis(t *testing.T) {
+func TestInitAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 

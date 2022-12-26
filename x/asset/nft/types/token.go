@@ -7,6 +7,7 @@ import (
 	codetypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -30,6 +31,7 @@ type IssueClassSettings struct {
 	URI         string
 	URIHash     string
 	Data        *codetypes.Any
+	Features    []ClassFeature
 }
 
 // MintSettings is the model which represents the params for the non-fungible token minting.
@@ -82,4 +84,9 @@ func ValidateTokenID(id string) error {
 	}
 
 	return nil
+}
+
+// IsFeatureEnabled returns true if feature is enabled for a non-fungible token.
+func (nftd *NFTClassDefinition) IsFeatureEnabled(feature ClassFeature) bool {
+	return lo.Contains(nftd.Features, feature)
 }

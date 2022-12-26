@@ -32,6 +32,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 		AssetNFTIssueClass: 20000,
 		AssetNFTMint:       30000,
+		AssetNFTBurn:       15000,
 
 		BankSendPerEntry:      22000,
 		BankMultiSendPerEntry: 27000,
@@ -87,6 +88,7 @@ type DeterministicGasRequirements struct {
 	// x/asset/nft
 	AssetNFTIssueClass uint64
 	AssetNFTMint       uint64
+	AssetNFTBurn       uint64
 
 	// x/bank
 	BankSendPerEntry      uint64
@@ -148,6 +150,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.AssetNFTIssueClass, true
 	case *assetnfttypes.MsgMint:
 		return dgr.AssetNFTMint, true
+	case *assetnfttypes.MsgBurn:
+		return dgr.AssetNFTBurn, true
 	case *banktypes.MsgSend:
 		entriesNum := len(m.Amount)
 		if len(m.Amount) == 0 {

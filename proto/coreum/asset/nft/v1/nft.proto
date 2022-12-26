@@ -1,0 +1,30 @@
+syntax = "proto3";
+package coreum.asset.nft.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
+
+// ClassFeature defines possible features of non-fungible token class.
+enum ClassFeature {
+  burn = 0;
+}
+
+// NFTClassDefinition defines the non-fungible token class settings to store.
+message NFTClassDefinition {
+  string id = 1 [(gogoproto.customname) = "ID"];
+  repeated ClassFeature features = 2;
+}
+
+// NFTClass is a full representation of the non-fungible token class.
+message NFTClass {
+  string id = 1;
+  string name = 2;
+  string symbol = 3;
+  string description = 4;
+  string uri = 5 [(gogoproto.customname) = "URI"];
+  string uri_hash = 6 [(gogoproto.customname) = "URIHash"];
+  google.protobuf.Any data = 7;
+  repeated ClassFeature features = 8;
+}

@@ -9,4 +9,10 @@ var (
 	ErrInvalidInput = sdkerrors.Register(ModuleName, 1, "invalid input")
 	// ErrInvalidID is returned when the provided id is not of valid format
 	ErrInvalidID = sdkerrors.Register(ModuleName, 2, "id format is not valid")
+	// ErrClassNotFound is returned when token class not found in the store.
+	ErrClassNotFound = sdkerrors.Register(ModuleName, 3, "non-fungible token class not found")
+	// ErrFeatureNotActive is returned when an operation is performed on a token which is missing a required feature.
+	ErrFeatureNotActive = sdkerrors.Register(ModuleName, 4, "feature is not active")
+	// ErrNFTNotFound is returned if a non-fungible token not found in the store.
+	ErrNFTNotFound = sdkerrors.Register(ModuleName, 5, "non-fungible token not found")
 )
