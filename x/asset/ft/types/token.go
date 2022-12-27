@@ -116,8 +116,8 @@ func ValidateBurnRate(burnRate sdk.Dec) error {
 	return nil
 }
 
-// ValidateSendCommissionFee checks that provided send commission fee is valid
-func ValidateSendCommissionFee(sendCommissionRate sdk.Dec) error {
+// ValidateSendCommissionRate checks that provided send commission rate is valid
+func ValidateSendCommissionRate(sendCommissionRate sdk.Dec) error {
 	if err := validateRate(sendCommissionRate); err != nil {
 		return errors.Wrap(err, "send commission rate is invalid")
 	}
@@ -152,8 +152,8 @@ func (ftd FTDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
 	return calculateRate(coin.Amount, ftd.BurnRate)
 }
 
-// CalculateSendCommissionRateAmountAmount returns the coins to be sent to issuer as a sending commission
-func (ftd FTDefinition) CalculateSendCommissionRateAmountAmount(coin sdk.Coin) sdk.Int {
+// CalculateSendCommissionRateAmount returns the coins to be sent to issuer as a sending commission
+func (ftd FTDefinition) CalculateSendCommissionRateAmount(coin sdk.Coin) sdk.Int {
 	return calculateRate(coin.Amount, ftd.SendCommissionRate)
 }
 

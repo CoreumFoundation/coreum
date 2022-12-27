@@ -91,59 +91,59 @@ func TestKeeperCalculateBurnCoin(t *testing.T) {
 //nolint:dupl // We don't care
 func TestKeeperCalculateSendCommissionRate(t *testing.T) {
 	testCases := []struct {
-		rate               string
-		sendAmount         int64
-		sendCommissionRate int64
+		rate           string
+		sendAmount     int64
+		sendCommission int64
 	}{
 		{
-			rate:               "0.5",
-			sendAmount:         0,
-			sendCommissionRate: 0,
+			rate:           "0.5",
+			sendAmount:     0,
+			sendCommission: 0,
 		},
 		{
-			rate:               "0",
-			sendAmount:         1,
-			sendCommissionRate: 0,
+			rate:           "0",
+			sendAmount:     1,
+			sendCommission: 0,
 		},
 		{
-			rate:               "0.01",
-			sendAmount:         1,
-			sendCommissionRate: 1,
+			rate:           "0.01",
+			sendAmount:     1,
+			sendCommission: 1,
 		},
 		{
-			rate:               "0.01",
-			sendAmount:         101,
-			sendCommissionRate: 2,
+			rate:           "0.01",
+			sendAmount:     101,
+			sendCommission: 2,
 		},
 		{
-			rate:               "0.01",
-			sendAmount:         100,
-			sendCommissionRate: 1,
+			rate:           "0.01",
+			sendAmount:     100,
+			sendCommission: 1,
 		},
 		{
-			rate:               "0.1",
-			sendAmount:         100,
-			sendCommissionRate: 10,
+			rate:           "0.1",
+			sendAmount:     100,
+			sendCommission: 10,
 		},
 		{
-			rate:               "1.0",
-			sendAmount:         73,
-			sendCommissionRate: 73,
+			rate:           "1.0",
+			sendAmount:     73,
+			sendCommission: 73,
 		},
 		{
-			rate:               "0.1234",
-			sendAmount:         97,
-			sendCommissionRate: 12,
+			rate:           "0.1234",
+			sendAmount:     97,
+			sendCommission: 12,
 		},
 		{
-			rate:               "0.0003",
-			sendAmount:         492301,
-			sendCommissionRate: 148,
+			rate:           "0.0003",
+			sendAmount:     492301,
+			sendCommission: 148,
 		},
 		{
-			rate:               "0.0103",
-			sendAmount:         492301,
-			sendCommissionRate: 5071,
+			rate:           "0.0103",
+			sendAmount:     492301,
+			sendCommission: 5071,
 		},
 	}
 
@@ -155,8 +155,8 @@ func TestKeeperCalculateSendCommissionRate(t *testing.T) {
 			definition := types.FTDefinition{
 				SendCommissionRate: sdk.MustNewDecFromStr(tc.rate),
 			}
-			sendCommissionRate := definition.CalculateSendCommissionRateAmountAmount(sdk.NewCoin("test", sdk.NewInt(tc.sendAmount)))
-			assertT.EqualValues(sdk.NewInt(tc.sendCommissionRate).String(), sendCommissionRate.String())
+			sendCommissionRate := definition.CalculateSendCommissionRateAmount(sdk.NewCoin("test", sdk.NewInt(tc.sendAmount)))
+			assertT.EqualValues(sdk.NewInt(tc.sendCommission).String(), sendCommissionRate.String())
 		})
 	}
 }

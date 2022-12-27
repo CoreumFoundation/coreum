@@ -20,7 +20,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	if err := types.ValidateBurnRate(settings.BurnRate); err != nil {
 		return "", err
 	}
-	if err := types.ValidateSendCommissionFee(settings.SendCommissionRate); err != nil {
+	if err := types.ValidateSendCommissionRate(settings.SendCommissionRate); err != nil {
 		return "", err
 	}
 

@@ -281,7 +281,7 @@ func TestValidateSendCommissionRate(t *testing.T) {
 			return err
 		}
 
-		err = types.ValidateSendCommissionFee(rate)
+		err = types.ValidateSendCommissionRate(rate)
 		return err
 	}
 
