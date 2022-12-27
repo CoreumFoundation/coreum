@@ -19,8 +19,10 @@ deterministic gas for all our types. For a more recent data, consult
 Here is formula for the transaction 
 
 `
-Gas = FixedGas + Sum(DeterministicGas for each message) + GasForExtraBytes + GasForExtraSignatures
+Gas = FixedGas + Sum(Gas for each message) + GasForExtraBytes + GasForExtraSignatures
 `
+
+If message type is deterministic, then the value is looked up from the table, if it is non-deterministic, then the required gas is determined after the execution.
 
 `
 GasForExtraBytes = max(0, TxByteSize-FreeBytes) * TxSizeCostPerByte
@@ -38,10 +40,10 @@ Currently we have values for the above variables as follows:
 - `FreeBytes`: 2048
 
 As an example if the transaction has 1 signature on it and is below 
-2048 bytes, the user will not pay any thing extra, and if one of those values exceed those limits, the user will pay for the extra resources.
+2048 bytes, the user will not pay anything extra, and if one of those values exceed those limits, the user will pay for the extra resources.
 
 #### Full example
-lets say we have a transaction with 2 messages of type 
+Let's say we have a transaction with 2 messages of type 
 asset.MintNonFungibleToken inside, also there are 2
 signatures and the tx size is 2050 bytes, total will be:
 
@@ -58,8 +60,9 @@ There are some special cases where an extra step is introduced to the formula.
 
 #### Bank
 1. bank.MsgSend: `DeterministicGasForMsg = SendPerEntry * NumberOfCoins`
-2. bank.MsgMultiSend: `DeterministicGasForMsg = MultiSendPerEntry * (NumberOfInputs + NumberOfOutputs)`
+2. bank.MsgMultiSend: `DeterministicGasForMsg = MultiSendPerEntry * Max(NumberOfInputs, NumberOfOutputs)`
 
+Where `SendPerEntry` and `MultiSendPerEntry` are constant values defined for each of the message types.
 ## Deterministic Gas Table 
 
 ### Deterministic messages
