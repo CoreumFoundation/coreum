@@ -3,6 +3,7 @@
 package modules
 
 import (
+	"bytes"
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -58,7 +59,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 
 	// issue new NFT class with too long data
 
-	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: make([]byte, assetnfttypes.MaxDataSize+1)})
+	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)})
 	requireT.NoError(err)
 
 	issueMsg = &assetnfttypes.MsgIssueClass{
@@ -194,7 +195,7 @@ func TestAssetNFTMint(t *testing.T) {
 
 	// mint with too long data
 
-	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: make([]byte, assetnfttypes.MaxDataSize+1)})
+	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: bytes.Repeat([]byte{0x01}, assetnfttypes.MaxDataSize+1)})
 	requireT.NoError(err)
 
 	mintMsg = &assetnfttypes.MsgMint{

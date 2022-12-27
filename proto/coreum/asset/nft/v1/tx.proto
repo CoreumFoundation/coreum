@@ -5,6 +5,8 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "cosmos/msg/v1/msg.proto";
 
+import "coreum/asset/nft/v1/types.proto";
+
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
 option (gogoproto.goproto_getters_all) = false;
 
@@ -38,7 +40,3 @@ message MsgMint {
 }
 
 message EmptyResponse {}
-
-message DataBytes {
-  bytes Data = 1;
-}

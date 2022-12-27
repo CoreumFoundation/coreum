@@ -5,6 +5,7 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -22,23 +23,22 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// NFTByteArray defines basic data format, byte slice, for NFT
-type NFTByteArray struct {
-	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+type DataBytes struct {
+	Data []byte `protobuf:"bytes,1,opt,name=Data,proto3" json:"Data,omitempty"`
 }
 
-func (m *NFTByteArray) Reset()         { *m = NFTByteArray{} }
-func (m *NFTByteArray) String() string { return proto.CompactTextString(m) }
-func (*NFTByteArray) ProtoMessage()    {}
-func (*NFTByteArray) Descriptor() ([]byte, []int) {
+func (m *DataBytes) Reset()         { *m = DataBytes{} }
+func (m *DataBytes) String() string { return proto.CompactTextString(m) }
+func (*DataBytes) ProtoMessage()    {}
+func (*DataBytes) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3ee3ca6de043c159, []int{0}
 }
-func (m *NFTByteArray) XXX_Unmarshal(b []byte) error {
+func (m *DataBytes) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *NFTByteArray) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *DataBytes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_NFTByteArray.Marshal(b, m, deterministic)
+		return xxx_messageInfo_DataBytes.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -48,47 +48,41 @@ func (m *NFTByteArray) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *NFTByteArray) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NFTByteArray.Merge(m, src)
+func (m *DataBytes) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DataBytes.Merge(m, src)
 }
-func (m *NFTByteArray) XXX_Size() int {
+func (m *DataBytes) XXX_Size() int {
 	return m.Size()
 }
-func (m *NFTByteArray) XXX_DiscardUnknown() {
-	xxx_messageInfo_NFTByteArray.DiscardUnknown(m)
+func (m *DataBytes) XXX_DiscardUnknown() {
+	xxx_messageInfo_DataBytes.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_NFTByteArray proto.InternalMessageInfo
-
-func (m *NFTByteArray) GetData() []byte {
-	if m != nil {
-		return m.Data
-	}
-	return nil
-}
+var xxx_messageInfo_DataBytes proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*NFTByteArray)(nil), "coreum.asset.nft.v1.NFTByteArray")
+	proto.RegisterType((*DataBytes)(nil), "coreum.asset.nft.v1.DataBytes")
 }
 
 func init() { proto.RegisterFile("coreum/asset/nft/v1/types.proto", fileDescriptor_3ee3ca6de043c159) }
 
 var fileDescriptor_3ee3ca6de043c159 = []byte{
-	// 172 bytes of a gzipped FileDescriptorProto
+	// 183 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4f, 0xce, 0x2f, 0x4a,
 	0x2d, 0xcd, 0xd5, 0x4f, 0x2c, 0x2e, 0x4e, 0x2d, 0xd1, 0xcf, 0x4b, 0x2b, 0xd1, 0x2f, 0x33, 0xd4,
 	0x2f, 0xa9, 0x2c, 0x48, 0x2d, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x86, 0x28, 0xd0,
-	0x03, 0x2b, 0xd0, 0xcb, 0x4b, 0x2b, 0xd1, 0x2b, 0x33, 0x54, 0x52, 0xe2, 0xe2, 0xf1, 0x73, 0x0b,
-	0x71, 0xaa, 0x2c, 0x49, 0x75, 0x2c, 0x2a, 0x4a, 0xac, 0x14, 0x12, 0xe2, 0x62, 0x49, 0x49, 0x2c,
-	0x49, 0x94, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x09, 0x02, 0xb3, 0x9d, 0xfc, 0x4e, 0x3c, 0x92, 0x63,
-	0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x09, 0x8f, 0xe5, 0x18, 0x2e, 0x3c, 0x96,
-	0x63, 0xb8, 0xf1, 0x58, 0x8e, 0x21, 0xca, 0x24, 0x3d, 0xb3, 0x24, 0xa3, 0x34, 0x49, 0x2f, 0x39,
-	0x3f, 0x57, 0xdf, 0x19, 0x6c, 0xba, 0x5b, 0x7e, 0x69, 0x5e, 0x4a, 0x62, 0x49, 0x66, 0x7e, 0x9e,
-	0x3e, 0xd4, 0x3d, 0x15, 0x48, 0x2e, 0x02, 0x3b, 0x27, 0x89, 0x0d, 0xec, 0x1e, 0x63, 0x40, 0x00,
-	0x00, 0x00, 0xff, 0xff, 0xc9, 0xd8, 0xc3, 0xbe, 0xb2, 0x00, 0x00, 0x00,
+	0x03, 0x2b, 0xd0, 0xcb, 0x4b, 0x2b, 0xd1, 0x2b, 0x33, 0x94, 0x12, 0x49, 0xcf, 0x4f, 0xcf, 0x07,
+	0xcb, 0xeb, 0x83, 0x58, 0x10, 0xa5, 0x4a, 0xf2, 0x5c, 0x9c, 0x2e, 0x89, 0x25, 0x89, 0x4e, 0x95,
+	0x25, 0xa9, 0xc5, 0x42, 0x42, 0x5c, 0x2c, 0x20, 0x8e, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0x4f, 0x10,
+	0x98, 0xed, 0x14, 0x74, 0xe2, 0xa1, 0x1c, 0xc3, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31,
+	0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb,
+	0x31, 0x44, 0x99, 0xa4, 0x67, 0x96, 0x64, 0x94, 0x26, 0xe9, 0x25, 0xe7, 0xe7, 0xea, 0x3b, 0x83,
+	0x2d, 0x75, 0xcb, 0x2f, 0xcd, 0x4b, 0x49, 0x2c, 0xc9, 0xcc, 0xcf, 0xd3, 0x87, 0x3a, 0xb3, 0x02,
+	0xc9, 0xa1, 0x60, 0x57, 0x26, 0xb1, 0x81, 0xed, 0x36, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x2e,
+	0x1e, 0xb3, 0x7e, 0xc9, 0x00, 0x00, 0x00,
 }
 
-func (m *NFTByteArray) Marshal() (dAtA []byte, err error) {
+func (m *DataBytes) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -98,12 +92,12 @@ func (m *NFTByteArray) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *NFTByteArray) MarshalTo(dAtA []byte) (int, error) {
+func (m *DataBytes) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *NFTByteArray) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *DataBytes) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -129,7 +123,7 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *NFTByteArray) Size() (n int) {
+func (m *DataBytes) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -148,7 +142,7 @@ func sovTypes(x uint64) (n int) {
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *NFTByteArray) Unmarshal(dAtA []byte) error {
+func (m *DataBytes) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -171,10 +165,10 @@ func (m *NFTByteArray) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: NFTByteArray: wiretype end group for non-group")
+			return fmt.Errorf("proto: DataBytes: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: NFTByteArray: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: DataBytes: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

@@ -92,7 +92,7 @@ func ValidateData(data *codectypes.Any) error {
 			return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", MaxDataSize)
 		}
 		if data.TypeUrl != "/"+proto.MessageName((*DataBytes)(nil)) {
-			return sdkerrors.Wrap(ErrInvalidInput, "data field must contain NFTDataArray type")
+			return sdkerrors.Wrapf(ErrInvalidInput, "data field must contain %s type", proto.MessageName((*DataBytes)(nil)))
 		}
 	}
 

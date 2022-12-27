@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
@@ -59,7 +60,7 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 				msg := validMessage
 				msg.Data = &codectypes.Any{
 					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
-					Value:   make([]byte, types.MaxDataSize),
+					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize),
 				}
 				return &msg
 			},
@@ -141,7 +142,7 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 				msg := validMessage
 				msg.Data = &codectypes.Any{
 					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
-					Value:   make([]byte, types.MaxDataSize+1),
+					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize+1),
 				}
 				return &msg
 			},
@@ -208,7 +209,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 				msg := validMessage
 				msg.Data = &codectypes.Any{
 					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
-					Value:   make([]byte, types.MaxDataSize),
+					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize),
 				}
 				return &msg
 			},
@@ -272,7 +273,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 				msg := validMessage
 				msg.Data = &codectypes.Any{
 					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
-					Value:   make([]byte, types.MaxDataSize+1),
+					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize+1),
 				}
 				return &msg
 			},
