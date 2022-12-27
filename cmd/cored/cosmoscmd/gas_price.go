@@ -54,6 +54,9 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 	return gasPriceFlag.Value.Set(gasPrice.MinGasPrice.String())
 }
 
+// addQueryGasPriceToAllLeafs adds the logic to PreRunE function of all leaf commands
+// in the tree of the provided command. This function assumes that only the leaf commands
+// will contain logic to execute transactions to be executed.
 func addQueryGasPriceToAllLeafs(cmd *cobra.Command) {
 	if !cmd.HasSubCommands() {
 		cmd.PreRunE = mergeRunEs(queryGasPriceRunE, cmd.PreRunE)
