@@ -18,11 +18,11 @@ type AppModuleBasic struct {
 // AppModule implements an application module for the wnft module.
 type AppModule struct {
 	nftmodule.AppModule
-	keeper keeper.NFTKeeperWrapper
+	keeper keeper.BaseKeeperWrapper
 }
 
 // NewAppModule creates a new wnft AppModule object.
-func NewAppModule(cdc codec.Codec, keeper keeper.NFTKeeperWrapper, ak nft.AccountKeeper, bk nft.BankKeeper, registry codectypes.InterfaceRegistry) AppModule {
+func NewAppModule(cdc codec.Codec, keeper keeper.BaseKeeperWrapper, ak nft.AccountKeeper, bk nft.BankKeeper, registry codectypes.InterfaceRegistry) AppModule {
 	bankModule := nftmodule.NewAppModule(cdc, keeper.Keeper, ak, bk, registry)
 	return AppModule{
 		AppModule: bankModule,

@@ -247,7 +247,7 @@ type App struct {
 	AssetNFTKeeper     assetnftkeeper.Keeper
 	FeeModelKeeper     feemodelkeeper.Keeper
 	BankKeeper         wbankkeeper.BaseKeeperWrapper
-	NFTKeeper          wnftkeeper.NFTKeeperWrapper
+	NFTKeeper          wnftkeeper.BaseKeeperWrapper
 	CustomParamsKeeper customparamskeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 

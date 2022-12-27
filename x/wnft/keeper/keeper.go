@@ -11,15 +11,15 @@ import (
 	"github.com/CoreumFoundation/coreum/x/wnft/types"
 )
 
-// NFTKeeperWrapper wraps the original nft keeper and intercepts its original methods if needed
-type NFTKeeperWrapper struct {
+// BaseKeeperWrapper wraps the original nft keeper and intercepts its original methods if needed
+type BaseKeeperWrapper struct {
 	nftkeeper.Keeper
 	nonFungibleTokenProvider types.NonFungibleTokenProvider
 }
 
 // NewWrappedNFTKeeper returns a new instance of the WrappedNFTKeeper
-func NewWrappedNFTKeeper(originalKeeper nftkeeper.Keeper, provider types.NonFungibleTokenProvider) NFTKeeperWrapper {
-	return NFTKeeperWrapper{
+func NewWrappedNFTKeeper(originalKeeper nftkeeper.Keeper, provider types.NonFungibleTokenProvider) BaseKeeperWrapper {
+	return BaseKeeperWrapper{
 		Keeper:                   originalKeeper,
 		nonFungibleTokenProvider: provider,
 	}
@@ -27,7 +27,7 @@ func NewWrappedNFTKeeper(originalKeeper nftkeeper.Keeper, provider types.NonFung
 
 // Send overwrites Send method of the original keeper.
 // Copied from https://github.com/cosmos/cosmos-sdk/blob/a1143138716b64bc4fa0aa53c0f0fa59eb675bb7/x/nft/keeper/msg_server.go#L14
-func (wk NFTKeeperWrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendResponse, error) {
+func (wk BaseKeeperWrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
@@ -62,7 +62,7 @@ func (wk NFTKeeperWrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.M
 }
 
 // Transfer overwrites the original transfer function to include our custom interceptor
-func (wk NFTKeeperWrapper) Transfer(ctx sdk.Context, classID string, nftID string, receiver sdk.AccAddress) error {
+func (wk BaseKeeperWrapper) Transfer(ctx sdk.Context, classID string, nftID string, receiver sdk.AccAddress) error {
 	if err := wk.nonFungibleTokenProvider.BeforeTransfer(ctx, classID, nftID, receiver); err != nil {
 		return err
 	}
