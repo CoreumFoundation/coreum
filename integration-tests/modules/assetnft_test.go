@@ -49,7 +49,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        data,
 	}
-	res, err := tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -71,7 +71,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        data,
 	}
-	res, err = tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -98,7 +98,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        data,
 	}
-	res, err = tx.BroadcastTx(
+	res, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -185,7 +185,7 @@ func TestAssetNFTMint(t *testing.T) {
 		URIHash: "content-hash",
 		Data:    data,
 	}
-	res, err := tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -206,7 +206,7 @@ func TestAssetNFTMint(t *testing.T) {
 		URIHash: "content-hash",
 		Data:    data,
 	}
-	res, err = tx.BroadcastTx(
+	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -232,7 +232,7 @@ func TestAssetNFTMint(t *testing.T) {
 		URIHash: "content-hash",
 		Data:    data,
 	}
-	res, err = tx.BroadcastTx(
+	res, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
