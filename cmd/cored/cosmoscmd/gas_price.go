@@ -31,7 +31,7 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	if gasPriceFlag.Changed || gasPriceFlag.Value.String() != autoValue {
+	if gasPriceFlag.Changed && gasPriceFlag.Value.String() != autoValue {
 		return nil
 	}
 
