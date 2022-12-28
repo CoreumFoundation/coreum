@@ -240,8 +240,7 @@ func TestKeeper_Mint(t *testing.T) {
 
 	// try to mint unmintable token
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(unmintableDenom, sdk.NewInt(100)))
-	requireT.Error(err)
-	requireT.True(types.ErrFeatureNotActive.Is(err))
+	requireT.ErrorIs(types.ErrFeatureNotActive, err)
 
 	// Issue a mintable fungible token
 	settings = types.IssueSettings{
@@ -260,8 +259,7 @@ func TestKeeper_Mint(t *testing.T) {
 	// try to mint as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Mint(ctx, randomAddr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
-	requireT.Error(err)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// mint tokens and check balance and total supply
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
@@ -304,8 +302,7 @@ func TestKeeper_Burn(t *testing.T) {
 
 	// try to burn unburnable token
 	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
-	requireT.Error(err)
-	requireT.True(types.ErrFeatureNotActive.Is(err))
+	requireT.ErrorIs(types.ErrFeatureNotActive, err)
 
 	// Issue a burnable fungible token
 	settings = types.IssueSettings{
@@ -325,8 +322,7 @@ func TestKeeper_Burn(t *testing.T) {
 	// try to burn as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Burn(ctx, randomAddr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
-	requireT.Error(err)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// burn tokens and check balance and total supply
 	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
@@ -344,5 +340,5 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 
 	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(sdkerrors.ErrInsufficientFunds, err)
 }

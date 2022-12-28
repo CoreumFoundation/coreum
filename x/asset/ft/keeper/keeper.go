@@ -85,6 +85,10 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 				return err
 			}
 
+			if err := k.isCoinSpendable(ctx, inAddress, ft, coin.Amount); err != nil {
+				return err
+			}
+
 			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != inAddress.String() {
 				coinsToBurn := ft.CalculateBurnRateAmount(coin)
 				err = k.burn(ctx, inAddress, ft, coinsToBurn)
@@ -94,6 +98,28 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 			}
 		}
 	}
+
+	for _, out := range outputs {
+		outAddress, err := sdk.AccAddressFromBech32(out.Address)
+		if err != nil {
+			return err
+		}
+
+		for _, coin := range out.Coins {
+			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+			if types.ErrFTNotFound.Is(err) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+
+			if err := k.isCoinReceivable(ctx, outAddress, ft, coin.Amount); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
