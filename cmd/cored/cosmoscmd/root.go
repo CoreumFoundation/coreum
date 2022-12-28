@@ -243,6 +243,9 @@ func txCommand(moduleBasics module.BasicManager) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
+	moduleBasics.AddTxCommands(cmd)
+	addQueryGasPriceToAllLeafs(cmd)
+
 	cmd.AddCommand(
 		authcmd.GetSignCommand(),
 		authcmd.GetSignBatchCommand(),
@@ -254,9 +257,7 @@ func txCommand(moduleBasics module.BasicManager) *cobra.Command {
 		authcmd.GetDecodeCommand(),
 	)
 
-	moduleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
-
 	return cmd
 }
 
