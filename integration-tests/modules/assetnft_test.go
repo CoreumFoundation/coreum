@@ -4,10 +4,12 @@ package modules
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
@@ -79,8 +81,18 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	)
 	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
 
+	jsonData := struct {
+		Name        string
+		Description string
+	}{
+		Name:        "testName",
+		Description: "testDescription",
+	}
+	jsonDataRaw, err := json.Marshal(jsonData)
+	requireT.NoError(err)
+
 	// issue new NFT class
-	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte{0x00, 0x01}})
+	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonDataRaw})
 	requireT.NoError(err)
 
 	// we need to do this, otherwise assertion fails because some private fields are set differently
@@ -134,6 +146,15 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		UriHash:     issueMsg.URIHash,
 		Data:        dataToCompare,
 	}, nftClassRes.Class)
+
+	var data2 assetnfttypes.DataBytes
+	requireT.NoError(proto.Unmarshal(nftClassRes.Class.Data.Value, &data2))
+
+	jsonData2 := jsonData
+	jsonData2.Name = ""
+	jsonData2.Description = ""
+	requireT.NoError(json.Unmarshal(data2.Data, &jsonData2))
+	requireT.Equal(jsonData, jsonData2)
 }
 
 // TestAssetNFTMint tests non-fungible token minting.
@@ -214,8 +235,18 @@ func TestAssetNFTMint(t *testing.T) {
 	)
 	requireT.True(assetnfttypes.ErrInvalidInput.Is(err))
 
+	jsonData := struct {
+		Name        string
+		Description string
+	}{
+		Name:        "testName",
+		Description: "testDescription",
+	}
+	jsonDataRaw, err := json.Marshal(jsonData)
+	requireT.NoError(err)
+
 	// mint new token in that class
-	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte{0x00, 0x01}})
+	data, err = codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: jsonDataRaw})
 	requireT.NoError(err)
 
 	// we need to do this, otherwise assertion fails because some private fields are set differently
@@ -263,6 +294,15 @@ func TestAssetNFTMint(t *testing.T) {
 		UriHash: mintMsg.URIHash,
 		Data:    dataToCompare,
 	}, nftRes.Nft)
+
+	var data2 assetnfttypes.DataBytes
+	requireT.NoError(proto.Unmarshal(nftRes.Nft.Data.Value, &data2))
+
+	jsonData2 := jsonData
+	jsonData2.Name = ""
+	jsonData2.Description = ""
+	requireT.NoError(json.Unmarshal(data2.Data, &jsonData2))
+	requireT.Equal(jsonData, jsonData2)
 
 	// check the owner
 	ownerRes, err := nftClient.Owner(ctx, &nft.QueryOwnerRequest{
