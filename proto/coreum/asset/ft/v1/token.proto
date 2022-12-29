@@ -27,6 +27,12 @@ message FTDefinition {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
+  // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
+  // amount sent to the token issuer account.
+  string send_commission_rate = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
 }
 
 // FT is a full representation of the fungible token.
@@ -44,6 +50,12 @@ message FT {
   // burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
   // burn_amount. This value will be burnt on top of the send amount.
   string burn_rate = 9 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
+  // send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine
+  // amount sent to the token issuer account.
+  string send_commission_rate = 10 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
