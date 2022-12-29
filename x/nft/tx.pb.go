@@ -6,25 +6,21 @@ package nft
 import (
 	context "context"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -50,11 +46,9 @@ func (*MsgSend) ProtoMessage()    {}
 func (*MsgSend) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9cd688b01965c386, []int{0}
 }
-
 func (m *MsgSend) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgSend) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgSend.Marshal(b, m, deterministic)
@@ -67,15 +61,12 @@ func (m *MsgSend) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *MsgSend) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgSend.Merge(m, src)
 }
-
 func (m *MsgSend) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgSend) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgSend.DiscardUnknown(m)
 }
@@ -111,7 +102,8 @@ func (m *MsgSend) GetReceiver() string {
 }
 
 // MsgSendResponse defines the Msg/Send response type.
-type MsgSendResponse struct{}
+type MsgSendResponse struct {
+}
 
 func (m *MsgSendResponse) Reset()         { *m = MsgSendResponse{} }
 func (m *MsgSendResponse) String() string { return proto.CompactTextString(m) }
@@ -119,11 +111,9 @@ func (*MsgSendResponse) ProtoMessage()    {}
 func (*MsgSendResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9cd688b01965c386, []int{1}
 }
-
 func (m *MsgSendResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgSendResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgSendResponse.Marshal(b, m, deterministic)
@@ -136,15 +126,12 @@ func (m *MsgSendResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-
 func (m *MsgSendResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgSendResponse.Merge(m, src)
 }
-
 func (m *MsgSendResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgSendResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgSendResponse.DiscardUnknown(m)
 }
@@ -220,7 +207,8 @@ type MsgServer interface {
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
-type UnimplementedMsgServer struct{}
+type UnimplementedMsgServer struct {
+}
 
 func (*UnimplementedMsgServer) Send(ctx context.Context, req *MsgSend) (*MsgSendResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Send not implemented")
@@ -346,7 +334,6 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *MsgSend) Size() (n int) {
 	if m == nil {
 		return 0
@@ -384,11 +371,9 @@ func (m *MsgSendResponse) Size() (n int) {
 func sovTx(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *MsgSend) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -567,7 +552,6 @@ func (m *MsgSend) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgSendResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -618,7 +602,6 @@ func (m *MsgSendResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipTx(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

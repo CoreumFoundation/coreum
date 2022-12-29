@@ -153,6 +153,8 @@ func TestAssetFTBurn(t *testing.T) {
 }
 
 // TestAssetFTBurnRate tests burn rate functionality of fungible tokens.
+//
+//nolint:dupl
 func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
 
@@ -184,14 +186,15 @@ func TestAssetFTBurnRate(t *testing.T) {
 
 	// Issue an fungible token
 	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        issuer.String(),
-		Symbol:        "ABC",
-		Subunit:       "abc",
-		Precision:     6,
-		InitialAmount: sdk.NewInt(1000),
-		Description:   "ABC Description",
-		Features:      []assetfttypes.TokenFeature{},
-		BurnRate:      sdk.MustNewDecFromStr("0.10"),
+		Issuer:             issuer.String(),
+		Symbol:             "ABC",
+		Subunit:            "abc",
+		Precision:          6,
+		InitialAmount:      sdk.NewInt(1000),
+		Description:        "ABC Description",
+		Features:           []assetfttypes.TokenFeature{},
+		BurnRate:           sdk.MustNewDecFromStr("0.10"),
+		SendCommissionRate: sdk.NewDec(0),
 	}
 
 	res, err := tx.BroadcastTx(
@@ -294,6 +297,155 @@ func TestAssetFTBurnRate(t *testing.T) {
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&issuer:     800,
+		&recipient1: 70,
+		&recipient2: 100,
+	})
+}
+
+// TestAssetFTSendCommissionRate tests send commission rate functionality of fungible tokens.
+//
+//nolint:dupl
+func TestAssetFTSendCommissionRate(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	recipient1 := chain.GenAccount()
+	recipient2 := chain.GenAccount()
+
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&banktypes.MsgSend{},
+			},
+		}),
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+			},
+		}),
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+			},
+		}),
+	)
+
+	// Issue an fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "ABC",
+		Subunit:            "abc",
+		Precision:          6,
+		InitialAmount:      sdk.NewInt(1000),
+		Description:        "ABC Description",
+		Features:           []assetfttypes.TokenFeature{},
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.10"),
+	}
+
+	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	tokenIssuedEvents, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
+	requireT.NoError(err)
+	denom := tokenIssuedEvents[0].Denom
+
+	// send from issuer to recipient1 (send commission rate must not apply)
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient1.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:     600,
+		&recipient1: 400,
+	})
+
+	// send from recipient1 to recipient2 (send commission rate must apply)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient1.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:     610,
+		&recipient1: 290,
+		&recipient2: 100,
+	})
+
+	// send from recipient2 to issuer (send commission rate must not apply)
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient2.String(),
+		ToAddress:   issuer.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:     710,
+		&recipient1: 290,
+		&recipient2: 0,
+	})
+
+	// multi send from recipient1 to issuer and recipient2
+	// (send commission rate must apply to both transfers. will be fixed later to apply to one transfer)
+	multiSendMsg := &banktypes.MsgMultiSend{
+		Inputs: []banktypes.Input{
+			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200)))},
+		},
+		Outputs: []banktypes.Output{
+			{Address: issuer.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100)))},
+			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100)))},
+		},
+	}
+
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				multiSendMsg,
+			}}),
+	)
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.NoError(err)
+	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:     830,
 		&recipient1: 70,
 		&recipient2: 100,
 	})
@@ -786,13 +938,14 @@ func TestAssetFTIssueBasic(t *testing.T) {
 
 	// Issue the new fungible token
 	msg := &assetfttypes.MsgIssue{
-		Issuer:        issuer.String(),
-		Symbol:        "WBTC",
-		Subunit:       "wsatoshi",
-		Precision:     8,
-		Description:   "Wrapped BTC",
-		InitialAmount: sdk.NewInt(777),
-		BurnRate:      sdk.NewDec(0),
+		Issuer:             issuer.String(),
+		Symbol:             "WBTC",
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		Description:        "Wrapped BTC",
+		InitialAmount:      sdk.NewInt(777),
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
 	}
 
 	res, err := tx.BroadcastTx(
@@ -808,15 +961,16 @@ func TestAssetFTIssueBasic(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, assetfttypes.EventTokenIssued{
-		Denom:         assetfttypes.BuildDenom(msg.Subunit, issuer),
-		Issuer:        msg.Issuer,
-		Symbol:        msg.Symbol,
-		Precision:     msg.Precision,
-		Subunit:       msg.Subunit,
-		Description:   msg.Description,
-		InitialAmount: msg.InitialAmount,
-		Features:      []assetfttypes.TokenFeature{},
-		BurnRate:      msg.BurnRate,
+		Denom:              assetfttypes.BuildDenom(msg.Subunit, issuer),
+		Issuer:             msg.Issuer,
+		Symbol:             msg.Symbol,
+		Precision:          msg.Precision,
+		Subunit:            msg.Subunit,
+		Description:        msg.Description,
+		InitialAmount:      msg.InitialAmount,
+		Features:           []assetfttypes.TokenFeature{},
+		BurnRate:           msg.BurnRate,
+		SendCommissionRate: msg.SendCommissionRate,
 	}, *fungibleTokenIssuedEvts[0])
 
 	denom := fungibleTokenIssuedEvts[0].Denom
@@ -828,13 +982,14 @@ func TestAssetFTIssueBasic(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.Equal(assetfttypes.FT{
-		Denom:       denom,
-		Issuer:      msg.Issuer,
-		Symbol:      msg.Symbol,
-		Subunit:     "wsatoshi",
-		Precision:   8,
-		Description: msg.Description,
-		BurnRate:    msg.BurnRate,
+		Denom:              denom,
+		Issuer:             msg.Issuer,
+		Symbol:             msg.Symbol,
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		Description:        msg.Description,
+		BurnRate:           msg.BurnRate,
+		SendCommissionRate: msg.SendCommissionRate,
 	}, gotToken.Token)
 
 	// query balance

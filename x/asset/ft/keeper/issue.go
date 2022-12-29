@@ -20,6 +20,9 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	if err := types.ValidateBurnRate(settings.BurnRate); err != nil {
 		return "", err
 	}
+	if err := types.ValidateSendCommissionRate(settings.SendCommissionRate); err != nil {
+		return "", err
+	}
 
 	err := types.ValidateSymbol(settings.Symbol)
 	if err != nil {
@@ -43,10 +46,11 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 
 	definition := types.FTDefinition{
-		Denom:    denom,
-		Issuer:   settings.Issuer.String(),
-		Features: settings.Features,
-		BurnRate: settings.BurnRate,
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Features:           settings.Features,
+		BurnRate:           settings.BurnRate,
+		SendCommissionRate: settings.SendCommissionRate,
 	}
 	k.SetTokenDefinition(ctx, definition)
 
@@ -55,15 +59,16 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventTokenIssued{
-		Denom:         denom,
-		Issuer:        settings.Issuer.String(),
-		Symbol:        settings.Symbol,
-		Subunit:       settings.Subunit,
-		Precision:     settings.Precision,
-		Description:   settings.Description,
-		InitialAmount: settings.InitialAmount,
-		Features:      settings.Features,
-		BurnRate:      settings.BurnRate,
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Subunit:            settings.Subunit,
+		Precision:          settings.Precision,
+		Description:        settings.Description,
+		InitialAmount:      settings.InitialAmount,
+		Features:           settings.Features,
+		BurnRate:           settings.BurnRate,
+		SendCommissionRate: settings.SendCommissionRate,
 	}); err != nil {
 		return "", sdkerrors.Wrap(err, "can't emit EventTokenIssued event")
 	}
@@ -127,15 +132,16 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.FTDefinition)
 	}
 
 	return types.FT{
-		Denom:          definition.Denom,
-		Issuer:         definition.Issuer,
-		Symbol:         metadata.Symbol,
-		Precision:      uint32(precision),
-		Subunit:        subunit,
-		Description:    metadata.Description,
-		Features:       definition.Features,
-		BurnRate:       definition.BurnRate,
-		GloballyFrozen: k.isGloballyFrozen(ctx, definition.Denom),
+		Denom:              definition.Denom,
+		Issuer:             definition.Issuer,
+		Symbol:             metadata.Symbol,
+		Precision:          uint32(precision),
+		Subunit:            subunit,
+		Description:        metadata.Description,
+		Features:           definition.Features,
+		BurnRate:           definition.BurnRate,
+		SendCommissionRate: definition.SendCommissionRate,
+		GloballyFrozen:     k.isGloballyFrozen(ctx, definition.Denom),
 	}, nil
 }
 
