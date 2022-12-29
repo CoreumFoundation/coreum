@@ -22,6 +22,7 @@ type Keeper struct {
 	paramSubspace ParamSubspace
 	storeKey      sdk.StoreKey
 	nftKeeper     types.NFTKeeper
+	bankKeeper    types.BankKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -30,12 +31,14 @@ func NewKeeper(
 	paramSubspace ParamSubspace,
 	storeKey sdk.StoreKey,
 	nftKeeper types.NFTKeeper,
+	bankKeeper types.BankKeeper,
 ) Keeper {
 	return Keeper{
 		cdc:           cdc,
 		paramSubspace: paramSubspace,
 		storeKey:      storeKey,
 		nftKeeper:     nftKeeper,
+		bankKeeper:    bankKeeper,
 	}
 }
 
@@ -115,6 +118,17 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 
 	if nftFound := k.nftKeeper.HasNFT(ctx, settings.ClassID, settings.ID); nftFound {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q already defined for the class", settings.ID)
+	}
+
+	params := k.GetParams(ctx)
+	if params.MintFee.IsPositive() {
+		coinsToBurn := sdk.NewCoins(params.MintFee)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, settings.Sender, types.ModuleName, coinsToBurn); err != nil {
+			return sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", settings.Sender.String(), types.ModuleName)
+		}
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+			return sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
+		}
 	}
 
 	if err := k.nftKeeper.Mint(ctx, nft.NFT{

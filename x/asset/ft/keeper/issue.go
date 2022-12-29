@@ -36,6 +36,17 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		)
 	}
 
+	params := k.GetParams(ctx)
+	if params.IssueFee.IsPositive() {
+		coinsToBurn := sdk.NewCoins(params.IssueFee)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, settings.Issuer, types.ModuleName, coinsToBurn); err != nil {
+			return "", sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", settings.Issuer.String(), types.ModuleName)
+		}
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+			return "", sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
+		}
+	}
+
 	if err := k.StoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
 	}
@@ -258,7 +269,7 @@ func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, ft types.FTDefinit
 
 	coinsToBurn := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coinsToBurn); err != nil {
-		return sdkerrors.Wrapf(err, "can't send  coins from account %s to module %s", account.String(), types.ModuleName)
+		return sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", account.String(), types.ModuleName)
 	}
 
 	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
