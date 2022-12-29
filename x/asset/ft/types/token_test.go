@@ -134,6 +134,7 @@ func TestValidateSymbol(t *testing.T) {
 	}
 }
 
+//nolint:dupl // We don't care
 func TestValidateBurnRate(t *testing.T) {
 	testCases := []struct {
 		rate    string
@@ -198,6 +199,89 @@ func TestValidateBurnRate(t *testing.T) {
 		}
 
 		err = types.ValidateBurnRate(rate)
+		return err
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		name := fmt.Sprintf("%+v", tc)
+		t.Run(name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := parseAndValidate(tc.rate)
+			if tc.invalid {
+				assertT.Error(err)
+			} else {
+				assertT.NoError(err)
+			}
+		})
+	}
+}
+
+//nolint:dupl // We don't care
+func TestValidateSendCommissionRate(t *testing.T) {
+	testCases := []struct {
+		rate    string
+		invalid bool
+	}{
+		{
+			rate: "0",
+		},
+		{
+			rate: "0.00",
+		},
+		{
+			rate: "1.00",
+		},
+		{
+			rate: "0.10",
+		},
+		{
+			rate: "0.10000",
+		},
+		{
+			rate: "0.0001",
+		},
+		{
+			rate:    "0.00001",
+			invalid: true,
+		},
+		{
+			rate:    "-0.01",
+			invalid: true,
+		},
+		{
+			rate:    "-1.0",
+			invalid: true,
+		},
+		{
+			rate:    "1.0002",
+			invalid: true,
+		},
+		{
+			rate:    "1.00023",
+			invalid: true,
+		},
+		{
+			rate:    "0.12345",
+			invalid: true,
+		},
+		{
+			rate:    "0.000000000000000001",
+			invalid: true,
+		},
+		{
+			rate:    "0.0000000000000000001",
+			invalid: true,
+		},
+	}
+
+	parseAndValidate := func(in string) error {
+		rate, err := sdk.NewDecFromStr(in)
+		if err != nil {
+			return err
+		}
+
+		err = types.ValidateSendCommissionRate(rate)
 		return err
 	}
 
