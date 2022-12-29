@@ -37,14 +37,15 @@ func TestQueryToken(t *testing.T) {
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 
 	requireT.Equal(types.FT{
-		Denom:       denom,
-		Issuer:      testNetwork.Validators[0].Address.String(),
-		Symbol:      symbol,
-		Subunit:     strings.ToLower(subunit),
-		Precision:   8,
-		Description: "",
-		Features:    []types.TokenFeature{},
-		BurnRate:    sdk.NewDec(0),
+		Denom:              denom,
+		Issuer:             testNetwork.Validators[0].Address.String(),
+		Symbol:             symbol,
+		Subunit:            strings.ToLower(subunit),
+		Precision:          8,
+		Description:        "",
+		Features:           []types.TokenFeature{},
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
 	}, resp.Token)
 }
 

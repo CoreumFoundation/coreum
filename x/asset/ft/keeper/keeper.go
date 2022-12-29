@@ -50,6 +50,9 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 		if err := k.applyBurnRate(ctx, ft, fromAddress, toAddress, coin); err != nil {
 			return err
 		}
+		if err := k.applySendCommissionRate(ctx, ft, fromAddress, toAddress, coin); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -59,6 +62,18 @@ func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FTDefinition, fromAddres
 	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
 		coinToBurn := ft.CalculateBurnRateAmount(coin)
 		err := k.burn(ctx, fromAddress, ft, coinToBurn)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) applySendCommissionRate(ctx sdk.Context, ft types.FTDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
+	if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
+		sendCommission := ft.CalculateSendCommissionRateAmount(coin)
+		err := k.bankKeeper.SendCoins(ctx, fromAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendCommission)))
 		if err != nil {
 			return err
 		}
@@ -91,7 +106,14 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 
 			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != inAddress.String() {
 				coinsToBurn := ft.CalculateBurnRateAmount(coin)
-				err = k.burn(ctx, inAddress, ft, coinsToBurn)
+				err := k.burn(ctx, inAddress, ft, coinsToBurn)
+				if err != nil {
+					return err
+				}
+			}
+			if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && ft.Issuer != inAddress.String() {
+				sendCommissionRate := ft.CalculateSendCommissionRateAmount(coin)
+				err := k.bankKeeper.SendCoins(ctx, inAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendCommissionRate)))
 				if err != nil {
 					return err
 				}
