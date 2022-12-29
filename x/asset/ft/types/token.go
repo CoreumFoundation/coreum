@@ -127,8 +127,3 @@ func ValidateBurnRate(burnRate sdk.Dec) error {
 func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 	return dec.Mul(sdk.NewDecFromInt(sdk.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
 }
-
-// CalculateBurnRateAmount returns the coins to be burned
-func (ftd FTDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
-	return ftd.BurnRate.MulInt(coin.Amount).Ceil().RoundInt()
-}
