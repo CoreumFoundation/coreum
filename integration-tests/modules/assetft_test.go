@@ -38,6 +38,7 @@ func TestAssetFTBurn(t *testing.T) {
 				&assetfttypes.MsgBurn{},
 				&assetfttypes.MsgBurn{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(2),
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
@@ -169,6 +170,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
@@ -315,6 +317,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgFreeze{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 
 	// Issue an unfreezable fungible token
@@ -374,7 +377,6 @@ func TestAssetFTFreeze(t *testing.T) {
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 				&assetfttypes.MsgFreeze{},
 				&assetfttypes.MsgFreeze{},
@@ -382,6 +384,7 @@ func TestAssetFTFreeze(t *testing.T) {
 				&assetfttypes.MsgUnfreeze{},
 				&assetfttypes.MsgUnfreeze{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
@@ -671,6 +674,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 				&assetfttypes.MsgGloballyUnfreeze{},
 				&banktypes.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 
 	// Issue the new fungible token
@@ -782,6 +786,7 @@ func TestAssetFTIssueBasic(t *testing.T) {
 	issuer := chain.GenAccount()
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	// Issue the new fungible token
@@ -866,6 +871,7 @@ func TestAssetFTMint(t *testing.T) {
 				&assetfttypes.MsgMint{},
 				&assetfttypes.MsgMint{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(2),
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
@@ -995,6 +1001,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 
 	// Issue an unwhitelistable fungible token
@@ -1066,6 +1073,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, nonIssuer, integrationtests.BalancesOptions{

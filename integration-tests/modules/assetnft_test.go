@@ -97,6 +97,7 @@ func TestAssetNFTMint(t *testing.T) {
 				&assetnfttypes.MsgMint{},
 				&nft.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
 		}),
 	)
 
