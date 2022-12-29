@@ -40,6 +40,7 @@ var EnableFakeUpgradeHandler string
 //go:embed networks/coreum-devnet-1
 var coreumDevnet1GenTxsFS embed.FS
 
+//nolint:funlen
 func init() {
 	// common vars
 	var (

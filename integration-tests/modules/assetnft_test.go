@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
@@ -186,6 +187,7 @@ func TestAssetNFTMint(t *testing.T) {
 		ClassId:  sendMsg.ClassId,
 		Id:       sendMsg.Id,
 	}, nftSentEvent)
+
 	// check new owner
 	ownerRes, err = nftClient.Owner(ctx, &nft.QueryOwnerRequest{
 		ClassId: classID,
@@ -193,4 +195,14 @@ func TestAssetNFTMint(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(receiver.String(), ownerRes.Owner)
+
+	// check that balance is 0 meaning mint fee was taken
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: issuer.String(),
+		Denom:   chain.NetworkConfig.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
 }

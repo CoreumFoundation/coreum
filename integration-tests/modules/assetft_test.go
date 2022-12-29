@@ -18,6 +18,53 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
+// TestAssetFTIssue tests issue functionality of fungible tokens.
+func TestAssetFTIssue(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features:      []assetfttypes.TokenFeature{},
+	}
+
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+
+	// check that balance is 0 meaning issue fee was taken
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: issuer.String(),
+		Denom:   chain.NetworkConfig.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
+}
+
 // TestAssetFTBurn tests burn functionality of fungible tokens.
 func TestAssetFTBurn(t *testing.T) {
 	t.Parallel()
