@@ -111,8 +111,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	}
 
 	_, err := assetKeeper.Issue(ctx, settings)
-	requireT.Error(err)
-	requireT.True(types.ErrInvalidInput.Is(err))
+	requireT.ErrorIs(types.ErrInvalidInput, err)
 
 	// issue token
 	settings = types.IssueSettings{
