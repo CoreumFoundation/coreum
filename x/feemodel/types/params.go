@@ -6,10 +6,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	// KeyModel represents the Model param key with which the ModelParams will be stored.
-	KeyModel = []byte("Model")
-)
+// KeyModel represents the Model param key with which the ModelParams will be stored.
+var KeyModel = []byte("Model")
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // of model's parameters.

@@ -7,11 +7,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/samber/lo"
 
-	assettypes "github.com/CoreumFoundation/coreum/x/asset/types"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
@@ -22,16 +24,17 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FreeBytes:      2048,
 		FreeSignatures: 1,
 
-		AssetIssueFungibleToken:               80000,
-		AssetMintFungibleToken:                35000,
-		AssetBurnFungibleToken:                35000,
-		AssetFreezeFungibleToken:              55000,
-		AssetUnfreezeFungibleToken:            55000,
-		AssetGloballyFreezeFungibleToken:      5000,
-		AssetGloballyUnfreezeFungibleToken:    5000,
-		AssetSetWhitelistedLimitFungibleToken: 35000,
-		AssetIssueNonFungibleTokenClass:       20000,
-		AssetMintNonFungibleToken:             30000,
+		AssetFTIssue:               80000,
+		AssetFTMint:                35000,
+		AssetFTBurn:                35000,
+		AssetFTFreeze:              55000,
+		AssetFTUnfreeze:            55000,
+		AssetFTGloballyFreeze:      5000,
+		AssetFTGloballyUnfreeze:    5000,
+		AssetFTSetWhitelistedLimit: 35000,
+
+		AssetNFTIssueClass: 20000,
+		AssetNFTMint:       30000,
 
 		BankSendPerEntry:      22000,
 		BankMultiSendPerEntry: 27000,
@@ -47,6 +50,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		GovDeposit:        91000,
 
 		NFTSend: 20000,
+
+		SlashingUnjail: 25000,
 
 		StakingDelegate:        51000,
 		StakingUndelegate:      51000,
@@ -72,17 +77,19 @@ type DeterministicGasRequirements struct {
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
 
-	// x/asset
-	AssetIssueFungibleToken               uint64
-	AssetMintFungibleToken                uint64
-	AssetBurnFungibleToken                uint64
-	AssetFreezeFungibleToken              uint64
-	AssetUnfreezeFungibleToken            uint64
-	AssetGloballyFreezeFungibleToken      uint64
-	AssetGloballyUnfreezeFungibleToken    uint64
-	AssetSetWhitelistedLimitFungibleToken uint64
-	AssetIssueNonFungibleTokenClass       uint64
-	AssetMintNonFungibleToken             uint64
+	// x/asset/ft
+	AssetFTIssue               uint64
+	AssetFTMint                uint64
+	AssetFTBurn                uint64
+	AssetFTFreeze              uint64
+	AssetFTUnfreeze            uint64
+	AssetFTGloballyFreeze      uint64
+	AssetFTGloballyUnfreeze    uint64
+	AssetFTSetWhitelistedLimit uint64
+
+	// x/asset/nft
+	AssetNFTIssueClass uint64
+	AssetNFTMint       uint64
 
 	// x/bank
 	BankSendPerEntry      uint64
@@ -103,6 +110,9 @@ type DeterministicGasRequirements struct {
 	// x/nft
 	NFTSend uint64
 
+	// x/slashing
+	SlashingUnjail uint64
+
 	// x/staking
 	StakingDelegate        uint64
 	StakingUndelegate      uint64
@@ -121,26 +131,26 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	// Then define a reasonable value for the message and return `true` again.
 
 	switch m := msg.(type) {
-	case *assettypes.MsgIssueFungibleToken:
-		return dgr.AssetIssueFungibleToken, true
-	case *assettypes.MsgFreezeFungibleToken:
-		return dgr.AssetFreezeFungibleToken, true
-	case *assettypes.MsgUnfreezeFungibleToken:
-		return dgr.AssetUnfreezeFungibleToken, true
-	case *assettypes.MsgGloballyFreezeFungibleToken:
-		return dgr.AssetFreezeFungibleToken, true
-	case *assettypes.MsgGloballyUnfreezeFungibleToken:
-		return dgr.AssetUnfreezeFungibleToken, true
-	case *assettypes.MsgMintFungibleToken:
-		return dgr.AssetMintFungibleToken, true
-	case *assettypes.MsgBurnFungibleToken:
-		return dgr.AssetBurnFungibleToken, true
-	case *assettypes.MsgSetWhitelistedLimitFungibleToken:
-		return dgr.AssetSetWhitelistedLimitFungibleToken, true
-	case *assettypes.MsgIssueNonFungibleTokenClass:
-		return dgr.AssetIssueNonFungibleTokenClass, true
-	case *assettypes.MsgMintNonFungibleToken:
-		return dgr.AssetMintNonFungibleToken, true
+	case *assetfttypes.MsgIssue:
+		return dgr.AssetFTIssue, true
+	case *assetfttypes.MsgFreeze:
+		return dgr.AssetFTFreeze, true
+	case *assetfttypes.MsgUnfreeze:
+		return dgr.AssetFTUnfreeze, true
+	case *assetfttypes.MsgGloballyFreeze:
+		return dgr.AssetFTFreeze, true
+	case *assetfttypes.MsgGloballyUnfreeze:
+		return dgr.AssetFTUnfreeze, true
+	case *assetfttypes.MsgMint:
+		return dgr.AssetFTMint, true
+	case *assetfttypes.MsgBurn:
+		return dgr.AssetFTBurn, true
+	case *assetfttypes.MsgSetWhitelistedLimit:
+		return dgr.AssetFTSetWhitelistedLimit, true
+	case *assetnfttypes.MsgIssueClass:
+		return dgr.AssetNFTIssueClass, true
+	case *assetnfttypes.MsgMint:
+		return dgr.AssetNFTMint, true
 	case *banktypes.MsgSend:
 		entriesNum := len(m.Amount)
 		if len(m.Amount) == 0 {
@@ -183,6 +193,8 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.GovDeposit, true
 	case *nft.MsgSend:
 		return dgr.NFTSend, true
+	case *slashingtypes.MsgUnjail:
+		return dgr.SlashingUnjail, true
 	case *stakingtypes.MsgDelegate:
 		return dgr.StakingDelegate, true
 	case *stakingtypes.MsgUndelegate:
