@@ -69,6 +69,12 @@ func testNetwork() config.Network {
 				MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
 			},
 		},
+		AssetFTConfig: config.AssetFTConfig{
+			IssueFee: sdk.NewIntFromUint64(10000000),
+		},
+		AssetNFTConfig: config.AssetNFTConfig{
+			MintFee: sdk.NewIntFromUint64(500000),
+		},
 	})
 }
 

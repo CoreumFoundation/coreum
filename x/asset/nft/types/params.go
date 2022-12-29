@@ -20,7 +20,7 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // DefaultParams returns params with default values.
 func DefaultParams() Params {
 	return Params{
-		MintFee: sdk.NewInt64Coin("stake", 500000),
+		MintFee: sdk.NewInt64Coin("stake", 0),
 	}
 }
 
