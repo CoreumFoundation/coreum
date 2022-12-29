@@ -26,10 +26,6 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
 	}
 
-	if err := k.StoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
-		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
-	}
-
 	denom := types.BuildDenom(settings.Subunit, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
@@ -40,7 +36,9 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		)
 	}
 
-	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
+	if err := k.StoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
+		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
+	}
 
 	definition := types.FTDefinition{
 		Denom:    denom,
@@ -48,6 +46,8 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		Features: settings.Features,
 		BurnRate: settings.BurnRate,
 	}
+
+	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 	k.SetTokenDefinition(ctx, definition)
 
 	if err := k.mint(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {

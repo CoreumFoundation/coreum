@@ -326,6 +326,7 @@ func New(
 
 	assetFTKeeper := assetftkeeper.NewKeeper(
 		appCodec,
+		app.GetSubspace(assetfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetfttypes.Params{})),
 		keys[assetfttypes.StoreKey],
 		// for the asset we use the clear bank keeper without the assets integration to prevent cycling calls.
 		bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs()),
@@ -381,7 +382,12 @@ func New(
 
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
 
-	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(appCodec, keys[assetnfttypes.StoreKey], app.NFTKeeper)
+	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
+		appCodec,
+		app.GetSubspace(assetnfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetnfttypes.Params{})),
+		keys[assetnfttypes.StoreKey],
+		app.NFTKeeper,
+	)
 
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
@@ -798,6 +804,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(wasm.ModuleName)
 	paramsKeeper.Subspace(feemodeltypes.ModuleName)
 	paramsKeeper.Subspace(customparamstypes.CustomParamsStaking)
+	paramsKeeper.Subspace(assetfttypes.ModuleName)
+	paramsKeeper.Subspace(assetnfttypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

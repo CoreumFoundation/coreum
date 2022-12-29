@@ -4,25 +4,51 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
+// ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters
+type ParamSubspace interface {
+	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
+	SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
+}
+
 // Keeper is the asset module non-fungible token nftKeeper.
 type Keeper struct {
-	cdc       codec.BinaryCodec
-	storeKey  sdk.StoreKey
-	nftKeeper types.NFTKeeper
+	cdc           codec.BinaryCodec
+	paramSubspace ParamSubspace
+	storeKey      sdk.StoreKey
+	nftKeeper     types.NFTKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, nftKeeper types.NFTKeeper) Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	paramSubspace ParamSubspace,
+	storeKey sdk.StoreKey,
+	nftKeeper types.NFTKeeper,
+) Keeper {
 	return Keeper{
-		cdc:       cdc,
-		storeKey:  storeKey,
-		nftKeeper: nftKeeper,
+		cdc:           cdc,
+		paramSubspace: paramSubspace,
+		storeKey:      storeKey,
+		nftKeeper:     nftKeeper,
 	}
+}
+
+// SetParams sets the parameters of the model
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramSubspace.SetParamSet(ctx, &params)
+}
+
+// GetParams gets the parameters of the model
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	var params types.Params
+	k.paramSubspace.GetParamSet(ctx, &params)
+	return params
 }
 
 // IssueClass issues new non-fungible token class and returns its id.
