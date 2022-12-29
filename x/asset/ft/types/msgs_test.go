@@ -71,6 +71,14 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 	msg = msgF()
 	msg.Subunit = ""
 	requireT.Error(msg.ValidateBasic())
+
+	msg = msgF()
+	msg.BurnRate = sdk.MustNewDecFromStr("-0.1")
+	requireT.Error(msg.ValidateBasic())
+
+	msg = msgF()
+	msg.SendCommissionRate = sdk.MustNewDecFromStr("-0.1")
+	requireT.Error(msg.ValidateBasic())
 }
 
 func TestMsgFreeze_ValidateBasic(t *testing.T) {

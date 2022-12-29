@@ -162,14 +162,15 @@ func TestKeeper_Issue(t *testing.T) {
 	gotToken, err := ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
 	requireT.Equal(types.FT{
-		Denom:       denom,
-		Issuer:      settings.Issuer.String(),
-		Symbol:      settings.Symbol,
-		Description: settings.Description,
-		Subunit:     strings.ToLower(settings.Subunit),
-		Precision:   settings.Precision,
-		Features:    []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
-		BurnRate:    sdk.NewDec(0),
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Description:        settings.Description,
+		Subunit:            strings.ToLower(settings.Subunit),
+		Precision:          settings.Precision,
+		Features:           []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
 	}, gotToken)
 
 	// check the metadata
