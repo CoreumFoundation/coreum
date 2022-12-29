@@ -26,7 +26,7 @@
       "params": {
         "issue_fee": {
           "denom": "{{ .Denom }}",
-          "amount": "10000000"
+          "amount": "{{ .AssetFTConfig.IssueFee }}"
         }
       }
     },
@@ -34,7 +34,7 @@
       "params": {
         "mint_fee": {
           "denom": "{{ .Denom }}",
-          "amount": "500000"
+          "amount": "{{ .AssetNFTConfig.MintFee }}"
         }
       }
     },
