@@ -48,8 +48,8 @@ type MultiSendIterationInfo struct {
 	Receivers          map[string]sdk.Int
 }
 
-// CalculateBurnRateShares returns the coins to be burned
-func (info MultiSendIterationInfo) CalculateBurnRateShares() (map[string]sdk.Int, map[string]sdk.Int) {
+// CalculateBurnRateAndCommissionShares returns the coins to be burned or send as commission
+func (info MultiSendIterationInfo) CalculateBurnRateAndCommissionShares() (map[string]sdk.Int, map[string]sdk.Int) {
 	var minNonIssuerIOAmount sdk.Int
 	if info.NonIssuerInputSum.LT(info.NonIssuerOutputSum) {
 		minNonIssuerIOAmount = info.NonIssuerInputSum
@@ -178,7 +178,7 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 	}
 
 	for _, splitInfo := range splitIntoMap {
-		burnShares, commissionShares := splitInfo.CalculateBurnRateShares()
+		burnShares, commissionShares := splitInfo.CalculateBurnRateAndCommissionShares()
 		for account, burnShare := range burnShares {
 			senderAccAddress, err := sdk.AccAddressFromBech32(account)
 			if err != nil {
