@@ -72,7 +72,7 @@ func init() {
 		}
 
 		assetNFTConfig = AssetNFTConfig{
-			MintFee: sdk.NewIntFromUint64(500000),
+			MintFee: sdk.ZeroInt(),
 		}
 	)
 
