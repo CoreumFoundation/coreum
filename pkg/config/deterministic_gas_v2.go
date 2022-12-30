@@ -3,6 +3,7 @@ package config
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -18,7 +19,7 @@ import (
 
 type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
 
-type GasConfig struct {
+type DeterministicGasRequirements struct {
 	FixedGas       uint64
 	FreeBytes      uint64
 	FreeSignatures uint64
@@ -26,8 +27,8 @@ type GasConfig struct {
 	gasByMsg map[string]gasByMsgFunc
 }
 
-func DefaultGasRequirementsV2() GasConfig {
-	gr := GasConfig{
+func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
+	gr := DeterministicGasRequirements{
 		FixedGas:       50000,
 		FreeBytes:      2048,
 		FreeSignatures: 1,
@@ -89,9 +90,13 @@ func DefaultGasRequirementsV2() GasConfig {
 	return gr
 }
 
-// GasRequiredByMessageV2 returns gas required by message and true if message is deterministic.
+func (gr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint64 {
+	return gr.FreeBytes*params.TxSizeCostPerByte + gr.FreeSignatures*params.SigVerifyCostSecp256k1
+}
+
+// GasRequiredByMessage returns gas required by message and true if message is deterministic.
 // Function returns 0 and false if message is undeterministic or unknown.
-func (gr GasConfig) GasRequiredByMessageV2(msg sdk.Msg) (uint64, bool) {
+func (gr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
 	gasFunc, ok := gr.gasByMsg[msgName(msg)]
 	if ok {
 		return gasFunc(msg)
@@ -112,7 +117,7 @@ func undermGasFunc() gasByMsgFunc {
 	}
 }
 
-func (gr GasConfig) autzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
+func (gr DeterministicGasRequirements) autzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgExec)
 		if !ok {
@@ -125,14 +130,13 @@ func (gr GasConfig) autzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc
 			return 0, false
 		}
 		for _, childMsg := range childMsgs {
-			gas, isDeterministic := gr.GasRequiredByMessageV2(childMsg)
+			gas, isDeterministic := gr.GasRequiredByMessage(childMsg)
 			if !isDeterministic {
 				return 0, false
 			}
 			totalGas += gas
 		}
 		return authzMsgExecOverhead + totalGas, true
-
 	}
 }
 

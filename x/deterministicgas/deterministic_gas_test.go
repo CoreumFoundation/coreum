@@ -35,7 +35,7 @@ func TestDeterministicGasRequirements(t *testing.T) {
 		}
 
 		fmt.Printf("%T => %v\n", sdkMsg, name)
-		_, ok = config.DefaultGasRequirementsV2().GasRequiredByMessageV2(sdkMsg)
+		_, ok = config.DefaultDeterministicGasRequirements().GasRequiredByMessage(sdkMsg)
 		assert.True(t, ok)
 	}
 }
