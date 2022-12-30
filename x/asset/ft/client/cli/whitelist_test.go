@@ -27,7 +27,8 @@ func TestWhitelist(t *testing.T) {
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	// Issue token
-	args := []string{symbol, subunit, precision, "777", `"My Token"`,
+	args := []string{
+		symbol, subunit, precision, "777", `"My Token"`,
 		"--features", types.TokenFeature_whitelist.String(), //nolint:nosnakecase
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
@@ -38,7 +39,8 @@ func TestWhitelist(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		symbol := "l" + uuid.NewString()[:4]
 		subunit := "sub" + symbol
-		args := []string{symbol, subunit, precision, "777", `"My Token"`,
+		args := []string{
+			symbol, subunit, precision, "777", `"My Token"`,
 			"--features", types.TokenFeature_whitelist.String(), //nolint:nosnakecase
 		}
 		args = append(args, txValidator1Args(testNetwork)...)
