@@ -49,7 +49,7 @@ type MultiSendIterationInfo struct {
 }
 
 // CalculateBurnRateShares returns the coins to be burned
-func (info MultiSendIterationInfo) CalculateBurnRateShares() map[string]sdk.Int {
+func (info MultiSendIterationInfo) CalculateBurnRateShares() (map[string]sdk.Int, map[string]sdk.Int) {
 	var minNonIssuerIOAmount sdk.Int
 	if info.NonIssuerInputSum.LT(info.NonIssuerOutputSum) {
 		minNonIssuerIOAmount = info.NonIssuerInputSum
@@ -57,16 +57,25 @@ func (info MultiSendIterationInfo) CalculateBurnRateShares() map[string]sdk.Int 
 		minNonIssuerIOAmount = info.NonIssuerOutputSum
 	}
 
-	shares := map[string]sdk.Int{}
-	amountToBurn := info.FT.BurnRate.MulInt(minNonIssuerIOAmount)
-	if amountToBurn.IsPositive() {
+	burnShares := map[string]sdk.Int{}
+	burnAmount := info.FT.BurnRate.MulInt(minNonIssuerIOAmount)
+	if burnAmount.IsPositive() {
 		for sendAccount, sendAmount := range info.NonIssuerSenders {
-			burnShare := amountToBurn.Mul(sdk.NewDecFromInt(sendAmount)).Quo(sdk.NewDecFromInt(info.NonIssuerInputSum)).Ceil().RoundInt()
-			shares[sendAccount] = burnShare
+			burnShare := burnAmount.Mul(sdk.NewDecFromInt(sendAmount)).Quo(sdk.NewDecFromInt(info.NonIssuerInputSum)).Ceil().RoundInt()
+			burnShares[sendAccount] = burnShare
 		}
 	}
 
-	return shares
+	commissionShares := map[string]sdk.Int{}
+	commissionAmount := info.FT.SendCommissionRate.MulInt(minNonIssuerIOAmount)
+	if commissionAmount.IsPositive() {
+		for sendAccount, sendAmount := range info.NonIssuerSenders {
+			commissionShare := commissionAmount.Mul(sdk.NewDecFromInt(sendAmount)).Quo(sdk.NewDecFromInt(info.NonIssuerInputSum)).Ceil().RoundInt()
+			commissionShares[sendAccount] = commissionShare
+		}
+	}
+
+	return burnShares, commissionShares
 }
 
 func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) (map[string]MultiSendIterationInfo, error) {
@@ -88,10 +97,12 @@ func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, o
 				NonIssuerInputSum:  sdk.NewInt(0),
 				NonIssuerOutputSum: sdk.NewInt(0),
 				NonIssuerSenders:   map[string]sdk.Int{},
+				Senders:            map[string]sdk.Int{},
+				Receivers:          map[string]sdk.Int{},
 			}
 		}
 
-		//nolint:nestif // I cannot fix the complexity here without sacrificing performance
+		//nolint:nestif // I could not find a way to fix the complexity here without sacrificing performance
 		if isInput {
 			oldAmount, ok := info.Senders[address.String()]
 			if !ok {
@@ -167,8 +178,8 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 	}
 
 	for _, splitInfo := range splitIntoMap {
-		shares := splitInfo.CalculateBurnRateShares()
-		for account, burnShare := range shares {
+		burnShares, commissionShares := splitInfo.CalculateBurnRateShares()
+		for account, burnShare := range burnShares {
 			senderAccAddress, err := sdk.AccAddressFromBech32(account)
 			if err != nil {
 				return err
@@ -179,7 +190,42 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 				return err
 			}
 		}
+
+		for account, commissionShare := range commissionShares {
+			senderAccAddress, err := sdk.AccAddressFromBech32(account)
+			if err != nil {
+				return err
+			}
+
+			coins := sdk.NewCoins(sdk.NewCoin(splitInfo.FT.Denom, commissionShare))
+			err = k.bankKeeper.SendCoins(ctx, senderAccAddress, sdk.MustAccAddressFromBech32(splitInfo.FT.Issuer), coins)
+			if err != nil {
+				return err
+			}
+		}
 	}
+
+	for _, out := range outputs {
+		outAddress, err := sdk.AccAddressFromBech32(out.Address)
+		if err != nil {
+			return err
+		}
+
+		for _, coin := range out.Coins {
+			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+			if types.ErrFTNotFound.Is(err) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+
+			if err := k.isCoinReceivable(ctx, outAddress, ft, coin.Amount); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 

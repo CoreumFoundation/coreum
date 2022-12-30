@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -55,8 +56,8 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	_, err = ftKeeper.GetToken(ctx, unfreezableDenom)
 	requireT.NoError(err)
 
-	receiver := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	err = bankKeeper.SendCoins(ctx, issuer, receiver, sdk.NewCoins(
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
 		sdk.NewCoin(freezableDenom, sdk.NewInt(100)),
 		sdk.NewCoin(unfreezableDenom, sdk.NewInt(100)),
 	))
@@ -65,19 +66,16 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	// try to global-freeze non-existent
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)
 	err = ftKeeper.GloballyFreeze(ctx, issuer, nonExistentDenom)
-	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, types.ErrFTNotFound))
 
 	// try to global-freeze unfreezable FT
 	err = ftKeeper.GloballyFreeze(ctx, issuer, unfreezableDenom)
-	requireT.Error(err)
 	assertT.True(sdkerrors.IsOf(err, types.ErrFeatureNotActive))
 
 	// try to global-freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.GloballyFreeze(ctx, randomAddr, freezableDenom)
-	requireT.Error(err)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	assertT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// freeze twice to check global-freeze idempotence
 	err = ftKeeper.GloballyFreeze(ctx, issuer, freezableDenom)
@@ -90,8 +88,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 
 	// try to global-unfreeze from non issuer address
 	err = ftKeeper.GloballyUnfreeze(ctx, randomAddr, freezableDenom)
-	requireT.Error(err)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	assertT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// unfreeze twice to check global-unfreeze idempotence
 	err = ftKeeper.GloballyUnfreeze(ctx, issuer, freezableDenom)
@@ -105,16 +102,29 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	// freeze, try to send & verify balance
 	err = ftKeeper.GloballyFreeze(ctx, issuer, freezableDenom)
 	requireT.NoError(err)
-	err = bankKeeper.SendCoins(ctx, receiver, randomAddr, sdk.Coins{sdk.NewCoin(freezableDenom, sdk.NewInt(10))})
-	requireT.Error(err)
-	assertT.True(types.ErrGloballyFrozen.Is(err))
-	balance := bankKeeper.GetBalance(ctx, randomAddr, freezableDenom)
-	requireT.Equal(sdk.NewCoin(freezableDenom, sdk.NewInt(0)), balance)
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(freezableDenom, sdk.NewInt(10)))
+	// send
+	err = bankKeeper.SendCoins(ctx, recipient, randomAddr, coinsToSend)
+	assertT.ErrorIs(types.ErrGloballyFrozen, err)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
+	assertT.ErrorIs(types.ErrGloballyFrozen, err)
 
 	// unfreeze, try to send & verify balance
 	err = ftKeeper.GloballyUnfreeze(ctx, issuer, freezableDenom)
 	requireT.NoError(err)
-	err = bankKeeper.SendCoins(ctx, receiver, randomAddr, sdk.Coins{sdk.NewCoin(freezableDenom, sdk.NewInt(12))})
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(freezableDenom, sdk.NewInt(6)))
+	// send
+	err = bankKeeper.SendCoins(ctx, recipient, randomAddr, coinsToSend)
+	requireT.NoError(err)
+	balance := bankKeeper.GetBalance(ctx, randomAddr, freezableDenom)
+	requireT.Equal(sdk.NewCoin(freezableDenom, sdk.NewInt(6)), balance)
+	// multi-send
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
 	requireT.NoError(err)
 	balance = bankKeeper.GetBalance(ctx, randomAddr, freezableDenom)
 	requireT.Equal(sdk.NewCoin(freezableDenom, sdk.NewInt(12)), balance)
