@@ -106,12 +106,10 @@ The doc describes the procedure of creating and running the validator node which
   --commission-max-rate="$CORED_VALIDATOR_COMMISSION_MAX_RATE" \
   --commission-max-change-rate="$CORED_VALIDATOR_COMMISSION_MAX_CHANGE_RATE" \
   --min-self-delegation=$CORED_MIN_DELEGATION_AMOUNT \
-  --gas-prices 1500$CORED_DENOM \
   --gas auto \
   --gas-adjustment 1.3 \
   --chain-id="$CHAINID" \
   --from=$MONIKER \
-  --gas-prices 1500$CORED_DENOM \
   --keyring-backend os -y -b block $CORED_CHAIN_ID_ARGS
   ``` 
 

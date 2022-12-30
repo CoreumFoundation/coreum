@@ -67,7 +67,6 @@ The doc describes the **coreum** CLI command for the multisig accounts.
     ```bash
     cored tx bank send $(cored keys show --address k1k2k3 $CORED_CHAIN_ID_ARGS) $(cored keys show --address recipient $CORED_CHAIN_ID_ARGS) 700$CORED_DENOM \
     --from $(cored keys show --address k1k2k3 $CORED_CHAIN_ID_ARGS) \
-    --gas-prices 1500$CORED_DENOM \
     --generate-only $CORED_CHAIN_ID_ARGS > bank-unsigned-tx.json
     ```
 
