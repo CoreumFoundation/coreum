@@ -223,7 +223,7 @@ func (s *TestSuite) TestSupply() {
 					Id:      testID,
 					Uri:     testURI,
 				}
-				err := s.app.WNFTKeeper.Mint(s.ctx, n, s.addrs[0])
+				err := s.app.NFTKeeper.Mint(s.ctx, n, s.addrs[0])
 				require.NoError(err, "the error occurred on:%d", index)
 
 				req = &nft.QuerySupplyRequest{
@@ -298,7 +298,7 @@ func (s *TestSuite) TestNFTs() { //nolint:funlen // the default sdk test
 					Id:      testID,
 					Uri:     testURI,
 				}
-				err := s.app.WNFTKeeper.Mint(s.ctx, n, s.addrs[0])
+				err := s.app.NFTKeeper.Mint(s.ctx, n, s.addrs[0])
 				require.NoError(err, "the error occurred on:%d", index)
 			},
 			"",
@@ -309,7 +309,7 @@ func (s *TestSuite) TestNFTs() { //nolint:funlen // the default sdk test
 		{
 			"Success,query by owner",
 			func(index int, require *require.Assertions) {
-				err := s.app.WNFTKeeper.SaveClass(s.ctx, nft.Class{
+				err := s.app.NFTKeeper.SaveClass(s.ctx, nft.Class{
 					Id: "MyKitty",
 				})
 				require.NoError(err)
@@ -320,7 +320,7 @@ func (s *TestSuite) TestNFTs() { //nolint:funlen // the default sdk test
 						ClassId: "MyKitty",
 						Id:      fmt.Sprintf("MyCat%d", i),
 					}
-					err := s.app.WNFTKeeper.Mint(s.ctx, n, s.addrs[2])
+					err := s.app.NFTKeeper.Mint(s.ctx, n, s.addrs[2])
 					require.NoError(err)
 					nfts = append(nfts, &n)
 				}

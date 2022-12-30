@@ -41,7 +41,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(strings.ToLower(settings.Symbol)+"-"+addr.String(), classID)
 
-	class, found := testApp.WNFTKeeper.GetClass(ctx, classID)
+	class, found := testApp.NFTKeeper.GetClass(ctx, classID)
 	requireT.True(found)
 	// we check line by line because of the data field
 	requireT.Equal(settings.Name, class.Name)
@@ -89,7 +89,7 @@ func TestKeeper_Mint(t *testing.T) {
 	err = nftKeeper.Mint(ctx, settings)
 	requireT.NoError(err)
 
-	nft, found := testApp.WNFTKeeper.GetNFT(ctx, classID, settings.ID)
+	nft, found := testApp.NFTKeeper.GetNFT(ctx, classID, settings.ID)
 	requireT.True(found)
 	// we check line by line because of the data field
 	requireT.Equal(settings.ClassID, nft.ClassId)
@@ -98,7 +98,7 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.Equal(settings.URIHash, nft.UriHash)
 	requireT.Equal(string(settings.Data.Value), string(nft.Data.Value))
 
-	nftOwner := testApp.WNFTKeeper.GetOwner(ctx, classID, settings.ID)
+	nftOwner := testApp.NFTKeeper.GetOwner(ctx, classID, settings.ID)
 	requireT.Equal(addr, nftOwner)
 
 	// mint second NFT with the same ID
