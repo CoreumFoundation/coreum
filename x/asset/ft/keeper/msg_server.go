@@ -43,14 +43,15 @@ func (ms MsgServer) Issue(ctx context.Context, req *types.MsgIssue) (*types.Empt
 		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid issuer in MsgIssue")
 	}
 	_, err = ms.keeper.Issue(sdk.UnwrapSDKContext(ctx), types.IssueSettings{
-		Issuer:        issuer,
-		Symbol:        req.Symbol,
-		Subunit:       req.Subunit,
-		Precision:     req.Precision,
-		Description:   req.Description,
-		InitialAmount: req.InitialAmount,
-		Features:      req.Features,
-		BurnRate:      req.BurnRate,
+		Issuer:             issuer,
+		Symbol:             req.Symbol,
+		Subunit:            req.Subunit,
+		Precision:          req.Precision,
+		Description:        req.Description,
+		InitialAmount:      req.InitialAmount,
+		Features:           req.Features,
+		BurnRate:           req.BurnRate,
+		SendCommissionRate: req.SendCommissionRate,
 	})
 	if err != nil {
 		return nil, err
