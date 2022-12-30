@@ -51,7 +51,7 @@ func TestAssetFTIssue(t *testing.T) {
 		Features:      []assetfttypes.TokenFeature{},
 	}
 
-	_, err := tx.BroadcastTx(
+	res, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -59,6 +59,12 @@ func TestAssetFTIssue(t *testing.T) {
 	)
 
 	requireT.NoError(err)
+
+	// verify issue fee was burnt
+
+	burntStr, err := event.FindStringEventAttribute(res.Events, banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(chain.NetworkConfig.Denom, chain.NetworkConfig.AssetFTConfig.IssueFee).String(), burntStr)
 
 	// check that balance is 0 meaning issue fee was taken
 

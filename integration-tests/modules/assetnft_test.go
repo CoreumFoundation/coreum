@@ -255,13 +255,19 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
 	}
-	_, err = tx.BroadcastTx(
+	res, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
 	requireT.NoError(err)
+
+	// verify issue fee was burnt
+
+	burntStr, err := event.FindStringEventAttribute(res.Events, banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.OneInt()).String(), burntStr)
 
 	// check that balance is 0 meaning mint fee was taken
 
