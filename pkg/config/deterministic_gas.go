@@ -3,6 +3,7 @@ package config
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -20,6 +21,10 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		FixedGas:       50000,
 		FreeBytes:      2048,
 		FreeSignatures: 1,
+
+		AuthzExecBase: 2000,
+		AuthzGrant:    7000,
+		AuthzRevoke:   3000,
 
 		AssetFTIssue:               80000,
 		AssetFTMint:                35000,
@@ -73,6 +78,11 @@ type DeterministicGasRequirements struct {
 
 	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
 	FreeSignatures uint64
+
+	// x/authz
+	AuthzExecBase uint64
+	AuthzGrant    uint64
+	AuthzRevoke   uint64
 
 	// x/asset/ft
 	AssetFTIssue               uint64
@@ -128,6 +138,24 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	// Then define a reasonable value for the message and return `true` again.
 
 	switch m := msg.(type) {
+	case *authztypes.MsgExec:
+		var totalGas uint64
+		childMsgs, err := m.GetMessages()
+		if err != nil {
+			return 0, false
+		}
+		for _, childMsg := range childMsgs {
+			gas, isDeterministic := dgr.GasRequiredByMessage(childMsg)
+			if !isDeterministic {
+				return 0, false
+			}
+			totalGas += gas
+		}
+		return dgr.AuthzExecBase + totalGas, true
+	case *authztypes.MsgGrant:
+		return dgr.AuthzGrant, true
+	case *authztypes.MsgRevoke:
+		return dgr.AuthzRevoke, true
 	case *assetfttypes.MsgIssue:
 		return dgr.AssetFTIssue, true
 	case *assetfttypes.MsgFreeze:
