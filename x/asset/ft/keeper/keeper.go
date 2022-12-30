@@ -48,7 +48,7 @@ type MultiSendIterationInfo struct {
 	Receivers          map[string]sdk.Int
 }
 
-// CalculateBurnRateAndCommissionShares returns the coins to be burned or send as commission
+// CalculateBurnRateAndCommissionShares returns the burn coins and commission coins
 func (info MultiSendIterationInfo) CalculateBurnRateAndCommissionShares() (map[string]sdk.Int, map[string]sdk.Int) {
 	var minNonIssuerIOAmount sdk.Int
 	if info.NonIssuerInputSum.LT(info.NonIssuerOutputSum) {
