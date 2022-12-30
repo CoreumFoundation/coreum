@@ -9,6 +9,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -34,7 +35,7 @@ func DefaultGasRequirementsV2() GasConfig {
 
 	gr.gasByMsg = map[string]gasByMsgFunc{
 		// authz
-		msgName(&authz.MsgExec{}):   gr.autzMsgExecFunc(2000),
+		msgName(&authz.MsgExec{}):   gr.autzMsgExecGasFunc(2000),
 		msgName(&authz.MsgGrant{}):  constGasFunc(7000),
 		msgName(&authz.MsgRevoke{}): constGasFunc(7000),
 
@@ -53,8 +54,8 @@ func DefaultGasRequirementsV2() GasConfig {
 		msgName(&assetnfttypes.MsgMint{}):       constGasFunc(30000),
 
 		// bank
-		msgName(&banktypes.MsgSend{}):      bankSenMsgFunc(22000),
-		msgName(&banktypes.MsgMultiSend{}): bankMultiSendMsgFunc(27000),
+		msgName(&banktypes.MsgSend{}):      bankSendMsgGasFunc(22000),
+		msgName(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(27000),
 
 		// distribution
 		msgName(&distributiontypes.MsgFundCommunityPool{}):           constGasFunc(50000),
@@ -88,11 +89,14 @@ func DefaultGasRequirementsV2() GasConfig {
 	return gr
 }
 
+// GasRequiredByMessageV2 returns gas required by message and true if message is deterministic.
+// Function returns 0 and false if message is undeterministic or unknown.
 func (gr GasConfig) GasRequiredByMessageV2(msg sdk.Msg) (uint64, bool) {
-	gas, ok := gr.gasByMsg[msgName(msg)]
+	gasFunc, ok := gr.gasByMsg[msgName(msg)]
 	if ok {
-		return gas(msg)
+		return gasFunc(msg)
 	}
+	// Unknown message.
 	return 0, false
 }
 
@@ -108,7 +112,7 @@ func undermGasFunc() gasByMsgFunc {
 	}
 }
 
-func (gr GasConfig) autzMsgExecFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
+func (gr GasConfig) autzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgExec)
 		if !ok {
@@ -132,37 +136,31 @@ func (gr GasConfig) autzMsgExecFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
 	}
 }
 
-func bankSenMsgFunc(bankSendPerEntryGas uint64) gasByMsgFunc {
+func bankSendMsgGasFunc(bankSendPerEntryGas uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m := msg.(*banktypes.MsgSend)
 		entriesNum := len(m.Amount)
-		if len(m.Amount) == 0 {
-			entriesNum = 1
-		}
-		return uint64(entriesNum) * bankSendPerEntryGas, true
+
+		return uint64(lo.Max([]int{entriesNum, 1})) * bankSendPerEntryGas, true
 	}
 }
 
-func bankMultiSendMsgFunc(bankMultiSendPerEntryGas uint64) gasByMsgFunc {
+func bankMultiSendMsgGasFunc(bankMultiSendPerEntryGas uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m := msg.(*banktypes.MsgMultiSend)
-		entriesNum := 0
+		inputEntriesNum := 0
 		for _, inp := range m.Inputs {
-			entriesNum += len(inp.Coins)
+			inputEntriesNum += len(inp.Coins)
 		}
 
 		outputEntriesNum := 0
 		for _, outp := range m.Outputs {
 			outputEntriesNum += len(outp.Coins)
 		}
-		if outputEntriesNum > entriesNum {
-			entriesNum = outputEntriesNum
-		}
 
-		if entriesNum == 0 {
-			entriesNum = 1
-		}
-		return uint64(entriesNum) * bankMultiSendPerEntryGas, true
+		// Select max of input or output entries & use 1 as a fallback.
+		maxEntriesNum := lo.Max([]int{inputEntriesNum, outputEntriesNum, 1})
+		return uint64(maxEntriesNum) * bankMultiSendPerEntryGas, true
 	}
 }
 
