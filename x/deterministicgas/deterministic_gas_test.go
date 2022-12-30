@@ -20,6 +20,7 @@ import (
 var revProtoTypes map[reflect.Type]string
 
 func TestDeterministicGasRequirements(t *testing.T) {
+	t.Skip()
 	simapp.New()
 
 	fmt.Printf("total types num: %v\n\n", len(revProtoTypes))
