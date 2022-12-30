@@ -1,6 +1,6 @@
 # Run full
 
-**Attention!** *If you are planning to run a node against the devnet (either full node or a validator node), be mindful that the devnet might be restarted without prior notice(i.e block height is set to 0 and all state removed), and you should be prepared to act accordingly by removing all state and start from zero.*
+**Attention!** *If you are planning to run a node against the devnet (either full node or a validator node), be mindful that the devnet might be restarted without prior notice (i.e block height is set to 0 and all state removed), and you should be prepared to act accordingly by removing all state and start from zero.*
 
 The doc describes the procedure of creating and running the full node.
 
