@@ -70,10 +70,10 @@ func testNetwork() config.Network {
 			},
 		},
 		AssetFTConfig: config.AssetFTConfig{
-			IssueFee: sdk.NewIntFromUint64(10000000),
+			IssueFee: sdk.NewIntFromUint64(10_00_000),
 		},
 		AssetNFTConfig: config.AssetNFTConfig{
-			MintFee: sdk.NewIntFromUint64(500000),
+			MintFee: sdk.NewIntFromUint64(500_000),
 		},
 	})
 }

@@ -20,7 +20,7 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // DefaultParams returns params with default values.
 func DefaultParams() Params {
 	return Params{
-		MintFee: sdk.NewInt64Coin("stake", 0),
+		MintFee: sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
 	}
 }
 
@@ -34,7 +34,7 @@ func validateMintFee(i interface{}) error {
 	if !ok {
 		return errors.Errorf("invalid parameter type: %T", i)
 	}
-	if fee.IsNil() || fee.IsNegative() {
+	if !fee.IsValid() || fee.IsNil() {
 		return errors.New("mint fee must be a non-negative value")
 	}
 	return nil

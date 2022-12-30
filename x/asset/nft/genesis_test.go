@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
-func TestImportAndExportGenesis(t *testing.T) {
+func TestInitAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 
 	testApp := simapp.New()

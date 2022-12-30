@@ -20,7 +20,7 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // DefaultParams returns params with default values.
 func DefaultParams() Params {
 	return Params{
-		IssueFee: sdk.NewInt64Coin("stake", 0),
+		IssueFee: sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
 	}
 }
 
@@ -34,7 +34,7 @@ func validateIssueFee(i interface{}) error {
 	if !ok {
 		return errors.Errorf("invalid parameter type: %T", i)
 	}
-	if fee.IsNil() || fee.IsNegative() {
+	if !fee.IsValid() || fee.IsNil() {
 		return errors.New("issue fee must be a non-negative value")
 	}
 	return nil

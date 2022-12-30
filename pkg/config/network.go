@@ -68,7 +68,7 @@ func init() {
 		}
 
 		assetFTConfig = AssetFTConfig{
-			IssueFee: sdk.NewIntFromUint64(10000000),
+			IssueFee: sdk.NewIntFromUint64(10_000_000),
 		}
 
 		assetNFTConfig = AssetNFTConfig{
