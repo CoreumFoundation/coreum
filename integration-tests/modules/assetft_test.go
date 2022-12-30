@@ -9,9 +9,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	tmjson "github.com/tendermint/tendermint/libs/json"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
@@ -63,6 +69,82 @@ func TestAssetFTIssue(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
+}
+
+// TestAssetFTIssueFeeProposal tests proposal upgrading issue fee
+func TestAssetFTIssueFeeProposal(t *testing.T) {
+	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+	requireT := require.New(t)
+	origIssueFee := chain.NetworkConfig.AssetFTConfig.IssueFee
+
+	updateIssueFee(t, sdk.ZeroInt())
+
+	issuer := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+			},
+		}))
+
+	// Issue token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features:      []assetfttypes.TokenFeature{},
+	}
+
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+
+	// Revert to original issue fee
+	updateIssueFee(t, origIssueFee)
+}
+
+//nolint:dupl
+func updateIssueFee(t *testing.T, issueFee sdk.Int) {
+	ctx, chain := integrationtests.NewTestingContext(t)
+	requireT := require.New(t)
+
+	// Fund accounts.
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
+	requireT.NoError(err)
+
+	// Create proposition to change issue fee value.
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change FT issue fee", "Propose changing IssueFee in the assetft module",
+		[]paramproposal.ParamChange{
+			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, issueFee))))),
+		},
+	))
+	requireT.NoError(err)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	requireT.NoError(err)
+	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
+
+	// Vote yes from all vote accounts.
+	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposalID)
+	requireT.NoError(err)
+
+	// Wait for proposal result.
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypes.StatusPassed, finalStatus)
 }
 
 // TestAssetFTBurn tests burn functionality of fungible tokens.
@@ -370,6 +452,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
