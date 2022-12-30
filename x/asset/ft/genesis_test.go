@@ -33,12 +33,13 @@ func TestImportAndExportGenesis(t *testing.T) {
 	var tokens []types.FT
 	for i := 0; i < 5; i++ {
 		ft := types.FT{
-			Denom:     types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
-			Issuer:    issuer.String(),
-			Symbol:    fmt.Sprintf("ABC%d", i),
-			Subunit:   fmt.Sprintf("abc%d", i),
-			Precision: uint32(rand.Int31n(100)),
-			BurnRate:  sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
+			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
+			Issuer:             issuer.String(),
+			Symbol:             fmt.Sprintf("ABC%d", i),
+			Subunit:            fmt.Sprintf("abc%d", i),
+			Precision:          uint32(rand.Int31n(100)),
+			BurnRate:           sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
+			SendCommissionRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
 			Features: []types.TokenFeature{
 				types.TokenFeature_freeze,    //nolint:nosnakecase // proto enum
 				types.TokenFeature_whitelist, //nolint:nosnakecase // proto enum
