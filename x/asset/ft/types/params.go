@@ -34,7 +34,7 @@ func validateIssueFee(i interface{}) error {
 	if !ok {
 		return errors.Errorf("invalid parameter type: %T", i)
 	}
-	if !fee.IsValid() || fee.IsNil() {
+	if fee.IsNil() || !fee.IsValid() {
 		return errors.New("issue fee must be a non-negative value")
 	}
 	return nil
