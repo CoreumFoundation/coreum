@@ -132,6 +132,41 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 }
 
+func TestKeeper_Mint_WithoutFee(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	nftKeeper := testApp.AssetNFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
+	}
+	nftKeeper.SetParams(ctx, nftParams)
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: addr,
+		Symbol: "symbol",
+	}
+
+	classID, err := nftKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:  addr,
+		ClassID: classID,
+		ID:      "my-id",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+
+	// mint NFT
+	err = nftKeeper.Mint(ctx, settings)
+	requireT.NoError(err)
+}
+
 func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
@@ -153,8 +188,6 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
 
-	dataString := "metadata"
-	dataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
 	requireT.NoError(err)
 	settings := types.MintSettings{
 		Sender:  addr,
@@ -162,7 +195,6 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 		ID:      "my-id",
 		URI:     "https://my-nft-meta.invalid/1",
 		URIHash: "content-hash",
-		Data:    dataValue,
 	}
 
 	// mint NFT

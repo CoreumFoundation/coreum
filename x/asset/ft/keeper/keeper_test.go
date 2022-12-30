@@ -232,6 +232,35 @@ func TestKeeper_Issue(t *testing.T) {
 	requireT.True(errors.Is(types.ErrInvalidInput, err))
 }
 
+func TestKeeper_Issue_WithoutFee(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	ftParams := types.Params{
+		IssueFee: sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
+	}
+	ftKeeper.SetParams(ctx, ftParams)
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdk.NewInt(777),
+		Features:      []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
+	}
+
+	_, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+}
+
 func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 	requireT := require.New(t)
 
