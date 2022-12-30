@@ -34,6 +34,10 @@ func (msg MsgIssue) ValidateBasic() error {
 		return err
 	}
 
+	if err := ValidateSendCommissionRate(msg.SendCommissionRate); err != nil {
+		return err
+	}
+
 	// we allow zero initial amount, in that case we won't mint it initially
 	if msg.InitialAmount.IsNil() || msg.InitialAmount.IsNegative() {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid initial amount %s, can't be negative", msg.InitialAmount.String())

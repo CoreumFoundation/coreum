@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -31,14 +32,15 @@ func init() {
 
 // IssueSettings is the model which represents the params for the fungible token issuance.
 type IssueSettings struct {
-	Issuer        sdk.AccAddress
-	Symbol        string
-	Subunit       string
-	Precision     uint32
-	Description   string
-	InitialAmount sdk.Int
-	Features      []TokenFeature
-	BurnRate      sdk.Dec
+	Issuer             sdk.AccAddress
+	Symbol             string
+	Subunit            string
+	Precision          uint32
+	Description        string
+	InitialAmount      sdk.Int
+	Features           []TokenFeature
+	BurnRate           sdk.Dec
+	SendCommissionRate sdk.Dec
 }
 
 // BuildDenom builds the denom string from the symbol and issuer address.
@@ -106,18 +108,35 @@ func (ftd *FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
 	return lo.Contains(ftd.Features, feature)
 }
 
-// ValidateBurnRate checks the provide burn rate is valid
+// ValidateBurnRate checks that provided burn rate is valid
 func ValidateBurnRate(burnRate sdk.Dec) error {
-	if burnRate.IsNil() {
+	if err := validateRate(burnRate); err != nil {
+		return errors.Wrap(err, "burn rate is invalid")
+	}
+	return nil
+}
+
+// ValidateSendCommissionRate checks that provided send commission rate is valid
+func ValidateSendCommissionRate(sendCommissionRate sdk.Dec) error {
+	if err := validateRate(sendCommissionRate); err != nil {
+		return errors.Wrap(err, "send commission rate is invalid")
+	}
+	return nil
+}
+
+func validateRate(rate sdk.Dec) error {
+	const maxRatePrecisionAllowed = 4
+
+	if rate.IsNil() {
 		return nil
 	}
 
-	if !isDecPrecisionValid(burnRate, 4) {
-		return sdkerrors.Wrap(ErrInvalidInput, "burn rate precision should not be more than 4 decimal places")
+	if !isDecPrecisionValid(rate, maxRatePrecisionAllowed) {
+		return sdkerrors.Wrap(ErrInvalidInput, "rate precision should not be more than 4 decimal places")
 	}
 
-	if burnRate.LT(sdk.NewDec(0)) || burnRate.GT(sdk.NewDec(1)) {
-		return sdkerrors.Wrap(ErrInvalidInput, "burn rate is not within acceptable range")
+	if rate.LT(sdk.NewDec(0)) || rate.GT(sdk.NewDec(1)) {
+		return sdkerrors.Wrap(ErrInvalidInput, "rate is not within acceptable range")
 	}
 
 	return nil
@@ -130,5 +149,14 @@ func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 
 // CalculateBurnRateAmount returns the coins to be burned
 func (ftd FTDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
-	return ftd.BurnRate.MulInt(coin.Amount).Ceil().RoundInt()
+	return calculateRate(coin.Amount, ftd.BurnRate)
+}
+
+// CalculateSendCommissionRateAmount returns the coins to be sent to issuer as a sending commission
+func (ftd FTDefinition) CalculateSendCommissionRateAmount(coin sdk.Coin) sdk.Int {
+	return calculateRate(coin.Amount, ftd.SendCommissionRate)
+}
+
+func calculateRate(amount sdk.Int, rate sdk.Dec) sdk.Int {
+	return rate.MulInt(amount).Ceil().RoundInt()
 }
