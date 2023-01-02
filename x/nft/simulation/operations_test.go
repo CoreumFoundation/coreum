@@ -38,7 +38,7 @@ func (suite *SimTestSuite) TestWeightedOperations() {
 		make(simtypes.AppParams),
 		suite.app.AppCodec(),
 		suite.app.AccountKeeper,
-		suite.app.BankKeeper, suite.app.NFTKeeper,
+		suite.app.BankKeeper, suite.app.NFTKeeper.Keeper,
 	)
 
 	// setup 3 accounts
@@ -98,7 +98,7 @@ func (suite *SimTestSuite) TestSimulateMsgSend() {
 
 	// execute operation
 	registry := suite.app.InterfaceRegistry()
-	op := simulation.SimulateMsgSend(codec.NewProtoCodec(registry), suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.NFTKeeper)
+	op := simulation.SimulateMsgSend(codec.NewProtoCodec(registry), suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.NFTKeeper.Keeper)
 	operationMsg, futureOperations, err := op(r, suite.app.BaseApp, ctx, accounts, "")
 	suite.Require().NoError(err)
 
