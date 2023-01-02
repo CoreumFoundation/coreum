@@ -10,12 +10,13 @@ var (
 	_ sdk.Msg = &MsgMint{}
 )
 
+// Constraints
 const (
-	nftClassMaxNameLength        = 128
-	nftClassMaxDescriptionLength = 256
-	nftMaxURILength              = 256
-	nftMaxURIHashLength          = 128
-	nftMaxDataSize               = 5 * 1000 // 5kb
+	ClassMaxNameLength        = 128
+	ClassMaxDescriptionLength = 256
+	MaxURILength              = 256
+	MaxURIHashLength          = 128
+	MaxDataSize               = 5 * 1024 // 5KB
 )
 
 // ValidateBasic checks that message fields are valid.
@@ -24,28 +25,28 @@ func (msg *MsgIssueClass) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer account %s", msg.Issuer)
 	}
 
-	if len(msg.Name) > nftClassMaxNameLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid name %q, the length must be less than or equal %d", msg.Name, nftClassMaxNameLength)
+	if len(msg.Name) > ClassMaxNameLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid name %q, the length must be less than or equal %d", msg.Name, ClassMaxNameLength)
 	}
 
 	if err := ValidateClassSymbol(msg.Symbol); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if len(msg.Description) > nftClassMaxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than or equal %d", msg.Description, nftClassMaxDescriptionLength)
+	if err := ValidateData(msg.Data); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if len(msg.URI) > nftMaxURILength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(msg.URI), nftMaxURILength)
+	if len(msg.Description) > ClassMaxDescriptionLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than or equal %d", msg.Description, ClassMaxDescriptionLength)
 	}
 
-	if len(msg.URIHash) > nftMaxURIHashLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), nftMaxURIHashLength)
+	if len(msg.URI) > MaxURILength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(msg.URI), MaxURILength)
 	}
 
-	if msg.Data != nil && len(msg.Data.Value) > nftMaxDataSize {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", nftMaxDataSize)
+	if len(msg.URIHash) > MaxURIHashLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), MaxURIHashLength)
 	}
 
 	return nil
@@ -68,20 +69,20 @@ func (msg *MsgMint) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
+	if err := ValidateData(msg.Data); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
 	if _, err := DeconstructClassID(msg.ClassID); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if len(msg.URI) > nftMaxURILength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(msg.URI), nftMaxURILength)
+	if len(msg.URI) > MaxURILength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(msg.URI), MaxURILength)
 	}
 
-	if len(msg.URIHash) > nftMaxURIHashLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), nftMaxURIHashLength)
-	}
-
-	if msg.Data != nil && len(msg.Data.Value) > nftMaxDataSize {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", nftMaxDataSize)
+	if len(msg.URIHash) > MaxURIHashLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), MaxURIHashLength)
 	}
 
 	return nil
