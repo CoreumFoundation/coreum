@@ -232,7 +232,7 @@ func TestKeeper_Issue(t *testing.T) {
 	requireT.True(errors.Is(types.ErrInvalidInput, err))
 }
 
-func TestKeeper_Issue_WithoutFee(t *testing.T) {
+func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()

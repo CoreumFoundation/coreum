@@ -131,7 +131,7 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 }
 
-func TestKeeper_Mint_WithoutFee(t *testing.T) {
+func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.NewContext(false, tmproto.Header{})
