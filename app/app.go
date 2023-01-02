@@ -106,10 +106,11 @@ import (
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
-	nftmodule "github.com/CoreumFoundation/coreum/x/nft/module"
 	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/x/wnft"
+	wnftkeeper "github.com/CoreumFoundation/coreum/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/x/wstaking"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
@@ -173,7 +174,7 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
-		nftmodule.AppModuleBasic{},
+		wnft.AppModuleBasic{},
 		assetft.AppModuleBasic{},
 		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
@@ -246,7 +247,7 @@ type App struct {
 	AssetNFTKeeper     assetnftkeeper.Keeper
 	FeeModelKeeper     feemodelkeeper.Keeper
 	BankKeeper         wbankkeeper.BaseKeeperWrapper
-	NFTKeeper          nftkeeper.Keeper
+	NFTKeeper          wnftkeeper.Wrapper
 	CustomParamsKeeper customparamskeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -377,11 +378,12 @@ func New(
 		tkeys[feemodeltypes.TransientStoreKey],
 	)
 
-	app.NFTKeeper = nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
-
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
 
-	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(appCodec, keys[assetnfttypes.StoreKey], app.NFTKeeper)
+	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
+	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(appCodec, keys[assetnfttypes.StoreKey], nftKeeper)
+
+	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
@@ -454,7 +456,7 @@ func New(
 	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
-	nftModule := nftmodule.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
+	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
 
 	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper)
 
@@ -487,7 +489,7 @@ func New(
 		feeModule,
 		assetFTModule,
 		assetNFTModule,
-		nftModule,
+		wnftModule,
 		customParamsModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
@@ -600,7 +602,7 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		assetFTModule,
 		assetNFTModule,
-		nftModule,
+		wnftModule,
 		customParamsModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
