@@ -30,15 +30,20 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 
 // BeforeSendCoins checks that a transfer request is allowed or not
 func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
-	return k.BeforeInputOutputCoins(
+	return k.beforeInputOutputCoins(
 		ctx,
 		[]banktypes.Input{{Address: fromAddress.String(), Coins: coins}},
 		[]banktypes.Output{{Address: toAddress.String(), Coins: coins}},
 	)
 }
 
+// BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper
+func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	return k.beforeInputOutputCoins(ctx, inputs, outputs)
+}
+
 // MultiSendIterationInfo is used to gather information about multi send, and will be used to calculate
-// burn_rate and send_commission_rate must be calculate in multi send
+// burn_rate and send_commission_rate must be calculated in multi send
 type MultiSendIterationInfo struct {
 	FT                 types.FTDefinition
 	NonIssuerInputSum  sdk.Int
@@ -57,7 +62,7 @@ func (info MultiSendIterationInfo) CalculateBurnRateAndCommissionShares() (map[s
 		minNonIssuerIOAmount = info.NonIssuerOutputSum
 	}
 
-	burnShares := map[string]sdk.Int{}
+	burnShares := make(map[string]sdk.Int)
 	burnAmount := info.FT.BurnRate.MulInt(minNonIssuerIOAmount)
 	if burnAmount.IsPositive() {
 		for sendAccount, sendAmount := range info.NonIssuerSenders {
@@ -66,7 +71,7 @@ func (info MultiSendIterationInfo) CalculateBurnRateAndCommissionShares() (map[s
 		}
 	}
 
-	commissionShares := map[string]sdk.Int{}
+	commissionShares := make(map[string]sdk.Int)
 	commissionAmount := info.FT.SendCommissionRate.MulInt(minNonIssuerIOAmount)
 	if commissionAmount.IsPositive() {
 		for sendAccount, sendAmount := range info.NonIssuerSenders {
@@ -78,20 +83,57 @@ func (info MultiSendIterationInfo) CalculateBurnRateAndCommissionShares() (map[s
 	return burnShares, commissionShares
 }
 
+func (k Keeper) fillInputs(ctx sdk.Context, address sdk.AccAddress, info MultiSendIterationInfo, coin sdk.Coin) error {
+	oldAmount, ok := info.Senders[address.String()]
+	if !ok {
+		oldAmount = sdk.NewInt(0)
+	}
+
+	newAmount := oldAmount.Add(coin.Amount)
+	if err := k.isCoinSpendable(ctx, address, info.FT, newAmount); err != nil {
+		return err
+	}
+
+	info.Senders[address.String()] = newAmount
+	if info.FT.Issuer != address.String() {
+		info.NonIssuerSenders[address.String()] = newAmount
+		info.NonIssuerInputSum = info.NonIssuerInputSum.Add(coin.Amount)
+	}
+
+	return nil
+}
+
+func (k Keeper) fillOutputs(ctx sdk.Context, address sdk.AccAddress, info MultiSendIterationInfo, coin sdk.Coin) error {
+	oldAmount, ok := info.Receivers[address.String()]
+	if !ok {
+		oldAmount = sdk.NewInt(0)
+	}
+	newAmount := oldAmount.Add(coin.Amount)
+	info.Receivers[address.String()] = newAmount
+	if err := k.isCoinReceivable(ctx, address, info.FT, newAmount); err != nil {
+		return err
+	}
+
+	if info.FT.Issuer != address.String() {
+		info.NonIssuerOutputSum = info.NonIssuerOutputSum.Add(coin.Amount)
+	}
+
+	return nil
+}
+
 func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) (map[string]MultiSendIterationInfo, error) {
-	iterationMap := map[string]MultiSendIterationInfo{}
+	iterationMap := make(map[string]MultiSendIterationInfo)
 	iterateCoin := func(coin sdk.Coin, address sdk.AccAddress, isInput bool) error {
-		ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-		if types.ErrFTNotFound.Is(err) {
-			return nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		info, ok := iterationMap[ft.Denom]
+		info, ok := iterationMap[coin.Denom]
 		if !ok {
+			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+			if types.ErrFTNotFound.Is(err) {
+				return nil
+			}
+
+			if err != nil {
+				return err
+			}
 			info = MultiSendIterationInfo{
 				FT:                 ft,
 				NonIssuerInputSum:  sdk.NewInt(0),
@@ -102,40 +144,17 @@ func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, o
 			}
 		}
 
-		//nolint:nestif // I could not find a way to fix the complexity here without sacrificing performance
 		if isInput {
-			oldAmount, ok := info.Senders[address.String()]
-			if !ok {
-				oldAmount = sdk.NewInt(0)
-			}
-
-			newAmount := oldAmount.Add(coin.Amount)
-			if err := k.isCoinSpendable(ctx, address, ft, newAmount); err != nil {
+			if err := k.fillInputs(ctx, address, info, coin); err != nil {
 				return err
-			}
-
-			info.Senders[address.String()] = newAmount
-			if ft.Issuer != address.String() {
-				info.NonIssuerSenders[address.String()] = newAmount
-				info.NonIssuerInputSum = info.NonIssuerInputSum.Add(coin.Amount)
 			}
 		} else {
-			oldAmount, ok := info.Receivers[address.String()]
-			if !ok {
-				oldAmount = sdk.NewInt(0)
-			}
-			newAmount := oldAmount.Add(coin.Amount)
-			info.Receivers[address.String()] = newAmount
-			if err := k.isCoinReceivable(ctx, address, ft, newAmount); err != nil {
+			if err := k.fillOutputs(ctx, address, info, coin); err != nil {
 				return err
-			}
-
-			if ft.Issuer != address.String() {
-				info.NonIssuerOutputSum = info.NonIssuerOutputSum.Add(coin.Amount)
 			}
 		}
 
-		iterationMap[ft.Denom] = info
+		iterationMap[info.FT.Denom] = info
 		return nil
 	}
 
@@ -170,8 +189,7 @@ func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, o
 	return iterationMap, nil
 }
 
-// BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper
-func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+func (k Keeper) beforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
 	splitIntoMap, err := k.iterateInputOutputs(ctx, inputs, outputs)
 	if err != nil {
 		return err
