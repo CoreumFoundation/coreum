@@ -1,10 +1,9 @@
 # System Requirements
-Running a node against the mainnet can be a resource intensive process. In the table below you may find recommended system requirements for different networks.
 
 ### Mainnet
 If you are planning a to run a node against our mainnet, please observe the following points
 - use a dedicated bare-metal server, and do not use a VPS or a cloud computing instance.
-- only use SSD or NVMe hard drives
+- only use SSD or NVMe hard drives, directly attached to the motherboard.
 
 |Node Type  |Cores  |RAM    |Storage    | Internet Connection |
 |-----------|-------|-------|-----------|---------------------|
