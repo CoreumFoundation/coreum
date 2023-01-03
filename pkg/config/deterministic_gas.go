@@ -30,13 +30,13 @@ type DeterministicGasRequirements struct {
 
 // DefaultDeterministicGasRequirements returns default config for deterministic gas.
 func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
-	gr := DeterministicGasRequirements{
+	dgr := DeterministicGasRequirements{
 		FixedGas:       50000,
 		freeBytes:      2048,
 		freeSignatures: 1,
 	}
 
-	gr.gasByMsg = map[string]gasByMsgFunc{
+	dgr.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
 		MsgName(&assetfttypes.MsgIssue{}):               constGasFunc(80000),
 		MsgName(&assetfttypes.MsgMint{}):                constGasFunc(35000),
@@ -52,7 +52,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&assetnfttypes.MsgMint{}):       constGasFunc(30000),
 
 		// authz
-		MsgName(&authz.MsgExec{}):   autzMsgExecGasFunc(2000, &gr),
+		MsgName(&authz.MsgExec{}):   autzMsgExecGasFunc(2000, &dgr),
 		MsgName(&authz.MsgGrant{}):  constGasFunc(7000),
 		MsgName(&authz.MsgRevoke{}): constGasFunc(7000),
 
@@ -89,7 +89,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&wasmtypes.MsgExecuteContract{}): undermGasFunc(),
 	}
 
-	return gr
+	return dgr
 }
 
 // TxBaseGas is the free gas we give to every transaction to cover costs of
@@ -123,7 +123,7 @@ func undermGasFunc() gasByMsgFunc {
 
 // NOTE: we need to pass DeterministicGasRequirements by pointer here because
 // it needs initialized later map with all msg types inside to estimate gas recursively.
-func autzMsgExecGasFunc(authzMsgExecOverhead uint64, gr *DeterministicGasRequirements) gasByMsgFunc {
+func autzMsgExecGasFunc(authzMsgExecOverhead uint64, dgr *DeterministicGasRequirements) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgExec)
 		if !ok {
@@ -136,7 +136,7 @@ func autzMsgExecGasFunc(authzMsgExecOverhead uint64, gr *DeterministicGasRequire
 			return 0, false
 		}
 		for _, childMsg := range childMsgs {
-			gas, isDeterministic := gr.GasRequiredByMessage(childMsg)
+			gas, isDeterministic := dgr.GasRequiredByMessage(childMsg)
 			if !isDeterministic {
 				return 0, false
 			}
