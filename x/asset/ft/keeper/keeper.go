@@ -138,9 +138,9 @@ func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, o
 				FT:                 ft,
 				NonIssuerInputSum:  sdk.NewInt(0),
 				NonIssuerOutputSum: sdk.NewInt(0),
-				NonIssuerSenders:   map[string]sdk.Int{},
-				Senders:            map[string]sdk.Int{},
-				Receivers:          map[string]sdk.Int{},
+				NonIssuerSenders:   make(map[string]sdk.Int),
+				Senders:            make(map[string]sdk.Int),
+				Receivers:          make(map[string]sdk.Int),
 			}
 		}
 
