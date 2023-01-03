@@ -1,7 +1,10 @@
 package config_test
 
 import (
+	"reflect"
+	"strings"
 	"testing"
+	_ "unsafe"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,8 +17,64 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
+// To access private variable from github.com/gogo/protobuf we link it to local variable.
+// This is needed to iterate through all registered protobuf types.
+//
+//go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
+var revProtoTypes map[reflect.Type]string
+
+func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
+	// A list of valid message prefixes or messages which are not defined
+	// as deterministic in purpose.
+	nonDetermPrefixes := []string{
+		// Not-integrated modules:
+		// IBC:
+		"/ibc.core.",
+		"/ibc.applications.",
+		// CosmWASM:
+		"/cosmwasm.wasm.",
+		// To be integrated standard modules:
+		"/cosmos.feegrant.",
+		"/cosmos.evidence.",
+		"/cosmos.crisis.",
+		"/cosmos.vesting.",
+
+		// Internal cosmos protos:
+		"/testdata.",
+		"/cosmos.tx.v1beta1.Tx",
+	}
+
 	dgr := config.DefaultDeterministicGasRequirements()
+
+	var determMsgs []sdk.Msg
+	for tt := range revProtoTypes {
+		sdkMsg, ok := reflect.New(tt.Elem()).Interface().(sdk.Msg)
+		if !ok {
+			continue
+		}
+
+		if !lo.ContainsBy(nonDetermPrefixes, func(prefix string) bool {
+			return strings.HasPrefix(config.MsgName(sdkMsg), prefix)
+		}) {
+			determMsgs = append(determMsgs, sdkMsg)
+		}
+	}
+
+	// To make sure we do not increase/decrease deterministic types accidentally
+	// we assert length to be equal to exact number, so each change requires
+	// explicit adjustment of tests.
+	assert.Equal(t, len(determMsgs), 30)
+
+	for _, sdkMsg := range determMsgs {
+		t.Run(config.MsgName(sdkMsg), func(tt *testing.T) {
+			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
+			assert.True(tt, ok)
+			assert.Positive(tt, gas)
+		})
+	}
+}
+
+func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 	const (
 		denom   = "ducore"
 		address = "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6"
@@ -25,6 +84,8 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 		bankMultiSendPerEntryGas = 27000
 		authzMsgExecOverhead     = 2000
 	)
+
+	dgr := config.DefaultDeterministicGasRequirements()
 
 	tests := []struct {
 		name                    string
