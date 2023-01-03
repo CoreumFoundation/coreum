@@ -94,14 +94,14 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 // TxBaseGas is the free gas we give to every transaction to cover costs of
 // tx size and signature verification. TxBaseGas is covered by FixedGas.
-func (gr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint64 {
-	return gr.freeBytes*params.TxSizeCostPerByte + gr.freeSignatures*params.SigVerifyCostSecp256k1
+func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint64 {
+	return dgr.freeBytes*params.TxSizeCostPerByte + dgr.freeSignatures*params.SigVerifyCostSecp256k1
 }
 
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
 // Function returns 0 and false if message is undeterministic or unknown.
-func (gr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
-	gasFunc, ok := gr.gasByMsg[MsgName(msg)]
+func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
+	gasFunc, ok := dgr.gasByMsg[MsgName(msg)]
 	if ok {
 		return gasFunc(msg)
 	}
