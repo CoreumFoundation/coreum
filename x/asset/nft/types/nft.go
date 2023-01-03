@@ -4,9 +4,10 @@ import (
 	"regexp"
 	"strings"
 
-	codetypes "github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -29,7 +30,7 @@ type IssueClassSettings struct {
 	Description string
 	URI         string
 	URIHash     string
-	Data        *codetypes.Any
+	Data        *codectypes.Any
 }
 
 // MintSettings is the model which represents the params for the non-fungible token minting.
@@ -39,7 +40,7 @@ type MintSettings struct {
 	ID      string
 	URI     string
 	URIHash string
-	Data    *codetypes.Any
+	Data    *codectypes.Any
 }
 
 // BuildClassID builds the non-fungible token id string from the symbol and issuer address.
@@ -79,6 +80,20 @@ func ValidateTokenID(id string) error {
 
 	if err := nft.ValidateNFTID(id); err != nil {
 		return sdkerrors.Wrapf(ErrInvalidID, err.Error())
+	}
+
+	return nil
+}
+
+// ValidateData checks the provided data field is valid for NFT class or token.
+func ValidateData(data *codectypes.Any) error {
+	if data != nil {
+		if len(data.Value) > MaxDataSize {
+			return sdkerrors.Wrapf(ErrInvalidInput, "invalid data, it's allowed to use %d bytes", MaxDataSize)
+		}
+		if data.TypeUrl != "/"+proto.MessageName((*DataBytes)(nil)) {
+			return sdkerrors.Wrapf(ErrInvalidInput, "data field must contain %s type", proto.MessageName((*DataBytes)(nil)))
+		}
 	}
 
 	return nil
