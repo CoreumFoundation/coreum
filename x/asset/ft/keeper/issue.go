@@ -206,6 +206,23 @@ func (k Keeper) GetTokenDefinition(ctx sdk.Context, denom string) (types.FTDefin
 	return definition, nil
 }
 
+// IterateAllTokenDefinitions iterates over all token definitions applies the provided callback.
+// If true is returned from the callback, iteration is halted.
+func (k Keeper) IterateAllTokenDefinitions(ctx sdk.Context, cb func(types.FTDefinition) bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.FTKeyPrefix)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var definition types.FTDefinition
+		k.cdc.MustUnmarshal(iterator.Value(), &definition)
+
+		if cb(definition) {
+			break
+		}
+	}
+}
+
 // SetTokenDefinition stores the TokenDefinition.
 func (k Keeper) SetTokenDefinition(ctx sdk.Context, definition types.FTDefinition) {
 	store := ctx.KVStore(k.storeKey)

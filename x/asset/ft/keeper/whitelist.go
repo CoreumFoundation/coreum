@@ -39,9 +39,9 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 
 // SetWhitelistedBalances sets the whitelisted balances of a specified account
 func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
-	frozenStore := k.whitelistedAccountBalanceStore(ctx, addr)
+	whitelistedStore := k.whitelistedAccountBalanceStore(ctx, addr)
 	for _, coin := range coins {
-		frozenStore.SetBalance(coin)
+		whitelistedStore.SetBalance(coin)
 	}
 }
 
@@ -60,12 +60,35 @@ func (k Keeper) GetAccountsWhitelistedBalances(ctx sdk.Context, pagination *quer
 	return collectBalances(k.cdc, k.whitelistedBalancesStore(ctx), pagination)
 }
 
+// IterateAllWhitelistedBalances iterates over all whitelisted balances of all accounts and applies the provided callback.
+// If true is returned from the callback, iteration is halted.
+func (k Keeper) IterateAllWhitelistedBalances(ctx sdk.Context, cb func(sdk.AccAddress, sdk.Coin) bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		address, err := types.AddressFromBalancesStore(iterator.Key())
+		if err != nil {
+			k.Logger(ctx).With("key", iterator.Key(), "err", err).Error("failed to get address from whitelisted balances store")
+			panic(err)
+		}
+
+		var balance sdk.Coin
+		k.cdc.MustUnmarshal(iterator.Value(), &balance)
+
+		if cb(address, balance) {
+			break
+		}
+	}
+}
+
 // whitelistedBalancesStore get the store for the whitelisted balances of all accounts
 func (k Keeper) whitelistedBalancesStore(ctx sdk.Context) prefix.Store {
 	return prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix)
 }
 
-// whitelistedAccountBalanceStore gets the store for the frozen balances of an account
+// whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account
 func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
 	store := ctx.KVStore(k.storeKey)
 	return newBalanceStore(k.cdc, store, types.CreateWhitelistedBalancesPrefix(addr))
