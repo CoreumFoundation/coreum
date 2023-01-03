@@ -161,6 +161,19 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 			expectedIsDeterministic: true,
 		},
 		{
+			name: "bank.MsgMultiSend: 1 input & 1 output",
+			msg: &banktypes.MsgMultiSend{
+				Inputs: []banktypes.Input{
+					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
+				},
+				Outputs: []banktypes.Output{
+					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
+				},
+			},
+			expectedGas:             bankMultiSendPerEntryGas,
+			expectedIsDeterministic: true,
+		},
+		{
 			name: "bank.MsgMultiSend: 1 input & 2 outputs",
 			msg: &banktypes.MsgMultiSend{
 				Inputs: []banktypes.Input{
