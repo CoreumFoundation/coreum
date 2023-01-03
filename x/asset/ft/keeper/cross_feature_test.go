@@ -44,3 +44,6 @@ package keeper
 //
 // # Send commission + Freeze
 // - when send commission causes a non-frozen balance to be exceeded, tx should fail
+//
+// # Sending cored + FT
+// - test sending FT together with cored when FT transfer should fail/succeed due to whitelist/freezing
