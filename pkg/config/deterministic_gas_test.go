@@ -51,8 +51,8 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 
 	var determMsgs []sdk.Msg
 	var undetermMsgs []sdk.Msg
-	for tt := range revProtoTypes {
-		sdkMsg, ok := reflect.New(tt.Elem()).Interface().(sdk.Msg)
+	for protoType := range revProtoTypes {
+		sdkMsg, ok := reflect.New(protoType.Elem()).Interface().(sdk.Msg)
 		if !ok {
 			continue
 		}
@@ -82,22 +82,25 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 	assert.Equal(t, 0, len(undetermMsgs))
 
 	for _, sdkMsg := range determMsgs {
-		t.Run("deterministic: "+config.MsgName(sdkMsg), func(tt *testing.T) {
+		sdkMsg := sdkMsg
+		t.Run("deterministic: "+config.MsgName(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
-			assert.True(tt, ok)
-			assert.Positive(tt, gas)
+			assert.True(t, ok)
+			assert.Positive(t, gas)
 		})
 	}
 
 	for _, sdkMsg := range undetermMsgs {
-		t.Run("undeterministic: "+config.MsgName(sdkMsg), func(tt *testing.T) {
+		sdkMsg := sdkMsg
+		t.Run("undeterministic: "+config.MsgName(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
-			assert.False(tt, ok)
-			assert.Zero(tt, gas)
+			assert.False(t, ok)
+			assert.Zero(t, gas)
 		})
 	}
 }
 
+//nolint:funlen
 func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 	const (
 		denom   = "ducore"
@@ -231,11 +234,12 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gas, isDeterministic := dgr.GasRequiredByMessage(tt.msg)
-			assert.Equal(t, tt.expectedIsDeterministic, isDeterministic)
-			assert.Equal(t, tt.expectedGas, gas)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			gas, isDeterministic := dgr.GasRequiredByMessage(tc.msg)
+			assert.Equal(t, tc.expectedIsDeterministic, isDeterministic)
+			assert.Equal(t, tc.expectedGas, gas)
 		})
 	}
 }
