@@ -24,14 +24,14 @@ import (
 var revProtoTypes map[reflect.Type]string
 
 func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
-	// A list of valid message prefixes or messages which are not defined
-	// as deterministic in purpose.
-	nonDetermPrefixes := []string{
+	// A list of valid message prefixes or messages which are unknown and not
+	// determined as neither deterministic nor undeterministic.
+	unknownMsgPrefixes := []string{
 		// Not-integrated modules:
 		// IBC:
 		"/ibc.core.",
 		"/ibc.applications.",
-		// CosmWASM:
+		// CosmWasm
 		"/cosmwasm.wasm.",
 		// To be integrated standard modules:
 		"/cosmos.feegrant.",
@@ -44,32 +44,56 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 		"/cosmos.tx.v1beta1.Tx",
 	}
 
+	// WASM messages will be added here
+	undetermMsgPrefixes := []string{}
+
 	dgr := config.DefaultDeterministicGasRequirements()
 
 	var determMsgs []sdk.Msg
+	var undetermMsgs []sdk.Msg
 	for tt := range revProtoTypes {
 		sdkMsg, ok := reflect.New(tt.Elem()).Interface().(sdk.Msg)
 		if !ok {
 			continue
 		}
 
-		if !lo.ContainsBy(nonDetermPrefixes, func(prefix string) bool {
+		// Skip unknow messages.
+		if lo.ContainsBy(unknownMsgPrefixes, func(prefix string) bool {
 			return strings.HasPrefix(config.MsgName(sdkMsg), prefix)
 		}) {
-			determMsgs = append(determMsgs, sdkMsg)
+			continue
 		}
+
+		// Add message to undeterministic.
+		if lo.ContainsBy(undetermMsgPrefixes, func(prefix string) bool {
+			return strings.HasPrefix(config.MsgName(sdkMsg), prefix)
+		}) {
+			undetermMsgs = append(undetermMsgs, sdkMsg)
+		}
+
+		// Add message to deterministic.
+		determMsgs = append(determMsgs, sdkMsg)
 	}
 
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, len(determMsgs), 30)
+	assert.Equal(t, 30, len(determMsgs))
+	assert.Equal(t, 0, len(undetermMsgs))
 
 	for _, sdkMsg := range determMsgs {
-		t.Run(config.MsgName(sdkMsg), func(tt *testing.T) {
+		t.Run("deterministic: "+config.MsgName(sdkMsg), func(tt *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.True(tt, ok)
 			assert.Positive(tt, gas)
+		})
+	}
+
+	for _, sdkMsg := range undetermMsgs {
+		t.Run("undeterministic: "+config.MsgName(sdkMsg), func(tt *testing.T) {
+			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
+			assert.False(tt, ok)
+			assert.Zero(tt, gas)
 		})
 	}
 }
