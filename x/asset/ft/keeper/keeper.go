@@ -103,8 +103,8 @@ func (k Keeper) fillOutputs(address sdk.AccAddress, info *MultiSendIterationInfo
 	return nil
 }
 
-func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) (map[string]MultiSendIterationInfo, error) {
-	iterationMap := make(map[string]MultiSendIterationInfo)
+func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) (map[string]*MultiSendIterationInfo, error) {
+	iterationMap := make(map[string]*MultiSendIterationInfo)
 	iterateCoin := func(coin sdk.Coin, address sdk.AccAddress, isInput bool) error {
 		info, ok := iterationMap[coin.Denom]
 		if !ok {
@@ -116,7 +116,7 @@ func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, o
 			if err != nil {
 				return err
 			}
-			info = MultiSendIterationInfo{
+			info = &MultiSendIterationInfo{
 				FT:                 ft,
 				NonIssuerInputSum:  sdk.NewInt(0),
 				NonIssuerOutputSum: sdk.NewInt(0),
@@ -128,11 +128,11 @@ func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, o
 		}
 
 		if isInput {
-			if err := k.fillInputs(address, &info, coin); err != nil {
+			if err := k.fillInputs(address, info, coin); err != nil {
 				return err
 			}
 		} else {
-			if err := k.fillOutputs(address, &info, coin); err != nil {
+			if err := k.fillOutputs(address, info, coin); err != nil {
 				return err
 			}
 		}
@@ -205,7 +205,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs
 			}
 		}
 
-		// we need to check restraints after the burn_rate and send_commission_rate is applied
+		// we need to check restraints after the burn_rate and send_commission_rate are applied
 		for sender, amount := range splitInfo.Senders {
 			senderAccAddress, err := sdk.AccAddressFromBech32(sender)
 			if err != nil {
