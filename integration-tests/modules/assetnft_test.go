@@ -9,14 +9,11 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -347,7 +344,10 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origMintFee := chain.NetworkConfig.AssetNFTConfig.MintFee
 
-	updateMintFee(t, sdk.OneInt())
+	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing MintFee in the assetnft module",
+		[]paramproposal.ParamChange{
+			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.OneInt()))))),
+		}))
 
 	issuer := chain.GenAccount()
 	requireT.NoError(
@@ -406,39 +406,8 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
 
 	// Revert to original mint fee
-	updateMintFee(t, origMintFee)
-}
-
-//nolint:dupl
-func updateMintFee(t *testing.T, mintFee sdk.Int) {
-	ctx, chain := integrationtests.NewTestingContext(t)
-	requireT := require.New(t)
-
-	// Fund accounts.
-	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-	requireT.NoError(err)
-
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
-
-	// Create proposition to change mint fee value.
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change NFT mint fee", "Propose changing MintFee in the assetnft module",
+	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing MintFee in the assetnft module",
 		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, mintFee))))),
-		},
-	))
-	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
-	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
-
-	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposalID)
-	requireT.NoError(err)
-
-	// Wait for proposal result.
-	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
-	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, origMintFee))))),
+		}))
 }
