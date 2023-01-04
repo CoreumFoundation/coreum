@@ -30,7 +30,7 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.Ba
 
 // BeforeSendCoins checks that a transfer request is allowed or not
 func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
-	return k.beforeInputOutputCoins(
+	return k.applyFeatures(
 		ctx,
 		[]banktypes.Input{{Address: fromAddress.String(), Coins: coins}},
 		[]banktypes.Output{{Address: toAddress.String(), Coins: coins}},
@@ -39,7 +39,7 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 
 // BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper
 func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	return k.beforeInputOutputCoins(ctx, inputs, outputs)
+	return k.applyFeatures(ctx, inputs, outputs)
 }
 
 // MultiSendIterationInfo is used to gather information about multi send, and will be used to calculate
@@ -53,8 +53,8 @@ type MultiSendIterationInfo struct {
 	Receivers          map[string]sdk.Int
 }
 
-// CalculateBurnRateAndCommissionShares returns the burn coins and commission coins
-func (info MultiSendIterationInfo) CalculateBurnRateAndCommissionShares() (map[string]sdk.Int, map[string]sdk.Int) {
+// CalculateRateShares returns the burn coins and commission coins
+func (info MultiSendIterationInfo) CalculateRateShares(rate sdk.Dec) map[string]sdk.Int {
 	var minNonIssuerIOAmount sdk.Int
 	if info.NonIssuerInputSum.LT(info.NonIssuerOutputSum) {
 		minNonIssuerIOAmount = info.NonIssuerInputSum
@@ -62,38 +62,24 @@ func (info MultiSendIterationInfo) CalculateBurnRateAndCommissionShares() (map[s
 		minNonIssuerIOAmount = info.NonIssuerOutputSum
 	}
 
-	burnShares := make(map[string]sdk.Int)
-	burnAmount := info.FT.BurnRate.MulInt(minNonIssuerIOAmount)
-	if burnAmount.IsPositive() {
+	shares := make(map[string]sdk.Int)
+	amount := rate.MulInt(minNonIssuerIOAmount)
+	if amount.IsPositive() {
 		for sendAccount, sendAmount := range info.NonIssuerSenders {
-			burnShare := burnAmount.Mul(sdk.NewDecFromInt(sendAmount)).Quo(sdk.NewDecFromInt(info.NonIssuerInputSum)).Ceil().RoundInt()
-			burnShares[sendAccount] = burnShare
+			shares[sendAccount] = amount.Mul(sdk.NewDecFromInt(sendAmount)).Quo(sdk.NewDecFromInt(info.NonIssuerInputSum)).Ceil().RoundInt()
 		}
 	}
 
-	commissionShares := make(map[string]sdk.Int)
-	commissionAmount := info.FT.SendCommissionRate.MulInt(minNonIssuerIOAmount)
-	if commissionAmount.IsPositive() {
-		for sendAccount, sendAmount := range info.NonIssuerSenders {
-			commissionShare := commissionAmount.Mul(sdk.NewDecFromInt(sendAmount)).Quo(sdk.NewDecFromInt(info.NonIssuerInputSum)).Ceil().RoundInt()
-			commissionShares[sendAccount] = commissionShare
-		}
-	}
-
-	return burnShares, commissionShares
+	return shares
 }
 
-func (k Keeper) fillInputs(ctx sdk.Context, address sdk.AccAddress, info MultiSendIterationInfo, coin sdk.Coin) error {
+func (k Keeper) fillInputs(address sdk.AccAddress, info *MultiSendIterationInfo, coin sdk.Coin) error {
 	oldAmount, ok := info.Senders[address.String()]
 	if !ok {
 		oldAmount = sdk.NewInt(0)
 	}
 
 	newAmount := oldAmount.Add(coin.Amount)
-	if err := k.isCoinSpendable(ctx, address, info.FT, newAmount); err != nil {
-		return err
-	}
-
 	info.Senders[address.String()] = newAmount
 	if info.FT.Issuer != address.String() {
 		info.NonIssuerSenders[address.String()] = newAmount
@@ -103,17 +89,13 @@ func (k Keeper) fillInputs(ctx sdk.Context, address sdk.AccAddress, info MultiSe
 	return nil
 }
 
-func (k Keeper) fillOutputs(ctx sdk.Context, address sdk.AccAddress, info MultiSendIterationInfo, coin sdk.Coin) error {
+func (k Keeper) fillOutputs(address sdk.AccAddress, info *MultiSendIterationInfo, coin sdk.Coin) error {
 	oldAmount, ok := info.Receivers[address.String()]
 	if !ok {
 		oldAmount = sdk.NewInt(0)
 	}
 	newAmount := oldAmount.Add(coin.Amount)
 	info.Receivers[address.String()] = newAmount
-	if err := k.isCoinReceivable(ctx, address, info.FT, newAmount); err != nil {
-		return err
-	}
-
 	if info.FT.Issuer != address.String() {
 		info.NonIssuerOutputSum = info.NonIssuerOutputSum.Add(coin.Amount)
 	}
@@ -142,19 +124,19 @@ func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, o
 				Senders:            make(map[string]sdk.Int),
 				Receivers:          make(map[string]sdk.Int),
 			}
+			iterationMap[info.FT.Denom] = info
 		}
 
 		if isInput {
-			if err := k.fillInputs(ctx, address, info, coin); err != nil {
+			if err := k.fillInputs(address, &info, coin); err != nil {
 				return err
 			}
 		} else {
-			if err := k.fillOutputs(ctx, address, info, coin); err != nil {
+			if err := k.fillOutputs(address, &info, coin); err != nil {
 				return err
 			}
 		}
 
-		iterationMap[info.FT.Denom] = info
 		return nil
 	}
 
@@ -189,14 +171,14 @@ func (k Keeper) iterateInputOutputs(ctx sdk.Context, inputs []banktypes.Input, o
 	return iterationMap, nil
 }
 
-func (k Keeper) beforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
 	splitIntoMap, err := k.iterateInputOutputs(ctx, inputs, outputs)
 	if err != nil {
 		return err
 	}
 
 	for _, splitInfo := range splitIntoMap {
-		burnShares, commissionShares := splitInfo.CalculateBurnRateAndCommissionShares()
+		burnShares := splitInfo.CalculateRateShares(splitInfo.FT.BurnRate)
 		for account, burnShare := range burnShares {
 			senderAccAddress, err := sdk.AccAddressFromBech32(account)
 			if err != nil {
@@ -209,6 +191,7 @@ func (k Keeper) beforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 			}
 		}
 
+		commissionShares := splitInfo.CalculateRateShares(splitInfo.FT.SendCommissionRate)
 		for account, commissionShare := range commissionShares {
 			senderAccAddress, err := sdk.AccAddressFromBech32(account)
 			if err != nil {
@@ -221,24 +204,24 @@ func (k Keeper) beforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 				return err
 			}
 		}
-	}
 
-	for _, out := range outputs {
-		outAddress, err := sdk.AccAddressFromBech32(out.Address)
-		if err != nil {
-			return err
-		}
-
-		for _, coin := range out.Coins {
-			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-			if types.ErrFTNotFound.Is(err) {
-				continue
-			}
+		// we need to check restraints after the burn_rate and send_commission_rate is applied
+		for sender, amount := range splitInfo.Senders {
+			senderAccAddress, err := sdk.AccAddressFromBech32(sender)
 			if err != nil {
 				return err
 			}
+			if err := k.isCoinSpendable(ctx, senderAccAddress, splitInfo.FT, amount); err != nil {
+				return err
+			}
+		}
 
-			if err := k.isCoinReceivable(ctx, outAddress, ft, coin.Amount); err != nil {
+		for receiver, amount := range splitInfo.Receivers {
+			receiverAccAddress, err := sdk.AccAddressFromBech32(receiver)
+			if err != nil {
+				return err
+			}
+			if err := k.isCoinReceivable(ctx, receiverAccAddress, splitInfo.FT, amount); err != nil {
 				return err
 			}
 		}
