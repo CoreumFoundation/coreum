@@ -77,6 +77,7 @@ func TestAssetFTIssue(t *testing.T) {
 // TestAssetFTIssueFeeProposal tests proposal upgrading issue fee
 func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
+	// That's why t.Parallel() is not here.
 
 	ctx, chain := integrationtests.NewTestingContext(t)
 	requireT := require.New(t)
