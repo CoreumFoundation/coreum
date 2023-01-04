@@ -14,13 +14,13 @@ If you are planning a to run a node against our mainnet, please observe the foll
 ### Testnet
 |Node Type  |Cores  |RAM    |Storage    |  Internet Connection |
 |-----------|-------|-------|-----------| ---------------------|
-|Validator  |2      |16GB   |500GB      |  10+  MBPS           |
-|Full       |2      |16GB   |500GB      |  10+  MBPS           |
-|Default    |2      |16GB   |500GB      |  10+  MBPS           |
+|Validator  |2      |16GB   |500GB      |  100+  MBPS           |
+|Full       |2      |16GB   |500GB      |  100+  MBPS           |
+|Default    |2      |16GB   |500GB      |  100+  MBPS           |
 
 ### Devnet
 |Node Type  |Cores  |RAM    |Storage    |  Internet Connection |
 |-----------|-------|-------|-----------| ---------------------|
-|Validator  |2      |16GB   |100GB      |  10+  MBPS           |
-|Full       |2      |16GB   |100GB      |  10+  MBPS           |
-|Default    |2      |16GB   |100GB      |  10+  MBPS           |
+|Validator  |2      |16GB   |100GB      |  100+  MBPS           |
+|Full       |2      |16GB   |100GB      |  100+  MBPS           |
+|Default    |2      |16GB   |100GB      |  100+  MBPS           |
