@@ -1,5 +1,3 @@
-//go:build integrationtests
-
 package modules
 
 import (
@@ -7,6 +5,7 @@ import (
 
 	codetypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	"github.com/stretchr/testify/require"
@@ -25,8 +24,11 @@ func TestFeeGrant(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{}},
-		Amount:   sdk.NewInt(1_000_000),
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&feegrant.MsgGrantAllowance{},
+			&feegrant.MsgRevokeAllowance{}},
 	}))
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
@@ -44,13 +46,14 @@ func TestFeeGrant(t *testing.T) {
 		Allowance: basicAllowance,
 	}
 
-	_, err = tx.BroadcastTx(
+	res, err := tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
 		grantMsg,
 	)
 	requireT.NoError(err)
+	requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(grantMsg))
 
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: grantee.String(),
@@ -65,4 +68,33 @@ func TestFeeGrant(t *testing.T) {
 		sendMsg,
 	)
 	requireT.NoError(err)
+
+	revokeMsg := &feegrant.MsgRevokeAllowance{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	}
+
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(revokeMsg)),
+		revokeMsg,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(revokeMsg))
+
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: grantee.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee).WithFeeGranterAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 }
