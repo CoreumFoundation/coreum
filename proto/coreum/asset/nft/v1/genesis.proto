@@ -1,0 +1,13 @@
+syntax = "proto3";
+package coreum.asset.nft.v1;
+
+import "gogoproto/gogo.proto";
+import "coreum/asset/nft/v1/params.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
+
+// GenesisState defines the asset module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
