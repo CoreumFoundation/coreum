@@ -69,7 +69,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	// try to freeze unfreezable FT
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(unfreezableDenom, sdk.NewInt(10)))
-	assertT.True(sdkerrors.IsOf(err, types.ErrFeatureNotActive))
+	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
 
 	// try to freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())

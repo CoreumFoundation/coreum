@@ -70,7 +70,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 
 	// try to global-freeze unfreezable FT
 	err = ftKeeper.GloballyFreeze(ctx, issuer, unfreezableDenom)
-	assertT.True(sdkerrors.IsOf(err, types.ErrFeatureNotActive))
+	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
 
 	// try to global-freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())

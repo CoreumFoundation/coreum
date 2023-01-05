@@ -83,7 +83,12 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 
 // areCoinsSpendable returns an error if there are not enough coins balances to be spent
 func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, ft types.FTDefinition, amount sdk.Int) error {
-	if k.isGloballyFrozen(ctx, ft.Denom) {
+	if !ft.IsFeatureEnabled(types.TokenFeature_freeze) { //nolint:nosnakecase
+		return nil
+	}
+
+	// the issuer can use token even if it's globally frozen
+	if k.isGloballyFrozen(ctx, ft.Denom) && ft.Issuer != addr.String() {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", ft.Denom)
 	}
 

@@ -59,7 +59,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 
 	// whitelisting fails on unwhitelistable token
 	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(unwhitelistableDenom, sdk.NewInt(1)))
-	requireT.ErrorIs(types.ErrFeatureNotActive, err)
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// try to whitelist non-existent denom
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)

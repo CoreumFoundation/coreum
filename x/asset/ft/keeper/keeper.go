@@ -8,6 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/samber/lo"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -206,14 +207,20 @@ func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 	return k.burn(ctx, sender, ft, coin.Amount)
 }
 
-func (k Keeper) checkFeatureAllowed(sender sdk.AccAddress, ft types.FTDefinition, feature types.TokenFeature) error {
-	if !ft.IsFeatureEnabled(feature) {
-		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", ft.Denom, feature)
+func (k Keeper) checkFeatureAllowed(addr sdk.AccAddress, ftd types.FTDefinition, feature types.TokenFeature) error {
+	featureEnabled := lo.Contains(ftd.Features, feature)
+
+	// issuer can use any enabled feature and burning even if it is disabled
+	if ftd.Issuer == addr.String() {
+		if featureEnabled || feature == types.TokenFeature_burn { //nolint:nosnakecase
+			return nil
+		}
 	}
 
-	if ft.Issuer != sender.String() {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform this operation", sender.String())
+	// non-issuer can use only burning and only if it is enabled
+	if featureEnabled && feature == types.TokenFeature_burn { //nolint:nosnakecase
+		return nil
 	}
 
-	return nil
+	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 }
