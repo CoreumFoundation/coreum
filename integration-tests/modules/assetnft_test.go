@@ -108,6 +108,9 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
 		Data:        data,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burn, //nolint:nosnakecase // generated variable
+		},
 	}
 	res, err := tx.BroadcastTx(
 		ctx,
@@ -143,19 +146,20 @@ func TestAssetNFTIssueClass(t *testing.T) {
 
 	requireT.Equal(assetnfttypes.Class{
 		Id:          classID,
+		Issuer:      issuer.String(),
 		Symbol:      issueMsg.Symbol,
 		Name:        issueMsg.Name,
 		Description: issueMsg.Description,
-		Uri:         issueMsg.URI,
-		UriHash:     issueMsg.URIHash,
+		URI:         issueMsg.URI,
+		URIHash:     issueMsg.URIHash,
 		Data:        dataToCompare,
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_burn, //nolint:nosnakecase // generated variable
 		},
-	}, nftClassRes.Class)
+	}, assetNftClassRes.Class)
 
 	var data2 assetnfttypes.DataBytes
-	requireT.NoError(proto.Unmarshal(nftClassRes.Class.Data.Value, &data2))
+	requireT.NoError(proto.Unmarshal(assetNftClassRes.Class.Data.Value, &data2))
 
 	requireT.Equal(jsonData, data2.Data)
 }

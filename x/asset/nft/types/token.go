@@ -7,8 +7,8 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/samber/lo"
 	"github.com/gogo/protobuf/proto"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/x/nft"
 )

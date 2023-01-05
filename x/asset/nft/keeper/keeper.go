@@ -5,8 +5,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
@@ -129,7 +129,6 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 	if err != nil {
 		return err
 	}
-
 
 	if !definition.IsIssuer(settings.Sender) {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", settings.Sender.String())

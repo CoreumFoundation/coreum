@@ -37,7 +37,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	genState := types.GenesisState{
-		Params: types.DefaultParams(),
+		Params:           types.DefaultParams(),
 		ClassDefinitions: classDefinitions,
 	}
 

@@ -41,6 +41,7 @@ func TestQueryClass(t *testing.T) {
 
 	requireT.Equal(types.Class{
 		Id:          classID,
+		Issuer:      testNetwork.Validators[0].Address.String(),
 		Name:        name,
 		Symbol:      symbol,
 		Description: description,

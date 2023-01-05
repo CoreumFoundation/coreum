@@ -25,6 +25,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	return &types.GenesisState{
 		ClassDefinitions: classDefinitions,
-		Params: k.GetParams(ctx),
+		Params:           k.GetParams(ctx),
 	}
 }
