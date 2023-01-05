@@ -87,6 +87,11 @@ func ValidateTokenID(id string) error {
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a non-fungible token.
-func (nftd *NFTClassDefinition) IsFeatureEnabled(feature ClassFeature) bool {
-	return lo.Contains(nftd.Features, feature)
+func (def *ClassDefinition) IsFeatureEnabled(feature ClassFeature) bool {
+	return lo.Contains(def.Features, feature)
+}
+
+// IsIssuer returns true if the addr is issuer.
+func (def *ClassDefinition) IsIssuer(add sdk.Address) bool {
+	return def.Issuer == add.String()
 }

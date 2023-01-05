@@ -6,10 +6,6 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	_ "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
@@ -18,15 +14,15 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -35,7 +31,8 @@ var (
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // QueryStakingParamsRequest defines the request type for querying x/customparams staking parameters.
-type QueryStakingParamsRequest struct{}
+type QueryStakingParamsRequest struct {
+}
 
 func (m *QueryStakingParamsRequest) Reset()         { *m = QueryStakingParamsRequest{} }
 func (m *QueryStakingParamsRequest) String() string { return proto.CompactTextString(m) }
@@ -43,11 +40,9 @@ func (*QueryStakingParamsRequest) ProtoMessage()    {}
 func (*QueryStakingParamsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_da080998585ae5b1, []int{0}
 }
-
 func (m *QueryStakingParamsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryStakingParamsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryStakingParamsRequest.Marshal(b, m, deterministic)
@@ -60,15 +55,12 @@ func (m *QueryStakingParamsRequest) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-
 func (m *QueryStakingParamsRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryStakingParamsRequest.Merge(m, src)
 }
-
 func (m *QueryStakingParamsRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryStakingParamsRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryStakingParamsRequest.DiscardUnknown(m)
 }
@@ -86,11 +78,9 @@ func (*QueryStakingParamsResponse) ProtoMessage()    {}
 func (*QueryStakingParamsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_da080998585ae5b1, []int{1}
 }
-
 func (m *QueryStakingParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryStakingParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryStakingParamsResponse.Marshal(b, m, deterministic)
@@ -103,15 +93,12 @@ func (m *QueryStakingParamsResponse) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-
 func (m *QueryStakingParamsResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryStakingParamsResponse.Merge(m, src)
 }
-
 func (m *QueryStakingParamsResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryStakingParamsResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryStakingParamsResponse.DiscardUnknown(m)
 }
@@ -198,7 +185,8 @@ type QueryServer interface {
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
-type UnimplementedQueryServer struct{}
+type UnimplementedQueryServer struct {
+}
 
 func (*UnimplementedQueryServer) StakingParams(ctx context.Context, req *QueryStakingParamsRequest) (*QueryStakingParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StakingParams not implemented")
@@ -306,7 +294,6 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *QueryStakingParamsRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -330,11 +317,9 @@ func (m *QueryStakingParamsResponse) Size() (n int) {
 func sovQuery(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *QueryStakingParamsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -385,7 +370,6 @@ func (m *QueryStakingParamsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryStakingParamsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -469,7 +453,6 @@ func (m *QueryStakingParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipQuery(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

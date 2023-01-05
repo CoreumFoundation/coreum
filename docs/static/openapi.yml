@@ -1297,7 +1297,7 @@ paths:
           type: string
       tags:
         - Query
-  '/coreum/asset/nft/v1/class/{id}':
+  '/coreum/asset/nft/v1/classes/{id}':
     get:
       summary: Class queries the non-fungible token class of the module.
       operationId: CoreumAssetNftV1Class
@@ -1311,6 +1311,8 @@ paths:
                 type: object
                 properties:
                   id:
+                    type: string
+                  issuer:
                     type: string
                   name:
                     type: string
@@ -1506,7 +1508,7 @@ paths:
                         ClassFeature defines possible features of non-fungible
                         token class.
                 description: >-
-                  NFTClass is a full representation of the non-fungible token
+                  Class is a full representation of the non-fungible token
                   class.
             description: >-
               QueryClassResponse is response type for the Query/Class RPC
@@ -27833,18 +27835,12 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
-  coreum.asset.nft.v1.ClassFeature:
-    type: string
-    enum:
-      - burn
-    default: burn
-    description: ClassFeature defines possible features of non-fungible token class.
-  coreum.asset.nft.v1.EmptyResponse:
-    type: object
-  coreum.asset.nft.v1.NFTClass:
+  coreum.asset.nft.v1.Class:
     type: object
     properties:
       id:
+        type: string
+      issuer:
         type: string
       name:
         type: string
@@ -28021,7 +28017,15 @@ definitions:
             - burn
           default: burn
           description: ClassFeature defines possible features of non-fungible token class.
-    description: NFTClass is a full representation of the non-fungible token class.
+    description: Class is a full representation of the non-fungible token class.
+  coreum.asset.nft.v1.ClassFeature:
+    type: string
+    enum:
+      - burn
+    default: burn
+    description: ClassFeature defines possible features of non-fungible token class.
+  coreum.asset.nft.v1.EmptyResponse:
+    type: object
   coreum.asset.nft.v1.QueryClassResponse:
     type: object
     properties:
@@ -28029,6 +28033,8 @@ definitions:
         type: object
         properties:
           id:
+            type: string
+          issuer:
             type: string
           name:
             type: string
@@ -28213,7 +28219,7 @@ definitions:
               description: >-
                 ClassFeature defines possible features of non-fungible token
                 class.
-        description: NFTClass is a full representation of the non-fungible token class.
+        description: Class is a full representation of the non-fungible token class.
     description: QueryClassResponse is response type for the Query/Class RPC method.
   coreum.customparams.v1.QueryStakingParamsResponse:
     type: object

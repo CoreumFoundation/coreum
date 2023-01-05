@@ -39,7 +39,7 @@ func TestQueryClass(t *testing.T) {
 	var resp types.QueryClassResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 
-	requireT.Equal(types.NFTClass{
+	requireT.Equal(types.Class{
 		Id:          classID,
 		Name:        name,
 		Symbol:      symbol,

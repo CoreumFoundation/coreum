@@ -78,7 +78,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(assetnfttypes.NFTClass{
+	requireT.Equal(assetnfttypes.Class{
 		Id:          classID,
 		Symbol:      issueMsg.Symbol,
 		Name:        issueMsg.Name,

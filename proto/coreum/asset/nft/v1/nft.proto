@@ -11,20 +11,22 @@ enum ClassFeature {
   burn = 0;
 }
 
-// NFTClassDefinition defines the non-fungible token class settings to store.
-message NFTClassDefinition {
+// ClassDefinition defines the non-fungible token class settings to store.
+message ClassDefinition {
   string id = 1 [(gogoproto.customname) = "ID"];
-  repeated ClassFeature features = 2;
+  string issuer = 2;
+  repeated ClassFeature features = 3;
 }
 
-// NFTClass is a full representation of the non-fungible token class.
-message NFTClass {
+// Class is a full representation of the non-fungible token class.
+message Class {
   string id = 1;
-  string name = 2;
-  string symbol = 3;
-  string description = 4;
-  string uri = 5 [(gogoproto.customname) = "URI"];
-  string uri_hash = 6 [(gogoproto.customname) = "URIHash"];
-  google.protobuf.Any data = 7;
-  repeated ClassFeature features = 8;
+  string issuer = 2;
+  string name = 3;
+  string symbol = 4;
+  string description = 5;
+  string uri = 6 [(gogoproto.customname) = "URI"];
+  string uri_hash = 7 [(gogoproto.customname) = "URIHash"];
+  google.protobuf.Any data = 8;
+  repeated ClassFeature features = 9;
 }

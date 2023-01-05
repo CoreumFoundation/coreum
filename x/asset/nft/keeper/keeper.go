@@ -60,8 +60,9 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't save non-fungible token: %s", err)
 	}
 
-	k.SetClassDefinition(ctx, types.NFTClassDefinition{
+	k.SetClassDefinition(ctx, types.ClassDefinition{
 		ID:       id,
+		Issuer:   settings.Issuer.String(),
 		Features: settings.Features,
 	})
 
@@ -87,8 +88,13 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
-	if err := validateMintingAllowed(settings.Sender, settings.ClassID); err != nil {
+	definition, err := k.GetClassDefinition(ctx, settings.ClassID)
+	if err != nil {
 		return err
+	}
+
+	if !definition.IsIssuer(settings.Sender) {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", settings.Sender.String())
 	}
 
 	if !k.nftKeeper.HasClass(ctx, settings.ClassID) {
@@ -119,7 +125,7 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return err
 	}
 
-	err = checkFeatureAllowed(classID, definition, types.ClassFeature_burn) //nolint:nosnakecase // generated variable
+	err = checkFeatureAllowed(owner, definition, types.ClassFeature_burn) //nolint:nosnakecase // generated variable
 	if err != nil {
 		return err
 	}
@@ -135,23 +141,27 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 	return k.nftKeeper.Burn(ctx, classID, id)
 }
 
-// SetClassDefinition stores the NFTClassDefinition.
-func (k Keeper) SetClassDefinition(ctx sdk.Context, definition types.NFTClassDefinition) {
+// SetClassDefinition stores the ClassDefinition.
+func (k Keeper) SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetClassKey(definition.ID), k.cdc.MustMarshal(&definition))
 }
 
-// GetNFTClass reruns the NFTClass.
-func (k Keeper) GetNFTClass(ctx sdk.Context, classID string) (types.NFTClass, error) {
+// GetClass reruns the Class.
+func (k Keeper) GetClass(ctx sdk.Context, classID string) (types.Class, error) {
 	definition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
-		return types.NFTClass{}, err
+		return types.Class{}, err
 	}
 
-	class, _ := k.nftKeeper.GetClass(ctx, classID)
+	class, found := k.nftKeeper.GetClass(ctx, classID)
+	if !found {
+		return types.Class{}, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft class with ID:%s not found", classID)
+	}
 
-	return types.NFTClass{
+	return types.Class{
 		Id:          class.Id,
+		Issuer:      definition.Issuer,
 		Name:        class.Name,
 		Symbol:      class.Symbol,
 		Description: class.Description,
@@ -162,40 +172,40 @@ func (k Keeper) GetNFTClass(ctx sdk.Context, classID string) (types.NFTClass, er
 	}, nil
 }
 
-// GetClassDefinition reruns the NFTClassDefinition.
-func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.NFTClassDefinition, error) {
+// GetClassDefinition reruns the ClassDefinition.
+func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.ClassDefinition, error) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetClassKey(classID))
 	if bz == nil {
-		return types.NFTClassDefinition{}, sdkerrors.Wrapf(types.ErrClassNotFound, "classID: %s", classID)
+		return types.ClassDefinition{}, sdkerrors.Wrapf(types.ErrClassNotFound, "classID: %s", classID)
 	}
-	var definition types.NFTClassDefinition
+	var definition types.ClassDefinition
 	k.cdc.MustUnmarshal(bz, &definition)
 
 	return definition, nil
 }
 
 // GetClassDefinitions returns all non-fungible class token definitions.
-func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.NFTClassDefinition, *query.PageResponse, error) {
+func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.ClassDefinition, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassKeyPrefix)
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,
 		pagination,
 		// builder
-		func(key []byte, definition *types.NFTClassDefinition) (*types.NFTClassDefinition, error) {
+		func(key []byte, definition *types.ClassDefinition) (*types.ClassDefinition, error) {
 			return definition, nil
 		},
 		// constructor
-		func() *types.NFTClassDefinition {
-			return &types.NFTClassDefinition{}
+		func() *types.ClassDefinition {
+			return &types.ClassDefinition{}
 		},
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	definitions := make([]types.NFTClassDefinition, 0, len(definitionsPointers))
+	definitions := make([]types.ClassDefinition, 0, len(definitionsPointers))
 	for _, definition := range definitionsPointers {
 		definitions = append(definitions, *definition)
 	}
@@ -203,32 +213,21 @@ func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageReque
 	return definitions, pageRes, err
 }
 
-func validateMintingAllowed(sender sdk.AccAddress, classID string) error {
-	isIssuer, err := isIssuer(sender, classID)
-	if err != nil {
-		return err
+//nolint:nosnakecase
+func checkFeatureAllowed(addr sdk.AccAddress, def types.ClassDefinition, feature types.ClassFeature) error {
+	featureEnabled := def.IsFeatureEnabled(feature)
+
+	// issuer can use any enabled feature and burning even if it is disabled
+	if def.IsIssuer(addr) {
+		if featureEnabled || feature == types.ClassFeature_burn {
+			return nil
+		}
 	}
 
-	if !isIssuer {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", sender.String())
+	// non-issuer can use only burning and only if it is enabled
+	if featureEnabled && feature == types.ClassFeature_burn {
+		return nil
 	}
 
-	return nil
-}
-
-func isIssuer(sender sdk.AccAddress, classID string) (bool, error) {
-	issuer, err := types.DeconstructClassID(classID)
-	if err != nil {
-		return false, err
-	}
-
-	return issuer.String() == sender.String(), nil
-}
-
-func checkFeatureAllowed(classID string, definition types.NFTClassDefinition, feature types.ClassFeature) error {
-	if !definition.IsFeatureEnabled(feature) {
-		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "classID:%s, feature:%s", classID, feature)
-	}
-
-	return nil
+	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 }

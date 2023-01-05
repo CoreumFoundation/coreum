@@ -31,15 +31,18 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdTxIssueClass(),
 		CmdTxMint(),
+		CmdTxBurn(),
 	)
 
 	return cmd
 }
 
 // CmdTxIssueClass returns IssueClass cobra command.
+//
+//nolint:nosnakecase // generated variable
 func CmdTxIssueClass() *cobra.Command {
-	allowedFeatures := make([]string, 0, len(types.ClassFeature_name)) //nolint:nosnakecase // generated variable
-	for _, n := range types.ClassFeature_name {                        //nolint:nosnakecase
+	allowedFeatures := make([]string, 0, len(types.ClassFeature_name))
+	for _, n := range types.ClassFeature_name {
 		allowedFeatures = append(allowedFeatures, n)
 	}
 	allowedFeaturesString := strings.Join(allowedFeatures, ",")
@@ -52,9 +55,9 @@ func CmdTxIssueClass() *cobra.Command {
 			fmt.Sprintf(`Issue new non-fungible token class.
 
 Example:
-$ %s tx asset-nft issue-class abc "ABC Name" "ABC class description." https://my-class-meta.invalid/1 e000624 --from [issuer] --%s=%s"
+$ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-meta.invalid/1 e000624 --from [issuer] --%s=%s"
 `,
-				version.AppName, featuresFlag, allowedFeaturesString,
+				version.AppName, types.ModuleName, featuresFlag, allowedFeaturesString,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -114,9 +117,9 @@ func CmdTxMint() *cobra.Command {
 			fmt.Sprintf(`Mint new non-fungible token.
 
 Example:
-$ %s tx asset-nft mint abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
+$ %s tx %s mint abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -158,9 +161,9 @@ func CmdTxBurn() *cobra.Command {
 			fmt.Sprintf(`Burn non-fungible token.
 
 Example:
-$ %s tx asset-nft mint abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --from [sender]
+$ %s tx %s burn abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -12,7 +12,7 @@ var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
-	GetNFTClass(ctx sdk.Context, classID string) (types.NFTClass, error)
+	GetClass(ctx sdk.Context, classID string) (types.Class, error)
 }
 
 // QueryService serves grpc query requests for assetsnft module.
@@ -29,7 +29,7 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 
 // Class reruns the asset NFT class.
 func (q QueryService) Class(ctx context.Context, req *types.QueryClassRequest) (*types.QueryClassResponse, error) {
-	nftClass, err := q.keeper.GetNFTClass(sdk.UnwrapSDKContext(ctx), req.Id)
+	nftClass, err := q.keeper.GetClass(sdk.UnwrapSDKContext(ctx), req.Id)
 	if err != nil {
 		return nil, err
 	}

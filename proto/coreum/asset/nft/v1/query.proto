@@ -12,7 +12,7 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
 service Query {
   // Class queries the non-fungible token class of the module.
   rpc Class(QueryClassRequest) returns (QueryClassResponse) {
-    option (google.api.http).get = "/coreum/asset/nft/v1/class/{id}";
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{id}";
   }
 }
 
@@ -23,5 +23,5 @@ message QueryClassRequest {
 
 // QueryClassResponse is response type for the Query/Class RPC method.
 message QueryClassResponse {
-  NFTClass class = 1 [(gogoproto.nullable) = false];
+  Class class = 1 [(gogoproto.nullable) = false];
 }

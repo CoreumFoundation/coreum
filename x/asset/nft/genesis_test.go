@@ -25,9 +25,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// prepare the genesis data
 
 	// class definitions
-	var classDefinitions []types.NFTClassDefinition
+	var classDefinitions []types.ClassDefinition
 	for i := 0; i < 5; i++ {
-		classDefinition := types.NFTClassDefinition{
+		classDefinition := types.ClassDefinition{
 			ID: fmt.Sprintf("id%d", i),
 			Features: []types.ClassFeature{
 				types.ClassFeature_burn, //nolint:nosnakecase // proto enum
