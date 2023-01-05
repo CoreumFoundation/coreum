@@ -465,7 +465,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
-	bankMultiSendGas := chain.GasLimitByMsgs(&banktypes.MsgMultiSend{})
+	bankMultiSendGas := chain.GasLimitByMsgs(msg)
 
 	res, err = tx.BroadcastTx(
 		ctx,
