@@ -37,6 +37,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	genState := types.GenesisState{
+		Params: types.DefaultParams(),
 		ClassDefinitions: classDefinitions,
 	}
 
@@ -51,6 +52,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 		requireT.NoError(err)
 		assertT.EqualValues(definition, storedDefinition)
 	}
+
+	// params
+	params := nftKeeper.GetParams(ctx)
+	assertT.EqualValues(types.DefaultParams(), params)
 
 	// check that export is equal import
 	exportedGenState := nft.ExportGenesis(ctx, nftKeeper)

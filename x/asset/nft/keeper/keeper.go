@@ -5,26 +5,55 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
+// ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters
+type ParamSubspace interface {
+	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
+	SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
+}
+
 // Keeper is the asset module non-fungible token nftKeeper.
 type Keeper struct {
-	cdc       codec.BinaryCodec
-	storeKey  sdk.StoreKey
-	nftKeeper types.NFTKeeper
+	cdc           codec.BinaryCodec
+	paramSubspace ParamSubspace
+	storeKey      sdk.StoreKey
+	nftKeeper     types.NFTKeeper
+	bankKeeper    types.BankKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, nftKeeper types.NFTKeeper) Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	paramSubspace ParamSubspace,
+	storeKey sdk.StoreKey,
+	nftKeeper types.NFTKeeper,
+	bankKeeper types.BankKeeper,
+) Keeper {
 	return Keeper{
-		cdc:       cdc,
-		storeKey:  storeKey,
-		nftKeeper: nftKeeper,
+		cdc:           cdc,
+		paramSubspace: paramSubspace,
+		storeKey:      storeKey,
+		nftKeeper:     nftKeeper,
+		bankKeeper:    bankKeeper,
 	}
+}
+
+// SetParams sets the parameters of the model
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramSubspace.SetParamSet(ctx, &params)
+}
+
+// GetParams gets the parameters of the model
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	var params types.Params
+	k.paramSubspace.GetParamSet(ctx, &params)
+	return params
 }
 
 // IssueClass issues new non-fungible token class and returns its id.
@@ -35,6 +64,10 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 
 	id := types.BuildClassID(settings.Symbol, settings.Issuer)
 	if err := nft.ValidateClassID(id); err != nil {
+		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
+	}
+
+	if err := types.ValidateData(settings.Data); err != nil {
 		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
@@ -88,10 +121,15 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
 	}
 
+	if err := types.ValidateData(settings.Data); err != nil {
+		return sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
+	}
+
 	definition, err := k.GetClassDefinition(ctx, settings.ClassID)
 	if err != nil {
 		return err
 	}
+
 
 	if !definition.IsIssuer(settings.Sender) {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", settings.Sender.String())
@@ -103,6 +141,17 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 
 	if nftFound := k.nftKeeper.HasNFT(ctx, settings.ClassID, settings.ID); nftFound {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q already defined for the class", settings.ID)
+	}
+
+	params := k.GetParams(ctx)
+	if params.MintFee.IsPositive() {
+		coinsToBurn := sdk.NewCoins(params.MintFee)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, settings.Sender, types.ModuleName, coinsToBurn); err != nil {
+			return sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", settings.Sender.String(), types.ModuleName)
+		}
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+			return sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
+		}
 	}
 
 	if err := k.nftKeeper.Mint(ctx, nft.NFT{

@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/testutil/event"
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -143,7 +145,13 @@ func TestKeeper_Issue(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
+	ftParams := types.Params{
+		IssueFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
+	}
+	ftKeeper.SetParams(ctx, ftParams)
+
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(ftParams.IssueFee)))
 
 	settings := types.IssueSettings{
 		Issuer:        addr,
@@ -157,19 +165,32 @@ func TestKeeper_Issue(t *testing.T) {
 
 	denom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
+
+	// verify issue fee was burnt
+
+	burntStr, err := event.FindStringEventAttribute(ctx.EventManager().ABCIEvents(), banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	requireT.NoError(err)
+	requireT.Equal(ftParams.IssueFee.String(), burntStr)
+
+	// check that balance is 0 meaning issue fee was taken
+
+	balance := bankKeeper.GetBalance(ctx, addr, constant.DenomDev)
+	requireT.Equal(sdk.ZeroInt().String(), balance.Amount.String())
+
 	requireT.Equal(types.BuildDenom(settings.Subunit, settings.Issuer), denom)
 
 	gotToken, err := ftKeeper.GetToken(ctx, denom)
 	requireT.NoError(err)
 	requireT.Equal(types.FT{
-		Denom:       denom,
-		Issuer:      settings.Issuer.String(),
-		Symbol:      settings.Symbol,
-		Description: settings.Description,
-		Subunit:     strings.ToLower(settings.Subunit),
-		Precision:   settings.Precision,
-		Features:    []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
-		BurnRate:    sdk.NewDec(0),
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Description:        settings.Description,
+		Subunit:            strings.ToLower(settings.Subunit),
+		Precision:          settings.Precision,
+		Features:           []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
 	}, gotToken)
 
 	// check the metadata
@@ -211,6 +232,63 @@ func TestKeeper_Issue(t *testing.T) {
 	requireT.True(errors.Is(types.ErrInvalidInput, err))
 }
 
+func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	ftParams := types.Params{
+		IssueFee: sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
+	}
+	ftKeeper.SetParams(ctx, ftParams)
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdk.NewInt(777),
+		Features:      []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
+	}
+
+	_, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+}
+
+func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	ftParams := types.Params{
+		IssueFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
+	}
+	ftKeeper.SetParams(ctx, ftParams)
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdk.NewInt(777),
+		Features:      []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
+	}
+
+	_, err := ftKeeper.Issue(ctx, settings)
+	requireT.ErrorIs(err, sdkerrors.ErrInsufficientFunds)
+}
+
 func TestKeeper_Mint(t *testing.T) {
 	requireT := require.New(t)
 
@@ -240,8 +318,7 @@ func TestKeeper_Mint(t *testing.T) {
 
 	// try to mint unmintable token
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(unmintableDenom, sdk.NewInt(100)))
-	requireT.Error(err)
-	requireT.True(types.ErrFeatureNotActive.Is(err))
+	requireT.ErrorIs(types.ErrFeatureNotActive, err)
 
 	// Issue a mintable fungible token
 	settings = types.IssueSettings{
@@ -260,8 +337,7 @@ func TestKeeper_Mint(t *testing.T) {
 	// try to mint as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Mint(ctx, randomAddr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
-	requireT.Error(err)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// mint tokens and check balance and total supply
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
@@ -304,8 +380,7 @@ func TestKeeper_Burn(t *testing.T) {
 
 	// try to burn unburnable token
 	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
-	requireT.Error(err)
-	requireT.True(types.ErrFeatureNotActive.Is(err))
+	requireT.ErrorIs(types.ErrFeatureNotActive, err)
 
 	// Issue a burnable fungible token
 	settings = types.IssueSettings{
@@ -325,8 +400,7 @@ func TestKeeper_Burn(t *testing.T) {
 	// try to burn as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Burn(ctx, randomAddr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
-	requireT.Error(err)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// burn tokens and check balance and total supply
 	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
@@ -344,5 +418,5 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 
 	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.ErrorIs(sdkerrors.ErrInsufficientFunds, err)
 }

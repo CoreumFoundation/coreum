@@ -7,25 +7,51 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
+// ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters
+type ParamSubspace interface {
+	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
+	SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
+}
+
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   sdk.StoreKey
-	bankKeeper types.BankKeeper
+	cdc           codec.BinaryCodec
+	paramSubspace ParamSubspace
+	storeKey      sdk.StoreKey
+	bankKeeper    types.BankKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, bankKeeper types.BankKeeper) Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	paramSubspace ParamSubspace,
+	storeKey sdk.StoreKey,
+	bankKeeper types.BankKeeper,
+) Keeper {
 	return Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		bankKeeper: bankKeeper,
+		cdc:           cdc,
+		paramSubspace: paramSubspace,
+		storeKey:      storeKey,
+		bankKeeper:    bankKeeper,
 	}
+}
+
+// SetParams sets the parameters of the model
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+	k.paramSubspace.SetParamSet(ctx, &params)
+}
+
+// GetParams gets the parameters of the model
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	var params types.Params
+	k.paramSubspace.GetParamSet(ctx, &params)
+	return params
 }
 
 // BeforeSendCoins checks that a transfer request is allowed or not
@@ -50,6 +76,9 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 		if err := k.applyBurnRate(ctx, ft, fromAddress, toAddress, coin); err != nil {
 			return err
 		}
+		if err := k.applySendCommissionRate(ctx, ft, fromAddress, toAddress, coin); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -59,6 +88,18 @@ func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FTDefinition, fromAddres
 	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
 		coinToBurn := ft.CalculateBurnRateAmount(coin)
 		err := k.burn(ctx, fromAddress, ft, coinToBurn)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) applySendCommissionRate(ctx sdk.Context, ft types.FTDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
+	if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
+		sendCommission := ft.CalculateSendCommissionRateAmount(coin)
+		err := k.bankKeeper.SendCoins(ctx, fromAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendCommission)))
 		if err != nil {
 			return err
 		}
@@ -85,15 +126,48 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 				return err
 			}
 
+			if err := k.isCoinSpendable(ctx, inAddress, ft, coin.Amount); err != nil {
+				return err
+			}
+
 			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != inAddress.String() {
 				coinsToBurn := ft.CalculateBurnRateAmount(coin)
-				err = k.burn(ctx, inAddress, ft, coinsToBurn)
+				err := k.burn(ctx, inAddress, ft, coinsToBurn)
+				if err != nil {
+					return err
+				}
+			}
+			if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && ft.Issuer != inAddress.String() {
+				sendCommissionRate := ft.CalculateSendCommissionRateAmount(coin)
+				err := k.bankKeeper.SendCoins(ctx, inAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendCommissionRate)))
 				if err != nil {
 					return err
 				}
 			}
 		}
 	}
+
+	for _, out := range outputs {
+		outAddress, err := sdk.AccAddressFromBech32(out.Address)
+		if err != nil {
+			return err
+		}
+
+		for _, coin := range out.Coins {
+			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+			if types.ErrFTNotFound.Is(err) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+
+			if err := k.isCoinReceivable(ctx, outAddress, ft, coin.Amount); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 

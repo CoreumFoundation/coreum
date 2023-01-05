@@ -22,8 +22,22 @@
   },
   "app_hash": "",
   "app_state": {
-    "assetft": {},
-    "assetnft": {},
+    "assetft": {
+      "params": {
+        "issue_fee": {
+          "denom": "{{ .Denom }}",
+          "amount": "{{ .AssetFTConfig.IssueFee }}"
+        }
+      }
+    },
+    "assetnft": {
+      "params": {
+        "mint_fee": {
+          "denom": "{{ .Denom }}",
+          "amount": "{{ .AssetNFTConfig.MintFee }}"
+        }
+      }
+    },
     "auth": {
       "params": {
         "max_memo_characters": "256",

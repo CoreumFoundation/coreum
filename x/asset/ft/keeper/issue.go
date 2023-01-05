@@ -20,13 +20,12 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	if err := types.ValidateBurnRate(settings.BurnRate); err != nil {
 		return "", err
 	}
+	if err := types.ValidateSendCommissionRate(settings.SendCommissionRate); err != nil {
+		return "", err
+	}
 
 	err := types.ValidateSymbol(settings.Symbol)
 	if err != nil {
-		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
-	}
-
-	if err := k.StoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
 	}
 
@@ -40,14 +39,30 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		)
 	}
 
-	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
+	params := k.GetParams(ctx)
+	if params.IssueFee.IsPositive() {
+		coinsToBurn := sdk.NewCoins(params.IssueFee)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, settings.Issuer, types.ModuleName, coinsToBurn); err != nil {
+			return "", sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", settings.Issuer.String(), types.ModuleName)
+		}
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+			return "", sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
+		}
+	}
+
+	if err := k.StoreSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
+		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
+	}
 
 	definition := types.FTDefinition{
-		Denom:    denom,
-		Issuer:   settings.Issuer.String(),
-		Features: settings.Features,
-		BurnRate: settings.BurnRate,
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Features:           settings.Features,
+		BurnRate:           settings.BurnRate,
+		SendCommissionRate: settings.SendCommissionRate,
 	}
+
+	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 	k.SetTokenDefinition(ctx, definition)
 
 	if err := k.mint(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
@@ -55,15 +70,16 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventTokenIssued{
-		Denom:         denom,
-		Issuer:        settings.Issuer.String(),
-		Symbol:        settings.Symbol,
-		Subunit:       settings.Subunit,
-		Precision:     settings.Precision,
-		Description:   settings.Description,
-		InitialAmount: settings.InitialAmount,
-		Features:      settings.Features,
-		BurnRate:      settings.BurnRate,
+		Denom:              denom,
+		Issuer:             settings.Issuer.String(),
+		Symbol:             settings.Symbol,
+		Subunit:            settings.Subunit,
+		Precision:          settings.Precision,
+		Description:        settings.Description,
+		InitialAmount:      settings.InitialAmount,
+		Features:           settings.Features,
+		BurnRate:           settings.BurnRate,
+		SendCommissionRate: settings.SendCommissionRate,
 	}); err != nil {
 		return "", sdkerrors.Wrap(err, "can't emit EventTokenIssued event")
 	}
@@ -127,15 +143,16 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.FTDefinition)
 	}
 
 	return types.FT{
-		Denom:          definition.Denom,
-		Issuer:         definition.Issuer,
-		Symbol:         metadata.Symbol,
-		Precision:      uint32(precision),
-		Subunit:        subunit,
-		Description:    metadata.Description,
-		Features:       definition.Features,
-		BurnRate:       definition.BurnRate,
-		GloballyFrozen: k.isGloballyFrozen(ctx, definition.Denom),
+		Denom:              definition.Denom,
+		Issuer:             definition.Issuer,
+		Symbol:             metadata.Symbol,
+		Precision:          uint32(precision),
+		Subunit:            subunit,
+		Description:        metadata.Description,
+		Features:           definition.Features,
+		BurnRate:           definition.BurnRate,
+		SendCommissionRate: definition.SendCommissionRate,
+		GloballyFrozen:     k.isGloballyFrozen(ctx, definition.Denom),
 	}, nil
 }
 
@@ -258,7 +275,7 @@ func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, ft types.FTDefinit
 
 	coinsToBurn := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coinsToBurn); err != nil {
-		return sdkerrors.Wrapf(err, "can't send  coins from account %s to module %s", account.String(), types.ModuleName)
+		return sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", account.String(), types.ModuleName)
 	}
 
 	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {

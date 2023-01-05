@@ -13,6 +13,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, definition := range genState.ClassDefinitions {
 		k.SetClassDefinition(ctx, definition)
 	}
+	k.SetParams(ctx, genState.Params)
 }
 
 // ExportGenesis returns the module's exported genesis.
@@ -24,5 +25,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 
 	return &types.GenesisState{
 		ClassDefinitions: classDefinitions,
+		Params: k.GetParams(ctx),
 	}
 }

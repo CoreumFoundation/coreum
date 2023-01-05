@@ -405,6 +405,7 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 		txf,
 		issueFungibleTokenWASM,
 		instantiateConfig{
+			amount:     chain.NewCoin(chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(2)),
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
 			label:      "fungible_token",
@@ -452,23 +453,25 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 	ft, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom1})
 	requireT.NoError(err)
 	requireT.EqualValues(assetfttypes.FT{
-		Denom:     denom1,
-		Issuer:    contractAddr,
-		Symbol:    symbol + "1",
-		Subunit:   subunit1,
-		Precision: precision,
-		BurnRate:  sdk.NewDec(0),
+		Denom:              denom1,
+		Issuer:             contractAddr,
+		Symbol:             symbol + "1",
+		Subunit:            subunit1,
+		Precision:          precision,
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
 	}, ft.GetToken())
 
 	ft, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom2})
 	requireT.NoError(err)
 	requireT.EqualValues(assetfttypes.FT{
-		Denom:     denom2,
-		Issuer:    contractAddr,
-		Symbol:    symbol + "2",
-		Subunit:   subunit2,
-		Precision: precision,
-		BurnRate:  sdk.NewDec(0),
+		Denom:              denom2,
+		Issuer:             contractAddr,
+		Symbol:             symbol + "2",
+		Subunit:            subunit2,
+		Precision:          precision,
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
 	}, ft.GetToken())
 
 	// check the counter

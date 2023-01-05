@@ -33,12 +33,13 @@ func TestInitAndExportGenesis(t *testing.T) {
 	var tokens []types.FT
 	for i := 0; i < 5; i++ {
 		ft := types.FT{
-			Denom:     types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
-			Issuer:    issuer.String(),
-			Symbol:    fmt.Sprintf("ABC%d", i),
-			Subunit:   fmt.Sprintf("abc%d", i),
-			Precision: uint32(rand.Int31n(100)),
-			BurnRate:  sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
+			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
+			Issuer:             issuer.String(),
+			Symbol:             fmt.Sprintf("ABC%d", i),
+			Subunit:            fmt.Sprintf("abc%d", i),
+			Precision:          uint32(rand.Int31n(100)),
+			BurnRate:           sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
+			SendCommissionRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
 			Features: []types.TokenFeature{
 				types.TokenFeature_freeze,    //nolint:nosnakecase // proto enum
 				types.TokenFeature_whitelist, //nolint:nosnakecase // proto enum
@@ -81,6 +82,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	genState := types.GenesisState{
+		Params:              types.DefaultParams(),
 		Tokens:              tokens,
 		FrozenBalances:      frozenBalances,
 		WhitelistedBalances: whitelistedBalances,
@@ -90,6 +92,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 	ft.InitGenesis(ctx, ftKeeper, genState)
 
 	// assert the keeper state
+
+	// params
+
+	params := ftKeeper.GetParams(ctx)
+	assertT.EqualValues(types.DefaultParams(), params)
 
 	// token definitions
 	for _, definition := range tokens {
@@ -119,6 +126,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// check that export is equal import
 	exportedGenState := ft.ExportGenesis(ctx, ftKeeper)
 
+	assertT.EqualValues(genState.Params, exportedGenState.Params)
 	assertT.ElementsMatch(genState.Tokens, exportedGenState.Tokens)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)

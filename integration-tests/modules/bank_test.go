@@ -155,6 +155,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	}
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 		Messages: fundMsgs,
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	// issue fungible tokens
@@ -279,6 +280,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 		Messages: append([]sdk.Msg{&banktypes.MsgSend{
 			Amount: make(sdk.Coins, numOfTokens),
 		}}, issueMsgs...),
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(numOfTokens),
 	}))
 
 	// Issue fungible tokens
@@ -426,6 +428,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 				},
 			},
 		}}, issueMsgs...),
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(numOfTokens),
 	}))
 
 	// Issue fungible tokens
@@ -515,6 +518,7 @@ func TestBankMultiSend(t *testing.T) {
 			{Coins: make(sdk.Coins, 2)},
 			{Coins: make(sdk.Coins, 2)},
 		}}}, issueMsgs...),
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(int64(len(issueMsgs))),
 	}))
 
 	// Issue fungible tokens
@@ -677,10 +681,11 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 			multiSendMsg,
 			issue1Msg,
 		},
-		Amount: nativeAmountToSend.Amount,
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.Add(nativeAmountToSend.Amount),
 	}))
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{issue2Msg},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	// issue first fungible token

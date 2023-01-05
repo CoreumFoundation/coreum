@@ -1101,6 +1101,13 @@ paths:
 
                       burn_amount. This value will be burnt on top of the send
                       amount.
+                  send_commission_rate:
+                    type: string
+                    description: >-
+                      send_commission_rate is a number between 0 and 1 which
+                      will be multiplied by send amount to determine
+
+                      amount sent to the token issuer account.
                 description: FT is a full representation of the fungible token.
             description: >-
               QueryTokenResponse is response type for the Query/Token RPC
@@ -27267,6 +27274,13 @@ definitions:
           amount to determine
 
           burn_amount. This value will be burnt on top of the send amount.
+      send_commission_rate:
+        type: string
+        description: >-
+          send_commission_rate is a number between 0 and 1 which will be
+          multiplied by send amount to determine
+
+          amount sent to the token issuer account.
     description: FT is a full representation of the fungible token.
   coreum.asset.ft.v1.QueryFrozenBalanceResponse:
     type: object
@@ -27359,6 +27373,13 @@ definitions:
               send amount to determine
 
               burn_amount. This value will be burnt on top of the send amount.
+          send_commission_rate:
+            type: string
+            description: >-
+              send_commission_rate is a number between 0 and 1 which will be
+              multiplied by send amount to determine
+
+              amount sent to the token issuer account.
         description: FT is a full representation of the fungible token.
     description: QueryTokenResponse is response type for the Query/Token RPC method.
   coreum.asset.ft.v1.QueryWhitelistedBalanceResponse:

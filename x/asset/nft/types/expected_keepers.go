@@ -17,3 +17,9 @@ type NFTKeeper interface {
 	Burn(ctx sdk.Context, classID, nftID string) error
 	GetOwner(ctx sdk.Context, classID, nftID string) sdk.AccAddress
 }
+
+// BankKeeper defines the expected bank interface.
+type BankKeeper interface {
+	BurnCoins(ctx sdk.Context, moduleName string, amounts sdk.Coins) error
+	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+}
