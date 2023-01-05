@@ -17,7 +17,7 @@ import (
 )
 
 //nolint:funlen
-func TestImportAndExportGenesis(t *testing.T) {
+func TestInitAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
@@ -82,6 +82,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 	}
 
 	genState := types.GenesisState{
+		Params:              types.DefaultParams(),
 		Tokens:              tokens,
 		FrozenBalances:      frozenBalances,
 		WhitelistedBalances: whitelistedBalances,
@@ -91,6 +92,11 @@ func TestImportAndExportGenesis(t *testing.T) {
 	ft.InitGenesis(ctx, ftKeeper, genState)
 
 	// assert the keeper state
+
+	// params
+
+	params := ftKeeper.GetParams(ctx)
+	assertT.EqualValues(types.DefaultParams(), params)
 
 	// token definitions
 	for _, definition := range tokens {
@@ -120,6 +126,7 @@ func TestImportAndExportGenesis(t *testing.T) {
 	// check that export is equal import
 	exportedGenState := ft.ExportGenesis(ctx, ftKeeper)
 
+	assertT.EqualValues(genState.Params, exportedGenState.Params)
 	assertT.ElementsMatch(genState.Tokens, exportedGenState.Tokens)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)
