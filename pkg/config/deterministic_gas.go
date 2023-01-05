@@ -41,55 +41,56 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 	dgr.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
-		MsgName(&assetfttypes.MsgIssue{}):               constGasFunc(80000),
-		MsgName(&assetfttypes.MsgMint{}):                constGasFunc(35000),
-		MsgName(&assetfttypes.MsgBurn{}):                constGasFunc(35000),
-		MsgName(&assetfttypes.MsgFreeze{}):              constGasFunc(55000),
-		MsgName(&assetfttypes.MsgUnfreeze{}):            constGasFunc(55000),
-		MsgName(&assetfttypes.MsgGloballyFreeze{}):      constGasFunc(5000),
-		MsgName(&assetfttypes.MsgGloballyUnfreeze{}):    constGasFunc(5000),
-		MsgName(&assetfttypes.MsgSetWhitelistedLimit{}): constGasFunc(35000),
+		MsgName(&assetfttypes.MsgIssue{}):               constantGasFunc(80000),
+		MsgName(&assetfttypes.MsgMint{}):                constantGasFunc(35000),
+		MsgName(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
+		MsgName(&assetfttypes.MsgFreeze{}):              constantGasFunc(55000),
+		MsgName(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(55000),
+		MsgName(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
+		MsgName(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
+		MsgName(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(35000),
 
 		// asset/nft
-		MsgName(&assetnfttypes.MsgIssueClass{}): constGasFunc(20000),
-		MsgName(&assetnfttypes.MsgMint{}):       constGasFunc(30000),
+		MsgName(&assetnfttypes.MsgIssueClass{}): constantGasFunc(20000),
+		MsgName(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
 
 		// authz
-		MsgName(&authz.MsgExec{}):   autzMsgExecGasFunc(2000, &dgr),
-		MsgName(&authz.MsgGrant{}):  constGasFunc(7000),
-		MsgName(&authz.MsgRevoke{}): constGasFunc(7000),
+		MsgName(&authz.MsgExec{}):   authzMsgExecGasFunc(2000, &dgr),
+		MsgName(&authz.MsgGrant{}):  constantGasFunc(7000),
+		MsgName(&authz.MsgRevoke{}): constantGasFunc(7000),
 
 		// bank
 		MsgName(&banktypes.MsgSend{}):      bankSendMsgGasFunc(22000),
 		MsgName(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(27000),
 
 		// distribution
-		MsgName(&distributiontypes.MsgFundCommunityPool{}):           constGasFunc(50000),
-		MsgName(&distributiontypes.MsgSetWithdrawAddress{}):          constGasFunc(50000),
-		MsgName(&distributiontypes.MsgWithdrawDelegatorReward{}):     constGasFunc(120000),
-		MsgName(&distributiontypes.MsgWithdrawValidatorCommission{}): constGasFunc(50000),
+		MsgName(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(50000),
+		MsgName(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(50000),
+		MsgName(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(120000),
+		MsgName(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(50000),
 
 		// gov
-		MsgName(&govtypes.MsgSubmitProposal{}): constGasFunc(95000),
-		MsgName(&govtypes.MsgVote{}):           constGasFunc(8000),
-		MsgName(&govtypes.MsgVoteWeighted{}):   constGasFunc(11000),
-		MsgName(&govtypes.MsgDeposit{}):        constGasFunc(11000),
+		MsgName(&govtypes.MsgSubmitProposal{}): constantGasFunc(95000),
+		MsgName(&govtypes.MsgVote{}):           constantGasFunc(8000),
+		MsgName(&govtypes.MsgVoteWeighted{}):   constantGasFunc(11000),
+		MsgName(&govtypes.MsgDeposit{}):        constantGasFunc(11000),
 
 		// nft
-		MsgName(&nfttypes.MsgSend{}): constGasFunc(20000),
+		MsgName(&nfttypes.MsgSend{}): constantGasFunc(20000),
 
 		// slashing
-		MsgName(&slashingtypes.MsgUnjail{}): constGasFunc(25000),
+		MsgName(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
 		// staking
-		MsgName(&stakingtypes.MsgDelegate{}):        constGasFunc(51000),
-		MsgName(&stakingtypes.MsgUndelegate{}):      constGasFunc(51000),
-		MsgName(&stakingtypes.MsgBeginRedelegate{}): constGasFunc(51000),
-		MsgName(&stakingtypes.MsgCreateValidator{}): constGasFunc(50000),
-		MsgName(&stakingtypes.MsgEditValidator{}):   constGasFunc(50000),
+		MsgName(&stakingtypes.MsgDelegate{}):        constantGasFunc(51000),
+		MsgName(&stakingtypes.MsgUndelegate{}):      constantGasFunc(51000),
+		MsgName(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(51000),
+		MsgName(&stakingtypes.MsgCreateValidator{}): constantGasFunc(50000),
+		MsgName(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
 
 		// wasm
-		MsgName(&wasmtypes.MsgExecuteContract{}): undermGasFunc(),
+		MsgName(&wasmtypes.MsgExecuteContract{}): underministicGasFunc(),
+		// TODO: Add other WASM messages.
 	}
 
 	return dgr
@@ -112,21 +113,29 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	return 0, false
 }
 
-func constGasFunc(constGasVal uint64) gasByMsgFunc {
+// MsgName returns TypeURL of a msg in cosmos SDK style.
+// Samples of values returned by the function:
+// "/cosmos.distribution.v1beta1.MsgFundCommunityPool"
+// "/coreum.asset.ft.v1.MsgMint"
+func MsgName(msg sdk.Msg) string {
+	return sdk.MsgTypeURL(msg)
+}
+
+func constantGasFunc(constGasVal uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		return constGasVal, true
 	}
 }
 
-func undermGasFunc() gasByMsgFunc {
+func underministicGasFunc() gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		return 0, false
 	}
 }
 
 // NOTE: we need to pass DeterministicGasRequirements by pointer here because
-// it needs initialized later map with all msg types inside to estimate gas recursively.
-func autzMsgExecGasFunc(authzMsgExecOverhead uint64, dgr *DeterministicGasRequirements) gasByMsgFunc {
+// it needs to be initialized later map with all msg types inside to estimate gas recursively.
+func authzMsgExecGasFunc(authzMsgExecOverhead uint64, dgr *DeterministicGasRequirements) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgExec)
 		if !ok {
@@ -181,12 +190,4 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerEntryGas uint64) gasByMsgFunc {
 		maxEntriesNum := lo.Max([]int{inputEntriesNum, outputEntriesNum, 1})
 		return uint64(maxEntriesNum) * bankMultiSendPerEntryGas, true
 	}
-}
-
-// MsgName returns TypeURL of a msg in cosmos SDK style.
-// Samples of values returned by the function:
-// "/cosmos.distribution.v1beta1.MsgFundCommunityPool"
-// "/coreum.asset.ft.v1.MsgMint"
-func MsgName(msg sdk.Msg) string {
-	return sdk.MsgTypeURL(msg)
 }
