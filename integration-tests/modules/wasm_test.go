@@ -405,6 +405,7 @@ func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 		txf,
 		issueFungibleTokenWASM,
 		instantiateConfig{
+			amount:     chain.NewCoin(chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(2)),
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    initialPayload,
 			label:      "fungible_token",

@@ -40,6 +40,7 @@ var EnableFakeUpgradeHandler string
 //go:embed networks/coreum-devnet-1
 var coreumDevnet1GenTxsFS embed.FS
 
+//nolint:funlen
 func init() {
 	// common vars
 	var (
@@ -65,6 +66,14 @@ func init() {
 				MinSelfDelegation: sdk.NewInt(20_000_000_000), // 20k core
 			},
 		}
+
+		assetFTConfig = AssetFTConfig{
+			IssueFee: sdk.NewIntFromUint64(10_000_000),
+		}
+
+		assetNFTConfig = AssetNFTConfig{
+			MintFee: sdk.ZeroInt(),
+		}
 	)
 
 	const denomDev = "ducore"
@@ -86,6 +95,8 @@ func init() {
 			GovConfig:            govConfig,
 			StakingConfig:        stakingConfig,
 			CustomParamsConfig:   customParamsConfig,
+			AssetFTConfig:        assetFTConfig,
+			AssetNFTConfig:       assetNFTConfig,
 		},
 		{
 			ChainID:              constant.ChainIDDev,
@@ -101,6 +112,8 @@ func init() {
 			GovConfig:          govConfig,
 			StakingConfig:      stakingConfig,
 			CustomParamsConfig: customParamsConfig,
+			AssetFTConfig:      assetFTConfig,
+			AssetNFTConfig:     assetNFTConfig,
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
 				{
@@ -220,6 +233,16 @@ type CustomParamsConfig struct {
 	Staking CustomParamsStakingConfig
 }
 
+// AssetFTConfig is the part of network config defining parameters of ft assets
+type AssetFTConfig struct {
+	IssueFee sdk.Int
+}
+
+// AssetNFTConfig is the part of network config defining parameters of nft assets
+type AssetNFTConfig struct {
+	MintFee sdk.Int
+}
+
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID              ChainID
@@ -234,6 +257,8 @@ type NetworkConfig struct {
 	GovConfig            GovConfig
 	StakingConfig        StakingConfig
 	CustomParamsConfig   CustomParamsConfig
+	AssetFTConfig        AssetFTConfig
+	AssetNFTConfig       AssetNFTConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 	// TODO: remove this field once we have real upgrade handler
@@ -252,6 +277,8 @@ type Network struct {
 	gov                      GovConfig
 	staking                  StakingConfig
 	customParams             CustomParamsConfig
+	assetFT                  AssetFTConfig
+	assetNFT                 AssetNFTConfig
 	enableFakeUpgradeHandler bool
 
 	mu             *sync.Mutex
@@ -272,6 +299,8 @@ func NewNetwork(c NetworkConfig) Network {
 		gov:                      c.GovConfig,
 		staking:                  c.StakingConfig,
 		customParams:             c.CustomParamsConfig,
+		assetFT:                  c.AssetFTConfig,
+		assetNFT:                 c.AssetNFTConfig,
 		mu:                       &sync.Mutex{},
 		fundedAccounts:           append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:                   append([]json.RawMessage{}, c.GenTxs...),
@@ -537,6 +566,8 @@ func genesis(n Network) ([]byte, error) {
 		Gov                  GovConfig
 		Staking              StakingConfig
 		CustomParamsConfig   CustomParamsConfig
+		AssetFTConfig        AssetFTConfig
+		AssetNFTConfig       AssetNFTConfig
 	}{
 		GenesisTimeUTC:       n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:              n.chainID,
@@ -546,6 +577,8 @@ func genesis(n Network) ([]byte, error) {
 		Gov:                  n.gov,
 		Staking:              n.staking,
 		CustomParamsConfig:   n.customParams,
+		AssetFTConfig:        n.assetFT,
+		AssetNFTConfig:       n.assetNFT,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
