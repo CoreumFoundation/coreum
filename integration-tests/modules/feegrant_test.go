@@ -33,8 +33,7 @@ func TestFeeGrant(t *testing.T) {
 			&feegrant.MsgRevokeAllowance{}},
 	}))
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{}},
-		Amount:   sdk.NewInt(10),
+		Amount: sdk.NewInt(10),
 	}))
 	basicAllowance, err := codetypes.NewAnyWithValue(&feegrant.BasicAllowance{
 		SpendLimit: nil, // empty means no limit
