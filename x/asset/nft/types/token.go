@@ -117,9 +117,7 @@ func (nftd ClassDefinition) IsFeatureAllowed(addr sdk.Address, feature ClassFeat
 	featureEnabled := nftd.IsFeatureEnabled(feature)
 	// issuer can use any enabled feature and burning even if it is disabled
 	if nftd.IsIssuer(addr) {
-		if featureEnabled || feature == ClassFeature_burn {
-			return true
-		}
+		return featureEnabled || feature == ClassFeature_burn
 	}
 
 	// non-issuer can use only burning and only if it is enabled
