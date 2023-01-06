@@ -22,7 +22,7 @@ var (
 	NFTClassKeyPrefix = []byte{0x01}
 )
 
-// GetClassKey constructs the key for the non-fungible token class.
-func GetClassKey(classID string) []byte {
+// CreateClassKey constructs the key for the non-fungible token class.
+func CreateClassKey(classID string) []byte {
 	return store.JoinKeysWithLength(NFTClassKeyPrefix, []byte(classID))
 }

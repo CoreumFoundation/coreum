@@ -191,7 +191,7 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 // SetClassDefinition stores the ClassDefinition.
 func (k Keeper) SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetClassKey(definition.ID), k.cdc.MustMarshal(&definition))
+	store.Set(types.CreateClassKey(definition.ID), k.cdc.MustMarshal(&definition))
 }
 
 // GetClass reruns the Class.
@@ -222,7 +222,7 @@ func (k Keeper) GetClass(ctx sdk.Context, classID string) (types.Class, error) {
 // GetClassDefinition reruns the ClassDefinition.
 func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.ClassDefinition, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetClassKey(classID))
+	bz := store.Get(types.CreateClassKey(classID))
 	if bz == nil {
 		return types.ClassDefinition{}, sdkerrors.Wrapf(types.ErrClassNotFound, "classID: %s", classID)
 	}
