@@ -87,19 +87,24 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(51000),
 		MsgName(&stakingtypes.MsgCreateValidator{}): constantGasFunc(50000),
 		MsgName(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
-
-		// wasm
-		// TODO (milad): rewise gas config for WASM msgs.
-		MsgName(&wasmtypes.MsgStoreCode{}):            underministicGasFunc(),
-		MsgName(&wasmtypes.MsgInstantiateContract{}):  underministicGasFunc(),
-		MsgName(&wasmtypes.MsgInstantiateContract2{}): underministicGasFunc(),
-		MsgName(&wasmtypes.MsgExecuteContract{}):      underministicGasFunc(),
-		MsgName(&wasmtypes.MsgMigrateContract{}):      underministicGasFunc(),
-		MsgName(&wasmtypes.MsgUpdateAdmin{}):          underministicGasFunc(),
-		MsgName(&wasmtypes.MsgClearAdmin{}):           underministicGasFunc(),
-		MsgName(&wasmtypes.MsgIBCSend{}):              underministicGasFunc(),
-		MsgName(&wasmtypes.MsgIBCCloseChannel{}):      underministicGasFunc(),
 	}
+
+	// wasm
+	// TODO (milad): rewise gas config for WASM msgs.
+	registerUndeterministicGasFuncs(
+		&dgr,
+		[]sdk.Msg{
+			&wasmtypes.MsgStoreCode{},
+			&wasmtypes.MsgInstantiateContract{},
+			&wasmtypes.MsgInstantiateContract2{},
+			&wasmtypes.MsgExecuteContract{},
+			&wasmtypes.MsgMigrateContract{},
+			&wasmtypes.MsgUpdateAdmin{},
+			&wasmtypes.MsgClearAdmin{},
+			&wasmtypes.MsgIBCSend{},
+			&wasmtypes.MsgIBCCloseChannel{},
+		},
+	)
 
 	return dgr
 }
@@ -154,6 +159,12 @@ func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhea
 			totalGas += gas
 		}
 		return totalGas, true
+	}
+}
+
+func registerUndeterministicGasFuncs(dgr *DeterministicGasRequirements, msgs []sdk.Msg) {
+	for _, msg := range msgs {
+		dgr.gasByMsg[MsgName(msg)] = underministicGasFunc()
 	}
 }
 
