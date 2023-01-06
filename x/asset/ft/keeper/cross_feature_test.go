@@ -12,18 +12,6 @@ package keeper
 // - limiting issuer does not provide any value because he may always remove/change any limits
 // - tx freezing balance for issuer account should error out
 //
-// # Issuer + Global Freeze
-// - on the other hand global freeze means that nobody can send and receive tokens
-// - if issuer sends/receives tokens from/to someone else it is enforced because the other account is not an issuer
-// - but it should apply even if issuer sends tokens to himself
-// - in general if global freeze is active all transfers must be blocked, including those defined by the issuer
-//
-// # Mint + Global Freeze
-// - if global freeze is active minting should fail
-//
-// # Burn + Global Freeze
-// - if global freeze is active burning should fail
-//
 // # Mint + Burn rate
 // - burn rate should not apply when tokens are received by the issuer because of minting
 //
