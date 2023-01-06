@@ -55,7 +55,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
 
 		// authz
-		MsgName(&authz.MsgExec{}):   authzMsgExecGasFunc(2000, &dgr),
+		MsgName(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
 		MsgName(&authz.MsgGrant{}):  constantGasFunc(7000),
 		MsgName(&authz.MsgRevoke{}): constantGasFunc(7000),
 
@@ -117,7 +117,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	if ok {
 		return gasFunc(msg)
 	}
-	// Unknown message.
+
+	// Currently we treat unknown message types as undeterministic.
+	// In the future other approach could be to return third boolean parameter
+	// identifying if message is known and report unknown messages to monitoring.
 	return 0, false
 }
 
@@ -129,21 +132,9 @@ func MsgName(msg sdk.Msg) string {
 	return sdk.MsgTypeURL(msg)
 }
 
-func constantGasFunc(constGasVal uint64) gasByMsgFunc {
-	return func(msg sdk.Msg) (uint64, bool) {
-		return constGasVal, true
-	}
-}
-
-func underministicGasFunc() gasByMsgFunc {
-	return func(msg sdk.Msg) (uint64, bool) {
-		return 0, false
-	}
-}
-
 // NOTE: we need to pass DeterministicGasRequirements by pointer here because
 // it needs to be initialized later map with all msg types inside to estimate gas recursively.
-func authzMsgExecGasFunc(authzMsgExecOverhead uint64, dgr *DeterministicGasRequirements) gasByMsgFunc {
+func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgExec)
 		if !ok {
@@ -163,6 +154,18 @@ func authzMsgExecGasFunc(authzMsgExecOverhead uint64, dgr *DeterministicGasRequi
 			totalGas += gas
 		}
 		return totalGas, true
+	}
+}
+
+func constantGasFunc(constGasVal uint64) gasByMsgFunc {
+	return func(msg sdk.Msg) (uint64, bool) {
+		return constGasVal, true
+	}
+}
+
+func underministicGasFunc() gasByMsgFunc {
+	return func(msg sdk.Msg) (uint64, bool) {
+		return 0, false
 	}
 }
 
