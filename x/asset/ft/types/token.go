@@ -119,9 +119,7 @@ func (ftd FTDefinition) IsFeatureAllowed(addr sdk.Address, feature TokenFeature)
 	featureEnabled := ftd.IsFeatureEnabled(feature)
 	// issuer can use any enabled feature and burning even if it is disabled
 	if ftd.IsIssuer(addr) {
-		if featureEnabled || feature == TokenFeature_burn {
-			return true
-		}
+		return featureEnabled || feature == TokenFeature_burn
 	}
 
 	// non-issuer can use only burning and only if it is enabled
