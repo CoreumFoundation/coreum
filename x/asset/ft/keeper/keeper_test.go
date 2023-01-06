@@ -356,8 +356,8 @@ func TestKeeper_GetIssuerTokens(t *testing.T) {
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	amountToIssuer := 5
-	for i := 0; i < amountToIssuer; i++ {
+	numberOfTokens := 5
+	for i := 0; i < numberOfTokens; i++ {
 		settings := types.IssueSettings{
 			Issuer:        addr,
 			Symbol:        "ABC" + uuid.NewString()[:4],
@@ -378,8 +378,8 @@ func TestKeeper_GetIssuerTokens(t *testing.T) {
 	requireT.Equal(3, len(tokens))
 
 	tokens, _, err = ftKeeper.GetIssuerTokens(ctx, addr, &query.PageRequest{
-		Limit: uint64(amountToIssuer + 1),
+		Limit: uint64(numberOfTokens + 1),
 	})
 	requireT.NoError(err)
-	requireT.Equal(amountToIssuer, len(tokens))
+	requireT.Equal(numberOfTokens, len(tokens))
 }

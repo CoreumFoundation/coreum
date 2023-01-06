@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/CoreumFoundation/coreum/pkg/store"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
@@ -81,7 +80,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 // IsSymbolDuplicate checks symbol exists in the store
 func (k Keeper) IsSymbolDuplicate(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
 	symbol = types.NormalizeSymbolForKey(symbol)
-	compositeKey := store.JoinKeys(types.GetSymbolKey(issuer), []byte(symbol))
+	compositeKey := types.CreateSymbolKey(issuer, symbol)
 	bytes := ctx.KVStore(k.storeKey).Get(compositeKey)
 	return bytes != nil
 }
@@ -92,7 +91,7 @@ func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress)
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
 
-	compositeKey := store.JoinKeys(types.GetSymbolKey(issuer), []byte(symbol))
+	compositeKey := types.CreateSymbolKey(issuer, symbol)
 	ctx.KVStore(k.storeKey).Set(compositeKey, []byte{0x01})
 	return nil
 }
@@ -181,7 +180,7 @@ func (k Keeper) GetTokenDefinition(ctx sdk.Context, denom string) (types.FTDefin
 	if err != nil {
 		return types.FTDefinition{}, err
 	}
-	bz := ctx.KVStore(k.storeKey).Get(types.GetTokenKey(issuer, subunit))
+	bz := ctx.KVStore(k.storeKey).Get(types.CreateTokenKey(issuer, subunit))
 	if bz == nil {
 		return types.FTDefinition{}, sdkerrors.Wrapf(types.ErrFTNotFound, "denom: %s", denom)
 	}
@@ -193,7 +192,7 @@ func (k Keeper) GetTokenDefinition(ctx sdk.Context, denom string) (types.FTDefin
 
 // SetTokenDefinition stores the TokenDefinition.
 func (k Keeper) SetTokenDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.FTDefinition) {
-	ctx.KVStore(k.storeKey).Set(types.GetTokenKey(issuer, subunit), k.cdc.MustMarshal(&definition))
+	ctx.KVStore(k.storeKey).Set(types.CreateTokenKey(issuer, subunit), k.cdc.MustMarshal(&definition))
 }
 
 // SetDenomMetadata registers denom metadata on the bank keeper
@@ -226,9 +225,11 @@ func (k Keeper) getTokenDefinitions(ctx sdk.Context, pagination *query.PageReque
 }
 
 func (k Keeper) getIssuerTokenDefinitions(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.FTDefinition, *query.PageResponse, error) {
-	return k.getTokenDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.GetIssuerTokensPrefix(issuer)), pagination)
+	return k.getTokenDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateIssuerTokensPrefix(issuer)), pagination)
 }
 
+// getTokenDefinitionsFromStore queries the FTDefinitions form the provided store.
+// It is used to either get all definitions or only those which starts from particular prefix.
 func (k Keeper) getTokenDefinitionsFromStore(store prefix.Store, pagination *query.PageRequest) ([]types.FTDefinition, *query.PageResponse, error) {
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,

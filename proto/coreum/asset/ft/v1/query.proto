@@ -66,7 +66,7 @@ message QueryTokensResponse {
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 1;
 
-  repeated FT tokens = 2[(gogoproto.nullable) = false];
+  repeated FT tokens = 2 [(gogoproto.nullable) = false];
 }
 
 message QueryFrozenBalancesRequest {
