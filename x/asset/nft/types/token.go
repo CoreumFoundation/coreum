@@ -101,12 +101,41 @@ func ValidateData(data *codectypes.Any) error {
 	return nil
 }
 
-// IsFeatureEnabled returns true if feature is enabled for a non-fungible token.
-func (def *ClassDefinition) IsFeatureEnabled(feature ClassFeature) bool {
-	return lo.Contains(def.Features, feature)
+// CheckFeatureAllowed returns error if feature isn't allowed for the address.
+func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature ClassFeature) error {
+	if nftd.IsFeatureAllowed(addr, feature) {
+		return nil
+	}
+
+	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 }
 
-// IsIssuer returns true if the addr is issuer.
-func (def *ClassDefinition) IsIssuer(add sdk.Address) bool {
-	return def.Issuer == add.String()
+// IsFeatureAllowed returns true if feature is allowed for the address.
+//
+//nolint:nosnakecase
+func (nftd ClassDefinition) IsFeatureAllowed(addr sdk.Address, feature ClassFeature) bool {
+	featureEnabled := nftd.IsFeatureEnabled(feature)
+	// issuer can use any enabled feature and burning even if it is disabled
+	if nftd.IsIssuer(addr) {
+		if featureEnabled || feature == ClassFeature_burn {
+			return true
+		}
+	}
+
+	// non-issuer can use only burning and only if it is enabled
+	if featureEnabled && feature == ClassFeature_burn {
+		return true
+	}
+
+	return false
+}
+
+// IsFeatureEnabled returns true if feature is enabled for a fungible token.
+func (nftd ClassDefinition) IsFeatureEnabled(feature ClassFeature) bool {
+	return lo.Contains(nftd.Features, feature)
+}
+
+// IsIssuer returns true if the addr is the issuer.
+func (nftd ClassDefinition) IsIssuer(addr sdk.Address) bool {
+	return nftd.Issuer == addr.String()
 }

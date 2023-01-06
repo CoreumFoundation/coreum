@@ -168,13 +168,12 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 
 // Burn burns non-fungible token.
 func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) error {
-	definition, err := k.GetClassDefinition(ctx, classID)
+	ndfd, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
 		return err
 	}
 
-	err = checkFeatureAllowed(owner, definition, types.ClassFeature_burn) //nolint:nosnakecase // generated variable
-	if err != nil {
+	if err = ndfd.CheckFeatureAllowed(owner, types.ClassFeature_burn); err != nil { //nolint:nosnakecase // generated variable
 		return err
 	}
 
@@ -259,23 +258,4 @@ func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageReque
 	}
 
 	return definitions, pageRes, err
-}
-
-//nolint:nosnakecase
-func checkFeatureAllowed(addr sdk.AccAddress, def types.ClassDefinition, feature types.ClassFeature) error {
-	featureEnabled := def.IsFeatureEnabled(feature)
-
-	// issuer can use any enabled feature and burning even if it is disabled
-	if def.IsIssuer(addr) {
-		if featureEnabled || feature == types.ClassFeature_burn {
-			return nil
-		}
-	}
-
-	// non-issuer can use only burning and only if it is enabled
-	if featureEnabled && feature == types.ClassFeature_burn {
-		return nil
-	}
-
-	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 }
