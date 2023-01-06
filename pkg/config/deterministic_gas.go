@@ -89,8 +89,16 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
 
 		// wasm
-		MsgName(&wasmtypes.MsgExecuteContract{}): underministicGasFunc(),
-		// TODO: Add other WASM messages.
+		// TODO (milad): rewise gas config for WASM msgs.
+		MsgName(&wasmtypes.MsgStoreCode{}):            underministicGasFunc(),
+		MsgName(&wasmtypes.MsgInstantiateContract{}):  underministicGasFunc(),
+		MsgName(&wasmtypes.MsgInstantiateContract2{}): underministicGasFunc(),
+		MsgName(&wasmtypes.MsgExecuteContract{}):      underministicGasFunc(),
+		MsgName(&wasmtypes.MsgMigrateContract{}):      underministicGasFunc(),
+		MsgName(&wasmtypes.MsgUpdateAdmin{}):          underministicGasFunc(),
+		MsgName(&wasmtypes.MsgClearAdmin{}):           underministicGasFunc(),
+		MsgName(&wasmtypes.MsgIBCSend{}):              underministicGasFunc(),
+		MsgName(&wasmtypes.MsgIBCCloseChannel{}):      underministicGasFunc(),
 	}
 
 	return dgr

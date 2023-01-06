@@ -31,8 +31,6 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 		// IBC:
 		"/ibc.core.",
 		"/ibc.applications.",
-		// CosmWasm
-		"/cosmwasm.wasm.",
 		// To be integrated standard modules:
 		"/cosmos.feegrant.",
 		"/cosmos.evidence.",
@@ -45,7 +43,10 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 	}
 
 	// WASM messages will be added here
-	undetermMsgPrefixes := []string{}
+	undetermMsgPrefixes := []string{
+		// CosmWasm
+		"/cosmwasm.wasm.",
+	}
 
 	dgr := config.DefaultDeterministicGasRequirements()
 
@@ -69,6 +70,7 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 			return strings.HasPrefix(config.MsgName(sdkMsg), prefix)
 		}) {
 			undetermMsgs = append(undetermMsgs, sdkMsg)
+			continue
 		}
 
 		// Add message to deterministic.
@@ -79,7 +81,7 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
 	assert.Equal(t, 30, len(determMsgs))
-	assert.Equal(t, 0, len(undetermMsgs))
+	assert.Equal(t, 9, len(undetermMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg
