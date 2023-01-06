@@ -18,8 +18,7 @@ func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom str
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_freeze); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -34,8 +33,7 @@ func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom s
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_freeze); err != nil { //nolint:nosnakecase
 		return err
 	}
 
