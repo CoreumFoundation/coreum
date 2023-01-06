@@ -35,3 +35,12 @@ package keeper
 //
 // # Sending cored + FT
 // - test sending FT together with cored when FT transfer should fail/succeed due to whitelist/freezing
+//
+// # Balance + Burn rate
+// - burn rate should not apply when there are not enough tokes to burn and send
+//
+// # Balance + Send rate
+// - send rate should not apply when there are not enough tokes for send rate and send
+//
+// # All in one
+// - Core + FT coin in one send and multi-send with All Features enabled and account state which already include the whitelisted and frozen state
