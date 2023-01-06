@@ -62,25 +62,8 @@ func (k Keeper) GetAccountsWhitelistedBalances(ctx sdk.Context, pagination *quer
 
 // IterateAllWhitelistedBalances iterates over all whitelisted balances of all accounts and applies the provided callback.
 // If true is returned from the callback, iteration is halted.
-func (k Keeper) IterateAllWhitelistedBalances(ctx sdk.Context, cb func(sdk.AccAddress, sdk.Coin) bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix)
-	iterator := store.Iterator(nil, nil)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		address, err := types.AddressFromBalancesStore(iterator.Key())
-		if err != nil {
-			k.Logger(ctx).With("key", iterator.Key(), "err", err).Error("failed to get address from whitelisted balances store")
-			panic(err)
-		}
-
-		var balance sdk.Coin
-		k.cdc.MustUnmarshal(iterator.Value(), &balance)
-
-		if cb(address, balance) {
-			break
-		}
-	}
+func (k Keeper) IterateAllWhitelistedBalances(ctx sdk.Context, cb func(sdk.AccAddress, sdk.Coin) bool) error {
+	return k.whitelistedAccountBalancesStore(ctx).IterateAllBalances(cb)
 }
 
 // whitelistedBalancesStore get the store for the whitelisted balances of all accounts
@@ -92,6 +75,12 @@ func (k Keeper) whitelistedBalancesStore(ctx sdk.Context) prefix.Store {
 func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
 	store := ctx.KVStore(k.storeKey)
 	return newBalanceStore(k.cdc, store, types.CreateWhitelistedBalancesPrefix(addr))
+}
+
+// whitelistedAccountBalancesStore gets the store for the whitelisted balances
+func (k Keeper) whitelistedAccountBalancesStore(ctx sdk.Context) balanceStore {
+	store := ctx.KVStore(k.storeKey)
+	return newBalanceStore(k.cdc, store, types.WhitelistedBalancesKeyPrefix)
 }
 
 // areCoinsReceivable returns an error if whitelisted amount is too low to receive coins
