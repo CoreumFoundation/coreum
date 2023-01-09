@@ -1,12 +1,13 @@
 package types_test
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
-	codetypes "github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	gogotypes "github.com/gogo/protobuf/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +30,7 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 
 	dataString := "metadata"
-	dataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
+	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
 	requireT.NoError(err)
 
 	validMessage := types.MsgIssueClass{
@@ -50,6 +51,25 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 			name: "valid msg",
 			messageFunc: func() *types.MsgIssueClass {
 				msg := validMessage
+				return &msg
+			},
+		},
+		{
+			name: "valid msg with max data size",
+			messageFunc: func() *types.MsgIssueClass {
+				msg := validMessage
+				msg.Data = &codectypes.Any{
+					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
+					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize),
+				}
+				return &msg
+			},
+		},
+		{
+			name: "valid msg with nil data",
+			messageFunc: func() *types.MsgIssueClass {
+				msg := validMessage
+				msg.Data = nil
 				return &msg
 			},
 		},
@@ -117,13 +137,24 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid data",
+			name: "invalid data - too long",
 			messageFunc: func() *types.MsgIssueClass {
-				longDataString := string(make([]byte, 5001))
-				longDataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(longDataString)})
+				msg := validMessage
+				msg.Data = &codectypes.Any{
+					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
+					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize+1),
+				}
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid data - wrong type",
+			messageFunc: func() *types.MsgIssueClass {
+				dataValue, err := codectypes.NewAnyWithValue(&types.MsgIssueClass{})
 				requireT.NoError(err)
 				msg := validMessage
-				msg.Data = longDataValue
+				msg.Data = dataValue
 				return &msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -144,11 +175,12 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func TestMsgMint_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 
 	dataString := "metadata"
-	dataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(dataString)})
+	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
 	requireT.NoError(err)
 
 	validMessage := types.MsgMint{
@@ -168,6 +200,25 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			name: "valid msg",
 			messageFunc: func() *types.MsgMint {
 				msg := validMessage
+				return &msg
+			},
+		},
+		{
+			name: "valid msg with max data size",
+			messageFunc: func() *types.MsgMint {
+				msg := validMessage
+				msg.Data = &codectypes.Any{
+					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
+					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize),
+				}
+				return &msg
+			},
+		},
+		{
+			name: "valid msg with nil data",
+			messageFunc: func() *types.MsgMint {
+				msg := validMessage
+				msg.Data = nil
 				return &msg
 			},
 		},
@@ -217,13 +268,24 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			expectedError: types.ErrInvalidInput,
 		},
 		{
-			name: "invalid data",
+			name: "invalid data - too long",
 			messageFunc: func() *types.MsgMint {
-				longDataString := string(make([]byte, 5001))
-				longDataValue, err := codetypes.NewAnyWithValue(&gogotypes.BytesValue{Value: []byte(longDataString)})
+				msg := validMessage
+				msg.Data = &codectypes.Any{
+					TypeUrl: "/" + proto.MessageName((*types.DataBytes)(nil)),
+					Value:   bytes.Repeat([]byte{0x01}, types.MaxDataSize+1),
+				}
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid data - wrong type",
+			messageFunc: func() *types.MsgMint {
+				dataValue, err := codectypes.NewAnyWithValue(&types.MsgIssueClass{})
 				requireT.NoError(err)
 				msg := validMessage
-				msg.Data = longDataValue
+				msg.Data = dataValue
 				return &msg
 			},
 			expectedError: types.ErrInvalidInput,

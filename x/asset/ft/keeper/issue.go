@@ -28,10 +28,6 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
 	}
 
-	if err := k.SetSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
-		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
-	}
-
 	denom := types.BuildDenom(settings.Subunit, settings.Issuer)
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
@@ -42,7 +38,20 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		)
 	}
 
-	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
+	params := k.GetParams(ctx)
+	if params.IssueFee.IsPositive() {
+		coinsToBurn := sdk.NewCoins(params.IssueFee)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, settings.Issuer, types.ModuleName, coinsToBurn); err != nil {
+			return "", sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", settings.Issuer.String(), types.ModuleName)
+		}
+		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+			return "", sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
+		}
+	}
+
+	if err := k.SetSymbol(ctx, settings.Symbol, settings.Issuer); err != nil {
+		return "", sdkerrors.Wrapf(err, "provided symbol: %s", settings.Symbol)
+	}
 
 	definition := types.FTDefinition{
 		Denom:              denom,
@@ -51,6 +60,8 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
 	}
+
+	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 	k.SetTokenDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
 	if err := k.mint(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
@@ -296,7 +307,7 @@ func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, ft types.FTDefinit
 
 	coinsToBurn := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coinsToBurn); err != nil {
-		return sdkerrors.Wrapf(err, "can't send  coins from account %s to module %s", account.String(), types.ModuleName)
+		return sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", account.String(), types.ModuleName)
 	}
 
 	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {

@@ -38,7 +38,7 @@ func (suite *SimTestSuite) TestWeightedOperations() {
 		make(simtypes.AppParams),
 		suite.app.AppCodec(),
 		suite.app.AccountKeeper,
-		suite.app.BankKeeper, suite.app.NFTKeeper,
+		suite.app.BankKeeper, suite.app.NFTKeeper.Keeper,
 	)
 
 	// setup 3 accounts
@@ -69,7 +69,7 @@ func (suite *SimTestSuite) getTestingAccounts(r *rand.Rand, n int) []simtypes.Ac
 	accounts := simtypes.RandomAccounts(r, n)
 
 	initAmt := suite.app.StakingKeeper.TokensFromConsensusPower(suite.ctx, 200000)
-	initCoins := sdk.NewCoins(sdk.NewCoin("stake", initAmt))
+	initCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, initAmt))
 
 	// add coins to the accounts
 	for _, account := range accounts {
@@ -98,7 +98,7 @@ func (suite *SimTestSuite) TestSimulateMsgSend() {
 
 	// execute operation
 	registry := suite.app.InterfaceRegistry()
-	op := simulation.SimulateMsgSend(codec.NewProtoCodec(registry), suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.NFTKeeper)
+	op := simulation.SimulateMsgSend(codec.NewProtoCodec(registry), suite.app.AccountKeeper, suite.app.BankKeeper, suite.app.NFTKeeper.Keeper)
 	operationMsg, futureOperations, err := op(r, suite.app.BaseApp, ctx, accounts, "")
 	suite.Require().NoError(err)
 

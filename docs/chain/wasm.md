@@ -82,7 +82,7 @@ cored q wasm list-code $CORED_NODE_ARGS
 
 ```bash
 RES=$(cored tx wasm store artifacts/cw_nameservice.wasm \
-    --from wallet --gas-prices 1500$CORED_DENOM --gas auto --gas-adjustment 1.3 -y -b block --output json $CORED_NODE_ARGS)
+    --from wallet --gas auto --gas-adjustment 1.3 -y -b block --output json $CORED_NODE_ARGS)
 echo $RES    
 CODE_ID=$(echo $RES | jq -r '.logs[0].events[-1].attributes[0].value')
 echo $CODE_ID
@@ -98,7 +98,7 @@ cored q wasm code-info $CODE_ID $CORED_NODE_ARGS
 
 ```bash
 INIT="{\"purchase_price\":{\"amount\":\"100\",\"denom\":\"$CORED_DENOM\"},\"transfer_price\":{\"amount\":\"999\",\"denom\":\"$CORED_DENOM\"}}"
-cored tx wasm instantiate $CODE_ID "$INIT" --from wallet --gas-prices 1500$CORED_DENOM --label "name service" -b block -y --no-admin $CORED_NODE_ARGS
+cored tx wasm instantiate $CODE_ID "$INIT" --from wallet --label "name service" -b block -y --no-admin $CORED_NODE_ARGS
 ```
 
 * Check the contract details and account balance.
@@ -113,7 +113,7 @@ echo $CONTRACT
 
 ```bash
 REGISTER='{"register":{"name":"fred"}}'
-cored tx wasm execute $CONTRACT "$REGISTER" --amount 100$CORED_DENOM --from wallet --gas-prices 1500$CORED_DENOM -b block -y $CORED_NODE_ARGS
+cored tx wasm execute $CONTRACT "$REGISTER" --amount 100$CORED_DENOM --from wallet -b block -y $CORED_NODE_ARGS
 ```
 
 * Query the owner of the name record.
@@ -131,7 +131,7 @@ The owner is the "wallet" now.
 cored keys add new-owner $CORED_CHAIN_ID_ARGS
 RECIPIENT_ADDRESS=$(cored keys show --address new-owner $CORED_CHAIN_ID_ARGS)
 TRANSFER="{\"transfer\":{\"name\":\"fred\",\"to\":\"$RECIPIENT_ADDRESS\"}}"
-cored tx wasm execute $CONTRACT "$TRANSFER" --amount 999$CORED_DENOM --from wallet --gas-prices 1500$CORED_DENOM -b block -y $CORED_NODE_ARGS
+cored tx wasm execute $CONTRACT "$TRANSFER" --amount 999$CORED_DENOM --from wallet -b block -y $CORED_NODE_ARGS
 ``` 
 
 * Query the record owner again to see the new owner address.
