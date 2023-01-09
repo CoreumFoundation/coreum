@@ -42,13 +42,10 @@ func testNetwork() config.Network {
 	return config.NewNetwork(config.NetworkConfig{
 		ChainID:              constant.ChainIDDev,
 		GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-		AddressPrefix:        "devcore",
-		MetadataDisplayDenom: "dcore",
-		// Denom uses the u (μ) prefix stands for micro, more info here https://en.wikipedia.org/wiki/Metric_prefix
-		// We also add another prefix for non mainnet network symbols to differentiate them from mainnet.
-		// 'd' prefix in ducore stands for devnet.
-		Denom: "ucore",
-		Fee:   feeConfig,
+		AddressPrefix:        constant.AddressPrefixDev,
+		MetadataDisplayDenom: constant.DenomDevDisplay,
+		Denom:                constant.DenomDev,
+		Fee:                  feeConfig,
 		FundedAccounts: []config.FundedAccount{{
 			Address:  sdk.AccAddress(cosmossecp256k1.GenPrivKey().PubKey().Address()).String(),
 			Balances: sdk.NewCoins(sdk.NewInt64Coin("some-test-token", 1000)),

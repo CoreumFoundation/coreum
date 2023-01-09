@@ -11,6 +11,7 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
@@ -19,6 +20,7 @@ import (
 func TestAutoGasPrices(t *testing.T) {
 	testNetwork := network.New(t)
 	ctx := testNetwork.Validators[0].ClientCtx
+	denom := testNetwork.Config.BondDenom
 
 	testCases := []struct {
 		name         string
@@ -42,21 +44,21 @@ func TestAutoGasPrices(t *testing.T) {
 		},
 		{
 			name:  "specific gas prices is provided",
-			flags: []string{"--gas-prices=0.1ducore", "--gas=100000"},
+			flags: []string{fmt.Sprintf("--gas-prices=0.1%s", denom), "--gas=100000"},
 			feeAssertion: func(t *testing.T, fee sdk.Coins) {
-				assert.True(t, fee.IsEqual(sdk.NewCoins(sdk.NewCoin("ducore", sdk.NewInt(10000)))))
+				assert.True(t, fee.IsEqual(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10000)))))
 			},
 		},
 		{
 			name:  "specific fees are provided",
-			flags: []string{"--fees=12345ducore"},
+			flags: []string{fmt.Sprintf("--fees=12345%s", denom)},
 			feeAssertion: func(t *testing.T, fee sdk.Coins) {
-				assert.True(t, fee.IsEqual(sdk.NewCoins(sdk.NewCoin("ducore", sdk.NewInt(12345)))))
+				assert.True(t, fee.IsEqual(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(12345)))))
 			},
 		},
 		{
 			name:        "both gas prices and fees are provided",
-			flags:       []string{"--fees=12345ducore", "--gas-prices=auto"},
+			flags:       []string{fmt.Sprintf("--fees=12345%s", denom), "--gas-prices=auto"},
 			expectError: true,
 		},
 	}
@@ -64,10 +66,10 @@ func TestAutoGasPrices(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			assertT := assert.New(t)
+			requireT := require.New(t)
 			recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 			args := append([]string{
-				"send", testNetwork.Validators[0].Address.String(), recipient.String(), "100ducore",
+				"send", testNetwork.Validators[0].Address.String(), recipient.String(), fmt.Sprintf("100%s", denom),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 			}, tc.flags...)
@@ -76,18 +78,18 @@ func TestAutoGasPrices(t *testing.T) {
 
 			bufWriter, err := clitestutil.ExecTestCLICmd(ctx, bankTx, args)
 			if tc.expectError {
-				assertT.Error(err)
+				requireT.Error(err)
 				return
 			}
-			assertT.NoError(err)
+			requireT.NoError(err)
 
 			txRes := sdk.TxResponse{}
 			bts := bufWriter.Bytes()
 			err = ctx.Codec.UnmarshalJSON(bts, &txRes)
-			assertT.NoError(err)
+			requireT.NoError(err)
 
 			txQuery, err := authtx.QueryTx(ctx, txRes.TxHash)
-			assertT.NoError(err)
+			requireT.NoError(err)
 			tx := txQuery.Tx.GetCachedValue().(*cosmostx.Tx)
 			tc.feeAssertion(t, tx.GetFee())
 		})

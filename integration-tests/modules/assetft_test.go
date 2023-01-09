@@ -542,7 +542,8 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				multiSendMsg,
-			}}),
+			},
+		}),
 	)
 
 	_, err = tx.BroadcastTx(

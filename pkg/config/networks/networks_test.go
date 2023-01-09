@@ -41,7 +41,7 @@ var invalidSignatureTx = []byte(`
           "key": "Ai+ulhQOTk78QqrOwr9ySdZQ+N6F5PzkRU7LsYXA24Gl"
         },
         "value": {
-          "denom": "ducore",
+          "denom": "udevcore",
           "amount": "10000000000000"
         }
       }

@@ -28,11 +28,12 @@ jobs:
             go-cache: true
             linter-cache: false
             docker-cache: true
-          - ci_step: "integration tests"
-            command: "crust build/integration-tests images --log-format=yaml && crust znet test --log-format=yaml"
-            go-cache: true
-            linter-cache: false
-            docker-cache: true
+# FIXME(dhil) restore once we update the crust
+#          - ci_step: "integration tests"
+#            command: "crust build/integration-tests images --log-format=yaml && crust znet test --log-format=yaml"
+#            go-cache: true
+#            linter-cache: false
+#            docker-cache: true
 
     runs-on: ubuntu-22.04
     steps:
