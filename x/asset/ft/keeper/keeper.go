@@ -62,7 +62,7 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 	for _, coin := range coins {
 		ft, err := k.GetTokenDefinition(ctx, coin.Denom)
 		if err != nil {
-			if types.ErrFTNotFound.Is(err) {
+			if types.ErrInvalidDenom.Is(err) || types.ErrFTNotFound.Is(err) {
 				continue
 			}
 			return err
@@ -118,7 +118,7 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 
 		for _, coin := range in.Coins {
 			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-			if types.ErrFTNotFound.Is(err) {
+			if types.ErrInvalidDenom.Is(err) || types.ErrFTNotFound.Is(err) {
 				continue
 			}
 
@@ -155,7 +155,7 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 
 		for _, coin := range out.Coins {
 			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-			if types.ErrFTNotFound.Is(err) {
+			if types.ErrInvalidDenom.Is(err) || types.ErrFTNotFound.Is(err) {
 				continue
 			}
 			if err != nil {

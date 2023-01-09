@@ -131,5 +131,5 @@ func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
 // frozenAccountBalanceStore gets the store for the frozen balances of an account
 func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
 	store := ctx.KVStore(k.storeKey)
-	return newBalanceStore(k.cdc, store, types.CreateFrozenBalancesPrefix(addr))
+	return newBalanceStore(k.cdc, store, types.CreateFrozenBalancesKey(addr))
 }
