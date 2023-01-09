@@ -1609,11 +1609,13 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 	issuer1 := chain.GenAccount()
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	issuer2 := chain.GenAccount()
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	// issue the new fungible token form issuer1
