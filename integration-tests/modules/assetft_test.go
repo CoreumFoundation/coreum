@@ -228,7 +228,7 @@ func TestAssetFTBurn(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 
 	// Issue a burnable fungible token
 	issueMsg = &assetfttypes.MsgIssue{
@@ -662,7 +662,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
 		freezeMsg,
 	)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
 
 // TestAssetFTFreeze checks freeze functionality of fungible tokens.
@@ -1279,7 +1279,7 @@ func TestAssetFTMint(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 
 	// Issue a mintable fungible token
 	issueMsg = &assetfttypes.MsgIssue{
@@ -1396,7 +1396,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
 
 // TestAssetFTWhitelist checks whitelist functionality of fungible tokens.

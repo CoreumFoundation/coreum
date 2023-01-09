@@ -127,7 +127,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.FTDefinition)
 
 	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, definition.Denom)
 	if !found {
-		return types.FT{}, sdkerrors.Wrapf(types.ErrFTNotFound, "metadata for %s denom not found", definition.Denom)
+		return types.FT{}, sdkerrors.Wrapf(types.ErrTokenNotFound, "metadata for %s denom not found", definition.Denom)
 	}
 
 	precision := -1
@@ -209,7 +209,7 @@ func (k Keeper) GetTokenDefinition(ctx sdk.Context, denom string) (types.FTDefin
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetTokenKey(denom))
 	if bz == nil {
-		return types.FTDefinition{}, sdkerrors.Wrapf(types.ErrFTNotFound, "denom: %s", denom)
+		return types.FTDefinition{}, sdkerrors.Wrapf(types.ErrTokenNotFound, "denom: %s", denom)
 	}
 	var definition types.FTDefinition
 	k.cdc.MustUnmarshal(bz, &definition)

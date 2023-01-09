@@ -109,6 +109,10 @@ func (ftd FTDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature TokenFe
 		return nil
 	}
 
+	if !ftd.IsFeatureEnabled(feature) {
+		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
+	}
+
 	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 }
 
@@ -123,11 +127,7 @@ func (ftd FTDefinition) IsFeatureAllowed(addr sdk.Address, feature TokenFeature)
 	}
 
 	// non-issuer can use only burning and only if it is enabled
-	if featureEnabled && feature == TokenFeature_burn {
-		return true
-	}
-
-	return false
+	return featureEnabled && feature == TokenFeature_burn
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
