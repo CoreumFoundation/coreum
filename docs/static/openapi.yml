@@ -1509,8 +1509,10 @@ paths:
                     items:
                       type: string
                       enum:
-                        - burn
-                      default: burn
+                        - burning
+                        - freezing
+                        - whitelisting
+                      default: burning
                       description: >-
                         ClassFeature defines possible features of non-fungible
                         token class.
@@ -28035,15 +28037,19 @@ definitions:
         items:
           type: string
           enum:
-            - burn
-          default: burn
+            - burning
+            - freezing
+            - whitelisting
+          default: burning
           description: ClassFeature defines possible features of non-fungible token class.
     description: Class is a full representation of the non-fungible token class.
   coreum.asset.nft.v1.ClassFeature:
     type: string
     enum:
-      - burn
-    default: burn
+      - burning
+      - freezing
+      - whitelisting
+    default: burning
     description: ClassFeature defines possible features of non-fungible token class.
   coreum.asset.nft.v1.EmptyResponse:
     type: object
@@ -28235,8 +28241,10 @@ definitions:
             items:
               type: string
               enum:
-                - burn
-              default: burn
+                - burning
+                - freezing
+                - whitelisting
+              default: burning
               description: >-
                 ClassFeature defines possible features of non-fungible token
                 class.

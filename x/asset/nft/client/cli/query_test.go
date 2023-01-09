@@ -24,7 +24,7 @@ func TestQueryClass(t *testing.T) {
 	description := "class description"
 	URI := "https://my-class-meta.invalid/1"
 	URIHash := "content-hash"
-	features := types.ClassFeature_burn.String() //nolint:nosnakecase // generated variable
+	features := types.ClassFeature_burning.String() //nolint:nosnakecase // generated variable
 	ctx := testNetwork.Validators[0].ClientCtx
 
 	classID := issueClass(
@@ -48,7 +48,7 @@ func TestQueryClass(t *testing.T) {
 		URI:         URI,
 		URIHash:     URIHash,
 		Features: []types.ClassFeature{
-			types.ClassFeature_burn, //nolint:nosnakecase // generated variable
+			types.ClassFeature_burning, //nolint:nosnakecase // generated variable
 		},
 	}, resp.Class)
 }

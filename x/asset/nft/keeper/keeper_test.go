@@ -38,7 +38,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        dataValue,
 		Features: []types.ClassFeature{
-			types.ClassFeature_burn, //nolint:nosnakecase // generated variable
+			types.ClassFeature_burning, //nolint:nosnakecase // generated variable
 		},
 	}
 
@@ -66,7 +66,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 	requireT.Equal(settings.URI, nftClass.URI)
 	requireT.Equal(settings.URIHash, nftClass.URIHash)
 	requireT.Equal(string(settings.Data.Value), string(nftClass.Data.Value))
-	requireT.Equal([]types.ClassFeature{types.ClassFeature_burn}, nftClass.Features) //nolint:nosnakecase // generated variable
+	requireT.Equal([]types.ClassFeature{types.ClassFeature_burning}, nftClass.Features) //nolint:nosnakecase // generated variable
 
 	// try to duplicate
 	settings.Symbol = "SYMBOL"
@@ -164,7 +164,7 @@ func TestKeeper_Burn(t *testing.T) {
 		Issuer: issuer,
 		Symbol: "symbol",
 		Features: []types.ClassFeature{
-			types.ClassFeature_burn, //nolint:nosnakecase // generated variable
+			types.ClassFeature_burning, //nolint:nosnakecase // generated variable
 		},
 	}
 
@@ -230,7 +230,7 @@ func TestKeeper_Burn(t *testing.T) {
 
 	// try burn the nft with the disabled feature from the recipient account
 	err = assetNFTKeeper.Burn(ctx, recipient, classID, nftID)
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	requireT.ErrorIs(types.ErrFeatureDisabled, err)
 }
 
 func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {

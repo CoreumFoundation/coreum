@@ -173,7 +173,7 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return err
 	}
 
-	if err = ndfd.CheckFeatureAllowed(owner, types.ClassFeature_burn); err != nil { //nolint:nosnakecase // generated variable
+	if err = ndfd.CheckFeatureAllowed(owner, types.ClassFeature_burning); err != nil { //nolint:nosnakecase // generated variable
 		return err
 	}
 

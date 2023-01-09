@@ -29,7 +29,7 @@ func TestCmdTxIssueClass(t *testing.T) {
 		"class description",
 		"https://my-class-meta.invalid/1",
 		"content-hash",
-		fmt.Sprintf("--features=%s", types.ClassFeature_burn.String()), //nolint:nosnakecase // generated variable
+		fmt.Sprintf("--features=%s", types.ClassFeature_burning.String()), //nolint:nosnakecase // generated variable
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)

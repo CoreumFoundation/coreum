@@ -107,6 +107,10 @@ func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature Cla
 		return nil
 	}
 
+	if !nftd.IsFeatureEnabled(feature) {
+		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
+	}
+
 	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 }
 
@@ -117,15 +121,11 @@ func (nftd ClassDefinition) IsFeatureAllowed(addr sdk.Address, feature ClassFeat
 	featureEnabled := nftd.IsFeatureEnabled(feature)
 	// issuer can use any enabled feature and burning even if it is disabled
 	if nftd.IsIssuer(addr) {
-		return featureEnabled || feature == ClassFeature_burn
+		return featureEnabled || feature == ClassFeature_burning
 	}
 
 	// non-issuer can use only burning and only if it is enabled
-	if featureEnabled && feature == ClassFeature_burn {
-		return true
-	}
-
-	return false
+	return featureEnabled && feature == ClassFeature_burning
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
