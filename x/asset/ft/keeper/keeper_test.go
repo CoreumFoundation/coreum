@@ -8,7 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -419,4 +421,42 @@ func TestKeeper_Burn(t *testing.T) {
 
 	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.ErrorIs(sdkerrors.ErrInsufficientFunds, err)
+}
+
+func TestKeeper_GetIssuerTokens(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	numberOfTokens := 5
+	for i := 0; i < numberOfTokens; i++ {
+		settings := types.IssueSettings{
+			Issuer:        addr,
+			Symbol:        "ABC" + uuid.NewString()[:4],
+			Description:   "ABC Desc",
+			Subunit:       "abc" + uuid.NewString()[:4],
+			Precision:     8,
+			InitialAmount: sdk.NewInt(10),
+		}
+		denom, err := ftKeeper.Issue(ctx, settings)
+		requireT.NoError(err)
+		requireT.Equal(types.BuildDenom(settings.Subunit, settings.Issuer), denom)
+	}
+
+	tokens, _, err := ftKeeper.GetIssuerTokens(ctx, addr, &query.PageRequest{
+		Limit: 3,
+	})
+	requireT.NoError(err)
+	requireT.Equal(3, len(tokens))
+
+	tokens, _, err = ftKeeper.GetIssuerTokens(ctx, addr, &query.PageRequest{
+		Limit: uint64(numberOfTokens + 1),
+	})
+	requireT.NoError(err)
+	requireT.Equal(numberOfTokens, len(tokens))
 }
