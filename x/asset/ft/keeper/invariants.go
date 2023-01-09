@@ -11,14 +11,14 @@ import (
 const (
 	// NonNegativeBalancesInvariantName is non negative balances invariant name.
 	NonNegativeBalancesInvariantName = "non-negative-balances"
-	// BankMetadataMatchesInvariantName is bank metadata exists name.
-	BankMetadataMatchesInvariantName = "bank-metadata-exists"
+	// BankMetadataExistsInvariantName is bank metadata exists name.
+	BankMetadataExistsInvariantName = "bank-metadata-exists"
 )
 
 // RegisterInvariants registers the bank module invariants
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(types.ModuleName, NonNegativeBalancesInvariantName, NonNegativeBalancesInvariant(k))
-	ir.RegisterRoute(types.ModuleName, BankMetadataMatchesInvariantName, BankMetadataMatchesInvariant(k))
+	ir.RegisterRoute(types.ModuleName, BankMetadataExistsInvariantName, BankMetadataMatchesInvariant(k))
 }
 
 // NonNegativeBalancesInvariant checks that all accounts in the application have non-negative feature balances.
@@ -81,7 +81,7 @@ func BankMetadataMatchesInvariant(k Keeper) sdk.Invariant {
 		})
 
 		return sdk.FormatInvariant(
-			types.ModuleName, BankMetadataMatchesInvariantName,
+			types.ModuleName, BankMetadataExistsInvariantName,
 			fmt.Sprintf("number of missing metadata entries %d\n%s", count, msg),
 		), count != 0
 	}
