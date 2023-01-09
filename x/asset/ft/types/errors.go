@@ -12,7 +12,7 @@ var (
 	// ErrInvalidKey is returned when the provided store key is invalid
 	ErrInvalidKey = sdkerrors.Register(ModuleName, 3, "invalid key")
 	// ErrFeatureDisabled is returned when used disabled feature.
-	ErrFeatureDisabled = sdkerrors.Register(ModuleName, 4, "invalid input")
+	ErrFeatureDisabled = sdkerrors.Register(ModuleName, 4, "feature disabled")
 	// ErrNotEnoughBalance is returned when there is not enough
 	ErrNotEnoughBalance = sdkerrors.Register(ModuleName, 5, "not enough balance")
 	// ErrGloballyFrozen is returned when token is globally frozen so all operations with it are blocked
