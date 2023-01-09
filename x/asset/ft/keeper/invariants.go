@@ -11,8 +11,8 @@ import (
 const (
 	// NonNegativeBalancesInvariantName is non negative balances invariant name.
 	NonNegativeBalancesInvariantName = "non-negative-balances"
-	// BankMetadataMatchesInvariantName is bank metadata matches name.
-	BankMetadataMatchesInvariantName = "bank-metadata-matches"
+	// BankMetadataMatchesInvariantName is bank metadata exists name.
+	BankMetadataMatchesInvariantName = "bank-metadata-exists"
 )
 
 // RegisterInvariants registers the bank module invariants
@@ -39,7 +39,7 @@ func NonNegativeBalancesInvariant(k Keeper) sdk.Invariant {
 		})
 		if err != nil {
 			count++
-			msg += fmt.Sprintf("catched error on IterateAllFrozenBalances %s\n", err)
+			msg += fmt.Sprintf("can't iterate over frozen balances %s\n", err)
 		}
 
 		err = k.IterateAllWhitelistedBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
@@ -52,7 +52,7 @@ func NonNegativeBalancesInvariant(k Keeper) sdk.Invariant {
 		})
 		if err != nil {
 			count++
-			msg += fmt.Sprintf("catched error on IterateAllWhitelistedBalances %s\n", err)
+			msg += fmt.Sprintf("can't iterate over whitelisted balances %s\n", err)
 		}
 
 		return sdk.FormatInvariant(
