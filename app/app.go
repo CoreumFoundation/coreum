@@ -191,6 +191,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		assetfttypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		assetnfttypes.ModuleName:       {authtypes.Burner},
 		nft.ModuleName:                 {}, // the line is required by the nft module to have the module account stored in the account keeper
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
@@ -325,11 +326,13 @@ func New(
 		keys[authz.ModuleName], appCodec, app.MsgServiceRouter(),
 	)
 
+	originalBankKeeper := bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs())
 	assetFTKeeper := assetftkeeper.NewKeeper(
 		appCodec,
+		app.GetSubspace(assetfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetfttypes.Params{})),
 		keys[assetfttypes.StoreKey],
-		// for the asset we use the clear bank keeper without the assets integration to prevent cycling calls.
-		bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs()),
+		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
+		originalBankKeeper,
 	)
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
@@ -381,7 +384,14 @@ func New(
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
 
 	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
-	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(appCodec, keys[assetnfttypes.StoreKey], nftKeeper)
+	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
+		appCodec,
+		app.GetSubspace(assetnfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetnfttypes.Params{})),
+		keys[assetnfttypes.StoreKey],
+		nftKeeper,
+		// for the assetnft we use the clear bank keeper without the assets integration because it interacts only with native token.
+		originalBankKeeper,
+	)
 
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
@@ -800,6 +810,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(wasm.ModuleName)
 	paramsKeeper.Subspace(feemodeltypes.ModuleName)
 	paramsKeeper.Subspace(customparamstypes.CustomParamsStaking)
+	paramsKeeper.Subspace(assetfttypes.ModuleName)
+	paramsKeeper.Subspace(assetnfttypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

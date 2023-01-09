@@ -9,14 +9,119 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
+
+// TestAssetFTIssue tests issue functionality of fungible tokens.
+func TestAssetFTIssue(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features:      []assetfttypes.TokenFeature{},
+	}
+
+	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+
+	// verify issue fee was burnt
+
+	burntStr, err := event.FindStringEventAttribute(res.Events, banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(chain.NetworkConfig.Denom, chain.NetworkConfig.AssetFTConfig.IssueFee).String(), burntStr)
+
+	// check that balance is 0 meaning issue fee was taken
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: issuer.String(),
+		Denom:   chain.NetworkConfig.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
+}
+
+// TestAssetFTIssueFeeProposal tests proposal upgrading issue fee
+func TestAssetFTIssueFeeProposal(t *testing.T) {
+	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
+	// That's why t.Parallel() is not here.
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+	requireT := require.New(t)
+	origIssueFee := chain.NetworkConfig.AssetFTConfig.IssueFee
+
+	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing IssueFee in the assetft module",
+		[]paramproposal.ParamChange{
+			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.ZeroInt()))))),
+		}))
+
+	issuer := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+			},
+		}))
+
+	// Issue token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features:      []assetfttypes.TokenFeature{},
+	}
+
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+
+	// Revert to original issue fee
+	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing IssueFee in the assetft module",
+		[]paramproposal.ParamChange{
+			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, origIssueFee))))),
+		}))
+}
 
 // TestAssetFTBurn tests burn functionality of fungible tokens.
 func TestAssetFTBurn(t *testing.T) {
@@ -38,6 +143,7 @@ func TestAssetFTBurn(t *testing.T) {
 				&assetfttypes.MsgBurn{},
 				&assetfttypes.MsgBurn{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(2),
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
@@ -171,6 +277,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
@@ -321,6 +428,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}),
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
@@ -434,7 +542,8 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				multiSendMsg,
-			}}),
+			},
+		}),
 	)
 
 	_, err = tx.BroadcastTx(
@@ -467,6 +576,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgFreeze{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 
 	// Issue an unfreezable fungible token
@@ -526,7 +636,6 @@ func TestAssetFTFreeze(t *testing.T) {
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 				&assetfttypes.MsgFreeze{},
 				&assetfttypes.MsgFreeze{},
@@ -534,6 +643,7 @@ func TestAssetFTFreeze(t *testing.T) {
 				&assetfttypes.MsgUnfreeze{},
 				&assetfttypes.MsgUnfreeze{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
@@ -823,6 +933,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 				&assetfttypes.MsgGloballyUnfreeze{},
 				&banktypes.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 
 	// Issue the new fungible token
@@ -934,6 +1045,7 @@ func TestAssetFTIssueBasic(t *testing.T) {
 	issuer := chain.GenAccount()
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	// Issue the new fungible token
@@ -1021,6 +1133,7 @@ func TestAssetFTMint(t *testing.T) {
 				&assetfttypes.MsgMint{},
 				&assetfttypes.MsgMint{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(2),
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
@@ -1150,6 +1263,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 
 	// Issue an unwhitelistable fungible token
@@ -1221,6 +1335,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
 			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
 		}))
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, nonIssuer, integrationtests.BalancesOptions{
@@ -1478,6 +1593,81 @@ func TestAssetFTWhitelist(t *testing.T) {
 		sendMsg,
 	)
 	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+}
+
+// TestAssetIssueAndQueryTokens checks that tokens query works as expected.
+func TestAssetIssueAndQueryTokens(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	clientCtx := chain.ClientContext
+
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+
+	issuer1 := chain.GenAccount()
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer1, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
+	}))
+
+	issuer2 := chain.GenAccount()
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer2, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
+	}))
+
+	// issue the new fungible token form issuer1
+	msg1 := &assetfttypes.MsgIssue{
+		Issuer:             issuer1.String(),
+		Symbol:             "WBTC",
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		Description:        "Wrapped BTC",
+		InitialAmount:      sdk.NewInt(777),
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+	}
+
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg1)),
+		msg1,
+	)
+	require.NoError(t, err)
+
+	// issue the new fungible token form issuer2
+	msg2 := msg1
+	msg2.Issuer = issuer2.String()
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg2)),
+		msg1,
+	)
+
+	require.NoError(t, err)
+
+	// query for the tokens
+	gotToken, err := ftClient.Tokens(ctx, &assetfttypes.QueryTokensRequest{
+		Issuer: issuer1.String(),
+	})
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(msg1.Subunit, issuer1)
+	requireT.Equal(1, len(gotToken.Tokens))
+	requireT.Equal(assetfttypes.FT{
+		Denom:              denom,
+		Issuer:             issuer1.String(),
+		Symbol:             msg1.Symbol,
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		Description:        msg1.Description,
+		BurnRate:           msg1.BurnRate,
+		SendCommissionRate: msg1.SendCommissionRate,
+	}, gotToken.Tokens[0])
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx tx.ClientContext, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
