@@ -8,7 +8,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/samber/lo"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -78,32 +77,6 @@ type MultiSendIterationInfo struct {
 	NonIssuerSenders   map[string]sdk.Int
 	Senders            map[string]sdk.Int
 	Receivers          map[string]sdk.Int
-}
-
-func (k Keeper) applyFeatures2(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	// squashInputs / squashOutputs
-}
-
-func squashInputs(inputs []banktypes.Input) []banktypes.Input {
-	accAddressCoins := make(map[string]sdk.Coins)
-
-	for _, input := range inputs {
-		accCoins, ok := accAddressCoins[input.Address]
-		if ok {
-			accCoins = accCoins.Add(input.Coins...)
-		} else {
-			accCoins = input.Coins
-		}
-
-		accAddressCoins[input.Address] = accCoins
-	}
-
-	return lo.MapToSlice(accAddressCoins, func(accAddress string, coins sdk.Coins) banktypes.Input {
-		return banktypes.Input{
-			Address: accAddress,
-			Coins:   coins,
-		}
-	})
 }
 
 // CalculateRateShares returns the burn coins and commission coins
