@@ -12,7 +12,7 @@ var (
 	// ErrClassNotFound is returned when token class not found in the store.
 	ErrClassNotFound = sdkerrors.Register(ModuleName, 3, "non-fungible token class not found")
 	// ErrFeatureDisabled is returned when used disabled feature.
-	ErrFeatureDisabled = sdkerrors.Register(ModuleName, 4, "invalid input")
+	ErrFeatureDisabled = sdkerrors.Register(ModuleName, 4, "feature disabled")
 	// ErrNFTNotFound is returned if a non-fungible token not found in the store.
 	ErrNFTNotFound = sdkerrors.Register(ModuleName, 5, "non-fungible token not found")
 )
