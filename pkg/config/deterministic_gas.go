@@ -89,10 +89,10 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
 	}
 
-	// wasm
-	// TODO (milad): rewise gas config for WASM msgs.
 	registerUndeterministicGasFuncs(
 		&dgr,
+		// wasm
+		// TODO (milad): rewise gas config for WASM msgs.
 		[]sdk.Msg{
 			&wasmtypes.MsgStoreCode{},
 			&wasmtypes.MsgInstantiateContract{},
