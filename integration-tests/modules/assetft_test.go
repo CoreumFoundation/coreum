@@ -542,7 +542,8 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				multiSendMsg,
-			}}),
+			},
+		}),
 	)
 
 	_, err = tx.BroadcastTx(
@@ -1592,6 +1593,81 @@ func TestAssetFTWhitelist(t *testing.T) {
 		sendMsg,
 	)
 	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
+}
+
+// TestAssetIssueAndQueryTokens checks that tokens query works as expected.
+func TestAssetIssueAndQueryTokens(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	clientCtx := chain.ClientContext
+
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+
+	issuer1 := chain.GenAccount()
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer1, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
+	}))
+
+	issuer2 := chain.GenAccount()
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer2, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
+	}))
+
+	// issue the new fungible token form issuer1
+	msg1 := &assetfttypes.MsgIssue{
+		Issuer:             issuer1.String(),
+		Symbol:             "WBTC",
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		Description:        "Wrapped BTC",
+		InitialAmount:      sdk.NewInt(777),
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+	}
+
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg1)),
+		msg1,
+	)
+	require.NoError(t, err)
+
+	// issue the new fungible token form issuer2
+	msg2 := msg1
+	msg2.Issuer = issuer2.String()
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg2)),
+		msg1,
+	)
+
+	require.NoError(t, err)
+
+	// query for the tokens
+	gotToken, err := ftClient.Tokens(ctx, &assetfttypes.QueryTokensRequest{
+		Issuer: issuer1.String(),
+	})
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(msg1.Subunit, issuer1)
+	requireT.Equal(1, len(gotToken.Tokens))
+	requireT.Equal(assetfttypes.FT{
+		Denom:              denom,
+		Issuer:             issuer1.String(),
+		Symbol:             msg1.Symbol,
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		Description:        msg1.Description,
+		BurnRate:           msg1.BurnRate,
+		SendCommissionRate: msg1.SendCommissionRate,
+	}, gotToken.Tokens[0])
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx tx.ClientContext, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {

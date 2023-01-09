@@ -45,7 +45,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 	requireT.NoError(err)
 
 	var resp types.QueryTokenResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryTokenInfo(), []string{denom, "--output", "json"})
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 	requireT.True(resp.Token.GloballyFrozen)
@@ -55,7 +55,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreeze(), args)
 	requireT.NoError(err)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryTokenInfo(), []string{denom, "--output", "json"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 	requireT.False(resp.Token.GloballyFrozen)

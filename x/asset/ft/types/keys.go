@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 
@@ -35,24 +37,34 @@ var (
 	WhitelistedBalancesKeyPrefix = []byte{0x05}
 )
 
-// GetTokenKey constructs the key for the fungible token.
-func GetTokenKey(denom string) []byte {
-	return store.JoinKeysWithLength(FTKeyPrefix, []byte(denom))
+// CreateTokenKey constructs the key for the fungible token.
+func CreateTokenKey(issuer sdk.AccAddress, subunit string) []byte {
+	return store.JoinKeys(CreateIssuerTokensPrefix(issuer), []byte(strings.ToLower(subunit)))
 }
 
-// CreateFrozenBalancesPrefix creates the prefix for an account's frozen balances.
-func CreateFrozenBalancesPrefix(addr []byte) []byte {
+// CreateIssuerTokensPrefix constructs the prefix for the fungible token issued by account.
+func CreateIssuerTokensPrefix(issuer sdk.AccAddress) []byte {
+	return store.JoinKeys(FTKeyPrefix, address.MustLengthPrefix(issuer))
+}
+
+// CreateFrozenBalancesKey creates the prefix for an account's frozen balances.
+func CreateFrozenBalancesKey(addr []byte) []byte {
 	return store.JoinKeys(FrozenBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
-// CreateGlobalFreezePrefix creates the prefix for fungible token global freeze key.
-func CreateGlobalFreezePrefix(denom string) []byte {
+// CreateGlobalFreezeKey creates the prefix for fungible token global freeze key.
+func CreateGlobalFreezeKey(denom string) []byte {
 	return store.JoinKeys(GlobalFreezeKeyPrefix, []byte(denom))
 }
 
-// CreateWhitelistedBalancesPrefix creates the prefix for an account's whitelisted balances.
-func CreateWhitelistedBalancesPrefix(addr []byte) []byte {
+// CreateWhitelistedBalancesKey creates the prefix for an account's whitelisted balances.
+func CreateWhitelistedBalancesKey(addr []byte) []byte {
 	return store.JoinKeys(WhitelistedBalancesKeyPrefix, address.MustLengthPrefix(addr))
+}
+
+// CreateSymbolKey creates the prefix for a ft symbol.
+func CreateSymbolKey(addr []byte, symbol string) []byte {
+	return store.JoinKeys(store.JoinKeys(SymbolKeyPrefix, addr), []byte(symbol))
 }
 
 // AddressFromBalancesStore returns an account address from a balances prefix
@@ -70,9 +82,4 @@ func AddressFromBalancesStore(key []byte) (sdk.AccAddress, error) {
 		return nil, ErrInvalidKey
 	}
 	return key[1 : bound+1], nil
-}
-
-// CreateSymbolPrefix creates the prefix for an ft symbol.
-func CreateSymbolPrefix(addr []byte) []byte {
-	return store.JoinKeys(SymbolKeyPrefix, addr)
 }
