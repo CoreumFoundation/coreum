@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -17,7 +18,60 @@ import (
 	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
+<<<<<<< HEAD
 type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
+=======
+// DefaultDeterministicGasRequirements returns default config for deterministic gas
+func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
+	return DeterministicGasRequirements{
+		FixedGas:       50000,
+		FreeBytes:      2048,
+		FreeSignatures: 1,
+
+		AuthzExecBase: 2000,
+		AuthzGrant:    7000,
+		AuthzRevoke:   3000,
+
+		AssetFTIssue:               80000,
+		AssetFTMint:                35000,
+		AssetFTBurn:                35000,
+		AssetFTFreeze:              55000,
+		AssetFTUnfreeze:            55000,
+		AssetFTGloballyFreeze:      5000,
+		AssetFTGloballyUnfreeze:    5000,
+		AssetFTSetWhitelistedLimit: 35000,
+
+		AssetNFTIssueClass: 20000,
+		AssetNFTMint:       30000,
+
+		BankSendPerEntry:      22000,
+		BankMultiSendPerEntry: 27000,
+
+		DistributionFundCommunityPool:           50000,
+		DistributionSetWithdrawAddress:          50000,
+		DistributionWithdrawDelegatorReward:     120000,
+		DistributionWithdrawValidatorCommission: 50000,
+
+		FeeGrantGrantAllowance:  13000,
+		FeeGrantRevokeAllowance: 13000,
+
+		GovSubmitProposal: 95000,
+		GovVote:           8000,
+		GovVoteWeighted:   11000,
+		GovDeposit:        91000,
+
+		NFTSend: 20000,
+
+		SlashingUnjail: 25000,
+
+		StakingDelegate:        51000,
+		StakingUndelegate:      51000,
+		StakingBeginRedelegate: 51000,
+		StakingCreateValidator: 50000,
+		StakingEditValidator:   50000,
+	}
+}
+>>>>>>> origin/master
 
 // DeterministicGasRequirements specifies gas required by all transaction types
 // Crisis module is intentionally skipped here because it is already deterministic by design and fee is specified
@@ -25,6 +79,7 @@ type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
 type DeterministicGasRequirements struct {
 	FixedGas uint64
 
+<<<<<<< HEAD
 	freeBytes      uint64
 	freeSignatures uint64
 
@@ -107,6 +162,64 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 	)
 
 	return dgr
+=======
+	// FreeBytes defines how many tx bytes are stored for free (included in `FixedGas` price)
+	FreeBytes uint64
+
+	// FreeSignatures defines how many secp256k1 signatures are verified for free (included in `FixedGas` price)
+	FreeSignatures uint64
+
+	// x/authz
+	AuthzExecBase uint64
+	AuthzGrant    uint64
+	AuthzRevoke   uint64
+
+	// x/asset/ft
+	AssetFTIssue               uint64
+	AssetFTMint                uint64
+	AssetFTBurn                uint64
+	AssetFTFreeze              uint64
+	AssetFTUnfreeze            uint64
+	AssetFTGloballyFreeze      uint64
+	AssetFTGloballyUnfreeze    uint64
+	AssetFTSetWhitelistedLimit uint64
+
+	// x/asset/nft
+	AssetNFTIssueClass uint64
+	AssetNFTMint       uint64
+
+	// x/bank
+	BankSendPerEntry      uint64
+	BankMultiSendPerEntry uint64
+
+	// x/distribution
+	DistributionFundCommunityPool           uint64
+	DistributionSetWithdrawAddress          uint64
+	DistributionWithdrawDelegatorReward     uint64
+	DistributionWithdrawValidatorCommission uint64
+
+	// x/feegrant
+	FeeGrantGrantAllowance  uint64
+	FeeGrantRevokeAllowance uint64
+	// x/gov
+	GovSubmitProposal uint64
+	GovVote           uint64
+	GovVoteWeighted   uint64
+	GovDeposit        uint64
+
+	// x/nft
+	NFTSend uint64
+
+	// x/slashing
+	SlashingUnjail uint64
+
+	// x/staking
+	StakingDelegate        uint64
+	StakingUndelegate      uint64
+	StakingBeginRedelegate uint64
+	StakingCreateValidator uint64
+	StakingEditValidator   uint64
+>>>>>>> origin/master
 }
 
 // TxBaseGas is the free gas we give to every transaction to cover costs of
@@ -207,6 +320,48 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerEntryGas uint64) gasByMsgFunc {
 		for _, outp := range m.Outputs {
 			outputEntriesNum += len(outp.Coins)
 		}
+<<<<<<< HEAD
+=======
+		return uint64(entriesNum) * dgr.BankMultiSendPerEntry, true
+	case *distributiontypes.MsgFundCommunityPool:
+		return dgr.DistributionFundCommunityPool, true
+	case *distributiontypes.MsgSetWithdrawAddress:
+		return dgr.DistributionSetWithdrawAddress, true
+	case *distributiontypes.MsgWithdrawDelegatorReward:
+		return dgr.DistributionWithdrawDelegatorReward, true
+	case *distributiontypes.MsgWithdrawValidatorCommission:
+		return dgr.DistributionWithdrawValidatorCommission, true
+	case *feegrant.MsgGrantAllowance:
+		return dgr.FeeGrantGrantAllowance, true
+	case *feegrant.MsgRevokeAllowance:
+		return dgr.FeeGrantRevokeAllowance, true
+	case *govtypes.MsgSubmitProposal:
+		return dgr.GovSubmitProposal, true
+	case *govtypes.MsgVote:
+		return dgr.GovVote, true
+	case *govtypes.MsgVoteWeighted:
+		return dgr.GovVoteWeighted, true
+	case *govtypes.MsgDeposit:
+		return dgr.GovDeposit, true
+	case *nft.MsgSend:
+		return dgr.NFTSend, true
+	case *slashingtypes.MsgUnjail:
+		return dgr.SlashingUnjail, true
+	case *stakingtypes.MsgDelegate:
+		return dgr.StakingDelegate, true
+	case *stakingtypes.MsgUndelegate:
+		return dgr.StakingUndelegate, true
+	case *stakingtypes.MsgBeginRedelegate:
+		return dgr.StakingBeginRedelegate, true
+	case *stakingtypes.MsgCreateValidator:
+		return dgr.StakingCreateValidator, true
+	case *stakingtypes.MsgEditValidator:
+		return dgr.StakingEditValidator, true
+	default:
+		return 0, false
+	}
+}
+>>>>>>> origin/master
 
 		// Select max of input or output entries & use 1 as a fallback.
 		maxEntriesNum := lo.Max([]int{inputEntriesNum, outputEntriesNum, 1})
