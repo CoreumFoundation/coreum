@@ -14,6 +14,7 @@ jobs:
         with:
           persist-credentials: false
           path: coreum
+          fetch-depth: 0
       - name: Checkout crust
         uses: actions/checkout@v3
         with:
