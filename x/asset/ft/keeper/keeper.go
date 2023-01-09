@@ -81,11 +81,9 @@ type MultiSendIterationInfo struct {
 
 // CalculateRateShares returns the burn coins and commission coins
 func (info MultiSendIterationInfo) CalculateRateShares(rate sdk.Dec) map[string]sdk.Int {
-	var minNonIssuerIOAmount sdk.Int
+	minNonIssuerIOAmount := info.NonIssuerOutputSum
 	if info.NonIssuerInputSum.LT(info.NonIssuerOutputSum) {
 		minNonIssuerIOAmount = info.NonIssuerInputSum
-	} else {
-		minNonIssuerIOAmount = info.NonIssuerOutputSum
 	}
 
 	shares := make(map[string]sdk.Int)
