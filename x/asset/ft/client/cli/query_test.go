@@ -30,7 +30,7 @@ func TestQueryToken(t *testing.T) {
 
 	denom := issue(requireT, ctx, symbol, subunit, precision, testNetwork)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryTokenInfo(), []string{denom, "--output", "json"})
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
 
 	var resp types.QueryTokenResponse
@@ -47,6 +47,40 @@ func TestQueryToken(t *testing.T) {
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
 	}, resp.Token)
+}
+
+func TestQueryTokens(t *testing.T) {
+	requireT := require.New(t)
+
+	testNetwork := network.New(t)
+
+	issuer := testNetwork.Validators[0].Address
+
+	// the denom must start from the letter
+	symbol := "btc" + uuid.NewString()[:4]
+	subunit := "sub" + symbol
+	precision := "8"
+	ctx := testNetwork.Validators[0].ClientCtx
+
+	denom := issue(requireT, ctx, symbol, subunit, precision, testNetwork)
+
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryTokens(), []string{issuer.String(), "--output", "json", "--limit", "1"})
+	requireT.NoError(err)
+
+	var resp types.QueryTokensResponse
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+
+	requireT.Equal(types.FT{
+		Denom:              denom,
+		Issuer:             testNetwork.Validators[0].Address.String(),
+		Symbol:             symbol,
+		Subunit:            strings.ToLower(subunit),
+		Precision:          8,
+		Description:        "",
+		Features:           []types.TokenFeature{},
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+	}, resp.Tokens[0])
 }
 
 func issue(requireT *require.Assertions, ctx client.Context, symbol, subunit, precision string, testNetwork *network.Network) string {

@@ -16,7 +16,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Init fungible token definitions
 	for _, ft := range genState.Tokens {
-		issuerAddress := sdk.MustAccAddressFromBech32(ft.Issuer)
+		subunit, issuer, err := types.DeconstructDenom(ft.Denom)
+		if err != nil {
+			panic(err)
+		}
+
 		definition := types.FTDefinition{
 			Denom:              ft.Denom,
 			Issuer:             ft.Issuer,
@@ -24,8 +28,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			BurnRate:           ft.BurnRate,
 			SendCommissionRate: ft.SendCommissionRate,
 		}
-		k.SetTokenDefinition(ctx, definition)
-		err := k.StoreSymbol(ctx, ft.Symbol, issuerAddress)
+
+		k.SetTokenDefinition(ctx, issuer, subunit, definition)
+
+		err = k.SetSymbol(ctx, ft.Symbol, issuer)
 		if err != nil {
 			panic(err)
 		}
