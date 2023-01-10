@@ -198,6 +198,17 @@ func TestKeeper_Burn(t *testing.T) {
 	err = assetNFTKeeper.Burn(ctx, issuer, classID, nftID)
 	requireT.ErrorIs(types.ErrNFTNotFound, err)
 
+	// mint NFT
+	err = assetNFTKeeper.Mint(ctx, settings)
+	requireT.NoError(err)
+
+	err = nftKeeper.Transfer(ctx, settings.ClassID, settings.ID, recipient)
+	requireT.NoError(err)
+
+	// try burn the nft with the enabled feature from the recipient account
+	err = assetNFTKeeper.Burn(ctx, recipient, classID, nftID)
+	requireT.NoError(err)
+
 	// issue class without burning feature
 	classSettings = types.IssueClassSettings{
 		Issuer: issuer,
