@@ -52,9 +52,9 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(35000),
 
 		// asset/nft
-		MsgName(&assetnfttypes.MsgBurn{}):       constantGasFunc(15000),
 		MsgName(&assetnfttypes.MsgIssueClass{}): constantGasFunc(20000),
 		MsgName(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
+		MsgName(&assetnfttypes.MsgBurn{}):       constantGasFunc(15000),
 
 		// authz
 		MsgName(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
