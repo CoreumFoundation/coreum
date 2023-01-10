@@ -16,16 +16,17 @@ const (
 
 // Denom names
 const (
-	DenomDev         = "ducore"
-	DenomDevDisplay  = "dcore"
-	DenomTest        = "tucore"
-	DenomTestDisplay = "tcore"
-	DenomMain        = "core"
-	DenomMainDisplay = "ucore"
+	DenomDev         = "udevcore"
+	DenomDevDisplay  = "devcore"
+	DenomTest        = "utestcore"
+	DenomTestDisplay = "testcore"
+	DenomMain        = "ucore"
+	DenomMainDisplay = "core"
 )
 
 // Address prefixes
 const (
 	AddressPrefixDev  = "devcore"
+	AddressPrefixTest = "testcore"
 	AddressPrefixMain = "core"
 )
