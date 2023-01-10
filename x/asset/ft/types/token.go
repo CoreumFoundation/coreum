@@ -49,15 +49,15 @@ func BuildDenom(subunit string, issuer sdk.AccAddress) string {
 }
 
 // DeconstructDenom splits the denom string into the symbol and issuer address.
-func DeconstructDenom(denom string) (prefix string, issuer sdk.Address, err error) {
+func DeconstructDenom(denom string) (prefix string, issuer sdk.AccAddress, err error) {
 	denomParts := strings.Split(denom, denomSeparator)
 	if len(denomParts) != 2 {
-		return "", nil, sdkerrors.Wrap(ErrInvalidInput, "symbol must match format [subunit]-[issuer-address]")
+		return "", nil, sdkerrors.Wrap(ErrInvalidDenom, "denom must match format [subunit]-[issuer-address]")
 	}
 
 	address, err := sdk.AccAddressFromBech32(denomParts[1])
 	if err != nil {
-		return "", nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid issuer address in denom,err:%s", err)
+		return "", nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address in denom, err:%s", err)
 	}
 
 	return denomParts[0], address, nil
@@ -104,7 +104,7 @@ func NormalizeSymbolForKey(in string) string {
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
-func (ftd *FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
+func (ftd FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
 	return lo.Contains(ftd.Features, feature)
 }
 
