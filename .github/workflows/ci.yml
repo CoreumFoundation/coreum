@@ -19,7 +19,7 @@ jobs:
             linter-cache: true
             docker-cache: false
           - ci_step: "test"
-            command: "cat pkg/config/deterministic_gas_test.go && crust test/coreum --log-format=yaml"
+            command: "pwd && ls && cat coreum/pkg/config/deterministic_gas_test.go && crust test/coreum --log-format=yaml"
             go-cache: true
             linter-cache: false
             docker-cache: false
