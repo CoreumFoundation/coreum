@@ -101,7 +101,7 @@ func TestBankMatchesInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	definition.Denom = "invalid"
-	ftKeeper.SetTokenDefinition(ctx, definition)
+	ftKeeper.SetTokenDefinition(ctx, settings1.Issuer, settings1.Subunit, definition)
 
 	// check that state is broken now
 	_, isBroken = keeper.BankMetadataMatchesInvariant(ftKeeper)(ctx)
