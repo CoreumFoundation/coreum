@@ -1,5 +1,8 @@
 package keeper
 
+// # Issue bare toke
+// - issue the FT with the minimum possible filled data and apply Mint/Freeze/Whitelist/Burn
+
 // # Issuer + Whitelist
 // - whitelisting balance for issuer account should not be possible, issuer may always receive and send funds
 //   so whitelisting him may create a lot of troubles
@@ -30,6 +33,9 @@ package keeper
 // # Burn rate + Freeze
 // - when burn rate causes a non-frozen balance to be exceeded, tx should fail
 //
+// # Burn rate + Send Commission + Freeze
+// - when there is enough unfrozen coins for the burn rate, but not enough for commission (and vice versa), tx should fail
+//
 // # Send commission + Freeze
 // - when send commission causes a non-frozen balance to be exceeded, tx should fail
 //
@@ -44,3 +50,6 @@ package keeper
 //
 // # All in one
 // - Core + FT coin in one send and multi-send with All Features enabled and account state which already include the whitelisted and frozen state
+//
+//# Permission matrix
+// - Add table test that check the access to all features by issuer and non issuer with the enabled and disabled features
