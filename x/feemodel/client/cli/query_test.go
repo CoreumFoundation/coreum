@@ -24,6 +24,6 @@ func TestMinGasPrice(t *testing.T) {
 	var resp sdk.DecCoin
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &resp))
 
-	assert.Equal(t, "ducore", resp.Denom)
+	assert.Equal(t, testNetwork.Config.BondDenom, resp.Denom)
 	assert.True(t, resp.Amount.GT(sdk.ZeroDec()))
 }

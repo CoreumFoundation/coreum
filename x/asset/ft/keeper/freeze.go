@@ -123,6 +123,12 @@ func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.Pag
 	return collectBalances(k.cdc, k.frozenBalancesStore(ctx), pagination)
 }
 
+// IterateAllFrozenBalances iterates over all frozen balances of all accounts and applies the provided callback.
+// If true is returned from the callback, iteration is stopped.
+func (k Keeper) IterateAllFrozenBalances(ctx sdk.Context, cb func(sdk.AccAddress, sdk.Coin) bool) error {
+	return k.frozenAccountsBalanceStore(ctx).IterateAllBalances(cb)
+}
+
 // frozenBalancesStore get the store for the frozen balances of all accounts
 func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
 	return prefix.NewStore(ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
@@ -132,4 +138,10 @@ func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
 func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
 	store := ctx.KVStore(k.storeKey)
 	return newBalanceStore(k.cdc, store, types.CreateFrozenBalancesKey(addr))
+}
+
+// frozenAccountBalanceStore gets the store for the frozen balances of an account
+func (k Keeper) frozenAccountsBalanceStore(ctx sdk.Context) balanceStore {
+	store := ctx.KVStore(k.storeKey)
+	return newBalanceStore(k.cdc, store, types.FrozenBalancesKeyPrefix)
 }

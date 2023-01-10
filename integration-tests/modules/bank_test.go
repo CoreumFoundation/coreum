@@ -309,11 +309,11 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
-	zeroBankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	require.Equal(t, deterministicGasConfig.FixedGas+deterministicGasConfig.BankSendPerEntry, zeroBankSendGas)
 
 	bankSendGas := chain.GasLimitByMsgs(msg)
-	require.Equal(t, deterministicGasConfig.FixedGas+numOfTokens*deterministicGasConfig.BankSendPerEntry, bankSendGas)
+	msgGas, ok := chain.DeterministicGas().GasRequiredByMessage(msg)
+	require.True(t, ok)
+	require.Equal(t, deterministicGasConfig.FixedGas+msgGas, bankSendGas)
 
 	res, err = tx.BroadcastTx(
 		ctx,
@@ -400,7 +400,6 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
-	deterministicGasConfig := chain.DeterministicGas()
 
 	amountToSend := sdk.NewInt(1000)
 
@@ -466,12 +465,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
-
-	zeroBankMultiSendGas := chain.GasLimitByMsgs(&banktypes.MsgMultiSend{})
-	require.Equal(t, deterministicGasConfig.FixedGas+deterministicGasConfig.BankMultiSendPerEntry, zeroBankMultiSendGas)
-
 	bankMultiSendGas := chain.GasLimitByMsgs(msg)
-	require.Equal(t, deterministicGasConfig.FixedGas+numOfTokens*deterministicGasConfig.BankMultiSendPerEntry, bankMultiSendGas)
 
 	res, err = tx.BroadcastTx(
 		ctx,

@@ -23,7 +23,7 @@
           "key": "l7Albqyhw3hZhCIYMdpU4w/OkopzalM03p8LVsxm1qs="
         },
         "value": {
-          "denom": "ducore",
+          "denom": "udevcore",
           "amount": "10000000000000"
         }
       }
@@ -56,6 +56,6 @@
     }
   },
   "signatures": [
-    "JnOWrDALtmlG+OrxHSAEvzHMVydCRP6w6x9+7wlE7KhogpnwMN6ktU8zuzdpJ6rmaKHrGD+N9T9b/jZ5P1LhFA=="
+    "7kJIwRnHuezJHITDkQUbg/uDF+ap+nm5pf+9dsmo8OwmNSMfN7Di3tePt2Q4pKfj4XqZzfz814+D0VQzq/RkbA=="
   ]
 }
