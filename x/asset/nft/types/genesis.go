@@ -1,6 +1,6 @@
 package types
 
-// DefaultGenesis returns the default FT genesis state.
+// DefaultGenesis returns the default NFT genesis state.
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params: DefaultParams(),

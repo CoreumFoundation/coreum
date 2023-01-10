@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math/rand"
 
+	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -168,6 +169,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	am.keeper.SetShortEMAGas(ctx, newShortEMA)
 	am.keeper.SetLongEMAGas(ctx, newLongEMA)
 	am.keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec(previousMinGasPrice.Denom, newMinGasPrice))
+	metrics.SetGauge([]string{"min_gas_price"}, float32(newMinGasPrice.MustFloat64()))
 
 	return []abci.ValidatorUpdate{}
 }

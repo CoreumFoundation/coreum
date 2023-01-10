@@ -2,11 +2,11 @@ package simapp
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/pkg/errors"
 )
 
 // !!! The code is a modified copy of the cosmos-sdk simapp util code.
@@ -73,7 +73,7 @@ func testAddr(addr, bech string) (sdk.AccAddress, error) {
 		return nil, err
 	}
 	if bech != res.String() {
-		return nil, fmt.Errorf("bech encoding doesn't match reference")
+		return nil, errors.New("bech encoding doesn't match reference")
 	}
 
 	bechres, err := sdk.AccAddressFromBech32(bech)

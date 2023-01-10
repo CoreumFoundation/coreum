@@ -2,7 +2,6 @@ package tx
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strconv"
 
@@ -13,6 +12,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/pkg/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"google.golang.org/grpc"
@@ -87,9 +87,16 @@ func (c ClientContext) WithFromAddress(addr sdk.AccAddress) ClientContext {
 	return c
 }
 
+// WithFeeGranterAddress returns a copy of the context with an updated fee granter account
+// address.
+func (c ClientContext) WithFeeGranterAddress(addr sdk.AccAddress) ClientContext {
+	c.clientCtx = c.clientCtx.WithFeeGranterAddress(addr)
+	return c
+}
+
 // NewStream implements the grpc ClientConn.NewStream method
 func (c ClientContext) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	return nil, fmt.Errorf("streaming rpc not supported")
+	return nil, errors.New("streaming rpc not supported")
 }
 
 // FeeGranterAddress returns the fee granter address from the context

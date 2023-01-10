@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -56,6 +57,29 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	})
 
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
+}
+
+// UpdateParams goes through proposal process to update parameters
+func (g Governance) UpdateParams(ctx context.Context, description string, updates []paramproposal.ParamChange) error {
+	// Fund accounts.
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = chain.Faucet.FundAccounts(ctx, NewFundedAccount(proposer, proposerBalance))
+	if err != nil {
+		return err
+	}
+
+	err = g.ProposeAndVote(ctx, proposer,
+		paramproposal.NewParameterChangeProposal("Updating parameters", description, updates), govtypes.OptionYes)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.

@@ -8,10 +8,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/testutil/event"
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -143,7 +147,13 @@ func TestKeeper_Issue(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
+	ftParams := types.Params{
+		IssueFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
+	}
+	ftKeeper.SetParams(ctx, ftParams)
+
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(ftParams.IssueFee)))
 
 	settings := types.IssueSettings{
 		Issuer:        addr,
@@ -157,6 +167,18 @@ func TestKeeper_Issue(t *testing.T) {
 
 	denom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
+
+	// verify issue fee was burnt
+
+	burntStr, err := event.FindStringEventAttribute(ctx.EventManager().ABCIEvents(), banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
+	requireT.NoError(err)
+	requireT.Equal(ftParams.IssueFee.String(), burntStr)
+
+	// check that balance is 0 meaning issue fee was taken
+
+	balance := bankKeeper.GetBalance(ctx, addr, constant.DenomDev)
+	requireT.Equal(sdk.ZeroInt().String(), balance.Amount.String())
+
 	requireT.Equal(types.BuildDenom(settings.Subunit, settings.Issuer), denom)
 
 	gotToken, err := ftKeeper.GetToken(ctx, denom)
@@ -210,6 +232,63 @@ func TestKeeper_Issue(t *testing.T) {
 	st.Symbol = "aBc"
 	_, err = ftKeeper.Issue(ctx, st)
 	requireT.True(errors.Is(types.ErrInvalidInput, err))
+}
+
+func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	ftParams := types.Params{
+		IssueFee: sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
+	}
+	ftKeeper.SetParams(ctx, ftParams)
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdk.NewInt(777),
+		Features:      []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
+	}
+
+	_, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+}
+
+func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	ftParams := types.Params{
+		IssueFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
+	}
+	ftKeeper.SetParams(ctx, ftParams)
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	settings := types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        "ABC",
+		Description:   "ABC Desc",
+		Subunit:       "abc",
+		Precision:     8,
+		InitialAmount: sdk.NewInt(777),
+		Features:      []types.TokenFeature{types.TokenFeature_freeze}, //nolint:nosnakecase
+	}
+
+	_, err := ftKeeper.Issue(ctx, settings)
+	requireT.ErrorIs(err, sdkerrors.ErrInsufficientFunds)
 }
 
 func TestKeeper_Mint(t *testing.T) {
@@ -342,4 +421,42 @@ func TestKeeper_Burn(t *testing.T) {
 
 	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.ErrorIs(sdkerrors.ErrInsufficientFunds, err)
+}
+
+func TestKeeper_GetIssuerTokens(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	numberOfTokens := 5
+	for i := 0; i < numberOfTokens; i++ {
+		settings := types.IssueSettings{
+			Issuer:        addr,
+			Symbol:        "ABC" + uuid.NewString()[:4],
+			Description:   "ABC Desc",
+			Subunit:       "abc" + uuid.NewString()[:4],
+			Precision:     8,
+			InitialAmount: sdk.NewInt(10),
+		}
+		denom, err := ftKeeper.Issue(ctx, settings)
+		requireT.NoError(err)
+		requireT.Equal(types.BuildDenom(settings.Subunit, settings.Issuer), denom)
+	}
+
+	tokens, _, err := ftKeeper.GetIssuerTokens(ctx, addr, &query.PageRequest{
+		Limit: 3,
+	})
+	requireT.NoError(err)
+	requireT.Equal(3, len(tokens))
+
+	tokens, _, err = ftKeeper.GetIssuerTokens(ctx, addr, &query.PageRequest{
+		Limit: uint64(numberOfTokens + 1),
+	})
+	requireT.NoError(err)
+	requireT.Equal(numberOfTokens, len(tokens))
 }

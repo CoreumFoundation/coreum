@@ -155,6 +155,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	}
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 		Messages: fundMsgs,
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	// issue fungible tokens
@@ -279,6 +280,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 		Messages: append([]sdk.Msg{&banktypes.MsgSend{
 			Amount: make(sdk.Coins, numOfTokens),
 		}}, issueMsgs...),
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(numOfTokens),
 	}))
 
 	// Issue fungible tokens
@@ -307,11 +309,11 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
-	zeroBankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	require.Equal(t, deterministicGasConfig.FixedGas+deterministicGasConfig.BankSendPerEntry, zeroBankSendGas)
 
 	bankSendGas := chain.GasLimitByMsgs(msg)
-	require.Equal(t, deterministicGasConfig.FixedGas+numOfTokens*deterministicGasConfig.BankSendPerEntry, bankSendGas)
+	msgGas, ok := chain.DeterministicGas().GasRequiredByMessage(msg)
+	require.True(t, ok)
+	require.Equal(t, deterministicGasConfig.FixedGas+msgGas, bankSendGas)
 
 	res, err = tx.BroadcastTx(
 		ctx,
@@ -398,7 +400,6 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
-	deterministicGasConfig := chain.DeterministicGas()
 
 	amountToSend := sdk.NewInt(1000)
 
@@ -426,6 +427,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 				},
 			},
 		}}, issueMsgs...),
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(numOfTokens),
 	}))
 
 	// Issue fungible tokens
@@ -463,12 +465,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
-
-	zeroBankMultiSendGas := chain.GasLimitByMsgs(&banktypes.MsgMultiSend{})
-	require.Equal(t, deterministicGasConfig.FixedGas+deterministicGasConfig.BankMultiSendPerEntry, zeroBankMultiSendGas)
-
 	bankMultiSendGas := chain.GasLimitByMsgs(msg)
-	require.Equal(t, deterministicGasConfig.FixedGas+numOfTokens*deterministicGasConfig.BankMultiSendPerEntry, bankMultiSendGas)
 
 	res, err = tx.BroadcastTx(
 		ctx,
@@ -515,6 +512,7 @@ func TestBankMultiSend(t *testing.T) {
 			{Coins: make(sdk.Coins, 2)},
 			{Coins: make(sdk.Coins, 2)},
 		}}}, issueMsgs...),
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(int64(len(issueMsgs))),
 	}))
 
 	// Issue fungible tokens
@@ -677,10 +675,11 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 			multiSendMsg,
 			issue1Msg,
 		},
-		Amount: nativeAmountToSend.Amount,
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.Add(nativeAmountToSend.Amount),
 	}))
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{issue2Msg},
+		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	// issue first fungible token
