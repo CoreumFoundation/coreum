@@ -15,6 +15,7 @@ var _ types.MsgServer = MsgServer{}
 type MsgKeeper interface {
 	IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (string, error)
 	Mint(ctx sdk.Context, settings types.MintSettings) error
+	Burn(ctx sdk.Context, owner sdk.AccAddress, classID, ID string) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -35,6 +36,7 @@ func (ms MsgServer) IssueClass(ctx context.Context, req *types.MsgIssueClass) (*
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid issuer in MsgIssueClass")
 	}
+
 	if _, err := ms.keeper.IssueClass(
 		sdk.UnwrapSDKContext(ctx),
 		types.IssueClassSettings{
@@ -45,6 +47,7 @@ func (ms MsgServer) IssueClass(ctx context.Context, req *types.MsgIssueClass) (*
 			URI:         req.URI,
 			URIHash:     req.URIHash,
 			Data:        req.Data,
+			Features:    req.Features,
 		},
 	); err != nil {
 		return nil, err
@@ -69,6 +72,25 @@ func (ms MsgServer) Mint(ctx context.Context, req *types.MsgMint) (*types.EmptyR
 			URIHash: req.URIHash,
 			Data:    req.Data,
 		},
+	); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// Burn burns the non-fungible token.
+func (ms MsgServer) Burn(ctx context.Context, req *types.MsgBurn) (*types.EmptyResponse, error) {
+	owner, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	if err := ms.keeper.Burn(
+		sdk.UnwrapSDKContext(ctx),
+		owner,
+		req.ClassID,
+		req.ID,
 	); err != nil {
 		return nil, err
 	}

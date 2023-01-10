@@ -4,6 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -55,6 +56,29 @@ func (s balanceStore) Balances(pagination *query.PageRequest) (sdk.Coins, *query
 	}
 
 	return coins, pageRes, err
+}
+
+// IterateAllBalances iterates over all balances of all accounts and applies the provided callback.
+// If true is returned from the callback, iteration is stopped.
+func (s balanceStore) IterateAllBalances(cb func(sdk.AccAddress, sdk.Coin) bool) error {
+	iterator := s.store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		address, err := types.AddressFromBalancesStore(iterator.Key())
+		if err != nil {
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address in the balances store saved with key: %s", string(iterator.Key()))
+		}
+
+		var balance sdk.Coin
+		s.cdc.MustUnmarshal(iterator.Value(), &balance)
+
+		if cb(address, balance) {
+			break
+		}
+	}
+
+	return nil
 }
 
 func (s balanceStore) SetBalance(coin sdk.Coin) {

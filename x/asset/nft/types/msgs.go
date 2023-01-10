@@ -8,6 +8,7 @@ import (
 var (
 	_ sdk.Msg = &MsgIssueClass{}
 	_ sdk.Msg = &MsgMint{}
+	_ sdk.Msg = &MsgBurn{}
 )
 
 // Constraints
@@ -90,6 +91,30 @@ func (msg *MsgMint) ValidateBasic() error {
 
 // GetSigners returns the required signers of this message type.
 func (msg *MsgMint) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Sender),
+	}
+}
+
+// ValidateBasic checks that message fields are valid.
+func (msg *MsgBurn) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+	}
+
+	if err := ValidateTokenID(msg.ID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	return nil
+}
+
+// GetSigners returns the required signers of this message type.
+func (msg *MsgBurn) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}

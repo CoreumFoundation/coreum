@@ -3,6 +3,8 @@ package coreum.asset.nft.v1;
 
 import "gogoproto/gogo.proto";
 
+import "coreum/asset/nft/v1/nft.proto";
+
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
 
 // EventClassIssued is emitted on MsgIssueClass.
@@ -14,4 +16,5 @@ message EventClassIssued {
   string description = 5;
   string uri = 6 [(gogoproto.customname) = "URI"];
   string uri_hash = 7 [(gogoproto.customname) = "URIHash"];
+  repeated ClassFeature features = 8;
 }

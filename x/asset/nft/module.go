@@ -81,7 +81,7 @@ func (a AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // GetQueryCmd returns the assetnft module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return nil
+	return cli.GetQueryCmd()
 }
 
 // ----------------------------------------------------------------------------
@@ -128,6 +128,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 }
 
 // RegisterInvariants registers the assetnft module's invariants.

@@ -12,6 +12,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
 func TestCmdTxIssueClass(t *testing.T) {
@@ -22,7 +23,14 @@ func TestCmdTxIssueClass(t *testing.T) {
 	validator := testNetwork.Validators[0]
 	ctx := validator.ClientCtx
 
-	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
+	args := []string{
+		symbol,
+		"class name",
+		"class description",
+		"https://my-class-meta.invalid/1",
+		"content-hash",
+		fmt.Sprintf("--features=%s", types.ClassFeature_burning.String()), //nolint:nosnakecase // generated variable
+	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
