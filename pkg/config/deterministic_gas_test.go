@@ -79,7 +79,7 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 32, len(determMsgs))
+	assert.Equal(t, 33, len(determMsgs))
 	assert.Equal(t, 9, len(undetermMsgs))
 
 	for _, sdkMsg := range determMsgs {
