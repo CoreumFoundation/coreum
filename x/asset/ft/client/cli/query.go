@@ -23,7 +23,8 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryTokenInfo())
+	cmd.AddCommand(CmdQueryToken())
+	cmd.AddCommand(CmdQueryTokens())
 	cmd.AddCommand(CmdQueryFrozenBalance())
 	cmd.AddCommand(CmdQueryFrozenBalances())
 	cmd.AddCommand(CmdQueryWhitelistedBalance())
@@ -31,17 +32,17 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// CmdQueryTokenInfo return the QueryToken cobra command.
-func CmdQueryTokenInfo() *cobra.Command {
+// CmdQueryToken return the QueryToken cobra command.
+func CmdQueryToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "info [denom]",
+		Use:   "token [denom]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Query fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query fungible token details.
 
 Example:
-$ %[1]s query asset-ft info [denom]
+$ %[1]s query asset-ft token [denom]
 `,
 				version.AppName,
 			),
@@ -63,6 +64,51 @@ $ %[1]s query asset-ft info [denom]
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryTokens return the QueryTokens cobra command.
+//
+//nolint:dupl // most code is identical, but reusing logic is not beneficial here.
+func CmdQueryTokens() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tokens [issuer]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query fungible tokens.
+
+Example:
+$ %[1]s query asset-ft tokens [issuer]
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			issuer := args[0]
+			res, err := queryClient.Tokens(cmd.Context(), &types.QueryTokensRequest{
+				Pagination: pageReq,
+				Issuer:     issuer,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "tokens")
 
 	return cmd
 }

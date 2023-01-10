@@ -31,7 +31,8 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 
-	nftClient := nft.NewQueryClient(chain.ClientContext)
+	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
@@ -53,6 +54,9 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
 		Data:        data,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+		},
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
@@ -104,6 +108,9 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
 		Data:        data,
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+		},
 	}
 	res, err := tx.BroadcastTx(
 		ctx,
@@ -115,35 +122,44 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	requireT.Equal(chain.GasLimitByMsgs(issueMsg), uint64(res.GasUsed))
 	tokenIssuedEvents, err := event.FindTypedEvents[*assetnfttypes.EventClassIssued](res.Events)
 	requireT.NoError(err)
-	tokenIssuedEvent := tokenIssuedEvents[0]
+	issuedEvent := tokenIssuedEvents[0]
+
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
 	requireT.Equal(&assetnfttypes.EventClassIssued{
-		ID:          assetnfttypes.BuildClassID(issueMsg.Symbol, issuer),
+		ID:          classID,
 		Issuer:      issuer.String(),
 		Symbol:      issueMsg.Symbol,
 		Name:        issueMsg.Name,
 		Description: issueMsg.Description,
 		URI:         issueMsg.URI,
 		URIHash:     issueMsg.URIHash,
-	}, tokenIssuedEvent)
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+		},
+	}, issuedEvent)
 
-	// check that class is present in the nft module
-	nftClassRes, err := nftClient.Class(ctx, &nft.QueryClassRequest{
-		ClassId: tokenIssuedEvent.ID,
+	// query nft asset with features
+	assetNftClassRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{
+		Id: classID,
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(&nft.Class{
-		Id:          assetnfttypes.BuildClassID(issueMsg.Symbol, issuer),
+	requireT.Equal(assetnfttypes.Class{
+		Id:          classID,
+		Issuer:      issuer.String(),
 		Symbol:      issueMsg.Symbol,
 		Name:        issueMsg.Name,
 		Description: issueMsg.Description,
-		Uri:         issueMsg.URI,
-		UriHash:     issueMsg.URIHash,
+		URI:         issueMsg.URI,
+		URIHash:     issueMsg.URIHash,
 		Data:        dataToCompare,
-	}, nftClassRes.Class)
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+		},
+	}, assetNftClassRes.Class)
 
 	var data2 assetnfttypes.DataBytes
-	requireT.NoError(proto.Unmarshal(nftClassRes.Class.Data.Value, &data2))
+	requireT.NoError(proto.Unmarshal(assetNftClassRes.Class.Data.Value, &data2))
 
 	requireT.Equal(jsonData, data2.Data)
 }
@@ -411,4 +427,103 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, origMintFee))))),
 		}))
+}
+
+// TestAssetNFTBurn tests non-fungible token burning.
+func TestAssetNFTBurn(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	nftClient := nft.NewQueryClient(chain.ClientContext)
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetnfttypes.MsgIssueClass{},
+				&assetnfttypes.MsgMint{},
+				&assetnfttypes.MsgBurn{},
+			},
+		}),
+	)
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+		},
+	}
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	// mint new token in that class
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      "id-1",
+		ClassID: classID,
+	}
+	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(mintMsg), uint64(res.GasUsed))
+
+	// check that token is present in the nft module
+	nftRes, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: classID,
+		Id:      mintMsg.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(&nft.NFT{
+		ClassId: classID,
+		Id:      mintMsg.ID,
+		Uri:     mintMsg.URI,
+		UriHash: mintMsg.URIHash,
+	}, nftRes.Nft)
+
+	// burn the NFT
+	msgBurn := &assetnfttypes.MsgBurn{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      "id-1",
+	}
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBurn)),
+		msgBurn,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(msgBurn), uint64(res.GasUsed))
+
+	// assert the burning event
+	burnEvents, err := event.FindTypedEvents[*nft.EventBurn](res.Events)
+	requireT.NoError(err)
+	burnEvent := burnEvents[0]
+	requireT.Equal(&nft.EventBurn{
+		ClassId: classID,
+		Id:      msgBurn.ID,
+		Owner:   issuer.String(),
+	}, burnEvent)
+
+	// check that token isn't presented in the nft module anymore
+	_, err = nftClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: classID,
+		Id:      mintMsg.ID,
+	})
+	requireT.Error(err)
+	requireT.Contains(err.Error(), nft.ErrNFTNotExists.Error()) // the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
 }
