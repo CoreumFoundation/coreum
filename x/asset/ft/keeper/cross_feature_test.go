@@ -1,5 +1,7 @@
 package keeper
 
+// # All tests must be applied for to send and multi-send
+
 // # Issue bare toke
 // - issue the FT with the minimum possible filled data and apply Mint/Freeze/Whitelist/Burn
 
