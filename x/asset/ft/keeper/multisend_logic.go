@@ -8,7 +8,11 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-type IOPuts struct {
+// TODO: Some renaming could be done.
+// TODO: Use sdk.Parse for addresses instead of sdk.AccAddress()
+
+// TODO: Check if we can drop this structure.
+type IOPut struct {
 	Address string
 	Coins   sdk.Coins
 }
@@ -24,14 +28,14 @@ type GroupedMultisend struct {
 }
 
 func (k Keeper) applyFeatures2(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	inp := make([]IOPuts, len(inputs))
+	inp := make([]IOPut, len(inputs))
 	for i, in := range inputs {
-		inp[i] = IOPuts(in)
+		inp[i] = IOPut(in)
 	}
 
-	outp := make([]IOPuts, len(outputs))
+	outp := make([]IOPut, len(outputs))
 	for i, out := range outputs {
-		outp[i] = IOPuts(out)
+		outp[i] = IOPut(out)
 	}
 
 	squashedInp := squashIOPuts(inp)
@@ -43,7 +47,8 @@ func (k Keeper) applyFeatures2(ctx sdk.Context, inputs []banktypes.Input, output
 	return k.applyRates(ctx, groupedInp, groupedOutp)
 }
 
-func squashIOPuts(inputs []IOPuts) []IOPuts {
+// TODO: Try to make squash & group in a single function.
+func squashIOPuts(inputs []IOPut) []IOPut {
 	accAddressCoins := make(map[string]sdk.Coins)
 
 	for _, input := range inputs {
@@ -57,15 +62,15 @@ func squashIOPuts(inputs []IOPuts) []IOPuts {
 		accAddressCoins[input.Address] = accCoins
 	}
 
-	return lo.MapToSlice(accAddressCoins, func(accAddress string, coins sdk.Coins) IOPuts {
-		return IOPuts{
+	return lo.MapToSlice(accAddressCoins, func(accAddress string, coins sdk.Coins) IOPut {
+		return IOPut{
 			Address: accAddress,
 			Coins:   coins,
 		}
 	})
 }
 
-func groupByDenom(ioputs []IOPuts) map[string][]AccAmount {
+func groupByDenom(ioputs []IOPut) map[string][]AccAmount {
 	denomToAccounts := make(map[string][]AccAmount)
 
 	for _, ioput := range ioputs {
@@ -94,6 +99,9 @@ func (k Keeper) applyRates(ctx sdk.Context, inputsAmounts, outputAmounts map[str
 		}
 
 		outpAmounts := outputAmounts[denom]
+		// 10% -> 8%
+		// TODO: Current implementation of CalculateAdjustedRate has worse rounding behavior than initial.
+		// Try to pass amount to CalculateAdjustedRate directly so we do all multiplications at first and then we do division.
 		adjustedBurnRate := CalculateAdjustedRate(ftd.BurnRate, ftd.Issuer, inpAmounts, outpAmounts)
 		adjustedCommissionRate := CalculateAdjustedRate(ftd.SendCommissionRate, ftd.Issuer, inpAmounts, outpAmounts)
 
@@ -111,6 +119,14 @@ func (k Keeper) applyRates(ctx sdk.Context, inputsAmounts, outputAmounts map[str
 				if err != nil {
 					return err
 				}
+
+			}
+		}
+
+		// TODO: Same for outpAmounts
+		for _, inpAmount := range inpAmounts {
+			if err := k.isCoinSpendable(ctx, sdk.AccAddress(inpAmount.Account), ftd, inpAmount.Amount); err != nil {
+				return err
 			}
 		}
 	}
