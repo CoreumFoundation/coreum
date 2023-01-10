@@ -87,6 +87,13 @@ func (c ClientContext) WithFromAddress(addr sdk.AccAddress) ClientContext {
 	return c
 }
 
+// WithFeeGranterAddress returns a copy of the context with an updated fee granter account
+// address.
+func (c ClientContext) WithFeeGranterAddress(addr sdk.AccAddress) ClientContext {
+	c.clientCtx = c.clientCtx.WithFeeGranterAddress(addr)
+	return c
+}
+
 // NewStream implements the grpc ClientConn.NewStream method
 func (c ClientContext) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	return nil, errors.New("streaming rpc not supported")

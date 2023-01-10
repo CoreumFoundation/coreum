@@ -68,7 +68,7 @@ func (k Keeper) whitelistedBalancesStore(ctx sdk.Context) prefix.Store {
 // whitelistedAccountBalanceStore gets the store for the frozen balances of an account
 func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
 	store := ctx.KVStore(k.storeKey)
-	return newBalanceStore(k.cdc, store, types.CreateWhitelistedBalancesPrefix(addr))
+	return newBalanceStore(k.cdc, store, types.CreateWhitelistedBalancesKey(addr))
 }
 
 // areCoinsReceivable returns an error if whitelisted amount is too low to receive coins

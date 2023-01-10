@@ -6,6 +6,7 @@ import (
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -46,6 +47,9 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		DistributionSetWithdrawAddress:          50000,
 		DistributionWithdrawDelegatorReward:     120000,
 		DistributionWithdrawValidatorCommission: 50000,
+
+		FeeGrantGrantAllowance:  13000,
+		FeeGrantRevokeAllowance: 13000,
 
 		GovSubmitProposal: 95000,
 		GovVote:           8000,
@@ -110,6 +114,9 @@ type DeterministicGasRequirements struct {
 	DistributionWithdrawDelegatorReward     uint64
 	DistributionWithdrawValidatorCommission uint64
 
+	// x/feegrant
+	FeeGrantGrantAllowance  uint64
+	FeeGrantRevokeAllowance uint64
 	// x/gov
 	GovSubmitProposal uint64
 	GovVote           uint64
@@ -212,6 +219,10 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 		return dgr.DistributionWithdrawDelegatorReward, true
 	case *distributiontypes.MsgWithdrawValidatorCommission:
 		return dgr.DistributionWithdrawValidatorCommission, true
+	case *feegrant.MsgGrantAllowance:
+		return dgr.FeeGrantGrantAllowance, true
+	case *feegrant.MsgRevokeAllowance:
+		return dgr.FeeGrantRevokeAllowance, true
 	case *govtypes.MsgSubmitProposal:
 		return dgr.GovSubmitProposal, true
 	case *govtypes.MsgVote:
