@@ -55,3 +55,10 @@ package keeper
 //
 //# Permission matrix
 // - Add table test that check the access to all features by issuer and non issuer with the enabled and disabled features
+//
+//# Native tokens check
+// - Add table test to check that a native token skips all features checks
+//
+//# Authz
+// - Add test to issue a token with freeze and whitelisting features and test those features from the issuer and non-issuer accounts executed on behalf of a grantee
+//
