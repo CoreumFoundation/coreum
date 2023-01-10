@@ -69,7 +69,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		//
 		// We consume gas as follows:
 		// - constant preliminary fee (`FixedGas`) is charged on every tx to cover the cost of running some ante decorators
-		// - bonus gas is added for free to cover cost related to transaction size (`FreeBytes`) and signatures (`FreeSignatures`)
+		// - bonus gas is added for free to cover cost related to transaction size (`freeBytes`) and signatures (`freeSignatures`)
 		// - at the end we compute gas available to message handlers
 		//
 		// Details:
@@ -80,8 +80,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		//   consuming real gas. It doesn't mean they run for free, the cost of running them is covered later by charging
 		//   `FixedGas` on the final gas meter
 		//
-		// `AddBaseGasDecorator` is there to add some bonus gas covering cost of a tx size up to limit defined by `FreeBytes`
-		// and signature verification up to `FreeSignatures` signatures.
+		// `AddBaseGasDecorator` is there to add some bonus gas covering cost of a tx size up to limit defined by `freeBytes`
+		// and signature verification up to `freeSignatures` signatures.
 		//
 		// `ChargeFixedGasDecorator` creates final gas meter passed to message handlers and computes and charges final gas
 		// to be consumed by the entire ante handler. Consumed gas is computed as follows:
