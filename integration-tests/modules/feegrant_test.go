@@ -30,7 +30,8 @@ func TestFeeGrant(t *testing.T) {
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
 			&feegrant.MsgGrantAllowance{},
-			&feegrant.MsgRevokeAllowance{}},
+			&feegrant.MsgRevokeAllowance{},
+		},
 	}))
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
 		Amount: sdk.NewInt(1),

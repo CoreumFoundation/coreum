@@ -31,3 +31,28 @@ func TestCmdTxMint(t *testing.T) {
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
 	requireT.NoError(err)
 }
+
+func TestCmdTxBurn(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+
+	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
+	requireT.NoError(err)
+
+	classID := types.BuildClassID(symbol, validator.Address)
+	args = []string{classID, "nft-1", "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
+	requireT.NoError(err)
+
+	args = []string{classID, "nft-1"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args)
+	requireT.NoError(err)
+}
