@@ -71,6 +71,11 @@ jobs:
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
+          persist-credentials: false
+          path: coreum
+      - name: Checkout crust
+        uses: actions/checkout@v3
+        with:
           repository: CoreumFoundation/crust
           path: crust
       - name: Set up crust
