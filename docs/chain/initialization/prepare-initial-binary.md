@@ -126,7 +126,7 @@ The output example:
   ```
 
 * Repeat the same operation for each validator, collect the signed transactions, put them to the "
-  pkg/config/networks/$CORED_CHAIN_ID" folder. All transactions from that folder will be used in the genesis file.
+  pkg/config/genesis/gentx/$CORED_CHAIN_ID" folder. All transactions from that folder will be used in the genesis file.
 
 * Update the "pkg/config/networks/network.go" file with the initial balances of the validator staker. Pay attention that the
   balance must be more than the amount in the "create-validator" transaction.
