@@ -23,7 +23,7 @@ import (
 //go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
-func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
+func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor undeterministic.
 	unknownMsgPrefixes := []string{
