@@ -132,12 +132,14 @@ func TestAssetFTBurn(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
-	randomAddress := chain.GenAccount()
+	recipient := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+				&banktypes.MsgSend{},
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgBurn{},
@@ -146,8 +148,9 @@ func TestAssetFTBurn(t *testing.T) {
 			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(2),
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
+				&assetfttypes.MsgBurn{},
 				&assetfttypes.MsgBurn{},
 			},
 		}))
@@ -178,12 +181,12 @@ func TestAssetFTBurn(t *testing.T) {
 	requireT.NoError(err)
 	unburnable := fungibleTokenIssuedEvts[0].Denom
 
-	// try to burn unburnable token
+	// try to burn unburnable token from issuer
 	burnMsg := &assetfttypes.MsgBurn{
 		Sender: issuer.String(),
 		Coin: sdk.Coin{
 			Denom:  unburnable,
-			Amount: sdk.NewInt(1000),
+			Amount: sdk.NewInt(900),
 		},
 	}
 
@@ -193,7 +196,39 @@ func TestAssetFTBurn(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.True(assetfttypes.ErrFeatureNotActive.Is(err))
+	requireT.NoError(err)
+
+	// send some coins to the recipient
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(unburnable, sdk.NewInt(100))),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// try to burn unburnable token from recipient
+	burnMsg = &assetfttypes.MsgBurn{
+		Sender: recipient.String(),
+		Coin: sdk.Coin{
+			Denom:  unburnable,
+			Amount: sdk.NewInt(1000),
+		},
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 
 	// Issue a burnable fungible token
 	issueMsg = &assetfttypes.MsgIssue{
@@ -218,19 +253,33 @@ func TestAssetFTBurn(t *testing.T) {
 	requireT.NoError(err)
 	burnableDenom := fungibleTokenIssuedEvts[0].Denom
 
+	// send some coins to the recipient
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdk.NewInt(100))),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
 	// try to pass non-issuer signature to msg
 	burnMsg = &assetfttypes.MsgBurn{
-		Sender: randomAddress.String(),
-		Coin:   sdk.NewCoin(burnableDenom, sdk.NewInt(1000)),
+		Sender: recipient.String(),
+		Coin:   sdk.NewCoin(burnableDenom, sdk.NewInt(100)),
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(randomAddress),
+		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.Error(err)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.NoError(err)
 
 	// burn tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
@@ -251,7 +300,7 @@ func TestAssetFTBurn(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdk.NewInt(1000)).Sub(burnCoin).String(), balance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdk.NewInt(300)).String(), balance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
@@ -613,7 +662,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
 		freezeMsg,
 	)
-	assertT.True(assetfttypes.ErrFeatureNotActive.Is(err))
+	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
 
 // TestAssetFTFreeze checks freeze functionality of fungible tokens.
@@ -917,9 +966,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
-
 	requireT := require.New(t)
-	assertT := assert.New(t)
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
@@ -934,6 +981,14 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 				&banktypes.MsgSend{},
 			},
 			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+				&banktypes.MsgMultiSend{},
+				&banktypes.MsgSend{},
+			},
 		}))
 
 	// Issue the new fungible token
@@ -987,7 +1042,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	assertT.True(assetfttypes.ErrGloballyFrozen.Is(err))
+	requireT.NoError(err)
 
 	// multi-send
 	multiSendMsg := &banktypes.MsgMultiSend{
@@ -1000,7 +1055,34 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
 		multiSendMsg,
 	)
-	assertT.True(assetfttypes.ErrGloballyFrozen.Is(err))
+	requireT.NoError(err)
+
+	// send from recipient
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   issuer.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.True(assetfttypes.ErrGloballyFrozen.Is(err))
+
+	// multi-send
+	multiSendMsg = &banktypes.MsgMultiSend{
+		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
+		Outputs: []banktypes.Output{{Address: issuer.String(), Coins: coinsToSend}},
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
+		multiSendMsg,
+	)
+	requireT.True(assetfttypes.ErrGloballyFrozen.Is(err))
 
 	// Globally unfreeze FT.
 	globUnfreezeMsg := &assetfttypes.MsgGloballyUnfreeze{
@@ -1015,17 +1097,31 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// Try to send FT.
-	sendMsg2 := &banktypes.MsgSend{
+	// Try to send FT from issuer.
+	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(55))),
+		Amount:      coinsToSend,
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg2)),
-		sendMsg2,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// Try to send FT from recipient.
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   issuer.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
 	)
 	requireT.NoError(err)
 }
@@ -1183,7 +1279,7 @@ func TestAssetFTMint(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
-	requireT.True(assetfttypes.ErrFeatureNotActive.Is(err))
+	requireT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 
 	// Issue a mintable fungible token
 	issueMsg = &assetfttypes.MsgIssue{
@@ -1300,7 +1396,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
-	assertT.True(assetfttypes.ErrFeatureNotActive.Is(err))
+	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
 
 // TestAssetFTWhitelist checks whitelist functionality of fungible tokens.

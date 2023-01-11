@@ -66,11 +66,11 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	// try to global-freeze non-existent
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)
 	err = ftKeeper.GloballyFreeze(ctx, issuer, nonExistentDenom)
-	assertT.True(sdkerrors.IsOf(err, types.ErrFTNotFound))
+	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
 
 	// try to global-freeze unfreezable FT
 	err = ftKeeper.GloballyFreeze(ctx, issuer, unfreezableDenom)
-	assertT.True(sdkerrors.IsOf(err, types.ErrFeatureNotActive))
+	assertT.ErrorIs(types.ErrFeatureDisabled, err)
 
 	// try to global-freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
