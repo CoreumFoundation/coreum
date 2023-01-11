@@ -427,125 +427,143 @@ func TestKeeper_Burn(t *testing.T) {
 }
 
 //nolint:funlen // there are too many tests cases
-func TestKeeperCalculateBurnRateShare(t *testing.T) {
+func TestKeeperCalculateRateShare(t *testing.T) {
+	genAccount := func() string {
+		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
+	}
+	var accounts []string
+	for i := 0; i < 10; i++ {
+		accounts = append(accounts, genAccount())
+	}
+	issuer := genAccount()
 	testCases := []struct {
-		burnRate         string
-		commissionRate   string
-		inputSum         int64
-		outputSum        int64
-		senders          map[string]int64
-		burnShares       map[string]int64
-		commissionShares map[string]int64
+		rate      string
+		issuer    string
+		senders   map[string]int64
+		receivers map[string]int64
+		shares    map[string]int64
 	}{
 		{
-			burnRate:         "0.5",
-			commissionRate:   "0.5",
-			inputSum:         0,
-			outputSum:        0,
-			senders:          map[string]int64{},
-			burnShares:       map[string]int64{},
-			commissionShares: map[string]int64{},
+			rate:    "0.5",
+			issuer:  issuer,
+			senders: map[string]int64{},
+			shares:  map[string]int64{},
 		},
 		{
-			burnRate:       "0.5",
-			commissionRate: "0.5",
-			inputSum:       10,
-			outputSum:      0,
+			rate:   "0.5",
+			issuer: issuer,
 			senders: map[string]int64{
-				"1": 5,
-				"2": 5,
+				accounts[0]: 5,
+				accounts[1]: 5,
 			},
-			burnShares:       map[string]int64{},
-			commissionShares: map[string]int64{},
+			receivers: map[string]int64{
+				issuer: 10,
+			},
+			shares: map[string]int64{},
 		},
 		{
-			burnRate:       "0.1",
-			commissionRate: "0.1",
-			inputSum:       1000,
-			outputSum:      2000,
+			rate:   "0.5",
+			issuer: issuer,
 			senders: map[string]int64{
-				"1": 400,
-				"2": 600,
+				issuer: 10,
 			},
-			burnShares: map[string]int64{
-				"1": 40,
-				"2": 60,
+			receivers: map[string]int64{
+				accounts[0]: 5,
+				accounts[1]: 5,
 			},
-			commissionShares: map[string]int64{
-				"1": 40,
-				"2": 60,
-			},
+			shares: map[string]int64{},
 		},
 		{
-			burnRate:       "0.1",
-			commissionRate: "0.1",
-			inputSum:       1001,
-			outputSum:      2000,
+			rate:   "0.1",
+			issuer: issuer,
 			senders: map[string]int64{
-				"1": 399,
-				"2": 602,
+				accounts[0]: 400,
+				accounts[1]: 600,
 			},
-			burnShares: map[string]int64{
-				"1": 40,
-				"2": 61,
+			receivers: map[string]int64{
+				accounts[0]: 1000,
 			},
-			commissionShares: map[string]int64{
-				"1": 40,
-				"2": 61,
+			shares: map[string]int64{
+				accounts[0]: 40,
+				accounts[1]: 60,
 			},
 		},
 		{
-			burnRate:       "0.01",
-			commissionRate: "0.01",
-			inputSum:       50000,
-			outputSum:      20000,
+			rate:   "0.1",
+			issuer: issuer,
 			senders: map[string]int64{
-				"1": 30000,
-				"2": 20000,
+				accounts[0]: 399,
+				accounts[1]: 602,
 			},
-			burnShares: map[string]int64{
-				"1": 120,
-				"2": 80,
+			receivers: map[string]int64{
+				accounts[0]: 1001,
 			},
-			commissionShares: map[string]int64{
-				"1": 120,
-				"2": 80,
+			shares: map[string]int64{
+				accounts[0]: 40,
+				accounts[1]: 61,
 			},
 		},
 		{
-			burnRate:       "0.01001",
-			commissionRate: "0.01001",
-			inputSum:       50000,
-			outputSum:      20000,
+			rate:   "0.1",
+			issuer: issuer,
 			senders: map[string]int64{
-				"1": 30000,
-				"2": 20000,
+				issuer:      90,
+				accounts[0]: 29,
+				accounts[1]: 32,
 			},
-			burnShares: map[string]int64{
-				"1": 121,
-				"2": 81,
+			receivers: map[string]int64{
+				genAccount(): 90 + 29 + 32,
 			},
-			commissionShares: map[string]int64{
-				"1": 121,
-				"2": 81,
+			shares: map[string]int64{
+				accounts[0]: 3,
+				accounts[1]: 4,
 			},
 		},
 		{
-			burnRate:       "0.1234",
-			commissionRate: "0.1234",
-			inputSum:       97,
-			outputSum:      97,
+			rate:   "0.01",
+			issuer: issuer,
 			senders: map[string]int64{
-				"1": 80,
-				"2": 17,
+				accounts[0]: 30000,
+				accounts[1]: 20000,
 			},
-			burnShares: map[string]int64{
-				"1": 10,
-				"2": 3,
+			receivers: map[string]int64{
+				issuer:       30000,
+				genAccount(): 20000,
 			},
-			commissionShares: map[string]int64{
-				"1": 10,
-				"2": 3,
+			shares: map[string]int64{
+				accounts[0]: 120,
+				accounts[1]: 80,
+			},
+		},
+		{
+			rate:   "0.01001",
+			issuer: issuer,
+			senders: map[string]int64{
+				accounts[0]: 30000,
+				accounts[1]: 20000,
+			},
+			receivers: map[string]int64{
+				issuer:       30000,
+				genAccount(): 20000,
+			},
+			shares: map[string]int64{
+				accounts[0]: 121,
+				accounts[1]: 81,
+			},
+		},
+		{
+			rate:   "0.1234",
+			issuer: issuer,
+			senders: map[string]int64{
+				accounts[0]: 80,
+				accounts[1]: 17,
+			},
+			receivers: map[string]int64{
+				genAccount(): 97,
+			},
+			shares: map[string]int64{
+				accounts[0]: 10,
+				accounts[1]: 3,
 			},
 		},
 	}
@@ -555,27 +573,19 @@ func TestKeeperCalculateBurnRateShare(t *testing.T) {
 		name := fmt.Sprintf("%+v", tc)
 		t.Run(name, func(t *testing.T) {
 			assertT := assert.New(t)
-			senders := map[string]sdk.Int{}
-			for addr, amt := range tc.senders {
-				senders[addr] = sdk.NewInt(amt)
+			issuer := sdk.MustAccAddressFromBech32(tc.issuer)
+			inputs := make([]keeper.AccAmount, 0, len(tc.senders))
+			for acc, amount := range tc.senders {
+				inputs = append(inputs, keeper.AccAmount{Account: sdk.MustAccAddressFromBech32(acc), Amount: sdk.NewInt(amount)})
 			}
-			si := keeper.MultiSendIterationInfo{
-				FT: types.FTDefinition{
-					BurnRate:           sdk.MustNewDecFromStr(tc.burnRate),
-					SendCommissionRate: sdk.MustNewDecFromStr(tc.commissionRate),
-				},
-				NonIssuerInputSum:  sdk.NewInt(tc.inputSum),
-				NonIssuerOutputSum: sdk.NewInt(tc.outputSum),
-				NonIssuerSenders:   senders,
-			}
-			burnShares := si.CalculateRateShares(si.FT.BurnRate)
-			for acc, share := range burnShares {
-				assertT.EqualValues(tc.burnShares[acc], share.Int64())
+			outputs := make([]keeper.AccAmount, 0, len(tc.receivers))
+			for acc, amount := range tc.receivers {
+				outputs = append(outputs, keeper.AccAmount{Account: sdk.MustAccAddressFromBech32(acc), Amount: sdk.NewInt(amount)})
 			}
 
-			commissionShares := si.CalculateRateShares(si.FT.SendCommissionRate)
-			for acc, share := range commissionShares {
-				assertT.EqualValues(tc.commissionShares[acc], share.Int64())
+			shares := keeper.CalculateRateShares(sdk.MustNewDecFromStr(tc.rate), issuer.String(), inputs, outputs)
+			for _, share := range shares {
+				assertT.EqualValues(tc.shares[share.Account.String()], share.Amount.Int64())
 			}
 		})
 	}
