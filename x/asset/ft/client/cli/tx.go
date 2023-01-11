@@ -66,9 +66,9 @@ func CmdTxIssue() *cobra.Command {
 			fmt.Sprintf(`Issues new fungible token.
 
 Example:
-$ %s tx asset-ft issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
+$ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -170,9 +170,9 @@ func CmdTxFreeze() *cobra.Command {
 			fmt.Sprintf(`Freeze a portion of fungible token.
 
 Example:
-$ %s tx asset-ft freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -214,9 +214,9 @@ func CmdTxUnfreeze() *cobra.Command {
 			fmt.Sprintf(`Unfreezes a portion of the frozen fungible token.
 
 Example:
-$ %s tx asset-ft unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -257,9 +257,9 @@ func CmdTxMint() *cobra.Command {
 			fmt.Sprintf(`Mint new amount of fungible token.
 
 Example:
-$ %s tx asset-ft mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -298,9 +298,9 @@ func CmdTxBurn() *cobra.Command {
 			fmt.Sprintf(`Burn some amount of fungible token.
 
 Example:
-$ %s tx asset-ft burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -341,9 +341,9 @@ func CmdTxSetWhitelistedLimit() *cobra.Command {
 			fmt.Sprintf(`Set whitelisted limit on an account.
 
 Example:
-$ %s tx asset-ft set-whitelisted-limit [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
+$ %s tx %s set-whitelisted-limit [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -384,9 +384,9 @@ func CmdTxGloballyFreeze() *cobra.Command {
 This operation is idempotent so global freeze of already frozen token does nothing.
 
 Example:
-$ %s tx asset-ft globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -422,9 +422,9 @@ func CmdTxGloballyUnfreeze() *cobra.Command {
 This operation is idempotent so global unfreezing of non-frozen token does nothing.
 
 Example:
-$ %s tx asset-ft globally-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s globally-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
