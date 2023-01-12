@@ -23,7 +23,7 @@ import (
 //go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
-func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
+func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor undeterministic.
 	unknownMsgPrefixes := []string{
@@ -85,8 +85,8 @@ func TestDeterministicGasRequirements_DetermMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 34, len(determMsgs))
 	assert.Equal(t, 7, len(undetermMsgs))
+	assert.Equal(t, 35, len(determMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg

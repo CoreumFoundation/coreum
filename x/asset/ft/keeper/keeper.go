@@ -62,7 +62,7 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 	for _, coin := range coins {
 		ft, err := k.GetTokenDefinition(ctx, coin.Denom)
 		if err != nil {
-			if types.ErrInvalidDenom.Is(err) || types.ErrFTNotFound.Is(err) {
+			if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
 				continue
 			}
 			return err
@@ -85,7 +85,7 @@ func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccA
 }
 
 func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FTDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
-	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
+	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && !ft.IsIssuer(fromAddress) && !ft.IsIssuer(toAddress) {
 		coinToBurn := ft.CalculateBurnRateAmount(coin)
 		err := k.burn(ctx, fromAddress, ft, coinToBurn)
 		if err != nil {
@@ -97,7 +97,7 @@ func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FTDefinition, fromAddres
 }
 
 func (k Keeper) applySendCommissionRate(ctx sdk.Context, ft types.FTDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
-	if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && ft.Issuer != fromAddress.String() && ft.Issuer != toAddress.String() {
+	if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && !ft.IsIssuer(fromAddress) && !ft.IsIssuer(toAddress) {
 		sendCommission := ft.CalculateSendCommissionRateAmount(coin)
 		err := k.bankKeeper.SendCoins(ctx, fromAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendCommission)))
 		if err != nil {
@@ -118,7 +118,7 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 
 		for _, coin := range in.Coins {
 			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-			if types.ErrInvalidDenom.Is(err) || types.ErrFTNotFound.Is(err) {
+			if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
 				continue
 			}
 
@@ -130,14 +130,14 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 				return err
 			}
 
-			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && ft.Issuer != inAddress.String() {
+			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && !ft.IsIssuer(inAddress) {
 				coinsToBurn := ft.CalculateBurnRateAmount(coin)
 				err := k.burn(ctx, inAddress, ft, coinsToBurn)
 				if err != nil {
 					return err
 				}
 			}
-			if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && ft.Issuer != inAddress.String() {
+			if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && !ft.IsIssuer(inAddress) {
 				sendCommissionRate := ft.CalculateSendCommissionRateAmount(coin)
 				err := k.bankKeeper.SendCoins(ctx, inAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendCommissionRate)))
 				if err != nil {
@@ -155,7 +155,7 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 
 		for _, coin := range out.Coins {
 			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-			if types.ErrInvalidDenom.Is(err) || types.ErrFTNotFound.Is(err) {
+			if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
 				continue
 			}
 			if err != nil {
@@ -183,8 +183,7 @@ func (k Keeper) Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_mint) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_mint); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -198,22 +197,10 @@ func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_burn) //nolint:nosnakecase
+	err = ft.CheckFeatureAllowed(sender, types.TokenFeature_burn) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
 
 	return k.burn(ctx, sender, ft, coin.Amount)
-}
-
-func (k Keeper) checkFeatureAllowed(sender sdk.AccAddress, ft types.FTDefinition, feature types.TokenFeature) error {
-	if !ft.IsFeatureEnabled(feature) {
-		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", ft.Denom, feature)
-	}
-
-	if ft.Issuer != sender.String() {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform this operation", sender.String())
-	}
-
-	return nil
 }

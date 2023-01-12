@@ -20,8 +20,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_freeze); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -48,8 +47,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_freeze); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -83,7 +81,12 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 
 // areCoinsSpendable returns an error if there are not enough coins balances to be spent
 func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, ft types.FTDefinition, amount sdk.Int) error {
-	if k.isGloballyFrozen(ctx, ft.Denom) {
+	if !ft.IsFeatureEnabled(types.TokenFeature_freeze) { //nolint:nosnakecase
+		return nil
+	}
+
+	// the issuer can use token even if it's globally frozen
+	if k.isGloballyFrozen(ctx, ft.Denom) && !ft.IsIssuer(addr) {
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", ft.Denom)
 	}
 
