@@ -81,6 +81,7 @@ The output example:
 
   *Update the parameters in case different parameters are needed. The identity might be registered on that website https://keybase.io/*
 
+NOTE: cored still requires connection to node even though tx generation should be fully done offline. The easiest way is to start znet locally.
   ```bash
   ./cored tx staking create-validator \
     --amount=10000000000000$CORED_DENOM \
