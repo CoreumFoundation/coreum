@@ -65,7 +65,7 @@ func (g groupedByDenomBankOperations) flatten() map[string][]BankOperation {
 func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs map[string][]BankOperation) error {
 	for denom, inOps := range inputs {
 		ftd, err := k.GetTokenDefinition(ctx, denom)
-		if types.ErrFTNotFound.Is(err) {
+		if types.ErrTokenNotFound.Is(err) {
 			return nil
 		}
 
@@ -105,6 +105,9 @@ func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs map[string][]BankOpe
 
 // CalculateRateShares calculates how the burn or commission share amount should be split between different parties
 func CalculateRateShares(rate sdk.Dec, issuer string, inOps, outOps []BankOperation) []BankOperation {
+	// The algorithm is as following. we first get the minimum of total inputs and outputs which are not
+	// from the issuer. We then multiply by the rate to get applicable total amount. we then split this amount
+	// between non-issuer senders, proportional to their input value.
 	if !rate.IsPositive() {
 		return nil
 	}
