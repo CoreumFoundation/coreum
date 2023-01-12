@@ -574,13 +574,13 @@ func TestKeeperCalculateRateShare(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assertT := assert.New(t)
 			issuer := sdk.MustAccAddressFromBech32(tc.issuer)
-			inputs := make([]keeper.AccAmount, 0, len(tc.senders))
+			inputs := make([]keeper.BankOperation, 0, len(tc.senders))
 			for acc, amount := range tc.senders {
-				inputs = append(inputs, keeper.AccAmount{Account: sdk.MustAccAddressFromBech32(acc), Amount: sdk.NewInt(amount)})
+				inputs = append(inputs, keeper.BankOperation{Account: sdk.MustAccAddressFromBech32(acc), Amount: sdk.NewInt(amount)})
 			}
-			outputs := make([]keeper.AccAmount, 0, len(tc.receivers))
+			outputs := make([]keeper.BankOperation, 0, len(tc.receivers))
 			for acc, amount := range tc.receivers {
-				outputs = append(outputs, keeper.AccAmount{Account: sdk.MustAccAddressFromBech32(acc), Amount: sdk.NewInt(amount)})
+				outputs = append(outputs, keeper.BankOperation{Account: sdk.MustAccAddressFromBech32(acc), Amount: sdk.NewInt(amount)})
 			}
 
 			shares := keeper.CalculateRateShares(sdk.MustNewDecFromStr(tc.rate), issuer.String(), inputs, outputs)
