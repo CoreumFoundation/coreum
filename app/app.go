@@ -120,7 +120,7 @@ const (
 	Name = "core"
 
 	// DefaultChainID is the default chain id of the network
-	DefaultChainID = constant.ChainIDDev
+	DefaultChainID = constant.ChainIDTest
 )
 
 // ChosenNetwork is a hacky solution to pass network config

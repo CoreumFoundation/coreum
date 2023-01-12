@@ -251,11 +251,11 @@ func validateGenesisTxSignature(clientCtx tx.ClientContext, tx sdk.Tx) error {
 
 func unsealConfig() {
 	sdkConfig := sdk.GetConfig()
-	setField(sdkConfig, "sealed", false)
-	setField(sdkConfig, "sealedch", make(chan struct{}))
+	unsafeSetField(sdkConfig, "sealed", false)
+	unsafeSetField(sdkConfig, "sealedch", make(chan struct{}))
 }
 
-func setField(object interface{}, fieldName string, value interface{}) {
+func unsafeSetField(object interface{}, fieldName string, value interface{}) {
 	rs := reflect.ValueOf(object).Elem()
 	field := rs.FieldByName(fieldName)
 	// rf can't be read or set.
