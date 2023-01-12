@@ -37,9 +37,9 @@ func CmdQueryClass() *cobra.Command {
 			fmt.Sprintf(`Query non-fungible token class details.
 
 Example:
-$ %[1]s query asset-nft class [id]
+$ %[1]s query %s class [id]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
