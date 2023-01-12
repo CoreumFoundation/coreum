@@ -396,9 +396,6 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		},
 	}))
 
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
-
 	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 
 	// deployWASMContract and init contract with the initial coins amount
@@ -407,7 +404,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	contractAddr, _, err := deployAndInstantiateWASMContract(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
-		txf,
+		chain.TxFactory().WithSimulateAndExecute(true),
 		bankSendWASM,
 		instantiateConfig{
 			accessType: wasmtypes.AccessTypeUnspecified,
