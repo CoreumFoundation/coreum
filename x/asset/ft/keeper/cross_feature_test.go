@@ -50,6 +50,9 @@ package keeper
 // # Balance + Send rate
 // - send rate should not apply when there are not enough tokes for send rate and send
 //
+// $ Non-issuer + Whitelist (add this test directly to whitelisting if there are no such)
+// - whitelist non-issuer to have 10 coins, send 10 coins to non-issuer, try to set non-issuer whitelist amount to 9, the tx should failed
+//
 // # All in one
 // - Core + FT coin in one send and multi-send with All Features enabled and account state which already include the whitelisted and frozen state
 //
