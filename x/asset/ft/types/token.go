@@ -49,15 +49,15 @@ func BuildDenom(subunit string, issuer sdk.AccAddress) string {
 }
 
 // DeconstructDenom splits the denom string into the symbol and issuer address.
-func DeconstructDenom(denom string) (prefix string, issuer sdk.Address, err error) {
+func DeconstructDenom(denom string) (prefix string, issuer sdk.AccAddress, err error) {
 	denomParts := strings.Split(denom, denomSeparator)
 	if len(denomParts) != 2 {
-		return "", nil, sdkerrors.Wrap(ErrInvalidInput, "symbol must match format [subunit]-[issuer-address]")
+		return "", nil, sdkerrors.Wrap(ErrInvalidDenom, "denom must match format [subunit]-[issuer-address]")
 	}
 
 	address, err := sdk.AccAddressFromBech32(denomParts[1])
 	if err != nil {
-		return "", nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid issuer address in denom,err:%s", err)
+		return "", nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address in denom, err:%s", err)
 	}
 
 	return denomParts[0], address, nil
@@ -103,9 +103,41 @@ func NormalizeSymbolForKey(in string) string {
 	return strings.ToLower(in)
 }
 
+// CheckFeatureAllowed returns error if feature isn't allowed for the address.
+func (ftd FTDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature TokenFeature) error {
+	if ftd.IsFeatureAllowed(addr, feature) {
+		return nil
+	}
+
+	if !ftd.IsFeatureEnabled(feature) {
+		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
+	}
+
+	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
+}
+
+// IsFeatureAllowed returns true if feature is allowed for the address.
+//
+//nolint:nosnakecase
+func (ftd FTDefinition) IsFeatureAllowed(addr sdk.Address, feature TokenFeature) bool {
+	featureEnabled := ftd.IsFeatureEnabled(feature)
+	// issuer can use any enabled feature and burning even if it is disabled
+	if ftd.IsIssuer(addr) {
+		return featureEnabled || feature == TokenFeature_burn
+	}
+
+	// non-issuer can use only burning and only if it is enabled
+	return featureEnabled && feature == TokenFeature_burn
+}
+
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
-func (ftd *FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
+func (ftd FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
 	return lo.Contains(ftd.Features, feature)
+}
+
+// IsIssuer returns true if the addr is the issuer.
+func (ftd FTDefinition) IsIssuer(addr sdk.Address) bool {
+	return ftd.Issuer == addr.String()
 }
 
 // ValidateBurnRate checks that provided burn rate is valid

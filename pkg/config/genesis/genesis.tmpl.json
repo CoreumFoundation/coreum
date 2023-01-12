@@ -176,7 +176,7 @@
     },
     "mint": {
       "minter": {
-        "inflation": "0.080000000000000000",
+        "inflation": "0.100000000000000000",
         "annual_provisions": "0.000000000000000000"
       },
       "params": {

@@ -18,8 +18,7 @@ func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom str
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_freeze); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -34,8 +33,7 @@ func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom s
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_freeze) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_freeze); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -46,13 +44,13 @@ func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom s
 // SetGlobalFreeze enables/disables global freeze on a fungible token depending on frozen arg.
 func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 	if frozen {
-		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezePrefix(denom), globalFreezeEnabledStoreVal)
+		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezeKey(denom), globalFreezeEnabledStoreVal)
 		return
 	}
-	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezePrefix(denom))
+	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezeKey(denom))
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
-	globFreezeVal := ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezePrefix(denom))
+	globFreezeVal := ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom))
 	return bytes.Equal(globFreezeVal, globalFreezeEnabledStoreVal)
 }

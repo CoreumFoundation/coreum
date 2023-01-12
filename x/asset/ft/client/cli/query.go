@@ -23,7 +23,8 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryTokenInfo())
+	cmd.AddCommand(CmdQueryToken())
+	cmd.AddCommand(CmdQueryTokens())
 	cmd.AddCommand(CmdQueryFrozenBalance())
 	cmd.AddCommand(CmdQueryFrozenBalances())
 	cmd.AddCommand(CmdQueryWhitelistedBalance())
@@ -31,19 +32,19 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// CmdQueryTokenInfo return the QueryToken cobra command.
-func CmdQueryTokenInfo() *cobra.Command {
+// CmdQueryToken return the QueryToken cobra command.
+func CmdQueryToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "info [denom]",
+		Use:   "token [denom]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Query fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query fungible token details.
 
 Example:
-$ %[1]s query asset-ft info [denom]
+$ %[1]s query %s token [denom]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -67,6 +68,51 @@ $ %[1]s query asset-ft info [denom]
 	return cmd
 }
 
+// CmdQueryTokens return the QueryTokens cobra command.
+//
+//nolint:dupl // most code is identical, but reusing logic is not beneficial here.
+func CmdQueryTokens() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tokens [issuer]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query fungible tokens",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query fungible tokens.
+
+Example:
+$ %[1]s query %s tokens [issuer]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			issuer := args[0]
+			res, err := queryClient.Tokens(cmd.Context(), &types.QueryTokensRequest{
+				Pagination: pageReq,
+				Issuer:     issuer,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "tokens")
+
+	return cmd
+}
+
 // CmdQueryFrozenBalances return the QueryFrozenBalances cobra command.
 //
 //nolint:dupl // most code is identical, but reusing logic is not beneficial here.
@@ -79,9 +125,9 @@ func CmdQueryFrozenBalances() *cobra.Command {
 			fmt.Sprintf(`Query frozen fungible token balances of an account.
 
 Example:
-$ %[1]s query asset-ft frozen-balances [account]
+$ %[1]s query %s frozen-balances [account]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -122,9 +168,9 @@ func CmdQueryFrozenBalance() *cobra.Command {
 			fmt.Sprintf(`Query frozen fungible token balance of an account.
 
 Example:
-$ %[1]s query asset-ft frozen-balance [account] [denom]
+$ %[1]s query %s frozen-balance [account] [denom]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -162,9 +208,9 @@ func CmdQueryWhitelistedBalances() *cobra.Command {
 			fmt.Sprintf(`Query whitelisted fungible token balances of an account.
 
 Example:
-$ %[1]s query asset-ft whitelisted-balances [account]
+$ %[1]s query %s whitelisted-balances [account]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -205,9 +251,9 @@ func CmdQueryWhitelistedBalance() *cobra.Command {
 			fmt.Sprintf(`Query whitelisted fungible token balance of an account.
 
 Example:
-$ %[1]s query asset-ft whitelisted-balance [account] [denom]
+$ %[1]s query %s whitelisted-balance [account] [denom]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {

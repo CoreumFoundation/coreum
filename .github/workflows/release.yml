@@ -14,6 +14,7 @@ jobs:
         with:
           persist-credentials: false
           path: coreum
+          fetch-depth: 0
       - name: Checkout crust
         uses: actions/checkout@v3
         with:
@@ -23,10 +24,31 @@ jobs:
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Build cored release
         run: crust release/cored --log-format=yaml
+      - name: Check Tag
+        id: check-tag
+        run: |
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo ::set-output name=release::true
+          fi
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc[0-9]+$ ]]; then
+              echo ::set-output name=release_candidate::true
+          fi
       - name: Create release
+        if: steps.check-tag.outputs.release == 'true'
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          generate_release_notes: true
+          files: |
+            crust/bin/release/cored-linux-amd64
+            crust/bin/release/cored-linux-arm64
+      - name: Create release candidate
+        if: steps.check-tag.outputs.release_candidate == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: true
+          generate_release_notes: true
           files: |
             crust/bin/release/cored-linux-amd64
             crust/bin/release/cored-linux-arm64

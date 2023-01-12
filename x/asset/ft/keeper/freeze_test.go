@@ -65,11 +65,11 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	// try to freeze non-existent denom
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(nonExistentDenom, sdk.NewInt(10)))
-	assertT.True(sdkerrors.IsOf(err, types.ErrFTNotFound))
+	assertT.True(sdkerrors.IsOf(err, types.ErrTokenNotFound))
 
 	// try to freeze unfreezable FT
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(unfreezableDenom, sdk.NewInt(10)))
-	assertT.True(sdkerrors.IsOf(err, types.ErrFeatureNotActive))
+	assertT.ErrorIs(types.ErrFeatureDisabled, err)
 
 	// try to freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())

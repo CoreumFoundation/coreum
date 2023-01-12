@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/gogo/protobuf/proto"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -31,6 +32,7 @@ type IssueClassSettings struct {
 	URI         string
 	URIHash     string
 	Data        *codectypes.Any
+	Features    []ClassFeature
 }
 
 // MintSettings is the model which represents the params for the non-fungible token minting.
@@ -97,4 +99,41 @@ func ValidateData(data *codectypes.Any) error {
 	}
 
 	return nil
+}
+
+// CheckFeatureAllowed returns error if feature isn't allowed for the address.
+func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature ClassFeature) error {
+	if nftd.IsFeatureAllowed(addr, feature) {
+		return nil
+	}
+
+	if !nftd.IsFeatureEnabled(feature) {
+		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
+	}
+
+	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
+}
+
+// IsFeatureAllowed returns true if feature is allowed for the address.
+//
+//nolint:nosnakecase
+func (nftd ClassDefinition) IsFeatureAllowed(addr sdk.Address, feature ClassFeature) bool {
+	featureEnabled := nftd.IsFeatureEnabled(feature)
+	// issuer can use any enabled feature and burning even if it is disabled
+	if nftd.IsIssuer(addr) {
+		return featureEnabled || feature == ClassFeature_burning
+	}
+
+	// non-issuer can use only burning and only if it is enabled
+	return featureEnabled && feature == ClassFeature_burning
+}
+
+// IsFeatureEnabled returns true if feature is enabled for a fungible token.
+func (nftd ClassDefinition) IsFeatureEnabled(feature ClassFeature) bool {
+	return lo.Contains(nftd.Features, feature)
+}
+
+// IsIssuer returns true if the addr is the issuer.
+func (nftd ClassDefinition) IsIssuer(addr sdk.Address) bool {
+	return nftd.Issuer == addr.String()
 }

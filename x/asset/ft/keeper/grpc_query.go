@@ -15,6 +15,7 @@ var _ types.QueryServer = QueryService{}
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
 	GetToken(ctx sdk.Context, denom string) (types.FT, error)
+	GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.FT, *query.PageResponse, error)
 	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
@@ -42,6 +43,23 @@ func (qs QueryService) Token(ctx context.Context, req *types.QueryTokenRequest) 
 
 	return &types.QueryTokenResponse{
 		Token: token,
+	}, nil
+}
+
+// Tokens returns fungible tokens query result.
+func (qs QueryService) Tokens(ctx context.Context, req *types.QueryTokensRequest) (*types.QueryTokensResponse, error) {
+	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "issuer is required and must be valid account address")
+	}
+	tokens, pageRes, err := qs.keeper.GetIssuerTokens(sdk.UnwrapSDKContext(ctx), issuer, req.Pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryTokensResponse{
+		Pagination: pageRes,
+		Tokens:     tokens,
 	}, nil
 }
 

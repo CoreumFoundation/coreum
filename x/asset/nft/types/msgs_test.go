@@ -305,3 +305,64 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgBurn_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgBurn{
+		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ID:      "my-id",
+	}
+	testCases := []struct {
+		name          string
+		messageFunc   func() *types.MsgBurn
+		expectedError error
+	}{
+		{
+			name: "valid msg",
+			messageFunc: func() *types.MsgBurn {
+				msg := validMessage
+				return &msg
+			},
+		},
+		{
+			name: "invalid id",
+			messageFunc: func() *types.MsgBurn {
+				msg := validMessage
+				msg.ID = "id?"
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid sender",
+			messageFunc: func() *types.MsgBurn {
+				msg := validMessage
+				msg.Sender = "devcore172rx"
+				return &msg
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid classID",
+			messageFunc: func() *types.MsgBurn {
+				msg := validMessage
+				msg.ClassID = "x"
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := tc.messageFunc().ValidateBasic()
+			if tc.expectedError == nil {
+				assertT.NoError(err)
+			} else {
+				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}

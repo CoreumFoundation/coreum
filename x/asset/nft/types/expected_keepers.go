@@ -9,10 +9,13 @@ import (
 // NFTKeeper defines the expected NFT interface.
 type NFTKeeper interface {
 	SaveClass(ctx sdk.Context, class nft.Class) error
+	GetClass(ctx sdk.Context, classID string) (nft.Class, bool)
 	HasClass(ctx sdk.Context, classID string) bool
 	GetClasses(ctx sdk.Context) (classes []*nft.Class)
 	HasNFT(ctx sdk.Context, classID, id string) bool
 	Mint(ctx sdk.Context, token nft.NFT, receiver sdk.AccAddress) error
+	Burn(ctx sdk.Context, classID, nftID string) error
+	GetOwner(ctx sdk.Context, classID, nftID string) sdk.AccAddress
 }
 
 // BankKeeper defines the expected bank interface.

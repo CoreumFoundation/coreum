@@ -80,8 +80,7 @@ func (k Keeper) Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_mint) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_mint); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -95,22 +94,10 @@ func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_burn) //nolint:nosnakecase
+	err = ft.CheckFeatureAllowed(sender, types.TokenFeature_burn) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
 
 	return k.burn(ctx, sender, ft, coin.Amount)
-}
-
-func (k Keeper) checkFeatureAllowed(sender sdk.AccAddress, ft types.FTDefinition, feature types.TokenFeature) error {
-	if !ft.IsFeatureEnabled(feature) {
-		return sdkerrors.Wrapf(types.ErrFeatureNotActive, "denom:%s, feature:%s", ft.Denom, feature)
-	}
-
-	if ft.Issuer != sender.String() {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform this operation", sender.String())
-	}
-
-	return nil
 }
