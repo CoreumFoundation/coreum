@@ -88,7 +88,7 @@ func CalculateRateShares(rate sdk.Dec, issuer string, inOps, outOps accountBalan
 	// The algorithm is as following. we first get the minimum of total inputs and outputs which are not
 	// from the issuer. We then multiply by the rate to get applicable total amount. we then split this amount
 	// between non-issuer senders, proportional to their input value.
-	if !rate.IsPositive() {
+	if rate.IsNil() || !rate.IsPositive() {
 		return nil
 	}
 
