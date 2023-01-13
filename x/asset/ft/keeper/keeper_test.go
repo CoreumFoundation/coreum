@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"testing"
 
@@ -446,138 +447,205 @@ func TestKeeperCalculateRateShare(t *testing.T) {
 		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
 	}
 	var accounts []string
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 11; i++ {
 		accounts = append(accounts, genAccount())
 	}
 	issuer := genAccount()
+	pow10 := func(ex int64) sdk.Int {
+		return sdk.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
+	}
 	testCases := []struct {
 		rate      string
-		issuer    string
-		senders   map[string]int64
-		receivers map[string]int64
-		shares    map[string]int64
+		senders   map[string]sdk.Int
+		receivers map[string]sdk.Int
+		shares    map[string]sdk.Int
 	}{
 		{
 			rate:    "0.5",
-			issuer:  issuer,
-			senders: map[string]int64{},
-			shares:  map[string]int64{},
+			senders: map[string]sdk.Int{},
+			shares:  map[string]sdk.Int{},
 		},
 		{
-			rate:   "0.5",
-			issuer: issuer,
-			senders: map[string]int64{
-				accounts[0]: 5,
-				accounts[1]: 5,
+			rate: "0.5",
+			senders: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(5),
+				accounts[1]: sdk.NewInt(5),
 			},
-			receivers: map[string]int64{
-				issuer: 10,
+			receivers: map[string]sdk.Int{
+				issuer: sdk.NewInt(10),
 			},
-			shares: map[string]int64{},
+			shares: map[string]sdk.Int{},
 		},
 		{
-			rate:   "0.5",
-			issuer: issuer,
-			senders: map[string]int64{
-				issuer: 10,
+			rate: "0.5",
+			senders: map[string]sdk.Int{
+				issuer: sdk.NewInt(10),
 			},
-			receivers: map[string]int64{
-				accounts[0]: 5,
-				accounts[1]: 5,
+			receivers: map[string]sdk.Int{
+				accounts[5]: sdk.NewInt(5),
+				accounts[6]: sdk.NewInt(5),
 			},
-			shares: map[string]int64{},
+			shares: map[string]sdk.Int{},
 		},
 		{
-			rate:   "0.1",
-			issuer: issuer,
-			senders: map[string]int64{
-				accounts[0]: 400,
-				accounts[1]: 600,
+			rate: "0.1",
+			senders: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(400),
+				accounts[1]: sdk.NewInt(600),
 			},
-			receivers: map[string]int64{
-				accounts[0]: 1000,
+			receivers: map[string]sdk.Int{
+				accounts[10]: sdk.NewInt(1000),
 			},
-			shares: map[string]int64{
-				accounts[0]: 40,
-				accounts[1]: 60,
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(40),
+				accounts[1]: sdk.NewInt(60),
 			},
 		},
 		{
-			rate:   "0.1",
-			issuer: issuer,
-			senders: map[string]int64{
-				accounts[0]: 399,
-				accounts[1]: 602,
+			rate: "0.1",
+			senders: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(399),
+				accounts[1]: sdk.NewInt(602),
 			},
-			receivers: map[string]int64{
-				accounts[0]: 1001,
+			receivers: map[string]sdk.Int{
+				accounts[10]: sdk.NewInt(1001),
 			},
-			shares: map[string]int64{
-				accounts[0]: 40,
-				accounts[1]: 61,
-			},
-		},
-		{
-			rate:   "0.1",
-			issuer: issuer,
-			senders: map[string]int64{
-				issuer:      90,
-				accounts[0]: 29,
-				accounts[1]: 32,
-			},
-			receivers: map[string]int64{
-				genAccount(): 90 + 29 + 32,
-			},
-			shares: map[string]int64{
-				accounts[0]: 3,
-				accounts[1]: 4,
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(40),
+				accounts[1]: sdk.NewInt(61),
 			},
 		},
 		{
-			rate:   "0.01",
-			issuer: issuer,
-			senders: map[string]int64{
-				accounts[0]: 30000,
-				accounts[1]: 20000,
+			rate: "0.1",
+			senders: map[string]sdk.Int{
+				issuer:      sdk.NewInt(90),
+				accounts[0]: sdk.NewInt(29),
+				accounts[1]: sdk.NewInt(32),
 			},
-			receivers: map[string]int64{
-				issuer:       30000,
-				genAccount(): 20000,
+			receivers: map[string]sdk.Int{
+				genAccount(): sdk.NewInt(90 + 29 + 32),
 			},
-			shares: map[string]int64{
-				accounts[0]: 120,
-				accounts[1]: 80,
-			},
-		},
-		{
-			rate:   "0.01001",
-			issuer: issuer,
-			senders: map[string]int64{
-				accounts[0]: 30000,
-				accounts[1]: 20000,
-			},
-			receivers: map[string]int64{
-				issuer:       30000,
-				genAccount(): 20000,
-			},
-			shares: map[string]int64{
-				accounts[0]: 121,
-				accounts[1]: 81,
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(3),
+				accounts[1]: sdk.NewInt(4),
 			},
 		},
 		{
-			rate:   "0.1234",
-			issuer: issuer,
-			senders: map[string]int64{
-				accounts[0]: 80,
-				accounts[1]: 17,
+			rate: "0.01",
+			senders: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(30000),
+				accounts[1]: sdk.NewInt(20000),
 			},
-			receivers: map[string]int64{
-				genAccount(): 97,
+			receivers: map[string]sdk.Int{
+				issuer:       sdk.NewInt(30000),
+				genAccount(): sdk.NewInt(20000),
 			},
-			shares: map[string]int64{
-				accounts[0]: 10,
-				accounts[1]: 3,
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(120),
+				accounts[1]: sdk.NewInt(80),
+			},
+		},
+		{
+			rate: "0.01001",
+			senders: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(30000),
+				accounts[1]: sdk.NewInt(20000),
+			},
+			receivers: map[string]sdk.Int{
+				issuer:       sdk.NewInt(30000),
+				genAccount(): sdk.NewInt(20000),
+			},
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(121),
+				accounts[1]: sdk.NewInt(81),
+			},
+		},
+		{
+			rate: "0.1234",
+			senders: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(80),
+				accounts[1]: sdk.NewInt(17),
+			},
+			receivers: map[string]sdk.Int{
+				genAccount(): sdk.NewInt(97),
+			},
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(10),
+				accounts[1]: sdk.NewInt(3),
+			},
+		},
+		{
+			rate: "0.1",
+			senders: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(1),
+				accounts[1]: sdk.NewInt(2),
+				accounts[2]: sdk.NewInt(9),
+			},
+			receivers: map[string]sdk.Int{
+				genAccount(): sdk.NewInt(12),
+			},
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(1),
+				accounts[1]: sdk.NewInt(1),
+				accounts[2]: sdk.NewInt(1),
+			},
+		},
+		{
+			rate: "0.01",
+			senders: map[string]sdk.Int{
+				issuer:      sdk.NewInt(2100),
+				accounts[0]: sdk.NewInt(1100),
+				accounts[1]: sdk.NewInt(1700),
+				accounts[2]: sdk.NewInt(1900),
+			},
+			receivers: map[string]sdk.Int{
+				issuer:       sdk.NewInt(2100),
+				genAccount(): sdk.NewInt(300),
+				genAccount(): sdk.NewInt(1100),
+				genAccount(): sdk.NewInt(3300),
+			},
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(11),
+				accounts[1]: sdk.NewInt(17),
+				accounts[2]: sdk.NewInt(19),
+			},
+		},
+		{
+			rate: "0.01",
+			senders: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(100).Mul(pow10(24)),
+				accounts[1]: sdk.NewInt(300).Mul(pow10(25)),
+				accounts[2]: sdk.NewInt(500).Mul(pow10(26)),
+			},
+			receivers: map[string]sdk.Int{
+				genAccount(): sdk.NewInt(100).Mul(pow10(24)),
+				genAccount(): sdk.NewInt(300).Mul(pow10(25)),
+				genAccount(): sdk.NewInt(500).Mul(pow10(26)),
+			},
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(100).Mul(pow10(22)),
+				accounts[1]: sdk.NewInt(300).Mul(pow10(23)),
+				accounts[2]: sdk.NewInt(500).Mul(pow10(24)),
+			},
+		},
+		{
+			rate: "0.99",
+			senders: map[string]sdk.Int{
+				issuer:      sdk.NewInt(2100),
+				accounts[0]: sdk.NewInt(1100),
+				accounts[1]: sdk.NewInt(1700),
+				accounts[2]: sdk.NewInt(2728),
+			},
+			receivers: map[string]sdk.Int{
+				genAccount(): sdk.NewInt(2100),
+				genAccount(): sdk.NewInt(1000),
+				genAccount(): sdk.NewInt(1800),
+				genAccount(): sdk.NewInt(2728),
+			},
+			shares: map[string]sdk.Int{
+				accounts[0]: sdk.NewInt(1089),
+				accounts[1]: sdk.NewInt(1683),
+				accounts[2]: sdk.NewInt(2701),
 			},
 		},
 	}
@@ -587,19 +655,9 @@ func TestKeeperCalculateRateShare(t *testing.T) {
 		name := fmt.Sprintf("%+v", tc)
 		t.Run(name, func(t *testing.T) {
 			assertT := assert.New(t)
-			issuer := sdk.MustAccAddressFromBech32(tc.issuer)
-			inputs := make(map[string]sdk.Int)
-			for acc, amount := range tc.senders {
-				inputs[acc] = sdk.NewInt(amount)
-			}
-			outputs := make(map[string]sdk.Int)
-			for acc, amount := range tc.receivers {
-				outputs[acc] = sdk.NewInt(amount)
-			}
-
-			shares := keeper.CalculateRateShares(sdk.MustNewDecFromStr(tc.rate), issuer.String(), inputs, outputs)
+			shares := keeper.CalculateRateShares(sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
 			for account, share := range shares {
-				assertT.EqualValues(tc.shares[account], share.Int64())
+				assertT.EqualValues(tc.shares[account].String(), share.String())
 			}
 		})
 	}
@@ -616,7 +674,7 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 	bankKeeper := testApp.BankKeeper
 	ba := newBankAsserter(ctx, t, bankKeeper)
 
-	// issue 3 tokens
+	// issue 2 tokens
 	var recipients []sdk.AccAddress
 	var issuers []sdk.AccAddress
 	var denoms []string
