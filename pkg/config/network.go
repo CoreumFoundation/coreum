@@ -38,6 +38,9 @@ var (
 	//go:embed genesis/gentx/coreum-devnet-1
 	devGenTxsFS embed.FS
 
+	//go:embed genesis/gentx/coreum-testnet-1
+	testGenTxsFS embed.FS
+
 	//go:embed genesis/genesis.tmpl.json
 	genesisTemplate string
 
@@ -85,6 +88,13 @@ func init() {
 	// 10m delegated and 1m extra to the txs
 	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
 
+	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
+	// 500M = 4 * (124_950_000 + 50_000)
+	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
+	// where 50_000 is balances of each of 4 initial validator stakers.
+	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(124_950_000_000_000)))
+	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(50_000_000_000)))
+
 	devGovConfig := govConfig
 	devGovConfig.ProposalConfig.VotingPeriod = "24h"
 
@@ -118,15 +128,63 @@ func init() {
 			Denom:                constant.DenomTest,
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
-				SeedPeers: []string{}, // FIXME(dhil) update with real seeds
+				SeedPeers: []string{
+					"64391878009b8804d90fda13805e45041f492155@34.172.125.230:26656", // seed-sirius
+					"53f2367d8f8291af8e3b6ca60efded0675ff6314@34.132.58.250:26656",  // seed-antares
+				},
 			},
 			GovConfig:          testGovConfig,
 			StakingConfig:      stakingConfig,
 			CustomParamsConfig: customParamsConfig,
 			AssetFTConfig:      assetFTConfig,
 			AssetNFTConfig:     assetNFTConfig,
-			FundedAccounts:     []FundedAccount{},   // FIXME(dhil) update with validators and foundation addresses
-			GenTxs:             []json.RawMessage{}, // FIXME(dhil) update with real genesis transaction
+			FundedAccounts: []FundedAccount{
+				// Accounts used to create initial validators to bootstrap chain.
+				// validator-1-creator
+				{
+					Address:  "testcore1wf67lcjnp7mhr3ntjct7fdsex3e4h6jaxxp5aa",
+					Balances: testStakerValidatorBalance,
+				},
+				// validator-2-creator
+				{
+					Address:  "testcore1snrwnty4h4rrnghd4s9m2xklrk7qu42haygce6",
+					Balances: testStakerValidatorBalance,
+				},
+				// validator-3-creator
+				{
+					Address:  "testcore14x4ux30sadvg90k2xd8fte5vnhhh0uvkxrrn9j",
+					Balances: testStakerValidatorBalance,
+				},
+				// validator-4-creator
+				{
+					Address:  "testcore1adst6w4e79tddzhcgaru2l2gms8jjep6a4caa7",
+					Balances: testStakerValidatorBalance,
+				},
+
+				// Accounts storing remaining total supply of the chain. Created as single signature accounts initially and will be
+				// transferred to management after chain start.
+				// foundation-initial-1
+				{
+					Address:  "testcore1efkcsd94u0vrx8rgq9cktjgq7fgwrjap3qu289",
+					Balances: testFoundationInitialBalance,
+				},
+				// foundation-initial-2
+				{
+					Address:  "testcore18nfwg708vu74e6mrcu6yjdzcdq5608rmvavt05",
+					Balances: testFoundationInitialBalance,
+				},
+				// foundation-initial-3
+				{
+					Address:  "testcore1qrqhjrc2jl36l4vuvhvjlt6kg6d0xqazzlxek7",
+					Balances: testFoundationInitialBalance,
+				},
+				// foundation-initial-4
+				{
+					Address:  "testcore12guwnjehw06c9r40knd0js5dn6g924p7xxg48h",
+					Balances: testFoundationInitialBalance,
+				},
+			},
+			GenTxs: readGenTxs(testGenTxsFS),
 		},
 		constant.ChainIDDev: {
 			ChainID:              constant.ChainIDDev,
