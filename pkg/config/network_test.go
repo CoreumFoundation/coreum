@@ -27,6 +27,7 @@ func TestAddFundsToGenesis(t *testing.T) {
 	requireT := require.New(t)
 
 	n, err := config.NetworkByChainID(constant.ChainIDDev)
+	unsealConfig()
 	n.SetSDKConfig()
 
 	requireT.NoError(err)
