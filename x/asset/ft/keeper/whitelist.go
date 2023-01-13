@@ -20,8 +20,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = k.checkFeatureAllowed(sender, ft, types.TokenFeature_whitelist) //nolint:nosnakecase
-	if err != nil {
+	if err = ft.CheckFeatureAllowed(sender, types.TokenFeature_whitelist); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -85,8 +84,7 @@ func (k Keeper) whitelistedAccountBalancesStore(ctx sdk.Context) balanceStore {
 
 // areCoinsReceivable returns an error if whitelisted amount is too low to receive coins
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, ft types.FTDefinition, amount sdk.Int) error {
-	//nolint:nosnakecase
-	if !ft.IsFeatureEnabled(types.TokenFeature_whitelist) || ft.Issuer == addr.String() {
+	if !ft.IsFeatureEnabled(types.TokenFeature_whitelist) || ft.IsIssuer(addr) { //nolint:nosnakecase
 		return nil
 	}
 

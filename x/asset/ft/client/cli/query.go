@@ -42,9 +42,9 @@ func CmdQueryToken() *cobra.Command {
 			fmt.Sprintf(`Query fungible token details.
 
 Example:
-$ %[1]s query asset-ft token [denom]
+$ %[1]s query %s token [denom]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -80,9 +80,9 @@ func CmdQueryTokens() *cobra.Command {
 			fmt.Sprintf(`Query fungible tokens.
 
 Example:
-$ %[1]s query asset-ft tokens [issuer]
+$ %[1]s query %s tokens [issuer]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -125,9 +125,9 @@ func CmdQueryFrozenBalances() *cobra.Command {
 			fmt.Sprintf(`Query frozen fungible token balances of an account.
 
 Example:
-$ %[1]s query asset-ft frozen-balances [account]
+$ %[1]s query %s frozen-balances [account]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -168,9 +168,9 @@ func CmdQueryFrozenBalance() *cobra.Command {
 			fmt.Sprintf(`Query frozen fungible token balance of an account.
 
 Example:
-$ %[1]s query asset-ft frozen-balance [account] [denom]
+$ %[1]s query %s frozen-balance [account] [denom]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -208,9 +208,9 @@ func CmdQueryWhitelistedBalances() *cobra.Command {
 			fmt.Sprintf(`Query whitelisted fungible token balances of an account.
 
 Example:
-$ %[1]s query asset-ft whitelisted-balances [account]
+$ %[1]s query %s whitelisted-balances [account]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -251,9 +251,9 @@ func CmdQueryWhitelistedBalance() *cobra.Command {
 			fmt.Sprintf(`Query whitelisted fungible token balance of an account.
 
 Example:
-$ %[1]s query asset-ft whitelisted-balance [account] [denom]
+$ %[1]s query %s whitelisted-balance [account] [denom]
 `,
-				version.AppName,
+				version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -320,7 +320,7 @@ func TestKeeper_Mint(t *testing.T) {
 
 	// try to mint unmintable token
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(unmintableDenom, sdk.NewInt(100)))
-	requireT.ErrorIs(types.ErrFeatureNotActive, err)
+	requireT.ErrorIs(types.ErrFeatureDisabled, err)
 
 	// Issue a mintable fungible token
 	settings = types.IssueSettings{
@@ -362,11 +362,12 @@ func TestKeeper_Burn(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
-	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	// Issue an unburnable fungible token
 	settings := types.IssueSettings{
-		Issuer:        addr,
+		Issuer:        issuer,
 		Symbol:        "NotBurnable",
 		Subunit:       "notburnable",
 		InitialAmount: sdk.NewInt(777),
@@ -380,13 +381,21 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unburnableDenom)
 
-	// try to burn unburnable token
-	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
-	requireT.ErrorIs(types.ErrFeatureNotActive, err)
+	// send to new recipient address
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdk.NewInt(100))))
+	requireT.NoError(err)
+
+	// try to burn unburnable token from the recipient account
+	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
+	requireT.ErrorIs(types.ErrFeatureDisabled, err)
+
+	// try to burn unburnable token from the issuer account
+	err = ftKeeper.Burn(ctx, issuer, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
+	requireT.NoError(err)
 
 	// Issue a burnable fungible token
 	settings = types.IssueSettings{
-		Issuer:        addr,
+		Issuer:        issuer,
 		Symbol:        "burnable",
 		Subunit:       "burnable",
 		InitialAmount: sdk.NewInt(777),
@@ -399,27 +408,30 @@ func TestKeeper_Burn(t *testing.T) {
 	burnableDenom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
-	// try to burn as non-issuer
-	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	err = ftKeeper.Burn(ctx, randomAddr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
-
-	// burn tokens and check balance and total supply
-	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
+	// send to new recipient address
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdk.NewInt(100))))
 	requireT.NoError(err)
 
-	balance := bankKeeper.GetBalance(ctx, addr, burnableDenom)
-	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdk.NewInt(677)), balance)
+	// try to burn as non-issuer
+	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
+	requireT.NoError(err)
+
+	// burn tokens and check balance and total supply
+	err = ftKeeper.Burn(ctx, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
+	requireT.NoError(err)
+
+	balance := bankKeeper.GetBalance(ctx, issuer, burnableDenom)
+	requireT.EqualValues(sdk.NewCoin(burnableDenom, sdk.NewInt(577)), balance)
 
 	totalSupply, err := bankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewInt(677), totalSupply.Supply.AmountOf(burnableDenom))
+	requireT.EqualValues(sdk.NewInt(577), totalSupply.Supply.AmountOf(burnableDenom))
 
 	// try to burn frozen amount
-	err = ftKeeper.Freeze(ctx, addr, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(600)))
+	err = ftKeeper.Freeze(ctx, issuer, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(600)))
 	requireT.NoError(err)
 
-	err = ftKeeper.Burn(ctx, addr, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
+	err = ftKeeper.Burn(ctx, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.ErrorIs(sdkerrors.ErrInsufficientFunds, err)
 }
 
