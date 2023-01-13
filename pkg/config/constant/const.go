@@ -11,6 +11,7 @@ type ChainID string
 // Predefined chain ids
 const (
 	ChainIDMain ChainID = "coreum-mainnet-1"
+	ChainIDTest ChainID = "coreum-testnet-1"
 	ChainIDDev  ChainID = "coreum-devnet-1"
 )
 
