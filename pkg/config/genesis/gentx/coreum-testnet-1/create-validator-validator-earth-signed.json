@@ -24,7 +24,7 @@
         },
         "value": {
           "denom": "utestcore",
-          "amount": "20000000000"
+          "amount": "30000000000"
         }
       }
     ],
@@ -61,6 +61,6 @@
     }
   },
   "signatures": [
-    "zZbWoLKBt0Cpa/u6lrQk6kugZD1Y3afQ2iiZVSefeNEKRlgJilsweml2pX4gqwxJ2tf2GC5s/+J8ErrgpUcedw=="
+    "gKROVmS4yxxumIb46xtsoV+EIzotNkj7iDdX5MGjhgM2/vazGGynNRNkYdGsBD0VEb9jVx2V5NZ6RRk0PFGUWw=="
   ]
 }

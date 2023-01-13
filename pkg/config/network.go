@@ -88,7 +88,7 @@ func init() {
 	// 10m delegated and 1m extra to the txs
 	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
 
-	// TODO: Add test that total supply is always 500M.
+	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
 	// 500M = 4 * (124_950_000 + 50_000)
 	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
 	// where 50_000 is balances of each of 4 initial validator stakers.

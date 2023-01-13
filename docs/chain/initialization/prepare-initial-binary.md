@@ -84,7 +84,7 @@ The output example:
 NOTE: cored still requires connection to node even though tx generation should be fully done offline. The easiest way is to start znet locally.
   ```bash
   ./cored tx staking create-validator \
-    --amount=10000000000000$CORED_DENOM \
+    --amount=30000000000$CORED_DENOM \
     --pubkey=$(./cored tendermint show-validator) \
     --moniker=$MONIKER \
     --website="" \
@@ -93,7 +93,7 @@ NOTE: cored still requires connection to node even though tx generation should b
     --commission-rate="0.10" \
     --commission-max-rate="0.20" \
     --commission-max-change-rate="0.01" \
-    --min-self-delegation="1" \
+    --min-self-delegation="20000000000" \
     --from=$(./cored keys show --address $MONIKER) \
     --gas=0 \
     --generate-only \
