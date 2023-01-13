@@ -45,7 +45,7 @@ func (g groupedByDenomAccountOperations) add(address string, coins sdk.Coins) {
 func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs groupedByDenomAccountOperations) error {
 	for denom, inOps := range inputs {
 		ftd, err := k.GetTokenDefinition(ctx, denom)
-		if types.ErrTokenNotFound.Is(err) {
+		if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
 			return nil
 		}
 
