@@ -84,30 +84,29 @@ func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 }
 
 // CalculateRateShares calculates how the burn or commission share amount should be split between different parties
-// Since burning & send commission are not applied when sending to/from FT issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
-// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
-
-// Examples
-// burn_rate: 10%
-
-// inputs:
-// 75
-// 75
-// 25 <-- issuer
-
-// outputs:
-// 50
-// 100 <-- issuer
-// 25
-
-// In this case commissioned amount is: min(non_issuer_inputs, non_issuer_outputs) = min(75+75, 50+25) = 75
-// Expected commission: 75 * 10% = 7.5
-// And now we divide it proportionally between all input sender: 7.5 / 150 * 75 = 3.75
-// As result each sender is expected to pay 3.75 of commission.
-// Note that if we used original rate it would be 75 * 10% = 7.5
-// Here is the final formula we use to calculate adjusted burn/commission amount for multisend txs:
-// amount * rate * min(non_issuer_inputs_sum, non_issuer_outputs_sum) / non_issuer_inputs_sum
 func CalculateRateShares(rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdk.Int {
+	// Since burning & send commission are not applied when sending to/from FT issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
+	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
+
+	// Examples
+	// burn_rate: 10%
+
+	// inputs:
+	// 75, 75
+	// 25 <-- issuer
+
+	// outputs:
+	// 50
+	// 100 <-- issuer
+	// 25
+
+	// In this case commissioned amount is: min(non_issuer_inputs, non_issuer_outputs) = min(75+75, 50+25) = 75
+	// Expected commission: 75 * 10% = 7.5
+	// And now we divide it proportionally between all input sender: 7.5 / 150 * 75 = 3.75
+	// As result each sender is expected to pay 3.75 of commission.
+	// Note that if we used original rate it would be 75 * 10% = 7.5
+	// Here is the final formula we use to calculate adjusted burn/commission amount for multisend txs:
+	// amount * rate * min(non_issuer_inputs_sum, non_issuer_outputs_sum) / non_issuer_inputs_sum
 	if rate.IsNil() || !rate.IsPositive() {
 		return nil
 	}
