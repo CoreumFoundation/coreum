@@ -425,7 +425,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 	})
 
 	// multi send from recipient1 to issuer and recipient2
-	// (burn must apply to both transfers. will be fixed later to apply to one transfer)
+	// (burn must apply to one of outputs, deducted from recipient 1)
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
 			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200)))},
@@ -453,7 +453,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 		&issuer:     800,
-		&recipient1: 70,
+		&recipient1: 80,
 		&recipient2: 100,
 	})
 }
@@ -576,7 +576,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	})
 
 	// multi send from recipient1 to issuer and recipient2
-	// (send commission rate must apply to both transfers. will be fixed later to apply to one transfer)
+	// (send commission rate must apply to one of transfers)
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
 			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200)))},
@@ -603,8 +603,8 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     830,
-		&recipient1: 70,
+		&issuer:     820,
+		&recipient1: 80,
 		&recipient2: 100,
 	})
 }

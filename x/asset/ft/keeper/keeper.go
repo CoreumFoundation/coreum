@@ -55,120 +55,17 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 }
 
 // BeforeSendCoins checks that a transfer request is allowed or not
-//
-// TODO: we should try to express this function in terms of BeforeInputOutputCoins so
-// we will have a single place to enforce our logic
 func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
-	for _, coin := range coins {
-		ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-		if err != nil {
-			if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
-				continue
-			}
-			return err
-		}
-		if err := k.isCoinSpendable(ctx, fromAddress, ft, coin.Amount); err != nil {
-			return err
-		}
-		if err := k.isCoinReceivable(ctx, toAddress, ft, coin.Amount); err != nil {
-			return err
-		}
-		if err := k.applyBurnRate(ctx, ft, fromAddress, toAddress, coin); err != nil {
-			return err
-		}
-		if err := k.applySendCommissionRate(ctx, ft, fromAddress, toAddress, coin); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (k Keeper) applyBurnRate(ctx sdk.Context, ft types.FTDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
-	if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && !ft.IsIssuer(fromAddress) && !ft.IsIssuer(toAddress) {
-		coinToBurn := ft.CalculateBurnRateAmount(coin)
-		err := k.burn(ctx, fromAddress, ft, coinToBurn)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (k Keeper) applySendCommissionRate(ctx sdk.Context, ft types.FTDefinition, fromAddress, toAddress sdk.AccAddress, coin sdk.Coin) error {
-	if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && !ft.IsIssuer(fromAddress) && !ft.IsIssuer(toAddress) {
-		sendCommission := ft.CalculateSendCommissionRateAmount(coin)
-		err := k.bankKeeper.SendCoins(ctx, fromAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendCommission)))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return k.applyFeatures(
+		ctx,
+		[]banktypes.Input{{Address: fromAddress.String(), Coins: coins}},
+		[]banktypes.Output{{Address: toAddress.String(), Coins: coins}},
+	)
 }
 
 // BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper
 func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	for _, in := range inputs {
-		inAddress, err := sdk.AccAddressFromBech32(in.Address)
-		if err != nil {
-			return err
-		}
-
-		for _, coin := range in.Coins {
-			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-			if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
-				continue
-			}
-
-			if err != nil {
-				return err
-			}
-
-			if err := k.isCoinSpendable(ctx, inAddress, ft, coin.Amount); err != nil {
-				return err
-			}
-
-			if !ft.BurnRate.IsNil() && ft.BurnRate.IsPositive() && !ft.IsIssuer(inAddress) {
-				coinsToBurn := ft.CalculateBurnRateAmount(coin)
-				err := k.burn(ctx, inAddress, ft, coinsToBurn)
-				if err != nil {
-					return err
-				}
-			}
-			if !ft.SendCommissionRate.IsNil() && ft.SendCommissionRate.IsPositive() && !ft.IsIssuer(inAddress) {
-				sendCommissionRate := ft.CalculateSendCommissionRateAmount(coin)
-				err := k.bankKeeper.SendCoins(ctx, inAddress, sdk.MustAccAddressFromBech32(ft.Issuer), sdk.NewCoins(sdk.NewCoin(coin.Denom, sendCommissionRate)))
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	for _, out := range outputs {
-		outAddress, err := sdk.AccAddressFromBech32(out.Address)
-		if err != nil {
-			return err
-		}
-
-		for _, coin := range out.Coins {
-			ft, err := k.GetTokenDefinition(ctx, coin.Denom)
-			if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
-				continue
-			}
-			if err != nil {
-				return err
-			}
-
-			if err := k.isCoinReceivable(ctx, outAddress, ft, coin.Amount); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return k.applyFeatures(ctx, inputs, outputs)
 }
 
 // Logger returns the Keeper logger.
