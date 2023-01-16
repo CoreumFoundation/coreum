@@ -30,15 +30,22 @@ import (
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
-// ChainID represents predefined Chain ID
-type ChainID = constant.ChainID
+var (
+	// EnableFakeUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
+	// It is string, not bool, because -X flag supports strings only.
+	EnableFakeUpgradeHandler string
 
-// EnableFakeUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
-// It is string, not bool, because -X flag supports strings only.
-var EnableFakeUpgradeHandler string
+	//go:embed genesis/gentx/coreum-devnet-1
+	devGenTxsFS embed.FS
 
-//go:embed networks/coreum-devnet-1
-var coreumDevnet1GenTxsFS embed.FS
+	//go:embed genesis/gentx/coreum-testnet-1
+	testGenTxsFS embed.FS
+
+	//go:embed genesis/genesis.tmpl.json
+	genesisTemplate string
+
+	networkConfigs map[constant.ChainID]NetworkConfig
+)
 
 //nolint:funlen
 func init() {
@@ -79,10 +86,26 @@ func init() {
 	// devnet vars
 
 	// 10m delegated and 1m extra to the txs
-	stakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
+	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
 
-	list := []NetworkConfig{
-		{
+	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
+	// 500M = 4 * (124_950_000 + 50_000)
+	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
+	// where 50_000 is balances of each of 4 initial validator stakers.
+	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(124_950_000_000_000)))
+	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(50_000_000_000)))
+
+	devGovConfig := govConfig
+	devGovConfig.ProposalConfig.VotingPeriod = "24h"
+
+	// testnet vars
+
+	testGovConfig := govConfig
+	testGovConfig.ProposalConfig.VotingPeriod = "24h"
+
+	// configs
+	networkConfigs = map[constant.ChainID]NetworkConfig{
+		constant.ChainIDMain: {
 			ChainID:              constant.ChainIDMain,
 			Enabled:              false,
 			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
@@ -96,7 +119,74 @@ func init() {
 			AssetFTConfig:        assetFTConfig,
 			AssetNFTConfig:       assetNFTConfig,
 		},
-		{
+		constant.ChainIDTest: {
+			ChainID:              constant.ChainIDTest,
+			Enabled:              true,
+			GenesisTime:          time.Date(2023, 1, 18, 12, 0, 0, 0, time.UTC),
+			AddressPrefix:        constant.AddressPrefixTest,
+			MetadataDisplayDenom: constant.DenomTestDisplay,
+			Denom:                constant.DenomTest,
+			Fee:                  feeConfig,
+			NodeConfig: NodeConfig{
+				SeedPeers: []string{
+					"64391878009b8804d90fda13805e45041f492155@34.172.125.230:26656", // seed-sirius
+					"53f2367d8f8291af8e3b6ca60efded0675ff6314@34.132.58.250:26656",  // seed-antares
+				},
+			},
+			GovConfig:          testGovConfig,
+			StakingConfig:      stakingConfig,
+			CustomParamsConfig: customParamsConfig,
+			AssetFTConfig:      assetFTConfig,
+			AssetNFTConfig:     assetNFTConfig,
+			FundedAccounts: []FundedAccount{
+				// Accounts used to create initial validators to bootstrap chain.
+				// validator-1-creator
+				{
+					Address:  "testcore1wf67lcjnp7mhr3ntjct7fdsex3e4h6jaxxp5aa",
+					Balances: testStakerValidatorBalance,
+				},
+				// validator-2-creator
+				{
+					Address:  "testcore1snrwnty4h4rrnghd4s9m2xklrk7qu42haygce6",
+					Balances: testStakerValidatorBalance,
+				},
+				// validator-3-creator
+				{
+					Address:  "testcore14x4ux30sadvg90k2xd8fte5vnhhh0uvkxrrn9j",
+					Balances: testStakerValidatorBalance,
+				},
+				// validator-4-creator
+				{
+					Address:  "testcore1adst6w4e79tddzhcgaru2l2gms8jjep6a4caa7",
+					Balances: testStakerValidatorBalance,
+				},
+
+				// Accounts storing remaining total supply of the chain. Created as single signature accounts initially and will be
+				// transferred to management after chain start.
+				// foundation-initial-1
+				{
+					Address:  "testcore1efkcsd94u0vrx8rgq9cktjgq7fgwrjap3qu289",
+					Balances: testFoundationInitialBalance,
+				},
+				// foundation-initial-2
+				{
+					Address:  "testcore18nfwg708vu74e6mrcu6yjdzcdq5608rmvavt05",
+					Balances: testFoundationInitialBalance,
+				},
+				// foundation-initial-3
+				{
+					Address:  "testcore1qrqhjrc2jl36l4vuvhvjlt6kg6d0xqazzlxek7",
+					Balances: testFoundationInitialBalance,
+				},
+				// foundation-initial-4
+				{
+					Address:  "testcore12guwnjehw06c9r40knd0js5dn6g924p7xxg48h",
+					Balances: testFoundationInitialBalance,
+				},
+			},
+			GenTxs: readGenTxs(testGenTxsFS),
+		},
+		constant.ChainIDDev: {
 			ChainID:              constant.ChainIDDev,
 			Enabled:              true,
 			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
@@ -107,7 +197,7 @@ func init() {
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.68.221.216:26656"},
 			},
-			GovConfig:          govConfig,
+			GovConfig:          devGovConfig,
 			StakingConfig:      stakingConfig,
 			CustomParamsConfig: customParamsConfig,
 			AssetFTConfig:      assetFTConfig,
@@ -116,22 +206,22 @@ func init() {
 				// Staker of validator 0
 				{
 					Address:  "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6",
-					Balances: stakerValidatorBalance,
+					Balances: devStakerValidatorBalance,
 				},
 				// Staker of validator 1
 				{
 					Address:  "devcore105ct3vl89ar53jrj23zl6e09cmqwym2ua5hegf",
-					Balances: stakerValidatorBalance,
+					Balances: devStakerValidatorBalance,
 				},
 				// Staker of validator 2
 				{
 					Address:  "devcore14x46r5eflga696sd5my900euvlplu2prhny5ae",
-					Balances: stakerValidatorBalance,
+					Balances: devStakerValidatorBalance,
 				},
 				// Staker of validator 3
 				{
 					Address:  "devcore1xsthw036vst75rhh4py57lt7nx59qpvzez3a8k",
-					Balances: stakerValidatorBalance,
+					Balances: devStakerValidatorBalance,
 				},
 				// Faucet's account storing the rest of total supply
 				{
@@ -139,13 +229,9 @@ func init() {
 					Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
 				},
 			},
-			GenTxs:                      readGenTxs(coreumDevnet1GenTxsFS),
+			GenTxs:                      readGenTxs(devGenTxsFS),
 			IsFakeUpgradeHandlerEnabled: EnableFakeUpgradeHandler != "",
 		},
-	}
-
-	for _, elem := range list {
-		networkConfigs[elem.ChainID] = elem
 	}
 }
 
@@ -177,8 +263,6 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 
 	return genTxs
 }
-
-var networkConfigs = map[ChainID]NetworkConfig{}
 
 // EnabledNetworks returns enabled networks
 func EnabledNetworks() []Network {
@@ -243,7 +327,7 @@ type AssetNFTConfig struct {
 
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
-	ChainID              ChainID
+	ChainID              constant.ChainID
 	GenesisTime          time.Time
 	AddressPrefix        string
 	MetadataDisplayDenom string
@@ -265,7 +349,7 @@ type NetworkConfig struct {
 
 // Network holds all the configuration for different predefined networks
 type Network struct {
-	chainID                  ChainID
+	chainID                  constant.ChainID
 	genesisTime              time.Time
 	addressPrefix            string
 	metadataDisplayDenom     string
@@ -368,7 +452,7 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 		bank.AppModuleBasic{},
 	)).Codec
 
-	genesisJSON, err := genesis(n)
+	genesisJSON, err := genesisByTemplate(n)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
 	}
@@ -471,7 +555,7 @@ func (n Network) AddressPrefix() string {
 }
 
 // ChainID returns the chain ID used in network config
-func (n Network) ChainID() ChainID {
+func (n Network) ChainID() constant.ChainID {
 	return n.chainID
 }
 
@@ -522,7 +606,7 @@ func (n Network) DeterministicGas() DeterministicGasRequirements {
 }
 
 // NetworkConfigByChainID returns predefined NetworkConfig for a ChainID.
-func NetworkConfigByChainID(id ChainID) (NetworkConfig, error) {
+func NetworkConfigByChainID(id constant.ChainID) (NetworkConfig, error) {
 	nc, found := networkConfigs[id]
 	if !found {
 		return NetworkConfig{}, errors.Errorf("chainID %s not found", id)
@@ -532,7 +616,7 @@ func NetworkConfigByChainID(id ChainID) (NetworkConfig, error) {
 }
 
 // NetworkByChainID returns predefined Network for a ChainID.
-func NetworkByChainID(id ChainID) (Network, error) {
+func NetworkByChainID(id constant.ChainID) (Network, error) {
 	nc, err := NetworkConfigByChainID(id)
 	if err != nil {
 		return Network{}, err
@@ -546,10 +630,8 @@ func NetworkByChainID(id ChainID) (Network, error) {
 	return NewNetwork(nc), nil
 }
 
-//go:embed genesis/genesis.tmpl.json
-var genesisTemplate string
-
-func genesis(n Network) ([]byte, error) {
+// genesisByTemplate returns the genesis formatted by the input template.
+func genesisByTemplate(n Network) ([]byte, error) {
 	funcMap := template.FuncMap{
 		"ToUpper": strings.ToUpper,
 	}
@@ -557,7 +639,7 @@ func genesis(n Network) ([]byte, error) {
 	genesisBuf := new(bytes.Buffer)
 	err := template.Must(template.New("genesis").Funcs(funcMap).Parse(genesisTemplate)).Execute(genesisBuf, struct {
 		GenesisTimeUTC       string
-		ChainID              ChainID
+		ChainID              constant.ChainID
 		MetadataDisplayDenom string
 		Denom                string
 		FeeModelParams       feemodeltypes.ModelParams

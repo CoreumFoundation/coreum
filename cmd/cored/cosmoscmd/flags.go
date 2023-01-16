@@ -13,6 +13,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 // OverwriteDefaultChainIDFlags searches for the DefaultChainID flag and replaces its value of the current default.
@@ -56,7 +57,7 @@ func PreProcessFlags() (config.Network, error) {
 	}
 
 	// get chain config
-	network, err := config.NetworkByChainID(config.ChainID(*chainID))
+	network, err := config.NetworkByChainID(constant.ChainID(*chainID))
 	if err != nil {
 		return config.Network{}, err
 	}

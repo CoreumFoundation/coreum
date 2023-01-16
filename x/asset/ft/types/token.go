@@ -178,17 +178,3 @@ func validateRate(rate sdk.Dec) error {
 func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 	return dec.Mul(sdk.NewDecFromInt(sdk.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
 }
-
-// CalculateBurnRateAmount returns the coins to be burned
-func (ftd FTDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
-	return calculateRate(coin.Amount, ftd.BurnRate)
-}
-
-// CalculateSendCommissionRateAmount returns the coins to be sent to issuer as a sending commission
-func (ftd FTDefinition) CalculateSendCommissionRateAmount(coin sdk.Coin) sdk.Int {
-	return calculateRate(coin.Amount, ftd.SendCommissionRate)
-}
-
-func calculateRate(amount sdk.Int, rate sdk.Dec) sdk.Int {
-	return rate.MulInt(amount).Ceil().RoundInt()
-}
