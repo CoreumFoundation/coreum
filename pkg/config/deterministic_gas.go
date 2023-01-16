@@ -102,7 +102,6 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 	registerUndeterministicGasFuncs(
 		&dgr,
 		// wasm
-		// TODO (milad): rewise gas config for WASM msgs.
 		[]sdk.Msg{
 			&wasmtypes.MsgStoreCode{},
 			&wasmtypes.MsgInstantiateContract{},
