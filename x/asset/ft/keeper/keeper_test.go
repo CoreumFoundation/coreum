@@ -700,7 +700,7 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 		recipients = append(recipients, sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()))
 	}
 
-	var testCases = []struct {
+	testCases := []struct {
 		name         string
 		inputs       []banktypes.Input
 		outputs      []banktypes.Output

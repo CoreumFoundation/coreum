@@ -29,6 +29,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	}
 
 	denom := types.BuildDenom(settings.Subunit, settings.Issuer)
+
 	if _, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
 		return "", sdkerrors.Wrapf(
 			types.ErrInvalidInput,
