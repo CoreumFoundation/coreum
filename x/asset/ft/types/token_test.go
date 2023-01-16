@@ -303,20 +303,20 @@ func TestValidateSendCommissionRate(t *testing.T) {
 }
 
 //nolint:funlen,nosnakecase // this is complex test scenario and breaking it down is not helpful
-func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
+func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	nonIssuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	type fields struct {
 		Denom              string
 		Issuer             string
-		Features           []types.TokenFeature
+		Features           []types.Feature
 		BurnRate           sdk.Dec
 		SendCommissionRate sdk.Dec
 	}
 	type args struct {
 		addr    sdk.AccAddress
-		feature types.TokenFeature
+		feature types.Feature
 	}
 	tests := []struct {
 		name    string
@@ -328,13 +328,13 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 			name: "minting_feature_enabled_for_issuer",
 			fields: fields{
 				Issuer: issuer.String(),
-				Features: []types.TokenFeature{
-					types.TokenFeature_mint,
+				Features: []types.Feature{
+					types.Feature_minting,
 				},
 			},
 			args: args{
 				addr:    issuer,
-				feature: types.TokenFeature_mint,
+				feature: types.Feature_minting,
 			},
 			wantErr: require.NoError,
 		},
@@ -342,13 +342,13 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 			name: "burning_feature_always_enabled_for_issuer",
 			fields: fields{
 				Issuer: issuer.String(),
-				Features: []types.TokenFeature{
-					types.TokenFeature_burn,
+				Features: []types.Feature{
+					types.Feature_burning,
 				},
 			},
 			args: args{
 				addr:    nonIssuer,
-				feature: types.TokenFeature_burn,
+				feature: types.Feature_burning,
 			},
 			wantErr: require.NoError,
 		},
@@ -359,7 +359,7 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 			},
 			args: args{
 				addr:    issuer,
-				feature: types.TokenFeature_burn,
+				feature: types.Feature_burning,
 			},
 			wantErr: require.NoError,
 		},
@@ -367,13 +367,13 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 			name: "minting_feature_disabled_for_non_issuer",
 			fields: fields{
 				Issuer: issuer.String(),
-				Features: []types.TokenFeature{
-					types.TokenFeature_mint,
+				Features: []types.Feature{
+					types.Feature_minting,
 				},
 			},
 			args: args{
 				addr:    nonIssuer,
-				feature: types.TokenFeature_mint,
+				feature: types.Feature_minting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
 				if assert.ErrorIs(t, err, sdkerrors.ErrUnauthorized) {
@@ -389,7 +389,7 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 			},
 			args: args{
 				addr:    issuer,
-				feature: types.TokenFeature_mint,
+				feature: types.Feature_minting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
 				if assert.ErrorIs(t, err, types.ErrFeatureDisabled) {
@@ -402,14 +402,14 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			ftd := types.FTDefinition{
+			def := types.Definition{
 				Denom:              tt.fields.Denom,
 				Issuer:             tt.fields.Issuer,
 				Features:           tt.fields.Features,
 				BurnRate:           tt.fields.BurnRate,
 				SendCommissionRate: tt.fields.SendCommissionRate,
 			}
-			tt.wantErr(t, ftd.CheckFeatureAllowed(tt.args.addr, tt.args.feature), fmt.Sprintf("CheckFeatureAllowed(%v, %v)", tt.args.addr, tt.args.feature))
+			tt.wantErr(t, def.CheckFeatureAllowed(tt.args.addr, tt.args.feature), fmt.Sprintf("CheckFeatureAllowed(%v, %v)", tt.args.addr, tt.args.feature))
 		})
 	}
 }

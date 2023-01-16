@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// NonNegativeBalancesInvariantName is non negative balances invariant name.
+	// NonNegativeBalancesInvariantName is non-negative balances invariant name.
 	NonNegativeBalancesInvariantName = "non-negative-balances"
 	// BankMetadataExistsInvariantName is bank metadata exists name.
 	BankMetadataExistsInvariantName = "bank-metadata-exists"
@@ -29,7 +29,7 @@ func NonNegativeBalancesInvariant(k Keeper) sdk.Invariant {
 			count int
 		)
 
-		err := k.IterateAllFrozenBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
+		err := k.IterateAccountsFrozenBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
 			if balance.IsNegative() {
 				count++
 				msg += fmt.Sprintf("\t%s has a negative frozen balance of %s\n", addr, balance)
@@ -42,7 +42,7 @@ func NonNegativeBalancesInvariant(k Keeper) sdk.Invariant {
 			msg += fmt.Sprintf("can't iterate over frozen balances %s\n", err)
 		}
 
-		err = k.IterateAllWhitelistedBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
+		err = k.IterateAccountsWhitelistedBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
 			if balance.IsNegative() {
 				count++
 				msg += fmt.Sprintf("\t%s has a negative whitelisted balance of %s\n", addr, balance)
@@ -70,7 +70,7 @@ func BankMetadataMatchesInvariant(k Keeper) sdk.Invariant {
 			count int
 		)
 
-		k.IterateAllTokenDefinitions(ctx, func(definition types.FTDefinition) bool {
+		k.IterateAllTokenDefinitions(ctx, func(definition types.Definition) bool {
 			_, found := k.bankKeeper.GetDenomMetaData(ctx, definition.Denom)
 			if !found {
 				count++

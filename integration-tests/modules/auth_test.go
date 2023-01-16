@@ -71,7 +71,6 @@ func TestAuthFeeLimits(t *testing.T) {
 		chain.TxFactory().
 			WithGas(uint64(maxBlockGas+1)),
 		msg)
-	// TODO(dhil) here we get the Internal error -> "tx (***) not found" and the test takes the "txTimeout" time, validate that it's expected
 	require.Error(t, err)
 
 	// gas equal MaxBlockGas, the tx should pass

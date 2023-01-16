@@ -32,42 +32,6 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// CmdQueryToken return the QueryToken cobra command.
-func CmdQueryToken() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "token [denom]",
-		Args:  cobra.ExactArgs(1),
-		Short: "Query fungible token",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query fungible token details.
-
-Example:
-$ %[1]s query %s token [denom]
-`,
-				version.AppName, types.ModuleName,
-			),
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			queryClient := types.NewQueryClient(clientCtx)
-
-			denom := args[0]
-			res, err := queryClient.Token(cmd.Context(), &types.QueryTokenRequest{
-				Denom: denom,
-			})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
 // CmdQueryTokens return the QueryTokens cobra command.
 //
 //nolint:dupl // most code is identical, but reusing logic is not beneficial here.
@@ -109,6 +73,42 @@ $ %[1]s query %s tokens [issuer]
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "tokens")
+
+	return cmd
+}
+
+// CmdQueryToken return the QueryToken cobra command.
+func CmdQueryToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "token [denom]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query fungible token details.
+
+Example:
+$ %[1]s query %s token [denom]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			denom := args[0]
+			res, err := queryClient.Token(cmd.Context(), &types.QueryTokenRequest{
+				Denom: denom,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }

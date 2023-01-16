@@ -30,9 +30,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// prepare the genesis data
 
 	// token definitions
-	var tokens []types.FT
+	var tokens []types.Token
 	for i := 0; i < 5; i++ {
-		ft := types.FT{
+		ft := types.Token{
 			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
 			Issuer:             issuer.String(),
 			Symbol:             fmt.Sprintf("ABC%d", i),
@@ -40,12 +40,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 			Precision:          uint32(rand.Int31n(100)),
 			BurnRate:           sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
 			SendCommissionRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
-			Features: []types.TokenFeature{
-				types.TokenFeature_freeze,    //nolint:nosnakecase // proto enum
-				types.TokenFeature_whitelist, //nolint:nosnakecase // proto enum
+			Features: []types.Feature{
+				types.Feature_freezing,     //nolint:nosnakecase // proto enum
+				types.Feature_whitelisting, //nolint:nosnakecase // proto enum
 			},
 		}
-		// Globally freeze some FTs.
+		// Globally freeze some Tokens.
 		if i%2 == 0 {
 			ft.GloballyFrozen = true
 		}
@@ -100,9 +100,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// token definitions
 	for _, definition := range tokens {
-		storedFT, err := ftKeeper.GetToken(ctx, definition.Denom)
+		storedToken, err := ftKeeper.GetToken(ctx, definition.Denom)
 		requireT.NoError(err)
-		assertT.EqualValues(definition, storedFT)
+		assertT.EqualValues(definition, storedToken)
 	}
 
 	// frozen balances

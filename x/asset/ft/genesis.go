@@ -8,8 +8,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// TODO(yaroslav): Add global freezing logic to genesis once coreum #268 is merged.
-
 // InitGenesis initializes the asset module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
@@ -21,7 +19,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic(err)
 		}
 
-		definition := types.FTDefinition{
+		definition := types.Definition{
 			Denom:              ft.Denom,
 			Issuer:             ft.Issuer,
 			Features:           ft.Features,

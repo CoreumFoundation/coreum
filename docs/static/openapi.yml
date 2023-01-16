@@ -6,7 +6,7 @@ info:
 paths:
   '/coreum/asset/ft/v1/accounts/{account}/balances/frozen':
     get:
-      summary: FrozenBalances returns all the frozen balances for the account
+      summary: FrozenBalances returns all the frozen balances for the account.
       operationId: CoreumAssetFtV1FrozenBalances
       responses:
         '200':
@@ -301,7 +301,7 @@ paths:
         - Query
   '/coreum/asset/ft/v1/accounts/{account}/balances/frozen/{denom}':
     get:
-      summary: FrozenBalance returns frozen balance of the denom for the account
+      summary: FrozenBalance returns frozen balance of the denom for the account.
       operationId: CoreumAssetFtV1FrozenBalance
       responses:
         '200':
@@ -527,7 +527,9 @@ paths:
         - Query
   '/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted':
     get:
-      summary: WhitelistedBalances returns all the whitelisted balances for the account
+      summary: >-
+        WhitelistedBalances returns all the whitelisted balances for the
+        account.
       operationId: CoreumAssetFtV1WhitelistedBalances
       responses:
         '200':
@@ -828,7 +830,7 @@ paths:
     get:
       summary: >-
         WhitelistedBalance returns whitelisted balance of the denom for the
-        account
+        account.
       operationId: CoreumAssetFtV1WhitelistedBalance
       responses:
         '200':
@@ -1107,14 +1109,12 @@ paths:
                       items:
                         type: string
                         enum:
-                          - freeze
-                          - mint
-                          - burn
-                          - whitelist
-                        default: freeze
-                        title: >-
-                          TokenFeature defines possible features of fungible
-                          token
+                          - minting
+                          - burning
+                          - freezing
+                          - whitelisting
+                        default: minting
+                        title: Feature defines possible features of fungible token
                     burn_rate:
                       type: string
                       description: >-
@@ -1130,10 +1130,7 @@ paths:
                         will be multiplied by send amount to determine
 
                         amount sent to the token issuer account.
-                  description: FT is a full representation of the fungible token.
-            description: >-
-              QueryTokensResponse is response type for the Query/Tokesn RPC
-              method.
+                  description: Token is a full representation of the fungible token.
         default:
           description: An unexpected error response.
           schema:
@@ -1415,12 +1412,12 @@ paths:
                     items:
                       type: string
                       enum:
-                        - freeze
-                        - mint
-                        - burn
-                        - whitelist
-                      default: freeze
-                      title: TokenFeature defines possible features of fungible token
+                        - minting
+                        - burning
+                        - freezing
+                        - whitelisting
+                      default: minting
+                      title: Feature defines possible features of fungible token
                   burn_rate:
                     type: string
                     description: >-
@@ -1436,10 +1433,7 @@ paths:
                       will be multiplied by send amount to determine
 
                       amount sent to the token issuer account.
-                description: FT is a full representation of the fungible token.
-            description: >-
-              QueryTokenResponse is response type for the Query/Token RPC
-              method.
+                description: Token is a full representation of the fungible token.
         default:
           description: An unexpected error response.
           schema:
@@ -27568,50 +27562,15 @@ paths:
 definitions:
   coreum.asset.ft.v1.EmptyResponse:
     type: object
-  coreum.asset.ft.v1.FT:
-    type: object
-    properties:
-      denom:
-        type: string
-      issuer:
-        type: string
-      symbol:
-        type: string
-      subunit:
-        type: string
-      precision:
-        type: integer
-        format: int64
-      description:
-        type: string
-      globally_frozen:
-        type: boolean
-      features:
-        type: array
-        items:
-          type: string
-          enum:
-            - freeze
-            - mint
-            - burn
-            - whitelist
-          default: freeze
-          title: TokenFeature defines possible features of fungible token
-      burn_rate:
-        type: string
-        description: >-
-          burn_rate is a number between 0 and 1 which will be multiplied by send
-          amount to determine
-
-          burn_amount. This value will be burnt on top of the send amount.
-      send_commission_rate:
-        type: string
-        description: >-
-          send_commission_rate is a number between 0 and 1 which will be
-          multiplied by send amount to determine
-
-          amount sent to the token issuer account.
-    description: FT is a full representation of the fungible token.
+  coreum.asset.ft.v1.Feature:
+    type: string
+    enum:
+      - minting
+      - burning
+      - freezing
+      - whitelisting
+    default: minting
+    title: Feature defines possible features of fungible token
   coreum.asset.ft.v1.QueryFrozenBalanceResponse:
     type: object
     properties:
@@ -27690,12 +27649,12 @@ definitions:
             items:
               type: string
               enum:
-                - freeze
-                - mint
-                - burn
-                - whitelist
-              default: freeze
-              title: TokenFeature defines possible features of fungible token
+                - minting
+                - burning
+                - freezing
+                - whitelisting
+              default: minting
+              title: Feature defines possible features of fungible token
           burn_rate:
             type: string
             description: >-
@@ -27710,8 +27669,7 @@ definitions:
               multiplied by send amount to determine
 
               amount sent to the token issuer account.
-        description: FT is a full representation of the fungible token.
-    description: QueryTokenResponse is response type for the Query/Token RPC method.
+        description: Token is a full representation of the fungible token.
   coreum.asset.ft.v1.QueryTokensResponse:
     type: object
     properties:
@@ -27758,12 +27716,12 @@ definitions:
               items:
                 type: string
                 enum:
-                  - freeze
-                  - mint
-                  - burn
-                  - whitelist
-                default: freeze
-                title: TokenFeature defines possible features of fungible token
+                  - minting
+                  - burning
+                  - freezing
+                  - whitelisting
+                default: minting
+                title: Feature defines possible features of fungible token
             burn_rate:
               type: string
               description: >-
@@ -27778,8 +27736,7 @@ definitions:
                 multiplied by send amount to determine
 
                 amount sent to the token issuer account.
-          description: FT is a full representation of the fungible token.
-    description: QueryTokensResponse is response type for the Query/Tokesn RPC method.
+          description: Token is a full representation of the fungible token.
   coreum.asset.ft.v1.QueryWhitelistedBalanceResponse:
     type: object
     properties:
@@ -27834,15 +27791,50 @@ definitions:
             NOTE: The amount field is an Int which implements the custom method
             signatures required by gogoproto.
         title: balances contains the whitelisted balances on the queried account
-  coreum.asset.ft.v1.TokenFeature:
-    type: string
-    enum:
-      - freeze
-      - mint
-      - burn
-      - whitelist
-    default: freeze
-    title: TokenFeature defines possible features of fungible token
+  coreum.asset.ft.v1.Token:
+    type: object
+    properties:
+      denom:
+        type: string
+      issuer:
+        type: string
+      symbol:
+        type: string
+      subunit:
+        type: string
+      precision:
+        type: integer
+        format: int64
+      description:
+        type: string
+      globally_frozen:
+        type: boolean
+      features:
+        type: array
+        items:
+          type: string
+          enum:
+            - minting
+            - burning
+            - freezing
+            - whitelisting
+          default: minting
+          title: Feature defines possible features of fungible token
+      burn_rate:
+        type: string
+        description: >-
+          burn_rate is a number between 0 and 1 which will be multiplied by send
+          amount to determine
+
+          burn_amount. This value will be burnt on top of the send amount.
+      send_commission_rate:
+        type: string
+        description: >-
+          send_commission_rate is a number between 0 and 1 which will be
+          multiplied by send amount to determine
+
+          amount sent to the token issuer account.
+    description: Token is a full representation of the fungible token.
   cosmos.base.query.v1beta1.PageRequest:
     type: object
     properties:
