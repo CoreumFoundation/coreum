@@ -28,8 +28,8 @@ import (
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	//"github.com/cosmos/cosmos-sdk/x/auth/vesting"
+	//vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
@@ -171,7 +171,7 @@ var (
 		feegrantmodule.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		vesting.AppModuleBasic{},
+		//vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
 		wnft.AppModuleBasic{},
@@ -482,7 +482,7 @@ func New(
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		//vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		wbank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -517,7 +517,7 @@ func New(
 		evidencetypes.ModuleName,
 		customparamstypes.ModuleName,
 		stakingtypes.ModuleName,
-		vestingtypes.ModuleName,
+		//vestingtypes.ModuleName,
 		authtypes.ModuleName,
 		authz.ModuleName,
 		banktypes.ModuleName,
@@ -545,7 +545,7 @@ func New(
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
-		vestingtypes.ModuleName,
+		//vestingtypes.ModuleName,
 		minttypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -573,7 +573,7 @@ func New(
 		distrtypes.ModuleName,
 		customparamstypes.ModuleName,
 		stakingtypes.ModuleName,
-		vestingtypes.ModuleName,
+		//vestingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,

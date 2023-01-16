@@ -32,9 +32,9 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 		"/ibc.core.",
 		"/ibc.applications.",
 		// To be integrated standard modules:
-		"/cosmos.evidence.",
-		"/cosmos.crisis.",
-		"/cosmos.vesting.",
+		"/cosmos.evidence.", // move to undeterm
+		"/cosmos.vesting.",  // move to a separate task & keep here
+		"/cosmos.crisis.",   // move to undeterm
 
 		// Internal cosmos protos:
 		"/testdata.",
@@ -80,14 +80,14 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
 	assert.Equal(t, 9, len(undetermMsgs))
-	assert.Equal(t, 33, len(determMsgs))
+	assert.Equal(t, 34, len(determMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg
 		t.Run("deterministic: "+config.MsgName(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.True(t, ok)
-			assert.Positive(t, gas)
+			assert.True(t, gas >= 0)
 		})
 	}
 

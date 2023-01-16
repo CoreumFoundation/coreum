@@ -6,6 +6,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -64,6 +65,11 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		// bank
 		MsgName(&banktypes.MsgSend{}):      bankSendMsgGasFunc(22000),
 		MsgName(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(27000),
+
+		// crisis
+		// MsgVerifyInvariant is defined with 0 constant gas here since fee
+		// charged by this tx type is defined as param inside module.
+		MsgName(&crisistypes.MsgVerifyInvariant{}): constantGasFunc(0),
 
 		// distribution
 		MsgName(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(50000),
