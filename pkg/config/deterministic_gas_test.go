@@ -25,7 +25,7 @@ var revProtoTypes map[reflect.Type]string
 func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor undeterministic.
-	ignoredMsgNames := []string{
+	ignoredMsgTypes := []string{
 		// Not-integrated modules:
 		// IBC:
 
@@ -95,7 +95,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	}
 
 	// WASM messages will be added here
-	undetermMsgNames := []string{
+	undetermMsgTypes := []string{
 		// crisis
 		"/cosmos.crisis.v1beta1.MsgVerifyInvariant",
 
@@ -123,15 +123,15 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 		}
 
 		// Skip unknow messages.
-		if lo.ContainsBy(ignoredMsgNames, func(msgName string) bool {
-			return config.MsgName(sdkMsg) == msgName
+		if lo.ContainsBy(ignoredMsgTypes, func(msgType string) bool {
+			return config.MsgType(sdkMsg) == msgType
 		}) {
 			continue
 		}
 
 		// Add message to undeterministic.
-		if lo.ContainsBy(undetermMsgNames, func(msgName string) bool {
-			return config.MsgName(sdkMsg) == msgName
+		if lo.ContainsBy(undetermMsgTypes, func(msgType string) bool {
+			return config.MsgType(sdkMsg) == msgType
 		}) {
 			undetermMsgs = append(undetermMsgs, sdkMsg)
 			continue
@@ -149,7 +149,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg
-		t.Run("deterministic: "+config.MsgName(sdkMsg), func(t *testing.T) {
+		t.Run("deterministic: "+config.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.True(t, ok)
 			assert.True(t, gas >= 0)
@@ -158,7 +158,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range undetermMsgs {
 		sdkMsg := sdkMsg
-		t.Run("undeterministic: "+config.MsgName(sdkMsg), func(t *testing.T) {
+		t.Run("undeterministic: "+config.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.False(t, ok)
 			assert.Zero(t, gas)

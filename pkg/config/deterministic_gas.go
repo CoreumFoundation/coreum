@@ -44,61 +44,61 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 	dgr.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
-		MsgName(&assetfttypes.MsgIssue{}):               constantGasFunc(80000),
-		MsgName(&assetfttypes.MsgMint{}):                constantGasFunc(35000),
-		MsgName(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
-		MsgName(&assetfttypes.MsgFreeze{}):              constantGasFunc(55000),
-		MsgName(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(55000),
-		MsgName(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
-		MsgName(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
-		MsgName(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(35000),
+		MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(80000),
+		MsgType(&assetfttypes.MsgMint{}):                constantGasFunc(35000),
+		MsgType(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
+		MsgType(&assetfttypes.MsgFreeze{}):              constantGasFunc(55000),
+		MsgType(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(55000),
+		MsgType(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
+		MsgType(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
+		MsgType(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(35000),
 
 		// asset/nft
-		MsgName(&assetnfttypes.MsgBurn{}):       constantGasFunc(15000),
-		MsgName(&assetnfttypes.MsgIssueClass{}): constantGasFunc(20000),
-		MsgName(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
+		MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(15000),
+		MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(20000),
+		MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
 
 		// authz
-		MsgName(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
-		MsgName(&authz.MsgGrant{}):  constantGasFunc(7000),
-		MsgName(&authz.MsgRevoke{}): constantGasFunc(7000),
+		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
+		MsgType(&authz.MsgGrant{}):  constantGasFunc(7000),
+		MsgType(&authz.MsgRevoke{}): constantGasFunc(7000),
 
 		// bank
-		MsgName(&banktypes.MsgSend{}):      bankSendMsgGasFunc(22000),
-		MsgName(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(27000),
+		MsgType(&banktypes.MsgSend{}):      bankSendMsgGasFunc(22000),
+		MsgType(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(27000),
 
 		// distribution
-		MsgName(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(50000),
-		MsgName(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(50000),
-		MsgName(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(120000),
-		MsgName(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(50000),
+		MsgType(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(50000),
+		MsgType(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(50000),
+		MsgType(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(120000),
+		MsgType(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(50000),
 
 		// feegrant
-		MsgName(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(13000),
-		MsgName(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(13000),
+		MsgType(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(13000),
+		MsgType(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(13000),
 
 		// gov
-		MsgName(&govtypes.MsgSubmitProposal{}): constantGasFunc(95000),
-		MsgName(&govtypes.MsgVote{}):           constantGasFunc(8000),
-		MsgName(&govtypes.MsgVoteWeighted{}):   constantGasFunc(11000),
-		MsgName(&govtypes.MsgDeposit{}):        constantGasFunc(11000),
+		MsgType(&govtypes.MsgSubmitProposal{}): constantGasFunc(95000),
+		MsgType(&govtypes.MsgVote{}):           constantGasFunc(8000),
+		MsgType(&govtypes.MsgVoteWeighted{}):   constantGasFunc(11000),
+		MsgType(&govtypes.MsgDeposit{}):        constantGasFunc(11000),
 
 		// nft
-		MsgName(&nfttypes.MsgSend{}): constantGasFunc(20000),
+		MsgType(&nfttypes.MsgSend{}): constantGasFunc(20000),
 
 		// slashing
-		MsgName(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
+		MsgType(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
 		// staking
-		MsgName(&stakingtypes.MsgDelegate{}):        constantGasFunc(51000),
-		MsgName(&stakingtypes.MsgUndelegate{}):      constantGasFunc(51000),
-		MsgName(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(51000),
-		MsgName(&stakingtypes.MsgCreateValidator{}): constantGasFunc(50000),
-		MsgName(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
+		MsgType(&stakingtypes.MsgDelegate{}):        constantGasFunc(51000),
+		MsgType(&stakingtypes.MsgUndelegate{}):      constantGasFunc(51000),
+		MsgType(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(51000),
+		MsgType(&stakingtypes.MsgCreateValidator{}): constantGasFunc(50000),
+		MsgType(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
 
 		// wasm
-		MsgName(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
-		MsgName(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(8000),
+		MsgType(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
+		MsgType(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(8000),
 	}
 
 	registerUndeterministicGasFuncs(
@@ -138,7 +138,7 @@ func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint6
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
 // Function returns 0 and false if message is undeterministic or unknown.
 func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
-	gasFunc, ok := dgr.gasByMsg[MsgName(msg)]
+	gasFunc, ok := dgr.gasByMsg[MsgType(msg)]
 	if ok {
 		return gasFunc(msg)
 	}
@@ -149,11 +149,11 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	return 0, false
 }
 
-// MsgName returns TypeURL of a msg in cosmos SDK style.
+// MsgType returns TypeURL of a msg in cosmos SDK style.
 // Samples of values returned by the function:
 // "/cosmos.distribution.v1beta1.MsgFundCommunityPool"
 // "/coreum.asset.ft.v1.MsgMint"
-func MsgName(msg sdk.Msg) string {
+func MsgType(msg sdk.Msg) string {
 	return sdk.MsgTypeURL(msg)
 }
 
@@ -184,7 +184,7 @@ func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhea
 
 func registerUndeterministicGasFuncs(dgr *DeterministicGasRequirements, msgs []sdk.Msg) {
 	for _, msg := range msgs {
-		dgr.gasByMsg[MsgName(msg)] = underministicGasFunc()
+		dgr.gasByMsg[MsgType(msg)] = underministicGasFunc()
 	}
 }
 
