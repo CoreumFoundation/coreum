@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 	_ "unsafe"
 
@@ -26,25 +25,100 @@ var revProtoTypes map[reflect.Type]string
 func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor undeterministic.
-	unknownMsgPrefixes := []string{
+	ignoredMsgNames := []string{
 		// Not-integrated modules:
 		// IBC:
-		"/ibc.core.",
-		"/ibc.applications.",
+
+		// ibc/core/client
+		"/ibc.core.client.v1.MsgCreateClient",
+		"/ibc.core.client.v1.MsgCreateClientResponse",
+		"/ibc.core.client.v1.MsgUpdateClient",
+		"/ibc.core.client.v1.MsgUpdateClientResponse",
+		"/ibc.core.client.v1.MsgUpgradeClient",
+		"/ibc.core.client.v1.MsgUpgradeClientResponse",
+		"/ibc.core.client.v1.MsgSubmitMisbehaviour",
+		"/ibc.core.client.v1.MsgSubmitMisbehaviourResponse",
+
+		// ibc/core/connection
+		"/ibc.core.connection.v1.MsgConnectionOpenInit",
+		"/ibc.core.connection.v1.MsgConnectionOpenInitResponse",
+		"/ibc.core.connection.v1.MsgConnectionOpenTry",
+		"/ibc.core.connection.v1.MsgConnectionOpenTryResponse",
+		"/ibc.core.connection.v1.MsgConnectionOpenAck",
+		"/ibc.core.connection.v1.MsgConnectionOpenAckResponse",
+		"/ibc.core.connection.v1.MsgConnectionOpenConfirm",
+		"/ibc.core.connection.v1.MsgConnectionOpenConfirmResponse",
+
+		// ibc/core/channel
+		"/ibc.core.channel.v1.MsgChannelOpenInit",
+		"/ibc.core.channel.v1.MsgChannelOpenInitResponse",
+		"/ibc.core.channel.v1.MsgChannelOpenTry",
+		"/ibc.core.channel.v1.MsgChannelOpenTryResponse",
+		"/ibc.core.channel.v1.MsgChannelOpenAck",
+		"/ibc.core.channel.v1.MsgChannelOpenAckResponse",
+		"/ibc.core.channel.v1.MsgChannelOpenConfirm",
+		"/ibc.core.channel.v1.MsgChannelOpenConfirmResponse",
+		"/ibc.core.channel.v1.MsgChannelCloseInit",
+		"/ibc.core.channel.v1.MsgChannelCloseInitResponse",
+		"/ibc.core.channel.v1.MsgChannelCloseConfirm",
+		"/ibc.core.channel.v1.MsgChannelCloseConfirmResponse",
+		"/ibc.core.channel.v1.MsgRecvPacket",
+		"/ibc.core.channel.v1.MsgRecvPacketResponse",
+		"/ibc.core.channel.v1.MsgTimeout",
+		"/ibc.core.channel.v1.MsgTimeoutResponse",
+		"/ibc.core.channel.v1.MsgTimeoutOnClose",
+		"/ibc.core.channel.v1.MsgTimeoutOnCloseResponse",
+		"/ibc.core.channel.v1.MsgAcknowledgement",
+		"/ibc.core.channel.v1.MsgAcknowledgementResponse",
+
+		// ibc.applications.transfer
+		"/ibc.applications.transfer.v1.MsgTransfer",
+		"/ibc.applications.transfer.v1.MsgTransferResponse",
+
+		// ibc.applications.fee
+		"/ibc.applications.fee.v1.MsgRegisterPayee",
+		"/ibc.applications.fee.v1.MsgRegisterPayeeResponse",
+		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayee",
+		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayeeResponse",
+		"/ibc.applications.fee.v1.MsgPayPacketFee",
+		"/ibc.applications.fee.v1.MsgPayPacketFeeResponse",
+		"/ibc.applications.fee.v1.MsgPayPacketFeeAsync",
+		"/ibc.applications.fee.v1.MsgPayPacketFeeAsyncResponse",
+
 		// To be integrated standard modules:
-		"/cosmos.evidence.", // move to undeterm
-		"/cosmos.vesting.",  // move to a separate task & keep here
-		"/cosmos.crisis.",   // move to undeterm
+		"/cosmos.vesting.v1beta1.MsgCreateVestingAccount",
 
 		// Internal cosmos protos:
-		"/testdata.",
+		"/testdata.TestMsg",
+		"/testdata.MsgCreateDog",
 		"/cosmos.tx.v1beta1.Tx",
 	}
 
 	// WASM messages will be added here
-	undetermMsgPrefixes := []string{
-		// CosmWasm
-		"/cosmwasm.wasm.",
+	undetermMsgNames := []string{
+		// crisis
+		"/cosmos.crisis.v1beta1.MsgVerifyInvariant",
+
+		// evidence
+		"/cosmos.evidence.v1beta1.MsgSubmitEvidence",
+
+		// wasm
+		"/cosmwasm.wasm.v1.MsgStoreCode",
+		"/cosmwasm.wasm.v1.MsgStoreCodeResponse",
+		"/cosmwasm.wasm.v1.MsgInstantiateContract",
+		"/cosmwasm.wasm.v1.MsgInstantiateContract2",
+		"/cosmwasm.wasm.v1.MsgInstantiateContractResponse",
+		"/cosmwasm.wasm.v1.MsgInstantiateContract2Response",
+		"/cosmwasm.wasm.v1.MsgExecuteContract",
+		"/cosmwasm.wasm.v1.MsgExecuteContractResponse",
+		"/cosmwasm.wasm.v1.MsgMigrateContract",
+		"/cosmwasm.wasm.v1.MsgMigrateContractResponse",
+		"/cosmwasm.wasm.v1.MsgUpdateAdmin",
+		"/cosmwasm.wasm.v1.MsgUpdateAdminResponse",
+		"/cosmwasm.wasm.v1.MsgClearAdmin",
+		"/cosmwasm.wasm.v1.MsgClearAdminResponse",
+		"/cosmwasm.wasm.v1.MsgIBCSend",
+		"/cosmwasm.wasm.v1.MsgIBCCloseChannel",
 	}
 
 	dgr := config.DefaultDeterministicGasRequirements()
@@ -58,15 +132,15 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 		}
 
 		// Skip unknow messages.
-		if lo.ContainsBy(unknownMsgPrefixes, func(prefix string) bool {
-			return strings.HasPrefix(config.MsgName(sdkMsg), prefix)
+		if lo.ContainsBy(ignoredMsgNames, func(msgName string) bool {
+			return config.MsgName(sdkMsg) == msgName
 		}) {
 			continue
 		}
 
 		// Add message to undeterministic.
-		if lo.ContainsBy(undetermMsgPrefixes, func(prefix string) bool {
-			return strings.HasPrefix(config.MsgName(sdkMsg), prefix)
+		if lo.ContainsBy(undetermMsgNames, func(msgName string) bool {
+			return config.MsgName(sdkMsg) == msgName
 		}) {
 			undetermMsgs = append(undetermMsgs, sdkMsg)
 			continue
@@ -79,8 +153,8 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 9, len(undetermMsgs))
-	assert.Equal(t, 34, len(determMsgs))
+	assert.Equal(t, 11, len(undetermMsgs))
+	assert.Equal(t, 33, len(determMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg

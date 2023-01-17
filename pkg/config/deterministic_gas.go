@@ -8,6 +8,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -66,11 +67,6 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&banktypes.MsgSend{}):      bankSendMsgGasFunc(22000),
 		MsgName(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(27000),
 
-		// crisis
-		// MsgVerifyInvariant is defined with 0 constant gas here since fee
-		// charged by this tx type is defined as param inside module.
-		MsgName(&crisistypes.MsgVerifyInvariant{}): constantGasFunc(0),
-
 		// distribution
 		MsgName(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(50000),
 		MsgName(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(50000),
@@ -103,9 +99,20 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 	registerUndeterministicGasFuncs(
 		&dgr,
-		// wasm
 		// TODO (milad): rewise gas config for WASM msgs.
 		[]sdk.Msg{
+			// crisis
+			// MsgVerifyInvariant is defined as undeterministic since fee
+			// charged by this tx type is defined as param inside module.
+			&crisistypes.MsgVerifyInvariant{},
+
+			// evidence
+			// MsgSubmitEvidence is defined as undeterministic since we do not
+			// have any custom evidence type implemented, so it should fail on
+			// ValidateBasic step.
+			&evidencetypes.MsgSubmitEvidence{},
+
+			// wasm
 			&wasmtypes.MsgStoreCode{},
 			&wasmtypes.MsgInstantiateContract{},
 			&wasmtypes.MsgInstantiateContract2{},
