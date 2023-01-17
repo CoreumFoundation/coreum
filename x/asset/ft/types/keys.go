@@ -25,8 +25,8 @@ const (
 
 // Store key prefixes
 var (
-	// FTKeyPrefix defines the key prefix for the fungible token.
-	FTKeyPrefix = []byte{0x01}
+	// TokenKeyPrefix defines the key prefix for the fungible token.
+	TokenKeyPrefix = []byte{0x01}
 	// SymbolKeyPrefix defines the key prefix for the fungible token by Symbol.
 	SymbolKeyPrefix = []byte{0x02}
 	// FrozenBalancesKeyPrefix defines the key prefix to track frozen balances
@@ -44,7 +44,12 @@ func CreateTokenKey(issuer sdk.AccAddress, subunit string) []byte {
 
 // CreateIssuerTokensPrefix constructs the prefix for the fungible token issued by account.
 func CreateIssuerTokensPrefix(issuer sdk.AccAddress) []byte {
-	return store.JoinKeys(FTKeyPrefix, address.MustLengthPrefix(issuer))
+	return store.JoinKeys(TokenKeyPrefix, address.MustLengthPrefix(issuer))
+}
+
+// CreateSymbolKey creates the prefix for a ft symbol.
+func CreateSymbolKey(addr []byte, symbol string) []byte {
+	return store.JoinKeys(store.JoinKeys(SymbolKeyPrefix, addr), []byte(symbol))
 }
 
 // CreateFrozenBalancesKey creates the prefix for an account's frozen balances.
@@ -60,11 +65,6 @@ func CreateGlobalFreezeKey(denom string) []byte {
 // CreateWhitelistedBalancesKey creates the prefix for an account's whitelisted balances.
 func CreateWhitelistedBalancesKey(addr []byte) []byte {
 	return store.JoinKeys(WhitelistedBalancesKeyPrefix, address.MustLengthPrefix(addr))
-}
-
-// CreateSymbolKey creates the prefix for a ft symbol.
-func CreateSymbolKey(addr []byte, symbol string) []byte {
-	return store.JoinKeys(store.JoinKeys(SymbolKeyPrefix, addr), []byte(symbol))
 }
 
 // AddressFromBalancesStore returns an account address from a balances prefix
