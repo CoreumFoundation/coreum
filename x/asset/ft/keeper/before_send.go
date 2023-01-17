@@ -67,7 +67,7 @@ func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 
 		burnShares := CalculateRateShares(def.BurnRate, def.Issuer, inOps, outOps)
 		for account, amount := range burnShares {
-			if err := k.burnSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
+			if err := k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
 				return err
 			}
 		}

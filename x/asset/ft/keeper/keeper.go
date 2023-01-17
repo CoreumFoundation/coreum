@@ -100,7 +100,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 	k.SetTokenDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
-	if err := k.mintReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
+	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
 	}
 
@@ -135,7 +135,7 @@ func (k Keeper) Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 		return err
 	}
 
-	return k.mintReceivable(ctx, def, coin.Amount, sender)
+	return k.mintIfReceivable(ctx, def, coin.Amount, sender)
 }
 
 // Burn burns fungible token.
@@ -150,7 +150,7 @@ func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 		return err
 	}
 
-	return k.burnSpendable(ctx, sender, def, coin.Amount)
+	return k.burnIfSpendable(ctx, sender, def, coin.Amount)
 }
 
 // Freeze freezes specified token from the specified account.
@@ -472,7 +472,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 
 // private access
 
-func (k Keeper) mintReceivable(ctx sdk.Context, def types.Definition, amount sdk.Int, recipient sdk.AccAddress) error {
+func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount sdk.Int, recipient sdk.AccAddress) error {
 	if !amount.IsPositive() {
 		return nil
 	}
@@ -492,7 +492,7 @@ func (k Keeper) mintReceivable(ctx sdk.Context, def types.Definition, amount sdk
 	return nil
 }
 
-func (k Keeper) burnSpendable(ctx sdk.Context, account sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+func (k Keeper) burnIfSpendable(ctx sdk.Context, account sdk.AccAddress, def types.Definition, amount sdk.Int) error {
 	if err := k.isCoinSpendable(ctx, account, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}
