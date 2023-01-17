@@ -122,7 +122,7 @@ func init() {
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,
 			Enabled:              true,
-			GenesisTime:          time.Date(2023, 1, 18, 12, 0, 0, 0, time.UTC),
+			GenesisTime:          time.Date(2023, 1, 16, 12, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixTest,
 			MetadataDisplayDenom: constant.DenomTestDisplay,
 			Denom:                constant.DenomTest,
