@@ -546,11 +546,8 @@ func TestAssetNFTFreeze(t *testing.T) {
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
 				&nft.MsgSend{},
-				&nft.MsgSend{},
-				&nft.MsgSend{},
-				&nft.MsgSend{},
 				&assetnfttypes.MsgFreeze{},
-				// &assetnfttypes.MsgUnfreeze{},
+				&assetnfttypes.MsgUnfreeze{},
 			},
 		}),
 	)
