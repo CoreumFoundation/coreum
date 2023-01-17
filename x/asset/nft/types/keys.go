@@ -20,6 +20,8 @@ const (
 var (
 	// NFTClassKeyPrefix defines the key prefix for the non-fungible token class definition.
 	NFTClassKeyPrefix = []byte{0x01}
+	// NFTFreezingKeyPrefix defines the key prefix to track frozen NFTs.
+	NFTFreezingKeyPrefix = []byte{0x02}
 )
 
 // CreateClassKey constructs the key for the non-fungible token class.

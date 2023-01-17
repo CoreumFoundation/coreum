@@ -312,3 +312,63 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 	// mint NFT
 	requireT.ErrorIs(nftKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
 }
+
+func TestKeeper_Freeze(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	assetNFTKeeper.SetParams(ctx, nftParams)
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: addr,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_freezing, //nolint:nosnakecase
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:  addr,
+		ClassID: classID,
+		ID:      "my-id",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+
+	// mint NFT
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
+
+	// freeze NFT
+	nftID := settings.ID
+	requireT.NoError(assetNFTKeeper.Freeze(ctx, addr, classID, nftID))
+
+	// transfer from issuer (although it is frozen, the issuer can send)
+	receiver := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, receiver)
+	requireT.NoError(err)
+
+	// transfer from non-issuer (must fail)
+	receiver2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, receiver2)
+	requireT.Error(err)
+	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+
+	// unfreeze
+	requireT.NoError(assetNFTKeeper.Unfreeze(ctx, addr, classID, nftID))
+
+	// transfer from non-issuer (must succeed)
+	err = nftKeeper.Transfer(ctx, classID, nftID, receiver2)
+	requireT.NoError(err)
+}

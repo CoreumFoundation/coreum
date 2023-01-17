@@ -15,4 +15,6 @@ var (
 	ErrFeatureDisabled = sdkerrors.Register(ModuleName, 4, "feature disabled")
 	// ErrNFTNotFound is returned if a non-fungible token not found in the store.
 	ErrNFTNotFound = sdkerrors.Register(ModuleName, 5, "non-fungible token not found")
+	// ErrInvalidKey is returned when the provided store key is invalid
+	ErrInvalidKey = sdkerrors.Register(ModuleName, 6, "invalid key")
 )

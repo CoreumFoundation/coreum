@@ -188,6 +188,102 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 	return k.nftKeeper.Burn(ctx, classID, id)
 }
 
+// Freeze freezes a non fungible token
+func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	if err != nil {
+		return err
+	}
+
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_burning); err != nil { //nolint:nosnakecase // generated variable
+		return err
+	}
+
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	k.StoreFrozen(ctx, classID, nftID)
+
+	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
+	return ctx.EventManager().EmitTypedEvent(&types.EventFrozen{
+		ClassId: classID,
+		Id:      nftID,
+		Owner:   owner.String(),
+	})
+}
+
+// StoreFrozen marks the nft frozen, but does not make any checks
+// should not be used directly outside of the module except for genesis.
+func (k Keeper) StoreFrozen(ctx sdk.Context, classID, nftID string) {
+	freezeStore := newFreezingFeatureStore(ctx.KVStore(k.storeKey))
+	freezeStore.freeze(classID, nftID)
+}
+
+// Unfreeze unfreezes a non fungible token
+func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	if err != nil {
+		return err
+	}
+
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_burning); err != nil { //nolint:nosnakecase // generated variable
+		return err
+	}
+
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	freezeStore := newFreezingFeatureStore(ctx.KVStore(k.storeKey))
+	freezeStore.unfreeze(classID, nftID)
+
+	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
+	return ctx.EventManager().EmitTypedEvent(&types.EventUnfrozen{
+		ClassId: classID,
+		Id:      nftID,
+		Owner:   owner.String(),
+	})
+}
+
+// IsFrozen return whether a non fungible token is frozen or not
+func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) bool {
+	freezeStore := newFreezingFeatureStore(ctx.KVStore(k.storeKey))
+	return freezeStore.isFrozen(classID, nftID)
+}
+
+// AllFrozen return all frozen NFTs
+func (k Keeper) AllFrozen(ctx sdk.Context) ([]types.FrozenNFT, error) {
+	freezeStore := newFreezingFeatureStore(ctx.KVStore(k.storeKey))
+	return freezeStore.allFrozen()
+}
+
+func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	// we return nil here, since we want the original tests of the nft module to pass, but they
+	// fail if we return errors for unregistered NFTs on asset. Also the original nft module
+	// does not have access to the asset module to register the NFTs
+	if types.ErrClassNotFound.Is(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	// always allow issuer to send NFTs issued by them.
+	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
+	if classDefinition.Issuer == owner.String() {
+		return nil
+	}
+
+	freezeStore := newFreezingFeatureStore(ctx.KVStore(k.storeKey))
+	if freezeStore.isFrozen(classID, nftID) {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
+	}
+
+	return nil
+}
+
 // SetClassDefinition stores the ClassDefinition.
 func (k Keeper) SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) {
 	store := ctx.KVStore(k.storeKey)

@@ -55,6 +55,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&assetnfttypes.MsgBurn{}):       constantGasFunc(15000),
 		MsgName(&assetnfttypes.MsgIssueClass{}): constantGasFunc(20000),
 		MsgName(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
+		MsgName(&assetnfttypes.MsgFreeze{}):     constantGasFunc(7000),
+		MsgName(&assetnfttypes.MsgUnfreeze{}):   constantGasFunc(5000),
 
 		// authz
 		MsgName(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),

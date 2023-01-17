@@ -38,3 +38,14 @@ func TestJoinKeys(t *testing.T) {
 	require.Equal(t, append(prefix, denom...), key)
 	require.Equal(t, keyClone, prefix)
 }
+
+func TestJoinKeysWithLengthMany(t *testing.T) {
+	keys := [][]byte{
+		[]byte("key1"),
+		[]byte("key2"),
+		[]byte("key3"),
+	}
+	compositeKey := store.JoinKeysWithLengthMany(keys...)
+	parsedKeys := store.ParseJoinKeysWithLengthMany(compositeKey)
+	require.Equal(t, keys, parsedKeys)
+}

@@ -8,6 +8,7 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/gogo/protobuf/proto"
@@ -18,6 +19,7 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -526,4 +528,169 @@ func TestAssetNFTBurn(t *testing.T) {
 	})
 	requireT.Error(err)
 	requireT.Contains(err.Error(), nft.ErrNFTNotExists.Error()) // the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
+}
+
+// TestAssetNFTFreeze tests non-fungible token freezing.
+func TestAssetNFTFreeze(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	receiver1 := chain.GenAccount()
+
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetnfttypes.MsgIssueClass{},
+				&assetnfttypes.MsgMint{},
+				&nft.MsgSend{},
+				&nft.MsgSend{},
+				&nft.MsgSend{},
+				&nft.MsgSend{},
+				&assetnfttypes.MsgFreeze{},
+				// &assetnfttypes.MsgUnfreeze{},
+			},
+		}),
+	)
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, receiver1, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&nft.MsgSend{},
+			},
+		}),
+	)
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_freezing, //nolint:nosnakecase // generated variable
+		},
+	}
+	_, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	// mint new token in that class
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	nftID := "id-1"
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      nftID,
+		ClassID: classID,
+	}
+	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(mintMsg), uint64(res.GasUsed))
+
+	// freeze the NFT
+	msgFreeze := &assetnfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      nftID,
+	}
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
+		msgFreeze,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(msgFreeze), uint64(res.GasUsed))
+
+	// assert the freezing event
+	frozenEvents, err := event.FindTypedEvents[*types.EventFrozen](res.Events)
+	requireT.NoError(err)
+	frozenEvent := frozenEvents[0]
+	requireT.Equal(&types.EventFrozen{
+		ClassId: classID,
+		Id:      msgFreeze.ID,
+		Owner:   issuer.String(),
+	}, frozenEvent)
+
+	// send from issuer to receiver1 (send is allowed)
+	sendMsg := &nft.MsgSend{
+		Sender:   issuer.String(),
+		ClassId:  classID,
+		Id:       nftID,
+		Receiver: receiver1.String(),
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// send from receiver1 to receiver2 (send is not allowed since it is frozen)
+	receiver2 := chain.GenAccount()
+	sendMsg = &nft.MsgSend{
+		Sender:   receiver1.String(),
+		ClassId:  classID,
+		Id:       nftID,
+		Receiver: receiver2.String(),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(receiver1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+
+	// unfreeze the NFT
+	msgUnfreeze := &assetnfttypes.MsgUnfreeze{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      nftID,
+	}
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUnfreeze)),
+		msgUnfreeze,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(chain.GasLimitByMsgs(msgUnfreeze), res.GasUsed)
+
+	// assert the unfreezing event
+	unFrozenEvents, err := event.FindTypedEvents[*types.EventUnfrozen](res.Events)
+	requireT.NoError(err)
+	unfrozenEvent := unFrozenEvents[0]
+	requireT.Equal(&types.EventUnfrozen{
+		ClassId: classID,
+		Id:      msgFreeze.ID,
+		Owner:   receiver1.String(),
+	}, unfrozenEvent)
+
+	// send from receiver1 to receiver2 (send is allowed since it is not unfrozen)
+	sendMsg = &nft.MsgSend{
+		Sender:   receiver1.String(),
+		ClassId:  classID,
+		Id:       nftID,
+		Receiver: receiver2.String(),
+	}
+
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(receiver1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
 }
