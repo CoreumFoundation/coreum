@@ -44,7 +44,13 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// WASM messages will be added here
 	undetermMsgPrefixes := []string{
 		// CosmWasm
-		"/cosmwasm.wasm.",
+		"/cosmwasm.wasm.v1.MsgStoreCode",
+		"/cosmwasm.wasm.v1.MsgInstantiateContract",
+		"/cosmwasm.wasm.v1.MsgInstantiateContract2",
+		"/cosmwasm.wasm.v1.MsgExecuteContract",
+		"/cosmwasm.wasm.v1.MsgMigrateContract",
+		"/cosmwasm.wasm.v1.MsgIBCCloseChannel",
+		"/cosmwasm.wasm.v1.MsgIBCSend",
 	}
 
 	dgr := config.DefaultDeterministicGasRequirements()
@@ -79,8 +85,8 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 9, len(undetermMsgs))
-	assert.Equal(t, 33, len(determMsgs))
+	assert.Equal(t, 7, len(undetermMsgs))
+	assert.Equal(t, 35, len(determMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg
