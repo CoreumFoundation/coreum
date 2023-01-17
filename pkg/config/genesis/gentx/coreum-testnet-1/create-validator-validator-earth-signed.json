@@ -51,7 +51,7 @@
     "fee": {
       "amount": [
         {
-          "denom": "ducore",
+          "denom": "utestcore",
           "amount": "0"
         }
       ],
@@ -61,6 +61,6 @@
     }
   },
   "signatures": [
-    "gKROVmS4yxxumIb46xtsoV+EIzotNkj7iDdX5MGjhgM2/vazGGynNRNkYdGsBD0VEb9jVx2V5NZ6RRk0PFGUWw=="
+    "E6Hz1zXyxYNC2dbjfsjH2izllOmWSBm+cKlwzIerUUhTVHlxFCxeGlp8rWvCZvGNkg7cyX2JOLLOsdjQy87sZg=="
   ]
 }
