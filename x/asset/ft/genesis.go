@@ -13,28 +13,28 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	k.SetParams(ctx, genState.Params)
 
 	// Init fungible token definitions
-	for _, ft := range genState.Tokens {
-		subunit, issuer, err := types.DeconstructDenom(ft.Denom)
+	for _, token := range genState.Tokens {
+		subunit, issuer, err := types.DeconstructDenom(token.Denom)
 		if err != nil {
 			panic(err)
 		}
 
 		definition := types.Definition{
-			Denom:              ft.Denom,
-			Issuer:             ft.Issuer,
-			Features:           ft.Features,
-			BurnRate:           ft.BurnRate,
-			SendCommissionRate: ft.SendCommissionRate,
+			Denom:              token.Denom,
+			Issuer:             token.Issuer,
+			Features:           token.Features,
+			BurnRate:           token.BurnRate,
+			SendCommissionRate: token.SendCommissionRate,
 		}
 
 		k.SetTokenDefinition(ctx, issuer, subunit, definition)
 
-		err = k.SetSymbol(ctx, ft.Symbol, issuer)
+		err = k.SetSymbol(ctx, token.Symbol, issuer)
 		if err != nil {
 			panic(err)
 		}
-		if ft.GloballyFrozen {
-			k.SetGlobalFreeze(ctx, ft.Denom, true)
+		if token.GloballyFrozen {
+			k.SetGlobalFreeze(ctx, token.Denom, true)
 		}
 	}
 

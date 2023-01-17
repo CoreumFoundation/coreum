@@ -21,8 +21,8 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// TestAssetTokenIssue tests issue functionality of fungible tokens.
-func TestAssetTokenIssue(t *testing.T) {
+// TestAssetFTIssue tests issue functionality of fungible tokens.
+func TestAssetFTIssue(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -73,8 +73,8 @@ func TestAssetTokenIssue(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
 }
 
-// TestAssetTokenIssueFeeProposal tests proposal upgrading issue fee
-func TestAssetTokenIssueFeeProposal(t *testing.T) {
+// TestAssetFTIssueFeeProposal tests proposal upgrading issue fee
+func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
 
@@ -197,8 +197,8 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 	}, gotToken.Tokens[0])
 }
 
-// TestAssetTokenMint tests mint functionality of fungible tokens.
-func TestAssetTokenMint(t *testing.T) {
+// TestAssetFTMint tests mint functionality of fungible tokens.
+func TestAssetFTMint(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -331,8 +331,8 @@ func TestAssetTokenMint(t *testing.T) {
 	assertT.EqualValues(mintCoin, newSupply.GetAmount().Sub(oldSupply.GetAmount()))
 }
 
-// TestAssetTokenBurn tests burn functionality of fungible tokens.
-func TestAssetTokenBurn(t *testing.T) {
+// TestAssetFTBurn tests burn functionality of fungible tokens.
+func TestAssetFTBurn(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -515,10 +515,10 @@ func TestAssetTokenBurn(t *testing.T) {
 	assertT.EqualValues(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
 }
 
-// TestAssetTokenBurnRate tests burn rate functionality of fungible tokens.
+// TestAssetFTBurnRate tests burn rate functionality of fungible tokens.
 //
 //nolint:dupl
-func TestAssetTokenBurnRate(t *testing.T) {
+func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -666,10 +666,10 @@ func TestAssetTokenBurnRate(t *testing.T) {
 	})
 }
 
-// TestAssetTokenSendCommissionRate tests send commission rate functionality of fungible tokens.
+// TestAssetFTSendCommissionRate tests send commission rate functionality of fungible tokens.
 //
 //nolint:dupl
-func TestAssetTokenSendCommissionRate(t *testing.T) {
+func TestAssetFTSendCommissionRate(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -817,8 +817,8 @@ func TestAssetTokenSendCommissionRate(t *testing.T) {
 	})
 }
 
-// TestAssetTokenFreeze checks freeze functionality of fungible tokens.
-func TestAssetTokenFreeze(t *testing.T) {
+// TestAssetFTFreeze checks freeze functionality of fungible tokens.
+func TestAssetFTFreeze(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -1116,8 +1116,8 @@ func TestAssetTokenFreeze(t *testing.T) {
 	}, fungibleTokenFreezeEvts[0])
 }
 
-// TestAssetTokenFreezeUnfreezable checks freeze functionality on unfreezable fungible tokens.
-func TestAssetTokenFreezeUnfreezable(t *testing.T) {
+// TestAssetFTFreezeUnfreezable checks freeze functionality on unfreezable fungible tokens.
+func TestAssetFTFreezeUnfreezable(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -1172,8 +1172,8 @@ func TestAssetTokenFreezeUnfreezable(t *testing.T) {
 	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
 
-// TestAssetTokenGloballyFreeze checks global freeze functionality of fungible tokens.
-func TestAssetTokenGloballyFreeze(t *testing.T) {
+// TestAssetFTGloballyFreeze checks global freeze functionality of fungible tokens.
+func TestAssetFTGloballyFreeze(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -1337,8 +1337,8 @@ func TestAssetTokenGloballyFreeze(t *testing.T) {
 	requireT.NoError(err)
 }
 
-// TestAssetTokenWhitelist checks whitelist functionality of fungible tokens.
-func TestAssetTokenWhitelist(t *testing.T) {
+// TestAssetFTWhitelist checks whitelist functionality of fungible tokens.
+func TestAssetFTWhitelist(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -1629,8 +1629,8 @@ func TestAssetTokenWhitelist(t *testing.T) {
 	assertT.True(assetfttypes.ErrWhitelistedLimitExceeded.Is(err))
 }
 
-// TestAssetTokenWhitelistUnwhitelistable checks whitelist functionality on unwhitelistable fungible tokens.
-func TestAssetTokenWhitelistUnwhitelistable(t *testing.T) {
+// TestAssetFTWhitelistUnwhitelistable checks whitelist functionality on unwhitelistable fungible tokens.
+func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

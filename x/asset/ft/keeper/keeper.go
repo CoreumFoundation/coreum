@@ -80,12 +80,8 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 
 	params := k.GetParams(ctx)
 	if params.IssueFee.IsPositive() {
-		coinsToBurn := sdk.NewCoins(params.IssueFee)
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, settings.Issuer, types.ModuleName, coinsToBurn); err != nil {
-			return "", sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", settings.Issuer.String(), types.ModuleName)
-		}
-		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
-			return "", sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
+		if err := k.burn(ctx, settings.Issuer, sdk.NewCoins(params.IssueFee)); err != nil {
+			return "", err
 		}
 	}
 
@@ -104,7 +100,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
 	k.SetTokenDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
-	if err := k.mint(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
+	if err := k.mintReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
 	}
 
@@ -130,31 +126,31 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 
 // Mint mints new fungible token.
 func (k Keeper) Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if err = ft.CheckFeatureAllowed(sender, types.Feature_minting); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_minting); err != nil { //nolint:nosnakecase
 		return err
 	}
 
-	return k.mint(ctx, ft, coin.Amount, sender)
+	return k.mintReceivable(ctx, def, coin.Amount, sender)
 }
 
 // Burn burns fungible token.
 func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = ft.CheckFeatureAllowed(sender, types.Feature_burning) //nolint:nosnakecase
+	err = def.CheckFeatureAllowed(sender, types.Feature_burning) //nolint:nosnakecase
 	if err != nil {
 		return err
 	}
 
-	return k.burn(ctx, sender, ft, coin.Amount)
+	return k.burnSpendable(ctx, sender, def, coin.Amount)
 }
 
 // Freeze freezes specified token from the specified account.
@@ -163,12 +159,12 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if err = ft.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -191,12 +187,12 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if err = ft.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -223,12 +219,12 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 
 // GloballyFreeze enables global freeze on a fungible token. This function is idempotent.
 func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
-	ft, err := k.GetTokenDefinition(ctx, denom)
+	def, err := k.GetTokenDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if err = ft.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -238,12 +234,12 @@ func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom str
 
 // GloballyUnfreeze disables global freeze on a fungible token. This function is idempotent.
 func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
-	ft, err := k.GetTokenDefinition(ctx, denom)
+	def, err := k.GetTokenDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if err = ft.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -262,12 +258,12 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // GetTokens returns all fungible tokens.
 func (k Keeper) GetTokens(ctx sdk.Context, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error) {
-	definitions, pageResponse, err := k.getTokenDefinitions(ctx, pagination)
+	defs, pageResponse, err := k.getTokenDefinitions(ctx, pagination)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	tokens, err := k.getTokensByDefinitions(ctx, definitions)
+	tokens, err := k.getTokensByDefinitions(ctx, defs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -293,8 +289,7 @@ func (k Keeper) GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, paginati
 // IterateAllTokenDefinitions iterates over all token definitions applies the provided callback.
 // If true is returned from the callback, iteration is halted.
 func (k Keeper) IterateAllTokenDefinitions(ctx sdk.Context, cb func(types.Definition) bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix)
-	iterator := store.Iterator(nil, nil)
+	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix).Iterator(nil, nil)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -325,12 +320,12 @@ func (k Keeper) GetTokenDefinition(ctx sdk.Context, denom string) (types.Definit
 
 // GetToken return the fungible token by its denom.
 func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
-	definition, err := k.GetTokenDefinition(ctx, denom)
+	def, err := k.GetTokenDefinition(ctx, denom)
 	if err != nil {
 		return types.Token{}, err
 	}
 
-	return k.getTokenFullInfo(ctx, definition)
+	return k.getTokenFullInfo(ctx, def)
 }
 
 // GetAccountsFrozenBalances returns the frozen balance on all the account
@@ -356,13 +351,13 @@ func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom str
 
 // GetAccountsWhitelistedBalances returns the whitelisted balance of all the account
 func (k Keeper) GetAccountsWhitelistedBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
-	return collectBalances(k.cdc, k.whitelistedBalancesStore(ctx), pagination)
+	return collectBalances(k.cdc, prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix), pagination)
 }
 
 // IterateAccountsWhitelistedBalances iterates over all whitelisted balances of all accounts and applies the provided callback.
 // If true is returned from the callback, iteration is halted.
 func (k Keeper) IterateAccountsWhitelistedBalances(ctx sdk.Context, cb func(sdk.AccAddress, sdk.Coin) bool) error {
-	return k.whitelistedAccountBalancesStore(ctx).IterateAllBalances(cb)
+	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix).IterateAllBalances(cb)
 }
 
 // GetWhitelistedBalances returns the whitelisted balance of an account
@@ -454,12 +449,12 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
 	}
 
-	ft, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetTokenDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if err = ft.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil { //nolint:nosnakecase
 		return err
 	}
 
@@ -477,17 +472,17 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 
 // private access
 
-func (k Keeper) mint(ctx sdk.Context, ft types.Definition, amount sdk.Int, recipient sdk.AccAddress) error {
+func (k Keeper) mintReceivable(ctx sdk.Context, def types.Definition, amount sdk.Int, recipient sdk.AccAddress) error {
 	if !amount.IsPositive() {
 		return nil
 	}
-	if err := k.isCoinReceivable(ctx, recipient, ft, amount); err != nil {
+	if err := k.isCoinReceivable(ctx, recipient, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not receivable")
 	}
 
-	coinsToMint := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
+	coinsToMint := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coinsToMint); err != nil {
-		return sdkerrors.Wrapf(err, "can't mint %s for the module %s", coinsToMint.String(), types.ModuleName)
+		return sdkerrors.Wrapf(err, "can't mintReceivable %s for the module %s", coinsToMint.String(), types.ModuleName)
 	}
 
 	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coinsToMint); err != nil {
@@ -497,53 +492,55 @@ func (k Keeper) mint(ctx sdk.Context, ft types.Definition, amount sdk.Int, recip
 	return nil
 }
 
-func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, ft types.Definition, amount sdk.Int) error {
-	if err := k.isCoinSpendable(ctx, account, ft, amount); err != nil {
+func (k Keeper) burnSpendable(ctx sdk.Context, account sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+	if err := k.isCoinSpendable(ctx, account, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}
 
-	coinsToBurn := sdk.NewCoins(sdk.NewCoin(ft.Denom, amount))
+	return k.burn(ctx, account, sdk.NewCoins(sdk.NewCoin(def.Denom, amount)))
+}
+
+func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, coinsToBurn sdk.Coins) error {
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, account, types.ModuleName, coinsToBurn); err != nil {
 		return sdkerrors.Wrapf(err, "can't send coins from account %s to module %s", account.String(), types.ModuleName)
 	}
 
 	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
-		return sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
+		return sdkerrors.Wrapf(err, "can't burnSpendable %s for the module %s", coinsToBurn.String(), types.ModuleName)
 	}
 
 	return nil
 }
 
-func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, ft types.Definition, amount sdk.Int) error {
-	if !ft.IsFeatureEnabled(types.Feature_freezing) || ft.IsIssuer(addr) { //nolint:nosnakecase
+func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+	if !def.IsFeatureEnabled(types.Feature_freezing) || def.IsIssuer(addr) { //nolint:nosnakecase
 		return nil
 	}
 
-	// the issuer can use token even if it's globally frozen
-	if k.isGloballyFrozen(ctx, ft.Denom) {
-		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", ft.Denom)
+	if k.isGloballyFrozen(ctx, def.Denom) {
+		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
-	availableBalance := k.availableBalance(ctx, addr, ft.Denom)
+	availableBalance := k.availableBalance(ctx, addr, def.Denom)
 	if !availableBalance.Amount.GTE(amount) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available, available %s",
-			sdk.NewCoin(ft.Denom, amount), availableBalance)
+			sdk.NewCoin(def.Denom, amount), availableBalance)
 	}
 	return nil
 }
 
-func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, ft types.Definition, amount sdk.Int) error {
-	if !ft.IsFeatureEnabled(types.Feature_whitelisting) || ft.IsIssuer(addr) { //nolint:nosnakecase
+func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+	if !def.IsFeatureEnabled(types.Feature_whitelisting) || def.IsIssuer(addr) { //nolint:nosnakecase
 		return nil
 	}
 
-	balance := k.bankKeeper.GetBalance(ctx, addr, ft.Denom)
-	whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, ft.Denom)
+	balance := k.bankKeeper.GetBalance(ctx, addr, def.Denom)
+	whitelistedBalance := k.GetWhitelistedBalance(ctx, addr, def.Denom)
 
 	finalBalance := balance.Amount.Add(amount)
 	if finalBalance.GT(whitelistedBalance.Amount) {
 		return sdkerrors.Wrapf(types.ErrWhitelistedLimitExceeded, "balance whitelisted for %s is not enough to receive %s, current whitelisted balance: %s",
-			addr, sdk.NewCoin(ft.Denom, amount), whitelistedBalance)
+			addr, sdk.NewCoin(def.Denom, amount), whitelistedBalance)
 	}
 	return nil
 }
@@ -551,8 +548,8 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, ft types.
 func (k Keeper) isSymbolDuplicated(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
 	symbol = types.NormalizeSymbolForKey(symbol)
 	compositeKey := types.CreateSymbolKey(issuer, symbol)
-	bytes := ctx.KVStore(k.storeKey).Get(compositeKey)
-	return bytes != nil
+	rawBytes := ctx.KVStore(k.storeKey).Get(compositeKey)
+	return rawBytes != nil
 }
 
 func (k Keeper) availableBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
@@ -639,9 +636,9 @@ func (k Keeper) getTokenDefinitionsFromStore(store prefix.Store, pagination *que
 	return definitions, pageRes, err
 }
 
-func (k Keeper) getTokensByDefinitions(ctx sdk.Context, definitions []types.Definition) ([]types.Token, error) {
-	var tokens []types.Token
-	for _, definition := range definitions {
+func (k Keeper) getTokensByDefinitions(ctx sdk.Context, defs []types.Definition) ([]types.Token, error) {
+	tokens := make([]types.Token, 0, len(defs))
+	for _, definition := range defs {
 		token, err := k.getTokenFullInfo(ctx, definition)
 		if err != nil {
 			return nil, err
@@ -659,14 +656,12 @@ func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
 
 // frozenAccountBalanceStore gets the store for the frozen balances of an account
 func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
-	store := ctx.KVStore(k.storeKey)
-	return newBalanceStore(k.cdc, store, types.CreateFrozenBalancesKey(addr))
+	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateFrozenBalancesKey(addr))
 }
 
 // frozenAccountBalanceStore gets the store for the frozen balances of an account
 func (k Keeper) frozenAccountsBalanceStore(ctx sdk.Context) balanceStore {
-	store := ctx.KVStore(k.storeKey)
-	return newBalanceStore(k.cdc, store, types.FrozenBalancesKeyPrefix)
+	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
@@ -674,21 +669,9 @@ func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
 	return bytes.Equal(globFreezeVal, globalFreezeEnabledStoreVal)
 }
 
-// whitelistedBalancesStore get the store for the whitelisted balances of all accounts
-func (k Keeper) whitelistedBalancesStore(ctx sdk.Context) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix)
-}
-
 // whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account
 func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
-	store := ctx.KVStore(k.storeKey)
-	return newBalanceStore(k.cdc, store, types.CreateWhitelistedBalancesKey(addr))
-}
-
-// whitelistedAccountBalancesStore gets the store for the whitelisted balances
-func (k Keeper) whitelistedAccountBalancesStore(ctx sdk.Context) balanceStore {
-	store := ctx.KVStore(k.storeKey)
-	return newBalanceStore(k.cdc, store, types.WhitelistedBalancesKeyPrefix)
+	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateWhitelistedBalancesKey(addr))
 }
 
 // logger returns the Keeper logger.

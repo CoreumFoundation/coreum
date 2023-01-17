@@ -32,7 +32,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// token definitions
 	var tokens []types.Token
 	for i := 0; i < 5; i++ {
-		ft := types.Token{
+		token := types.Token{
 			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
 			Issuer:             issuer.String(),
 			Symbol:             fmt.Sprintf("ABC%d", i),
@@ -47,10 +47,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 		}
 		// Globally freeze some Tokens.
 		if i%2 == 0 {
-			ft.GloballyFrozen = true
+			token.GloballyFrozen = true
 		}
-		tokens = append(tokens, ft)
-		ftKeeper.SetDenomMetadata(ctx, ft.Denom, ft.Symbol, ft.Description, ft.Precision)
+		tokens = append(tokens, token)
+		ftKeeper.SetDenomMetadata(ctx, token.Denom, token.Symbol, token.Description, token.Precision)
 	}
 
 	// frozen balances
