@@ -44,61 +44,61 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 	dgr.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
-		MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(80000),
-		MsgType(&assetfttypes.MsgMint{}):                constantGasFunc(35000),
-		MsgType(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
-		MsgType(&assetfttypes.MsgFreeze{}):              constantGasFunc(55000),
-		MsgType(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(55000),
+		MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
+		MsgType(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
+		MsgType(&assetfttypes.MsgBurn{}):                constantGasFunc(25000),
+		MsgType(&assetfttypes.MsgFreeze{}):              constantGasFunc(5000),
+		MsgType(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
 		MsgType(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
 		MsgType(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
-		MsgType(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(35000),
+		MsgType(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
 
 		// asset/nft
-		MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(15000),
-		MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(20000),
-		MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
+		MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(16000),
+		MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
+		MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(35000),
 
 		// authz
 		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
 		MsgType(&authz.MsgGrant{}):  constantGasFunc(7000),
-		MsgType(&authz.MsgRevoke{}): constantGasFunc(7000),
+		MsgType(&authz.MsgRevoke{}): constantGasFunc(2500),
 
 		// bank
-		MsgType(&banktypes.MsgSend{}):      bankSendMsgGasFunc(22000),
-		MsgType(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(27000),
+		MsgType(&banktypes.MsgSend{}):      bankSendMsgGasFunc(24000),
+		MsgType(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(15000),
 
 		// distribution
-		MsgType(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(50000),
-		MsgType(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(50000),
-		MsgType(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(120000),
-		MsgType(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(50000),
+		MsgType(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(15000),
+		MsgType(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(5000),
+		MsgType(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(35000),
+		MsgType(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(10000),
 
 		// feegrant
-		MsgType(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(13000),
-		MsgType(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(13000),
+		MsgType(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(7500),
+		MsgType(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
-		MsgType(&govtypes.MsgSubmitProposal{}): constantGasFunc(95000),
-		MsgType(&govtypes.MsgVote{}):           constantGasFunc(8000),
-		MsgType(&govtypes.MsgVoteWeighted{}):   constantGasFunc(11000),
-		MsgType(&govtypes.MsgDeposit{}):        constantGasFunc(11000),
+		MsgType(&govtypes.MsgSubmitProposal{}): constantGasFunc(65000),
+		MsgType(&govtypes.MsgVote{}):           constantGasFunc(6000),
+		MsgType(&govtypes.MsgVoteWeighted{}):   constantGasFunc(8500),
+		MsgType(&govtypes.MsgDeposit{}):        constantGasFunc(52000),
 
 		// nft
-		MsgType(&nfttypes.MsgSend{}): constantGasFunc(20000),
+		MsgType(&nfttypes.MsgSend{}): constantGasFunc(16000),
 
 		// slashing
 		MsgType(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
 		// staking
-		MsgType(&stakingtypes.MsgDelegate{}):        constantGasFunc(51000),
-		MsgType(&stakingtypes.MsgUndelegate{}):      constantGasFunc(51000),
-		MsgType(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(51000),
-		MsgType(&stakingtypes.MsgCreateValidator{}): constantGasFunc(50000),
-		MsgType(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
+		MsgType(&stakingtypes.MsgDelegate{}):        constantGasFunc(69000),
+		MsgType(&stakingtypes.MsgUndelegate{}):      constantGasFunc(112000),
+		MsgType(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(142000),
+		MsgType(&stakingtypes.MsgCreateValidator{}): constantGasFunc(76000),
+		MsgType(&stakingtypes.MsgEditValidator{}):   constantGasFunc(13000),
 
 		// wasm
 		MsgType(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
-		MsgType(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(8000),
+		MsgType(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
 	}
 
 	registerUndeterministicGasFuncs(
@@ -212,24 +212,21 @@ func bankSendMsgGasFunc(bankSendPerEntryGas uint64) gasByMsgFunc {
 	}
 }
 
-func bankMultiSendMsgGasFunc(bankMultiSendPerEntryGas uint64) gasByMsgFunc {
+func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*banktypes.MsgMultiSend)
 		if !ok {
 			return 0, false
 		}
-		inputEntriesNum := 0
+		totalOperationsNum := 0
 		for _, inp := range m.Inputs {
-			inputEntriesNum += len(inp.Coins)
+			totalOperationsNum += len(inp.Coins)
 		}
 
-		outputEntriesNum := 0
 		for _, outp := range m.Outputs {
-			outputEntriesNum += len(outp.Coins)
+			totalOperationsNum += len(outp.Coins)
 		}
 
-		// Select max of input or output entries & use 1 as a fallback.
-		maxEntriesNum := lo.Max([]int{inputEntriesNum, outputEntriesNum, 1})
-		return uint64(maxEntriesNum) * bankMultiSendPerEntryGas, true
+		return uint64(lo.Max([]int{totalOperationsNum, 1})) * bankMultiSendPerOperationGas, true
 	}
 }
