@@ -31,17 +31,17 @@ var (
 // AppModuleBasic
 // ----------------------------------------------------------------------------
 
-// AppModuleBasic implements the AppModuleBasic interface for the assetft module.
+// AppModuleBasic implements the AppModuleBasic interface for the asset ft module.
 type AppModuleBasic struct {
 	cdc codec.BinaryCodec
 }
 
-// NewAppModuleBasic return the assetft AppModuleBasic.
+// NewAppModuleBasic return the asset ft AppModuleBasic.
 func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
 	return AppModuleBasic{cdc: cdc}
 }
 
-// Name returns the assetft module's name.
+// Name returns the asset ft module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
@@ -54,12 +54,12 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(reg)
 }
 
-// DefaultGenesis returns the assetft module's default genesis state.
+// DefaultGenesis returns the asset ft module's default genesis state.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesis())
 }
 
-// ValidateGenesis performs genesis state validation for the assetft module.
+// ValidateGenesis performs genesis state validation for the asset ft module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
 	var genState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
@@ -68,7 +68,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncod
 	return genState.Validate()
 }
 
-// RegisterRESTRoutes registers the assetft module's REST service handlers.
+// RegisterRESTRoutes registers the asset ft module's REST service handlers.
 func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
 }
 
@@ -79,12 +79,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 	}
 }
 
-// GetTxCmd returns the assetft module's root tx command.
+// GetTxCmd returns the asset ft module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
 }
 
-// GetQueryCmd returns the assetft module's root query command.
+// GetQueryCmd returns the asset ft module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
@@ -93,7 +93,7 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // AppModule
 // ----------------------------------------------------------------------------
 
-// AppModule implements the AppModule interface for the assetft module.
+// AppModule implements the AppModule interface for the asset ft module.
 type AppModule struct {
 	AppModuleBasic
 
@@ -114,20 +114,20 @@ func NewAppModule(
 	}
 }
 
-// Name returns the assetft module's name.
+// Name returns the asset ft module's name.
 func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
-// Route returns the assetft module's message routing key.
+// Route returns the asset ft module's message routing key.
 func (am AppModule) Route() sdk.Route {
 	return sdk.Route{}
 }
 
-// QuerierRoute returns the assetft module's query routing key.
+// QuerierRoute returns the asset ft module's query routing key.
 func (AppModule) QuerierRoute() string { return types.QuerierRoute }
 
-// LegacyQuerierHandler returns the assetft module's Querier.
+// LegacyQuerierHandler returns the asset ft module's Querier.
 func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
 	return nil
 }
@@ -139,12 +139,12 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 }
 
-// RegisterInvariants registers the assetft module's invariants.
+// RegisterInvariants registers the asset ft module's invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
 	keeper.RegisterInvariants(ir, am.keeper)
 }
 
-// InitGenesis performs the assetft module's genesis initialization It returns
+// InitGenesis performs the asset ft module's genesis initialization It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
@@ -156,7 +156,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis returns the assetft module's exported genesis state as raw JSON bytes.
+// ExportGenesis returns the asset ft module's exported genesis state as raw JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	genState := ExportGenesis(ctx, am.keeper)
 	return cdc.MustMarshalJSON(genState)
@@ -165,10 +165,10 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // ConsensusVersion implements ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
-// BeginBlock executes all ABCI BeginBlock logic respective to the assetft module.
+// BeginBlock executes all ABCI BeginBlock logic respective to the asset ft module.
 func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
-// EndBlock executes all ABCI EndBlock logic respective to the assetft module. It
+// EndBlock executes all ABCI EndBlock logic respective to the asset ft module. It
 // returns no validator updates.
 func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
@@ -176,7 +176,7 @@ func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Valid
 
 // AppModuleSimulation functions
 
-// GenerateGenesisState creates a randomized GenState of the assetft module.
+// GenerateGenesisState creates a randomized GenState of the asset ft module.
 func (AppModule) GenerateGenesisState(_ *module.SimulationState) {}
 
 // ProposalContents doesn't return any content functions for governance proposals.
@@ -184,15 +184,15 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 	return nil
 }
 
-// RandomizedParams creates randomized assetft param changes for the simulator.
+// RandomizedParams creates randomized asset ft param changes for the simulator.
 func (AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
 	return nil
 }
 
-// RegisterStoreDecoder registers a decoder for assetft module's types
+// RegisterStoreDecoder registers a decoder for asset ft module's types
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
-// WeightedOperations returns the all the assetft module operations with their respective weights.
+// WeightedOperations returns the all the asset ft module operations with their respective weights.
 func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return nil
 }

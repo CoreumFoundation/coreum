@@ -104,21 +104,12 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 
 		// wasm
 		"/cosmwasm.wasm.v1.MsgStoreCode",
-		"/cosmwasm.wasm.v1.MsgStoreCodeResponse",
 		"/cosmwasm.wasm.v1.MsgInstantiateContract",
 		"/cosmwasm.wasm.v1.MsgInstantiateContract2",
-		"/cosmwasm.wasm.v1.MsgInstantiateContractResponse",
-		"/cosmwasm.wasm.v1.MsgInstantiateContract2Response",
 		"/cosmwasm.wasm.v1.MsgExecuteContract",
-		"/cosmwasm.wasm.v1.MsgExecuteContractResponse",
 		"/cosmwasm.wasm.v1.MsgMigrateContract",
-		"/cosmwasm.wasm.v1.MsgMigrateContractResponse",
-		"/cosmwasm.wasm.v1.MsgUpdateAdmin",
-		"/cosmwasm.wasm.v1.MsgUpdateAdminResponse",
-		"/cosmwasm.wasm.v1.MsgClearAdmin",
-		"/cosmwasm.wasm.v1.MsgClearAdminResponse",
-		"/cosmwasm.wasm.v1.MsgIBCSend",
 		"/cosmwasm.wasm.v1.MsgIBCCloseChannel",
+		"/cosmwasm.wasm.v1.MsgIBCSend",
 	}
 
 	dgr := config.DefaultDeterministicGasRequirements()
@@ -153,8 +144,8 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 11, len(undetermMsgs))
-	assert.Equal(t, 33, len(determMsgs))
+	assert.Equal(t, 9, len(undetermMsgs))
+	assert.Equal(t, 35, len(determMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg

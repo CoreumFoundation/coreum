@@ -14,11 +14,10 @@ var _ types.MsgServer = MsgServer{}
 // MsgKeeper defines subscope of keeper methods required by msg service.
 type MsgKeeper interface {
 	Issue(ctx sdk.Context, settings types.IssueSettings) (string, error)
-	GetToken(ctx sdk.Context, denom string) (types.FT, error)
-	Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
-	Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
 	Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
+	Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
+	Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
@@ -53,6 +52,38 @@ func (ms MsgServer) Issue(ctx context.Context, req *types.MsgIssue) (*types.Empt
 		BurnRate:           req.BurnRate,
 		SendCommissionRate: req.SendCommissionRate,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// Mint mints new fungible tokens.
+func (ms MsgServer) Mint(goCtx context.Context, req *types.MsgMint) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	err = ms.keeper.Mint(ctx, sender, req.Coin)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// Burn a part of the token
+func (ms MsgServer) Burn(goCtx context.Context, req *types.MsgBurn) (*types.EmptyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	err = ms.keeper.Burn(ctx, sender, req.Coin)
 	if err != nil {
 		return nil, err
 	}
@@ -95,38 +126,6 @@ func (ms MsgServer) Unfreeze(goCtx context.Context, req *types.MsgUnfreeze) (*ty
 	}
 
 	err = ms.keeper.Unfreeze(ctx, sender, account, req.Coin)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.EmptyResponse{}, nil
-}
-
-// Mint mints new fungible tokens.
-func (ms MsgServer) Mint(goCtx context.Context, req *types.MsgMint) (*types.EmptyResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	err = ms.keeper.Mint(ctx, sender, req.Coin)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.EmptyResponse{}, nil
-}
-
-// Burn a part of the token
-func (ms MsgServer) Burn(goCtx context.Context, req *types.MsgBurn) (*types.EmptyResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	sender, err := sdk.AccAddressFromBech32(req.Sender)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
-	}
-
-	err = ms.keeper.Burn(ctx, sender, req.Coin)
 	if err != nil {
 		return nil, err
 	}

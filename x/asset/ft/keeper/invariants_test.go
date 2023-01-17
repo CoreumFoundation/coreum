@@ -29,9 +29,9 @@ func TestNonNegativeBalancesInvariant(t *testing.T) {
 		Subunit:       "def",
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []types.TokenFeature{
-			types.TokenFeature_freeze,    //nolint:nosnakecase
-			types.TokenFeature_whitelist, //nolint:nosnakecase
+		Features: []types.Feature{
+			types.Feature_freezing,     //nolint:nosnakecase
+			types.Feature_whitelisting, //nolint:nosnakecase
 		},
 	}
 
@@ -83,9 +83,9 @@ func TestBankMatchesInvariant(t *testing.T) {
 		Subunit:       "def",
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []types.TokenFeature{
-			types.TokenFeature_freeze,    //nolint:nosnakecase
-			types.TokenFeature_whitelist, //nolint:nosnakecase
+		Features: []types.Feature{
+			types.Feature_freezing,     //nolint:nosnakecase
+			types.Feature_whitelisting, //nolint:nosnakecase
 		},
 	}
 
