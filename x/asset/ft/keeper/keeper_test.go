@@ -322,7 +322,7 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(types.BuildDenom(settings.Symbol, settings.Issuer), unmintableDenom)
 
-	// try to mintReceivable unmintable token
+	// try to mint unmintable token
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(unmintableDenom, sdk.NewInt(100)))
 	requireT.ErrorIs(types.ErrFeatureDisabled, err)
 
@@ -340,12 +340,12 @@ func TestKeeper_Mint(t *testing.T) {
 	mintableDenom, err := ftKeeper.Issue(ctx, settings)
 	requireT.NoError(err)
 
-	// try to mintReceivable as non-issuer
+	// try to mint as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Mint(ctx, randomAddr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
 	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
-	// mintReceivable tokens and check balance and total supply
+	// mint tokens and check balance and total supply
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 
@@ -389,11 +389,11 @@ func TestKeeper_Burn(t *testing.T) {
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(unburnableDenom, sdk.NewInt(100))))
 	requireT.NoError(err)
 
-	// try to burnSpendable unburnable token from the recipient account
+	// try to burn unburnable token from the recipient account
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
 	requireT.ErrorIs(types.ErrFeatureDisabled, err)
 
-	// try to burnSpendable unburnable token from the issuer account
+	// try to burn unburnable token from the issuer account
 	err = ftKeeper.Burn(ctx, issuer, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 
@@ -416,11 +416,11 @@ func TestKeeper_Burn(t *testing.T) {
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewCoin(burnableDenom, sdk.NewInt(200))))
 	requireT.NoError(err)
 
-	// try to burnSpendable as non-issuer
+	// try to burn as non-issuer
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 
-	// burnSpendable tokens and check balance and total supply
+	// burn tokens and check balance and total supply
 	err = ftKeeper.Burn(ctx, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 
@@ -431,14 +431,14 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(sdk.NewInt(577), totalSupply.Supply.AmountOf(burnableDenom))
 
-	// try to burnSpendable issuer frozen amount
+	// try to burn issuer frozen amount
 	err = ftKeeper.Freeze(ctx, issuer, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(600)))
 	requireT.NoError(err)
-	// issuer can burnSpendable even frozen
+	// issuer can burn even frozen
 	err = ftKeeper.Burn(ctx, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 
-	// try to burnSpendable non-issuer frozen coins
+	// try to burn non-issuer frozen coins
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
@@ -456,7 +456,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	bankKeeper := testApp.BankKeeper
 	ba := newBankAsserter(ctx, t, bankKeeper)
 
-	// issue with more than 1 burnSpendable rate
+	// issue with more than 1 burn rate
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	settings := types.IssueSettings{
 		Issuer:        issuer,
@@ -489,7 +489,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
-	// send from issuer to recipient (burnSpendable must not apply)
+	// send from issuer to recipient (burn must not apply)
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(500)),
 	))
@@ -500,7 +500,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 		&issuer:    100,
 	})
 
-	// send from recipient1 to recipient2 (burnSpendable must apply)
+	// send from recipient1 to recipient2 (burn must apply)
 	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = bankKeeper.SendCoins(ctx, recipient, recipient2, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(100)),
@@ -513,7 +513,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 		&issuer:     100,
 	})
 
-	// send from recipient to issuer account (burnSpendable must not apply)
+	// send from recipient to issuer account (burn must not apply)
 	err = bankKeeper.SendCoins(ctx, recipient, issuer, sdk.NewCoins(
 		sdk.NewCoin(denom, sdk.NewInt(375)),
 	))
@@ -615,8 +615,8 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[0]: {
 					&issuers[0]:    710,
-					&recipients[0]: 68, // 100 - 29 - 3 (burnSpendable = roundup(29 * 10%))
-					&recipients[1]: 64, // 100 - 32 - 4 (burnSpendable = roundup(32 * 10%))
+					&recipients[0]: 68, // 100 - 29 - 3 (burn = roundup(29 * 10%))
+					&recipients[1]: 64, // 100 - 32 - 4 (burn = roundup(32 * 10%))
 					&recipients[2]: 89,
 					&recipients[3]: 62,
 				},
@@ -642,8 +642,8 @@ func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 			distribution: map[string]map[*sdk.AccAddress]int64{
 				denoms[1]: {
 					&issuers[1]:    840,
-					&recipients[0]: 32, // 100 - 60 - 8 (burnSpendable = roundup(60 * (60/100) * 20%))
-					&recipients[1]: 55, // 100 - 40 - 5 (burnSpendable = roundup(40 * (60/100) * 20%))
+					&recipients[0]: 32, // 100 - 60 - 8 (burn = roundup(60 * (60/100) * 20%))
+					&recipients[1]: 55, // 100 - 40 - 5 (burn = roundup(40 * (60/100) * 20%))
 					&recipients[2]: 25,
 					&recipients[3]: 35,
 				},

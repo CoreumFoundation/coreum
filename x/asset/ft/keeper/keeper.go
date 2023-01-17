@@ -482,7 +482,7 @@ func (k Keeper) mintReceivable(ctx sdk.Context, def types.Definition, amount sdk
 
 	coinsToMint := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
 	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coinsToMint); err != nil {
-		return sdkerrors.Wrapf(err, "can't mintReceivable %s for the module %s", coinsToMint.String(), types.ModuleName)
+		return sdkerrors.Wrapf(err, "can't mint %s for the module %s", coinsToMint.String(), types.ModuleName)
 	}
 
 	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coinsToMint); err != nil {
@@ -506,7 +506,7 @@ func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, coinsToBurn sdk.Co
 	}
 
 	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
-		return sdkerrors.Wrapf(err, "can't burnSpendable %s for the module %s", coinsToBurn.String(), types.ModuleName)
+		return sdkerrors.Wrapf(err, "can't burn %s for the module %s", coinsToBurn.String(), types.ModuleName)
 	}
 
 	return nil
