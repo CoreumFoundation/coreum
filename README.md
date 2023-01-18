@@ -9,7 +9,7 @@ Read more on [our website](https://www.coreum.com) and [documentation portal](ht
 
 ## Build and Play
 
-Coreum blockchain is under development and all the features are going to be added progressively over time.
+Coreum blockchain is under develo[README.md](README.md)pment and all the features are going to be added progressively over time.
 Everyone is encouraged to run a chain locally for development and testing purposes.
 
 Entire process of running local chain is automated by our tooling. The only prerequisites are:
