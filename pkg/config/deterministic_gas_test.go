@@ -22,6 +22,7 @@ import (
 //go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
+//nolint:funlen
 func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor undeterministic.
@@ -152,7 +153,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 		t.Run("deterministic: "+config.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.True(t, ok)
-			assert.True(t, gas >= 0)
+			assert.Positive(t, gas)
 		})
 	}
 
@@ -172,9 +173,9 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 		denom   = "ducore"
 		address = "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6"
 
-		assetFTIssue             = 80000
-		bankSendPerEntryGas      = 22000
-		bankMultiSendPerEntryGas = 27000
+		assetFTIssue             = 70000
+		bankSendPerEntryGas      = 24000
+		bankMultiSendPerEntryGas = 11000
 		authzMsgExecOverhead     = 2000
 	)
 
@@ -236,7 +237,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
 				},
 			},
-			expectedGas:             bankMultiSendPerEntryGas,
+			expectedGas:             bankMultiSendPerEntryGas * 2,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -250,7 +251,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
 				},
 			},
-			expectedGas:             2 * bankMultiSendPerEntryGas,
+			expectedGas:             3 * bankMultiSendPerEntryGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -266,7 +267,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(3)))},
 				},
 			},
-			expectedGas:             3 * bankMultiSendPerEntryGas,
+			expectedGas:             5 * bankMultiSendPerEntryGas,
 			expectedIsDeterministic: true,
 		},
 		{

@@ -52,9 +52,9 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgType(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
 
 		// asset/nft
-		//MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(16000),
-		//MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
-		//MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(39000),
+		// MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(16000),
+		// MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
+		// MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(39000),
 
 		// authz
 		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
@@ -82,7 +82,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgType(&govtypes.MsgDeposit{}):        constantGasFunc(52000),
 
 		// nft
-		//MsgType(&nfttypes.MsgSend{}): constantGasFunc(16000),
+		// MsgType(&nfttypes.MsgSend{}): constantGasFunc(16000),
 
 		// slashing
 		MsgType(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
