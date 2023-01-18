@@ -20,9 +20,9 @@ import (
 
 // Flags defined on transactions
 const (
-	featuresFlag           = "features"
-	burnRateFlag           = "burn-rate"
-	sendCommissionRateFlag = "send-commission-rate"
+	FeaturesFlag           = "features"
+	BurnRateFlag           = "burn-rate"
+	SendCommissionRateFlag = "send-commission-rate"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -53,8 +53,8 @@ func GetTxCmd() *cobra.Command {
 //
 //nolint:funlen // Despite the length function is still manageable
 func CmdTxIssue() *cobra.Command {
-	allowedFeatures := []string{}
-	for _, n := range types.TokenFeature_name { //nolint:nosnakecase
+	var allowedFeatures []string
+	for _, n := range types.Feature_name { //nolint:nosnakecase
 		allowedFeatures = append(allowedFeatures, n)
 	}
 	sort.Strings(allowedFeatures)
@@ -95,13 +95,13 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 				}
 			}
 
-			featuresString, err := cmd.Flags().GetStringSlice(featuresFlag)
+			featuresString, err := cmd.Flags().GetStringSlice(FeaturesFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 
 			burnRate := sdk.NewDec(0)
-			burnRateStr, err := cmd.Flags().GetString(burnRateFlag)
+			burnRateStr, err := cmd.Flags().GetString(BurnRateFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -113,7 +113,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 			}
 
 			sendCommissionRate := sdk.NewDec(0)
-			sendCommissionFeeStr, err := cmd.Flags().GetString(sendCommissionRateFlag)
+			sendCommissionFeeStr, err := cmd.Flags().GetString(SendCommissionRateFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -124,13 +124,13 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 				}
 			}
 
-			var features []types.TokenFeature
+			var features []types.Feature
 			for _, str := range featuresString {
-				feature, ok := types.TokenFeature_value[str] //nolint:nosnakecase
+				feature, ok := types.Feature_value[str] //nolint:nosnakecase
 				if !ok {
 					return errors.Errorf("unknown feature '%s',allowed features: %s", str, strings.Join(allowedFeatures, ","))
 				}
-				features = append(features, types.TokenFeature(feature))
+				features = append(features, types.Feature(feature))
 			}
 			description := args[4]
 
@@ -149,9 +149,91 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
-	cmd.Flags().StringSlice(featuresFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
-	cmd.Flags().String(burnRateFlag, "0", "Indicates the rate at which coins will be burned on top of the sent amount in every send action. Must be between 0 and 1.")
-	cmd.Flags().String(sendCommissionRateFlag, "0", "Indicates the rate at which coins will be sent to the issuer on top of the sent amount in every send action. Must be between 0 and 1.")
+	cmd.Flags().StringSlice(FeaturesFlag, []string{}, "Features to be enabled on fungible token. e.g --features="+strings.Join(allowedFeatures, ","))
+	cmd.Flags().String(BurnRateFlag, "0", "Indicates the rate at which coins will be burned on top of the sent amount in every send action. Must be between 0 and 1.")
+	cmd.Flags().String(SendCommissionRateFlag, "0", "Indicates the rate at which coins will be sent to the issuer on top of the sent amount in every send action. Must be between 0 and 1.")
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxMint returns Mint cobra command.
+func CmdTxMint() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "mint [amount] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "mint new amount of fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Mint new amount of fungible token.
+
+Example:
+$ %s tx %s mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			amount, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgMint{
+				Sender: sender.String(),
+				Coin:   amount,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxBurn returns Burn cobra command.
+func CmdTxBurn() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burn [amount] --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "burn some amount of fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Burn some amount of fungible token.
+
+Example:
+$ %s tx %s burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			amount, err := sdk.ParseCoinNormalized(args[0])
+			if err != nil {
+				return sdkerrors.Wrap(err, "invalid amount")
+			}
+
+			msg := &types.MsgBurn{
+				Sender: sender.String(),
+				Coin:   amount,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -236,88 +318,6 @@ $ %s tx %s unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cq
 				Sender:  sender.String(),
 				Account: account,
 				Coin:    amount,
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-// CmdTxMint returns Mint cobra command.
-func CmdTxMint() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "mint [amount] --from [sender]",
-		Args:  cobra.ExactArgs(1),
-		Short: "mint new amount of fungible token",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Mint new amount of fungible token.
-
-Example:
-$ %s tx %s mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
-`,
-				version.AppName, types.ModuleName,
-			),
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			sender := clientCtx.GetFromAddress()
-			amount, err := sdk.ParseCoinNormalized(args[0])
-			if err != nil {
-				return sdkerrors.Wrap(err, "invalid amount")
-			}
-
-			msg := &types.MsgMint{
-				Sender: sender.String(),
-				Coin:   amount,
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-// CmdTxBurn returns Burn cobra command.
-func CmdTxBurn() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "burn [amount] --from [sender]",
-		Args:  cobra.ExactArgs(1),
-		Short: "burn some amount of fungible token",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Burn some amount of fungible token.
-
-Example:
-$ %s tx %s burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
-`,
-				version.AppName, types.ModuleName,
-			),
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			sender := clientCtx.GetFromAddress()
-			amount, err := sdk.ParseCoinNormalized(args[0])
-			if err != nil {
-				return sdkerrors.Wrap(err, "invalid amount")
-			}
-
-			msg := &types.MsgBurn{
-				Sender: sender.String(),
-				Coin:   amount,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

@@ -12,48 +12,45 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Token queries the fungible token of the module.
-  rpc Token(QueryTokenRequest) returns (QueryTokenResponse) {
-    option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}";
-  }
-
   // Tokens queries the fungible tokens of the module.
   rpc Tokens(QueryTokensRequest) returns (QueryTokensResponse) {
     option (google.api.http).get = "/coreum/asset/ft/v1/tokens";
   }
 
-  // FrozenBalances returns all the frozen balances for the account
+  // Token queries the fungible token of the module.
+  rpc Token(QueryTokenRequest) returns (QueryTokenResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}";
+  }
+
+  // FrozenBalances returns all the frozen balances for the account.
   rpc FrozenBalances(QueryFrozenBalancesRequest) returns (QueryFrozenBalancesResponse) {
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/frozen";
   }
 
-  // FrozenBalance returns frozen balance of the denom for the account
+  // FrozenBalance returns frozen balance of the denom for the account.
   rpc FrozenBalance(QueryFrozenBalanceRequest) returns (QueryFrozenBalanceResponse) {
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/frozen/{denom}";
   }
 
-  // WhitelistedBalances returns all the whitelisted balances for the account
+  // WhitelistedBalances returns all the whitelisted balances for the account.
   rpc WhitelistedBalances(QueryWhitelistedBalancesRequest) returns (QueryWhitelistedBalancesResponse) {
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted";
   }
 
-  // WhitelistedBalance returns whitelisted balance of the denom for the account
+  // WhitelistedBalance returns whitelisted balance of the denom for the account.
   rpc WhitelistedBalance(QueryWhitelistedBalanceRequest) returns (QueryWhitelistedBalanceResponse) {
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted/{denom}";
   }
 }
 
-// QueryTokenRequest is request type for the Query/Token RPC method.
 message QueryTokenRequest {
   string denom = 1;
 }
 
-// QueryTokenResponse is response type for the Query/Token RPC method.
 message QueryTokenResponse {
-  FT token = 1 [(gogoproto.nullable) = false];
+  Token token = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryTokenRequest is request type for the Query/Tokens RPC method.
 message QueryTokensRequest {
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
@@ -61,12 +58,11 @@ message QueryTokensRequest {
   string issuer = 2;
 }
 
-// QueryTokensResponse is response type for the Query/Tokesn RPC method.
 message QueryTokensResponse {
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 1;
 
-  repeated FT tokens = 2 [(gogoproto.nullable) = false];
+  repeated Token tokens = 2 [(gogoproto.nullable) = false];
 }
 
 message QueryFrozenBalancesRequest {

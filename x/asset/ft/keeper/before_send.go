@@ -7,18 +7,18 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
-	groupInputs := make(groupedByDenomAccountOperations)
-	for _, in := range inputs {
-		groupInputs.add(in.Address, in.Coins)
-	}
+// BeforeSendCoins checks that a transfer request is allowed or not.
+func (k Keeper) BeforeSendCoins(ctx sdk.Context, fromAddress, toAddress sdk.AccAddress, coins sdk.Coins) error {
+	return k.applyFeatures(
+		ctx,
+		[]banktypes.Input{{Address: fromAddress.String(), Coins: coins}},
+		[]banktypes.Output{{Address: toAddress.String(), Coins: coins}},
+	)
+}
 
-	groupOutputs := make(groupedByDenomAccountOperations)
-	for _, out := range outputs {
-		groupOutputs.add(out.Address, out.Coins)
-	}
-
-	return k.applyRates(ctx, groupInputs, groupOutputs)
+// BeforeInputOutputCoins extends InputOutputCoins method of the bank keeper.
+func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	return k.applyFeatures(ctx, inputs, outputs)
 }
 
 type accountOperationMap map[string]sdk.Int
@@ -42,39 +42,53 @@ func (g groupedByDenomAccountOperations) add(address string, coins sdk.Coins) {
 	}
 }
 
+func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	groupInputs := make(groupedByDenomAccountOperations)
+	for _, in := range inputs {
+		groupInputs.add(in.Address, in.Coins)
+	}
+
+	groupOutputs := make(groupedByDenomAccountOperations)
+	for _, out := range outputs {
+		groupOutputs.add(out.Address, out.Coins)
+	}
+
+	return k.applyRates(ctx, groupInputs, groupOutputs)
+}
+
 func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs groupedByDenomAccountOperations) error {
 	for denom, inOps := range inputs {
-		ftd, err := k.GetTokenDefinition(ctx, denom)
+		def, err := k.GetTokenDefinition(ctx, denom)
 		if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
 			return nil
 		}
 
 		outOps := outputs[denom]
 
-		burnShares := CalculateRateShares(ftd.BurnRate, ftd.Issuer, inOps, outOps)
+		burnShares := CalculateRateShares(def.BurnRate, def.Issuer, inOps, outOps)
 		for account, amount := range burnShares {
-			if err := k.burn(ctx, sdk.MustAccAddressFromBech32(account), ftd, amount); err != nil {
+			if err := k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
 				return err
 			}
 		}
 
-		commissionShares := CalculateRateShares(ftd.SendCommissionRate, ftd.Issuer, inOps, outOps)
-		issuer := sdk.MustAccAddressFromBech32(ftd.Issuer)
+		commissionShares := CalculateRateShares(def.SendCommissionRate, def.Issuer, inOps, outOps)
+		issuer := sdk.MustAccAddressFromBech32(def.Issuer)
 		for account, amount := range commissionShares {
-			coins := sdk.NewCoins(sdk.NewCoin(ftd.Denom, amount))
+			coins := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
 			if err := k.bankKeeper.SendCoins(ctx, sdk.MustAccAddressFromBech32(account), issuer, coins); err != nil {
 				return err
 			}
 		}
 
 		for account, amount := range inOps {
-			if err := k.isCoinSpendable(ctx, sdk.MustAccAddressFromBech32(account), ftd, amount); err != nil {
+			if err := k.isCoinSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
 				return err
 			}
 		}
 
 		for account, amount := range outOps {
-			if err := k.isCoinReceivable(ctx, sdk.MustAccAddressFromBech32(account), ftd, amount); err != nil {
+			if err := k.isCoinReceivable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
 				return err
 			}
 		}
@@ -83,9 +97,19 @@ func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 	return nil
 }
 
+func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
+	sum := sdk.ZeroInt()
+	for account, amount := range ops {
+		if account != issuer {
+			sum = sum.Add(amount)
+		}
+	}
+	return sum
+}
+
 // CalculateRateShares calculates how the burn or commission share amount should be split between different parties
 func CalculateRateShares(rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdk.Int {
-	// Since burning & send commission are not applied when sending to/from FT issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
+	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
 	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
 
 	// Examples
@@ -132,14 +156,4 @@ func CalculateRateShares(rate sdk.Dec, issuer string, inOps, outOps accountOpera
 		}
 	}
 	return shares
-}
-
-func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
-	sum := sdk.ZeroInt()
-	for account, amount := range ops {
-		if account != issuer {
-			sum = sum.Add(amount)
-		}
-	}
-	return sum
 }

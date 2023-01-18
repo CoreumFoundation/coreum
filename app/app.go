@@ -92,10 +92,6 @@ import (
 	assetft "github.com/CoreumFoundation/coreum/x/asset/ft"
 	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	assetftwasm "github.com/CoreumFoundation/coreum/x/asset/ft/wasm"
-	assetnft "github.com/CoreumFoundation/coreum/x/asset/nft"
-	assetnftkeeper "github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	"github.com/CoreumFoundation/coreum/x/customparams"
 	customparamskeeper "github.com/CoreumFoundation/coreum/x/customparams/keeper"
@@ -104,15 +100,9 @@ import (
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
-	"github.com/CoreumFoundation/coreum/x/nft"
-	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
-	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
-	"github.com/CoreumFoundation/coreum/x/wnft"
-	wnftkeeper "github.com/CoreumFoundation/coreum/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/x/wstaking"
-	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
 const (
@@ -129,11 +119,8 @@ const (
 // This can be implemented once we separate network config into its own package.
 var ChosenNetwork config.Network
 
-// this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
-
 func getGovProposalHandlers() []govclient.ProposalHandler {
 	var govProposalHandlers []govclient.ProposalHandler
-	// this line is used by starport scaffolding # stargate/app/govProposalHandlers
 
 	govProposalHandlers = append(govProposalHandlers, wasmclient.ProposalHandlers...)
 
@@ -142,7 +129,6 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		distrclient.ProposalHandler,
 		upgradeclient.ProposalHandler,
 		upgradeclient.CancelProposalHandler,
-		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
 
 	return govProposalHandlers
@@ -174,11 +160,8 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
-		wnft.AppModuleBasic{},
 		assetft.AppModuleBasic{},
-		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
-		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
@@ -191,9 +174,6 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		assetfttypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
-		assetnfttypes.ModuleName:       {authtypes.Burner},
-		nft.ModuleName:                 {}, // the line is required by the nft module to have the module account stored in the account keeper
-		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
 
@@ -245,12 +225,9 @@ type App struct {
 	WASMKeeper       wasm.Keeper
 
 	AssetFTKeeper      assetftkeeper.Keeper
-	AssetNFTKeeper     assetnftkeeper.Keeper
 	FeeModelKeeper     feemodelkeeper.Keeper
 	BankKeeper         wbankkeeper.BaseKeeperWrapper
-	NFTKeeper          wnftkeeper.Wrapper
 	CustomParamsKeeper customparamskeeper.Keeper
-	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
 	mm *module.Manager
@@ -289,8 +266,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
-		wasm.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey,
-		// this line is used by starport scaffolding # stargate/app/storeKey
+		wasm.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -315,7 +291,6 @@ func New(
 	app.CapabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
 
 	scopedWASMKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
-	// this line is used by starport scaffolding # stargate/app/scopedKeeper
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -383,18 +358,6 @@ func New(
 
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
 
-	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
-	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
-		appCodec,
-		app.GetSubspace(assetnfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetnfttypes.Params{})),
-		keys[assetnfttypes.StoreKey],
-		nftKeeper,
-		// for the assetnft we use the clear bank keeper without the assets integration because it interacts only with native token.
-		originalBankKeeper,
-	)
-
-	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
-
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
@@ -415,10 +378,7 @@ func New(
 		panic(errors.Wrapf(err, "error while reading wasm config"))
 	}
 
-	wasmOpts := []wasm.Option{
-		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(assetftwasm.MsgHandler)),
-		wasmkeeper.WithQueryPlugins(wasmtypes.NewCustomQuerier(assetftwasm.QueryHandler(app.AssetFTKeeper))),
-	}
+	var wasmOpts []wasm.Option
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
@@ -452,9 +412,6 @@ func New(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, govRouter,
 	)
-	// this line is used by starport scaffolding # stargate/app/keeperDefinition
-
-	// this line is used by starport scaffolding # ibc/app/router
 
 	/****  Module Options ****/
 
@@ -463,10 +420,7 @@ func New(
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	assetFTModule := assetft.NewAppModule(appCodec, app.AssetFTKeeper, app.BankKeeper)
-	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
-
-	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
 
 	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper)
 
@@ -498,10 +452,7 @@ func New(
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
 		assetFTModule,
-		assetNFTModule,
-		wnftModule,
 		customParamsModule,
-		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -529,9 +480,6 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
-		assetnfttypes.ModuleName,
-		nft.ModuleName,
-		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -555,9 +503,6 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
-		assetnfttypes.ModuleName,
-		nft.ModuleName,
-		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -585,10 +530,7 @@ func New(
 		feegrant.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
-		nft.ModuleName,
 		assetfttypes.ModuleName,
-		assetnfttypes.ModuleName,
-		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -611,10 +553,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		assetFTModule,
-		assetNFTModule,
-		wnftModule,
 		customParamsModule,
-		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -667,8 +606,6 @@ func New(
 			tmos.Exit(errors.Wrapf(err, "failed initialize wasmp pinned codes").Error())
 		}
 	}
-
-	// this line is used by starport scaffolding # stargate/app/beforeInitReturn
 
 	return app
 }
@@ -811,8 +748,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(feemodeltypes.ModuleName)
 	paramsKeeper.Subspace(customparamstypes.CustomParamsStaking)
 	paramsKeeper.Subspace(assetfttypes.ModuleName)
-	paramsKeeper.Subspace(assetnfttypes.ModuleName)
-	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
 }
