@@ -6,13 +6,11 @@ The coreum documentation provides a comprehensive set of instructions on how to 
 
 The node docs section provides documentation on how to run all types of coreum nodes.
 
-1. [Run seed node.](node/run-seed.md)
-2. [Run sentry node.](node/run-sentry.md)
-3. [Run full node.](./node/run-full.md)
-4. [Run validator node.](node/run-validator.md)
+Find details at https://docs.coreum.dev/validator/
 
 ## User docs
 The node docs section supplies documentation on how to use the running chain.
 
-1. [Multisignature accounts](multisig.md)
-2. [WASM integration](wasm.md)
+1. [Multisignature accounts](https://docs.coreum.dev/guides/multisig.html)
+2. [WASM integration](https://docs.coreum.dev/guides/wasm.html)
+
