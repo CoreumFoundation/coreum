@@ -38,7 +38,7 @@ type IssueSettings struct {
 	Precision          uint32
 	Description        string
 	InitialAmount      sdk.Int
-	Features           []TokenFeature
+	Features           []Feature
 	BurnRate           sdk.Dec
 	SendCommissionRate sdk.Dec
 }
@@ -104,12 +104,12 @@ func NormalizeSymbolForKey(in string) string {
 }
 
 // CheckFeatureAllowed returns error if feature isn't allowed for the address.
-func (ftd FTDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature TokenFeature) error {
-	if ftd.IsFeatureAllowed(addr, feature) {
+func (def Definition) CheckFeatureAllowed(addr sdk.AccAddress, feature Feature) error {
+	if def.IsFeatureAllowed(addr, feature) {
 		return nil
 	}
 
-	if !ftd.IsFeatureEnabled(feature) {
+	if !def.IsFeatureEnabled(feature) {
 		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
 	}
 
@@ -119,25 +119,25 @@ func (ftd FTDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature TokenFe
 // IsFeatureAllowed returns true if feature is allowed for the address.
 //
 //nolint:nosnakecase
-func (ftd FTDefinition) IsFeatureAllowed(addr sdk.Address, feature TokenFeature) bool {
-	featureEnabled := ftd.IsFeatureEnabled(feature)
+func (def Definition) IsFeatureAllowed(addr sdk.Address, feature Feature) bool {
+	featureEnabled := def.IsFeatureEnabled(feature)
 	// issuer can use any enabled feature and burning even if it is disabled
-	if ftd.IsIssuer(addr) {
-		return featureEnabled || feature == TokenFeature_burn
+	if def.IsIssuer(addr) {
+		return featureEnabled || feature == Feature_burning
 	}
 
 	// non-issuer can use only burning and only if it is enabled
-	return featureEnabled && feature == TokenFeature_burn
+	return featureEnabled && feature == Feature_burning
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
-func (ftd FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
-	return lo.Contains(ftd.Features, feature)
+func (def Definition) IsFeatureEnabled(feature Feature) bool {
+	return lo.Contains(def.Features, feature)
 }
 
 // IsIssuer returns true if the addr is the issuer.
-func (ftd FTDefinition) IsIssuer(addr sdk.Address) bool {
-	return ftd.Issuer == addr.String()
+func (def Definition) IsIssuer(addr sdk.Address) bool {
+	return def.Issuer == addr.String()
 }
 
 // ValidateBurnRate checks that provided burn rate is valid
@@ -177,18 +177,4 @@ func validateRate(rate sdk.Dec) error {
 // checks that dec precision is limited to the provided value
 func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 	return dec.Mul(sdk.NewDecFromInt(sdk.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
-}
-
-// CalculateBurnRateAmount returns the coins to be burned
-func (ftd FTDefinition) CalculateBurnRateAmount(coin sdk.Coin) sdk.Int {
-	return calculateRate(coin.Amount, ftd.BurnRate)
-}
-
-// CalculateSendCommissionRateAmount returns the coins to be sent to issuer as a sending commission
-func (ftd FTDefinition) CalculateSendCommissionRateAmount(coin sdk.Coin) sdk.Int {
-	return calculateRate(coin.Amount, ftd.SendCommissionRate)
-}
-
-func calculateRate(amount sdk.Int, rate sdk.Dec) sdk.Int {
-	return rate.MulInt(amount).Ceil().RoundInt()
 }

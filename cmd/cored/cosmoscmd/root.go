@@ -66,7 +66,6 @@ type (
 // Option configures root command option.
 type Option func(*rootOptions)
 
-// scaffoldingOptions keeps set of options to apply scaffolding.
 type rootOptions struct {
 	addSubCmds         []*cobra.Command
 	startCmdCustomizer func(*cobra.Command)

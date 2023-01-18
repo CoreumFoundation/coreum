@@ -30,14 +30,6 @@
         }
       }
     },
-    "assetnft": {
-      "params": {
-        "mint_fee": {
-          "denom": "{{ .Denom }}",
-          "amount": "{{ .AssetNFTConfig.MintFee }}"
-        }
-      }
-    },
     "auth": {
       "params": {
         "max_memo_characters": "256",
@@ -271,7 +263,6 @@
         "amount": "{{ .FeeModelParams.InitialGasPrice }}"
       }
     },
-    "cnft": {},
     "customparams": {
       "staking_params": {
         "min_self_delegation": "{{ .CustomParamsConfig.Staking.MinSelfDelegation }}"

@@ -14,8 +14,6 @@ import (
 	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
 type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
@@ -51,11 +49,6 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
 		MsgName(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(35000),
 
-		// asset/nft
-		MsgName(&assetnfttypes.MsgBurn{}):       constantGasFunc(15000),
-		MsgName(&assetnfttypes.MsgIssueClass{}): constantGasFunc(20000),
-		MsgName(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
-
 		// authz
 		MsgName(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
 		MsgName(&authz.MsgGrant{}):  constantGasFunc(7000),
@@ -81,9 +74,6 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&govtypes.MsgVoteWeighted{}):   constantGasFunc(11000),
 		MsgName(&govtypes.MsgDeposit{}):        constantGasFunc(11000),
 
-		// nft
-		MsgName(&nfttypes.MsgSend{}): constantGasFunc(20000),
-
 		// slashing
 		MsgName(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
@@ -93,20 +83,21 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(51000),
 		MsgName(&stakingtypes.MsgCreateValidator{}): constantGasFunc(50000),
 		MsgName(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
+
+		// wasm
+		MsgName(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
+		MsgName(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(8000),
 	}
 
 	registerUndeterministicGasFuncs(
 		&dgr,
 		// wasm
-		// TODO (milad): rewise gas config for WASM msgs.
 		[]sdk.Msg{
 			&wasmtypes.MsgStoreCode{},
 			&wasmtypes.MsgInstantiateContract{},
 			&wasmtypes.MsgInstantiateContract2{},
 			&wasmtypes.MsgExecuteContract{},
 			&wasmtypes.MsgMigrateContract{},
-			&wasmtypes.MsgUpdateAdmin{},
-			&wasmtypes.MsgClearAdmin{},
 			&wasmtypes.MsgIBCSend{},
 			&wasmtypes.MsgIBCCloseChannel{},
 		},

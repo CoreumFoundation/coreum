@@ -25,43 +25,43 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// TokenFeature defines possible features of fungible token
-type TokenFeature int32
+// Feature defines possible features of fungible token
+type Feature int32
 
 const (
-	TokenFeature_freeze    TokenFeature = 0
-	TokenFeature_mint      TokenFeature = 1
-	TokenFeature_burn      TokenFeature = 2
-	TokenFeature_whitelist TokenFeature = 3
+	Feature_minting      Feature = 0
+	Feature_burning      Feature = 1
+	Feature_freezing     Feature = 2
+	Feature_whitelisting Feature = 3
 )
 
-var TokenFeature_name = map[int32]string{
-	0: "freeze",
-	1: "mint",
-	2: "burn",
-	3: "whitelist",
+var Feature_name = map[int32]string{
+	0: "minting",
+	1: "burning",
+	2: "freezing",
+	3: "whitelisting",
 }
 
-var TokenFeature_value = map[string]int32{
-	"freeze":    0,
-	"mint":      1,
-	"burn":      2,
-	"whitelist": 3,
+var Feature_value = map[string]int32{
+	"minting":      0,
+	"burning":      1,
+	"freezing":     2,
+	"whitelisting": 3,
 }
 
-func (x TokenFeature) String() string {
-	return proto.EnumName(TokenFeature_name, int32(x))
+func (x Feature) String() string {
+	return proto.EnumName(Feature_name, int32(x))
 }
 
-func (TokenFeature) EnumDescriptor() ([]byte, []int) {
+func (Feature) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_fe80c7a2c55589e7, []int{0}
 }
 
-// FTDefinition defines the fungible token settings to store.
-type FTDefinition struct {
-	Denom    string         `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
-	Issuer   string         `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	Features []TokenFeature `protobuf:"varint,3,rep,packed,name=features,proto3,enum=coreum.asset.ft.v1.TokenFeature" json:"features,omitempty"`
+// Definition defines the fungible token settings to store.
+type Definition struct {
+	Denom    string    `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Issuer   string    `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Features []Feature `protobuf:"varint,3,rep,packed,name=features,proto3,enum=coreum.asset.ft.v1.Feature" json:"features,omitempty"`
 	// burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
 	// burn_amount. This value will be burnt on top of the send amount.
 	BurnRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=burn_rate,json=burnRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"burn_rate"`
@@ -70,18 +70,18 @@ type FTDefinition struct {
 	SendCommissionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=send_commission_rate,json=sendCommissionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"send_commission_rate"`
 }
 
-func (m *FTDefinition) Reset()         { *m = FTDefinition{} }
-func (m *FTDefinition) String() string { return proto.CompactTextString(m) }
-func (*FTDefinition) ProtoMessage()    {}
-func (*FTDefinition) Descriptor() ([]byte, []int) {
+func (m *Definition) Reset()         { *m = Definition{} }
+func (m *Definition) String() string { return proto.CompactTextString(m) }
+func (*Definition) ProtoMessage()    {}
+func (*Definition) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fe80c7a2c55589e7, []int{0}
 }
-func (m *FTDefinition) XXX_Unmarshal(b []byte) error {
+func (m *Definition) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *FTDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Definition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_FTDefinition.Marshal(b, m, deterministic)
+		return xxx_messageInfo_Definition.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -91,28 +91,28 @@ func (m *FTDefinition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *FTDefinition) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FTDefinition.Merge(m, src)
+func (m *Definition) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Definition.Merge(m, src)
 }
-func (m *FTDefinition) XXX_Size() int {
+func (m *Definition) XXX_Size() int {
 	return m.Size()
 }
-func (m *FTDefinition) XXX_DiscardUnknown() {
-	xxx_messageInfo_FTDefinition.DiscardUnknown(m)
+func (m *Definition) XXX_DiscardUnknown() {
+	xxx_messageInfo_Definition.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_FTDefinition proto.InternalMessageInfo
+var xxx_messageInfo_Definition proto.InternalMessageInfo
 
-// FT is a full representation of the fungible token.
-type FT struct {
-	Denom          string         `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
-	Issuer         string         `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	Symbol         string         `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Subunit        string         `protobuf:"bytes,4,opt,name=subunit,proto3" json:"subunit,omitempty"`
-	Precision      uint32         `protobuf:"varint,5,opt,name=precision,proto3" json:"precision,omitempty"`
-	Description    string         `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	GloballyFrozen bool           `protobuf:"varint,7,opt,name=globally_frozen,json=globallyFrozen,proto3" json:"globally_frozen,omitempty"`
-	Features       []TokenFeature `protobuf:"varint,8,rep,packed,name=features,proto3,enum=coreum.asset.ft.v1.TokenFeature" json:"features,omitempty"`
+// Token is a full representation of the fungible token.
+type Token struct {
+	Denom          string    `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Issuer         string    `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Symbol         string    `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Subunit        string    `protobuf:"bytes,4,opt,name=subunit,proto3" json:"subunit,omitempty"`
+	Precision      uint32    `protobuf:"varint,5,opt,name=precision,proto3" json:"precision,omitempty"`
+	Description    string    `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	GloballyFrozen bool      `protobuf:"varint,7,opt,name=globally_frozen,json=globallyFrozen,proto3" json:"globally_frozen,omitempty"`
+	Features       []Feature `protobuf:"varint,8,rep,packed,name=features,proto3,enum=coreum.asset.ft.v1.Feature" json:"features,omitempty"`
 	// burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine
 	// burn_amount. This value will be burnt on top of the send amount.
 	BurnRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=burn_rate,json=burnRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"burn_rate"`
@@ -121,18 +121,18 @@ type FT struct {
 	SendCommissionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=send_commission_rate,json=sendCommissionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"send_commission_rate"`
 }
 
-func (m *FT) Reset()         { *m = FT{} }
-func (m *FT) String() string { return proto.CompactTextString(m) }
-func (*FT) ProtoMessage()    {}
-func (*FT) Descriptor() ([]byte, []int) {
+func (m *Token) Reset()         { *m = Token{} }
+func (m *Token) String() string { return proto.CompactTextString(m) }
+func (*Token) ProtoMessage()    {}
+func (*Token) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fe80c7a2c55589e7, []int{1}
 }
-func (m *FT) XXX_Unmarshal(b []byte) error {
+func (m *Token) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *FT) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Token) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_FT.Marshal(b, m, deterministic)
+		return xxx_messageInfo_Token.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -142,63 +142,63 @@ func (m *FT) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *FT) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FT.Merge(m, src)
+func (m *Token) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Token.Merge(m, src)
 }
-func (m *FT) XXX_Size() int {
+func (m *Token) XXX_Size() int {
 	return m.Size()
 }
-func (m *FT) XXX_DiscardUnknown() {
-	xxx_messageInfo_FT.DiscardUnknown(m)
+func (m *Token) XXX_DiscardUnknown() {
+	xxx_messageInfo_Token.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_FT proto.InternalMessageInfo
+var xxx_messageInfo_Token proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterEnum("coreum.asset.ft.v1.TokenFeature", TokenFeature_name, TokenFeature_value)
-	proto.RegisterType((*FTDefinition)(nil), "coreum.asset.ft.v1.FTDefinition")
-	proto.RegisterType((*FT)(nil), "coreum.asset.ft.v1.FT")
+	proto.RegisterEnum("coreum.asset.ft.v1.Feature", Feature_name, Feature_value)
+	proto.RegisterType((*Definition)(nil), "coreum.asset.ft.v1.Definition")
+	proto.RegisterType((*Token)(nil), "coreum.asset.ft.v1.Token")
 }
 
 func init() { proto.RegisterFile("coreum/asset/ft/v1/token.proto", fileDescriptor_fe80c7a2c55589e7) }
 
 var fileDescriptor_fe80c7a2c55589e7 = []byte{
-	// 503 bytes of a gzipped FileDescriptorProto
+	// 500 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x53, 0xcb, 0x6e, 0xd3, 0x40,
-	0x14, 0xb5, 0x93, 0xd6, 0xb5, 0x87, 0xb6, 0x44, 0xa3, 0xa8, 0xb2, 0x2a, 0xe4, 0x58, 0x5d, 0x40,
-	0x84, 0x84, 0x47, 0xa1, 0x3b, 0x04, 0x9b, 0xb6, 0xf2, 0x06, 0xb1, 0xb1, 0xb2, 0x62, 0x13, 0xfc,
-	0xb8, 0x4e, 0x47, 0xb5, 0x67, 0xa2, 0x99, 0x71, 0x20, 0xfd, 0x02, 0x96, 0x7c, 0x42, 0xff, 0x81,
-	0x5f, 0x60, 0xd1, 0x65, 0x97, 0x88, 0x45, 0x85, 0x92, 0x0d, 0x9f, 0x81, 0xc6, 0x76, 0xdb, 0x20,
-	0x56, 0x3c, 0xba, 0xf2, 0x9c, 0x73, 0x67, 0x8e, 0xcf, 0xbd, 0x47, 0x17, 0x79, 0x29, 0x17, 0x50,
-	0x95, 0x24, 0x96, 0x12, 0x14, 0xc9, 0x15, 0x99, 0x8f, 0x88, 0xe2, 0x67, 0xc0, 0x82, 0x99, 0xe0,
-	0x8a, 0x63, 0xdc, 0xd4, 0x83, 0xba, 0x1e, 0xe4, 0x2a, 0x98, 0x8f, 0xf6, 0xfb, 0x53, 0x3e, 0xe5,
-	0x75, 0x99, 0xe8, 0x53, 0x73, 0x73, 0xdf, 0x4b, 0xb9, 0x2c, 0xb9, 0x24, 0x49, 0x2c, 0x81, 0xcc,
-	0x47, 0x09, 0xa8, 0x78, 0x44, 0x52, 0x4e, 0x5b, 0xa5, 0x83, 0xcf, 0x1d, 0xb4, 0x1d, 0x8e, 0x4f,
-	0x20, 0xa7, 0x8c, 0x2a, 0xca, 0x19, 0xee, 0xa3, 0xcd, 0x0c, 0x18, 0x2f, 0x5d, 0xd3, 0x37, 0x87,
-	0x4e, 0xd4, 0x00, 0xbc, 0x87, 0x2c, 0x2a, 0x65, 0x05, 0xc2, 0xed, 0xd4, 0x74, 0x8b, 0xf0, 0x4b,
-	0x64, 0xe7, 0x10, 0xab, 0x4a, 0x80, 0x74, 0xbb, 0x7e, 0x77, 0xb8, 0xfb, 0xdc, 0x0f, 0x7e, 0xf7,
-	0x16, 0x8c, 0xb5, 0xf7, 0xb0, 0xb9, 0x18, 0xdd, 0xbe, 0xc0, 0xaf, 0x91, 0x93, 0x54, 0x82, 0x4d,
-	0x44, 0xac, 0xc0, 0xdd, 0xd0, 0xc2, 0x47, 0xc1, 0xe5, 0xf5, 0xc0, 0xf8, 0x76, 0x3d, 0x78, 0x3c,
-	0xa5, 0xea, 0xb4, 0x4a, 0x82, 0x94, 0x97, 0xa4, 0x6d, 0xa1, 0xf9, 0x3c, 0x93, 0xd9, 0x19, 0x51,
-	0x8b, 0x19, 0xc8, 0xe0, 0x04, 0xd2, 0xc8, 0xd6, 0x02, 0x51, 0xac, 0x00, 0xbf, 0x43, 0x7d, 0x09,
-	0x2c, 0x9b, 0xa4, 0xbc, 0x2c, 0xa9, 0x94, 0x94, 0xb7, 0xba, 0x9b, 0x7f, 0xa5, 0x8b, 0xb5, 0xd6,
-	0xf1, 0xad, 0x94, 0xfe, 0xc3, 0x0b, 0xfb, 0xe3, 0xc5, 0xc0, 0xf8, 0x71, 0x31, 0x30, 0x0e, 0xbe,
-	0x74, 0x51, 0x27, 0x1c, 0xff, 0xe1, 0xac, 0xf6, 0x90, 0x25, 0x17, 0x65, 0xc2, 0x0b, 0xb7, 0xdb,
-	0xf0, 0x0d, 0xc2, 0x2e, 0xda, 0x92, 0x55, 0x52, 0x31, 0xaa, 0x9a, 0x19, 0x44, 0x37, 0x10, 0x3f,
-	0x42, 0xce, 0x4c, 0x40, 0x4a, 0xb5, 0x83, 0xba, 0x8f, 0x9d, 0xe8, 0x8e, 0xc0, 0x3e, 0x7a, 0x90,
-	0x81, 0x4c, 0x05, 0x9d, 0xe9, 0xe0, 0x5c, 0xab, 0x7e, 0xbb, 0x4e, 0xe1, 0x27, 0xe8, 0xe1, 0xb4,
-	0xe0, 0x49, 0x5c, 0x14, 0x8b, 0x49, 0x2e, 0xf8, 0x39, 0x30, 0x77, 0xcb, 0x37, 0x87, 0x76, 0xb4,
-	0x7b, 0x43, 0x87, 0x35, 0xfb, 0x4b, 0x8c, 0xf6, 0xbf, 0xc5, 0xe8, 0xdc, 0x53, 0x8c, 0xe8, 0xff,
-	0xc7, 0xf8, 0xf4, 0x15, 0xda, 0x5e, 0x6f, 0x09, 0x23, 0x64, 0xe5, 0x02, 0xe0, 0x1c, 0x7a, 0x06,
-	0xb6, 0xd1, 0x46, 0x49, 0x99, 0xea, 0x99, 0xfa, 0xa4, 0xdd, 0xf5, 0x3a, 0x78, 0x07, 0x39, 0xef,
-	0x4f, 0xa9, 0x82, 0x82, 0x4a, 0xd5, 0xeb, 0x1e, 0xbd, 0xb9, 0x5c, 0x7a, 0xe6, 0xd5, 0xd2, 0x33,
-	0xbf, 0x2f, 0x3d, 0xf3, 0xd3, 0xca, 0x33, 0xae, 0x56, 0x9e, 0xf1, 0x75, 0xe5, 0x19, 0x6f, 0x0f,
-	0xd7, 0xec, 0x1d, 0xd7, 0x73, 0x0c, 0x79, 0xc5, 0xb2, 0x58, 0xa7, 0x42, 0xda, 0xdd, 0xfe, 0x70,
-	0xb7, 0xdd, 0xb5, 0xdf, 0xc4, 0xaa, 0x37, 0xf2, 0xf0, 0x67, 0x00, 0x00, 0x00, 0xff, 0xff, 0x18,
-	0xdd, 0x78, 0x78, 0xfd, 0x03, 0x00, 0x00,
+	0x14, 0xb5, 0x63, 0x92, 0x38, 0xd3, 0x52, 0xaa, 0x51, 0x54, 0x59, 0x05, 0x39, 0x51, 0x17, 0x10,
+	0x21, 0xe1, 0x51, 0xe8, 0x02, 0x89, 0x65, 0x53, 0x65, 0x83, 0xd8, 0x58, 0xac, 0xd8, 0x04, 0x3f,
+	0xae, 0xdd, 0x51, 0xed, 0x99, 0x68, 0x66, 0x1c, 0x48, 0xbf, 0x80, 0x25, 0x9f, 0xd0, 0x0f, 0xe0,
+	0x2b, 0x58, 0x75, 0xd9, 0x25, 0x62, 0x51, 0xa1, 0x64, 0xc3, 0x67, 0xa0, 0x19, 0xbb, 0x0f, 0xc4,
+	0x8a, 0x88, 0xae, 0xec, 0x73, 0xee, 0xf5, 0xf1, 0xb9, 0xf7, 0xe8, 0x22, 0x3f, 0xe1, 0x02, 0xaa,
+	0x92, 0x44, 0x52, 0x82, 0x22, 0x99, 0x22, 0x8b, 0x31, 0x51, 0xfc, 0x14, 0x58, 0x30, 0x17, 0x5c,
+	0x71, 0x8c, 0xeb, 0x7a, 0x60, 0xea, 0x41, 0xa6, 0x82, 0xc5, 0x78, 0xbf, 0x9f, 0xf3, 0x9c, 0x9b,
+	0x32, 0xd1, 0x6f, 0x75, 0xe7, 0xbe, 0x9f, 0x70, 0x59, 0x72, 0x49, 0xe2, 0x48, 0x02, 0x59, 0x8c,
+	0x63, 0x50, 0xd1, 0x98, 0x24, 0x9c, 0x36, 0x4a, 0x07, 0x5f, 0x5b, 0x08, 0x1d, 0x43, 0x46, 0x19,
+	0x55, 0x94, 0x33, 0xdc, 0x47, 0xed, 0x14, 0x18, 0x2f, 0x3d, 0x7b, 0x68, 0x8f, 0x7a, 0x61, 0x0d,
+	0xf0, 0x1e, 0xea, 0x50, 0x29, 0x2b, 0x10, 0x5e, 0xcb, 0xd0, 0x0d, 0xc2, 0xaf, 0x90, 0x9b, 0x41,
+	0xa4, 0x2a, 0x01, 0xd2, 0x73, 0x86, 0xce, 0x68, 0xe7, 0xe5, 0xe3, 0xe0, 0x6f, 0x67, 0xc1, 0xb4,
+	0xee, 0x09, 0x6f, 0x9a, 0xf1, 0x1b, 0xd4, 0x8b, 0x2b, 0xc1, 0x66, 0x22, 0x52, 0xe0, 0x3d, 0xd0,
+	0x9a, 0x47, 0xc1, 0xc5, 0xd5, 0xc0, 0xfa, 0x71, 0x35, 0x78, 0x9a, 0x53, 0x75, 0x52, 0xc5, 0x41,
+	0xc2, 0x4b, 0xd2, 0x78, 0xaf, 0x1f, 0x2f, 0x64, 0x7a, 0x4a, 0xd4, 0x72, 0x0e, 0x32, 0x38, 0x86,
+	0x24, 0x74, 0xb5, 0x40, 0x18, 0x29, 0xc0, 0x1f, 0x50, 0x5f, 0x02, 0x4b, 0x67, 0x09, 0x2f, 0x4b,
+	0x2a, 0x25, 0xe5, 0x8d, 0x6e, 0x7b, 0x23, 0x5d, 0xac, 0xb5, 0x26, 0x37, 0x52, 0xfa, 0x0f, 0xaf,
+	0xdd, 0xcf, 0xe7, 0x03, 0xeb, 0xd7, 0xf9, 0xc0, 0x3a, 0xf8, 0xe6, 0xa0, 0xf6, 0x3b, 0x1d, 0xc4,
+	0x3f, 0x6e, 0x6a, 0x0f, 0x75, 0xe4, 0xb2, 0x8c, 0x79, 0xe1, 0x39, 0x35, 0x5f, 0x23, 0xec, 0xa1,
+	0xae, 0xac, 0xe2, 0x8a, 0x51, 0x55, 0xaf, 0x21, 0xbc, 0x86, 0xf8, 0x09, 0xea, 0xcd, 0x05, 0x24,
+	0x54, 0x9b, 0x30, 0xa3, 0x3c, 0x0c, 0x6f, 0x09, 0x3c, 0x44, 0x5b, 0x29, 0xc8, 0x44, 0xd0, 0xb9,
+	0x8e, 0xcd, 0xeb, 0x98, 0x6f, 0xef, 0x52, 0xf8, 0x19, 0x7a, 0x94, 0x17, 0x3c, 0x8e, 0x8a, 0x62,
+	0x39, 0xcb, 0x04, 0x3f, 0x03, 0xe6, 0x75, 0x87, 0xf6, 0xc8, 0x0d, 0x77, 0xae, 0xe9, 0xa9, 0x61,
+	0xff, 0x08, 0xd1, 0xdd, 0x38, 0xc4, 0xde, 0x3d, 0x85, 0x88, 0xfe, 0x7f, 0x88, 0xcf, 0x27, 0xa8,
+	0xdb, 0x4c, 0x83, 0xb7, 0x50, 0xb7, 0xa4, 0x4c, 0x51, 0x96, 0xef, 0x5a, 0x1a, 0x68, 0x3f, 0x1a,
+	0xd8, 0x78, 0x1b, 0xb9, 0x99, 0x00, 0x38, 0xd3, 0xa8, 0x85, 0x77, 0xd1, 0xf6, 0xc7, 0x13, 0xaa,
+	0xa0, 0xa0, 0xd2, 0x34, 0x3b, 0x47, 0x6f, 0x2f, 0x56, 0xbe, 0x7d, 0xb9, 0xf2, 0xed, 0x9f, 0x2b,
+	0xdf, 0xfe, 0xb2, 0xf6, 0xad, 0xcb, 0xb5, 0x6f, 0x7d, 0x5f, 0xfb, 0xd6, 0xfb, 0xc3, 0x3b, 0x26,
+	0x27, 0x66, 0x91, 0x53, 0x5e, 0xb1, 0x34, 0xd2, 0xb1, 0x90, 0xe6, 0xb0, 0x3f, 0xdd, 0x9e, 0xb6,
+	0x71, 0x1d, 0x77, 0xcc, 0x39, 0x1e, 0xfe, 0x0e, 0x00, 0x00, 0xff, 0xff, 0x2a, 0xa0, 0x2e, 0x15,
+	0xfa, 0x03, 0x00, 0x00,
 }
 
-func (m *FTDefinition) Marshal() (dAtA []byte, err error) {
+func (m *Definition) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -208,12 +208,12 @@ func (m *FTDefinition) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *FTDefinition) MarshalTo(dAtA []byte) (int, error) {
+func (m *Definition) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *FTDefinition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Definition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -273,7 +273,7 @@ func (m *FTDefinition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *FT) Marshal() (dAtA []byte, err error) {
+func (m *Token) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -283,12 +283,12 @@ func (m *FT) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *FT) MarshalTo(dAtA []byte) (int, error) {
+func (m *Token) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *FT) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Token) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -395,7 +395,7 @@ func encodeVarintToken(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *FTDefinition) Size() (n int) {
+func (m *Definition) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -423,7 +423,7 @@ func (m *FTDefinition) Size() (n int) {
 	return n
 }
 
-func (m *FT) Size() (n int) {
+func (m *Token) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -475,7 +475,7 @@ func sovToken(x uint64) (n int) {
 func sozToken(x uint64) (n int) {
 	return sovToken(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *FTDefinition) Unmarshal(dAtA []byte) error {
+func (m *Definition) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -498,10 +498,10 @@ func (m *FTDefinition) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: FTDefinition: wiretype end group for non-group")
+			return fmt.Errorf("proto: Definition: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: FTDefinition: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Definition: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -570,7 +570,7 @@ func (m *FTDefinition) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType == 0 {
-				var v TokenFeature
+				var v Feature
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return ErrIntOverflowToken
@@ -580,7 +580,7 @@ func (m *FTDefinition) Unmarshal(dAtA []byte) error {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					v |= TokenFeature(b&0x7F) << shift
+					v |= Feature(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -614,10 +614,10 @@ func (m *FTDefinition) Unmarshal(dAtA []byte) error {
 				}
 				var elementCount int
 				if elementCount != 0 && len(m.Features) == 0 {
-					m.Features = make([]TokenFeature, 0, elementCount)
+					m.Features = make([]Feature, 0, elementCount)
 				}
 				for iNdEx < postIndex {
-					var v TokenFeature
+					var v Feature
 					for shift := uint(0); ; shift += 7 {
 						if shift >= 64 {
 							return ErrIntOverflowToken
@@ -627,7 +627,7 @@ func (m *FTDefinition) Unmarshal(dAtA []byte) error {
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						v |= TokenFeature(b&0x7F) << shift
+						v |= Feature(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
@@ -726,7 +726,7 @@ func (m *FTDefinition) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *FT) Unmarshal(dAtA []byte) error {
+func (m *Token) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -749,10 +749,10 @@ func (m *FT) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: FT: wiretype end group for non-group")
+			return fmt.Errorf("proto: Token: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: FT: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Token: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -956,7 +956,7 @@ func (m *FT) Unmarshal(dAtA []byte) error {
 			m.GloballyFrozen = bool(v != 0)
 		case 8:
 			if wireType == 0 {
-				var v TokenFeature
+				var v Feature
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return ErrIntOverflowToken
@@ -966,7 +966,7 @@ func (m *FT) Unmarshal(dAtA []byte) error {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					v |= TokenFeature(b&0x7F) << shift
+					v |= Feature(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -1000,10 +1000,10 @@ func (m *FT) Unmarshal(dAtA []byte) error {
 				}
 				var elementCount int
 				if elementCount != 0 && len(m.Features) == 0 {
-					m.Features = make([]TokenFeature, 0, elementCount)
+					m.Features = make([]Feature, 0, elementCount)
 				}
 				for iNdEx < postIndex {
-					var v TokenFeature
+					var v Feature
 					for shift := uint(0); ; shift += 7 {
 						if shift >= 64 {
 							return ErrIntOverflowToken
@@ -1013,7 +1013,7 @@ func (m *FT) Unmarshal(dAtA []byte) error {
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						v |= TokenFeature(b&0x7F) << shift
+						v |= Feature(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}

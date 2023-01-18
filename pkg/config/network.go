@@ -77,10 +77,6 @@ func init() {
 		assetFTConfig = AssetFTConfig{
 			IssueFee: sdk.NewIntFromUint64(10_000_000),
 		}
-
-		assetNFTConfig = AssetNFTConfig{
-			MintFee: sdk.ZeroInt(),
-		}
 	)
 
 	// devnet vars
@@ -92,8 +88,8 @@ func init() {
 	// 500M = 4 * (124_950_000 + 50_000)
 	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
 	// where 50_000 is balances of each of 4 initial validator stakers.
-	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(124_950_000_000_000)))
-	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(50_000_000_000)))
+	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(124_950_000_000_000)))
+	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(50_000_000_000)))
 
 	devGovConfig := govConfig
 	devGovConfig.ProposalConfig.VotingPeriod = "24h"
@@ -117,27 +113,25 @@ func init() {
 			StakingConfig:        stakingConfig,
 			CustomParamsConfig:   customParamsConfig,
 			AssetFTConfig:        assetFTConfig,
-			AssetNFTConfig:       assetNFTConfig,
 		},
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,
 			Enabled:              true,
-			GenesisTime:          time.Date(2023, 1, 18, 12, 0, 0, 0, time.UTC),
+			GenesisTime:          time.Date(2023, 1, 16, 12, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixTest,
 			MetadataDisplayDenom: constant.DenomTestDisplay,
 			Denom:                constant.DenomTest,
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					"64391878009b8804d90fda13805e45041f492155@34.172.125.230:26656", // seed-sirius
-					"53f2367d8f8291af8e3b6ca60efded0675ff6314@34.132.58.250:26656",  // seed-antares
+					"64391878009b8804d90fda13805e45041f492155@35.232.157.206:26656", // seed-sirius
+					"53f2367d8f8291af8e3b6ca60efded0675ff6314@34.29.15.170:26656",   // seed-antares
 				},
 			},
 			GovConfig:          testGovConfig,
 			StakingConfig:      stakingConfig,
 			CustomParamsConfig: customParamsConfig,
 			AssetFTConfig:      assetFTConfig,
-			AssetNFTConfig:     assetNFTConfig,
 			FundedAccounts: []FundedAccount{
 				// Accounts used to create initial validators to bootstrap chain.
 				// validator-1-creator
@@ -201,7 +195,6 @@ func init() {
 			StakingConfig:      stakingConfig,
 			CustomParamsConfig: customParamsConfig,
 			AssetFTConfig:      assetFTConfig,
-			AssetNFTConfig:     assetNFTConfig,
 			FundedAccounts: []FundedAccount{
 				// Staker of validator 0
 				{
@@ -320,11 +313,6 @@ type AssetFTConfig struct {
 	IssueFee sdk.Int
 }
 
-// AssetNFTConfig is the part of network config defining parameters of nft assets
-type AssetNFTConfig struct {
-	MintFee sdk.Int
-}
-
 // NetworkConfig helps initialize Network instance
 type NetworkConfig struct {
 	ChainID              constant.ChainID
@@ -340,7 +328,6 @@ type NetworkConfig struct {
 	StakingConfig        StakingConfig
 	CustomParamsConfig   CustomParamsConfig
 	AssetFTConfig        AssetFTConfig
-	AssetNFTConfig       AssetNFTConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 	// TODO: remove this field once we have real upgrade handler
@@ -360,7 +347,6 @@ type Network struct {
 	staking                  StakingConfig
 	customParams             CustomParamsConfig
 	assetFT                  AssetFTConfig
-	assetNFT                 AssetNFTConfig
 	enableFakeUpgradeHandler bool
 
 	mu             *sync.Mutex
@@ -382,7 +368,6 @@ func NewNetwork(c NetworkConfig) Network {
 		staking:                  c.StakingConfig,
 		customParams:             c.CustomParamsConfig,
 		assetFT:                  c.AssetFTConfig,
-		assetNFT:                 c.AssetNFTConfig,
 		mu:                       &sync.Mutex{},
 		fundedAccounts:           append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:                   append([]json.RawMessage{}, c.GenTxs...),
@@ -647,7 +632,6 @@ func genesisByTemplate(n Network) ([]byte, error) {
 		Staking              StakingConfig
 		CustomParamsConfig   CustomParamsConfig
 		AssetFTConfig        AssetFTConfig
-		AssetNFTConfig       AssetNFTConfig
 	}{
 		GenesisTimeUTC:       n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:              n.chainID,
@@ -658,7 +642,6 @@ func genesisByTemplate(n Network) ([]byte, error) {
 		Staking:              n.staking,
 		CustomParamsConfig:   n.customParams,
 		AssetFTConfig:        n.assetFT,
-		AssetNFTConfig:       n.assetNFT,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")

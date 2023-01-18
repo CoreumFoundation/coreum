@@ -42,8 +42,8 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
-		Features: []assetfttypes.TokenFeature{
-			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing, //nolint:nosnakecase // enable the feature to make the computation more complicated
 		},
 	}
 
@@ -126,8 +126,8 @@ func TestBankSendBatchMsgs(t *testing.T) {
 		Subunit:       "tok1",
 		Description:   "TOK1 Description",
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
-		Features: []assetfttypes.TokenFeature{
-			assetfttypes.TokenFeature_freeze, //nolint:nosnakecase // enable the feature to make the computation more complicated
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing, //nolint:nosnakecase // enable the feature to make the computation more complicated
 		},
 	}
 
@@ -294,7 +294,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 
 	coinsToSend := sdk.NewCoins()
 
-	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	require.NoError(t, err)
 	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
 
@@ -441,7 +441,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 
 	coinsToSend := sdk.NewCoins()
 
-	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	require.NoError(t, err)
 	require.Equal(t, numOfTokens, len(tokenIssuedEvts))
 
@@ -524,7 +524,7 @@ func TestBankMultiSend(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventTokenIssued](res.Events)
+	tokenIssuedEvts, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
 	require.NoError(t, err)
 	require.Equal(t, len(issueMsgs), len(tokenIssuedEvts))
 
