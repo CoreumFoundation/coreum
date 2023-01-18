@@ -224,7 +224,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 		{
 			name:                    "bank.MsgMultiSend 0 input & 0 output",
 			msg:                     &banktypes.MsgMultiSend{},
-			expectedGas:             bankMultiSendPerEntryGas,
+			expectedGas:             bankMultiSendPerEntryGas * 2,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -284,7 +284,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					[]sdk.Msg{&banktypes.MsgSend{}, &banktypes.MsgMultiSend{}},
 				),
 			),
-			expectedGas:             authzMsgExecOverhead + bankSendPerEntryGas + bankMultiSendPerEntryGas,
+			expectedGas:             authzMsgExecOverhead + bankSendPerEntryGas + 2*bankMultiSendPerEntryGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -298,7 +298,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					},
 				),
 			),
-			expectedGas:             authzMsgExecOverhead + authzMsgExecOverhead + bankSendPerEntryGas + bankMultiSendPerEntryGas + bankSendPerEntryGas,
+			expectedGas:             authzMsgExecOverhead + authzMsgExecOverhead + bankSendPerEntryGas + 2*bankMultiSendPerEntryGas + bankSendPerEntryGas,
 			expectedIsDeterministic: true,
 		},
 		{

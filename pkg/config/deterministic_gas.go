@@ -225,6 +225,7 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 			totalOperationsNum += len(outp.Coins)
 		}
 
-		return uint64(lo.Max([]int{totalOperationsNum, 1})) * bankMultiSendPerOperationGas, true
+		// Minimum 2 operations (1 input & 1 output) should be present inside any multi-send.
+		return uint64(lo.Max([]int{totalOperationsNum, 2})) * bankMultiSendPerOperationGas, true
 	}
 }
