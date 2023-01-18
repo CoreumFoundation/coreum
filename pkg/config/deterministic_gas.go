@@ -48,7 +48,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgType(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
 		MsgType(&assetfttypes.MsgBurn{}):                constantGasFunc(23000),
 		MsgType(&assetfttypes.MsgFreeze{}):              constantGasFunc(5000),
-		MsgType(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
+		MsgType(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(2500),
 		MsgType(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
 		MsgType(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
 		MsgType(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
@@ -59,13 +59,13 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(39000),
 
 		// authz
-		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(1000),
+		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
 		MsgType(&authz.MsgGrant{}):  constantGasFunc(7000),
 		MsgType(&authz.MsgRevoke{}): constantGasFunc(2500),
 
 		// bank
 		MsgType(&banktypes.MsgSend{}):      bankSendMsgGasFunc(24000),
-		MsgType(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(12000),
+		MsgType(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(11000),
 
 		// distribution
 		MsgType(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(15000),
