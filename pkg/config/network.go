@@ -88,8 +88,8 @@ func init() {
 	// 500M = 4 * (124_950_000 + 50_000)
 	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
 	// where 50_000 is balances of each of 4 initial validator stakers.
-	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(124_950_000_000_000)))
-	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(50_000_000_000)))
+	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(124_950_000_000_000)))
+	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(50_000_000_000)))
 
 	devGovConfig := govConfig
 	devGovConfig.ProposalConfig.VotingPeriod = "24h"
@@ -117,7 +117,7 @@ func init() {
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,
 			Enabled:              true,
-			GenesisTime:          time.Date(2023, 1, 18, 12, 0, 0, 0, time.UTC),
+			GenesisTime:          time.Date(2023, 1, 16, 12, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixTest,
 			MetadataDisplayDenom: constant.DenomTestDisplay,
 			Denom:                constant.DenomTest,
