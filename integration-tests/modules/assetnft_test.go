@@ -19,7 +19,6 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -608,10 +607,10 @@ func TestAssetNFTFreeze(t *testing.T) {
 	requireT.Equal(chain.GasLimitByMsgs(msgFreeze), uint64(res.GasUsed))
 
 	// assert the freezing event
-	frozenEvents, err := event.FindTypedEvents[*types.EventFrozen](res.Events)
+	frozenEvents, err := event.FindTypedEvents[*assetnfttypes.EventFrozen](res.Events)
 	requireT.NoError(err)
 	frozenEvent := frozenEvents[0]
-	requireT.Equal(&types.EventFrozen{
+	requireT.Equal(&assetnfttypes.EventFrozen{
 		ClassId: classID,
 		Id:      msgFreeze.ID,
 		Owner:   issuer.String(),
@@ -666,10 +665,10 @@ func TestAssetNFTFreeze(t *testing.T) {
 	requireT.EqualValues(chain.GasLimitByMsgs(msgUnfreeze), res.GasUsed)
 
 	// assert the unfreezing event
-	unFrozenEvents, err := event.FindTypedEvents[*types.EventUnfrozen](res.Events)
+	unFrozenEvents, err := event.FindTypedEvents[*assetnfttypes.EventUnfrozen](res.Events)
 	requireT.NoError(err)
 	unfrozenEvent := unFrozenEvents[0]
-	requireT.Equal(&types.EventUnfrozen{
+	requireT.Equal(&assetnfttypes.EventUnfrozen{
 		ClassId: classID,
 		Id:      msgFreeze.ID,
 		Owner:   receiver1.String(),

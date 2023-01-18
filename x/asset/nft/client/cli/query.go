@@ -66,7 +66,7 @@ $ %[1]s query %s class [id]
 	return cmd
 }
 
-// CmdQueryClass return the QueryToken cobra command.
+// CmdQueryFrozen return the CmdQueryFrozen cobra command.
 func CmdQueryFrozen() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "frozen [class-id] [id]",
