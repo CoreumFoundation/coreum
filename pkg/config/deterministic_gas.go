@@ -1,7 +1,6 @@
 package config
 
 import (
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
@@ -85,21 +84,21 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgName(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
 
 		// wasm
-		MsgName(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
-		MsgName(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(8000),
+		//MsgName(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
+		//MsgName(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(8000),
 	}
 
 	registerUndeterministicGasFuncs(
 		&dgr,
 		// wasm
 		[]sdk.Msg{
-			&wasmtypes.MsgStoreCode{},
-			&wasmtypes.MsgInstantiateContract{},
-			&wasmtypes.MsgInstantiateContract2{},
-			&wasmtypes.MsgExecuteContract{},
-			&wasmtypes.MsgMigrateContract{},
-			&wasmtypes.MsgIBCSend{},
-			&wasmtypes.MsgIBCCloseChannel{},
+			//&wasmtypes.MsgStoreCode{},
+			//&wasmtypes.MsgInstantiateContract{},
+			//&wasmtypes.MsgInstantiateContract2{},
+			//&wasmtypes.MsgExecuteContract{},
+			//&wasmtypes.MsgMigrateContract{},
+			//&wasmtypes.MsgIBCSend{},
+			//&wasmtypes.MsgIBCCloseChannel{},
 		},
 	)
 
