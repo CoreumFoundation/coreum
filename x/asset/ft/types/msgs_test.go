@@ -150,7 +150,6 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
 func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name                string
@@ -318,7 +317,6 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
 func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name                string
