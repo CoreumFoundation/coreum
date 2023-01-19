@@ -122,6 +122,18 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
 		},
+		{
+			name: "issuer freezing",
+			message: types.MsgFreeze{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedError: sdkerrors.ErrUnauthorized,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -360,6 +372,18 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 				},
 			},
 			expectedErrorString: "invalid denom",
+		},
+		{
+			name: "issuer whitelisting",
+			message: types.MsgSetWhitelistedLimit{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedError: sdkerrors.ErrUnauthorized,
 		},
 	}
 
