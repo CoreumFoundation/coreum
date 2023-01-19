@@ -537,7 +537,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
-	receiver1 := chain.GenAccount()
+	recipient1 := chain.GenAccount()
 
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
@@ -551,7 +551,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		}),
 	)
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, receiver1, integrationtests.BalancesOptions{
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&nft.MsgSend{},
 			},
@@ -616,12 +616,12 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Owner:   issuer.String(),
 	}, frozenEvent)
 
-	// send from issuer to receiver1 (send is allowed)
+	// send from issuer to recipient1 (send is allowed)
 	sendMsg := &nft.MsgSend{
 		Sender:   issuer.String(),
 		ClassId:  classID,
 		Id:       nftID,
-		Receiver: receiver1.String(),
+		Receiver: recipient1.String(),
 	}
 	_, err = tx.BroadcastTx(
 		ctx,
@@ -631,18 +631,18 @@ func TestAssetNFTFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// send from receiver1 to receiver2 (send is not allowed since it is frozen)
-	receiver2 := chain.GenAccount()
+	// send from recipient1 to recipient2 (send is not allowed since it is frozen)
+	recipient2 := chain.GenAccount()
 	sendMsg = &nft.MsgSend{
-		Sender:   receiver1.String(),
+		Sender:   recipient1.String(),
 		ClassId:  classID,
 		Id:       nftID,
-		Receiver: receiver2.String(),
+		Receiver: recipient2.String(),
 	}
 
 	_, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(receiver1),
+		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
@@ -671,20 +671,20 @@ func TestAssetNFTFreeze(t *testing.T) {
 	requireT.Equal(&assetnfttypes.EventUnfrozen{
 		ClassId: classID,
 		Id:      msgFreeze.ID,
-		Owner:   receiver1.String(),
+		Owner:   recipient1.String(),
 	}, unfrozenEvent)
 
-	// send from receiver1 to receiver2 (send is allowed since it is not unfrozen)
+	// send from recipient1 to recipient2 (send is allowed since it is not unfrozen)
 	sendMsg = &nft.MsgSend{
-		Sender:   receiver1.String(),
+		Sender:   recipient1.String(),
 		ClassId:  classID,
 		Id:       nftID,
-		Receiver: receiver2.String(),
+		Receiver: recipient2.String(),
 	}
 
 	_, err = tx.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(receiver1),
+		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)

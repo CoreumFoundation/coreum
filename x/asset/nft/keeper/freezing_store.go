@@ -5,7 +5,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/pkg/store"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
@@ -20,21 +19,21 @@ type nftFreezingStore struct {
 }
 
 func (s nftFreezingStore) freeze(classID, nftID string) {
-	s.store.Set(s.genCompositeKey(classID, nftID), []byte{0x1})
+	s.store.Set(types.CreateFreezingKey(classID, nftID), []byte{0x1})
 }
 
 func (s nftFreezingStore) unfreeze(classID, nftID string) {
-	s.store.Delete(s.genCompositeKey(classID, nftID))
+	s.store.Delete(types.CreateFreezingKey(classID, nftID))
 }
 
 func (s nftFreezingStore) isFrozen(classID, nftID string) bool {
-	return s.store.Has(s.genCompositeKey(classID, nftID))
+	return s.store.Has(types.CreateFreezingKey(classID, nftID))
 }
 
-func (s nftFreezingStore) allFrozen() ([]types.FrozenNFT, error) {
+func (s nftFreezingStore) allFrozen(q *query.PageRequest) (*query.PageResponse, []types.FrozenNFT, error) {
 	mp := make(map[string][]string, 0)
-	_, err := query.Paginate(s.store, &query.PageRequest{Limit: query.MaxLimit}, func(key, value []byte) error {
-		classID, nftID, err := s.parseCompositeKey(key)
+	pageRes, err := query.Paginate(s.store, q, func(key, value []byte) error {
+		classID, nftID, err := types.ParseFreezingKey(key)
 		if err != nil {
 			return err
 		}
@@ -42,7 +41,7 @@ func (s nftFreezingStore) allFrozen() ([]types.FrozenNFT, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var frozen []types.FrozenNFT
@@ -53,20 +52,5 @@ func (s nftFreezingStore) allFrozen() ([]types.FrozenNFT, error) {
 		})
 	}
 
-	return frozen, nil
-}
-
-func (s nftFreezingStore) genCompositeKey(classID, nftID string) []byte {
-	return store.JoinKeysWithLengthMany([]byte(classID), []byte(nftID))
-}
-
-func (s nftFreezingStore) parseCompositeKey(key []byte) (classID, nftID string, err error) {
-	parsedKeys := store.ParseJoinKeysWithLengthMany(key)
-	if len(parsedKeys) != 2 {
-		err = types.ErrInvalidKey
-		return
-	}
-	classID = string(parsedKeys[0])
-	nftID = string(parsedKeys[1])
-	return classID, nftID, nil
+	return pageRes, frozen, nil
 }

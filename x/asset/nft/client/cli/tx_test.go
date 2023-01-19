@@ -50,23 +50,33 @@ func TestCmdFreeze(t *testing.T) {
 	ctx := validator.ClientCtx
 
 	// create class
-	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
-	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
-	requireT.NoError(err)
-
+	classID := issueClass(
+		requireT,
+		ctx,
+		symbol,
+		"class name",
+		"class description",
+		"https://my-class-meta.invalid/1",
+		"",
+		testNetwork,
+		types.ClassFeature_freezing, //nolint:nosnakecase // generated variable
+	)
 	// mint nft
-	classID := types.BuildClassID(symbol, validator.Address)
 	nftID := "nft-1"
-	args = []string{classID, nftID, "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
-	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
-	requireT.NoError(err)
+	mint(
+		requireT,
+		ctx,
+		classID,
+		nftID,
+		"https://my-nft-meta.invalid/1",
+		"9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9",
+		testNetwork,
+	)
 
 	// freeze
-	args = []string{classID, nftID}
+	args := []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
 	requireT.NoError(err)
 
 	// query frozen

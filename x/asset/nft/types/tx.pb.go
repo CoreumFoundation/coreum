@@ -340,9 +340,9 @@ type MsgClient interface {
 	Mint(ctx context.Context, in *MsgMint, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// Burn burns the existing non-fungible token in the class.
 	Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOption) (*EmptyResponse, error)
-	// Freeze freezes an nft, if such feature is enabled on it, so it cannot be sent
+	// Freeze freezes an NFT
 	Freeze(ctx context.Context, in *MsgFreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
-	// Unfreeze removes the freeze effect, already put on an nft
+	// Unfreeze removes the freeze effect already put on an NFT
 	Unfreeze(ctx context.Context, in *MsgUnfreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
@@ -407,9 +407,9 @@ type MsgServer interface {
 	Mint(context.Context, *MsgMint) (*EmptyResponse, error)
 	// Burn burns the existing non-fungible token in the class.
 	Burn(context.Context, *MsgBurn) (*EmptyResponse, error)
-	// Freeze freezes an nft, if such feature is enabled on it, so it cannot be sent
+	// Freeze freezes an NFT
 	Freeze(context.Context, *MsgFreeze) (*EmptyResponse, error)
-	// Unfreeze removes the freeze effect, already put on an nft
+	// Unfreeze removes the freeze effect already put on an NFT
 	Unfreeze(context.Context, *MsgUnfreeze) (*EmptyResponse, error)
 }
 

@@ -195,7 +195,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID st
 		return err
 	}
 
-	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_burning); err != nil { //nolint:nosnakecase // generated variable
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_freezing); err != nil { //nolint:nosnakecase // generated variable
 		return err
 	}
 
@@ -203,7 +203,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID st
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
-	k.StoreFrozen(ctx, classID, nftID)
+	k.SetFrozen(ctx, classID, nftID, true)
 
 	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
 	return ctx.EventManager().EmitTypedEvent(&types.EventFrozen{
@@ -213,11 +213,15 @@ func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID st
 	})
 }
 
-// StoreFrozen marks the nft frozen, but does not make any checks
+// SetFrozen marks the nft frozen, but does not make any checks
 // should not be used directly outside of the module except for genesis.
-func (k Keeper) StoreFrozen(ctx sdk.Context, classID, nftID string) {
+func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) {
 	freezeStore := newFreezingFeatureStore(ctx.KVStore(k.storeKey))
-	freezeStore.freeze(classID, nftID)
+	if frozen {
+		freezeStore.freeze(classID, nftID)
+	} else {
+		freezeStore.unfreeze(classID, nftID)
+	}
 }
 
 // Unfreeze unfreezes a non fungible token
@@ -235,8 +239,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
-	freezeStore := newFreezingFeatureStore(ctx.KVStore(k.storeKey))
-	freezeStore.unfreeze(classID, nftID)
+	k.SetFrozen(ctx, classID, nftID, false)
 
 	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
 	return ctx.EventManager().EmitTypedEvent(&types.EventUnfrozen{
@@ -255,7 +258,8 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) bool {
 // AllFrozen return all frozen NFTs
 func (k Keeper) AllFrozen(ctx sdk.Context) ([]types.FrozenNFT, error) {
 	freezeStore := newFreezingFeatureStore(ctx.KVStore(k.storeKey))
-	return freezeStore.allFrozen()
+	_, tokens, err := freezeStore.allFrozen(&query.PageRequest{Limit: query.MaxLimit})
+	return tokens, err
 }
 
 func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {

@@ -46,6 +46,6 @@ func TestJoinKeysWithLengthMany(t *testing.T) {
 		[]byte("key3"),
 	}
 	compositeKey := store.JoinKeysWithLengthMany(keys...)
-	parsedKeys := store.ParseJoinKeysWithLengthMany(compositeKey)
+	parsedKeys := store.ParseJoinedKeys(compositeKey)
 	require.Equal(t, keys, parsedKeys)
 }

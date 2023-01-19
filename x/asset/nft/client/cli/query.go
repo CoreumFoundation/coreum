@@ -89,7 +89,7 @@ $ %[1]s query %s frozen [class-id] [id]
 			id := args[1]
 			res, err := queryClient.Frozen(cmd.Context(), &types.QueryFrozenRequest{
 				Id:      id,
-				ClassID: classID,
+				ClassId: classID,
 			})
 			if err != nil {
 				return err

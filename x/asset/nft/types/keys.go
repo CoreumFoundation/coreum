@@ -1,6 +1,10 @@
 package types
 
-import "github.com/CoreumFoundation/coreum/pkg/store"
+import (
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/CoreumFoundation/coreum/pkg/store"
+)
 
 const (
 	// ModuleName defines the module name
@@ -27,4 +31,21 @@ var (
 // CreateClassKey constructs the key for the non-fungible token class.
 func CreateClassKey(classID string) []byte {
 	return store.JoinKeysWithLength(NFTClassKeyPrefix, []byte(classID))
+}
+
+// CreateFreezingKey constructs the key for the freezing of non-fungible token.
+func CreateFreezingKey(classID, nftID string) []byte {
+	return store.JoinKeysWithLengthMany([]byte(classID), []byte(nftID))
+}
+
+// ParseFreezingKey parses freezing key back to class id and nft id
+func ParseFreezingKey(key []byte) (classID, nftID string, err error) {
+	parsedKeys := store.ParseJoinedKeys(key)
+	if len(parsedKeys) != 2 {
+		err = sdkerrors.Wrapf(ErrInvalidKey, "freezing key must be composed to 2 length prefixed keys")
+		return
+	}
+	classID = string(parsedKeys[0])
+	nftID = string(parsedKeys[1])
+	return classID, nftID, nil
 }

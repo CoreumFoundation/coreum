@@ -54,8 +54,8 @@ func JoinKeysWithLengthMany(keys ...[]byte) []byte {
 	return compositeKey
 }
 
-// ParseJoinKeysWithLengthMany parses all the length prefixed keys, put together by JoinKeysWithLengthMany
-func ParseJoinKeysWithLengthMany(key []byte) [][]byte {
+// ParseJoinedKeys parses all the length prefixed keys, put together by JoinKeysWithLengthMany
+func ParseJoinedKeys(key []byte) [][]byte {
 	bzLen := len(key)
 	if bzLen == 0 {
 		return nil
@@ -63,8 +63,8 @@ func ParseJoinKeysWithLengthMany(key []byte) [][]byte {
 	keys := make([][]byte, 0)
 	startBound := 1
 	for {
-		addrLen := key[startBound-1]
-		endBound := startBound + int(addrLen)
+		keyLen := key[startBound-1]
+		endBound := startBound + int(keyLen)
 		if bzLen < endBound {
 			return nil
 		}

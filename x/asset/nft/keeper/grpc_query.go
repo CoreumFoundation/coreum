@@ -42,7 +42,7 @@ func (q QueryService) Class(ctx context.Context, req *types.QueryClassRequest) (
 
 // Frozen reruns whether NFT is frozen or not.
 func (q QueryService) Frozen(ctx context.Context, req *types.QueryFrozenRequest) (*types.QueryFrozenResponse, error) {
-	frozen := q.keeper.IsFrozen(sdk.UnwrapSDKContext(ctx), req.ClassID, req.Id)
+	frozen := q.keeper.IsFrozen(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id)
 	return &types.QueryFrozenResponse{
 		Frozen: frozen,
 	}, nil

@@ -17,7 +17,7 @@ service Query {
 
   // Frozen queries to check if an NFT is frozen or not.
   rpc Frozen (QueryFrozenRequest) returns (QueryFrozenResponse) {
-    option (google.api.http).get = "/coreum/asset/nft/v1/nfts/{id}/frozen";
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen";
   }
 }
 
@@ -33,7 +33,7 @@ message QueryClassResponse {
 
 message QueryFrozenRequest {
   string id = 1;
-  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string class_id = 2;
 }
 
 message QueryFrozenResponse {
