@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 	_ "unsafe"
 
@@ -23,27 +22,88 @@ import (
 //go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
+//nolint:funlen
 func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor undeterministic.
-	unknownMsgPrefixes := []string{
+	ignoredMsgTypes := []string{
 		// Not-integrated modules:
 		// IBC:
-		"/ibc.core.",
-		"/ibc.applications.",
+
+		// ibc/core/client
+		"/ibc.core.client.v1.MsgCreateClient",
+		"/ibc.core.client.v1.MsgCreateClientResponse",
+		"/ibc.core.client.v1.MsgUpdateClient",
+		"/ibc.core.client.v1.MsgUpdateClientResponse",
+		"/ibc.core.client.v1.MsgUpgradeClient",
+		"/ibc.core.client.v1.MsgUpgradeClientResponse",
+		"/ibc.core.client.v1.MsgSubmitMisbehaviour",
+		"/ibc.core.client.v1.MsgSubmitMisbehaviourResponse",
+
+		// ibc/core/connection
+		"/ibc.core.connection.v1.MsgConnectionOpenInit",
+		"/ibc.core.connection.v1.MsgConnectionOpenInitResponse",
+		"/ibc.core.connection.v1.MsgConnectionOpenTry",
+		"/ibc.core.connection.v1.MsgConnectionOpenTryResponse",
+		"/ibc.core.connection.v1.MsgConnectionOpenAck",
+		"/ibc.core.connection.v1.MsgConnectionOpenAckResponse",
+		"/ibc.core.connection.v1.MsgConnectionOpenConfirm",
+		"/ibc.core.connection.v1.MsgConnectionOpenConfirmResponse",
+
+		// ibc/core/channel
+		"/ibc.core.channel.v1.MsgChannelOpenInit",
+		"/ibc.core.channel.v1.MsgChannelOpenInitResponse",
+		"/ibc.core.channel.v1.MsgChannelOpenTry",
+		"/ibc.core.channel.v1.MsgChannelOpenTryResponse",
+		"/ibc.core.channel.v1.MsgChannelOpenAck",
+		"/ibc.core.channel.v1.MsgChannelOpenAckResponse",
+		"/ibc.core.channel.v1.MsgChannelOpenConfirm",
+		"/ibc.core.channel.v1.MsgChannelOpenConfirmResponse",
+		"/ibc.core.channel.v1.MsgChannelCloseInit",
+		"/ibc.core.channel.v1.MsgChannelCloseInitResponse",
+		"/ibc.core.channel.v1.MsgChannelCloseConfirm",
+		"/ibc.core.channel.v1.MsgChannelCloseConfirmResponse",
+		"/ibc.core.channel.v1.MsgRecvPacket",
+		"/ibc.core.channel.v1.MsgRecvPacketResponse",
+		"/ibc.core.channel.v1.MsgTimeout",
+		"/ibc.core.channel.v1.MsgTimeoutResponse",
+		"/ibc.core.channel.v1.MsgTimeoutOnClose",
+		"/ibc.core.channel.v1.MsgTimeoutOnCloseResponse",
+		"/ibc.core.channel.v1.MsgAcknowledgement",
+		"/ibc.core.channel.v1.MsgAcknowledgementResponse",
+
+		// ibc.applications.transfer
+		"/ibc.applications.transfer.v1.MsgTransfer",
+		"/ibc.applications.transfer.v1.MsgTransferResponse",
+
+		// ibc.applications.fee
+		"/ibc.applications.fee.v1.MsgRegisterPayee",
+		"/ibc.applications.fee.v1.MsgRegisterPayeeResponse",
+		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayee",
+		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayeeResponse",
+		"/ibc.applications.fee.v1.MsgPayPacketFee",
+		"/ibc.applications.fee.v1.MsgPayPacketFeeResponse",
+		"/ibc.applications.fee.v1.MsgPayPacketFeeAsync",
+		"/ibc.applications.fee.v1.MsgPayPacketFeeAsyncResponse",
+
 		// To be integrated standard modules:
-		"/cosmos.evidence.",
-		"/cosmos.crisis.",
-		"/cosmos.vesting.",
+		"/cosmos.vesting.v1beta1.MsgCreateVestingAccount",
 
 		// Internal cosmos protos:
-		"/testdata.",
+		"/testdata.TestMsg",
+		"/testdata.MsgCreateDog",
 		"/cosmos.tx.v1beta1.Tx",
 	}
 
 	// WASM messages will be added here
-	undetermMsgPrefixes := []string{
-		// CosmWasm
+	undetermMsgTypes := []string{
+		// crisis
+		"/cosmos.crisis.v1beta1.MsgVerifyInvariant",
+
+		// evidence
+		"/cosmos.evidence.v1beta1.MsgSubmitEvidence",
+
+		// wasm
 		"/cosmwasm.wasm.v1.MsgStoreCode",
 		"/cosmwasm.wasm.v1.MsgInstantiateContract",
 		"/cosmwasm.wasm.v1.MsgInstantiateContract2",
@@ -64,15 +124,15 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 		}
 
 		// Skip unknow messages.
-		if lo.ContainsBy(unknownMsgPrefixes, func(prefix string) bool {
-			return strings.HasPrefix(config.MsgName(sdkMsg), prefix)
+		if lo.ContainsBy(ignoredMsgTypes, func(msgType string) bool {
+			return config.MsgType(sdkMsg) == msgType
 		}) {
 			continue
 		}
 
 		// Add message to undeterministic.
-		if lo.ContainsBy(undetermMsgPrefixes, func(prefix string) bool {
-			return strings.HasPrefix(config.MsgName(sdkMsg), prefix)
+		if lo.ContainsBy(undetermMsgTypes, func(msgType string) bool {
+			return config.MsgType(sdkMsg) == msgType
 		}) {
 			undetermMsgs = append(undetermMsgs, sdkMsg)
 			continue
@@ -85,12 +145,12 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 7, len(undetermMsgs))
+	assert.Equal(t, 9, len(undetermMsgs))
 	assert.Equal(t, 31, len(determMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg
-		t.Run("deterministic: "+config.MsgName(sdkMsg), func(t *testing.T) {
+		t.Run("deterministic: "+config.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.True(t, ok)
 			assert.Positive(t, gas)
@@ -99,7 +159,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range undetermMsgs {
 		sdkMsg := sdkMsg
-		t.Run("undeterministic: "+config.MsgName(sdkMsg), func(t *testing.T) {
+		t.Run("undeterministic: "+config.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.False(t, ok)
 			assert.Zero(t, gas)
@@ -113,9 +173,9 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 		denom   = "ducore"
 		address = "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6"
 
-		assetFTIssue             = 80000
-		bankSendPerEntryGas      = 22000
-		bankMultiSendPerEntryGas = 27000
+		assetFTIssue             = 70000
+		bankSendPerEntryGas      = 24000
+		bankMultiSendPerEntryGas = 11000
 		authzMsgExecOverhead     = 2000
 	)
 
@@ -164,7 +224,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 		{
 			name:                    "bank.MsgMultiSend 0 input & 0 output",
 			msg:                     &banktypes.MsgMultiSend{},
-			expectedGas:             bankMultiSendPerEntryGas,
+			expectedGas:             bankMultiSendPerEntryGas * 2,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -177,7 +237,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
 				},
 			},
-			expectedGas:             bankMultiSendPerEntryGas,
+			expectedGas:             bankMultiSendPerEntryGas * 2,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -191,7 +251,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
 				},
 			},
-			expectedGas:             2 * bankMultiSendPerEntryGas,
+			expectedGas:             3 * bankMultiSendPerEntryGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -207,7 +267,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(3)))},
 				},
 			},
-			expectedGas:             3 * bankMultiSendPerEntryGas,
+			expectedGas:             5 * bankMultiSendPerEntryGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -224,7 +284,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					[]sdk.Msg{&banktypes.MsgSend{}, &banktypes.MsgMultiSend{}},
 				),
 			),
-			expectedGas:             authzMsgExecOverhead + bankSendPerEntryGas + bankMultiSendPerEntryGas,
+			expectedGas:             authzMsgExecOverhead + bankSendPerEntryGas + 2*bankMultiSendPerEntryGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -238,7 +298,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 					},
 				),
 			),
-			expectedGas:             authzMsgExecOverhead + authzMsgExecOverhead + bankSendPerEntryGas + bankMultiSendPerEntryGas + bankSendPerEntryGas,
+			expectedGas:             authzMsgExecOverhead + authzMsgExecOverhead + bankSendPerEntryGas + 2*bankMultiSendPerEntryGas + bankSendPerEntryGas,
 			expectedIsDeterministic: true,
 		},
 		{
