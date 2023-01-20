@@ -1,7 +1,7 @@
 # Overview
-This module called `assetft` is responsible for providing tokenization features for the fungible token part, described in Coreum's whitepaper. There is also another module under development called `assetnft` which is responsible for the NFT part of asset tokenization. 
+This module called `assetft` is responsible for providing tokenization features for the fungible token. 
 
-Here in this doc we will provide the detailed behavior of fungible tokens as they are implemented. This doc will describe transaction types and their behavior. For the fields and their meanings used in transactions please consult the proto files in `coreum/proto/coreum/asset/ft`.
+Here in this doc we will provide the detailed behavior of fungible tokens as they are implemented. For the fields used in transactions and their meanings please consult the proto files in `coreum/proto/coreum/asset/ft`.
 
 Here is the list of the transactions provided by this module, we will examine each of them separately. 
  - Issue
@@ -14,11 +14,13 @@ Here is the list of the transactions provided by this module, we will examine ea
 # Interaction with bank module, introducing wbank module
 Since Coreum is based on Cosmos SDK, We should mention that Cosmos SDK provides the native bank module which is responsible for tracking fungible token creation and balances for each account. But this module does not allow anyone to create a fungible token, mint/burn it, and also does not allow for other features such as freezing and whitelisting. To work around this issue we have wrapped the `bank` module into the `wbank` module. 
 
-In `wbank` module we wrap all the send related  methods of the `bank` module and intercept them with `BeforeSend` and `BeforeInputOutput` functions provided by `assetft` module. This allows `assetft` module to inject custom logic into interceptor functions and reject some transaction if whitelisting or freezing criteria is not met.
+In `wbank` module we wrap all the send related  methods of the `bank` module and intercept them with `BeforeSend` and `BeforeInputOutput` functions provided by `assetft` module. This allows `assetft` module to inject custom logic into interceptor functions and reject some transaction if whitelisting or freezing criteria is not met. 
+
+
+This structure allows to reuse the code provided by Cosmos SDK, and also reuse the infrastructure that the community provides (e.g explorers and wallets) It is apparent in the query structure. And it also leads to the fact that some of the information regarding fungible tokens will exists in the `assetft` module and some in the `bank` module. For example, if you want to query for frozen balances of a fungible token, you need to query the `assetft` module but if you want to get the total supply, you must query the bank module.
 
 In a nutshell, `assetft` module interacts with `wbank` which in turn wraps the original `bank` module.
 
-This structure allows to reuse the code provided by Cosmos SDK, and also reuse the infrastructure that the community provides (e.g explorers and wallets), but the downside is that the data regarding each fungible token must be split and stored in 2 different places. It is apparent in the query structure.  For example, if you want to query for frozen balances of a fungible token, you need to query the assetft module but if you want to get the total supply, you must query the bank module. 
 
 
 # Token Interactions 
