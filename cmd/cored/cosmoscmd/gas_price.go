@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	autoValue = "auto"
+	autoValue            = "auto"
+	defaultGasMultiplier = "1.1"
 )
 
 func mergeRunEs(runEs ...func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
@@ -61,7 +62,7 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	if !gasAdjustmentFlag.Changed {
-		if err := gasAdjustmentFlag.Value.Set("1.1"); err != nil {
+		if err := gasAdjustmentFlag.Value.Set(defaultGasMultiplier); err != nil {
 			return err
 		}
 	}
