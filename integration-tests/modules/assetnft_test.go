@@ -538,6 +538,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	recipient1 := chain.GenAccount()
+	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
@@ -606,6 +607,13 @@ func TestAssetNFTFreeze(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(chain.GasLimitByMsgs(msgFreeze), uint64(res.GasUsed))
 
+	queryRes, err := nftClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
+		ClassId: classID,
+		Id:      nftID,
+	})
+	requireT.NoError(err)
+	requireT.True(queryRes.Frozen)
+
 	// assert the freezing event
 	frozenEvents, err := event.FindTypedEvents[*assetnfttypes.EventFrozen](res.Events)
 	requireT.NoError(err)
@@ -663,6 +671,13 @@ func TestAssetNFTFreeze(t *testing.T) {
 	)
 	requireT.NoError(err)
 	requireT.EqualValues(chain.GasLimitByMsgs(msgUnfreeze), res.GasUsed)
+
+	queryRes, err = nftClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
+		ClassId: classID,
+		Id:      nftID,
+	})
+	requireT.NoError(err)
+	requireT.False(queryRes.Frozen)
 
 	// assert the unfreezing event
 	unFrozenEvents, err := event.FindTypedEvents[*assetnfttypes.EventUnfrozen](res.Events)

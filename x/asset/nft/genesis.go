@@ -29,7 +29,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
-	frozen, err := k.AllFrozen(ctx)
+	_, frozen, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
 		panic(err)
 	}

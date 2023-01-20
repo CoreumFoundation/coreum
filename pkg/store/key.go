@@ -8,7 +8,7 @@ import (
 // maxKeyLen is the maximum allowed length (in bytes) for a key to be length-prefixed.
 const maxKeyLen = 255
 
-// JoinKeysWithLength joins the keys with the length separation to protect from the intersecting keys
+// JoinKeysWithLength joins the keys with the length separation to allow to parse back the original keys
 // in case the length is not fixed.
 //
 // Example of such behavior:
@@ -18,47 +18,29 @@ const maxKeyLen = 255
 // Example with the usage of the func
 // prefix + ab + c = prefix2ab1c
 // prefix + a + bc = prefix1a2bc
-func JoinKeysWithLength(prefix []byte, key []byte) []byte {
-	compositeKey := make([]byte, 0)
-	compositeKey = append(compositeKey, prefix...)
-	bzLen := len(key)
-	if bzLen == 0 {
-		return compositeKey
-	}
-	if bzLen > maxKeyLen {
-		panic(errors.Errorf("key length should be max %d bytes, got %d", maxKeyLen, bzLen))
-	}
-	byteLen := proto.EncodeVarint(uint64(len(key)))
-	compositeKey = append(compositeKey, byteLen...)
-	compositeKey = append(compositeKey, key...)
-
-	return compositeKey
-}
-
-// JoinKeysWithLengthMany is similar to JoinKeysWithLength but gets a list of keys and prefixes all of them
-func JoinKeysWithLengthMany(keys ...[]byte) []byte {
+func JoinKeysWithLength(keys ...[]byte) ([]byte, error) {
 	compositeKey := make([]byte, 0)
 	for _, key := range keys {
 		bzLen := len(key)
 		if bzLen == 0 {
-			return compositeKey
+			return compositeKey, errors.New("received empty key")
 		}
 		if bzLen > maxKeyLen {
-			panic(errors.Errorf("key length should be max %d bytes, got %d", maxKeyLen, bzLen))
+			return nil, errors.Errorf("key length should be max %d bytes, got %d", maxKeyLen, bzLen)
 		}
 		byteLen := proto.EncodeVarint(uint64(len(key)))
 		compositeKey = append(compositeKey, byteLen...)
 		compositeKey = append(compositeKey, key...)
 	}
 
-	return compositeKey
+	return compositeKey, nil
 }
 
-// ParseJoinedKeys parses all the length prefixed keys, put together by JoinKeysWithLengthMany
-func ParseJoinedKeys(key []byte) [][]byte {
+// ParseLengthPrefixedKeys parses all the length prefixed keys, put together by JoinKeysWithLength
+func ParseLengthPrefixedKeys(key []byte) ([][]byte, error) {
 	bzLen := len(key)
 	if bzLen == 0 {
-		return nil
+		return nil, errors.New("empty key")
 	}
 	keys := make([][]byte, 0)
 	startBound := 1
@@ -66,7 +48,7 @@ func ParseJoinedKeys(key []byte) [][]byte {
 		keyLen := key[startBound-1]
 		endBound := startBound + int(keyLen)
 		if bzLen < endBound {
-			return nil
+			return nil, errors.New("length prefix does not match the key")
 		}
 		keySection := key[startBound:endBound]
 		keys = append(keys, keySection)
@@ -76,7 +58,7 @@ func ParseJoinedKeys(key []byte) [][]byte {
 		}
 		startBound = endBound + 1
 	}
-	return keys
+	return keys, nil
 }
 
 // JoinKeys joins the keys protecting the prefixes from the modification.

@@ -17,7 +17,8 @@ func TestJoinKeysWithLength(t *testing.T) {
 	keyClone := append(make([]byte, 0, len(prefix)), prefix...)
 	// gen new key
 	denom := []byte("denom")
-	key := store.JoinKeysWithLength(prefix, denom)
+	key, err := store.JoinKeysWithLength(prefix, denom)
+	require.NoError(t, err)
 	exp := make([]byte, 0)
 	exp = append(exp, prefix...)
 	exp = append(exp, proto.EncodeVarint(uint64(len(denom)))...)
@@ -40,12 +41,41 @@ func TestJoinKeys(t *testing.T) {
 }
 
 func TestJoinKeysWithLengthMany(t *testing.T) {
-	keys := [][]byte{
-		[]byte("key1"),
-		[]byte("key2"),
-		[]byte("key3"),
+	testCases := []struct {
+		keys        [][]byte
+		expectError bool
+	}{
+		{
+			keys: [][]byte{
+				[]byte("key1"),
+				[]byte("key2"),
+				[]byte("key3"),
+			},
+		},
+		{
+			keys: [][]byte{
+				[]byte("key1"),
+			},
+		},
+		{
+			keys: [][]byte{
+				[]byte("key1"),
+				[]byte("key2"),
+				[]byte(""),
+			},
+			expectError: true,
+		},
 	}
-	compositeKey := store.JoinKeysWithLengthMany(keys...)
-	parsedKeys := store.ParseJoinedKeys(compositeKey)
-	require.Equal(t, keys, parsedKeys)
+	for _, tc := range testCases {
+		keys := tc.keys
+		compositeKey, err := store.JoinKeysWithLength(keys...)
+		if tc.expectError {
+			require.Error(t, err)
+			continue
+		}
+		require.NoError(t, err)
+		parsedKeys, err := store.ParseLengthPrefixedKeys(compositeKey)
+		require.NoError(t, err)
+		require.Equal(t, keys, parsedKeys)
+	}
 }
