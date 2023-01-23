@@ -17,7 +17,7 @@ Since Coreum is based on Cosmos SDK, We should mention that Cosmos SDK provides 
 In `wbank` module we wrap all the send related  methods of the `bank` module and intercept them with `BeforeSend` and `BeforeInputOutput` functions provided by `assetft` module. This allows `assetft` module to inject custom logic into interceptor functions and reject some transaction if whitelisting or freezing criteria is not met. 
 
 
-This structure allows to reuse the code provided by Cosmos SDK, and also reuse the infrastructure that the community provides (e.g explorers and wallets) It is apparent in the query structure. And it also leads to the fact that some of the information regarding fungible tokens will exists in the `assetft` module and some in the `bank` module. For example, if you want to query for frozen balances of a fungible token, you need to query the `assetft` module but if you want to get the total supply, you must query the bank module.
+This structure allows to reuse the code provided by Cosmos SDK, and also reuse the infrastructure that the community provides (e.g explorers and wallets) It is apparent in the query structure. And it also leads to the fact that some of the information regarding fungible tokens will exist in the `assetft` module and some in the `bank` module. For example, if you want to query for frozen balances of a fungible token, you need to query the `assetft` module but if you want to get the total supply, you must query the bank module.
 
 In a nutshell, `assetft` module interacts with `wbank` which in turn wraps the original `bank` module.
 
