@@ -19,10 +19,10 @@ const maxKeyLen = 255
 // prefix + a + bc = prefix1a2bc
 func JoinKeysWithLength(keys ...[]byte) ([]byte, error) {
 	compositeKey := make([]byte, 0)
-	for _, key := range keys {
+	for index, key := range keys {
 		keyLen := len(key)
 		if keyLen == 0 {
-			return compositeKey, errors.New("received empty key")
+			return nil, errors.Errorf("received empty key on index %d", index)
 		}
 		if keyLen > maxKeyLen {
 			return nil, errors.Errorf("key length should be max %d bytes, got %d", maxKeyLen, keyLen)

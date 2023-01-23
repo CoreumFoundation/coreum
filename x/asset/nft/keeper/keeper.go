@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -269,7 +271,8 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return store.Has(key), nil
+
+	return bytes.Equal(store.Get(key), frozenNFTStoreValue), nil
 }
 
 // GetFrozenNFTs return paginated frozen NFTs
