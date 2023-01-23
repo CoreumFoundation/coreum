@@ -95,7 +95,13 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, msg, s.deterministicGasRequirements)
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
-					if isDeterministic {
+					// gas metrics are reported only if message type is deterministic, and was successful
+					// CheckTx and ReCheckTx phases are ignored, since are only interested in the real execution
+					// of the message at DeliverTx phase.
+					if err == nil &&
+						isDeterministic &&
+						!newSDKCtx.IsCheckTx() &&
+						!newSDKCtx.IsReCheckTx() {
 						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg))
 					}
 					return res, err
