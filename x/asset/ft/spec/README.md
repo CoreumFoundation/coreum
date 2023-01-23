@@ -68,12 +68,11 @@ Here is the description of behavior of the freezing feature:
 - The issuer cannot freeze their own account
 - The user can only send their tokens in excess of the frozen amount.
 - The user can receive tokens regardless of frozen limitation.
-- The user can send their tokens to the issuer regardless of frozen limitation.
 - Issuer cannot freeze their own account
 - Frozen amount cannot be a negative value, it means that amount present in unfreeze transaction cannot be bigger than the current frozen amount
 
 ## Global Freeze/Unfreeze
-If the freezing feature is enabled on a token, then the issuer of the token can globally freeze that token, which means that nobody except the issuer can send or receive that token. In other words, only the issuer will be able to send to other accounts and all other accounts will be able to send only to the issuer. The issuer can also globally unfreeze and remove this limitation. 
+If the freezing feature is enabled on a token, then the issuer of the token can globally freeze that token, which means that nobody except the issuer can send that token. In other words, only the issuer will be able to send to other accounts. The issuer can also globally unfreeze and remove this limitation. 
 
 ## Whitelist
 If the whitelisting feature is enabled, then every account that wishes to receive this token, must first be whitelisted by the issuer, otherwise they will not be able to receive that token. This feature allows the issuer to set whitelisted limit on any account, and then that account will be able to receive tokens only up to the whitelisted limit. If someone tries to send tokens to an account which will result in the whitelisted amount to be exceeded, the transaction will fail.
