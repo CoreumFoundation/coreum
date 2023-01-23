@@ -13,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func TestFrozenAndWhitelistedBalanceInvariant(t *testing.T) {
+func TestFrozenBalancesInvariant(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.NewContext(false, tmproto.Header{})
@@ -30,51 +30,37 @@ func TestFrozenAndWhitelistedBalanceInvariant(t *testing.T) {
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []types.Feature{
-			types.Feature_freezing,     //nolint:nosnakecase
-			types.Feature_whitelisting, //nolint:nosnakecase
+			types.Feature_freezing, //nolint:nosnakecase
 		},
 	}
 
 	denom1, err := ftKeeper.Issue(ctx, settings1)
 	requireT.NoError(err)
 
-	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom1, 10)))
 	ftKeeper.SetFrozenBalances(ctx, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom1, 10)))
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom1, 10)))
 	requireT.NoError(err)
 
 	// check that current state is valid
-	_, isBroken := keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
+	_, isBroken := keeper.FrozenBalancesInvariant(ftKeeper)(ctx)
 	requireT.False(isBroken)
 
-	// break frozen the state and check
+	// break frozen state and check
 	ftKeeper.SetFrozenBalances(ctx, recipient, sdk.Coins{sdk.Coin{
 		Denom:  denom1,
 		Amount: sdk.NewInt(-1),
 	}})
-	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
+	_, isBroken = keeper.FrozenBalancesInvariant(ftKeeper)(ctx)
 	requireT.True(isBroken)
 
 	// make the state valid
 	ftKeeper.SetFrozenBalances(ctx, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom1, 10)))
-	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
+	_, isBroken = keeper.FrozenBalancesInvariant(ftKeeper)(ctx)
 	requireT.False(isBroken)
 
-	// break whitelisted the state and check
-	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.Coins{sdk.Coin{
-		Denom:  denom1,
-		Amount: sdk.NewInt(-1),
-	}})
-	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
-	requireT.True(isBroken)
-
 	// make the state valid
 	ftKeeper.SetFrozenBalances(ctx, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom1, 10)))
-	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.Coins{sdk.Coin{
-		Denom:  denom1,
-		Amount: sdk.NewInt(0),
-	}})
-	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
+	_, isBroken = keeper.FrozenBalancesInvariant(ftKeeper)(ctx)
 	requireT.False(isBroken)
 
 	settings2 := types.IssueSettings{
@@ -93,19 +79,83 @@ func TestFrozenAndWhitelistedBalanceInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	ftKeeper.SetFrozenBalances(ctx, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)))
-	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
+	_, isBroken = keeper.FrozenBalancesInvariant(ftKeeper)(ctx)
 	requireT.True(isBroken)
 	// make the state valid (we use the slice here since the `sdk.NewCoins` sanitizes the empty coins)
 	ftKeeper.SetFrozenBalances(ctx, recipient, sdk.Coins{sdk.NewInt64Coin(denom2, 0)})
-	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
+	_, isBroken = keeper.FrozenBalancesInvariant(ftKeeper)(ctx)
+	requireT.False(isBroken)
+}
+
+func TestWhitelistedBalancesInvariant(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	settings1 := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Description:   "DEF Desc",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []types.Feature{
+			types.Feature_whitelisting, //nolint:nosnakecase
+		},
+	}
+
+	denom1, err := ftKeeper.Issue(ctx, settings1)
+	requireT.NoError(err)
+
+	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom1, 10)))
+	err = bankKeeper.SendCoins(ctx, issuer, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom1, 10)))
+	requireT.NoError(err)
+
+	// check that current state is valid
+	_, isBroken := keeper.WhitelistedBalancesInvariant(ftKeeper)(ctx)
 	requireT.False(isBroken)
 
+	// break whitelisted state and check
+	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.Coins{sdk.Coin{
+		Denom:  denom1,
+		Amount: sdk.NewInt(-1),
+	}})
+	_, isBroken = keeper.WhitelistedBalancesInvariant(ftKeeper)(ctx)
+	requireT.True(isBroken)
+
+	// make the state valid
+	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.Coins{sdk.Coin{
+		Denom:  denom1,
+		Amount: sdk.NewInt(0),
+	}})
+	_, isBroken = keeper.WhitelistedBalancesInvariant(ftKeeper)(ctx)
+	requireT.False(isBroken)
+
+	settings2 := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF2",
+		Subunit:       "def2",
+		Description:   "DEF Desc",
+		InitialAmount: sdk.NewInt(1000),
+		// the freezing and whitelisting disabled
+		Features: []types.Feature{
+			types.Feature_minting, //nolint:nosnakecase
+		},
+	}
+
+	denom2, err := ftKeeper.Issue(ctx, settings2)
+	requireT.NoError(err)
+
 	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)))
-	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
+	_, isBroken = keeper.WhitelistedBalancesInvariant(ftKeeper)(ctx)
 	requireT.True(isBroken)
 	// make the state valid (we use the slice here since the `sdk.NewCoins` sanitizes the empty coins)
 	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.Coins{sdk.NewInt64Coin(denom2, 0)})
-	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
+	_, isBroken = keeper.WhitelistedBalancesInvariant(ftKeeper)(ctx)
 	requireT.False(isBroken)
 }
 

@@ -9,21 +9,23 @@ import (
 )
 
 const (
-	// FrozenAndWhitelistedBalancesInvariantName is frozen and whitelisted balances invariant name.
-	FrozenAndWhitelistedBalancesInvariantName = "frozen-and-whitelisted-balances"
+	// FrozenBalancesInvariantName is frozen balances invariant name.
+	FrozenBalancesInvariantName = "frozen-balances"
+	// WhitelistedBalancesInvariantName is whitelisted balances invariant name.
+	WhitelistedBalancesInvariantName = "whitelisted-balances"
 	// BankMetadataExistsInvariantName is bank metadata exist name.
 	BankMetadataExistsInvariantName = "bank-metadata-exist"
 )
 
 // RegisterInvariants registers the bank module invariants
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
-	ir.RegisterRoute(types.ModuleName, FrozenAndWhitelistedBalancesInvariantName, FrozenAndWhitelistedBalanceInvariant(k))
+	ir.RegisterRoute(types.ModuleName, FrozenBalancesInvariantName, FrozenBalancesInvariant(k))
+	ir.RegisterRoute(types.ModuleName, WhitelistedBalancesInvariantName, WhitelistedBalancesInvariant(k))
 	ir.RegisterRoute(types.ModuleName, BankMetadataExistsInvariantName, BankMetadataExistInvariant(k))
 }
 
-// FrozenAndWhitelistedBalanceInvariant checks that all accounts in the application have non-negative feature balances
-// and balance is empty if the corresponding feature is disabled.
-func FrozenAndWhitelistedBalanceInvariant(k Keeper) sdk.Invariant {
+// FrozenBalancesInvariant checks that all accounts in the application have non-negative frozen balances.
+func FrozenBalancesInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
 			count int
@@ -32,21 +34,33 @@ func FrozenAndWhitelistedBalanceInvariant(k Keeper) sdk.Invariant {
 
 		definitions := make(map[string]types.Definition)
 		err := k.IterateAccountsFrozenBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
-			var stop bool
-			count, msg, stop = applyFeatureBalanceInvariant(ctx, k, addr, balance, types.Feature_freezing, definitions, count, msg)
-
-			return stop
+			count, msg = applyFeatureBalanceInvariant(ctx, k, addr, balance, types.Feature_freezing, definitions, count, msg) //nolint:nosnakecase
+			return false
 		})
 		if err != nil {
 			count++
 			msg += fmt.Sprintf("can't iterate over frozen balances %s\n", err)
 		}
 
-		err = k.IterateAccountsWhitelistedBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
-			var stop bool
-			count, msg, stop = applyFeatureBalanceInvariant(ctx, k, addr, balance, types.Feature_whitelisting, definitions, count, msg)
+		return sdk.FormatInvariant(
+			types.ModuleName, FrozenBalancesInvariantName,
+			fmt.Sprintf("amount of invalid frozen balances found: %d\n%s", count, msg),
+		), count != 0
+	}
+}
 
-			return stop
+// WhitelistedBalancesInvariant checks that all accounts in the application have non-negative whitelisted balances.
+func WhitelistedBalancesInvariant(k Keeper) sdk.Invariant {
+	return func(ctx sdk.Context) (string, bool) {
+		var (
+			count int
+			msg   string
+		)
+
+		definitions := make(map[string]types.Definition)
+		err := k.IterateAccountsWhitelistedBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
+			count, msg = applyFeatureBalanceInvariant(ctx, k, addr, balance, types.Feature_whitelisting, definitions, count, msg) //nolint:nosnakecase
+			return false
 		})
 		if err != nil {
 			count++
@@ -54,8 +68,8 @@ func FrozenAndWhitelistedBalanceInvariant(k Keeper) sdk.Invariant {
 		}
 
 		return sdk.FormatInvariant(
-			types.ModuleName, FrozenAndWhitelistedBalancesInvariantName,
-			fmt.Sprintf("amount of invalid balances found: %d\n%s", count, msg),
+			types.ModuleName, WhitelistedBalancesInvariantName,
+			fmt.Sprintf("amount of invalid whitelisted balances found: %d\n%s", count, msg),
 		), count != 0
 	}
 }
@@ -94,7 +108,7 @@ func applyFeatureBalanceInvariant(
 	definitions map[string]types.Definition,
 	count int,
 	msg string,
-) (int, string, bool) {
+) (int, string) {
 	if balance.IsNegative() {
 		count++
 		msg += fmt.Sprintf("\taddress %s has a negative %s balance: %s\n", addr, feature, balance)
@@ -107,7 +121,7 @@ func applyFeatureBalanceInvariant(
 		if err != nil {
 			count++
 			msg += fmt.Sprintf("\t definition for the %s denom not found\n", balance.Denom)
-			return count, msg, false
+			return count, msg
 		}
 		definitions[balance.Denom] = definition
 	}
@@ -117,5 +131,5 @@ func applyFeatureBalanceInvariant(
 		msg += fmt.Sprintf("\t feature %s is disabled, but %s balance %s is possitive\n", feature.String(), feature.String(), balance)
 	}
 
-	return count, msg, false
+	return count, msg
 }
