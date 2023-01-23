@@ -17,7 +17,7 @@ import (
 )
 
 // globalFreezeEnabledStoreVal is the value used to store the globally frozen flag
-var globalFreezeEnabledStoreVal = []byte{0x00}
+var globalFreezeEnabledStoreVal = []byte{0x01}
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
 type ParamSubspace interface {
