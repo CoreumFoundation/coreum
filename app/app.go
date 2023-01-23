@@ -92,6 +92,10 @@ import (
 	assetft "github.com/CoreumFoundation/coreum/x/asset/ft"
 	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	assetftwasm "github.com/CoreumFoundation/coreum/x/asset/ft/wasm"
+	assetnft "github.com/CoreumFoundation/coreum/x/asset/nft"
+	assetnftkeeper "github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/auth/ante"
 	"github.com/CoreumFoundation/coreum/x/customparams"
 	customparamskeeper "github.com/CoreumFoundation/coreum/x/customparams/keeper"
@@ -100,8 +104,13 @@ import (
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
+	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
+	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/x/wnft"
+	wnftkeeper "github.com/CoreumFoundation/coreum/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/x/wstaking"
 )
 
@@ -160,7 +169,9 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
+		wnft.AppModuleBasic{},
 		assetft.AppModuleBasic{},
+		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
 	)
 
@@ -174,6 +185,8 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		assetfttypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		assetnfttypes.ModuleName:       {authtypes.Burner},
+		nft.ModuleName:                 {}, // the line is required by the nft module to have the module account stored in the account keeper
 	}
 )
 
@@ -225,8 +238,10 @@ type App struct {
 	WASMKeeper       wasm.Keeper
 
 	AssetFTKeeper      assetftkeeper.Keeper
+	AssetNFTKeeper     assetnftkeeper.Keeper
 	FeeModelKeeper     feemodelkeeper.Keeper
 	BankKeeper         wbankkeeper.BaseKeeperWrapper
+	NFTKeeper          wnftkeeper.Wrapper
 	CustomParamsKeeper customparamskeeper.Keeper
 
 	// mm is the module manager
@@ -266,7 +281,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
-		wasm.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey,
+		wasm.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -358,6 +373,18 @@ func New(
 
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
 
+	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
+	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
+		appCodec,
+		app.GetSubspace(assetnfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetnfttypes.Params{})),
+		keys[assetnfttypes.StoreKey],
+		nftKeeper,
+		// for the assetnft we use the clear bank keeper without the assets integration because it interacts only with native token.
+		originalBankKeeper,
+	)
+
+	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
+
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
@@ -378,7 +405,10 @@ func New(
 		panic(errors.Wrapf(err, "error while reading wasm config"))
 	}
 
-	var wasmOpts []wasm.Option
+	wasmOpts := []wasm.Option{
+		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(assetftwasm.MsgHandler)),
+		wasmkeeper.WithQueryPlugins(wasmtypes.NewCustomQuerier(assetftwasm.QueryHandler(app.AssetFTKeeper))),
+	}
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
@@ -420,7 +450,10 @@ func New(
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	assetFTModule := assetft.NewAppModule(appCodec, app.AssetFTKeeper, app.BankKeeper)
+	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
+
+	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
 
 	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper)
 
@@ -452,6 +485,8 @@ func New(
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
 		assetFTModule,
+		assetNFTModule,
+		wnftModule,
 		customParamsModule,
 	)
 
@@ -480,6 +515,8 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
+		assetnfttypes.ModuleName,
+		nft.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -503,6 +540,8 @@ func New(
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
 		assetfttypes.ModuleName,
+		assetnfttypes.ModuleName,
+		nft.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -530,7 +569,9 @@ func New(
 		feegrant.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
+		nft.ModuleName,
 		assetfttypes.ModuleName,
+		assetnfttypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -553,6 +594,8 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		assetFTModule,
+		assetNFTModule,
+		wnftModule,
 		customParamsModule,
 	)
 	app.sm.RegisterStoreDecoders()
@@ -748,6 +791,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(feemodeltypes.ModuleName)
 	paramsKeeper.Subspace(customparamstypes.CustomParamsStaking)
 	paramsKeeper.Subspace(assetfttypes.ModuleName)
+	paramsKeeper.Subspace(assetnfttypes.ModuleName)
 
 	return paramsKeeper
 }
