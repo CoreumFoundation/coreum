@@ -1,6 +1,8 @@
 package config_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"reflect"
 	"testing"
@@ -207,6 +209,42 @@ func TestValidateAllGenTxs(t *testing.T) {
 
 			assert.NoError(t, validateGenesisTxSignature(clientCtx, sdkTx))
 		}
+	}
+}
+
+func TestGenesisHash(t *testing.T) {
+	type args struct {
+		chainID constant.ChainID
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantHash string
+	}{
+		{
+			name: "testnet",
+			args: args{
+				chainID: constant.ChainIDTest,
+			},
+			wantHash: "8ece5edef851738ef3d8435a58bfbfe91b163ff199785ae1470da84466f0f1c1",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := config.NetworkByChainID(tt.args.chainID)
+			require.NoError(t, err)
+
+			unsealConfig()
+			n.SetSDKConfig()
+			genesisDoc, err := n.EncodeGenesis()
+			require.NoError(t, err)
+
+			hash := sha256.New()
+			_, err = hash.Write(genesisDoc)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantHash, hex.EncodeToString(hash.Sum(nil)))
+		})
 	}
 }
 
