@@ -6,7 +6,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -40,59 +42,78 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 	dgr.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
-		MsgName(&assetfttypes.MsgIssue{}):               constantGasFunc(80000),
-		MsgName(&assetfttypes.MsgMint{}):                constantGasFunc(35000),
-		MsgName(&assetfttypes.MsgBurn{}):                constantGasFunc(35000),
-		MsgName(&assetfttypes.MsgFreeze{}):              constantGasFunc(55000),
-		MsgName(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(55000),
-		MsgName(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
-		MsgName(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(5000),
-		MsgName(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(35000),
+		MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
+		MsgType(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
+		MsgType(&assetfttypes.MsgBurn{}):                constantGasFunc(23000),
+		MsgType(&assetfttypes.MsgFreeze{}):              constantGasFunc(5000),
+		MsgType(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(2500),
+		MsgType(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
+		MsgType(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
+		MsgType(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
+
+		// asset/nft
+		// MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(16000),
+		// MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
+		// MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(39000),
 
 		// authz
-		MsgName(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
-		MsgName(&authz.MsgGrant{}):  constantGasFunc(7000),
-		MsgName(&authz.MsgRevoke{}): constantGasFunc(7000),
+		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
+		MsgType(&authz.MsgGrant{}):  constantGasFunc(7000),
+		MsgType(&authz.MsgRevoke{}): constantGasFunc(2500),
 
 		// bank
-		MsgName(&banktypes.MsgSend{}):      bankSendMsgGasFunc(22000),
-		MsgName(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(27000),
+		MsgType(&banktypes.MsgSend{}):      bankSendMsgGasFunc(24000),
+		MsgType(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(11000),
 
 		// distribution
-		MsgName(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(50000),
-		MsgName(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(50000),
-		MsgName(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(120000),
-		MsgName(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(50000),
+		MsgType(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(15000),
+		MsgType(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(5000),
+		MsgType(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(65000),
+		MsgType(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(22000),
 
 		// feegrant
-		MsgName(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(13000),
-		MsgName(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(13000),
+		MsgType(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(10000),
+		MsgType(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
-		MsgName(&govtypes.MsgSubmitProposal{}): constantGasFunc(95000),
-		MsgName(&govtypes.MsgVote{}):           constantGasFunc(8000),
-		MsgName(&govtypes.MsgVoteWeighted{}):   constantGasFunc(11000),
-		MsgName(&govtypes.MsgDeposit{}):        constantGasFunc(11000),
+		MsgType(&govtypes.MsgSubmitProposal{}): constantGasFunc(65000),
+		MsgType(&govtypes.MsgVote{}):           constantGasFunc(7000),
+		MsgType(&govtypes.MsgVoteWeighted{}):   constantGasFunc(9000),
+		MsgType(&govtypes.MsgDeposit{}):        constantGasFunc(52000),
+
+		// nft
+		// MsgType(&nfttypes.MsgSend{}): constantGasFunc(16000),
 
 		// slashing
-		MsgName(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
+		MsgType(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
 		// staking
-		MsgName(&stakingtypes.MsgDelegate{}):        constantGasFunc(51000),
-		MsgName(&stakingtypes.MsgUndelegate{}):      constantGasFunc(51000),
-		MsgName(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(51000),
-		MsgName(&stakingtypes.MsgCreateValidator{}): constantGasFunc(50000),
-		MsgName(&stakingtypes.MsgEditValidator{}):   constantGasFunc(50000),
+		MsgType(&stakingtypes.MsgDelegate{}):        constantGasFunc(69000),
+		MsgType(&stakingtypes.MsgUndelegate{}):      constantGasFunc(112000),
+		MsgType(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(142000),
+		MsgType(&stakingtypes.MsgCreateValidator{}): constantGasFunc(76000),
+		MsgType(&stakingtypes.MsgEditValidator{}):   constantGasFunc(13000),
 
 		// wasm
-		MsgName(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
-		MsgName(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(8000),
+		MsgType(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
+		MsgType(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
 	}
 
 	registerUndeterministicGasFuncs(
 		&dgr,
-		// wasm
 		[]sdk.Msg{
+			// crisis
+			// MsgVerifyInvariant is defined as undeterministic since fee
+			// charged by this tx type is defined as param inside module.
+			&crisistypes.MsgVerifyInvariant{},
+
+			// evidence
+			// MsgSubmitEvidence is defined as undeterministic since we do not
+			// have any custom evidence type implemented, so it should fail on
+			// ValidateBasic step.
+			&evidencetypes.MsgSubmitEvidence{},
+
+			// wasm
 			&wasmtypes.MsgStoreCode{},
 			&wasmtypes.MsgInstantiateContract{},
 			&wasmtypes.MsgInstantiateContract2{},
@@ -115,7 +136,7 @@ func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint6
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
 // Function returns 0 and false if message is undeterministic or unknown.
 func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
-	gasFunc, ok := dgr.gasByMsg[MsgName(msg)]
+	gasFunc, ok := dgr.gasByMsg[MsgType(msg)]
 	if ok {
 		return gasFunc(msg)
 	}
@@ -126,11 +147,11 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	return 0, false
 }
 
-// MsgName returns TypeURL of a msg in cosmos SDK style.
+// MsgType returns TypeURL of a msg in cosmos SDK style.
 // Samples of values returned by the function:
 // "/cosmos.distribution.v1beta1.MsgFundCommunityPool"
 // "/coreum.asset.ft.v1.MsgMint"
-func MsgName(msg sdk.Msg) string {
+func MsgType(msg sdk.Msg) string {
 	return sdk.MsgTypeURL(msg)
 }
 
@@ -161,7 +182,7 @@ func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhea
 
 func registerUndeterministicGasFuncs(dgr *DeterministicGasRequirements, msgs []sdk.Msg) {
 	for _, msg := range msgs {
-		dgr.gasByMsg[MsgName(msg)] = underministicGasFunc()
+		dgr.gasByMsg[MsgType(msg)] = underministicGasFunc()
 	}
 }
 
@@ -189,24 +210,22 @@ func bankSendMsgGasFunc(bankSendPerEntryGas uint64) gasByMsgFunc {
 	}
 }
 
-func bankMultiSendMsgGasFunc(bankMultiSendPerEntryGas uint64) gasByMsgFunc {
+func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*banktypes.MsgMultiSend)
 		if !ok {
 			return 0, false
 		}
-		inputEntriesNum := 0
+		totalOperationsNum := 0
 		for _, inp := range m.Inputs {
-			inputEntriesNum += len(inp.Coins)
+			totalOperationsNum += len(inp.Coins)
 		}
 
-		outputEntriesNum := 0
 		for _, outp := range m.Outputs {
-			outputEntriesNum += len(outp.Coins)
+			totalOperationsNum += len(outp.Coins)
 		}
 
-		// Select max of input or output entries & use 1 as a fallback.
-		maxEntriesNum := lo.Max([]int{inputEntriesNum, outputEntriesNum, 1})
-		return uint64(maxEntriesNum) * bankMultiSendPerEntryGas, true
+		// Minimum 2 operations (1 input & 1 output) should be present inside any multi-send.
+		return uint64(lo.Max([]int{totalOperationsNum, 2})) * bankMultiSendPerOperationGas, true
 	}
 }
