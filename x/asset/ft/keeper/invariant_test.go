@@ -97,8 +97,7 @@ func TestFrozenAndWhitelistedBalanceInvariant(t *testing.T) {
 	requireT.True(isBroken)
 	// make the state valid (we use the slice here since the `sdk.NewCoins` sanitizes the empty coins)
 	ftKeeper.SetFrozenBalances(ctx, recipient, sdk.Coins{sdk.NewInt64Coin(denom2, 0)})
-	i, isBroken := keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
-	_ = i
+	_, isBroken = keeper.FrozenAndWhitelistedBalanceInvariant(ftKeeper)(ctx)
 	requireT.False(isBroken)
 
 	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.NewCoins(sdk.NewInt64Coin(denom2, 10)))
