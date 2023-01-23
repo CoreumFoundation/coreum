@@ -113,7 +113,7 @@ func (msg MsgFreeze) ValidateBasic() error {
 	}
 
 	if issuer.String() == msg.Account {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer balance can't be frozen")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	return msg.Coin.Validate()
@@ -206,7 +206,7 @@ func (msg MsgSetWhitelistedLimit) ValidateBasic() error {
 	}
 
 	if issuer.String() == msg.Account {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer balance can't be whitelisted")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
 	return msg.Coin.Validate()

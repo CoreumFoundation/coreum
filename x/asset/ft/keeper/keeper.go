@@ -165,7 +165,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 	}
 
 	if def.IsIssuer(addr) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer balance can't be frozen")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
@@ -263,7 +263,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 	}
 
 	if def.IsIssuer(addr) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer balance can't be whitelisted")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
 	if err = def.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil { //nolint:nosnakecase
