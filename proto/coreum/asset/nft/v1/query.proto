@@ -1,0 +1,27 @@
+syntax = "proto3";
+package coreum.asset.nft.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+import "coreum/asset/nft/v1/nft.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Class queries the non-fungible token class of the module.
+  rpc Class(QueryClassRequest) returns (QueryClassResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{id}";
+  }
+}
+
+// QueryTokenRequest is request type for the Query/Class RPC method.
+message QueryClassRequest {
+  string id = 1; // we don't use the gogoproto.customname here since the google.api.http ignores it and generates invalid code.
+}
+
+// QueryClassResponse is response type for the Query/Class RPC method.
+message QueryClassResponse {
+  Class class = 1 [(gogoproto.nullable) = false];
+}

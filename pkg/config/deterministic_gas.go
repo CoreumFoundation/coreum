@@ -16,6 +16,8 @@ import (
 	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
 type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
@@ -56,6 +58,11 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		// MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
 		// MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(39000),
 
+		// asset/nft
+		MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(15000),
+		MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(20000),
+		MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(30000),
+
 		// authz
 		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
 		MsgType(&authz.MsgGrant{}):  constantGasFunc(7000),
@@ -83,6 +90,9 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 		// nft
 		// MsgType(&nfttypes.MsgSend{}): constantGasFunc(16000),
+
+		// nft
+		MsgType(&nfttypes.MsgSend{}): constantGasFunc(20000),
 
 		// slashing
 		MsgType(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),

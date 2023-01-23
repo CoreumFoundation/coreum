@@ -1,0 +1,1 @@
+5b75ccc4fc9544286ef389404f238a98a9579cccc8fb797e1afb3c9bab8dff92  issue_fungible_token.wasm

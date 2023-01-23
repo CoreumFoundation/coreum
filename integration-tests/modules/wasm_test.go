@@ -22,6 +22,7 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/testutil/event"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 var (
@@ -29,6 +30,8 @@ var (
 	bankSendWASM []byte
 	//go:embed testdata/wasm/simple-state/artifacts/simple_state.wasm
 	simpleStateWASM []byte
+	//go:embed testdata/wasm/issue-fungible-token/artifacts/issue_fungible_token.wasm
+	issueFungibleTokenWASM []byte
 )
 
 type bankWithdrawRequest struct {
@@ -52,6 +55,21 @@ type simpleStateMethod string
 const (
 	simpleGetCount  simpleStateMethod = "get_count"
 	simpleIncrement simpleStateMethod = "increment"
+)
+
+type issueFungibleTokenRequest struct {
+	Symbol    string `json:"symbol"`
+	Subunit   string `json:"subunit"`
+	Precision uint32 `json:"precision"`
+	Amount    string `json:"amount"`
+}
+
+type fungibleTokenMethod string
+
+const (
+	ftIssue    fungibleTokenMethod = "issue"
+	ftGetCount fungibleTokenMethod = "get_count"
+	ftGetInfo  fungibleTokenMethod = "get_info"
 )
 
 // TestWASMBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
@@ -449,6 +467,137 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues("", contractInfo.Admin)
 	requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
+}
+
+// TestWASMIssueFungibleTokenInContract verifies that smart contract is able to issue fungible token
+func TestWASMIssueFungibleTokenInContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	admin := chain.GenAccount()
+
+	requireT := require.New(t)
+	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+	))
+
+	clientCtx := chain.ClientContext.WithFromAddress(admin)
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+	bankClient := banktypes.NewQueryClient(clientCtx)
+	ftClient := assetfttypes.NewQueryClient(clientCtx)
+
+	// deployWASMContract and init contract with the initial coins amount
+	initialPayload, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+	contractAddr, _, err := deployAndInstantiateWASMContract(
+		ctx,
+		clientCtx,
+		txf,
+		issueFungibleTokenWASM,
+		instantiateConfig{
+			amount:     chain.NewCoin(chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(2)),
+			accessType: wasmtypes.AccessTypeUnspecified,
+			payload:    initialPayload,
+			label:      "fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	symbol := "mytoken"
+	subunit := "mysatoshi"
+	subunit1 := subunit + "1"
+	subunit2 := subunit + "2"
+	precision := uint32(8)
+	denom1 := assetfttypes.BuildDenom(subunit1, sdk.MustAccAddressFromBech32(contractAddr))
+	denom2 := assetfttypes.BuildDenom(subunit2, sdk.MustAccAddressFromBech32(contractAddr))
+	initialAmount := sdk.NewInt(5000)
+
+	// issue fungible token by smart contract
+	createPayload, err := json.Marshal(map[fungibleTokenMethod]issueFungibleTokenRequest{
+		ftIssue: {
+			Symbol:    symbol,
+			Subunit:   subunit,
+			Precision: precision,
+			Amount:    initialAmount.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	txf = txf.WithSimulateAndExecute(true)
+	gasUsed, err := executeWASMContract(ctx, clientCtx, txf, contractAddr, createPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	logger.Get(ctx).Info("Fungible token issued by smart contract", zap.Int64("gasUsed", gasUsed))
+
+	// check balance of recipient
+	balance, err := bankClient.AllBalances(ctx,
+		&banktypes.QueryAllBalancesRequest{
+			Address: contractAddr,
+		})
+	requireT.NoError(err)
+
+	assertT := assert.New(t)
+	assertT.Equal(initialAmount.String(), balance.Balances.AmountOf(denom1).String())
+	assertT.Equal(initialAmount.String(), balance.Balances.AmountOf(denom2).String())
+
+	ft, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom1})
+	requireT.NoError(err)
+	requireT.EqualValues(assetfttypes.Token{
+		Denom:              denom1,
+		Issuer:             contractAddr,
+		Symbol:             symbol + "1",
+		Subunit:            subunit1,
+		Precision:          precision,
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+	}, ft.GetToken())
+
+	ft, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom2})
+	requireT.NoError(err)
+	requireT.EqualValues(assetfttypes.Token{
+		Denom:              denom2,
+		Issuer:             contractAddr,
+		Symbol:             symbol + "2",
+		Subunit:            subunit2,
+		Precision:          precision,
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+	}, ft.GetToken())
+
+	// check the counter
+	getCountPayload, err := json.Marshal(map[fungibleTokenMethod]struct{}{
+		ftGetCount: {},
+	})
+	requireT.NoError(err)
+	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, getCountPayload)
+	requireT.NoError(err)
+
+	counterResponse := struct {
+		Count int `json:"count"`
+	}{}
+	err = json.Unmarshal(queryOut, &counterResponse)
+	requireT.NoError(err)
+	assertT.Equal(2, counterResponse.Count)
+
+	// query from smart contract
+	getInfoPayload, err := json.Marshal(map[fungibleTokenMethod]interface{}{
+		ftGetInfo: struct {
+			Denom string `json:"denom"`
+		}{
+			Denom: denom1,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, getInfoPayload)
+	requireT.NoError(err)
+
+	infoResponse := struct {
+		Issuer string `json:"issuer"`
+	}{}
+	requireT.NoError(json.Unmarshal(queryOut, &infoResponse))
+	assertT.Equal(contractAddr, infoResponse.Issuer)
 }
 
 func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
