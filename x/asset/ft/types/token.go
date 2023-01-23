@@ -15,7 +15,8 @@ import (
 
 var (
 	// The length is 50 since the demon is {subunit}-{address} and
-	// the address length might be up to 66 symbols and the demon length must be less than 127.
+	// the address length might be up to 66 symbols and the demon length must be less than 127 symbols
+	// according to bank validation.
 	subunitRegexStr = `^[a-z][a-z0-9]{0,50}$`
 	subunitRegex    *regexp.Regexp
 

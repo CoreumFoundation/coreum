@@ -464,7 +464,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		fungibleTokenWASM,
 		instantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
-			amount:     chain.NewCoin(chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(1)),
+			amount:     chain.NewCoin(chain.NetworkConfig.AssetFTConfig.IssueFee),
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    issuerFTInstantiatePayload,
 			label:      "fungible_token",
