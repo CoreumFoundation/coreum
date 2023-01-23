@@ -352,7 +352,9 @@ func TestKeeper_Freeze(t *testing.T) {
 	// freeze NFT
 	nftID := settings.ID
 	requireT.NoError(assetNFTKeeper.Freeze(ctx, issuer, classID, nftID))
-	requireT.True(assetNFTKeeper.IsFrozen(ctx, classID, nftID))
+	isFrozen, err := assetNFTKeeper.IsFrozen(ctx, classID, nftID)
+	requireT.NoError(err)
+	requireT.True(isFrozen)
 
 	// transfer from issuer (although it is frozen, the issuer can send)
 	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -367,7 +369,10 @@ func TestKeeper_Freeze(t *testing.T) {
 
 	// unfreeze
 	requireT.NoError(assetNFTKeeper.Unfreeze(ctx, issuer, classID, nftID))
-	requireT.False(assetNFTKeeper.IsFrozen(ctx, classID, nftID))
+	requireT.NoError(err)
+	isFrozen, err = assetNFTKeeper.IsFrozen(ctx, classID, nftID)
+	requireT.NoError(err)
+	requireT.False(isFrozen)
 
 	// transfer from non-issuer (must succeed)
 	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)

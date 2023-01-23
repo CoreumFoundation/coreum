@@ -12,6 +12,10 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
+var (
+	frozenNFTStoreValue = []byte{0x01}
+)
+
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters
 type ParamSubspace interface {
 	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
@@ -203,7 +207,9 @@ func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID st
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
-	k.SetFrozen(ctx, classID, nftID, true)
+	if err := k.SetFrozen(ctx, classID, nftID, true); err != nil {
+		return err
+	}
 
 	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
 	return ctx.EventManager().EmitTypedEvent(&types.EventFrozen{
@@ -222,7 +228,7 @@ func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) e
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix)
 	if frozen {
-		store.Set(key, []byte{0x01})
+		store.Set(key, frozenNFTStoreValue)
 	} else {
 		store.Delete(key)
 	}
@@ -244,7 +250,9 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
-	k.SetFrozen(ctx, classID, nftID, false)
+	if err := k.SetFrozen(ctx, classID, nftID, false); err != nil {
+		return err
+	}
 
 	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
 	return ctx.EventManager().EmitTypedEvent(&types.EventUnfrozen{
@@ -280,7 +288,7 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.Pag
 		return nil, nil, err
 	}
 
-	var frozen []types.FrozenNFT
+	frozen := make([]types.FrozenNFT, 0, len(mp))
 	for classID, nfts := range mp {
 		frozen = append(frozen, types.FrozenNFT{
 			ClassID: classID,

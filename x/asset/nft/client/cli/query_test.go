@@ -55,10 +55,6 @@ func TestQueryClass(t *testing.T) {
 	}, resp.Class)
 }
 
-func stringify[S fmt.Stringer](s S, _ int) string {
-	return s.String()
-}
-
 func issueClass(
 	requireT *require.Assertions,
 	ctx client.Context,
@@ -66,7 +62,9 @@ func issueClass(
 	testNetwork *network.Network,
 	features ...types.ClassFeature,
 ) string {
-	featuresStringList := lo.Map(features, stringify[types.ClassFeature])
+	featuresStringList := lo.Map(features, func(s types.ClassFeature, _ int) string {
+		return s.String()
+	})
 	featuresString := strings.Join(featuresStringList, ",")
 	validator := testNetwork.Validators[0]
 	args := []string{symbol, name, description, url, urlHash, fmt.Sprintf("--features=%s", featuresString)}

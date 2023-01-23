@@ -39,16 +39,16 @@ func CreateFreezingKey(classID, nftID string) ([]byte, error) {
 }
 
 // ParseFreezingKey parses freezing key back to class id and nft id
-func ParseFreezingKey(key []byte) (classID, nftID string, err error) {
+func ParseFreezingKey(key []byte) (string, string, error) {
 	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
 	if err != nil {
-		return
+		return "", "", err
 	}
 	if len(parsedKeys) != 2 {
 		err = sdkerrors.Wrapf(ErrInvalidKey, "freezing key must be composed to 2 length prefixed keys")
-		return
+		return "", "", err
 	}
-	classID = string(parsedKeys[0])
-	nftID = string(parsedKeys[1])
+	classID := string(parsedKeys[0])
+	nftID := string(parsedKeys[1])
 	return classID, nftID, nil
 }

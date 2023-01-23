@@ -1,7 +1,6 @@
 package store
 
 import (
-	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 )
 
@@ -21,15 +20,15 @@ const maxKeyLen = 255
 func JoinKeysWithLength(keys ...[]byte) ([]byte, error) {
 	compositeKey := make([]byte, 0)
 	for _, key := range keys {
-		bzLen := len(key)
-		if bzLen == 0 {
+		keyLen := len(key)
+		if keyLen == 0 {
 			return compositeKey, errors.New("received empty key")
 		}
-		if bzLen > maxKeyLen {
-			return nil, errors.Errorf("key length should be max %d bytes, got %d", maxKeyLen, bzLen)
+		if keyLen > maxKeyLen {
+			return nil, errors.Errorf("key length should be max %d bytes, got %d", maxKeyLen, keyLen)
 		}
-		byteLen := proto.EncodeVarint(uint64(len(key)))
-		compositeKey = append(compositeKey, byteLen...)
+
+		compositeKey = append(compositeKey, byte(keyLen))
 		compositeKey = append(compositeKey, key...)
 	}
 
@@ -38,8 +37,8 @@ func JoinKeysWithLength(keys ...[]byte) ([]byte, error) {
 
 // ParseLengthPrefixedKeys parses all the length prefixed keys, put together by JoinKeysWithLength
 func ParseLengthPrefixedKeys(key []byte) ([][]byte, error) {
-	bzLen := len(key)
-	if bzLen == 0 {
+	inputKeyLen := len(key)
+	if inputKeyLen == 0 {
 		return nil, errors.New("empty key")
 	}
 	keys := make([][]byte, 0)
@@ -47,13 +46,13 @@ func ParseLengthPrefixedKeys(key []byte) ([][]byte, error) {
 	for {
 		keyLen := key[startBound-1]
 		endBound := startBound + int(keyLen)
-		if bzLen < endBound {
+		if inputKeyLen < endBound {
 			return nil, errors.New("length prefix does not match the key")
 		}
 		keySection := key[startBound:endBound]
 		keys = append(keys, keySection)
 
-		if endBound == bzLen {
+		if endBound == inputKeyLen {
 			break
 		}
 		startBound = endBound + 1

@@ -306,7 +306,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // we simply don't care
+//nolint:dupl // test case duplicates are ok
 func TestMsgBurn_ValidateBasic(t *testing.T) {
 	validMessage := types.MsgBurn{
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
@@ -368,7 +368,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // we simply don't care
+//nolint:dupl // test case duplicates are ok
 func TestMsgFreeze_ValidateBasic(t *testing.T) {
 	validMessage := types.MsgFreeze{
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
@@ -430,7 +430,7 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // we simply don't care
+//nolint:dupl // test case duplicates are ok
 func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 	validMessage := types.MsgUnfreeze{
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",

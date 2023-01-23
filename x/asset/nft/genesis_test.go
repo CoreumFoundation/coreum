@@ -51,7 +51,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	genState := types.GenesisState{
 		Params:           types.DefaultParams(),
 		ClassDefinitions: classDefinitions,
-		FrozenNfts:       frozenNFTs,
+		FrozenNFTs:       frozenNFTs,
 	}
 
 	// init the keeper
@@ -73,5 +73,5 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// check that export is equal import
 	exportedGenState := nft.ExportGenesis(ctx, nftKeeper)
 	assertT.ElementsMatch(genState.ClassDefinitions, exportedGenState.ClassDefinitions)
-	assertT.ElementsMatch(genState.FrozenNfts, exportedGenState.FrozenNfts)
+	assertT.ElementsMatch(genState.FrozenNFTs, exportedGenState.FrozenNFTs)
 }

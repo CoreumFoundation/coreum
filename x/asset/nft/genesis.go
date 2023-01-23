@@ -15,7 +15,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 	k.SetParams(ctx, genState.Params)
 
-	for _, frozen := range genState.FrozenNfts {
+	for _, frozen := range genState.FrozenNFTs {
 		for _, nftID := range frozen.NftIDs {
 			k.SetFrozen(ctx, frozen.ClassID, nftID, true)
 		}
@@ -37,6 +37,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	return &types.GenesisState{
 		ClassDefinitions: classDefinitions,
 		Params:           k.GetParams(ctx),
-		FrozenNfts:       frozen,
+		FrozenNFTs:       frozen,
 	}
 }

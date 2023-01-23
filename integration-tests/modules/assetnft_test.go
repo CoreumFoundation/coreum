@@ -173,7 +173,7 @@ func TestAssetNFTMint(t *testing.T) {
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
-	receiver := chain.GenAccount()
+	recipient := chain.GenAccount()
 
 	nftClient := nft.NewQueryClient(chain.ClientContext)
 	requireT.NoError(
@@ -312,7 +312,7 @@ func TestAssetNFTMint(t *testing.T) {
 	// change the owner
 	sendMsg := &nft.MsgSend{
 		Sender:   issuer.String(),
-		Receiver: receiver.String(),
+		Receiver: recipient.String(),
 		Id:       mintMsg.ID,
 		ClassId:  classID,
 	}
@@ -340,7 +340,7 @@ func TestAssetNFTMint(t *testing.T) {
 		Id:      nftMintedEvent.Id,
 	})
 	requireT.NoError(err)
-	requireT.Equal(receiver.String(), ownerRes.Owner)
+	requireT.Equal(recipient.String(), ownerRes.Owner)
 
 	// check that balance is 0 meaning mint fee was taken
 

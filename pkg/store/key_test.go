@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
@@ -64,6 +65,27 @@ func TestJoinKeysWithLengthMany(t *testing.T) {
 				[]byte(""),
 			},
 			expectError: true,
+		},
+		{
+			keys: [][]byte{
+				[]byte("key1"),
+				bytes.Repeat([]byte{0x1}, 256),
+				[]byte("key2"),
+			},
+			expectError: true,
+		},
+		{
+			keys: [][]byte{
+				[]byte("1key1"),
+				[]byte("2key2"),
+			},
+		},
+		{
+			keys: [][]byte{
+				bytes.Repeat([]byte{0x01}, 255),
+				bytes.Repeat([]byte{0x02}, 255),
+				bytes.Repeat([]byte{0x03}, 255),
+			},
 		},
 	}
 	for _, tc := range testCases {
