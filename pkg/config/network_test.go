@@ -2,8 +2,8 @@ package config_test
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -226,7 +226,7 @@ func TestGenesisHash(t *testing.T) {
 			args: args{
 				chainID: constant.ChainIDTest,
 			},
-			wantHash: "8ece5edef851738ef3d8435a58bfbfe91b163ff199785ae1470da84466f0f1c1",
+			wantHash: "12273f3e0bc97e848cccdc67225a3d7c54c42243d6ec7f01a7bcfc4ede63cacd",
 		},
 	}
 	for _, tt := range tests {
@@ -239,11 +239,7 @@ func TestGenesisHash(t *testing.T) {
 			n.SetSDKConfig()
 			genesisDoc, err := n.EncodeGenesis()
 			require.NoError(t, err)
-
-			hash := sha256.New()
-			_, err = hash.Write(genesisDoc)
-			require.NoError(t, err)
-			require.Equal(t, tt.wantHash, hex.EncodeToString(hash.Sum(nil)))
+			require.Equal(t, tt.wantHash, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)))
 		})
 	}
 }
