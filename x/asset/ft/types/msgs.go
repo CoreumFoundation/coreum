@@ -107,8 +107,13 @@ func (msg MsgFreeze) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	if _, _, err := DeconstructDenom(msg.Coin.Denom); err != nil {
+	_, issuer, err := DeconstructDenom(msg.Coin.Denom)
+	if err != nil {
 		return err
+	}
+
+	if issuer.String() == msg.Account {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	return msg.Coin.Validate()
@@ -195,8 +200,13 @@ func (msg MsgSetWhitelistedLimit) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	if _, _, err := DeconstructDenom(msg.Coin.Denom); err != nil {
+	_, issuer, err := DeconstructDenom(msg.Coin.Denom)
+	if err != nil {
 		return err
+	}
+
+	if issuer.String() == msg.Account {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
 	return msg.Coin.Validate()

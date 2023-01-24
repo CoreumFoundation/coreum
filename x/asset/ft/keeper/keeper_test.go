@@ -431,12 +431,9 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(sdk.NewInt(577), totalSupply.Supply.AmountOf(burnableDenom))
 
-	// try to burn issuer frozen amount
+	// try to freeze the issuer (issuer can't be frozen)
 	err = ftKeeper.Freeze(ctx, issuer, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(600)))
-	requireT.NoError(err)
-	// issuer can burn even frozen
-	err = ftKeeper.Burn(ctx, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
-	requireT.NoError(err)
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// try to burn non-issuer frozen coins
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
@@ -1174,6 +1171,10 @@ func TestKeeper_Whitelist(t *testing.T) {
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdk.NewInt(10)))
 	assertT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+
+	// try to whitelist the issuer (issuer can't be whitelisted)
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, issuer, sdk.NewCoin(denom, sdk.NewInt(1)))
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// set whitelisted balance to 0
 	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(0))))

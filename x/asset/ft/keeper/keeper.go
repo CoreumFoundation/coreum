@@ -164,6 +164,10 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
+	if def.IsIssuer(addr) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
+	}
+
 	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
 		return err
 	}
@@ -245,6 +249,37 @@ func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom s
 
 	k.SetGlobalFreeze(ctx, denom, false)
 	return nil
+}
+
+// SetWhitelistedBalance sets whitelisted limit for the account.
+func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
+	if coin.IsNil() || coin.IsNegative() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
+	}
+
+	def, err := k.GetTokenDefinition(ctx, coin.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
+	}
+
+	if def.IsIssuer(addr) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
+	}
+
+	if err = def.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil { //nolint:nosnakecase
+		return err
+	}
+
+	whitelistedStore := k.whitelistedAccountBalanceStore(ctx, addr)
+	previousWhitelistedBalance := whitelistedStore.Balance(coin.Denom)
+	whitelistedStore.SetBalance(coin)
+
+	return ctx.EventManager().EmitTypedEvent(&types.EventWhitelistedAmountChanged{
+		Account:        addr.String(),
+		Denom:          coin.Denom,
+		PreviousAmount: previousWhitelistedBalance.Amount,
+		CurrentAmount:  coin.Amount,
+	})
 }
 
 // Public read access
@@ -441,33 +476,6 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 	for _, coin := range coins {
 		whitelistedStore.SetBalance(coin)
 	}
-}
-
-// SetWhitelistedBalance sets whitelisted limit for the account.
-func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
-	if coin.IsNil() || coin.IsNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
-	}
-
-	def, err := k.GetTokenDefinition(ctx, coin.Denom)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
-	}
-
-	if err = def.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil { //nolint:nosnakecase
-		return err
-	}
-
-	whitelistedStore := k.whitelistedAccountBalanceStore(ctx, addr)
-	previousWhitelistedBalance := whitelistedStore.Balance(coin.Denom)
-	whitelistedStore.SetBalance(coin)
-
-	return ctx.EventManager().EmitTypedEvent(&types.EventWhitelistedAmountChanged{
-		Account:        addr.String(),
-		Denom:          coin.Denom,
-		PreviousAmount: previousWhitelistedBalance.Amount,
-		CurrentAmount:  coin.Amount,
-	})
 }
 
 // private access
