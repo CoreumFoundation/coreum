@@ -244,7 +244,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 		return err
 	}
 
-	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_burning); err != nil { //nolint:nosnakecase // generated variable
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_freezing); err != nil { //nolint:nosnakecase // generated variable
 		return err
 	}
 
