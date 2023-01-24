@@ -1,0 +1,53 @@
+syntax = "proto3";
+package coreum.asset.nft.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+import "coreum/asset/nft/v1/nft.proto";
+
+import "coreum/asset/nft/v1/types.proto";
+
+option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
+option (gogoproto.goproto_getters_all) = false;
+
+// Msg defines the Msg service.
+service Msg {
+  // IssueClass creates new non-fungible token class.
+  rpc IssueClass(MsgIssueClass) returns (EmptyResponse);
+  // Mint mints new non-fungible token in the class.
+  rpc Mint(MsgMint) returns (EmptyResponse);
+  // Burn burns the existing non-fungible token in the class.
+  rpc Burn(MsgBurn) returns (EmptyResponse);
+}
+
+// MsgIssueClass defines message for the IssueClass method.
+message MsgIssueClass {
+  string issuer = 1;
+  string symbol = 2;
+  string name = 3;
+  string description = 4;
+  string uri = 5 [(gogoproto.customname) = "URI"];
+  string uri_hash = 6 [(gogoproto.customname) = "URIHash"];
+  google.protobuf.Any data = 7;
+  repeated ClassFeature features = 8;
+}
+
+// MsgMint defines message for the Mint method.
+message MsgMint {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+  string uri = 4 [(gogoproto.customname) = "URI"];
+  string uri_hash = 5 [(gogoproto.customname) = "URIHash"];
+  google.protobuf.Any data = 6;
+}
+
+// MsgBurn defines message for the Burn method.
+message MsgBurn {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+}
+
+message EmptyResponse {}

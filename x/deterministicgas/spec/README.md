@@ -89,6 +89,7 @@ Where `SendPerEntry` and `MultiSendPerEntry` are constant values defined for eac
 |gov.Vote                                  | 8000 |
 |gov.VoteWeighted                          | 11000|
 |gov.Deposit                               | 91000|
+|nft.Send                                  | 20000|
 |slashing.Unjail                           | 25000|
 |staking.Delegate                          | 51000|
 |staking.Undelegate                        | 51000|
