@@ -120,16 +120,16 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	ctx := testNetwork.Validators[0].ClientCtx
 	initialAmount := sdk.NewInt(777)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
-	issuer := testNetwork.Validators[0].Address
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	// freeze part of the token
 	coinToFreeze := sdk.NewInt64Coin(denom, 100)
-	args := append([]string{issuer.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
+	args := append([]string{recipient.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
 	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
 	requireT.NoError(err)
 
 	var resp types.QueryFrozenBalanceResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{issuer.String(), denom, "--output", "json"})
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom, "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 	requireT.Equal(coinToFreeze.String(), resp.Balance.String())
@@ -140,29 +140,29 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 		token.Subunit = fmt.Sprintf("satoshi%d%s", i, uuid.NewString()[:4])
 		newDenom := issue(requireT, ctx, token, initialAmount, testNetwork)
 		coinToFreeze = sdk.NewInt64Coin(newDenom, 100)
-		args = append([]string{issuer.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
+		args = append([]string{recipient.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
 		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
 		requireT.NoError(err)
 	}
 
 	var balancesResp types.QueryFrozenBalancesResponse
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalances(), []string{issuer.String(), "--output", "json"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalances(), []string{recipient.String(), "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 3)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalances(), []string{issuer.String(), "--output", "json", "--limit", "1"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalances(), []string{recipient.String(), "--output", "json", "--limit", "1"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 1)
 
 	// unfreeze part of the frozen token
 	unfreezeTokens := sdk.NewInt64Coin(denom, 75)
-	args = append([]string{issuer.String(), unfreezeTokens.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
+	args = append([]string{recipient.String(), unfreezeTokens.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args)
 	requireT.NoError(err)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{issuer.String(), denom, "--output", "json"})
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom, "--output", "json"})
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 
