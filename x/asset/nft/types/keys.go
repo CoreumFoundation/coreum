@@ -40,7 +40,7 @@ func CreateFreezingKey(classID, nftID string) ([]byte, error) {
 		return nil, err
 	}
 
-	return store.JoinKeys(NFTClassKeyPrefix, compositeKey), nil
+	return store.JoinKeys(NFTFreezingKeyPrefix, compositeKey), nil
 }
 
 // ParseFreezingKey parses freezing key back to class id and nft id

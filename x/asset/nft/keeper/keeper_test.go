@@ -369,7 +369,6 @@ func TestKeeper_Freeze(t *testing.T) {
 
 	// unfreeze
 	requireT.NoError(assetNFTKeeper.Unfreeze(ctx, issuer, classID, nftID))
-	requireT.NoError(err)
 	isFrozen, err = assetNFTKeeper.IsFrozen(ctx, classID, nftID)
 	requireT.NoError(err)
 	requireT.False(isFrozen)
