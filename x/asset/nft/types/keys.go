@@ -35,7 +35,12 @@ func CreateClassKey(classID string) []byte {
 
 // CreateFreezingKey constructs the key for the freezing of non-fungible token.
 func CreateFreezingKey(classID, nftID string) ([]byte, error) {
-	return store.JoinKeysWithLength([]byte(classID), []byte(nftID))
+	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
+	if err != nil {
+		return nil, err
+	}
+
+	return store.JoinKeys(NFTClassKeyPrefix, compositeKey), nil
 }
 
 // ParseFreezingKey parses freezing key back to class id and nft id
@@ -48,7 +53,5 @@ func ParseFreezingKey(key []byte) (string, string, error) {
 		err = sdkerrors.Wrapf(ErrInvalidKey, "freezing key must be composed to 2 length prefixed keys")
 		return "", "", err
 	}
-	classID := string(parsedKeys[0])
-	nftID := string(parsedKeys[1])
-	return classID, nftID, nil
+	return string(parsedKeys[0]), string(parsedKeys[1]), nil
 }

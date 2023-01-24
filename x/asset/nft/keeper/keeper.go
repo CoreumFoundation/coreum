@@ -228,7 +228,7 @@ func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) e
 	if err != nil {
 		return err
 	}
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix)
+	store := ctx.KVStore(k.storeKey)
 	if frozen {
 		store.Set(key, frozenNFTStoreValue)
 	} else {
@@ -266,7 +266,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 
 // IsFrozen return whether a non fungible token is frozen or not
 func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix)
+	store := ctx.KVStore(k.storeKey)
 	key, err := types.CreateFreezingKey(classID, nftID)
 	if err != nil {
 		return false, err
