@@ -347,7 +347,7 @@ func TestKeeper_Freeze(t *testing.T) {
 	}
 
 	// mint NFT
-	requireT.NoError(assetNFTKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
 
 	// freeze NFT
 	nftID := settings.ID
@@ -409,7 +409,7 @@ func TestKeeper_Freeze_Unfreezable(t *testing.T) {
 	}
 
 	// mint NFT
-	requireT.NoError(assetNFTKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
 
 	// freeze NFT
 	nftID := settings.ID
