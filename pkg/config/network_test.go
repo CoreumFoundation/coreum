@@ -213,26 +213,21 @@ func TestValidateAllGenTxs(t *testing.T) {
 }
 
 func TestGenesisHash(t *testing.T) {
-	type args struct {
-		chainID constant.ChainID
-	}
 	tests := []struct {
 		name     string
-		args     args
+		chainID  constant.ChainID
 		wantHash string
 	}{
 		{
-			name: "testnet",
-			args: args{
-				chainID: constant.ChainIDTest,
-			},
+			name:     "testnet",
+			chainID:  constant.ChainIDTest,
 			wantHash: "12273f3e0bc97e848cccdc67225a3d7c54c42243d6ec7f01a7bcfc4ede63cacd",
 		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			n, err := config.NetworkByChainID(tt.args.chainID)
+			n, err := config.NetworkByChainID(tt.chainID)
 			require.NoError(t, err)
 
 			unsealConfig()
