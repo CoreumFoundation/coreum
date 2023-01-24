@@ -98,7 +98,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	}
 
 	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
-	k.SetTokenDefinition(ctx, settings.Issuer, settings.Subunit, definition)
+	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
 	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
@@ -126,7 +126,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 
 // Mint mints new fungible token.
 func (k Keeper) Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	def, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
@@ -140,7 +140,7 @@ func (k Keeper) Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 
 // Burn burns fungible token.
 func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error {
-	def, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
@@ -159,7 +159,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	def, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
@@ -191,7 +191,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
-	def, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
@@ -223,7 +223,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 
 // GloballyFreeze enables global freeze on a fungible token. This function is idempotent.
 func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
-	def, err := k.GetTokenDefinition(ctx, denom)
+	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
@@ -238,7 +238,7 @@ func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom str
 
 // GloballyUnfreeze disables global freeze on a fungible token. This function is idempotent.
 func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
-	def, err := k.GetTokenDefinition(ctx, denom)
+	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
@@ -257,7 +257,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
 	}
 
-	def, err := k.GetTokenDefinition(ctx, coin.Denom)
+	def, err := k.GetDefinition(ctx, coin.Denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
@@ -293,7 +293,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 // GetTokens returns all fungible tokens.
 func (k Keeper) GetTokens(ctx sdk.Context, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error) {
-	defs, pageResponse, err := k.getTokenDefinitions(ctx, pagination)
+	defs, pageResponse, err := k.getDefinitions(ctx, pagination)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -308,7 +308,7 @@ func (k Keeper) GetTokens(ctx sdk.Context, pagination *query.PageRequest) ([]typ
 
 // GetIssuerTokens returns fungible tokens issued by the issuer.
 func (k Keeper) GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error) {
-	definitions, pageResponse, err := k.getIssuerTokenDefinitions(ctx, issuer, pagination)
+	definitions, pageResponse, err := k.getIssuerDefinitions(ctx, issuer, pagination)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -321,9 +321,9 @@ func (k Keeper) GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, paginati
 	return tokens, pageResponse, nil
 }
 
-// IterateAllTokenDefinitions iterates over all token definitions applies the provided callback.
+// IterateAllDefinitions iterates over all token definitions applies the provided callback.
 // If true is returned from the callback, iteration is halted.
-func (k Keeper) IterateAllTokenDefinitions(ctx sdk.Context, cb func(types.Definition) bool) {
+func (k Keeper) IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition) bool) {
 	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix).Iterator(nil, nil)
 	defer iterator.Close()
 
@@ -337,8 +337,8 @@ func (k Keeper) IterateAllTokenDefinitions(ctx sdk.Context, cb func(types.Defini
 	}
 }
 
-// GetTokenDefinition returns the TokenDefinition by the denom.
-func (k Keeper) GetTokenDefinition(ctx sdk.Context, denom string) (types.Definition, error) {
+// GetDefinition returns the Definition by the denom.
+func (k Keeper) GetDefinition(ctx sdk.Context, denom string) (types.Definition, error) {
 	subunit, issuer, err := types.DeconstructDenom(denom)
 	if err != nil {
 		return types.Definition{}, err
@@ -355,7 +355,7 @@ func (k Keeper) GetTokenDefinition(ctx sdk.Context, denom string) (types.Definit
 
 // GetToken return the fungible token by its denom.
 func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
-	def, err := k.GetTokenDefinition(ctx, denom)
+	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {
 		return types.Token{}, err
 	}
@@ -423,8 +423,8 @@ func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress)
 	return nil
 }
 
-// SetTokenDefinition stores the TokenDefinition.
-func (k Keeper) SetTokenDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition) {
+// SetDefinition stores the Definition.
+func (k Keeper) SetDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition) {
 	ctx.KVStore(k.storeKey).Set(types.CreateTokenKey(issuer, subunit), k.cdc.MustMarshal(&definition))
 }
 
@@ -454,6 +454,7 @@ func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description str
 }
 
 // SetFrozenBalances sets the frozen balances of a specified account.
+// Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you need set zero amount use the slice []sdk.Coins.
 func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
 	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
 	for _, coin := range coins {
@@ -471,6 +472,7 @@ func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 }
 
 // SetWhitelistedBalances sets the whitelisted balances of a specified account.
+// Pay attention that the sdk.NewCoins() sanitizes/removes the empty coins, hence if you need set zero amount use the slice []sdk.Coins.
 func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
 	whitelistedStore := k.whitelistedAccountBalanceStore(ctx, addr)
 	for _, coin := range coins {
@@ -573,12 +575,12 @@ func (k Keeper) availableBalance(ctx sdk.Context, addr sdk.AccAddress, denom str
 	return balance.Sub(frozenBalance)
 }
 
-func (k Keeper) getTokenDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
-	return k.getTokenDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix), pagination)
+func (k Keeper) getDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
+	return k.getDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix), pagination)
 }
 
-func (k Keeper) getIssuerTokenDefinitions(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
-	return k.getTokenDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateIssuerTokensPrefix(issuer)), pagination)
+func (k Keeper) getIssuerDefinitions(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
+	return k.getDefinitionsFromStore(prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateIssuerTokensPrefix(issuer)), pagination)
 }
 
 func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (types.Token, error) {
@@ -618,7 +620,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 	}, nil
 }
 
-func (k Keeper) getTokenDefinitionsFromStore(store prefix.Store, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
+func (k Keeper) getDefinitionsFromStore(store prefix.Store, pagination *query.PageRequest) ([]types.Definition, *query.PageResponse, error) {
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,

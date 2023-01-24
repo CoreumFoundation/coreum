@@ -58,7 +58,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs
 
 func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs groupedByDenomAccountOperations) error {
 	for denom, inOps := range inputs {
-		def, err := k.GetTokenDefinition(ctx, denom)
+		def, err := k.GetDefinition(ctx, denom)
 		if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
 			return nil
 		}
