@@ -17,7 +17,7 @@ const (
 	BankMetadataExistsInvariantName = "bank-metadata-exist"
 )
 
-// RegisterInvariants registers the bank module invariants
+// RegisterInvariants registers the bank module invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(types.ModuleName, FrozenBalancesInvariantName, FrozenBalancesInvariant(k))
 	ir.RegisterRoute(types.ModuleName, WhitelistedBalancesInvariantName, WhitelistedBalancesInvariant(k))
@@ -34,7 +34,7 @@ func FrozenBalancesInvariant(k Keeper) sdk.Invariant {
 
 		definitions := make(map[string]types.Definition)
 		err := k.IterateAccountsFrozenBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
-			count, msg = applyFeatureBalanceInvariant(ctx, k, addr, balance, types.Feature_freezing, definitions, count, msg) //nolint:nosnakecase
+			count, msg = applyFeatureBalanceInvariant(ctx, k, addr, balance, types.Feature_freezing, definitions, count, msg)
 			return false
 		})
 		if err != nil {
@@ -59,7 +59,7 @@ func WhitelistedBalancesInvariant(k Keeper) sdk.Invariant {
 
 		definitions := make(map[string]types.Definition)
 		err := k.IterateAccountsWhitelistedBalances(ctx, func(addr sdk.AccAddress, balance sdk.Coin) bool {
-			count, msg = applyFeatureBalanceInvariant(ctx, k, addr, balance, types.Feature_whitelisting, definitions, count, msg) //nolint:nosnakecase
+			count, msg = applyFeatureBalanceInvariant(ctx, k, addr, balance, types.Feature_whitelisting, definitions, count, msg)
 			return false
 		})
 		if err != nil {

@@ -16,19 +16,19 @@ import (
 )
 
 const (
-	// OpWeightMsgSend Simulation operation weights constants
+	// OpWeightMsgSend Simulation operation weights constants.
 	OpWeightMsgSend = "op_weight_msg_send" //nolint:gosec
 )
 
 const (
-	// WeightSend nft operations weights
+	// WeightSend nft operations weights.
 	WeightSend = 100
 )
 
 // TypeMsgSend defines the MsgSend tx message.
 var TypeMsgSend = sdk.MsgTypeURL(&nft.MsgSend{})
 
-// WeightedOperations returns all the operations from the module with their respective weights
+// WeightedOperations returns all the operations from the module with their respective weights.
 func WeightedOperations(
 	registry cdctypes.InterfaceRegistry,
 	appParams simtypes.AppParams,

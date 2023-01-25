@@ -154,7 +154,7 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 // MsgType returns TypeURL of a msg in cosmos SDK style.
 // Samples of values returned by the function:
 // "/cosmos.distribution.v1beta1.MsgFundCommunityPool"
-// "/coreum.asset.ft.v1.MsgMint"
+// "/coreum.asset.ft.v1.MsgMint".
 func MsgType(msg sdk.Msg) string {
 	return sdk.MsgTypeURL(msg)
 }

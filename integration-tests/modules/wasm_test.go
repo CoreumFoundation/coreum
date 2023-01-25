@@ -469,7 +469,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
 }
 
-// TestWASMIssueFungibleTokenInContract verifies that smart contract is able to issue fungible token
+// TestWASMIssueFungibleTokenInContract verifies that smart contract is able to issue fungible token.
 func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
@@ -704,7 +704,7 @@ func queryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contract
 	return json.RawMessage(resp.Data), nil
 }
 
-// isWASMContractPinned returns true if smart contract is pinned
+// isWASMContractPinned returns true if smart contract is pinned.
 func isWASMContractPinned(ctx context.Context, clientCtx tx.ClientContext, codeID uint64) (bool, error) {
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})

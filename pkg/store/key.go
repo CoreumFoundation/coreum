@@ -16,7 +16,7 @@ const maxKeyLen = 255
 //
 // Example with the usage of the func
 // prefix + ab + c = prefix2ab1c
-// prefix + a + bc = prefix1a2bc
+// prefix + a + bc = prefix1a2bc.
 func JoinKeysWithLength(keys ...[]byte) ([]byte, error) {
 	compositeKey := make([]byte, 0)
 	for index, key := range keys {
@@ -35,7 +35,7 @@ func JoinKeysWithLength(keys ...[]byte) ([]byte, error) {
 	return compositeKey, nil
 }
 
-// ParseLengthPrefixedKeys parses all the length prefixed keys, put together by JoinKeysWithLength
+// ParseLengthPrefixedKeys parses all the length prefixed keys, put together by JoinKeysWithLength.
 func ParseLengthPrefixedKeys(key []byte) ([][]byte, error) {
 	inputKeyLen := len(key)
 	if inputKeyLen == 0 {
