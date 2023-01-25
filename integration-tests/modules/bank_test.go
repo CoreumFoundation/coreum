@@ -508,10 +508,14 @@ func TestBankMultiSend(t *testing.T) {
 	}
 
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
-		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{Outputs: []banktypes.Output{
-			{Coins: make(sdk.Coins, 2)},
-			{Coins: make(sdk.Coins, 2)},
-		}}}, issueMsgs...),
+		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
+			Inputs: []banktypes.Input{
+				{Coins: make(sdk.Coins, 2)},
+			},
+			Outputs: []banktypes.Output{
+				{Coins: make(sdk.Coins, 2)},
+				{Coins: make(sdk.Coins, 2)},
+			}}}, issueMsgs...),
 		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(int64(len(issueMsgs))),
 	}))
 

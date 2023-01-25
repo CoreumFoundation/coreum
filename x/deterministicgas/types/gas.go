@@ -13,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
-const gasMultiplier = 5
+const fuseGasMultiplier = 5
 
 // NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types
 func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasRequirements config.DeterministicGasRequirements) sdk.Router {
@@ -95,7 +95,13 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, msg, s.deterministicGasRequirements)
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
-					if isDeterministic {
+					// gas metrics are reported only if message type is deterministic, and was successful
+					// CheckTx and ReCheckTx phases are ignored, since are only interested in the real execution
+					// of the message at DeliverTx phase.
+					if err == nil &&
+						isDeterministic &&
+						!newSDKCtx.IsCheckTx() &&
+						!newSDKCtx.IsReCheckTx() {
 						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg))
 					}
 					return res, err
@@ -115,7 +121,7 @@ func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequir
 
 		// We pass much higher amount of gas to hanfdler to be sure that it succeeds.
 		// We want to avoid passing infinite gas meter to always have a limit in case of mistake.
-		ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasMultiplier * gasRequired))
+		ctx = ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * gasRequired))
 	}
 	return ctx, gasBefore, exists
 }

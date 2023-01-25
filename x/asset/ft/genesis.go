@@ -27,7 +27,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			SendCommissionRate: token.SendCommissionRate,
 		}
 
-		k.SetTokenDefinition(ctx, issuer, subunit, definition)
+		k.SetDefinition(ctx, issuer, subunit, definition)
 
 		err = k.SetSymbol(ctx, token.Symbol, issuer)
 		if err != nil {

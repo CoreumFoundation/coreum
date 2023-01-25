@@ -1380,7 +1380,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
-				&assetfttypes.MsgSetWhitelistedLimit{},
+				&banktypes.MsgSend{},
 			},
 		}))
 
