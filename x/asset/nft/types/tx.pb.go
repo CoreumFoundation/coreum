@@ -157,6 +157,84 @@ func (m *MsgBurn) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgBurn proto.InternalMessageInfo
 
+type MsgFreeze struct {
+	Sender  string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	ClassID string `protobuf:"bytes,2,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
+	ID      string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (m *MsgFreeze) Reset()         { *m = MsgFreeze{} }
+func (m *MsgFreeze) String() string { return proto.CompactTextString(m) }
+func (*MsgFreeze) ProtoMessage()    {}
+func (*MsgFreeze) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e850acc149a7cfa7, []int{3}
+}
+func (m *MsgFreeze) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgFreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgFreeze.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgFreeze) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgFreeze.Merge(m, src)
+}
+func (m *MsgFreeze) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgFreeze) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgFreeze.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgFreeze proto.InternalMessageInfo
+
+type MsgUnfreeze struct {
+	Sender  string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	ClassID string `protobuf:"bytes,2,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
+	ID      string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (m *MsgUnfreeze) Reset()         { *m = MsgUnfreeze{} }
+func (m *MsgUnfreeze) String() string { return proto.CompactTextString(m) }
+func (*MsgUnfreeze) ProtoMessage()    {}
+func (*MsgUnfreeze) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e850acc149a7cfa7, []int{4}
+}
+func (m *MsgUnfreeze) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUnfreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUnfreeze.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUnfreeze) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUnfreeze.Merge(m, src)
+}
+func (m *MsgUnfreeze) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUnfreeze) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUnfreeze.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUnfreeze proto.InternalMessageInfo
+
 type EmptyResponse struct {
 }
 
@@ -164,7 +242,7 @@ func (m *EmptyResponse) Reset()         { *m = EmptyResponse{} }
 func (m *EmptyResponse) String() string { return proto.CompactTextString(m) }
 func (*EmptyResponse) ProtoMessage()    {}
 func (*EmptyResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e850acc149a7cfa7, []int{3}
+	return fileDescriptor_e850acc149a7cfa7, []int{5}
 }
 func (m *EmptyResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -197,46 +275,51 @@ func init() {
 	proto.RegisterType((*MsgIssueClass)(nil), "coreum.asset.nft.v1.MsgIssueClass")
 	proto.RegisterType((*MsgMint)(nil), "coreum.asset.nft.v1.MsgMint")
 	proto.RegisterType((*MsgBurn)(nil), "coreum.asset.nft.v1.MsgBurn")
+	proto.RegisterType((*MsgFreeze)(nil), "coreum.asset.nft.v1.MsgFreeze")
+	proto.RegisterType((*MsgUnfreeze)(nil), "coreum.asset.nft.v1.MsgUnfreeze")
 	proto.RegisterType((*EmptyResponse)(nil), "coreum.asset.nft.v1.EmptyResponse")
 }
 
 func init() { proto.RegisterFile("coreum/asset/nft/v1/tx.proto", fileDescriptor_e850acc149a7cfa7) }
 
 var fileDescriptor_e850acc149a7cfa7 = []byte{
-	// 517 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x93, 0x41, 0x6f, 0xda, 0x30,
-	0x14, 0xc7, 0x09, 0x50, 0xc2, 0x8c, 0xba, 0x49, 0x5e, 0x55, 0xa5, 0xa8, 0x0b, 0x8c, 0xc3, 0xc4,
-	0xc9, 0x51, 0xd9, 0xae, 0x3b, 0x8c, 0x76, 0x55, 0x73, 0xe0, 0x62, 0xad, 0x97, 0x5d, 0x2a, 0x43,
-	0x4c, 0xb0, 0x04, 0x36, 0x8a, 0xed, 0xaa, 0xf9, 0x16, 0xfb, 0x0a, 0xfb, 0x36, 0x3d, 0x4d, 0x3d,
-	0xee, 0x84, 0xb6, 0xf0, 0x01, 0xf6, 0x15, 0x26, 0xdb, 0x74, 0xa3, 0x52, 0xaa, 0x72, 0xe9, 0xcd,
-	0xef, 0xfd, 0x5f, 0xfe, 0x79, 0xfe, 0x3d, 0x3f, 0x70, 0x3c, 0x11, 0x19, 0xd5, 0x8b, 0x88, 0x48,
-	0x49, 0x55, 0xc4, 0xa7, 0x2a, 0xba, 0x3e, 0x89, 0xd4, 0x0d, 0x5a, 0x66, 0x42, 0x09, 0xf8, 0xda,
-	0xa9, 0xc8, 0xaa, 0x88, 0x4f, 0x15, 0xba, 0x3e, 0x69, 0x1f, 0xa4, 0x22, 0x15, 0x56, 0x8f, 0xcc,
-	0xc9, 0x95, 0xb6, 0x8f, 0x52, 0x21, 0xd2, 0x39, 0x8d, 0x6c, 0x34, 0xd6, 0xd3, 0x88, 0xf0, 0x7c,
-	0x23, 0xbd, 0x29, 0xfb, 0x87, 0x31, 0x73, 0x72, 0xa7, 0xb4, 0x85, 0x7c, 0x49, 0xa5, 0x2b, 0xe8,
-	0x7d, 0xaf, 0x82, 0xfd, 0x91, 0x4c, 0x63, 0x29, 0x35, 0x3d, 0x9d, 0x13, 0x29, 0xe1, 0x21, 0x68,
-	0x30, 0x13, 0x65, 0x81, 0xd7, 0xf5, 0xfa, 0x2f, 0xf0, 0x26, 0x32, 0x79, 0x99, 0x2f, 0xc6, 0x62,
-	0x1e, 0x54, 0x5d, 0xde, 0x45, 0x10, 0x82, 0x3a, 0x27, 0x0b, 0x1a, 0xd4, 0x6c, 0xd6, 0x9e, 0x61,
-	0x17, 0xb4, 0x12, 0x2a, 0x27, 0x19, 0x5b, 0x2a, 0x26, 0x78, 0x50, 0xb7, 0xd2, 0x76, 0x0a, 0x1e,
-	0x81, 0x9a, 0xce, 0x58, 0xb0, 0x67, 0x94, 0xa1, 0x5f, 0xac, 0x3a, 0xb5, 0x4b, 0x1c, 0x63, 0x93,
-	0x83, 0xef, 0x40, 0x53, 0x67, 0xec, 0x6a, 0x46, 0xe4, 0x2c, 0x68, 0x58, 0xbd, 0x55, 0xac, 0x3a,
-	0xfe, 0x25, 0x8e, 0x2f, 0x88, 0x9c, 0x61, 0x5f, 0x67, 0xcc, 0x1c, 0x60, 0x1f, 0xd4, 0x13, 0xa2,
-	0x48, 0xe0, 0x77, 0xbd, 0x7e, 0x6b, 0x70, 0x80, 0x1c, 0x24, 0x74, 0x0f, 0x09, 0x7d, 0xe2, 0x39,
-	0xb6, 0x15, 0xf0, 0x23, 0x68, 0x4e, 0x29, 0x51, 0x3a, 0xa3, 0x32, 0x68, 0x76, 0x6b, 0xfd, 0x97,
-	0x83, 0xb7, 0xa8, 0x84, 0x3e, 0xb2, 0x00, 0xce, 0x5d, 0x25, 0xfe, 0xf7, 0x49, 0xef, 0x87, 0x07,
-	0xfc, 0x91, 0x4c, 0x47, 0x8c, 0x2b, 0x4b, 0x81, 0xf2, 0xe4, 0x3f, 0x1d, 0x17, 0x99, 0xa6, 0x27,
-	0xe6, 0xeb, 0x2b, 0x96, 0x38, 0x3e, 0xae, 0x69, 0xeb, 0x18, 0x9f, 0x61, 0xdf, 0x8a, 0x71, 0x02,
-	0x0f, 0x41, 0x95, 0x25, 0x8e, 0xd5, 0xb0, 0x51, 0xac, 0x3a, 0xd5, 0xf8, 0x0c, 0x57, 0x59, 0x72,
-	0xcf, 0xa3, 0xfe, 0x04, 0x8f, 0xbd, 0x1d, 0x78, 0x34, 0x9e, 0xe2, 0xd1, 0x23, 0xf6, 0x3e, 0x43,
-	0x9d, 0xf1, 0xe7, 0xba, 0x4f, 0xef, 0x15, 0xd8, 0xff, 0xbc, 0x58, 0xaa, 0x1c, 0x53, 0xb9, 0x14,
-	0x5c, 0xd2, 0xc1, 0x1f, 0x0f, 0xd4, 0x46, 0x32, 0x85, 0x5f, 0x00, 0xd8, 0x7a, 0x6c, 0xbd, 0xd2,
-	0x39, 0x3c, 0x78, 0x90, 0xed, 0xf2, 0x9a, 0x07, 0xee, 0xf0, 0x02, 0xd4, 0xed, 0x78, 0x8e, 0x1f,
-	0xf3, 0x33, 0xea, 0xae, 0x4e, 0x16, 0xcc, 0xa3, 0x4e, 0x46, 0xdd, 0xc5, 0x69, 0x88, 0x6f, 0x7f,
-	0x87, 0x95, 0xdb, 0x22, 0xf4, 0xee, 0x8a, 0xd0, 0xfb, 0x55, 0x84, 0xde, 0xb7, 0x75, 0x58, 0xb9,
-	0x5b, 0x87, 0x95, 0x9f, 0xeb, 0xb0, 0xf2, 0xf5, 0x43, 0xca, 0xd4, 0x4c, 0x8f, 0xd1, 0x44, 0x2c,
-	0xa2, 0x53, 0xeb, 0x75, 0x2e, 0x34, 0x4f, 0x88, 0xd9, 0x8e, 0x68, 0xb3, 0xb5, 0x37, 0x5b, 0x7b,
-	0x6b, 0x97, 0x76, 0xdc, 0xb0, 0xd3, 0x7c, 0xff, 0x37, 0x00, 0x00, 0xff, 0xff, 0x02, 0xd6, 0xbc,
-	0x55, 0x5b, 0x04, 0x00, 0x00,
+	// 565 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x94, 0x41, 0x6f, 0xda, 0x3c,
+	0x18, 0xc7, 0x09, 0xa1, 0x09, 0x35, 0xea, 0xfb, 0x4a, 0x5e, 0x55, 0xa5, 0x55, 0x17, 0x18, 0x87,
+	0x89, 0x53, 0xa2, 0xb2, 0x5d, 0x77, 0x18, 0xed, 0x50, 0x23, 0x2d, 0xd2, 0x64, 0x8d, 0xcb, 0x2e,
+	0x95, 0x21, 0x26, 0x58, 0x02, 0x1b, 0xc5, 0x4e, 0x55, 0xf6, 0x25, 0xb6, 0xaf, 0xb0, 0x6f, 0xd3,
+	0xd3, 0xd4, 0xe3, 0x4e, 0x68, 0x0b, 0x5f, 0x64, 0xb2, 0x0d, 0x1d, 0x95, 0x40, 0xe5, 0xc2, 0xcd,
+	0xcf, 0xf3, 0x7f, 0xfc, 0xb7, 0xfd, 0xb3, 0xfd, 0x80, 0xf3, 0x01, 0xcf, 0x48, 0x3e, 0x09, 0xb1,
+	0x10, 0x44, 0x86, 0x6c, 0x28, 0xc3, 0xdb, 0x8b, 0x50, 0xde, 0x05, 0xd3, 0x8c, 0x4b, 0x0e, 0x5f,
+	0x18, 0x35, 0xd0, 0x6a, 0xc0, 0x86, 0x32, 0xb8, 0xbd, 0x38, 0x3b, 0x4e, 0x79, 0xca, 0xb5, 0x1e,
+	0xaa, 0x91, 0x29, 0x3d, 0x3b, 0x4d, 0x39, 0x4f, 0xc7, 0x24, 0xd4, 0x51, 0x3f, 0x1f, 0x86, 0x98,
+	0xcd, 0x96, 0xd2, 0xcb, 0x4d, 0x6b, 0x28, 0x33, 0x23, 0xd7, 0x37, 0x6e, 0x61, 0x36, 0x25, 0xc2,
+	0x14, 0x34, 0x7f, 0x94, 0xc1, 0x51, 0x2c, 0xd2, 0x48, 0x88, 0x9c, 0x5c, 0x8e, 0xb1, 0x10, 0xf0,
+	0x04, 0x38, 0x54, 0x45, 0x99, 0x67, 0x35, 0xac, 0xd6, 0x21, 0x5a, 0x46, 0x2a, 0x2f, 0x66, 0x93,
+	0x3e, 0x1f, 0x7b, 0x65, 0x93, 0x37, 0x11, 0x84, 0xa0, 0xc2, 0xf0, 0x84, 0x78, 0xb6, 0xce, 0xea,
+	0x31, 0x6c, 0x80, 0x5a, 0x42, 0xc4, 0x20, 0xa3, 0x53, 0x49, 0x39, 0xf3, 0x2a, 0x5a, 0x5a, 0x4f,
+	0xc1, 0x53, 0x60, 0xe7, 0x19, 0xf5, 0x0e, 0x94, 0xd2, 0x71, 0x8b, 0x79, 0xdd, 0xee, 0xa1, 0x08,
+	0xa9, 0x1c, 0x7c, 0x0d, 0xaa, 0x79, 0x46, 0x6f, 0x46, 0x58, 0x8c, 0x3c, 0x47, 0xeb, 0xb5, 0x62,
+	0x5e, 0x77, 0x7b, 0x28, 0xba, 0xc6, 0x62, 0x84, 0xdc, 0x3c, 0xa3, 0x6a, 0x00, 0x5b, 0xa0, 0x92,
+	0x60, 0x89, 0x3d, 0xb7, 0x61, 0xb5, 0x6a, 0xed, 0xe3, 0xc0, 0x40, 0x0a, 0x56, 0x90, 0x82, 0xf7,
+	0x6c, 0x86, 0x74, 0x05, 0x7c, 0x07, 0xaa, 0x43, 0x82, 0x65, 0x9e, 0x11, 0xe1, 0x55, 0x1b, 0x76,
+	0xeb, 0xbf, 0xf6, 0xab, 0x60, 0x03, 0xfd, 0x40, 0x03, 0xe8, 0x9a, 0x4a, 0xf4, 0x38, 0xa5, 0xf9,
+	0xd3, 0x02, 0x6e, 0x2c, 0xd2, 0x98, 0x32, 0xa9, 0x29, 0x10, 0x96, 0xfc, 0xa3, 0x63, 0x22, 0xb5,
+	0xe9, 0x81, 0x9a, 0x7d, 0x43, 0x13, 0xc3, 0xc7, 0x6c, 0x5a, 0x3b, 0x46, 0x57, 0xc8, 0xd5, 0x62,
+	0x94, 0xc0, 0x13, 0x50, 0xa6, 0x89, 0x61, 0xd5, 0x71, 0x8a, 0x79, 0xbd, 0x1c, 0x5d, 0xa1, 0x32,
+	0x4d, 0x56, 0x3c, 0x2a, 0xcf, 0xf0, 0x38, 0xd8, 0x81, 0x87, 0xf3, 0x1c, 0x8f, 0x26, 0xd6, 0xe7,
+	0xe9, 0xe4, 0x19, 0xdb, 0xd7, 0x79, 0x9a, 0x03, 0x70, 0x18, 0x8b, 0xb4, 0x9b, 0x11, 0xf2, 0x95,
+	0xec, 0x6d, 0x11, 0x02, 0x6a, 0xb1, 0x48, 0x7b, 0x6c, 0xb8, 0xdf, 0x65, 0xfe, 0x07, 0x47, 0x1f,
+	0x26, 0x53, 0x39, 0x43, 0x44, 0x4c, 0x39, 0x13, 0xa4, 0xfd, 0xcd, 0x06, 0x76, 0x2c, 0x52, 0xf8,
+	0x19, 0x80, 0xb5, 0x8f, 0xd3, 0xdc, 0xf8, 0xa6, 0x9e, 0x7c, 0xae, 0xb3, 0xcd, 0x35, 0x4f, 0xdc,
+	0xe1, 0x35, 0xa8, 0xe8, 0xa7, 0x76, 0xbe, 0xcd, 0x4f, 0xa9, 0xbb, 0x3a, 0xe9, 0x4b, 0xde, 0xea,
+	0xa4, 0xd4, 0x9d, 0x9c, 0x3e, 0x02, 0x67, 0x79, 0x97, 0xfe, 0x36, 0x2f, 0xa3, 0xef, 0xe4, 0xf6,
+	0x09, 0x54, 0x1f, 0x2f, 0xad, 0xb1, 0xcd, 0x6f, 0x55, 0xb1, 0x8b, 0x63, 0x07, 0xdd, 0xff, 0xf1,
+	0x4b, 0xf7, 0x85, 0x6f, 0x3d, 0x14, 0xbe, 0xf5, 0xbb, 0xf0, 0xad, 0xef, 0x0b, 0xbf, 0xf4, 0xb0,
+	0xf0, 0x4b, 0xbf, 0x16, 0x7e, 0xe9, 0xcb, 0xdb, 0x94, 0xca, 0x51, 0xde, 0x0f, 0x06, 0x7c, 0x12,
+	0x5e, 0x6a, 0xaf, 0x2e, 0xcf, 0x59, 0x82, 0x55, 0x27, 0x0a, 0x97, 0x1d, 0xf2, 0x6e, 0xad, 0x47,
+	0xea, 0x06, 0xd9, 0x77, 0xf4, 0xcf, 0x79, 0xf3, 0x37, 0x00, 0x00, 0xff, 0xff, 0xf4, 0x53, 0x05,
+	0xb7, 0xc7, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -257,6 +340,10 @@ type MsgClient interface {
 	Mint(ctx context.Context, in *MsgMint, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// Burn burns the existing non-fungible token in the class.
 	Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOption) (*EmptyResponse, error)
+	// Freeze freezes an NFT
+	Freeze(ctx context.Context, in *MsgFreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
+	// Unfreeze removes the freeze effect already put on an NFT
+	Unfreeze(ctx context.Context, in *MsgUnfreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
 type msgClient struct {
@@ -294,6 +381,24 @@ func (c *msgClient) Burn(ctx context.Context, in *MsgBurn, opts ...grpc.CallOpti
 	return out, nil
 }
 
+func (c *msgClient) Freeze(ctx context.Context, in *MsgFreeze, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.nft.v1.Msg/Freeze", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) Unfreeze(ctx context.Context, in *MsgUnfreeze, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.nft.v1.Msg/Unfreeze", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// IssueClass creates new non-fungible token class.
@@ -302,6 +407,10 @@ type MsgServer interface {
 	Mint(context.Context, *MsgMint) (*EmptyResponse, error)
 	// Burn burns the existing non-fungible token in the class.
 	Burn(context.Context, *MsgBurn) (*EmptyResponse, error)
+	// Freeze freezes an NFT
+	Freeze(context.Context, *MsgFreeze) (*EmptyResponse, error)
+	// Unfreeze removes the freeze effect already put on an NFT
+	Unfreeze(context.Context, *MsgUnfreeze) (*EmptyResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -316,6 +425,12 @@ func (*UnimplementedMsgServer) Mint(ctx context.Context, req *MsgMint) (*EmptyRe
 }
 func (*UnimplementedMsgServer) Burn(ctx context.Context, req *MsgBurn) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Burn not implemented")
+}
+func (*UnimplementedMsgServer) Freeze(ctx context.Context, req *MsgFreeze) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Freeze not implemented")
+}
+func (*UnimplementedMsgServer) Unfreeze(ctx context.Context, req *MsgUnfreeze) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unfreeze not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -376,6 +491,42 @@ func _Msg_Burn_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_Freeze_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgFreeze)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).Freeze(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.nft.v1.Msg/Freeze",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).Freeze(ctx, req.(*MsgFreeze))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_Unfreeze_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUnfreeze)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).Unfreeze(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.nft.v1.Msg/Unfreeze",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).Unfreeze(ctx, req.(*MsgUnfreeze))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "coreum.asset.nft.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -391,6 +542,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Burn",
 			Handler:    _Msg_Burn_Handler,
+		},
+		{
+			MethodName: "Freeze",
+			Handler:    _Msg_Freeze_Handler,
+		},
+		{
+			MethodName: "Unfreeze",
+			Handler:    _Msg_Unfreeze_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -606,6 +765,94 @@ func (m *MsgBurn) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgFreeze) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgFreeze) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgFreeze) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ID) > 0 {
+		i -= len(m.ID)
+		copy(dAtA[i:], m.ID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ID)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ClassID) > 0 {
+		i -= len(m.ClassID)
+		copy(dAtA[i:], m.ClassID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ClassID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUnfreeze) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUnfreeze) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUnfreeze) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ID) > 0 {
+		i -= len(m.ID)
+		copy(dAtA[i:], m.ID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ID)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ClassID) > 0 {
+		i -= len(m.ClassID)
+		copy(dAtA[i:], m.ClassID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ClassID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *EmptyResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -718,6 +965,48 @@ func (m *MsgMint) Size() (n int) {
 }
 
 func (m *MsgBurn) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ClassID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgFreeze) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ClassID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgUnfreeze) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1373,6 +1662,298 @@ func (m *MsgBurn) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgBurn: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClassID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClassID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgFreeze) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgFreeze: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgFreeze: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClassID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClassID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUnfreeze) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUnfreeze: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUnfreeze: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

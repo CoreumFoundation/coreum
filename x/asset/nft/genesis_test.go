@@ -36,9 +36,22 @@ func TestInitAndExportGenesis(t *testing.T) {
 		classDefinitions = append(classDefinitions, classDefinition)
 	}
 
+	// Frozen NFTs
+	var frozenNFTs []types.FrozenNFT
+	for i := 0; i < 5; i++ {
+		frozenNFTs = append(frozenNFTs, types.FrozenNFT{
+			ClassID: fmt.Sprintf("id-%d", i),
+			NftIDs: []string{
+				fmt.Sprintf("id-1-%d", i),
+				fmt.Sprintf("id-2-%d", i),
+			},
+		})
+	}
+
 	genState := types.GenesisState{
 		Params:           types.DefaultParams(),
 		ClassDefinitions: classDefinitions,
+		FrozenNFTs:       frozenNFTs,
 	}
 
 	// init the keeper
@@ -60,4 +73,5 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// check that export is equal import
 	exportedGenState := nft.ExportGenesis(ctx, nftKeeper)
 	assertT.ElementsMatch(genState.ClassDefinitions, exportedGenState.ClassDefinitions)
+	assertT.ElementsMatch(genState.FrozenNFTs, exportedGenState.FrozenNFTs)
 }

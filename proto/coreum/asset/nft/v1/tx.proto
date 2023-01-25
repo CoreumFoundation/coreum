@@ -19,6 +19,10 @@ service Msg {
   rpc Mint(MsgMint) returns (EmptyResponse);
   // Burn burns the existing non-fungible token in the class.
   rpc Burn(MsgBurn) returns (EmptyResponse);
+  // Freeze freezes an NFT
+  rpc Freeze(MsgFreeze) returns (EmptyResponse);
+  // Unfreeze removes the freeze effect already put on an NFT
+  rpc Unfreeze(MsgUnfreeze) returns (EmptyResponse);
 }
 
 // MsgIssueClass defines message for the IssueClass method.
@@ -49,5 +53,17 @@ message MsgBurn {
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
 }
+
+ message MsgFreeze {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+ }
+ 
+ message MsgUnfreeze {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+ }
 
 message EmptyResponse {}

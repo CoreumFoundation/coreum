@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +12,10 @@ import (
 
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
+)
+
+var (
+	frozenNFTStoreValue = []byte{0x01}
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters
@@ -186,6 +192,144 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 	}
 
 	return k.nftKeeper.Burn(ctx, classID, id)
+}
+
+// Freeze freezes a non-fungible token
+func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	if err != nil {
+		return err
+	}
+
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_freezing); err != nil { //nolint:nosnakecase // generated variable
+		return err
+	}
+
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	if err := k.SetFrozen(ctx, classID, nftID, true); err != nil {
+		return err
+	}
+
+	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
+	return ctx.EventManager().EmitTypedEvent(&types.EventFrozen{
+		ClassId: classID,
+		Id:      nftID,
+		Owner:   owner.String(),
+	})
+}
+
+// SetFrozen marks the nft frozen, but does not make any checks
+// should not be used directly outside the module except for genesis.
+func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) error {
+	key, err := types.CreateFreezingKey(classID, nftID)
+	if err != nil {
+		return err
+	}
+	store := ctx.KVStore(k.storeKey)
+	if frozen {
+		store.Set(key, frozenNFTStoreValue)
+	} else {
+		store.Delete(key)
+	}
+	return nil
+}
+
+// Unfreeze unfreezes a non-fungible token
+func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	if err != nil {
+		return err
+	}
+
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_freezing); err != nil { //nolint:nosnakecase // generated variable
+		return err
+	}
+
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	if err := k.SetFrozen(ctx, classID, nftID, false); err != nil {
+		return err
+	}
+
+	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
+	return ctx.EventManager().EmitTypedEvent(&types.EventUnfrozen{
+		ClassId: classID,
+		Id:      nftID,
+		Owner:   owner.String(),
+	})
+}
+
+// IsFrozen return whether a non-fungible token is frozen or not
+func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
+	store := ctx.KVStore(k.storeKey)
+	key, err := types.CreateFreezingKey(classID, nftID)
+	if err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(store.Get(key), frozenNFTStoreValue), nil
+}
+
+// GetFrozenNFTs return paginated frozen NFTs
+func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.FrozenNFT, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix)
+	mp := make(map[string][]string, 0)
+	pageRes, err := query.Paginate(store, q, func(key, value []byte) error {
+		classID, nftID, err := types.ParseFreezingKey(key)
+		if err != nil {
+			return err
+		}
+		mp[classID] = append(mp[classID], nftID)
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	frozen := make([]types.FrozenNFT, 0, len(mp))
+	for classID, nfts := range mp {
+		frozen = append(frozen, types.FrozenNFT{
+			ClassID: classID,
+			NftIDs:  nfts,
+		})
+	}
+
+	return pageRes, frozen, nil
+}
+
+func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	// we return nil here, since we want the original tests of the nft module to pass, but they
+	// fail if we return errors for unregistered NFTs on asset. Also the original nft module
+	// does not have access to the asset module to register the NFTs
+	if types.ErrClassNotFound.Is(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	// always allow issuer to send NFTs issued by them.
+	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
+	if classDefinition.Issuer == owner.String() {
+		return nil
+	}
+
+	frozen, err := k.IsFrozen(ctx, classID, nftID)
+	if err != nil {
+		return err
+	}
+
+	if frozen {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
+	}
+
+	return nil
 }
 
 // SetClassDefinition stores the ClassDefinition.

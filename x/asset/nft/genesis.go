@@ -14,6 +14,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.SetClassDefinition(ctx, definition)
 	}
 	k.SetParams(ctx, genState.Params)
+
+	for _, frozen := range genState.FrozenNFTs {
+		for _, nftID := range frozen.NftIDs {
+			if err := k.SetFrozen(ctx, frozen.ClassID, nftID, true); err != nil {
+				panic(err)
+			}
+		}
+	}
 }
 
 // ExportGenesis returns the module's exported genesis.
@@ -23,8 +31,14 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	_, frozen, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
 		ClassDefinitions: classDefinitions,
 		Params:           k.GetParams(ctx),
+		FrozenNFTs:       frozen,
 	}
 }
