@@ -32,6 +32,8 @@ func GetTxCmd() *cobra.Command {
 		CmdTxIssueClass(),
 		CmdTxMint(),
 		CmdTxBurn(),
+		CmdTxFreeze(),
+		CmdTxUnfreeze(),
 	)
 
 	return cmd
@@ -177,6 +179,86 @@ $ %s tx %s burn abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --from [s
 			ID := args[1]
 
 			msg := &types.MsgBurn{
+				Sender:  sender.String(),
+				ClassID: classID,
+				ID:      ID,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxFreeze returns Freeze cobra command.
+func CmdTxFreeze() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "freeze [class-id] [id] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Freeze a non-fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Freeze a non-fungible token.
+
+Example:
+$ %s tx %s freeze abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			classID := args[0]
+			ID := args[1]
+
+			msg := &types.MsgFreeze{
+				Sender:  sender.String(),
+				ClassID: classID,
+				ID:      ID,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxUnfreeze returns Unfreeze cobra command.
+func CmdTxUnfreeze() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unfreeze [class-id] [id] --from [sender]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Unfreeze a non-fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Unfreeze a non-fungible token.
+
+Example:
+$ %s tx %s unfreeze abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			classID := args[0]
+			ID := args[1]
+
+			msg := &types.MsgUnfreeze{
 				Sender:  sender.String(),
 				ClassID: classID,
 				ID:      ID,
