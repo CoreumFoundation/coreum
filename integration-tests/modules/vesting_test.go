@@ -40,13 +40,13 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 		Amount:   amountToVest,
 	}))
 
-	versingDuration := 10 * time.Second
+	vestingDuration := 10 * time.Second
 	vestingCoin := chain.NewCoin(amountToVest)
 	createAccMsg := &vestingtypes.MsgCreateVestingAccount{
 		FromAddress: creator.String(),
 		ToAddress:   vestingAcc.String(),
 		Amount:      sdk.NewCoins(vestingCoin),
-		EndTime:     time.Now().Add(versingDuration).Unix(),
+		EndTime:     time.Now().Add(vestingDuration).Unix(),
 		Delayed:     true,
 	}
 
@@ -96,7 +96,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
 
 	// await vesting time to unlock the vesting coins
-	<-time.After(versingDuration)
+	<-time.After(vestingDuration)
 
 	// fund the vesting account to pay fees one more time
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
@@ -133,13 +133,13 @@ func TestVestingAccountStaking(t *testing.T) {
 		Amount:   amountToVest,
 	}))
 
-	versingDuration := 10 * time.Second
+	vestingDuration := 10 * time.Second
 	vestingCoin := chain.NewCoin(amountToVest)
 	createAccMsg := &vestingtypes.MsgCreateVestingAccount{
 		FromAddress: creator.String(),
 		ToAddress:   vestingAcc.String(),
 		Amount:      sdk.NewCoins(vestingCoin),
-		EndTime:     time.Now().Add(versingDuration).Unix(),
+		EndTime:     time.Now().Add(vestingDuration).Unix(),
 		Delayed:     false,
 	}
 
@@ -216,6 +216,8 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
+				&assetfttypes.MsgSetWhitelistedLimit{},
+				&assetfttypes.MsgSetWhitelistedLimit{},
 				&vestingtypes.MsgCreateVestingAccount{},
 				&banktypes.MsgSend{},
 				&assetfttypes.MsgIssue{},
@@ -234,10 +236,9 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Description:   "description",
 		InitialAmount: sdk.NewInt(10_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_burning,  //nolint:nosnakecase
-			assetfttypes.Feature_freezing, //nolint:nosnakecase
-			// we can't create a vesting account with the whitelisting because we can't send such tokens
-			// after the account creation without the account to be whitelisted
+			assetfttypes.Feature_burning,      //nolint:nosnakecase
+			assetfttypes.Feature_freezing,     //nolint:nosnakecase
+			assetfttypes.Feature_whitelisting, //nolint:nosnakecase
 		},
 	}
 
@@ -250,13 +251,42 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT.NoError(err)
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 
-	versingDuration := 10 * time.Second
 	vestingCoin := sdk.NewCoin(denom, sdk.NewInt(100))
+
+	// whitelist the vestingAcc
+	msgSetWhitelistedLimit := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: vestingAcc.String(),
+		Coin:    vestingCoin,
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSetWhitelistedLimit)),
+		msgSetWhitelistedLimit,
+	)
+	requireT.NoError(err)
+
+	// whitelist the recipient to let the vesting account send coins to it
+	msgSetWhitelistedLimit = &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    vestingCoin,
+	}
+	_, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSetWhitelistedLimit)),
+		msgSetWhitelistedLimit,
+	)
+	requireT.NoError(err)
+
+	vestingDuration := 10 * time.Second
 	createAccMsg := &vestingtypes.MsgCreateVestingAccount{
 		FromAddress: issuer.String(),
 		ToAddress:   vestingAcc.String(),
 		Amount:      sdk.NewCoins(vestingCoin),
-		EndTime:     time.Now().Add(versingDuration).Unix(),
+		EndTime:     time.Now().Add(vestingDuration).Unix(),
 		Delayed:     true,
 	}
 
@@ -331,7 +361,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT.NoError(err)
 
 	// await vesting time to unlock the vesting coins
-	<-time.After(versingDuration)
+	<-time.After(vestingDuration)
 
 	// try to burn one more time, now the coins are unlocked so can be burnt
 	_, err = tx.BroadcastTx(
