@@ -30,7 +30,7 @@ var (
 	bankSendWASM []byte
 	//go:embed testdata/wasm/simple-state/artifacts/simple_state.wasm
 	simpleStateWASM []byte
-	//go:embed testdata/wasm/fungible-token/artifacts/fungible_token.wasm
+	//go:embed testdata/wasm/ft/artifacts/fungible_token.wasm
 	fungibleTokenWASM []byte
 )
 
@@ -48,7 +48,7 @@ const (
 	withdraw bankMethod = "withdraw"
 )
 
-// simple state modes
+// simple state models
 
 type simpleState struct {
 	Count int `json:"count"`
