@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -20,16 +19,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
-)
-
-var (
-	txTimeout            = time.Minute
-	txStatusPollInterval = 500 * time.Millisecond
-
-	txNextBlocksTimeout      = time.Minute
-	txNextBlocksPollInterval = time.Second
-
-	requestTimeout = 10 * time.Second
 )
 
 // Factory is a re-export of the cosmos sdk tx.Factory type, to make usage of this package more convenient.
@@ -159,7 +148,7 @@ func BroadcastRawTx(ctx context.Context, clientCtx ClientContext, txBytes []byte
 
 // broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block
 func broadcastTxCommit(ctx context.Context, clientCtx ClientContext, encodedTx []byte) (*sdk.TxResponse, error) {
-	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.RequestTimeout)
 	defer cancel()
 
 	txHash := fmt.Sprintf("%X", tmtypes.Tx(encodedTx).Hash())
@@ -233,11 +222,11 @@ func AwaitTx(
 		return nil, errors.Wrap(err, "tx hash is not a valid hex")
 	}
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TxTimeout)
 	defer cancel()
 
-	if err = retry.Do(timeoutCtx, txStatusPollInterval, func() error {
-		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	if err = retry.Do(timeoutCtx, clientCtx.config.TxStatusPollInterval, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.RequestTimeout)
 		defer cancel()
 
 		var err error
@@ -269,12 +258,12 @@ func AwaitNextBlocks(
 	clientCtx ClientContext,
 	nextBlocks int64,
 ) error {
-	timeoutCtx, cancel := context.WithTimeout(ctx, txNextBlocksTimeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TxNextBlocksTimeout)
 	defer cancel()
 
 	heightToStart := int64(0)
-	return retry.Do(timeoutCtx, txNextBlocksPollInterval, func() error {
-		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
+	return retry.Do(timeoutCtx, clientCtx.config.TxNextBlocksPollInterval, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.RequestTimeout)
 		defer cancel()
 
 		res, err := clientCtx.Client().Status(requestCtx)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -27,10 +28,31 @@ import (
 
 var protoCodec = encoding.GetCodec(proto.Name)
 
+// Config stores context config
+type Config struct {
+	RequestTimeout           time.Duration
+	TxTimeout                time.Duration
+	TxStatusPollInterval     time.Duration
+	TxNextBlocksTimeout      time.Duration
+	TxNextBlocksPollInterval time.Duration
+}
+
+// DefaultConfig returns default context config
+func DefaultConfig() Config {
+	return Config{
+		RequestTimeout:           10 * time.Second,
+		TxTimeout:                time.Minute,
+		TxStatusPollInterval:     500 * time.Millisecond,
+		TxNextBlocksTimeout:      time.Minute,
+		TxNextBlocksPollInterval: time.Second,
+	}
+}
+
 // NewClientContext returns new context
 func NewClientContext(modules module.BasicManager) ClientContext {
 	encodingConfig := config.NewEncodingConfig(modules)
 	return ClientContext{
+		config: DefaultConfig(),
 		clientCtx: client.Context{}.
 			WithCodec(encodingConfig.Codec).
 			WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -42,7 +64,14 @@ func NewClientContext(modules module.BasicManager) ClientContext {
 // ClientContext exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation
 type ClientContext struct {
+	config    Config
 	clientCtx client.Context
+}
+
+// WithConfig returns a copy of the context with an updated config
+func (c ClientContext) WithConfig(config Config) ClientContext {
+	c.config = config
+	return c
 }
 
 // ChainID returns chain ID
