@@ -515,7 +515,8 @@ func TestBankMultiSend(t *testing.T) {
 			Outputs: []banktypes.Output{
 				{Coins: make(sdk.Coins, 2)},
 				{Coins: make(sdk.Coins, 2)},
-			}}}, issueMsgs...),
+			},
+		}}, issueMsgs...),
 		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(int64(len(issueMsgs))),
 	}))
 
