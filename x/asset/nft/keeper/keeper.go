@@ -194,7 +194,7 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 	return k.nftKeeper.Burn(ctx, classID, id)
 }
 
-// Freeze freezes a non fungible token
+// Freeze freezes a non-fungible token
 func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
@@ -222,7 +222,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID st
 }
 
 // SetFrozen marks the nft frozen, but does not make any checks
-// should not be used directly outside of the module except for genesis.
+// should not be used directly outside the module except for genesis.
 func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) error {
 	key, err := types.CreateFreezingKey(classID, nftID)
 	if err != nil {
@@ -237,7 +237,7 @@ func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) e
 	return nil
 }
 
-// Unfreeze unfreezes a non fungible token
+// Unfreeze unfreezes a non-fungible token
 func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
@@ -264,7 +264,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 	})
 }
 
-// IsFrozen return whether a non fungible token is frozen or not
+// IsFrozen return whether a non-fungible token is frozen or not
 func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 	store := ctx.KVStore(k.storeKey)
 	key, err := types.CreateFreezingKey(classID, nftID)
