@@ -1,4 +1,4 @@
-package config
+package deterministicgas
 
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"

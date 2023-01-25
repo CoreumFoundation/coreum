@@ -1,4 +1,4 @@
-package config_test
+package deterministicgas_test
 
 import (
 	"reflect"
