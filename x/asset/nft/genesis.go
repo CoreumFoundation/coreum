@@ -17,7 +17,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	for _, frozen := range genState.FrozenNFTs {
 		for _, nftID := range frozen.NftIDs {
-			k.SetFrozen(ctx, frozen.ClassID, nftID, true)
+			if err := k.SetFrozen(ctx, frozen.ClassID, nftID, true); err != nil {
+				panic(err)
+			}
 		}
 	}
 }
