@@ -573,7 +573,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(amountToFreeze.String(), frozenRes.Balance.Amount.String())
 
-	// ********** Unfree **********
+	// ********** Unfreez **********
 
 	amountToUnfreeze := sdk.NewInt(40)
 	unfreezePayload, err := json.Marshal(map[fungibleTokenMethod]accountAmountBodyFungibleTokenRequest{
