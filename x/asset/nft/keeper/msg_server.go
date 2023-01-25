@@ -16,6 +16,8 @@ type MsgKeeper interface {
 	IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (string, error)
 	Mint(ctx sdk.Context, settings types.MintSettings) error
 	Burn(ctx sdk.Context, owner sdk.AccAddress, classID, ID string) error
+	Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
+	Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -92,6 +94,36 @@ func (ms MsgServer) Burn(ctx context.Context, req *types.MsgBurn) (*types.EmptyR
 		req.ClassID,
 		req.ID,
 	); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// Freeze freeze the non-fungible token.
+func (ms MsgServer) Freeze(ctx context.Context, req *types.MsgFreeze) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	err = ms.keeper.Freeze(sdk.UnwrapSDKContext(ctx), sender, req.ClassID, req.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// Unfreeze unfreezes the non-fungible token.
+func (ms MsgServer) Unfreeze(ctx context.Context, req *types.MsgUnfreeze) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	err = ms.keeper.Unfreeze(sdk.UnwrapSDKContext(ctx), sender, req.ClassID, req.ID)
+	if err != nil {
 		return nil, err
 	}
 

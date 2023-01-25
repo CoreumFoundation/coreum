@@ -312,3 +312,143 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 	// mint NFT
 	requireT.ErrorIs(nftKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
 }
+
+func TestKeeper_Freeze(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	assetNFTKeeper.SetParams(ctx, nftParams)
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_freezing, //nolint:nosnakecase
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:  issuer,
+		ClassID: classID,
+		ID:      "my-id",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+
+	// mint NFT
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+
+	// freeze NFT
+	nftID := settings.ID
+	requireT.NoError(assetNFTKeeper.Freeze(ctx, issuer, classID, nftID))
+	isFrozen, err := assetNFTKeeper.IsFrozen(ctx, classID, nftID)
+	requireT.NoError(err)
+	requireT.True(isFrozen)
+
+	// transfer from issuer (although it is frozen, the issuer can send)
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
+	requireT.NoError(err)
+
+	// transfer from non-issuer (must fail)
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.Error(err)
+	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+
+	// unfreeze
+	requireT.NoError(assetNFTKeeper.Unfreeze(ctx, issuer, classID, nftID))
+	isFrozen, err = assetNFTKeeper.IsFrozen(ctx, classID, nftID)
+	requireT.NoError(err)
+	requireT.False(isFrozen)
+
+	// transfer from non-issuer (must succeed)
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.NoError(err)
+}
+
+func TestKeeper_Freeze_Unfreezable(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	assetNFTKeeper.SetParams(ctx, nftParams)
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer:   issuer,
+		Symbol:   "symbol",
+		Features: []types.ClassFeature{},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:  issuer,
+		ClassID: classID,
+		ID:      "my-id",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+
+	// mint NFT
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+
+	// freeze NFT
+	nftID := settings.ID
+	err = assetNFTKeeper.Freeze(ctx, issuer, classID, nftID)
+	requireT.Error(err)
+	requireT.True(types.ErrFeatureDisabled.Is(err))
+}
+
+func TestKeeper_Freeze_Nonexistent(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	assetNFTKeeper.SetParams(ctx, nftParams)
+
+	// try to freeze NFT when Class does not exists
+	err := assetNFTKeeper.Freeze(ctx, issuer, types.BuildClassID("symbol", issuer), "random-id")
+	requireT.Error(err)
+	requireT.True(types.ErrClassNotFound.Is(err))
+
+	// issue class
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_freezing, //nolint:nosnakecase
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	// try to freeze when NFT does not exists
+	err = assetNFTKeeper.Freeze(ctx, issuer, classID, "random-id")
+	requireT.Error(err)
+	requireT.True(types.ErrNFTNotFound.Is(err))
+}

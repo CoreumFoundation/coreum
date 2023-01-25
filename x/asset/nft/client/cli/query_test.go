@@ -2,11 +2,13 @@ package cli_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/testutil/network"
@@ -24,13 +26,13 @@ func TestQueryClass(t *testing.T) {
 	description := "class description"
 	URI := "https://my-class-meta.invalid/1"
 	URIHash := "content-hash"
-	features := types.ClassFeature_burning.String() //nolint:nosnakecase // generated variable
 	ctx := testNetwork.Validators[0].ClientCtx
 
 	classID := issueClass(
 		requireT, ctx,
-		symbol, name, description, URI, URIHash, features,
+		symbol, name, description, URI, URIHash,
 		testNetwork,
+		types.ClassFeature_burning, //nolint:nosnakecase // generated variable
 	)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
@@ -56,14 +58,31 @@ func TestQueryClass(t *testing.T) {
 func issueClass(
 	requireT *require.Assertions,
 	ctx client.Context,
-	symbol, name, description, url, urlHash, features string,
+	symbol, name, description, url, urlHash string,
 	testNetwork *network.Network,
+	features ...types.ClassFeature,
 ) string {
+	featuresStringList := lo.Map(features, func(s types.ClassFeature, _ int) string {
+		return s.String()
+	})
+	featuresString := strings.Join(featuresStringList, ",")
 	validator := testNetwork.Validators[0]
-	args := []string{symbol, name, description, url, urlHash, fmt.Sprintf("--features=%s", features)}
+	args := []string{symbol, name, description, url, urlHash, fmt.Sprintf("--features=%s", featuresString)}
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
 	return types.BuildClassID(symbol, validator.Address)
+}
+
+func mint(
+	requireT *require.Assertions,
+	ctx client.Context,
+	classID, nftID, url, urlHash string,
+	testNetwork *network.Network,
+) {
+	args := []string{classID, nftID, url, urlHash}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
+	requireT.NoError(err)
 }
