@@ -11,11 +11,11 @@ import (
 // CONTRACT: Must be the first decorator in the chain
 // CONTRACT: Tx must implement GasTx interface
 type SetInfiniteGasMeterDecorator struct {
-	deterministicGasRequirements deterministicgas.DeterministicGasRequirements
+	deterministicGasRequirements deterministicgas.GasRequirements
 }
 
 // NewSetInfiniteGasMeterDecorator creates new SetInfiniteGasMeterDecorator
-func NewSetInfiniteGasMeterDecorator(deterministicGasRequirements deterministicgas.DeterministicGasRequirements) SetInfiniteGasMeterDecorator {
+func NewSetInfiniteGasMeterDecorator(deterministicGasRequirements deterministicgas.GasRequirements) SetInfiniteGasMeterDecorator {
 	return SetInfiniteGasMeterDecorator{
 		deterministicGasRequirements: deterministicGasRequirements,
 	}
@@ -35,11 +35,11 @@ func (sigmd SetInfiniteGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx,
 // CONTRACT: Tx must implement GasTx interface
 type AddBaseGasDecorator struct {
 	ak                           authante.AccountKeeper
-	deterministicGasRequirements deterministicgas.DeterministicGasRequirements
+	deterministicGasRequirements deterministicgas.GasRequirements
 }
 
 // NewAddBaseGasDecorator creates new AddBaseGasDecorator
-func NewAddBaseGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements deterministicgas.DeterministicGasRequirements) AddBaseGasDecorator {
+func NewAddBaseGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements deterministicgas.GasRequirements) AddBaseGasDecorator {
 	return AddBaseGasDecorator{
 		ak:                           ak,
 		deterministicGasRequirements: deterministicGasRequirements,
@@ -68,11 +68,11 @@ func (abgd AddBaseGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 // CONTRACT: Tx must implement GasTx interface
 type ChargeFixedGasDecorator struct {
 	ak                           authante.AccountKeeper
-	deterministicGasRequirements deterministicgas.DeterministicGasRequirements
+	deterministicGasRequirements deterministicgas.GasRequirements
 }
 
 // NewChargeFixedGasDecorator creates new ChargeFixedGasDecorator
-func NewChargeFixedGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements deterministicgas.DeterministicGasRequirements) ChargeFixedGasDecorator {
+func NewChargeFixedGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements deterministicgas.GasRequirements) ChargeFixedGasDecorator {
 	return ChargeFixedGasDecorator{
 		ak:                           ak,
 		deterministicGasRequirements: deterministicGasRequirements,

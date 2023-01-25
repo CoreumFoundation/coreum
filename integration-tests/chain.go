@@ -21,7 +21,7 @@ import (
 type ChainContext struct {
 	ClientContext    tx.ClientContext
 	NetworkConfig    config.NetworkConfig
-	DeterministicGas deterministicgas.DeterministicGasRequirements
+	DeterministicGas deterministicgas.GasRequirements
 }
 
 // NewChainContext returns a new instance if the ChainContext.
@@ -29,7 +29,7 @@ func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig
 	return ChainContext{
 		ClientContext:    clientCtx,
 		NetworkConfig:    networkCfg,
-		DeterministicGas: deterministicgas.DefaultDeterministicGasRequirements(),
+		DeterministicGas: deterministicgas.DefaultGasRequirements(),
 	}
 }
 
