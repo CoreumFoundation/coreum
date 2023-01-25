@@ -452,3 +452,138 @@ func TestKeeper_Freeze_Nonexistent(t *testing.T) {
 	requireT.Error(err)
 	requireT.True(types.ErrNFTNotFound.Is(err))
 }
+
+func TestKeeper_Whitelist(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	assetNFTKeeper.SetParams(ctx, nftParams)
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_whitelisting, //nolint:nosnakecase
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:  issuer,
+		ClassID: classID,
+		ID:      "my-id",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+
+	// mint NFT
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
+	nftID := settings.ID
+
+	// transfer to non whitelisted account, it should fail.
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
+	requireT.Error(err)
+	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+
+	// whitelist the account
+	requireT.NoError(assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient))
+	isWhitelisted, err := assetNFTKeeper.IsWhitelisted(ctx, classID, nftID, recipient)
+	requireT.NoError(err)
+	requireT.True(isWhitelisted)
+
+	// transfer again, it should now succeed.
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
+	requireT.NoError(err)
+}
+
+func TestKeeper_Whitelist_Unwhitelistable(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	assetNFTKeeper.SetParams(ctx, nftParams)
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer:   issuer,
+		Symbol:   "symbol",
+		Features: []types.ClassFeature{},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:  issuer,
+		ClassID: classID,
+		ID:      "my-id",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+
+	// mint NFT
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+
+	// try to whitelist account, it should fail
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	nftID := settings.ID
+	err = assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient)
+	requireT.Error(err)
+	requireT.True(types.ErrFeatureDisabled.Is(err))
+}
+
+func TestKeeper_Whitelist_NonExistent(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	assetNFTKeeper.SetParams(ctx, nftParams)
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_whitelisting, //nolint:nosnakecase
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:  issuer,
+		ClassID: classID,
+		ID:      "my-id",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+
+	// try whitelist account, it should fail
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	nftID := settings.ID
+	err = assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient)
+	requireT.Error(err)
+	requireT.True(types.ErrNFTNotFound.Is(err))
+}

@@ -26,6 +26,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdQueryClass(),
 		CmdQueryFrozen(),
+		CmdQueryWhitelisted(),
 	)
 	return cmd
 }
@@ -90,6 +91,46 @@ $ %[1]s query %s frozen [class-id] [id]
 			res, err := queryClient.Frozen(cmd.Context(), &types.QueryFrozenRequest{
 				Id:      id,
 				ClassId: classID,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryWhitelisted return the CmdQueryWhitelisted cobra command.
+func CmdQueryWhitelisted() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "whitelisted [class-id] [id] [account]",
+		Args:  cobra.ExactArgs(3),
+		Short: "Query if account is whitelisted for non-fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query if account is whitelisted for non-fungible token.
+
+Example:
+$ %s query %s frozen [class-id] [id] devcore15nc50svxu8xakdvks2hzd586xs9xmyqu9ws5ta
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			classID := args[0]
+			id := args[1]
+			account := args[2]
+			res, err := queryClient.Whitelisted(cmd.Context(), &types.QueryWhitelistedRequest{
+				Id:      id,
+				ClassId: classID,
+				Account: account,
 			})
 			if err != nil {
 				return err

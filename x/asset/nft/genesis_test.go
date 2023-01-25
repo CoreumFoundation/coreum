@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
@@ -48,10 +50,25 @@ func TestInitAndExportGenesis(t *testing.T) {
 		})
 	}
 
+	// Whitelisting
+	var toWhitelist []types.Whitelisted
+	for i := 0; i < 5; i++ {
+		toWhitelist = append(toWhitelist, types.Whitelisted{
+			ClassID: fmt.Sprintf("class-id-%d", i),
+			NftID:   fmt.Sprintf("nft-id-%d", i),
+			Accounts: []string{
+				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+			},
+		})
+	}
+
 	genState := types.GenesisState{
 		Params:           types.DefaultParams(),
 		ClassDefinitions: classDefinitions,
 		FrozenNFTs:       frozenNFTs,
+		Whitelisted:      toWhitelist,
 	}
 
 	// init the keeper

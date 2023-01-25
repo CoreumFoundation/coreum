@@ -19,6 +19,11 @@ service Query {
   rpc Frozen (QueryFrozenRequest) returns (QueryFrozenResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen";
   }
+
+  // Whitelisted queries to check if an account is whitelited or not
+  rpc Whitelisted (QueryWhitelistedRequest) returns (QueryWhitelistedResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/account/{account}";
+  }
 }
 
 // QueryTokenRequest is request type for the Query/Class RPC method.
@@ -38,4 +43,14 @@ message QueryFrozenRequest {
 
 message QueryFrozenResponse {
   bool frozen = 1;
+}
+
+message QueryWhitelistedRequest {
+  string id = 1;
+  string class_id = 2;
+  string account = 3;
+}
+
+message QueryWhitelistedResponse {
+  bool whitelisted = 1;
 }

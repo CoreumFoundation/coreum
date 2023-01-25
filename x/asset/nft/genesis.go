@@ -22,6 +22,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			}
 		}
 	}
+
+	for _, whitelisted := range genState.Whitelisted {
+		for _, account := range whitelisted.Accounts {
+			if err := k.SetWhitelisting(ctx, whitelisted.ClassID, whitelisted.NftID, sdk.AccAddress(account), true); err != nil {
+				panic(err)
+			}
+		}
+	}
 }
 
 // ExportGenesis returns the module's exported genesis.
@@ -36,9 +44,15 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	_, whitelisted, err := k.GetAllWhitelisted(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
 		ClassDefinitions: classDefinitions,
 		Params:           k.GetParams(ctx),
 		FrozenNFTs:       frozen,
+		Whitelisted:      whitelisted,
 	}
 }

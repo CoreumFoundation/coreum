@@ -18,6 +18,8 @@ type MsgKeeper interface {
 	Burn(ctx sdk.Context, owner sdk.AccAddress, classID, ID string) error
 	Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
 	Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
+	Whitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
+	Unwhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -124,6 +126,44 @@ func (ms MsgServer) Unfreeze(ctx context.Context, req *types.MsgUnfreeze) (*type
 
 	err = ms.keeper.Unfreeze(sdk.UnwrapSDKContext(ctx), sender, req.ClassID, req.ID)
 	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// Whitelist adds an account to the whitelisted list of accounts for the NFT
+func (ms MsgServer) Whitelist(ctx context.Context, req *types.MsgWhitelist) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account")
+	}
+
+	if err := ms.keeper.Whitelist(sdk.UnwrapSDKContext(ctx), req.ClassID, req.ID, sender, account); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// Unwhitelist removes an account from the whitelisted list of accounts for the NFT
+func (ms MsgServer) Unwhitelist(ctx context.Context, req *types.MsgUnwhitelist) (*types.EmptyResponse, error) {
+	sender, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid sender")
+	}
+
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account")
+	}
+
+	if err := ms.keeper.Unwhitelist(sdk.UnwrapSDKContext(ctx), req.ClassID, req.ID, sender, account); err != nil {
 		return nil, err
 	}
 
