@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	autoValue = "auto"
+	autoValue            = "auto"
+	defaultGasMultiplier = "1.1"
 )
 
 func mergeRunEs(runEs ...func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
@@ -51,7 +52,22 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return gasPriceFlag.Value.Set(gasPrice.MinGasPrice.String())
+	if err := gasPriceFlag.Value.Set(gasPrice.MinGasPrice.String()); err != nil {
+		return err
+	}
+
+	gasAdjustmentFlag := cmd.LocalFlags().Lookup(flags.FlagGasAdjustment)
+	if gasAdjustmentFlag == nil {
+		return nil
+	}
+
+	if !gasAdjustmentFlag.Changed {
+		if err := gasAdjustmentFlag.Value.Set(defaultGasMultiplier); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // addQueryGasPriceToAllLeafs adds the logic to PreRunE function of all leaf commands

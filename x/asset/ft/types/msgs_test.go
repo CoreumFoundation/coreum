@@ -122,6 +122,18 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
 		},
+		{
+			name: "issuer freezing",
+			message: types.MsgFreeze{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedError: sdkerrors.ErrUnauthorized,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -138,7 +150,6 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
 func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name                string
@@ -306,7 +317,6 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:dupl // test cases are identical between freeze and unfreeze, but reuse is not beneficial for tests
 func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 	testCases := []struct {
 		name                string
@@ -360,6 +370,18 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 				},
 			},
 			expectedErrorString: "invalid denom",
+		},
+		{
+			name: "issuer whitelisting",
+			message: types.MsgSetWhitelistedLimit{
+				Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+				Coin: sdk.Coin{
+					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+					Amount: sdk.NewInt(100),
+				},
+			},
+			expectedError: sdkerrors.ErrUnauthorized,
 		},
 	}
 
