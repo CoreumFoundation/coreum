@@ -35,7 +35,7 @@ func TestIssue(t *testing.T) {
 		Precision:   8,
 		Description: "description",
 		Features: []types.Feature{
-			types.Feature_burning, //nolint:nosnakecase
+			types.Feature_burning,
 		},
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
@@ -57,8 +57,8 @@ func TestMintBurn(t *testing.T) {
 		Precision:   8,
 		Description: "description",
 		Features: []types.Feature{
-			types.Feature_minting, //nolint:nosnakecase
-			types.Feature_burning, //nolint:nosnakecase
+			types.Feature_minting,
+			types.Feature_burning,
 		},
 	}
 
@@ -113,7 +113,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 		Precision:   8,
 		Description: "description",
 		Features: []types.Feature{
-			types.Feature_freezing, //nolint:nosnakecase
+			types.Feature_freezing,
 		},
 	}
 
@@ -182,7 +182,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 		Precision:   8,
 		Description: "description",
 		Features: []types.Feature{
-			types.Feature_freezing, //nolint:nosnakecase
+			types.Feature_freezing,
 		},
 	}
 
@@ -222,7 +222,7 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 		Precision:   8,
 		Description: "description",
 		Features: []types.Feature{
-			types.Feature_whitelisting, //nolint:nosnakecase
+			types.Feature_whitelisting,
 		},
 	}
 

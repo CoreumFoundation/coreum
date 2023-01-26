@@ -5,7 +5,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// Keeper interface exposes methods required by ante handler decorator of fee model
+// Keeper interface exposes methods required by ante handler decorator of fee model.
 type Keeper interface {
 	TrackGas(ctx sdk.Context, gas int64)
 	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
@@ -13,19 +13,19 @@ type Keeper interface {
 
 // FeeDecorator will check if the gas price offered by transaction's fee is at least as large
 // as the current minimum gas price required by the network and computd by our fee model.
-// CONTRACT: Tx must implement FeeTx to use FeeDecorator
+// CONTRACT: Tx must implement FeeTx to use FeeDecorator.
 type FeeDecorator struct {
 	keeper Keeper
 }
 
-// NewFeeDecorator creates ante decorator refusing transactions which does not offer minimum gas price
+// NewFeeDecorator creates ante decorator refusing transactions which does not offer minimum gas price.
 func NewFeeDecorator(keeper Keeper) FeeDecorator {
 	return FeeDecorator{
 		keeper: keeper,
 	}
 }
 
-// AnteHandle handles transaction in ante decorator
+// AnteHandle handles transaction in ante decorator.
 func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	if ctx.BlockHeight() == 0 {
 		// Don't enforce fee model on genesis block

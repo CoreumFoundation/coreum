@@ -56,7 +56,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        data,
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_burning,
 		},
 	}
 	_, err = tx.BroadcastTx(
@@ -110,7 +110,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        data,
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_burning,
 		},
 	}
 	res, err := tx.BroadcastTx(
@@ -135,7 +135,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URI:         issueMsg.URI,
 		URIHash:     issueMsg.URIHash,
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_burning,
 		},
 	}, issuedEvent)
 
@@ -155,7 +155,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     issueMsg.URIHash,
 		Data:        dataToCompare,
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_burning,
 		},
 	}, assetNftClassRes.Class)
 
@@ -353,7 +353,7 @@ func TestAssetNFTMint(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
 }
 
-// TestAssetNFTMintFeeProposal tests proposal upgrading mint fee
+// TestAssetNFTMintFeeProposal tests proposal upgrading mint fee.
 func TestAssetNFTMintFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
@@ -455,7 +455,7 @@ func TestAssetNFTBurn(t *testing.T) {
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_burning,
 		},
 	}
 	_, err := tx.BroadcastTx(
@@ -564,7 +564,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_freezing, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_freezing,
 		},
 	}
 	_, err := tx.BroadcastTx(

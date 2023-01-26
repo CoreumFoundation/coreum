@@ -8,7 +8,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// Mint defines a method for minting a new nft
+// Mint defines a method for minting a new nft.
 func (k Keeper) Mint(ctx sdk.Context, token nft.NFT, receiver sdk.AccAddress) error {
 	if !k.HasClass(ctx, token.ClassId) {
 		return sdkerrors.Wrap(nft.ErrClassNotExists, token.ClassId)
@@ -35,7 +35,7 @@ func (k Keeper) Mint(ctx sdk.Context, token nft.NFT, receiver sdk.AccAddress) er
 }
 
 // Burn defines a method for burning a nft from a specific account.
-// Note: When the upper module uses this method, it needs to authenticate nft
+// Note: When the upper module uses this method, it needs to authenticate nft.
 func (k Keeper) Burn(ctx sdk.Context, classID, nftID string) error {
 	if !k.HasClass(ctx, classID) {
 		return sdkerrors.Wrap(nft.ErrClassNotExists, classID)
@@ -64,8 +64,8 @@ func (k Keeper) Burn(ctx sdk.Context, classID, nftID string) error {
 	return nil
 }
 
-// Update defines a method for updating an exist nft
-// Note: When the upper module uses this method, it needs to authenticate nft
+// Update defines a method for updating an exist nft.
+// Note: When the upper module uses this method, it needs to authenticate nft.
 func (k Keeper) Update(ctx sdk.Context, token nft.NFT) error {
 	if !k.HasClass(ctx, token.ClassId) {
 		return sdkerrors.Wrap(nft.ErrClassNotExists, token.ClassId)
@@ -79,7 +79,7 @@ func (k Keeper) Update(ctx sdk.Context, token nft.NFT) error {
 }
 
 // Transfer defines a method for sending a nft from one account to another account.
-// Note: When the upper module uses this method, it needs to authenticate nft
+// Note: When the upper module uses this method, it needs to authenticate nft.
 func (k Keeper) Transfer(ctx sdk.Context,
 	classID string,
 	nftID string,
@@ -99,7 +99,7 @@ func (k Keeper) Transfer(ctx sdk.Context,
 	return nil
 }
 
-// GetNFT returns the nft information of the specified classID and nftID
+// GetNFT returns the nft information of the specified classID and nftID.
 func (k Keeper) GetNFT(ctx sdk.Context, classID, nftID string) (nft.NFT, bool) {
 	store := k.getNFTStore(ctx, classID)
 	bz := store.Get([]byte(nftID))
@@ -111,7 +111,7 @@ func (k Keeper) GetNFT(ctx sdk.Context, classID, nftID string) (nft.NFT, bool) {
 	return nft, true
 }
 
-// GetNFTsOfClassByOwner returns all nft information of the specified classID under the specified owner
+// GetNFTsOfClassByOwner returns all nft information of the specified classID under the specified owner.
 func (k Keeper) GetNFTsOfClassByOwner(ctx sdk.Context, classID string, owner sdk.AccAddress) (nfts []nft.NFT) {
 	ownerStore := k.getClassStoreByOwner(ctx, owner, classID)
 	iterator := ownerStore.Iterator(nil, nil)
@@ -125,7 +125,7 @@ func (k Keeper) GetNFTsOfClassByOwner(ctx sdk.Context, classID string, owner sdk
 	return nfts
 }
 
-// GetNFTsOfClass returns all nft information under the specified classID
+// GetNFTsOfClass returns all nft information under the specified classID.
 func (k Keeper) GetNFTsOfClass(ctx sdk.Context, classID string) (nfts []nft.NFT) {
 	nftStore := k.getNFTStore(ctx, classID)
 	iterator := nftStore.Iterator(nil, nil)
@@ -138,27 +138,27 @@ func (k Keeper) GetNFTsOfClass(ctx sdk.Context, classID string) (nfts []nft.NFT)
 	return nfts
 }
 
-// GetOwner returns the owner information of the specified nft
+// GetOwner returns the owner information of the specified nft.
 func (k Keeper) GetOwner(ctx sdk.Context, classID, nftID string) sdk.AccAddress {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(ownerStoreKey(classID, nftID))
 	return sdk.AccAddress(bz)
 }
 
-// GetBalance returns the specified account, the number of all nfts under the specified classID
+// GetBalance returns the specified account, the number of all nfts under the specified classID.
 func (k Keeper) GetBalance(ctx sdk.Context, classID string, owner sdk.AccAddress) uint64 {
 	nfts := k.GetNFTsOfClassByOwner(ctx, classID, owner)
 	return uint64(len(nfts))
 }
 
-// GetTotalSupply returns the number of all nfts under the specified classID
+// GetTotalSupply returns the number of all nfts under the specified classID.
 func (k Keeper) GetTotalSupply(ctx sdk.Context, classID string) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(classTotalSupply(classID))
 	return sdk.BigEndianToUint64(bz)
 }
 
-// HasNFT determines whether the specified classID and nftID exist
+// HasNFT determines whether the specified classID and nftID exist.
 func (k Keeper) HasNFT(ctx sdk.Context, classID, id string) bool {
 	store := k.getNFTStore(ctx, classID)
 	return store.Has([]byte(id))

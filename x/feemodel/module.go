@@ -29,7 +29,7 @@ var (
 	_ module.AppModuleSimulation = AppModule{}
 )
 
-// Keeper defines an interface of keeper required by fee module
+// Keeper defines an interface of keeper required by fee module.
 type Keeper interface {
 	TrackedGas(ctx sdk.Context) int64
 	SetParams(ctx sdk.Context, params types.Params)
@@ -100,7 +100,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 }
 
-// NewAppModule creates a new AppModule object
+// NewAppModule creates a new AppModule object.
 func NewAppModule(keeper Keeper) AppModule {
 	return AppModule{
 		keeper: keeper,
@@ -189,7 +189,7 @@ func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
 	return nil
 }
 
-// RegisterStoreDecoder registers a decoder for supply module's types
+// RegisterStoreDecoder registers a decoder for supply module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
 // WeightedOperations returns the all the gov module operations with their respective weights.

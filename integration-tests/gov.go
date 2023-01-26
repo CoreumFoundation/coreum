@@ -59,7 +59,7 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
 }
 
-// UpdateParams goes through proposal process to update parameters
+// UpdateParams goes through proposal process to update parameters.
 func (g Governance) UpdateParams(ctx context.Context, description string, updates []paramproposal.ParamChange) error {
 	// Fund accounts.
 	proposer := chain.GenAccount()
@@ -263,7 +263,7 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 	return proposal.Status, nil
 }
 
-// GetProposal returns proposal by ID
+// GetProposal returns proposal by ID.
 func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
 	resp, err := g.govClient.Proposal(ctx, &govtypes.QueryProposalRequest{
 		ProposalId: proposalID,

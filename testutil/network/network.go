@@ -27,11 +27,11 @@ import (
 )
 
 type (
-	// Network defines a local in-process testing network
+	// Network defines a local in-process testing network.
 	Network = network.Network
 
 	// Config defines the necessary configuration used to bootstrap and start an
-	// in-process local testing network
+	// in-process local testing network.
 	Config = network.Config
 
 	// ConfigOption option for the simapp configuration.
@@ -96,7 +96,7 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 }
 
 // DefaultConfig will initialize config for the network with custom application,
-// genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
+// genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig.
 func DefaultConfig() network.Config {
 	devCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
