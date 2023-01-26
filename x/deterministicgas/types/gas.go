@@ -16,7 +16,7 @@ import (
 const fuseGasMultiplier = 5
 
 // NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types
-func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasRequirements deterministicgas.GasRequirements) sdk.Router {
+func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasRequirements deterministicgas.Config) sdk.Router {
 	return &deterministicGasRouter{
 		baseRouter:                   baseRouter,
 		deterministicGasRequirements: deterministicGasRequirements,
@@ -25,7 +25,7 @@ func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasRequiremen
 
 type deterministicGasRouter struct {
 	baseRouter                   sdk.Router
-	deterministicGasRequirements deterministicgas.GasRequirements
+	deterministicGasRequirements deterministicgas.Config
 }
 
 func (r *deterministicGasRouter) AddRoute(route sdk.Route) sdk.Router {
@@ -45,7 +45,7 @@ func (r *deterministicGasRouter) handler(baseHandler sdk.Handler) sdk.Handler {
 }
 
 // NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for defined message types
-func NewDeterministicMsgServer(baseServer grpc.Server, deterministicGasRequirements deterministicgas.GasRequirements) grpc.Server {
+func NewDeterministicMsgServer(baseServer grpc.Server, deterministicGasRequirements deterministicgas.Config) grpc.Server {
 	return &deterministicMsgServer{
 		baseServer:                   baseServer,
 		deterministicGasRequirements: deterministicGasRequirements,
@@ -54,7 +54,7 @@ func NewDeterministicMsgServer(baseServer grpc.Server, deterministicGasRequireme
 
 type deterministicMsgServer struct {
 	baseServer                   grpc.Server
-	deterministicGasRequirements deterministicgas.GasRequirements
+	deterministicGasRequirements deterministicgas.Config
 }
 
 func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, handler interface{}) {
@@ -112,7 +112,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 	s.baseServer.RegisterService(sd, handler)
 }
 
-func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequirements deterministicgas.GasRequirements) (sdk.Context, sdk.Gas, bool) {
+func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequirements deterministicgas.Config) (sdk.Context, sdk.Gas, bool) {
 	gasRequired, exists := deterministicGasRequirements.GasRequiredByMessage(msg)
 	gasBefore := ctx.GasMeter().GasConsumed()
 	if exists {

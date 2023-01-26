@@ -267,7 +267,7 @@ func New(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
-	deterministicGasRequirements := deterministicgas.DefaultGasRequirements()
+	deterministicGasRequirements := deterministicgas.DefaultConfig()
 	appCodec := encodingConfig.Codec
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry

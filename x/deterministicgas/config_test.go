@@ -113,7 +113,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 		"/cosmwasm.wasm.v1.MsgIBCSend",
 	}
 
-	dgr := deterministicgas.DefaultGasRequirements()
+	dgr := deterministicgas.DefaultConfig()
 
 	var determMsgs []sdk.Msg
 	var undetermMsgs []sdk.Msg
@@ -179,7 +179,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 		authzMsgExecOverhead     = 2000
 	)
 
-	dgr := deterministicgas.DefaultGasRequirements()
+	dgr := deterministicgas.DefaultConfig()
 
 	tests := []struct {
 		name                    string

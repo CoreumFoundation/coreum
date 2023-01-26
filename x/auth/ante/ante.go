@@ -20,7 +20,7 @@ import (
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	DeterministicGasRequirements deterministicgas.GasRequirements
+	DeterministicGasRequirements deterministicgas.Config
 	AccountKeeper                authante.AccountKeeper
 	BankKeeper                   authtypes.BankKeeper
 	FeegrantKeeper               authante.FeegrantKeeper
