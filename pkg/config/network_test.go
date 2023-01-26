@@ -19,6 +19,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"

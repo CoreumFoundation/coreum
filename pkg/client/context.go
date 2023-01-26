@@ -37,7 +37,7 @@ import (
 
 var protoCodec = encoding.GetCodec(proto.Name)
 
-// ContextConfig stores context config
+// ContextConfig stores context config.
 type ContextConfig struct {
 	RequestTimeout           time.Duration
 	TxTimeout                time.Duration
@@ -46,7 +46,7 @@ type ContextConfig struct {
 	TxNextBlocksPollInterval time.Duration
 }
 
-// DefaultContextConfig returns default context config
+// DefaultContextConfig returns default context config.
 func DefaultContextConfig() ContextConfig {
 	return ContextConfig{
 		RequestTimeout:           10 * time.Second,
@@ -57,7 +57,7 @@ func DefaultContextConfig() ContextConfig {
 	}
 }
 
-// NewContext returns new context
+// NewContext returns new context.
 func NewContext(contextConfig ContextConfig, modules module.BasicManager) Context {
 	encodingConfig := config.NewEncodingConfig(modules)
 	return Context{
@@ -71,25 +71,25 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 }
 
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
-// to provide better implementation
+// to provide better implementation.
 type Context struct {
 	config    ContextConfig
 	clientCtx client.Context
 }
 
-// ChainID returns chain ID
+// ChainID returns chain ID.
 func (c Context) ChainID() string {
 	return c.clientCtx.ChainID
 }
 
-// WithChainID returns a copy of the context with an updated chain ID
+// WithChainID returns a copy of the context with an updated chain ID.
 func (c Context) WithChainID(chainID string) Context {
 	c.clientCtx = c.clientCtx.WithChainID(chainID)
 	return c
 }
 
 // WithClient returns a copy of the context with an updated RPC client
-// instance
+// instance.
 func (c Context) WithClient(client rpcclient.Client) Context {
 	c.clientCtx = c.clientCtx.WithClient(client)
 	return c
@@ -102,18 +102,18 @@ func (c Context) WithBroadcastMode(mode string) Context {
 	return c
 }
 
-// TxConfig returns TxConfig of SDK context
+// TxConfig returns TxConfig of SDK context.
 func (c Context) TxConfig() client.TxConfig {
 	return c.clientCtx.TxConfig
 }
 
-// WithFromName returns a copy of the context with an updated from account name
+// WithFromName returns a copy of the context with an updated from account name.
 func (c Context) WithFromName(name string) Context {
 	c.clientCtx = c.clientCtx.WithFromName(name)
 	return c
 }
 
-// WithFromAddress returns a copy of the context with an updated from account address
+// WithFromAddress returns a copy of the context with an updated from account address.
 func (c Context) WithFromAddress(addr sdk.AccAddress) Context {
 	c.clientCtx = c.clientCtx.WithFromAddress(addr)
 	return c
@@ -126,12 +126,12 @@ func (c Context) WithFeeGranterAddress(addr sdk.AccAddress) Context {
 	return c
 }
 
-// NewStream implements the grpc ClientConn.NewStream method
+// NewStream implements the grpc ClientConn.NewStream method.
 func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	return nil, errors.New("streaming rpc not supported")
 }
 
-// FeeGranterAddress returns the fee granter address from the context
+// FeeGranterAddress returns the fee granter address from the context.
 func (c Context) FeeGranterAddress() sdk.AccAddress {
 	return c.clientCtx.GetFeeGranterAddress()
 }
@@ -146,27 +146,27 @@ func (c Context) FromAddress() sdk.AccAddress {
 	return c.clientCtx.GetFromAddress()
 }
 
-// BroadcastMode returns configured tx broadcast mode
+// BroadcastMode returns configured tx broadcast mode.
 func (c Context) BroadcastMode() string {
 	return c.clientCtx.BroadcastMode
 }
 
-// Client returns RPC client
+// Client returns RPC client.
 func (c Context) Client() rpcclient.Client {
 	return c.clientCtx.Client
 }
 
-// InterfaceRegistry returns interface registry of SDK context
+// InterfaceRegistry returns interface registry of SDK context.
 func (c Context) InterfaceRegistry() codectypes.InterfaceRegistry {
 	return c.clientCtx.InterfaceRegistry
 }
 
-// Keyring returns keyring
+// Keyring returns keyring.
 func (c Context) Keyring() keyring.Keyring {
 	return c.clientCtx.Keyring
 }
 
-// WithKeyring returns a copy of the context with an updated keyring
+// WithKeyring returns a copy of the context with an updated keyring.
 func (c Context) WithKeyring(k keyring.Keyring) Context {
 	c.clientCtx = c.clientCtx.WithKeyring(k)
 	return c
@@ -238,13 +238,13 @@ func (c Context) WithKeyringDir(dir string) Context {
 	return c
 }
 
-// WithGenerateOnly returns a copy of the context with updated GenerateOnly value
+// WithGenerateOnly returns a copy of the context with updated GenerateOnly value.
 func (c Context) WithGenerateOnly(generateOnly bool) Context {
 	c.clientCtx = c.clientCtx.WithGenerateOnly(generateOnly)
 	return c
 }
 
-// WithSimulation returns a copy of the context with updated Simulate value
+// WithSimulation returns a copy of the context with updated Simulate value.
 func (c Context) WithSimulation(simulate bool) Context {
 	c.clientCtx = c.clientCtx.WithSimulation(simulate)
 	return c
@@ -270,19 +270,19 @@ func (c Context) WithSkipConfirmation(skip bool) Context {
 	return c
 }
 
-// WithTxConfig returns the context with an updated TxConfig
+// WithTxConfig returns the context with an updated TxConfig.
 func (c Context) WithTxConfig(generator client.TxConfig) Context {
 	c.clientCtx = c.clientCtx.WithTxConfig(generator)
 	return c
 }
 
-// WithAccountRetriever returns the context with an updated AccountRetriever
+// WithAccountRetriever returns the context with an updated AccountRetriever.
 func (c Context) WithAccountRetriever(retriever client.AccountRetriever) Context {
 	c.clientCtx = c.clientCtx.WithAccountRetriever(retriever)
 	return c
 }
 
-// WithInterfaceRegistry returns the context with an updated InterfaceRegistry
+// WithInterfaceRegistry returns the context with an updated InterfaceRegistry.
 func (c Context) WithInterfaceRegistry(interfaceRegistry codectypes.InterfaceRegistry) Context {
 	c.clientCtx = c.clientCtx.WithInterfaceRegistry(interfaceRegistry)
 	return c
@@ -295,13 +295,13 @@ func (c Context) WithViper(prefix string) Context {
 	return c
 }
 
-// PrintString prints the raw string to ctx.Output if it's defined, otherwise to os.Stdout
+// PrintString prints the raw string to ctx.Output if it's defined, otherwise to os.Stdout.
 func (c Context) PrintString(str string) error {
 	return c.clientCtx.PrintBytes([]byte(str))
 }
 
 // PrintBytes prints the raw bytes to ctx.Output if it's defined, otherwise to os.Stdout.
-// NOTE: for printing a complex state object, you should use ctx.PrintOutput
+// NOTE: for printing a complex state object, you should use ctx.PrintOutput.
 func (c Context) PrintBytes(o []byte) error {
 	return c.clientCtx.PrintBytes(o)
 }
@@ -313,7 +313,7 @@ func (c Context) PrintProto(toPrint gogoproto.Message) error {
 	return c.clientCtx.PrintProto(toPrint)
 }
 
-// Invoke invokes GRPC method
+// Invoke invokes GRPC method.
 func (c Context) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
 	if reflect.ValueOf(req).IsNil() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request cannot be nil")

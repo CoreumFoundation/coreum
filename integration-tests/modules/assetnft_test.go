@@ -567,7 +567,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 			assetnfttypes.ClassFeature_freezing,
 		},
 	}
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -583,7 +583,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		ID:      nftID,
 		ClassID: classID,
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -598,7 +598,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		ClassID: classID,
 		ID:      nftID,
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
@@ -631,7 +631,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Id:       nftID,
 		Receiver: recipient1.String(),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -648,7 +648,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Receiver: recipient2.String(),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -663,7 +663,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		ClassID: classID,
 		ID:      nftID,
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUnfreeze)),
@@ -697,7 +697,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Receiver: recipient2.String(),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
