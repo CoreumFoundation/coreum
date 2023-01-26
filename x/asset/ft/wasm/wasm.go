@@ -11,7 +11,7 @@ import (
 	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
 )
 
-// MsgHandler handles conversion of messages received from smart contracts
+// MsgHandler handles conversion of messages received from smart contracts.
 func MsgHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]sdk.Msg, error) {
 	var res []sdk.Msg
 	for msgType, msg := range messages {
@@ -27,7 +27,7 @@ func MsgHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]s
 	return res, nil
 }
 
-// QueryHandler handles queries from smart contracts
+// QueryHandler handles queries from smart contracts.
 func QueryHandler(keeper keeper.Keeper) wasmtypes.Querier {
 	return func(ctx sdk.Context, queries map[string]json.RawMessage) ([]byte, bool, error) {
 		for qType, q := range queries {

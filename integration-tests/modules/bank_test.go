@@ -43,7 +43,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		Description:   "TOK1 Description",
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_freezing, //nolint:nosnakecase // enable the feature to make the computation more complicated
+			assetfttypes.Feature_freezing, // enable the feature to make the computation more complicated
 		},
 	}
 
@@ -127,7 +127,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 		Description:   "TOK1 Description",
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_freezing, //nolint:nosnakecase // enable the feature to make the computation more complicated
+			assetfttypes.Feature_freezing, // enable the feature to make the computation more complicated
 		},
 	}
 
@@ -183,7 +183,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
 }
 
-// TestBankSendDeterministicGas checks that transfer takes the deterministic amount of gas
+// TestBankSendDeterministicGas checks that transfer takes the deterministic amount of gas.
 func TestBankSendDeterministicGas(t *testing.T) {
 	t.Parallel()
 
@@ -217,7 +217,7 @@ func TestBankSendDeterministicGas(t *testing.T) {
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
-// TestBankSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas
+// TestBankSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas.
 func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	t.Parallel()
 
@@ -251,7 +251,7 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
 }
 
-// TestBankSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
+// TestBankSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred.
 func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
@@ -326,7 +326,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
-// TestBankSendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
+// TestBankSendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided.
 func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	t.Parallel()
 
@@ -358,7 +358,7 @@ func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	require.True(t, cosmoserrors.ErrOutOfGas.Is(err))
 }
 
-// TestBankSendGasEstimation checks that gas is correctly estimated for send message
+// TestBankSendGasEstimation checks that gas is correctly estimated for send message.
 func TestBankSendGasEstimation(t *testing.T) {
 	t.Parallel()
 
@@ -390,7 +390,7 @@ func TestBankSendGasEstimation(t *testing.T) {
 	assert.Equal(t, bankSendGas, estimatedGas)
 }
 
-// TestBankMultiSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred
+// TestBankMultiSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred.
 func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
@@ -478,7 +478,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
 }
 
-// TestBankMultiSend tests MultiSend message
+// TestBankMultiSend tests MultiSend message.
 func TestBankMultiSend(t *testing.T) {
 	t.Parallel()
 
@@ -713,7 +713,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 		WithAccountNumber(sender1AccInfo.GetAccountNumber()).
 		WithSequence(sender1AccInfo.GetSequence()).
 		WithGas(chain.GasLimitByMsgs(multiSendMsg)).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON) //nolint:nosnakecase // the sdk constant
+		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	txBuilder, err := txF.BuildUnsignedTx(multiSendMsg)
 	requireT.NoError(err)
@@ -730,7 +730,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 		WithAccountNumber(sender2AccInfo.GetAccountNumber()).
 		WithSequence(sender2AccInfo.GetSequence()).
 		WithGas(chain.GasLimitByMsgs(multiSendMsg)).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON) //nolint:nosnakecase // the sdk constant
+		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	// sign from sender2
 	err = tx.Sign(txF, sender2KeyInfo.GetName(), txBuilder, false)
@@ -757,7 +757,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 
 // FIXME (wojtek): add test verifying that transfer fails if sender is out of balance.
 
-// TestBankCoreSend checks that core is transferred correctly between wallets
+// TestBankCoreSend checks that core is transferred correctly between wallets.
 func TestBankCoreSend(t *testing.T) {
 	t.Parallel()
 

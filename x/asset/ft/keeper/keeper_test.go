@@ -48,7 +48,7 @@ func TestKeeper_Issue(t *testing.T) {
 		Subunit:       "abc",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(777),
-		Features:      []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+		Features:      []types.Feature{types.Feature_freezing},
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
@@ -76,7 +76,7 @@ func TestKeeper_Issue(t *testing.T) {
 		Description:        settings.Description,
 		Subunit:            strings.ToLower(settings.Subunit),
 		Precision:          settings.Precision,
-		Features:           []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+		Features:           []types.Feature{types.Feature_freezing},
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
 	}, gotToken)
@@ -160,7 +160,7 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 			Subunit:       "subunit",
 			Description:   "ABC Desc",
 			InitialAmount: sdk.NewInt(777),
-			Features:      []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+			Features:      []types.Feature{types.Feature_freezing},
 		}
 
 		_, err := ftKeeper.Issue(ctx, settings)
@@ -218,7 +218,7 @@ func TestKeeper_IssueValidateSubunit(t *testing.T) {
 			Subunit:       subunit,
 			Description:   "ABC Desc",
 			InitialAmount: sdk.NewInt(777),
-			Features:      []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+			Features:      []types.Feature{types.Feature_freezing},
 		}
 
 		_, err := ftKeeper.Issue(ctx, settings)
@@ -260,7 +260,7 @@ func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
 		Subunit:       "abc",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(777),
-		Features:      []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+		Features:      []types.Feature{types.Feature_freezing},
 	}
 
 	_, err := ftKeeper.Issue(ctx, settings)
@@ -288,7 +288,7 @@ func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 		Subunit:       "abc",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(777),
-		Features:      []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+		Features:      []types.Feature{types.Feature_freezing},
 	}
 
 	_, err := ftKeeper.Issue(ctx, settings)
@@ -313,8 +313,8 @@ func TestKeeper_Mint(t *testing.T) {
 		Subunit:       "notmintable",
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.Feature{
-			types.Feature_freezing, //nolint:nosnakecase
-			types.Feature_burning,  //nolint:nosnakecase
+			types.Feature_freezing,
+			types.Feature_burning,
 		},
 	}
 
@@ -333,7 +333,7 @@ func TestKeeper_Mint(t *testing.T) {
 		Subunit:       "mintable",
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.Feature{
-			types.Feature_minting, //nolint:nosnakecase
+			types.Feature_minting,
 		},
 	}
 
@@ -376,8 +376,8 @@ func TestKeeper_Burn(t *testing.T) {
 		Subunit:       "notburnable",
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.Feature{
-			types.Feature_freezing, //nolint:nosnakecase
-			types.Feature_minting,  //nolint:nosnakecase
+			types.Feature_freezing,
+			types.Feature_minting,
 		},
 	}
 
@@ -404,8 +404,8 @@ func TestKeeper_Burn(t *testing.T) {
 		Subunit:       "burnable",
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.Feature{
-			types.Feature_burning,  //nolint:nosnakecase
-			types.Feature_freezing, //nolint:nosnakecase
+			types.Feature_burning,
+			types.Feature_freezing,
 		},
 	}
 
@@ -856,7 +856,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Subunit:       "def",
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(666),
-		Features:      []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+		Features:      []types.Feature{types.Feature_freezing},
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
@@ -1022,7 +1022,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 		Precision:     6,
 		Description:   "FREEZE Desc",
 		InitialAmount: sdk.NewInt(777),
-		Features:      []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+		Features:      []types.Feature{types.Feature_freezing},
 	}
 
 	freezableDenom, err := ftKeeper.Issue(ctx, freezableSettings)
@@ -1136,7 +1136,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 		Subunit:       "def",
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(666),
-		Features:      []types.Feature{types.Feature_whitelisting}, //nolint:nosnakecase
+		Features:      []types.Feature{types.Feature_whitelisting},
 	}
 
 	denom, err := ftKeeper.Issue(ctx, settings)
@@ -1252,7 +1252,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 		Subunit:       "def",
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []types.Feature{types.Feature_freezing}, //nolint:nosnakecase
+		Features:      []types.Feature{types.Feature_freezing},
 	}
 
 	settings2 := types.IssueSettings{
@@ -1261,7 +1261,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 		Subunit:       "def",
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(2000),
-		Features:      []types.Feature{types.Feature_whitelisting}, //nolint:nosnakecase
+		Features:      []types.Feature{types.Feature_whitelisting},
 	}
 
 	bondDenom := testApp.StakingKeeper.BondDenom(ctx)

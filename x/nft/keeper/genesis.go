@@ -8,7 +8,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// InitGenesis new nft genesis
+// InitGenesis new nft genesis.
 func (k Keeper) InitGenesis(ctx sdk.Context, data *nft.GenesisState) {
 	for _, class := range data.Classes {
 		if err := k.SaveClass(ctx, *class); err != nil {

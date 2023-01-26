@@ -12,13 +12,13 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// FundedAccount represents a requirement of a test to get some funds for an account
+// FundedAccount represents a requirement of a test to get some funds for an account.
 type FundedAccount struct {
 	Address sdk.AccAddress
 	Amount  sdk.Coin
 }
 
-// NewFundedAccount is the constructor of FundedAccount
+// NewFundedAccount is the constructor of FundedAccount.
 func NewFundedAccount(address sdk.AccAddress, amount sdk.Coin) FundedAccount {
 	return FundedAccount{
 		Address: address,

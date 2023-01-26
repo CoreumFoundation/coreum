@@ -15,7 +15,7 @@ import (
 
 const fuseGasMultiplier = 5
 
-// NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types
+// NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types.
 func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasRequirements config.DeterministicGasRequirements) sdk.Router {
 	return &deterministicGasRouter{
 		baseRouter:                   baseRouter,
@@ -44,7 +44,7 @@ func (r *deterministicGasRouter) handler(baseHandler sdk.Handler) sdk.Handler {
 	}
 }
 
-// NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for defined message types
+// NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for defined message types.
 func NewDeterministicMsgServer(baseServer grpc.Server, deterministicGasRequirements config.DeterministicGasRequirements) grpc.Server {
 	return &deterministicMsgServer{
 		baseServer:                   baseServer,

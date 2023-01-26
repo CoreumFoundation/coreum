@@ -32,7 +32,7 @@ func TestQueryClass(t *testing.T) {
 		requireT, ctx,
 		symbol, name, description, URI, URIHash,
 		testNetwork,
-		types.ClassFeature_burning, //nolint:nosnakecase // generated variable
+		types.ClassFeature_burning,
 	)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
@@ -50,7 +50,7 @@ func TestQueryClass(t *testing.T) {
 		URI:         URI,
 		URIHash:     URIHash,
 		Features: []types.ClassFeature{
-			types.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			types.ClassFeature_burning,
 		},
 	}, resp.Class)
 }

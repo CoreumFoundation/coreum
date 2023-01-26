@@ -18,14 +18,14 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// Flags defined on transactions
+// Flags defined on transactions.
 const (
 	FeaturesFlag           = "features"
 	BurnRateFlag           = "burn-rate"
 	SendCommissionRateFlag = "send-commission-rate"
 )
 
-// GetTxCmd returns the transaction commands for this module
+// GetTxCmd returns the transaction commands for this module.
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -54,7 +54,7 @@ func GetTxCmd() *cobra.Command {
 //nolint:funlen // Despite the length function is still manageable
 func CmdTxIssue() *cobra.Command {
 	var allowedFeatures []string
-	for _, n := range types.Feature_name { //nolint:nosnakecase
+	for _, n := range types.Feature_name {
 		allowedFeatures = append(allowedFeatures, n)
 	}
 	sort.Strings(allowedFeatures)
@@ -126,7 +126,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 
 			var features []types.Feature
 			for _, str := range featuresString {
-				feature, ok := types.Feature_value[str] //nolint:nosnakecase
+				feature, ok := types.Feature_value[str]
 				if !ok {
 					return errors.Errorf("unknown feature '%s',allowed features: %s", str, strings.Join(allowedFeatures, ","))
 				}

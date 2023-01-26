@@ -38,7 +38,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        dataValue,
 		Features: []types.ClassFeature{
-			types.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			types.ClassFeature_burning,
 		},
 	}
 
@@ -66,7 +66,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 	requireT.Equal(settings.URI, nftClass.URI)
 	requireT.Equal(settings.URIHash, nftClass.URIHash)
 	requireT.Equal(string(settings.Data.Value), string(nftClass.Data.Value))
-	requireT.Equal([]types.ClassFeature{types.ClassFeature_burning}, nftClass.Features) //nolint:nosnakecase // generated variable
+	requireT.Equal([]types.ClassFeature{types.ClassFeature_burning}, nftClass.Features)
 
 	// try to duplicate
 	settings.Symbol = "SYMBOL"
@@ -164,7 +164,7 @@ func TestKeeper_Burn(t *testing.T) {
 		Issuer: issuer,
 		Symbol: "symbol",
 		Features: []types.ClassFeature{
-			types.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			types.ClassFeature_burning,
 		},
 	}
 
@@ -330,7 +330,7 @@ func TestKeeper_Freeze(t *testing.T) {
 		Issuer: issuer,
 		Symbol: "symbol",
 		Features: []types.ClassFeature{
-			types.ClassFeature_freezing, //nolint:nosnakecase
+			types.ClassFeature_freezing,
 		},
 	}
 
@@ -440,7 +440,7 @@ func TestKeeper_Freeze_Nonexistent(t *testing.T) {
 		Issuer: issuer,
 		Symbol: "symbol",
 		Features: []types.ClassFeature{
-			types.ClassFeature_freezing, //nolint:nosnakecase
+			types.ClassFeature_freezing,
 		},
 	}
 

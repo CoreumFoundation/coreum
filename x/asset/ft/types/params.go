@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// KeyIssueFee represents the issue fee param key
+// KeyIssueFee represents the issue fee param key.
 var KeyIssueFee = []byte("IssueFee")
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
