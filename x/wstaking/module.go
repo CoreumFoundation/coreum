@@ -19,7 +19,7 @@ type AppModule struct {
 	customParamsKeeper wstakingtypes.CustomParamsKeeper
 }
 
-// NewAppModule creates a new AppModule object
+// NewAppModule creates a new AppModule object.
 func NewAppModule(
 	cdc codec.Codec,
 	stakingKeeper stakingkeeper.Keeper,

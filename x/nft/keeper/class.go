@@ -7,7 +7,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// SaveClass defines a method for creating a new nft class
+// SaveClass defines a method for creating a new nft class.
 func (k Keeper) SaveClass(ctx sdk.Context, class nft.Class) error {
 	if k.HasClass(ctx, class.Id) {
 		return sdkerrors.Wrap(nft.ErrClassExists, class.Id)
@@ -21,7 +21,7 @@ func (k Keeper) SaveClass(ctx sdk.Context, class nft.Class) error {
 	return nil
 }
 
-// UpdateClass defines a method for updating a exist nft class
+// UpdateClass defines a method for updating a exist nft class.
 func (k Keeper) UpdateClass(ctx sdk.Context, class nft.Class) error {
 	if !k.HasClass(ctx, class.Id) {
 		return sdkerrors.Wrap(nft.ErrClassNotExists, class.Id)
@@ -35,7 +35,7 @@ func (k Keeper) UpdateClass(ctx sdk.Context, class nft.Class) error {
 	return nil
 }
 
-// GetClass defines a method for returning the class information of the specified id
+// GetClass defines a method for returning the class information of the specified id.
 func (k Keeper) GetClass(ctx sdk.Context, classID string) (nft.Class, bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(classStoreKey(classID))
@@ -48,7 +48,7 @@ func (k Keeper) GetClass(ctx sdk.Context, classID string) (nft.Class, bool) {
 	return class, true
 }
 
-// GetClasses defines a method for returning all classes information
+// GetClasses defines a method for returning all classes information.
 func (k Keeper) GetClasses(ctx sdk.Context) (classes []*nft.Class) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, ClassKey)
@@ -61,7 +61,7 @@ func (k Keeper) GetClasses(ctx sdk.Context) (classes []*nft.Class) {
 	return classes
 }
 
-// HasClass determines whether the specified classID exist
+// HasClass determines whether the specified classID exist.
 func (k Keeper) HasClass(ctx sdk.Context, classID string) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(classStoreKey(classID))

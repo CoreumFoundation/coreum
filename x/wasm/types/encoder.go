@@ -8,13 +8,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Handler handles encoding of custom message
+// Handler handles encoding of custom message.
 type Handler func(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]sdk.Msg, error)
 
-// Querier handles custom queries
+// Querier handles custom queries.
 type Querier func(ctx sdk.Context, queries map[string]json.RawMessage) ([]byte, bool, error)
 
-// NewCustomEncoder encodes custom messages received from smart contracts
+// NewCustomEncoder encodes custom messages received from smart contracts.
 func NewCustomEncoder(handlers ...Handler) *wasmkeeper.MessageEncoders {
 	return &wasmkeeper.MessageEncoders{
 		Custom: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
@@ -36,7 +36,7 @@ func NewCustomEncoder(handlers ...Handler) *wasmkeeper.MessageEncoders {
 	}
 }
 
-// NewCustomQuerier handles custom queries
+// NewCustomQuerier handles custom queries.
 func NewCustomQuerier(queriers ...Querier) *wasmkeeper.QueryPlugins {
 	return &wasmkeeper.QueryPlugins{
 		Custom: func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {

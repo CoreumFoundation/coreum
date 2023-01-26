@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	// votingPeriod is the proposal voting period duration
+	// votingPeriod is the proposal voting period duration.
 	votingPeriod = time.Second * 15
 )
 

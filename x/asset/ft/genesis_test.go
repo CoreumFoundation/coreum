@@ -41,8 +41,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 			BurnRate:           sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
 			SendCommissionRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
 			Features: []types.Feature{
-				types.Feature_freezing,     //nolint:nosnakecase // proto enum
-				types.Feature_whitelisting, //nolint:nosnakecase // proto enum
+				types.Feature_freezing,
+				types.Feature_whitelisting,
 			},
 		}
 		// Globally freeze some Tokens.

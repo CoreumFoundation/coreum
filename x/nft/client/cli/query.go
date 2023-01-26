@@ -14,13 +14,13 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// Flag names and values
+// Flag names and values.
 const (
 	FlagOwner   = "owner"
 	FlagClassID = "class-id"
 )
 
-// GetQueryCmd returns the cli query commands for this module
+// GetQueryCmd returns the cli query commands for this module.
 func GetQueryCmd() *cobra.Command {
 	nftQueryCmd := &cobra.Command{
 		Use:                        nft.ModuleName,

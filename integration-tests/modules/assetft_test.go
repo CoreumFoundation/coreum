@@ -73,7 +73,7 @@ func TestAssetFTIssue(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
 }
 
-// TestAssetFTIssueFeeProposal tests proposal upgrading issue fee
+// TestAssetFTIssueFeeProposal tests proposal upgrading issue fee.
 func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
@@ -235,8 +235,8 @@ func TestAssetFTMint(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_burning,  //nolint:nosnakecase
-			assetfttypes.Feature_freezing, //nolint:nosnakecase
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
 		},
 	}
 
@@ -277,7 +277,7 @@ func TestAssetFTMint(t *testing.T) {
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []assetfttypes.Feature{assetfttypes.Feature_minting}, //nolint:nosnakecase
+		Features:      []assetfttypes.Feature{assetfttypes.Feature_minting},
 	}
 
 	res, err = tx.BroadcastTx(
@@ -372,8 +372,8 @@ func TestAssetFTBurn(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_minting,  //nolint:nosnakecase
-			assetfttypes.Feature_freezing, //nolint:nosnakecase
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_freezing,
 		},
 	}
 
@@ -446,7 +446,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Precision:     6,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []assetfttypes.Feature{assetfttypes.Feature_burning}, //nolint:nosnakecase
+		Features:      []assetfttypes.Feature{assetfttypes.Feature_burning},
 	}
 
 	res, err = tx.BroadcastTx(
@@ -873,7 +873,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_freezing, //nolint:nosnakecase
+			assetfttypes.Feature_freezing,
 		},
 	}
 
@@ -1211,7 +1211,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		Description:   "FREEZE Description",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_freezing, //nolint:nosnakecase
+			assetfttypes.Feature_freezing,
 		},
 	}
 	res, err := tx.BroadcastTx(
@@ -1396,7 +1396,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Description:   "ABC Description",
 		InitialAmount: amount,
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_whitelisting, //nolint:nosnakecase
+			assetfttypes.Feature_whitelisting,
 		},
 	}
 	_, err := tx.BroadcastTx(
