@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -52,6 +53,7 @@ func TestQueryClass(t *testing.T) {
 		Features: []types.ClassFeature{
 			types.ClassFeature_burning, //nolint:nosnakecase // generated variable
 		},
+		RoyaltyRate: sdk.MustNewDecFromStr("0"),
 	}, resp.Class)
 }
 
