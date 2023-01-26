@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// KeyMintFee represents the mint fee param key
+// KeyMintFee represents the mint fee param key.
 var KeyMintFee = []byte("MintFee")
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs

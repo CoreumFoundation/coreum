@@ -13,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// GetTxCmd returns the transaction commands for this module
+// GetTxCmd returns the transaction commands for this module.
 func GetTxCmd() *cobra.Command {
 	nftTxCmd := &cobra.Command{
 		Use:                        nft.ModuleName,

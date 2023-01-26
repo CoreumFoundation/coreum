@@ -10,25 +10,25 @@ import (
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
-// QueryKeeper defines subscope of keeper methods required by query service
+// QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
 	GetParams(ctx sdk.Context) types.Params
 	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
 }
 
-// NewQueryService creates query service
+// NewQueryService creates query service.
 func NewQueryService(keeper QueryKeeper) QueryService {
 	return QueryService{
 		keeper: keeper,
 	}
 }
 
-// QueryService serves grpc requests for fee model
+// QueryService serves grpc requests for fee model.
 type QueryService struct {
 	keeper QueryKeeper
 }
 
-// MinGasPrice returns current minimum gas price required by the network
+// MinGasPrice returns current minimum gas price required by the network.
 func (qs QueryService) MinGasPrice(ctx context.Context, req *types.QueryMinGasPriceRequest) (*types.QueryMinGasPriceResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -39,7 +39,7 @@ func (qs QueryService) MinGasPrice(ctx context.Context, req *types.QueryMinGasPr
 	}, nil
 }
 
-// Params returns params of fee model
+// Params returns params of fee model.
 func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")

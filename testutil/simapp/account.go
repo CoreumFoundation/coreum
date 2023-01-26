@@ -11,11 +11,11 @@ import (
 
 // !!! The code is a modified copy of the cosmos-sdk simapp util code.
 
-// GenerateAccountStrategy is simapp strategy for the account generation
+// GenerateAccountStrategy is simapp strategy for the account generation.
 type GenerateAccountStrategy func(int) []sdk.AccAddress
 
 // AddTestAddrsIncremental constructs and returns accNum amount of accounts with an
-// initial balance of accAmt in random order
+// initial balance of accAmt in random order.
 func AddTestAddrsIncremental(app *App, ctx sdk.Context, accNum int, accAmt sdk.Int) []sdk.AccAddress {
 	return addTestAddrs(app, ctx, accNum, accAmt, createIncrementalAccounts)
 }

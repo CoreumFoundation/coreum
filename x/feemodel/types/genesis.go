@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DefaultGenesisState returns genesis state with default values
+// DefaultGenesisState returns genesis state with default values.
 func DefaultGenesisState() *GenesisState {
 	params := DefaultParams()
 	return &GenesisState{
@@ -14,7 +14,7 @@ func DefaultGenesisState() *GenesisState {
 	}
 }
 
-// Validate validates genesis parameters
+// Validate validates genesis parameters.
 func (m *GenesisState) Validate() error {
 	if err := m.MinGasPrice.Validate(); err != nil {
 		return errors.WithStack(err)

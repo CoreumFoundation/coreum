@@ -14,6 +14,11 @@ service Query {
   rpc Class(QueryClassRequest) returns (QueryClassResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{id}";
   }
+
+  // Frozen queries to check if an NFT is frozen or not.
+  rpc Frozen (QueryFrozenRequest) returns (QueryFrozenResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen";
+  }
 }
 
 // QueryTokenRequest is request type for the Query/Class RPC method.
@@ -24,4 +29,13 @@ message QueryClassRequest {
 // QueryClassResponse is response type for the Query/Class RPC method.
 message QueryClassResponse {
   Class class = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryFrozenRequest {
+  string id = 1;
+  string class_id = 2;
+}
+
+message QueryFrozenResponse {
+  bool frozen = 1;
 }

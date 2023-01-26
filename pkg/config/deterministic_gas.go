@@ -57,6 +57,8 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(16000),
 		MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
 		MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(39000),
+		MsgType(&assetnfttypes.MsgFreeze{}):     constantGasFunc(7000),
+		MsgType(&assetnfttypes.MsgUnfreeze{}):   constantGasFunc(5000),
 
 		// authz
 		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
@@ -152,7 +154,7 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 // MsgType returns TypeURL of a msg in cosmos SDK style.
 // Samples of values returned by the function:
 // "/cosmos.distribution.v1beta1.MsgFundCommunityPool"
-// "/coreum.asset.ft.v1.MsgMint"
+// "/coreum.asset.ft.v1.MsgMint".
 func MsgType(msg sdk.Msg) string {
 	return sdk.MsgTypeURL(msg)
 }

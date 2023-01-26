@@ -11,13 +11,13 @@ import (
 	"github.com/CoreumFoundation/coreum/x/wnft/types"
 )
 
-// Wrapper wraps the original nft keeper and intercepts its original methods if needed
+// Wrapper wraps the original nft keeper and intercepts its original methods if needed.
 type Wrapper struct {
 	nftkeeper.Keeper
 	nonFungibleTokenProvider types.NonFungibleTokenProvider
 }
 
-// NewWrappedNFTKeeper returns a new instance of the WrappedNFTKeeper
+// NewWrappedNFTKeeper returns a new instance of the WrappedNFTKeeper.
 func NewWrappedNFTKeeper(originalKeeper nftkeeper.Keeper, provider types.NonFungibleTokenProvider) Wrapper {
 	return Wrapper{
 		Keeper:                   originalKeeper,
@@ -61,7 +61,7 @@ func (wk Wrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendRes
 	return &nft.MsgSendResponse{}, nil
 }
 
-// Transfer overwrites the original transfer function to include our custom interceptor
+// Transfer overwrites the original transfer function to include our custom interceptor.
 func (wk Wrapper) Transfer(ctx sdk.Context, classID, nftID string, receiver sdk.AccAddress) error {
 	if err := wk.nonFungibleTokenProvider.BeforeTransfer(ctx, classID, nftID, receiver); err != nil {
 		return err

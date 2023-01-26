@@ -84,7 +84,7 @@ func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
 	return sdk.NewDecCoinFromDec(c.NetworkConfig.Denom, amount)
 }
 
-// DeterministicGas returns deterministic gas config
+// DeterministicGas returns deterministic gas config.
 func (c ChainContext) DeterministicGas() config.DeterministicGasRequirements {
 	return c.NetworkConfig.Fee.DeterministicGas
 }
@@ -161,7 +161,7 @@ type ChainConfig struct {
 	StakerMnemonics []string
 }
 
-// Chain holds network and client for the blockchain
+// Chain holds network and client for the blockchain.
 type Chain struct {
 	ChainContext
 	Faucet     Faucet

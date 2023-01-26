@@ -222,12 +222,12 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	// Send tokens
-	receiver := chain.GenAccount()
+	recipient := chain.GenAccount()
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
 			Amount:    "5000",
 			Denom:     chain.NetworkConfig.Denom,
-			Recipient: receiver.String(),
+			Recipient: recipient.String(),
 		},
 	})
 	requireT.NoError(err)
@@ -241,7 +241,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 
 	bankSend := &banktypes.MsgSend{
 		FromAddress: admin.String(),
-		ToAddress:   receiver.String(),
+		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.NewInt(1000))),
 	}
 
@@ -469,7 +469,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
 }
 
-// TestWASMIssueFungibleTokenInContract verifies that smart contract is able to issue fungible token
+// TestWASMIssueFungibleTokenInContract verifies that smart contract is able to issue fungible token.
 func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
@@ -704,7 +704,7 @@ func queryWASMContract(ctx context.Context, clientCtx client.Context, contractAd
 	return json.RawMessage(resp.Data), nil
 }
 
-// isWASMContractPinned returns true if smart contract is pinned
+// isWASMContractPinned returns true if smart contract is pinned.
 func isWASMContractPinned(ctx context.Context, clientCtx client.Context, codeID uint64) (bool, error) {
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})

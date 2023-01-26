@@ -18,3 +18,15 @@ message EventClassIssued {
   string uri_hash = 7 [(gogoproto.customname) = "URIHash"];
   repeated ClassFeature features = 8;
 }
+
+message EventFrozen {
+  string class_id = 1;
+  string id       = 2;
+  string owner    = 3;
+}
+
+message EventUnfrozen {
+  string class_id = 1;
+  string id       = 2;
+  string owner    = 3;
+}

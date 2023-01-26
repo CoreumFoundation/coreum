@@ -150,7 +150,7 @@ func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sd
 	}
 }
 
-// broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block
+// broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block.
 func broadcastTxCommit(ctx context.Context, clientCtx Context, encodedTx []byte) (*sdk.TxResponse, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.RequestTimeout)
 	defer cancel()
@@ -192,7 +192,7 @@ func prepareFactory(ctx context.Context, clientCtx Context, txf tx.Factory) (tx.
 	return txf, nil
 }
 
-// GetAccountInfo returns account number and account sequence for provided address
+// GetAccountInfo returns account number and account sequence for provided address.
 func GetAccountInfo(
 	ctx context.Context,
 	clientCtx Context,
@@ -289,7 +289,7 @@ func AwaitNextBlocks(
 	})
 }
 
-// GetGasPrice returns the current gas price of the chain
+// GetGasPrice returns the current gas price of the chain.
 func GetGasPrice(
 	ctx context.Context,
 	clientCtx Context,
