@@ -19,8 +19,8 @@ import (
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
-	ClientContext client.Context
-	NetworkConfig config.NetworkConfig
+	ClientContext    client.Context
+	NetworkConfig    config.NetworkConfig
 	DeterministicGas deterministicgas.Config
 }
 
