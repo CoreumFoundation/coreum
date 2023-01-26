@@ -23,7 +23,10 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdQueryClass())
+	cmd.AddCommand(
+		CmdQueryClass(),
+		CmdQueryFrozen(),
+	)
 	return cmd
 }
 
@@ -49,6 +52,44 @@ $ %[1]s query %s class [id]
 			id := args[0]
 			res, err := queryClient.Class(cmd.Context(), &types.QueryClassRequest{
 				Id: id,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryFrozen return the CmdQueryFrozen cobra command.
+func CmdQueryFrozen() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "frozen [class-id] [id]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query if non-fungible token is frozen",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query if non-fungible token is frozen.
+
+Example:
+$ %[1]s query %s frozen [class-id] [id]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			classID := args[0]
+			id := args[1]
+			res, err := queryClient.Frozen(cmd.Context(), &types.QueryFrozenRequest{
+				Id:      id,
+				ClassId: classID,
 			})
 			if err != nil {
 				return err

@@ -224,17 +224,17 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	ctx, chain := integrationtests.NewTestingContext(t)
 
 	sender := chain.GenAccount()
-	receiver1 := chain.GenAccount()
-	receiver2 := chain.GenAccount()
+	recipient1 := chain.GenAccount()
+	recipient2 := chain.GenAccount()
 
 	bankSend1 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
-		ToAddress:   receiver1.String(),
+		ToAddress:   recipient1.String(),
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 	bankSend2 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
-		ToAddress:   receiver2.String(),
+		ToAddress:   recipient2.String(),
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 
@@ -514,7 +514,8 @@ func TestBankMultiSend(t *testing.T) {
 			Outputs: []banktypes.Output{
 				{Coins: make(sdk.Coins, 2)},
 				{Coins: make(sdk.Coins, 2)},
-			}}}, issueMsgs...),
+			},
+		}}, issueMsgs...),
 		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee.MulRaw(int64(len(issueMsgs))),
 	}))
 

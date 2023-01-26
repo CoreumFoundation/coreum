@@ -222,12 +222,12 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	// Send tokens
-	receiver := chain.GenAccount()
+	recipient := chain.GenAccount()
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
 			Amount:    "5000",
 			Denom:     chain.NetworkConfig.Denom,
-			Recipient: receiver.String(),
+			Recipient: recipient.String(),
 		},
 	})
 	requireT.NoError(err)
@@ -241,7 +241,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 
 	bankSend := &banktypes.MsgSend{
 		FromAddress: admin.String(),
-		ToAddress:   receiver.String(),
+		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.NewInt(1000))),
 	}
 

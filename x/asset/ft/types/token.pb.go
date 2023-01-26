@@ -25,7 +25,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Feature defines possible features of fungible token
+// Feature defines possible features of fungible token.
 type Feature int32
 
 const (
