@@ -19,17 +19,17 @@ import (
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
-	ClientContext    tx.ClientContext
-	NetworkConfig    config.NetworkConfig
-	DeterministicGas deterministicgas.Config
+	ClientContext          tx.ClientContext
+	NetworkConfig          config.NetworkConfig
+	DeterministicGasConfig deterministicgas.Config
 }
 
 // NewChainContext returns a new instance if the ChainContext.
 func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig) ChainContext {
 	return ChainContext{
-		ClientContext:    clientCtx,
-		NetworkConfig:    networkCfg,
-		DeterministicGas: deterministicgas.DefaultConfig(),
+		ClientContext:          clientCtx,
+		NetworkConfig:          networkCfg,
+		DeterministicGasConfig: deterministicgas.DefaultConfig(),
 	}
 }
 
@@ -92,11 +92,11 @@ func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
 func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64
 	for _, msg := range msgs {
-		msgGas, exists := c.DeterministicGas.GasRequiredByMessage(msg)
+		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
-		totalGasRequired += msgGas + c.DeterministicGas.FixedGas
+		totalGasRequired += msgGas + c.DeterministicGasConfig.FixedGas
 	}
 
 	return totalGasRequired
@@ -107,14 +107,14 @@ func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 func (c ChainContext) GasLimitByMultiSendMsgs(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64
 	for _, msg := range msgs {
-		msgGas, exists := c.DeterministicGas.GasRequiredByMessage(msg)
+		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
 		totalGasRequired += msgGas
 	}
 
-	return totalGasRequired + c.DeterministicGas.FixedGas
+	return totalGasRequired + c.DeterministicGasConfig.FixedGas
 }
 
 // BalancesOptions is the input type for the ComputeNeededBalanceFromOptions.
