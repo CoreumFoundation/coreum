@@ -1685,7 +1685,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
 
-func assertCoinDistribution(ctx context.Context, clientCtx tx.ClientContext, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
+func assertCoinDistribution(ctx context.Context, clientCtx tx.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	requireT := require.New(t)
 

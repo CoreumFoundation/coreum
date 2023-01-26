@@ -198,7 +198,7 @@ func TestValidateAllGenTxs(t *testing.T) {
 		unsealConfig()
 		n.SetSDKConfig()
 
-		clientCtx := tx.NewClientContext(app.ModuleBasics).WithChainID(string(n.ChainID()))
+		clientCtx := tx.NewContext(tx.DefaultContextConfig(), app.ModuleBasics).WithChainID(string(n.ChainID()))
 
 		// Check real n txs.
 		for _, rawTx := range n.GenTxs() {
@@ -214,7 +214,7 @@ func TestValidateAllGenTxs(t *testing.T) {
 // Original code was significantly refactored & simplified to cover our use-case.
 // Note that this func handles only genesis txs signature validation because of
 // hardcoded account number & sequence to avoid real network requests.
-func validateGenesisTxSignature(clientCtx tx.ClientContext, tx sdk.Tx) error {
+func validateGenesisTxSignature(clientCtx tx.Context, tx sdk.Tx) error {
 	signedTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
 		return errors.New("failed to convert Tx to SigVerifiableTx")

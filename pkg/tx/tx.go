@@ -1,5 +1,9 @@
 package tx
 
+// This file contains helper functions used to prepare and broadcast transactions.
+// Blocking broadcast was reimplemented to use polling instead of subscription to eliminate the case when
+// transaction execution is missed due to broken websocket connection.
+
 import (
 	"context"
 	"encoding/hex"
@@ -40,7 +44,7 @@ var Sign = tx.Sign
 // the main idea is to add context.Context to the signature and use it
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 // TODO: add test to check if client respects ctx.
-func BroadcastTx(ctx context.Context, clientCtx ClientContext, txf Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
+func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
 		return nil, err
@@ -93,7 +97,7 @@ func BroadcastTx(ctx context.Context, clientCtx ClientContext, txf Factory, msgs
 
 // CalculateGas simulates the execution of a transaction and returns the
 // simulation response obtained by the query and the adjusted gas amount.
-func CalculateGas(ctx context.Context, clientCtx ClientContext, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
+func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
 	txBytes, err := tx.BuildSimTx(txf, msgs...)
 	if err != nil {
 		return nil, 0, err
@@ -115,7 +119,7 @@ func CalculateGas(ctx context.Context, clientCtx ClientContext, txf Factory, msg
 }
 
 // BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
-func BroadcastRawTx(ctx context.Context, clientCtx ClientContext, txBytes []byte) (*sdk.TxResponse, error) {
+func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
 	// broadcast to a Tendermint node
 	switch clientCtx.BroadcastMode() {
 	case flags.BroadcastSync:
@@ -147,7 +151,7 @@ func BroadcastRawTx(ctx context.Context, clientCtx ClientContext, txBytes []byte
 }
 
 // broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block
-func broadcastTxCommit(ctx context.Context, clientCtx ClientContext, encodedTx []byte) (*sdk.TxResponse, error) {
+func broadcastTxCommit(ctx context.Context, clientCtx Context, encodedTx []byte) (*sdk.TxResponse, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.RequestTimeout)
 	defer cancel()
 
@@ -174,7 +178,7 @@ func broadcastTxCommit(ctx context.Context, clientCtx ClientContext, encodedTx [
 	return sdk.NewResponseResultTx(awaitRes, nil, ""), nil
 }
 
-func prepareFactory(ctx context.Context, clientCtx ClientContext, txf tx.Factory) (tx.Factory, error) {
+func prepareFactory(ctx context.Context, clientCtx Context, txf tx.Factory) (tx.Factory, error) {
 	if txf.AccountNumber() == 0 && txf.Sequence() == 0 {
 		acc, err := GetAccountInfo(ctx, clientCtx, clientCtx.FromAddress())
 		if err != nil {
@@ -191,7 +195,7 @@ func prepareFactory(ctx context.Context, clientCtx ClientContext, txf tx.Factory
 // GetAccountInfo returns account number and account sequence for provided address
 func GetAccountInfo(
 	ctx context.Context,
-	clientCtx ClientContext,
+	clientCtx Context,
 	address sdk.AccAddress,
 ) (authtypes.AccountI, error) {
 	req := &authtypes.QueryAccountRequest{
@@ -214,7 +218,7 @@ func GetAccountInfo(
 // AwaitTx awaits until a signed transaction is included in a block, returning the result.
 func AwaitTx(
 	ctx context.Context,
-	clientCtx ClientContext,
+	clientCtx Context,
 	txHash string,
 ) (resultTx *coretypes.ResultTx, err error) {
 	txHashBytes, err := hex.DecodeString(txHash)
@@ -255,7 +259,7 @@ func AwaitTx(
 // AwaitNextBlocks waits for next blocks.
 func AwaitNextBlocks(
 	ctx context.Context,
-	clientCtx ClientContext,
+	clientCtx Context,
 	nextBlocks int64,
 ) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TxNextBlocksTimeout)
@@ -288,7 +292,7 @@ func AwaitNextBlocks(
 // GetGasPrice returns the current gas price of the chain
 func GetGasPrice(
 	ctx context.Context,
-	clientCtx ClientContext,
+	clientCtx Context,
 ) (sdk.DecCoin, error) {
 	feeQueryClient := feemodeltypes.NewQueryClient(clientCtx)
 	res, err := feeQueryClient.MinGasPrice(ctx, &feemodeltypes.QueryMinGasPriceRequest{})

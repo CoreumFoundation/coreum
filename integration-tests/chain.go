@@ -18,12 +18,12 @@ import (
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
-	ClientContext tx.ClientContext
+	ClientContext tx.Context
 	NetworkConfig config.NetworkConfig
 }
 
 // NewChainContext returns a new instance if the ChainContext.
-func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig) ChainContext {
+func NewChainContext(clientCtx tx.Context, networkCfg config.NetworkConfig) ChainContext {
 	return ChainContext{
 		ClientContext: clientCtx,
 		NetworkConfig: networkCfg,
@@ -174,7 +174,7 @@ func NewChain(cfg ChainConfig) Chain {
 	if err != nil {
 		panic(err)
 	}
-	clientCtx := tx.NewClientContext(app.ModuleBasics).
+	clientCtx := tx.NewContext(tx.DefaultContextConfig(), app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
 		WithClient(rpcClient).
 		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).

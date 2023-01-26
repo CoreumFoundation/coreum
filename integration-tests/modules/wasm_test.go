@@ -608,7 +608,7 @@ func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, er
 
 func incrementAndVerify(
 	ctx context.Context,
-	clientCtx tx.ClientContext,
+	clientCtx tx.Context,
 	txf tx.Factory,
 	contractAddr string,
 	requireT *require.Assertions,
@@ -649,7 +649,7 @@ type instantiateConfig struct {
 }
 
 // deployAndInstantiateWASMContract deploys, instantiateWASMContract the wasm contract and returns its address.
-func deployAndInstantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte, initConfig instantiateConfig) (string, uint64, error) {
+func deployAndInstantiateWASMContract(ctx context.Context, clientCtx tx.Context, txf tx.Factory, wasmData []byte, initConfig instantiateConfig) (string, uint64, error) {
 	codeID, err := deployWASMContract(ctx, clientCtx, txf, wasmData)
 	if err != nil {
 		return "", 0, err
@@ -665,7 +665,7 @@ func deployAndInstantiateWASMContract(ctx context.Context, clientCtx tx.ClientCo
 }
 
 // executeWASMContract executes the wasm contract with the payload and optionally funding amount.
-func executeWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
+func executeWASMContract(ctx context.Context, clientCtx tx.Context, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
 	funds := sdk.NewCoins()
 	if !fundAmt.Amount.IsNil() {
 		funds = funds.Add(fundAmt)
@@ -689,7 +689,7 @@ func executeWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx
 }
 
 // queryWASMContract queries the contract with the requested payload.
-func queryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
+func queryWASMContract(ctx context.Context, clientCtx tx.Context, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
 	query := &wasmtypes.QuerySmartContractStateRequest{
 		Address:   contractAddr,
 		QueryData: wasmtypes.RawContractMessage(payload),
@@ -705,7 +705,7 @@ func queryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contract
 }
 
 // isWASMContractPinned returns true if smart contract is pinned
-func isWASMContractPinned(ctx context.Context, clientCtx tx.ClientContext, codeID uint64) (bool, error) {
+func isWASMContractPinned(ctx context.Context, clientCtx tx.Context, codeID uint64) (bool, error) {
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})
 	if err != nil {
@@ -720,7 +720,7 @@ func isWASMContractPinned(ctx context.Context, clientCtx tx.ClientContext, codeI
 }
 
 // deploys the wasm contract and returns its codeID.
-func deployWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte) (uint64, error) {
+func deployWASMContract(ctx context.Context, clientCtx tx.Context, txf tx.Factory, wasmData []byte) (uint64, error) {
 	msgStoreCode := &wasmtypes.MsgStoreCode{
 		Sender:       clientCtx.FromAddress().String(),
 		WASMByteCode: wasmData,
@@ -743,7 +743,7 @@ func deployWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.
 }
 
 // instantiates the contract and returns the contract address.
-func instantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, req instantiateConfig) (string, error) {
+func instantiateWASMContract(ctx context.Context, clientCtx tx.Context, txf tx.Factory, req instantiateConfig) (string, error) {
 	funds := sdk.NewCoins()
 	if amount := req.amount; !amount.Amount.IsNil() {
 		funds = funds.Add(amount)
