@@ -75,6 +75,8 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 type Context struct {
 	config    ContextConfig
 	clientCtx client.Context
+
+	gasPriceAdjustment sdk.Dec
 }
 
 // ChainID returns chain ID.
@@ -85,6 +87,17 @@ func (c Context) ChainID() string {
 // WithChainID returns a copy of the context with an updated chain ID.
 func (c Context) WithChainID(chainID string) Context {
 	c.clientCtx = c.clientCtx.WithChainID(chainID)
+	return c
+}
+
+// GasPriceAdjustment returns gas price adjustment.
+func (c Context) GasPriceAdjustment() sdk.Dec {
+	return c.gasPriceAdjustment
+}
+
+// WithGasPriceAdjustment returns a copy of the context with an updated gas price adjustment.
+func (c Context) WithGasPriceAdjustment(gasPriceAdjustment sdk.Dec) Context {
+	c.gasPriceAdjustment = gasPriceAdjustment
 	return c
 }
 

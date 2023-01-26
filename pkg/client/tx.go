@@ -38,6 +38,8 @@ type Factory = tx.Factory
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 var Sign = tx.Sign
 
+var defaultGasPriceAdjustment = sdk.MustNewDecFromStr("1.1")
+
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
 // NOTE: copied from the link below and made some changes.
@@ -55,6 +57,11 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 		if err != nil {
 			return nil, err
 		}
+		gasPriceAdjustment := clientCtx.GasPriceAdjustment()
+		if gasPriceAdjustment.IsNil() {
+			gasPriceAdjustment = defaultGasPriceAdjustment
+		}
+		gasPrice.Amount.Mul(gasPriceAdjustment)
 		txf = txf.WithGasPrices(gasPrice.String())
 
 		_, adjusted, err := CalculateGas(ctx, clientCtx, txf, msgs...)
