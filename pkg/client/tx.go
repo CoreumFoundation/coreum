@@ -1,4 +1,4 @@
-package tx
+package client
 
 // This file contains helper functions used to prepare and broadcast transactions.
 // Blocking broadcast was reimplemented to use polling instead of subscription to eliminate the case when

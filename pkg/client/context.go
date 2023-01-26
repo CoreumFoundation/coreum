@@ -1,4 +1,4 @@
-package tx
+package client
 
 // `Context` structure in this file is a wrapper around client context delivered by Cosmos SDK.
 // The original code does not respect cancelable `ctx`, leading to situations when dead HTTP connection

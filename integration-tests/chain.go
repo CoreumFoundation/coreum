@@ -12,18 +12,18 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
-	ClientContext tx.Context
+	ClientContext client.Context
 	NetworkConfig config.NetworkConfig
 }
 
 // NewChainContext returns a new instance if the ChainContext.
-func NewChainContext(clientCtx tx.Context, networkCfg config.NetworkConfig) ChainContext {
+func NewChainContext(clientCtx client.Context, networkCfg config.NetworkConfig) ChainContext {
 	return ChainContext{
 		ClientContext: clientCtx,
 		NetworkConfig: networkCfg,
@@ -66,8 +66,8 @@ func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 }
 
 // TxFactory returns factory with present values for the Chain.
-func (c ChainContext) TxFactory() tx.Factory {
-	return tx.Factory{}.
+func (c ChainContext) TxFactory() client.Factory {
+	return client.Factory{}.
 		WithKeybase(c.ClientContext.Keyring()).
 		WithChainID(string(c.NetworkConfig.ChainID)).
 		WithTxConfig(c.ClientContext.TxConfig()).
@@ -174,7 +174,7 @@ func NewChain(cfg ChainConfig) Chain {
 	if err != nil {
 		panic(err)
 	}
-	clientCtx := tx.NewContext(tx.DefaultContextConfig(), app.ModuleBasics).
+	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
 		WithClient(rpcClient).
 		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
