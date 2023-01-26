@@ -1,7 +1,9 @@
 package config_test
 
 import (
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -10,6 +12,7 @@ import (
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -207,6 +210,71 @@ func TestValidateAllGenTxs(t *testing.T) {
 
 			assert.NoError(t, validateGenesisTxSignature(clientCtx, sdkTx))
 		}
+	}
+}
+
+func TestGenesisHash(t *testing.T) {
+	tests := []struct {
+		name     string
+		chainID  constant.ChainID
+		wantHash string
+	}{
+		{
+			name:     "testnet",
+			chainID:  constant.ChainIDTest,
+			wantHash: "12273f3e0bc97e848cccdc67225a3d7c54c42243d6ec7f01a7bcfc4ede63cacd",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := config.NetworkByChainID(tt.chainID)
+			require.NoError(t, err)
+
+			unsealConfig()
+			n.SetSDKConfig()
+			genesisDoc, err := n.EncodeGenesis()
+			require.NoError(t, err)
+			require.Equal(t, tt.wantHash, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)))
+		})
+	}
+}
+
+func TestGenesisCoreTotalSupply(t *testing.T) {
+	tests := []struct {
+		name       string
+		chainID    constant.ChainID
+		wantSupply sdk.Coin
+	}{
+		{
+			name:       "testnet",
+			chainID:    constant.ChainIDTest,
+			wantSupply: sdk.NewCoin(constant.DenomTest, sdk.NewInt(500_000_000_000_000)),
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := config.NetworkByChainID(tt.chainID)
+			require.NoError(t, err)
+
+			unsealConfig()
+			n.SetSDKConfig()
+			genesisDoc, err := n.GenesisDoc()
+			require.NoError(t, err)
+
+			var appStateMapJSONRawMessage map[string]json.RawMessage
+			err = json.Unmarshal(genesisDoc.AppState, &appStateMapJSONRawMessage)
+			require.NoError(t, err)
+
+			bankGenesis, ok := appStateMapJSONRawMessage[banktypes.ModuleName]
+			require.True(t, ok)
+
+			var bankGenesisState banktypes.GenesisState
+			err = json.Unmarshal(bankGenesis, &bankGenesisState)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSupply.Amount.String(), bankGenesisState.Supply.AmountOf(tt.wantSupply.Denom).String())
+		})
 	}
 }
 
