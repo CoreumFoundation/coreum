@@ -4,18 +4,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
 
 // SetInfiniteGasMeterDecorator sets the infinite gas limit for ante handler
 // CONTRACT: Must be the first decorator in the chain.
 // CONTRACT: Tx must implement GasTx interface.
 type SetInfiniteGasMeterDecorator struct {
-	deterministicGasRequirements config.DeterministicGasRequirements
+	deterministicGasRequirements deterministicgas.Config
 }
 
 // NewSetInfiniteGasMeterDecorator creates new SetInfiniteGasMeterDecorator.
-func NewSetInfiniteGasMeterDecorator(deterministicGasRequirements config.DeterministicGasRequirements) SetInfiniteGasMeterDecorator {
+func NewSetInfiniteGasMeterDecorator(deterministicGasRequirements deterministicgas.Config) SetInfiniteGasMeterDecorator {
 	return SetInfiniteGasMeterDecorator{
 		deterministicGasRequirements: deterministicGasRequirements,
 	}
@@ -35,11 +35,11 @@ func (sigmd SetInfiniteGasMeterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx,
 // CONTRACT: Tx must implement GasTx interface.
 type AddBaseGasDecorator struct {
 	ak                           authante.AccountKeeper
-	deterministicGasRequirements config.DeterministicGasRequirements
+	deterministicGasRequirements deterministicgas.Config
 }
 
 // NewAddBaseGasDecorator creates new AddBaseGasDecorator.
-func NewAddBaseGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements config.DeterministicGasRequirements) AddBaseGasDecorator {
+func NewAddBaseGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements deterministicgas.Config) AddBaseGasDecorator {
 	return AddBaseGasDecorator{
 		ak:                           ak,
 		deterministicGasRequirements: deterministicGasRequirements,
@@ -68,11 +68,11 @@ func (abgd AddBaseGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 // CONTRACT: Tx must implement GasTx interface.
 type ChargeFixedGasDecorator struct {
 	ak                           authante.AccountKeeper
-	deterministicGasRequirements config.DeterministicGasRequirements
+	deterministicGasRequirements deterministicgas.Config
 }
 
 // NewChargeFixedGasDecorator creates new ChargeFixedGasDecorator.
-func NewChargeFixedGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements config.DeterministicGasRequirements) ChargeFixedGasDecorator {
+func NewChargeFixedGasDecorator(ak authante.AccountKeeper, deterministicGasRequirements deterministicgas.Config) ChargeFixedGasDecorator {
 	return ChargeFixedGasDecorator{
 		ak:                           ak,
 		deterministicGasRequirements: deterministicGasRequirements,

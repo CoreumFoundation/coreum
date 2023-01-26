@@ -1,4 +1,4 @@
-package config
+package deterministicgas
 
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -22,10 +22,10 @@ import (
 
 type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
 
-// DeterministicGasRequirements specifies gas required by all transaction types
+// Config specifies gas required by all transaction types
 // Crisis module is intentionally skipped here because it is already deterministic by design and fee is specified
 // using `consume_fee` param in genesis.
-type DeterministicGasRequirements struct {
+type Config struct {
 	FixedGas uint64
 
 	freeBytes      uint64
@@ -34,9 +34,9 @@ type DeterministicGasRequirements struct {
 	gasByMsg map[string]gasByMsgFunc
 }
 
-// DefaultDeterministicGasRequirements returns default config for deterministic gas.
-func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
-	dgr := DeterministicGasRequirements{
+// DefaultConfig returns default config for deterministic gas.
+func DefaultConfig() Config {
+	dgr := Config{
 		FixedGas:       50000,
 		freeBytes:      2048,
 		freeSignatures: 1,
@@ -133,13 +133,13 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 
 // TxBaseGas is the free gas we give to every transaction to cover costs of
 // tx size and signature verification. TxBaseGas is covered by FixedGas.
-func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint64 {
+func (dgr Config) TxBaseGas(params authtypes.Params) uint64 {
 	return dgr.freeBytes*params.TxSizeCostPerByte + dgr.freeSignatures*params.SigVerifyCostSecp256k1
 }
 
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
 // Function returns 0 and false if message is undeterministic or unknown.
-func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
+func (dgr Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
 	gasFunc, ok := dgr.gasByMsg[MsgType(msg)]
 	if ok {
 		return gasFunc(msg)
@@ -159,9 +159,9 @@ func MsgType(msg sdk.Msg) string {
 	return sdk.MsgTypeURL(msg)
 }
 
-// NOTE: we need to pass DeterministicGasRequirements by pointer here because
+// NOTE: we need to pass Config by pointer here because
 // it needs to be initialized later map with all msg types inside to estimate gas recursively.
-func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
+func (dgr *Config) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgExec)
 		if !ok {
@@ -184,7 +184,7 @@ func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhea
 	}
 }
 
-func registerUndeterministicGasFuncs(dgr *DeterministicGasRequirements, msgs []sdk.Msg) {
+func registerUndeterministicGasFuncs(dgr *Config, msgs []sdk.Msg) {
 	for _, msg := range msgs {
 		dgr.gasByMsg[MsgType(msg)] = underministicGasFunc()
 	}

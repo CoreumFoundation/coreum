@@ -1,4 +1,4 @@
-package config_test
+package deterministicgas_test
 
 import (
 	"reflect"
@@ -12,8 +12,8 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/CoreumFoundation/coreum/pkg/config"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
 
 // To access private variable from github.com/gogo/protobuf we link it to local variable.
@@ -113,7 +113,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 		"/cosmwasm.wasm.v1.MsgIBCSend",
 	}
 
-	dgr := config.DefaultDeterministicGasRequirements()
+	dgr := deterministicgas.DefaultConfig()
 
 	var determMsgs []sdk.Msg
 	var undetermMsgs []sdk.Msg
@@ -125,14 +125,14 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 
 		// Skip unknow messages.
 		if lo.ContainsBy(ignoredMsgTypes, func(msgType string) bool {
-			return config.MsgType(sdkMsg) == msgType
+			return deterministicgas.MsgType(sdkMsg) == msgType
 		}) {
 			continue
 		}
 
 		// Add message to undeterministic.
 		if lo.ContainsBy(undetermMsgTypes, func(msgType string) bool {
-			return config.MsgType(sdkMsg) == msgType
+			return deterministicgas.MsgType(sdkMsg) == msgType
 		}) {
 			undetermMsgs = append(undetermMsgs, sdkMsg)
 			continue
@@ -150,7 +150,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg
-		t.Run("deterministic: "+config.MsgType(sdkMsg), func(t *testing.T) {
+		t.Run("deterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.True(t, ok)
 			assert.Positive(t, gas)
@@ -159,7 +159,7 @@ func TestDeterministicGasRequirements_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range undetermMsgs {
 		sdkMsg := sdkMsg
-		t.Run("undeterministic: "+config.MsgType(sdkMsg), func(t *testing.T) {
+		t.Run("undeterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := dgr.GasRequiredByMessage(sdkMsg)
 			assert.False(t, ok)
 			assert.Zero(t, gas)
@@ -179,7 +179,7 @@ func TestDeterministicGasRequirements_GasRequiredByMessage(t *testing.T) {
 		authzMsgExecOverhead     = 2000
 	)
 
-	dgr := config.DefaultDeterministicGasRequirements()
+	dgr := deterministicgas.DefaultConfig()
 
 	tests := []struct {
 		name                    string
