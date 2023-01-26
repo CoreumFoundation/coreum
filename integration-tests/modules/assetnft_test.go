@@ -110,8 +110,10 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        data,
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_burning,         //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_disable_sending, //nolint:nosnakecase // generated variable
 		},
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}
 	res, err := tx.BroadcastTx(
 		ctx,
@@ -135,8 +137,10 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URI:         issueMsg.URI,
 		URIHash:     issueMsg.URIHash,
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_burning,         //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_disable_sending, //nolint:nosnakecase // generated variable
 		},
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}, issuedEvent)
 
 	// query nft asset with features
@@ -155,8 +159,10 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     issueMsg.URIHash,
 		Data:        dataToCompare,
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_burning,         //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_disable_sending, //nolint:nosnakecase // generated variable
 		},
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}, assetNftClassRes.Class)
 
 	var data2 assetnfttypes.DataBytes

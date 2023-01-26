@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -32,6 +33,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 			Features: []types.ClassFeature{
 				types.ClassFeature_burning, //nolint:nosnakecase // proto enum
 			},
+			RoyaltyRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", (i+1)%10)),
 		}
 		classDefinitions = append(classDefinitions, classDefinition)
 	}

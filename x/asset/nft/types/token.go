@@ -33,6 +33,7 @@ type IssueClassSettings struct {
 	URIHash     string
 	Data        *codectypes.Any
 	Features    []ClassFeature
+	RoyaltyRate sdk.Dec
 }
 
 // MintSettings is the model which represents the params for the non-fungible token minting.
