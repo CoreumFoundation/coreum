@@ -10,22 +10,22 @@ import (
 	"github.com/gogo/protobuf/proto"
 	googlegrpc "google.golang.org/grpc"
 
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
 
 const fuseGasMultiplier = 5
 
 // NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types.
-func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasRequirements config.DeterministicGasRequirements) sdk.Router {
+func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasConfig deterministicgas.Config) sdk.Router {
 	return &deterministicGasRouter{
-		baseRouter:                   baseRouter,
-		deterministicGasRequirements: deterministicGasRequirements,
+		baseRouter:             baseRouter,
+		deterministicGasConfig: deterministicGasConfig,
 	}
 }
 
 type deterministicGasRouter struct {
-	baseRouter                   sdk.Router
-	deterministicGasRequirements config.DeterministicGasRequirements
+	baseRouter             sdk.Router
+	deterministicGasConfig deterministicgas.Config
 }
 
 func (r *deterministicGasRouter) AddRoute(route sdk.Route) sdk.Router {
@@ -39,22 +39,22 @@ func (r *deterministicGasRouter) Route(ctx sdk.Context, path string) sdk.Handler
 
 func (r *deterministicGasRouter) handler(baseHandler sdk.Handler) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		ctx, _, _ = ctxForDeterministicGas(ctx, msg, r.deterministicGasRequirements)
+		ctx, _, _ = ctxForDeterministicGas(ctx, msg, r.deterministicGasConfig)
 		return baseHandler(ctx, msg)
 	}
 }
 
 // NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for defined message types.
-func NewDeterministicMsgServer(baseServer grpc.Server, deterministicGasRequirements config.DeterministicGasRequirements) grpc.Server {
+func NewDeterministicMsgServer(baseServer grpc.Server, deterministicGasConfig deterministicgas.Config) grpc.Server {
 	return &deterministicMsgServer{
-		baseServer:                   baseServer,
-		deterministicGasRequirements: deterministicGasRequirements,
+		baseServer:             baseServer,
+		deterministicGasConfig: deterministicGasConfig,
 	}
 }
 
 type deterministicMsgServer struct {
-	baseServer                   grpc.Server
-	deterministicGasRequirements config.DeterministicGasRequirements
+	baseServer             grpc.Server
+	deterministicGasConfig deterministicgas.Config
 }
 
 func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, handler interface{}) {
@@ -92,7 +92,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 				return interceptor(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
 					sdkCtx := sdk.UnwrapSDKContext(ctx)
 					msg := req.(sdk.Msg)
-					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, msg, s.deterministicGasRequirements)
+					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, msg, s.deterministicGasConfig)
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
 					// gas metrics are reported only if message type is deterministic, and was successful
@@ -112,8 +112,8 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 	s.baseServer.RegisterService(sd, handler)
 }
 
-func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasRequirements config.DeterministicGasRequirements) (sdk.Context, sdk.Gas, bool) {
-	gasRequired, exists := deterministicGasRequirements.GasRequiredByMessage(msg)
+func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasConfig deterministicgas.Config) (sdk.Context, sdk.Gas, bool) {
+	gasRequired, exists := deterministicGasConfig.GasRequiredByMessage(msg)
 	gasBefore := ctx.GasMeter().GasConsumed()
 	if exists {
 		// Fixed gas is consumed on original gas meter to require and report deterministic gas amount

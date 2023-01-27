@@ -1,4 +1,4 @@
-package config
+package deterministicgas
 
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -22,10 +22,10 @@ import (
 
 type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
 
-// DeterministicGasRequirements specifies gas required by all transaction types
+// Config specifies gas required by all transaction types
 // Crisis module is intentionally skipped here because it is already deterministic by design and fee is specified
 // using `consume_fee` param in genesis.
-type DeterministicGasRequirements struct {
+type Config struct {
 	FixedGas uint64
 
 	freeBytes      uint64
@@ -34,15 +34,15 @@ type DeterministicGasRequirements struct {
 	gasByMsg map[string]gasByMsgFunc
 }
 
-// DefaultDeterministicGasRequirements returns default config for deterministic gas.
-func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
-	dgr := DeterministicGasRequirements{
+// DefaultConfig returns default config for deterministic gas.
+func DefaultConfig() Config {
+	cfg := Config{
 		FixedGas:       50000,
 		freeBytes:      2048,
 		freeSignatures: 1,
 	}
 
-	dgr.gasByMsg = map[string]gasByMsgFunc{
+	cfg.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
 		MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
 		MsgType(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
@@ -61,7 +61,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgType(&assetnfttypes.MsgUnfreeze{}):   constantGasFunc(5000),
 
 		// authz
-		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
+		MsgType(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(2000),
 		MsgType(&authz.MsgGrant{}):  constantGasFunc(7000),
 		MsgType(&authz.MsgRevoke{}): constantGasFunc(2500),
 
@@ -104,7 +104,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 	}
 
 	registerUndeterministicGasFuncs(
-		&dgr,
+		&cfg,
 		[]sdk.Msg{
 			// crisis
 			// MsgVerifyInvariant is defined as undeterministic since fee
@@ -128,19 +128,19 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		},
 	)
 
-	return dgr
+	return cfg
 }
 
 // TxBaseGas is the free gas we give to every transaction to cover costs of
 // tx size and signature verification. TxBaseGas is covered by FixedGas.
-func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint64 {
-	return dgr.freeBytes*params.TxSizeCostPerByte + dgr.freeSignatures*params.SigVerifyCostSecp256k1
+func (cfg Config) TxBaseGas(params authtypes.Params) uint64 {
+	return cfg.freeBytes*params.TxSizeCostPerByte + cfg.freeSignatures*params.SigVerifyCostSecp256k1
 }
 
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
 // Function returns 0 and false if message is undeterministic or unknown.
-func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
-	gasFunc, ok := dgr.gasByMsg[MsgType(msg)]
+func (cfg Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
+	gasFunc, ok := cfg.gasByMsg[MsgType(msg)]
 	if ok {
 		return gasFunc(msg)
 	}
@@ -159,9 +159,9 @@ func MsgType(msg sdk.Msg) string {
 	return sdk.MsgTypeURL(msg)
 }
 
-// NOTE: we need to pass DeterministicGasRequirements by pointer here because
+// NOTE: we need to pass Config by pointer here because
 // it needs to be initialized later map with all msg types inside to estimate gas recursively.
-func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
+func (cfg *Config) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgExec)
 		if !ok {
@@ -174,7 +174,7 @@ func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhea
 			return 0, false
 		}
 		for _, childMsg := range childMsgs {
-			gas, isDeterministic := dgr.GasRequiredByMessage(childMsg)
+			gas, isDeterministic := cfg.GasRequiredByMessage(childMsg)
 			if !isDeterministic {
 				return 0, false
 			}
@@ -184,9 +184,9 @@ func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhea
 	}
 }
 
-func registerUndeterministicGasFuncs(dgr *DeterministicGasRequirements, msgs []sdk.Msg) {
+func registerUndeterministicGasFuncs(cfg *Config, msgs []sdk.Msg) {
 	for _, msg := range msgs {
-		dgr.gasByMsg[MsgType(msg)] = underministicGasFunc()
+		cfg.gasByMsg[MsgType(msg)] = underministicGasFunc()
 	}
 }
 

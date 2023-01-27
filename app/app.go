@@ -100,6 +100,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/customparams"
 	customparamskeeper "github.com/CoreumFoundation/coreum/x/customparams/keeper"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/x/deterministicgas/types"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/x/feemodel/keeper"
@@ -266,6 +267,7 @@ func New(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
+	deterministicGasConfig := deterministicgas.DefaultConfig()
 	appCodec := encodingConfig.Codec
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
@@ -274,7 +276,7 @@ func New(
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
-	bApp.SetRouter(deterministicgastypes.NewDeterministicGasRouter(bApp.Router(), ChosenNetwork.DeterministicGas()))
+	bApp.SetRouter(deterministicgastypes.NewDeterministicGasRouter(bApp.Router(), deterministicGasConfig))
 
 	keys := sdk.NewKVStoreKeys(
 		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey, stakingtypes.StoreKey,
@@ -577,7 +579,7 @@ func New(
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	app.mm.RegisterServices(module.NewConfigurator(app.appCodec,
-		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), ChosenNetwork.DeterministicGas()), app.GRPCQueryRouter()))
+		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig), app.GRPCQueryRouter()))
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	app.sm = module.NewSimulationManager(
@@ -611,13 +613,13 @@ func New(
 
 	anteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
-			DeterministicGasRequirements: ChosenNetwork.DeterministicGas(),
-			AccountKeeper:                app.AccountKeeper,
-			BankKeeper:                   app.BankKeeper,
-			SignModeHandler:              encodingConfig.TxConfig.SignModeHandler(),
-			FeegrantKeeper:               app.FeeGrantKeeper,
-			FeeModelKeeper:               app.FeeModelKeeper,
-			WasmTXCounterStoreKey:        keys[wasm.StoreKey],
+			DeterministicGasConfig: deterministicGasConfig,
+			AccountKeeper:          app.AccountKeeper,
+			BankKeeper:             app.BankKeeper,
+			SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
+			FeegrantKeeper:         app.FeeGrantKeeper,
+			FeeModelKeeper:         app.FeeModelKeeper,
+			WasmTXCounterStoreKey:  keys[wasm.StoreKey],
 		},
 	)
 	if err != nil {

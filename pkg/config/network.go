@@ -52,8 +52,7 @@ func init() {
 	// common vars
 	var (
 		feeConfig = FeeConfig{
-			FeeModel:         feemodeltypes.DefaultModel(),
-			DeterministicGas: DefaultDeterministicGasRequirements(),
+			FeeModel: feemodeltypes.DefaultModel(),
 		}
 
 		govConfig = GovConfig{
@@ -277,8 +276,7 @@ func EnabledNetworks() []Network {
 
 // FeeConfig is the part of network config defining parameters of our fee model.
 type FeeConfig struct {
-	FeeModel         feemodeltypes.Model
-	DeterministicGas DeterministicGasRequirements
+	FeeModel feemodeltypes.Model
 }
 
 // GovConfig contains gov module configs.
@@ -598,11 +596,6 @@ func (n Network) FeeModel() feemodeltypes.Model {
 // IsFakeUpgradeHandlerEnabled enables temporary fake upgrade handler until we have real one.
 func (n Network) IsFakeUpgradeHandlerEnabled() bool {
 	return n.enableFakeUpgradeHandler
-}
-
-// DeterministicGas returns deterministic gas amounts required by some message types.
-func (n Network) DeterministicGas() DeterministicGasRequirements {
-	return n.fee.DeterministicGas
 }
 
 // NetworkConfigByChainID returns predefined NetworkConfig for a ChainID.
