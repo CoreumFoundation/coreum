@@ -381,7 +381,7 @@ type QueryClient interface {
 	Class(ctx context.Context, in *QueryClassRequest, opts ...grpc.CallOption) (*QueryClassResponse, error)
 	// Frozen queries to check if an NFT is frozen or not.
 	Frozen(ctx context.Context, in *QueryFrozenRequest, opts ...grpc.CallOption) (*QueryFrozenResponse, error)
-	// Whitelisted queries to check if an account is whitelited or not
+	// Whitelisted queries to check if an account is whitelited to hold an NFT or not.
 	Whitelisted(ctx context.Context, in *QueryWhitelistedRequest, opts ...grpc.CallOption) (*QueryWhitelistedResponse, error)
 }
 
@@ -426,7 +426,7 @@ type QueryServer interface {
 	Class(context.Context, *QueryClassRequest) (*QueryClassResponse, error)
 	// Frozen queries to check if an NFT is frozen or not.
 	Frozen(context.Context, *QueryFrozenRequest) (*QueryFrozenResponse, error)
-	// Whitelisted queries to check if an account is whitelited or not
+	// Whitelisted queries to check if an account is whitelited to hold an NFT or not.
 	Whitelisted(context.Context, *QueryWhitelistedRequest) (*QueryWhitelistedResponse, error)
 }
 

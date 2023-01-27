@@ -142,12 +142,12 @@ func TestCmdWhitelist(t *testing.T) {
 	requireT.NoError(err)
 
 	// query whitelisted
-	var frozenResp types.QueryWhitelistedResponse
+	var whitelistedResp types.QueryWhitelistedResponse
 	args = []string{classID, nftID, account.String()}
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelisted(), args)
 	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &frozenResp))
-	requireT.True(frozenResp.Whitelisted)
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &whitelistedResp))
+	requireT.True(whitelistedResp.Whitelisted)
 
 	// unwhitelist
 	args = []string{classID, nftID, account.String()}
@@ -159,8 +159,8 @@ func TestCmdWhitelist(t *testing.T) {
 	args = []string{classID, nftID, account.String()}
 	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelisted(), args)
 	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &frozenResp))
-	requireT.False(frozenResp.Whitelisted)
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &whitelistedResp))
+	requireT.False(whitelistedResp.Whitelisted)
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {

@@ -115,7 +115,7 @@ func CmdQueryWhitelisted() *cobra.Command {
 			fmt.Sprintf(`Query if account is whitelisted for non-fungible token.
 
 Example:
-$ %s query %s frozen [class-id] [id] devcore15nc50svxu8xakdvks2hzd586xs9xmyqu9ws5ta
+$ %s query %s whitelisted [class-id] [id] devcore15nc50svxu8xakdvks2hzd586xs9xmyqu9ws5ta
 `,
 				version.AppName, types.ModuleName,
 			),

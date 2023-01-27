@@ -20,7 +20,7 @@ service Query {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen";
   }
 
-  // Whitelisted queries to check if an account is whitelited or not
+  // Whitelisted queries to check if an account is whitelited to hold an NFT or not.
   rpc Whitelisted (QueryWhitelistedRequest) returns (QueryWhitelistedResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/account/{account}";
   }

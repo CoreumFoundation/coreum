@@ -39,9 +39,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	// Frozen NFTs
-	var frozenNFTs []types.FrozenNFT
+	var frozen []types.FrozenNFT
 	for i := 0; i < 5; i++ {
-		frozenNFTs = append(frozenNFTs, types.FrozenNFT{
+		frozen = append(frozen, types.FrozenNFT{
 			ClassID: fmt.Sprintf("id-%d", i),
 			NftIDs: []string{
 				fmt.Sprintf("id-1-%d", i),
@@ -51,9 +51,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	// Whitelisting
-	var toWhitelist []types.Whitelisted
+	var whitelisted []types.Whitelisted
 	for i := 0; i < 5; i++ {
-		toWhitelist = append(toWhitelist, types.Whitelisted{
+		whitelisted = append(whitelisted, types.Whitelisted{
 			ClassID: fmt.Sprintf("class-id-%d", i),
 			NftID:   fmt.Sprintf("nft-id-%d", i),
 			Accounts: []string{
@@ -67,8 +67,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 	genState := types.GenesisState{
 		Params:           types.DefaultParams(),
 		ClassDefinitions: classDefinitions,
-		FrozenNFTs:       frozenNFTs,
-		Whitelisted:      toWhitelist,
+		FrozenNFTs:       frozen,
+		Whitelisted:      whitelisted,
 	}
 
 	// init the keeper
