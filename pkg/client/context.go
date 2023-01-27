@@ -39,6 +39,12 @@ var protoCodec = encoding.GetCodec(proto.Name)
 
 // ContextConfig stores context config.
 type ContextConfig struct {
+	GasConfig     GasConfig
+	TimeoutConfig TimeoutConfig
+}
+
+// TimeoutConfig is the part of context config holding timeout parameters.
+type TimeoutConfig struct {
 	RequestTimeout           time.Duration
 	TxTimeout                time.Duration
 	TxStatusPollInterval     time.Duration
@@ -46,14 +52,26 @@ type ContextConfig struct {
 	TxNextBlocksPollInterval time.Duration
 }
 
+// GasConfig is the part of context config holding gas parameters.
+type GasConfig struct {
+	GasAdjustment      float64
+	GasPriceAdjustment sdk.Dec
+}
+
 // DefaultContextConfig returns default context config.
 func DefaultContextConfig() ContextConfig {
 	return ContextConfig{
-		RequestTimeout:           10 * time.Second,
-		TxTimeout:                time.Minute,
-		TxStatusPollInterval:     500 * time.Millisecond,
-		TxNextBlocksTimeout:      time.Minute,
-		TxNextBlocksPollInterval: time.Second,
+		GasConfig: GasConfig{
+			GasAdjustment:      1.0,
+			GasPriceAdjustment: sdk.MustNewDecFromStr("1.1"),
+		},
+		TimeoutConfig: TimeoutConfig{
+			RequestTimeout:           10 * time.Second,
+			TxTimeout:                time.Minute,
+			TxStatusPollInterval:     500 * time.Millisecond,
+			TxNextBlocksTimeout:      time.Minute,
+			TxNextBlocksPollInterval: time.Second,
+		},
 	}
 }
 
@@ -75,8 +93,6 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 type Context struct {
 	config    ContextConfig
 	clientCtx client.Context
-
-	gasPriceAdjustment sdk.Dec
 }
 
 // ChainID returns chain ID.
@@ -90,15 +106,14 @@ func (c Context) WithChainID(chainID string) Context {
 	return c
 }
 
-// GasPriceAdjustment returns gas price adjustment.
-func (c Context) GasPriceAdjustment() sdk.Dec {
-	return c.gasPriceAdjustment
+// GasAdjustment returns gas adjustment.
+func (c Context) GasAdjustment() float64 {
+	return c.config.GasConfig.GasAdjustment
 }
 
-// WithGasPriceAdjustment returns a copy of the context with an updated gas price adjustment.
-func (c Context) WithGasPriceAdjustment(gasPriceAdjustment sdk.Dec) Context {
-	c.gasPriceAdjustment = gasPriceAdjustment
-	return c
+// GasPriceAdjustment returns gas price adjustment.
+func (c Context) GasPriceAdjustment() sdk.Dec {
+	return c.config.GasConfig.GasPriceAdjustment
 }
 
 // WithClient returns a copy of the context with an updated RPC client

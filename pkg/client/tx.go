@@ -40,8 +40,6 @@ type Factory = tx.Factory
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
 var Sign = tx.Sign
 
-var defaultGasPriceAdjustment = sdk.MustNewDecFromStr("1.1")
-
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will return an error upon failure.
 // NOTE: copied from the link below and made some changes.
@@ -59,12 +57,7 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 		if err != nil {
 			return nil, err
 		}
-		gasPriceAdjustment := clientCtx.GasPriceAdjustment()
-		if gasPriceAdjustment.IsNil() {
-			gasPriceAdjustment = defaultGasPriceAdjustment
-		}
-		gasPrice.Amount.Mul(gasPriceAdjustment)
-		txf = txf.WithGasPrices(gasPrice.String())
+		txf = txf.WithGasPrices(gasPrice.Amount.Mul(clientCtx.GasPriceAdjustment()).String())
 
 		_, adjusted, err := CalculateGas(ctx, clientCtx, txf, msgs...)
 		if err != nil {
@@ -121,7 +114,7 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 	}
 
 	if txf.GasAdjustment() == 0 {
-		txf = txf.WithGasAdjustment(1.0)
+		txf = txf.WithGasAdjustment(clientCtx.GasAdjustment())
 	}
 
 	return simRes, uint64(txf.GasAdjustment() * float64(simRes.GasInfo.GasUsed)), nil
@@ -161,7 +154,7 @@ func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sd
 
 // broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block.
 func broadcastTxCommit(ctx context.Context, clientCtx Context, encodedTx []byte) (*sdk.TxResponse, error) {
-	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.RequestTimeout)
+	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 	defer cancel()
 
 	txHash := fmt.Sprintf("%X", tmtypes.Tx(encodedTx).Hash())
@@ -235,11 +228,11 @@ func AwaitTx(
 		return nil, errors.Wrap(err, "tx hash is not a valid hex")
 	}
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TxTimeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxTimeout)
 	defer cancel()
 
-	if err = retry.Do(timeoutCtx, clientCtx.config.TxStatusPollInterval, func() error {
-		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.RequestTimeout)
+	if err = retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxStatusPollInterval, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
 		var err error
@@ -271,12 +264,12 @@ func AwaitNextBlocks(
 	clientCtx Context,
 	nextBlocks int64,
 ) error {
-	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TxNextBlocksTimeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxNextBlocksTimeout)
 	defer cancel()
 
 	heightToStart := int64(0)
-	return retry.Do(timeoutCtx, clientCtx.config.TxNextBlocksPollInterval, func() error {
-		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.RequestTimeout)
+	return retry.Do(timeoutCtx, clientCtx.config.TimeoutConfig.TxNextBlocksPollInterval, func() error {
+		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
 		res, err := clientCtx.Client().Status(requestCtx)
