@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 // ********** Transactions **********
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum AssetFTMessages {
+pub enum CoreumMsgs {
     AssetFTMsgIssue {
         symbol: String,
         subunit: String,
@@ -42,13 +42,13 @@ pub enum AssetFTMessages {
     },
 }
 
-impl Into<CosmosMsg<AssetFTMessages>> for AssetFTMessages {
-    fn into(self) -> CosmosMsg<AssetFTMessages> {
+impl Into<CosmosMsg<CoreumMsgs>> for CoreumMsgs {
+    fn into(self) -> CosmosMsg<CoreumMsgs> {
         CosmosMsg::Custom(self)
     }
 }
 
-impl CustomMsg for AssetFTMessages {}
+impl CustomMsg for CoreumMsgs {}
 
 // ********** Queries **********
 
@@ -85,7 +85,7 @@ pub struct AssetFTWhitelistedBalanceResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum AssetFTQueries {
+pub enum CoreumQueries {
     AssetFTQueryToken { denom: String },
     AssetFTQueryFrozenBalance {
         account: String,
@@ -97,4 +97,4 @@ pub enum AssetFTQueries {
     },
 }
 
-impl CustomQuery for AssetFTQueries {}
+impl CustomQuery for CoreumQueries {}

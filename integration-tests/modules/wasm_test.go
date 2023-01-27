@@ -65,14 +65,14 @@ const (
 //
 //nolint:tagliatelle
 type issueFungibleTokenRequest struct {
-	Symbol             string  `json:"symbol"`
-	Subunit            string  `json:"subunit"`
-	Precision          uint32  `json:"precision"`
-	InitialAmount      string  `json:"initial_amount"`
-	Description        string  `json:"description"`
-	Features           []int32 `json:"features"`
-	BurnRate           string  `json:"burn_rate"`
-	SendCommissionRate string  `json:"send_commission_rate"`
+	Symbol             string                      `json:"symbol"`
+	Subunit            string                      `json:"subunit"`
+	Precision          uint32                      `json:"precision"`
+	InitialAmount      string                      `json:"initial_amount"`
+	Description        string                      `json:"description"`
+	Features           []assetfttypes.TokenFeature `json:"features"`
+	BurnRate           string                      `json:"burn_rate"`
+	SendCommissionRate string                      `json:"send_commission_rate"`
 }
 
 type amountBodyFungibleTokenRequest struct {
@@ -444,11 +444,11 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		Precision:     6,
 		InitialAmount: issuanceAmount.String(),
 		Description:   "my wasm fungible token",
-		Features: []int32{
-			int32(assetfttypes.TokenFeature_mint),
-			int32(assetfttypes.TokenFeature_burn),
-			int32(assetfttypes.TokenFeature_freeze),
-			int32(assetfttypes.TokenFeature_whitelist),
+		Features: []assetfttypes.TokenFeature{
+			assetfttypes.TokenFeature_mint,
+			assetfttypes.TokenFeature_burn,
+			assetfttypes.TokenFeature_freeze,
+			assetfttypes.TokenFeature_whitelist,
 		},
 		BurnRate:           burnRate.String(),
 		SendCommissionRate: sendCommissionRate.String(),
@@ -456,7 +456,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
 
-	// instantiate new token
+	// instantiate new contract
 	contractAddr, _, err := deployAndInstantiateWASMContract(
 		ctx,
 		clientCtx,

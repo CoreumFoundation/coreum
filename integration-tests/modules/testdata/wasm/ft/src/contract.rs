@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 // version info for migration info
-const CONTRACT_NAME: &str = "creates.io:fungible-token";
+const CONTRACT_NAME: &str = "creates.io:ft";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -81,7 +81,7 @@ pub fn execute(
     _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     match msg {
         ExecuteMsg::Mint { amount } => mint(deps, info, amount),
         ExecuteMsg::Burn { amount } => burn(deps, info, amount),
@@ -106,7 +106,7 @@ pub enum QueryMsg {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps<sdk::AssetFTQueries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps<sdk::CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Token {} => to_binary(&token(deps)?),
         QueryMsg::FrozenBalance { account } => to_binary(&frozen_balance(deps, account)?),
@@ -122,9 +122,9 @@ pub fn instantiate(
     env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    let issue_asset_msg = SubMsg::new(sdk::AssetFTMessages::AssetFTMsgIssue {
+    let issue_asset_msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgIssue {
         symbol: msg.symbol,
         subunit: msg.subunit.clone(),
         precision: msg.precision,
@@ -156,13 +156,13 @@ fn mint(
     deps: DepsMut,
     info: MessageInfo,
     amount: u128,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::AssetFTMessages::AssetFTMsgMint {
+    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgMint {
         coin: Coin::new(amount.clone(), state.denom.clone()),
     });
 
@@ -177,13 +177,13 @@ fn burn(
     deps: DepsMut,
     info: MessageInfo,
     amount: u128,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::AssetFTMessages::AssetFTMsgBurn {
+    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgBurn {
         coin: Coin::new(amount.clone(), state.denom.clone()),
     });
 
@@ -199,13 +199,13 @@ fn freeze(
     info: MessageInfo,
     account: String,
     amount: u128,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::AssetFTMessages::AssetFTMsgFreeze {
+    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgFreeze {
         account,
         coin: Coin::new(amount.clone(), state.denom.clone()),
     });
@@ -222,13 +222,13 @@ fn unfreeze(
     info: MessageInfo,
     account: String,
     amount: u128,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::AssetFTMessages::AssetFTMsgUnfreeze {
+    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgUnfreeze {
         account,
         coin: Coin::new(amount.clone(), state.denom.clone()),
     });
@@ -243,13 +243,13 @@ fn unfreeze(
 fn globally_freeze(
     deps: DepsMut,
     info: MessageInfo,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::AssetFTMessages::AssetFTMsgGloballyFreeze {
+    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgGloballyFreeze {
         denom: state.denom.clone(),
     });
 
@@ -262,13 +262,13 @@ fn globally_freeze(
 fn globally_unfreeze(
     deps: DepsMut,
     info: MessageInfo,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::AssetFTMessages::AssetFTMsgGloballyUnfreeze {
+    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgGloballyUnfreeze {
         denom: state.denom.clone(),
     });
 
@@ -283,13 +283,13 @@ fn set_whitelisted_limit(
     info: MessageInfo,
     account: String,
     amount: u128,
-) -> Result<Response<sdk::AssetFTMessages>, ContractError> {
+) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::AssetFTMessages::AssetFTMsgSetWhitelistedLimit {
+    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgSetWhitelistedLimit {
         account,
         coin: Coin::new(amount.clone(), state.denom.clone()),
     });
@@ -303,18 +303,18 @@ fn set_whitelisted_limit(
 
 // ********** Queries **********
 
-fn token(deps: Deps<sdk::AssetFTQueries>) -> StdResult<AssetFTTokenResponse> {
+fn token(deps: Deps<sdk::CoreumQueries>) -> StdResult<AssetFTTokenResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<sdk::AssetFTQueries> =
-        sdk::AssetFTQueries::AssetFTQueryToken { denom: state.denom }.into();
+    let request: QueryRequest<sdk::CoreumQueries> =
+        sdk::CoreumQueries::AssetFTQueryToken { denom: state.denom }.into();
     let res: AssetFTTokenResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
-fn frozen_balance(deps: Deps<sdk::AssetFTQueries>, account: String) -> StdResult<AssetFTFrozenBalanceResponse> {
+fn frozen_balance(deps: Deps<sdk::CoreumQueries>, account: String) -> StdResult<AssetFTFrozenBalanceResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<sdk::AssetFTQueries> =
-        sdk::AssetFTQueries::AssetFTQueryFrozenBalance {
+    let request: QueryRequest<sdk::CoreumQueries> =
+        sdk::CoreumQueries::AssetFTQueryFrozenBalance {
             denom: state.denom,
             account,
         }.into();
@@ -322,10 +322,10 @@ fn frozen_balance(deps: Deps<sdk::AssetFTQueries>, account: String) -> StdResult
     Ok(res)
 }
 
-fn whitelisted_balance(deps: Deps<sdk::AssetFTQueries>, account: String) -> StdResult<AssetFTWhitelistedBalanceResponse> {
+fn whitelisted_balance(deps: Deps<sdk::CoreumQueries>, account: String) -> StdResult<AssetFTWhitelistedBalanceResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<sdk::AssetFTQueries> =
-        sdk::AssetFTQueries::AssetFTQueryWhitelistedBalance {
+    let request: QueryRequest<sdk::CoreumQueries> =
+        sdk::CoreumQueries::AssetFTQueryWhitelistedBalance {
             denom: state.denom,
             account,
         }.into();
