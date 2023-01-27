@@ -1,5 +1,5 @@
 use crate::sdk;
-use crate::sdk::{AssetFTFrozenBalanceResponse, AssetFTTokenResponse, AssetFTWhitelistedBalanceResponse};
+use crate::sdk::{AssetFTFeature, AssetFTFrozenBalanceResponse, AssetFTTokenResponse, AssetFTWhitelistedBalanceResponse};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, QueryRequest, StdResult, SubMsg,
 };
@@ -22,7 +22,7 @@ pub struct InstantiateMsg {
     pub precision: u32,
     pub initial_amount: Uint128,
     pub description: Option<String>,
-    pub features: Option<Vec<u32>>,
+    pub features: Option<Vec<AssetFTFeature>>,
     pub burn_rate: Option<String>,
     pub send_commission_rate: Option<String>,
 }

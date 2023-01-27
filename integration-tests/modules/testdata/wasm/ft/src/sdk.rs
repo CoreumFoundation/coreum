@@ -5,6 +5,14 @@ use serde::{Deserialize, Serialize};
 // ********** Transactions **********
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum AssetFTFeature {
+    Minting = 0,
+    Burning = 1,
+    Freezing = 2,
+    Whitelisting = 3,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum CoreumMsgs {
     AssetFTMsgIssue {
         symbol: String,
@@ -12,7 +20,7 @@ pub enum CoreumMsgs {
         precision: u32,
         initial_amount: Uint128,
         description: Option<String>,
-        features: Option<Vec<u32>>,
+        features: Option<Vec<AssetFTFeature>>,
         burn_rate: Option<String>,
         send_commission_rate: Option<String>,
     },
@@ -61,7 +69,7 @@ pub struct AssetFTToken {
     pub subunit: String,
     pub precision: u32,
     pub description: Option<String>,
-    pub features: Option<Vec<u32>>,
+    pub features: Option<Vec<AssetFTFeature>>,
     pub burn_rate: String,
     pub send_commission_rate: String,
 }

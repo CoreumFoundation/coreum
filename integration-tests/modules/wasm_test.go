@@ -65,14 +65,14 @@ const (
 //
 //nolint:tagliatelle
 type issueFungibleTokenRequest struct {
-	Symbol             string                      `json:"symbol"`
-	Subunit            string                      `json:"subunit"`
-	Precision          uint32                      `json:"precision"`
-	InitialAmount      string                      `json:"initial_amount"`
-	Description        string                      `json:"description"`
-	Features           []assetfttypes.TokenFeature `json:"features"`
-	BurnRate           string                      `json:"burn_rate"`
-	SendCommissionRate string                      `json:"send_commission_rate"`
+	Symbol             string                 `json:"symbol"`
+	Subunit            string                 `json:"subunit"`
+	Precision          uint32                 `json:"precision"`
+	InitialAmount      string                 `json:"initial_amount"`
+	Description        string                 `json:"description"`
+	Features           []assetfttypes.Feature `json:"features"`
+	BurnRate           string                 `json:"burn_rate"`
+	SendCommissionRate string                 `json:"send_commission_rate"`
 }
 
 type amountBodyFungibleTokenRequest struct {
@@ -502,8 +502,6 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
 }
 
-// TestWASMIssueFungibleTokenInContract verifies that smart contract is able to issue fungible token.
-func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.
 //
 //nolint:nosnakecase
@@ -538,11 +536,11 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		Precision:     6,
 		InitialAmount: issuanceAmount.String(),
 		Description:   "my wasm fungible token",
-		Features: []assetfttypes.TokenFeature{
-			assetfttypes.TokenFeature_mint,
-			assetfttypes.TokenFeature_burn,
-			assetfttypes.TokenFeature_freeze,
-			assetfttypes.TokenFeature_whitelist,
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
 		},
 		BurnRate:           burnRate.String(),
 		SendCommissionRate: sendCommissionRate.String(),
@@ -571,7 +569,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	tokenRes, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{Denom: denom})
 	requireT.NoError(err)
 
-	expectedToken := assetfttypes.FT{
+	expectedToken := assetfttypes.Token{
 		Denom:          denom,
 		Issuer:         contractAddr,
 		Symbol:         issuanceReq.Symbol,
@@ -579,11 +577,11 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		Precision:      issuanceReq.Precision,
 		Description:    issuanceReq.Description,
 		GloballyFrozen: false,
-		Features: []assetfttypes.TokenFeature{
-			assetfttypes.TokenFeature_mint,
-			assetfttypes.TokenFeature_burn,
-			assetfttypes.TokenFeature_freeze,
-			assetfttypes.TokenFeature_whitelist,
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
 		},
 		BurnRate:           burnRate,
 		SendCommissionRate: sendCommissionRate,
