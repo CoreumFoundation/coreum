@@ -57,7 +57,8 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 		if err != nil {
 			return nil, err
 		}
-		txf = txf.WithGasPrices(gasPrice.Amount.Mul(clientCtx.GasPriceAdjustment()).String())
+		gasPrice.Amount = gasPrice.Amount.Mul(clientCtx.GasPriceAdjustment())
+		txf = txf.WithGasPrices(gasPrice.String())
 
 		_, adjusted, err := CalculateGas(ctx, clientCtx, txf, msgs...)
 		if err != nil {
