@@ -33,7 +33,9 @@ func TestQueryClass(t *testing.T) {
 		requireT, ctx,
 		symbol, name, description, URI, URIHash,
 		testNetwork,
-		types.ClassFeature_burning, //nolint:nosnakecase // generated variable
+		"0.1",
+		types.ClassFeature_burning,         //nolint:nosnakecase // generated variable
+		types.ClassFeature_disable_sending, //nolint:nosnakecase // generated variable
 	)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
@@ -51,9 +53,10 @@ func TestQueryClass(t *testing.T) {
 		URI:         URI,
 		URIHash:     URIHash,
 		Features: []types.ClassFeature{
-			types.ClassFeature_burning, //nolint:nosnakecase // generated variable
+			types.ClassFeature_burning,         //nolint:nosnakecase // generated variable
+			types.ClassFeature_disable_sending, //nolint:nosnakecase // generated variable
 		},
-		RoyaltyRate: sdk.MustNewDecFromStr("0"),
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}, resp.Class)
 }
 
@@ -62,6 +65,7 @@ func issueClass(
 	ctx client.Context,
 	symbol, name, description, url, urlHash string,
 	testNetwork *network.Network,
+	royaltyRate string,
 	features ...types.ClassFeature,
 ) string {
 	featuresStringList := lo.Map(features, func(s types.ClassFeature, _ int) string {
@@ -71,6 +75,9 @@ func issueClass(
 	validator := testNetwork.Validators[0]
 	args := []string{symbol, name, description, url, urlHash, fmt.Sprintf("--features=%s", featuresString)}
 	args = append(args, txValidator1Args(testNetwork)...)
+	if royaltyRate != "" {
+		args = append(args, "--royalty-rate", royaltyRate)
+	}
 	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 

@@ -59,6 +59,7 @@ func TestCmdFreeze(t *testing.T) {
 		"https://my-class-meta.invalid/1",
 		"",
 		testNetwork,
+		"0.0",
 		types.ClassFeature_freezing, //nolint:nosnakecase // generated variable
 	)
 	// mint nft
