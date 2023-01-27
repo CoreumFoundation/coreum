@@ -16,7 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-// globalFreezeEnabledStoreVal is the value used to store the globally frozen flag
+// globalFreezeEnabledStoreVal is the value used to store the globally frozen flag.
 var globalFreezeEnabledStoreVal = []byte{0x01}
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
@@ -131,7 +131,7 @@ func (k Keeper) Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if err = def.CheckFeatureAllowed(sender, types.Feature_minting); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_minting); err != nil {
 		return err
 	}
 
@@ -145,7 +145,7 @@ func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	err = def.CheckFeatureAllowed(sender, types.Feature_burning) //nolint:nosnakecase
+	err = def.CheckFeatureAllowed(sender, types.Feature_burning)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
-	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil {
 		return err
 	}
 
@@ -196,7 +196,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", coin.Denom)
 	}
 
-	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil {
 		return err
 	}
 
@@ -228,7 +228,7 @@ func (k Keeper) GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom str
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil {
 		return err
 	}
 
@@ -243,7 +243,7 @@ func (k Keeper) GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom s
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
 
-	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil {
 		return err
 	}
 
@@ -266,7 +266,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
-	if err = def.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil { //nolint:nosnakecase
+	if err = def.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil {
 		return err
 	}
 
@@ -363,7 +363,7 @@ func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 	return k.getTokenFullInfo(ctx, def)
 }
 
-// GetAccountsFrozenBalances returns the frozen balance on all the account
+// GetAccountsFrozenBalances returns the frozen balance on all the account.
 func (k Keeper) GetAccountsFrozenBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
 	return collectBalances(k.cdc, k.frozenBalancesStore(ctx), pagination)
 }
@@ -374,17 +374,17 @@ func (k Keeper) IterateAccountsFrozenBalances(ctx sdk.Context, cb func(sdk.AccAd
 	return k.frozenAccountsBalanceStore(ctx).IterateAllBalances(cb)
 }
 
-// GetFrozenBalances returns the frozen balance of an account
+// GetFrozenBalances returns the frozen balance of an account.
 func (k Keeper) GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
 	return k.frozenAccountBalanceStore(ctx, addr).Balances(pagination)
 }
 
-// GetFrozenBalance returns the frozen balance of a denom and account
+// GetFrozenBalance returns the frozen balance of a denom and account.
 func (k Keeper) GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 	return k.frozenAccountBalanceStore(ctx, addr).Balance(denom)
 }
 
-// GetAccountsWhitelistedBalances returns the whitelisted balance of all the account
+// GetAccountsWhitelistedBalances returns the whitelisted balance of all the account.
 func (k Keeper) GetAccountsWhitelistedBalances(ctx sdk.Context, pagination *query.PageRequest) ([]types.Balance, *query.PageResponse, error) {
 	return collectBalances(k.cdc, prefix.NewStore(ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix), pagination)
 }
@@ -395,12 +395,12 @@ func (k Keeper) IterateAccountsWhitelistedBalances(ctx sdk.Context, cb func(sdk.
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.WhitelistedBalancesKeyPrefix).IterateAllBalances(cb)
 }
 
-// GetWhitelistedBalances returns the whitelisted balance of an account
+// GetWhitelistedBalances returns the whitelisted balance of an account.
 func (k Keeper) GetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
 	return k.whitelistedAccountBalanceStore(ctx, addr).Balances(pagination)
 }
 
-// GetWhitelistedBalance returns the whitelisted balance of a denom and account
+// GetWhitelistedBalance returns the whitelisted balance of a denom and account.
 func (k Keeper) GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 	return k.whitelistedAccountBalanceStore(ctx, addr).Balance(denom)
 }
@@ -523,7 +523,7 @@ func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, coinsToBurn sdk.Co
 }
 
 func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
-	if !def.IsFeatureEnabled(types.Feature_freezing) || def.IsIssuer(addr) { //nolint:nosnakecase
+	if !def.IsFeatureEnabled(types.Feature_freezing) || def.IsIssuer(addr) {
 		return nil
 	}
 
@@ -540,7 +540,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 }
 
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
-	if !def.IsFeatureEnabled(types.Feature_whitelisting) || def.IsIssuer(addr) { //nolint:nosnakecase
+	if !def.IsFeatureEnabled(types.Feature_whitelisting) || def.IsIssuer(addr) {
 		return nil
 	}
 
@@ -659,17 +659,17 @@ func (k Keeper) getTokensByDefinitions(ctx sdk.Context, defs []types.Definition)
 	return tokens, nil
 }
 
-// frozenBalancesStore get the store for the frozen balances of all accounts
+// frozenBalancesStore get the store for the frozen balances of all accounts.
 func (k Keeper) frozenBalancesStore(ctx sdk.Context) prefix.Store {
 	return prefix.NewStore(ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
 }
 
-// frozenAccountBalanceStore gets the store for the frozen balances of an account
+// frozenAccountBalanceStore gets the store for the frozen balances of an account.
 func (k Keeper) frozenAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateFrozenBalancesKey(addr))
 }
 
-// frozenAccountBalanceStore gets the store for the frozen balances of an account
+// frozenAccountBalanceStore gets the store for the frozen balances of an account.
 func (k Keeper) frozenAccountsBalanceStore(ctx sdk.Context) balanceStore {
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.FrozenBalancesKeyPrefix)
 }
@@ -679,7 +679,7 @@ func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
 	return bytes.Equal(globFreezeVal, globalFreezeEnabledStoreVal)
 }
 
-// whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account
+// whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account.
 func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddress) balanceStore {
 	return newBalanceStore(k.cdc, ctx.KVStore(k.storeKey), types.CreateWhitelistedBalancesKey(addr))
 }

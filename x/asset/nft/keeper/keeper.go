@@ -18,7 +18,7 @@ var (
 	frozenNFTStoreValue = []byte{0x01}
 )
 
-// ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters
+// ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
 type ParamSubspace interface {
 	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
 	SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
@@ -50,12 +50,12 @@ func NewKeeper(
 	}
 }
 
-// SetParams sets the parameters of the model
+// SetParams sets the parameters of the model.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSubspace.SetParamSet(ctx, &params)
 }
 
-// GetParams gets the parameters of the model
+// GetParams gets the parameters of the model.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	var params types.Params
 	k.paramSubspace.GetParamSet(ctx, &params)
@@ -179,7 +179,7 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return err
 	}
 
-	if err = ndfd.CheckFeatureAllowed(owner, types.ClassFeature_burning); err != nil { //nolint:nosnakecase // generated variable
+	if err = ndfd.CheckFeatureAllowed(owner, types.ClassFeature_burning); err != nil {
 		return err
 	}
 
@@ -194,14 +194,14 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 	return k.nftKeeper.Burn(ctx, classID, id)
 }
 
-// Freeze freezes a non-fungible token
+// Freeze freezes a non-fungible token.
 func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
 		return err
 	}
 
-	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_freezing); err != nil { //nolint:nosnakecase // generated variable
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_freezing); err != nil {
 		return err
 	}
 
@@ -237,14 +237,14 @@ func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) e
 	return nil
 }
 
-// Unfreeze unfreezes a non-fungible token
+// Unfreeze unfreezes a non-fungible token.
 func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
 		return err
 	}
 
-	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_freezing); err != nil { //nolint:nosnakecase // generated variable
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_freezing); err != nil {
 		return err
 	}
 
@@ -264,7 +264,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 	})
 }
 
-// IsFrozen return whether a non-fungible token is frozen or not
+// IsFrozen return whether a non-fungible token is frozen or not.
 func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 	store := ctx.KVStore(k.storeKey)
 	key, err := types.CreateFreezingKey(classID, nftID)
@@ -275,7 +275,7 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 	return bytes.Equal(store.Get(key), frozenNFTStoreValue), nil
 }
 
-// GetFrozenNFTs return paginated frozen NFTs
+// GetFrozenNFTs return paginated frozen NFTs.
 func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.FrozenNFT, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix)
 	mp := make(map[string][]string, 0)

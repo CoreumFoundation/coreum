@@ -107,7 +107,7 @@ func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
 	return sum
 }
 
-// CalculateRateShares calculates how the burn or commission share amount should be split between different parties
+// CalculateRateShares calculates how the burn or commission share amount should be split between different parties.
 func CalculateRateShares(rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdk.Int {
 	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
 	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.

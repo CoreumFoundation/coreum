@@ -29,7 +29,7 @@ func TestCmdTxIssueClass(t *testing.T) {
 		"class description",
 		"https://my-class-meta.invalid/1",
 		"content-hash",
-		fmt.Sprintf("--features=%s", types.ClassFeature_burning.String()), //nolint:nosnakecase // generated variable
+		fmt.Sprintf("--features=%s", types.ClassFeature_burning.String()),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
@@ -59,7 +59,7 @@ func TestCmdFreeze(t *testing.T) {
 		"https://my-class-meta.invalid/1",
 		"",
 		testNetwork,
-		types.ClassFeature_freezing, //nolint:nosnakecase // generated variable
+		types.ClassFeature_freezing,
 	)
 	// mint nft
 	nftID := "nft-1"

@@ -7,14 +7,14 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// Keeper of the nft store
+// Keeper of the nft store.
 type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 	bk       nft.BankKeeper
 }
 
-// NewKeeper creates a new nft Keeper instance
+// NewKeeper creates a new nft Keeper instance.
 func NewKeeper(key storetypes.StoreKey,
 	cdc codec.BinaryCodec, ak nft.AccountKeeper, bk nft.BankKeeper,
 ) Keeper {

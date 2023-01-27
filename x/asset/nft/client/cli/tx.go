@@ -18,7 +18,7 @@ const (
 	featuresFlag = "features"
 )
 
-// GetTxCmd returns the transaction commands for this module
+// GetTxCmd returns the transaction commands for this module.
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -40,8 +40,6 @@ func GetTxCmd() *cobra.Command {
 }
 
 // CmdTxIssueClass returns IssueClass cobra command.
-//
-//nolint:nosnakecase // generated variable
 func CmdTxIssueClass() *cobra.Command {
 	allowedFeatures := make([]string, 0, len(types.ClassFeature_name))
 	for _, n := range types.ClassFeature_name {
@@ -82,7 +80,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 
 			var features []types.ClassFeature
 			for _, str := range featuresString {
-				feature, ok := types.ClassFeature_value[str] //nolint:nosnakecase
+				feature, ok := types.ClassFeature_value[str]
 				if !ok {
 					return errors.Errorf("unknown feature '%s',allowed allowedFeatures: %s", str, allowedFeaturesString)
 				}
