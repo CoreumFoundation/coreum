@@ -1,8 +1,10 @@
 package client
 
 // This file contains helper functions used to prepare and broadcast transactions.
-// Blocking broadcast was reimplemented to use polling instead of subscription to eliminate the case when
+// Blocking broadcast mode was reimplemented to use polling instead of subscription to eliminate the case when
 // transaction execution is missed due to broken websocket connection.
+// For other broadcast modes we just call original Cosmos implementation.
+// For more details check BroadcastRawTx & broadcastTxCommit.
 
 import (
 	"context"
