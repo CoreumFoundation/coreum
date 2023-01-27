@@ -27,7 +27,7 @@ import (
 
 var protoCodec = encoding.GetCodec(proto.Name)
 
-// NewClientContext returns new context
+// NewClientContext returns new context.
 func NewClientContext(modules module.BasicManager) ClientContext {
 	encodingConfig := config.NewEncodingConfig(modules)
 	return ClientContext{
@@ -40,24 +40,24 @@ func NewClientContext(modules module.BasicManager) ClientContext {
 }
 
 // ClientContext exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
-// to provide better implementation
+// to provide better implementation.
 type ClientContext struct {
 	clientCtx client.Context
 }
 
-// ChainID returns chain ID
+// ChainID returns chain ID.
 func (c ClientContext) ChainID() string {
 	return c.clientCtx.ChainID
 }
 
-// WithChainID returns a copy of the context with an updated chain ID
+// WithChainID returns a copy of the context with an updated chain ID.
 func (c ClientContext) WithChainID(chainID string) ClientContext {
 	c.clientCtx = c.clientCtx.WithChainID(chainID)
 	return c
 }
 
 // WithClient returns a copy of the context with an updated RPC client
-// instance
+// instance.
 func (c ClientContext) WithClient(client rpcclient.Client) ClientContext {
 	c.clientCtx = c.clientCtx.WithClient(client)
 	return c
@@ -70,18 +70,18 @@ func (c ClientContext) WithBroadcastMode(mode string) ClientContext {
 	return c
 }
 
-// TxConfig returns TxConfig of SDK context
+// TxConfig returns TxConfig of SDK context.
 func (c ClientContext) TxConfig() client.TxConfig {
 	return c.clientCtx.TxConfig
 }
 
-// WithFromName returns a copy of the context with an updated from account name
+// WithFromName returns a copy of the context with an updated from account name.
 func (c ClientContext) WithFromName(name string) ClientContext {
 	c.clientCtx = c.clientCtx.WithFromName(name)
 	return c
 }
 
-// WithFromAddress returns a copy of the context with an updated from account address
+// WithFromAddress returns a copy of the context with an updated from account address.
 func (c ClientContext) WithFromAddress(addr sdk.AccAddress) ClientContext {
 	c.clientCtx = c.clientCtx.WithFromAddress(addr)
 	return c
@@ -94,12 +94,12 @@ func (c ClientContext) WithFeeGranterAddress(addr sdk.AccAddress) ClientContext 
 	return c
 }
 
-// NewStream implements the grpc ClientConn.NewStream method
+// NewStream implements the grpc ClientConn.NewStream method.
 func (c ClientContext) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	return nil, errors.New("streaming rpc not supported")
 }
 
-// FeeGranterAddress returns the fee granter address from the context
+// FeeGranterAddress returns the fee granter address from the context.
 func (c ClientContext) FeeGranterAddress() sdk.AccAddress {
 	return c.clientCtx.GetFeeGranterAddress()
 }
@@ -114,33 +114,33 @@ func (c ClientContext) FromAddress() sdk.AccAddress {
 	return c.clientCtx.GetFromAddress()
 }
 
-// BroadcastMode returns configured tx broadcast mode
+// BroadcastMode returns configured tx broadcast mode.
 func (c ClientContext) BroadcastMode() string {
 	return c.clientCtx.BroadcastMode
 }
 
-// Client returns RPC client
+// Client returns RPC client.
 func (c ClientContext) Client() rpcclient.Client {
 	return c.clientCtx.Client
 }
 
-// InterfaceRegistry returns interface registry of SDK context
+// InterfaceRegistry returns interface registry of SDK context.
 func (c ClientContext) InterfaceRegistry() codectypes.InterfaceRegistry {
 	return c.clientCtx.InterfaceRegistry
 }
 
-// Keyring returns keyring
+// Keyring returns keyring.
 func (c ClientContext) Keyring() keyring.Keyring {
 	return c.clientCtx.Keyring
 }
 
-// WithKeyring returns a copy of the context with an updated keyring
+// WithKeyring returns a copy of the context with an updated keyring.
 func (c ClientContext) WithKeyring(k keyring.Keyring) ClientContext {
 	c.clientCtx = c.clientCtx.WithKeyring(k)
 	return c
 }
 
-// Invoke invokes GRPC method
+// Invoke invokes GRPC method.
 func (c ClientContext) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
 	if reflect.ValueOf(req).IsNil() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request cannot be nil")

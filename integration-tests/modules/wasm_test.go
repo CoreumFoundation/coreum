@@ -255,12 +255,12 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	requireT.NoError(err)
 
 	// Send tokens
-	receiver := chain.GenAccount()
+	recipient := chain.GenAccount()
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
 			Amount:    "5000",
 			Denom:     chain.NetworkConfig.Denom,
-			Recipient: receiver.String(),
+			Recipient: recipient.String(),
 		},
 	})
 	requireT.NoError(err)
@@ -274,7 +274,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 
 	bankSend := &banktypes.MsgSend{
 		FromAddress: admin.String(),
-		ToAddress:   receiver.String(),
+		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.NewInt(1000))),
 	}
 
@@ -410,6 +410,100 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	assertT.Greater(gasUsedAfterUnpinning, gasUsedAfterPinning)
 }
 
+// TestUpdateAndClearAdminOfContract runs MsgUpdateAdmin and MsgClearAdmin tx types.
+func TestUpdateAndClearAdminOfContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	admin := chain.GenAccount()
+	newAdmin := chain.GenAccount()
+
+	requireT := require.New(t)
+	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+	))
+	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, newAdmin, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&wasmtypes.MsgClearAdmin{},
+		},
+	}))
+
+	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
+
+	// deployWASMContract and init contract with the initial coins amount
+	initialPayload, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+	contractAddr, _, err := deployAndInstantiateWASMContract(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithSimulateAndExecute(true),
+		bankSendWASM,
+		instantiateConfig{
+			accessType: wasmtypes.AccessTypeUnspecified,
+			admin:      admin,
+			payload:    initialPayload,
+			amount:     chain.NewCoin(sdk.NewInt(10000)),
+			label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	// query contract info
+	contractInfo, err := wasmClient.ContractInfo(ctx, &wasmtypes.QueryContractInfoRequest{
+		Address: contractAddr,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(admin.String(), contractInfo.Admin)
+
+	// update admin
+	msgUpdateAdmin := &wasmtypes.MsgUpdateAdmin{
+		Sender:   admin.String(),
+		NewAdmin: newAdmin.String(),
+		Contract: contractAddr,
+	}
+
+	res, err := tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithSimulateAndExecute(true).WithGas(chain.GasLimitByMsgs(msgUpdateAdmin)),
+		msgUpdateAdmin,
+	)
+
+	requireT.NoError(err)
+	requireT.NotNil(res)
+	contractInfo, err = wasmClient.ContractInfo(ctx, &wasmtypes.QueryContractInfoRequest{
+		Address: contractAddr,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(newAdmin.String(), contractInfo.Admin)
+	requireT.EqualValues(chain.GasLimitByMsgs(msgUpdateAdmin), res.GasUsed)
+
+	// clear admin
+	msgClearAdmin := &wasmtypes.MsgClearAdmin{
+		Sender:   newAdmin.String(),
+		Contract: contractAddr,
+	}
+
+	res, err = tx.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(newAdmin),
+		chain.TxFactory().WithSimulateAndExecute(true),
+		msgClearAdmin,
+	)
+
+	requireT.NoError(err)
+	requireT.NotNil(res)
+	contractInfo, err = wasmClient.ContractInfo(ctx, &wasmtypes.QueryContractInfoRequest{
+		Address: contractAddr,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues("", contractInfo.Admin)
+	requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
+}
+
+// TestWASMIssueFungibleTokenInContract verifies that smart contract is able to issue fungible token.
+func TestWASMIssueFungibleTokenInContract(t *testing.T) {
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.
 //
 //nolint:nosnakecase
@@ -740,6 +834,7 @@ var gasMultiplier = 1.5
 
 // instantiateConfig contains params specific to contract instantiation.
 type instantiateConfig struct {
+	admin      sdk.AccAddress
 	accessType wasmtypes.AccessType
 	payload    json.RawMessage
 	amount     sdk.Coin
@@ -803,7 +898,7 @@ func queryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contract
 	return json.RawMessage(resp.Data), nil
 }
 
-// isWASMContractPinned returns true if smart contract is pinned
+// isWASMContractPinned returns true if smart contract is pinned.
 func isWASMContractPinned(ctx context.Context, clientCtx tx.ClientContext, codeID uint64) (bool, error) {
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})
@@ -849,6 +944,7 @@ func instantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, tx
 	}
 	msg := &wasmtypes.MsgInstantiateContract{
 		Sender: clientCtx.FromAddress().String(),
+		Admin:  req.admin.String(),
 		CodeID: req.CodeID,
 		Label:  req.label,
 		Msg:    wasmtypes.RawContractMessage(req.payload),

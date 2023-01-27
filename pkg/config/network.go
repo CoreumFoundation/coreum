@@ -52,8 +52,7 @@ func init() {
 	// common vars
 	var (
 		feeConfig = FeeConfig{
-			FeeModel:         feemodeltypes.DefaultModel(),
-			DeterministicGas: DefaultDeterministicGasRequirements(),
+			FeeModel: feemodeltypes.DefaultModel(),
 		}
 
 		govConfig = GovConfig{
@@ -92,8 +91,8 @@ func init() {
 	// 500M = 4 * (124_950_000 + 50_000)
 	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
 	// where 50_000 is balances of each of 4 initial validator stakers.
-	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(124_950_000_000_000)))
-	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(50_000_000_000)))
+	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(124_950_000_000_000)))
+	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(50_000_000_000)))
 
 	devGovConfig := govConfig
 	devGovConfig.ProposalConfig.VotingPeriod = "24h"
@@ -122,15 +121,15 @@ func init() {
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,
 			Enabled:              true,
-			GenesisTime:          time.Date(2023, 1, 18, 12, 0, 0, 0, time.UTC),
+			GenesisTime:          time.Date(2023, 1, 16, 12, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixTest,
 			MetadataDisplayDenom: constant.DenomTestDisplay,
 			Denom:                constant.DenomTest,
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					"64391878009b8804d90fda13805e45041f492155@34.172.125.230:26656", // seed-sirius
-					"53f2367d8f8291af8e3b6ca60efded0675ff6314@34.132.58.250:26656",  // seed-antares
+					"64391878009b8804d90fda13805e45041f492155@35.232.157.206:26656", // seed-sirius
+					"53f2367d8f8291af8e3b6ca60efded0675ff6314@34.29.15.170:26656",   // seed-antares
 				},
 			},
 			GovConfig:          testGovConfig,
@@ -264,7 +263,7 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 	return genTxs
 }
 
-// EnabledNetworks returns enabled networks
+// EnabledNetworks returns enabled networks.
 func EnabledNetworks() []Network {
 	enabledNetworks := make([]Network, 0, len(networkConfigs))
 	for _, nc := range networkConfigs {
@@ -275,18 +274,17 @@ func EnabledNetworks() []Network {
 	return enabledNetworks
 }
 
-// FeeConfig is the part of network config defining parameters of our fee model
+// FeeConfig is the part of network config defining parameters of our fee model.
 type FeeConfig struct {
-	FeeModel         feemodeltypes.Model
-	DeterministicGas DeterministicGasRequirements
+	FeeModel feemodeltypes.Model
 }
 
-// GovConfig contains gov module configs
+// GovConfig contains gov module configs.
 type GovConfig struct {
 	ProposalConfig GovProposalConfig
 }
 
-// GovProposalConfig contains gov module proposal-related configuration options
+// GovProposalConfig contains gov module proposal-related configuration options.
 type GovProposalConfig struct {
 	// MinDepositAmount is the minimum amount needed to create a proposal. Basically anti-spam policy.
 	MinDepositAmount string
@@ -295,7 +293,7 @@ type GovProposalConfig struct {
 	VotingPeriod string
 }
 
-// StakingConfig contains staking module configuration
+// StakingConfig contains staking module configuration.
 type StakingConfig struct {
 	// UnbondingTime is the time duration after which bonded coins will become to be released
 	UnbondingTime string
@@ -315,17 +313,17 @@ type CustomParamsConfig struct {
 	Staking CustomParamsStakingConfig
 }
 
-// AssetFTConfig is the part of network config defining parameters of ft assets
+// AssetFTConfig is the part of network config defining parameters of ft assets.
 type AssetFTConfig struct {
 	IssueFee sdk.Int
 }
 
-// AssetNFTConfig is the part of network config defining parameters of nft assets
+// AssetNFTConfig is the part of network config defining parameters of nft assets.
 type AssetNFTConfig struct {
 	MintFee sdk.Int
 }
 
-// NetworkConfig helps initialize Network instance
+// NetworkConfig helps initialize Network instance.
 type NetworkConfig struct {
 	ChainID              constant.ChainID
 	GenesisTime          time.Time
@@ -347,7 +345,7 @@ type NetworkConfig struct {
 	IsFakeUpgradeHandlerEnabled bool
 }
 
-// Network holds all the configuration for different predefined networks
+// Network holds all the configuration for different predefined networks.
 type Network struct {
 	chainID                  constant.ChainID
 	genesisTime              time.Time
@@ -368,7 +366,7 @@ type Network struct {
 	genTxs         []json.RawMessage
 }
 
-// NewNetwork returns a new instance of Network
+// NewNetwork returns a new instance of Network.
 func NewNetwork(c NetworkConfig) Network {
 	n := Network{
 		genesisTime:              c.GenesisTime,
@@ -393,14 +391,14 @@ func NewNetwork(c NetworkConfig) Network {
 }
 
 // FundedAccount is used to provide information about prefunded
-// accounts in network config
+// accounts in network config.
 type FundedAccount struct {
 	// we can't use the sdk.AccAddress because of configurable prefixes
 	Address  string
 	Balances sdk.Coins
 }
 
-// FundAccount funds address with balances at genesis
+// FundAccount funds address with balances at genesis.
 func (n *Network) FundAccount(accAddress sdk.AccAddress, balances sdk.Coins) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -412,13 +410,13 @@ func (n *Network) FundAccount(accAddress sdk.AccAddress, balances sdk.Coins) err
 	return nil
 }
 
-// NodeConfig returns NodeConfig
+// NodeConfig returns NodeConfig.
 func (n *Network) NodeConfig() *NodeConfig {
 	nodeConfig := n.nodeConfig.Clone()
 	return &nodeConfig
 }
 
-// AddGenesisTx adds transaction to the genesis file
+// AddGenesisTx adds transaction to the genesis file.
 func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -443,7 +441,7 @@ func applyFundedAccountToGenesis(
 	return accountState
 }
 
-// GenesisDoc returns the genesis doc of the network
+// GenesisDoc returns the genesis doc of the network.
 func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	codec := NewEncodingConfig(module.NewBasicManager(
 		auth.AppModuleBasic{},
@@ -503,7 +501,7 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	return genesisDoc, nil
 }
 
-// EncodeGenesis returns the json encoded representation of the genesis file
+// EncodeGenesis returns the json encoded representation of the genesis file.
 func (n Network) EncodeGenesis() ([]byte, error) {
 	genesisDoc, err := n.GenesisDoc()
 	if err != nil {
@@ -518,7 +516,7 @@ func (n Network) EncodeGenesis() ([]byte, error) {
 	return bs, nil
 }
 
-// SaveGenesis saves json encoded representation of the genesis config into file
+// SaveGenesis saves json encoded representation of the genesis config into file.
 func (n Network) SaveGenesis(homeDir string) error {
 	genDocBytes, err := n.EncodeGenesis()
 	if err != nil {
@@ -549,22 +547,22 @@ func (n Network) SetSDKConfig() {
 	config.Seal()
 }
 
-// AddressPrefix returns the address prefix to be used in network config
+// AddressPrefix returns the address prefix to be used in network config.
 func (n Network) AddressPrefix() string {
 	return n.addressPrefix
 }
 
-// ChainID returns the chain ID used in network config
+// ChainID returns the chain ID used in network config.
 func (n Network) ChainID() constant.ChainID {
 	return n.chainID
 }
 
-// GenesisTime returns the genesis time of the network
+// GenesisTime returns the genesis time of the network.
 func (n Network) GenesisTime() time.Time {
 	return n.genesisTime
 }
 
-// FundedAccounts returns the funded accounts
+// FundedAccounts returns the funded accounts.
 func (n Network) FundedAccounts() []FundedAccount {
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -574,7 +572,7 @@ func (n Network) FundedAccounts() []FundedAccount {
 	return fundedAccounts
 }
 
-// GenTxs returns the genesis transactions
+// GenTxs returns the genesis transactions.
 func (n Network) GenTxs() []json.RawMessage {
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -585,24 +583,19 @@ func (n Network) GenTxs() []json.RawMessage {
 }
 
 // Denom returns the base chain denom. This is different
-// for each network(i.e. mainnet, testnet, etc)
+// for each network(i.e. mainnet, testnet, etc).
 func (n Network) Denom() string {
 	return n.denom
 }
 
-// FeeModel returns fee model configuration
+// FeeModel returns fee model configuration.
 func (n Network) FeeModel() feemodeltypes.Model {
 	return n.fee.FeeModel
 }
 
-// IsFakeUpgradeHandlerEnabled enables temporary fake upgrade handler until we have real one
+// IsFakeUpgradeHandlerEnabled enables temporary fake upgrade handler until we have real one.
 func (n Network) IsFakeUpgradeHandlerEnabled() bool {
 	return n.enableFakeUpgradeHandler
-}
-
-// DeterministicGas returns deterministic gas amounts required by some message types
-func (n Network) DeterministicGas() DeterministicGasRequirements {
-	return n.fee.DeterministicGas
 }
 
 // NetworkConfigByChainID returns predefined NetworkConfig for a ChainID.

@@ -39,7 +39,6 @@ func NewKeeper(
 // the recipient address is black-listed or if sending the tokens fails.
 // !!! The code is the copy of the corresponding func of the bank module !!!
 func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
-	// TODO (dhil) revise all Send* functions after the FT implementation and decide that we need it or not
 	senderAddr := k.ak.GetModuleAddress(senderModule)
 	if senderAddr == nil {
 		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", senderModule))

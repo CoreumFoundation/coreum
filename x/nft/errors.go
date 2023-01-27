@@ -4,7 +4,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// x/nft module sentinel errors
+// x/nft module sentinel errors.
 var (
 	ErrInvalidNFT     = sdkerrors.Register(ModuleName, 2, "invalid nft")
 	ErrClassExists    = sdkerrors.Register(ModuleName, 3, "nft class already exist")

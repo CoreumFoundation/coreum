@@ -22,7 +22,7 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 )
 
-// TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other then CORE is rejected
+// TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other than CORE is rejected
 
 // TestAuthFeeLimits verifies that invalid message gas won't be accepted.
 func TestAuthFeeLimits(t *testing.T) {
@@ -71,7 +71,6 @@ func TestAuthFeeLimits(t *testing.T) {
 		chain.TxFactory().
 			WithGas(uint64(maxBlockGas+1)),
 		msg)
-	// TODO(dhil) here we get the Internal error -> "tx (***) not found" and the test takes the "txTimeout" time, validate that it's expected
 	require.Error(t, err)
 
 	// gas equal MaxBlockGas, the tx should pass
@@ -138,7 +137,7 @@ func TestAuthMultisig(t *testing.T) {
 		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
 		WithSequence(multisigAccInfo.GetSequence()).
 		WithKeybase(kr).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON) //nolint:nosnakecase // the sdk constant
+		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	bankSendMsg := &banktypes.MsgSend{
 		FromAddress: multisigAddress.String(),
@@ -181,7 +180,7 @@ func TestAuthMultisig(t *testing.T) {
 }
 
 // TestAuthUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
-// used to sign transaction
+// used to sign transaction.
 func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 	t.Parallel()
 

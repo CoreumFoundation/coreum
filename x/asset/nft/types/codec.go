@@ -9,5 +9,5 @@ import (
 // RegisterInterfaces registers the asset module tx interfaces.
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterInterface(proto.MessageName((*DataBytes)(nil)), (*proto.Message)(nil), (*DataBytes)(nil))
-	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc) //nolint:nosnakecase // generated name
+	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

@@ -41,7 +41,7 @@ type IssueSettings struct {
 	Precision          uint32
 	Description        string
 	InitialAmount      sdk.Int
-	Features           []TokenFeature
+	Features           []Feature
 	BurnRate           sdk.Dec
 	SendCommissionRate sdk.Dec
 }
@@ -75,7 +75,7 @@ var reserved = []string{
 	strings.ToLower(constant.DenomMainDisplay),
 }
 
-// ValidateSubunit checks the provide subunit is valid
+// ValidateSubunit checks the provided subunit is valid.
 func ValidateSubunit(subunit string) error {
 	if lo.Contains(reserved, strings.ToLower(subunit)) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "%s is a reserved subunit", subunit)
@@ -88,7 +88,7 @@ func ValidateSubunit(subunit string) error {
 	return nil
 }
 
-// ValidateSymbol checks the provided symbol is valid
+// ValidateSymbol checks the provided symbol is valid.
 func ValidateSymbol(symbol string) error {
 	if lo.Contains(reserved, strings.ToLower(symbol)) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "%s is a reserved symbol", symbol)
@@ -101,18 +101,18 @@ func ValidateSymbol(symbol string) error {
 	return nil
 }
 
-// NormalizeSymbolForKey normalizes the symbol string
+// NormalizeSymbolForKey normalizes the symbol string.
 func NormalizeSymbolForKey(in string) string {
 	return strings.ToLower(in)
 }
 
 // CheckFeatureAllowed returns error if feature isn't allowed for the address.
-func (ftd FTDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature TokenFeature) error {
-	if ftd.IsFeatureAllowed(addr, feature) {
+func (def Definition) CheckFeatureAllowed(addr sdk.AccAddress, feature Feature) error {
+	if def.IsFeatureAllowed(addr, feature) {
 		return nil
 	}
 
-	if !ftd.IsFeatureEnabled(feature) {
+	if !def.IsFeatureEnabled(feature) {
 		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
 	}
 
@@ -120,30 +120,28 @@ func (ftd FTDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature TokenFe
 }
 
 // IsFeatureAllowed returns true if feature is allowed for the address.
-//
-//nolint:nosnakecase
-func (ftd FTDefinition) IsFeatureAllowed(addr sdk.Address, feature TokenFeature) bool {
-	featureEnabled := ftd.IsFeatureEnabled(feature)
+func (def Definition) IsFeatureAllowed(addr sdk.Address, feature Feature) bool {
+	featureEnabled := def.IsFeatureEnabled(feature)
 	// issuer can use any enabled feature and burning even if it is disabled
-	if ftd.IsIssuer(addr) {
-		return featureEnabled || feature == TokenFeature_burn
+	if def.IsIssuer(addr) {
+		return featureEnabled || feature == Feature_burning
 	}
 
 	// non-issuer can use only burning and only if it is enabled
-	return featureEnabled && feature == TokenFeature_burn
+	return featureEnabled && feature == Feature_burning
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.
-func (ftd FTDefinition) IsFeatureEnabled(feature TokenFeature) bool {
-	return lo.Contains(ftd.Features, feature)
+func (def Definition) IsFeatureEnabled(feature Feature) bool {
+	return lo.Contains(def.Features, feature)
 }
 
 // IsIssuer returns true if the addr is the issuer.
-func (ftd FTDefinition) IsIssuer(addr sdk.Address) bool {
-	return ftd.Issuer == addr.String()
+func (def Definition) IsIssuer(addr sdk.Address) bool {
+	return def.Issuer == addr.String()
 }
 
-// ValidateBurnRate checks that provided burn rate is valid
+// ValidateBurnRate checks that provided burn rate is valid.
 func ValidateBurnRate(burnRate sdk.Dec) error {
 	if err := validateRate(burnRate); err != nil {
 		return errors.Wrap(err, "burn rate is invalid")
@@ -151,7 +149,7 @@ func ValidateBurnRate(burnRate sdk.Dec) error {
 	return nil
 }
 
-// ValidateSendCommissionRate checks that provided send commission rate is valid
+// ValidateSendCommissionRate checks that provided send commission rate is valid.
 func ValidateSendCommissionRate(sendCommissionRate sdk.Dec) error {
 	if err := validateRate(sendCommissionRate); err != nil {
 		return errors.Wrap(err, "send commission rate is invalid")
@@ -177,7 +175,7 @@ func validateRate(rate sdk.Dec) error {
 	return nil
 }
 
-// checks that dec precision is limited to the provided value
+// checks that dec precision is limited to the provided value.
 func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 	return dec.Mul(sdk.NewDecFromInt(sdk.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
 }
