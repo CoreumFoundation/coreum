@@ -17,7 +17,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
@@ -59,7 +59,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 			assetnfttypes.ClassFeature_burning,
 		},
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -81,7 +81,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     "content-hash",
 		Data:        data,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -113,7 +113,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 			assetnfttypes.ClassFeature_burning,
 		},
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -192,7 +192,7 @@ func TestAssetNFTMint(t *testing.T) {
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 	}
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -215,7 +215,7 @@ func TestAssetNFTMint(t *testing.T) {
 		URIHash: "content-hash",
 		Data:    data,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -236,7 +236,7 @@ func TestAssetNFTMint(t *testing.T) {
 		URIHash: "content-hash",
 		Data:    data,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -264,7 +264,7 @@ func TestAssetNFTMint(t *testing.T) {
 		URIHash: "content-hash",
 		Data:    data,
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -316,7 +316,7 @@ func TestAssetNFTMint(t *testing.T) {
 		Id:       mintMsg.ID,
 		ClassId:  classID,
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -382,7 +382,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 	}
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -399,7 +399,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 		URI:     "https://my-class-meta.invalid/1",
 		URIHash: "content-hash",
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -458,7 +458,7 @@ func TestAssetNFTBurn(t *testing.T) {
 			assetnfttypes.ClassFeature_burning,
 		},
 	}
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -473,7 +473,7 @@ func TestAssetNFTBurn(t *testing.T) {
 		ID:      "id-1",
 		ClassID: classID,
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -501,7 +501,7 @@ func TestAssetNFTBurn(t *testing.T) {
 		ClassID: classID,
 		ID:      "id-1",
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBurn)),
@@ -567,7 +567,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 			assetnfttypes.ClassFeature_freezing,
 		},
 	}
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -583,7 +583,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		ID:      nftID,
 		ClassID: classID,
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -598,7 +598,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		ClassID: classID,
 		ID:      nftID,
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
@@ -631,7 +631,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Id:       nftID,
 		Receiver: recipient1.String(),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -648,7 +648,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Receiver: recipient2.String(),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -663,7 +663,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		ClassID: classID,
 		ID:      nftID,
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUnfreeze)),
@@ -697,7 +697,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Receiver: recipient2.String(),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),

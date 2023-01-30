@@ -16,7 +16,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -48,7 +48,7 @@ func TestAssetFTIssue(t *testing.T) {
 		Features:      []assetfttypes.Feature{},
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -106,7 +106,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 		Features:      []assetfttypes.Feature{},
 	}
 
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -157,7 +157,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		SendCommissionRate: sdk.NewDec(0),
 	}
 
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg1)),
@@ -168,7 +168,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 	// issue the new fungible token form issuer2
 	msg2 := msg1
 	msg2.Issuer = issuer2.String()
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer2),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg2)),
@@ -240,7 +240,7 @@ func TestAssetFTMint(t *testing.T) {
 		},
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -261,7 +261,7 @@ func TestAssetFTMint(t *testing.T) {
 		},
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -280,7 +280,7 @@ func TestAssetFTMint(t *testing.T) {
 		Features:      []assetfttypes.Feature{assetfttypes.Feature_minting},
 	}
 
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -297,7 +297,7 @@ func TestAssetFTMint(t *testing.T) {
 		Sender: randomAddress.String(),
 		Coin:   sdk.NewCoin(mintableDenom, sdk.NewInt(1000)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(randomAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -314,7 +314,7 @@ func TestAssetFTMint(t *testing.T) {
 		Sender: issuer.String(),
 		Coin:   mintCoin,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -377,7 +377,7 @@ func TestAssetFTBurn(t *testing.T) {
 		},
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -398,7 +398,7 @@ func TestAssetFTBurn(t *testing.T) {
 		},
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
@@ -413,7 +413,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(unburnable, sdk.NewInt(100))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -430,7 +430,7 @@ func TestAssetFTBurn(t *testing.T) {
 		},
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
@@ -449,7 +449,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Features:      []assetfttypes.Feature{assetfttypes.Feature_burning},
 	}
 
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -468,7 +468,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdk.NewInt(100))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -481,7 +481,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Sender: recipient.String(),
 		Coin:   sdk.NewCoin(burnableDenom, sdk.NewInt(100)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
@@ -498,7 +498,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Sender: issuer.String(),
 		Coin:   burnCoin,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
@@ -561,7 +561,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 		SendCommissionRate: sdk.NewDec(0),
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -580,7 +580,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -599,7 +599,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -619,7 +619,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient2),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -652,7 +652,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 		}),
 	)
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
@@ -712,7 +712,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		SendCommissionRate: sdk.MustNewDecFromStr("0.10"),
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -731,7 +731,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -750,7 +750,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -770,7 +770,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient2),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -803,7 +803,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		}),
 	)
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
@@ -889,7 +889,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		msg, msgSend,
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
@@ -907,7 +907,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(randomAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
@@ -922,7 +922,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
@@ -963,7 +963,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		ToAddress:   recipient2.String(),
 		Amount:      coinsToSend,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -976,7 +976,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
 		Outputs: []banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}},
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
@@ -993,7 +993,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		ToAddress:   recipient2.String(),
 		Amount:      coinsToSend,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1011,7 +1011,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
 		Outputs: []banktypes.Output{{Address: recipient2.String(), Coins: coinsToSend}},
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
@@ -1031,7 +1031,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
@@ -1054,7 +1054,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		ToAddress:   recipient2.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(250))),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1069,7 +1069,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		ToAddress:   recipient2.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200))),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1083,7 +1083,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
@@ -1097,7 +1097,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
@@ -1145,7 +1145,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 		Features:      []assetfttypes.Feature{},
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
@@ -1163,7 +1163,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(unfreezableDenom, sdk.NewInt(1000)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
@@ -1214,7 +1214,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 			assetfttypes.Feature_freezing,
 		},
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -1231,7 +1231,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		Sender: issuer.String(),
 		Denom:  denom,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globFreezeMsg)),
@@ -1247,7 +1247,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      coinsToSend,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1260,7 +1260,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		Inputs:  []banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
 		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
@@ -1274,7 +1274,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount:      coinsToSend,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1287,7 +1287,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
 		Outputs: []banktypes.Output{{Address: issuer.String(), Coins: coinsToSend}},
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
@@ -1300,7 +1300,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		Sender: issuer.String(),
 		Denom:  denom,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globUnfreezeMsg)),
@@ -1314,7 +1314,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      coinsToSend,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1328,7 +1328,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount:      coinsToSend,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1399,7 +1399,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 			assetfttypes.Feature_whitelisting,
 		},
 	}
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
@@ -1414,7 +1414,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(nonIssuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
@@ -1430,7 +1430,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      coinsToSend,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1443,7 +1443,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Inputs:  []banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
 		Outputs: []banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}},
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(multiSendMsg)),
@@ -1457,7 +1457,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
@@ -1486,7 +1486,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(600))),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1500,7 +1500,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1520,7 +1520,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1534,7 +1534,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(401)),
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
@@ -1556,7 +1556,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1585,7 +1585,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		ToAddress:   issuer.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(recipient),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1606,7 +1606,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.ZeroInt()),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
@@ -1620,7 +1620,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt())),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -1661,7 +1661,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 		Features:      []assetfttypes.Feature{},
 	}
 
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
@@ -1676,7 +1676,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(unwhitelistableDenom, sdk.NewInt(1000)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
@@ -1685,7 +1685,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
 
-func assertCoinDistribution(ctx context.Context, clientCtx tx.ClientContext, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
+func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	requireT := require.New(t)
 
