@@ -486,7 +486,7 @@ func (k Keeper) SetWhitelisting(ctx sdk.Context, classID, nftID string, account 
 }
 
 // GetAllWhitelisted returns all whitelisted accounts for all NFTs.
-func (k Keeper) GetAllWhitelisted(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.Whitelisted, error) {
+func (k Keeper) GetAllWhitelisted(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.WhitelistedNFTAccounts, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTWhitelistingKeyPrefix)
 	type nftUniqueID struct {
 		classID string
@@ -502,16 +502,17 @@ func (k Keeper) GetAllWhitelisted(ctx sdk.Context, q *query.PageRequest) (*query
 		if err != nil {
 			return err
 		}
-		mp[uniqueID] = append(mp[uniqueID], account.String())
+		accountString := account.String()
+		mp[uniqueID] = append(mp[uniqueID], accountString)
 		return nil
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	whitelisted := make([]types.Whitelisted, 0, len(mp))
+	whitelisted := make([]types.WhitelistedNFTAccounts, 0, len(mp))
 	for uniqueID, accounts := range mp {
-		whitelisted = append(whitelisted, types.Whitelisted{
+		whitelisted = append(whitelisted, types.WhitelistedNFTAccounts{
 			ClassID:  uniqueID.classID,
 			NftID:    uniqueID.nftID,
 			Accounts: accounts,

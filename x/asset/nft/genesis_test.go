@@ -2,6 +2,7 @@ package nft_test
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,9 +52,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	// Whitelisting
-	var whitelisted []types.Whitelisted
+	var whitelisted []types.WhitelistedNFTAccounts
 	for i := 0; i < 5; i++ {
-		whitelisted = append(whitelisted, types.Whitelisted{
+		whitelisted = append(whitelisted, types.WhitelistedNFTAccounts{
 			ClassID: fmt.Sprintf("class-id-%d", i),
 			NftID:   fmt.Sprintf("nft-id-%d", i),
 			Accounts: []string{
@@ -65,10 +66,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	genState := types.GenesisState{
-		Params:           types.DefaultParams(),
-		ClassDefinitions: classDefinitions,
-		FrozenNFTs:       frozen,
-		Whitelisted:      whitelisted,
+		Params:                 types.DefaultParams(),
+		ClassDefinitions:       classDefinitions,
+		FrozenNFTs:             frozen,
+		WhitelistedNFTAccounts: whitelisted,
 	}
 
 	// init the keeper
@@ -91,4 +92,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 	exportedGenState := nft.ExportGenesis(ctx, nftKeeper)
 	assertT.ElementsMatch(genState.ClassDefinitions, exportedGenState.ClassDefinitions)
 	assertT.ElementsMatch(genState.FrozenNFTs, exportedGenState.FrozenNFTs)
+
+	for _, st := range genState.WhitelistedNFTAccounts {
+		sort.Strings(st.Accounts)
+	}
+	for _, st := range exportedGenState.WhitelistedNFTAccounts {
+		sort.Strings(st.Accounts)
+	}
+	assertT.ElementsMatch(genState.WhitelistedNFTAccounts, exportedGenState.WhitelistedNFTAccounts)
 }
