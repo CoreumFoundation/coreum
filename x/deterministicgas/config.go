@@ -45,7 +45,7 @@ func DefaultConfig() Config {
 
 	cfg.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
-		//MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
+		MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
 		MsgType(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
 		MsgType(&assetfttypes.MsgBurn{}):                constantGasFunc(23000),
 		MsgType(&assetfttypes.MsgFreeze{}):              constantGasFunc(5000),
@@ -237,7 +237,7 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 }
 
 func reportUnknownMessageMetric(msgName string) {
-	metrics.IncrCounterWithLabels([]string{"unknown_message"}, 1, []metrics.Label{
+	metrics.IncrCounterWithLabels([]string{"deterministic_gas_unknown_message"}, 1, []metrics.Label{
 		{Name: "msg_name", Value: msgName},
 	})
 }
