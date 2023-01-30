@@ -14,7 +14,10 @@ import (
 )
 
 var (
-	subunitRegexStr = `^[a-z][a-z0-9]{0,70}$`
+	// The length is 50 since the demon is {subunit}-{address} and
+	// the address length might be up to 66 symbols and the demon length must be less than 127 symbols
+	// according to bank validation.
+	subunitRegexStr = `^[a-z][a-z0-9]{0,50}$`
 	subunitRegex    *regexp.Regexp
 
 	symbolRegexStr = `^[a-zA-Z][a-zA-Z0-9-.]{0,127}$`
@@ -57,7 +60,7 @@ func DeconstructDenom(denom string) (prefix string, issuer sdk.AccAddress, err e
 
 	address, err := sdk.AccAddressFromBech32(denomParts[1])
 	if err != nil {
-		return "", nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address in denom, err:%s", err)
+		return "", nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address %q in denom: %s, err:%s", denomParts[1], denom, err)
 	}
 
 	return denomParts[0], address, nil
