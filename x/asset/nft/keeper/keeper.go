@@ -316,14 +316,14 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		return err
 	}
 
-	if classDefinition.IsFeatureEnabled(types.ClassFeature_disable_sending) { //nolint:nosnakecase // generated variable
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s has sending disabled", classID, nftID)
-	}
-
 	// always allow issuer to send NFTs issued by them.
 	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
 	if classDefinition.Issuer == owner.String() {
 		return nil
+	}
+
+	if classDefinition.IsFeatureEnabled(types.ClassFeature_disable_sending) { //nolint:nosnakecase // generated variable
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s has sending disabled", classID, nftID)
 	}
 
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
