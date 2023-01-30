@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
 // FundedAccount represents a requirement of a test to get some funds for an account.
@@ -165,7 +165,7 @@ func (f Faucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
 	gasLimit := uint64(len(msgs)) * f.chainCtx.GasLimitByMsgs(&banktypes.MsgSend{})
 
 	// Transaction is broadcasted and awaited
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		f.chainCtx.ClientContext,
 		f.chainCtx.TxFactory().WithGas(gasLimit),

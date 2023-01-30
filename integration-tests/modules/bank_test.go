@@ -20,7 +20,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -85,7 +85,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 	}))
 
 	// issue fungible tokens
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -96,7 +96,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 	// send coins in loop
 	start := time.Now()
 	for _, msg := range multiSendMsgs {
-		res, err := tx.BroadcastTx(
+		res, err := client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(issuer),
 			// we estimate here since the th size is grater then allowed for the deterministic fee
@@ -159,7 +159,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	}))
 
 	// issue fungible tokens
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -170,7 +170,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	// send coins in loop
 	start := time.Now()
 	for i := 0; i < iterationsToFund; i++ {
-		res, err := tx.BroadcastTx(
+		res, err := client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(issuer),
 			chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendSendMsgs...)),
@@ -206,7 +206,7 @@ func TestBankSendDeterministicGas(t *testing.T) {
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -246,7 +246,7 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	gasExpected := chain.GasLimitByMultiSendMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)
 	txf := chain.ChainContext.TxFactory().WithGas(gasExpected)
-	result, err := tx.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
+	result, err := client.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
 	require.NoError(t, err)
 	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
 }
@@ -283,7 +283,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	}))
 
 	// Issue fungible tokens
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsgs...)),
@@ -314,7 +314,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, chain.DeterministicGasConfig.FixedGas+msgGas, bankSendGas)
 
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -347,7 +347,7 @@ func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -379,7 +379,7 @@ func TestBankSendGasEstimation(t *testing.T) {
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	_, estimatedGas, err := tx.CalculateGas(
+	_, estimatedGas, err := client.CalculateGas(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -430,7 +430,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	}))
 
 	// Issue fungible tokens
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsgs...)),
@@ -466,7 +466,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankMultiSendGas := chain.GasLimitByMsgs(msg)
 
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -520,7 +520,7 @@ func TestBankMultiSend(t *testing.T) {
 	}))
 
 	// Issue fungible tokens
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsgs...)),
@@ -565,7 +565,7 @@ func TestBankMultiSend(t *testing.T) {
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankMultiSendGas := chain.GasLimitByMsgs(msg)
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -687,7 +687,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	}))
 
 	// issue first fungible token
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender1),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issue1Msg)),
@@ -695,7 +695,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// issue second fungible token
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender2),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issue2Msg)),
@@ -704,7 +704,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	requireT.NoError(err)
 
 	// create MultiSend tx message and sign it from 2 accounts
-	sender1AccInfo, err := tx.GetAccountInfo(ctx, chain.ClientContext, sender1)
+	sender1AccInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, sender1)
 	requireT.NoError(err)
 
 	// set sender1 params for the signature
@@ -718,10 +718,10 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	requireT.NoError(err)
 
 	// sign from sender1
-	err = tx.Sign(txF, sender1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, sender1KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 
-	sender2AccInfo, err := tx.GetAccountInfo(ctx, chain.ClientContext, sender2)
+	sender2AccInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, sender2)
 	requireT.NoError(err)
 
 	// set sender2 params for the signature
@@ -732,13 +732,13 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	// sign from sender2
-	err = tx.Sign(txF, sender2KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, sender2KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 
 	// encode tx and broadcast
 	encodedMultiSendTx, err := chain.ClientContext.TxConfig().TxEncoder()(txBuilder.GetTx())
 	requireT.NoError(err)
-	_, err = tx.BroadcastRawTx(
+	_, err = client.BroadcastRawTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender1),
 		encodedMultiSendTx)
@@ -783,7 +783,7 @@ func TestBankCoreSend(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(amountToSend)),
 	}
 
-	result, err := tx.BroadcastTx(
+	result, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
