@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	// msg names
+	// msg names.
 	msgIssueName               = buildMsgName(&types.MsgIssue{})
 	msgMintName                = buildMsgName(&types.MsgMint{})
 	msgBurnName                = buildMsgName(&types.MsgBurn{})
@@ -30,7 +30,7 @@ var (
 	msgGloballyFreezeName      = buildMsgName(&types.MsgGloballyFreeze{})
 	msgGloballyUnfreezeName    = buildMsgName(&types.MsgGloballyUnfreeze{})
 	msgSetWhitelistedLimitName = buildMsgName(&types.MsgSetWhitelistedLimit{})
-	// query names
+	// query names.
 	queryTokenName              = buildQueryName("Token")
 	queryFrozenBalanceName      = buildQueryName("FrozenBalance")
 	queryWhitelistedBalanceName = buildQueryName("WhitelistedBalance")
@@ -111,7 +111,7 @@ func MsgHandler(sender sdk.AccAddress, messages map[string]json.RawMessage) ([]s
 	return res, nil
 }
 
-// QueryHandler handles queries from smart contracts
+// QueryHandler handles queries from smart contracts.
 func QueryHandler(queryServer types.QueryServer) wasmtypes.Querier {
 	return func(ctx sdk.Context, queries map[string]json.RawMessage) ([]byte, bool, error) {
 		for queryType, rawQuery := range queries {

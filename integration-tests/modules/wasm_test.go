@@ -91,7 +91,7 @@ type accountBodyFungibleTokenRequest struct {
 type fungibleTokenMethod string
 
 const (
-	// tx
+	// tx.
 	fungibleTokenMethodMint                fungibleTokenMethod = "mint"
 	fungibleTokenMethodBurn                fungibleTokenMethod = "burn"
 	fungibleTokenMethodFreeze              fungibleTokenMethod = "freeze"
@@ -99,7 +99,7 @@ const (
 	fungibleTokenMethodGloballyFreeze      fungibleTokenMethod = "globally_freeze"
 	fungibleTokenMethodGloballyUnfreeze    fungibleTokenMethod = "globally_unfreeze"
 	fungibleTokenMethodSetWhitelistedLimit fungibleTokenMethod = "set_whitelisted_limit"
-	// query
+	// query.
 	fungibleTokenMethodToken              fungibleTokenMethod = "token"
 	fungibleTokenMethodFrozenBalance      fungibleTokenMethod = "frozen_balance"
 	fungibleTokenMethodWhitelistedBalance fungibleTokenMethod = "whitelisted_balance"
