@@ -20,7 +20,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -119,7 +119,7 @@ func TestWASMBankSendContract(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(5000))),
 	}
 
-	_, err = tx.BroadcastTx(ctx, clientCtx, txf, msg)
+	_, err = client.BroadcastTx(ctx, clientCtx, txf, msg)
 	requireT.NoError(err)
 
 	// get the contract balance and check total
@@ -250,7 +250,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 
 	clientCtx = chain.ChainContext.ClientContext.WithFromAddress(admin)
 	txf = chain.ChainContext.TxFactory().WithGas(maxGasExpected)
-	result, err := tx.BroadcastTx(ctx, clientCtx, txf, wasmBankSend, bankSend)
+	result, err := client.BroadcastTx(ctx, clientCtx, txf, wasmBankSend, bankSend)
 	require.NoError(t, err)
 
 	require.NoError(t, err)
@@ -430,7 +430,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		Contract: contractAddr,
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(admin),
 		chain.TxFactory().WithSimulateAndExecute(true).WithGas(chain.GasLimitByMsgs(msgUpdateAdmin)),
@@ -452,7 +452,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		Contract: contractAddr,
 	}
 
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(newAdmin),
 		chain.TxFactory().WithSimulateAndExecute(true),
@@ -608,8 +608,8 @@ func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, er
 
 func incrementAndVerify(
 	ctx context.Context,
-	clientCtx tx.ClientContext,
-	txf tx.Factory,
+	clientCtx client.Context,
+	txf client.Factory,
 	contractAddr string,
 	requireT *require.Assertions,
 	expectedValue int,
@@ -649,7 +649,7 @@ type instantiateConfig struct {
 }
 
 // deployAndInstantiateWASMContract deploys, instantiateWASMContract the wasm contract and returns its address.
-func deployAndInstantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte, initConfig instantiateConfig) (string, uint64, error) {
+func deployAndInstantiateWASMContract(ctx context.Context, clientCtx client.Context, txf client.Factory, wasmData []byte, initConfig instantiateConfig) (string, uint64, error) {
 	codeID, err := deployWASMContract(ctx, clientCtx, txf, wasmData)
 	if err != nil {
 		return "", 0, err
@@ -665,7 +665,7 @@ func deployAndInstantiateWASMContract(ctx context.Context, clientCtx tx.ClientCo
 }
 
 // executeWASMContract executes the wasm contract with the payload and optionally funding amount.
-func executeWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
+func executeWASMContract(ctx context.Context, clientCtx client.Context, txf client.Factory, contractAddr string, payload json.RawMessage, fundAmt sdk.Coin) (int64, error) {
 	funds := sdk.NewCoins()
 	if !fundAmt.Amount.IsNil() {
 		funds = funds.Add(fundAmt)
@@ -681,7 +681,7 @@ func executeWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx
 	txf = txf.
 		WithGasAdjustment(gasMultiplier)
 
-	res, err := tx.BroadcastTx(ctx, clientCtx, txf, msg)
+	res, err := client.BroadcastTx(ctx, clientCtx, txf, msg)
 	if err != nil {
 		return 0, err
 	}
@@ -689,7 +689,7 @@ func executeWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx
 }
 
 // queryWASMContract queries the contract with the requested payload.
-func queryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
+func queryWASMContract(ctx context.Context, clientCtx client.Context, contractAddr string, payload json.RawMessage) (json.RawMessage, error) {
 	query := &wasmtypes.QuerySmartContractStateRequest{
 		Address:   contractAddr,
 		QueryData: wasmtypes.RawContractMessage(payload),
@@ -705,7 +705,7 @@ func queryWASMContract(ctx context.Context, clientCtx tx.ClientContext, contract
 }
 
 // isWASMContractPinned returns true if smart contract is pinned.
-func isWASMContractPinned(ctx context.Context, clientCtx tx.ClientContext, codeID uint64) (bool, error) {
+func isWASMContractPinned(ctx context.Context, clientCtx client.Context, codeID uint64) (bool, error) {
 	wasmClient := wasmtypes.NewQueryClient(clientCtx)
 	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})
 	if err != nil {
@@ -720,7 +720,7 @@ func isWASMContractPinned(ctx context.Context, clientCtx tx.ClientContext, codeI
 }
 
 // deploys the wasm contract and returns its codeID.
-func deployWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, wasmData []byte) (uint64, error) {
+func deployWASMContract(ctx context.Context, clientCtx client.Context, txf client.Factory, wasmData []byte) (uint64, error) {
 	msgStoreCode := &wasmtypes.MsgStoreCode{
 		Sender:       clientCtx.FromAddress().String(),
 		WASMByteCode: wasmData,
@@ -729,7 +729,7 @@ func deployWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.
 	txf = txf.
 		WithGasAdjustment(gasMultiplier)
 
-	res, err := tx.BroadcastTx(ctx, clientCtx, txf, msgStoreCode)
+	res, err := client.BroadcastTx(ctx, clientCtx, txf, msgStoreCode)
 	if err != nil {
 		return 0, err
 	}
@@ -743,7 +743,7 @@ func deployWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.
 }
 
 // instantiates the contract and returns the contract address.
-func instantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, req instantiateConfig) (string, error) {
+func instantiateWASMContract(ctx context.Context, clientCtx client.Context, txf client.Factory, req instantiateConfig) (string, error) {
 	funds := sdk.NewCoins()
 	if amount := req.amount; !amount.Amount.IsNil() {
 		funds = funds.Add(amount)
@@ -760,7 +760,7 @@ func instantiateWASMContract(ctx context.Context, clientCtx tx.ClientContext, tx
 	txf = txf.
 		WithGasAdjustment(gasMultiplier)
 
-	res, err := tx.BroadcastTx(ctx, clientCtx, txf, msg)
+	res, err := client.BroadcastTx(ctx, clientCtx, txf, msg)
 	if err != nil {
 		return "", err
 	}
