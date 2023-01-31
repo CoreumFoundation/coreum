@@ -471,7 +471,6 @@ func (k Keeper) IsWhitelisted(ctx sdk.Context, classID, nftID string, account sd
 
 // SetWhitelisting adds an account to the whitelisting of the NFT, if whitelisting is true
 // and removes it, if whitelisting is false.
-// should not be used directly outside the module, except for genesis.
 func (k Keeper) SetWhitelisting(ctx sdk.Context, classID, nftID string, account sdk.AccAddress, whitelisting bool) error {
 	key, err := types.CreateWhitelistingKey(classID, nftID, account)
 	if err != nil {
