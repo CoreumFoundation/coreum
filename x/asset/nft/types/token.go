@@ -102,6 +102,15 @@ func ValidateData(data *codectypes.Any) error {
 	return nil
 }
 
+// ValidateRoyaltyRate checks the provided non-fungible token royalty rate is valid.
+func ValidateRoyaltyRate(rate sdk.Dec) error {
+	if !rate.GT(sdk.NewDec(1)) || rate.LT(sdk.NewDec(0)) {
+		return sdkerrors.Wrapf(ErrInvalidInput, "royalty rate should be between 0 and 1")
+	}
+
+	return nil
+}
+
 // CheckFeatureAllowed returns error if feature isn't allowed for the address.
 func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature ClassFeature) error {
 	if nftd.IsFeatureAllowed(addr, feature) {

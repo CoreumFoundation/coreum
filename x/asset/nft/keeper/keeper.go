@@ -68,6 +68,10 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		return "", err
 	}
 
+	if err := types.ValidateRoyaltyRate(settings.RoyaltyRate); err != nil {
+		return "", err
+	}
+
 	id := types.BuildClassID(settings.Symbol, settings.Issuer)
 	if err := nft.ValidateClassID(id); err != nil {
 		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())

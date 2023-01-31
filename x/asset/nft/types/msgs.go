@@ -48,6 +48,10 @@ func (msg *MsgIssueClass) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(msg.URI), MaxURILength)
 	}
 
+	if err := ValidateRoyaltyRate(msg.RoyaltyRate); err != nil {
+		return err
+	}
+
 	if len(msg.URIHash) > MaxURIHashLength {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), MaxURIHashLength)
 	}
