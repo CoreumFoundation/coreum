@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
@@ -50,7 +50,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 		Delayed:     true,
 	}
 
-	txRes, err := tx.BroadcastTx(
+	txRes, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(creator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createAccMsg)),
@@ -87,7 +87,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	}
 
 	// try to send full amount from vesting account before delay is ended
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -108,7 +108,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	}))
 
 	// try to send one more time, the coins should be unlocked at that time
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -158,7 +158,7 @@ func TestVestingAccountStaking(t *testing.T) {
 		Delayed:     false,
 	}
 
-	txRes, err := tx.BroadcastTx(
+	txRes, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(creator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createAccMsg)),
@@ -196,7 +196,7 @@ func TestVestingAccountStaking(t *testing.T) {
 	}
 
 	// try to delegate full amount from created vesting account
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgDelegate)),
@@ -247,7 +247,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		},
 	}
 
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -264,7 +264,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Account: vestingAcc.String(),
 		Coin:    vestingCoin,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSetWhitelistedLimit)),
@@ -278,7 +278,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    vestingCoin,
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSetWhitelistedLimit)),
@@ -295,7 +295,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Delayed:     true,
 	}
 
-	txRes, err := tx.BroadcastTx(
+	txRes, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(createAccMsg)),
@@ -329,7 +329,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Sender: vestingAcc.String(),
 		Coin:   sdk.NewInt64Coin(denom, 10),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
@@ -343,7 +343,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 10)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -357,7 +357,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Account: vestingAcc.String(),
 		Coin:    sdk.NewInt64Coin(denom, 50),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
@@ -373,7 +373,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	}
 
 	// try to burn one more time, now the coins are unlocked so can be burnt
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
@@ -382,7 +382,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT.NoError(err)
 
 	// try to send unlocked coins
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -396,7 +396,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		ToAddress:   recipient.String(),
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 60)),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
@@ -410,7 +410,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Account: vestingAcc.String(),
 		Coin:    sdk.NewInt64Coin(denom, 50),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
@@ -419,7 +419,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT.NoError(err)
 
 	// try to send the unfrozen coins now
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(vestingAcc),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
