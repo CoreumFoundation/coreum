@@ -21,7 +21,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
@@ -125,7 +125,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	editValidatorRes, err := tx.BroadcastTx(
+	editValidatorRes, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(validatorAccAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(editValidatorMsg)),
@@ -143,7 +143,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 
 	// Delegate coins
 	delegateMsg := stakingtypes.NewMsgDelegate(delegator, validatorAddress, chain.NewCoin(delegateAmount))
-	delegateResult, err := tx.BroadcastTx(
+	delegateResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
@@ -174,7 +174,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		Amount:              chain.NewCoin(delegateAmount),
 	}
 
-	redelegateResult, err := tx.BroadcastTx(
+	redelegateResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(redelegateMsg)),
@@ -203,7 +203,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 
 	// Undelegate coins
 	undelegateMsg := stakingtypes.NewMsgUndelegate(delegator, validator2Address, chain.NewCoin(delegateAmount))
-	undelegateResult, err := tx.BroadcastTx(
+	undelegateResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),
@@ -301,7 +301,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(validatorAccAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(editValidatorMsg)),

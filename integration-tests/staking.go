@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
 // CreateValidator creates a new validator on the chain and returns the staker addresses, validator addresses and callback function to deactivate it.
@@ -40,7 +40,7 @@ func CreateValidator(ctx context.Context, chain Chain, stakingAmount, selfDelega
 		return nil, nil, nil, err
 	}
 
-	result, err := tx.BroadcastTx(
+	result, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(staker),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
@@ -69,7 +69,7 @@ func CreateValidator(ctx context.Context, chain Chain, stakingAmount, selfDelega
 	return staker, validatorAddr, func() error {
 		// Undelegate coins, i.e. deactivate staker
 		undelegateMsg := stakingtypes.NewMsgUndelegate(staker, validatorAddr, chain.NewCoin(stakingAmount))
-		_, err = tx.BroadcastTx(
+		_, err = client.BroadcastTx(
 			ctx,
 			chain.ClientContext.WithFromAddress(staker),
 			chain.TxFactory().WithGas(chain.GasLimitByMsgs(undelegateMsg)),

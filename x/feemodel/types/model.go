@@ -2,32 +2,32 @@ package types
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
-// DefaultModel returns model with default params
+// DefaultModel returns model with default params.
 func DefaultModel() Model {
 	return Model{
 		params: DefaultParams().Model,
 	}
 }
 
-// NewModel creates model
+// NewModel creates model.
 func NewModel(params ModelParams) Model {
 	return Model{
 		params: params,
 	}
 }
 
-// Model executes fee model
+// Model executes fee model.
 type Model struct {
 	params ModelParams
 }
 
-// Params returns fee model params
+// Params returns fee model params.
 func (m Model) Params() ModelParams {
 	return m.params
 }
 
-// CalculateNextGasPrice calculates minimum gas price for next block
-// Chart showing a sample output of the fee model: x/feemodel/spec/assets/curve.png
+// CalculateNextGasPrice calculates minimum gas price for next block.
+// Chart showing a sample output of the fee model: x/feemodel/spec/assets/curve.png.
 func (m Model) CalculateNextGasPrice(shortEMA, longEMA int64) sdk.Dec {
 	switch {
 	case shortEMA >= m.params.MaxBlockGas:
@@ -45,17 +45,17 @@ func (m Model) CalculateNextGasPrice(shortEMA, longEMA int64) sdk.Dec {
 	}
 }
 
-// CalculateGasPriceWithMaxDiscount calculates gas price with maximum discount applied
+// CalculateGasPriceWithMaxDiscount calculates gas price with maximum discount applied.
 func (m Model) CalculateGasPriceWithMaxDiscount() sdk.Dec {
 	return m.params.InitialGasPrice.Mul(sdk.OneDec().Sub(m.params.MaxDiscount))
 }
 
-// CalculateMaxGasPrice calculates maximum gas price
+// CalculateMaxGasPrice calculates maximum gas price.
 func (m Model) CalculateMaxGasPrice() sdk.Dec {
 	return m.params.InitialGasPrice.Mul(m.params.MaxGasPriceMultiplier)
 }
 
-// CalculateEscalationStartBlockGas calculates escalation start block gas
+// CalculateEscalationStartBlockGas calculates escalation start block gas.
 func (m Model) CalculateEscalationStartBlockGas() int64 {
 	return sdk.NewInt(m.params.MaxBlockGas).ToDec().Mul(m.params.EscalationStartFraction).TruncateInt64()
 }
@@ -87,7 +87,7 @@ func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA, longEMA int64) sd
 	return gasPriceWithMaxDiscount.Add(offset)
 }
 
-// CalculateEMA calculates next EMA value
+// CalculateEMA calculates next EMA value.
 func CalculateEMA(previousEMA, newValue int64, numOfBlocks uint32) int64 {
 	return int64((uint64(numOfBlocks-1)*uint64(previousEMA) + uint64(newValue)) / uint64(numOfBlocks))
 }

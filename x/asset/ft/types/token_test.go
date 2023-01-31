@@ -302,7 +302,7 @@ func TestValidateSendCommissionRate(t *testing.T) {
 	}
 }
 
-//nolint:funlen,nosnakecase // this is complex test scenario and breaking it down is not helpful
+//nolint:funlen // this is complex test scenario and breaking it down is not helpful
 func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	nonIssuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
 func TestFeeGrant(t *testing.T) {
@@ -48,7 +48,7 @@ func TestFeeGrant(t *testing.T) {
 		Allowance: basicAllowance,
 	}
 
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
@@ -63,7 +63,7 @@ func TestFeeGrant(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee).WithFeeGranterAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -76,7 +76,7 @@ func TestFeeGrant(t *testing.T) {
 		Grantee: grantee.String(),
 	}
 
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(revokeMsg)),
@@ -91,7 +91,7 @@ func TestFeeGrant(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
 	}
 
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee).WithFeeGranterAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),

@@ -17,7 +17,7 @@ func newBalanceStore(cdc codec.BinaryCodec, store sdk.KVStore, pref []byte) bala
 	}
 }
 
-// balanceStore is the unified store for getting balance of an accounts, currently it is used by freezing and whitelisting
+// balanceStore is the unified store for getting balance of an accounts, currently it is used by freezing and whitelisting.
 type balanceStore struct {
 	store prefix.Store
 	cdc   codec.BinaryCodec

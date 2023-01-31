@@ -14,4 +14,10 @@ message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   // class_definitions keep the non-fungible token class definitions state
   repeated ClassDefinition class_definitions = 2 [(gogoproto.nullable) = false];
+  repeated FrozenNFT frozen_nfts = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "FrozenNFTs"];
+}
+
+message FrozenNFT {
+   string classID = 1;
+   repeated string nftIDs = 2;
 }

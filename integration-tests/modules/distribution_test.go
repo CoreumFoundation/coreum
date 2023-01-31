@@ -16,7 +16,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
 )
 
@@ -50,7 +50,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	// capture the pool amount now to check it later
 	poolBeforeFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
-	txResult, err := tx.BroadcastTx(
+	txResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(communityPoolFunder),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFundCommunityPool)),
@@ -164,7 +164,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	clientCtx := chain.ClientContext
 
 	logger.Get(ctx).Info("Delegating some coins to validator to withdraw later")
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(delegateMsg)),
@@ -189,7 +189,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	validatorStakerBalanceBeforeWithdrawal := validatorStakerBalanceRes.Balance
 
 	// await next 5 blocks
-	requireT.NoError(tx.AwaitNextBlocks(ctx, clientCtx, 5))
+	requireT.NoError(client.AwaitNextBlocks(ctx, clientCtx, 5))
 
 	// *** Withdraw and check the delegator reward. ***
 
@@ -200,7 +200,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		DelegatorAddress: delegator.String(),
 		ValidatorAddress: validatorAddress.String(),
 	}
-	txResult, err := tx.BroadcastTx(
+	txResult, err := client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(withdrawRewardMsg)),
@@ -234,7 +234,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		DelegatorAddress: delegator.String(),
 		WithdrawAddress:  delegatorRewardRecipient.String(),
 	}
-	txResult, err = tx.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(setWithdrawAddressMsg)),
@@ -244,7 +244,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	// validate the deterministic gas
 	requireT.Equal(chain.GasLimitByMsgs(setWithdrawAddressMsg), uint64(txResult.GasUsed))
 	// withdraw the reward second time
-	txResult, err = tx.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(withdrawRewardMsg)),
@@ -274,7 +274,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	txResult, err = tx.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(validatorStakerAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(withdrawCommissionMsg)),

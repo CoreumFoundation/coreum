@@ -13,7 +13,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 )
 
@@ -59,7 +59,7 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
 }
 
-// UpdateParams goes through proposal process to update parameters
+// UpdateParams goes through proposal process to update parameters.
 func (g Governance) UpdateParams(ctx context.Context, description string, updates []paramproposal.ParamChange) error {
 	// Fund accounts.
 	proposer := chain.GenAccount()
@@ -126,7 +126,7 @@ func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress,
 func (g Governance) Propose(ctx context.Context, msg *govtypes.MsgSubmitProposal) (uint64, error) {
 	txf := g.chainCtx.TxFactory().
 		WithGas(g.chainCtx.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}))
-	result, err := tx.BroadcastTx(
+	result, err := client.BroadcastTx(
 		ctx,
 		g.chainCtx.ClientContext.WithFromAddress(msg.GetProposer()),
 		txf,
@@ -201,7 +201,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 		clientCtx := g.chainCtx.ClientContext.
 			WithBroadcastMode(flags.BroadcastSync)
 
-		res, err := tx.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
+		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
 		if err != nil {
 			return err
 		}
@@ -210,7 +210,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 
 	// await for the first error
 	for _, txHash := range txHashes {
-		_, err := tx.AwaitTx(ctx, g.chainCtx.ClientContext, txHash)
+		_, err := client.AwaitTx(ctx, g.chainCtx.ClientContext, txHash)
 		if err != nil {
 			return err
 		}
@@ -263,7 +263,7 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 	return proposal.Status, nil
 }
 
-// GetProposal returns proposal by ID
+// GetProposal returns proposal by ID.
 func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
 	resp, err := g.govClient.Proposal(ctx, &govtypes.QueryProposalRequest{
 		ProposalId: proposalID,

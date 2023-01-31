@@ -10,30 +10,30 @@ import (
 )
 
 const (
-	// ModuleName defines the module name
+	// ModuleName defines the module name.
 	ModuleName = "assetft"
 
-	// StoreKey defines the primary module store key
+	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
 
-	// RouterKey is the message route for slashing
+	// RouterKey is the message route for slashing.
 	RouterKey = ModuleName
 
-	// QuerierRoute defines the module's query routing key
+	// QuerierRoute defines the module's query routing key.
 	QuerierRoute = ModuleName
 )
 
-// Store key prefixes
+// Store key prefixes.
 var (
 	// TokenKeyPrefix defines the key prefix for the fungible token.
 	TokenKeyPrefix = []byte{0x01}
 	// SymbolKeyPrefix defines the key prefix for the fungible token by Symbol.
 	SymbolKeyPrefix = []byte{0x02}
-	// FrozenBalancesKeyPrefix defines the key prefix to track frozen balances
+	// FrozenBalancesKeyPrefix defines the key prefix to track frozen balances.
 	FrozenBalancesKeyPrefix = []byte{0x03}
 	// GlobalFreezeKeyPrefix defines the key prefix to track global freezing of a Fungible Token.
 	GlobalFreezeKeyPrefix = []byte{0x04}
-	// WhitelistedBalancesKeyPrefix defines the key prefix to track whitelisted balances
+	// WhitelistedBalancesKeyPrefix defines the key prefix to track whitelisted balances.
 	WhitelistedBalancesKeyPrefix = []byte{0x05}
 )
 

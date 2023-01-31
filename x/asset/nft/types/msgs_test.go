@@ -306,6 +306,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	}
 }
 
+//nolint:dupl // test case duplicates are ok
 func TestMsgBurn_ValidateBasic(t *testing.T) {
 	validMessage := types.MsgBurn{
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
@@ -345,6 +346,130 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid classID",
 			messageFunc: func() *types.MsgBurn {
+				msg := validMessage
+				msg.ClassID = "x"
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := tc.messageFunc().ValidateBasic()
+			if tc.expectedError == nil {
+				assertT.NoError(err)
+			} else {
+				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
+//nolint:dupl // test case duplicates are ok
+func TestMsgFreeze_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgFreeze{
+		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ID:      "my-id",
+	}
+	testCases := []struct {
+		name          string
+		messageFunc   func() *types.MsgFreeze
+		expectedError error
+	}{
+		{
+			name: "valid msg",
+			messageFunc: func() *types.MsgFreeze {
+				msg := validMessage
+				return &msg
+			},
+		},
+		{
+			name: "invalid id",
+			messageFunc: func() *types.MsgFreeze {
+				msg := validMessage
+				msg.ID = "some-invalid-id?"
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid sender",
+			messageFunc: func() *types.MsgFreeze {
+				msg := validMessage
+				msg.Sender = "devcore172rx"
+				return &msg
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid classID",
+			messageFunc: func() *types.MsgFreeze {
+				msg := validMessage
+				msg.ClassID = "x"
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := tc.messageFunc().ValidateBasic()
+			if tc.expectedError == nil {
+				assertT.NoError(err)
+			} else {
+				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
+//nolint:dupl // test case duplicates are ok
+func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgUnfreeze{
+		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ID:      "my-id",
+	}
+	testCases := []struct {
+		name          string
+		messageFunc   func() *types.MsgUnfreeze
+		expectedError error
+	}{
+		{
+			name: "valid msg",
+			messageFunc: func() *types.MsgUnfreeze {
+				msg := validMessage
+				return &msg
+			},
+		},
+		{
+			name: "invalid id",
+			messageFunc: func() *types.MsgUnfreeze {
+				msg := validMessage
+				msg.ID = "invalid-id?"
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid sender",
+			messageFunc: func() *types.MsgUnfreeze {
+				msg := validMessage
+				msg.Sender = "devcore172rszx"
+				return &msg
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid classID",
+			messageFunc: func() *types.MsgUnfreeze {
 				msg := validMessage
 				msg.ClassID = "x"
 				return &msg
