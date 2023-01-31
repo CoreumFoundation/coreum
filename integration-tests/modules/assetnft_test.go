@@ -549,6 +549,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 				&assetnfttypes.MsgFreeze{},
 				&assetnfttypes.MsgUnfreeze{},
 			},
+			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
 		}),
 	)
 	requireT.NoError(
@@ -727,6 +728,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 				&assetnfttypes.MsgWhitelist{},
 				&assetnfttypes.MsgUnwhitelist{},
 			},
+			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
 		}),
 	)
 

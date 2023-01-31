@@ -76,7 +76,7 @@ func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
 		return "", "", nil, err
 	}
 	if len(parsedKeys) != 3 {
-		err = sdkerrors.Wrapf(ErrInvalidKey, "whitelisting key must be composed to 3 length prefixed keys")
+		err = sdkerrors.Wrapf(ErrInvalidKey, "whitelisting key must be composed of 3 length prefixed keys")
 		return "", "", nil, err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), parsedKeys[2], nil

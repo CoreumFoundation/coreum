@@ -461,11 +461,12 @@ func TestKeeper_Whitelist(t *testing.T) {
 	nftKeeper := testApp.NFTKeeper
 
 	nftParams := types.Params{
-		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 1000_000),
 	}
 	assetNFTKeeper.SetParams(ctx, nftParams)
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(testApp.FundAccount(ctx, issuer, sdk.NewCoins(nftParams.MintFee)))
 	classSettings := types.IssueClassSettings{
 		Issuer: issuer,
 		Symbol: "symbol",
@@ -487,7 +488,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	}
 
 	// mint NFT
-	requireT.NoError(assetNFTKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
 	nftID := settings.ID
 
 	// transfer to non whitelisted account, it should fail.
@@ -567,11 +568,7 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 			types.ClassFeature_whitelisting, //nolint:nosnakecase
 		},
 	}
-
-	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
-	requireT.NoError(err)
-
-	requireT.NoError(err)
+	classID := types.BuildClassID(classSettings.Symbol, issuer)
 	settings := types.MintSettings{
 		Sender:  issuer,
 		ClassID: classID,
@@ -580,9 +577,19 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 		URIHash: "content-hash",
 	}
 
-	// try whitelist account, it should fail
+	// try whitelist account, it should fail because class is not present
 	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	nftID := settings.ID
+	err := assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient)
+	requireT.Error(err)
+	requireT.True(types.ErrClassNotFound.Is(err))
+
+	// create class
+	mintedClassID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+	requireT.EqualValues(classID, mintedClassID)
+
+	// try whitelist account, it should fail because nft is not present
 	err = assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient)
 	requireT.Error(err)
 	requireT.True(types.ErrNFTNotFound.Is(err))
