@@ -8,13 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/rpc/client"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -35,10 +34,15 @@ func TestUpgrade(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Nil(currentPlan.Plan)
 
-	infoBefore, err := info(ctx, chain.ClientContext.Client())
+	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
+	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-	require.False(t, strings.HasSuffix(infoBefore.Version, "-upgrade"))
-	upgradeHeight := infoBefore.LastBlockHeight + 30
+	require.False(t, strings.HasSuffix(infoBeforeRes.ApplicationVersion.Version, "-upgrade"))
+
+	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	requireT.NoError(err)
+
+	upgradeHeight := latestBlockRes.Block.Header.Height + 30
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -85,23 +89,24 @@ func TestUpgrade(t *testing.T) {
 	assert.Equal(t, "upgrade", currentPlan.Plan.Name)
 	assert.Equal(t, upgradeHeight, currentPlan.Plan.Height)
 
-	infoWaiting, err := info(ctx, chain.ClientContext.Client())
+	infoWaitingBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
-	log.Info("Waiting for upgrade", zap.Int64("upgradeHeight", upgradeHeight), zap.Int64("currentHeight", infoWaiting.LastBlockHeight))
 
-	retryCtx, cancel := context.WithTimeout(ctx, 3*time.Second*time.Duration(upgradeHeight-infoWaiting.LastBlockHeight))
+	requireT.NoError(err)
+	log.Info("Waiting for upgrade", zap.Int64("upgradeHeight", upgradeHeight), zap.Int64("currentHeight", infoWaitingBlockRes.Block.Header.Height))
+	retryCtx, cancel := context.WithTimeout(ctx, 3*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
 	defer cancel()
-	var infoAfter abci.ResponseInfo
+	var infoAfterBlockRes *tmservice.GetLatestBlockResponse
 	err = retry.Do(retryCtx, time.Second, func() error {
 		var err error
-		infoAfter, err = info(ctx, chain.ClientContext.Client())
+		infoAfterBlockRes, err = tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 		if err != nil {
 			return retry.Retryable(err)
 		}
-		if infoAfter.LastBlockHeight >= upgradeHeight {
+		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight {
 			return nil
 		}
-		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfter.LastBlockHeight))
+		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height))
 	})
 	requireT.NoError(err)
 
@@ -112,16 +117,10 @@ func TestUpgrade(t *testing.T) {
 	requireT.NoError(err)
 	assert.Equal(t, upgradeHeight, appliedPlan.Height)
 
-	// Verify that node was restarted by cosmovisor and new version is running.
-	assert.Equal(t, infoBefore.Version+"-upgrade", infoAfter.Version)
-}
+	infoAfterRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	requireT.NoError(err)
+	require.False(t, strings.HasSuffix(infoBeforeRes.ApplicationVersion.Version, "-upgrade"))
 
-func info(ctx context.Context, client client.Client) (abci.ResponseInfo, error) {
-	requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	i, err := client.ABCIInfo(requestCtx)
-	if err != nil {
-		return abci.ResponseInfo{}, errors.WithStack(err)
-	}
-	return i.Response, nil
+	// Verify that node was restarted by cosmovisor and new version is running.
+	assert.Equal(t, infoBeforeRes.ApplicationVersion.Version+"-upgrade", infoAfterRes.ApplicationVersion.Version)
 }
