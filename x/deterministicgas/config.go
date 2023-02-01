@@ -5,6 +5,7 @@ import (
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
@@ -98,6 +99,9 @@ func DefaultConfig() Config {
 		MsgType(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(142000),
 		MsgType(&stakingtypes.MsgCreateValidator{}): constantGasFunc(76000),
 		MsgType(&stakingtypes.MsgEditValidator{}):   constantGasFunc(13000),
+
+		// vesting
+		MsgType(&vestingtypes.MsgCreateVestingAccount{}): constantGasFunc(25000),
 
 		// wasm
 		MsgType(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),

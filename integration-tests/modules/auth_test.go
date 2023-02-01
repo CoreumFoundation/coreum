@@ -19,7 +19,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
 // TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other than CORE is rejected
@@ -48,7 +48,7 @@ func TestAuthFeeLimits(t *testing.T) {
 		Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.Params().MaxDiscount))
 
 	// the gas price is too low
-	_, err := tx.BroadcastTx(ctx,
+	_, err := client.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
 			WithGas(chain.GasLimitByMsgs(msg)).
@@ -57,7 +57,7 @@ func TestAuthFeeLimits(t *testing.T) {
 	require.True(t, sdkerrors.ErrInsufficientFee.Is(err))
 
 	// no gas price
-	_, err = tx.BroadcastTx(ctx,
+	_, err = client.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
 			WithGas(chain.GasLimitByMsgs(msg)).
@@ -66,7 +66,7 @@ func TestAuthFeeLimits(t *testing.T) {
 	require.True(t, sdkerrors.ErrInsufficientFee.Is(err))
 
 	// more gas than MaxBlockGas
-	_, err = tx.BroadcastTx(ctx,
+	_, err = client.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
 			WithGas(uint64(maxBlockGas+1)),
@@ -74,7 +74,7 @@ func TestAuthFeeLimits(t *testing.T) {
 	require.Error(t, err)
 
 	// gas equal MaxBlockGas, the tx should pass
-	_, err = tx.BroadcastTx(ctx,
+	_, err = client.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
 			WithGas(uint64(maxBlockGas)),
@@ -130,7 +130,7 @@ func TestAuthMultisig(t *testing.T) {
 
 	clientCtx := chain.ClientContext
 	// prepare the tx factory to sign with the account seq and number of the multisig account
-	multisigAccInfo, err := tx.GetAccountInfo(ctx, clientCtx, multisigAddress)
+	multisigAccInfo, err := client.GetAccountInfo(ctx, clientCtx, multisigAddress)
 	requireT.NoError(err)
 	txF := chain.TxFactory().
 		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
@@ -148,26 +148,26 @@ func TestAuthMultisig(t *testing.T) {
 	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
 
-	err = tx.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
-	_, err = tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
+	_, err = client.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 	logger.Get(ctx).Info("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = tx.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
-	err = tx.Sign(txF, signer2KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer2KeyInfo.GetName(), txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
-	result, err := tx.BroadcastRawTx(ctx, clientCtx, encodedTx)
+	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Fully signed tx executed", zap.String("txHash", result.TxHash))
 
@@ -194,7 +194,7 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 	}))
 
 	clientCtx := chain.ClientContext
-	accInfo, err := tx.GetAccountInfo(ctx, clientCtx, sender)
+	accInfo, err := client.GetAccountInfo(ctx, clientCtx, sender)
 	require.NoError(t, err)
 
 	msg := &banktypes.MsgSend{
@@ -203,7 +203,7 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
 	}
 
-	_, err = tx.BroadcastTx(ctx,
+	_, err = client.BroadcastTx(ctx,
 		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().
 			WithSequence(accInfo.GetSequence()+1). // incorrect sequence

@@ -19,9 +19,9 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -201,7 +201,7 @@ func TestValidateAllGenTxs(t *testing.T) {
 		unsealConfig()
 		n.SetSDKConfig()
 
-		clientCtx := tx.NewClientContext(app.ModuleBasics).WithChainID(string(n.ChainID()))
+		clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).WithChainID(string(n.ChainID()))
 
 		// Check real n txs.
 		for _, rawTx := range n.GenTxs() {
@@ -282,7 +282,7 @@ func TestGenesisCoreTotalSupply(t *testing.T) {
 // Original code was significantly refactored & simplified to cover our use-case.
 // Note that this func handles only genesis txs signature validation because of
 // hardcoded account number & sequence to avoid real network requests.
-func validateGenesisTxSignature(clientCtx tx.ClientContext, tx sdk.Tx) error {
+func validateGenesisTxSignature(clientCtx client.Context, tx sdk.Tx) error {
 	signedTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
 		return errors.New("failed to convert Tx to SigVerifiableTx")
