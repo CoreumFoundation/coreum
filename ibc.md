@@ -1,9 +1,14 @@
 # IBC integration plan
 
 ## IBC protocol
-- we need someone to deeply understand how the IBC protocol works including: communication between relayer and chain, light client inside validators, how validators agree on the state of the other chain
-- meaning of all the messages and params in the module
+- we need someone to deeply understand how the IBC protocol works including: communication between relayer and chain
+- meaning of all the messages and params in the module, can we define deterministic gas for them?
 - check if there is anything related to governance
+- understand difference between ordered and unordered channels
+- understand data in the exported state of IBC
+- inspect all IBC-related modules
+- inspect IBC integration inside bank module (and others?)
+- when `upgrade` module executes migrations there is some weird logic related to IBC. We need to understand it.
 
 ## Relayer
 - it is possible to use single relayer for all the channels
@@ -12,8 +17,7 @@
 - we must monitor the funds of relayer on all the chains (grafana metric)
 - if we want other entities to manage relayers we need to incentivize them to do it
 - how relayer syncs two chains? how often? what transactions are used? how much gas they take?
-- write a benchmark integration test to check how IBC transfers behave under load
-- inspect IBC transactions on other chains
+- inspect IBC transactions on other chains to check how much gas they take
  
 ### Hermes vs Cosmos relayer
 - Cosmos relayer is written in go, Hermes is written in rust
@@ -76,3 +80,7 @@ In theory IBC might be used to transfer any messages between two compatible chai
 - Do we want to do it?
 - It requires significant effort put on investigation first
 - We don't even know at the moment if it really might be done in practice.
+
+## Benchmarking
+- write a benchmark integration test to check how IBC transfers behave under load
+- check how much resources (disk space, memory, cpu?) each integrated chain takes on our side
