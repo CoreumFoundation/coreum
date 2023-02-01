@@ -2,6 +2,7 @@ package deterministicgas
 
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -152,6 +153,7 @@ func (cfg Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
 	// Currently we treat unknown message types as undeterministic.
 	// In the future other approach could be to return third boolean parameter
 	// identifying if message is known and report unknown messages to monitoring.
+	reportUnknownMessageMetric(MsgType(msg))
 	return 0, false
 }
 
@@ -236,4 +238,10 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 		// Minimum 2 operations (1 input & 1 output) should be present inside any multi-send.
 		return uint64(lo.Max([]int{totalOperationsNum, 2})) * bankMultiSendPerOperationGas, true
 	}
+}
+
+func reportUnknownMessageMetric(msgName string) {
+	metrics.IncrCounterWithLabels([]string{"deterministic_gas_unknown_message"}, 1, []metrics.Label{
+		{Name: "msg_name", Value: msgName},
+	})
 }
