@@ -282,6 +282,9 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.Pag
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix)
 	mp := make(map[string][]string, 0)
 	pageRes, err := query.Paginate(store, q, func(key, value []byte) error {
+		if !bytes.Equal(value, frozenNFTStoreValue) {
+			return errors.Errorf("value stored in freezing store is not %x, value %x", frozenNFTStoreValue, value)
+		}
 		classID, nftID, err := types.ParseFreezingKey(key)
 		if err != nil {
 			return err
