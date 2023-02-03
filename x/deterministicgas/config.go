@@ -82,10 +82,9 @@ func DefaultConfig() Config {
 		MsgType(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
-		MsgType(&govtypes.MsgSubmitProposal{}): constantGasFunc(65000),
-		MsgType(&govtypes.MsgVote{}):           constantGasFunc(7000),
-		MsgType(&govtypes.MsgVoteWeighted{}):   constantGasFunc(9000),
-		MsgType(&govtypes.MsgDeposit{}):        constantGasFunc(52000),
+		MsgType(&govtypes.MsgVote{}):         constantGasFunc(7000),
+		MsgType(&govtypes.MsgVoteWeighted{}): constantGasFunc(9000),
+		MsgType(&govtypes.MsgDeposit{}):      constantGasFunc(52000),
 
 		// nft
 		MsgType(&nfttypes.MsgSend{}): constantGasFunc(16000),
@@ -111,6 +110,11 @@ func DefaultConfig() Config {
 	registerUndeterministicGasFuncs(
 		&cfg,
 		[]sdk.Msg{
+			// gov
+			// MsgSubmitProposal is defined as undeterministic because it runs a proposal handler function
+			// specific for each proposal and those functions consume unknown amount of gas.
+			&govtypes.MsgSubmitProposal{},
+
 			// crisis
 			// MsgVerifyInvariant is defined as undeterministic since fee
 			// charged by this tx type is defined as param inside module.
