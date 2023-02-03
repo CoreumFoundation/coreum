@@ -135,6 +135,7 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 | Message Type                               |
 |--------------------------------------------|
+| /cosmos.crisis.v1beta1.MsgVerifyInvariant  |
 | /cosmos.evidence.v1beta1.MsgSubmitEvidence |
 | /cosmwasm.wasm.v1.MsgExecuteContract       |
 | /cosmwasm.wasm.v1.MsgIBCCloseChannel       |
