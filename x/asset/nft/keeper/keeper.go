@@ -11,6 +11,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum/pkg/store"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -486,6 +487,30 @@ func (k Keeper) SetWhitelisting(ctx sdk.Context, classID, nftID string, account 
 		store.Delete(key)
 	}
 	return nil
+}
+
+// GetAllWhitelistedAccountsForNFT returns all whitelisted accounts for all NFTs.
+func (k Keeper) GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) (*query.PageResponse, []string, error) {
+	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
+	if err != nil {
+		return nil, nil, err
+	}
+	key := store.JoinKeys(types.NFTWhitelistingKeyPrefix, compositeKey)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), key)
+	accounts := []string{}
+	pageRes, err := query.Paginate(store, q, func(key, value []byte) error {
+		if !bytes.Equal(value, whitelistedNFTStoreValue) {
+			return errors.Errorf("value stored in whitelisting store is not %x, value %x", whitelistedNFTStoreValue, value)
+		}
+		account := sdk.AccAddress(key[1:]) // the first byte contains the length prefix
+		accounts = append(accounts, account.String())
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return pageRes, accounts, nil
 }
 
 // GetAllWhitelisted returns all whitelisted accounts for all NFTs.

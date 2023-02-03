@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
@@ -16,6 +17,7 @@ type QueryKeeper interface {
 	GetClass(ctx sdk.Context, classID string) (types.Class, error)
 	IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error)
 	IsWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error)
+	GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) (*query.PageResponse, []string, error)
 }
 
 // QueryService serves grpc query requests for assetsnft module.
@@ -64,4 +66,13 @@ func (q QueryService) Whitelisted(ctx context.Context, req *types.QueryWhitelist
 	return &types.QueryWhitelistedResponse{
 		Whitelisted: isWhitelisted,
 	}, nil
+}
+
+// WhitelistedAccountsForNFT returns the list of accounts which are whitelited to hold this NFT.
+func (q QueryService) WhitelistedAccountsForNFT(ctx context.Context, req *types.QueryWhitelistedAccountsForNFTRequest) (*types.QueryWhitelistedAccountsForNFTResponse, error) {
+	pageRes, accounts, err := q.keeper.GetAllWhitelistedAccountsForNFT(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id, req.Pagination)
+	return &types.QueryWhitelistedAccountsForNFTResponse{
+		Pagination: pageRes,
+		Accounts:   accounts,
+	}, err
 }

@@ -149,6 +149,14 @@ func TestCmdWhitelist(t *testing.T) {
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &whitelistedResp))
 	requireT.True(whitelistedResp.Whitelisted)
 
+	// query with pagination
+	var resPage types.QueryWhitelistedAccountsForNFTResponse
+	args = []string{classID, nftID}
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelistedAccounts(), args)
+	requireT.NoError(err)
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resPage))
+	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
+
 	// unwhitelist
 	args = []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
@@ -161,6 +169,7 @@ func TestCmdWhitelist(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &whitelistedResp))
 	requireT.False(whitelistedResp.Whitelisted)
+
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {

@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -506,6 +507,35 @@ func TestKeeper_Whitelist(t *testing.T) {
 	// transfer again, it should now succeed.
 	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
 	requireT.NoError(err)
+
+	// test query accounts
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient2))
+
+	_, frozenAccounts, err := assetNFTKeeper.GetAllWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: query.MaxLimit})
+	requireT.NoError(err)
+	requireT.Len(frozenAccounts, 2)
+	requireT.ElementsMatch(frozenAccounts, []string{
+		recipient.String(),
+		recipient2.String(),
+	})
+
+	incrementallyQueriedAccounts := []string{}
+	pageRes, frozenAccounts, err := assetNFTKeeper.GetAllWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: 1})
+	requireT.NoError(err)
+	requireT.Len(frozenAccounts, 1)
+	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, frozenAccounts...)
+
+	pageRes, frozenAccounts, err = assetNFTKeeper.GetAllWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Key: pageRes.GetNextKey()})
+	requireT.NoError(err)
+	requireT.Len(frozenAccounts, 1)
+	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, frozenAccounts...)
+	requireT.Nil(pageRes.GetNextKey())
+
+	requireT.ElementsMatch([]string{
+		recipient.String(),
+		recipient2.String(),
+	}, incrementallyQueriedAccounts)
 }
 
 func TestKeeper_Whitelist_Unwhitelistable(t *testing.T) {
