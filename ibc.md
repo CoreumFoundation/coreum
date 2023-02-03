@@ -18,6 +18,7 @@
 - if we want other entities to manage relayers we need to incentivize them to do it
 - how relayer syncs two chains? how often? what transactions are used? how much gas they take?
 - inspect IBC transactions on other chains to check how much gas they take
+- check if it's possible to run many relayers serving the same channel
  
 ### Hermes vs Cosmos relayer
 - Cosmos relayer is written in go, Hermes is written in rust
