@@ -83,8 +83,11 @@ TotalGas = 121040
 | /coreum.asset.nft.v1.MsgMint                                | 39000                          |
 | /coreum.asset.nft.v1.MsgUnfreeze                            | 5000                           |
 | /coreum.nft.v1beta1.MsgSend                                 | 16000                          |
+| /cosmos.authz.v1beta1.MsgExec                               | [special case](#special-cases) |
 | /cosmos.authz.v1beta1.MsgGrant                              | 7000                           |
 | /cosmos.authz.v1beta1.MsgRevoke                             | 2500                           |
+| /cosmos.bank.v1beta1.MsgMultiSend                           | [special case](#special-cases) |
+| /cosmos.bank.v1beta1.MsgSend                                | [special case](#special-cases) |
 | /cosmos.distribution.v1beta1.MsgFundCommunityPool           | 15000                          |
 | /cosmos.distribution.v1beta1.MsgSetWithdrawAddress          | 5000                           |
 | /cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward     | 65000                          |
@@ -104,9 +107,6 @@ TotalGas = 121040
 | /cosmos.vesting.v1beta1.MsgCreateVestingAccount             | 25000                          |
 | /cosmwasm.wasm.v1.MsgClearAdmin                             | 6500                           |
 | /cosmwasm.wasm.v1.MsgUpdateAdmin                            | 8000                           |
-| /cosmos.bank.v1beta1.MsgSend                                | [special case](#special-cases) |
-| /cosmos.bank.v1beta1.MsgMultiSend                           | [special case](#special-cases) |
-| /cosmos.authz.v1beta1.MsgExec                               | [special case](#special-cases) |
 
 #### Special Cases
 
