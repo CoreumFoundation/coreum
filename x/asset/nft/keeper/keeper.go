@@ -409,8 +409,8 @@ func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageReque
 	return definitions, pageRes, err
 }
 
-// Whitelist adds an account to the whitelisted list of accounts for the NFT
-func (k Keeper) Whitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error {
+// AddToWhitelist adds an account to the whitelisted list of accounts for the NFT
+func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
 		return err
@@ -428,15 +428,15 @@ func (k Keeper) Whitelist(ctx sdk.Context, classID, nftID string, sender, accoun
 		return err
 	}
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventWhitelisted{
+	return ctx.EventManager().EmitTypedEvent(&types.EventAddedToWhitelist{
 		ClassId: classID,
 		Id:      nftID,
 		Account: account.String(),
 	})
 }
 
-// Unwhitelist removes an account from the whitelisted list of accounts for the NFT
-func (k Keeper) Unwhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error {
+// RemoveFromWhitelist removes an account from the whitelisted list of accounts for the NFT
+func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
 		return err
@@ -454,7 +454,7 @@ func (k Keeper) Unwhitelist(ctx sdk.Context, classID, nftID string, sender, acco
 		return err
 	}
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventUnwhitelisted{
+	return ctx.EventManager().EmitTypedEvent(&types.EventRemovedFromWhitelist{
 		ClassId: classID,
 		Id:      nftID,
 		Account: account.String(),

@@ -498,7 +498,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 
 	// whitelist the account
-	requireT.NoError(assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient))
+	requireT.NoError(assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient))
 	isWhitelisted, err := assetNFTKeeper.IsWhitelisted(ctx, classID, nftID, recipient)
 	requireT.NoError(err)
 	requireT.True(isWhitelisted)
@@ -544,7 +544,7 @@ func TestKeeper_Whitelist_Unwhitelistable(t *testing.T) {
 	// try to whitelist account, it should fail
 	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	nftID := settings.ID
-	err = assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient)
+	err = assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient)
 	requireT.Error(err)
 	requireT.True(types.ErrFeatureDisabled.Is(err))
 }
@@ -580,7 +580,7 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 	// try whitelist account, it should fail because class is not present
 	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	nftID := settings.ID
-	err := assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient)
+	err := assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient)
 	requireT.Error(err)
 	requireT.True(types.ErrClassNotFound.Is(err))
 
@@ -590,7 +590,7 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 	requireT.EqualValues(classID, mintedClassID)
 
 	// try whitelist account, it should fail because nft is not present
-	err = assetNFTKeeper.Whitelist(ctx, classID, nftID, issuer, recipient)
+	err = assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient)
 	requireT.Error(err)
 	requireT.True(types.ErrNFTNotFound.Is(err))
 }

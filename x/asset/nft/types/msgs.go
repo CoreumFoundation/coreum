@@ -171,7 +171,7 @@ func (msg *MsgUnfreeze) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic checks that message fields are valid.
-func (msg *MsgWhitelist) ValidateBasic() error {
+func (msg *MsgAddToWhitelist) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
@@ -192,14 +192,14 @@ func (msg *MsgWhitelist) ValidateBasic() error {
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg *MsgWhitelist) GetSigners() []sdk.AccAddress {
+func (msg *MsgAddToWhitelist) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}
 }
 
 // ValidateBasic checks that message fields are valid.
-func (msg *MsgUnwhitelist) ValidateBasic() error {
+func (msg *MsgRemoveFromWhitelist) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
@@ -220,7 +220,7 @@ func (msg *MsgUnwhitelist) ValidateBasic() error {
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg *MsgUnwhitelist) GetSigners() []sdk.AccAddress {
+func (msg *MsgRemoveFromWhitelist) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}

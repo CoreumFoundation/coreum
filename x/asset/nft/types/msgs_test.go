@@ -498,8 +498,8 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 }
 
 //nolint:dupl // test case duplicates are ok
-func TestMsgWhitelist_ValidateBasic(t *testing.T) {
-	validMessage := types.MsgWhitelist{
+func TestMsgAddToWhitelist_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgAddToWhitelist{
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 		Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
@@ -507,19 +507,19 @@ func TestMsgWhitelist_ValidateBasic(t *testing.T) {
 	}
 	testCases := []struct {
 		name          string
-		messageFunc   func() *types.MsgWhitelist
+		messageFunc   func() *types.MsgAddToWhitelist
 		expectedError error
 	}{
 		{
 			name: "valid msg",
-			messageFunc: func() *types.MsgWhitelist {
+			messageFunc: func() *types.MsgAddToWhitelist {
 				msg := validMessage
 				return &msg
 			},
 		},
 		{
 			name: "invalid id",
-			messageFunc: func() *types.MsgWhitelist {
+			messageFunc: func() *types.MsgAddToWhitelist {
 				msg := validMessage
 				msg.ID = invalidNFTID
 				return &msg
@@ -528,7 +528,7 @@ func TestMsgWhitelist_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid sender",
-			messageFunc: func() *types.MsgWhitelist {
+			messageFunc: func() *types.MsgAddToWhitelist {
 				msg := validMessage
 				msg.Sender = invalidAccount
 				return &msg
@@ -537,7 +537,7 @@ func TestMsgWhitelist_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid account",
-			messageFunc: func() *types.MsgWhitelist {
+			messageFunc: func() *types.MsgAddToWhitelist {
 				msg := validMessage
 				msg.Account = "devcore172"
 				return &msg
@@ -546,7 +546,7 @@ func TestMsgWhitelist_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid classID",
-			messageFunc: func() *types.MsgWhitelist {
+			messageFunc: func() *types.MsgAddToWhitelist {
 				msg := validMessage
 				msg.ClassID = "x"
 				return &msg
@@ -570,8 +570,8 @@ func TestMsgWhitelist_ValidateBasic(t *testing.T) {
 }
 
 //nolint:dupl // test case duplicates are ok
-func TestMsgUnwhitelist_ValidateBasic(t *testing.T) {
-	validMessage := types.MsgUnwhitelist{
+func TestMsgRemoveFromWhitelist_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgRemoveFromWhitelist{
 		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 		Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
@@ -579,19 +579,19 @@ func TestMsgUnwhitelist_ValidateBasic(t *testing.T) {
 	}
 	testCases := []struct {
 		name          string
-		messageFunc   func() *types.MsgUnwhitelist
+		messageFunc   func() *types.MsgRemoveFromWhitelist
 		expectedError error
 	}{
 		{
 			name: "valid msg",
-			messageFunc: func() *types.MsgUnwhitelist {
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
 				msg := validMessage
 				return &msg
 			},
 		},
 		{
 			name: "invalid id",
-			messageFunc: func() *types.MsgUnwhitelist {
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
 				msg := validMessage
 				msg.ID = invalidNFTID
 				return &msg
@@ -600,7 +600,7 @@ func TestMsgUnwhitelist_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid sender",
-			messageFunc: func() *types.MsgUnwhitelist {
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
 				msg := validMessage
 				msg.Sender = invalidAccount
 				return &msg
@@ -609,7 +609,7 @@ func TestMsgUnwhitelist_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid account",
-			messageFunc: func() *types.MsgUnwhitelist {
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
 				msg := validMessage
 				msg.Account = "devcore172"
 				return &msg
@@ -618,7 +618,7 @@ func TestMsgUnwhitelist_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid classID",
-			messageFunc: func() *types.MsgUnwhitelist {
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
 				msg := validMessage
 				msg.ClassID = "x"
 				return &msg

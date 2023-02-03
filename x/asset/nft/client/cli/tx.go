@@ -301,7 +301,7 @@ $ %s tx %s whitelist abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 devc
 			ID := args[1]
 			account := args[2]
 
-			msg := &types.MsgWhitelist{
+			msg := &types.MsgAddToWhitelist{
 				Sender:  sender.String(),
 				ClassID: classID,
 				ID:      ID,
@@ -343,7 +343,7 @@ $ %s tx %s unwhitelist abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 de
 			ID := args[1]
 			account := args[2]
 
-			msg := &types.MsgUnwhitelist{
+			msg := &types.MsgRemoveFromWhitelist{
 				Sender:  sender.String(),
 				ClassID: classID,
 				ID:      ID,

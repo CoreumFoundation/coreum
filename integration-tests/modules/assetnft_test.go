@@ -725,8 +725,8 @@ func TestAssetNFTWhitelist(t *testing.T) {
 				&assetnfttypes.MsgMint{},
 				&nft.MsgSend{},
 				&nft.MsgSend{},
-				&assetnfttypes.MsgWhitelist{},
-				&assetnfttypes.MsgUnwhitelist{},
+				&assetnfttypes.MsgAddToWhitelist{},
+				&assetnfttypes.MsgRemoveFromWhitelist{},
 			},
 			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
 		}),
@@ -782,7 +782,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// whitelist recipient for the NFT
-	msgWhitelist := &assetnfttypes.MsgWhitelist{
+	MsgAddToWhitelist := &assetnfttypes.MsgAddToWhitelist{
 		Sender:  issuer.String(),
 		ClassID: classID,
 		ID:      nftID,
@@ -791,11 +791,11 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	res, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgWhitelist)),
-		msgWhitelist,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgAddToWhitelist)),
+		MsgAddToWhitelist,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(msgWhitelist), res.GasUsed)
+	requireT.EqualValues(chain.GasLimitByMsgs(MsgAddToWhitelist), res.GasUsed)
 
 	queryRes, err := nftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
 		ClassId: classID,
@@ -806,12 +806,12 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.True(queryRes.Whitelisted)
 
 	// assert the whitelisting event
-	whitelistEvents, err := event.FindTypedEvents[*assetnfttypes.EventWhitelisted](res.Events)
+	whitelistEvents, err := event.FindTypedEvents[*assetnfttypes.EventAddedToWhitelist](res.Events)
 	requireT.NoError(err)
 	whitelistEvent := whitelistEvents[0]
-	requireT.Equal(&assetnfttypes.EventWhitelisted{
+	requireT.Equal(&assetnfttypes.EventAddedToWhitelist{
 		ClassId: classID,
-		Id:      msgWhitelist.ID,
+		Id:      MsgAddToWhitelist.ID,
 		Account: recipient.String(),
 	}, whitelistEvent)
 
@@ -825,7 +825,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.NoError(err)
 
 	// unwhitelist the account
-	msgUnwhitelist := &assetnfttypes.MsgUnwhitelist{
+	MsgRemoveFromWhitelist := &assetnfttypes.MsgRemoveFromWhitelist{
 		Sender:  issuer.String(),
 		ClassID: classID,
 		ID:      nftID,
@@ -834,11 +834,11 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	res, err = tx.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUnwhitelist)),
-		msgUnwhitelist,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgRemoveFromWhitelist)),
+		MsgRemoveFromWhitelist,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(msgUnwhitelist), res.GasUsed)
+	requireT.EqualValues(chain.GasLimitByMsgs(MsgRemoveFromWhitelist), res.GasUsed)
 
 	queryRes, err = nftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
 		ClassId: classID,
@@ -849,12 +849,12 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.False(queryRes.Whitelisted)
 
 	// assert the unwhitelisting event
-	unWhitelistedEvents, err := event.FindTypedEvents[*assetnfttypes.EventUnwhitelisted](res.Events)
+	unWhitelistedEvents, err := event.FindTypedEvents[*assetnfttypes.EventRemovedFromWhitelist](res.Events)
 	requireT.NoError(err)
 	unWhitelistedEvent := unWhitelistedEvents[0]
-	requireT.Equal(&assetnfttypes.EventUnwhitelisted{
+	requireT.Equal(&assetnfttypes.EventRemovedFromWhitelist{
 		ClassId: classID,
-		Id:      msgWhitelist.ID,
+		Id:      MsgAddToWhitelist.ID,
 		Account: recipient.String(),
 	}, unWhitelistedEvent)
 }
