@@ -75,7 +75,7 @@ func (ms MsgServer) Mint(goCtx context.Context, req *types.MsgMint) (*types.Empt
 	return &types.EmptyResponse{}, nil
 }
 
-// Burn a part of the token
+// Burn a part of the token.
 func (ms MsgServer) Burn(goCtx context.Context, req *types.MsgBurn) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
@@ -133,7 +133,7 @@ func (ms MsgServer) Unfreeze(goCtx context.Context, req *types.MsgUnfreeze) (*ty
 	return &types.EmptyResponse{}, nil
 }
 
-// GloballyFreeze globally freezes fungible token
+// GloballyFreeze globally freezes fungible token.
 func (ms MsgServer) GloballyFreeze(goCtx context.Context, req *types.MsgGloballyFreeze) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
@@ -148,7 +148,7 @@ func (ms MsgServer) GloballyFreeze(goCtx context.Context, req *types.MsgGlobally
 	return &types.EmptyResponse{}, nil
 }
 
-// GloballyUnfreeze globally unfreezes fungible token
+// GloballyUnfreeze globally unfreezes fungible token.
 func (ms MsgServer) GloballyUnfreeze(goCtx context.Context, req *types.MsgGloballyUnfreeze) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
@@ -163,7 +163,7 @@ func (ms MsgServer) GloballyUnfreeze(goCtx context.Context, req *types.MsgGlobal
 	return &types.EmptyResponse{}, nil
 }
 
-// SetWhitelistedLimit sets the limit of how many tokens account may hold
+// SetWhitelistedLimit sets the limit of how many tokens account may hold.
 func (ms MsgServer) SetWhitelistedLimit(goCtx context.Context, req *types.MsgSetWhitelistedLimit) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)

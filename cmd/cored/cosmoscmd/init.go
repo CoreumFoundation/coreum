@@ -19,7 +19,7 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
-// used flags
+// Used flags.
 const (
 	// FlagOverwrite defines a flag to overwrite an existing genesis JSON file.
 	FlagOverwrite = "overwrite"

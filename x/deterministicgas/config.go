@@ -1,9 +1,11 @@
-package config
+package deterministicgas
 
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
@@ -22,10 +24,10 @@ import (
 
 type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
 
-// DeterministicGasRequirements specifies gas required by all transaction types
+// Config specifies gas required by all transaction types
 // Crisis module is intentionally skipped here because it is already deterministic by design and fee is specified
 // using `consume_fee` param in genesis.
-type DeterministicGasRequirements struct {
+type Config struct {
 	FixedGas uint64
 
 	freeBytes      uint64
@@ -34,15 +36,15 @@ type DeterministicGasRequirements struct {
 	gasByMsg map[string]gasByMsgFunc
 }
 
-// DefaultDeterministicGasRequirements returns default config for deterministic gas.
-func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
-	dgr := DeterministicGasRequirements{
+// DefaultConfig returns default config for deterministic gas.
+func DefaultConfig() Config {
+	cfg := Config{
 		FixedGas:       50000,
 		freeBytes:      2048,
 		freeSignatures: 1,
 	}
 
-	dgr.gasByMsg = map[string]gasByMsgFunc{
+	cfg.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
 		MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
 		MsgType(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
@@ -63,7 +65,7 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgType(&assetnfttypes.MsgRemoveFromWhitelist{}): constantGasFunc(3500),
 
 		// authz
-		MsgType(&authz.MsgExec{}):   dgr.authzMsgExecGasFunc(2000),
+		MsgType(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(2000),
 		MsgType(&authz.MsgGrant{}):  constantGasFunc(7000),
 		MsgType(&authz.MsgRevoke{}): constantGasFunc(2500),
 
@@ -100,13 +102,16 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		MsgType(&stakingtypes.MsgCreateValidator{}): constantGasFunc(76000),
 		MsgType(&stakingtypes.MsgEditValidator{}):   constantGasFunc(13000),
 
+		// vesting
+		MsgType(&vestingtypes.MsgCreateVestingAccount{}): constantGasFunc(25000),
+
 		// wasm
 		MsgType(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
 		MsgType(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
 	}
 
 	registerUndeterministicGasFuncs(
-		&dgr,
+		&cfg,
 		[]sdk.Msg{
 			// crisis
 			// MsgVerifyInvariant is defined as undeterministic since fee
@@ -130,19 +135,19 @@ func DefaultDeterministicGasRequirements() DeterministicGasRequirements {
 		},
 	)
 
-	return dgr
+	return cfg
 }
 
 // TxBaseGas is the free gas we give to every transaction to cover costs of
 // tx size and signature verification. TxBaseGas is covered by FixedGas.
-func (dgr DeterministicGasRequirements) TxBaseGas(params authtypes.Params) uint64 {
-	return dgr.freeBytes*params.TxSizeCostPerByte + dgr.freeSignatures*params.SigVerifyCostSecp256k1
+func (cfg Config) TxBaseGas(params authtypes.Params) uint64 {
+	return cfg.freeBytes*params.TxSizeCostPerByte + cfg.freeSignatures*params.SigVerifyCostSecp256k1
 }
 
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
 // Function returns 0 and false if message is undeterministic or unknown.
-func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
-	gasFunc, ok := dgr.gasByMsg[MsgType(msg)]
+func (cfg Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
+	gasFunc, ok := cfg.gasByMsg[MsgType(msg)]
 	if ok {
 		return gasFunc(msg)
 	}
@@ -150,20 +155,21 @@ func (dgr DeterministicGasRequirements) GasRequiredByMessage(msg sdk.Msg) (uint6
 	// Currently we treat unknown message types as undeterministic.
 	// In the future other approach could be to return third boolean parameter
 	// identifying if message is known and report unknown messages to monitoring.
+	reportUnknownMessageMetric(MsgType(msg))
 	return 0, false
 }
 
 // MsgType returns TypeURL of a msg in cosmos SDK style.
 // Samples of values returned by the function:
 // "/cosmos.distribution.v1beta1.MsgFundCommunityPool"
-// "/coreum.asset.ft.v1.MsgMint"
+// "/coreum.asset.ft.v1.MsgMint".
 func MsgType(msg sdk.Msg) string {
 	return sdk.MsgTypeURL(msg)
 }
 
-// NOTE: we need to pass DeterministicGasRequirements by pointer here because
+// NOTE: we need to pass Config by pointer here because
 // it needs to be initialized later map with all msg types inside to estimate gas recursively.
-func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
+func (cfg *Config) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*authz.MsgExec)
 		if !ok {
@@ -176,7 +182,7 @@ func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhea
 			return 0, false
 		}
 		for _, childMsg := range childMsgs {
-			gas, isDeterministic := dgr.GasRequiredByMessage(childMsg)
+			gas, isDeterministic := cfg.GasRequiredByMessage(childMsg)
 			if !isDeterministic {
 				return 0, false
 			}
@@ -186,9 +192,9 @@ func (dgr *DeterministicGasRequirements) authzMsgExecGasFunc(authzMsgExecOverhea
 	}
 }
 
-func registerUndeterministicGasFuncs(dgr *DeterministicGasRequirements, msgs []sdk.Msg) {
+func registerUndeterministicGasFuncs(cfg *Config, msgs []sdk.Msg) {
 	for _, msg := range msgs {
-		dgr.gasByMsg[MsgType(msg)] = underministicGasFunc()
+		cfg.gasByMsg[MsgType(msg)] = underministicGasFunc()
 	}
 }
 
@@ -234,4 +240,10 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 		// Minimum 2 operations (1 input & 1 output) should be present inside any multi-send.
 		return uint64(lo.Max([]int{totalOperationsNum, 2})) * bankMultiSendPerOperationGas, true
 	}
+}
+
+func reportUnknownMessageMetric(msgName string) {
+	metrics.IncrCounterWithLabels([]string{"deterministic_gas_unknown_message"}, 1, []metrics.Label{
+		{Name: "msg_name", Value: msgName},
+	})
 }

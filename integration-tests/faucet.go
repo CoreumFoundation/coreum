@@ -9,16 +9,16 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
-// FundedAccount represents a requirement of a test to get some funds for an account
+// FundedAccount represents a requirement of a test to get some funds for an account.
 type FundedAccount struct {
 	Address sdk.AccAddress
 	Amount  sdk.Coin
 }
 
-// NewFundedAccount is the constructor of FundedAccount
+// NewFundedAccount is the constructor of FundedAccount.
 func NewFundedAccount(address sdk.AccAddress, amount sdk.Coin) FundedAccount {
 	return FundedAccount{
 		Address: address,
@@ -165,7 +165,7 @@ func (f Faucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
 	gasLimit := uint64(len(msgs)) * f.chainCtx.GasLimitByMsgs(&banktypes.MsgSend{})
 
 	// Transaction is broadcasted and awaited
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		f.chainCtx.ClientContext,
 		f.chainCtx.TxFactory().WithGas(gasLimit),

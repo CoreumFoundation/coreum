@@ -37,14 +37,14 @@ func TestValidateSubunit(t *testing.T) {
 		"Coreum",
 		"uCoreum",
 		"COREeum",
-		"A1234567890123456789012345678901234567890123456789012345678901234567890",
+		"A1234567890123456789012345678901234567890123456789",
 		"Core",
 		"uCore",
 		"CORE",
 		"UCORE",
 		"3abc",
 		"3ABC",
-		"AB1234567890123456789012345678901234567890123456789012345678901234567890",
+		"AB123456789012345678901234567890123456789012345678",
 	}
 
 	acceptableSubunits := []string{
@@ -55,7 +55,7 @@ func TestValidateSubunit(t *testing.T) {
 		"coreum",
 		"ucoreum",
 		"coreeum",
-		"a1234567890123456789012345678901234567890123456789012345678901234567890",
+		"a1234567890123456789012345678901234567890123456789",
 	}
 
 	assertValidSubunit := func(symbol string, isValid bool) {
@@ -302,7 +302,7 @@ func TestValidateSendCommissionRate(t *testing.T) {
 	}
 }
 
-//nolint:funlen,nosnakecase // this is complex test scenario and breaking it down is not helpful
+//nolint:funlen // this is complex test scenario and breaking it down is not helpful
 func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	nonIssuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())

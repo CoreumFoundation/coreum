@@ -13,7 +13,7 @@ var (
 	_ sdk.Msg = &MsgUnfreeze{}
 )
 
-// Constraints
+// Constraints.
 const (
 	ClassMaxNameLength        = 128
 	ClassMaxDescriptionLength = 256

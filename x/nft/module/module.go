@@ -49,7 +49,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 // RegisterLegacyAminoCodec registers the nft module's types for the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
 
-// RegisterInterfaces registers the nft module's interface types
+// RegisterInterfaces registers the nft module's interface types.
 func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	nft.RegisterInterfaces(registry)
 }
@@ -77,17 +77,17 @@ func (a AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux 
 	}
 }
 
-// GetQueryCmd returns the cli query commands for the nft module
+// GetQueryCmd returns the cli query commands for the nft module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// GetTxCmd returns the transaction commands for the nft module
+// GetTxCmd returns the transaction commands for the nft module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
 }
 
-// AppModule implements the sdk.AppModule interface
+// AppModule implements the sdk.AppModule interface.
 type AppModule struct {
 	AppModuleBasic
 	keeper keeper.Keeper
@@ -97,7 +97,7 @@ type AppModule struct {
 	registry      codectypes.InterfaceRegistry
 }
 
-// NewAppModule creates a new AppModule object
+// NewAppModule creates a new AppModule object.
 func NewAppModule(cdc codec.Codec, keeper keeper.Keeper, ak nft.AccountKeeper, bk nft.BankKeeper, registry codectypes.InterfaceRegistry) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
@@ -113,7 +113,7 @@ func (AppModule) Name() string {
 	return nft.ModuleName
 }
 
-// RegisterInvariants does nothing, there are no invariants to enforce
+// RegisterInvariants does nothing, there are no invariants to enforce.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // Route returns the message routing key for the staking module.
@@ -126,7 +126,7 @@ func (am AppModule) NewHandler() sdk.Handler {
 	return nil
 }
 
-// QuerierRoute returns the route we respond to for abci queries
+// QuerierRoute returns the route we respond to for abci queries.
 func (AppModule) QuerierRoute() string { return "" }
 
 // LegacyQuerierHandler returns the nft module sdk.Querier.
@@ -185,7 +185,7 @@ func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
 	return nil
 }
 
-// RegisterStoreDecoder registers a decoder for nft module's types
+// RegisterStoreDecoder registers a decoder for nft module's types.
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 	sdr[keeper.StoreKey] = simulation.NewDecodeStore(am.cdc)
 }

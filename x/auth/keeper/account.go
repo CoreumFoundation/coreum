@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
-// NewInfiniteAccountKeeper returns new InfiniteAccountKeeper
+// NewInfiniteAccountKeeper returns new InfiniteAccountKeeper.
 func NewInfiniteAccountKeeper(ak ante.AccountKeeper) InfiniteAccountKeeper {
 	return InfiniteAccountKeeper{
 		ak: ak,
@@ -20,25 +20,25 @@ type InfiniteAccountKeeper struct {
 	ak ante.AccountKeeper
 }
 
-// GetParams returns params
+// GetParams returns params.
 func (iak InfiniteAccountKeeper) GetParams(ctx sdk.Context) (params types.Params) {
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	return iak.ak.GetParams(ctx)
 }
 
-// GetAccount returns account info by address
+// GetAccount returns account info by address.
 func (iak InfiniteAccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI {
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	return iak.ak.GetAccount(ctx, addr)
 }
 
-// SetAccount sets account info
+// SetAccount sets account info.
 func (iak InfiniteAccountKeeper) SetAccount(ctx sdk.Context, acc types.AccountI) {
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	iak.ak.SetAccount(ctx, acc)
 }
 
-// GetModuleAddress returns address of a module
+// GetModuleAddress returns address of a module.
 func (iak InfiniteAccountKeeper) GetModuleAddress(moduleName string) sdk.AccAddress {
 	return iak.ak.GetModuleAddress(moduleName)
 }

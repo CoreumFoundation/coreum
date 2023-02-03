@@ -26,7 +26,7 @@ func TestQueryTokens(t *testing.T) {
 		Precision:   8,
 		Description: "description",
 		Features: []types.Feature{
-			types.Feature_whitelisting, //nolint:nosnakecase
+			types.Feature_whitelisting,
 		},
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
@@ -60,7 +60,7 @@ func TestQueryToken(t *testing.T) {
 		Precision:   8,
 		Description: "description",
 		Features: []types.Feature{
-			types.Feature_whitelisting, //nolint:nosnakecase
+			types.Feature_whitelisting,
 		},
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),

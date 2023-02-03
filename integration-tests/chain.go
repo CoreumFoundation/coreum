@@ -12,21 +12,24 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
-	ClientContext tx.ClientContext
-	NetworkConfig config.NetworkConfig
+	ClientContext          client.Context
+	NetworkConfig          config.NetworkConfig
+	DeterministicGasConfig deterministicgas.Config
 }
 
 // NewChainContext returns a new instance if the ChainContext.
-func NewChainContext(clientCtx tx.ClientContext, networkCfg config.NetworkConfig) ChainContext {
+func NewChainContext(clientCtx client.Context, networkCfg config.NetworkConfig) ChainContext {
 	return ChainContext{
-		ClientContext: clientCtx,
-		NetworkConfig: networkCfg,
+		ClientContext:          clientCtx,
+		NetworkConfig:          networkCfg,
+		DeterministicGasConfig: deterministicgas.DefaultConfig(),
 	}
 }
 
@@ -66,8 +69,8 @@ func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 }
 
 // TxFactory returns factory with present values for the Chain.
-func (c ChainContext) TxFactory() tx.Factory {
-	return tx.Factory{}.
+func (c ChainContext) TxFactory() client.Factory {
+	return client.Factory{}.
 		WithKeybase(c.ClientContext.Keyring()).
 		WithChainID(string(c.NetworkConfig.ChainID)).
 		WithTxConfig(c.ClientContext.TxConfig()).
@@ -84,22 +87,16 @@ func (c ChainContext) NewDecCoin(amount sdk.Dec) sdk.DecCoin {
 	return sdk.NewDecCoinFromDec(c.NetworkConfig.Denom, amount)
 }
 
-// DeterministicGas returns deterministic gas config
-func (c ChainContext) DeterministicGas() config.DeterministicGasRequirements {
-	return c.NetworkConfig.Fee.DeterministicGas
-}
-
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
 // It panics if unsupported message type specified.
 func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
-	deterministicGas := c.NetworkConfig.Fee.DeterministicGas
 	var totalGasRequired uint64
 	for _, msg := range msgs {
-		msgGas, exists := deterministicGas.GasRequiredByMessage(msg)
+		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
-		totalGasRequired += msgGas + deterministicGas.FixedGas
+		totalGasRequired += msgGas + c.DeterministicGasConfig.FixedGas
 	}
 
 	return totalGasRequired
@@ -108,17 +105,16 @@ func (c ChainContext) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 // GasLimitByMultiSendMsgs calculates sum of gas limits required for message types passed and includes the FixedGas once.
 // It panics if unsupported message type specified.
 func (c ChainContext) GasLimitByMultiSendMsgs(msgs ...sdk.Msg) uint64 {
-	deterministicGas := c.NetworkConfig.Fee.DeterministicGas
 	var totalGasRequired uint64
 	for _, msg := range msgs {
-		msgGas, exists := deterministicGas.GasRequiredByMessage(msg)
+		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
 		totalGasRequired += msgGas
 	}
 
-	return totalGasRequired + deterministicGas.FixedGas
+	return totalGasRequired + c.DeterministicGasConfig.FixedGas
 }
 
 // BalancesOptions is the input type for the ComputeNeededBalanceFromOptions.
@@ -161,7 +157,7 @@ type ChainConfig struct {
 	StakerMnemonics []string
 }
 
-// Chain holds network and client for the blockchain
+// Chain holds network and client for the blockchain.
 type Chain struct {
 	ChainContext
 	Faucet     Faucet
@@ -174,7 +170,7 @@ func NewChain(cfg ChainConfig) Chain {
 	if err != nil {
 		panic(err)
 	}
-	clientCtx := tx.NewClientContext(app.ModuleBasics).
+	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
 		WithClient(rpcClient).
 		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).

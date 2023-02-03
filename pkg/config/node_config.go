@@ -15,10 +15,10 @@ import (
 	"github.com/tendermint/tendermint/privval"
 )
 
-// DefaultNodeConfigPath is the default path there the config.toml is saved
+// DefaultNodeConfigPath is the default path there the config.toml is saved.
 var DefaultNodeConfigPath = filepath.Join("config", "config.toml")
 
-// NodeConfig saves files with private keys and config required by node
+// NodeConfig saves files with private keys and config required by node.
 type NodeConfig struct {
 	Name           string
 	PrometheusPort int
@@ -27,7 +27,7 @@ type NodeConfig struct {
 	SeedPeers      []string
 }
 
-// Clone creates a copy of the NodeConfig so that mutable fields like slices
+// Clone creates a copy of the NodeConfig so that mutable fields like slices.
 // are copied as immutable.
 func (nc NodeConfig) Clone() NodeConfig {
 	copied := NodeConfig{
@@ -45,7 +45,7 @@ func (nc NodeConfig) Clone() NodeConfig {
 	return copied
 }
 
-// SavePrivateKeys saves private keys to files
+// SavePrivateKeys saves private keys to files.
 func (nc NodeConfig) SavePrivateKeys(homeDir string) error {
 	err := os.MkdirAll(homeDir+"/config", 0o700)
 	if err != nil {
@@ -75,7 +75,7 @@ func (nc NodeConfig) SavePrivateKeys(homeDir string) error {
 	return nil
 }
 
-// TendermintNodeConfig applies node's tendermint config
+// TendermintNodeConfig applies node's tendermint config.
 func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
 	if cfg == nil {
 		cfg = config.DefaultConfig()
@@ -100,7 +100,7 @@ func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
 	return cfg
 }
 
-// WriteTendermintConfigToFile saves tendermint config to file
+// WriteTendermintConfigToFile saves tendermint config to file.
 func WriteTendermintConfigToFile(filePath string, cfg *config.Config) error {
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0o700); err != nil {

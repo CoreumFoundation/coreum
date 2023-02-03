@@ -8,20 +8,20 @@ import (
 )
 
 const (
-	// ModuleName defines the module name
+	// ModuleName defines the module name.
 	ModuleName = "assetnft"
 
-	// StoreKey defines the primary module store key
+	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
 
-	// RouterKey is the message route for slashing
+	// RouterKey is the message route for slashing.
 	RouterKey = ModuleName
 
-	// QuerierRoute defines the module's query routing key
+	// QuerierRoute defines the module's query routing key.
 	QuerierRoute = ModuleName
 )
 
-// Store key prefixes
+// Store key prefixes.
 var (
 	// NFTClassKeyPrefix defines the key prefix for the non-fungible token class definition.
 	NFTClassKeyPrefix = []byte{0x01}
@@ -46,7 +46,7 @@ func CreateFreezingKey(classID, nftID string) ([]byte, error) {
 	return store.JoinKeys(NFTFreezingKeyPrefix, compositeKey), nil
 }
 
-// ParseFreezingKey parses freezing key back to class id and nft id
+// ParseFreezingKey parses freezing key back to class id and nft id.
 func ParseFreezingKey(key []byte) (string, string, error) {
 	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
 	if err != nil {

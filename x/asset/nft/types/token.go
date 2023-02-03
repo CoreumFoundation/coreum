@@ -16,7 +16,7 @@ import (
 var (
 	nftSymbolRegexStr = `^[a-zA-Z][a-zA-Z0-9]{0,40}$`
 	nftSymbolRegex    = regexp.MustCompile(nftSymbolRegexStr)
-	// the regexp is same as for the nft module
+	// the regexp is same as for the nft module.
 	nftIDRegexStr = `^[a-zA-Z][a-zA-Z0-9/:-]{2,100}$`
 	nftIDRegex    = regexp.MustCompile(nftIDRegexStr)
 
@@ -115,8 +115,6 @@ func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature Cla
 }
 
 // IsFeatureAllowed returns true if feature is allowed for the address.
-//
-//nolint:nosnakecase
 func (nftd ClassDefinition) IsFeatureAllowed(addr sdk.Address, feature ClassFeature) bool {
 	featureEnabled := nftd.IsFeatureEnabled(feature)
 	// issuer can use any enabled feature and burning even if it is disabled
