@@ -740,7 +740,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 			assetnfttypes.ClassFeature_whitelisting, //nolint:nosnakecase // generated variable
 		},
 	}
-	_, err := tx.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -756,7 +756,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		ID:      nftID,
 		ClassID: classID,
 	}
-	res, err := tx.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
@@ -772,7 +772,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		Id:       nftID,
 		Receiver: recipient.String(),
 	}
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -788,7 +788,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		ID:      nftID,
 		Account: recipient.String(),
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgAddToWhitelist)),
@@ -816,7 +816,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	}, whitelistEvent)
 
 	// try to send again and it should succeed now.
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
@@ -831,7 +831,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		ID:      nftID,
 		Account: recipient.String(),
 	}
-	res, err = tx.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgRemoveFromWhitelist)),
