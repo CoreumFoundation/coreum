@@ -9,20 +9,23 @@ parent:
 
 ## Intro
 
-Coreum is using a deterministic gas model for its transactions. Meaning that given a transaction type (e.g 
-asset.MintFungibleToken) one can know how much gas will be used before hand, and this amount is fixed if some
-preconditions are met. Of course this deterministic gas does not apply  to the type of transactions that have a complicated, nondeterministic execution path (e.g wasm smart contracts). We will provide a table with all 
-deterministic gas for all our types. For a more recent data, consult 
-[this file](https://github.com/CoreumFoundation/coreum/blob/master/pkg/config/deterministic_gas.go#L17)
+Coreum is using a deterministic gas model for its transactions. Meaning that given a transaction type (e.g
+`/coreum.asset.ft.v1.MsgMint`) one can know how much gas will be used before hand, and this amount is fixed if some
+preconditions are met. Of course this deterministic gas does not apply to the type of transactions that have a
+complicated, nondeterministic execution path (e.g `/cosmwasm.wasm.v1.MsgExecuteContract`). We provide tables with all
+[deterministic gas](#deterministic-messages) & [nondeterministic gas](#nondeterministic-messages) for all our types. 
+For a more recent data, consult [this file](https://github.com/CoreumFoundation/coreum/blob/master/x/deterministicgas/config.go#L47)
 
 ## Formula
-Here is formula for the transaction 
+
+Here is formula for the transaction
 
 `
 Gas = FixedGas + Sum(Gas for each message) + GasForExtraBytes + GasForExtraSignatures
 `
 
-If message type is deterministic, then the value is looked up from the table, if it is non-deterministic, then the required gas is determined after the execution.
+If message type is deterministic, then the value is looked up from the table, if it is non-deterministic, then the
+required gas is determined after the execution.
 
 `
 GasForExtraBytes = max(0, TxByteSize-FreeBytes) * TxSizeCostPerByte
@@ -32,19 +35,22 @@ GasForExtraBytes = max(0, TxByteSize-FreeBytes) * TxSizeCostPerByte
 GasForExtraSignatures = max(0, NumOfSigs-FreeSigs) * SigVerifyCost
 `
 
-Currently we have values for the above variables as follows: 
+Currently we have values for the above variables as follows:
+
 - `FixedGas`: 50000
-- `SigVerifyCost`: 1000  
+- `SigVerifyCost`: 1000
 - `TxSizeCostPerByte`: 10
 - `FreeSignatures`: 1
 - `FreeBytes`: 2048
 
-As an example if the transaction has 1 signature on it and is below 
-2048 bytes, the user will not pay anything extra, and if one of those values exceed those limits, the user will pay for the extra resources.
+As an example if the transaction has 1 signature on it and is below
+2048 bytes, the user will not pay anything extra, and if one of those values exceed those limits, the user will pay for
+the extra resources.
 
-#### Full example
-Let's say we have a transaction with 2 messages of type 
-asset.MintNonFungibleToken inside, also there are 2
+### Full example
+
+Let's say we have a transaction with 2 messages of type
+`/coreum.asset.ft.v1.MsgMint` inside, also there are 2
 signatures and the tx size is 2050 bytes, total will be:
 
 `
@@ -55,47 +61,86 @@ TotalGas = 50000 + 35000 * 2 + (2050-2048) * 10 + 1 * 1000
 TotalGas = 121040
 `
 
-### Special Cases
-There are some special cases where an extra step is introduced to the formula. 
 
-#### Bank
-1. bank.MsgSend: `DeterministicGasForMsg = SendPerEntry * NumberOfCoins`
-2. bank.MsgMultiSend: `DeterministicGasForMsg = MultiSendPerEntry * Max(NumberOfInputs, NumberOfOutputs)`
 
-Where `SendPerEntry` and `MultiSendPerEntry` are constant values defined for each of the message types.
-## Deterministic Gas Table 
+## Gas Tables
 
 ### Deterministic messages
 
-| Message Type                             | Gas  |
-|------------------------------------------|------|
-|asset.IssueFungibleToken                  | 80000|
-|asset.MintFungibleToken                   | 35000|
-|asset.BurnFungibleToken                   | 35000|
-|asset.FreezeFungibleToken                 | 55000|
-|asset.UnfreezeFungibleToken               | 55000|
-|asset.GloballyFreezeFungibleToken         | 5000 |
-|asset.GloballyUnfreezeFungibleToken       | 5000 |
-|asset.SetWhitelistedLimitFungibleToken    | 35000|
-|asset.IssueNonFungibleTokenClass          | 20000|
-|asset.MintNonFungibleToken                | 30000|
-|bank.SendPerEntry                         | 22000|
-|bank.MultiSendPerEntry                    | 27000|
-|distribution.FundCommunityPool            | 50000|
-|distribution.SetWithdrawAddress           | 50000|
-|distribution.WithdrawDelegatorReward      | 120000|
-|distribution.WithdrawValidatorCommission  | 50000|
-|gov.SubmitProposal                        | 95000|
-|gov.Vote                                  | 8000 |
-|gov.VoteWeighted                          | 11000|
-|gov.Deposit                               | 91000|
-|nft.Send                                  | 20000|
-|slashing.Unjail                           | 25000|
-|staking.Delegate                          | 51000|
-|staking.Undelegate                        | 51000|
-|staking.BeginRedelegate                   | 51000|
-|staking.CreateValidator                   | 50000|
-|staking.EditValidator                     | 50000|
+| Message Type                                                | Gas                            |
+|-------------------------------------------------------------|--------------------------------|
+| /coreum.asset.ft.v1.MsgBurn                                 | 23000                          |
+| /coreum.asset.ft.v1.MsgFreeze                               | 5000                           |
+| /coreum.asset.ft.v1.MsgGloballyFreeze                       | 5000                           |
+| /coreum.asset.ft.v1.MsgGloballyUnfreeze                     | 2500                           |
+| /coreum.asset.ft.v1.MsgIssue                                | 70000                          |
+| /coreum.asset.ft.v1.MsgMint                                 | 11000                          |
+| /coreum.asset.ft.v1.MsgSetWhitelistedLimit                  | 5000                           |
+| /coreum.asset.ft.v1.MsgUnfreeze                             | 2500                           |
+| /coreum.asset.nft.v1.MsgBurn                                | 16000                          |
+| /coreum.asset.nft.v1.MsgFreeze                              | 7000                           |
+| /coreum.asset.nft.v1.MsgIssueClass                          | 16000                          |
+| /coreum.asset.nft.v1.MsgMint                                | 39000                          |
+| /coreum.asset.nft.v1.MsgUnfreeze                            | 5000                           |
+| /coreum.nft.v1beta1.MsgSend                                 | 16000                          |
+| /cosmos.authz.v1beta1.MsgExec                               | [special case](#special-cases) |
+| /cosmos.authz.v1beta1.MsgGrant                              | 7000                           |
+| /cosmos.authz.v1beta1.MsgRevoke                             | 2500                           |
+| /cosmos.bank.v1beta1.MsgMultiSend                           | [special case](#special-cases) |
+| /cosmos.bank.v1beta1.MsgSend                                | [special case](#special-cases) |
+| /cosmos.distribution.v1beta1.MsgFundCommunityPool           | 15000                          |
+| /cosmos.distribution.v1beta1.MsgSetWithdrawAddress          | 5000                           |
+| /cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward     | 65000                          |
+| /cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission | 22000                          |
+| /cosmos.feegrant.v1beta1.MsgGrantAllowance                  | 10000                          |
+| /cosmos.feegrant.v1beta1.MsgRevokeAllowance                 | 2500                           |
+| /cosmos.gov.v1beta1.MsgDeposit                              | 52000                          |
+| /cosmos.gov.v1beta1.MsgSubmitProposal                       | 65000                          |
+| /cosmos.gov.v1beta1.MsgVote                                 | 7000                           |
+| /cosmos.gov.v1beta1.MsgVoteWeighted                         | 9000                           |
+| /cosmos.slashing.v1beta1.MsgUnjail                          | 25000                          |
+| /cosmos.staking.v1beta1.MsgBeginRedelegate                  | 142000                         |
+| /cosmos.staking.v1beta1.MsgCreateValidator                  | 76000                          |
+| /cosmos.staking.v1beta1.MsgDelegate                         | 69000                          |
+| /cosmos.staking.v1beta1.MsgEditValidator                    | 13000                          |
+| /cosmos.staking.v1beta1.MsgUndelegate                       | 112000                         |
+| /cosmos.vesting.v1beta1.MsgCreateVestingAccount             | 25000                          |
+| /cosmwasm.wasm.v1.MsgClearAdmin                             | 6500                           |
+| /cosmwasm.wasm.v1.MsgUpdateAdmin                            | 8000                           |
+
+#### Special Cases
+
+There are some special cases when custom logic is applied for deterministic gas calculation.
+Real examples of special case tests could be found [here](https://github.com/CoreumFoundation/coreum/blob/master/x/deterministicgas/config_test.go#L168)
+
+##### `/cosmos.bank.v1beta1.MsgSend`
+
+`DeterministicGasForMsg = bankSendPerCoinGas * NumberOfCoins`
+
+`bankSendPerCoinGas` is currently equal to `24000`.
+
+##### `/cosmos.bank.v1beta1.MsgMultiSend`
+
+`DeterministicGasForMsg = bankMultiSendPerOperationGas * (NumberOfInputs + NumberOfOutputs)`
+
+`bankMultiSendPerOperationGas` is currently equal to `11000`.
+
+##### `/cosmos.authz.v1beta1.MsgExec`
+
+`DeterministicGasForMsg = authzMsgExecOverhead + Sum(DeterministicGas(ChildMsg))`
+
+`authzMsgExecOverhead` is currently equal to `2000`.
 
 ### Nondeterministic messages
-all the messages related to wasm. 
+
+| Message Type                               |
+|--------------------------------------------|
+| /cosmos.crisis.v1beta1.MsgVerifyInvariant  |
+| /cosmos.evidence.v1beta1.MsgSubmitEvidence |
+| /cosmwasm.wasm.v1.MsgExecuteContract       |
+| /cosmwasm.wasm.v1.MsgIBCCloseChannel       |
+| /cosmwasm.wasm.v1.MsgIBCSend               |
+| /cosmwasm.wasm.v1.MsgInstantiateContract   |
+| /cosmwasm.wasm.v1.MsgInstantiateContract2  |
+| /cosmwasm.wasm.v1.MsgMigrateContract       |
+| /cosmwasm.wasm.v1.MsgStoreCode             |
