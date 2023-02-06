@@ -212,7 +212,7 @@ func underministicGasFunc() gasByMsgFunc {
 	}
 }
 
-func bankSendMsgGasFunc(bankSendPerEntryGas uint64) gasByMsgFunc {
+func bankSendMsgGasFunc(bankSendPerCoinGas uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*banktypes.MsgSend)
 		if !ok {
@@ -220,7 +220,7 @@ func bankSendMsgGasFunc(bankSendPerEntryGas uint64) gasByMsgFunc {
 		}
 		entriesNum := len(m.Amount)
 
-		return uint64(lo.Max([]int{entriesNum, 1})) * bankSendPerEntryGas, true
+		return uint64(lo.Max([]int{entriesNum, 1})) * bankSendPerCoinGas, true
 	}
 }
 
