@@ -14,9 +14,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-var (
-	frozenNFTStoreValue = []byte{0x01}
-)
+var frozenNFTStoreValue = []byte{0x01}
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
 type ParamSubspace interface {
