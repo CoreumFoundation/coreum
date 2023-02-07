@@ -132,7 +132,7 @@ func (ms MsgServer) Unfreeze(ctx context.Context, req *types.MsgUnfreeze) (*type
 	return &types.EmptyResponse{}, nil
 }
 
-// AddToWhitelist adds an account to the whitelisted list of accounts for the NFT
+// AddToWhitelist adds an account to the whitelisted list of accounts for the NFT.
 func (ms MsgServer) AddToWhitelist(ctx context.Context, req *types.MsgAddToWhitelist) (*types.EmptyResponse, error) {
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
@@ -151,7 +151,7 @@ func (ms MsgServer) AddToWhitelist(ctx context.Context, req *types.MsgAddToWhite
 	return &types.EmptyResponse{}, nil
 }
 
-// RemoveFromWhitelist removes an account from the whitelisted list of accounts for the NFT
+// RemoveFromWhitelist removes an account from the whitelisted list of accounts for the NFT.
 func (ms MsgServer) RemoveFromWhitelist(ctx context.Context, req *types.MsgRemoveFromWhitelist) (*types.EmptyResponse, error) {
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {

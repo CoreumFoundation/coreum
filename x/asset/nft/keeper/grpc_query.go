@@ -52,7 +52,7 @@ func (q QueryService) Frozen(ctx context.Context, req *types.QueryFrozenRequest)
 	}, err
 }
 
-// Whitelisted checks to see if an account is whitelisted for an NFT
+// Whitelisted checks to see if an account is whitelisted for an NFT.
 func (q QueryService) Whitelisted(ctx context.Context, req *types.QueryWhitelistedRequest) (*types.QueryWhitelistedResponse, error) {
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {

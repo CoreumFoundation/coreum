@@ -27,7 +27,7 @@ var (
 	NFTClassKeyPrefix = []byte{0x01}
 	// NFTFreezingKeyPrefix defines the key prefix to track frozen NFTs.
 	NFTFreezingKeyPrefix = []byte{0x02}
-	// NFTWhitelistingKeyPrefix defines the key prefix to track whitelisted account
+	// NFTWhitelistingKeyPrefix defines the key prefix to track whitelisted account.
 	NFTWhitelistingKeyPrefix = []byte{0x03}
 )
 
@@ -69,7 +69,7 @@ func CreateWhitelistingKey(classID, nftID string, account sdk.AccAddress) ([]byt
 	return store.JoinKeys(NFTWhitelistingKeyPrefix, compositeKey), nil
 }
 
-// ParseWhitelistingKey parses freezing key back to class id and nft id
+// ParseWhitelistingKey parses freezing key back to class id and nft id.
 func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
 	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
 	if err != nil {

@@ -410,7 +410,7 @@ func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageReque
 	return definitions, pageRes, err
 }
 
-// AddToWhitelist adds an account to the whitelisted list of accounts for the NFT
+// AddToWhitelist adds an account to the whitelisted list of accounts for the NFT.
 func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
@@ -436,7 +436,7 @@ func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, a
 	})
 }
 
-// RemoveFromWhitelist removes an account from the whitelisted list of accounts for the NFT
+// RemoveFromWhitelist removes an account from the whitelisted list of accounts for the NFT.
 func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	if err != nil {
@@ -462,7 +462,7 @@ func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, send
 	})
 }
 
-// IsWhitelisted checks to see if an account is whitelisted for an NFT
+// IsWhitelisted checks to see if an account is whitelisted for an NFT.
 func (k Keeper) IsWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error) {
 	key, err := types.CreateWhitelistingKey(classID, nftID, account)
 	if err != nil {

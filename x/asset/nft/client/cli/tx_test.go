@@ -169,7 +169,6 @@ func TestCmdWhitelist(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &whitelistedResp))
 	requireT.False(whitelistedResp.Whitelisted)
-
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {
