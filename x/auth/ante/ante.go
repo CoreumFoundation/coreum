@@ -12,22 +12,22 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/auth/keeper"
+	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 	deterministicgasante "github.com/CoreumFoundation/coreum/x/deterministicgas/ante"
 	feemodelante "github.com/CoreumFoundation/coreum/x/feemodel/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
-	DeterministicGasRequirements config.DeterministicGasRequirements
-	AccountKeeper                authante.AccountKeeper
-	BankKeeper                   authtypes.BankKeeper
-	FeegrantKeeper               authante.FeegrantKeeper
-	FeeModelKeeper               feemodelante.Keeper
-	SignModeHandler              authsigning.SignModeHandler
-	SigGasConsumer               func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
-	WasmTXCounterStoreKey        sdk.StoreKey
+	DeterministicGasConfig deterministicgas.Config
+	AccountKeeper          authante.AccountKeeper
+	BankKeeper             authtypes.BankKeeper
+	FeegrantKeeper         authante.FeegrantKeeper
+	FeeModelKeeper         feemodelante.Keeper
+	SignModeHandler        authsigning.SignModeHandler
+	SigGasConsumer         func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
+	WasmTXCounterStoreKey  sdk.StoreKey
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -92,7 +92,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		//   IMPORTANT: If they consumed less, the rest **IS NOT** given to the message handlers for free.
 
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
-		deterministicgasante.NewSetInfiniteGasMeterDecorator(options.DeterministicGasRequirements),
+		deterministicgasante.NewSetInfiniteGasMeterDecorator(options.DeterministicGasConfig),
 		authante.NewRejectExtensionOptionsDecorator(),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
@@ -104,10 +104,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
 		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
-		deterministicgasante.NewAddBaseGasDecorator(infiniteAccountKeeper, options.DeterministicGasRequirements),
+		deterministicgasante.NewAddBaseGasDecorator(infiniteAccountKeeper, options.DeterministicGasConfig),
 		authante.NewConsumeGasForTxSizeDecorator(infiniteAccountKeeper),
 		authante.NewSigGasConsumeDecorator(infiniteAccountKeeper, options.SigGasConsumer),
-		deterministicgasante.NewChargeFixedGasDecorator(infiniteAccountKeeper, options.DeterministicGasRequirements),
+		deterministicgasante.NewChargeFixedGasDecorator(infiniteAccountKeeper, options.DeterministicGasConfig),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil

@@ -63,7 +63,7 @@ func (qs QueryService) Token(ctx context.Context, req *types.QueryTokenRequest) 
 	}, nil
 }
 
-// FrozenBalances lists frozen balances on a given account
+// FrozenBalances lists frozen balances on a given account.
 func (qs QueryService) FrozenBalances(goCtx context.Context, req *types.QueryFrozenBalancesRequest) (*types.QueryFrozenBalancesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
@@ -81,7 +81,7 @@ func (qs QueryService) FrozenBalances(goCtx context.Context, req *types.QueryFro
 	}, nil
 }
 
-// FrozenBalance lists frozen balance of a denom on a given account
+// FrozenBalance lists frozen balance of a denom on a given account.
 func (qs QueryService) FrozenBalance(goCtx context.Context, req *types.QueryFrozenBalanceRequest) (*types.QueryFrozenBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
@@ -95,7 +95,7 @@ func (qs QueryService) FrozenBalance(goCtx context.Context, req *types.QueryFroz
 	}, nil
 }
 
-// WhitelistedBalances lists whitelisted balances on a given account
+// WhitelistedBalances lists whitelisted balances on a given account.
 func (qs QueryService) WhitelistedBalances(goCtx context.Context, req *types.QueryWhitelistedBalancesRequest) (*types.QueryWhitelistedBalancesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
@@ -113,7 +113,7 @@ func (qs QueryService) WhitelistedBalances(goCtx context.Context, req *types.Que
 	}, nil
 }
 
-// WhitelistedBalance lists whitelisted balance of a denom on a given account
+// WhitelistedBalance lists whitelisted balance of a denom on a given account.
 func (qs QueryService) WhitelistedBalance(goCtx context.Context, req *types.QueryWhitelistedBalanceRequest) (*types.QueryWhitelistedBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)

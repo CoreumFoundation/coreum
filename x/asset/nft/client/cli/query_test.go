@@ -34,8 +34,8 @@ func TestQueryClass(t *testing.T) {
 		symbol, name, description, URI, URIHash,
 		testNetwork,
 		"0.1",
-		types.ClassFeature_burning,         //nolint:nosnakecase // generated variable
-		types.ClassFeature_disable_sending, //nolint:nosnakecase // generated variable
+		types.ClassFeature_burning,
+		types.ClassFeature_disable_sending,
 	)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
@@ -53,8 +53,8 @@ func TestQueryClass(t *testing.T) {
 		URI:         URI,
 		URIHash:     URIHash,
 		Features: []types.ClassFeature{
-			types.ClassFeature_burning,         //nolint:nosnakecase // generated variable
-			types.ClassFeature_disable_sending, //nolint:nosnakecase // generated variable
+			types.ClassFeature_burning,
+			types.ClassFeature_disable_sending,
 		},
 		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}, resp.Class)

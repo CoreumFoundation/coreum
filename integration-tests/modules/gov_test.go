@@ -14,13 +14,13 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
 // TestGovProposalWithDepositAndWeightedVotes - is a complex governance test which tests:
-// 1. proposal submission without enough deposit
-// 2. depositing missing amount to proposal created on the 1st step
-// 3. voting using weighted votes
+// 1. proposal submission without enough deposit,
+// 2. depositing missing amount to proposal created on the 1st step,
+// 3. voting using weighted votes.
 func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	t.Parallel()
 
@@ -64,7 +64,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	// Deposit missing amount to proposal.
 	depositMsg := govtypes.NewMsgDeposit(depositor, proposalID, sdk.Coins{missingDepositAmount})
-	result, err := tx.BroadcastTx(
+	result, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(depositor),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(depositMsg)),

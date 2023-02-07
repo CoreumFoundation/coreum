@@ -31,7 +31,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		classDefinition := types.ClassDefinition{
 			ID: fmt.Sprintf("id%d", i),
 			Features: []types.ClassFeature{
-				types.ClassFeature_burning, //nolint:nosnakecase // proto enum
+				types.ClassFeature_burning,
 			},
 			RoyaltyRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", (i+1)%10)),
 		}

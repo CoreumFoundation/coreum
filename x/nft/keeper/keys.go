@@ -11,27 +11,27 @@ import (
 )
 
 var (
-	// ClassKey is store prefix of the Class
+	// ClassKey is store prefix of the Class.
 	ClassKey = []byte{0x01}
-	// NFTKey is store prefix of the NFT
+	// NFTKey is store prefix of the NFT.
 	NFTKey = []byte{0x02}
-	// NFTOfClassByOwnerKey is store prefix of the NFTOfClassByOwner
+	// NFTOfClassByOwnerKey is store prefix of the NFTOfClassByOwner.
 	NFTOfClassByOwnerKey = []byte{0x03}
-	// OwnerKey is store prefix of the Owner
+	// OwnerKey is store prefix of the Owner.
 	OwnerKey = []byte{0x04}
-	// ClassTotalSupply is store prefix of the ClassTotalSupply
+	// ClassTotalSupply is store prefix of the ClassTotalSupply.
 	ClassTotalSupply = []byte{0x05}
 
-	// Delimiter is store key Delimiter
+	// Delimiter is store key Delimiter.
 	Delimiter = []byte{0x00}
-	// Placeholder is store key Placeholder
+	// Placeholder is store key Placeholder.
 	Placeholder = []byte{0x01}
 )
 
-// StoreKey is the store key string for nft
+// StoreKey is the store key string for nft.
 const StoreKey = nft.ModuleName
 
-// classStoreKey returns the byte representation of the nft class key
+// classStoreKey returns the byte representation of the nft class key.
 func classStoreKey(classID string) []byte {
 	key := make([]byte, len(ClassKey)+len(classID))
 	copy(key, ClassKey)
@@ -39,7 +39,7 @@ func classStoreKey(classID string) []byte {
 	return key
 }
 
-// nftStoreKey returns the byte representation of the nft
+// nftStoreKey returns the byte representation of the nft.
 func nftStoreKey(classID string) []byte {
 	key := make([]byte, len(NFTKey)+len(classID)+len(Delimiter))
 	copy(key, NFTKey)
@@ -48,7 +48,7 @@ func nftStoreKey(classID string) []byte {
 	return key
 }
 
-// classTotalSupply returns the byte representation of the ClassTotalSupply
+// classTotalSupply returns the byte representation of the ClassTotalSupply.
 func classTotalSupply(classID string) []byte {
 	key := make([]byte, len(ClassTotalSupply)+len(classID))
 	copy(key, ClassTotalSupply)
@@ -58,7 +58,7 @@ func classTotalSupply(classID string) []byte {
 
 // nftOfClassByOwnerStoreKey returns the byte representation of the nft owner
 // Items are stored with the following key: values
-// 0x03<owner><Delimiter(1 Byte)><classID><Delimiter(1 Byte)>
+// 0x03<owner><Delimiter(1 Byte)><classID><Delimiter(1 Byte)>.
 func nftOfClassByOwnerStoreKey(owner sdk.AccAddress, classID string) []byte {
 	owner = address.MustLengthPrefix(owner)
 	classIDBz := store.UnsafeStrToBytes(classID)
@@ -74,7 +74,7 @@ func nftOfClassByOwnerStoreKey(owner sdk.AccAddress, classID string) []byte {
 
 // prefixNftOfClassByOwnerStoreKey returns the prefix of the result of the method nftOfClassByOwnerStoreKey
 // Items are stored with the following key: values
-// 0x03<owner><Delimiter>
+// 0x03<owner><Delimiter>.
 func prefixNftOfClassByOwnerStoreKey(owner sdk.AccAddress) []byte {
 	owner = address.MustLengthPrefix(owner)
 
@@ -86,7 +86,7 @@ func prefixNftOfClassByOwnerStoreKey(owner sdk.AccAddress) []byte {
 }
 
 // Note: the full path of the nftOfClassByOwnerStoreKey stored in the store: 0x03<owner><Delimiter><classID><Delimiter><nftID>,
-// the key of the prefix store query result constructed using the prefixNftOfClassByOwnerStoreKey function needs to remove the 0x03<owner><Delimiter> prefix
+// the key of the prefix store query result constructed using the prefixNftOfClassByOwnerStoreKey function needs to remove the 0x03<owner><Delimiter> prefix.
 func parseNftOfClassByOwnerStoreKey(key []byte) (classID, nftID string) {
 	ret := bytes.Split(key, Delimiter)
 	if len(ret) != 2 {
@@ -99,7 +99,7 @@ func parseNftOfClassByOwnerStoreKey(key []byte) (classID, nftID string) {
 
 // ownerStoreKey returns the byte representation of the nft owner
 // Items are stored with the following key: values
-// 0x04<classID><Delimiter(1 Byte)><nftID>
+// 0x04<classID><Delimiter(1 Byte)><nftID>.
 func ownerStoreKey(classID, nftID string) []byte {
 	// key is of format:
 	classIDBz := store.UnsafeStrToBytes(classID)

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
 // TestAuthz tests the authz module Grant/Execute/Revoke messages execution and their deterministic gas.
@@ -65,7 +65,7 @@ func TestAuthz(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	txResult, err := tx.BroadcastTx(
+	txResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
@@ -83,7 +83,7 @@ func TestAuthz(t *testing.T) {
 	requireT.Equal(1, len(gransRes.Grants))
 
 	// try to send from grantee directly
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBankSend)),
@@ -92,7 +92,7 @@ func TestAuthz(t *testing.T) {
 	requireT.ErrorIs(sdkerrors.ErrInvalidPubKey, err)
 
 	// try to send using the authz
-	txResult, err = tx.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
@@ -109,7 +109,7 @@ func TestAuthz(t *testing.T) {
 
 	// revoke the grant
 	revokeMsg := authztypes.NewMsgRevoke(granter, grantee, sdk.MsgTypeURL(&banktypes.MsgSend{}))
-	txResult, err = tx.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&revokeMsg)),
@@ -126,7 +126,7 @@ func TestAuthz(t *testing.T) {
 	requireT.Equal(0, len(gransRes.Grants))
 
 	// try to send with the revoked grant
-	_, err = tx.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),

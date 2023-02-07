@@ -18,7 +18,7 @@ var (
 	reNFTID = reClassID
 )
 
-// ValidateClassID returns whether the class id is valid
+// ValidateClassID returns whether the class id is valid.
 func ValidateClassID(id string) error {
 	if !reClassID.MatchString(id) {
 		return sdkerrors.Wrapf(ErrInvalidClassID, "invalid class id: %s", id)
@@ -26,7 +26,7 @@ func ValidateClassID(id string) error {
 	return nil
 }
 
-// ValidateNFTID returns whether the nft id is valid
+// ValidateNFTID returns whether the nft id is valid.
 func ValidateNFTID(id string) error {
 	if !reNFTID.MatchString(id) {
 		return sdkerrors.Wrapf(ErrInvalidID, "invalid nft id: %s", id)
