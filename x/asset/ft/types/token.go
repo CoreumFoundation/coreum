@@ -26,6 +26,7 @@ var (
 
 const (
 	denomSeparator = "-"
+	maxPrecision   = 20
 )
 
 func init() {
@@ -63,6 +64,10 @@ func DeconstructDenom(denom string) (prefix string, issuer sdk.AccAddress, err e
 		return "", nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid issuer address %q in denom: %s, err:%s", denomParts[1], denom, err)
 	}
 
+	if err := ValidateSubunit(denomParts[0]); err != nil {
+		return "", nil, err
+	}
+
 	return denomParts[0], address, nil
 }
 
@@ -85,6 +90,14 @@ func ValidateSubunit(subunit string) error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "subunit must match regex format '%s'", subunitRegexStr)
 	}
 
+	return nil
+}
+
+// ValidatePrecision checks the provided precision is valid.
+func ValidatePrecision(precision uint32) error {
+	if precision == 0 || precision > maxPrecision {
+		return sdkerrors.Wrapf(ErrInvalidInput, "precision must be between 1 and %d", maxPrecision)
+	}
 	return nil
 }
 
