@@ -30,3 +30,15 @@ message EventUnfrozen {
   string id       = 2;
   string owner    = 3;
 }
+
+message EventAddedToWhitelist {
+  string class_id = 1;
+  string id       = 2;
+  string account   = 3;
+}
+
+message EventRemovedFromWhitelist {
+  string class_id = 1;
+  string id       = 2;
+  string account   = 3;
+}
