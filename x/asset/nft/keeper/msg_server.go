@@ -52,6 +52,7 @@ func (ms MsgServer) IssueClass(ctx context.Context, req *types.MsgIssueClass) (*
 			URIHash:     req.URIHash,
 			Data:        req.Data,
 			Features:    req.Features,
+			RoyaltyRate: req.RoyaltyRate,
 		},
 	); err != nil {
 		return nil, err

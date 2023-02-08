@@ -314,6 +314,55 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 	requireT.ErrorIs(nftKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
 }
 
+func TestKeeper_DisableSending(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	nftParams := types.Params{
+		MintFee: sdk.NewInt64Coin(constant.DenomDev, 0),
+	}
+	assetNFTKeeper.SetParams(ctx, nftParams)
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_disable_sending, //nolint:nosnakecase
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	settings := types.MintSettings{
+		Sender:  issuer,
+		ClassID: classID,
+		ID:      "my-id",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+
+	// mint NFT
+	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
+
+	// try to send from issuer, it should succeed
+	nftID := settings.ID
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
+	requireT.NoError(err)
+
+	// try to transfer from non-issuer, it should fail
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
+	requireT.Error(err)
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+}
+
 func TestKeeper_Freeze(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()

@@ -4,15 +4,15 @@ package client
 // Blocking broadcast mode was reimplemented to use polling instead of subscription to eliminate the case when
 // transaction execution is missed due to broken websocket connection.
 // For other broadcast modes we just call original Cosmos implementation.
-// For more details check BroadcastRawTx & broadcastTxCommit.
+// For more details check BroadcastRawTx & broadcastTxBlock.
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -20,7 +20,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/mempool"
-	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
@@ -123,76 +122,19 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 
 // BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
 func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
-	// broadcast to a Tendermint node
 	switch clientCtx.BroadcastMode() {
 	case flags.BroadcastSync:
-		res, err := clientCtx.Client().BroadcastTxSync(ctx, txBytes)
-		if err != nil {
-			return nil, err
-		}
-
-		if res.Code != 0 {
-			return nil, errors.Wrapf(sdkerrors.ABCIError(res.Codespace, res.Code, res.Log),
-				"transaction '%s' failed", res.Hash.String())
-		}
-
-		return sdk.NewResponseFormatBroadcastTx(res), nil
+		return broadcastTxSync(ctx, clientCtx, txBytes)
 
 	case flags.BroadcastAsync:
-		res, err := clientCtx.Client().BroadcastTxAsync(ctx, txBytes)
-		if err != nil {
-			return nil, err
-		}
-		return sdk.NewResponseFormatBroadcastTx(res), nil
+		return broadcastTxAsync(ctx, clientCtx, txBytes)
 
 	case flags.BroadcastBlock:
-		return broadcastTxCommit(ctx, clientCtx, txBytes)
+		return broadcastTxBlock(ctx, clientCtx, txBytes)
 
 	default:
 		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode())
 	}
-}
-
-// broadcastTxCommit broadcasts encoded transaction, waits until it is included in a block.
-func broadcastTxCommit(ctx context.Context, clientCtx Context, encodedTx []byte) (*sdk.TxResponse, error) {
-	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
-	defer cancel()
-
-	txHash := fmt.Sprintf("%X", tmtypes.Tx(encodedTx).Hash())
-	res, err := clientCtx.Client().BroadcastTxSync(requestCtx, encodedTx)
-	if err != nil {
-		if errors.Is(err, requestCtx.Err()) {
-			return nil, errors.WithStack(err)
-		}
-
-		if err := convertTendermintError(err); !sdkerrors.ErrTxInMempoolCache.Is(err) {
-			return nil, errors.WithStack(err)
-		}
-	} else if res.Code != 0 {
-		return nil, errors.Wrapf(sdkerrors.ABCIError(res.Codespace, res.Code, res.Log),
-			"transaction '%s' failed", txHash)
-	}
-
-	awaitRes, err := AwaitTx(ctx, clientCtx, txHash)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return sdk.NewResponseResultTx(awaitRes, nil, ""), nil
-}
-
-func prepareFactory(ctx context.Context, clientCtx Context, txf tx.Factory) (tx.Factory, error) {
-	if txf.AccountNumber() == 0 && txf.Sequence() == 0 {
-		acc, err := GetAccountInfo(ctx, clientCtx, clientCtx.FromAddress())
-		if err != nil {
-			return txf, err
-		}
-		txf = txf.
-			WithAccountNumber(acc.GetAccountNumber()).
-			WithSequence(acc.GetSequence())
-	}
-
-	return txf, nil
 }
 
 // GetAccountInfo returns account number and account sequence for provided address.
@@ -218,17 +160,13 @@ func GetAccountInfo(
 	return acc, nil
 }
 
-// AwaitTx awaits until a signed transaction is included in a block, returning the result.
+// AwaitTx waits until a signed transaction is included in a block, returning the result.
 func AwaitTx(
 	ctx context.Context,
 	clientCtx Context,
 	txHash string,
-) (resultTx *coretypes.ResultTx, err error) {
-	txHashBytes, err := hex.DecodeString(txHash)
-	if err != nil {
-		return nil, errors.Wrap(err, "tx hash is not a valid hex")
-	}
-
+) (txResponse *sdk.TxResponse, err error) {
+	txSvcClient := sdktx.NewServiceClient(clientCtx)
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxTimeout)
 	defer cancel()
 
@@ -236,18 +174,20 @@ func AwaitTx(
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
-		var err error
-		resultTx, err = clientCtx.Client().Tx(requestCtx, txHashBytes, false)
+		res, err := txSvcClient.GetTx(requestCtx, &sdktx.GetTxRequest{
+			Hash: txHash,
+		})
 		if err != nil {
 			return retry.Retryable(errors.WithStack(err))
 		}
 
-		if resultTx.TxResult.Code != 0 {
-			res := resultTx.TxResult
-			return errors.Wrapf(sdkerrors.ABCIError(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
+		txResponse = res.TxResponse
+		if txResponse.Code != 0 {
+			return errors.Wrapf(sdkerrors.ABCIError(txResponse.Codespace, txResponse.Code, txResponse.Logs.String()),
+				"transaction '%s' failed", txResponse.TxHash)
 		}
 
-		if resultTx.Height == 0 {
+		if txResponse.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
 		}
 
@@ -256,7 +196,7 @@ func AwaitTx(
 		return nil, err
 	}
 
-	return resultTx, nil
+	return txResponse, nil
 }
 
 // AwaitNextBlocks waits for next blocks.
@@ -265,6 +205,7 @@ func AwaitNextBlocks(
 	clientCtx Context,
 	nextBlocks int64,
 ) error {
+	tmQueryClient := tmservice.NewServiceClient(clientCtx)
 	timeoutCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.TxNextBlocksTimeout)
 	defer cancel()
 
@@ -273,12 +214,12 @@ func AwaitNextBlocks(
 		requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 		defer cancel()
 
-		res, err := clientCtx.Client().Status(requestCtx)
+		res, err := tmQueryClient.GetLatestBlock(requestCtx, &tmservice.GetLatestBlockRequest{})
 		if err != nil {
 			return retry.Retryable(errors.WithStack(err))
 		}
 
-		currentHeight := res.SyncInfo.LatestBlockHeight
+		currentHeight := res.Block.Header.Height
 		if heightToStart == 0 {
 			heightToStart = currentHeight
 		}
@@ -304,6 +245,110 @@ func GetGasPrice(
 	}
 
 	return res.GetMinGasPrice(), nil
+}
+
+func broadcastTxAsync(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
+	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
+	defer cancel()
+
+	// rpc client
+	if clientCtx.RPCClient() != nil {
+		res, err := clientCtx.RPCClient().BroadcastTxAsync(requestCtx, txBytes)
+		if err != nil {
+			return nil, err
+		}
+		return sdk.NewResponseFormatBroadcastTx(res), nil
+	}
+	// grpc client
+	txSvcClient := sdktx.NewServiceClient(clientCtx)
+	res, err := txSvcClient.BroadcastTx(requestCtx, &sdktx.BroadcastTxRequest{
+		TxBytes: txBytes,
+		Mode:    sdktx.BroadcastMode_BROADCAST_MODE_ASYNC,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res.TxResponse, nil
+}
+
+// broadcastTxBlock broadcasts encoded transaction, waits until it is included in a block.
+func broadcastTxBlock(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
+	txRes, err := broadcastTxSync(ctx, clientCtx, txBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	awaitRes, err := AwaitTx(ctx, clientCtx, txRes.TxHash)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return awaitRes, nil
+}
+
+func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
+	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
+	defer cancel()
+
+	// rpc client
+	txHash := fmt.Sprintf("%X", tmtypes.Tx(txBytes).Hash())
+	if clientCtx.RPCClient() != nil {
+		res, err := clientCtx.RPCClient().BroadcastTxSync(requestCtx, txBytes)
+		if err != nil {
+			if err := processBroadcastBlockTxCommitError(requestCtx, err); err != nil {
+				return nil, err
+			}
+		} else if res.Code != 0 {
+			return nil, errors.Wrapf(sdkerrors.ABCIError(res.Codespace, res.Code, res.Log),
+				"transaction '%s' failed", txHash)
+		}
+
+		return sdk.NewResponseFormatBroadcastTx(res), nil
+	}
+
+	// grpc client
+	txSvcClient := sdktx.NewServiceClient(clientCtx)
+	res, err := txSvcClient.BroadcastTx(requestCtx, &sdktx.BroadcastTxRequest{
+		TxBytes: txBytes,
+		Mode:    sdktx.BroadcastMode_BROADCAST_MODE_SYNC,
+	})
+	if err != nil {
+		if err := processBroadcastBlockTxCommitError(requestCtx, err); err != nil {
+			return nil, err
+		}
+	} else if res.TxResponse.Code != 0 {
+		return nil, errors.Wrapf(sdkerrors.ABCIError(res.TxResponse.Codespace, res.TxResponse.Code, res.TxResponse.Logs.String()),
+			"transaction '%s' failed", res.TxResponse.TxHash)
+	}
+
+	return res.TxResponse, nil
+}
+
+func processBroadcastBlockTxCommitError(ctx context.Context, err error) error {
+	if errors.Is(err, ctx.Err()) {
+		return errors.WithStack(err)
+	}
+
+	if err := convertTendermintError(err); !sdkerrors.ErrTxInMempoolCache.Is(err) {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+func prepareFactory(ctx context.Context, clientCtx Context, txf tx.Factory) (tx.Factory, error) {
+	if txf.AccountNumber() == 0 && txf.Sequence() == 0 {
+		acc, err := GetAccountInfo(ctx, clientCtx, clientCtx.FromAddress())
+		if err != nil {
+			return txf, err
+		}
+		txf = txf.
+			WithAccountNumber(acc.GetAccountNumber()).
+			WithSequence(acc.GetSequence())
+	}
+
+	return txf, nil
 }
 
 // the idea behind this function is to map it similarly to how cosmos sdk does it in the link below
