@@ -12,6 +12,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
@@ -110,6 +111,9 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/cosmwasm.wasm.v1.MsgIBCSend",
 	}
 
+	// This is required to compile all the messages used by the app, not only those included in deterministic gas config
+	simapp.New()
+
 	cfg := deterministicgas.DefaultConfig()
 
 	var determMsgs []sdk.Msg
@@ -120,7 +124,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 			continue
 		}
 
-		// Skip unknow messages.
+		// Skip unknown messages.
 		if lo.ContainsBy(ignoredMsgTypes, func(msgType string) bool {
 			return deterministicgas.MsgType(sdkMsg) == msgType
 		}) {
