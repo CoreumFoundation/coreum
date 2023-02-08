@@ -154,14 +154,14 @@ func TestChainNotMutable(t *testing.T) {
 	requireT.NoError(n.FundAccount(sdk.AccAddress(pubKey.Address()), sdk.NewCoins(sdk.NewInt64Coin("someTestToken", 1000))))
 	n.AddGenesisTx([]byte("test string"))
 
-	requireT.Len(n.FundedAccounts(), 6)
-	requireT.Len(n.GenTxs(), 5)
+	requireT.Len(n.FundedAccounts(), 5)
+	requireT.Len(n.GenTxs(), 4)
 
 	// re-init the config and check that length remains the same
 	n, err = config.NetworkByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
-	requireT.Len(n.FundedAccounts(), 5)
-	requireT.Len(n.GenTxs(), 4)
+	requireT.Len(n.FundedAccounts(), 4)
+	requireT.Len(n.GenTxs(), 3)
 }
 
 func TestValidateAllGenesis(t *testing.T) {
