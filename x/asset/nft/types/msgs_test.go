@@ -16,6 +16,11 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
+const (
+	invalidNFTID   = "invalid-id?"
+	invalidAccount = "devcore172rx"
+)
+
 func TestMain(m *testing.M) {
 	n, err := config.NetworkByChainID(constant.ChainIDDev)
 	if err != nil {
@@ -226,7 +231,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			name: "invalid id",
 			messageFunc: func() *types.MsgMint {
 				msg := validMessage
-				msg.ID = "id?"
+				msg.ID = invalidNFTID
 				return &msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -235,7 +240,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 			name: "invalid sender",
 			messageFunc: func() *types.MsgMint {
 				msg := validMessage
-				msg.Sender = "devcore172rc5sz2uc"
+				msg.Sender = invalidAccount
 				return &msg
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
@@ -329,7 +334,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			name: "invalid id",
 			messageFunc: func() *types.MsgBurn {
 				msg := validMessage
-				msg.ID = "id?"
+				msg.ID = invalidNFTID
 				return &msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -338,7 +343,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			name: "invalid sender",
 			messageFunc: func() *types.MsgBurn {
 				msg := validMessage
-				msg.Sender = "devcore172rx"
+				msg.Sender = invalidAccount
 				return &msg
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
@@ -391,7 +396,7 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 			name: "invalid id",
 			messageFunc: func() *types.MsgFreeze {
 				msg := validMessage
-				msg.ID = "some-invalid-id?"
+				msg.ID = invalidNFTID
 				return &msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -400,7 +405,7 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 			name: "invalid sender",
 			messageFunc: func() *types.MsgFreeze {
 				msg := validMessage
-				msg.Sender = "devcore172rx"
+				msg.Sender = invalidAccount
 				return &msg
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
@@ -453,7 +458,7 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 			name: "invalid id",
 			messageFunc: func() *types.MsgUnfreeze {
 				msg := validMessage
-				msg.ID = "invalid-id?"
+				msg.ID = invalidNFTID
 				return &msg
 			},
 			expectedError: types.ErrInvalidInput,
@@ -462,7 +467,7 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 			name: "invalid sender",
 			messageFunc: func() *types.MsgUnfreeze {
 				msg := validMessage
-				msg.Sender = "devcore172rszx"
+				msg.Sender = invalidAccount
 				return &msg
 			},
 			expectedError: sdkerrors.ErrInvalidAddress,
@@ -470,6 +475,150 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid classID",
 			messageFunc: func() *types.MsgUnfreeze {
+				msg := validMessage
+				msg.ClassID = "x"
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := tc.messageFunc().ValidateBasic()
+			if tc.expectedError == nil {
+				assertT.NoError(err)
+			} else {
+				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
+//nolint:dupl // test case duplicates are ok
+func TestMsgAddToWhitelist_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgAddToWhitelist{
+		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ID:      "my-id",
+	}
+	testCases := []struct {
+		name          string
+		messageFunc   func() *types.MsgAddToWhitelist
+		expectedError error
+	}{
+		{
+			name: "valid msg",
+			messageFunc: func() *types.MsgAddToWhitelist {
+				msg := validMessage
+				return &msg
+			},
+		},
+		{
+			name: "invalid id",
+			messageFunc: func() *types.MsgAddToWhitelist {
+				msg := validMessage
+				msg.ID = invalidNFTID
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid sender",
+			messageFunc: func() *types.MsgAddToWhitelist {
+				msg := validMessage
+				msg.Sender = invalidAccount
+				return &msg
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid account",
+			messageFunc: func() *types.MsgAddToWhitelist {
+				msg := validMessage
+				msg.Account = "devcore172"
+				return &msg
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid classID",
+			messageFunc: func() *types.MsgAddToWhitelist {
+				msg := validMessage
+				msg.ClassID = "x"
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+	}
+
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := tc.messageFunc().ValidateBasic()
+			if tc.expectedError == nil {
+				assertT.NoError(err)
+			} else {
+				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
+}
+
+//nolint:dupl // test case duplicates are ok
+func TestMsgRemoveFromWhitelist_ValidateBasic(t *testing.T) {
+	validMessage := types.MsgRemoveFromWhitelist{
+		Sender:  "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ClassID: "symbol-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
+		ID:      "my-id",
+	}
+	testCases := []struct {
+		name          string
+		messageFunc   func() *types.MsgRemoveFromWhitelist
+		expectedError error
+	}{
+		{
+			name: "valid msg",
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
+				msg := validMessage
+				return &msg
+			},
+		},
+		{
+			name: "invalid id",
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
+				msg := validMessage
+				msg.ID = invalidNFTID
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid sender",
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
+				msg := validMessage
+				msg.Sender = invalidAccount
+				return &msg
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid account",
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
+				msg := validMessage
+				msg.Account = "devcore172"
+				return &msg
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid classID",
+			messageFunc: func() *types.MsgRemoveFromWhitelist {
 				msg := validMessage
 				msg.ClassID = "x"
 				return &msg
