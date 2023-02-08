@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
 import "coreum/asset/nft/v1/nft.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
 
@@ -18,6 +19,16 @@ service Query {
   // Frozen queries to check if an NFT is frozen or not.
   rpc Frozen (QueryFrozenRequest) returns (QueryFrozenResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen";
+  }
+
+  // Whitelisted queries to check if an account is whitelited to hold an NFT or not.
+  rpc Whitelisted (QueryWhitelistedRequest) returns (QueryWhitelistedResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/account/{account}";
+  }
+
+  // WhitelistedAccountsForNFT returns the list of accounts which are whitelited to hold this NFT.
+  rpc WhitelistedAccountsForNFT (QueryWhitelistedAccountsForNFTRequest) returns (QueryWhitelistedAccountsForNFTResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted";
   }
 }
 
@@ -38,4 +49,27 @@ message QueryFrozenRequest {
 
 message QueryFrozenResponse {
   bool frozen = 1;
+}
+
+message QueryWhitelistedRequest {
+  string id = 1;
+  string class_id = 2;
+  string account = 3;
+}
+
+message QueryWhitelistedResponse {
+  bool whitelisted = 1;
+}
+
+message QueryWhitelistedAccountsForNFTRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  string id = 2;
+  string class_id = 3;
+}
+
+message QueryWhitelistedAccountsForNFTResponse {
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  repeated string accounts = 2;
 }

@@ -235,6 +235,86 @@ func (m *MsgUnfreeze) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUnfreeze proto.InternalMessageInfo
 
+type MsgAddToWhitelist struct {
+	Sender  string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	ClassID string `protobuf:"bytes,2,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
+	ID      string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	Account string `protobuf:"bytes,4,opt,name=account,proto3" json:"account,omitempty"`
+}
+
+func (m *MsgAddToWhitelist) Reset()         { *m = MsgAddToWhitelist{} }
+func (m *MsgAddToWhitelist) String() string { return proto.CompactTextString(m) }
+func (*MsgAddToWhitelist) ProtoMessage()    {}
+func (*MsgAddToWhitelist) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e850acc149a7cfa7, []int{5}
+}
+func (m *MsgAddToWhitelist) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgAddToWhitelist) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgAddToWhitelist.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgAddToWhitelist) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddToWhitelist.Merge(m, src)
+}
+func (m *MsgAddToWhitelist) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgAddToWhitelist) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddToWhitelist.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgAddToWhitelist proto.InternalMessageInfo
+
+type MsgRemoveFromWhitelist struct {
+	Sender  string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	ClassID string `protobuf:"bytes,2,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
+	ID      string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	Account string `protobuf:"bytes,4,opt,name=account,proto3" json:"account,omitempty"`
+}
+
+func (m *MsgRemoveFromWhitelist) Reset()         { *m = MsgRemoveFromWhitelist{} }
+func (m *MsgRemoveFromWhitelist) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveFromWhitelist) ProtoMessage()    {}
+func (*MsgRemoveFromWhitelist) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e850acc149a7cfa7, []int{6}
+}
+func (m *MsgRemoveFromWhitelist) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveFromWhitelist) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveFromWhitelist.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveFromWhitelist) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveFromWhitelist.Merge(m, src)
+}
+func (m *MsgRemoveFromWhitelist) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveFromWhitelist) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveFromWhitelist.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveFromWhitelist proto.InternalMessageInfo
+
 type EmptyResponse struct {
 }
 
@@ -242,7 +322,7 @@ func (m *EmptyResponse) Reset()         { *m = EmptyResponse{} }
 func (m *EmptyResponse) String() string { return proto.CompactTextString(m) }
 func (*EmptyResponse) ProtoMessage()    {}
 func (*EmptyResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e850acc149a7cfa7, []int{5}
+	return fileDescriptor_e850acc149a7cfa7, []int{7}
 }
 func (m *EmptyResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -277,49 +357,56 @@ func init() {
 	proto.RegisterType((*MsgBurn)(nil), "coreum.asset.nft.v1.MsgBurn")
 	proto.RegisterType((*MsgFreeze)(nil), "coreum.asset.nft.v1.MsgFreeze")
 	proto.RegisterType((*MsgUnfreeze)(nil), "coreum.asset.nft.v1.MsgUnfreeze")
+	proto.RegisterType((*MsgAddToWhitelist)(nil), "coreum.asset.nft.v1.MsgAddToWhitelist")
+	proto.RegisterType((*MsgRemoveFromWhitelist)(nil), "coreum.asset.nft.v1.MsgRemoveFromWhitelist")
 	proto.RegisterType((*EmptyResponse)(nil), "coreum.asset.nft.v1.EmptyResponse")
 }
 
 func init() { proto.RegisterFile("coreum/asset/nft/v1/tx.proto", fileDescriptor_e850acc149a7cfa7) }
 
 var fileDescriptor_e850acc149a7cfa7 = []byte{
-	// 565 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x94, 0x41, 0x6f, 0xda, 0x3c,
-	0x18, 0xc7, 0x09, 0xa1, 0x09, 0x35, 0xea, 0xfb, 0x4a, 0x5e, 0x55, 0xa5, 0x55, 0x17, 0x18, 0x87,
-	0x89, 0x53, 0xa2, 0xb2, 0x5d, 0x77, 0x18, 0xed, 0x50, 0x23, 0x2d, 0xd2, 0x64, 0x8d, 0xcb, 0x2e,
-	0x95, 0x21, 0x26, 0x58, 0x02, 0x1b, 0xc5, 0x4e, 0x55, 0xf6, 0x25, 0xb6, 0xaf, 0xb0, 0x6f, 0xd3,
-	0xd3, 0xd4, 0xe3, 0x4e, 0x68, 0x0b, 0x5f, 0x64, 0xb2, 0x0d, 0x1d, 0x95, 0x40, 0xe5, 0xc2, 0xcd,
-	0xcf, 0xf3, 0x7f, 0xfc, 0xb7, 0xfd, 0xb3, 0xfd, 0x80, 0xf3, 0x01, 0xcf, 0x48, 0x3e, 0x09, 0xb1,
-	0x10, 0x44, 0x86, 0x6c, 0x28, 0xc3, 0xdb, 0x8b, 0x50, 0xde, 0x05, 0xd3, 0x8c, 0x4b, 0x0e, 0x5f,
-	0x18, 0x35, 0xd0, 0x6a, 0xc0, 0x86, 0x32, 0xb8, 0xbd, 0x38, 0x3b, 0x4e, 0x79, 0xca, 0xb5, 0x1e,
-	0xaa, 0x91, 0x29, 0x3d, 0x3b, 0x4d, 0x39, 0x4f, 0xc7, 0x24, 0xd4, 0x51, 0x3f, 0x1f, 0x86, 0x98,
-	0xcd, 0x96, 0xd2, 0xcb, 0x4d, 0x6b, 0x28, 0x33, 0x23, 0xd7, 0x37, 0x6e, 0x61, 0x36, 0x25, 0xc2,
-	0x14, 0x34, 0x7f, 0x94, 0xc1, 0x51, 0x2c, 0xd2, 0x48, 0x88, 0x9c, 0x5c, 0x8e, 0xb1, 0x10, 0xf0,
-	0x04, 0x38, 0x54, 0x45, 0x99, 0x67, 0x35, 0xac, 0xd6, 0x21, 0x5a, 0x46, 0x2a, 0x2f, 0x66, 0x93,
-	0x3e, 0x1f, 0x7b, 0x65, 0x93, 0x37, 0x11, 0x84, 0xa0, 0xc2, 0xf0, 0x84, 0x78, 0xb6, 0xce, 0xea,
-	0x31, 0x6c, 0x80, 0x5a, 0x42, 0xc4, 0x20, 0xa3, 0x53, 0x49, 0x39, 0xf3, 0x2a, 0x5a, 0x5a, 0x4f,
-	0xc1, 0x53, 0x60, 0xe7, 0x19, 0xf5, 0x0e, 0x94, 0xd2, 0x71, 0x8b, 0x79, 0xdd, 0xee, 0xa1, 0x08,
-	0xa9, 0x1c, 0x7c, 0x0d, 0xaa, 0x79, 0x46, 0x6f, 0x46, 0x58, 0x8c, 0x3c, 0x47, 0xeb, 0xb5, 0x62,
-	0x5e, 0x77, 0x7b, 0x28, 0xba, 0xc6, 0x62, 0x84, 0xdc, 0x3c, 0xa3, 0x6a, 0x00, 0x5b, 0xa0, 0x92,
-	0x60, 0x89, 0x3d, 0xb7, 0x61, 0xb5, 0x6a, 0xed, 0xe3, 0xc0, 0x40, 0x0a, 0x56, 0x90, 0x82, 0xf7,
-	0x6c, 0x86, 0x74, 0x05, 0x7c, 0x07, 0xaa, 0x43, 0x82, 0x65, 0x9e, 0x11, 0xe1, 0x55, 0x1b, 0x76,
-	0xeb, 0xbf, 0xf6, 0xab, 0x60, 0x03, 0xfd, 0x40, 0x03, 0xe8, 0x9a, 0x4a, 0xf4, 0x38, 0xa5, 0xf9,
-	0xd3, 0x02, 0x6e, 0x2c, 0xd2, 0x98, 0x32, 0xa9, 0x29, 0x10, 0x96, 0xfc, 0xa3, 0x63, 0x22, 0xb5,
-	0xe9, 0x81, 0x9a, 0x7d, 0x43, 0x13, 0xc3, 0xc7, 0x6c, 0x5a, 0x3b, 0x46, 0x57, 0xc8, 0xd5, 0x62,
-	0x94, 0xc0, 0x13, 0x50, 0xa6, 0x89, 0x61, 0xd5, 0x71, 0x8a, 0x79, 0xbd, 0x1c, 0x5d, 0xa1, 0x32,
-	0x4d, 0x56, 0x3c, 0x2a, 0xcf, 0xf0, 0x38, 0xd8, 0x81, 0x87, 0xf3, 0x1c, 0x8f, 0x26, 0xd6, 0xe7,
-	0xe9, 0xe4, 0x19, 0xdb, 0xd7, 0x79, 0x9a, 0x03, 0x70, 0x18, 0x8b, 0xb4, 0x9b, 0x11, 0xf2, 0x95,
-	0xec, 0x6d, 0x11, 0x02, 0x6a, 0xb1, 0x48, 0x7b, 0x6c, 0xb8, 0xdf, 0x65, 0xfe, 0x07, 0x47, 0x1f,
-	0x26, 0x53, 0x39, 0x43, 0x44, 0x4c, 0x39, 0x13, 0xa4, 0xfd, 0xcd, 0x06, 0x76, 0x2c, 0x52, 0xf8,
-	0x19, 0x80, 0xb5, 0x8f, 0xd3, 0xdc, 0xf8, 0xa6, 0x9e, 0x7c, 0xae, 0xb3, 0xcd, 0x35, 0x4f, 0xdc,
-	0xe1, 0x35, 0xa8, 0xe8, 0xa7, 0x76, 0xbe, 0xcd, 0x4f, 0xa9, 0xbb, 0x3a, 0xe9, 0x4b, 0xde, 0xea,
-	0xa4, 0xd4, 0x9d, 0x9c, 0x3e, 0x02, 0x67, 0x79, 0x97, 0xfe, 0x36, 0x2f, 0xa3, 0xef, 0xe4, 0xf6,
-	0x09, 0x54, 0x1f, 0x2f, 0xad, 0xb1, 0xcd, 0x6f, 0x55, 0xb1, 0x8b, 0x63, 0x07, 0xdd, 0xff, 0xf1,
-	0x4b, 0xf7, 0x85, 0x6f, 0x3d, 0x14, 0xbe, 0xf5, 0xbb, 0xf0, 0xad, 0xef, 0x0b, 0xbf, 0xf4, 0xb0,
-	0xf0, 0x4b, 0xbf, 0x16, 0x7e, 0xe9, 0xcb, 0xdb, 0x94, 0xca, 0x51, 0xde, 0x0f, 0x06, 0x7c, 0x12,
-	0x5e, 0x6a, 0xaf, 0x2e, 0xcf, 0x59, 0x82, 0x55, 0x27, 0x0a, 0x97, 0x1d, 0xf2, 0x6e, 0xad, 0x47,
-	0xea, 0x06, 0xd9, 0x77, 0xf4, 0xcf, 0x79, 0xf3, 0x37, 0x00, 0x00, 0xff, 0xff, 0xf4, 0x53, 0x05,
-	0xb7, 0xc7, 0x05, 0x00, 0x00,
+	// 643 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x55, 0xc1, 0x6a, 0xdb, 0x40,
+	0x10, 0xb5, 0x6c, 0xc7, 0x72, 0xc6, 0x24, 0xa5, 0x4a, 0x08, 0x4a, 0x48, 0x65, 0xd7, 0x87, 0x60,
+	0x28, 0x48, 0x24, 0xed, 0xb5, 0x87, 0x38, 0xa9, 0x89, 0xa1, 0x82, 0x22, 0x12, 0x0a, 0xa5, 0x10,
+	0x64, 0x69, 0x2d, 0x2f, 0x58, 0xbb, 0x46, 0xbb, 0x0a, 0x71, 0xef, 0xbd, 0xf4, 0xd4, 0x5f, 0xe8,
+	0xdf, 0xe4, 0x54, 0x72, 0x29, 0xf4, 0x14, 0x5a, 0xe7, 0x47, 0xca, 0xee, 0xda, 0x69, 0x52, 0x24,
+	0xa2, 0x8b, 0xe9, 0x6d, 0x67, 0xde, 0xd3, 0x9b, 0xd1, 0x63, 0x76, 0x07, 0x76, 0x03, 0x9a, 0xa0,
+	0x34, 0x76, 0x7c, 0xc6, 0x10, 0x77, 0xc8, 0x90, 0x3b, 0x17, 0xfb, 0x0e, 0xbf, 0xb4, 0x27, 0x09,
+	0xe5, 0xd4, 0xd8, 0x50, 0xa8, 0x2d, 0x51, 0x9b, 0x0c, 0xb9, 0x7d, 0xb1, 0xbf, 0xb3, 0x19, 0xd1,
+	0x88, 0x4a, 0xdc, 0x11, 0x27, 0x45, 0xdd, 0xd9, 0x8e, 0x28, 0x8d, 0xc6, 0xc8, 0x91, 0xd1, 0x20,
+	0x1d, 0x3a, 0x3e, 0x99, 0xce, 0xa1, 0x67, 0x59, 0x35, 0x84, 0x98, 0x82, 0x9b, 0x99, 0x2d, 0x4c,
+	0x27, 0x88, 0x29, 0x42, 0xfb, 0x5b, 0x19, 0xd6, 0x5c, 0x16, 0xf5, 0x19, 0x4b, 0xd1, 0xd1, 0xd8,
+	0x67, 0xcc, 0xd8, 0x82, 0x1a, 0x16, 0x51, 0x62, 0x6a, 0x2d, 0xad, 0xb3, 0xea, 0xcd, 0x23, 0x91,
+	0x67, 0xd3, 0x78, 0x40, 0xc7, 0x66, 0x59, 0xe5, 0x55, 0x64, 0x18, 0x50, 0x25, 0x7e, 0x8c, 0xcc,
+	0x8a, 0xcc, 0xca, 0xb3, 0xd1, 0x82, 0x46, 0x88, 0x58, 0x90, 0xe0, 0x09, 0xc7, 0x94, 0x98, 0x55,
+	0x09, 0xdd, 0x4f, 0x19, 0xdb, 0x50, 0x49, 0x13, 0x6c, 0xae, 0x08, 0xa4, 0xab, 0xcf, 0x6e, 0x9a,
+	0x95, 0x33, 0xaf, 0xef, 0x89, 0x9c, 0xb1, 0x07, 0xf5, 0x34, 0xc1, 0xe7, 0x23, 0x9f, 0x8d, 0xcc,
+	0x9a, 0xc4, 0x1b, 0xb3, 0x9b, 0xa6, 0x7e, 0xe6, 0xf5, 0x4f, 0x7c, 0x36, 0xf2, 0xf4, 0x34, 0xc1,
+	0xe2, 0x60, 0x74, 0xa0, 0x1a, 0xfa, 0xdc, 0x37, 0xf5, 0x96, 0xd6, 0x69, 0x1c, 0x6c, 0xda, 0xca,
+	0x24, 0x7b, 0x61, 0x92, 0x7d, 0x48, 0xa6, 0x9e, 0x64, 0x18, 0xaf, 0xa1, 0x3e, 0x44, 0x3e, 0x4f,
+	0x13, 0xc4, 0xcc, 0x7a, 0xab, 0xd2, 0x59, 0x3f, 0x78, 0x6e, 0x67, 0xb8, 0x6f, 0x4b, 0x03, 0x7a,
+	0x8a, 0xe9, 0xdd, 0x7d, 0xd2, 0xfe, 0xae, 0x81, 0xee, 0xb2, 0xc8, 0xc5, 0x84, 0x4b, 0x17, 0x10,
+	0x09, 0xff, 0xba, 0xa3, 0x22, 0xd1, 0x74, 0x20, 0xbe, 0x3e, 0xc7, 0xa1, 0xf2, 0x47, 0x35, 0x2d,
+	0x15, 0xfb, 0xc7, 0x9e, 0x2e, 0xc1, 0x7e, 0x68, 0x6c, 0x41, 0x19, 0x87, 0xca, 0xab, 0x6e, 0x6d,
+	0x76, 0xd3, 0x2c, 0xf7, 0x8f, 0xbd, 0x32, 0x0e, 0x17, 0x7e, 0x54, 0x1f, 0xf1, 0x63, 0xa5, 0x80,
+	0x1f, 0xb5, 0xc7, 0xfc, 0x68, 0xfb, 0xf2, 0x7f, 0xba, 0x69, 0x42, 0x96, 0xf5, 0x3f, 0xed, 0x00,
+	0x56, 0x5d, 0x16, 0xf5, 0x12, 0x84, 0x3e, 0xa1, 0xa5, 0x15, 0x41, 0xd0, 0x70, 0x59, 0x74, 0x46,
+	0x86, 0xcb, 0x2d, 0xf3, 0x59, 0x83, 0xa7, 0x2e, 0x8b, 0x0e, 0xc3, 0xf0, 0x94, 0xbe, 0x1f, 0x61,
+	0x8e, 0xc6, 0x98, 0x2d, 0x6f, 0x12, 0x4c, 0xd0, 0xfd, 0x20, 0xa0, 0x29, 0xe1, 0xf3, 0x7b, 0xb3,
+	0x08, 0xdb, 0x5f, 0x34, 0xd8, 0x72, 0x59, 0xe4, 0xa1, 0x98, 0x5e, 0xa0, 0x5e, 0x42, 0xe3, 0xff,
+	0xd9, 0xcc, 0x13, 0x58, 0x7b, 0x13, 0x4f, 0xf8, 0xd4, 0x43, 0x6c, 0x42, 0x09, 0x43, 0x07, 0x3f,
+	0xaa, 0x50, 0x71, 0x59, 0x64, 0x9c, 0x02, 0xdc, 0x7b, 0x4d, 0xda, 0x99, 0x17, 0xed, 0xc1, 0x8b,
+	0xb3, 0x93, 0xcd, 0x79, 0xa0, 0x6e, 0x9c, 0x40, 0x55, 0xde, 0xbf, 0xdd, 0x3c, 0x3d, 0x81, 0x16,
+	0x55, 0x92, 0x93, 0x9f, 0xab, 0x24, 0xd0, 0x42, 0x4a, 0x6f, 0xa1, 0x36, 0x1f, 0x70, 0x2b, 0x4f,
+	0x4b, 0xe1, 0x85, 0xd4, 0xde, 0x41, 0xfd, 0x6e, 0x92, 0x5b, 0x79, 0x7a, 0x0b, 0x46, 0x21, 0xc5,
+	0x8f, 0xb0, 0xfe, 0xcf, 0xcc, 0xee, 0xe5, 0xe9, 0x3e, 0xe4, 0x15, 0x52, 0x1f, 0xc2, 0x46, 0xd6,
+	0x24, 0xbe, 0xc8, 0x2b, 0x91, 0x41, 0x2e, 0x52, 0xa7, 0xeb, 0x5d, 0xfd, 0xb6, 0x4a, 0x57, 0x33,
+	0x4b, 0xbb, 0x9e, 0x59, 0xda, 0xaf, 0x99, 0xa5, 0x7d, 0xbd, 0xb5, 0x4a, 0xd7, 0xb7, 0x56, 0xe9,
+	0xe7, 0xad, 0x55, 0xfa, 0xf0, 0x2a, 0xc2, 0x7c, 0x94, 0x0e, 0xec, 0x80, 0xc6, 0xce, 0x91, 0xd4,
+	0xea, 0xd1, 0x94, 0x84, 0xbe, 0x58, 0x32, 0xce, 0x7c, 0xf9, 0x5d, 0xde, 0x5b, 0x7f, 0x72, 0xf7,
+	0x0d, 0x6a, 0xf2, 0x51, 0x7c, 0xf9, 0x27, 0x00, 0x00, 0xff, 0xff, 0x51, 0xd6, 0x22, 0xd7, 0xa2,
+	0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -344,6 +431,10 @@ type MsgClient interface {
 	Freeze(ctx context.Context, in *MsgFreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// Unfreeze removes the freeze effect already put on an NFT
 	Unfreeze(ctx context.Context, in *MsgUnfreeze, opts ...grpc.CallOption) (*EmptyResponse, error)
+	// AddToWhitelist sets the account as whitelisted to hold the NFT
+	AddToWhitelist(ctx context.Context, in *MsgAddToWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
+	// RemoveFromWhitelist removes an account from whitelisted list of the NFT
+	RemoveFromWhitelist(ctx context.Context, in *MsgRemoveFromWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
 type msgClient struct {
@@ -399,6 +490,24 @@ func (c *msgClient) Unfreeze(ctx context.Context, in *MsgUnfreeze, opts ...grpc.
 	return out, nil
 }
 
+func (c *msgClient) AddToWhitelist(ctx context.Context, in *MsgAddToWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.nft.v1.Msg/AddToWhitelist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RemoveFromWhitelist(ctx context.Context, in *MsgRemoveFromWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error) {
+	out := new(EmptyResponse)
+	err := c.cc.Invoke(ctx, "/coreum.asset.nft.v1.Msg/RemoveFromWhitelist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// IssueClass creates new non-fungible token class.
@@ -411,6 +520,10 @@ type MsgServer interface {
 	Freeze(context.Context, *MsgFreeze) (*EmptyResponse, error)
 	// Unfreeze removes the freeze effect already put on an NFT
 	Unfreeze(context.Context, *MsgUnfreeze) (*EmptyResponse, error)
+	// AddToWhitelist sets the account as whitelisted to hold the NFT
+	AddToWhitelist(context.Context, *MsgAddToWhitelist) (*EmptyResponse, error)
+	// RemoveFromWhitelist removes an account from whitelisted list of the NFT
+	RemoveFromWhitelist(context.Context, *MsgRemoveFromWhitelist) (*EmptyResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -431,6 +544,12 @@ func (*UnimplementedMsgServer) Freeze(ctx context.Context, req *MsgFreeze) (*Emp
 }
 func (*UnimplementedMsgServer) Unfreeze(ctx context.Context, req *MsgUnfreeze) (*EmptyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unfreeze not implemented")
+}
+func (*UnimplementedMsgServer) AddToWhitelist(ctx context.Context, req *MsgAddToWhitelist) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddToWhitelist not implemented")
+}
+func (*UnimplementedMsgServer) RemoveFromWhitelist(ctx context.Context, req *MsgRemoveFromWhitelist) (*EmptyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromWhitelist not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -527,6 +646,42 @@ func _Msg_Unfreeze_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_AddToWhitelist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddToWhitelist)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AddToWhitelist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.nft.v1.Msg/AddToWhitelist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AddToWhitelist(ctx, req.(*MsgAddToWhitelist))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RemoveFromWhitelist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveFromWhitelist)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RemoveFromWhitelist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/coreum.asset.nft.v1.Msg/RemoveFromWhitelist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RemoveFromWhitelist(ctx, req.(*MsgRemoveFromWhitelist))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "coreum.asset.nft.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -550,6 +705,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Unfreeze",
 			Handler:    _Msg_Unfreeze_Handler,
+		},
+		{
+			MethodName: "AddToWhitelist",
+			Handler:    _Msg_AddToWhitelist_Handler,
+		},
+		{
+			MethodName: "RemoveFromWhitelist",
+			Handler:    _Msg_RemoveFromWhitelist_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -853,6 +1016,108 @@ func (m *MsgUnfreeze) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgAddToWhitelist) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgAddToWhitelist) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgAddToWhitelist) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Account) > 0 {
+		i -= len(m.Account)
+		copy(dAtA[i:], m.Account)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Account)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.ID) > 0 {
+		i -= len(m.ID)
+		copy(dAtA[i:], m.ID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ID)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ClassID) > 0 {
+		i -= len(m.ClassID)
+		copy(dAtA[i:], m.ClassID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ClassID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveFromWhitelist) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveFromWhitelist) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveFromWhitelist) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Account) > 0 {
+		i -= len(m.Account)
+		copy(dAtA[i:], m.Account)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Account)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.ID) > 0 {
+		i -= len(m.ID)
+		copy(dAtA[i:], m.ID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ID)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ClassID) > 0 {
+		i -= len(m.ClassID)
+		copy(dAtA[i:], m.ClassID)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ClassID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *EmptyResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1021,6 +1286,56 @@ func (m *MsgUnfreeze) Size() (n int) {
 		n += 1 + l + sovTx(uint64(l))
 	}
 	l = len(m.ID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgAddToWhitelist) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ClassID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Account)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRemoveFromWhitelist) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ClassID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.ID)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Account)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -2051,6 +2366,362 @@ func (m *MsgUnfreeze) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.ID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgAddToWhitelist) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgAddToWhitelist: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgAddToWhitelist: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClassID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClassID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Account", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Account = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveFromWhitelist) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveFromWhitelist: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveFromWhitelist: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClassID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClassID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Account", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Account = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

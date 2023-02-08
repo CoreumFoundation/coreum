@@ -549,6 +549,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 				&assetnfttypes.MsgFreeze{},
 				&assetnfttypes.MsgUnfreeze{},
 			},
+			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
 		}),
 	)
 	requireT.NoError(
@@ -704,4 +705,156 @@ func TestAssetNFTFreeze(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
+}
+
+// TestAssetNFTWhitelist tests non-fungible token whitelisting.
+func TestAssetNFTWhitelist(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetnfttypes.MsgIssueClass{},
+				&assetnfttypes.MsgMint{},
+				&nft.MsgSend{},
+				&nft.MsgSend{},
+				&assetnfttypes.MsgAddToWhitelist{},
+				&assetnfttypes.MsgRemoveFromWhitelist{},
+			},
+			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+		}),
+	)
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_whitelisting, //nolint:nosnakecase // generated variable
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	// mint new token in that class
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	nftID := "id-1"
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      nftID,
+		ClassID: classID,
+	}
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(mintMsg), uint64(res.GasUsed))
+
+	// send to non-whitelisted recipient (send must fail)
+	sendMsg := &nft.MsgSend{
+		Sender:   issuer.String(),
+		ClassId:  classID,
+		Id:       nftID,
+		Receiver: recipient.String(),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+
+	// whitelist recipient for the NFT
+	MsgAddToWhitelist := &assetnfttypes.MsgAddToWhitelist{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      nftID,
+		Account: recipient.String(),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgAddToWhitelist)),
+		MsgAddToWhitelist,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(chain.GasLimitByMsgs(MsgAddToWhitelist), res.GasUsed)
+
+	queryRes, err := nftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
+		ClassId: classID,
+		Id:      nftID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.True(queryRes.Whitelisted)
+
+	// assert the whitelisting event
+	whitelistEvents, err := event.FindTypedEvents[*assetnfttypes.EventAddedToWhitelist](res.Events)
+	requireT.NoError(err)
+	whitelistEvent := whitelistEvents[0]
+	requireT.Equal(&assetnfttypes.EventAddedToWhitelist{
+		ClassId: classID,
+		Id:      MsgAddToWhitelist.ID,
+		Account: recipient.String(),
+	}, whitelistEvent)
+
+	// try to send again and it should succeed now.
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// unwhitelist the account
+	MsgRemoveFromWhitelist := &assetnfttypes.MsgRemoveFromWhitelist{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      nftID,
+		Account: recipient.String(),
+	}
+	res, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgRemoveFromWhitelist)),
+		MsgRemoveFromWhitelist,
+	)
+	requireT.NoError(err)
+	requireT.EqualValues(chain.GasLimitByMsgs(MsgRemoveFromWhitelist), res.GasUsed)
+
+	queryRes, err = nftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
+		ClassId: classID,
+		Id:      nftID,
+		Account: recipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.False(queryRes.Whitelisted)
+
+	// assert the unwhitelisting event
+	unWhitelistedEvents, err := event.FindTypedEvents[*assetnfttypes.EventRemovedFromWhitelist](res.Events)
+	requireT.NoError(err)
+	unWhitelistedEvent := unWhitelistedEvents[0]
+	requireT.Equal(&assetnfttypes.EventRemovedFromWhitelist{
+		ClassId: classID,
+		Id:      MsgAddToWhitelist.ID,
+		Account: recipient.String(),
+	}, unWhitelistedEvent)
 }

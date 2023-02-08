@@ -56,11 +56,13 @@ func DefaultConfig() Config {
 		MsgType(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
 
 		// asset/nft
-		MsgType(&assetnfttypes.MsgBurn{}):       constantGasFunc(16000),
-		MsgType(&assetnfttypes.MsgIssueClass{}): constantGasFunc(16000),
-		MsgType(&assetnfttypes.MsgMint{}):       constantGasFunc(39000),
-		MsgType(&assetnfttypes.MsgFreeze{}):     constantGasFunc(7000),
-		MsgType(&assetnfttypes.MsgUnfreeze{}):   constantGasFunc(5000),
+		MsgType(&assetnfttypes.MsgBurn{}):                constantGasFunc(16000),
+		MsgType(&assetnfttypes.MsgIssueClass{}):          constantGasFunc(16000),
+		MsgType(&assetnfttypes.MsgMint{}):                constantGasFunc(39000),
+		MsgType(&assetnfttypes.MsgFreeze{}):              constantGasFunc(7000),
+		MsgType(&assetnfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
+		MsgType(&assetnfttypes.MsgAddToWhitelist{}):      constantGasFunc(7000),
+		MsgType(&assetnfttypes.MsgRemoveFromWhitelist{}): constantGasFunc(3500),
 
 		// authz
 		MsgType(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(2000),
@@ -208,7 +210,7 @@ func underministicGasFunc() gasByMsgFunc {
 	}
 }
 
-func bankSendMsgGasFunc(bankSendPerEntryGas uint64) gasByMsgFunc {
+func bankSendMsgGasFunc(bankSendPerCoinGas uint64) gasByMsgFunc {
 	return func(msg sdk.Msg) (uint64, bool) {
 		m, ok := msg.(*banktypes.MsgSend)
 		if !ok {
@@ -216,7 +218,7 @@ func bankSendMsgGasFunc(bankSendPerEntryGas uint64) gasByMsgFunc {
 		}
 		entriesNum := len(m.Amount)
 
-		return uint64(lo.Max([]int{entriesNum, 1})) * bankSendPerEntryGas, true
+		return uint64(lo.Max([]int{entriesNum, 1})) * bankSendPerCoinGas, true
 	}
 }
 
