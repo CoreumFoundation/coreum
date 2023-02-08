@@ -39,6 +39,10 @@ message MsgIssueClass {
   string uri_hash = 6 [(gogoproto.customname) = "URIHash"];
   google.protobuf.Any data = 7;
   repeated ClassFeature features = 8;
+  string royalty_rate = 9 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
 }
 
 // MsgMint defines message for the Mint method.
