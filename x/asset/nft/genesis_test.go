@@ -2,10 +2,13 @@ package nft_test
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
@@ -37,9 +40,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	// Frozen NFTs
-	var frozenNFTs []types.FrozenNFT
+	var frozen []types.FrozenNFT
 	for i := 0; i < 5; i++ {
-		frozenNFTs = append(frozenNFTs, types.FrozenNFT{
+		frozen = append(frozen, types.FrozenNFT{
 			ClassID: fmt.Sprintf("id-%d", i),
 			NftIDs: []string{
 				fmt.Sprintf("id-1-%d", i),
@@ -48,10 +51,25 @@ func TestInitAndExportGenesis(t *testing.T) {
 		})
 	}
 
+	// Whitelisting
+	var whitelisted []types.WhitelistedNFTAccounts
+	for i := 0; i < 5; i++ {
+		whitelisted = append(whitelisted, types.WhitelistedNFTAccounts{
+			ClassID: fmt.Sprintf("class-id-%d", i),
+			NftID:   fmt.Sprintf("nft-id-%d", i),
+			Accounts: []string{
+				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+			},
+		})
+	}
+
 	genState := types.GenesisState{
-		Params:           types.DefaultParams(),
-		ClassDefinitions: classDefinitions,
-		FrozenNFTs:       frozenNFTs,
+		Params:                 types.DefaultParams(),
+		ClassDefinitions:       classDefinitions,
+		FrozenNFTs:             frozen,
+		WhitelistedNFTAccounts: whitelisted,
 	}
 
 	// init the keeper
@@ -74,4 +92,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 	exportedGenState := nft.ExportGenesis(ctx, nftKeeper)
 	assertT.ElementsMatch(genState.ClassDefinitions, exportedGenState.ClassDefinitions)
 	assertT.ElementsMatch(genState.FrozenNFTs, exportedGenState.FrozenNFTs)
+
+	for _, st := range genState.WhitelistedNFTAccounts {
+		sort.Strings(st.Accounts)
+	}
+	for _, st := range exportedGenState.WhitelistedNFTAccounts {
+		sort.Strings(st.Accounts)
+	}
+	assertT.ElementsMatch(genState.WhitelistedNFTAccounts, exportedGenState.WhitelistedNFTAccounts)
 }

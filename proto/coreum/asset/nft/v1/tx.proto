@@ -23,6 +23,10 @@ service Msg {
   rpc Freeze(MsgFreeze) returns (EmptyResponse);
   // Unfreeze removes the freeze effect already put on an NFT
   rpc Unfreeze(MsgUnfreeze) returns (EmptyResponse);
+  // AddToWhitelist sets the account as whitelisted to hold the NFT
+  rpc AddToWhitelist(MsgAddToWhitelist) returns (EmptyResponse);
+  // RemoveFromWhitelist removes an account from whitelisted list of the NFT
+  rpc RemoveFromWhitelist(MsgRemoveFromWhitelist) returns (EmptyResponse);
 }
 
 // MsgIssueClass defines message for the IssueClass method.
@@ -64,6 +68,20 @@ message MsgBurn {
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
+ }
+
+ message MsgAddToWhitelist {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+  string account = 4;
+ }
+
+ message MsgRemoveFromWhitelist {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+  string account = 4;
  }
 
 message EmptyResponse {}
