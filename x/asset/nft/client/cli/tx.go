@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
@@ -119,9 +120,9 @@ func CmdTxMint() *cobra.Command {
 			fmt.Sprintf(`Mint new non-fungible token.
 
 Example:
-$ %s tx %s mint abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
+$ %s tx %s mint abc-%s id1 https://my-nft-meta.invalid/1 e000624 --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -163,9 +164,9 @@ func CmdTxBurn() *cobra.Command {
 			fmt.Sprintf(`Burn non-fungible token.
 
 Example:
-$ %s tx %s burn abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --from [sender]
+$ %s tx %s burn abc-%s id1 --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -203,9 +204,9 @@ func CmdTxFreeze() *cobra.Command {
 			fmt.Sprintf(`Freeze a non-fungible token.
 
 Example:
-$ %s tx %s freeze abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --from [sender]
+$ %s tx %s freeze abc-%s id1 --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -243,9 +244,9 @@ func CmdTxUnfreeze() *cobra.Command {
 			fmt.Sprintf(`Unfreeze a non-fungible token.
 
 Example:
-$ %s tx %s unfreeze abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --from [sender]
+$ %s tx %s unfreeze abc-%s id1 --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -283,9 +284,9 @@ func CmdTxWhitelist() *cobra.Command {
 			fmt.Sprintf(`Whitelist an account for a non-fungible token.
 
 Example:
-$ %s tx %s whitelist abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 devcore15nc50svxu8xakdvks2hzd586xs9xmyqu9ws5ta --from [sender]
+$ %s tx %s whitelist abc-%s id1 %s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -325,9 +326,9 @@ func CmdTxUnwhitelist() *cobra.Command {
 			fmt.Sprintf(`Unwhitelist an account for a non-fungible token.
 
 Example:
-$ %s tx %s unwhitelist abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 devcore15nc50svxu8xakdvks2hzd586xs9xmyqu9ws5ta --from [sender]
+$ %s tx %s unwhitelist abc-%s id1 %s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
