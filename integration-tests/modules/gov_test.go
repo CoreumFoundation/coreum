@@ -32,14 +32,10 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := gov.ComputeProposerBalance(ctx)
-	requireT.NoError(err)
-	proposerBalance = proposerBalance.Sub(missingDepositAmount)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx, integrationtests.FundedAccount{Address: proposer, Amount: proposerBalance}))
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
-	err = chain.Faucet.FundAccountsWithOptions(ctx, depositor, integrationtests.BalancesOptions{
+	err := chain.Faucet.FundAccountsWithOptions(ctx, depositor, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&govtypes.MsgDeposit{}},
 		Amount:   missingDepositAmount.Amount,
 	})
@@ -49,7 +45,11 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypes.NewTextProposal("Test proposal with weighted votes", strings.Repeat("Description", 20)))
 	requireT.NoError(err)
 	proposalMsg.InitialDeposit = proposalMsg.InitialDeposit.Sub(sdk.Coins{missingDepositAmount})
-	proposalID, err := gov.Propose(ctx, proposalMsg)
+
+	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
+	requireT.NoError(err)
+
+	proposalID, err := gov.Propose(ctx, deposit.Sub(missingDepositAmount), proposalMsg)
 	requireT.NoError(err)
 
 	logger.Get(ctx).Info("proposal created", zap.Uint64("proposal_id", proposalID))

@@ -42,11 +42,6 @@ func TestUpgrade(t *testing.T) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-	requireT.NoError(err)
-
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
 
 	log.Info("Creating proposal for upgrading", zap.Int64("upgradeHeight", upgradeHeight))
 
@@ -58,7 +53,11 @@ func TestUpgrade(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+
+	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
+	requireT.NoError(err)
+
+	proposalID, err := chain.Governance.Propose(ctx, deposit, proposalMsg)
 	requireT.NoError(err)
 	log.Info("Upgrade proposal has been submitted", zap.Uint64("proposalID", proposalID))
 

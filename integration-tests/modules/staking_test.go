@@ -37,11 +37,6 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-	requireT.NoError(err)
-
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
 
 	// Create proposition to change max validators value.
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
@@ -50,7 +45,11 @@ func TestStakingProposalParamChange(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+
+	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
+	requireT.NoError(err)
+
+	proposalID, err := chain.Governance.Propose(ctx, deposit, proposalMsg)
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
 
@@ -326,16 +325,15 @@ func changeMinSelfDelegationCustomParam(
 ) error {
 	// create new proposer
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-	requireT.NoError(err)
-
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
 
 	marshalledMinSelfDelegation, err := tmjson.Marshal(newMinSelfDelegation)
 	requireT.NoError(err)
+
+	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
+	requireT.NoError(err)
+
 	// apply proposal
-	err = chain.Governance.ProposeAndVote(ctx, proposer,
+	err = chain.Governance.ProposeAndVote(ctx, proposer, deposit,
 		paramproposal.NewParameterChangeProposal(
 			"Custom staking params change proposal", "-",
 			[]paramproposal.ParamChange{
@@ -361,15 +359,12 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain inte
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+
+	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
-
-	// TODO(dhil) refactor other tests to use that func for the standard propose + vote action.
 	// Create proposition to change max the unbonding time value.
-	err = chain.Governance.ProposeAndVote(ctx, proposer,
+	err = chain.Governance.ProposeAndVote(ctx, proposer, deposit,
 		paramproposal.NewParameterChangeProposal(
 			fmt.Sprintf("Change the unbnunbondingdig time to %s", unbondingTime.String()),
 			"Changing unbonding time for the integration test",

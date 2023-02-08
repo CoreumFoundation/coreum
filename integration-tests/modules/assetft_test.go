@@ -82,7 +82,10 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origIssueFee := chain.NetworkConfig.AssetFTConfig.IssueFee
 
-	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing IssueFee in the assetft module",
+	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
+	requireT.NoError(err)
+
+	requireT.NoError(chain.Governance.UpdateParams(ctx, deposit, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.ZeroInt()))))),
 		}))
@@ -106,7 +109,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 		Features:      []assetfttypes.Feature{},
 	}
 
-	_, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -116,7 +119,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT.NoError(err)
 
 	// Revert to original issue fee
-	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing IssueFee in the assetft module",
+	requireT.NoError(chain.Governance.UpdateParams(ctx, deposit, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, origIssueFee))))),
 		}))

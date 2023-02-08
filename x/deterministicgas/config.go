@@ -37,6 +37,8 @@ type Config struct {
 }
 
 // DefaultConfig returns default config for deterministic gas.
+//
+//nolint:funlen
 func DefaultConfig() Config {
 	cfg := Config{
 		FixedGas:       50000,

@@ -17,8 +17,6 @@ import (
 	"github.com/CoreumFoundation/coreum/testutil/event"
 )
 
-const submitProposalGas = 200_000
-
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {
 	chainCtx       ChainContext
@@ -45,37 +43,19 @@ func NewGovernance(chainCtx ChainContext, stakerMnemonics []string) Governance {
 	return gov
 }
 
-// ComputeProposerBalance computes the balance required for the proposer.
-func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error) {
+// GetRequiredDeposit returns required minimum deposit for proposal.
+func (g Governance) GetRequiredDeposit(ctx context.Context) (sdk.Coin, error) {
 	govParams, err := g.queryGovParams(ctx)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
 
-	minDeposit := govParams.DepositParams.MinDeposit[0]
-	proposerInitialBalance := g.chainCtx.ComputeNeededBalanceFromOptions(BalancesOptions{
-		NondeterministicMessagesGas: submitProposalGas, // to cover MsgSubmitProposal
-		Amount:                      minDeposit.Amount,
-	})
-
-	return g.chainCtx.NewCoin(proposerInitialBalance), nil
+	return govParams.DepositParams.MinDeposit[0], nil
 }
 
 // UpdateParams goes through proposal process to update parameters.
-func (g Governance) UpdateParams(ctx context.Context, description string, updates []paramproposal.ParamChange) error {
-	// Fund accounts.
-	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = chain.Faucet.FundAccounts(ctx, NewFundedAccount(proposer, proposerBalance))
-	if err != nil {
-		return err
-	}
-
-	err = g.ProposeAndVote(ctx, proposer,
+func (g Governance) UpdateParams(ctx context.Context, deposit sdk.Coin, description string, updates []paramproposal.ParamChange) error {
+	err := g.ProposeAndVote(ctx, chain.GenAccount(), deposit,
 		paramproposal.NewParameterChangeProposal("Updating parameters", description, updates), govtypes.OptionYes)
 	if err != nil {
 		return err
@@ -85,13 +65,13 @@ func (g Governance) UpdateParams(ctx context.Context, description string, update
 }
 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
-func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) error {
+func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress, deposit sdk.Coin, content govtypes.Content, option govtypes.VoteOption) error {
 	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, content)
 	if err != nil {
 		return err
 	}
 
-	proposalID, err := g.Propose(ctx, proposalMsg)
+	proposalID, err := g.Propose(ctx, deposit, proposalMsg)
 	if err != nil {
 		return err
 	}
@@ -125,8 +105,28 @@ func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress,
 }
 
 // Propose creates a new proposal.
-func (g Governance) Propose(ctx context.Context, msg *govtypes.MsgSubmitProposal) (uint64, error) {
-	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
+func (g Governance) Propose(ctx context.Context, deposit sdk.Coin, msg *govtypes.MsgSubmitProposal) (uint64, error) {
+	err := chain.Faucet.FundAccounts(ctx, NewFundedAccount(msg.GetProposer(), deposit))
+	if err != nil {
+		return 0, err
+	}
+
+	txf := g.chainCtx.TxFactory().WithGasAdjustment(1.3)
+	_, gas, err := client.CalculateGas(ctx, g.chainCtx.ClientContext.WithFromAddress(msg.GetProposer()), txf, msg)
+	if err != nil {
+		return 0, err
+	}
+
+	proposerBalance := g.chainCtx.ComputeNeededBalanceFromOptions(BalancesOptions{
+		NondeterministicMessagesGas: gas,
+	})
+
+	err = chain.Faucet.FundAccounts(ctx, NewFundedAccount(msg.GetProposer(), g.chainCtx.NewCoin(proposerBalance)))
+	if err != nil {
+		return 0, err
+	}
+
+	txf = g.chainCtx.TxFactory().WithGas(gas)
 	result, err := client.BroadcastTx(
 		ctx,
 		g.chainCtx.ClientContext.WithFromAddress(msg.GetProposer()),
