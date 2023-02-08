@@ -104,7 +104,11 @@ func ValidateData(data *codectypes.Any) error {
 
 // ValidateRoyaltyRate checks the provided non-fungible token royalty rate is valid.
 func ValidateRoyaltyRate(rate sdk.Dec) error {
-	if !rate.GT(sdk.NewDec(1)) || rate.LT(sdk.NewDec(0)) {
+	if rate.IsNil() {
+		return nil
+	}
+
+	if rate.GT(sdk.NewDec(1)) || rate.LT(sdk.NewDec(0)) {
 		return sdkerrors.Wrapf(ErrInvalidInput, "royalty rate should be between 0 and 1")
 	}
 

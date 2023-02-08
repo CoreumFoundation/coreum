@@ -350,10 +350,15 @@ func TestKeeper_DisableSending(t *testing.T) {
 	// mint NFT
 	requireT.NoError(assetNFTKeeper.Mint(ctx, settings))
 
-	// try to transfer, it should fail
+	// try to send from issuer, it should succeed
 	nftID := settings.ID
 	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
+	requireT.NoError(err)
+
+	// try to transfer from non-issuer, it should fail
+	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
 	requireT.Error(err)
 	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 }
