@@ -2,6 +2,7 @@ package integrationtests
 
 import (
 	"reflect"
+	"strings"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -10,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
@@ -119,9 +121,10 @@ func (c ChainContext) GasLimitByMultiSendMsgs(msgs ...sdk.Msg) uint64 {
 
 // BalancesOptions is the input type for the ComputeNeededBalanceFromOptions.
 type BalancesOptions struct {
-	Messages []sdk.Msg
-	GasPrice sdk.Dec
-	Amount   sdk.Int
+	Messages                    []sdk.Msg
+	NondeterministicMessagesGas uint64
+	GasPrice                    sdk.Dec
+	Amount                      sdk.Int
 }
 
 // ComputeNeededBalanceFromOptions computes the required balance based on the input options.
@@ -146,12 +149,12 @@ func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) s
 		totalAmount = totalAmount.Add(amt)
 	}
 
-	return totalAmount.Add(options.Amount)
+	return totalAmount.Add(options.GasPrice.Mul(sdk.NewDec(int64(options.NondeterministicMessagesGas))).Ceil().RoundInt()).Add(options.Amount)
 }
 
 // ChainConfig defines the config arguments required for the test chain initialisation.
 type ChainConfig struct {
-	RPCAddress      string
+	GRPCAddress     string
 	NetworkConfig   config.NetworkConfig
 	FundingMnemonic string
 	StakerMnemonics []string
@@ -166,15 +169,25 @@ type Chain struct {
 
 // NewChain creates an instance of the new Chain.
 func NewChain(cfg ChainConfig) Chain {
-	rpcClient, err := cosmosclient.NewClientFromNode(cfg.RPCAddress)
-	if err != nil {
-		panic(err)
-	}
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
-		WithClient(rpcClient).
 		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
 		WithBroadcastMode(flags.BroadcastBlock)
+
+	// TODO(dhil) remove switch once crust is updated
+	if strings.HasPrefix(cfg.GRPCAddress, "tcp") {
+		rpcClient, err := cosmosclient.NewClientFromNode(cfg.GRPCAddress)
+		if err != nil {
+			panic(err)
+		}
+		clientCtx = clientCtx.WithRPCClient(rpcClient)
+	} else {
+		grpcClient, err := grpc.Dial(cfg.GRPCAddress, grpc.WithInsecure())
+		if err != nil {
+			panic(err)
+		}
+		clientCtx = clientCtx.WithGRPCClient(grpcClient)
+	}
 
 	chainCtx := NewChainContext(clientCtx, cfg.NetworkConfig)
 	governance := NewGovernance(chainCtx, cfg.StakerMnemonics)

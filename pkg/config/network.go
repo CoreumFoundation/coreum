@@ -194,7 +194,10 @@ func init() {
 			Denom:                constant.DenomDev,
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
-				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.68.221.216:26656"},
+				SeedPeers: []string{
+					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.68.221.216:26656",
+					"88d1266e086bfe33589886cc10d4c58e85a69d14@34.135.191.69:26656",
+				},
 			},
 			GovConfig:          devGovConfig,
 			StakingConfig:      stakingConfig,
@@ -215,11 +218,6 @@ func init() {
 				// Staker of validator 2
 				{
 					Address:  "devcore14x46r5eflga696sd5my900euvlplu2prhny5ae",
-					Balances: devStakerValidatorBalance,
-				},
-				// Staker of validator 3
-				{
-					Address:  "devcore1xsthw036vst75rhh4py57lt7nx59qpvzez3a8k",
 					Balances: devStakerValidatorBalance,
 				},
 				// Faucet's account storing the rest of total supply
