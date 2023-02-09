@@ -367,7 +367,6 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain inte
 	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
-	// TODO(dhil) refactor other tests to use that func for the standard propose + vote action.
 	// Create proposition to change max the unbonding time value.
 	err = chain.Governance.ProposeAndVote(ctx, proposer,
 		paramproposal.NewParameterChangeProposal(
