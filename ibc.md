@@ -72,10 +72,8 @@ Tokens received through IBC must be treated as regular bank tokens (like CORE), 
 
 ## NFT integration
 
-NFT module provided by Cosmos SDK hasn't been integrated with IBC yet.
-We could do it ourselves. The problem with this approach is that it must be implemented the same way on all the connected chains to maintain compatibility.
-
-It means that we would have to deliver universal NFT-IBC integration for the entire ecosystem. In my opinion we should wait for official version delivered by Cosmos.
+There is an ongoing work on NFT+IBC integration: https://github.com/bianjieai/ibc-go/tree/ics-721-nft-transfer
+Should be available in ibc v5.
 
 ## WASM integration
 
