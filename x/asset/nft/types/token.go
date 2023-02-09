@@ -33,6 +33,7 @@ type IssueClassSettings struct {
 	URIHash     string
 	Data        *codectypes.Any
 	Features    []ClassFeature
+	RoyaltyRate sdk.Dec
 }
 
 // MintSettings is the model which represents the params for the non-fungible token minting.
@@ -96,6 +97,19 @@ func ValidateData(data *codectypes.Any) error {
 		if data.TypeUrl != "/"+proto.MessageName((*DataBytes)(nil)) {
 			return sdkerrors.Wrapf(ErrInvalidInput, "data field must contain %s type", proto.MessageName((*DataBytes)(nil)))
 		}
+	}
+
+	return nil
+}
+
+// ValidateRoyaltyRate checks the provided non-fungible token royalty rate is valid.
+func ValidateRoyaltyRate(rate sdk.Dec) error {
+	if rate.IsNil() {
+		return nil
+	}
+
+	if rate.GT(sdk.NewDec(1)) || rate.LT(sdk.NewDec(0)) {
+		return sdkerrors.Wrapf(ErrInvalidInput, "royalty rate should be between 0 and 1")
 	}
 
 	return nil
