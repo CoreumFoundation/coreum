@@ -1,62 +1,129 @@
-use cosmwasm_std::{Coin, CosmosMsg, CustomMsg, CustomQuery, Uint128};
+use cosmwasm_std::{Coin, CosmosMsg, CustomMsg, CustomQuery, Empty, QueryRequest, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+// ********** Generic payload **********
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum CoreumMsg<T = Empty> {
+    Msg {
+        name: String,
+        payload: T,
+    }
+}
+
+impl Into<CosmosMsg<CoreumMsg>> for CoreumMsg {
+    fn into(self) -> CosmosMsg<CoreumMsg> {
+        CosmosMsg::Custom(self)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum CoreumQuery<T = Empty> {
+    Query {
+        name: String,
+        payload: T,
+    }
+}
+
+impl Into<QueryRequest<CoreumQuery>> for CoreumQuery {
+    fn into(self) -> QueryRequest<CoreumQuery> {
+        QueryRequest::Custom(self)
+    }
+}
 
 // ********** Transactions **********
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum AssetFTFeature {
-    Minting = 0,
-    Burning = 1,
-    Freezing = 2,
-    Whitelisting = 3,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum CoreumMsgs {
-    AssetFTMsgIssue {
+pub enum AssetFTMsg {
+    MsgIssue {
         symbol: String,
         subunit: String,
         precision: u32,
         initial_amount: Uint128,
         description: Option<String>,
-        features: Option<Vec<AssetFTFeature>>,
+        features: Option<Vec<u32>>,
         burn_rate: Option<String>,
         send_commission_rate: Option<String>,
     },
-    AssetFTMsgMint {
+    MsgMint {
         coin: Coin,
     },
-    AssetFTMsgBurn {
+    MsgBurn {
         coin: Coin,
     },
-    AssetFTMsgFreeze {
+    MsgFreeze {
         account: String,
         coin: Coin,
     },
-    AssetFTMsgUnfreeze {
+    MsgUnfreeze {
         account: String,
         coin: Coin,
     },
-    AssetFTMsgGloballyFreeze {
+    MsgGloballyFreeze {
         denom: String,
     },
-    AssetFTMsgGloballyUnfreeze {
+    MsgGloballyUnfreeze {
         denom: String
     },
-    AssetFTMsgSetWhitelistedLimit {
+    MsgSetWhitelistedLimit {
         account: String,
         coin: Coin,
     },
 }
 
-impl Into<CosmosMsg<CoreumMsgs>> for CoreumMsgs {
-    fn into(self) -> CosmosMsg<CoreumMsgs> {
+impl AssetFTMsg {
+    pub fn to_coreum_msg(self) -> CoreumMsg<AssetFTMsg> {
+        match self {
+            AssetFTMsg::MsgIssue { .. } => CoreumMsg::Msg {
+                name: "coreum.asset.ft.v1.MsgIssue".into(),
+                payload: self.clone(),
+            },
+            AssetFTMsg::MsgMint { .. } => CoreumMsg::Msg {
+                name: "coreum.asset.ft.v1.MsgMint".into(),
+                payload: self.clone(),
+            },
+            AssetFTMsg::MsgBurn { .. } => CoreumMsg::Msg {
+                name: "coreum.asset.ft.v1.MsgBurn".into(),
+                payload: self,
+            },
+            AssetFTMsg::MsgFreeze { .. } => CoreumMsg::Msg {
+                name: "coreum.asset.ft.v1.MsgFreeze".into(),
+                payload: self,
+            },
+            AssetFTMsg::MsgUnfreeze { .. } => CoreumMsg::Msg {
+                name: "coreum.asset.ft.v1.MsgUnfreeze".into(),
+                payload: self,
+            },
+            AssetFTMsg::MsgGloballyFreeze { .. } => CoreumMsg::Msg {
+                name: "coreum.asset.ft.v1.MsgGloballyFreeze".into(),
+                payload: self,
+            },
+            AssetFTMsg::MsgGloballyUnfreeze { .. } => CoreumMsg::Msg {
+                name: "coreum.asset.ft.v1.MsgGloballyUnfreeze".into(),
+                payload: self,
+            },
+            AssetFTMsg::MsgSetWhitelistedLimit { .. } => CoreumMsg::Msg {
+                name: "coreum.asset.ft.v1.MsgSetWhitelistedLimit".into(),
+                payload: self,
+            },
+        }
+    }
+}
+
+impl Into<CosmosMsg<AssetFTMsg>> for AssetFTMsg {
+    fn into(self) -> CosmosMsg<AssetFTMsg> {
         CosmosMsg::Custom(self)
     }
 }
 
-impl CustomMsg for CoreumMsgs {}
+impl From<CoreumMsg<AssetFTMsg>> for CosmosMsg<CoreumMsg<AssetFTMsg>> {
+    fn from(item: CoreumMsg<AssetFTMsg>) -> Self {
+        CosmosMsg::Custom(item)
+    }
+}
+
+impl CustomMsg for CoreumMsg<AssetFTMsg> {}
 
 // ********** Queries **********
 
@@ -69,7 +136,7 @@ pub struct AssetFTToken {
     pub subunit: String,
     pub precision: u32,
     pub description: Option<String>,
-    pub features: Option<Vec<AssetFTFeature>>,
+    pub features: Option<Vec<u32>>,
     pub burn_rate: String,
     pub send_commission_rate: String,
 }
@@ -93,16 +160,35 @@ pub struct AssetFTWhitelistedBalanceResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum CoreumQueries {
-    AssetFTQueryToken { denom: String },
-    AssetFTQueryFrozenBalance {
+pub enum AssetFTQuery {
+    Token { denom: String },
+    FrozenBalance {
         account: String,
         denom: String,
     },
-    AssetFTQueryWhitelistedBalance {
+    WhitelistedBalance {
         account: String,
         denom: String,
     },
 }
 
-impl CustomQuery for CoreumQueries {}
+impl AssetFTQuery {
+    pub fn to_coreum_query(self) -> CoreumQuery<AssetFTQuery> {
+        match self {
+            AssetFTQuery::Token { .. } => CoreumQuery::Query {
+                name: "coreum.asset.ft.v1.QueryTokenRequest".into(),
+                payload: self.clone(),
+            },
+            AssetFTQuery::FrozenBalance { .. } => CoreumQuery::Query {
+                name: "coreum.asset.ft.v1.QueryFrozenBalanceRequest".into(),
+                payload: self.clone(),
+            },
+            AssetFTQuery::WhitelistedBalance { .. } => CoreumQuery::Query {
+                name: "coreum.asset.ft.v1.QueryWhitelistedBalanceRequest".into(),
+                payload: self.clone(),
+            },
+        }
+    }
+}
+
+impl CustomQuery for CoreumQuery<AssetFTQuery> {}

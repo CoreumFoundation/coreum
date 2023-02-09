@@ -87,7 +87,6 @@ import (
 	assetft "github.com/CoreumFoundation/coreum/x/asset/ft"
 	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	assetftwasm "github.com/CoreumFoundation/coreum/x/asset/ft/wasm"
 	assetnft "github.com/CoreumFoundation/coreum/x/asset/nft"
 	assetnftkeeper "github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -388,8 +387,8 @@ func New(
 	}
 
 	wasmOpts := []wasm.Option{
-		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(assetftwasm.MsgHandler)),
-		wasmkeeper.WithQueryPlugins(wasmtypes.NewCustomQuerier(assetftwasm.QueryHandler(assetftkeeper.NewQueryService(app.AssetFTKeeper)))),
+		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(wasmtypes.NewMsgHandler())),
+		wasmkeeper.WithQueryPlugins(wasmtypes.NewCustomQuerier(wasmtypes.NewQueryHandler(assetftkeeper.NewQueryService(app.AssetFTKeeper)))),
 	}
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))

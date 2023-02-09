@@ -1,5 +1,4 @@
-use crate::sdk;
-use crate::sdk::{AssetFTFeature, AssetFTFrozenBalanceResponse, AssetFTTokenResponse, AssetFTWhitelistedBalanceResponse};
+use crate::sdk::{AssetFTMsg, AssetFTQuery, AssetFTFrozenBalanceResponse, AssetFTTokenResponse, AssetFTWhitelistedBalanceResponse, CoreumMsg, CoreumQuery};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, QueryRequest, StdResult, SubMsg,
 };
@@ -22,7 +21,7 @@ pub struct InstantiateMsg {
     pub precision: u32,
     pub initial_amount: Uint128,
     pub description: Option<String>,
-    pub features: Option<Vec<AssetFTFeature>>,
+    pub features: Option<Vec<u32>>,
     pub burn_rate: Option<String>,
     pub send_commission_rate: Option<String>,
 }
@@ -81,7 +80,7 @@ pub fn execute(
     _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     match msg {
         ExecuteMsg::Mint { amount } => mint(deps, info, amount),
         ExecuteMsg::Burn { amount } => burn(deps, info, amount),
@@ -106,7 +105,7 @@ pub enum QueryMsg {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps<sdk::CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps<CoreumQuery<AssetFTQuery>>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Token {} => to_binary(&token(deps)?),
         QueryMsg::FrozenBalance { account } => to_binary(&frozen_balance(deps, account)?),
@@ -122,9 +121,10 @@ pub fn instantiate(
     env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    let issue_asset_msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgIssue {
+
+    let issue_asset_msg = SubMsg::new(AssetFTMsg::MsgIssue {
         symbol: msg.symbol,
         subunit: msg.subunit.clone(),
         precision: msg.precision,
@@ -133,7 +133,7 @@ pub fn instantiate(
         features: msg.features,
         burn_rate: msg.burn_rate,
         send_commission_rate: msg.send_commission_rate,
-    });
+    }.to_coreum_msg());
 
     let denom = format!("{}-{}", msg.subunit, env.contract.address).to_lowercase();
 
@@ -156,15 +156,15 @@ fn mint(
     deps: DepsMut,
     info: MessageInfo,
     amount: u128,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgMint {
+    let msg = SubMsg::new(AssetFTMsg::MsgMint {
         coin: Coin::new(amount.clone(), state.denom.clone()),
-    });
+    }.to_coreum_msg());
 
     Ok(Response::new()
         .add_attribute("method", "mint")
@@ -177,15 +177,15 @@ fn burn(
     deps: DepsMut,
     info: MessageInfo,
     amount: u128,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgBurn {
+    let msg = SubMsg::new(AssetFTMsg::MsgBurn {
         coin: Coin::new(amount.clone(), state.denom.clone()),
-    });
+    }.to_coreum_msg());
 
     Ok(Response::new()
         .add_attribute("method", "burn")
@@ -199,16 +199,16 @@ fn freeze(
     info: MessageInfo,
     account: String,
     amount: u128,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgFreeze {
+    let msg = SubMsg::new(AssetFTMsg::MsgFreeze {
         account,
         coin: Coin::new(amount.clone(), state.denom.clone()),
-    });
+    }.to_coreum_msg());
 
     Ok(Response::new()
         .add_attribute("method", "freeze")
@@ -222,16 +222,16 @@ fn unfreeze(
     info: MessageInfo,
     account: String,
     amount: u128,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgUnfreeze {
+    let msg = SubMsg::new(AssetFTMsg::MsgUnfreeze {
         account,
         coin: Coin::new(amount.clone(), state.denom.clone()),
-    });
+    }.to_coreum_msg());
 
     Ok(Response::new()
         .add_attribute("method", "unfreeze")
@@ -243,15 +243,15 @@ fn unfreeze(
 fn globally_freeze(
     deps: DepsMut,
     info: MessageInfo,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgGloballyFreeze {
+    let msg = SubMsg::new(AssetFTMsg::MsgGloballyFreeze {
         denom: state.denom.clone(),
-    });
+    }.to_coreum_msg());
 
     Ok(Response::new()
         .add_attribute("method", "globally_freeze")
@@ -262,15 +262,15 @@ fn globally_freeze(
 fn globally_unfreeze(
     deps: DepsMut,
     info: MessageInfo,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgGloballyUnfreeze {
+    let msg = SubMsg::new(AssetFTMsg::MsgGloballyUnfreeze {
         denom: state.denom.clone(),
-    });
+    }.to_coreum_msg());
 
     Ok(Response::new()
         .add_attribute("method", "globally_unfreeze")
@@ -283,16 +283,16 @@ fn set_whitelisted_limit(
     info: MessageInfo,
     account: String,
     amount: u128,
-) -> Result<Response<sdk::CoreumMsgs>, ContractError> {
+) -> Result<Response<CoreumMsg<AssetFTMsg>>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = SubMsg::new(sdk::CoreumMsgs::AssetFTMsgSetWhitelistedLimit {
+    let msg = SubMsg::new(AssetFTMsg::MsgSetWhitelistedLimit {
         account,
         coin: Coin::new(amount.clone(), state.denom.clone()),
-    });
+    }.to_coreum_msg());
 
     Ok(Response::new()
         .add_attribute("method", "set_whitelisted_limit")
@@ -303,32 +303,32 @@ fn set_whitelisted_limit(
 
 // ********** Queries **********
 
-fn token(deps: Deps<sdk::CoreumQueries>) -> StdResult<AssetFTTokenResponse> {
+fn token(deps: Deps<CoreumQuery<AssetFTQuery>>) -> StdResult<AssetFTTokenResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<sdk::CoreumQueries> =
-        sdk::CoreumQueries::AssetFTQueryToken { denom: state.denom }.into();
+    let request: QueryRequest<CoreumQuery<AssetFTQuery>> =
+        AssetFTQuery::Token { denom: state.denom }.to_coreum_query().into();
     let res: AssetFTTokenResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
-fn frozen_balance(deps: Deps<sdk::CoreumQueries>, account: String) -> StdResult<AssetFTFrozenBalanceResponse> {
+fn frozen_balance(deps: Deps<CoreumQuery<AssetFTQuery>>, account: String) -> StdResult<AssetFTFrozenBalanceResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<sdk::CoreumQueries> =
-        sdk::CoreumQueries::AssetFTQueryFrozenBalance {
+    let request: QueryRequest<CoreumQuery<AssetFTQuery>> =
+        AssetFTQuery::FrozenBalance {
             denom: state.denom,
             account,
-        }.into();
+        }.to_coreum_query().into();
     let res: AssetFTFrozenBalanceResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
-fn whitelisted_balance(deps: Deps<sdk::CoreumQueries>, account: String) -> StdResult<AssetFTWhitelistedBalanceResponse> {
+fn whitelisted_balance(deps: Deps<CoreumQuery<AssetFTQuery>>, account: String) -> StdResult<AssetFTWhitelistedBalanceResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<sdk::CoreumQueries> =
-        sdk::CoreumQueries::AssetFTQueryWhitelistedBalance {
+    let request: QueryRequest<CoreumQuery<AssetFTQuery>> =
+        AssetFTQuery::WhitelistedBalance {
             denom: state.denom,
             account,
-        }.into();
+        }.to_coreum_query().into();
     let res: AssetFTWhitelistedBalanceResponse = deps.querier.query(&request)?;
     Ok(res)
 }

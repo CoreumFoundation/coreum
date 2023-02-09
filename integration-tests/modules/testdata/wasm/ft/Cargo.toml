@@ -5,7 +5,7 @@ authors = ["Coreum"]
 edition = "2018"
 
 exclude = [
-  "issue_fungible_token.wasm",
+  "ft.wasm",
   "checksums.txt",
 ]
 
