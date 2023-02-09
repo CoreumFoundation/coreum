@@ -111,7 +111,9 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		Data:        data,
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_disable_sending,
 		},
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}
 	res, err := client.BroadcastTx(
 		ctx,
@@ -136,7 +138,9 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		URIHash:     issueMsg.URIHash,
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_disable_sending,
 		},
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}, issuedEvent)
 
 	// query nft asset with features
@@ -156,7 +160,9 @@ func TestAssetNFTIssueClass(t *testing.T) {
 		Data:        dataToCompare,
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_disable_sending,
 		},
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}, assetNftClassRes.Class)
 
 	var data2 assetnfttypes.DataBytes

@@ -35,6 +35,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 			Features: []types.ClassFeature{
 				types.ClassFeature_burning,
 			},
+			RoyaltyRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", (i+1)%10)),
 		}
 		classDefinitions = append(classDefinitions, classDefinition)
 	}
