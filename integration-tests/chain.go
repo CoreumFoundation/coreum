@@ -121,9 +121,10 @@ func (c ChainContext) GasLimitByMultiSendMsgs(msgs ...sdk.Msg) uint64 {
 
 // BalancesOptions is the input type for the ComputeNeededBalanceFromOptions.
 type BalancesOptions struct {
-	Messages []sdk.Msg
-	GasPrice sdk.Dec
-	Amount   sdk.Int
+	Messages                    []sdk.Msg
+	NondeterministicMessagesGas uint64
+	GasPrice                    sdk.Dec
+	Amount                      sdk.Int
 }
 
 // ComputeNeededBalanceFromOptions computes the required balance based on the input options.
@@ -148,7 +149,7 @@ func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) s
 		totalAmount = totalAmount.Add(amt)
 	}
 
-	return totalAmount.Add(options.Amount)
+	return totalAmount.Add(options.GasPrice.Mul(sdk.NewDec(int64(options.NondeterministicMessagesGas))).Ceil().RoundInt()).Add(options.Amount)
 }
 
 // ChainConfig defines the config arguments required for the test chain initialisation.

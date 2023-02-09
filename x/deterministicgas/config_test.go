@@ -95,6 +95,9 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	// WASM messages will be added here
 	undetermMsgTypes := []string{
+		// gov
+		"/cosmos.gov.v1beta1.MsgSubmitProposal",
+
 		// crisis
 		"/cosmos.crisis.v1beta1.MsgVerifyInvariant",
 
@@ -146,8 +149,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 9, len(undetermMsgs))
-	assert.Equal(t, 40, len(determMsgs))
+	assert.Equal(t, 10, len(undetermMsgs))
+	assert.Equal(t, 39, len(determMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg

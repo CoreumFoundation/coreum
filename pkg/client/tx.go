@@ -100,6 +100,11 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 // CalculateGas simulates the execution of a transaction and returns the
 // simulation response obtained by the query and the adjusted gas amount.
 func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
+	txf, err := prepareFactory(ctx, clientCtx, txf)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	txBytes, err := tx.BuildSimTx(txf, msgs...)
 	if err != nil {
 		return nil, 0, err
