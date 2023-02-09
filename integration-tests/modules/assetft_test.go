@@ -1811,11 +1811,19 @@ func TestBareToken(t *testing.T) {
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgMint{},
+				&assetfttypes.MsgBurn{},
+				&banktypes.MsgSend{},
 				&assetfttypes.MsgFreeze{},
 				&assetfttypes.MsgGloballyFreeze{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
 			},
 			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgBurn{},
+			},
 		}))
 
 	// Issue a bare token
@@ -1850,6 +1858,45 @@ func TestBareToken(t *testing.T) {
 		mintMsg,
 	)
 	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
+
+	// try to burn from issuer account (must succeed)
+	burnMsg := &assetfttypes.MsgBurn{
+		Sender: issuer.String(),
+		Coin:   sdk.NewCoin(denom, sdk.NewInt(10)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	assertT.NoError(err)
+
+	// try to burn from non-issuer account (must fail)
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	assertT.NoError(err)
+
+	burnMsg = &assetfttypes.MsgBurn{
+		Sender: recipient.String(),
+		Coin:   sdk.NewCoin(denom, sdk.NewInt(10)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 
 	// try to whitelist
 	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
