@@ -33,6 +33,6 @@ const (
 )
 
 const (
-	// AddressSampleTest is valida testnet address used for samples.
+	// AddressSampleTest is valid testnet address used for samples.
 	AddressSampleTest = "testcore1adst6w4e79tddzhcgaru2l2gms8jjep6a4caa7"
 )

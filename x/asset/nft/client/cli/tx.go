@@ -284,9 +284,9 @@ func CmdTxWhitelist() *cobra.Command {
 			fmt.Sprintf(`Whitelist an account for a non-fungible token.
 
 Example:
-$ %s tx %s whitelist abc-%s id1 %s --from [sender]
+$ %s tx %s whitelist abc-%[3]s id1 %[3]s --from [sender]
 `,
-				version.AppName, types.ModuleName, constant.AddressSampleTest, constant.AddressSampleTest,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -326,9 +326,9 @@ func CmdTxUnwhitelist() *cobra.Command {
 			fmt.Sprintf(`Unwhitelist an account for a non-fungible token.
 
 Example:
-$ %s tx %s unwhitelist abc-%s id1 %s --from [sender]
+$ %s tx %s unwhitelist abc-%[3]s id1 %[3]s --from [sender]
 `,
-				version.AppName, types.ModuleName, constant.AddressSampleTest, constant.AddressSampleTest,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
