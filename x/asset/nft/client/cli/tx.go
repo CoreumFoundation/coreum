@@ -287,7 +287,7 @@ $ %s tx %s unfreeze abc-%s id1 --from [sender]
 }
 
 // CmdTxWhitelist returns Whitelist cobra command.
-func CmdTxWhitelist() *cobra.Command {
+func CmdTxWhitelist() *cobra.Command { //nolint:dupl // all CLI commands are similar.
 	cmd := &cobra.Command{
 		Use:   "whitelist [class-id] [id] [account] --from [sender]",
 		Args:  cobra.ExactArgs(3),
@@ -329,7 +329,7 @@ $ %s tx %s whitelist abc-%[3]s id1 %[3]s --from [sender]
 }
 
 // CmdTxUnwhitelist returns Unwhitelist cobra command.
-func CmdTxUnwhitelist() *cobra.Command {
+func CmdTxUnwhitelist() *cobra.Command { //nolint:dupl // all CLI commands are similar.
 	cmd := &cobra.Command{
 		Use:   "unwhitelist [class-id] [id] [account] --from [sender]",
 		Args:  cobra.ExactArgs(3),
