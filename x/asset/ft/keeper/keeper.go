@@ -437,6 +437,8 @@ func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description str
 		Name:        symbol,
 		Symbol:      symbol,
 		Description: description,
+
+		// This is a cosmos sdk requirement that the first denomination unit MUST be the base
 		DenomUnits: []*banktypes.DenomUnit{
 			{
 				Denom:    denom,
