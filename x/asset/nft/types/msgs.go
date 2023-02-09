@@ -48,6 +48,10 @@ func (msg *MsgIssueClass) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI %q, the length must be less than or equal %d", len(msg.URI), MaxURILength)
 	}
 
+	if err := ValidateRoyaltyRate(msg.RoyaltyRate); err != nil {
+		return err
+	}
+
 	if len(msg.URIHash) > MaxURIHashLength {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), MaxURIHashLength)
 	}
@@ -165,6 +169,62 @@ func (msg *MsgUnfreeze) ValidateBasic() error {
 
 // GetSigners returns the required signers of this message type.
 func (msg *MsgUnfreeze) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Sender),
+	}
+}
+
+// ValidateBasic checks that message fields are valid.
+func (msg *MsgAddToWhitelist) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid account %s", msg.Sender)
+	}
+
+	if err := ValidateTokenID(msg.ID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	return nil
+}
+
+// GetSigners returns the required signers of this message type.
+func (msg *MsgAddToWhitelist) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Sender),
+	}
+}
+
+// ValidateBasic checks that message fields are valid.
+func (msg *MsgRemoveFromWhitelist) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+	}
+
+	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid account %s", msg.Sender)
+	}
+
+	if err := ValidateTokenID(msg.ID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
+	}
+
+	return nil
+}
+
+// GetSigners returns the required signers of this message type.
+func (msg *MsgRemoveFromWhitelist) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}

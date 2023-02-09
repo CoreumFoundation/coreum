@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
@@ -32,7 +33,9 @@ func TestQueryClass(t *testing.T) {
 		requireT, ctx,
 		symbol, name, description, URI, URIHash,
 		testNetwork,
+		"0.1",
 		types.ClassFeature_burning,
+		types.ClassFeature_disable_sending,
 	)
 
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
@@ -51,7 +54,9 @@ func TestQueryClass(t *testing.T) {
 		URIHash:     URIHash,
 		Features: []types.ClassFeature{
 			types.ClassFeature_burning,
+			types.ClassFeature_disable_sending,
 		},
+		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
 	}, resp.Class)
 }
 
@@ -60,6 +65,7 @@ func issueClass(
 	ctx client.Context,
 	symbol, name, description, url, urlHash string,
 	testNetwork *network.Network,
+	royaltyRate string,
 	features ...types.ClassFeature,
 ) string {
 	featuresStringList := lo.Map(features, func(s types.ClassFeature, _ int) string {
@@ -69,6 +75,9 @@ func issueClass(
 	validator := testNetwork.Validators[0]
 	args := []string{symbol, name, description, url, urlHash, fmt.Sprintf("--features=%s", featuresString)}
 	args = append(args, txValidator1Args(testNetwork)...)
+	if royaltyRate != "" {
+		args = append(args, "--royalty-rate", royaltyRate)
+	}
 	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 

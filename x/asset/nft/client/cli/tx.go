@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -15,7 +16,8 @@ import (
 )
 
 const (
-	featuresFlag = "features"
+	featuresFlag    = "features"
+	royaltyRateFlag = "royalty-rate"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -34,6 +36,8 @@ func GetTxCmd() *cobra.Command {
 		CmdTxBurn(),
 		CmdTxFreeze(),
 		CmdTxUnfreeze(),
+		CmdTxWhitelist(),
+		CmdTxUnwhitelist(),
 	)
 
 	return cmd
@@ -72,6 +76,14 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 			description := args[2]
 			uri := args[3]
 			uriHash := args[4]
+			royaltyStr, err := cmd.Flags().GetString(royaltyRateFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			royaltyRate, err := sdk.NewDecFromStr(royaltyStr)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 
 			featuresString, err := cmd.Flags().GetStringSlice(featuresFlag)
 			if err != nil {
@@ -95,6 +107,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 				URI:         uri,
 				URIHash:     uriHash,
 				Features:    features,
+				RoyaltyRate: royaltyRate,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -102,6 +115,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 	}
 
 	cmd.Flags().StringSlice(featuresFlag, []string{}, fmt.Sprintf("Features to be enabled on non-fungible token. e.g --%s=%s", featuresFlag, allowedFeaturesString))
+	cmd.Flags().String(royaltyRateFlag, "0", "royalty-rate is a number between 0 and 1, and will be used to determine royalties sent to issuer, when an nft in this class is traded.")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
@@ -260,6 +274,90 @@ $ %s tx %s unfreeze abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 --fro
 				Sender:  sender.String(),
 				ClassID: classID,
 				ID:      ID,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxWhitelist returns Whitelist cobra command.
+func CmdTxWhitelist() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "whitelist [class-id] [id] [account] --from [sender]",
+		Args:  cobra.ExactArgs(3),
+		Short: "Whitelist an account for a non-fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Whitelist an account for a non-fungible token.
+
+Example:
+$ %s tx %s whitelist abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 devcore15nc50svxu8xakdvks2hzd586xs9xmyqu9ws5ta --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			classID := args[0]
+			ID := args[1]
+			account := args[2]
+
+			msg := &types.MsgAddToWhitelist{
+				Sender:  sender.String(),
+				ClassID: classID,
+				ID:      ID,
+				Account: account,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxUnwhitelist returns Unwhitelist cobra command.
+func CmdTxUnwhitelist() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unwhitelist [class-id] [id] [account] --from [sender]",
+		Args:  cobra.ExactArgs(3),
+		Short: "Unwhitelist an account for a non-fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Unwhitelist an account for a non-fungible token.
+
+Example:
+$ %s tx %s unwhitelist abc-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 id1 devcore15nc50svxu8xakdvks2hzd586xs9xmyqu9ws5ta --from [sender]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			classID := args[0]
+			ID := args[1]
+			account := args[2]
+
+			msg := &types.MsgRemoveFromWhitelist{
+				Sender:  sender.String(),
+				ClassID: classID,
+				ID:      ID,
+				Account: account,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

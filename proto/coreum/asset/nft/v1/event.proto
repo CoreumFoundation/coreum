@@ -17,6 +17,10 @@ message EventClassIssued {
   string uri = 6 [(gogoproto.customname) = "URI"];
   string uri_hash = 7 [(gogoproto.customname) = "URIHash"];
   repeated ClassFeature features = 8;
+  string royalty_rate = 9 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
 }
 
 message EventFrozen {
@@ -29,4 +33,16 @@ message EventUnfrozen {
   string class_id = 1;
   string id       = 2;
   string owner    = 3;
+}
+
+message EventAddedToWhitelist {
+  string class_id = 1;
+  string id       = 2;
+  string account   = 3;
+}
+
+message EventRemovedFromWhitelist {
+  string class_id = 1;
+  string id       = 2;
+  string account   = 3;
 }

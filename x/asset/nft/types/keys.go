@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CoreumFoundation/coreum/pkg/store"
@@ -26,6 +27,8 @@ var (
 	NFTClassKeyPrefix = []byte{0x01}
 	// NFTFreezingKeyPrefix defines the key prefix to track frozen NFTs.
 	NFTFreezingKeyPrefix = []byte{0x02}
+	// NFTWhitelistingKeyPrefix defines the key prefix to track whitelisted account.
+	NFTWhitelistingKeyPrefix = []byte{0x03}
 )
 
 // CreateClassKey constructs the key for the non-fungible token class.
@@ -54,4 +57,27 @@ func ParseFreezingKey(key []byte) (string, string, error) {
 		return "", "", err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), nil
+}
+
+// CreateWhitelistingKey constructs the key for the whitelisting of non-fungible token.
+func CreateWhitelistingKey(classID, nftID string, account sdk.AccAddress) ([]byte, error) {
+	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID), account)
+	if err != nil {
+		return nil, err
+	}
+
+	return store.JoinKeys(NFTWhitelistingKeyPrefix, compositeKey), nil
+}
+
+// ParseWhitelistingKey parses freezing key back to class id and nft id.
+func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
+	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
+	if err != nil {
+		return "", "", nil, err
+	}
+	if len(parsedKeys) != 3 {
+		err = sdkerrors.Wrapf(ErrInvalidKey, "whitelisting key must be composed of 3 length prefixed keys")
+		return "", "", nil, err
+	}
+	return string(parsedKeys[0]), string(parsedKeys[1]), parsedKeys[2], nil
 }
