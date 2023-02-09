@@ -368,10 +368,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origMintFee := chain.NetworkConfig.AssetNFTConfig.MintFee
 
-	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
-	requireT.NoError(err)
-
-	requireT.NoError(chain.Governance.UpdateParams(ctx, deposit, "Propose changing MintFee in the assetnft module",
+	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing MintFee in the assetnft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.OneInt()))))),
 		}))
@@ -391,7 +388,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 	}
-	_, err = client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
@@ -433,7 +430,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
 
 	// Revert to original mint fee
-	requireT.NoError(chain.Governance.UpdateParams(ctx, deposit, "Propose changing MintFee in the assetnft module",
+	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing MintFee in the assetnft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, origMintFee))))),
 		}))

@@ -52,6 +52,12 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	// For the test we need to create the proposal twice.
+	proposerBalance = proposerBalance.Add(proposerBalance)
+	requireT.NoError(err)
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
+	requireT.NoError(err)
 
 	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
@@ -67,12 +73,8 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-
-	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
-	requireT.NoError(err)
-
-	_, err = chain.Governance.Propose(ctx, deposit, proposalMsg)
-	requireT.Error(err)
+	_, err = chain.Governance.Propose(ctx, proposalMsg)
+	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
 
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
@@ -88,7 +90,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, deposit, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
 

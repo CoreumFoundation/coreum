@@ -303,8 +303,13 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	requireT := require.New(t)
 
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+	proposerBalance.Amount = proposerBalance.Amount.MulRaw(2)
+
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(proposer, proposerBalance),
 	))
 
 	// instantiateWASMContract the contract and set the initial counter state.
@@ -353,11 +358,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		CodeIDs:     []uint64{codeID},
 	})
 	requireT.NoError(err)
-
-	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
-	requireT.NoError(err)
-
-	proposalID, err := chain.Governance.Propose(ctx, deposit, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
@@ -383,7 +384,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		CodeIDs:     []uint64{codeID},
 	})
 	requireT.NoError(err)
-	proposalID, err = chain.Governance.Propose(ctx, deposit, proposalMsg)
+	proposalID, err = chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 
 	proposal, err = chain.Governance.GetProposal(ctx, proposalID)

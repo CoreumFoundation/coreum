@@ -69,7 +69,13 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 
 	// create new proposer
 	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+
 	communityPoolRecipient := chain.GenAccount()
+
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
+	requireT.NoError(err)
 
 	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
@@ -80,11 +86,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 		sdk.NewCoins(poolCoin),
 	))
 	requireT.NoError(err)
-
-	deposit, err := chain.Governance.GetRequiredDeposit(ctx)
-	requireT.NoError(err)
-
-	proposalID, err := chain.Governance.Propose(ctx, deposit, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
 
 	requireT.NoError(err)
