@@ -13,16 +13,19 @@
 ## Relayer
 - it is possible to use single relayer for all the channels
 - we should run at least two relayers
-- we should run two full nodes for each blockchain we want to connect to
+- we should run two full nodes for each blockchain we want to connect to. We may use external service delivering them (check https://www.zeeve.io/)
 - we must monitor the funds of relayer on all the chains (grafana metric)
 - if we want other entities to manage relayers we need to incentivize them to do it
 - how relayer syncs two chains? how often? what transactions are used? how much gas they take?
 - inspect IBC transactions on other chains to check how much gas they take
 - check if it's possible to run many relayers serving the same channel
+- check how relayer behaves when client, connection, channel or port is closed due to inactivity or any other reason. How can they be restored?
  
 ### Hermes vs Cosmos relayer
 - Cosmos relayer is written in go, Hermes is written in rust
 - Cosmos relayer supports many chains in single instance, need to check Hermes
+- Hermes has a feature preventing channel from being automatically closed due to inactivity - check this
+- We need to test both Hermes and Cosmos, integrate them into znet, test and compare their features and limitations
 
 ## FT integration
 
@@ -85,3 +88,8 @@ In theory IBC might be used to transfer any messages between two compatible chai
 ## Benchmarking
 - write a benchmark integration test to check how IBC transfers behave under load
 - check how much resources (disk space, memory, cpu?) each integrated chain takes on our side
+
+## Other modules
+
+Inspect modules in https://github.com/tendermint/spn/tree/main/x.
+Some of them are IBC-elated and installed by ignite.
