@@ -18,6 +18,8 @@ import (
 	"github.com/CoreumFoundation/coreum/testutil/event"
 )
 
+const submitProposalGas = 200_000
+
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {
 	chainCtx       ChainContext
@@ -53,8 +55,8 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 
 	minDeposit := govParams.DepositParams.MinDeposit[0]
 	proposerInitialBalance := g.chainCtx.ComputeNeededBalanceFromOptions(BalancesOptions{
-		Messages: []sdk.Msg{&govtypes.MsgSubmitProposal{}},
-		Amount:   minDeposit.Amount,
+		NondeterministicMessagesGas: submitProposalGas, // to cover MsgSubmitProposal
+		Amount:                      minDeposit.Amount,
 	})
 
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
@@ -125,8 +127,7 @@ func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress,
 
 // Propose creates a new proposal.
 func (g Governance) Propose(ctx context.Context, msg *govtypes.MsgSubmitProposal) (uint64, error) {
-	txf := g.chainCtx.TxFactory().
-		WithGas(g.chainCtx.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}))
+	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
 	result, err := client.BroadcastTx(
 		ctx,
 		g.chainCtx.ClientContext.WithFromAddress(msg.GetProposer()),

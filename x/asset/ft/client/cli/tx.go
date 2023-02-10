@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
@@ -159,7 +160,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 }
 
 // CmdTxMint returns Mint cobra command.
-func CmdTxMint() *cobra.Command {
+func CmdTxMint() *cobra.Command { //nolint:dupl // all CLI commands are similar.
 	cmd := &cobra.Command{
 		Use:   "mint [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
@@ -168,9 +169,9 @@ func CmdTxMint() *cobra.Command {
 			fmt.Sprintf(`Mint new amount of fungible token.
 
 Example:
-$ %s tx %s mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s mint 100000ABC-%s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -200,7 +201,7 @@ $ %s tx %s mint 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from 
 }
 
 // CmdTxBurn returns Burn cobra command.
-func CmdTxBurn() *cobra.Command {
+func CmdTxBurn() *cobra.Command { //nolint:dupl // all CLI commands are similar.
 	cmd := &cobra.Command{
 		Use:   "burn [amount] --from [sender]",
 		Args:  cobra.ExactArgs(1),
@@ -209,9 +210,9 @@ func CmdTxBurn() *cobra.Command {
 			fmt.Sprintf(`Burn some amount of fungible token.
 
 Example:
-$ %s tx %s burn 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s burn 100000ABC-%s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -252,9 +253,9 @@ func CmdTxFreeze() *cobra.Command {
 			fmt.Sprintf(`Freeze a portion of fungible token.
 
 Example:
-$ %s tx %s freeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s freeze [account_address] 100000ABC-%s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -296,9 +297,9 @@ func CmdTxUnfreeze() *cobra.Command {
 			fmt.Sprintf(`Unfreezes a portion of the frozen fungible token.
 
 Example:
-$ %s tx %s unfreeze [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s unfreeze [account_address] 100000ABC-%s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -341,9 +342,9 @@ func CmdTxSetWhitelistedLimit() *cobra.Command {
 			fmt.Sprintf(`Set whitelisted limit on an account.
 
 Example:
-$ %s tx %s set-whitelisted-limit [account_address] 100000ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8-tEQ4 --from [sender]
+$ %s tx %s set-whitelisted-limit [account_address] 100000ABC-%s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -384,9 +385,9 @@ func CmdTxGloballyFreeze() *cobra.Command {
 This operation is idempotent so global freeze of already frozen token does nothing.
 
 Example:
-$ %s tx %s globally-freeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s globally-freeze ABC-%s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -422,9 +423,9 @@ func CmdTxGloballyUnfreeze() *cobra.Command {
 This operation is idempotent so global unfreezing of non-frozen token does nothing.
 
 Example:
-$ %s tx %s globally-unfreeze ABC-devcore1tr3w86yesnj8f290l6ve02cqhae8x4ze0nk0a8 --from [sender]
+$ %s tx %s globally-unfreeze ABC-%s --from [sender]
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {

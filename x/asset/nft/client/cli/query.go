@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
@@ -116,9 +117,9 @@ func CmdQueryWhitelisted() *cobra.Command {
 			fmt.Sprintf(`Query if account is whitelisted for non-fungible token.
 
 Example:
-$ %s query %s whitelisted [class-id] [id] devcore15nc50svxu8xakdvks2hzd586xs9xmyqu9ws5ta
+$ %s query %s whitelisted [class-id] [id] %s
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
