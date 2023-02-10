@@ -26,7 +26,8 @@ var (
 
 const (
 	denomSeparator = "-"
-	maxPrecision   = 20
+	// MaxPrecision used when issuing a token.
+	MaxPrecision = 20
 )
 
 func init() {
@@ -95,8 +96,8 @@ func ValidateSubunit(subunit string) error {
 
 // ValidatePrecision checks the provided precision is valid.
 func ValidatePrecision(precision uint32) error {
-	if precision == 0 || precision > maxPrecision {
-		return sdkerrors.Wrapf(ErrInvalidInput, "precision must be between 1 and %d", maxPrecision)
+	if precision == 0 || precision > MaxPrecision {
+		return sdkerrors.Wrapf(ErrInvalidInput, "precision must be between 1 and %d", MaxPrecision)
 	}
 	return nil
 }
