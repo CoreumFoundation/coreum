@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
@@ -16,6 +17,8 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 )
+
+const submitProposalGas = 200_000
 
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {
@@ -52,8 +55,8 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 
 	minDeposit := govParams.DepositParams.MinDeposit[0]
 	proposerInitialBalance := g.chainCtx.ComputeNeededBalanceFromOptions(BalancesOptions{
-		Messages: []sdk.Msg{&govtypes.MsgSubmitProposal{}},
-		Amount:   minDeposit.Amount,
+		NondeterministicMessagesGas: submitProposalGas, // to cover MsgSubmitProposal
+		Amount:                      minDeposit.Amount,
 	})
 
 	return g.chainCtx.NewCoin(proposerInitialBalance), nil
@@ -124,8 +127,7 @@ func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress,
 
 // Propose creates a new proposal.
 func (g Governance) Propose(ctx context.Context, msg *govtypes.MsgSubmitProposal) (uint64, error) {
-	txf := g.chainCtx.TxFactory().
-		WithGas(g.chainCtx.GasLimitByMsgs(&govtypes.MsgSubmitProposal{}))
+	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
 	result, err := client.BroadcastTx(
 		ctx,
 		g.chainCtx.ClientContext.WithFromAddress(msg.GetProposer()),
@@ -227,12 +229,13 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 		return proposal.Status, err
 	}
 
-	block, err := g.chainCtx.ClientContext.Client().Block(ctx, nil)
+	tmQueryClient := tmservice.NewServiceClient(g.chainCtx.ClientContext)
+	blockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	if err != nil {
 		return proposal.Status, errors.WithStack(err)
 	}
-	if block.Block.Time.Before(proposal.VotingEndTime) {
-		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(block.Block.Time))
+	if blockRes.Block.Header.Time.Before(proposal.VotingEndTime) {
+		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(blockRes.Block.Header.Time))
 		defer waitCancel()
 
 		<-waitCtx.Done()
