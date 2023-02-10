@@ -40,6 +40,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		Issuer:        issuer.String(),
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
+		Precision:     1,
 		Description:   "TOK1 Description",
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
 		Features: []assetfttypes.Feature{
@@ -125,6 +126,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 		Issuer:        issuer.String(),
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
+		Precision:     1,
 		Description:   "TOK1 Description",
 		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
 		Features: []assetfttypes.Feature{
@@ -271,6 +273,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 			Issuer:        sender.String(),
 			Symbol:        fmt.Sprintf("TOK%d", i),
 			Subunit:       fmt.Sprintf("tok%d", i),
+			Precision:     1,
 			Description:   fmt.Sprintf("TOK%d Description", i),
 			InitialAmount: amountToSend,
 		})
@@ -410,6 +413,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 			Symbol:        fmt.Sprintf("TOK%d", i),
 			Subunit:       fmt.Sprintf("tok%d", i),
 			Description:   fmt.Sprintf("TOK%d Description", i),
+			Precision:     1,
 			InitialAmount: amountToSend,
 		})
 	}
@@ -495,6 +499,7 @@ func TestBankMultiSend(t *testing.T) {
 			Issuer:        sender.String(),
 			Symbol:        "TOK1",
 			Subunit:       "tok1",
+			Precision:     1,
 			Description:   "TOK1 Description",
 			InitialAmount: amount,
 		},
@@ -502,6 +507,7 @@ func TestBankMultiSend(t *testing.T) {
 			Issuer:        sender.String(),
 			Symbol:        "TOK2",
 			Subunit:       "tok2",
+			Precision:     1,
 			Description:   "TOK2 Description",
 			InitialAmount: amount,
 		},
@@ -616,6 +622,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 		Issuer:        sender1.String(),
 		Symbol:        "TOK1",
 		Subunit:       "tok1",
+		Precision:     1,
 		Description:   "TOK1 Description",
 		InitialAmount: assetAmount,
 	}
@@ -623,6 +630,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 		Issuer:        sender2.String(),
 		Symbol:        "TOK2",
 		Subunit:       "tok2",
+		Precision:     1,
 		Description:   "TOK2 Description",
 		InitialAmount: assetAmount,
 	}

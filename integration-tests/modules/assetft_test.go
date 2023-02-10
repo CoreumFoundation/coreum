@@ -1141,6 +1141,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 		Symbol:        "ABCNotFreezable",
 		Subunit:       "uabcnotfreezable",
 		Description:   "ABC Description",
+		Precision:     1,
 		InitialAmount: sdk.NewInt(1000),
 		Features:      []assetfttypes.Feature{},
 	}
@@ -1194,6 +1195,7 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
 		Subunit:       "uabc",
+		Precision:     1,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assetfttypes.Feature{
@@ -1709,6 +1711,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotWhitelistable",
 		Subunit:       "uabcnotwhitelistable",
+		Precision:     1,
 		Description:   "ABC Description",
 		InitialAmount: amount,
 		Features:      []assetfttypes.Feature{},

@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -90,12 +89,12 @@ func TestKeeper_Issue(t *testing.T) {
 		Description: settings.Description,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    settings.Symbol,
-				Exponent: settings.Precision,
-			},
-			{
 				Denom:    denom,
 				Exponent: 0,
+			},
+			{
+				Denom:    settings.Symbol,
+				Exponent: settings.Precision,
 			},
 		},
 		Base:    denom,
@@ -110,14 +109,49 @@ func TestKeeper_Issue(t *testing.T) {
 	st := settings
 	st.Symbol = "test-symbol"
 	_, err = ftKeeper.Issue(ctx, st)
-	requireT.True(errors.Is(types.ErrInvalidInput, err))
+	requireT.ErrorIs(err, types.ErrInvalidInput)
 
 	// check duplicate symbol
+	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(ftParams.IssueFee)))
 	st = settings
-	st.Subunit = "test-subunit"
+	st.Subunit = "subunit"
 	st.Symbol = "aBc"
 	_, err = ftKeeper.Issue(ctx, st)
-	requireT.True(errors.Is(types.ErrInvalidInput, err))
+	requireT.ErrorIs(err, types.ErrInvalidInput)
+	requireT.True(strings.Contains(err.Error(), "duplicate"))
+}
+
+func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+
+	ftParams := types.Params{
+		IssueFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
+	}
+	ftKeeper.SetParams(ctx, ftParams)
+
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(ftParams.IssueFee)))
+	subunit := "abc"
+	denom := types.BuildDenom(subunit, addr)
+
+	settings := types.IssueSettings{
+		Issuer:        addr,
+		Symbol:        denom,
+		Description:   "ABC Desc",
+		Subunit:       subunit,
+		Precision:     8,
+		InitialAmount: sdk.NewInt(777),
+		Features:      []types.Feature{types.Feature_freezing},
+	}
+
+	_, err := ftKeeper.Issue(ctx, settings)
+	requireT.Error(err)
+	requireT.True(strings.Contains(err.Error(), "duplicate denomination"))
 }
 
 func TestKeeper_IssueValidateSymbol(t *testing.T) {
@@ -136,6 +170,8 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 		"UCORE",
 		"3abc",
 		"3ABC",
+		"COREeum.",
+		"C",
 	}
 
 	acceptableSymbols := []string{
@@ -159,13 +195,16 @@ func TestKeeper_IssueValidateSymbol(t *testing.T) {
 			Symbol:        symbol,
 			Subunit:       "subunit",
 			Description:   "ABC Desc",
+			Precision:     1,
 			InitialAmount: sdk.NewInt(777),
 			Features:      []types.Feature{types.Feature_freezing},
 		}
 
 		_, err := ftKeeper.Issue(ctx, settings)
-		if types.ErrInvalidInput.Is(err) == isValid {
-			requireT.Equal(types.ErrInvalidInput.Is(err), !isValid)
+		if !isValid {
+			requireT.ErrorIs(err, types.ErrInvalidInput)
+		} else {
+			requireT.NoError(err)
 		}
 	}
 
@@ -216,6 +255,7 @@ func TestKeeper_IssueValidateSubunit(t *testing.T) {
 			Issuer:        addr,
 			Symbol:        "symbol",
 			Subunit:       subunit,
+			Precision:     1,
 			Description:   "ABC Desc",
 			InitialAmount: sdk.NewInt(777),
 			Features:      []types.Feature{types.Feature_freezing},
@@ -311,6 +351,7 @@ func TestKeeper_Mint(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "NotMintable",
 		Subunit:       "notmintable",
+		Precision:     1,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.Feature{
 			types.Feature_freezing,
@@ -331,6 +372,7 @@ func TestKeeper_Mint(t *testing.T) {
 		Issuer:        addr,
 		Symbol:        "mintable",
 		Subunit:       "mintable",
+		Precision:     1,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.Feature{
 			types.Feature_minting,
@@ -374,6 +416,7 @@ func TestKeeper_Burn(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "NotBurnable",
 		Subunit:       "notburnable",
+		Precision:     1,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.Feature{
 			types.Feature_freezing,
@@ -402,6 +445,7 @@ func TestKeeper_Burn(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "burnable",
 		Subunit:       "burnable",
+		Precision:     1,
 		InitialAmount: sdk.NewInt(777),
 		Features: []types.Feature{
 			types.Feature_burning,
@@ -854,6 +898,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.Feature{types.Feature_freezing},
@@ -866,6 +911,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "ABC",
 		Subunit:       "abc",
+		Precision:     1,
 		Description:   "ABC Desc",
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.Feature{},
@@ -1134,6 +1180,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.Feature{types.Feature_whitelisting},
@@ -1146,6 +1193,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "ABC",
 		Subunit:       "abc",
+		Precision:     1,
 		Description:   "ABC Desc",
 		InitialAmount: sdk.NewInt(666),
 		Features:      []types.Feature{},
@@ -1250,6 +1298,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 		Issuer:        issuer1,
 		Symbol:        "DEF",
 		Subunit:       "def",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
 		Features:      []types.Feature{types.Feature_freezing},
@@ -1259,6 +1308,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 		Issuer:        issuer2,
 		Symbol:        "DEF",
 		Subunit:       "def",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(2000),
 		Features:      []types.Feature{types.Feature_whitelisting},
