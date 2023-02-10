@@ -4,6 +4,8 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
@@ -14,6 +16,8 @@ var _ types.QueryServer = QueryService{}
 type QueryKeeper interface {
 	GetClass(ctx sdk.Context, classID string) (types.Class, error)
 	IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error)
+	IsWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error)
+	GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) (*query.PageResponse, []string, error)
 }
 
 // QueryService serves grpc query requests for assetsnft module.
@@ -45,5 +49,30 @@ func (q QueryService) Frozen(ctx context.Context, req *types.QueryFrozenRequest)
 	frozen, err := q.keeper.IsFrozen(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id)
 	return &types.QueryFrozenResponse{
 		Frozen: frozen,
+	}, err
+}
+
+// Whitelisted checks to see if an account is whitelisted for an NFT.
+func (q QueryService) Whitelisted(ctx context.Context, req *types.QueryWhitelistedRequest) (*types.QueryWhitelistedResponse, error) {
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account")
+	}
+	isWhitelisted, err := q.keeper.IsWhitelisted(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id, account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryWhitelistedResponse{
+		Whitelisted: isWhitelisted,
+	}, nil
+}
+
+// WhitelistedAccountsForNFT returns the list of accounts which are whitelited to hold this NFT.
+func (q QueryService) WhitelistedAccountsForNFT(ctx context.Context, req *types.QueryWhitelistedAccountsForNFTRequest) (*types.QueryWhitelistedAccountsForNFTResponse, error) {
+	pageRes, accounts, err := q.keeper.GetAllWhitelistedAccountsForNFT(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id, req.Pagination)
+	return &types.QueryWhitelistedAccountsForNFTResponse{
+		Pagination: pageRes,
+		Accounts:   accounts,
 	}, err
 }

@@ -194,7 +194,10 @@ func init() {
 			Denom:                constant.DenomDev,
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
-				SeedPeers: []string{"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.68.221.216:26656"},
+				SeedPeers: []string{
+					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.67.212.120:26656",
+					"88d1266e086bfe33589886cc10d4c58e85a69d14@34.135.191.69:26656",
+				},
 			},
 			GovConfig:          devGovConfig,
 			StakingConfig:      stakingConfig,
@@ -202,24 +205,19 @@ func init() {
 			AssetFTConfig:      assetFTConfig,
 			AssetNFTConfig:     assetNFTConfig,
 			FundedAccounts: []FundedAccount{
-				// Staker of validator 0
+				// Staker of validator Mercury
 				{
 					Address:  "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6",
 					Balances: devStakerValidatorBalance,
 				},
-				// Staker of validator 1
+				// Staker of validator Venus
 				{
 					Address:  "devcore105ct3vl89ar53jrj23zl6e09cmqwym2ua5hegf",
 					Balances: devStakerValidatorBalance,
 				},
-				// Staker of validator 2
+				// Staker of validator Earth
 				{
 					Address:  "devcore14x46r5eflga696sd5my900euvlplu2prhny5ae",
-					Balances: devStakerValidatorBalance,
-				},
-				// Staker of validator 3
-				{
-					Address:  "devcore1xsthw036vst75rhh4py57lt7nx59qpvzez3a8k",
 					Balances: devStakerValidatorBalance,
 				},
 				// Faucet's account storing the rest of total supply

@@ -12,6 +12,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
@@ -94,6 +95,9 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	// WASM messages will be added here
 	undetermMsgTypes := []string{
+		// gov
+		"/cosmos.gov.v1beta1.MsgSubmitProposal",
+
 		// crisis
 		"/cosmos.crisis.v1beta1.MsgVerifyInvariant",
 
@@ -110,6 +114,9 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/cosmwasm.wasm.v1.MsgIBCSend",
 	}
 
+	// This is required to compile all the messages used by the app, not only those included in deterministic gas config
+	simapp.New()
+
 	cfg := deterministicgas.DefaultConfig()
 
 	var determMsgs []sdk.Msg
@@ -120,7 +127,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 			continue
 		}
 
-		// Skip unknow messages.
+		// Skip unknown messages.
 		if lo.ContainsBy(ignoredMsgTypes, func(msgType string) bool {
 			return deterministicgas.MsgType(sdkMsg) == msgType
 		}) {
@@ -142,8 +149,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 9, len(undetermMsgs))
-	assert.Equal(t, 38, len(determMsgs))
+	assert.Equal(t, 10, len(undetermMsgs))
+	assert.Equal(t, 39, len(determMsgs))
 
 	for _, sdkMsg := range determMsgs {
 		sdkMsg := sdkMsg

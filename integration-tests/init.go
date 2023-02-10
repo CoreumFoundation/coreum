@@ -26,7 +26,7 @@ func (m *stringsFlag) Set(val string) error {
 }
 
 type testingConfig struct {
-	RPCAddress      string
+	GRPCAddress     string
 	NetworkConfig   config.NetworkConfig
 	FundingMnemonic string
 	StakerMnemonics []string
@@ -45,7 +45,7 @@ func init() {
 		stakerMnemonics                          stringsFlag
 	)
 
-	flag.StringVar(&coredAddress, "cored-address", "tcp://localhost:26657", "Address of cored node started by znet")
+	flag.StringVar(&coredAddress, "cored-address", "localhost:9090", "Address of cored node started by znet")
 	flag.StringVar(&fundingMnemonic, "funding-mnemonic", "pitch basic bundle cause toe sound warm love town crucial divorce shell olympic convince scene middle garment glimpse narrow during fix fruit suffer honey", "Funding account mnemonic required by tests")
 	flag.Var(&stakerMnemonics, "staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
@@ -69,7 +69,7 @@ func init() {
 		panic(fmt.Sprintf("can't create network config for the integration tests: %s", err))
 	}
 	cfg = testingConfig{
-		RPCAddress:      coredAddress,
+		GRPCAddress:     coredAddress,
 		NetworkConfig:   networkConfig,
 		FundingMnemonic: fundingMnemonic,
 		StakerMnemonics: stakerMnemonics,
@@ -81,7 +81,7 @@ func init() {
 	config.NewNetwork(cfg.NetworkConfig).SetSDKConfig()
 
 	chain = NewChain(ChainConfig{
-		RPCAddress:      cfg.RPCAddress,
+		GRPCAddress:     cfg.GRPCAddress,
 		NetworkConfig:   cfg.NetworkConfig,
 		FundingMnemonic: cfg.FundingMnemonic,
 		StakerMnemonics: cfg.StakerMnemonics,

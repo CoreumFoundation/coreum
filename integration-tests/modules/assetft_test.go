@@ -1172,6 +1172,59 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
 }
 
+// TestAssetFTFreezeIssuerAccount checks that freezing the issuer account is not possible.
+func TestAssetFTFreezeIssuerAccount(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgFreeze{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+
+	// Issue an freezable fungible token
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Description:   "ABC Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+
+	denom := assetfttypes.BuildDenom(msg.Subunit, issuer)
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+	requireT.NoError(err)
+
+	// try to freeze issuer account
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: issuer.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+}
+
 // TestAssetFTGloballyFreeze checks global freeze functionality of fungible tokens.
 func TestAssetFTGloballyFreeze(t *testing.T) {
 	t.Parallel()
@@ -1683,6 +1736,208 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 		whitelistMsg,
 	)
 	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
+}
+
+// TestAssetFTWhitelistIssuer checks whitelisting on issuer account is not possible.
+func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgSetWhitelistedLimit{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+
+	// Issue an whitelistable fungible token
+	subunit := "uabcwhitelistable"
+	denom := assetfttypes.BuildDenom(subunit, issuer)
+	amount := sdk.NewInt(1000)
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABCWhitelistable",
+		Subunit:       subunit,
+		Description:   "ABC Description",
+		Precision:     1,
+		InitialAmount: amount,
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+
+	requireT.NoError(err)
+
+	// try to whitelist issuer account
+	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: issuer.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+}
+
+// TestBareToken checks non of the features will work if the flags are not set.
+func TestBareToken(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgMint{},
+				&assetfttypes.MsgBurn{},
+				&banktypes.MsgSend{},
+				&assetfttypes.MsgFreeze{},
+				&assetfttypes.MsgGloballyFreeze{},
+				&assetfttypes.MsgSetWhitelistedLimit{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgBurn{},
+			},
+		}))
+
+	// Issue a bare token
+	amount := sdk.NewInt(1000)
+	msg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "baretoken",
+		Subunit:       "baretoken",
+		InitialAmount: amount,
+		Precision:     10,
+	}
+	denom := assetfttypes.BuildDenom(msg.Subunit, issuer)
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msg)),
+		msg,
+	)
+
+	requireT.NoError(err)
+
+	// try to mint
+	mintMsg := &assetfttypes.MsgMint{
+		Sender: issuer.String(),
+		Coin:   sdk.NewCoin(denom, sdk.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	assertT.True(assetfttypes.ErrFeatureDisabled.Is(err))
+
+	// try to burn from issuer account (must succeed)
+	burnMsg := &assetfttypes.MsgBurn{
+		Sender: issuer.String(),
+		Coin:   sdk.NewCoin(denom, sdk.NewInt(10)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	assertT.NoError(err)
+
+	// try to burn from non-issuer account (must fail)
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	assertT.NoError(err)
+
+	burnMsg = &assetfttypes.MsgBurn{
+		Sender: recipient.String(),
+		Coin:   sdk.NewCoin(denom, sdk.NewInt(10)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+
+	// try to whitelist
+	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+
+	// try to freeze
+	freezeMsg := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
+		freezeMsg,
+	)
+	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+
+	// try to globally freeze
+	globalFreezeMsg := &assetfttypes.MsgGloballyFreeze{
+		Sender: issuer.String(),
+		Denom:  denom,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(globalFreezeMsg)),
+		globalFreezeMsg,
+	)
+	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {

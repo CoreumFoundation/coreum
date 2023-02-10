@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
@@ -26,6 +27,8 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdQueryClass(),
 		CmdQueryFrozen(),
+		CmdQueryWhitelisted(),
+		CmdQueryWhitelistedAccounts(),
 	)
 	return cmd
 }
@@ -90,6 +93,91 @@ $ %[1]s query %s frozen [class-id] [id]
 			res, err := queryClient.Frozen(cmd.Context(), &types.QueryFrozenRequest{
 				Id:      id,
 				ClassId: classID,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryWhitelisted return the CmdQueryWhitelisted cobra command.
+func CmdQueryWhitelisted() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "whitelisted [class-id] [id] [account]",
+		Args:  cobra.ExactArgs(3),
+		Short: "Query if account is whitelisted for non-fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query if account is whitelisted for non-fungible token.
+
+Example:
+$ %s query %s whitelisted [class-id] [id] %s
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			classID := args[0]
+			id := args[1]
+			account := args[2]
+			res, err := queryClient.Whitelisted(cmd.Context(), &types.QueryWhitelistedRequest{
+				Id:      id,
+				ClassId: classID,
+				Account: account,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryWhitelistedAccounts return the CmdQueryWhitelistedAccounts cobra command.
+func CmdQueryWhitelistedAccounts() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "whitelisted-accounts [class-id] [id]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query for the list whitelisted accounts for non-fungible token",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query for whitelisted accounts for non-fungible token.
+
+Example:
+$ %s query %s whitelisted [class-id] [id]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			classID := args[0]
+			id := args[1]
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.WhitelistedAccountsForNFT(cmd.Context(), &types.QueryWhitelistedAccountsForNFTRequest{
+				Pagination: pageReq,
+				Id:         id,
+				ClassId:    classID,
 			})
 			if err != nil {
 				return err

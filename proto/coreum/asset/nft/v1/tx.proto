@@ -23,6 +23,10 @@ service Msg {
   rpc Freeze(MsgFreeze) returns (EmptyResponse);
   // Unfreeze removes the freeze effect already put on an NFT
   rpc Unfreeze(MsgUnfreeze) returns (EmptyResponse);
+  // AddToWhitelist sets the account as whitelisted to hold the NFT
+  rpc AddToWhitelist(MsgAddToWhitelist) returns (EmptyResponse);
+  // RemoveFromWhitelist removes an account from whitelisted list of the NFT
+  rpc RemoveFromWhitelist(MsgRemoveFromWhitelist) returns (EmptyResponse);
 }
 
 // MsgIssueClass defines message for the IssueClass method.
@@ -35,6 +39,10 @@ message MsgIssueClass {
   string uri_hash = 6 [(gogoproto.customname) = "URIHash"];
   google.protobuf.Any data = 7;
   repeated ClassFeature features = 8;
+  string royalty_rate = 9 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+  ];
 }
 
 // MsgMint defines message for the Mint method.
@@ -64,6 +72,20 @@ message MsgBurn {
   string sender = 1;
   string class_id = 2 [(gogoproto.customname) = "ClassID"];
   string id = 3 [(gogoproto.customname) = "ID"];
+ }
+
+ message MsgAddToWhitelist {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+  string account = 4;
+ }
+
+ message MsgRemoveFromWhitelist {
+  string sender = 1;
+  string class_id = 2 [(gogoproto.customname) = "ClassID"];
+  string id = 3 [(gogoproto.customname) = "ID"];
+  string account = 4;
  }
 
 message EmptyResponse {}
