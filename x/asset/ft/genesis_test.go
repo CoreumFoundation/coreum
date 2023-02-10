@@ -50,7 +50,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 			token.GloballyFrozen = true
 		}
 		tokens = append(tokens, token)
-		ftKeeper.SetDenomMetadata(ctx, token.Denom, token.Symbol, token.Description, token.Precision)
+		requireT.NoError(ftKeeper.SetDenomMetadata(ctx, token.Denom, token.Symbol, token.Description, token.Precision))
 	}
 
 	// frozen balances
