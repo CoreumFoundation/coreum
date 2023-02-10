@@ -1195,6 +1195,7 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 		Issuer:        issuer.String(),
 		Symbol:        "ABC",
 		Subunit:       "uabc",
+		Precision:     1,
 		Description:   "ABC Description",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []assetfttypes.Feature{
