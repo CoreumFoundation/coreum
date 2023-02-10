@@ -80,8 +80,9 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 	}
 
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-		Messages: append([]sdk.Msg{issueMsg}, multiSendMsgs...),
-		Amount:   chain.NetworkConfig.AssetFTConfig.IssueFee.Add(sdk.NewInt(10_000_000)), // add more coins to cover extra bytes because of the message size
+		Messages:                    append([]sdk.Msg{issueMsg}, multiSendMsgs...),
+		NondeterministicMessagesGas: 10_000_000, // to cover extra bytes because of the message size
+		Amount:                      chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	// issue fungible tokens

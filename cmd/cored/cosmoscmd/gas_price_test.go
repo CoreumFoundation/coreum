@@ -87,6 +87,7 @@ func TestAutoGasPrices(t *testing.T) {
 			bts := bufWriter.Bytes()
 			err = ctx.Codec.UnmarshalJSON(bts, &txRes)
 			requireT.NoError(err)
+			requireT.NoError(testNetwork.WaitForNextBlock())
 
 			txQuery, err := authtx.QueryTx(ctx, txRes.TxHash)
 			requireT.NoError(err)

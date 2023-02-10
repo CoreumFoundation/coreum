@@ -71,6 +71,10 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		return "", err
 	}
 
+	if err := types.ValidateRoyaltyRate(settings.RoyaltyRate); err != nil {
+		return "", err
+	}
+
 	id := types.BuildClassID(settings.Symbol, settings.Issuer)
 	if err := nft.ValidateClassID(id); err != nil {
 		return "", sdkerrors.Wrap(types.ErrInvalidInput, err.Error())
@@ -103,9 +107,10 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 	}
 
 	k.SetClassDefinition(ctx, types.ClassDefinition{
-		ID:       id,
-		Issuer:   settings.Issuer.String(),
-		Features: settings.Features,
+		ID:          id,
+		Issuer:      settings.Issuer.String(),
+		Features:    settings.Features,
+		RoyaltyRate: settings.RoyaltyRate,
 	})
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventClassIssued{
@@ -117,6 +122,7 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		URI:         settings.URI,
 		URIHash:     settings.URIHash,
 		Features:    settings.Features,
+		RoyaltyRate: settings.RoyaltyRate,
 	}); err != nil {
 		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't emit event EventClassIssued: %s", err)
 	}
@@ -326,6 +332,10 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		return nil
 	}
 
+	if classDefinition.IsFeatureEnabled(types.ClassFeature_disable_sending) { //nolint:nosnakecase // generated variable
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s has sending disabled", classID, nftID)
+	}
+
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
 	if err != nil {
 		return err
@@ -366,6 +376,7 @@ func (k Keeper) GetClass(ctx sdk.Context, classID string) (types.Class, error) {
 		URIHash:     class.UriHash,
 		Data:        class.Data,
 		Features:    definition.Features,
+		RoyaltyRate: definition.RoyaltyRate,
 	}, nil
 }
 

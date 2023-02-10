@@ -21,6 +21,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	protobufgrpc "github.com/gogo/protobuf/grpc"
 	gogoproto "github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -91,8 +92,9 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation.
 type Context struct {
-	config    ContextConfig
-	clientCtx client.Context
+	config     ContextConfig
+	clientCtx  client.Context
+	grpcClient protobufgrpc.ClientConn
 }
 
 // ChainID returns chain ID.
@@ -116,10 +118,16 @@ func (c Context) GasPriceAdjustment() sdk.Dec {
 	return c.config.GasConfig.GasPriceAdjustment
 }
 
-// WithClient returns a copy of the context with an updated RPC client
+// WithRPCClient returns a copy of the context with an updated RPC client
 // instance.
-func (c Context) WithClient(client rpcclient.Client) Context {
+func (c Context) WithRPCClient(client rpcclient.Client) Context {
 	c.clientCtx = c.clientCtx.WithClient(client)
+	return c
+}
+
+// WithGRPCClient returns a copy of the context with an updated GRPCClient client.
+func (c Context) WithGRPCClient(grpcClient protobufgrpc.ClientConn) Context {
+	c.grpcClient = grpcClient
 	return c
 }
 
@@ -156,7 +164,15 @@ func (c Context) WithFeeGranterAddress(addr sdk.AccAddress) Context {
 
 // NewStream implements the grpc ClientConn.NewStream method.
 func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	return nil, errors.New("streaming rpc not supported")
+	if c.RPCClient() != nil {
+		return nil, errors.New("streaming rpc not supported")
+	}
+
+	if c.GRPCClient() != nil {
+		return c.grpcClient.NewStream(ctx, desc, method, opts...)
+	}
+
+	return nil, errors.New("neither RPC nor GRPC client is set")
 }
 
 // FeeGranterAddress returns the fee granter address from the context.
@@ -179,9 +195,14 @@ func (c Context) BroadcastMode() string {
 	return c.clientCtx.BroadcastMode
 }
 
-// Client returns RPC client.
-func (c Context) Client() rpcclient.Client {
+// RPCClient returns RPC client.
+func (c Context) RPCClient() rpcclient.Client {
 	return c.clientCtx.Client
+}
+
+// GRPCClient returns GRPCClient client.
+func (c Context) GRPCClient() protobufgrpc.ClientConn {
+	return c.grpcClient
 }
 
 // InterfaceRegistry returns interface registry of SDK context.
@@ -343,6 +364,18 @@ func (c Context) PrintProto(toPrint gogoproto.Message) error {
 
 // Invoke invokes GRPC method.
 func (c Context) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
+	if c.RPCClient() != nil {
+		return c.invokeRPC(ctx, method, req, reply, opts)
+	}
+
+	if c.GRPCClient() != nil {
+		return c.GRPCClient().Invoke(ctx, method, req, reply, opts...)
+	}
+
+	return errors.New("neither RPC nor GRPC client is set")
+}
+
+func (c Context) invokeRPC(ctx context.Context, method string, req, reply interface{}, opts []grpc.CallOption) error {
 	if reflect.ValueOf(req).IsNil() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request cannot be nil")
 	}
