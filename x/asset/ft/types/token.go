@@ -65,7 +65,7 @@ func DeconstructDenom(denom string) (prefix string, issuer sdk.AccAddress, err e
 	}
 
 	if err := ValidateSubunit(denomParts[0]); err != nil {
-		return "", nil, err
+		return "", nil, sdkerrors.Wrapf(ErrInvalidDenom, "invalid subunit, err:%s", err)
 	}
 
 	return denomParts[0], address, nil
