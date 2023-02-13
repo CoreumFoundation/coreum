@@ -92,3 +92,7 @@ In theory IBC might be used to transfer any messages between two compatible chai
 - Inspect modules in https://github.com/tendermint/spn/tree/main/x.
   Some of them are IBC-elated and installed by ignite.
 - Interchain Accounts: https://blog.cosmos.network/interchain-accounts-take-cosmos-interoperability-to-the-next-level-39c9a8aad4ad
+- github.com/cosmos/ibc-go/v4/modules/apps/
+- github.com/cosmos/ibc-go/v4/modules/core/
+- github.com/gravity-devs/liquidity/x/liquidity/
+- github.com/strangelove-ventures/packet-forward-middleware/v4/router/
