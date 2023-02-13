@@ -70,9 +70,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
 	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
@@ -158,7 +155,6 @@ var (
 		slashing.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 		ibc.AppModuleBasic{},
-		ibcfee.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
@@ -231,7 +227,6 @@ type App struct {
 	UpgradeKeeper    upgradekeeper.Keeper
 	ParamsKeeper     paramskeeper.Keeper
 	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	IBCFeeKeeper     ibcfeekeeper.Keeper
 	TransferKeeper   ibctransferkeeper.Keeper
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
@@ -246,7 +241,6 @@ type App struct {
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	ScopedIBCFeeKeeper   capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 	ScopedWASMKeeper     capabilitykeeper.ScopedKeeper
 
@@ -386,12 +380,6 @@ func New(
 
 	app.IBCKeeper = ibckeeper.NewKeeper(appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName),
 		app.StakingKeeper, app.UpgradeKeeper, app.ScopedIBCKeeper)
-	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		app.IBCKeeper.ChannelKeeper,
-		&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
-	)
 
 	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
 	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
@@ -408,8 +396,7 @@ func New(
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCFeeKeeper, // ISC4 Wrapper: fee IBC middleware
-		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
+		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, app.BankKeeper, app.ScopedTransferKeeper,
 	)
 
@@ -475,7 +462,7 @@ func New(
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transfer.NewIBCModule(app.TransferKeeper))
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WASMKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper))
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WASMKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	/****  Module Options ****/
@@ -519,7 +506,6 @@ func New(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
-		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
 		assetFTModule,
@@ -544,7 +530,6 @@ func New(
 		vestingtypes.ModuleName,
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
 		authtypes.ModuleName,
 		authz.ModuleName,
 		banktypes.ModuleName,
@@ -579,7 +564,6 @@ func New(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		ibchost.ModuleName,
-		ibcfeetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		wasm.ModuleName,
 		feemodeltypes.ModuleName,
@@ -607,7 +591,6 @@ func New(
 		minttypes.ModuleName,
 		crisistypes.ModuleName,
 		ibchost.ModuleName,
-		ibcfeetypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
@@ -642,7 +625,6 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
-		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		assetFTModule,
 		assetNFTModule,
 		wnftModule,
