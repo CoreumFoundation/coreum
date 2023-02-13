@@ -97,7 +97,9 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		SendCommissionRate: settings.SendCommissionRate,
 	}
 
-	k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision)
+	if err := k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision); err != nil {
+		return "", err
+	}
 	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
 	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
@@ -414,6 +416,7 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 
 // SetSymbol saves the symbol to store.
 func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress) error {
+	symbol = types.NormalizeSymbolForKey(symbol)
 	if k.isSymbolDuplicated(ctx, symbol, issuer) {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
@@ -429,19 +432,21 @@ func (k Keeper) SetDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit st
 }
 
 // SetDenomMetadata registers denom metadata on the bank keeper.
-func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description string, precision uint32) {
+func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description string, precision uint32) error {
 	denomMetadata := banktypes.Metadata{
 		Name:        symbol,
 		Symbol:      symbol,
 		Description: description,
+
+		// This is a cosmos sdk requirement that the first denomination unit MUST be the base
 		DenomUnits: []*banktypes.DenomUnit{
-			{
-				Denom:    symbol,
-				Exponent: precision,
-			},
 			{
 				Denom:    denom,
 				Exponent: uint32(0),
+			},
+			{
+				Denom:    symbol,
+				Exponent: precision,
 			},
 		},
 		// here take subunit provided by the user, generate the denom and used it as base,
@@ -450,7 +455,12 @@ func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description str
 		Display: symbol,
 	}
 
+	if err := denomMetadata.Validate(); err != nil {
+		return err
+	}
+
 	k.bankKeeper.SetDenomMetaData(ctx, denomMetadata)
+	return nil
 }
 
 // SetFrozenBalances sets the frozen balances of a specified account.
@@ -556,7 +566,6 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 }
 
 func (k Keeper) isSymbolDuplicated(ctx sdk.Context, symbol string, issuer sdk.AccAddress) bool {
-	symbol = types.NormalizeSymbolForKey(symbol)
 	compositeKey := types.CreateSymbolKey(issuer, symbol)
 	rawBytes := ctx.KVStore(k.storeKey).Get(compositeKey)
 	return rawBytes != nil
