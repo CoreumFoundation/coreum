@@ -235,6 +235,14 @@
       "redelegations": [],
       "exported": false
     },
+    "transfer": {
+      "port_id": "transfer",
+      "denom_traces": [],
+      "params": {
+        "send_enabled": true,
+        "receive_enabled": true
+      }
+    },
     "upgrade": {},
     "vesting": {},
     "wasm": {
@@ -268,21 +276,6 @@
       "staking_params": {
         "min_self_delegation": "{{ .CustomParamsConfig.Staking.MinSelfDelegation }}"
       }
-    },
-    "feeibc": {
-      "identified_fees": [],
-      "fee_enabled_channels": [],
-      "registered_payees": [],
-      "registered_counterparty_payees": [],
-      "forward_relayers": []
-    },
-    "transfer": {
-      "params": {
-        "send_enabled": true,
-        "receive_enabled": true
-      },
-      "port_id": "transfer",
-      "denom_traces": []
     }
   }
 }
