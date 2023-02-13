@@ -27,6 +27,7 @@ func TestFrozenBalancesInvariant(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []types.Feature{
@@ -67,6 +68,7 @@ func TestFrozenBalancesInvariant(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "DEF2",
 		Subunit:       "def2",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
 		// the freezing and whitelisting disabled
@@ -101,6 +103,7 @@ func TestWhitelistedBalancesInvariant(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []types.Feature{
@@ -139,6 +142,7 @@ func TestWhitelistedBalancesInvariant(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "DEF2",
 		Subunit:       "def2",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
 		// the freezing and whitelisting disabled
@@ -171,6 +175,7 @@ func TestBankMetadataExistInvariant(t *testing.T) {
 		Issuer:        issuer,
 		Symbol:        "DEF",
 		Subunit:       "def",
+		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
 		Features: []types.Feature{
