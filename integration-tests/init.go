@@ -77,7 +77,6 @@ func init() {
 		LogVerbose:      flag.Lookup("test.v").Value.String() == "true",
 	}
 
-	// FIXME (wojtek): remove this once we have our own address encoder
 	config.NewNetwork(cfg.NetworkConfig).SetSDKConfig()
 
 	chain = NewChain(ChainConfig{
