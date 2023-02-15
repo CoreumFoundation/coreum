@@ -15,11 +15,17 @@ const (
 )
 
 // NewNetworkConfig returns the network config used by integration tests.
-func NewNetworkConfig() (config.NetworkConfig, error) {
-	networkConfig, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+func NewNetworkConfig(chainID constant.ChainID) (config.NetworkConfig, error) {
+	networkConfig, err := config.NetworkConfigByChainID(chainID)
 	if err != nil {
 		return config.NetworkConfig{}, err
 	}
+
+	// modify network config only for devnet
+	if chainID != constant.ChainIDDev {
+		return networkConfig, nil
+	}
+
 	networkConfig.GovConfig.ProposalConfig = config.GovProposalConfig{
 		MinDepositAmount: "1000",
 		VotingPeriod:     votingPeriod.String(),
