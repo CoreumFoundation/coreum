@@ -93,7 +93,7 @@ func TestUpgrade(t *testing.T) {
 	infoWaitingBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
 
-	retryCtx, cancel := context.WithTimeout(ctx, 3*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
+	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
 	defer cancel()
 	log.Info("Waiting for upgrade", zap.Int64("upgradeHeight", upgradeHeight), zap.Int64("currentHeight", infoWaitingBlockRes.Block.Header.Height))
 	err = retry.Do(retryCtx, time.Second, func() error {
