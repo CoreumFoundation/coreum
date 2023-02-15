@@ -67,7 +67,6 @@ Here is the description of behavior of the freezing feature:
 - The user can only send their tokens in excess of the frozen amount.
 - The user can receive tokens regardless of frozen limitation.
 - The user cannot burn the frozen amount if both freezing and burning is enabled.
-- Issuer cannot freeze their own account
 - Frozen amount cannot be a negative value, it means that amount present in unfreeze transaction cannot be bigger than the current frozen amount
 - If either or both of BurnRate and SendCommissionRate are set above zero, then after transfer has taken place and those rates are applied, the sender's balance must not go below the frozen amount. Otherwise the transaction will fail.
 
