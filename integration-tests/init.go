@@ -8,6 +8,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 // stringsFlag allows setting a value multiple times to collect a list, as in -I=val1 -I=val2.
@@ -42,6 +43,7 @@ var (
 func init() {
 	var (
 		fundingMnemonic, coredAddress, logFormat string
+		chainID                                  string
 		stakerMnemonics                          stringsFlag
 	)
 
@@ -49,6 +51,7 @@ func init() {
 	flag.StringVar(&fundingMnemonic, "funding-mnemonic", "pitch basic bundle cause toe sound warm love town crucial divorce shell olympic convince scene middle garment glimpse narrow during fix fruit suffer honey", "Funding account mnemonic required by tests")
 	flag.Var(&stakerMnemonics, "staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
+	flag.StringVar(&chainID, "chain-id", string(constant.ChainIDDev), "Which chain-id to use (coreum-devnet-1, coreum-testnet-1,...)")
 
 	// accept testing flags
 	testing.Init()
@@ -64,7 +67,7 @@ func init() {
 		}
 	}
 
-	networkConfig, err := NewNetworkConfig()
+	networkConfig, err := NewNetworkConfig(constant.ChainID(chainID))
 	if err != nil {
 		panic(fmt.Sprintf("can't create network config for the integration tests: %s", err))
 	}
