@@ -328,7 +328,7 @@ type AssetNFTConfig struct {
 	MintFee sdk.Int
 }
 
-// CrisisConfig defines configuration of crisis module
+// CrisisConfig defines configuration of crisis module.
 type CrisisConfig struct {
 	Amount sdk.Int
 }

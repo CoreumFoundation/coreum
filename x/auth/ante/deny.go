@@ -6,7 +6,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// DenyMessagesDecorator denies transactions containing configured messages
+// DenyMessagesDecorator denies transactions containing configured messages.
 type DenyMessagesDecorator struct {
 	deniedMessages map[string]struct{}
 }
@@ -27,7 +27,7 @@ func (dmd DenyMessagesDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate
 	for _, msg := range tx.GetMsgs() {
 		msgName := proto.MessageName(msg)
 		if _, exists := dmd.deniedMessages[msgName]; exists {
-			return ctx, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "Message %q is disabled", msgName)
+			return ctx, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "message %q is disabled", msgName)
 		}
 	}
 	return next(ctx.WithGasMeter(sdk.NewInfiniteGasMeter()), tx, simulate)
