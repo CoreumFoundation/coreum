@@ -11,6 +11,8 @@ var (
 	_ sdk.Msg = &MsgBurn{}
 	_ sdk.Msg = &MsgFreeze{}
 	_ sdk.Msg = &MsgUnfreeze{}
+	_ sdk.Msg = &MsgGloballyFreeze{}
+	_ sdk.Msg = &MsgGloballyUnfreeze{}
 	_ sdk.Msg = &MsgSetWhitelistedLimit{}
 )
 
@@ -35,6 +37,10 @@ func (msg MsgIssue) ValidateBasic() error {
 	}
 
 	if err := ValidateSendCommissionRate(msg.SendCommissionRate); err != nil {
+		return err
+	}
+
+	if err := ValidatePrecision(msg.Precision); err != nil {
 		return err
 	}
 
