@@ -129,8 +129,6 @@ const (
 
 // ChosenNetwork is a hacky solution to pass network config
 // from cmd package to app.
-// FIXME remove this global field hack and pass network to the New function.
-// This can be implemented once we separate network config into its own package.
 var ChosenNetwork config.Network
 
 var (
