@@ -56,6 +56,10 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
 
+	if err := types.ValidatePrecision(settings.Precision); err != nil {
+		return "", sdkerrors.Wrapf(err, "provided precision: %d", settings.Precision)
+	}
+
 	if err := types.ValidateBurnRate(settings.BurnRate); err != nil {
 		return "", err
 	}
