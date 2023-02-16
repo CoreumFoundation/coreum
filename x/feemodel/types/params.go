@@ -89,5 +89,9 @@ func validateModelParams(i interface{}) error {
 		return errors.New("long EMA block length must be greater than short EMA block length")
 	}
 
+	if m.MaxBlockGas < 1 {
+		return errors.New("max block gas must be bigger than 0")
+	}
+
 	return nil
 }
