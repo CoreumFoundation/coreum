@@ -613,7 +613,6 @@ func NetworkByChainID(id constant.ChainID) (Network, error) {
 		return Network{}, err
 	}
 
-	// TODO: remove this check once all preconfigured networkConfigs are enabled
 	if !nc.Enabled {
 		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(constant.ChainIDDev))
 	}
