@@ -22,6 +22,33 @@ func TestBuildDenom(t *testing.T) {
 	require.Equal(t, "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5", denom)
 }
 
+func TestValidatePrecision(t *testing.T) {
+	testCases := []struct {
+		precision   uint32
+		expectError bool
+	}{
+		{precision: 1},
+		{precision: 3},
+		{precision: 10},
+		{precision: types.MaxPrecision},
+		{precision: 0, expectError: true},
+		{precision: types.MaxPrecision + 1, expectError: true},
+		{precision: 100_000, expectError: true},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprint(tc), func(t *testing.T) {
+			err := types.ValidatePrecision(tc.precision)
+			if tc.expectError {
+				assert.ErrorIs(t, err, types.ErrInvalidInput)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestValidateSubunit(t *testing.T) {
 	requireT := require.New(t)
 	unacceptableSubunits := []string{

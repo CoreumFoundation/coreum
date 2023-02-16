@@ -32,6 +32,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			Issuer:        acc.String(),
 			Symbol:        "BTC",
 			Subunit:       "btc",
+			Precision:     1,
 			Description:   "BTC Description",
 			InitialAmount: sdk.NewInt(777),
 		}
@@ -231,7 +232,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	defaultMsg := func() M {
 		return M{
 			Sender: acc.String(),
-			Coin:   sdk.NewCoin("ABC"+"-"+acc.String(), sdk.NewInt(100)),
+			Coin:   sdk.NewCoin("abc"+"-"+acc.String(), sdk.NewInt(100)),
 		}
 	}
 
@@ -278,7 +279,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	defaultMsg := func() M {
 		return M{
 			Sender: acc.String(),
-			Coin:   sdk.NewCoin("ABC"+"-"+acc.String(), sdk.NewInt(100)),
+			Coin:   sdk.NewCoin("abc"+"-"+acc.String(), sdk.NewInt(100)),
 		}
 	}
 
