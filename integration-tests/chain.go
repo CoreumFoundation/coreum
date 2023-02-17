@@ -2,9 +2,7 @@ package integrationtests
 
 import (
 	"reflect"
-	"strings"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -174,20 +172,11 @@ func NewChain(cfg ChainConfig) Chain {
 		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
 		WithBroadcastMode(flags.BroadcastBlock)
 
-	// TODO(dhil) remove switch once crust is updated
-	if strings.HasPrefix(cfg.GRPCAddress, "tcp") {
-		rpcClient, err := cosmosclient.NewClientFromNode(cfg.GRPCAddress)
-		if err != nil {
-			panic(err)
-		}
-		clientCtx = clientCtx.WithRPCClient(rpcClient)
-	} else {
-		grpcClient, err := grpc.Dial(cfg.GRPCAddress, grpc.WithInsecure())
-		if err != nil {
-			panic(err)
-		}
-		clientCtx = clientCtx.WithGRPCClient(grpcClient)
+	grpcClient, err := grpc.Dial(cfg.GRPCAddress, grpc.WithInsecure())
+	if err != nil {
+		panic(err)
 	}
+	clientCtx = clientCtx.WithGRPCClient(grpcClient)
 
 	chainCtx := NewChainContext(clientCtx, cfg.NetworkConfig)
 	governance := NewGovernance(chainCtx, cfg.StakerMnemonics)
