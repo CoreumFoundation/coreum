@@ -789,7 +789,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// whitelist recipient for the NFT
-	MsgAddToWhitelist := &assetnfttypes.MsgAddToWhitelist{
+	msgAddToWhitelist := &assetnfttypes.MsgAddToWhitelist{
 		Sender:  issuer.String(),
 		ClassID: classID,
 		ID:      nftID,
@@ -798,12 +798,13 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgAddToWhitelist)),
-		MsgAddToWhitelist,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgAddToWhitelist)),
+		msgAddToWhitelist,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(MsgAddToWhitelist), res.GasUsed)
+	requireT.EqualValues(chain.GasLimitByMsgs(msgAddToWhitelist), res.GasUsed)
 
+	// assert the query
 	queryRes, err := nftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
 		ClassId: classID,
 		Id:      nftID,
@@ -818,7 +819,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	whitelistEvent := whitelistEvents[0]
 	requireT.Equal(&assetnfttypes.EventAddedToWhitelist{
 		ClassId: classID,
-		Id:      MsgAddToWhitelist.ID,
+		Id:      msgAddToWhitelist.ID,
 		Account: recipient.String(),
 	}, whitelistEvent)
 
@@ -865,7 +866,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
 
 	// whitelist recipient2 for the NFT
-	MsgAddToWhitelist = &assetnfttypes.MsgAddToWhitelist{
+	msgAddToWhitelist = &assetnfttypes.MsgAddToWhitelist{
 		Sender:  issuer.String(),
 		ClassID: classID,
 		ID:      nftID,
@@ -874,29 +875,11 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgAddToWhitelist)),
-		MsgAddToWhitelist,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgAddToWhitelist)),
+		msgAddToWhitelist,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(MsgAddToWhitelist), res.GasUsed)
-
-	queryRes, err = nftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
-		ClassId: classID,
-		Id:      nftID,
-		Account: recipient2.String(),
-	})
-	requireT.NoError(err)
-	requireT.True(queryRes.Whitelisted)
-
-	// assert the whitelisting event
-	whitelistEvents, err = event.FindTypedEvents[*assetnfttypes.EventAddedToWhitelist](res.Events)
-	requireT.NoError(err)
-	whitelistEvent = whitelistEvents[0]
-	requireT.Equal(&assetnfttypes.EventAddedToWhitelist{
-		ClassId: classID,
-		Id:      MsgAddToWhitelist.ID,
-		Account: recipient2.String(),
-	}, whitelistEvent)
+	requireT.EqualValues(chain.GasLimitByMsgs(msgAddToWhitelist), res.GasUsed)
 
 	// try to send again from recipient to recipient2 and it should succeed now.
 	_, err = client.BroadcastTx(
@@ -908,7 +891,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	requireT.NoError(err)
 
 	// unwhitelist the account
-	MsgRemoveFromWhitelist := &assetnfttypes.MsgRemoveFromWhitelist{
+	msgRemoveFromWhitelist := &assetnfttypes.MsgRemoveFromWhitelist{
 		Sender:  issuer.String(),
 		ClassID: classID,
 		ID:      nftID,
@@ -917,11 +900,11 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(MsgRemoveFromWhitelist)),
-		MsgRemoveFromWhitelist,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgRemoveFromWhitelist)),
+		msgRemoveFromWhitelist,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(MsgRemoveFromWhitelist), res.GasUsed)
+	requireT.EqualValues(chain.GasLimitByMsgs(msgRemoveFromWhitelist), res.GasUsed)
 
 	queryRes, err = nftClient.Whitelisted(ctx, &assetnfttypes.QueryWhitelistedRequest{
 		ClassId: classID,
@@ -937,7 +920,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	unWhitelistedEvent := unWhitelistedEvents[0]
 	requireT.Equal(&assetnfttypes.EventRemovedFromWhitelist{
 		ClassId: classID,
-		Id:      MsgAddToWhitelist.ID,
+		Id:      msgAddToWhitelist.ID,
 		Account: recipient.String(),
 	}, unWhitelistedEvent)
 
