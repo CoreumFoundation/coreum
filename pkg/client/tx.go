@@ -44,7 +44,6 @@ var Sign = tx.Sign
 // NOTE: copied from the link below and made some changes.
 // the main idea is to add context.Context to the signature and use it
 // https://github.com/cosmos/cosmos-sdk/blob/v0.45.2/client/tx/tx.go
-// TODO: add test to check if client respects ctx.
 func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {

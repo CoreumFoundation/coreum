@@ -32,7 +32,7 @@ func GetMinGasPriceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "min-gas-price",
 		Short: "Query for minimum gas price for current block required by the network",
-		Args:  cobra.ExactArgs(0),
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			res, err := QueryGasPrice(cmd)
 			if err != nil {

@@ -5,6 +5,7 @@ package cosmoscmd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -87,8 +88,8 @@ func (s *rootOptions) apply(options ...Option) {
 // NewRootCmd creates a new root command for a Cosmos SDK application.
 func NewRootCmd(
 	appName,
-	defaultNodeHome,
-	defaultChainID string,
+	defaultNodeHome string,
+	network config.Network,
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
 	options ...Option,
@@ -127,7 +128,7 @@ func NewRootCmd(
 				return err
 			}
 
-			customAppTemplate, customAppConfig := initAppConfig()
+			customAppTemplate, customAppConfig := initAppConfig(network)
 
 			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig)
 		},
@@ -142,7 +143,7 @@ func NewRootCmd(
 		rootOptions,
 	)
 	overwriteFlagDefaults(rootCmd, map[string]string{
-		flags.FlagChainID:        defaultChainID,
+		flags.FlagChainID:        string(network.ChainID()),
 		flags.FlagKeyringBackend: "test",
 	})
 
@@ -376,7 +377,7 @@ func (a appCreator) appExport(
 
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
-func initAppConfig() (string, interface{}) {
+func initAppConfig(network config.Network) (string, interface{}) {
 	// Optionally allow the chain developer to overwrite the SDK's default
 	// server config.
 	srvCfg := serverconfig.DefaultConfig()
@@ -392,7 +393,7 @@ func initAppConfig() (string, interface{}) {
 	//   own app.toml to override, or use this default value.
 	//
 	// In simapp, we set the min gas prices to 0.
-	srvCfg.MinGasPrices = "0stake"
+	srvCfg.MinGasPrices = fmt.Sprintf("0.00000000000000001%s", network.Denom())
 
 	// WASMConfig defines configuration for the wasm module.
 	type WASMConfig struct {
