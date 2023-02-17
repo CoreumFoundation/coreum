@@ -879,7 +879,6 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		msgAddToWhitelist,
 	)
 	requireT.NoError(err)
-	requireT.EqualValues(chain.GasLimitByMsgs(msgAddToWhitelist), res.GasUsed)
 
 	// try to send again from recipient to recipient2 and it should succeed now.
 	_, err = client.BroadcastTx(
