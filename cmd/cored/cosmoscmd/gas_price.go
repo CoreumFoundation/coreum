@@ -53,11 +53,11 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	gasPriceWithOverHead := sdk.DecCoin{
+	gasPriceWithOverhead := sdk.DecCoin{
 		Denom:  gasPrice.MinGasPrice.Denom,
 		Amount: gasPrice.MinGasPrice.Amount.Mul(sdk.MustNewDecFromStr(defaultGasPriceMultiplier)),
 	}
-	return gasPriceFlag.Value.Set(gasPriceWithOverHead.String())
+	return gasPriceFlag.Value.Set(gasPriceWithOverhead.String())
 }
 
 // addQueryGasPriceToAllLeafs adds the logic to PreRunE function of all leaf commands
