@@ -33,59 +33,36 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 		// ibc/core/client
 		"/ibc.core.client.v1.MsgCreateClient",
-		"/ibc.core.client.v1.MsgCreateClientResponse",
 		"/ibc.core.client.v1.MsgUpdateClient",
-		"/ibc.core.client.v1.MsgUpdateClientResponse",
 		"/ibc.core.client.v1.MsgUpgradeClient",
-		"/ibc.core.client.v1.MsgUpgradeClientResponse",
 		"/ibc.core.client.v1.MsgSubmitMisbehaviour",
-		"/ibc.core.client.v1.MsgSubmitMisbehaviourResponse",
 
 		// ibc/core/connection
 		"/ibc.core.connection.v1.MsgConnectionOpenInit",
-		"/ibc.core.connection.v1.MsgConnectionOpenInitResponse",
 		"/ibc.core.connection.v1.MsgConnectionOpenTry",
-		"/ibc.core.connection.v1.MsgConnectionOpenTryResponse",
 		"/ibc.core.connection.v1.MsgConnectionOpenAck",
-		"/ibc.core.connection.v1.MsgConnectionOpenAckResponse",
 		"/ibc.core.connection.v1.MsgConnectionOpenConfirm",
-		"/ibc.core.connection.v1.MsgConnectionOpenConfirmResponse",
 
 		// ibc/core/channel
 		"/ibc.core.channel.v1.MsgChannelOpenInit",
-		"/ibc.core.channel.v1.MsgChannelOpenInitResponse",
 		"/ibc.core.channel.v1.MsgChannelOpenTry",
-		"/ibc.core.channel.v1.MsgChannelOpenTryResponse",
 		"/ibc.core.channel.v1.MsgChannelOpenAck",
-		"/ibc.core.channel.v1.MsgChannelOpenAckResponse",
 		"/ibc.core.channel.v1.MsgChannelOpenConfirm",
-		"/ibc.core.channel.v1.MsgChannelOpenConfirmResponse",
 		"/ibc.core.channel.v1.MsgChannelCloseInit",
-		"/ibc.core.channel.v1.MsgChannelCloseInitResponse",
 		"/ibc.core.channel.v1.MsgChannelCloseConfirm",
-		"/ibc.core.channel.v1.MsgChannelCloseConfirmResponse",
 		"/ibc.core.channel.v1.MsgRecvPacket",
-		"/ibc.core.channel.v1.MsgRecvPacketResponse",
 		"/ibc.core.channel.v1.MsgTimeout",
-		"/ibc.core.channel.v1.MsgTimeoutResponse",
 		"/ibc.core.channel.v1.MsgTimeoutOnClose",
-		"/ibc.core.channel.v1.MsgTimeoutOnCloseResponse",
 		"/ibc.core.channel.v1.MsgAcknowledgement",
-		"/ibc.core.channel.v1.MsgAcknowledgementResponse",
 
 		// ibc.applications.transfer
 		"/ibc.applications.transfer.v1.MsgTransfer",
-		"/ibc.applications.transfer.v1.MsgTransferResponse",
 
 		// ibc.applications.fee
 		"/ibc.applications.fee.v1.MsgRegisterPayee",
-		"/ibc.applications.fee.v1.MsgRegisterPayeeResponse",
 		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayee",
-		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayeeResponse",
 		"/ibc.applications.fee.v1.MsgPayPacketFee",
-		"/ibc.applications.fee.v1.MsgPayPacketFeeResponse",
 		"/ibc.applications.fee.v1.MsgPayPacketFeeAsync",
-		"/ibc.applications.fee.v1.MsgPayPacketFeeAsyncResponse",
 
 		// Internal cosmos protos:
 		"/testdata.TestMsg",
