@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   breaking-change:
-    runs-on: self-hosted
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - uses: bufbuild/buf-setup-action@v1
