@@ -11,6 +11,8 @@ var (
 	_ sdk.Msg = &MsgBurn{}
 	_ sdk.Msg = &MsgFreeze{}
 	_ sdk.Msg = &MsgUnfreeze{}
+	_ sdk.Msg = &MsgAddToWhitelist{}
+	_ sdk.Msg = &MsgRemoveFromWhitelist{}
 )
 
 // Constraints.
