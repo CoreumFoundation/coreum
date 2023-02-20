@@ -82,6 +82,6 @@ jobs:
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
-      - name: Dump docker logs on failure
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2
+#      - name: Dump docker logs on failure
+#        if: failure()
+#        uses: jwalton/gh-docker-logs@v2
