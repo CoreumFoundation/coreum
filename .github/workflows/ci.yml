@@ -44,7 +44,7 @@ jobs:
             linter-cache: false
             docker-cache: true
 
-    runs-on: self-hosted
+    runs-on: [self-hosted, manual-v2]
     steps:
       - name: Go version used to build crust tool
         run: go version
