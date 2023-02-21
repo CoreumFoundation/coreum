@@ -128,7 +128,7 @@ func applyFeatureBalanceInvariant(
 
 	if !definition.IsFeatureEnabled(feature) && balance.IsPositive() {
 		count++
-		msg += fmt.Sprintf("\t feature %s is disabled, but %s balance %s is possitive\n", feature.String(), feature.String(), balance)
+		msg += fmt.Sprintf("\t feature %s is disabled, but %s balance %s is positive\n", feature.String(), feature.String(), balance)
 	}
 
 	return count, msg
