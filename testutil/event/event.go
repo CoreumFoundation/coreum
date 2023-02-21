@@ -13,7 +13,7 @@ import (
 func FindTypedEvents[T proto.Message](events []tmtypes.Event) ([]T, error) {
 	var res []T
 
-	event := *new(T) //nolint:gocritic // T(nil) doesn't work with the proto.Message
+	event := *new(T)
 	eventName := proto.MessageName(event)
 	for _, e := range events {
 		if e.Type != eventName {
