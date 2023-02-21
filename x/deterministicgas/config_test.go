@@ -26,7 +26,7 @@ var revProtoTypes map[reflect.Type]string
 //nolint:funlen
 func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
-	// determined as neither deterministic nor undeterministic.
+	// determined as neither deterministic nor nondeterministic.
 	ignoredMsgTypes := []string{
 		// Not-integrated modules:
 		// IBC:
@@ -71,7 +71,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	}
 
 	// WASM messages will be added here
-	undetermMsgTypes := []string{
+	nondeterministicMsgTypes := []string{
 		// gov
 		"/cosmos.gov.v1beta1.MsgSubmitProposal",
 
@@ -96,8 +96,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	cfg := deterministicgas.DefaultConfig()
 
-	var determMsgs []sdk.Msg
-	var undetermMsgs []sdk.Msg
+	var deterministicMsgs []sdk.Msg
+	var nondeterministicMsgs []sdk.Msg
 	for protoType := range revProtoTypes {
 		sdkMsg, ok := reflect.New(protoType.Elem()).Interface().(sdk.Msg)
 		if !ok {
@@ -111,25 +111,25 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 			continue
 		}
 
-		// Add message to undeterministic.
-		if lo.ContainsBy(undetermMsgTypes, func(msgType string) bool {
+		// Add message to nondeterministic.
+		if lo.ContainsBy(nondeterministicMsgTypes, func(msgType string) bool {
 			return deterministicgas.MsgType(sdkMsg) == msgType
 		}) {
-			undetermMsgs = append(undetermMsgs, sdkMsg)
+			nondeterministicMsgs = append(nondeterministicMsgs, sdkMsg)
 			continue
 		}
 
 		// Add message to deterministic.
-		determMsgs = append(determMsgs, sdkMsg)
+		deterministicMsgs = append(deterministicMsgs, sdkMsg)
 	}
 
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 10, len(undetermMsgs))
-	assert.Equal(t, 39, len(determMsgs))
+	assert.Equal(t, 10, len(nondeterministicMsgs))
+	assert.Equal(t, 39, len(deterministicMsgs))
 
-	for _, sdkMsg := range determMsgs {
+	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg
 		t.Run("deterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
@@ -138,9 +138,9 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		})
 	}
 
-	for _, sdkMsg := range undetermMsgs {
+	for _, sdkMsg := range nondeterministicMsgs {
 		sdkMsg := sdkMsg
-		t.Run("undeterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
+		t.Run("nondeterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
 			assert.False(t, ok)
 			assert.Zero(t, gas)
