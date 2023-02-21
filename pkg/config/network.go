@@ -80,10 +80,6 @@ func init() {
 		assetNFTConfig = AssetNFTConfig{
 			MintFee: sdk.ZeroInt(),
 		}
-
-		crisisConfig = CrisisConfig{
-			Amount: sdk.NewIntFromUint64(500_000_000_000),
-		}
 	)
 
 	// devnet vars
@@ -121,7 +117,6 @@ func init() {
 			CustomParamsConfig:   customParamsConfig,
 			AssetFTConfig:        assetFTConfig,
 			AssetNFTConfig:       assetNFTConfig,
-			CrisisConfig:         crisisConfig,
 		},
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,
@@ -142,7 +137,6 @@ func init() {
 			CustomParamsConfig: customParamsConfig,
 			AssetFTConfig:      assetFTConfig,
 			AssetNFTConfig:     assetNFTConfig,
-			CrisisConfig:       crisisConfig,
 			FundedAccounts: []FundedAccount{
 				// Accounts used to create initial validators to bootstrap chain.
 				// validator-1-creator
@@ -210,7 +204,6 @@ func init() {
 			CustomParamsConfig: customParamsConfig,
 			AssetFTConfig:      assetFTConfig,
 			AssetNFTConfig:     assetNFTConfig,
-			CrisisConfig:       crisisConfig,
 			FundedAccounts: []FundedAccount{
 				// Staker of validator Mercury
 				{
@@ -328,11 +321,6 @@ type AssetNFTConfig struct {
 	MintFee sdk.Int
 }
 
-// CrisisConfig defines configuration of crisis module.
-type CrisisConfig struct {
-	Amount sdk.Int
-}
-
 // NetworkConfig helps initialize Network instance.
 type NetworkConfig struct {
 	ChainID              constant.ChainID
@@ -349,7 +337,6 @@ type NetworkConfig struct {
 	CustomParamsConfig   CustomParamsConfig
 	AssetFTConfig        AssetFTConfig
 	AssetNFTConfig       AssetNFTConfig
-	CrisisConfig         CrisisConfig
 	// TODO: remove this field once all preconfigured networks are enabled
 	Enabled bool
 	// TODO: remove this field once we have real upgrade handler
@@ -370,7 +357,6 @@ type Network struct {
 	customParams             CustomParamsConfig
 	assetFT                  AssetFTConfig
 	assetNFT                 AssetNFTConfig
-	crisis                   CrisisConfig
 	enableFakeUpgradeHandler bool
 
 	mu             *sync.Mutex
@@ -393,7 +379,6 @@ func NewNetwork(c NetworkConfig) Network {
 		customParams:             c.CustomParamsConfig,
 		assetFT:                  c.AssetFTConfig,
 		assetNFT:                 c.AssetNFTConfig,
-		crisis:                   c.CrisisConfig,
 		mu:                       &sync.Mutex{},
 		fundedAccounts:           append([]FundedAccount{}, c.FundedAccounts...),
 		genTxs:                   append([]json.RawMessage{}, c.GenTxs...),
@@ -653,7 +638,6 @@ func genesisByTemplate(n Network) ([]byte, error) {
 		CustomParamsConfig   CustomParamsConfig
 		AssetFTConfig        AssetFTConfig
 		AssetNFTConfig       AssetNFTConfig
-		CrisisConfig         CrisisConfig
 	}{
 		GenesisTimeUTC:       n.genesisTime.UTC().Format(time.RFC3339),
 		ChainID:              n.chainID,
@@ -665,7 +649,6 @@ func genesisByTemplate(n Network) ([]byte, error) {
 		CustomParamsConfig:   n.customParams,
 		AssetFTConfig:        n.assetFT,
 		AssetNFTConfig:       n.assetNFT,
-		CrisisConfig:         n.crisis,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")

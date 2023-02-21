@@ -5,6 +5,7 @@ package modules
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/stretchr/testify/require"
@@ -18,12 +19,16 @@ import (
 func TestVerifyInvariantMessageIsDenied(t *testing.T) {
 	t.Parallel()
 
+	// This fee must correspond to the one set in genesis. Crisis module does not allow
+	// to query it, and we don't want to store it in network config either.
+	const invariantFee = 500_000_000_000
+
 	ctx, chain := integrationtests.NewTestingContext(t)
 
 	sender := chain.GenAccount()
 
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
-		Amount: chain.NetworkConfig.CrisisConfig.Amount,
+		Amount: sdk.NewIntFromUint64(invariantFee),
 	}))
 
 	// the gas price is too low
