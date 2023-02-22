@@ -11,6 +11,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 
 	"github.com/CoreumFoundation/coreum/x/auth/keeper"
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
@@ -94,6 +95,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		deterministicgasante.NewSetInfiniteGasMeterDecorator(options.DeterministicGasConfig),
 		authante.NewRejectExtensionOptionsDecorator(),
+		NewDenyMessagesDecorator(&crisistypes.MsgVerifyInvariant{}),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
 		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
