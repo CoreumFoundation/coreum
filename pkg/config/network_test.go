@@ -170,7 +170,7 @@ func TestValidateAllGenesis(t *testing.T) {
 
 	for _, n := range config.EnabledNetworks() {
 		if n.ChainID() == constant.ChainIDMain {
-			// TODO: Currently genesis is invalid.
+			// TODO: Currently mainnet genesis is invalid.
 			continue
 		}
 
