@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ "lint", "test", "build", "integration tests coreum-modules", "integration tests coreum-upgrade",  "integration tests faucet" ]
+        ci_step: [ "lint", "test", "build", "integration tests coreum-modules", "integration tests coreum-upgrade", "integration tests faucet" ]
         include:
           - ci_step: "lint"
             command: "crust lint/coreum --log-format=yaml"
@@ -44,7 +44,7 @@ jobs:
             linter-cache: false
             docker-cache: true
 
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, managed-vms]
     steps:
       - name: Go version used to build crust tool
         run: go version
@@ -80,8 +80,10 @@ jobs:
           path: crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+      - name: Shutdown crust znet
+        run: "crust znet remove"
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
-      - name: Dump docker logs on failure
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2
+#      - name: Dump docker logs on failure
+#        if: failure()
+#        uses: jwalton/gh-docker-logs@v2
