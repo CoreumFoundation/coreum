@@ -26,66 +26,43 @@ var revProtoTypes map[reflect.Type]string
 //nolint:funlen
 func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
-	// determined as neither deterministic nor undeterministic.
+	// determined as neither deterministic nor nondeterministic.
 	ignoredMsgTypes := []string{
 		// Not-integrated modules:
 		// IBC:
 
 		// ibc/core/client
 		"/ibc.core.client.v1.MsgCreateClient",
-		"/ibc.core.client.v1.MsgCreateClientResponse",
 		"/ibc.core.client.v1.MsgUpdateClient",
-		"/ibc.core.client.v1.MsgUpdateClientResponse",
 		"/ibc.core.client.v1.MsgUpgradeClient",
-		"/ibc.core.client.v1.MsgUpgradeClientResponse",
 		"/ibc.core.client.v1.MsgSubmitMisbehaviour",
-		"/ibc.core.client.v1.MsgSubmitMisbehaviourResponse",
 
 		// ibc/core/connection
 		"/ibc.core.connection.v1.MsgConnectionOpenInit",
-		"/ibc.core.connection.v1.MsgConnectionOpenInitResponse",
 		"/ibc.core.connection.v1.MsgConnectionOpenTry",
-		"/ibc.core.connection.v1.MsgConnectionOpenTryResponse",
 		"/ibc.core.connection.v1.MsgConnectionOpenAck",
-		"/ibc.core.connection.v1.MsgConnectionOpenAckResponse",
 		"/ibc.core.connection.v1.MsgConnectionOpenConfirm",
-		"/ibc.core.connection.v1.MsgConnectionOpenConfirmResponse",
 
 		// ibc/core/channel
 		"/ibc.core.channel.v1.MsgChannelOpenInit",
-		"/ibc.core.channel.v1.MsgChannelOpenInitResponse",
 		"/ibc.core.channel.v1.MsgChannelOpenTry",
-		"/ibc.core.channel.v1.MsgChannelOpenTryResponse",
 		"/ibc.core.channel.v1.MsgChannelOpenAck",
-		"/ibc.core.channel.v1.MsgChannelOpenAckResponse",
 		"/ibc.core.channel.v1.MsgChannelOpenConfirm",
-		"/ibc.core.channel.v1.MsgChannelOpenConfirmResponse",
 		"/ibc.core.channel.v1.MsgChannelCloseInit",
-		"/ibc.core.channel.v1.MsgChannelCloseInitResponse",
 		"/ibc.core.channel.v1.MsgChannelCloseConfirm",
-		"/ibc.core.channel.v1.MsgChannelCloseConfirmResponse",
 		"/ibc.core.channel.v1.MsgRecvPacket",
-		"/ibc.core.channel.v1.MsgRecvPacketResponse",
 		"/ibc.core.channel.v1.MsgTimeout",
-		"/ibc.core.channel.v1.MsgTimeoutResponse",
 		"/ibc.core.channel.v1.MsgTimeoutOnClose",
-		"/ibc.core.channel.v1.MsgTimeoutOnCloseResponse",
 		"/ibc.core.channel.v1.MsgAcknowledgement",
-		"/ibc.core.channel.v1.MsgAcknowledgementResponse",
 
 		// ibc.applications.transfer
 		"/ibc.applications.transfer.v1.MsgTransfer",
-		"/ibc.applications.transfer.v1.MsgTransferResponse",
 
 		// ibc.applications.fee
 		"/ibc.applications.fee.v1.MsgRegisterPayee",
-		"/ibc.applications.fee.v1.MsgRegisterPayeeResponse",
 		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayee",
-		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayeeResponse",
 		"/ibc.applications.fee.v1.MsgPayPacketFee",
-		"/ibc.applications.fee.v1.MsgPayPacketFeeResponse",
 		"/ibc.applications.fee.v1.MsgPayPacketFeeAsync",
-		"/ibc.applications.fee.v1.MsgPayPacketFeeAsyncResponse",
 
 		// Internal cosmos protos:
 		"/testdata.TestMsg",
@@ -94,7 +71,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	}
 
 	// WASM messages will be added here
-	undetermMsgTypes := []string{
+	nondeterministicMsgTypes := []string{
 		// gov
 		"/cosmos.gov.v1beta1.MsgSubmitProposal",
 
@@ -119,8 +96,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	cfg := deterministicgas.DefaultConfig()
 
-	var determMsgs []sdk.Msg
-	var undetermMsgs []sdk.Msg
+	var deterministicMsgs []sdk.Msg
+	var nondeterministicMsgs []sdk.Msg
 	for protoType := range revProtoTypes {
 		sdkMsg, ok := reflect.New(protoType.Elem()).Interface().(sdk.Msg)
 		if !ok {
@@ -134,25 +111,25 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 			continue
 		}
 
-		// Add message to undeterministic.
-		if lo.ContainsBy(undetermMsgTypes, func(msgType string) bool {
+		// Add message to nondeterministic.
+		if lo.ContainsBy(nondeterministicMsgTypes, func(msgType string) bool {
 			return deterministicgas.MsgType(sdkMsg) == msgType
 		}) {
-			undetermMsgs = append(undetermMsgs, sdkMsg)
+			nondeterministicMsgs = append(nondeterministicMsgs, sdkMsg)
 			continue
 		}
 
 		// Add message to deterministic.
-		determMsgs = append(determMsgs, sdkMsg)
+		deterministicMsgs = append(deterministicMsgs, sdkMsg)
 	}
 
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 10, len(undetermMsgs))
-	assert.Equal(t, 39, len(determMsgs))
+	assert.Equal(t, 10, len(nondeterministicMsgs))
+	assert.Equal(t, 39, len(deterministicMsgs))
 
-	for _, sdkMsg := range determMsgs {
+	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg
 		t.Run("deterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
@@ -161,9 +138,9 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		})
 	}
 
-	for _, sdkMsg := range undetermMsgs {
+	for _, sdkMsg := range nondeterministicMsgs {
 		sdkMsg := sdkMsg
-		t.Run("undeterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
+		t.Run("nondeterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
 			assert.False(t, ok)
 			assert.Zero(t, gas)

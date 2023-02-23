@@ -2,6 +2,7 @@ package cosmoscmd
 
 import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -9,8 +10,8 @@ import (
 )
 
 const (
-	autoValue            = "auto"
-	defaultGasMultiplier = "1.1"
+	autoValue                 = "auto"
+	defaultGasPriceMultiplier = "1.1"
 )
 
 func mergeRunEs(runEs ...func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
@@ -52,22 +53,11 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := gasPriceFlag.Value.Set(gasPrice.MinGasPrice.String()); err != nil {
-		return err
+	gasPriceWithOverhead := sdk.DecCoin{
+		Denom:  gasPrice.MinGasPrice.Denom,
+		Amount: gasPrice.MinGasPrice.Amount.Mul(sdk.MustNewDecFromStr(defaultGasPriceMultiplier)),
 	}
-
-	gasAdjustmentFlag := cmd.LocalFlags().Lookup(flags.FlagGasAdjustment)
-	if gasAdjustmentFlag == nil {
-		return nil
-	}
-
-	if !gasAdjustmentFlag.Changed {
-		if err := gasAdjustmentFlag.Value.Set(defaultGasMultiplier); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return gasPriceFlag.Value.Set(gasPriceWithOverhead.String())
 }
 
 // addQueryGasPriceToAllLeafs adds the logic to PreRunE function of all leaf commands

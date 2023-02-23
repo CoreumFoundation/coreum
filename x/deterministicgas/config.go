@@ -111,21 +111,21 @@ func DefaultConfig() Config {
 		MsgType(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
 	}
 
-	registerUndeterministicGasFuncs(
+	registerNondeterministicGasFuncs(
 		&cfg,
 		[]sdk.Msg{
 			// gov
-			// MsgSubmitProposal is defined as undeterministic because it runs a proposal handler function
+			// MsgSubmitProposal is defined as nondeterministic because it runs a proposal handler function
 			// specific for each proposal and those functions consume unknown amount of gas.
 			&govtypes.MsgSubmitProposal{},
 
 			// crisis
-			// MsgVerifyInvariant is defined as undeterministic since fee
+			// MsgVerifyInvariant is defined as nondeterministic since fee
 			// charged by this tx type is defined as param inside module.
 			&crisistypes.MsgVerifyInvariant{},
 
 			// evidence
-			// MsgSubmitEvidence is defined as undeterministic since we do not
+			// MsgSubmitEvidence is defined as nondeterministic since we do not
 			// have any custom evidence type implemented, so it should fail on
 			// ValidateBasic step.
 			&evidencetypes.MsgSubmitEvidence{},
@@ -151,14 +151,14 @@ func (cfg Config) TxBaseGas(params authtypes.Params) uint64 {
 }
 
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
-// Function returns 0 and false if message is undeterministic or unknown.
+// Function returns 0 and false if message is nondeterministic or unknown.
 func (cfg Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
 	gasFunc, ok := cfg.gasByMsg[MsgType(msg)]
 	if ok {
 		return gasFunc(msg)
 	}
 
-	// Currently we treat unknown message types as undeterministic.
+	// Currently we treat unknown message types as nondeterministic.
 	// In the future other approach could be to return third boolean parameter
 	// identifying if message is known and report unknown messages to monitoring.
 	reportUnknownMessageMetric(MsgType(msg))
@@ -198,7 +198,7 @@ func (cfg *Config) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc
 	}
 }
 
-func registerUndeterministicGasFuncs(cfg *Config, msgs []sdk.Msg) {
+func registerNondeterministicGasFuncs(cfg *Config, msgs []sdk.Msg) {
 	for _, msg := range msgs {
 		cfg.gasByMsg[MsgType(msg)] = underministicGasFunc()
 	}
