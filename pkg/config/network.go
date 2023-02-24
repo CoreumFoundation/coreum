@@ -312,11 +312,11 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 
 // Networks returns slice of available networks.
 func Networks() []Network {
-	enabledNetworks := make([]Network, 0, len(networkConfigs))
+	networks := make([]Network, 0, len(networkConfigs))
 	for _, nc := range networkConfigs {
-		enabledNetworks = append(enabledNetworks, NewNetwork(nc))
+		networks = append(networks, NewNetwork(nc))
 	}
-	return enabledNetworks
+	return networks
 }
 
 // FeeConfig is the part of network config defining parameters of our fee model.
