@@ -168,7 +168,7 @@ func TestValidateAllGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	encCfg := config.NewEncodingConfig(app.ModuleBasics)
 
-	for _, n := range config.EnabledNetworks() {
+	for _, n := range config.Networks() {
 		if n.ChainID() == constant.ChainIDMain {
 			// TODO: Currently mainnet genesis is invalid.
 			continue
@@ -202,7 +202,7 @@ func TestValidateAllGenesis(t *testing.T) {
 }
 
 func TestValidateAllGenTxs(t *testing.T) {
-	for _, n := range config.EnabledNetworks() {
+	for _, n := range config.Networks() {
 		unsealConfig()
 		n.SetSDKConfig()
 

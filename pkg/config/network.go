@@ -310,8 +310,8 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 	return genTxs
 }
 
-// EnabledNetworks returns enabled networks.
-func EnabledNetworks() []Network {
+// Networks returns slice of available networks.
+func Networks() []Network {
 	enabledNetworks := make([]Network, 0, len(networkConfigs))
 	for _, nc := range networkConfigs {
 		enabledNetworks = append(enabledNetworks, NewNetwork(nc))
