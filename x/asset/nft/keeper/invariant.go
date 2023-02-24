@@ -11,20 +11,20 @@ import (
 
 // Invariant names.
 const (
-	OriginalClassExistsInvariantName  = "original-class-exist"
-	WhitelistedNFTExistsInvariantName = "whitelisted-exist"
-	FrozenNFTExistsInvariantName      = "frozen-exist"
+	OriginalClassExistsInvariantName = "original-class-exists"
+	WhitelistingInvariantName        = "whitelisting-invariant"
+	FreezingInvariantName            = "freezing-invariant"
 )
 
 // RegisterInvariants registers the bank module invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(types.ModuleName, OriginalClassExistsInvariantName, OriginalClassExistsInvariant(k))
-	ir.RegisterRoute(types.ModuleName, WhitelistedNFTExistsInvariantName, WhitelistedNFTExistsInvariant(k))
-	ir.RegisterRoute(types.ModuleName, FrozenNFTExistsInvariantName, FrozenNFTExistsInvariant(k))
+	ir.RegisterRoute(types.ModuleName, WhitelistingInvariantName, WhitelistingInvariant(k))
+	ir.RegisterRoute(types.ModuleName, FreezingInvariantName, FreezingInvariant(k))
 }
 
-// FrozenNFTExistsInvariant checks that all frozen NFTs have counterpart on the original Cosmos SDK NFT module.
-func FrozenNFTExistsInvariant(k Keeper) sdk.Invariant {
+// FreezingInvariant checks that all frozen NFTs have counterpart on the original Cosmos SDK NFT module.
+func FreezingInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
 			msg             string
@@ -59,14 +59,14 @@ func FrozenNFTExistsInvariant(k Keeper) sdk.Invariant {
 		}
 
 		return sdk.FormatInvariant(
-			types.ModuleName, FrozenNFTExistsInvariantName,
-			fmt.Sprintf("number of missing metadata entries %d\n%s", violationsCount, msg),
+			types.ModuleName, FreezingInvariantName,
+			fmt.Sprintf("number of invariant violation %d\n%s", violationsCount, msg),
 		), violationsCount != 0
 	}
 }
 
-// WhitelistedNFTExistsInvariant checks that all whitelisted NFTs have counterpart on the original Cosmos SDK NFT module.
-func WhitelistedNFTExistsInvariant(k Keeper) sdk.Invariant {
+// WhitelistingInvariant checks that all whitelisted NFTs have counterpart on the original Cosmos SDK NFT module.
+func WhitelistingInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
 			msg             string
@@ -89,8 +89,7 @@ func WhitelistedNFTExistsInvariant(k Keeper) sdk.Invariant {
 				violationsCount++
 				msg += fmt.Sprintf("\t class definition not found for whitelisted nft(%s/%s)", whitelisted.ClassID, whitelisted.NftID)
 			} else if err != nil {
-				violationsCount++
-				msg += fmt.Sprintf("\t whitelisting is disabled, but (%s/%s) is whitelisted \n", whitelisted.ClassID, whitelisted.NftID)
+				panic(err)
 			}
 
 			if !classDefinition.IsFeatureEnabled(types.ClassFeature_whitelisting) {
@@ -100,8 +99,8 @@ func WhitelistedNFTExistsInvariant(k Keeper) sdk.Invariant {
 		}
 
 		return sdk.FormatInvariant(
-			types.ModuleName, WhitelistedNFTExistsInvariantName,
-			fmt.Sprintf("number of missing metadata entries %d\n%s", violationsCount, msg),
+			types.ModuleName, WhitelistingInvariantName,
+			fmt.Sprintf("number of invariant violations %d\n%s", violationsCount, msg),
 		), violationsCount != 0
 	}
 }

@@ -78,14 +78,14 @@ func TestWhitelistedNFTExistsInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	// invariant is valid
-	_, isBroken := keeper.WhitelistedNFTExistsInvariant(nftKeeper)(ctx)
+	_, isBroken := keeper.WhitelistingInvariant(nftKeeper)(ctx)
 	requireT.False(isBroken)
 
 	// store nft directly (break consistency)
 	requireT.NoError(nftKeeper.SetWhitelisting(ctx, classID, "next-nft", recipient, true))
 
 	// invariant is broken
-	_, isBroken = keeper.WhitelistedNFTExistsInvariant(nftKeeper)(ctx)
+	_, isBroken = keeper.WhitelistingInvariant(nftKeeper)(ctx)
 	requireT.True(isBroken)
 }
 
@@ -120,13 +120,13 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	// invariant is valid
-	_, isBroken := keeper.FrozenNFTExistsInvariant(nftKeeper)(ctx)
+	_, isBroken := keeper.FreezingInvariant(nftKeeper)(ctx)
 	requireT.False(isBroken)
 
 	// store nft directly (break consistency)
 	requireT.NoError(nftKeeper.SetFrozen(ctx, classID, "next-nft", true))
 
 	// invariant is broken
-	_, isBroken = keeper.FrozenNFTExistsInvariant(nftKeeper)(ctx)
+	_, isBroken = keeper.FreezingInvariant(nftKeeper)(ctx)
 	requireT.True(isBroken)
 }
