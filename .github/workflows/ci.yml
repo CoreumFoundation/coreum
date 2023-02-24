@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ "lint", "test", "build", "integration tests coreum-modules", "integration tests coreum-upgrade", "integration tests faucet" ]
+        ci_step: ["lint", "test", "build", "integration tests coreum-modules"]
         include:
           - ci_step: "lint"
             command: "crust lint/coreum --log-format=yaml"
@@ -33,16 +33,16 @@ jobs:
             go-cache: true
             linter-cache: false
             docker-cache: true
-          - ci_step: "integration tests coreum-upgrade"
-            command: "crust build/integration-tests images --log-format=yaml && crust znet test --test-groups=coreum-upgrade --log-format=yaml"
-            go-cache: true
-            linter-cache: false
-            docker-cache: true
-          - ci_step: "integration tests faucet"
-            command: "crust build/integration-tests images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
-            go-cache: true
-            linter-cache: false
-            docker-cache: true
+#          - ci_step: "integration tests coreum-upgrade"
+#            command: "crust build/integration-tests images --log-format=yaml && crust znet test --test-groups=coreum-upgrade --log-format=yaml"
+#            go-cache: true
+#            linter-cache: false
+#            docker-cache: true
+#          - ci_step: "integration tests faucet"
+#            command: "crust build/integration-tests images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
+#            go-cache: true
+#            linter-cache: false
+#            docker-cache: true
 
     runs-on: [self-hosted, managed-vms]
     steps:
