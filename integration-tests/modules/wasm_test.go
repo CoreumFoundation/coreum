@@ -30,7 +30,7 @@ var (
 	bankSendWASM []byte
 	//go:embed testdata/wasm/simple-state/artifacts/simple_state.wasm
 	simpleStateWASM []byte
-	//go:embed testdata/wasm/ft/artifacts/fungible_token.wasm
+	//go:embed testdata/wasm/ft/artifacts/ft.wasm
 	fungibleTokenWASM []byte
 )
 
