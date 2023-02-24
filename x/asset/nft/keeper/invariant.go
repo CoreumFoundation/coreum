@@ -12,8 +12,8 @@ import (
 // Invariant names.
 const (
 	OriginalClassExistsInvariantName = "original-class-exists"
-	WhitelistingInvariantName        = "whitelisting-invariant"
-	FreezingInvariantName            = "freezing-invariant"
+	WhitelistingInvariantName        = "whitelisting"
+	FreezingInvariantName            = "freezing"
 )
 
 // RegisterInvariants registers the bank module invariants.
