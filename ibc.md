@@ -13,16 +13,17 @@
 ## Relayer
 - it is possible to use single relayer for all the channels
 - we should run at least two relayers
-- we should run two full nodes for each blockchain we want to connect to. We may use external service delivering them (check https://www.zeeve.io/)
 - we must monitor the funds of relayer on all the chains (grafana metric)
 - if we want other entities to manage relayers we need to incentivize them to do it
 - how relayer syncs two chains? how often? what transactions are used? how much gas they take?
 - inspect IBC transactions on other chains to check how much gas they take
 - check if it's possible to run many relayers serving the same channel
 - check how relayer behaves when client, connection, channel or port is closed due to inactivity or any other reason. How can they be restored?
+- what about support for dynamic gas price in relayers?
+- scenario to test: transfer 100k COREs to gaia and 100k COREs to Osmosis. Mint additional 100k on Osmosis. Gaia and Osmosis should be able tro transfer back 100k CORes each, and additional 100k should be locked in Osmosis forever.
  
-### Hermes vs Cosmos relayer
-- Cosmos relayer is written in go, Hermes is written in rust
+### Hermes vs Cosmos vs TS relayer
+- Cosmos relayer is written in go, Hermes is written in rust, TS is written in TypeScript
 - Cosmos relayer supports many chains in single instance, need to check Hermes
 - Hermes has a feature preventing channel from being automatically closed due to inactivity - check this
 - We need to test both Hermes and Cosmos, integrate them into znet, test and compare their features and limitations
@@ -68,7 +69,8 @@ It may reduce the mess but on the other hand will limit possibilities.
 
 ### Received tokens
 
-Tokens received through IBC must be treated as regular bank tokens (like CORE), without any additional features provided by FT module.
+- tokens received through IBC must be treated as regular bank tokens (like CORE), without any additional features provided by FT module
+- review our bank wrapper & make sure we completely ignore all features for such tokens
 
 ## NFT integration
 
@@ -96,3 +98,8 @@ In theory IBC might be used to transfer any messages between two compatible chai
 - github.com/cosmos/ibc-go/v4/modules/core/
 - github.com/gravity-devs/liquidity/x/liquidity/
 - github.com/strangelove-ventures/packet-forward-middleware/v4/router/
+
+## DevOps
+- we should run two full nodes for each blockchain we want to connect to. We may use external service delivering them (check https://www.zeeve.io/)
+- setup monitoring for relayers
+- prepare deployment files for relayers
