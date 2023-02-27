@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ "lint", "test", "build", "integration tests coreum-modules" ]
+        ci_step: ["lint", "test", "build", "integration tests coreum-modules"]
         include:
           - ci_step: "lint"
             command: "crust lint/coreum --log-format=yaml"
@@ -44,7 +44,7 @@ jobs:
 #            linter-cache: false
 #            docker-cache: true
 
-    runs-on: [self-hosted, manual-v2]
+    runs-on: [self-hosted, managed-vms]
     steps:
       - name: Go version used to build crust tool
         run: go version
