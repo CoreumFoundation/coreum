@@ -119,7 +119,7 @@ func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasConfig
 		// Fixed gas is consumed on original gas meter to require and report deterministic gas amount
 		ctx.GasMeter().ConsumeGas(gasRequired, fmt.Sprintf("DeterministicGas (gas required: %d, message type: %T)", gasRequired, msg))
 
-		// We pass much higher amount of gas to hanfdler to be sure that it succeeds.
+		// We pass much higher amount of gas to handler to be sure that it succeeds.
 		// We want to avoid passing infinite gas meter to always have a limit in case of mistake.
 		ctx = ctx.WithGasMeter(sdk.NewGasMeter(fuseGasMultiplier * gasRequired))
 	}
