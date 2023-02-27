@@ -177,7 +177,9 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 // AppModuleSimulation functions
 
 // GenerateGenesisState creates a randomized GenState of the fee module.
-func (AppModule) GenerateGenesisState(simState *module.SimulationState) {}
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(types.DefaultGenesisState())
+}
 
 // ProposalContents doesn't return any content functions for governance proposals.
 func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
