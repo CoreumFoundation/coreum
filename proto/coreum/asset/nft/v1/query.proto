@@ -5,12 +5,18 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
 import "coreum/asset/nft/v1/nft.proto";
+import "coreum/asset/nft/v1/params.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
 
 // Query defines the gRPC querier service.
 service Query {
+  // Params queries the parameters of x/asset/ft module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/params";
+  }
+
   // Class queries the non-fungible token class of the module.
   rpc Class(QueryClassRequest) returns (QueryClassResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{id}";
@@ -30,6 +36,14 @@ service Query {
   rpc WhitelistedAccountsForNFT (QueryWhitelistedAccountsForNFTRequest) returns (QueryWhitelistedAccountsForNFTResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted";
   }
+}
+
+// QueryParamsRequest defines the request type for querying x/asset/nft parameters.
+message QueryParamsRequest {}
+
+// QueryParamsResponse defines the response type for querying x/asset/nft parameters.
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryTokenRequest is request type for the Query/Class RPC method.
