@@ -34,7 +34,7 @@ func TestAssetNFTQueryParams(t *testing.T) {
 	resp, err := queryClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
 	require.NoError(t, err)
 
-	assert.Equal(t, chain.NetworkConfig.AssetNFTConfig.MintFee.String(), resp.Params.MintFee.String())
+	assert.Equal(t, sdk.NewCoin(chain.NetworkConfig.Denom, chain.NetworkConfig.AssetNFTConfig.MintFee).String(), resp.Params.MintFee.String())
 }
 
 // TestAssetNFTIssueClass tests non-fungible token class creation.
