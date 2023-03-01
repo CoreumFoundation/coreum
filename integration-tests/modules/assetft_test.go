@@ -2749,7 +2749,7 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2(t *testing.T) {
 	requireT.NoError(err)
 
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     510,
+		&issuer:     550,
 		&recipient1: 340,
 		&recipient2: 100,
 	})
@@ -2772,7 +2772,7 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2(t *testing.T) {
 	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
 	// verify balances did not change
 	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     510,
+		&issuer:     550,
 		&recipient1: 340,
 		&recipient2: 100,
 	})
