@@ -23,10 +23,10 @@ service Query {
 
   // Whitelisted queries to check if an account is whitelited to hold an NFT or not.
   rpc Whitelisted (QueryWhitelistedRequest) returns (QueryWhitelistedResponse) {
-    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/account/{account}";
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/{account}";
   }
 
-  // WhitelistedAccountsForNFT returns the list of accounts which are whitelited to hold this NFT.
+  // WhitelistedAccountsForNFT returns the list of accounts which are whitelisted to hold this NFT.
   rpc WhitelistedAccountsForNFT (QueryWhitelistedAccountsForNFTRequest) returns (QueryWhitelistedAccountsForNFTResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted";
   }
