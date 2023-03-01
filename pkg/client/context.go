@@ -364,12 +364,12 @@ func (c Context) PrintProto(toPrint gogoproto.Message) error {
 
 // Invoke invokes GRPC method.
 func (c Context) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
-	if c.RPCClient() != nil {
-		return c.invokeRPC(ctx, method, req, reply, opts)
-	}
-
 	if c.GRPCClient() != nil {
 		return c.GRPCClient().Invoke(ctx, method, req, reply, opts...)
+	}
+
+	if c.RPCClient() != nil {
+		return c.invokeRPC(ctx, method, req, reply, opts)
 	}
 
 	return errors.New("neither RPC nor GRPC client is set")
