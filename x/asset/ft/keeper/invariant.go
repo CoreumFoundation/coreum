@@ -9,23 +9,23 @@ import (
 )
 
 const (
-	// FrozenBalancesInvariantName is frozen balances invariant name.
-	FrozenBalancesInvariantName = "frozen-balances"
-	// WhitelistedBalancesInvariantName is whitelisted balances invariant name.
-	WhitelistedBalancesInvariantName = "whitelisted-balances"
+	// FreezingInvariantName is frozen balances invariant name.
+	FreezingInvariantName = "freezing"
+	// WhitelistingInvariantName is whitelisted balances invariant name.
+	WhitelistingInvariantName = "whitelisting"
 	// BankMetadataExistsInvariantName is bank metadata exist name.
 	BankMetadataExistsInvariantName = "bank-metadata-exist"
 )
 
 // RegisterInvariants registers the bank module invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
-	ir.RegisterRoute(types.ModuleName, FrozenBalancesInvariantName, FrozenBalancesInvariant(k))
-	ir.RegisterRoute(types.ModuleName, WhitelistedBalancesInvariantName, WhitelistedBalancesInvariant(k))
+	ir.RegisterRoute(types.ModuleName, FreezingInvariantName, FreezingInvariant(k))
+	ir.RegisterRoute(types.ModuleName, WhitelistingInvariantName, WhitelistingInvariant(k))
 	ir.RegisterRoute(types.ModuleName, BankMetadataExistsInvariantName, BankMetadataExistInvariant(k))
 }
 
-// FrozenBalancesInvariant checks that all accounts in the application have non-negative frozen balances.
-func FrozenBalancesInvariant(k Keeper) sdk.Invariant {
+// FreezingInvariant checks that all accounts in the application have non-negative frozen balances.
+func FreezingInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
 			count int
@@ -43,14 +43,14 @@ func FrozenBalancesInvariant(k Keeper) sdk.Invariant {
 		}
 
 		return sdk.FormatInvariant(
-			types.ModuleName, FrozenBalancesInvariantName,
+			types.ModuleName, FreezingInvariantName,
 			fmt.Sprintf("amount of invalid frozen balances found: %d\n%s", count, msg),
 		), count != 0
 	}
 }
 
-// WhitelistedBalancesInvariant checks that all accounts in the application have non-negative whitelisted balances.
-func WhitelistedBalancesInvariant(k Keeper) sdk.Invariant {
+// WhitelistingInvariant checks that all accounts in the application have non-negative whitelisted balances.
+func WhitelistingInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
 			count int
@@ -68,7 +68,7 @@ func WhitelistedBalancesInvariant(k Keeper) sdk.Invariant {
 		}
 
 		return sdk.FormatInvariant(
-			types.ModuleName, WhitelistedBalancesInvariantName,
+			types.ModuleName, WhitelistingInvariantName,
 			fmt.Sprintf("amount of invalid whitelisted balances found: %d\n%s", count, msg),
 		), count != 0
 	}
@@ -128,7 +128,7 @@ func applyFeatureBalanceInvariant(
 
 	if !definition.IsFeatureEnabled(feature) && balance.IsPositive() {
 		count++
-		msg += fmt.Sprintf("\t feature %s is disabled, but %s balance %s is possitive\n", feature.String(), feature.String(), balance)
+		msg += fmt.Sprintf("\t feature %s is disabled, but %s balance %s is positive\n", feature.String(), feature.String(), balance)
 	}
 
 	return count, msg

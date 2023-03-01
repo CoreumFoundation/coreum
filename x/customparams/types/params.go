@@ -42,7 +42,7 @@ func validateMinSelfDelegation(i interface{}) error {
 	if v.IsNil() {
 		return errors.New("param min_self_delegation must be not nil")
 	}
-	if v.IsNegative() {
+	if !v.IsPositive() {
 		return errors.Errorf("param min_self_delegation must be positive: %s", v)
 	}
 
