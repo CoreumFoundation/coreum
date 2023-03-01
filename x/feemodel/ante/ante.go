@@ -53,7 +53,7 @@ func (fd FeeDecorator) actOnFeeModelOutput(ctx sdk.Context, feeTx sdk.FeeTx) err
 	if len(fees) == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFee, "no fee declared for transaction")
 	}
-	if fees[0].Denom != minGasPrice.Denom {
+	if len(fees) > 1 || fees[0].Denom != minGasPrice.Denom {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "fee must be paid in '%s' coin only", minGasPrice.Denom)
 	}
 
