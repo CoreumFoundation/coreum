@@ -582,7 +582,7 @@ var (
 
 	pattern_Query_Frozen_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7, 2, 8}, []string{"coreum", "asset", "nft", "v1", "classes", "class_id", "nfts", "id", "frozen"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Whitelisted_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7, 2, 8, 2, 9, 1, 0, 4, 1, 5, 9}, []string{"coreum", "asset", "nft", "v1", "classes", "class_id", "nfts", "id", "whitelisted", "account"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Whitelisted_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7, 2, 8, 1, 0, 4, 1, 5, 9}, []string{"coreum", "asset", "nft", "v1", "classes", "class_id", "nfts", "id", "whitelisted", "account"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_WhitelistedAccountsForNFT_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6, 1, 0, 4, 1, 5, 7, 2, 8}, []string{"coreum", "asset", "nft", "v1", "classes", "class_id", "nfts", "id", "whitelisted"}, "", runtime.AssumeColonVerbOpt(true)))
 )
