@@ -31,8 +31,7 @@ func TestAssetFTQueryParams(t *testing.T) {
 	resp, err := queryClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
 	require.NoError(t, err)
 
-	assert.Equal(t, chain.NetworkConfig.Denom, resp.Params.IssueFee.Denom)
-	assert.True(t, resp.Params.IssueFee.Amount.GT(sdk.ZeroInt()))
+	assert.Equal(t, chain.NetworkConfig.AssetFTConfig.IssueFee.String(), resp.Params.IssueFee.String())
 }
 
 // TestAssetFTIssue tests issue functionality of fungible tokens.
