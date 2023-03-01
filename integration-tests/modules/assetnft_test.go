@@ -967,7 +967,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		ID:      nftID,
 		Account: issuer.String(),
 	}
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgAddToWhitelist)),
