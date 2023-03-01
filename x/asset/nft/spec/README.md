@@ -21,7 +21,7 @@ custom logic into `wnft` module, and keeps most NFT related information on the `
 ## Token Features
 NFT tokens come with a set of features that the issuer can specify at the time of issuing a class, and then in some cases configured on each NFT level later.
 
-here is the list of features:
+Here is the list of features:
 - burning
 - freezing
 - whitelisting
