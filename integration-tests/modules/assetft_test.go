@@ -21,6 +21,19 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
+// TestAssetFTQueryParams queries parameters of asset/ft module.
+func TestAssetFTQueryParams(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	queryClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := queryClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	assert.Equal(t, sdk.NewCoin(chain.NetworkConfig.Denom, chain.NetworkConfig.AssetFTConfig.IssueFee).String(), resp.Params.IssueFee.String())
+}
+
 // TestAssetFTIssue tests issue functionality of fungible tokens.
 func TestAssetFTIssue(t *testing.T) {
 	t.Parallel()
