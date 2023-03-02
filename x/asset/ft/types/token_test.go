@@ -72,6 +72,9 @@ func TestValidateSubunit(t *testing.T) {
 		"3abc",
 		"3ABC",
 		"AB123456789012345678901234567890123456789012345678",
+		"ibc",
+		"ibc-",
+		"ibc/",
 	}
 
 	acceptableSubunits := []string{

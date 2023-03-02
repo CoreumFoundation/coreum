@@ -79,6 +79,7 @@ var reserved = []string{
 	strings.ToLower(constant.DenomTestDisplay),
 	strings.ToLower(constant.DenomMain),
 	strings.ToLower(constant.DenomMainDisplay),
+	"ibc",
 }
 
 // ValidateSubunit checks the provided subunit is valid.
