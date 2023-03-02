@@ -18,6 +18,9 @@ their own custom behavior.
 In other words the `assetnft` module defines the custom behavior for NFTs, enforces that behavior by injecting
 custom logic into `wnft` module, and keeps most NFT related information on the `original nft moduel`.
 
+This design means that some portion of data relating to NFTs will live in this module, and some will live in the 
+`original nft module`, so to get the final NFT functionality one should be aware and understand that they should 
+make some of the queries to the `original nft module`. 
 ## Token Features
 NFT tokens come with a set of features that the issuer can specify at the time of issuing a class, and then in some cases configured on each NFT level later.
 
