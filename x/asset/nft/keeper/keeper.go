@@ -200,6 +200,10 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only owner can burn the nft")
 	}
 
+	if err = k.isNFTSendable(ctx, classID, id); err != nil {
+		return err
+	}
+
 	return k.nftKeeper.Burn(ctx, classID, id)
 }
 
