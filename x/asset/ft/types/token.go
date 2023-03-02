@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ibctypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
@@ -79,7 +80,7 @@ var reserved = []string{
 	strings.ToLower(constant.DenomTestDisplay),
 	strings.ToLower(constant.DenomMain),
 	strings.ToLower(constant.DenomMainDisplay),
-	"ibc",
+	strings.ToLower(ibctypes.DenomPrefix),
 }
 
 // ValidateSubunit checks the provided subunit is valid.

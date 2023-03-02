@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ibctypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -72,9 +73,9 @@ func TestValidateSubunit(t *testing.T) {
 		"3abc",
 		"3ABC",
 		"AB123456789012345678901234567890123456789012345678",
-		"ibc",
-		"ibc-",
-		"ibc/",
+		ibctypes.DenomPrefix,
+		ibctypes.DenomPrefix + "-",
+		ibctypes.DenomPrefix + "/",
 	}
 
 	acceptableSubunits := []string{
