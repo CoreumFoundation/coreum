@@ -5,9 +5,11 @@ package modules
 import (
 	"context"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
@@ -2287,6 +2289,118 @@ func TestBareToken(t *testing.T) {
 		globalFreezeMsg,
 	)
 	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
+}
+
+// TestAuthz tests the authz module works well with assetft module.
+func TestAuthzWithAssetFT(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+
+	assetftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&authztypes.MsgGrant{},
+			&authztypes.MsgGrant{},
+		},
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+	}))
+
+	// mint and grant authorization
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        granter.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, granter)
+	grantFreezeMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgFreeze{})),
+		time.Now().Add(time.Minute),
+	)
+	require.NoError(t, err)
+
+	grantWhitelistMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgSetWhitelistedLimit{})),
+		time.Now().Add(time.Minute),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantFreezeMsg, grantWhitelistMsg, issueMsg)),
+		grantFreezeMsg, grantWhitelistMsg, issueMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(2, len(gransRes.Grants))
+
+	// try to whitelist and freeze using the authz
+	msgFreeze := &assetfttypes.MsgFreeze{
+		Sender:  granter.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(240)),
+	}
+
+	msgWhitelist := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  granter.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(921)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgFreeze, msgWhitelist})
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	}))
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	freezingRes, err := assetftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues("240", freezingRes.GetBalance().Amount.String())
+
+	whitelistingRes, err := assetftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues("921", whitelistingRes.GetBalance().Amount.String())
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
