@@ -2208,7 +2208,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(300)),
 	}
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
@@ -2330,7 +2330,7 @@ func TestAssetFTFreezeAndBurnRate(t *testing.T) {
 		Account: recipient1.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
 	}
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
@@ -2462,7 +2462,7 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_1(t *testing.T) {
 		Account: recipient1.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
 	}
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
@@ -2470,7 +2470,7 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_1(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// send from recipient1 to recipient2 (burn and commision rate must apply) - within unfrozen balance limit
+	// send from recipient1 to recipient2 (burn and commission rate must apply) - within unfrozen balance limit
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
@@ -2595,7 +2595,7 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2(t *testing.T) {
 		Account: recipient1.String(),
 		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
 	}
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
@@ -2603,7 +2603,7 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// send from recipient1 to recipient2 (burn and commision rate must apply) - within unfrozen balance limit
+	// send from recipient1 to recipient2 (burn and commission rate must apply) - within unfrozen balance limit
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
@@ -2624,7 +2624,7 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2(t *testing.T) {
 		&recipient2: 100,
 	})
 
-	// try send from recipient1 to recipient2. Tx should fail because send commision rate value
+	// try send from recipient1 to recipient2. Tx should fail because send commission rate value
 	// exceeded unfrozen balance limit (with burn rate value within limit)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
