@@ -43,6 +43,8 @@ jobs:
             go-cache: true
             linter-cache: false
             docker-cache: true
+
+    runs-on: ubuntu-22.04
     steps:
       - name: Go version used to build crust tool
         run: go version
