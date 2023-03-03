@@ -2248,6 +2248,8 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 // TestAssetFTFreeze_WithRates verifies freezing with both burn and send commission rates applied
 // and when one of the rates goes outside of unfrozen balance.
 func TestAssetFTFreeze_WithRates(t *testing.T) {
+	t.Parallel()
+
 	testData := []struct {
 		description              string
 		burnRate                 sdk.Dec
