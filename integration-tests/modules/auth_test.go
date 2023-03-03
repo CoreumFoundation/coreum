@@ -122,7 +122,6 @@ func TestAuthFeeLimits(t *testing.T) {
 		msg)
 	require.Error(t, err)
 	require.True(t, sdkerrors.ErrInvalidCoins.Is(err))
-
 }
 
 // TestAuthMultisig tests the cosmos-sdk multisig accounts and API.
