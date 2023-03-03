@@ -14,6 +14,7 @@ var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
+	GetParams(ctx sdk.Context) types.Params
 	GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error)
 	GetToken(ctx sdk.Context, denom string) (types.Token, error)
 	GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
@@ -32,6 +33,13 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 	return QueryService{
 		keeper: keeper,
 	}
+}
+
+// Params queries the parameters of x/asset/ft module.
+func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	return &types.QueryParamsResponse{
+		Params: qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx)),
+	}, nil
 }
 
 // Tokens returns fungible tokens query result.

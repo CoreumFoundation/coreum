@@ -12,6 +12,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
@@ -22,6 +23,19 @@ import (
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
+
+// TestAssetNFTQueryParams queries parameters of asset/nft module.
+func TestAssetNFTQueryParams(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	queryClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := queryClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	assert.Equal(t, sdk.NewCoin(chain.NetworkConfig.Denom, chain.NetworkConfig.AssetNFTConfig.MintFee).String(), resp.Params.MintFee.String())
+}
 
 // TestAssetNFTIssueClass tests non-fungible token class creation.
 func TestAssetNFTIssueClass(t *testing.T) {

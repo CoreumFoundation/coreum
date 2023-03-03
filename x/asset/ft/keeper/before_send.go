@@ -53,10 +53,10 @@ func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs
 		groupOutputs.add(out.Address, out.Coins)
 	}
 
-	return k.applyRates(ctx, groupInputs, groupOutputs)
+	return k.applyRules(ctx, groupInputs, groupOutputs)
 }
 
-func (k Keeper) applyRates(ctx sdk.Context, inputs, outputs groupedByDenomAccountOperations) error {
+func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccountOperations) error {
 	for denom, inOps := range inputs {
 		def, err := k.GetDefinition(ctx, denom)
 		if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
