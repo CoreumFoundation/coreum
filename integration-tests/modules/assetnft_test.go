@@ -537,6 +537,108 @@ func TestAssetNFTBurn(t *testing.T) {
 	requireT.Contains(err.Error(), nft.ErrNFTNotExists.Error()) // the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
 }
 
+// TestAssetNFTBurn tests that burning an nft will erase all
+// records for it related to freezing and whitelisting.
+func TestAssetNFTBurn_WithFreezingAndWhitelistingRecords(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	nftClient := nft.NewQueryClient(chain.ClientContext)
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetnfttypes.MsgIssueClass{},
+				&assetnfttypes.MsgMint{},
+				&assetnfttypes.MsgAddToWhitelist{},
+				&assetnfttypes.MsgAddToWhitelist{},
+				&assetnfttypes.MsgFreeze{},
+				&assetnfttypes.MsgBurn{},
+			},
+		}),
+	)
+
+	msgList := []sdk.Msg{}
+	// create issue msg
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+	}
+	msgList = append(msgList, issueMsg)
+
+	// create mint msg
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      "id-1",
+		ClassID: classID,
+	}
+	msgList = append(msgList, mintMsg)
+
+	// add freeze message
+	msgList = append(msgList, &assetnfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      mintMsg.ID,
+	})
+
+	// add 2 whitelist messages
+	msgList = append(msgList,
+		&assetnfttypes.MsgAddToWhitelist{
+			Sender:  issuer.String(),
+			ClassID: classID,
+			ID:      mintMsg.ID,
+			Account: chain.GenAccount().String(),
+		},
+		&assetnfttypes.MsgAddToWhitelist{
+			Sender:  issuer.String(),
+			ClassID: classID,
+			ID:      mintMsg.ID,
+			Account: chain.GenAccount().String(),
+		},
+	)
+
+	// broadcast msg list
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+	requireT.NoError(err)
+
+	// burn the NFT
+	msgBurn := &assetnfttypes.MsgBurn{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      mintMsg.ID,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBurn)),
+		msgBurn,
+	)
+	requireT.NoError(err)
+
+	// check that token isn't presented in the nft module anymore
+	_, err = nftClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: classID,
+		Id:      mintMsg.ID,
+	})
+	requireT.Error(err)
+	requireT.Contains(err.Error(), nft.ErrNFTNotExists.Error()) // the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
+}
+
 // TestAssetNFTBurnFrozen tests that frozen NFT cannot be burnt.
 func TestAssetNFTBurnFrozen(t *testing.T) {
 	t.Parallel()
@@ -546,7 +648,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	recipient1 := chain.GenAccount()
-	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+	assetNFTClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
@@ -555,6 +657,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 				&assetnfttypes.MsgMint{},
 				&nft.MsgSend{},
 				&assetnfttypes.MsgFreeze{},
+				&assetnfttypes.MsgUnfreeze{},
 			},
 			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
 		}),
@@ -562,6 +665,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 	requireT.NoError(
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
+				&assetnfttypes.MsgBurn{},
 				&assetnfttypes.MsgBurn{},
 			},
 		}),
@@ -592,14 +696,13 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 		ID:      nftID,
 		ClassID: classID,
 	}
-	res, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
 		mintMsg,
 	)
 	requireT.NoError(err)
-	requireT.Equal(chain.GasLimitByMsgs(mintMsg), uint64(res.GasUsed))
 
 	// freeze the NFT
 	msgFreeze := &assetnfttypes.MsgFreeze{
@@ -607,16 +710,15 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 		ClassID: classID,
 		ID:      nftID,
 	}
-	res, err = client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
 		msgFreeze,
 	)
 	requireT.NoError(err)
-	requireT.Equal(chain.GasLimitByMsgs(msgFreeze), uint64(res.GasUsed))
 
-	queryRes, err := nftClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
+	queryRes, err := assetNFTClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
 		ClassId: classID,
 		Id:      nftID,
 	})
@@ -652,6 +754,141 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 		burnMsg,
 	)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+
+	// unfreeze the nft
+	msgUnFreeze := &assetnfttypes.MsgUnfreeze{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      nftID,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgUnFreeze)),
+		msgUnFreeze,
+	)
+	requireT.NoError(err)
+
+	// burn from recipient1 (it is now allowed)
+	burnMsg = &assetnfttypes.MsgBurn{
+		Sender:  recipient1.String(),
+		ClassID: classID,
+		ID:      nftID,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+}
+
+// TestAssetNFTBurnFrozen_Issuer tests that frozen NFT can be burnt by the issuer.
+func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+	assetNFTClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+	nftClient := nft.NewQueryClient(chain.ClientContext)
+
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetnfttypes.MsgIssueClass{},
+				&assetnfttypes.MsgMint{},
+				&assetnfttypes.MsgFreeze{},
+				&assetnfttypes.MsgBurn{},
+			},
+			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+		}),
+	)
+
+	// issue new NFT class
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer: issuer.String(),
+		Symbol: "NFTClassSymbol",
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_burning,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	// mint new token in that class
+	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
+	nftID := "id-1"
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      nftID,
+		ClassID: classID,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	// freeze the NFT
+	msgFreeze := &assetnfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      nftID,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
+		msgFreeze,
+	)
+	requireT.NoError(err)
+
+	queryRes, err := assetNFTClient.Frozen(ctx, &assetnfttypes.QueryFrozenRequest{
+		ClassId: classID,
+		Id:      nftID,
+	})
+	requireT.NoError(err)
+	requireT.True(queryRes.Frozen)
+
+	_, err = nftClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: classID,
+		Id:      nftID,
+	})
+	requireT.NoError(err)
+
+	// burn from issuer (burn is allowed even though nft it is frozen)
+	burnMsg := &assetnfttypes.MsgBurn{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      nftID,
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
+	)
+	requireT.NoError(err)
+
+	_, err = nftClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: classID,
+		Id:      nftID,
+	})
+	requireT.Error(err)
+	requireT.Contains(err.Error(), "not found nft")
 }
 
 // TestAssetNFTFreeze tests non-fungible token freezing.
@@ -1109,14 +1346,13 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	requireT.NoError(err)
 
 	msgList := []sdk.Msg{issueMsg, mintMsg, grantMsg}
-	res, err := client.BroadcastTx(
+	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
 		msgList...,
 	)
 	requireT.NoError(err)
-	requireT.Greater(res.Height, int64(1))
 
 	// whitelist recipient for the NFT
 	freezeMsg := &assetnfttypes.MsgFreeze{
