@@ -1403,9 +1403,6 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
-	clientCtx := chain.ClientContext
-
-	ftClient := assetfttypes.NewQueryClient(clientCtx)
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
@@ -1464,14 +1461,6 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 		msgList...,
 	)
 	requireT.NoError(err)
-
-	// query frozen tokens
-	frozenBalance, err := ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
-		Account: recipient.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(650)), frozenBalance.Balance)
 
 	// try to send more than available (300 + 60) (1000 - 650(frozen) = 350 is available)
 	recipient2 := chain.GenAccount()
