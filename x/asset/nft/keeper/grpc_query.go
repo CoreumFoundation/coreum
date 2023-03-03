@@ -14,6 +14,7 @@ var _ types.QueryServer = QueryService{}
 
 // QueryKeeper defines subscope of keeper methods required by query service.
 type QueryKeeper interface {
+	GetParams(ctx sdk.Context) types.Params
 	GetClass(ctx sdk.Context, classID string) (types.Class, error)
 	IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error)
 	IsWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error)
@@ -32,9 +33,16 @@ func NewQueryService(keeper QueryKeeper) QueryService {
 	}
 }
 
+// Params queries the parameters of x/asset/nft module.
+func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	return &types.QueryParamsResponse{
+		Params: qs.keeper.GetParams(sdk.UnwrapSDKContext(ctx)),
+	}, nil
+}
+
 // Class reruns the asset NFT class.
-func (q QueryService) Class(ctx context.Context, req *types.QueryClassRequest) (*types.QueryClassResponse, error) {
-	nftClass, err := q.keeper.GetClass(sdk.UnwrapSDKContext(ctx), req.Id)
+func (qs QueryService) Class(ctx context.Context, req *types.QueryClassRequest) (*types.QueryClassResponse, error) {
+	nftClass, err := qs.keeper.GetClass(sdk.UnwrapSDKContext(ctx), req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -45,20 +53,20 @@ func (q QueryService) Class(ctx context.Context, req *types.QueryClassRequest) (
 }
 
 // Frozen reruns whether NFT is frozen or not.
-func (q QueryService) Frozen(ctx context.Context, req *types.QueryFrozenRequest) (*types.QueryFrozenResponse, error) {
-	frozen, err := q.keeper.IsFrozen(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id)
+func (qs QueryService) Frozen(ctx context.Context, req *types.QueryFrozenRequest) (*types.QueryFrozenResponse, error) {
+	frozen, err := qs.keeper.IsFrozen(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id)
 	return &types.QueryFrozenResponse{
 		Frozen: frozen,
 	}, err
 }
 
 // Whitelisted checks to see if an account is whitelisted for an NFT.
-func (q QueryService) Whitelisted(ctx context.Context, req *types.QueryWhitelistedRequest) (*types.QueryWhitelistedResponse, error) {
+func (qs QueryService) Whitelisted(ctx context.Context, req *types.QueryWhitelistedRequest) (*types.QueryWhitelistedResponse, error) {
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidInput, "invalid account")
 	}
-	isWhitelisted, err := q.keeper.IsWhitelisted(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id, account)
+	isWhitelisted, err := qs.keeper.IsWhitelisted(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id, account)
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +77,8 @@ func (q QueryService) Whitelisted(ctx context.Context, req *types.QueryWhitelist
 }
 
 // WhitelistedAccountsForNFT returns the list of accounts which are whitelited to hold this NFT.
-func (q QueryService) WhitelistedAccountsForNFT(ctx context.Context, req *types.QueryWhitelistedAccountsForNFTRequest) (*types.QueryWhitelistedAccountsForNFTResponse, error) {
-	pageRes, accounts, err := q.keeper.GetAllWhitelistedAccountsForNFT(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id, req.Pagination)
+func (qs QueryService) WhitelistedAccountsForNFT(ctx context.Context, req *types.QueryWhitelistedAccountsForNFTRequest) (*types.QueryWhitelistedAccountsForNFTResponse, error) {
+	pageRes, accounts, err := qs.keeper.GetAllWhitelistedAccountsForNFT(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id, req.Pagination)
 	return &types.QueryWhitelistedAccountsForNFTResponse{
 		Pagination: pageRes,
 		Accounts:   accounts,
