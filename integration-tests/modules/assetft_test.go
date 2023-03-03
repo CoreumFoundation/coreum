@@ -1956,7 +1956,7 @@ func TestBareToken(t *testing.T) {
 	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 }
 
-// TestAssetFTBurnRate_OnMinting verifies both burn rate and send commision rate are not applied on received minted tokens
+// TestAssetFTBurnRate_OnMinting verifies both burn rate and send commision rate are not applied on received minted tokens.
 func TestAssetFTBurnRate_SendCommissionRate_OnMinting(t *testing.T) {
 	t.Parallel()
 
@@ -2024,7 +2024,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnMinting(t *testing.T) {
 	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(1500)).String(), balance.GetBalance().String())
 }
 
-// TestAssetFTBurnRate_OnBurning verifies that both burn rate and send commission rate are not applied when a token is burnt
+// TestAssetFTBurnRate_OnBurning verifies that both burn rate and send commission rate are not applied when a token is burnt.
 func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	t.Parallel()
 
@@ -2128,7 +2128,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	assertT.EqualValues(burnCoin, oldSupply.GetAmount().Sub(newSupply.GetAmount()))
 }
 
-// TestAssetFTFreezeAndBurn verifies that it is not possible to burn more tokens - outside of freezing limit
+// TestAssetFTFreezeAndBurn verifies that it is not possible to burn more tokens - outside of freezing limit.
 func TestAssetFTFreezeAndBurn(t *testing.T) {
 	t.Parallel()
 
@@ -2251,139 +2251,8 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(300)).String(), recipientBalance.GetBalance().String())
 }
 
-// TestAssetFTFreezeAndBurnRate verifies that it is not possible apply a burn rate on sending tokens - outside of freezing limit
-func TestAssetFTFreezeAndBurnRate(t *testing.T) {
-	t.Parallel()
-
-	ctx, chain := integrationtests.NewTestingContext(t)
-
-	requireT := require.New(t)
-	assertT := assert.New(t)
-	issuer := chain.GenAccount()
-	recipient1 := chain.GenAccount()
-	recipient2 := chain.GenAccount()
-
-	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgFreeze{},
-			},
-			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
-		}),
-	)
-
-	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-			},
-			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
-		}),
-	)
-
-	// Issue an fungible token
-	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:             issuer.String(),
-		Symbol:             "ABC",
-		Subunit:            "abc",
-		Precision:          6,
-		InitialAmount:      sdk.NewInt(1000),
-		Description:        "ABC Description",
-		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing},
-		BurnRate:           sdk.MustNewDecFromStr("0.50"), // set burn rate
-		SendCommissionRate: sdk.NewDec(0),
-	}
-
-	res, err := client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
-		issueMsg,
-	)
-
-	requireT.NoError(err)
-	tokenIssuedEvents, err := event.FindTypedEvents[*assetfttypes.EventIssued](res.Events)
-	requireT.NoError(err)
-	denom := tokenIssuedEvents[0].Denom
-
-	// send some coins to the recipient
-	sendMsg := &banktypes.MsgSend{
-		FromAddress: issuer.String(),
-		ToAddress:   recipient1.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(500))),
-	}
-
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
-		sendMsg,
-	)
-	requireT.NoError(err)
-
-	// freeze 200 tokens
-	freezeMsg := &assetfttypes.MsgFreeze{
-		Sender:  issuer.String(),
-		Account: recipient1.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
-	}
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
-		freezeMsg,
-	)
-	requireT.NoError(err)
-
-	// send from recipient1 to recipient2 (burn must apply) - within unfrozen balance limit
-	sendMsg = &banktypes.MsgSend{
-		FromAddress: recipient1.String(),
-		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
-	}
-
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(recipient1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
-		sendMsg,
-	)
-	requireT.NoError(err)
-
-	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     500,
-		&recipient1: 350,
-		&recipient2: 100,
-	})
-
-	// send from recipient1 to recipient2 outside of unfrozen balance limit. Tx should fail
-	sendMsg = &banktypes.MsgSend{
-		FromAddress: recipient1.String(),
-		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(120))),
-	}
-
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(recipient1),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
-		sendMsg,
-	)
-	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
-	// verify balances did not change
-	assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
-		&issuer:     500,
-		&recipient1: 350,
-		&recipient2: 100,
-	})
-}
-
 // TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_1 verifies that
-// it is not possible apply a burn rate on sending tokens - outside of freezing limit (when send commission rate value is within limit)
+// it is not possible apply a burn rate on sending tokens - outside of freezing limit (when send commission rate value is within limit).
 func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_1(t *testing.T) {
 	t.Parallel()
 
@@ -2516,7 +2385,9 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_1(t *testing.T) {
 }
 
 // TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2 verifies that
-// it is not possible apply a send commission rate on sending tokens - outside of freezing limit (when burn rate value is within limit)
+// it is not possible apply a send commission rate on sending tokens - outside of freezing limit (when burn rate value is within limit).
+//
+// nolint:dupl
 func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2(t *testing.T) {
 	t.Parallel()
 
