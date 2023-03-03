@@ -1956,7 +1956,7 @@ func TestBareToken(t *testing.T) {
 	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 }
 
-// TestAssetFTBurnRate_OnMinting verifies both burn rate and send commision rate are not applied on received minted tokens.
+// TestAssetFTBurnRate_OnMinting verifies both burn rate and send commission rate are not applied on received minted tokens.
 func TestAssetFTBurnRate_SendCommissionRate_OnMinting(t *testing.T) {
 	t.Parallel()
 
@@ -2387,7 +2387,7 @@ func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_1(t *testing.T) {
 // TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2 verifies that
 // it is not possible apply a send commission rate on sending tokens - outside of freezing limit (when burn rate value is within limit).
 //
-// nolint:dupl
+//nolint:dupl
 func TestAssetFTFreeze_WithBurnRate_WithSendCommissionRate_2(t *testing.T) {
 	t.Parallel()
 
