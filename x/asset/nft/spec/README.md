@@ -51,4 +51,4 @@ If this feature is enabled, then the NFT cannot be directly transferred between 
 send the tokens they hold directly to user B. This feature opens up the door for different use cases, one of which is that it might be used to force transfer of ownership to go via DEX, so that the royalty fee is applied and the creator of the NFT always gets a royalty fee.
 
 ### Royalty Rate
-This feature is related to the DEX, and if it is enable, every time that an NFT is traded on the DEX, a percentage of the the traded value is sent to the issuer as royalty fee.
+This feature is related to the DEX, and if it is enabled, every time that an NFT is traded on the DEX, a percentage of the the traded value is sent to the issuer as royalty fee.
