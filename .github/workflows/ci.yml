@@ -80,8 +80,6 @@ jobs:
           path: crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-      - name: Shutdown crust znet
-        run: "crust znet remove"
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
