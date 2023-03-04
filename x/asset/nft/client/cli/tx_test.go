@@ -123,7 +123,7 @@ func TestCmdWhitelist(t *testing.T) {
 		"",
 		testNetwork,
 		"0",
-		types.ClassFeature_whitelisting, //nolint:nosnakecase // generated variable
+		types.ClassFeature_whitelisting,
 	)
 	// mint nft
 	nftID := "nft-1"

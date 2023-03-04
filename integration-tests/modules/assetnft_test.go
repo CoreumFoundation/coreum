@@ -758,7 +758,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		Issuer: issuer.String(),
 		Symbol: "NFTClassSymbol",
 		Features: []assetnfttypes.ClassFeature{
-			assetnfttypes.ClassFeature_whitelisting, //nolint:nosnakecase // generated variable
+			assetnfttypes.ClassFeature_whitelisting,
 		},
 	}
 	_, err := client.BroadcastTx(
@@ -800,7 +800,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// whitelist recipient for the NFT
 	msgAddToWhitelist := &assetnfttypes.MsgAddToWhitelist{
@@ -877,7 +877,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// whitelist recipient2 for the NFT
 	msgAddToWhitelist = &assetnfttypes.MsgAddToWhitelist{
@@ -951,5 +951,5 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 }

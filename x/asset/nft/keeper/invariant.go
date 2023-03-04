@@ -37,12 +37,6 @@ func FreezingInvariant(k Keeper) sdk.Invariant {
 		}
 		for _, frozen := range frozenNFTs {
 			for _, nftID := range frozen.NftIDs {
-				found := k.nftKeeper.HasNFT(ctx, frozen.ClassID, nftID)
-				if !found {
-					violationsCount++
-					msg += fmt.Sprintf("\t frozen nft (%s/%s) not registered on the original nft module", frozen.ClassID, nftID)
-				}
-
 				classDefinition, err := k.GetClassDefinition(ctx, frozen.ClassID)
 				if types.ErrClassNotFound.Is(err) {
 					violationsCount++
@@ -78,11 +72,6 @@ func WhitelistingInvariant(k Keeper) sdk.Invariant {
 			panic(err)
 		}
 		for _, whitelisted := range whitelistedNFTs {
-			found := k.nftKeeper.HasNFT(ctx, whitelisted.ClassID, whitelisted.NftID)
-			if !found {
-				violationsCount++
-				msg += fmt.Sprintf("\t(%s/%s) nft not registered on the original nft module", whitelisted.ClassID, whitelisted.NftID)
-			}
 			classDefinition, err := k.GetClassDefinition(ctx, whitelisted.ClassID)
 
 			if types.ErrClassNotFound.Is(err) {
@@ -105,7 +94,7 @@ func WhitelistingInvariant(k Keeper) sdk.Invariant {
 	}
 }
 
-// OriginalClassExistsInvariant checks that all are registered Classes have counterpart on the original Cosmos SDK NFT module.
+// OriginalClassExistsInvariant checks that all the registered Classes have counterpart on the original Cosmos SDK NFT module.
 func OriginalClassExistsInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (

@@ -74,7 +74,7 @@ func (k Keeper) GetClass(ctx sdk.Context, classID string) (types.Class, error) {
 
 	class, found := k.nftKeeper.GetClass(ctx, classID)
 	if !found {
-		return types.Class{}, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft class with ID:%s not found", classID)
+		return types.Class{}, sdkerrors.Wrapf(types.ErrClassNotFound, "nft class with ID:%s not found", classID)
 	}
 
 	return types.Class{
@@ -348,6 +348,19 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 
 // IsFrozen return whether a non-fungible token is frozen or not.
 func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	if err != nil {
+		return false, err
+	}
+
+	if !classDefinition.IsFeatureEnabled(types.ClassFeature_freezing) {
+		return false, sdkerrors.Wrapf(types.ErrFeatureDisabled, `feature "freezing" is disabled`)
+	}
+
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
 	store := ctx.KVStore(k.storeKey)
 	key, err := types.CreateFreezingKey(classID, nftID)
 	if err != nil {
@@ -369,6 +382,10 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.Pag
 		if err != nil {
 			return err
 		}
+		if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+			return nil
+		}
+
 		mp[classID] = append(mp[classID], nftID)
 		return nil
 	})
@@ -389,6 +406,19 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.Pag
 
 // IsWhitelisted checks to see if an account is whitelisted for an NFT.
 func (k Keeper) IsWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error) {
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	if err != nil {
+		return false, err
+	}
+
+	if !classDefinition.IsFeatureEnabled(types.ClassFeature_whitelisting) {
+		return false, sdkerrors.Wrapf(types.ErrFeatureDisabled, `feature "whitelisting" is disabled`)
+	}
+
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
 	key, err := types.CreateWhitelistingKey(classID, nftID, account)
 	if err != nil {
 		return false, err
@@ -400,6 +430,10 @@ func (k Keeper) IsWhitelisted(ctx sdk.Context, classID, nftID string, account sd
 
 // GetAllWhitelistedAccountsForNFT returns all whitelisted accounts for all NFTs.
 func (k Keeper) GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) (*query.PageResponse, []string, error) {
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return nil, nil, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
 	if err != nil {
 		return nil, nil, err
@@ -411,6 +445,7 @@ func (k Keeper) GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID 
 		if !bytes.Equal(value, whitelistedNFTStoreValue) {
 			return errors.Errorf("value stored in whitelisting store is not %x, value %x", whitelistedNFTStoreValue, value)
 		}
+
 		account := sdk.AccAddress(key[1:]) // the first byte contains the length prefix
 		accounts = append(accounts, account.String())
 		return nil
@@ -435,13 +470,18 @@ func (k Keeper) GetAllWhitelisted(ctx sdk.Context, q *query.PageRequest) (*query
 			return errors.Errorf("value stored in whitelisting store is not %x, value %x", whitelistedNFTStoreValue, value)
 		}
 		classID, nftID, account, err := types.ParseWhitelistingKey(key)
+		if err != nil {
+			return err
+		}
+		if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+			return nil
+		}
+
 		uniqueID := nftUniqueID{
 			classID: classID,
 			nftID:   nftID,
 		}
-		if err != nil {
-			return err
-		}
+
 		accountString := account.String()
 		mp[uniqueID] = append(mp[uniqueID], accountString)
 		return nil
@@ -469,7 +509,7 @@ func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, a
 		return err
 	}
 
-	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_whitelisting); err != nil { //nolint:nosnakecase // generated variable
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_whitelisting); err != nil {
 		return err
 	}
 
@@ -495,7 +535,7 @@ func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, send
 		return err
 	}
 
-	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_whitelisting); err != nil { //nolint:nosnakecase // generated variable
+	if err = classDefinition.CheckFeatureAllowed(sender, types.ClassFeature_whitelisting); err != nil {
 		return err
 	}
 
@@ -548,24 +588,26 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		return nil
 	}
 
-	if classDefinition.IsFeatureEnabled(types.ClassFeature_disable_sending) { //nolint:nosnakecase // generated variable
+	if classDefinition.IsFeatureEnabled(types.ClassFeature_disable_sending) {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s has sending disabled", classID, nftID)
 	}
 
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
-	if err != nil {
+	switch {
+	case err == nil:
+		if frozen {
+			return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
+		}
+	case errors.Is(err, types.ErrFeatureDisabled):
+	default:
 		return err
-	}
-
-	if frozen {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
 	}
 
 	return nil
 }
 
 func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver sdk.AccAddress) error {
-	classDefinition, err := k.GetClassDefinition(ctx, classID)
+	_, err := k.GetClassDefinition(ctx, classID)
 	// we return nil here, since we want the original tests of the nft module to pass, but they
 	// fail if we return errors for unregistered NFTs on asset. Also the original nft module
 	// does not have access to the asset module to register the NFTs
@@ -576,19 +618,15 @@ func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver
 		return err
 	}
 
-	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
-		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
-	}
-
-	if classDefinition.IsFeatureEnabled(types.ClassFeature_whitelisting) { //nolint:nosnakecase // generated variable
-		whitelisted, err := k.IsWhitelisted(ctx, classID, nftID, receiver)
-		if err != nil {
-			return err
-		}
-
+	whitelisted, err := k.IsWhitelisted(ctx, classID, nftID, receiver)
+	switch {
+	case err == nil:
 		if !whitelisted {
-			return sdkerrors.ErrUnauthorized
+			return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is not whitelisted for account %s", classID, nftID, receiver)
 		}
+	case errors.Is(err, types.ErrFeatureDisabled):
+	default:
+		return err
 	}
 
 	return nil
