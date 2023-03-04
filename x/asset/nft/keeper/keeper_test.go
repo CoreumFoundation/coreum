@@ -199,7 +199,13 @@ func TestKeeper_Burn(t *testing.T) {
 	err = assetNFTKeeper.Burn(ctx, issuer, classID, nftID)
 	requireT.ErrorIs(err, types.ErrNFTNotFound)
 
-	// mint NFT
+	// mint the nft with the same ID (must fail)
+	err = assetNFTKeeper.Mint(ctx, settings)
+	requireT.Error(err)
+	requireT.ErrorIs(err, types.ErrInvalidInput)
+
+	// mint new NFT
+	settings.ID += "-2"
 	err = assetNFTKeeper.Mint(ctx, settings)
 	requireT.NoError(err)
 
@@ -207,7 +213,7 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 
 	// try burn the nft with the enabled feature from the recipient account
-	err = assetNFTKeeper.Burn(ctx, recipient, classID, nftID)
+	err = assetNFTKeeper.Burn(ctx, recipient, classID, settings.ID)
 	requireT.NoError(err)
 
 	// issue class without burning feature
@@ -233,7 +239,8 @@ func TestKeeper_Burn(t *testing.T) {
 	err = assetNFTKeeper.Burn(ctx, issuer, classID, nftID)
 	requireT.NoError(err)
 
-	// mint the nft one more time
+	// mint new nft
+	settings.ID += "-2"
 	err = assetNFTKeeper.Mint(ctx, settings)
 	requireT.NoError(err)
 
@@ -241,7 +248,7 @@ func TestKeeper_Burn(t *testing.T) {
 	requireT.NoError(err)
 
 	// try burn the nft with the disabled feature from the recipient account
-	err = assetNFTKeeper.Burn(ctx, recipient, classID, nftID)
+	err = assetNFTKeeper.Burn(ctx, recipient, classID, settings.ID)
 	requireT.ErrorIs(err, types.ErrFeatureDisabled)
 }
 

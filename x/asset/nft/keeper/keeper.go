@@ -19,6 +19,7 @@ import (
 var (
 	frozenNFTStoreValue      = []byte{0x01}
 	whitelistedNFTStoreValue = []byte{0x01}
+	burntNFTStoreValue       = []byte{0x01}
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
@@ -226,7 +227,15 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "classID %q not found", settings.ClassID)
 	}
 
-	if nftFound := k.nftKeeper.HasNFT(ctx, settings.ClassID, settings.ID); nftFound {
+	if k.nftKeeper.HasNFT(ctx, settings.ClassID, settings.ID) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q already defined for the class", settings.ID)
+	}
+
+	burnt, err := k.IsBurnt(ctx, settings.ClassID, settings.ID)
+	if err != nil {
+		return err
+	}
+	if burnt {
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q already defined for the class", settings.ID)
 	}
 
@@ -273,7 +282,65 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only owner can burn the nft")
 	}
 
-	return k.nftKeeper.Burn(ctx, classID, id)
+	if err := k.nftKeeper.Burn(ctx, classID, id); err != nil {
+		return err
+	}
+
+	return k.SetBurnt(ctx, classID, id)
+}
+
+// IsBurnt return whether a non-fungible token is burnt or not.
+func (k Keeper) IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error) {
+	store := ctx.KVStore(k.storeKey)
+	key, err := types.CreateBurningKey(classID, nftID)
+	if err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(store.Get(key), burntNFTStoreValue), nil
+}
+
+// SetBurnt marks the nft burnt, but does not make any checks
+// should not be used directly outside the module except for genesis.
+func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
+	key, err := types.CreateBurningKey(classID, nftID)
+	if err != nil {
+		return err
+	}
+	store := ctx.KVStore(k.storeKey)
+	store.Set(key, burntNFTStoreValue)
+	return nil
+}
+
+// GetBurntNFTs return paginated burnt NFTs.
+func (k Keeper) GetBurntNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.BurntNFT, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix)
+	mp := make(map[string][]string, 0)
+	pageRes, err := query.Paginate(store, q, func(key, value []byte) error {
+		if !bytes.Equal(value, burntNFTStoreValue) {
+			return errors.Errorf("value stored in burning store is not %x, value %x", burntNFTStoreValue, value)
+		}
+		classID, nftID, err := types.ParseBurningKey(key)
+		if err != nil {
+			return err
+		}
+
+		mp[classID] = append(mp[classID], nftID)
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	burnt := make([]types.BurntNFT, 0, len(mp))
+	for classID, nfts := range mp {
+		burnt = append(burnt, types.BurntNFT{
+			ClassID: classID,
+			NftIDs:  nfts,
+		})
+	}
+
+	return pageRes, burnt, nil
 }
 
 // Freeze freezes a non-fungible token.

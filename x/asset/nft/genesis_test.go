@@ -102,11 +102,24 @@ func TestInitAndExportGenesis(t *testing.T) {
 			})
 	}
 
+	// Burnt NFTs
+	var burnt []types.BurntNFT
+	for i := 0; i < 5; i++ {
+		burnt = append(burnt, types.BurntNFT{
+			ClassID: fmt.Sprintf("class-id-%d", i),
+			NftIDs: []string{
+				fmt.Sprintf("burnt-nft-id-1-%d", i),
+				fmt.Sprintf("burnt-nft-id-2-%d", i),
+			},
+		})
+	}
+
 	genState := types.GenesisState{
 		Params:                 types.DefaultParams(),
 		ClassDefinitions:       classDefinitions,
 		FrozenNFTs:             frozen,
 		WhitelistedNFTAccounts: whitelisted,
+		BurntNFTs:              burnt,
 	}
 
 	// init the keeper
@@ -138,4 +151,5 @@ func TestInitAndExportGenesis(t *testing.T) {
 		sort.Strings(st.Accounts)
 	}
 	assertT.ElementsMatch(genState.WhitelistedNFTAccounts, exportedGenState.WhitelistedNFTAccounts)
+	assertT.ElementsMatch(genState.BurntNFTs, exportedGenState.BurntNFTs)
 }

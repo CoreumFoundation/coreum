@@ -466,6 +466,8 @@ func TestAssetNFTBurn(t *testing.T) {
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
 				&assetnfttypes.MsgBurn{},
+				&assetnfttypes.MsgMint{},
+				&assetnfttypes.MsgMint{},
 			},
 		}),
 	)
@@ -547,6 +549,26 @@ func TestAssetNFTBurn(t *testing.T) {
 	})
 	requireT.Error(err)
 	requireT.Contains(err.Error(), nft.ErrNFTNotExists.Error()) // the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
+
+	// try to mint token with the same ID, should fail
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(err, assetnfttypes.ErrInvalidInput)
+
+	// mint token with different ID, should succeed
+	mintMsg.ID += "-2"
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
 }
 
 // TestAssetNFTFreeze tests non-fungible token freezing.
