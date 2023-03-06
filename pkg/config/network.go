@@ -82,10 +82,20 @@ func init() {
 		}
 	)
 
-	// devnet vars
+	// mainnet vars
 
-	// 10m delegated and 1m extra to the txs
-	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
+	// CORE allocation:
+	// 500M = (99_880_000 + 120_000) + 4 * 100_000_000
+	// In total 6 wallets will be created in genesis:
+	// where 120_000 is a balance of wallet to create genesis validators.
+	// where 99_880_000 is a balance of foundation-0 wallet.
+	// where 4 * 100_000_000 is a balance of each of foundation-{1-4} wallets.
+	mainGenesisValidatorsCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(120_000_000_000)))
+
+	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_880_000_000_000)))
+	mainFoundationOtherInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(100_000_000_000_000)))
+
+	// testnet vars
 
 	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
 	// 500M = 4 * (124_950_000 + 50_000)
@@ -94,33 +104,73 @@ func init() {
 	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(124_950_000_000_000)))
 	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(50_000_000_000)))
 
-	devGovConfig := govConfig
-	devGovConfig.ProposalConfig.VotingPeriod = "24h"
-
-	// testnet vars
-
 	testGovConfig := govConfig
 	testGovConfig.ProposalConfig.VotingPeriod = "24h"
+
+	// devnet vars
+
+	// 10m delegated and 1m extra to the txs
+	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
+
+	devGovConfig := govConfig
+	devGovConfig.ProposalConfig.VotingPeriod = "24h"
 
 	// configs
 	networkConfigs = map[constant.ChainID]NetworkConfig{
 		constant.ChainIDMain: {
 			ChainID:              constant.ChainIDMain,
-			Enabled:              false,
-			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+			GenesisTime:          time.Date(2023, 3, 7, 12, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixMain,
 			MetadataDisplayDenom: constant.DenomMainDisplay,
 			Denom:                constant.DenomMain,
 			Fee:                  feeConfig,
-			GovConfig:            govConfig,
-			StakingConfig:        stakingConfig,
-			CustomParamsConfig:   customParamsConfig,
-			AssetFTConfig:        assetFTConfig,
-			AssetNFTConfig:       assetNFTConfig,
+			NodeConfig: NodeConfig{
+				SeedPeers: []string{
+					// TODO: Add seeds.
+				},
+			},
+			GovConfig:          govConfig,
+			StakingConfig:      stakingConfig,
+			CustomParamsConfig: customParamsConfig,
+			AssetFTConfig:      assetFTConfig,
+			AssetNFTConfig:     assetNFTConfig,
+			FundedAccounts: []FundedAccount{
+				// TODO: Replace with real addresses.
+				// genesis-validators-creator: 120k
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainGenesisValidatorsCreatorBalance,
+				},
+				// foundation-0: 99_880_000
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationZeroInitialBalance,
+				},
+				// foundation-1: 100M
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationOtherInitialBalance,
+				},
+				// foundation-2: 100M
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationOtherInitialBalance,
+				},
+				// foundation-3: 100M
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationOtherInitialBalance,
+				},
+				// foundation-4: 100M
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationOtherInitialBalance,
+				},
+			},
+			GenTxs: []json.RawMessage{}, // TODO: Add real transactions.
 		},
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,
-			Enabled:              true,
 			GenesisTime:          time.Date(2023, 1, 16, 12, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixTest,
 			MetadataDisplayDenom: constant.DenomTestDisplay,
@@ -187,7 +237,6 @@ func init() {
 		},
 		constant.ChainIDDev: {
 			ChainID:              constant.ChainIDDev,
-			Enabled:              true,
 			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixDev,
 			MetadataDisplayDenom: constant.DenomDevDisplay,
@@ -261,15 +310,13 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 	return genTxs
 }
 
-// EnabledNetworks returns enabled networks.
-func EnabledNetworks() []Network {
-	enabledNetworks := make([]Network, 0, len(networkConfigs))
+// Networks returns slice of available networks.
+func Networks() []Network {
+	networks := make([]Network, 0, len(networkConfigs))
 	for _, nc := range networkConfigs {
-		if nc.Enabled {
-			enabledNetworks = append(enabledNetworks, NewNetwork(nc))
-		}
+		networks = append(networks, NewNetwork(nc))
 	}
-	return enabledNetworks
+	return networks
 }
 
 // FeeConfig is the part of network config defining parameters of our fee model.
@@ -337,8 +384,6 @@ type NetworkConfig struct {
 	CustomParamsConfig   CustomParamsConfig
 	AssetFTConfig        AssetFTConfig
 	AssetNFTConfig       AssetNFTConfig
-	// TODO: remove this field once all preconfigured networks are enabled
-	Enabled bool
 	// TODO: remove this field once we have real upgrade handler
 	IsFakeUpgradeHandlerEnabled bool
 }
@@ -611,10 +656,6 @@ func NetworkByChainID(id constant.ChainID) (Network, error) {
 	nc, err := NetworkConfigByChainID(id)
 	if err != nil {
 		return Network{}, err
-	}
-
-	if !nc.Enabled {
-		return Network{}, errors.Errorf("%s is not yet ready, use --chain-id=%s for devnet", id, string(constant.ChainIDDev))
 	}
 
 	return NewNetwork(nc), nil
