@@ -23,7 +23,7 @@ const (
 // GetQueryCmd returns the cli query commands for this module.
 func GetQueryCmd() *cobra.Command {
 	nftQueryCmd := &cobra.Command{
-		Use:                        nft.ModuleName,
+		Use:                        nft.CLIName,
 		Short:                      "Querying commands for the nft module",
 		Long:                       "",
 		DisableFlagParsing:         true,
