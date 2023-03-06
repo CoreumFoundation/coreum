@@ -2391,7 +2391,6 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			})
 		})
 	}
-
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
