@@ -49,11 +49,12 @@ func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, nex
 
 func (fd FeeDecorator) actOnFeeModelOutput(ctx sdk.Context, feeTx sdk.FeeTx) error {
 	fees := feeTx.GetFee()
-	minGasPrice := fd.keeper.GetMinGasPrice(ctx)
 	if len(fees) == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFee, "no fee declared for transaction")
 	}
-	if fees[0].Denom != minGasPrice.Denom {
+
+	minGasPrice := fd.keeper.GetMinGasPrice(ctx)
+	if len(fees) > 1 || fees[0].Denom != minGasPrice.Denom {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "fee must be paid in '%s' coin only", minGasPrice.Denom)
 	}
 
