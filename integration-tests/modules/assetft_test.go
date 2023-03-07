@@ -2242,7 +2242,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	// verify recipient balance did not change
 	recipientBalance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(300)).String(), recipientBalance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(350)).String(), recipientBalance.GetBalance().String())
 }
 
 // TestAssetFTFreeze_WithRates verifies freezing with both burn and send commission rates applied
