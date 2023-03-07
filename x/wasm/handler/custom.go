@@ -170,16 +170,15 @@ func NewCoreumMsgHandler() *wasmkeeper.MessageEncoders {
 			if err != nil {
 				return nil, err
 			}
-			msgs := make([]sdk.Msg, 0)
 			if decodedMsg == nil {
-				return msgs, nil
+				return nil, nil
 			}
 
 			if err := decodedMsg.ValidateBasic(); err != nil {
 				return nil, errors.WithStack(err)
 			}
 
-			return append(msgs, decodedMsg), nil
+			return []sdk.Msg{decodedMsg}, nil
 		},
 	}
 }

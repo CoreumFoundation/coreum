@@ -1,7 +1,4 @@
-use coreum_wasm_sdk::assetnft::{
-    ClassResponse as AssetNFTClassResponse, FrozenResponse as AssetNFTFrozenResponse,
-    Msg as AssetNFTMsg, Query as AssetNFTQuery, WhitelistedResponse as AssetNFTWhitelistedResponse,
-};
+use coreum_wasm_sdk::assetnft;
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries};
 use coreum_wasm_sdk::nft::{
     BalanceResponse as NFTBalanceResponse, Msg as NFTMsg, NFTResponse as NFTNFTResponse,
@@ -147,7 +144,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response<CoreumMsg>, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    let issue_msg = CoreumMsg::AssetNFT(AssetNFTMsg::IssueClass {
+    let issue_msg = CoreumMsg::AssetNFT(assetnft::Msg::IssueClass {
         name: msg.name,
         symbol: msg.symbol.clone(),
         description: msg.description,
@@ -187,7 +184,7 @@ fn mint(
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = CoreumMsg::AssetNFT(AssetNFTMsg::Mint {
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::Mint {
         class_id: state.class_id.clone(),
         id: id.clone(),
         uri,
@@ -212,7 +209,7 @@ fn burn(
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = CoreumMsg::AssetNFT(AssetNFTMsg::Burn {
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::Burn {
         class_id: state.class_id.clone(),
         id: id.clone(),
     });
@@ -234,7 +231,7 @@ fn freeze(
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = CoreumMsg::AssetNFT(AssetNFTMsg::Freeze {
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::Freeze {
         class_id: state.class_id.clone(),
         id: id.clone(),
     });
@@ -256,7 +253,7 @@ fn unfreeze(
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = CoreumMsg::AssetNFT(AssetNFTMsg::Unfreeze {
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::Unfreeze {
         class_id: state.class_id.clone(),
         id: id.clone(),
     });
@@ -279,7 +276,7 @@ fn add_to_white_list(
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = CoreumMsg::AssetNFT(AssetNFTMsg::AddToWhitelist {
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::AddToWhitelist {
         class_id: state.class_id.clone(),
         id: id.clone(),
         account,
@@ -303,7 +300,7 @@ fn remove_from_white_list(
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = CoreumMsg::AssetNFT(AssetNFTMsg::RemoveFromWhitelist {
+    let msg = CoreumMsg::AssetNFT(assetnft::Msg::RemoveFromWhitelist {
         class_id: state.class_id.clone(),
         id: id.clone(),
         account,
@@ -344,22 +341,22 @@ fn send(
 
 // ********** AssetNFT **********
 
-fn class(deps: Deps<CoreumQueries>) -> StdResult<AssetNFTClassResponse> {
+fn class(deps: Deps<CoreumQueries>) -> StdResult<assetnft::ClassResponse> {
     let state = STATE.load(deps.storage)?;
     let request: QueryRequest<CoreumQueries> =
-        CoreumQueries::AssetNFT(AssetNFTQuery::Class { id: state.class_id }).into();
-    let res: AssetNFTClassResponse = deps.querier.query(&request)?;
+        CoreumQueries::AssetNFT(assetnft::Query::Class { id: state.class_id }).into();
+    let res: assetnft::ClassResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
-fn frozen(deps: Deps<CoreumQueries>, id: String) -> StdResult<AssetNFTFrozenResponse> {
+fn frozen(deps: Deps<CoreumQueries>, id: String) -> StdResult<assetnft::FrozenResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<CoreumQueries> = CoreumQueries::AssetNFT(AssetNFTQuery::Frozen {
+    let request: QueryRequest<CoreumQueries> = CoreumQueries::AssetNFT(assetnft::Query::Frozen {
         id,
         class_id: state.class_id,
     })
     .into();
-    let res: AssetNFTFrozenResponse = deps.querier.query(&request)?;
+    let res: assetnft::FrozenResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
@@ -367,16 +364,16 @@ fn whitelisted(
     deps: Deps<CoreumQueries>,
     id: String,
     account: String,
-) -> StdResult<AssetNFTWhitelistedResponse> {
+) -> StdResult<assetnft::WhitelistedResponse> {
     let state = STATE.load(deps.storage)?;
     let request: QueryRequest<CoreumQueries> =
-        CoreumQueries::AssetNFT(AssetNFTQuery::Whitelisted {
+        CoreumQueries::AssetNFT(assetnft::Query::Whitelisted {
             id,
             class_id: state.class_id,
             account,
         })
         .into();
-    let res: AssetNFTWhitelistedResponse = deps.querier.query(&request)?;
+    let res: assetnft::WhitelistedResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
