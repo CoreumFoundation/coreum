@@ -236,7 +236,7 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return err
 	}
 	if burnt {
-		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q already defined for the class", settings.ID)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q has been burned for the class", settings.ID)
 	}
 
 	params := k.GetParams(ctx)
