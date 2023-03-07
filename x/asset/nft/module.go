@@ -92,17 +92,20 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper    keeper.Keeper
+	nftKeeper keeper.NFTKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
+	nftKeeper keeper.NFTKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		nftKeeper:      nftKeeper,
 	}
 }
 
@@ -133,7 +136,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 // RegisterInvariants registers the assetnft module's invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
-	keeper.RegisterInvariants(ir, am.keeper)
+	keeper.RegisterInvariants(ir, am.keeper, am.nftKeeper)
 }
 
 // InitGenesis performs the assetnft module's genesis initialization It returns

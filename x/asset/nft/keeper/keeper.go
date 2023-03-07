@@ -282,6 +282,11 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only owner can burn the nft")
 	}
 
+	// if the token is burnt the storage needs to be cleaned up.
+	if err := k.SetFrozen(ctx, classID, id, false); err != nil {
+		return err
+	}
+
 	if err := k.nftKeeper.Burn(ctx, classID, id); err != nil {
 		return err
 	}
@@ -313,6 +318,8 @@ func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
 }
 
 // GetBurntNFTs return paginated burnt NFTs.
+//
+//nolint:dupl
 func (k Keeper) GetBurntNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.BurntNFT, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix)
 	mp := make(map[string][]string, 0)
@@ -370,22 +377,6 @@ func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID st
 	})
 }
 
-// SetFrozen marks the nft frozen, but does not make any checks
-// should not be used directly outside the module except for genesis.
-func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) error {
-	key, err := types.CreateFreezingKey(classID, nftID)
-	if err != nil {
-		return err
-	}
-	store := ctx.KVStore(k.storeKey)
-	if frozen {
-		store.Set(key, frozenNFTStoreValue)
-	} else {
-		store.Delete(key)
-	}
-	return nil
-}
-
 // Unfreeze unfreezes a non-fungible token.
 func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
@@ -413,6 +404,22 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 	})
 }
 
+// SetFrozen marks the nft frozen, but does not make any checks
+// should not be used directly outside the module except for genesis.
+func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) error {
+	key, err := types.CreateFreezingKey(classID, nftID)
+	if err != nil {
+		return err
+	}
+	store := ctx.KVStore(k.storeKey)
+	if frozen {
+		store.Set(key, frozenNFTStoreValue)
+	} else {
+		store.Delete(key)
+	}
+	return nil
+}
+
 // IsFrozen return whether a non-fungible token is frozen or not.
 func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 	classDefinition, err := k.GetClassDefinition(ctx, classID)
@@ -438,6 +445,8 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 }
 
 // GetFrozenNFTs return paginated frozen NFTs.
+//
+//nolint:dupl
 func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.FrozenNFT, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix)
 	mp := make(map[string][]string, 0)
@@ -448,9 +457,6 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.Pag
 		classID, nftID, err := types.ParseFreezingKey(key)
 		if err != nil {
 			return err
-		}
-		if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
-			return nil
 		}
 
 		mp[classID] = append(mp[classID], nftID)

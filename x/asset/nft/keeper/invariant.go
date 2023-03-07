@@ -12,13 +12,59 @@ import (
 // Invariant names.
 const (
 	OriginalClassExistsInvariantName = "original-class-exists"
-	WhitelistingInvariantName        = "whitelisting"
 	FreezingInvariantName            = "freezing"
 )
 
+// NFTKeeper represents methods of NFT keeper required by the invariants.
+type NFTKeeper interface {
+	HasNFT(ctx sdk.Context, classID, id string) bool
+}
+
 // RegisterInvariants registers the bank module invariants.
-func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
+func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper, nftK NFTKeeper) {
 	ir.RegisterRoute(types.ModuleName, OriginalClassExistsInvariantName, OriginalClassExistsInvariant(k))
+	ir.RegisterRoute(types.ModuleName, FreezingInvariantName, FreezingInvariant(k, nftK))
+}
+
+// FreezingInvariant checks that all frozen NFTs have counterpart on the original Cosmos SDK NFT module.
+func FreezingInvariant(k Keeper, nftK NFTKeeper) sdk.Invariant {
+	return func(ctx sdk.Context) (string, bool) {
+		var (
+			msg             string
+			violationsCount int
+		)
+
+		_, frozenNFTs, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+		if err != nil {
+			panic(err)
+		}
+		for _, frozen := range frozenNFTs {
+			for _, nftID := range frozen.NftIDs {
+				classDefinition, err := k.GetClassDefinition(ctx, frozen.ClassID)
+				if types.ErrClassNotFound.Is(err) {
+					violationsCount++
+					msg += fmt.Sprintf("\t class definition not found for frozen nft(%s/%s)", frozen.ClassID, nftID)
+				} else if err != nil {
+					panic(err)
+				}
+
+				if !nftK.HasNFT(ctx, frozen.ClassID, nftID) {
+					violationsCount++
+					msg += fmt.Sprintf("\t nft not found for frozen nft(%s/%s)", frozen.ClassID, nftID)
+				}
+
+				if !classDefinition.IsFeatureEnabled(types.ClassFeature_freezing) {
+					violationsCount++
+					msg += fmt.Sprintf("\t freezing is disabled, but (%s/%s) is frozen \n", frozen.ClassID, nftID)
+				}
+			}
+		}
+
+		return sdk.FormatInvariant(
+			types.ModuleName, FreezingInvariantName,
+			fmt.Sprintf("number of invariant violation %d\n%s", violationsCount, msg),
+		), violationsCount != 0
+	}
 }
 
 // OriginalClassExistsInvariant checks that all the registered Classes have counterpart on the original Cosmos SDK NFT module.

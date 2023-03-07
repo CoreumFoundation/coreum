@@ -431,7 +431,7 @@ func New(
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	assetFTModule := assetft.NewAppModule(appCodec, app.AssetFTKeeper, app.BankKeeper)
-	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
+	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper, app.NFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
 	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
