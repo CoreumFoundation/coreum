@@ -15,19 +15,14 @@ const (
 	FreezingInvariantName            = "freezing"
 )
 
-// NFTKeeper represents methods of NFT keeper required by the invariants.
-type NFTKeeper interface {
-	HasNFT(ctx sdk.Context, classID, id string) bool
-}
-
 // RegisterInvariants registers the bank module invariants.
-func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper, nftK NFTKeeper) {
+func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(types.ModuleName, OriginalClassExistsInvariantName, OriginalClassExistsInvariant(k))
-	ir.RegisterRoute(types.ModuleName, FreezingInvariantName, FreezingInvariant(k, nftK))
+	ir.RegisterRoute(types.ModuleName, FreezingInvariantName, FreezingInvariant(k))
 }
 
 // FreezingInvariant checks that all frozen NFTs have counterpart on the original Cosmos SDK NFT module.
-func FreezingInvariant(k Keeper, nftK NFTKeeper) sdk.Invariant {
+func FreezingInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
 			msg             string
@@ -48,7 +43,7 @@ func FreezingInvariant(k Keeper, nftK NFTKeeper) sdk.Invariant {
 					panic(err)
 				}
 
-				if !nftK.HasNFT(ctx, frozen.ClassID, nftID) {
+				if !k.nftKeeper.HasNFT(ctx, frozen.ClassID, nftID) {
 					violationsCount++
 					msg += fmt.Sprintf("\t nft not found for frozen nft(%s/%s)", frozen.ClassID, nftID)
 				}

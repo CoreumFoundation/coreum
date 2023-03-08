@@ -274,7 +274,9 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only owner can burn the nft")
 	}
 
-	// if the token is burnt the storage needs to be cleaned up.
+	// If the token is burnt the storage needs to be cleaned up.
+	// We clean freezing because it's a single record only.
+	// We don't clean whitelisting because potential number of records is unlimited.
 	if err := k.SetFrozen(ctx, classID, id, false); err != nil {
 		return err
 	}
@@ -299,6 +301,17 @@ func (k Keeper) IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error) {
 // SetBurnt marks the nft burnt, but does not make any checks
 // should not be used directly outside the module except for genesis.
 func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
+	if k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "nft with classID:%s and ID:%s exists", classID, nftID)
+	}
+	burnt, err := k.IsBurnt(ctx, classID, nftID)
+	if err != nil {
+		return err
+	}
+	if burnt {
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "nft with classID:%s and ID:%s has been already burned", classID, nftID)
+	}
+
 	key, err := types.CreateBurningKey(classID, nftID)
 	if err != nil {
 		return err
