@@ -117,27 +117,26 @@ func ValidateRoyaltyRate(rate sdk.Dec) error {
 
 // CheckFeatureAllowed returns error if feature isn't allowed for the address.
 func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature ClassFeature) error {
-	if nftd.IsFeatureAllowed(addr, feature) {
+	// Issuer is allowed to burn even if burning is disabled
+	if nftd.IsIssuer(addr) && feature == ClassFeature_burning {
 		return nil
 	}
 
+	// For all the other cases feature must be enabled
 	if !nftd.IsFeatureEnabled(feature) {
 		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
 	}
 
-	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
-}
-
-// IsFeatureAllowed returns true if feature is allowed for the address.
-func (nftd ClassDefinition) IsFeatureAllowed(addr sdk.Address, feature ClassFeature) bool {
-	featureEnabled := nftd.IsFeatureEnabled(feature)
-	// issuer can use any enabled feature and burning even if it is disabled
-	if nftd.IsIssuer(addr) {
-		return featureEnabled || feature == ClassFeature_burning
+	// If burning is enabled then everyone may burn
+	if feature == ClassFeature_burning {
+		return nil
 	}
 
-	// non-issuer can use only burning and only if it is enabled
-	return featureEnabled && feature == ClassFeature_burning
+	// Features other than burning may be executed by the issuer only
+	if !nftd.IsIssuer(addr) {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
+	}
+	return nil
 }
 
 // IsFeatureEnabled returns true if feature is enabled for a fungible token.

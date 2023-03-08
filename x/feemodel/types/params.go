@@ -21,15 +21,13 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func DefaultParams() Params {
 	return Params{
 		Model: ModelParams{
-			// TODO: Find good parameters before launching mainnet
 			InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
 			MaxGasPriceMultiplier:   sdk.MustNewDecFromStr("1000.0"),
 			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
 			EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
-			// TODO: adjust MaxBlockGas before creating testnet & mainnet
-			MaxBlockGas:         50000000, // 400 * BankSend message
-			ShortEmaBlockLength: 50,
-			LongEmaBlockLength:  1000,
+			MaxBlockGas:             50000000, // 400 * BankSend message
+			ShortEmaBlockLength:     50,
+			LongEmaBlockLength:      1000,
 		},
 	}
 }
