@@ -117,18 +117,23 @@ func ValidateRoyaltyRate(rate sdk.Dec) error {
 
 // CheckFeatureAllowed returns error if feature isn't allowed for the address.
 func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature ClassFeature) error {
-	switch {
 	// Issuer is allowed to burn even if burning is disabled
-	case nftd.IsIssuer(addr) && feature == ClassFeature_burning:
+	if nftd.IsIssuer(addr) && feature == ClassFeature_burning {
 		return nil
+	}
+
 	// For all the other cases feature must be enabled
-	case !nftd.IsFeatureEnabled(feature):
+	if !nftd.IsFeatureEnabled(feature) {
 		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
+	}
+
 	// If burning is enabled then everyone may burn
-	case feature == ClassFeature_burning:
+	if feature == ClassFeature_burning {
 		return nil
+	}
+
 	// Features other than burning may be executed by the issuer only
-	case !nftd.IsIssuer(addr):
+	if !nftd.IsIssuer(addr) {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 	}
 	return nil
