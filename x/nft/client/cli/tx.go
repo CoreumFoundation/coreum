@@ -16,7 +16,7 @@ import (
 // GetTxCmd returns the transaction commands for this module.
 func GetTxCmd() *cobra.Command {
 	nftTxCmd := &cobra.Command{
-		Use:                        nft.ModuleName,
+		Use:                        nft.CLIName,
 		Short:                      "nft transactions subcommands",
 		Long:                       "Provides the most common nft logic for upper-level applications, compatible with Ethereum's erc721 contract",
 		DisableFlagParsing:         true,

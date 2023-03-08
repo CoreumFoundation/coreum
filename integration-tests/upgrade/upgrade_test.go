@@ -90,8 +90,10 @@ func TestUpgrade(t *testing.T) {
 	assert.Equal(t, "upgrade", currentPlan.Plan.Name)
 	assert.Equal(t, upgradeHeight, currentPlan.Plan.Height)
 
+	// Verify that we are before the upgrade
 	infoWaitingBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
+	requireT.Less(infoWaitingBlockRes.Block.Header.Height, upgradeHeight)
 
 	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
 	defer cancel()
@@ -104,7 +106,7 @@ func TestUpgrade(t *testing.T) {
 		if err != nil {
 			return retry.Retryable(err)
 		}
-		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight {
+		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight+1 {
 			return nil
 		}
 		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height))
