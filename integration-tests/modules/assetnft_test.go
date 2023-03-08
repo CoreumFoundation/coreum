@@ -576,6 +576,8 @@ func TestAssetNFTFreeze(t *testing.T) {
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&nft.MsgSend{},
+				&nft.MsgSend{},
+				&nft.MsgSend{},
 			},
 		}),
 	)
@@ -678,6 +680,23 @@ func TestAssetNFTFreeze(t *testing.T) {
 	requireT.Error(err)
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
 
+	// send from recipient1 to issuer (send is not allowed since it is frozen)
+	sendMsg = &nft.MsgSend{
+		Sender:   recipient1.String(),
+		ClassId:  classID,
+		Id:       nftID,
+		Receiver: issuer.String(),
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient1),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+
 	// unfreeze the NFT
 	msgUnfreeze := &assetnfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
@@ -710,7 +729,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		Owner:   recipient1.String(),
 	}, unfrozenEvent)
 
-	// send from recipient1 to recipient2 (send is allowed since it is not unfrozen)
+	// send from recipient1 to recipient2 (send is allowed since it is not frozen)
 	sendMsg = &nft.MsgSend{
 		Sender:   recipient1.String(),
 		ClassId:  classID,
@@ -724,7 +743,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
 		sendMsg,
 	)
-	requireT.Error(err)
+	requireT.NoError(err)
 }
 
 // TestAssetNFTWhitelist tests non-fungible token whitelisting.
@@ -744,10 +763,11 @@ func TestAssetNFTWhitelist(t *testing.T) {
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
 				&nft.MsgSend{},
+				&assetnfttypes.MsgAddToWhitelist{},
 				&nft.MsgSend{},
 				&assetnfttypes.MsgAddToWhitelist{},
-				&assetnfttypes.MsgAddToWhitelist{},
 				&assetnfttypes.MsgRemoveFromWhitelist{},
+				&assetnfttypes.MsgAddToWhitelist{},
 			},
 			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
 		}),
@@ -860,6 +880,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 		chain.Faucet.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&nft.MsgSend{},
+				&nft.MsgSend{},
 			},
 		}),
 	)
@@ -952,4 +973,35 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	)
 	requireT.Error(err)
 	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+
+	// whitelisting issuer should fail
+	msgAddToWhitelist = &assetnfttypes.MsgAddToWhitelist{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      nftID,
+		Account: issuer.String(),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgAddToWhitelist)),
+		msgAddToWhitelist,
+	)
+	requireT.Error(err)
+	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+
+	// sending to issuer should succeed
+	sendMsg = &nft.MsgSend{
+		Sender:   recipient2.String(),
+		ClassId:  classID,
+		Id:       nftID,
+		Receiver: issuer.String(),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient2),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
 }
