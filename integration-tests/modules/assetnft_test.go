@@ -697,7 +697,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 
 	// mint new token in that class
 	classID := assetnfttypes.BuildClassID(issueMsg.Symbol, issuer)
-	nftID := "id-1"
+	nftID := "id-1" //nolint:goconst // repeating values in tests are ok
 	mintMsg := &assetnfttypes.MsgMint{
 		Sender:  issuer.String(),
 		ID:      nftID,
