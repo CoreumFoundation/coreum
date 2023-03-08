@@ -1442,8 +1442,8 @@ func TestKeeper_AllInOne(t *testing.T) {
 	requireT.NoError(err)
 
 	// whitelist recipients
-	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient1, sdk.NewCoin(denom1, sdk.NewInt(100))))
-	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient2, sdk.NewCoin(denom1, sdk.NewInt(100))))
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient1, sdk.NewCoin(denom1, sdk.NewInt(10))))
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient2, sdk.NewCoin(denom1, sdk.NewInt(10))))
 
 	// multi-send valid amount
 	err = bankKeeper.InputOutputCoins(ctx,
