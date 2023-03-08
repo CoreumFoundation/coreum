@@ -666,16 +666,15 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 	}
 
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
-	switch {
-	case err == nil:
-		if frozen {
-			return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
+	if err != nil {
+		if errors.Is(err, types.ErrFeatureDisabled) {
+			return nil
 		}
-	case errors.Is(err, types.ErrFeatureDisabled):
-	default:
 		return err
 	}
-
+	if frozen {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
+	}
 	return nil
 }
 
@@ -692,15 +691,14 @@ func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver
 	}
 
 	whitelisted, err := k.IsWhitelisted(ctx, classID, nftID, receiver)
-	switch {
-	case err == nil:
-		if !whitelisted {
-			return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is not whitelisted for account %s", classID, nftID, receiver)
+	if err != nil {
+		if errors.Is(err, types.ErrFeatureDisabled) {
+			return nil
 		}
-	case errors.Is(err, types.ErrFeatureDisabled):
-	default:
 		return err
 	}
-
+	if !whitelisted {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is not whitelisted for account %s", classID, nftID, receiver)
+	}
 	return nil
 }
