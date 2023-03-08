@@ -591,6 +591,10 @@ func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, a
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
+	if classDefinition.Issuer == account.String() {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
+	}
+
 	if err := k.SetWhitelisting(ctx, classID, nftID, account, true); err != nil {
 		return err
 	}
@@ -615,6 +619,10 @@ func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, send
 
 	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	if classDefinition.Issuer == account.String() {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
 	}
 
 	if err := k.SetWhitelisting(ctx, classID, nftID, account, false); err != nil {
@@ -680,7 +688,7 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 }
 
 func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver sdk.AccAddress) error {
-	_, err := k.GetClassDefinition(ctx, classID)
+	classDefinition, err := k.GetClassDefinition(ctx, classID)
 	// we return nil here, since we want the original tests of the nft module to pass, but they
 	// fail if we return errors for unregistered NFTs on asset. Also the original nft module
 	// does not have access to the asset module to register the NFTs
@@ -689,6 +697,15 @@ func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver
 	}
 	if err != nil {
 		return err
+	}
+
+	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	// always allow issuer to receive NFTs issued by them.
+	if classDefinition.Issuer == receiver.String() {
+		return nil
 	}
 
 	whitelisted, err := k.IsWhitelisted(ctx, classID, nftID, receiver)
