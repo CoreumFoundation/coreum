@@ -14,74 +14,6 @@ import (
 	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// AssetFTMsg represents asset ft module messages integrated with the wasm handler.
-//
-//nolint:tagliatelle // we keep the name same as consume
-type AssetFTMsg struct {
-	Issue               *assetfttypes.MsgIssue               `json:"Issue"`
-	Mint                *assetfttypes.MsgMint                `json:"Mint"`
-	Burn                *assetfttypes.MsgBurn                `json:"Burn"`
-	Freeze              *assetfttypes.MsgFreeze              `json:"Freeze"`
-	Unfreeze            *assetfttypes.MsgUnfreeze            `json:"Unfreeze"`
-	GloballyFreeze      *assetfttypes.MsgGloballyFreeze      `json:"GloballyFreeze"`
-	GloballyUnfreeze    *assetfttypes.MsgGloballyUnfreeze    `json:"GloballyUnfreeze"`
-	SetWhitelistedLimit *assetfttypes.MsgSetWhitelistedLimit `json:"SetWhitelistedLimit"`
-}
-
-// AssetNFTMsgIssueClass defines message for the IssueClass method with string represented data field.
-//
-//nolint:tagliatelle // we keep the name same as consume
-type AssetNFTMsgIssueClass struct {
-	Symbol      string                       `json:"symbol"`
-	Name        string                       `json:"name"`
-	Description string                       `json:"description"`
-	URI         string                       `json:"uri"`
-	URIHash     string                       `json:"uri_hash"`
-	Data        string                       `json:"data"`
-	Features    []assetnfttypes.ClassFeature `json:"features"`
-	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
-}
-
-// AssetNFTMsgMint defines message for the Mint method with string represented data field.
-//
-//nolint:tagliatelle // we keep the name same as consume
-type AssetNFTMsgMint struct {
-	ClassID string `json:"class_id"`
-	ID      string `json:"id"`
-	URI     string `json:"uri"`
-	URIHash string `json:"uri_hash"`
-	Data    string `json:"data"`
-}
-
-// AssetNFTMsg represents asset nft module messages integrated with the wasm handler.
-//
-//nolint:tagliatelle // we keep the name same as consume
-type AssetNFTMsg struct {
-	IssueClass          *AssetNFTMsgIssueClass                `json:"IssueClass"`
-	Mint                *AssetNFTMsgMint                      `json:"Mint"`
-	Burn                *assetnfttypes.MsgBurn                `json:"Burn"`
-	Freeze              *assetnfttypes.MsgFreeze              `json:"Freeze"`
-	Unfreeze            *assetnfttypes.MsgUnfreeze            `json:"Unfreeze"`
-	AddToWhitelist      *assetnfttypes.MsgAddToWhitelist      `json:"AddToWhitelist"`
-	RemoveFromWhitelist *assetnfttypes.MsgRemoveFromWhitelist `json:"RemoveFromWhitelist"`
-}
-
-// NFTMsg represents nft module messages integrated with the wasm handler.
-//
-//nolint:tagliatelle // we keep the name same as consume
-type NFTMsg struct {
-	Send *nfttypes.MsgSend `json:"Send"`
-}
-
-// CoreumMsg represents all supported custom messages integrated with the wasm handler.
-//
-//nolint:tagliatelle // we keep the name same as consume
-type CoreumMsg struct {
-	AssetFT  *AssetFTMsg  `json:"AssetFT"`
-	AssetNFT *AssetNFTMsg `json:"AssetNFT"`
-	NFT      *NFTMsg      `json:"NFT"`
-}
-
 // AssetFTQuery represents asset ft module queries integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
@@ -156,33 +88,6 @@ type CoreumQuery struct {
 	NFT      *NFTQuery      `json:"NFT"`
 }
 
-// NewCoreumMsgHandler returns coreum handler that handles messages received from smart contracts.
-// The in the input sender is the address of smart contract.
-func NewCoreumMsgHandler() *wasmkeeper.MessageEncoders {
-	return &wasmkeeper.MessageEncoders{
-		Custom: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
-			var coreumMsg CoreumMsg
-			if err := json.Unmarshal(msg, &coreumMsg); err != nil {
-				return nil, errors.WithStack(err)
-			}
-
-			decodedMsg, err := decodeCoreumMessage(coreumMsg, sender)
-			if err != nil {
-				return nil, err
-			}
-			if decodedMsg == nil {
-				return nil, nil
-			}
-
-			if err := decodedMsg.ValidateBasic(); err != nil {
-				return nil, errors.WithStack(err)
-			}
-
-			return []sdk.Msg{decodedMsg}, nil
-		},
-	}
-}
-
 // NewCoreumQueryHandler returns the coreum handler which handles queries from smart contracts.
 func NewCoreumQueryHandler(
 	assetFTQueryServer assetfttypes.QueryServer,
@@ -199,134 +104,6 @@ func NewCoreumQueryHandler(
 			return processCoreumQuery(ctx, coreumQuery, assetFTQueryServer, assetNFTQueryServer, nftQueryServer)
 		},
 	}
-}
-
-func decodeCoreumMessage(coreumMessages CoreumMsg, sender sdk.AccAddress) (sdk.Msg, error) {
-	if coreumMessages.AssetFT != nil {
-		return decodeAssetFTMessage(coreumMessages.AssetFT, sender.String())
-	}
-	if coreumMessages.AssetNFT != nil {
-		return decodeAssetNFTMessage(coreumMessages.AssetNFT, sender.String())
-	}
-	if coreumMessages.NFT != nil {
-		return decodeNFTMessage(coreumMessages.NFT, sender.String())
-	}
-
-	return nil, nil
-}
-
-func decodeAssetFTMessage(assetFTMsg *AssetFTMsg, sender string) (sdk.Msg, error) {
-	if assetFTMsg.Issue != nil {
-		assetFTMsg.Issue.Issuer = sender
-		return assetFTMsg.Issue, nil
-	}
-	if assetFTMsg.Mint != nil {
-		assetFTMsg.Mint.Sender = sender
-		return assetFTMsg.Mint, nil
-	}
-	if assetFTMsg.Burn != nil {
-		assetFTMsg.Burn.Sender = sender
-		return assetFTMsg.Burn, nil
-	}
-	if assetFTMsg.Freeze != nil {
-		assetFTMsg.Freeze.Sender = sender
-		return assetFTMsg.Freeze, nil
-	}
-	if assetFTMsg.Unfreeze != nil {
-		assetFTMsg.Unfreeze.Sender = sender
-		return assetFTMsg.Unfreeze, nil
-	}
-	if assetFTMsg.GloballyFreeze != nil {
-		assetFTMsg.GloballyFreeze.Sender = sender
-		return assetFTMsg.GloballyFreeze, nil
-	}
-	if assetFTMsg.GloballyUnfreeze != nil {
-		assetFTMsg.GloballyUnfreeze.Sender = sender
-		return assetFTMsg.GloballyUnfreeze, nil
-	}
-	if assetFTMsg.SetWhitelistedLimit != nil {
-		assetFTMsg.SetWhitelistedLimit.Sender = sender
-		return assetFTMsg.SetWhitelistedLimit, nil
-	}
-
-	return nil, nil
-}
-
-func decodeAssetNFTMessage(assetNFTMsg *AssetNFTMsg, sender string) (sdk.Msg, error) {
-	if assetNFTMsg.IssueClass != nil {
-		var (
-			data *codectypes.Any
-			err  error
-		)
-		if assetNFTMsg.IssueClass.Data != "" {
-			data, err = convertStringToDataBytes(assetNFTMsg.IssueClass.Data)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return &assetnfttypes.MsgIssueClass{
-			Issuer:      sender,
-			Symbol:      assetNFTMsg.IssueClass.Symbol,
-			Name:        assetNFTMsg.IssueClass.Name,
-			Description: assetNFTMsg.IssueClass.Description,
-			URI:         assetNFTMsg.IssueClass.URI,
-			URIHash:     assetNFTMsg.IssueClass.URIHash,
-			Data:        data,
-			Features:    assetNFTMsg.IssueClass.Features,
-			RoyaltyRate: assetNFTMsg.IssueClass.RoyaltyRate,
-		}, nil
-	}
-	if assetNFTMsg.Mint != nil {
-		var (
-			data *codectypes.Any
-			err  error
-		)
-		if assetNFTMsg.Mint.Data != "" {
-			data, err = convertStringToDataBytes(assetNFTMsg.Mint.Data)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return &assetnfttypes.MsgMint{
-			Sender:  sender,
-			ClassID: assetNFTMsg.Mint.ClassID,
-			ID:      assetNFTMsg.Mint.ID,
-			URI:     assetNFTMsg.Mint.URI,
-			URIHash: assetNFTMsg.Mint.URIHash,
-			Data:    data,
-		}, nil
-	}
-	if assetNFTMsg.Burn != nil {
-		assetNFTMsg.Burn.Sender = sender
-		return assetNFTMsg.Burn, nil
-	}
-	if assetNFTMsg.Freeze != nil {
-		assetNFTMsg.Freeze.Sender = sender
-		return assetNFTMsg.Freeze, nil
-	}
-	if assetNFTMsg.Unfreeze != nil {
-		assetNFTMsg.Unfreeze.Sender = sender
-		return assetNFTMsg.Unfreeze, nil
-	}
-	if assetNFTMsg.AddToWhitelist != nil {
-		assetNFTMsg.AddToWhitelist.Sender = sender
-		return assetNFTMsg.AddToWhitelist, nil
-	}
-	if assetNFTMsg.RemoveFromWhitelist != nil {
-		assetNFTMsg.RemoveFromWhitelist.Sender = sender
-		return assetNFTMsg.RemoveFromWhitelist, nil
-	}
-
-	return nil, nil
-}
-
-func decodeNFTMessage(nftMsg *NFTMsg, sender string) (sdk.Msg, error) {
-	if nftMsg.Send != nil {
-		nftMsg.Send.Sender = sender
-		return nftMsg.Send, nil
-	}
-
-	return nil, nil
 }
 
 func convertStringToDataBytes(dataString string) (*codectypes.Any, error) {
@@ -402,7 +179,7 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *AssetNFTQuery, assetNF
 					Features:    classRes.Class.Features,
 					RoyaltyRate: classRes.Class.RoyaltyRate,
 				},
-			}, err
+			}, nil
 		})
 	}
 	if assetNFTQuery.Frozen != nil {
@@ -458,7 +235,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *NFTQuery, nftQueryServer nfttype
 					URIHash: nftRes.Nft.UriHash,
 					Data:    dataString,
 				},
-			}, err
+			}, nil
 		})
 	}
 

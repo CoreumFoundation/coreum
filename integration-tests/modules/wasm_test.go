@@ -34,7 +34,7 @@ var (
 	//go:embed testdata/wasm/simple-state/artifacts/simple_state.wasm
 	simpleStateWASM []byte
 	//go:embed testdata/wasm/ft/artifacts/ft.wasm
-	fungibleTokenWASM []byte
+	ftWASM []byte
 	//go:embed testdata/wasm/nft/artifacts/nft.wasm
 	nftWASM []byte
 )
@@ -69,7 +69,7 @@ const (
 // fungible token wasm models
 //
 //nolint:tagliatelle
-type issueFungibleTokenRequest struct {
+type issueFTRequest struct {
 	Symbol             string                 `json:"symbol"`
 	Subunit            string                 `json:"subunit"`
 	Precision          uint32                 `json:"precision"`
@@ -80,38 +80,38 @@ type issueFungibleTokenRequest struct {
 	SendCommissionRate string                 `json:"send_commission_rate"`
 }
 
-type amountBodyFungibleTokenRequest struct {
+type amountBodyFTRequest struct {
 	Amount string `json:"amount"`
 }
 
-type accountAmountBodyFungibleTokenRequest struct {
+type accountAmountBodyFTRequest struct {
 	Account string `json:"account"`
 	Amount  string `json:"amount"`
 }
 
-type accountBodyFungibleTokenRequest struct {
+type accountBodyFTRequest struct {
 	Account string `json:"account"`
 }
 
-type fungibleTokenMethod string
+type ftMethod string
 
 const (
 	// tx.
-	fungibleTokenMethodMint                fungibleTokenMethod = "mint"
-	fungibleTokenMethodBurn                fungibleTokenMethod = "burn"
-	fungibleTokenMethodFreeze              fungibleTokenMethod = "freeze"
-	fungibleTokenMethodUnfreeze            fungibleTokenMethod = "unfreeze"
-	fungibleTokenMethodGloballyFreeze      fungibleTokenMethod = "globally_freeze"
-	fungibleTokenMethodGloballyUnfreeze    fungibleTokenMethod = "globally_unfreeze"
-	fungibleTokenMethodSetWhitelistedLimit fungibleTokenMethod = "set_whitelisted_limit"
+	ftMethodMint                ftMethod = "mint"
+	ftMethodBurn                ftMethod = "burn"
+	ftMethodFreeze              ftMethod = "freeze"
+	ftMethodUnfreeze            ftMethod = "unfreeze"
+	ftMethodGloballyFreeze      ftMethod = "globally_freeze"
+	ftMethodGloballyUnfreeze    ftMethod = "globally_unfreeze"
+	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
 	// query.
-	fungibleTokenMethodToken              fungibleTokenMethod = "token"
-	fungibleTokenMethodFrozenBalance      fungibleTokenMethod = "frozen_balance"
-	fungibleTokenMethodWhitelistedBalance fungibleTokenMethod = "whitelisted_balance"
+	ftMethodToken              ftMethod = "token"
+	ftMethodFrozenBalance      ftMethod = "frozen_balance"
+	ftMethodWhitelistedBalance ftMethod = "whitelisted_balance"
 )
 
 //nolint:tagliatelle
-type issueNonFungibleTokenRequest struct {
+type issueNFTRequest struct {
 	Name        string                       `json:"name"`
 	Symbol      string                       `json:"symbol"`
 	Description string                       `json:"description"`
@@ -625,7 +625,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	sendCommissionRate := sdk.MustNewDecFromStr("0.2")
 
 	issuanceAmount := sdk.NewInt(10_000)
-	issuanceReq := issueFungibleTokenRequest{
+	issuanceReq := issueFTRequest{
 		Symbol:        "symbol",
 		Subunit:       "subunit",
 		Precision:     6,
@@ -648,7 +648,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		ctx,
 		clientCtx,
 		txf,
-		fungibleTokenWASM,
+		ftWASM,
 		instantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
 			amount:     chain.NewCoin(chain.NetworkConfig.AssetFTConfig.IssueFee),
@@ -697,8 +697,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Mint **********
 
 	amountToMint := sdk.NewInt(500)
-	mintPayload, err := json.Marshal(map[fungibleTokenMethod]amountBodyFungibleTokenRequest{
-		fungibleTokenMethodMint: {
+	mintPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
+		ftMethodMint: {
 			Amount: amountToMint.String(),
 		},
 	})
@@ -719,8 +719,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Burn **********
 
 	amountToBurn := sdk.NewInt(100)
-	burnPayload, err := json.Marshal(map[fungibleTokenMethod]amountBodyFungibleTokenRequest{
-		fungibleTokenMethodBurn: {
+	burnPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
+		ftMethodBurn: {
 			Amount: amountToBurn.String(),
 		},
 	})
@@ -741,8 +741,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Freeze **********
 
 	amountToFreeze := sdk.NewInt(100)
-	freezePayload, err := json.Marshal(map[fungibleTokenMethod]accountAmountBodyFungibleTokenRequest{
-		fungibleTokenMethodFreeze: {
+	freezePayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodFreeze: {
 			Account: recipient.String(),
 			Amount:  amountToFreeze.String(),
 		},
@@ -763,8 +763,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Unfreeze **********
 
 	amountToUnfreeze := sdk.NewInt(40)
-	unfreezePayload, err := json.Marshal(map[fungibleTokenMethod]accountAmountBodyFungibleTokenRequest{
-		fungibleTokenMethodUnfreeze: {
+	unfreezePayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodUnfreeze: {
 			Account: recipient.String(),
 			Amount:  amountToUnfreeze.String(),
 		},
@@ -784,8 +784,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** GloballyFreeze **********
 
-	globallyFreezePayload, err := json.Marshal(map[fungibleTokenMethod]struct{}{
-		fungibleTokenMethodGloballyFreeze: {},
+	globallyFreezePayload, err := json.Marshal(map[ftMethod]struct{}{
+		ftMethodGloballyFreeze: {},
 	})
 	requireT.NoError(err)
 
@@ -801,8 +801,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** GloballyUnfreeze **********
 
-	globallyUnfreezePayload, err := json.Marshal(map[fungibleTokenMethod]struct{}{
-		fungibleTokenMethodGloballyUnfreeze: {},
+	globallyUnfreezePayload, err := json.Marshal(map[ftMethod]struct{}{
+		ftMethodGloballyUnfreeze: {},
 	})
 	requireT.NoError(err)
 
@@ -819,8 +819,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	// ********** Whitelisting **********
 
 	amountToWhitelist := sdk.NewInt(100)
-	whitelistPayload, err := json.Marshal(map[fungibleTokenMethod]accountAmountBodyFungibleTokenRequest{
-		fungibleTokenMethodSetWhitelistedLimit: {
+	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetWhitelistedLimit: {
 			Account: recipient.String(),
 			Amount:  amountToWhitelist.String(),
 		},
@@ -842,8 +842,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** Token **********
 
-	tokenPayload, err := json.Marshal(map[fungibleTokenMethod]struct{}{
-		fungibleTokenMethodToken: {},
+	tokenPayload, err := json.Marshal(map[ftMethod]struct{}{
+		ftMethodToken: {},
 	})
 	requireT.NoError(err)
 	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, tokenPayload)
@@ -856,8 +856,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** FrozenBalance **********
 
-	frozenBalancePayload, err := json.Marshal(map[fungibleTokenMethod]accountBodyFungibleTokenRequest{
-		fungibleTokenMethodFrozenBalance: {
+	frozenBalancePayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
+		ftMethodFrozenBalance: {
 			Account: recipient.String(),
 		},
 	})
@@ -872,8 +872,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** WhitelistedBalance **********
 
-	whitelistedBalancePayload, err := json.Marshal(map[fungibleTokenMethod]accountBodyFungibleTokenRequest{
-		fungibleTokenMethodWhitelistedBalance: {
+	whitelistedBalancePayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
+		ftMethodWhitelistedBalance: {
 			Account: recipient.String(),
 		},
 	})
@@ -921,7 +921,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	}
 	requireT.NoError(err)
 
-	issueClassReq := issueNonFungibleTokenRequest{
+	issueClassReq := issueNFTRequest{
 		Name:        "name",
 		Symbol:      "symbol",
 		Description: "description",

@@ -1,9 +1,6 @@
 use coreum_wasm_sdk::assetnft;
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries};
-use coreum_wasm_sdk::nft::{
-    BalanceResponse as NFTBalanceResponse, Msg as NFTMsg, NFTResponse as NFTNFTResponse,
-    OwnerResponse as NFTOwnerResponse, Query as NFTQuery, SupplyResponse as NFTSupplyResponse,
-};
+use coreum_wasm_sdk::nft;
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, QueryRequest, StdResult};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, StdError};
 use cw2::set_contract_version;
@@ -324,7 +321,7 @@ fn send(
         return Err(ContractError::Unauthorized {});
     }
 
-    let msg = CoreumMsg::NFT(NFTMsg::Send {
+    let msg = CoreumMsg::NFT(nft::Msg::Send {
         class_id: state.class_id.clone(),
         id: id.clone(),
         receiver,
@@ -379,45 +376,45 @@ fn whitelisted(
 
 // ********** NFT **********
 
-fn balance(deps: Deps<CoreumQueries>, owner: String) -> StdResult<NFTBalanceResponse> {
+fn balance(deps: Deps<CoreumQueries>, owner: String) -> StdResult<nft::BalanceResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<CoreumQueries> = CoreumQueries::NFT(NFTQuery::Balance {
+    let request: QueryRequest<CoreumQueries> = CoreumQueries::NFT(nft::Query::Balance {
         class_id: state.class_id,
         owner,
     })
     .into();
-    let res: NFTBalanceResponse = deps.querier.query(&request)?;
+    let res: nft::BalanceResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
-fn owner(deps: Deps<CoreumQueries>, id: String) -> StdResult<NFTOwnerResponse> {
+fn owner(deps: Deps<CoreumQueries>, id: String) -> StdResult<nft::OwnerResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<CoreumQueries> = CoreumQueries::NFT(NFTQuery::Owner {
+    let request: QueryRequest<CoreumQueries> = CoreumQueries::NFT(nft::Query::Owner {
         class_id: state.class_id,
         id,
     })
     .into();
-    let res: NFTOwnerResponse = deps.querier.query(&request)?;
+    let res: nft::OwnerResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
-fn supply(deps: Deps<CoreumQueries>) -> StdResult<NFTSupplyResponse> {
+fn supply(deps: Deps<CoreumQueries>) -> StdResult<nft::SupplyResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<CoreumQueries> = CoreumQueries::NFT(NFTQuery::Supply {
+    let request: QueryRequest<CoreumQueries> = CoreumQueries::NFT(nft::Query::Supply {
         class_id: state.class_id,
     })
     .into();
-    let res: NFTSupplyResponse = deps.querier.query(&request)?;
+    let res: nft::SupplyResponse = deps.querier.query(&request)?;
     Ok(res)
 }
 
-fn nft(deps: Deps<CoreumQueries>, id: String) -> StdResult<NFTNFTResponse> {
+fn nft(deps: Deps<CoreumQueries>, id: String) -> StdResult<nft::NFTResponse> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<CoreumQueries> = CoreumQueries::NFT(NFTQuery::NFT {
+    let request: QueryRequest<CoreumQueries> = CoreumQueries::NFT(nft::Query::NFT {
         class_id: state.class_id,
         id,
     })
     .into();
-    let res: NFTNFTResponse = deps.querier.query(&request)?;
+    let res: nft::NFTResponse = deps.querier.query(&request)?;
     Ok(res)
 }
