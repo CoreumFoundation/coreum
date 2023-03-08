@@ -1396,8 +1396,6 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 
 // TestKeeper_AllInOne tests send and multi send with tokens that have all features enabled
 // and applied.
-//
-//nolint:funlen // this is complex test scenario and breaking it down is not helpful
 func TestKeeper_AllInOne(t *testing.T) {
 	requireT := require.New(t)
 

@@ -1585,6 +1585,8 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 }
 
 // TestNotEnoughBalanceForBurnRate checks tx will fail if there is not enough balance to cover burn rate.
+//
+//nolint:dupl // we expect code duplication in tests
 func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 	t.Parallel()
 
@@ -1664,6 +1666,8 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 }
 
 // TestNotEnoughBalanceForCommissionRate checks tx will fail if there is not enough balance to cover commission rate.
+//
+//nolint:dupl // we expect code duplication in tests
 func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 	t.Parallel()
 
