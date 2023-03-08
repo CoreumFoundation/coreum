@@ -14,19 +14,19 @@ import (
 	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// AssetFTQuery represents asset ft module queries integrated with the wasm handler.
+// assetFTQuery represents asset ft module queries integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type AssetFTQuery struct {
+type assetFTQuery struct {
 	Token              *assetfttypes.QueryTokenRequest              `json:"Token"`
 	FrozenBalance      *assetfttypes.QueryFrozenBalanceRequest      `json:"FrozenBalance"`
 	WhitelistedBalance *assetfttypes.QueryWhitelistedBalanceRequest `json:"WhitelistedBalance"`
 }
 
-// AssetNFTClass is the asset NFT Class with string data.
+// assetNFTClass is the asset nft Class with string data.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type AssetNFTClass struct {
+type assetNFTClass struct {
 	ID          string                       `json:"id"`
 	Issuer      string                       `json:"issuer"`
 	Name        string                       `json:"name"`
@@ -39,24 +39,24 @@ type AssetNFTClass struct {
 	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
 }
 
-// AssetNFTClassResponse is the asset NFT Class response with string data.
-type AssetNFTClassResponse struct {
-	Class AssetNFTClass `json:"class"`
+// assetNFTClassResponse is the asset nft Class response with string data.
+type assetNFTClassResponse struct {
+	Class assetNFTClass `json:"class"`
 }
 
-// AssetNFTQuery represents asset nft module queries integrated with the wasm handler.
+// assetNFTQuery represents asset nft module queries integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type AssetNFTQuery struct {
+type assetNFTQuery struct {
 	Class       *assetnfttypes.QueryClassRequest       `json:"Class"`
 	Frozen      *assetnfttypes.QueryFrozenRequest      `json:"Frozen"`
 	Whitelisted *assetnfttypes.QueryWhitelistedRequest `json:"Whitelisted"`
 }
 
-// NFT is the NFT with string data.
+// nft is the nft with string data.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type NFT struct {
+type nft struct {
 	ClassID string `json:"class_id"`
 	ID      string `json:"id"`
 	URI     string `json:"uri"`
@@ -64,28 +64,28 @@ type NFT struct {
 	Data    string `json:"data"`
 }
 
-// NFTResponse is the NFT response with string data.
+// NFTResponse is the nft response with string data.
 type NFTResponse struct {
-	NFT NFT `json:"nft"`
+	NFT nft `json:"nft"`
 }
 
-// NFTQuery represents nft module queries integrated with the wasm handler.
+// nftQuery represents nft module queries integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type NFTQuery struct {
+type nftQuery struct {
 	Balance *nfttypes.QueryBalanceRequest `json:"Balance"`
 	Owner   *nfttypes.QueryOwnerRequest   `json:"Owner"`
 	Supply  *nfttypes.QuerySupplyRequest  `json:"Supply"`
-	NFT     *nfttypes.QueryNFTRequest     `json:"NFT"`
+	NFT     *nfttypes.QueryNFTRequest     `json:"nft"`
 }
 
-// CoreumQuery represents all coreum module queries integrated with the wasm handler.
+// coreumQuery represents all coreum module queries integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type CoreumQuery struct {
-	AssetFT  *AssetFTQuery  `json:"AssetFT"`
-	AssetNFT *AssetNFTQuery `json:"AssetNFT"`
-	NFT      *NFTQuery      `json:"NFT"`
+type coreumQuery struct {
+	AssetFT  *assetFTQuery  `json:"AssetFT"`
+	AssetNFT *assetNFTQuery `json:"AssetNFT"`
+	NFT      *nftQuery      `json:"nft"`
 }
 
 // NewCoreumQueryHandler returns the coreum handler which handles queries from smart contracts.
@@ -96,7 +96,7 @@ func NewCoreumQueryHandler(
 ) *wasmkeeper.QueryPlugins {
 	return &wasmkeeper.QueryPlugins{
 		Custom: func(ctx sdk.Context, query json.RawMessage) ([]byte, error) {
-			var coreumQuery CoreumQuery
+			var coreumQuery coreumQuery
 			if err := json.Unmarshal(query, &coreumQuery); err != nil {
 				return nil, errors.WithStack(err)
 			}
@@ -116,7 +116,7 @@ func convertStringToDataBytes(dataString string) (*codectypes.Any, error) {
 
 func processCoreumQuery(
 	ctx sdk.Context,
-	queries CoreumQuery,
+	queries coreumQuery,
 	assetFTQueryServer assetfttypes.QueryServer,
 	assetNFTQueryServer assetnfttypes.QueryServer,
 	nftQueryServer nfttypes.QueryServer,
@@ -134,7 +134,7 @@ func processCoreumQuery(
 	return nil, nil
 }
 
-func processAssetFTQuery(ctx sdk.Context, assetFTQuery *AssetFTQuery, assetFTQueryServer assetfttypes.QueryServer) ([]byte, error) {
+func processAssetFTQuery(ctx sdk.Context, assetFTQuery *assetFTQuery, assetFTQueryServer assetfttypes.QueryServer) ([]byte, error) {
 	if assetFTQuery.Token != nil {
 		return executeQuery(ctx, assetFTQuery.Token, func(ctx context.Context, req *assetfttypes.QueryTokenRequest) (*assetfttypes.QueryTokenResponse, error) {
 			return assetFTQueryServer.Token(ctx, req)
@@ -154,9 +154,9 @@ func processAssetFTQuery(ctx sdk.Context, assetFTQuery *AssetFTQuery, assetFTQue
 	return nil, nil
 }
 
-func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *AssetNFTQuery, assetNFTQueryServer assetnfttypes.QueryServer) ([]byte, error) {
+func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *assetNFTQuery, assetNFTQueryServer assetnfttypes.QueryServer) ([]byte, error) {
 	if assetNFTQuery.Class != nil {
-		return executeQuery(ctx, assetNFTQuery.Class, func(ctx context.Context, req *assetnfttypes.QueryClassRequest) (*AssetNFTClassResponse, error) {
+		return executeQuery(ctx, assetNFTQuery.Class, func(ctx context.Context, req *assetnfttypes.QueryClassRequest) (*assetNFTClassResponse, error) {
 			classRes, err := assetNFTQueryServer.Class(ctx, req)
 			if err != nil {
 				return nil, err
@@ -166,8 +166,8 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *AssetNFTQuery, assetNF
 			if classRes.Class.Data != nil {
 				dataString = string(classRes.Class.Data.Value)
 			}
-			return &AssetNFTClassResponse{
-				Class: AssetNFTClass{
+			return &assetNFTClassResponse{
+				Class: assetNFTClass{
 					ID:          classRes.Class.Id,
 					Issuer:      classRes.Class.Issuer,
 					Name:        classRes.Class.Name,
@@ -196,7 +196,7 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *AssetNFTQuery, assetNF
 	return nil, nil
 }
 
-func processNFTQuery(ctx sdk.Context, nftQuery *NFTQuery, nftQueryServer nfttypes.QueryServer) ([]byte, error) {
+func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttypes.QueryServer) ([]byte, error) {
 	if nftQuery.Balance != nil {
 		return executeQuery(ctx, nftQuery.Balance, func(ctx context.Context, req *nfttypes.QueryBalanceRequest) (*nfttypes.QueryBalanceResponse, error) {
 			return nftQueryServer.Balance(ctx, req)
@@ -228,7 +228,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *NFTQuery, nftQueryServer nfttype
 				dataString = string(nftRes.Nft.Data.Value)
 			}
 			return &NFTResponse{
-				NFT: NFT{
+				NFT: nft{
 					ClassID: nftRes.Nft.ClassId,
 					ID:      nftRes.Nft.Id,
 					URI:     nftRes.Nft.Uri,

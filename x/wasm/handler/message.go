@@ -13,10 +13,10 @@ import (
 	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// AssetFTMsg represents asset ft module messages integrated with the wasm handler.
+// assetFTMsg represents asset ft module messages integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type AssetFTMsg struct {
+type assetFTMsg struct {
 	Issue               *assetfttypes.MsgIssue               `json:"Issue"`
 	Mint                *assetfttypes.MsgMint                `json:"Mint"`
 	Burn                *assetfttypes.MsgBurn                `json:"Burn"`
@@ -27,10 +27,10 @@ type AssetFTMsg struct {
 	SetWhitelistedLimit *assetfttypes.MsgSetWhitelistedLimit `json:"SetWhitelistedLimit"`
 }
 
-// AssetNFTMsgIssueClass defines message for the IssueClass method with string represented data field.
+// assetNFTMsgIssueClass defines message for the IssueClass method with string represented data field.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type AssetNFTMsgIssueClass struct {
+type assetNFTMsgIssueClass struct {
 	Symbol      string                       `json:"symbol"`
 	Name        string                       `json:"name"`
 	Description string                       `json:"description"`
@@ -41,10 +41,10 @@ type AssetNFTMsgIssueClass struct {
 	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
 }
 
-// AssetNFTMsgMint defines message for the Mint method with string represented data field.
+// assetNFTMsgMint defines message for the Mint method with string represented data field.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type AssetNFTMsgMint struct {
+type assetNFTMsgMint struct {
 	ClassID string `json:"class_id"`
 	ID      string `json:"id"`
 	URI     string `json:"uri"`
@@ -52,12 +52,12 @@ type AssetNFTMsgMint struct {
 	Data    string `json:"data"`
 }
 
-// AssetNFTMsg represents asset nft module messages integrated with the wasm handler.
+// assetNFTMsg represents asset nft module messages integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type AssetNFTMsg struct {
-	IssueClass          *AssetNFTMsgIssueClass                `json:"IssueClass"`
-	Mint                *AssetNFTMsgMint                      `json:"Mint"`
+type assetNFTMsg struct {
+	IssueClass          *assetNFTMsgIssueClass                `json:"IssueClass"`
+	Mint                *assetNFTMsgMint                      `json:"Mint"`
 	Burn                *assetnfttypes.MsgBurn                `json:"Burn"`
 	Freeze              *assetnfttypes.MsgFreeze              `json:"Freeze"`
 	Unfreeze            *assetnfttypes.MsgUnfreeze            `json:"Unfreeze"`
@@ -65,20 +65,20 @@ type AssetNFTMsg struct {
 	RemoveFromWhitelist *assetnfttypes.MsgRemoveFromWhitelist `json:"RemoveFromWhitelist"`
 }
 
-// NFTMsg represents nft module messages integrated with the wasm handler.
+// nftMsg represents nft module messages integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type NFTMsg struct {
+type nftMsg struct {
 	Send *nfttypes.MsgSend `json:"Send"`
 }
 
-// CoreumMsg represents all supported custom messages integrated with the wasm handler.
+// coreumMsg represents all supported custom messages integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
-type CoreumMsg struct {
-	AssetFT  *AssetFTMsg  `json:"AssetFT"`
-	AssetNFT *AssetNFTMsg `json:"AssetNFT"`
-	NFT      *NFTMsg      `json:"NFT"`
+type coreumMsg struct {
+	AssetFT  *assetFTMsg  `json:"AssetFT"`
+	AssetNFT *assetNFTMsg `json:"AssetNFT"`
+	NFT      *nftMsg      `json:"nft"`
 }
 
 // NewCoreumMsgHandler returns coreum handler that handles messages received from smart contracts.
@@ -86,7 +86,7 @@ type CoreumMsg struct {
 func NewCoreumMsgHandler() *wasmkeeper.MessageEncoders {
 	return &wasmkeeper.MessageEncoders{
 		Custom: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
-			var coreumMsg CoreumMsg
+			var coreumMsg coreumMsg
 			if err := json.Unmarshal(msg, &coreumMsg); err != nil {
 				return nil, errors.WithStack(err)
 			}
@@ -108,7 +108,7 @@ func NewCoreumMsgHandler() *wasmkeeper.MessageEncoders {
 	}
 }
 
-func decodeCoreumMessage(coreumMessages CoreumMsg, sender sdk.AccAddress) (sdk.Msg, error) {
+func decodeCoreumMessage(coreumMessages coreumMsg, sender sdk.AccAddress) (sdk.Msg, error) {
 	if coreumMessages.AssetFT != nil {
 		return decodeAssetFTMessage(coreumMessages.AssetFT, sender.String())
 	}
@@ -122,7 +122,7 @@ func decodeCoreumMessage(coreumMessages CoreumMsg, sender sdk.AccAddress) (sdk.M
 	return nil, nil
 }
 
-func decodeAssetFTMessage(assetFTMsg *AssetFTMsg, sender string) (sdk.Msg, error) {
+func decodeAssetFTMessage(assetFTMsg *assetFTMsg, sender string) (sdk.Msg, error) {
 	if assetFTMsg.Issue != nil {
 		assetFTMsg.Issue.Issuer = sender
 		return assetFTMsg.Issue, nil
@@ -159,7 +159,7 @@ func decodeAssetFTMessage(assetFTMsg *AssetFTMsg, sender string) (sdk.Msg, error
 	return nil, nil
 }
 
-func decodeAssetNFTMessage(assetNFTMsg *AssetNFTMsg, sender string) (sdk.Msg, error) {
+func decodeAssetNFTMessage(assetNFTMsg *assetNFTMsg, sender string) (sdk.Msg, error) {
 	if assetNFTMsg.IssueClass != nil {
 		var (
 			data *codectypes.Any
@@ -227,7 +227,7 @@ func decodeAssetNFTMessage(assetNFTMsg *AssetNFTMsg, sender string) (sdk.Msg, er
 	return nil, nil
 }
 
-func decodeNFTMessage(nftMsg *NFTMsg, sender string) (sdk.Msg, error) {
+func decodeNFTMessage(nftMsg *nftMsg, sender string) (sdk.Msg, error) {
 	if nftMsg.Send != nil {
 		nftMsg.Send.Sender = sender
 		return nftMsg.Send, nil
