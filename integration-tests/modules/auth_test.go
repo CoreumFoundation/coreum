@@ -20,9 +20,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
-
-// TODO (wojtek): once we have other coins add test verifying that transaction offering fee in coin other than CORE is rejected
 
 // TestAuthFeeLimits verifies that invalid message gas won't be accepted.
 func TestAuthFeeLimits(t *testing.T) {
@@ -34,8 +33,12 @@ func TestAuthFeeLimits(t *testing.T) {
 
 	maxBlockGas := chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
-		Messages: []sdk.Msg{&banktypes.MsgSend{}},
-		Amount:   sdk.NewInt(maxBlockGas + 100),
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgIssue{},
+		},
+		NondeterministicMessagesGas: uint64(maxBlockGas) + 100,
+		Amount:                      chain.NetworkConfig.AssetFTConfig.IssueFee,
 	}))
 
 	msg := &banktypes.MsgSend{
@@ -80,6 +83,45 @@ func TestAuthFeeLimits(t *testing.T) {
 			WithGas(uint64(maxBlockGas)),
 		msg)
 	require.NoError(t, err)
+
+	// fee paid in another coin is rejected
+	const subunit = "uzzz" // uzzz is intentionally selected to put it on second position, after ucore, in sorted coins
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        sender.String(),
+		Symbol:        "ZZZ",
+		Subunit:       subunit,
+		Precision:     6,
+		Description:   "ZZZ Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features:      []assetfttypes.Feature{},
+	}
+	denom := assetfttypes.BuildDenom(subunit, sender)
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(chain.GasLimitByMsgs(msg)).
+			WithGasPrices(sdk.NewInt64Coin(denom, 1).String()),
+		msg)
+	require.Error(t, err)
+	require.True(t, sdkerrors.ErrInvalidCoins.Is(err))
+
+	// fee paid both in core and another coin is rejected
+	_, err = client.BroadcastTx(ctx,
+		chain.ClientContext.WithFromAddress(sender),
+		chain.TxFactory().
+			WithGas(chain.GasLimitByMsgs(msg)).
+			WithGasPrices(chain.TxFactory().GasPrices().Add(sdk.NewInt64DecCoin(denom, 1)).Sort().String()),
+		msg)
+	require.Error(t, err)
+	require.True(t, sdkerrors.ErrInvalidCoins.Is(err))
 }
 
 // TestAuthMultisig tests the cosmos-sdk multisig accounts and API.
