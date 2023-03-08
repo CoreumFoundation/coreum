@@ -537,7 +537,7 @@ func TestAssetNFTBurn(t *testing.T) {
 	requireT.Contains(err.Error(), nft.ErrNFTNotExists.Error()) // the nft wraps the errors with the `errors` so the client doesn't decode them as sdk errors.
 }
 
-// TestAssetNFTBurn tests that burning an nft will erase all
+// TestAssetNFTBurn_WithFreezingAndRecords tests that burning an nft will erase all
 // records for it related to freezing.
 func TestAssetNFTBurn_WithFreezingAndRecords(t *testing.T) {
 	t.Parallel()
