@@ -205,12 +205,8 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return err
 	}
 
-	// if the token is burnt the storage needs to be cleaned up, for both the freezing and whitelisting.
+	// if the token is burnt the storage needs to be cleaned up, for freezing records.
 	if err := k.SetFrozen(ctx, classID, id, false); err != nil {
-		return err
-	}
-
-	if err := k.deleteWhitelistingForNFT(ctx, classID, id); err != nil {
 		return err
 	}
 
@@ -536,26 +532,6 @@ func (k Keeper) GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID 
 	}
 
 	return pageRes, accounts, nil
-}
-
-// deleteWhitelistingForNFT delete all whitelisted accounts for the NFT.
-func (k Keeper) deleteWhitelistingForNFT(ctx sdk.Context, classID, nftID string) error {
-	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
-	if err != nil {
-		return err
-	}
-	nftKey := store.JoinKeys(types.NFTWhitelistingKeyPrefix, compositeKey)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), nftKey)
-	whitelistedKeys := [][]byte{}
-	iterator := store.Iterator(nil, nil)
-	for ; iterator.Valid(); iterator.Next() {
-		whitelistedKeys = append(whitelistedKeys, iterator.Key())
-	}
-
-	for _, key := range whitelistedKeys {
-		store.Delete(key)
-	}
-	return nil
 }
 
 // GetAllWhitelisted returns all whitelisted accounts for all NFTs.
