@@ -12,14 +12,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/pkg/store"
+	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
-)
-
-var (
-	frozenNFTStoreValue      = []byte{0x01}
-	whitelistedNFTStoreValue = []byte{0x01}
-	burntNFTStoreValue       = []byte{0x01}
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
@@ -159,8 +154,7 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 
 // GetClassDefinition reruns the ClassDefinition.
 func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.ClassDefinition, error) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CreateClassKey(classID))
+	bz := ctx.KVStore(k.storeKey).Get(types.CreateClassKey(classID))
 	if bz == nil {
 		return types.ClassDefinition{}, sdkerrors.Wrapf(types.ErrClassNotFound, "classID: %s", classID)
 	}
@@ -172,10 +166,9 @@ func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.Class
 
 // GetClassDefinitions returns all non-fungible class token definitions.
 func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.ClassDefinition, *query.PageResponse, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassKeyPrefix)
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
-		store,
+		prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassKeyPrefix),
 		pagination,
 		// builder
 		func(key []byte, definition *types.ClassDefinition) (*types.ClassDefinition, error) {
@@ -200,8 +193,7 @@ func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageReque
 
 // SetClassDefinition stores the ClassDefinition.
 func (k Keeper) SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.CreateClassKey(definition.ID), k.cdc.MustMarshal(&definition))
+	ctx.KVStore(k.storeKey).Set(types.CreateClassKey(definition.ID), k.cdc.MustMarshal(&definition))
 }
 
 // Mint mints new non-fungible token.
@@ -296,13 +288,12 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 
 // IsBurnt return whether a non-fungible token is burnt or not.
 func (k Keeper) IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error) {
-	store := ctx.KVStore(k.storeKey)
 	key, err := types.CreateBurningKey(classID, nftID)
 	if err != nil {
 		return false, err
 	}
 
-	return bytes.Equal(store.Get(key), burntNFTStoreValue), nil
+	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), asset.StoreTrue), nil
 }
 
 // SetBurnt marks the nft burnt, but does not make any checks
@@ -312,8 +303,7 @@ func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
 	if err != nil {
 		return err
 	}
-	store := ctx.KVStore(k.storeKey)
-	store.Set(key, burntNFTStoreValue)
+	ctx.KVStore(k.storeKey).Set(key, asset.StoreTrue)
 	return nil
 }
 
@@ -321,20 +311,20 @@ func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
 //
 //nolint:dupl
 func (k Keeper) GetBurntNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.BurntNFT, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix)
 	mp := make(map[string][]string, 0)
-	pageRes, err := query.Paginate(store, q, func(key, value []byte) error {
-		if !bytes.Equal(value, burntNFTStoreValue) {
-			return errors.Errorf("value stored in burning store is not %x, value %x", burntNFTStoreValue, value)
-		}
-		classID, nftID, err := types.ParseBurningKey(key)
-		if err != nil {
-			return err
-		}
+	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix),
+		q, func(key, value []byte) error {
+			if !bytes.Equal(value, asset.StoreTrue) {
+				return errors.Errorf("value stored in burning store is not %x, value %x", asset.StoreTrue, value)
+			}
+			classID, nftID, err := types.ParseBurningKey(key)
+			if err != nil {
+				return err
+			}
 
-		mp[classID] = append(mp[classID], nftID)
-		return nil
-	})
+			mp[classID] = append(mp[classID], nftID)
+			return nil
+		})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -411,11 +401,11 @@ func (k Keeper) SetFrozen(ctx sdk.Context, classID, nftID string, frozen bool) e
 	if err != nil {
 		return err
 	}
-	store := ctx.KVStore(k.storeKey)
+	s := ctx.KVStore(k.storeKey)
 	if frozen {
-		store.Set(key, frozenNFTStoreValue)
+		s.Set(key, asset.StoreTrue)
 	} else {
-		store.Delete(key)
+		s.Delete(key)
 	}
 	return nil
 }
@@ -435,33 +425,32 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 		return false, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
-	store := ctx.KVStore(k.storeKey)
 	key, err := types.CreateFreezingKey(classID, nftID)
 	if err != nil {
 		return false, err
 	}
 
-	return bytes.Equal(store.Get(key), frozenNFTStoreValue), nil
+	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), asset.StoreTrue), nil
 }
 
 // GetFrozenNFTs return paginated frozen NFTs.
 //
 //nolint:dupl
 func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.FrozenNFT, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix)
 	mp := make(map[string][]string, 0)
-	pageRes, err := query.Paginate(store, q, func(key, value []byte) error {
-		if !bytes.Equal(value, frozenNFTStoreValue) {
-			return errors.Errorf("value stored in freezing store is not %x, value %x", frozenNFTStoreValue, value)
-		}
-		classID, nftID, err := types.ParseFreezingKey(key)
-		if err != nil {
-			return err
-		}
+	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix),
+		q, func(key, value []byte) error {
+			if !bytes.Equal(value, asset.StoreTrue) {
+				return errors.Errorf("value stored in freezing store is not %x, value %x", asset.StoreTrue, value)
+			}
+			classID, nftID, err := types.ParseFreezingKey(key)
+			if err != nil {
+				return err
+			}
 
-		mp[classID] = append(mp[classID], nftID)
-		return nil
-	})
+			mp[classID] = append(mp[classID], nftID)
+			return nil
+		})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -497,8 +486,7 @@ func (k Keeper) IsWhitelisted(ctx sdk.Context, classID, nftID string, account sd
 		return false, err
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	return bytes.Equal(store.Get(key), whitelistedNFTStoreValue), nil
+	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), asset.StoreTrue), nil
 }
 
 // GetAllWhitelistedAccountsForNFT returns all whitelisted accounts for all NFTs.
@@ -512,17 +500,17 @@ func (k Keeper) GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID 
 		return nil, nil, err
 	}
 	key := store.JoinKeys(types.NFTWhitelistingKeyPrefix, compositeKey)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), key)
 	accounts := []string{}
-	pageRes, err := query.Paginate(store, q, func(key, value []byte) error {
-		if !bytes.Equal(value, whitelistedNFTStoreValue) {
-			return errors.Errorf("value stored in whitelisting store is not %x, value %x", whitelistedNFTStoreValue, value)
-		}
+	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key),
+		q, func(key, value []byte) error {
+			if !bytes.Equal(value, asset.StoreTrue) {
+				return errors.Errorf("value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
+			}
 
-		account := sdk.AccAddress(key[1:]) // the first byte contains the length prefix
-		accounts = append(accounts, account.String())
-		return nil
-	})
+			account := sdk.AccAddress(key[1:]) // the first byte contains the length prefix
+			accounts = append(accounts, account.String())
+			return nil
+		})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -532,33 +520,33 @@ func (k Keeper) GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID 
 
 // GetAllWhitelisted returns all whitelisted accounts for all NFTs.
 func (k Keeper) GetAllWhitelisted(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.WhitelistedNFTAccounts, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTWhitelistingKeyPrefix)
 	type nftUniqueID struct {
 		classID string
 		nftID   string
 	}
 	mp := make(map[nftUniqueID][]string, 0)
-	pageRes, err := query.Paginate(store, q, func(key, value []byte) error {
-		if !bytes.Equal(value, whitelistedNFTStoreValue) {
-			return errors.Errorf("value stored in whitelisting store is not %x, value %x", whitelistedNFTStoreValue, value)
-		}
-		classID, nftID, account, err := types.ParseWhitelistingKey(key)
-		if err != nil {
-			return err
-		}
-		if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTWhitelistingKeyPrefix),
+		q, func(key, value []byte) error {
+			if !bytes.Equal(value, asset.StoreTrue) {
+				return errors.Errorf("value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
+			}
+			classID, nftID, account, err := types.ParseWhitelistingKey(key)
+			if err != nil {
+				return err
+			}
+			if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
+				return nil
+			}
+
+			uniqueID := nftUniqueID{
+				classID: classID,
+				nftID:   nftID,
+			}
+
+			accountString := account.String()
+			mp[uniqueID] = append(mp[uniqueID], accountString)
 			return nil
-		}
-
-		uniqueID := nftUniqueID{
-			classID: classID,
-			nftID:   nftID,
-		}
-
-		accountString := account.String()
-		mp[uniqueID] = append(mp[uniqueID], accountString)
-		return nil
-	})
+		})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -634,11 +622,11 @@ func (k Keeper) SetWhitelisting(ctx sdk.Context, classID, nftID string, account 
 	if err != nil {
 		return err
 	}
-	store := ctx.KVStore(k.storeKey)
+	s := ctx.KVStore(k.storeKey)
 	if whitelisting {
-		store.Set(key, whitelistedNFTStoreValue)
+		s.Set(key, asset.StoreTrue)
 	} else {
-		store.Delete(key)
+		s.Delete(key)
 	}
 	return nil
 }
