@@ -52,7 +52,6 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 	testApp := simapp.New()
 	ctx := testApp.NewContext(false, tmproto.Header{})
 	assetNFTKeeper := testApp.AssetNFTKeeper
-	nftKeeper := testApp.NFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
@@ -79,11 +78,11 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 	requireT.NoError(err)
 
 	// invariant is valid
-	_, isBroken := keeper.FreezingInvariant(assetNFTKeeper, nftKeeper)(ctx)
+	_, isBroken := keeper.FreezingInvariant(assetNFTKeeper)(ctx)
 	requireT.False(isBroken)
 
 	// non-existing nft (invariant is broken)
 	requireT.NoError(assetNFTKeeper.SetFrozen(ctx, classID, "next-nft", true))
-	_, isBroken = keeper.FreezingInvariant(assetNFTKeeper, nftKeeper)(ctx)
+	_, isBroken = keeper.FreezingInvariant(assetNFTKeeper)(ctx)
 	requireT.True(isBroken)
 }
