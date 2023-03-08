@@ -8,7 +8,7 @@ pub struct NFT {
     pub id: String,
     pub uri: Option<String>,
     pub uri_hash: Option<String>,
-    pub data: Option<String>,
+    pub data: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

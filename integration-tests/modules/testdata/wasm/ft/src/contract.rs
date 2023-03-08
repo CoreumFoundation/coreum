@@ -1,7 +1,7 @@
 use coreum_wasm_sdk::assetft;
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries};
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, QueryRequest, StdResult};
-use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response, StdError, Uint128};
+use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response, StdError, SubMsg, Uint128};
 use cw2::set_contract_version;
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
@@ -58,6 +58,8 @@ pub enum ExecuteMsg {
     GloballyFreeze {},
     GloballyUnfreeze {},
     SetWhitelistedLimit { account: String, amount: u128 },
+    // custom message we use to show the submission of multiple messages
+    MintAndSend { account: String, amount: u128 },
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -77,6 +79,7 @@ pub fn execute(
         ExecuteMsg::SetWhitelistedLimit { account, amount } => {
             set_whitelisted_limit(deps, info, account, amount)
         }
+        ExecuteMsg::MintAndSend { account, amount } => mint_and_send(deps, info, account, amount),
     }
 }
 
@@ -280,6 +283,36 @@ fn set_whitelisted_limit(
         .add_message(msg))
 }
 
+fn mint_and_send(
+    deps: DepsMut,
+    info: MessageInfo,
+    account: String,
+    amount: u128,
+) -> Result<Response<CoreumMsg>, ContractError> {
+    let state = STATE.load(deps.storage)?;
+    if info.sender != state.owner {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let mint_msg = SubMsg::new(CoreumMsg::AssetFT(assetft::Msg::Mint {
+        coin: Coin::new(amount, state.denom.clone()),
+    }));
+
+    let send_msg = SubMsg::new(cosmwasm_std::BankMsg::Send {
+        to_address: account.to_string(),
+        amount: vec![Coin {
+            amount: amount.into(),
+            denom: state.denom.clone(),
+        }],
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "mint_and_send")
+        .add_attribute("denom", state.denom)
+        .add_attribute("amount", amount.to_string())
+        .add_submessages([mint_msg, send_msg]))
+}
+
 // ********** Queries **********
 
 fn token(deps: Deps<CoreumQueries>) -> StdResult<assetft::TokenResponse> {
@@ -300,7 +333,7 @@ fn frozen_balance(
             denom: state.denom,
             account,
         })
-        .into();
+            .into();
     let res: assetft::FrozenBalanceResponse = deps.querier.query(&request)?;
     Ok(res)
 }
@@ -315,7 +348,7 @@ fn whitelisted_balance(
             denom: state.denom,
             account,
         })
-        .into();
+            .into();
     let res: assetft::WhitelistedBalanceResponse = deps.querier.query(&request)?;
     Ok(res)
 }

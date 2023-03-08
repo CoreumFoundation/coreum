@@ -104,6 +104,7 @@ const (
 	ftMethodGloballyFreeze      ftMethod = "globally_freeze"
 	ftMethodGloballyUnfreeze    ftMethod = "globally_unfreeze"
 	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
+	ftMethodMintAndSend         ftMethod = "mint_and_send"
 	// query.
 	ftMethodToken              ftMethod = "token"
 	ftMethodFrozenBalance      ftMethod = "frozen_balance"
@@ -606,7 +607,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	ctx, chain := integrationtests.NewTestingContext(t)
 
 	admin := chain.GenAccount()
-	recipient := chain.GenAccount()
+	recipient1 := chain.GenAccount()
+	recipient2 := chain.GenAccount()
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
@@ -743,7 +745,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	amountToFreeze := sdk.NewInt(100)
 	freezePayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodFreeze: {
-			Account: recipient.String(),
+			Account: recipient1.String(),
 			Amount:  amountToFreeze.String(),
 		},
 	})
@@ -754,7 +756,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	frozenRes, err := ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
-		Account: recipient.String(),
+		Account: recipient1.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
@@ -765,7 +767,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	amountToUnfreeze := sdk.NewInt(40)
 	unfreezePayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodUnfreeze: {
-			Account: recipient.String(),
+			Account: recipient1.String(),
 			Amount:  amountToUnfreeze.String(),
 		},
 	})
@@ -776,7 +778,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	frozenRes, err = ftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
-		Account: recipient.String(),
+		Account: recipient1.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
@@ -821,7 +823,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	amountToWhitelist := sdk.NewInt(100)
 	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodSetWhitelistedLimit: {
-			Account: recipient.String(),
+			Account: recipient1.String(),
 			Amount:  amountToWhitelist.String(),
 		},
 	})
@@ -832,11 +834,45 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	whitelistedRes, err := ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
-		Account: recipient.String(),
+		Account: recipient1.String(),
 		Denom:   denom,
 	})
 	requireT.NoError(err)
 	requireT.Equal(amountToWhitelist.String(), whitelistedRes.Balance.Amount.String())
+
+	// ********** MintAndSend **********
+
+	amountToMintAndSend := sdk.NewInt(100)
+	whitelistPayload, err = json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodSetWhitelistedLimit: {
+			Account: recipient2.String(),
+			Amount:  amountToMintAndSend.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	txf = txf.WithSimulateAndExecute(true)
+	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, whitelistPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	mintAndSendPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
+		ftMethodMintAndSend: {
+			Account: recipient2.String(),
+			Amount:  amountToMintAndSend.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	txf = txf.WithSimulateAndExecute(true)
+	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, mintAndSendPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	balanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: recipient2.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(amountToWhitelist.String(), balanceRes.Balance.Amount.String())
 
 	// ********** Query **********
 
@@ -858,7 +894,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	frozenBalancePayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
 		ftMethodFrozenBalance: {
-			Account: recipient.String(),
+			Account: recipient1.String(),
 		},
 	})
 	requireT.NoError(err)
@@ -874,7 +910,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	whitelistedBalancePayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
 		ftMethodWhitelistedBalance: {
-			Account: recipient.String(),
+			Account: recipient1.String(),
 		},
 	})
 	requireT.NoError(err)
