@@ -82,22 +82,23 @@ func init() {
 		}
 	)
 
+	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
+
 	// mainnet vars
 
 	// CORE allocation:
-	// 500M = (99_880_000 + 120_000) + 4 * 100_000_000
-	// In total 6 wallets will be created in genesis:
-	// where 120_000 is a balance of wallet to create genesis validators.
-	// where 99_880_000 is a balance of foundation-0 wallet.
-	// where 4 * 100_000_000 is a balance of each of foundation-{1-4} wallets.
-	mainGenesisValidatorsCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(120_000_000_000)))
+	// 500M = (4 * 25_000 + 99_900_000) + 4 * 100_000_000
+	// In total 8 wallets will be created in genesis:
+	// where 4 * 25_000 is a balance of each of 4 wallet used to create genesis validators.
+	// where 99_900_000 is a balance of foundation-0 wallet.
+	// where 4 * 100_000_000 is a balance of each of remaining 4 foundation wallets.
+	mainGenesisValidatorCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(25_000_000_000)))
 
-	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_880_000_000_000)))
+	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_900_000_000_000)))
 	mainFoundationOtherInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(100_000_000_000_000)))
 
 	// testnet vars
 
-	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
 	// 500M = 4 * (124_950_000 + 50_000)
 	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
 	// where 50_000 is balances of each of 4 initial validator stakers.
@@ -135,35 +136,49 @@ func init() {
 			AssetFTConfig:      assetFTConfig,
 			AssetNFTConfig:     assetNFTConfig,
 			FundedAccounts: []FundedAccount{
-				// TODO: Replace with real addresses.
-				// genesis-validators-creator: 120k
+				// coreum-krypton genesis-validators-creator: 25k
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
-					Balances: mainGenesisValidatorsCreatorBalance,
+					Address:  "core1d5wqdp322zn5jyn5mszrrstg2xuq35xyrhsc9f",
+					Balances: mainGenesisValidatorCreatorBalance,
 				},
-				// foundation-0: 99_880_000
+				// coreum-neon genesis-validators-creator: 25k
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core15cpygjlf7pgfnqlc8uz9eryspwd0pwk3xrup8h",
+					Balances: mainGenesisValidatorCreatorBalance,
+				},
+				// coreum-radon genesis-validators-creator: 25k
+				{
+					Address:  "core1zmhfe2hh4qmg54gpsyw8n35gayx3a85mqlfzgk",
+					Balances: mainGenesisValidatorCreatorBalance,
+				},
+				// coreum-xenon genesis-validators-creator: 25k
+				{
+					Address:  "core1hsmhywnkehyyv8muzswhdumzztae4hq4k3dj8p",
+					Balances: mainGenesisValidatorCreatorBalance,
+				},
+				// coreum-foundation-0: 99_900_000
+				{
+					Address:  "core13xmyzhvl02xpz0pu8v9mqalsvpyy7wvs9q5f90",
 					Balances: mainFoundationZeroInitialBalance,
 				},
-				// foundation-1: 100M
+				// coreum-foundation-1: 100M
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core14g6wpzdx8g9txvxxu3fl7fplal9y5ztx34ac5p",
 					Balances: mainFoundationOtherInitialBalance,
 				},
-				// foundation-2: 100M
+				// coreum-foundation-2: 100M
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core1zn2ns3ls68jlsv5dgkuz0rxsxt5fhk7n9cfl23",
 					Balances: mainFoundationOtherInitialBalance,
 				},
-				// foundation-3: 100M
+				// coreum-foundation-3: 100M
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core1p4gsfkmqm0uxua65phteqwnmu39fwjvtspfkcj",
 					Balances: mainFoundationOtherInitialBalance,
 				},
-				// foundation-4: 100M
+				// coreum-foundation-4: 100M
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core1rddqzjzy4f5frxkhds3sux0m03encqtla3ayu9",
 					Balances: mainFoundationOtherInitialBalance,
 				},
 			},
