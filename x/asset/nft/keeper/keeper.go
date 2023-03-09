@@ -477,6 +477,10 @@ func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, a
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
 
+	if classDefinition.Issuer == account.String() {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
+	}
+
 	if err := k.SetWhitelisting(ctx, classID, nftID, account, true); err != nil {
 		return err
 	}
@@ -501,6 +505,10 @@ func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, send
 
 	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	if classDefinition.Issuer == account.String() {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
 	}
 
 	if err := k.SetWhitelisting(ctx, classID, nftID, account, false); err != nil {
@@ -578,6 +586,11 @@ func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver
 
 	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
 		return sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
+	}
+
+	// always allow issuer to receive NFTs issued by them.
+	if classDefinition.Issuer == receiver.String() {
+		return nil
 	}
 
 	if classDefinition.IsFeatureEnabled(types.ClassFeature_whitelisting) { //nolint:nosnakecase // generated variable
