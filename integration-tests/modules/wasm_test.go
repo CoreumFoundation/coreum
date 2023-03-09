@@ -599,8 +599,6 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 }
 
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.
-//
-//nolint:nosnakecase
 func TestWASMFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 

@@ -13,11 +13,9 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
-
-// globalFreezeEnabledStoreVal is the value used to store the globally frozen flag.
-var globalFreezeEnabledStoreVal = []byte{0x01}
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
 type ParamSubspace interface {
@@ -219,8 +217,7 @@ func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress)
 		return sdkerrors.Wrapf(types.ErrInvalidInput, "duplicate symbol %s", symbol)
 	}
 
-	compositeKey := types.CreateSymbolKey(issuer, symbol)
-	ctx.KVStore(k.storeKey).Set(compositeKey, []byte{0x01})
+	ctx.KVStore(k.storeKey).Set(types.CreateSymbolKey(issuer, symbol), asset.StoreTrue)
 	return nil
 }
 
@@ -421,7 +418,7 @@ func (k Keeper) SetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, coins sd
 // SetGlobalFreeze enables/disables global freeze on a fungible token depending on frozen arg.
 func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 	if frozen {
-		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezeKey(denom), globalFreezeEnabledStoreVal)
+		ctx.KVStore(k.storeKey).Set(types.CreateGlobalFreezeKey(denom), asset.StoreTrue)
 		return
 	}
 	ctx.KVStore(k.storeKey).Delete(types.CreateGlobalFreezeKey(denom))
@@ -680,8 +677,7 @@ func (k Keeper) frozenAccountsBalanceStore(ctx sdk.Context) balanceStore {
 }
 
 func (k Keeper) isGloballyFrozen(ctx sdk.Context, denom string) bool {
-	globFreezeVal := ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom))
-	return bytes.Equal(globFreezeVal, globalFreezeEnabledStoreVal)
+	return bytes.Equal(ctx.KVStore(k.storeKey).Get(types.CreateGlobalFreezeKey(denom)), asset.StoreTrue)
 }
 
 // whitelistedAccountBalanceStore gets the store for the whitelisted balances of an account.

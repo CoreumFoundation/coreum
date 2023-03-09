@@ -265,7 +265,7 @@ func TestKeeper_IssueValidateSubunit(t *testing.T) {
 		if isValid {
 			requireT.NoError(err)
 		} else {
-			requireT.ErrorIs(types.ErrInvalidInput, err, "subunit", subunit)
+			requireT.ErrorIs(err, types.ErrInvalidInput, "subunit", subunit)
 		}
 	}
 
@@ -365,7 +365,7 @@ func TestKeeper_Mint(t *testing.T) {
 
 	// try to mint unmintable token
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(unmintableDenom, sdk.NewInt(100)))
-	requireT.ErrorIs(types.ErrFeatureDisabled, err)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
 
 	// Issue a mintable fungible token
 	settings = types.IssueSettings{
@@ -385,7 +385,7 @@ func TestKeeper_Mint(t *testing.T) {
 	// try to mint as non-issuer
 	randomAddr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Mint(ctx, randomAddr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// mint tokens and check balance and total supply
 	err = ftKeeper.Mint(ctx, addr, sdk.NewCoin(mintableDenom, sdk.NewInt(100)))
@@ -434,7 +434,7 @@ func TestKeeper_Burn(t *testing.T) {
 
 	// try to burn unburnable token from the recipient account
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
-	requireT.ErrorIs(types.ErrFeatureDisabled, err)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
 
 	// try to burn unburnable token from the issuer account
 	err = ftKeeper.Burn(ctx, issuer, sdk.NewCoin(unburnableDenom, sdk.NewInt(100)))
@@ -477,13 +477,13 @@ func TestKeeper_Burn(t *testing.T) {
 
 	// try to freeze the issuer (issuer can't be frozen)
 	err = ftKeeper.Freeze(ctx, issuer, issuer, sdk.NewCoin(burnableDenom, sdk.NewInt(600)))
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// try to burn non-issuer frozen coins
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
 	requireT.NoError(err)
 	err = ftKeeper.Burn(ctx, recipient, sdk.NewCoin(burnableDenom, sdk.NewInt(100)))
-	requireT.ErrorIs(sdkerrors.ErrInsufficientFunds, err)
+	requireT.ErrorIs(err, sdkerrors.ErrInsufficientFunds)
 }
 
 //nolint:dupl // We don't care
@@ -511,7 +511,7 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	}
 
 	_, err := assetKeeper.Issue(ctx, settings)
-	requireT.ErrorIs(types.ErrInvalidInput, err)
+	requireT.ErrorIs(err, types.ErrInvalidInput)
 
 	// issue token
 	settings = types.IssueSettings{
@@ -761,7 +761,7 @@ func TestKeeper_SendCommissionRate_BankSend(t *testing.T) {
 	}
 
 	_, err := assetKeeper.Issue(ctx, settings)
-	requireT.ErrorIs(types.ErrInvalidInput, err)
+	requireT.ErrorIs(err, types.ErrInvalidInput)
 
 	// issue token
 	settings = types.IssueSettings{
@@ -936,20 +936,20 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	// try to freeze unfreezable Token
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(unfreezableDenom, sdk.NewInt(10)))
-	assertT.ErrorIs(types.ErrFeatureDisabled, err)
+	assertT.ErrorIs(err, types.ErrFeatureDisabled)
 
 	// try to freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.Freeze(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdk.NewInt(10)))
-	assertT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	assertT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// try to freeze 0 balance
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(0)))
-	requireT.ErrorIs(sdkerrors.ErrInvalidCoins, err)
+	requireT.ErrorIs(err, sdkerrors.ErrInvalidCoins)
 
 	// try to unfreeze 0 balance
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(0)))
-	requireT.ErrorIs(sdkerrors.ErrInvalidCoins, err)
+	requireT.ErrorIs(err, sdkerrors.ErrInvalidCoins)
 
 	// try to freeze more than balance
 	err = ftKeeper.Freeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(110)))
@@ -959,7 +959,7 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 
 	// try to unfreeze more than frozen balance
 	err = ftKeeper.Unfreeze(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(130)))
-	requireT.ErrorIs(sdkerrors.ErrInsufficientFunds, err)
+	requireT.ErrorIs(err, sdkerrors.ErrInsufficientFunds)
 	frozenBalance = ftKeeper.GetFrozenBalance(ctx, recipient, denom)
 	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(110)), frozenBalance)
 
@@ -1103,12 +1103,12 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 
 	// try to global-freeze unfreezable Token
 	err = ftKeeper.GloballyFreeze(ctx, issuer, unfreezableDenom)
-	assertT.ErrorIs(types.ErrFeatureDisabled, err)
+	assertT.ErrorIs(err, types.ErrFeatureDisabled)
 
 	// try to global-freeze from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.GloballyFreeze(ctx, randomAddr, freezableDenom)
-	assertT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	assertT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// freeze twice to check global-freeze idempotence
 	err = ftKeeper.GloballyFreeze(ctx, issuer, freezableDenom)
@@ -1121,7 +1121,7 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 
 	// try to global-unfreeze from non issuer address
 	err = ftKeeper.GloballyUnfreeze(ctx, randomAddr, freezableDenom)
-	assertT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	assertT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// unfreeze twice to check global-unfreeze idempotence
 	err = ftKeeper.GloballyUnfreeze(ctx, issuer, freezableDenom)
@@ -1138,12 +1138,12 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(freezableDenom, sdk.NewInt(10)))
 	// send
 	err = bankKeeper.SendCoins(ctx, recipient, randomAddr, coinsToSend)
-	assertT.ErrorIs(types.ErrGloballyFrozen, err)
+	assertT.ErrorIs(err, types.ErrGloballyFrozen)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
 		[]banktypes.Output{{Address: randomAddr.String(), Coins: coinsToSend}})
-	assertT.ErrorIs(types.ErrGloballyFrozen, err)
+	assertT.ErrorIs(err, types.ErrGloballyFrozen)
 
 	// unfreeze, try to send & verify balance
 	err = ftKeeper.GloballyUnfreeze(ctx, issuer, freezableDenom)
@@ -1208,7 +1208,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 
 	// whitelisting fails on unwhitelistable token
 	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(unwhitelistableDenom, sdk.NewInt(1)))
-	requireT.ErrorIs(types.ErrFeatureDisabled, err)
+	requireT.ErrorIs(err, types.ErrFeatureDisabled)
 
 	// try to whitelist non-existent denom
 	nonExistentDenom := types.BuildDenom("nonexist", issuer)
@@ -1218,11 +1218,11 @@ func TestKeeper_Whitelist(t *testing.T) {
 	// try to whitelist from non issuer address
 	randomAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdk.NewInt(10)))
-	assertT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	assertT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// try to whitelist the issuer (issuer can't be whitelisted)
 	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, issuer, sdk.NewCoin(denom, sdk.NewInt(1)))
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// set whitelisted balance to 0
 	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(0))))
@@ -1232,7 +1232,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100)))
 	// send
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend)
-	requireT.ErrorIs(types.ErrWhitelistedLimitExceeded, err)
+	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
@@ -1269,12 +1269,12 @@ func TestKeeper_Whitelist(t *testing.T) {
 	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1)))
 	// send
 	err = bankKeeper.SendCoins(ctx, issuer, recipient, coinsToSend)
-	requireT.ErrorIs(types.ErrWhitelistedLimitExceeded, err)
+	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 	// multi-send
 	err = bankKeeper.InputOutputCoins(ctx,
 		[]banktypes.Input{{Address: issuer.String(), Coins: coinsToSend}},
 		[]banktypes.Output{{Address: recipient.String(), Coins: coinsToSend}})
-	requireT.ErrorIs(types.ErrWhitelistedLimitExceeded, err)
+	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 
 	// try to whitelist from non issuer address
 	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdk.NewInt(80)))
@@ -1378,7 +1378,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 			{Address: issuer1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom1, sdk.NewInt(15)))},
 			{Address: issuer2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdk.NewInt(10)))},
 		})
-	requireT.ErrorIs(sdkerrors.ErrInsufficientFunds, err)
+	requireT.ErrorIs(err, sdkerrors.ErrInsufficientFunds)
 
 	// multi-send invalid whitelisted amount
 	err = bankKeeper.InputOutputCoins(ctx,
@@ -1391,7 +1391,7 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 			// the recipient2 has whitelisted 10 so can't receive 15
 			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdk.NewInt(15)))},
 		})
-	requireT.ErrorIs(types.ErrWhitelistedLimitExceeded, err)
+	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
 }
 
 // TestKeeper_AllInOne tests send and multi send with tokens that have all features enabled

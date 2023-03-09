@@ -29,6 +29,8 @@ var (
 	NFTFreezingKeyPrefix = []byte{0x02}
 	// NFTWhitelistingKeyPrefix defines the key prefix to track whitelisted account.
 	NFTWhitelistingKeyPrefix = []byte{0x03}
+	// NFTBurningKeyPrefix defines the key prefix to track burnt NFTs.
+	NFTBurningKeyPrefix = []byte{0x04}
 )
 
 // CreateClassKey constructs the key for the non-fungible token class.
@@ -80,4 +82,27 @@ func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
 		return "", "", nil, err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), parsedKeys[2], nil
+}
+
+// CreateBurningKey constructs the key for the burning of non-fungible token.
+func CreateBurningKey(classID, nftID string) ([]byte, error) {
+	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
+	if err != nil {
+		return nil, err
+	}
+
+	return store.JoinKeys(NFTBurningKeyPrefix, compositeKey), nil
+}
+
+// ParseBurningKey parses burning key back to class id and nft id.
+func ParseBurningKey(key []byte) (string, string, error) {
+	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
+	if err != nil {
+		return "", "", err
+	}
+	if len(parsedKeys) != 2 {
+		err = sdkerrors.Wrapf(ErrInvalidKey, "burning key must be composed to 2 length prefixed keys")
+		return "", "", err
+	}
+	return string(parsedKeys[0]), string(parsedKeys[1]), nil
 }

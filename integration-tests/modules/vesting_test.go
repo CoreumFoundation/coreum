@@ -241,9 +241,9 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Description:   "description",
 		InitialAmount: sdk.NewInt(10_000),
 		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_burning,      //nolint:nosnakecase
-			assetfttypes.Feature_freezing,     //nolint:nosnakecase
-			assetfttypes.Feature_whitelisting, //nolint:nosnakecase
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
 		},
 	}
 
