@@ -31,7 +31,7 @@ func (s MsgServer) CreateValidator(goCtx context.Context, msg *stakingtypes.MsgC
 	expectedMinSelfDelegation := s.customParamsKeeper.GetStakingParams(ctx).MinSelfDelegation
 	if expectedMinSelfDelegation.GT(msg.MinSelfDelegation) {
 		return nil, sdkerrors.Wrapf(
-			stakingtypes.ErrSelfDelegationBelowMinimum, "min self delegation must be greater or equal than global min self delegation: %s", msg.MinSelfDelegation,
+			stakingtypes.ErrSelfDelegationBelowMinimum, "min self delegation must be greater than or equal to global min self delegation: %s", msg.MinSelfDelegation,
 		)
 	}
 

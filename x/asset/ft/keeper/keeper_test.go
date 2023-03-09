@@ -1279,6 +1279,10 @@ func TestKeeper_Whitelist(t *testing.T) {
 	// try to whitelist from non issuer address
 	err = ftKeeper.SetWhitelistedBalance(ctx, randomAddr, recipient, sdk.NewCoin(denom, sdk.NewInt(80)))
 	assertT.True(sdkerrors.IsOf(err, sdkerrors.ErrUnauthorized))
+
+	// reduce whitelisting limit below the current balance
+	err = ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient, sdk.NewCoin(denom, sdk.NewInt(80)))
+	assertT.NoError(err)
 }
 
 //nolint:funlen // this is complex test scenario and breaking it down is not helpful
@@ -1388,6 +1392,78 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdk.NewInt(15)))},
 		})
 	requireT.ErrorIs(types.ErrWhitelistedLimitExceeded, err)
+}
+
+// TestKeeper_AllInOne tests send and multi send with tokens that have all features enabled
+// and applied.
+func TestKeeper_AllInOne(t *testing.T) {
+	requireT := require.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_burning,
+			types.Feature_minting,
+			types.Feature_whitelisting,
+		},
+		BurnRate:           sdk.MustNewDecFromStr("0.1"),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.05"),
+	}
+
+	bondDenom := testApp.StakingKeeper.BondDenom(ctx)
+	// fund with the native coin
+	err := testApp.FundAccount(ctx, issuer, sdk.NewCoins(sdk.NewCoin(bondDenom, sdk.NewInt(1000))))
+	requireT.NoError(err)
+
+	denom1, err := ftKeeper.Issue(ctx, settings)
+	requireT.NoError(err)
+
+	recipient1 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	// freeze denom1 partially on the recipient1
+	err = ftKeeper.Freeze(ctx, issuer, recipient1, sdk.NewCoin(denom1, sdk.NewInt(10)))
+	requireT.NoError(err)
+
+	// whitelist recipients
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient1, sdk.NewCoin(denom1, sdk.NewInt(10))))
+	requireT.NoError(ftKeeper.SetWhitelistedBalance(ctx, issuer, recipient2, sdk.NewCoin(denom1, sdk.NewInt(10))))
+
+	// multi-send valid amount
+	err = bankKeeper.InputOutputCoins(ctx,
+		[]banktypes.Input{
+			{Address: issuer.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdk.NewInt(20)),
+				sdk.NewCoin(bondDenom, sdk.NewInt(40)),
+			)},
+		},
+		[]banktypes.Output{
+			// the recipient1 has frozen balance so that amount can be received
+			{Address: recipient1.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdk.NewInt(10)),
+				sdk.NewCoin(bondDenom, sdk.NewInt(20)),
+			)},
+			// the recipient2 has whitelisted balance so that is the max amount recipient2 can receive
+			{Address: recipient2.String(), Coins: sdk.NewCoins(
+				sdk.NewCoin(denom1, sdk.NewInt(10)),
+				sdk.NewCoin(bondDenom, sdk.NewInt(20)),
+			)},
+		})
+	requireT.NoError(err)
 }
 
 func TestKeeper_GetIssuerTokens(t *testing.T) {
