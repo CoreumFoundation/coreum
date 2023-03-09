@@ -122,7 +122,7 @@ func (k Keeper) GetDefinition(ctx sdk.Context, denom string) (types.Definition, 
 	return definition, nil
 }
 
-// GetToken return the fungible token by its denom.
+// GetToken return the fungible token by it's denom.
 func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {

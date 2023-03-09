@@ -5,9 +5,11 @@ package modules
 import (
 	"context"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
@@ -1405,6 +1407,345 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 	requireT.NoError(err)
 }
 
+// TestAssetCommissionRateExceedFreeze checks tx will fail if send commission causes
+// breach of freeze limit functionality.
+func TestAssetCommissionRateExceedFreeze(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&banktypes.MsgSend{},
+				&assetfttypes.MsgFreeze{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+			},
+		}))
+
+	// Issue the new fungible token
+	msgIssue := &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "ABC",
+		Subunit:            "uabc",
+		Precision:          6,
+		Description:        "ABC Description",
+		InitialAmount:      sdk.NewInt(1000),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.3"),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+	denom := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom, sdk.NewInt(1000)),
+		),
+	}
+
+	msgFreeze := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(650)),
+	}
+
+	msgList := []sdk.Msg{
+		msgIssue, msgSend, msgFreeze,
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+	requireT.NoError(err)
+
+	// try to send more than available (300 + 60) (1000 - 650(frozen) = 350 is available)
+	recipient2 := chain.GenAccount()
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(300)))
+	// send
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+}
+
+// TestSendCoreTokenWithRestrictedToken checks tx will fail if try to send core token
+// alongside restricted user issued token.
+func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&banktypes.MsgSend{},
+				&assetfttypes.MsgFreeze{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+			},
+			Amount: sdk.NewInt(1000),
+		}))
+
+	// Issue the new fungible token
+	msgIssue := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+	denom := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom, sdk.NewInt(1000)),
+		),
+	}
+
+	msgFreeze := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(800)),
+	}
+
+	msgList := []sdk.Msg{
+		msgIssue, msgSend, msgFreeze,
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+	requireT.NoError(err)
+
+	// try to send core token and minted token with freezing violation
+	recipient2 := chain.GenAccount()
+	coinsToSend := sdk.NewCoins(
+		sdk.NewCoin(denom, sdk.NewInt(210)),
+		chain.NewCoin(sdk.NewInt(1000)),
+	)
+
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+}
+
+// TestNotEnoughBalanceForBurnRate checks tx will fail if there is not enough balance to cover burn rate.
+//
+//nolint:dupl // we expect code duplication in tests
+func TestNotEnoughBalanceForBurnRate(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&banktypes.MsgSend{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+			},
+		}))
+
+	// Issue the new fungible token
+	msgIssue := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdk.NewInt(1000),
+		BurnRate:      sdk.MustNewDecFromStr("0.1"),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+	denom := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom, sdk.NewInt(1000)),
+		),
+	}
+
+	msgList := []sdk.Msg{
+		msgIssue, msgSend,
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+	requireT.NoError(err)
+
+	// try to send, it should fail (920 + 92 = 1012 > 1000)
+	recipient2 := chain.GenAccount()
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(920)))
+
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+}
+
+// TestNotEnoughBalanceForCommissionRate checks tx will fail if there is not enough balance to cover commission rate.
+//
+//nolint:dupl // we expect code duplication in tests
+func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&banktypes.MsgSend{},
+			},
+			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+		}))
+	requireT.NoError(
+		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&banktypes.MsgSend{},
+			},
+		}))
+
+	// Issue the new fungible token
+	msgIssue := &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "ABC",
+		Subunit:            "uabc",
+		Precision:          6,
+		Description:        "ABC Description",
+		InitialAmount:      sdk.NewInt(1000),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+		},
+	}
+	denom := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount: sdk.NewCoins(
+			sdk.NewCoin(denom, sdk.NewInt(1000)),
+		),
+	}
+
+	msgList := []sdk.Msg{
+		msgIssue, msgSend,
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgList...)),
+		msgList...,
+	)
+	requireT.NoError(err)
+
+	// try to send, it should fail (920 + 92 = 1012 > 1000)
+	recipient2 := chain.GenAccount()
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(920)))
+
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: recipient.String(),
+		ToAddress:   recipient2.String(),
+		Amount:      coinsToSend,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(recipient),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.Error(err)
+	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+}
+
 // TestAssetFTWhitelist checks whitelist functionality of fungible tokens.
 func TestAssetFTWhitelist(t *testing.T) {
 	t.Parallel()
@@ -1956,14 +2297,124 @@ func TestBareToken(t *testing.T) {
 	assertT.ErrorIs(err, assetfttypes.ErrFeatureDisabled)
 }
 
-// TestAssetFTBurnRate_OnMinting verifies both burn rate and send commission rate are not applied on received minted tokens.
-func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
+// TestAuthz tests the authz module works well with assetft module.
+func TestAuthzWithAssetFT(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
 
 	requireT := require.New(t)
+
+	assetftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+
+	granter := chain.GenAccount()
+	grantee := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&authztypes.MsgGrant{},
+			&authztypes.MsgGrant{},
+		},
+		Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+	}))
+
+	// mint and grant authorization
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        granter.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     1,
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, granter)
+	grantFreezeMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgFreeze{})),
+		time.Now().Add(time.Minute),
+	)
+	require.NoError(t, err)
+
+	grantWhitelistMsg, err := authztypes.NewMsgGrant(
+		granter,
+		grantee,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgSetWhitelistedLimit{})),
+		time.Now().Add(time.Minute),
+	)
+	require.NoError(t, err)
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantFreezeMsg, grantWhitelistMsg, issueMsg)),
+		grantFreezeMsg, grantWhitelistMsg, issueMsg,
+	)
+	requireT.NoError(err)
+
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: grantee.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(2, len(gransRes.Grants))
+
+	// try to whitelist and freeze using the authz
+	msgFreeze := &assetfttypes.MsgFreeze{
+		Sender:  granter.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(240)),
+	}
+
+	msgWhitelist := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  granter.String(),
+		Account: recipient.String(),
+		Coin:    sdk.NewCoin(denom, sdk.NewInt(921)),
+	}
+
+	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgFreeze, msgWhitelist})
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	}))
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(grantee),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
+	)
+	requireT.NoError(err)
+
+	freezingRes, err := assetftClient.FrozenBalance(ctx, &assetfttypes.QueryFrozenBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues("240", freezingRes.GetBalance().Amount.String())
+
+	whitelistingRes, err := assetftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues("921", whitelistingRes.GetBalance().Amount.String())
+}
+
+// TestAssetFTBurnRate_OnMinting verifies both burn rate and send commission rate are not applied on received minted tokens.
+func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	assertT := assert.New(t)
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewTestingContext(t)
 	issuer := chain.GenAccount()
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
