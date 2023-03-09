@@ -334,22 +334,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8cbd1169bd7b4a0a20d92b9af7a7e0422888bd38a6f5ec29c1fd8c1558a272e"
 
 [[package]]
-name = "ft"
-version = "0.1.0"
-dependencies = [
- "coreum-wasm-sdk",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus",
- "cw2",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -441,6 +425,22 @@ name = "libc"
 version = "0.2.126"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
+
+[[package]]
+name = "nft"
+version = "0.1.0"
+dependencies = [
+ "coreum-wasm-sdk",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw2",
+ "schemars",
+ "serde",
+ "thiserror",
+]
 
 [[package]]
 name = "opaque-debug"
