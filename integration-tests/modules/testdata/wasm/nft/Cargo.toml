@@ -1,11 +1,11 @@
 [package]
-name = "ft"
+name = "nft"
 version = "0.1.0"
 authors = ["Coreum"]
 edition = "2018"
 
 exclude = [
-    "ft.wasm",
+    "nft.wasm",
     "checksums.txt",
 ]
 

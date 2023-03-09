@@ -87,7 +87,6 @@ import (
 	assetft "github.com/CoreumFoundation/coreum/x/asset/ft"
 	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	assetftwasm "github.com/CoreumFoundation/coreum/x/asset/ft/wasm"
 	assetnft "github.com/CoreumFoundation/coreum/x/asset/nft"
 	assetnftkeeper "github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -102,7 +101,7 @@ import (
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
-	wasmtypes "github.com/CoreumFoundation/coreum/x/wasm/types"
+	wasmcustomhandler "github.com/CoreumFoundation/coreum/x/wasm/handler"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
 	"github.com/CoreumFoundation/coreum/x/wnft"
@@ -387,8 +386,12 @@ func New(
 	}
 
 	wasmOpts := []wasm.Option{
-		wasmkeeper.WithMessageEncoders(wasmtypes.NewCustomEncoder(assetftwasm.MsgHandler)),
-		wasmkeeper.WithQueryPlugins(wasmtypes.NewCustomQuerier(assetftwasm.QueryHandler(assetftkeeper.NewQueryService(app.AssetFTKeeper)))),
+		wasmkeeper.WithMessageEncoders(wasmcustomhandler.NewCoreumMsgHandler()),
+		wasmkeeper.WithQueryPlugins(wasmcustomhandler.NewCoreumQueryHandler(
+			assetftkeeper.NewQueryService(app.AssetFTKeeper),
+			assetnftkeeper.NewQueryService(app.AssetNFTKeeper),
+			app.NFTKeeper,
+		)),
 	}
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
