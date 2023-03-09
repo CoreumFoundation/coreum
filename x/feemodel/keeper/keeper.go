@@ -132,7 +132,7 @@ func (k Keeper) GetMinGasPrice(ctx sdk.Context) sdk.DecCoin {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(gasPriceKey)
 	if bz == nil {
-		// Thi si really a panic condition because it means that genesis initialization was not done correctly
+		// This is really a panic condition because it means that genesis initialization was not done correctly
 		panic("min gas price not set")
 	}
 	var minGasPrice sdk.DecCoin

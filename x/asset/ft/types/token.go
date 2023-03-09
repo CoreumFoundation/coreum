@@ -157,7 +157,7 @@ func (def Definition) IsIssuer(addr sdk.Address) bool {
 	return def.Issuer == addr.String()
 }
 
-// ValidateBurnRate checks that provided burn rate is valid.
+// ValidateBurnRate checks that the provided burn rate is valid.
 func ValidateBurnRate(burnRate sdk.Dec) error {
 	if err := validateRate(burnRate); err != nil {
 		return errors.Wrap(err, "burn rate is invalid")
