@@ -1,0 +1,12 @@
+[package]
+name = "coreum-wasm-sdk"
+version = "0.1.0"
+edition = "2021"
+description = "SDK for WASM coreum messages and queries."
+homepage = "https://coreum.com/"
+license = "Apache-2.0"
+
+[dependencies]
+cosmwasm-std = "1.0.0"
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }

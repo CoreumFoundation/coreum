@@ -166,6 +166,7 @@ func TestKeeper_Burn(t *testing.T) {
 		Symbol: "symbol",
 		Features: []types.ClassFeature{
 			types.ClassFeature_burning,
+			types.ClassFeature_disable_sending,
 		},
 	}
 
@@ -250,6 +251,51 @@ func TestKeeper_Burn(t *testing.T) {
 	// try burn the nft with the disabled feature from the recipient account
 	err = assetNFTKeeper.Burn(ctx, recipient, classID, settings.ID)
 	requireT.ErrorIs(err, types.ErrFeatureDisabled)
+}
+
+func TestKeeper_Burn_Frozen(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	classSettings := types.IssueClassSettings{
+		Issuer: issuer,
+		Symbol: "symbol",
+		Features: []types.ClassFeature{
+			types.ClassFeature_burning,
+			types.ClassFeature_freezing,
+		},
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, classSettings)
+	requireT.NoError(err)
+
+	nftID := "my-id"
+	settings := types.MintSettings{
+		Sender:  issuer,
+		ClassID: classID,
+		ID:      nftID,
+	}
+
+	// mint NFT
+	err = assetNFTKeeper.Mint(ctx, settings)
+	requireT.NoError(err)
+
+	err = nftKeeper.Transfer(ctx, settings.ClassID, settings.ID, recipient)
+	requireT.NoError(err)
+
+	// freeze nft
+	err = assetNFTKeeper.Freeze(ctx, issuer, settings.ClassID, settings.ID)
+	requireT.NoError(err)
+
+	// try burn the nft with the enabled feature from the recipient account
+	err = assetNFTKeeper.Burn(ctx, recipient, classID, settings.ID)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 }
 
 func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {

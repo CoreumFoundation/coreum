@@ -274,11 +274,26 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only owner can burn the nft")
 	}
 
-	// If the token is burnt the storage needs to be cleaned up.
-	// We clean freezing because it's a single record only.
-	// We don't clean whitelisting because potential number of records is unlimited.
-	if err := k.SetFrozen(ctx, classID, id, false); err != nil {
-		return err
+	//nolint:nestif // removing this complexity will not help with code readability
+	if ndfd.IsFeatureEnabled(types.ClassFeature_freezing) {
+		frozen, err := k.IsFrozen(ctx, classID, id)
+		if err != nil {
+			return err
+		}
+
+		if frozen {
+			// non issuer is not allowed to burn frozen NFT, but the issuer can
+			if owner.String() != ndfd.Issuer {
+				return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "frozen token cannot be burnt")
+			}
+
+			// If the token is burnt the storage needs to be cleaned up.
+			// We clean freezing because it's a single record only.
+			// We don't clean whitelisting because potential number of records is unlimited.
+			if err := k.SetFrozen(ctx, classID, id, false); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err := k.nftKeeper.Burn(ctx, classID, id); err != nil {

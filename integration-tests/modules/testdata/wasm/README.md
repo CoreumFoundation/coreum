@@ -9,7 +9,7 @@ For the tests simplification we use the prebuilt wasm artifacts.
 * Open the folder with the contract to rebuild
 * Execute the command:
 ```
-docker run --rm -v "$(pwd)":/code \
+docker run --rm -v "$(pwd)"/../sdk:/sdk -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.12.6
