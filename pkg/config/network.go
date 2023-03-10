@@ -441,6 +441,20 @@ type FundedAccount struct {
 	Balances sdk.Coins
 }
 
+func validateNoDuplicateFundedAccounts(accounts []FundedAccount) error {
+	accountsIndexMap := map[string]interface{}{}
+	for _, fundEntry := range accounts {
+		fundEntry := fundEntry
+		_, exists := accountsIndexMap[fundEntry.Address]
+		if exists {
+			return errors.New("duplicate funded account is not allowed")
+		}
+		accountsIndexMap[fundEntry.Address] = true
+	}
+
+	return nil
+}
+
 // FundAccount funds address with balances at genesis.
 func (n *Network) FundAccount(accAddress sdk.AccAddress, balances sdk.Coins) error {
 	n.mu.Lock()
@@ -519,6 +533,10 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
+
+	if err := validateNoDuplicateFundedAccounts(n.fundedAccounts); err != nil {
+		return nil, err
+	}
 
 	for _, fundedAcc := range n.fundedAccounts {
 		accountState = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
