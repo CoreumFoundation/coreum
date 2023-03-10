@@ -9,8 +9,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
 )
+
+func TestMain(m *testing.M) {
+	n, err := config.NetworkByChainID(constant.ChainIDDev)
+	if err != nil {
+		panic(err)
+	}
+	n.SetSDKConfig()
+	m.Run()
+}
 
 //nolint:funlen // there are too many tests cases
 func TestCalculateRateShares(t *testing.T) {
