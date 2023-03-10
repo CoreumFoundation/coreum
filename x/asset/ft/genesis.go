@@ -14,6 +14,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Init fungible token definitions
 	for _, token := range genState.Tokens {
+		if err := token.Validate(); err != nil {
+			panic(err)
+		}
+
 		subunit, issuer, err := types.DeconstructDenom(token.Denom)
 		if err != nil {
 			panic(err)
@@ -40,12 +44,18 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Init frozen balances
 	for _, frozenBalance := range genState.FrozenBalances {
+		if err := types.ValidateAssetCoins(frozenBalance.Coins); err != nil {
+			panic(err)
+		}
 		address := sdk.MustAccAddressFromBech32(frozenBalance.Address)
 		k.SetFrozenBalances(ctx, address, frozenBalance.Coins)
 	}
 
 	// Init whitelisted balances
 	for _, whitelistedBalance := range genState.WhitelistedBalances {
+		if err := types.ValidateAssetCoins(whitelistedBalance.Coins); err != nil {
+			panic(err)
+		}
 		address := sdk.MustAccAddressFromBech32(whitelistedBalance.Address)
 		k.SetWhitelistedBalances(ctx, address, whitelistedBalance.Coins)
 	}

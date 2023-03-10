@@ -96,6 +96,26 @@ func ValidateSubunit(subunit string) error {
 	return nil
 }
 
+// ValidateAssetCoin checks that the coin is a valid coin according to asset ft module restrictions.
+func ValidateAssetCoin(coin sdk.Coin) error {
+	if _, _, err := DeconstructDenom(coin.Denom); err != nil {
+		return err
+	}
+
+	return coin.Validate()
+}
+
+// ValidateAssetCoins checks that the coins is valid according to asset ft module restrictions.
+func ValidateAssetCoins(coins sdk.Coins) error {
+	for _, coin := range coins {
+		if err := ValidateAssetCoin(coin); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ValidatePrecision checks the provided precision is valid.
 func ValidatePrecision(precision uint32) error {
 	if precision == 0 || precision > MaxPrecision {
