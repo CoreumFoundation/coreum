@@ -256,6 +256,11 @@ func TestGenesisCoreTotalSupply(t *testing.T) {
 			chainID:    constant.ChainIDTest,
 			wantSupply: sdk.NewCoin(constant.DenomTest, sdk.NewInt(500_000_000_000_000)),
 		},
+		{
+			name:       "mainnet",
+			chainID:    constant.ChainIDMain,
+			wantSupply: sdk.NewCoin(constant.DenomMain, sdk.NewInt(500_000_000_000_000)),
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

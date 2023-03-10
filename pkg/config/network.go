@@ -441,6 +441,25 @@ type FundedAccount struct {
 	Balances sdk.Coins
 }
 
+func mergeDuplicateFundedAccounts(accounts []FundedAccount) []FundedAccount {
+	accountsMap := map[string]sdk.Coins{}
+	for _, fundEntry := range accounts {
+		oldBalance := accountsMap[fundEntry.Address]
+		newBalance := oldBalance.Add(fundEntry.Balances...)
+		accountsMap[fundEntry.Address] = newBalance
+	}
+
+	var output []FundedAccount
+	for address, coins := range accountsMap {
+		output = append(output, FundedAccount{
+			Address:  address,
+			Balances: coins,
+		})
+	}
+
+	return output
+}
+
 // FundAccount funds address with balances at genesis.
 func (n *Network) FundAccount(accAddress sdk.AccAddress, balances sdk.Coins) error {
 	n.mu.Lock()
@@ -520,7 +539,8 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	for _, fundedAcc := range n.fundedAccounts {
+	fundedAccounts := mergeDuplicateFundedAccounts(n.fundedAccounts)
+	for _, fundedAcc := range fundedAccounts {
 		accountState = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
 	}
 
