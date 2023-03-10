@@ -419,7 +419,7 @@ func validateNoDuplicateFundedAccounts(accounts []FundedAccount) error {
 		fundEntry := fundEntry
 		_, exists := accountsIndexMap[fundEntry.Address]
 		if exists {
-			return errors.New("duplicate funded account is not allowed.")
+			return errors.New("Duplicate funded account is not allowed.")
 		}
 		accountsIndexMap[fundEntry.Address] = true
 	}
