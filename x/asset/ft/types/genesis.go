@@ -30,6 +30,7 @@ func (gs GenesisState) Validate() error {
 	return gs.Params.ValidateBasic()
 }
 
+// Validate checks all the fields are valid.
 func (token Token) Validate() error {
 	_, _, err := DeconstructDenom(token.Denom)
 	if err != nil {
@@ -52,9 +53,5 @@ func (token Token) Validate() error {
 		return err
 	}
 
-	if err := ValidateBurnRate(token.BurnRate); err != nil {
-		return err
-	}
-
-	return nil
+	return ValidateBurnRate(token.BurnRate)
 }
