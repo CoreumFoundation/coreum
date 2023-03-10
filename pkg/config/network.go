@@ -92,9 +92,6 @@ func init() {
 	// where 4 * 100_000_000 is a balance of each of foundation-{1-4} wallets.
 	mainGenesisValidatorsCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(120_000_000_000)))
 
-	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_880_000_000_000)))
-	mainFoundationOtherInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(100_000_000_000_000)))
-
 	// testnet vars
 
 	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
@@ -140,31 +137,6 @@ func init() {
 				{
 					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
 					Balances: mainGenesisValidatorsCreatorBalance,
-				},
-				// foundation-0: 99_880_000
-				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
-					Balances: mainFoundationZeroInitialBalance,
-				},
-				// foundation-1: 100M
-				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
-					Balances: mainFoundationOtherInitialBalance,
-				},
-				// foundation-2: 100M
-				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
-					Balances: mainFoundationOtherInitialBalance,
-				},
-				// foundation-3: 100M
-				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
-					Balances: mainFoundationOtherInitialBalance,
-				},
-				// foundation-4: 100M
-				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
-					Balances: mainFoundationOtherInitialBalance,
 				},
 			},
 			GenTxs: []json.RawMessage{}, // TODO: Add real transactions.
@@ -441,23 +413,18 @@ type FundedAccount struct {
 	Balances sdk.Coins
 }
 
-func MergeDuplicateFundedAccounts(accounts []FundedAccount) []FundedAccount {
-	accountsIndexMap := map[string]int{}
-	var output []FundedAccount
-	index := 0
+func validateNoDuplicateFundedAccounts(accounts []FundedAccount) error {
+	accountsIndexMap := map[string]interface{}{}
 	for _, fundEntry := range accounts {
 		fundEntry := fundEntry
-		foundIndex, exists := accountsIndexMap[fundEntry.Address]
+		_, exists := accountsIndexMap[fundEntry.Address]
 		if exists {
-			output[foundIndex].Balances = output[foundIndex].Balances.Add(fundEntry.Balances...)
-		} else {
-			accountsIndexMap[fundEntry.Address] = index
-			output = append(output, fundEntry)
-			index++
+			return errors.New("duplicate funded account is not allowed.")
 		}
+		accountsIndexMap[fundEntry.Address] = true
 	}
 
-	return output
+	return nil
 }
 
 // FundAccount funds address with balances at genesis.
@@ -539,8 +506,11 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	fundedAccounts := MergeDuplicateFundedAccounts(n.fundedAccounts)
-	for _, fundedAcc := range fundedAccounts {
+	if err := validateNoDuplicateFundedAccounts(n.fundedAccounts); err != nil {
+		return nil, err
+	}
+
+	for _, fundedAcc := range n.fundedAccounts {
 		accountState = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
 	}
 

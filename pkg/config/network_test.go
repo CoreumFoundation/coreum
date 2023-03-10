@@ -328,60 +328,6 @@ func validateGenesisTxSignature(clientCtx client.Context, tx sdk.Tx) error {
 	return nil
 }
 
-func TestMergeDuplicateAccounts(t *testing.T) {
-	input := []config.FundedAccount{
-		{
-			Address: "1",
-			Balances: sdk.NewCoins(
-				sdk.NewCoin("denom1", sdk.NewInt(1)),
-				sdk.NewCoin("denom2", sdk.NewInt(1)),
-			),
-		},
-		{
-			Address: "1",
-			Balances: sdk.NewCoins(
-				sdk.NewCoin("denom1", sdk.NewInt(1)),
-				sdk.NewCoin("denom2", sdk.NewInt(1)),
-			),
-		},
-		{
-			Address: "2",
-			Balances: sdk.NewCoins(
-				sdk.NewCoin("denom1", sdk.NewInt(1)),
-				sdk.NewCoin("denom2", sdk.NewInt(1)),
-			),
-		},
-		{
-			Address: "1",
-			Balances: sdk.NewCoins(
-				sdk.NewCoin("denom1", sdk.NewInt(1)),
-				sdk.NewCoin("denom3", sdk.NewInt(1)),
-			),
-		},
-	}
-
-	expectedOutPut := []config.FundedAccount{
-		{
-			Address: "1",
-			Balances: sdk.NewCoins(
-				sdk.NewCoin("denom1", sdk.NewInt(3)),
-				sdk.NewCoin("denom2", sdk.NewInt(2)),
-				sdk.NewCoin("denom3", sdk.NewInt(1)),
-			),
-		},
-		{
-			Address: "2",
-			Balances: sdk.NewCoins(
-				sdk.NewCoin("denom1", sdk.NewInt(1)),
-				sdk.NewCoin("denom2", sdk.NewInt(1)),
-			),
-		},
-	}
-
-	outPut := config.MergeDuplicateFundedAccounts(input)
-	require.ElementsMatch(t, expectedOutPut, outPut)
-}
-
 func unsealConfig() {
 	sdkConfig := sdk.GetConfig()
 	unsafeSetField(sdkConfig, "sealed", false)
