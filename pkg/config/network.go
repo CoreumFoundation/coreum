@@ -92,6 +92,9 @@ func init() {
 	// where 4 * 100_000_000 is a balance of each of foundation-{1-4} wallets.
 	mainGenesisValidatorsCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(120_000_000_000)))
 
+	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_880_000_000_000)))
+	mainFoundationOtherInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(100_000_000_000_000)))
+
 	// testnet vars
 
 	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
@@ -137,6 +140,31 @@ func init() {
 				{
 					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
 					Balances: mainGenesisValidatorsCreatorBalance,
+				},
+				// foundation-0: 99_880_000
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationZeroInitialBalance,
+				},
+				// foundation-1: 100M
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationOtherInitialBalance,
+				},
+				// foundation-2: 100M
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationOtherInitialBalance,
+				},
+				// foundation-3: 100M
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationOtherInitialBalance,
+				},
+				// foundation-4: 100M
+				{
+					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Balances: mainFoundationOtherInitialBalance,
 				},
 			},
 			GenTxs: []json.RawMessage{}, // TODO: Add real transactions.
