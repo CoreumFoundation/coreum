@@ -19,5 +19,8 @@ func (m *GenesisState) Validate() error {
 	if err := m.MinGasPrice.Validate(); err != nil {
 		return errors.WithStack(err)
 	}
+	if !m.MinGasPrice.IsPositive() {
+		return errors.New("min gas price must be positive")
+	}
 	return m.Params.ValidateBasic()
 }
