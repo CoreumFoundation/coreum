@@ -14,8 +14,10 @@ import (
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/asset/nft"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	rawnft "github.com/CoreumFoundation/coreum/x/nft"
 )
 
+//nolint:funlen
 func TestInitAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
@@ -27,27 +29,52 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// prepare the genesis data
 
+	rawGenState := &rawnft.GenesisState{}
+
 	// class definitions
 	var classDefinitions []types.ClassDefinition
 	for i := 0; i < 5; i++ {
 		classDefinition := types.ClassDefinition{
-			ID: fmt.Sprintf("id%d", i),
+			ID: fmt.Sprintf("class-id-%d", i),
 			Features: []types.ClassFeature{
-				types.ClassFeature_burning,
+				types.ClassFeature_freezing,
+				types.ClassFeature_whitelisting,
 			},
 			RoyaltyRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", (i+1)%10)),
 		}
+
+		rawGenState.Classes = append(rawGenState.Classes, &rawnft.Class{
+			Id:     classDefinition.ID,
+			Name:   fmt.Sprintf("name-%d", i),
+			Symbol: fmt.Sprintf("symbol-%d", i),
+		})
 		classDefinitions = append(classDefinitions, classDefinition)
+	}
+
+	for i := 0; i < 5; i++ {
+		rawGenState.Entries = append(rawGenState.Entries, &rawnft.Entry{
+			Owner: sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+			Nfts: []*rawnft.NFT{
+				{
+					ClassId: fmt.Sprintf("class-id-%d", i),
+					Id:      fmt.Sprintf("nft-id-1-%d", i),
+				},
+				{
+					ClassId: fmt.Sprintf("class-id-%d", i),
+					Id:      fmt.Sprintf("nft-id-2-%d", i),
+				},
+			},
+		})
 	}
 
 	// Frozen NFTs
 	var frozen []types.FrozenNFT
 	for i := 0; i < 5; i++ {
 		frozen = append(frozen, types.FrozenNFT{
-			ClassID: fmt.Sprintf("id-%d", i),
+			ClassID: fmt.Sprintf("class-id-%d", i),
 			NftIDs: []string{
-				fmt.Sprintf("id-1-%d", i),
-				fmt.Sprintf("id-2-%d", i),
+				fmt.Sprintf("nft-id-1-%d", i),
+				fmt.Sprintf("nft-id-2-%d", i),
 			},
 		})
 	}
@@ -57,11 +84,32 @@ func TestInitAndExportGenesis(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		whitelisted = append(whitelisted, types.WhitelistedNFTAccounts{
 			ClassID: fmt.Sprintf("class-id-%d", i),
-			NftID:   fmt.Sprintf("nft-id-%d", i),
+			NftID:   fmt.Sprintf("nft-id-1-%d", i),
 			Accounts: []string{
 				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
 				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
 				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+			},
+		},
+			types.WhitelistedNFTAccounts{
+				ClassID: fmt.Sprintf("class-id-%d", i),
+				NftID:   fmt.Sprintf("nft-id-2-%d", i),
+				Accounts: []string{
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
+				},
+			})
+	}
+
+	// Burnt NFTs
+	var burnt []types.BurntNFT
+	for i := 0; i < 5; i++ {
+		burnt = append(burnt, types.BurntNFT{
+			ClassID: fmt.Sprintf("class-id-%d", i),
+			NftIDs: []string{
+				fmt.Sprintf("burnt-nft-id-1-%d", i),
+				fmt.Sprintf("burnt-nft-id-2-%d", i),
 			},
 		})
 	}
@@ -71,9 +119,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 		ClassDefinitions:       classDefinitions,
 		FrozenNFTs:             frozen,
 		WhitelistedNFTAccounts: whitelisted,
+		BurntNFTs:              burnt,
 	}
 
 	// init the keeper
+	testApp.NFTKeeper.InitGenesis(ctx, rawGenState)
 	nft.InitGenesis(ctx, nftKeeper, genState)
 
 	// assert the keeper state
@@ -101,4 +151,5 @@ func TestInitAndExportGenesis(t *testing.T) {
 		sort.Strings(st.Accounts)
 	}
 	assertT.ElementsMatch(genState.WhitelistedNFTAccounts, exportedGenState.WhitelistedNFTAccounts)
+	assertT.ElementsMatch(genState.BurntNFTs, exportedGenState.BurntNFTs)
 }

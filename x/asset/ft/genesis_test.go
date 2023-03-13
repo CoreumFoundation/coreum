@@ -37,7 +37,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 			Issuer:             issuer.String(),
 			Symbol:             fmt.Sprintf("ABC%d", i),
 			Subunit:            fmt.Sprintf("abc%d", i),
-			Precision:          uint32(rand.Int31n(99) + 1),
+			Precision:          uint32(rand.Int31n(19) + 1),
 			BurnRate:           sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i)),
 			SendCommissionRate: sdk.MustNewDecFromStr(fmt.Sprintf("0.%d", i+1)),
 			Features: []types.Feature{

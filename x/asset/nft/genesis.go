@@ -36,6 +36,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			}
 		}
 	}
+
+	for _, burnt := range genState.BurntNFTs {
+		for _, nftID := range burnt.NftIDs {
+			if err := k.SetBurnt(ctx, burnt.ClassID, nftID); err != nil {
+				panic(err)
+			}
+		}
+	}
 }
 
 // ExportGenesis returns the module's exported genesis.
@@ -55,10 +63,16 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	_, burnt, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
 		ClassDefinitions:       classDefinitions,
 		Params:                 k.GetParams(ctx),
 		FrozenNFTs:             frozen,
 		WhitelistedNFTAccounts: whitelisted,
+		BurntNFTs:              burnt,
 	}
 }

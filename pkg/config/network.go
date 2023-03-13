@@ -61,7 +61,7 @@ func init() {
 		govConfig = GovConfig{
 			ProposalConfig: GovProposalConfig{
 				MinDepositAmount: "4000000000", // 4,000 CORE
-				VotingPeriod:     "120h",       // 5 days
+				VotingPeriod:     "4h",         // 4 hours
 			},
 		}
 
@@ -263,7 +263,7 @@ func init() {
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.67.212.120:26656",
+					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.135.242.117:26656",
 					"88d1266e086bfe33589886cc10d4c58e85a69d14@34.135.191.69:26656",
 				},
 			},
@@ -460,6 +460,20 @@ type FundedAccount struct {
 	Balances sdk.Coins
 }
 
+func validateNoDuplicateFundedAccounts(accounts []FundedAccount) error {
+	accountsIndexMap := map[string]interface{}{}
+	for _, fundEntry := range accounts {
+		fundEntry := fundEntry
+		_, exists := accountsIndexMap[fundEntry.Address]
+		if exists {
+			return errors.New("duplicate funded account is not allowed")
+		}
+		accountsIndexMap[fundEntry.Address] = true
+	}
+
+	return nil
+}
+
 // FundAccount funds address with balances at genesis.
 func (n *Network) FundAccount(accAddress sdk.AccAddress, balances sdk.Coins) error {
 	n.mu.Lock()
@@ -538,6 +552,10 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
+
+	if err := validateNoDuplicateFundedAccounts(n.fundedAccounts); err != nil {
+		return nil, err
+	}
 
 	for _, fundedAcc := range n.fundedAccounts {
 		accountState = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)

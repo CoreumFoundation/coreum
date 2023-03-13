@@ -47,54 +47,11 @@ func TestOriginalClassExistsInvariant(t *testing.T) {
 	requireT.True(isBroken)
 }
 
-func TestWhitelistedNFTExistsInvariant(t *testing.T) {
-	requireT := require.New(t)
-	testApp := simapp.New()
-	ctx := testApp.NewContext(false, tmproto.Header{})
-	nftKeeper := testApp.AssetNFTKeeper
-
-	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-
-	// Issue a class
-	settings1 := types.IssueClassSettings{
-		Issuer:      issuer,
-		Symbol:      "DEF",
-		Description: "DEF Desc",
-		Features:    []types.ClassFeature{types.ClassFeature_whitelisting},
-	}
-
-	classID, err := nftKeeper.IssueClass(ctx, settings1)
-	requireT.NoError(err)
-
-	mintSettings := types.MintSettings{
-		Sender:  issuer,
-		ClassID: classID,
-		ID:      "nft-id",
-	}
-	err = nftKeeper.Mint(ctx, mintSettings)
-	requireT.NoError(err)
-
-	err = nftKeeper.AddToWhitelist(ctx, classID, mintSettings.ID, issuer, recipient)
-	requireT.NoError(err)
-
-	// invariant is valid
-	_, isBroken := keeper.WhitelistingInvariant(nftKeeper)(ctx)
-	requireT.False(isBroken)
-
-	// store nft directly (break consistency)
-	requireT.NoError(nftKeeper.SetWhitelisting(ctx, classID, "next-nft", recipient, true))
-
-	// invariant is broken
-	_, isBroken = keeper.WhitelistingInvariant(nftKeeper)(ctx)
-	requireT.True(isBroken)
-}
-
 func TestFrozenNFTExistsInvariant(t *testing.T) {
 	requireT := require.New(t)
 	testApp := simapp.New()
 	ctx := testApp.NewContext(false, tmproto.Header{})
-	nftKeeper := testApp.AssetNFTKeeper
+	assetNFTKeeper := testApp.AssetNFTKeeper
 
 	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
@@ -106,7 +63,7 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 		Features:    []types.ClassFeature{types.ClassFeature_freezing},
 	}
 
-	classID, err := nftKeeper.IssueClass(ctx, settings1)
+	classID, err := assetNFTKeeper.IssueClass(ctx, settings1)
 	requireT.NoError(err)
 
 	mintSettings := types.MintSettings{
@@ -114,20 +71,18 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 		ClassID: classID,
 		ID:      "nft-id",
 	}
-	err = nftKeeper.Mint(ctx, mintSettings)
+	err = assetNFTKeeper.Mint(ctx, mintSettings)
 	requireT.NoError(err)
 
-	err = nftKeeper.Freeze(ctx, issuer, classID, mintSettings.ID)
+	err = assetNFTKeeper.Freeze(ctx, issuer, classID, mintSettings.ID)
 	requireT.NoError(err)
 
 	// invariant is valid
-	_, isBroken := keeper.FreezingInvariant(nftKeeper)(ctx)
+	_, isBroken := keeper.FreezingInvariant(assetNFTKeeper)(ctx)
 	requireT.False(isBroken)
 
-	// store nft directly (break consistency)
-	requireT.NoError(nftKeeper.SetFrozen(ctx, classID, "next-nft", true))
-
-	// invariant is broken
-	_, isBroken = keeper.FreezingInvariant(nftKeeper)(ctx)
+	// non-existing nft (invariant is broken)
+	requireT.NoError(assetNFTKeeper.SetFrozen(ctx, classID, "next-nft", true))
+	_, isBroken = keeper.FreezingInvariant(assetNFTKeeper)(ctx)
 	requireT.True(isBroken)
 }

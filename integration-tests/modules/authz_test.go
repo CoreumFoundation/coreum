@@ -89,7 +89,7 @@ func TestAuthz(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBankSend)),
 		msgBankSend,
 	)
-	requireT.ErrorIs(sdkerrors.ErrInvalidPubKey, err)
+	requireT.ErrorIs(err, sdkerrors.ErrInvalidPubKey)
 
 	// try to send using the authz
 	txResult, err = client.BroadcastTx(
@@ -132,5 +132,5 @@ func TestAuthz(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
 		&execMsg,
 	)
-	requireT.ErrorIs(sdkerrors.ErrUnauthorized, err)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 }

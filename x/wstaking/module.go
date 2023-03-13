@@ -46,6 +46,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	m := stakingkeeper.NewMigrator(am.stakingKeeper)
 	err := cfg.RegisterMigration(stakingtypes.ModuleName, 1, m.Migrate1to2)
 	if err != nil {
-		panic(errors.Wrap(err, "can't register staing migration"))
+		panic(errors.Wrap(err, "can't register staking migration"))
 	}
 }
