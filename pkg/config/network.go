@@ -35,14 +35,17 @@ var (
 	// It is string, not bool, because -X flag supports strings only.
 	EnableFakeUpgradeHandler string
 
-	//go:embed genesis/gentx/coreum-devnet-1
-	devGenTxsFS embed.FS
+	//go:embed genesis/genesis.tmpl.json
+	genesisTemplate string
+
+	//go:embed genesis/gentx/coreum-mainnet-1
+	mainGenTxsFS embed.FS
 
 	//go:embed genesis/gentx/coreum-testnet-1
 	testGenTxsFS embed.FS
 
-	//go:embed genesis/genesis.tmpl.json
-	genesisTemplate string
+	//go:embed genesis/gentx/coreum-devnet-1
+	devGenTxsFS embed.FS
 
 	networkConfigs map[constant.ChainID]NetworkConfig
 )
@@ -120,7 +123,7 @@ func init() {
 	networkConfigs = map[constant.ChainID]NetworkConfig{
 		constant.ChainIDMain: {
 			ChainID:              constant.ChainIDMain,
-			GenesisTime:          time.Date(2023, 3, 7, 12, 0, 0, 0, time.UTC),
+			GenesisTime:          time.Date(2023, 3, 12, 0, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixMain,
 			MetadataDisplayDenom: constant.DenomMainDisplay,
 			Denom:                constant.DenomMain,
@@ -183,7 +186,7 @@ func init() {
 					Balances: mainFoundationOtherInitialBalance,
 				},
 			},
-			GenTxs: []json.RawMessage{}, // TODO: Add real transactions.
+			GenTxs: readGenTxs(mainGenTxsFS),
 		},
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,
