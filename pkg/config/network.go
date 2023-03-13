@@ -58,7 +58,7 @@ func init() {
 		govConfig = GovConfig{
 			ProposalConfig: GovProposalConfig{
 				MinDepositAmount: "4000000000", // 4,000 CORE
-				VotingPeriod:     "120h",       // 5 days
+				VotingPeriod:     "4h",         // 4 hours
 			},
 		}
 
@@ -244,7 +244,7 @@ func init() {
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.67.212.120:26656",
+					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.135.242.117:26656",
 					"88d1266e086bfe33589886cc10d4c58e85a69d14@34.135.191.69:26656",
 				},
 			},
