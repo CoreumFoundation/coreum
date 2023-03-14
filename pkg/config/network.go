@@ -35,14 +35,17 @@ var (
 	// It is string, not bool, because -X flag supports strings only.
 	EnableFakeUpgradeHandler string
 
-	//go:embed genesis/gentx/coreum-devnet-1
-	devGenTxsFS embed.FS
+	//go:embed genesis/genesis.tmpl.json
+	genesisTemplate string
+
+	//go:embed genesis/gentx/coreum-mainnet-1
+	mainGenTxsFS embed.FS
 
 	//go:embed genesis/gentx/coreum-testnet-1
 	testGenTxsFS embed.FS
 
-	//go:embed genesis/genesis.tmpl.json
-	genesisTemplate string
+	//go:embed genesis/gentx/coreum-devnet-1
+	devGenTxsFS embed.FS
 
 	networkConfigs map[constant.ChainID]NetworkConfig
 )
@@ -85,19 +88,18 @@ func init() {
 	// mainnet vars
 
 	// CORE allocation:
-	// 500M = (99_880_000 + 120_000) + 4 * 100_000_000
-	// In total 6 wallets will be created in genesis:
-	// where 120_000 is a balance of wallet to create genesis validators.
-	// where 99_880_000 is a balance of foundation-0 wallet.
-	// where 4 * 100_000_000 is a balance of each of foundation-{1-4} wallets.
-	mainGenesisValidatorsCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(120_000_000_000)))
+	// 500M = (4 * 25_000 + 99_900_000) + 4 * 100_000_000
+	// In total 8 wallets will be created in genesis:
+	// where 4 * 25_000 is a balance of each of 4 wallet used to create genesis validators.
+	// where 99_900_000 is a balance of foundation-0 wallet.
+	// where 4 * 100_000_000 is a balance of each of remaining 4 foundation wallets.
+	mainGenesisValidatorCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(25_000_000_000)))
 
-	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_880_000_000_000)))
+	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_900_000_000_000)))
 	mainFoundationOtherInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(100_000_000_000_000)))
 
 	// testnet vars
 
-	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
 	// 500M = 4 * (124_950_000 + 50_000)
 	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
 	// where 50_000 is balances of each of 4 initial validator stakers.
@@ -119,14 +121,15 @@ func init() {
 	networkConfigs = map[constant.ChainID]NetworkConfig{
 		constant.ChainIDMain: {
 			ChainID:              constant.ChainIDMain,
-			GenesisTime:          time.Date(2023, 3, 7, 12, 0, 0, 0, time.UTC),
+			GenesisTime:          time.Date(2023, 3, 12, 0, 0, 0, 0, time.UTC),
 			AddressPrefix:        constant.AddressPrefixMain,
 			MetadataDisplayDenom: constant.DenomMainDisplay,
 			Denom:                constant.DenomMain,
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					// TODO: Add seeds.
+					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@34.171.208.193:26657", // seed-iron
+					"cba16f4f32707d70a2a2d10861fac897f1e9aaa1@34.72.150.107:26657",  // seed-nickle
 				},
 			},
 			GovConfig:          govConfig,
@@ -135,39 +138,53 @@ func init() {
 			AssetFTConfig:      assetFTConfig,
 			AssetNFTConfig:     assetNFTConfig,
 			FundedAccounts: []FundedAccount{
-				// TODO: Replace with real addresses.
-				// genesis-validators-creator: 120k
+				// coreum-krypton genesis-validators-creator: 25k
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
-					Balances: mainGenesisValidatorsCreatorBalance,
+					Address:  "core1d5wqdp322zn5jyn5mszrrstg2xuq35xyrhsc9f",
+					Balances: mainGenesisValidatorCreatorBalance,
 				},
-				// foundation-0: 99_880_000
+				// coreum-neon genesis-validators-creator: 25k
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core15cpygjlf7pgfnqlc8uz9eryspwd0pwk3xrup8h",
+					Balances: mainGenesisValidatorCreatorBalance,
+				},
+				// coreum-radon genesis-validators-creator: 25k
+				{
+					Address:  "core1zmhfe2hh4qmg54gpsyw8n35gayx3a85mqlfzgk",
+					Balances: mainGenesisValidatorCreatorBalance,
+				},
+				// coreum-xenon genesis-validators-creator: 25k
+				{
+					Address:  "core1hsmhywnkehyyv8muzswhdumzztae4hq4k3dj8p",
+					Balances: mainGenesisValidatorCreatorBalance,
+				},
+				// coreum-foundation-0: 99_900_000
+				{
+					Address:  "core13xmyzhvl02xpz0pu8v9mqalsvpyy7wvs9q5f90",
 					Balances: mainFoundationZeroInitialBalance,
 				},
-				// foundation-1: 100M
+				// coreum-foundation-1: 100M
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core14g6wpzdx8g9txvxxu3fl7fplal9y5ztx34ac5p",
 					Balances: mainFoundationOtherInitialBalance,
 				},
-				// foundation-2: 100M
+				// coreum-foundation-2: 100M
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core1zn2ns3ls68jlsv5dgkuz0rxsxt5fhk7n9cfl23",
 					Balances: mainFoundationOtherInitialBalance,
 				},
-				// foundation-3: 100M
+				// coreum-foundation-3: 100M
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core1p4gsfkmqm0uxua65phteqwnmu39fwjvtspfkcj",
 					Balances: mainFoundationOtherInitialBalance,
 				},
-				// foundation-4: 100M
+				// coreum-foundation-4: 100M
 				{
-					Address:  "core1jkunqvllae563tfdjles7ys9dzm98rf0qzsraa",
+					Address:  "core1rddqzjzy4f5frxkhds3sux0m03encqtla3ayu9",
 					Balances: mainFoundationOtherInitialBalance,
 				},
 			},
-			GenTxs: []json.RawMessage{}, // TODO: Add real transactions.
+			GenTxs: readGenTxs(mainGenTxsFS),
 		},
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,

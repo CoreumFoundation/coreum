@@ -1,0 +1,94 @@
+{
+  "body": {
+    "messages": [
+      {
+        "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+        "description": {
+          "moniker": "Krypton",
+          "identity": "897ADE066F096C16",
+          "website": "https://coreum.com",
+          "security_contact": "info@coreum.com",
+          "details": ""
+        },
+        "commission": {
+          "rate": "0.200000000000000000",
+          "max_rate": "0.500000000000000000",
+          "max_change_rate": "0.050000000000000000"
+        },
+        "min_self_delegation": "20000000000",
+        "delegator_address": "core1d5wqdp322zn5jyn5mszrrstg2xuq35xyrhsc9f",
+        "validator_address": "corevaloper1d5wqdp322zn5jyn5mszrrstg2xuq35xyefwa9h",
+        "pubkey": {
+          "@type": "/cosmos.crypto.ed25519.PubKey",
+          "key": "nX+XUvinL39Gjte2hMvPuaYoG5ISE224G4zxpgA7DBU="
+        },
+        "value": {
+          "denom": "ucore",
+          "amount": "25000000000"
+        }
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [
+      {
+        "public_key": {
+          "@type": "/cosmos.crypto.multisig.LegacyAminoPubKey",
+          "threshold": 2,
+          "public_keys": [
+            {
+              "@type": "/cosmos.crypto.secp256k1.PubKey",
+              "key": "ArI3bO+jfhF8jicTqWCuiFJ0z3/DyQJvQ7Mvr2ql5lKW"
+            },
+            {
+              "@type": "/cosmos.crypto.secp256k1.PubKey",
+              "key": "ArSRRMiyr1Rwwq247M/1nzkzwfY/gEIFwB/liDFg8FIj"
+            },
+            {
+              "@type": "/cosmos.crypto.secp256k1.PubKey",
+              "key": "A2MidxM8OUyemp7UycIVNDR2YxEomyfEYtndydqIuBsV"
+            },
+            {
+              "@type": "/cosmos.crypto.secp256k1.PubKey",
+              "key": "AqCFxDHHgy13cbDs1VtKu2W8oqB5XTwQG/ff0CstGiEp"
+            }
+          ]
+        },
+        "mode_info": {
+          "multi": {
+            "bitarray": {
+              "extra_bits_stored": 4,
+              "elems": "UA=="
+            },
+            "mode_infos": [
+              {
+                "single": {
+                  "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+                }
+              },
+              {
+                "single": {
+                  "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+                }
+              }
+            ]
+          }
+        },
+        "sequence": "0"
+      }
+    ],
+    "fee": {
+      "amount": [],
+      "gas_limit": "0",
+      "payer": "",
+      "granter": ""
+    }
+  },
+  "signatures": [
+    "CkBfDhX8wr3CetkC3HL3HBllPGZq3RAiFZINvaFkw9KvlDFRd4WD4cZ1H4lmurt3iy8Be/OaGAteNn9iPDuuwmouCkBHR6D+NbifDq+l5Sz8S6ueoLhpe3EXruLmDCF4YD44mwKr6OPMwG1Eg4+JCEWQUxpoE+qMFGRXNbqP28Gn4HyE"
+  ]
+}
