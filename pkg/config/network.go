@@ -85,8 +85,6 @@ func init() {
 		}
 	)
 
-	// TODO: Add test that total supply (sum of amounts funded) is always 500M.
-
 	// mainnet vars
 
 	// CORE allocation:
