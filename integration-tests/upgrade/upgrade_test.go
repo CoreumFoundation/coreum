@@ -24,6 +24,8 @@ import (
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
+	const upgradeName = "dev-upgrade"
+
 	ctx, chain := integrationtests.NewTestingContext(t)
 
 	log := logger.Get(ctx)
@@ -38,7 +40,7 @@ func TestUpgrade(t *testing.T) {
 	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-	require.False(t, strings.HasSuffix(infoBeforeRes.ApplicationVersion.Version, "-upgrade"))
+	require.False(t, strings.HasSuffix(infoBeforeRes.ApplicationVersion.Version, "-"+upgradeName))
 
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
@@ -58,7 +60,7 @@ func TestUpgrade(t *testing.T) {
 	// Create proposal to upgrade chain.
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, upgradetypes.NewSoftwareUpgradeProposal("Upgrade test", "Testing if new version of node is started by cosmovisor",
 		upgradetypes.Plan{
-			Name:   "upgrade",
+			Name:   upgradeName,
 			Height: upgradeHeight,
 		},
 	))
@@ -87,7 +89,7 @@ func TestUpgrade(t *testing.T) {
 	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})
 	requireT.NoError(err)
 	requireT.NotNil(currentPlan.Plan)
-	assert.Equal(t, "upgrade", currentPlan.Plan.Name)
+	assert.Equal(t, upgradeName, currentPlan.Plan.Name)
 	assert.Equal(t, upgradeHeight, currentPlan.Plan.Height)
 
 	// Verify that we are before the upgrade
@@ -115,7 +117,7 @@ func TestUpgrade(t *testing.T) {
 
 	// Verify that upgrade was applied on chain.
 	appliedPlan, err := upgradeClient.AppliedPlan(ctx, &upgradetypes.QueryAppliedPlanRequest{
-		Name: "upgrade",
+		Name: upgradeName,
 	})
 	requireT.NoError(err)
 	assert.Equal(t, upgradeHeight, appliedPlan.Height)
@@ -128,5 +130,5 @@ func TestUpgrade(t *testing.T) {
 	log.Info(fmt.Sprintf("New binary version: %s", infoAfterRes.ApplicationVersion.Version))
 
 	// Verify that node was restarted by cosmovisor and new version is running.
-	assert.Equal(t, infoBeforeRes.ApplicationVersion.Version+"-upgrade", infoAfterRes.ApplicationVersion.Version)
+	assert.Equal(t, infoBeforeRes.ApplicationVersion.Version+"-"+upgradeName, infoAfterRes.ApplicationVersion.Version)
 }
