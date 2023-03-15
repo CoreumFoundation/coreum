@@ -14,7 +14,11 @@ import (
 )
 
 var (
-	nftSymbolRegexStr = `^[a-zA-Z][a-zA-Z0-9]{0,40}$`
+	// The length is 30 and this is the reasoning for it.
+	// since the class id has {symbol}-{address} format and
+	// the address length might be up to 66 symbols and the demon length must be less than 101
+	// this leaves room for 33 characters, but we round it down to 30 to be conservative.
+	nftSymbolRegexStr = `^[a-zA-Z][a-zA-Z0-9]{0,30}$`
 	nftSymbolRegex    = regexp.MustCompile(nftSymbolRegexStr)
 	// the regexp is same as for the nft module.
 	nftIDRegexStr = `^[a-zA-Z][a-zA-Z0-9/:-]{2,100}$`
@@ -63,6 +67,10 @@ func DeconstructClassID(classID string) (issuer sdk.Address, err error) {
 		return nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid issuer address in classID,err:%s", err)
 	}
 
+	if err := ValidateClassSymbol(classIDParts[0]); err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid subunit in classID,err:%s", err)
+	}
+
 	return address, nil
 }
 
@@ -75,7 +83,7 @@ func ValidateClassSymbol(symbol string) error {
 	return nil
 }
 
-// ValidateTokenID checks the provided non-fungible token class symbol is valid.
+// ValidateTokenID checks the provided non-fungible token id is valid.
 func ValidateTokenID(id string) error {
 	if !nftIDRegex.MatchString(id) {
 		return sdkerrors.Wrapf(ErrInvalidID, "id must match regex format '%s'", nftIDRegexStr)

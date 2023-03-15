@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -29,13 +30,14 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// prepare the genesis data
 
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	rawGenState := &rawnft.GenesisState{}
 
 	// class definitions
 	var classDefinitions []types.ClassDefinition
 	for i := 0; i < 5; i++ {
 		classDefinition := types.ClassDefinition{
-			ID: fmt.Sprintf("class-id-%d", i),
+			ID: fmt.Sprintf("classid%d-%s", i, issuer),
 			Features: []types.ClassFeature{
 				types.ClassFeature_freezing,
 				types.ClassFeature_whitelisting,
@@ -56,11 +58,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 			Owner: sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
 			Nfts: []*rawnft.NFT{
 				{
-					ClassId: fmt.Sprintf("class-id-%d", i),
+					ClassId: fmt.Sprintf("classid%d-%s", i, issuer),
 					Id:      fmt.Sprintf("nft-id-1-%d", i),
 				},
 				{
-					ClassId: fmt.Sprintf("class-id-%d", i),
+					ClassId: fmt.Sprintf("classid%d-%s", i, issuer),
 					Id:      fmt.Sprintf("nft-id-2-%d", i),
 				},
 			},
@@ -71,7 +73,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	var frozen []types.FrozenNFT
 	for i := 0; i < 5; i++ {
 		frozen = append(frozen, types.FrozenNFT{
-			ClassID: fmt.Sprintf("class-id-%d", i),
+			ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
 			NftIDs: []string{
 				fmt.Sprintf("nft-id-1-%d", i),
 				fmt.Sprintf("nft-id-2-%d", i),
@@ -83,7 +85,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	var whitelisted []types.WhitelistedNFTAccounts
 	for i := 0; i < 5; i++ {
 		whitelisted = append(whitelisted, types.WhitelistedNFTAccounts{
-			ClassID: fmt.Sprintf("class-id-%d", i),
+			ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
 			NftID:   fmt.Sprintf("nft-id-1-%d", i),
 			Accounts: []string{
 				sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
@@ -92,7 +94,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 			},
 		},
 			types.WhitelistedNFTAccounts{
-				ClassID: fmt.Sprintf("class-id-%d", i),
+				ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
 				NftID:   fmt.Sprintf("nft-id-2-%d", i),
 				Accounts: []string{
 					sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String(),
@@ -106,7 +108,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	var burnt []types.BurntNFT
 	for i := 0; i < 5; i++ {
 		burnt = append(burnt, types.BurntNFT{
-			ClassID: fmt.Sprintf("class-id-%d", i),
+			ClassID: fmt.Sprintf("classid%d-%s", i, issuer),
 			NftIDs: []string{
 				fmt.Sprintf("burnt-nft-id-1-%d", i),
 				fmt.Sprintf("burnt-nft-id-2-%d", i),
