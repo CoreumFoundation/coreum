@@ -24,7 +24,7 @@
         },
         "value": {
           "denom": "ucore",
-          "amount": "25000000000"
+          "amount": "20150000000"
         }
       }
     ],
@@ -89,6 +89,6 @@
     }
   },
   "signatures": [
-    "CkCnXJ/iwhkkShK/xQuEeJql4GU8ra0pJz4To8TZKb7aJlLZuStrmWvWLapF7FZ0sCRUBCSka349EnKHszAhCYbZCkD1MqUrVzDY/uIPDE1qYsBzj/X7qLUJFpzwSq2vRBzu9Q8xQffr05CTKPGKphm5x0TvUcXHkQ5gM3eMbFNn/NLl"
+    "CkBDGuyJKSRyeV73NJ5j7Ph0TtZdtb1D7Jy93ogewijljSYBXlEH8ysV5If2irHX+k0W6FBMuYmJf8jURq98+LT8CkD5DWwQTCJZ7bED1/wo02G9RaWWwQgZxNJSVPC42PbNuCREg/eHCDbd0DG2J+0SzvrN195TEX+0vjemJiAjWvC2"
   ]
 }
