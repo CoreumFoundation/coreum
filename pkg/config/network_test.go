@@ -169,11 +169,6 @@ func TestValidateAllGenesis(t *testing.T) {
 	encCfg := config.NewEncodingConfig(app.ModuleBasics)
 
 	for _, n := range config.Networks() {
-		if n.ChainID() == constant.ChainIDMain {
-			// TODO: Currently mainnet genesis is invalid.
-			continue
-		}
-
 		unsealConfig()
 		n.SetSDKConfig()
 		genesisJSON, err := n.EncodeGenesis()
@@ -225,14 +220,17 @@ func TestGenesisHash(t *testing.T) {
 		wantHash string
 	}{
 		{
-			name:     "testnet",
+			chainID:  constant.ChainIDMain,
+			wantHash: "f26ff015245b674641c7b197d40669b4f55e9da8a3a60a831c79e8c37d034a4c",
+		},
+		{
 			chainID:  constant.ChainIDTest,
 			wantHash: "12273f3e0bc97e848cccdc67225a3d7c54c42243d6ec7f01a7bcfc4ede63cacd",
 		},
 	}
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(string(tt.chainID), func(t *testing.T) {
 			n, err := config.NetworkByChainID(tt.chainID)
 			require.NoError(t, err)
 

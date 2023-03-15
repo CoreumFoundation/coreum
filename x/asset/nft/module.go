@@ -1,6 +1,7 @@
 package nft
 
 import (
+	"context"
 	"encoding/json"
 	"math/rand"
 
@@ -72,7 +73,11 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+		panic(err)
+	}
+}
 
 // GetTxCmd returns the assetnft module's root tx command.
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
