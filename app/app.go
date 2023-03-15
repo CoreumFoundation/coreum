@@ -83,7 +83,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/app/upgrade"
-	appupgradedev "github.com/CoreumFoundation/coreum/app/upgrade/dev"
 	appupgradev1 "github.com/CoreumFoundation/coreum/app/upgrade/v1"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -627,14 +626,6 @@ func New(
 	/**** Upgrades ****/
 	upgrades := []appupgrade.Upgrade{
 		appupgradev1.NewV1Upgrade(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
-	}
-
-	// We set fake upgrade handler to test upgrade procedure in CI before we have real upgrade available
-	if ChosenNetwork.IsDevUpgradeHandlerEnabled() {
-		// the upgrade is same as v1 since we use it for the integration tests, once the upgrade with the v1 binary is ready we can remove it.
-		devUpgrade := appupgradev1.NewV1Upgrade(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper)
-		devUpgrade.Name = appupgradedev.Name
-		upgrades = append(upgrades, devUpgrade)
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
