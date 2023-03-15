@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
@@ -20,11 +21,12 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
-	const upgradeName = "dev-upgrade"
+	const devUpgradeName = "dev-upgrade"
 
 	ctx, chain := integrationtests.NewTestingContext(t)
 
@@ -40,7 +42,7 @@ func TestUpgrade(t *testing.T) {
 	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-	require.False(t, strings.HasSuffix(infoBeforeRes.ApplicationVersion.Version, "-"+upgradeName))
+	require.False(t, strings.HasSuffix(infoBeforeRes.ApplicationVersion.Version, "-"+devUpgradeName))
 
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
@@ -60,7 +62,7 @@ func TestUpgrade(t *testing.T) {
 	// Create proposal to upgrade chain.
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, upgradetypes.NewSoftwareUpgradeProposal("Upgrade test", "Testing if new version of node is started by cosmovisor",
 		upgradetypes.Plan{
-			Name:   upgradeName,
+			Name:   devUpgradeName,
 			Height: upgradeHeight,
 		},
 	))
@@ -89,7 +91,7 @@ func TestUpgrade(t *testing.T) {
 	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})
 	requireT.NoError(err)
 	requireT.NotNil(currentPlan.Plan)
-	assert.Equal(t, upgradeName, currentPlan.Plan.Name)
+	assert.Equal(t, devUpgradeName, currentPlan.Plan.Name)
 	assert.Equal(t, upgradeHeight, currentPlan.Plan.Height)
 
 	// Verify that we are before the upgrade
@@ -117,7 +119,7 @@ func TestUpgrade(t *testing.T) {
 
 	// Verify that upgrade was applied on chain.
 	appliedPlan, err := upgradeClient.AppliedPlan(ctx, &upgradetypes.QueryAppliedPlanRequest{
-		Name: upgradeName,
+		Name: devUpgradeName,
 	})
 	requireT.NoError(err)
 	assert.Equal(t, upgradeHeight, appliedPlan.Height)
@@ -129,6 +131,16 @@ func TestUpgrade(t *testing.T) {
 
 	log.Info(fmt.Sprintf("New binary version: %s", infoAfterRes.ApplicationVersion.Version))
 
-	// Verify that node was restarted by cosmovisor and new version is running.
-	assert.Equal(t, infoBeforeRes.ApplicationVersion.Version+"-"+upgradeName, infoAfterRes.ApplicationVersion.Version)
+	// The new binary is from the dev upgrade that's why the suffix ends with the dev upgrade name.
+	assert.True(t, strings.HasSuffix(infoAfterRes.ApplicationVersion.Version, devUpgradeName))
+
+	// Test the upgrade
+	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+	paramsRes, err := assetNftClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	// check that asst nft is available now
+	requireT.Equal(assetnfttypes.Params{
+		MintFee: chain.NewCoin(sdk.NewInt(0)),
+	}, paramsRes.Params)
 }

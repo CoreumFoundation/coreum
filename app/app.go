@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -81,6 +82,9 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/app/openapi"
+	appupgrade "github.com/CoreumFoundation/coreum/app/upgrade"
+	appupgradedev "github.com/CoreumFoundation/coreum/app/upgrade/dev"
+	appupgradev1 "github.com/CoreumFoundation/coreum/app/upgrade/v1"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -336,13 +340,6 @@ func New(
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
-	// We set fake upgrade handler to test upgrade procedure in CI before we have real upgrade available
-	if ChosenNetwork.IsDevUpgradeHandlerEnabled() {
-		// the dev-upgrade is needed to implement the upgrade before the release
-		app.UpgradeKeeper.SetUpgradeHandler("dev-upgrade", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			return app.mm.RunMigrations(ctx, app.configurator, fromVM)
-		})
-	}
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper = *stakingKeeper.SetHooks(
@@ -624,6 +621,39 @@ func New(
 		)
 		if err != nil {
 			panic(errors.Wrapf(err, "failed to register wasm snapshot extension"))
+		}
+	}
+
+	/**** Upgrades ****/
+	upgrades := []appupgrade.Upgrade{
+		appupgradev1.NewV1Upgrade(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
+	}
+
+	// We set fake upgrade handler to test upgrade procedure in CI before we have real upgrade available
+	if ChosenNetwork.IsDevUpgradeHandlerEnabled() {
+		// the upgrade is same as v1 since we use it for the integration tests, once the upgrade with the v1 binary is ready we can remove it.
+		devUpgrade := appupgradev1.NewV1Upgrade(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper)
+		devUpgrade.Name = appupgradedev.Name
+		upgrades = append(upgrades, devUpgrade)
+	}
+
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	isSkipHeight := app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height)
+
+	// register the upgrades
+	for _, upgradeItem := range upgrades {
+		app.UpgradeKeeper.SetUpgradeHandler(
+			upgradeItem.Name,
+			upgradeItem.Upgrade,
+		)
+
+		if upgradeInfo.Name == upgradeItem.Name && !isSkipHeight {
+			// configure store loader that checks if version == upgradeHeight and applies store upgrades
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgradeItem.StoreUpgrades))
 		}
 	}
 
