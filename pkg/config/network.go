@@ -88,14 +88,17 @@ func init() {
 	// mainnet vars
 
 	// CORE allocation:
-	// 500M = (4 * 25_000 + 99_900_000) + 4 * 100_000_000
-	// In total 8 wallets will be created in genesis:
-	// where 4 * 25_000 is a balance of each of 4 wallet used to create genesis validators.
-	// where 99_900_000 is a balance of foundation-0 wallet.
-	// where 4 * 100_000_000 is a balance of each of remaining 4 foundation wallets.
+	// 500M = (5 * 25_000 + 700_000 + 99_175_000) + 4 * 100_000_000
+	// In total 11 wallets will be created in genesis:
+	// 5 * 25_000 is a balance of each of 4 wallets used to create genesis validators & 1 extra wallet to join network as validator later.
+	// 700_000 is a balance of bridge wallet.
+	// 99_175_000 is a balance of foundation-0 wallet (99_175_000 = 100_000_000 - (5 * 25_000 + 700_000)).
+	// 4 * 100_000_000 is a balance of each of remaining 4 foundation wallets.
 	mainGenesisValidatorCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(25_000_000_000)))
 
-	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_900_000_000_000)))
+	mainBridgeBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(700_000_000_000)))
+
+	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_175_000_000_000)))
 	mainFoundationOtherInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(100_000_000_000_000)))
 
 	// testnet vars
@@ -158,7 +161,17 @@ func init() {
 					Address:  "core1hsmhywnkehyyv8muzswhdumzztae4hq4k3dj8p",
 					Balances: mainGenesisValidatorCreatorBalance,
 				},
-				// coreum-foundation-0: 99_900_000
+				// coreum-argon genesis-validators-creator: 25k
+				{
+					Address:  "core1vj6p0qpw0ntzv6v3n9zjdtwkjxzc3krnx04mlk", // TODO: Replace with team's wallet.
+					Balances: mainGenesisValidatorCreatorBalance,
+				},
+				// bridge: 700k
+				{
+					Address:  "core1455z555ldd3zmkay4td4rv54f7yt2sdpvlvptg", // TODO: Replace with a real bridge address.
+					Balances: mainBridgeBalance,
+				},
+				// coreum-foundation-0: 99_175_000
 				{
 					Address:  "core13xmyzhvl02xpz0pu8v9mqalsvpyy7wvs9q5f90",
 					Balances: mainFoundationZeroInitialBalance,
