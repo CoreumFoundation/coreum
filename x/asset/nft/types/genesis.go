@@ -17,16 +17,12 @@ func (gs GenesisState) Validate() error {
 }
 
 // Validate performs basic validation on the fields of ClassDefinition.
-func (cd ClassDefinition) Validate() error {
-	if _, err := DeconstructClassID(cd.ID); err != nil {
+func (nftd ClassDefinition) Validate() error {
+	if _, err := DeconstructClassID(nftd.ID); err != nil {
 		return err
 	}
 
-	if err := ValidateRoyaltyRate(cd.RoyaltyRate); err != nil {
-		return err
-	}
-
-	return nil
+	return ValidateRoyaltyRate(nftd.RoyaltyRate)
 }
 
 // Validate performs basic validation on the fields of FrozenNFT.
