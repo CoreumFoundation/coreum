@@ -84,6 +84,8 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
+	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
+
 	"github.com/CoreumFoundation/coreum/app/openapi"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -111,8 +113,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/x/wstaking"
-
-	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 )
 
 const (
