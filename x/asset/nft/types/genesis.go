@@ -13,6 +13,30 @@ func DefaultGenesis() *GenesisState {
 
 // Validate performs basic genesis state validation returning an error upon any failure.
 func (gs GenesisState) Validate() error {
+	for _, cd := range gs.ClassDefinitions {
+		if err := cd.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, frozen := range gs.FrozenNFTs {
+		if err := frozen.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, whitelisted := range gs.WhitelistedNFTAccounts {
+		if err := whitelisted.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, burnt := range gs.BurntNFTs {
+		if err := burnt.Validate(); err != nil {
+			return err
+		}
+	}
+
 	return gs.Params.ValidateBasic()
 }
 
