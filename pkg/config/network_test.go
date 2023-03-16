@@ -239,6 +239,7 @@ func TestGenesisHash(t *testing.T) {
 			unsealConfig()
 			n.SetSDKConfig()
 			genesisDoc, err := n.EncodeGenesis()
+			require.NoError(t, err)
 
 			genesisFile, err := os.ReadFile(tt.genesisFilePath)
 			require.NoError(t, err)
