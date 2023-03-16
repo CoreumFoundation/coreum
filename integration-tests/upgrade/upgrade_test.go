@@ -138,7 +138,7 @@ func TestUpgrade(t *testing.T) {
 	paramsRes, err := assetNftClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
 	requireT.NoError(err)
 
-	// check that asst nft is available now
+	// check that asset nft is available now
 	requireT.Equal(assetnfttypes.Params{
 		MintFee: chain.NewCoin(sdk.NewInt(0)),
 	}, paramsRes.Params)
