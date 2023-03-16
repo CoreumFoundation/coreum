@@ -131,8 +131,8 @@ func init() {
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@34.171.208.193:26657", // seed-iron
-					"cba16f4f32707d70a2a2d10861fac897f1e9aaa1@34.72.150.107:26657",  // seed-nickle
+					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@34.171.208.193:26656", // seed-iron
+					"cba16f4f32707d70a2a2d10861fac897f1e9aaa1@34.72.150.107:26656",  // seed-nickle
 				},
 			},
 			GovConfig:          govConfig,
