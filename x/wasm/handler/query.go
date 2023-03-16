@@ -216,7 +216,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 			return nftQueryServer.Supply(ctx, req)
 		})
 	}
-	if nftQuery.NFT != nil {
+	if nftQuery.NFT != nil { //nolint:nestif // the ifs are for the error checks mostly
 		return executeQuery(ctx, nftQuery.NFT, func(ctx context.Context, req *nfttypes.QueryNFTRequest) (*NFTResponse, error) {
 			nftRes, err := nftQueryServer.NFT(ctx, req)
 			if err != nil {
