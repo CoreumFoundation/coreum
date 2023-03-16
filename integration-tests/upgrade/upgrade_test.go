@@ -40,7 +40,7 @@ func TestUpgrade(t *testing.T) {
 	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-	// we start with the binary we if the v0.0.1
+	// we start with the binary we if the v0.1.1
 	require.Equal(t, infoBeforeRes.ApplicationVersion.Version, "v0.1.1")
 
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
