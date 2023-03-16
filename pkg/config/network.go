@@ -31,10 +31,6 @@ import (
 )
 
 var (
-	// EnableDevUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
-	// It is string, not bool, because -X flag supports strings only.
-	EnableDevUpgradeHandler string
-
 	//go:embed genesis/genesis.tmpl.json
 	genesisTemplate string
 
