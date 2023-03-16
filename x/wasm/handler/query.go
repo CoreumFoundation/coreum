@@ -7,6 +7,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -164,7 +165,10 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *assetNFTQuery, assetNF
 
 			var dataString string
 			if classRes.Class.Data != nil {
-				dataString = string(classRes.Class.Data.Value)
+				dataString, err = unmarshalDataBytes(classRes.Class.Data)
+				if err != nil {
+					return nil, err
+				}
 			}
 			return &assetNFTClassResponse{
 				Class: assetNFTClass{
@@ -212,7 +216,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 			return nftQueryServer.Supply(ctx, req)
 		})
 	}
-	if nftQuery.NFT != nil {
+	if nftQuery.NFT != nil { //nolint:nestif // the ifs are for the error checks mostly
 		return executeQuery(ctx, nftQuery.NFT, func(ctx context.Context, req *nfttypes.QueryNFTRequest) (*NFTResponse, error) {
 			nftRes, err := nftQueryServer.NFT(ctx, req)
 			if err != nil {
@@ -225,7 +229,10 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 
 			var dataString string
 			if nftRes.Nft.Data != nil {
-				dataString = string(nftRes.Nft.Data.Value)
+				dataString, err = unmarshalDataBytes(nftRes.Nft.Data)
+				if err != nil {
+					return nil, err
+				}
 			}
 			return &NFTResponse{
 				NFT: nft{
@@ -257,4 +264,14 @@ func executeQuery[T, K any](
 		return nil, errors.WithStack(err)
 	}
 	return raw, nil
+}
+
+func unmarshalDataBytes(data *codectypes.Any) (string, error) {
+	var dataBytes assetnfttypes.DataBytes
+	err := proto.Unmarshal(data.Value, &dataBytes)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	return string(dataBytes.Data), nil
 }

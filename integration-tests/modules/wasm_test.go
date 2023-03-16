@@ -1204,7 +1204,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Description: expectedClass.Description,
 			URI:         expectedClass.URI,
 			URIHash:     expectedClass.URIHash,
-			Data:        string(dataToCompare.Value),
+			Data:        dataString,
 			Features:    expectedClass.Features,
 			RoyaltyRate: expectedClass.RoyaltyRate,
 		}, classQueryRes.Class,
@@ -1311,7 +1311,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			ID:      mintNFTReq2.ID,
 			URI:     mintNFTReq2.URI,
 			URIHash: mintNFTReq2.URIHash,
-			Data:    string(dataToCompare.Value),
+			Data:    dataString,
 		}, nftQueryRes.NFT,
 	)
 }
