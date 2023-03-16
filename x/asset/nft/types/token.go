@@ -67,8 +67,14 @@ func DeconstructClassID(classID string) (issuer sdk.Address, err error) {
 		return nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid issuer address in classID,err:%s", err)
 	}
 
-	if err := ValidateClassSymbol(classIDParts[0]); err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid subunit in classID,err:%s", err)
+	symbol := classIDParts[0]
+	if err := ValidateClassSymbol(symbol); err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid symbol in classID,err:%s", err)
+	}
+
+	// ensure that symbol is all lowercase
+	if strings.ToLower(symbol) != symbol {
+		return nil, sdkerrors.Wrapf(ErrInvalidInput, "symbol in classID should be lowercase")
 	}
 
 	return address, nil
