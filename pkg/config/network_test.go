@@ -2,8 +2,10 @@ package config_test
 
 import (
 	"crypto/sha256"
+	_ "embed"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -215,17 +217,17 @@ func TestValidateAllGenTxs(t *testing.T) {
 
 func TestGenesisHash(t *testing.T) {
 	tests := []struct {
-		name     string
-		chainID  constant.ChainID
-		wantHash string
+		name            string
+		chainID         constant.ChainID
+		genesisFilePath string
 	}{
 		{
-			chainID:  constant.ChainIDMain,
-			wantHash: "b7a9fa3445d6233372e72534c37e947d939e32a18f12928b23d407fc2b8ecc4d",
+			chainID:         constant.ChainIDMain,
+			genesisFilePath: "../../genesis/coreum-mainnet-1.json",
 		},
 		{
-			chainID:  constant.ChainIDTest,
-			wantHash: "12273f3e0bc97e848cccdc67225a3d7c54c42243d6ec7f01a7bcfc4ede63cacd",
+			chainID:         constant.ChainIDTest,
+			genesisFilePath: "../../genesis/coreum-testnet-1.json",
 		},
 	}
 	for _, tt := range tests {
@@ -238,7 +240,12 @@ func TestGenesisHash(t *testing.T) {
 			n.SetSDKConfig()
 			genesisDoc, err := n.EncodeGenesis()
 			require.NoError(t, err)
-			require.Equal(t, tt.wantHash, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)))
+
+			genesisFile, err := os.ReadFile(tt.genesisFilePath)
+			require.NoError(t, err)
+
+			require.NoError(t, err)
+			require.Equal(t, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)), fmt.Sprintf("%x", sha256.Sum256(genesisFile)))
 		})
 	}
 }
