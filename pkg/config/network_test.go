@@ -221,7 +221,7 @@ func TestGenesisHash(t *testing.T) {
 	}{
 		{
 			chainID:  constant.ChainIDMain,
-			wantHash: "d69a7b327e994bc3e9ab90f15158fe8c0f84848cdae5b03f4f0f82a7032f9c0f",
+			wantHash: "b7a9fa3445d6233372e72534c37e947d939e32a18f12928b23d407fc2b8ecc4d",
 		},
 		{
 			chainID:  constant.ChainIDTest,
