@@ -1,3 +1,4 @@
+use cosmwasm_std::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +12,7 @@ pub struct Class {
     pub description: Option<String>,
     pub uri: Option<String>,
     pub uri_hash: Option<String>,
-    pub data: Option<String>,
+    pub data: Option<Binary>,
     pub features: Option<Vec<u32>>,
     pub royalty_rate: Option<String>,
 }
@@ -42,7 +43,7 @@ pub enum Msg {
         description: Option<String>,
         uri: Option<String>,
         uri_hash: Option<String>,
-        data: Option<String>,
+        data: Option<Binary>,
         features: Option<Vec<u32>>,
         royalty_rate: Option<String>,
     },
@@ -51,7 +52,7 @@ pub enum Msg {
         id: String,
         uri: Option<String>,
         uri_hash: Option<String>,
-        data: Option<String>,
+        data: Option<Binary>,
     },
     Burn {
         class_id: String,

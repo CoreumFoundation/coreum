@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	// reClassIDString can be 3 ~ 100 characters long and support letters, followed by either
+	// reClassIDString can be 3 ~ 101 characters long and support letters, followed by either
 	// a letter, a number or a slash ('/') or a colon (':') or ('-').
 	reClassIDString = `[a-zA-Z][a-zA-Z0-9/:-]{2,100}`
 	reClassID       = regexp.MustCompile(fmt.Sprintf(`^%s$`, reClassIDString))
 
-	// reNFTIDString can be 3 ~ 100 characters long and support letters, followed by either
+	// reNFTIDString can be 3 ~ 101 characters long and support letters, followed by either
 	// a letter, a number or a slash ('/') or a colon (':') or ('-').
 	reNFTID = reClassID
 )

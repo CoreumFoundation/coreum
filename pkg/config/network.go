@@ -88,14 +88,17 @@ func init() {
 	// mainnet vars
 
 	// CORE allocation:
-	// 500M = (4 * 25_000 + 99_900_000) + 4 * 100_000_000
-	// In total 8 wallets will be created in genesis:
-	// where 4 * 25_000 is a balance of each of 4 wallet used to create genesis validators.
-	// where 99_900_000 is a balance of foundation-0 wallet.
-	// where 4 * 100_000_000 is a balance of each of remaining 4 foundation wallets.
+	// 500M = (5 * 25_000 + 700_000 + 99_175_000) + 4 * 100_000_000
+	// In total 11 wallets will be created in genesis:
+	// 5 * 25_000 is a balance of each of 4 wallets used to create genesis validators & 1 wallet to join network as validator after launch.
+	// 700_000 is a balance of bridge wallet.
+	// 99_175_000 is a balance of foundation-0 wallet (99_175_000 = 100_000_000 - (5 * 25_000 + 700_000)).
+	// 4 * 100_000_000 is a balance of each of remaining 4 foundation wallets.
 	mainGenesisValidatorCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(25_000_000_000)))
 
-	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_900_000_000_000)))
+	mainBridgeBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(700_000_000_000)))
+
+	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_175_000_000_000)))
 	mainFoundationOtherInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(100_000_000_000_000)))
 
 	// testnet vars
@@ -128,8 +131,8 @@ func init() {
 			Fee:                  feeConfig,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
-					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@34.171.208.193:26657", // seed-iron
-					"cba16f4f32707d70a2a2d10861fac897f1e9aaa1@34.72.150.107:26657",  // seed-nickle
+					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@34.171.208.193:26656", // seed-iron
+					"cba16f4f32707d70a2a2d10861fac897f1e9aaa1@34.72.150.107:26656",  // seed-nickle
 				},
 			},
 			GovConfig:          govConfig,
@@ -158,7 +161,17 @@ func init() {
 					Address:  "core1hsmhywnkehyyv8muzswhdumzztae4hq4k3dj8p",
 					Balances: mainGenesisValidatorCreatorBalance,
 				},
-				// coreum-foundation-0: 99_900_000
+				// coreum-argon validators-creator: 25k
+				{
+					Address:  "core1nc84mnnqshaln65vsykr63m605sc4kvdwnkgg9",
+					Balances: mainGenesisValidatorCreatorBalance,
+				},
+				// bridge: 700k
+				{
+					Address:  "core1ssh2d2ft6hzrgn9z6k7mmsamy2hfpxl9y8re5x",
+					Balances: mainBridgeBalance,
+				},
+				// coreum-foundation-0: 99_175_000
 				{
 					Address:  "core13xmyzhvl02xpz0pu8v9mqalsvpyy7wvs9q5f90",
 					Balances: mainFoundationZeroInitialBalance,

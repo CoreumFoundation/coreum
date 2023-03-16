@@ -1,8 +1,10 @@
 use coreum_wasm_sdk::assetnft;
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries};
 use coreum_wasm_sdk::nft;
-use cosmwasm_std::{entry_point, to_binary, Binary, Deps, QueryRequest, StdResult};
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, StdError};
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
+    StdError, StdResult,
+};
 use cw2::set_contract_version;
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
@@ -21,7 +23,7 @@ pub struct InstantiateMsg {
     pub description: Option<String>,
     pub uri: Option<String>,
     pub uri_hash: Option<String>,
-    pub data: Option<String>,
+    pub data: Option<Binary>,
     pub features: Option<Vec<u32>>,
     pub royalty_rate: Option<String>,
 }
@@ -56,7 +58,7 @@ pub enum ExecuteMsg {
         id: String,
         uri: Option<String>,
         uri_hash: Option<String>,
-        data: Option<String>,
+        data: Option<Binary>,
     },
     Burn {
         id: String,
@@ -174,7 +176,7 @@ fn mint(
     id: String,
     uri: Option<String>,
     uri_hash: Option<String>,
-    data: Option<String>,
+    data: Option<Binary>,
 ) -> Result<Response<CoreumMsg>, ContractError> {
     let state = STATE.load(deps.storage)?;
     if info.sender != state.owner {

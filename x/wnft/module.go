@@ -23,9 +23,9 @@ type AppModule struct {
 
 // NewAppModule creates a new wnft AppModule object.
 func NewAppModule(cdc codec.Codec, keeper keeper.Wrapper, ak nft.AccountKeeper, bk nft.BankKeeper, registry codectypes.InterfaceRegistry) AppModule {
-	bankModule := nftmodule.NewAppModule(cdc, keeper.Keeper, ak, bk, registry)
+	nftModule := nftmodule.NewAppModule(cdc, keeper.Keeper, ak, bk, registry)
 	return AppModule{
-		AppModule: bankModule,
+		AppModule: nftModule,
 		keeper:    keeper,
 	}
 }
