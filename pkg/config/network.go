@@ -31,10 +31,6 @@ import (
 )
 
 var (
-	// EnableFakeUpgradeHandler is set to true during compilation to enable fake upgrade handler on devnet allowing us to test upgrade procedure.
-	// It is string, not bool, because -X flag supports strings only.
-	EnableFakeUpgradeHandler string
-
 	//go:embed genesis/genesis.tmpl.json
 	genesisTemplate string
 
@@ -305,8 +301,7 @@ func init() {
 					Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
 				},
 			},
-			GenTxs:                      readGenTxs(devGenTxsFS),
-			IsFakeUpgradeHandlerEnabled: EnableFakeUpgradeHandler != "",
+			GenTxs: readGenTxs(devGenTxsFS),
 		},
 	}
 }
@@ -414,25 +409,22 @@ type NetworkConfig struct {
 	CustomParamsConfig   CustomParamsConfig
 	AssetFTConfig        AssetFTConfig
 	AssetNFTConfig       AssetNFTConfig
-	// TODO: remove this field once we have real upgrade handler
-	IsFakeUpgradeHandlerEnabled bool
 }
 
 // Network holds all the configuration for different predefined networks.
 type Network struct {
-	chainID                  constant.ChainID
-	genesisTime              time.Time
-	addressPrefix            string
-	metadataDisplayDenom     string
-	denom                    string
-	fee                      FeeConfig
-	nodeConfig               NodeConfig
-	gov                      GovConfig
-	staking                  StakingConfig
-	customParams             CustomParamsConfig
-	assetFT                  AssetFTConfig
-	assetNFT                 AssetNFTConfig
-	enableFakeUpgradeHandler bool
+	chainID              constant.ChainID
+	genesisTime          time.Time
+	addressPrefix        string
+	metadataDisplayDenom string
+	denom                string
+	fee                  FeeConfig
+	nodeConfig           NodeConfig
+	gov                  GovConfig
+	staking              StakingConfig
+	customParams         CustomParamsConfig
+	assetFT              AssetFTConfig
+	assetNFT             AssetNFTConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
@@ -442,22 +434,21 @@ type Network struct {
 // NewNetwork returns a new instance of Network.
 func NewNetwork(c NetworkConfig) Network {
 	n := Network{
-		genesisTime:              c.GenesisTime,
-		chainID:                  c.ChainID,
-		addressPrefix:            c.AddressPrefix,
-		metadataDisplayDenom:     c.MetadataDisplayDenom,
-		denom:                    c.Denom,
-		nodeConfig:               c.NodeConfig.Clone(),
-		fee:                      c.Fee,
-		gov:                      c.GovConfig,
-		staking:                  c.StakingConfig,
-		customParams:             c.CustomParamsConfig,
-		assetFT:                  c.AssetFTConfig,
-		assetNFT:                 c.AssetNFTConfig,
-		mu:                       &sync.Mutex{},
-		fundedAccounts:           append([]FundedAccount{}, c.FundedAccounts...),
-		genTxs:                   append([]json.RawMessage{}, c.GenTxs...),
-		enableFakeUpgradeHandler: c.IsFakeUpgradeHandlerEnabled,
+		genesisTime:          c.GenesisTime,
+		chainID:              c.ChainID,
+		addressPrefix:        c.AddressPrefix,
+		metadataDisplayDenom: c.MetadataDisplayDenom,
+		denom:                c.Denom,
+		nodeConfig:           c.NodeConfig.Clone(),
+		fee:                  c.Fee,
+		gov:                  c.GovConfig,
+		staking:              c.StakingConfig,
+		customParams:         c.CustomParamsConfig,
+		assetFT:              c.AssetFTConfig,
+		assetNFT:             c.AssetNFTConfig,
+		mu:                   &sync.Mutex{},
+		fundedAccounts:       append([]FundedAccount{}, c.FundedAccounts...),
+		genTxs:               append([]json.RawMessage{}, c.GenTxs...),
 	}
 
 	return n
@@ -682,11 +673,6 @@ func (n Network) Denom() string {
 // FeeModel returns fee model configuration.
 func (n Network) FeeModel() feemodeltypes.Model {
 	return n.fee.FeeModel
-}
-
-// IsFakeUpgradeHandlerEnabled enables temporary fake upgrade handler until we have real one.
-func (n Network) IsFakeUpgradeHandlerEnabled() bool {
-	return n.enableFakeUpgradeHandler
 }
 
 // NetworkConfigByChainID returns predefined NetworkConfig for a ChainID.

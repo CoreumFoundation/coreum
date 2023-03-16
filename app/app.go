@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -86,6 +87,8 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/app/openapi"
+	appupgrade "github.com/CoreumFoundation/coreum/app/upgrade"
+	appupgradev1 "github.com/CoreumFoundation/coreum/app/upgrade/v1"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -242,6 +245,8 @@ type App struct {
 
 	// sm is the simulation manager
 	sm *module.SimulationManager
+
+	configurator module.Configurator
 }
 
 // New returns a reference to an initialized blockchain app.
@@ -345,13 +350,6 @@ func New(
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
-
-	// We set fake upgrade handler to test upgrade procedure in CI before we have real upgrade available
-	if ChosenNetwork.IsFakeUpgradeHandlerEnabled() {
-		app.UpgradeKeeper.SetUpgradeHandler("upgrade", func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			return nil, nil
-		})
-	}
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
@@ -572,8 +570,10 @@ func New(
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
-	app.mm.RegisterServices(module.NewConfigurator(app.appCodec,
-		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig), app.GRPCQueryRouter()))
+
+	app.configurator = module.NewConfigurator(app.appCodec,
+		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig), app.GRPCQueryRouter())
+	app.mm.RegisterServices(app.configurator)
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	app.sm = module.NewSimulationManager(
@@ -632,6 +632,31 @@ func New(
 		)
 		if err != nil {
 			panic(errors.Wrapf(err, "failed to register wasm snapshot extension"))
+		}
+	}
+
+	/**** Upgrades ****/
+	upgrades := []appupgrade.Upgrade{
+		appupgradev1.NewV1Upgrade(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
+	}
+
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	isSkipHeight := app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height)
+
+	// register the upgrades
+	for _, upgradeItem := range upgrades {
+		app.UpgradeKeeper.SetUpgradeHandler(
+			upgradeItem.Name,
+			upgradeItem.Upgrade,
+		)
+
+		if upgradeInfo.Name == upgradeItem.Name && !isSkipHeight {
+			// configure store loader that checks if version == upgradeHeight and applies store upgrades
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgradeItem.StoreUpgrades))
 		}
 	}
 
