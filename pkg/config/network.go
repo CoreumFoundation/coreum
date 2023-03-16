@@ -90,7 +90,7 @@ func init() {
 	// CORE allocation:
 	// 500M = (5 * 25_000 + 700_000 + 99_175_000) + 4 * 100_000_000
 	// In total 11 wallets will be created in genesis:
-	// 5 * 25_000 is a balance of each of 4 wallets used to create genesis validators & 1 extra wallet to join network as validator later.
+	// 5 * 25_000 is a balance of each of 4 wallets used to create genesis validators & 1 wallet to join network as validator after launch.
 	// 700_000 is a balance of bridge wallet.
 	// 99_175_000 is a balance of foundation-0 wallet (99_175_000 = 100_000_000 - (5 * 25_000 + 700_000)).
 	// 4 * 100_000_000 is a balance of each of remaining 4 foundation wallets.
@@ -161,14 +161,14 @@ func init() {
 					Address:  "core1hsmhywnkehyyv8muzswhdumzztae4hq4k3dj8p",
 					Balances: mainGenesisValidatorCreatorBalance,
 				},
-				// coreum-argon genesis-validators-creator: 25k
+				// coreum-argon validators-creator: 25k
 				{
-					Address:  "core1vj6p0qpw0ntzv6v3n9zjdtwkjxzc3krnx04mlk", // TODO: Replace with team's wallet.
+					Address:  "core1nc84mnnqshaln65vsykr63m605sc4kvdwnkgg9",
 					Balances: mainGenesisValidatorCreatorBalance,
 				},
 				// bridge: 700k
 				{
-					Address:  "core1455z555ldd3zmkay4td4rv54f7yt2sdpvlvptg", // TODO: Replace with a real bridge address.
+					Address:  "core1ssh2d2ft6hzrgn9z6k7mmsamy2hfpxl9y8re5x",
 					Balances: mainBridgeBalance,
 				},
 				// coreum-foundation-0: 99_175_000
