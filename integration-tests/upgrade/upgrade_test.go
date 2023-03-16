@@ -130,7 +130,7 @@ func TestUpgrade(t *testing.T) {
 
 	log.Info(fmt.Sprintf("New binary version: %s", infoAfterRes.ApplicationVersion.Version))
 
-	// The new binary is from the dev upgrade isn't equal to intial
+	// The new binary is from the dev upgrade isn't equal to initial
 	assert.NotEqual(t, infoAfterRes.ApplicationVersion.Version, infoBeforeRes.ApplicationVersion.Version)
 
 	// Test the upgrade introduces in the v1 upgrade

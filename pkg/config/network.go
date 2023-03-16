@@ -404,19 +404,18 @@ type NetworkConfig struct {
 
 // Network holds all the configuration for different predefined networks.
 type Network struct {
-	chainID                 constant.ChainID
-	genesisTime             time.Time
-	addressPrefix           string
-	metadataDisplayDenom    string
-	denom                   string
-	fee                     FeeConfig
-	nodeConfig              NodeConfig
-	gov                     GovConfig
-	staking                 StakingConfig
-	customParams            CustomParamsConfig
-	assetFT                 AssetFTConfig
-	assetNFT                AssetNFTConfig
-	enableDevUpgradeHandler bool
+	chainID              constant.ChainID
+	genesisTime          time.Time
+	addressPrefix        string
+	metadataDisplayDenom string
+	denom                string
+	fee                  FeeConfig
+	nodeConfig           NodeConfig
+	gov                  GovConfig
+	staking              StakingConfig
+	customParams         CustomParamsConfig
+	assetFT              AssetFTConfig
+	assetNFT             AssetNFTConfig
 
 	mu             *sync.Mutex
 	fundedAccounts []FundedAccount
