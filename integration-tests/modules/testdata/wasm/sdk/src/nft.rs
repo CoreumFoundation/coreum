@@ -1,3 +1,4 @@
+use cosmwasm_std::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +9,7 @@ pub struct NFT {
     pub id: String,
     pub uri: Option<String>,
     pub uri_hash: Option<String>,
-    pub data: Option<String>,
+    pub data: Option<Binary>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -16,6 +16,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	k.SetParams(ctx, genState.Params)
 
 	for _, frozen := range genState.FrozenNFTs {
+		if err := frozen.Validate(); err != nil {
+			panic(err)
+		}
 		for _, nftID := range frozen.NftIDs {
 			if err := k.SetFrozen(ctx, frozen.ClassID, nftID, true); err != nil {
 				panic(err)
@@ -24,6 +27,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, whitelisted := range genState.WhitelistedNFTAccounts {
+		if err := whitelisted.Validate(); err != nil {
+			panic(err)
+		}
 		for _, account := range whitelisted.Accounts {
 			if err := k.SetWhitelisting(
 				ctx,
@@ -38,6 +44,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, burnt := range genState.BurntNFTs {
+		if err := burnt.Validate(); err != nil {
+			panic(err)
+		}
 		for _, nftID := range burnt.NftIDs {
 			if err := k.SetBurnt(ctx, burnt.ClassID, nftID); err != nil {
 				panic(err)

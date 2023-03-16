@@ -40,7 +40,7 @@ func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest
 	}, nil
 }
 
-// Class reruns the asset NFT class.
+// Class returns the asset NFT class.
 func (qs QueryService) Class(ctx context.Context, req *types.QueryClassRequest) (*types.QueryClassResponse, error) {
 	nftClass, err := qs.keeper.GetClass(sdk.UnwrapSDKContext(ctx), req.Id)
 	if err != nil {
@@ -52,7 +52,7 @@ func (qs QueryService) Class(ctx context.Context, req *types.QueryClassRequest) 
 	}, nil
 }
 
-// Frozen reruns whether NFT is frozen or not.
+// Frozen returns whether NFT is frozen or not.
 func (qs QueryService) Frozen(ctx context.Context, req *types.QueryFrozenRequest) (*types.QueryFrozenResponse, error) {
 	frozen, err := qs.keeper.IsFrozen(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Id)
 	return &types.QueryFrozenResponse{
