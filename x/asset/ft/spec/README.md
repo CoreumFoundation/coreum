@@ -1,21 +1,22 @@
-# Abstract
+# x/asset/ft
+
 This document specifies `assetft` module, which allows public users of the blockchain to create fungible tokens on Coreum blockchain.
 
 # Concepts
 In this section we will provide the detailed behavior of fungible token creation and management.
 
-Here is the list of functionalities provided by this module, we will examine each of them separately. 
- - Issue
- - Mint
- - Burn
- - Freeze
- - Global Freeze
- - Whitelist
+Here is the list of functionalities provided by this module, we will examine each of them separately.
+- Issue
+- Mint
+- Burn
+- Freeze
+- Global Freeze
+- Whitelist
 
 ## Interaction with bank module, introducing wbank module
-Since Coreum is based on Cosmos SDK, We should mention that Cosmos SDK provides the native bank module which is responsible for tracking fungible token creation and balances of each account. But this module does not allow any public to create a fungible token, mint/burn it, and also does not allow for other features such as freezing and whitelisting. To work around this issue we have wrapped the `bank` module into the `wbank` module. 
+Since Coreum is based on Cosmos SDK, We should mention that Cosmos SDK provides the native bank module which is responsible for tracking fungible token creation and balances of each account. But this module does not allow any public to create a fungible token, mint/burn it, and also does not allow for other features such as freezing and whitelisting. To work around this issue we have wrapped the `bank` module into the `wbank` module.
 
-In `wbank` module we wrap all the send related  methods of the `bank` module and intercept them with `BeforeSend` and `BeforeInputOutput` functions provided by `assetft` module. This allows `assetft` module to inject custom logic into interceptor functions and reject some transaction if whitelisting or freezing criteria are not met, or apply other features such as BurnRate. 
+In `wbank` module we wrap all the send related  methods of the `bank` module and intercept them with `BeforeSend` and `BeforeInputOutput` functions provided by `assetft` module. This allows `assetft` module to inject custom logic into interceptor functions and reject some transaction if whitelisting or freezing criteria are not met, or apply other features such as BurnRate.
 
 This structure allows to reuse the code provided by Cosmos SDK, and also reuse the infrastructure that the community provides (e.g explorers and wallets). But it also leads to the fact that some of the information regarding fungible tokens will exist in the `assetft` module and some in the `bank` module. For example, if you want to query for frozen balances of a fungible token, you need to query the `assetft` module but if you want to get the total supply, you must query the bank module.
 
@@ -40,7 +41,7 @@ When issuing a token, the issuer must decide which features are enabled on the t
 - freezing
 - whitelisting
 
-#### Burn Rate 
+#### Burn Rate
 The issuer has the option to provide `BurnRate` when issuing a new token. This value is a number between 0 and 1, and if it is above zero, in every transfer, some additional tokens will be burnt on top of the transferred value, from the senders address. The tokens to be burnt are calculated by multiplying the TransferAmount by burn rate, and rounding it up to an integer value.
 
 #### Send Commission Rate
@@ -56,7 +57,7 @@ If the minting feature is enabled, then issuer of the token can submit a Mint tr
 The issuer of the token can burn the tokens that they hold. If the burning feature is enabled, then every holder of the token can burn the tokens they hold.
 
 ### Freeze/Unfreeze
-If the freezing feature is enabled on a token, then the issuer of the token can freeze an account up to an amount. The frozen amount can be more than what the user currently holds, an works even if the user holds zero. The user can only send the tokens that they hold in excess of the frozen amount. 
+If the freezing feature is enabled on a token, then the issuer of the token can freeze an account up to an amount. The frozen amount can be more than what the user currently holds, an works even if the user holds zero. The user can only send the tokens that they hold in excess of the frozen amount.
 For example if the issuer freezes 1000 ABC tokens on account Y and this account holds 800, then they cannot move any of their tokens, but if the account receives 400 extra ABC tokens, their total balance will become 1200 and then can only spend 200 of it, since 1000 is Frozen.
 
 Here is the description of behavior of the freezing feature:
@@ -71,7 +72,7 @@ Here is the description of behavior of the freezing feature:
 - If either or both of BurnRate and SendCommissionRate are set above zero, then after transfer has taken place and those rates are applied, the sender's balance must not go below the frozen amount. Otherwise the transaction will fail.
 
 ### Global Freeze/Unfreeze
-If the freezing feature is enabled on a token, then the issuer of the token can globally freeze that token, which means that nobody except the issuer can send that token. In other words, only the issuer will be able to send to other accounts. The issuer can also globally unfreeze and remove this limitation. 
+If the freezing feature is enabled on a token, then the issuer of the token can globally freeze that token, which means that nobody except the issuer can send that token. In other words, only the issuer will be able to send to other accounts. The issuer can also globally unfreeze and remove this limitation.
 
 ### Whitelist
 If the whitelisting feature is enabled, then every account that wishes to receive this token, must first be whitelisted by the issuer, otherwise they will not be able to receive that token. This feature allows the issuer to set whitelisted limit on any account, and then that account will be able to receive tokens only up to the whitelisted limit. If someone tries to send tokens to an account which will result in the whitelisted amount to be exceeded, the transaction will fail.
