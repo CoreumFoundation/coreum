@@ -1,15 +1,8 @@
-<!--
-order: 0
-title: Fee model Overview
-parent:
-  title: "feemodel"
--->
-
 # x/feemodel
 
 ## Abstract
 
-This document specifies the feemodel module. The module is responsible for calculating minimum gas price required by the chain based on the [parameters](feemodel.md#parameters) of fee model.
+This document specifies the feemodel module. The module is responsible for calculating minimum gas price required by the chain based on the [parameters](README.md#parameters) of fee model.
 
 Two charts are presented below, showing how the implemented fee model behaves. Keep in mind that data presented on those charts were generated using `MaxGasPrice` set to `0.15` for better readability, while in reality we use `62.5`.
 

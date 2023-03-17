@@ -1,10 +1,3 @@
-<!--
-order: 0
-title: NFT Overview
-parent:
-  title: "nft"
--->
-
 # x/nft
 
 `x/nft` is an implementation of a Cosmos SDK module, per [ADR 43](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-043-nft-module.md), that allows you to create nft classification, create nft, transfer nft, update nft, and support various queries by integrating the module. It is fully compatible with the ERC721 specification.
