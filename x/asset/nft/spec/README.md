@@ -53,3 +53,4 @@ send the tokens they hold directly to user B. This feature opens up the door for
 
 ### Royalty Rate
 This feature is related to the DEX, and if it is enabled, every time that an NFT is traded on the DEX, a percentage of the the traded value is sent to the issuer as royalty fee.
+
