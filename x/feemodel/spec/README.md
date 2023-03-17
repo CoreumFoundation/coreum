@@ -165,4 +165,3 @@ The value might be interpreted as the number of blocks which are taken to calcul
 `NewAverage = ((LongAverageBlockLength - 1)*PreviousAverage + GasUsedByCurrentBlock) / LongAverageBlockLength`
 
 The value might be interpreted as the number of blocks which are taken to calculate the average. It would be exactly like that in SMA model, in EMA this is an approximation.
-

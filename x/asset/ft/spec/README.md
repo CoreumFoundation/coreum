@@ -82,4 +82,3 @@ Here is the description of behavior of the whitelisting feature:
 - The issuer can set whitelisted amount higher or lower than what the user currently holds.
 - The issuer account is whitelisted to infinity by default and cannot be modified.
 - The user can receive tokens as long as their total balance, after the transaction execution, will not be higher than their whitelisted amount
-

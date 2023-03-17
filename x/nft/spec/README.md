@@ -61,4 +61,3 @@ The message handling should fail if:
 ## Events
 
 The nft module emits proto events defined in [the Protobuf reference](https://github.com/CoreumFoundation/coreum/blob/master/proto/coreum/nft/v1beta1/event.proto).
-

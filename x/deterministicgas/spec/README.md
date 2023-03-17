@@ -137,4 +137,3 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | /cosmwasm.wasm.v1.MsgInstantiateContract2  |
 | /cosmwasm.wasm.v1.MsgMigrateContract       |
 | /cosmwasm.wasm.v1.MsgStoreCode             |
-
