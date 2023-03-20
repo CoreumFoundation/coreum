@@ -228,7 +228,7 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 		return err
 	}
 	if burnt {
-		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q has been burned for the class", settings.ID)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "ID %q has been burnt for the class", settings.ID)
 	}
 
 	params := k.GetParams(ctx)
@@ -327,7 +327,7 @@ func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
 		return err
 	}
 	if burnt {
-		return sdkerrors.Wrapf(types.ErrInvalidInput, "nft with classID:%s and ID:%s has been already burned", classID, nftID)
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "nft with classID:%s and ID:%s has been already burnt", classID, nftID)
 	}
 
 	key, err := types.CreateBurningKey(classID, nftID)
