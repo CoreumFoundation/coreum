@@ -67,10 +67,6 @@ Short moving average of gas consumed by previous blocks
 
 Long moving average of gas consumed by previous blocks
 
-<!--
-order: 2
--->
-
 ## Keeper
 
 The feemodel module provides a keeper providing these methods:
@@ -110,10 +106,6 @@ SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin)
 ```
 
 From all of these methods only `GetMinGasPrice` should be used by other modules. All the other ones serve internal needs of feemodel module.
-
-<!--
-order: 3
--->
 
 ## Parameters
 
