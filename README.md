@@ -16,27 +16,6 @@ Entire process of running local chain is automated by our tooling. The only prer
 - `docker` and `tmux` installed from your favorite package manager
 - `go 1.18` or newer installed and available in your `PATH`
 
-### Build `cored` Binary
-Prerequisites are:
-- `make` installed from your favorite package manager
-- `go 1.20` or newer installed and available in your `PATH`
-
-Steps to build required binaries:
-1. Clone [this repository](https://github.com/CoreumFoundation/coreum) to your `$HOME` directory:
-```
-$ cd $HOME
-$ git clone https://github.com/CoreumFoundation/coreum
-```
-2. Checkout version to install (example):
-```
-cd $HOME/coreum
-git checkout v1.0.0
-```
-3. cd into coreum directory and run `make build`
-```
-make build
-```
-
 ### Build binaries
 
 Steps to build required binaries:
@@ -112,3 +91,28 @@ $ cored status --chain-id=coreum-devnet-1 --node=https://s-0.devnet-1.coreum.dev
 ```
 
 Block explorer for devnet is available at [https://explorer.coreum.com](https://explorer.coreum.com)
+
+<hr>
+<br>
+
+## Only Build `cored` Binary
+Prerequisites are:
+- `make` installed from your favorite package manager
+- `go 1.20` or newer installed and available in your `PATH`
+
+Steps to build required binaries:
+1. Clone [this repository](https://github.com/CoreumFoundation/coreum) to your `$HOME` directory:
+```
+$ cd $HOME
+$ git clone https://github.com/CoreumFoundation/coreum
+```
+2. Checkout version to install (example):
+```
+cd $HOME/coreum
+git checkout v1.0.0
+```
+3. cd into coreum directory and run `make build`
+```
+make build
+```
+Binary will be located at $HOME/coreum/build/`cored`
