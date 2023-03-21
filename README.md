@@ -111,7 +111,7 @@ $ git clone https://github.com/CoreumFoundation/coreum
 cd $HOME/coreum
 git checkout v1.0.0
 ```
-3. cd into coreum directory and run `make build`
+3. run `make build` in coreum directory:
 ```
 make build
 ```
