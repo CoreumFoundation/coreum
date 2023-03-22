@@ -97,7 +97,7 @@ func BurntNFTInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
 			msg        string
-			foundCount int
+			violationCount int
 		)
 
 		_, burntNFTs, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
@@ -108,7 +108,7 @@ func BurntNFTInvariant(k Keeper) sdk.Invariant {
 		for _, burntNFT := range burntNFTs {
 			for _, id := range burntNFT.NftIDs {
 				if k.nftKeeper.HasNFT(ctx, burntNFT.ClassID, id) {
-					foundCount++
+					violationCount++
 					msg += fmt.Sprintf("\t burnt NFT exists in the nft module, classID %s, ID: %s", burntNFT.ClassID, id)
 				}
 			}
@@ -116,7 +116,7 @@ func BurntNFTInvariant(k Keeper) sdk.Invariant {
 
 		return sdk.FormatInvariant(
 			types.ModuleName, BurntNFTInvariantName,
-			fmt.Sprintf("number of found not burnt NFTs %d\n%s", foundCount, msg),
-		), foundCount != 0
+			fmt.Sprintf("number of found not burnt NFTs %d\n%s", violationCount, msg),
+		), violationCount != 0
 	}
 }
