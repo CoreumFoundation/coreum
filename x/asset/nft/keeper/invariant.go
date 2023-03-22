@@ -96,7 +96,7 @@ func OriginalClassExistsInvariant(k Keeper) sdk.Invariant {
 func BurntNFTInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
-			msg        string
+			msg            string
 			violationCount int
 		)
 
