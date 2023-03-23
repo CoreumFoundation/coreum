@@ -13,15 +13,17 @@ import (
 const (
 	OriginalClassExistsInvariantName = "original-class-exists"
 	FreezingInvariantName            = "freezing"
+	BurntNFTInvariantName            = "burnt-nft"
 )
 
 // RegisterInvariants registers the bank module invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(types.ModuleName, OriginalClassExistsInvariantName, OriginalClassExistsInvariant(k))
 	ir.RegisterRoute(types.ModuleName, FreezingInvariantName, FreezingInvariant(k))
+	ir.RegisterRoute(types.ModuleName, BurntNFTInvariantName, BurntNFTInvariant(k))
 }
 
-// FreezingInvariant checks that all frozen NFTs have counterpart on the original Cosmos SDK NFT module.
+// FreezingInvariant checks that all frozen NFTs have counterpart on the original Cosmos SDK nft module.
 func FreezingInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
@@ -62,7 +64,7 @@ func FreezingInvariant(k Keeper) sdk.Invariant {
 	}
 }
 
-// OriginalClassExistsInvariant checks that all the registered Classes have counterpart on the original Cosmos SDK NFT module.
+// OriginalClassExistsInvariant checks that all the registered Classes have counterpart on the original Cosmos SDK nft module.
 func OriginalClassExistsInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		var (
@@ -87,5 +89,34 @@ func OriginalClassExistsInvariant(k Keeper) sdk.Invariant {
 			types.ModuleName, OriginalClassExistsInvariantName,
 			fmt.Sprintf("number of missing original definitions %d\n%s", notFoundCount, msg),
 		), notFoundCount != 0
+	}
+}
+
+// BurntNFTInvariant checks that all burnt NFT registered in assetnft module don't exist in the Cosmos SDK nft module.
+func BurntNFTInvariant(k Keeper) sdk.Invariant {
+	return func(ctx sdk.Context) (string, bool) {
+		var (
+			msg            string
+			violationCount int
+		)
+
+		_, burntNFTs, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+		if err != nil {
+			panic(err)
+		}
+
+		for _, burntNFT := range burntNFTs {
+			for _, id := range burntNFT.NftIDs {
+				if k.nftKeeper.HasNFT(ctx, burntNFT.ClassID, id) {
+					violationCount++
+					msg += fmt.Sprintf("\t burnt NFT exists in the nft module, classID %s, ID: %s", burntNFT.ClassID, id)
+				}
+			}
+		}
+
+		return sdk.FormatInvariant(
+			types.ModuleName, BurntNFTInvariantName,
+			fmt.Sprintf("number of found not burnt NFTs %d\n%s", violationCount, msg),
+		), violationCount != 0
 	}
 }
