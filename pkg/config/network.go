@@ -114,7 +114,7 @@ func init() {
 	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
 
 	devGovConfig := govConfig
-	devGovConfig.ProposalConfig.VotingPeriod = "24h"
+	devGovConfig.ProposalConfig.VotingPeriod = "4h"
 
 	// configs
 	networkConfigs = map[constant.ChainID]NetworkConfig{
