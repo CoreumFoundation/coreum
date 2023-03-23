@@ -11,6 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 func TestOriginalClassExistsInvariant(t *testing.T) {
@@ -84,5 +85,50 @@ func TestFrozenNFTExistsInvariant(t *testing.T) {
 	// non-existing nft (invariant is broken)
 	requireT.NoError(assetNFTKeeper.SetFrozen(ctx, classID, "next-nft", true))
 	_, isBroken = keeper.FreezingInvariant(assetNFTKeeper)(ctx)
+	requireT.True(isBroken)
+}
+
+func TestBurntNFTNotExistsInvariant(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	assetNFTKeeper := testApp.AssetNFTKeeper
+	nftKeeper := testApp.NFTKeeper
+
+	issuer := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	// Issue a class
+	settings1 := types.IssueClassSettings{
+		Issuer:      issuer,
+		Symbol:      "DEF",
+		Description: "DEF Desc",
+	}
+
+	classID, err := assetNFTKeeper.IssueClass(ctx, settings1)
+	requireT.NoError(err)
+
+	mintSettings := types.MintSettings{
+		Sender:  issuer,
+		ClassID: classID,
+		ID:      "nft-id",
+	}
+	err = assetNFTKeeper.Mint(ctx, mintSettings)
+	requireT.NoError(err)
+
+	err = assetNFTKeeper.Burn(ctx, mintSettings.Sender, mintSettings.ClassID, mintSettings.ID)
+	requireT.NoError(err)
+
+	// invariant is valid
+	_, isBroken := keeper.BurntNFTInvariant(assetNFTKeeper)(ctx)
+	requireT.False(isBroken)
+
+	// burnt nft exists in nft module (invariant is broken)
+	requireT.NoError(assetNFTKeeper.SetBurnt(ctx, classID, "next-nft"))
+	requireT.NoError(nftKeeper.Mint(ctx, nft.NFT{
+		ClassId: classID,
+		Id:      "next-nft",
+	}, mintSettings.Sender))
+
+	_, isBroken = keeper.BurntNFTInvariant(assetNFTKeeper)(ctx)
 	requireT.True(isBroken)
 }
