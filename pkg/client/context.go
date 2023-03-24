@@ -119,8 +119,8 @@ func (c Context) GasPriceAdjustment() sdk.Dec {
 }
 
 // WithGasAdjustment returns context with new gas adjustment.
-func (c Context) WithGasAdjustment(adj sdk.Dec) Context {
-	c.config.GasConfig.GasPriceAdjustment = adj
+func (c Context) WithGasAdjustment(adj float64) Context {
+	c.config.GasConfig.GasAdjustment = adj
 	return c
 }
 
