@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -21,6 +20,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/genesis"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -217,17 +217,17 @@ func TestValidateAllGenTxs(t *testing.T) {
 
 func TestGenesisHash(t *testing.T) {
 	tests := []struct {
-		name            string
-		chainID         constant.ChainID
-		genesisFilePath string
+		name        string
+		chainID     constant.ChainID
+		genesisFile []byte
 	}{
 		{
-			chainID:         constant.ChainIDMain,
-			genesisFilePath: "../../genesis/coreum-mainnet-1.json",
+			chainID:     constant.ChainIDMain,
+			genesisFile: genesis.MainnetGenesis,
 		},
 		{
-			chainID:         constant.ChainIDTest,
-			genesisFilePath: "../../genesis/coreum-testnet-1.json",
+			chainID:     constant.ChainIDTest,
+			genesisFile: genesis.TestnetGenesis,
 		},
 	}
 	for _, tt := range tests {
@@ -241,11 +241,8 @@ func TestGenesisHash(t *testing.T) {
 			genesisDoc, err := n.EncodeGenesis()
 			require.NoError(t, err)
 
-			genesisFile, err := os.ReadFile(tt.genesisFilePath)
 			require.NoError(t, err)
-
-			require.NoError(t, err)
-			require.Equal(t, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)), fmt.Sprintf("%x", sha256.Sum256(genesisFile)))
+			require.Equal(t, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)), fmt.Sprintf("%x", sha256.Sum256(tt.genesisFile)))
 		})
 	}
 }
