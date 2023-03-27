@@ -2,55 +2,19 @@ package keeper_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/ibc-go/v4/testing/simapp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/testutil/simapp"
 )
-
-func createSimApp(b *testing.B) *app.App {
-	// TODO(dhil) add and in the coreum simapp options to run using the LevelDB and update that part
-	simapp.FlagEnabledValue = true
-	_, db, dir, logger, _, err := simapp.SetupSimulation("coreum-app-sim", "Simulation")
-	require.NoError(b, err, "simulation setup failed")
-
-	b.Cleanup(func() {
-		db.Close()
-		err = os.RemoveAll(dir)
-		require.NoError(b, err)
-	})
-
-	encoding := config.NewEncodingConfig(app.ModuleBasics)
-	network, err := config.NetworkByChainID(constant.ChainIDDev)
-	if err != nil {
-		panic(err)
-	}
-
-	app.ChosenNetwork = network
-	simApp := app.New(
-		logger,
-		db,
-		nil,
-		true,
-		map[int64]bool{},
-		app.DefaultNodeHome,
-		0,
-		encoding,
-		simapp.EmptyAppOptions{},
-	)
-
-	return simApp
-}
 
 func Benchmark100KDenomBankSend(b *testing.B) {
 	simApp := createSimApp(b)
@@ -142,4 +106,15 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 			assert.EqualValues(b, mintValue, supply.Amount, "denom: %s", supply.Denom)
 		}
 	})
+}
+
+func createSimApp(b *testing.B) *simapp.App {
+	db, err := sdk.NewLevelDB("simulation", b.TempDir())
+	require.NoError(b, err)
+
+	b.Cleanup(func() {
+		db.Close()
+	})
+
+	return simapp.New(simapp.WithCustomDB(db))
 }
