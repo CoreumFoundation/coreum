@@ -226,7 +226,7 @@ func TestGenesisHash(t *testing.T) {
 		},
 		{
 			chainID:     constant.ChainIDTest,
-			genesisHash: "12273f3e0bc97e848cccdc67225a3d7c54c42243d6ec7f01a7bcfc4ede63cacd",
+			genesisHash: "8ece5edef851738ef3d8435a58bfbfe91b163ff199785ae1470da84466f0f1c1",
 		},
 	}
 	for _, tt := range tests {
