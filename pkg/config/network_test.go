@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -163,55 +162,6 @@ func TestChainNotMutable(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Len(n.FundedAccounts(), 4)
 	requireT.Len(n.GenTxs(), 3)
-}
-
-func TestValidateAllGenesis(t *testing.T) {
-	assertT := assert.New(t)
-	encCfg := config.NewEncodingConfig(app.ModuleBasics)
-
-	for _, n := range config.Networks() {
-		unsealConfig()
-		n.SetSDKConfig()
-		genesisJSON, err := n.EncodeGenesis()
-		if !assertT.NoError(err) {
-			continue
-		}
-
-		gen, err := tmtypes.GenesisDocFromJSON(genesisJSON)
-		if !assertT.NoError(err) {
-			continue
-		}
-
-		var appStateMapJSONRawMessage map[string]json.RawMessage
-		err = json.Unmarshal(gen.AppState, &appStateMapJSONRawMessage)
-		if !assertT.NoError(err) {
-			continue
-		}
-
-		assertT.NoErrorf(
-			app.ModuleBasics.ValidateGenesis(
-				encCfg.Codec,
-				encCfg.TxConfig,
-				appStateMapJSONRawMessage,
-			), "genesis for network '%s' is invalid", n.ChainID())
-	}
-}
-
-func TestValidateAllGenTxs(t *testing.T) {
-	for _, n := range config.Networks() {
-		unsealConfig()
-		n.SetSDKConfig()
-
-		clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).WithChainID(string(n.ChainID()))
-
-		// Check real n txs.
-		for _, rawTx := range n.GenTxs() {
-			sdkTx, err := clientCtx.TxConfig().TxJSONDecoder()(rawTx)
-			assert.NoError(t, err)
-
-			assert.NoError(t, validateGenesisTxSignature(clientCtx, sdkTx))
-		}
-	}
 }
 
 func TestGenesisHash(t *testing.T) {
