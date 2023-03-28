@@ -248,7 +248,7 @@ func CmdTxFreeze() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "freeze [account_address] [amount] --from [sender]",
 		Args:  cobra.ExactArgs(2),
-		Short: "Freeze a portion of fungible token on an account",
+		Short: "Freeze a portion or a full amount of fungible token",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Freeze a portion of fungible token.
 
