@@ -20,7 +20,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/genesis"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -219,15 +218,15 @@ func TestGenesisHash(t *testing.T) {
 	tests := []struct {
 		name        string
 		chainID     constant.ChainID
-		genesisFile []byte
+		genesisHash string
 	}{
 		{
 			chainID:     constant.ChainIDMain,
-			genesisFile: genesis.MainnetGenesis,
+			genesisHash: "b7a9fa3445d6233372e72534c37e947d939e32a18f12928b23d407fc2b8ecc4d",
 		},
 		{
 			chainID:     constant.ChainIDTest,
-			genesisFile: genesis.TestnetGenesis,
+			genesisHash: "12273f3e0bc97e848cccdc67225a3d7c54c42243d6ec7f01a7bcfc4ede63cacd",
 		},
 	}
 	for _, tt := range tests {
@@ -242,7 +241,7 @@ func TestGenesisHash(t *testing.T) {
 			require.NoError(t, err)
 
 			require.NoError(t, err)
-			require.Equal(t, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)), fmt.Sprintf("%x", sha256.Sum256(tt.genesisFile)))
+			require.Equal(t, tt.genesisHash, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)))
 		})
 	}
 }
