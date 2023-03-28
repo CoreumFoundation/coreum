@@ -12,14 +12,11 @@ import (
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -232,46 +229,6 @@ func TestGenesisCoreTotalSupply(t *testing.T) {
 			require.Equal(t, tt.wantSupply.Amount.String(), bankGenesisState.Supply.AmountOf(tt.wantSupply.Denom).String())
 		})
 	}
-}
-
-// https://github.com/cosmos/cosmos-sdk/tree/v0.45.5/x/auth/client/cli/validate_sigs.go:L61
-// Original code was significantly refactored & simplified to cover our use-case.
-// Note that this func handles only genesis txs signature validation because of
-// hardcoded account number & sequence to avoid real network requests.
-func validateGenesisTxSignature(clientCtx client.Context, tx sdk.Tx) error {
-	signedTx, ok := tx.(authsigning.SigVerifiableTx)
-	if !ok {
-		return errors.New("failed to convert Tx to SigVerifiableTx")
-	}
-
-	sigs, err := signedTx.GetSignaturesV2()
-	if err != nil {
-		return errors.Wrap(err, "failed to get tx signature")
-	}
-
-	signers := signedTx.GetSigners()
-	signModeHandler := clientCtx.TxConfig().SignModeHandler()
-
-	for i, sig := range sigs {
-		pubKey := sig.PubKey
-
-		if i >= len(signers) || !sdk.AccAddress(pubKey.Address()).Equals(signers[i]) {
-			return errors.New("signature does not match its respective signer")
-		}
-
-		// AccountNumber & Sequence is set to 0 because txs we validate here are genesis txs.
-		signingData := authsigning.SignerData{
-			ChainID:       clientCtx.ChainID(),
-			AccountNumber: 0,
-			Sequence:      0,
-		}
-		err = authsigning.VerifySignature(pubKey, signingData, sig.Data, signModeHandler, signedTx)
-		if err != nil {
-			return errors.Wrap(err, "signature verification failed")
-		}
-	}
-
-	return nil
 }
 
 func unsealConfig() {
