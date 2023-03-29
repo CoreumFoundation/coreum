@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -13,15 +12,11 @@ import (
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -166,68 +161,19 @@ func TestChainNotMutable(t *testing.T) {
 	requireT.Len(n.GenTxs(), 3)
 }
 
-func TestValidateAllGenesis(t *testing.T) {
-	assertT := assert.New(t)
-	encCfg := config.NewEncodingConfig(app.ModuleBasics)
-
-	for _, n := range config.Networks() {
-		unsealConfig()
-		n.SetSDKConfig()
-		genesisJSON, err := n.EncodeGenesis()
-		if !assertT.NoError(err) {
-			continue
-		}
-
-		gen, err := tmtypes.GenesisDocFromJSON(genesisJSON)
-		if !assertT.NoError(err) {
-			continue
-		}
-
-		var appStateMapJSONRawMessage map[string]json.RawMessage
-		err = json.Unmarshal(gen.AppState, &appStateMapJSONRawMessage)
-		if !assertT.NoError(err) {
-			continue
-		}
-
-		assertT.NoErrorf(
-			app.ModuleBasics.ValidateGenesis(
-				encCfg.Codec,
-				encCfg.TxConfig,
-				appStateMapJSONRawMessage,
-			), "genesis for network '%s' is invalid", n.ChainID())
-	}
-}
-
-func TestValidateAllGenTxs(t *testing.T) {
-	for _, n := range config.Networks() {
-		unsealConfig()
-		n.SetSDKConfig()
-
-		clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).WithChainID(string(n.ChainID()))
-
-		// Check real n txs.
-		for _, rawTx := range n.GenTxs() {
-			sdkTx, err := clientCtx.TxConfig().TxJSONDecoder()(rawTx)
-			assert.NoError(t, err)
-
-			assert.NoError(t, validateGenesisTxSignature(clientCtx, sdkTx))
-		}
-	}
-}
-
 func TestGenesisHash(t *testing.T) {
 	tests := []struct {
-		name            string
-		chainID         constant.ChainID
-		genesisFilePath string
+		name        string
+		chainID     constant.ChainID
+		genesisHash string
 	}{
 		{
-			chainID:         constant.ChainIDMain,
-			genesisFilePath: "../../genesis/coreum-mainnet-1.json",
+			chainID:     constant.ChainIDMain,
+			genesisHash: "b7a9fa3445d6233372e72534c37e947d939e32a18f12928b23d407fc2b8ecc4d",
 		},
 		{
-			chainID:         constant.ChainIDTest,
-			genesisFilePath: "../../genesis/coreum-testnet-1.json",
+			chainID:     constant.ChainIDTest,
+			genesisHash: "8ece5edef851738ef3d8435a58bfbfe91b163ff199785ae1470da84466f0f1c1",
 		},
 	}
 	for _, tt := range tests {
@@ -241,11 +187,8 @@ func TestGenesisHash(t *testing.T) {
 			genesisDoc, err := n.EncodeGenesis()
 			require.NoError(t, err)
 
-			genesisFile, err := os.ReadFile(tt.genesisFilePath)
 			require.NoError(t, err)
-
-			require.NoError(t, err)
-			require.Equal(t, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)), fmt.Sprintf("%x", sha256.Sum256(genesisFile)))
+			require.Equal(t, tt.genesisHash, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)))
 		})
 	}
 }
@@ -286,46 +229,6 @@ func TestGenesisCoreTotalSupply(t *testing.T) {
 			require.Equal(t, tt.wantSupply.Amount.String(), bankGenesisState.Supply.AmountOf(tt.wantSupply.Denom).String())
 		})
 	}
-}
-
-// https://github.com/cosmos/cosmos-sdk/tree/v0.45.5/x/auth/client/cli/validate_sigs.go:L61
-// Original code was significantly refactored & simplified to cover our use-case.
-// Note that this func handles only genesis txs signature validation because of
-// hardcoded account number & sequence to avoid real network requests.
-func validateGenesisTxSignature(clientCtx client.Context, tx sdk.Tx) error {
-	signedTx, ok := tx.(authsigning.SigVerifiableTx)
-	if !ok {
-		return errors.New("failed to convert Tx to SigVerifiableTx")
-	}
-
-	sigs, err := signedTx.GetSignaturesV2()
-	if err != nil {
-		return errors.Wrap(err, "failed to get tx signature")
-	}
-
-	signers := signedTx.GetSigners()
-	signModeHandler := clientCtx.TxConfig().SignModeHandler()
-
-	for i, sig := range sigs {
-		pubKey := sig.PubKey
-
-		if i >= len(signers) || !sdk.AccAddress(pubKey.Address()).Equals(signers[i]) {
-			return errors.New("signature does not match its respective signer")
-		}
-
-		// AccountNumber & Sequence is set to 0 because txs we validate here are genesis txs.
-		signingData := authsigning.SignerData{
-			ChainID:       clientCtx.ChainID(),
-			AccountNumber: 0,
-			Sequence:      0,
-		}
-		err = authsigning.VerifySignature(pubKey, signingData, sig.Data, signModeHandler, signedTx)
-		if err != nil {
-			return errors.Wrap(err, "signature verification failed")
-		}
-	}
-
-	return nil
 }
 
 func unsealConfig() {

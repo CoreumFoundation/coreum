@@ -30,14 +30,6 @@
         }
       }
     },
-    "assetnft": {
-      "params": {
-        "mint_fee": {
-          "denom": "utestcore",
-          "amount": "0"
-        }
-      }
-    },
     "auth": {
       "params": {
         "max_memo_characters": "256",
@@ -219,7 +211,6 @@
       "index": "1",
       "owners": []
     },
-    "cnft": {},
     "crisis": {
       "constant_fee": {
         "denom": "utestcore",

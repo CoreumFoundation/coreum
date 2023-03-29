@@ -26,6 +26,7 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/CoreumFoundation/coreum/genesis"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
@@ -33,12 +34,6 @@ import (
 var (
 	//go:embed genesis/genesis.tmpl.json
 	genesisTemplate string
-
-	//go:embed genesis/gentx/coreum-mainnet-1
-	mainGenTxsFS embed.FS
-
-	//go:embed genesis/gentx/coreum-testnet-1
-	testGenTxsFS embed.FS
 
 	//go:embed genesis/gentx/coreum-devnet-1
 	devGenTxsFS embed.FS
@@ -81,33 +76,6 @@ func init() {
 		}
 	)
 
-	// mainnet vars
-
-	// CORE allocation:
-	// 500M = (5 * 25_000 + 700_000 + 99_175_000) + 4 * 100_000_000
-	// In total 11 wallets will be created in genesis:
-	// 5 * 25_000 is a balance of each of 4 wallets used to create genesis validators & 1 wallet to join network as validator after launch.
-	// 700_000 is a balance of bridge wallet.
-	// 99_175_000 is a balance of foundation-0 wallet (99_175_000 = 100_000_000 - (5 * 25_000 + 700_000)).
-	// 4 * 100_000_000 is a balance of each of remaining 4 foundation wallets.
-	mainGenesisValidatorCreatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(25_000_000_000)))
-
-	mainBridgeBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(700_000_000_000)))
-
-	mainFoundationZeroInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(99_175_000_000_000)))
-	mainFoundationOtherInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomMain, sdk.NewInt(100_000_000_000_000)))
-
-	// testnet vars
-
-	// 500M = 4 * (124_950_000 + 50_000)
-	// where 124_950_000 is a balance of each of 4 initial foundation wallets.
-	// where 50_000 is balances of each of 4 initial validator stakers.
-	testFoundationInitialBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(124_950_000_000_000)))
-	testStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomTest, sdk.NewInt(50_000_000_000)))
-
-	testGovConfig := govConfig
-	testGovConfig.ProposalConfig.VotingPeriod = "24h"
-
 	// devnet vars
 
 	// 10m delegated and 1m extra to the txs
@@ -131,69 +99,6 @@ func init() {
 					"cba16f4f32707d70a2a2d10861fac897f1e9aaa1@34.72.150.107:26656",  // seed-nickle
 				},
 			},
-			GovConfig:          govConfig,
-			StakingConfig:      stakingConfig,
-			CustomParamsConfig: customParamsConfig,
-			AssetFTConfig:      assetFTConfig,
-			AssetNFTConfig:     assetNFTConfig,
-			FundedAccounts: []FundedAccount{
-				// coreum-krypton genesis-validators-creator: 25k
-				{
-					Address:  "core1d5wqdp322zn5jyn5mszrrstg2xuq35xyrhsc9f",
-					Balances: mainGenesisValidatorCreatorBalance,
-				},
-				// coreum-neon genesis-validators-creator: 25k
-				{
-					Address:  "core15cpygjlf7pgfnqlc8uz9eryspwd0pwk3xrup8h",
-					Balances: mainGenesisValidatorCreatorBalance,
-				},
-				// coreum-radon genesis-validators-creator: 25k
-				{
-					Address:  "core1zmhfe2hh4qmg54gpsyw8n35gayx3a85mqlfzgk",
-					Balances: mainGenesisValidatorCreatorBalance,
-				},
-				// coreum-xenon genesis-validators-creator: 25k
-				{
-					Address:  "core1hsmhywnkehyyv8muzswhdumzztae4hq4k3dj8p",
-					Balances: mainGenesisValidatorCreatorBalance,
-				},
-				// coreum-argon validators-creator: 25k
-				{
-					Address:  "core1nc84mnnqshaln65vsykr63m605sc4kvdwnkgg9",
-					Balances: mainGenesisValidatorCreatorBalance,
-				},
-				// bridge: 700k
-				{
-					Address:  "core1ssh2d2ft6hzrgn9z6k7mmsamy2hfpxl9y8re5x",
-					Balances: mainBridgeBalance,
-				},
-				// coreum-foundation-0: 99_175_000
-				{
-					Address:  "core13xmyzhvl02xpz0pu8v9mqalsvpyy7wvs9q5f90",
-					Balances: mainFoundationZeroInitialBalance,
-				},
-				// coreum-foundation-1: 100M
-				{
-					Address:  "core14g6wpzdx8g9txvxxu3fl7fplal9y5ztx34ac5p",
-					Balances: mainFoundationOtherInitialBalance,
-				},
-				// coreum-foundation-2: 100M
-				{
-					Address:  "core1zn2ns3ls68jlsv5dgkuz0rxsxt5fhk7n9cfl23",
-					Balances: mainFoundationOtherInitialBalance,
-				},
-				// coreum-foundation-3: 100M
-				{
-					Address:  "core1p4gsfkmqm0uxua65phteqwnmu39fwjvtspfkcj",
-					Balances: mainFoundationOtherInitialBalance,
-				},
-				// coreum-foundation-4: 100M
-				{
-					Address:  "core1rddqzjzy4f5frxkhds3sux0m03encqtla3ayu9",
-					Balances: mainFoundationOtherInitialBalance,
-				},
-			},
-			GenTxs: readGenTxs(mainGenTxsFS),
 		},
 		constant.ChainIDTest: {
 			ChainID:              constant.ChainIDTest,
@@ -208,58 +113,6 @@ func init() {
 					"53f2367d8f8291af8e3b6ca60efded0675ff6314@34.29.15.170:26656",   // seed-antares
 				},
 			},
-			GovConfig:          testGovConfig,
-			StakingConfig:      stakingConfig,
-			CustomParamsConfig: customParamsConfig,
-			AssetFTConfig:      assetFTConfig,
-			AssetNFTConfig:     assetNFTConfig,
-			FundedAccounts: []FundedAccount{
-				// Accounts used to create initial validators to bootstrap chain.
-				// validator-1-creator
-				{
-					Address:  "testcore1wf67lcjnp7mhr3ntjct7fdsex3e4h6jaxxp5aa",
-					Balances: testStakerValidatorBalance,
-				},
-				// validator-2-creator
-				{
-					Address:  "testcore1snrwnty4h4rrnghd4s9m2xklrk7qu42haygce6",
-					Balances: testStakerValidatorBalance,
-				},
-				// validator-3-creator
-				{
-					Address:  "testcore14x4ux30sadvg90k2xd8fte5vnhhh0uvkxrrn9j",
-					Balances: testStakerValidatorBalance,
-				},
-				// validator-4-creator
-				{
-					Address:  "testcore1adst6w4e79tddzhcgaru2l2gms8jjep6a4caa7",
-					Balances: testStakerValidatorBalance,
-				},
-
-				// Accounts storing remaining total supply of the chain. Created as single signature accounts initially and will be
-				// transferred to management after chain start.
-				// foundation-initial-1
-				{
-					Address:  "testcore1efkcsd94u0vrx8rgq9cktjgq7fgwrjap3qu289",
-					Balances: testFoundationInitialBalance,
-				},
-				// foundation-initial-2
-				{
-					Address:  "testcore18nfwg708vu74e6mrcu6yjdzcdq5608rmvavt05",
-					Balances: testFoundationInitialBalance,
-				},
-				// foundation-initial-3
-				{
-					Address:  "testcore1qrqhjrc2jl36l4vuvhvjlt6kg6d0xqazzlxek7",
-					Balances: testFoundationInitialBalance,
-				},
-				// foundation-initial-4
-				{
-					Address:  "testcore12guwnjehw06c9r40knd0js5dn6g924p7xxg48h",
-					Balances: testFoundationInitialBalance,
-				},
-			},
-			GenTxs: readGenTxs(testGenTxsFS),
 		},
 		constant.ChainIDDev: {
 			ChainID:              constant.ChainIDDev,
@@ -521,66 +374,73 @@ func applyFundedAccountToGenesis(
 
 // GenesisDoc returns the genesis doc of the network.
 func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
-	codec := NewEncodingConfig(module.NewBasicManager(
-		auth.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
-		genutil.AppModuleBasic{},
-		bank.AppModuleBasic{},
-	)).Codec
+	switch n.chainID {
+	case constant.ChainIDMain:
+		return tmtypes.GenesisDocFromJSON(genesis.MainnetGenesis)
+	case constant.ChainIDTest:
+		return tmtypes.GenesisDocFromJSON(genesis.TestnetGenesis)
+	default:
+		codec := NewEncodingConfig(module.NewBasicManager(
+			auth.AppModuleBasic{},
+			authzmodule.AppModuleBasic{},
+			genutil.AppModuleBasic{},
+			bank.AppModuleBasic{},
+		)).Codec
 
-	genesisJSON, err := genesisByTemplate(n)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able get genesis")
+		genesisJSON, err := genesisByTemplate(n)
+		if err != nil {
+			return nil, errors.Wrap(err, "not able get genesis")
+		}
+
+		genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
+		if err != nil {
+			return nil, errors.Wrap(err, "not able to parse genesis json bytes")
+		}
+		var appState map[string]json.RawMessage
+
+		if err = json.Unmarshal(genesisDoc.AppState, &appState); err != nil {
+			return nil, errors.Wrap(err, "not able to parse genesis app state")
+		}
+
+		authState := authcosmostypes.GetGenesisStateFromAppState(codec, appState)
+		accountState, err := authcosmostypes.UnpackAccounts(authState.Accounts)
+		if err != nil {
+			return nil, errors.Wrap(err, "not able to unpack auth accounts")
+		}
+
+		genutilState := genutiltypes.GetGenesisStateFromAppState(codec, appState)
+		bankState := banktypes.GetGenesisStateFromAppState(codec, appState)
+
+		n.mu.Lock()
+		defer n.mu.Unlock()
+
+		if err := validateNoDuplicateFundedAccounts(n.fundedAccounts); err != nil {
+			return nil, err
+		}
+
+		for _, fundedAcc := range n.fundedAccounts {
+			accountState = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
+		}
+
+		genutilState.GenTxs = append(genutilState.GenTxs, n.genTxs...)
+
+		genutiltypes.SetGenesisStateInAppState(codec, appState, genutilState)
+		authState.Accounts, err = authcosmostypes.PackAccounts(authcosmostypes.SanitizeGenesisAccounts(accountState))
+		if err != nil {
+			return nil, errors.Wrap(err, "not able to sanitize and pack accounts")
+		}
+		appState[authcosmostypes.ModuleName] = codec.MustMarshalJSON(&authState)
+
+		bankState.Balances = banktypes.SanitizeGenesisBalances(bankState.Balances)
+		appState[banktypes.ModuleName] = codec.MustMarshalJSON(bankState)
+
+		genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
+		if err != nil {
+			return nil, err
+		}
+
+		return genesisDoc, nil
 	}
-
-	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to parse genesis json bytes")
-	}
-	var appState map[string]json.RawMessage
-
-	if err = json.Unmarshal(genesisDoc.AppState, &appState); err != nil {
-		return nil, errors.Wrap(err, "not able to parse genesis app state")
-	}
-
-	authState := authcosmostypes.GetGenesisStateFromAppState(codec, appState)
-	accountState, err := authcosmostypes.UnpackAccounts(authState.Accounts)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to unpack auth accounts")
-	}
-
-	genutilState := genutiltypes.GetGenesisStateFromAppState(codec, appState)
-	bankState := banktypes.GetGenesisStateFromAppState(codec, appState)
-
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	if err := validateNoDuplicateFundedAccounts(n.fundedAccounts); err != nil {
-		return nil, err
-	}
-
-	for _, fundedAcc := range n.fundedAccounts {
-		accountState = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
-	}
-
-	genutilState.GenTxs = append(genutilState.GenTxs, n.genTxs...)
-
-	genutiltypes.SetGenesisStateInAppState(codec, appState, genutilState)
-	authState.Accounts, err = authcosmostypes.PackAccounts(authcosmostypes.SanitizeGenesisAccounts(accountState))
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to sanitize and pack accounts")
-	}
-	appState[authcosmostypes.ModuleName] = codec.MustMarshalJSON(&authState)
-
-	bankState.Balances = banktypes.SanitizeGenesisBalances(bankState.Balances)
-	appState[banktypes.ModuleName] = codec.MustMarshalJSON(bankState)
-
-	genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-
-	return genesisDoc, nil
 }
 
 // EncodeGenesis returns the json encoded representation of the genesis file.
