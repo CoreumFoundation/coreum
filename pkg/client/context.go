@@ -118,6 +118,18 @@ func (c Context) GasPriceAdjustment() sdk.Dec {
 	return c.config.GasConfig.GasPriceAdjustment
 }
 
+// WithGasAdjustment returns context with new gas adjustment.
+func (c Context) WithGasAdjustment(adj float64) Context {
+	c.config.GasConfig.GasAdjustment = adj
+	return c
+}
+
+// WithGasPriceAdjustment returns context with new gas price adjustment.
+func (c Context) WithGasPriceAdjustment(adj sdk.Dec) Context {
+	c.config.GasConfig.GasPriceAdjustment = adj
+	return c
+}
+
 // WithRPCClient returns a copy of the context with an updated RPC client
 // instance.
 func (c Context) WithRPCClient(client rpcclient.Client) Context {
