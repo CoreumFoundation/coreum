@@ -42,15 +42,34 @@ var defaultConsensusParams = &abci.ConsensusParams{
 	},
 }
 
+// Option represents simapp customisations.
+type Option func() tmdb.DB
+
+// WithCustomDB returns the simapp Option to run with different DB.
+func WithCustomDB(db tmdb.DB) Option {
+	return func() tmdb.DB {
+		return db
+	}
+}
+
 // App is a simulation app wrapper.
 type App struct {
 	app.App
 }
 
 // New creates application instance with in-memory database and disabled logging.
-func New() *App {
-	db := tmdb.NewMemDB()
+func New(options ...Option) *App {
+	var db tmdb.DB
+
+	db = tmdb.NewMemDB()
 	logger := log.NewNopLogger()
+
+	for _, option := range options {
+		customDB := option()
+		if customDB != nil {
+			db = customDB
+		}
+	}
 
 	network, err := config.NetworkByChainID(constant.ChainIDDev)
 	if err != nil {
@@ -73,7 +92,9 @@ func New() *App {
 		AppStateBytes:   stateBytes,
 	})
 
-	return &App{*coreApp}
+	simApp := &App{*coreApp}
+
+	return simApp
 }
 
 // BeginNextBlock begins new SimApp block and returns the ctx of the new block.
