@@ -54,9 +54,9 @@ You can use the `MsgSend` message to transfer the ownership of nft. This is a fu
 
 The message handling should fail if:
 
-* provided `ClassID` is not exist.
-* provided `Id` is not exist.
-* provided `Sender` is not the owner of nft.
+* provided `ClassID` does not exist.
+* provided `Id` does not exist.
+* provided `Sender` does not the owner of nft.
 
 ## Events
 
