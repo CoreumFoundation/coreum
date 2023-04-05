@@ -112,7 +112,7 @@ func (f Faucet) FundAccounts(ctx context.Context, accountsToFund ...FundedAccoun
 	}()
 
 	// All requests are collected, let's create messages and broadcast tx
-	return f.broadcastTx(ctx, f.collectMessages(requests))
+	return f.broadcastTx(ctx, f.prepareMultiSendMessage(requests))
 }
 
 func (f Faucet) collectRequests(ctx context.Context, leaderReq fundingRequest) ([]fundingRequest, error) {
@@ -144,32 +144,36 @@ func (f Faucet) collectRequests(ctx context.Context, leaderReq fundingRequest) (
 	return requests, nil
 }
 
-func (f Faucet) collectMessages(requests []fundingRequest) []sdk.Msg {
-	var messages []sdk.Msg
-	for _, req := range requests {
-		for _, acc := range req.AccountsToFund {
-			messages = append(messages, &banktypes.MsgSend{
-				FromAddress: f.chainCtx.ClientContext.FromAddress().String(),
-				ToAddress:   acc.Address.String(),
-				Amount:      sdk.NewCoins(acc.Amount),
+func (f Faucet) prepareMultiSendMessage(requests []fundingRequest) *banktypes.MsgMultiSend {
+	msg := &banktypes.MsgMultiSend{}
+	sum := sdk.NewCoins()
+	for _, r := range requests {
+		for _, a := range r.AccountsToFund {
+			sum = sum.Add(a.Amount)
+			msg.Outputs = append(msg.Outputs, banktypes.Output{
+				Address: a.Address.String(),
+				Coins:   sdk.NewCoins(a.Amount),
 			})
 		}
 	}
-	return messages
+	msg.Inputs = []banktypes.Input{{
+		Address: f.chainCtx.ClientContext.FromAddress().String(),
+		Coins:   sum,
+	}}
+
+	return msg
 }
 
-func (f Faucet) broadcastTx(ctx context.Context, msgs []sdk.Msg) error {
+func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) error {
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for tests, it might take a while...")
-	// FIXME (wojtek): use estimation once it is available in `tx` package
-	gasLimit := uint64(len(msgs)) * f.chainCtx.GasLimitByMsgs(&banktypes.MsgSend{})
 
 	// Transaction is broadcasted and awaited
 	_, err := client.BroadcastTx(
 		ctx,
 		f.chainCtx.ClientContext,
-		f.chainCtx.TxFactory().WithGas(gasLimit),
-		msgs...,
+		f.chainCtx.TxFactory().WithSimulateAndExecute(true),
+		msg,
 	)
 	if err != nil {
 		return err
