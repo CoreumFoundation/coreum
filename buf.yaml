@@ -7,5 +7,3 @@ build:
 breaking:
   use:
     - FILE
-  ignore:
-    - coreum/asset/nft
