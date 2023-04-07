@@ -24,6 +24,7 @@ import (
 
 //go:generate go run spec/generate.go spec/README.md
 
+// These constants define gas for messages which have custom calculation logic.
 const (
 	BankSendPerCoinGas            = 24000
 	BankMultiSendPerOperationsGas = 11000
@@ -173,8 +174,13 @@ func (cfg Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
 	return 0, false
 }
 
+// GasByMessageMap returns copy mapping of message types and functions to calculate gas for specific type.
 func (cfg Config) GasByMessageMap() map[string]gasByMsgFunc {
-	return cfg.gasByMsg
+	newGasByMsg := make(map[string]gasByMsgFunc, len(cfg.gasByMsg))
+	for k, v := range cfg.gasByMsg {
+		newGasByMsg[k] = v
+	}
+	return newGasByMsg
 }
 
 // MsgType returns TypeURL of a msg in cosmos SDK style.

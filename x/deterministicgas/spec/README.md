@@ -6,7 +6,7 @@
 ## Intro
 
 Coreum is using a deterministic gas model for its transactions. Meaning that given a transaction type (e.g
-`/coreum.asset.ft.v1.MsgMint`) one can know how much gas will be used beforehand, and this amount is fixed if some
+`/coreum.asset.ft.v1.MsgIssueGasPrice`) one can know how much gas will be used beforehand, and this amount is fixed if some
 preconditions are met. Of course this deterministic gas does not apply to the type of transactions that have a
 complicated, nondeterministic execution path (e.g `/cosmwasm.wasm.v1.MsgExecuteContract`). We provide tables with all
 [deterministic gas](#deterministic-messages) & [nondeterministic gas](#nondeterministic-messages) for all our types.
@@ -55,11 +55,11 @@ TotalGas = 50000 +  1 * 24000 + 1 * 1000 + max(0, 1000-2048) * 10
 
 #### Example 2
 Let's say we have a transaction with 2 messages of type
-`/coreum.asset.ft.v1.MsgMint` inside, also there are 2
+`/coreum.asset.ft.v1.MsgIssueGasPrice` inside, also there are 2
 signatures and the tx size is 2050 bytes, total will be:
 
 `
-TotalGas = 50000 + 2 * 11000 + 2 * 1000 + max(0, 2050-2048) * 10
+TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 `
 
 ## Gas Tables
@@ -148,3 +148,5 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/cosmwasm.wasm.v1.MsgStoreCode                              ` |
 
 
+[//]: # (GENERATED DOC.)
+[//]: # (DO NOT EDIT MANUALLY!!!)

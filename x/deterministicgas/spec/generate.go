@@ -4,12 +4,14 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/x/deterministicgas"
-	"github.com/samber/lo"
 	"os"
 	"sort"
 	"text/template"
+
+	"github.com/samber/lo"
+
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
 
 var (
@@ -68,7 +70,7 @@ func main() {
 	}
 
 	readmeBuf := new(bytes.Buffer)
-	msgMintGasPrice, _ := cfg.GasRequiredByMessage(&assetfttypes.MsgMint{})
+	msgIssueGasPrice, _ := cfg.GasRequiredByMessage(&assetfttypes.MsgIssue{})
 	err := template.Must(template.New("README.md").Parse(readmeTmpl)).Execute(readmeBuf, struct {
 		GeneratorComment              string
 		SigVerifyCost                 uint64
@@ -76,12 +78,12 @@ func main() {
 		FixedGas                      uint64
 		FreeBytes                     uint64
 		FreeSignatures                uint64
-		DeterministicMessagesTable    string
-		NonDeterministicMessagesTable string
-		MsgMintGasPrice               uint64
+		MsgIssueGasPrice              uint64
 		BankSendPerCoinGas            uint64
 		BankMultiSendPerOperationsGas uint64
 		AuthzExecOverhead             uint64
+		DeterministicMessagesTable    string
+		NonDeterministicMessagesTable string
 	}{
 		GeneratorComment:              generatorComment,
 		FixedGas:                      cfg.FixedGas,
@@ -89,7 +91,7 @@ func main() {
 		TxSizeCostPerByte:             10,
 		FreeBytes:                     cfg.FreeBytes,
 		FreeSignatures:                cfg.FreeSignatures,
-		MsgMintGasPrice:               msgMintGasPrice,
+		MsgIssueGasPrice:              msgIssueGasPrice,
 		BankSendPerCoinGas:            deterministicgas.BankSendPerCoinGas,
 		BankMultiSendPerOperationsGas: deterministicgas.BankMultiSendPerOperationsGas,
 		AuthzExecOverhead:             deterministicgas.AuthzExecOverhead,

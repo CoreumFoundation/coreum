@@ -158,9 +158,9 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 		address = "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6"
 
 		assetFTIssue             = 70000
-		bankSendPerEntryGas      = 24000
-		bankMultiSendPerEntryGas = 11000
-		authzMsgExecOverhead     = 2000
+		bankSendPerEntryGas      = deterministicgas.BankSendPerCoinGas
+		bankMultiSendPerEntryGas = deterministicgas.BankMultiSendPerOperationsGas
+		authzMsgExecOverhead     = deterministicgas.AuthzExecOverhead
 	)
 
 	cfg := deterministicgas.DefaultConfig()

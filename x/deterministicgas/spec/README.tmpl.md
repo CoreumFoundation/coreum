@@ -5,7 +5,7 @@
 ## Intro
 
 Coreum is using a deterministic gas model for its transactions. Meaning that given a transaction type (e.g
-`/coreum.asset.ft.v1.MsgMint`) one can know how much gas will be used beforehand, and this amount is fixed if some
+`/coreum.asset.ft.v1.MsgIssueGasPrice`) one can know how much gas will be used beforehand, and this amount is fixed if some
 preconditions are met. Of course this deterministic gas does not apply to the type of transactions that have a
 complicated, nondeterministic execution path (e.g `/cosmwasm.wasm.v1.MsgExecuteContract`). We provide tables with all
 [deterministic gas](#deterministic-messages) & [nondeterministic gas](#nondeterministic-messages) for all our types.
@@ -54,11 +54,11 @@ TotalGas = {{ .FixedGas }} +  1 * {{ .BankSendPerCoinGas }} + 1 * {{ .SigVerifyC
 
 #### Example 2
 Let's say we have a transaction with 2 messages of type
-`/coreum.asset.ft.v1.MsgMint` inside, also there are 2
+`/coreum.asset.ft.v1.MsgIssueGasPrice` inside, also there are 2
 signatures and the tx size is 2050 bytes, total will be:
 
 `
-TotalGas = {{ .FixedGas }} + 2 * {{ .MsgMintGasPrice }} + 2 * {{ .SigVerifyCost }} + max(0, 2050-{{ .FreeBytes }}) * {{ .TxSizeCostPerByte }}
+TotalGas = {{ .FixedGas }} + 2 * {{ .MsgIssueGasPrice }} + 2 * {{ .SigVerifyCost }} + max(0, 2050-{{ .FreeBytes }}) * {{ .TxSizeCostPerByte }}
 `
 
 ## Gas Tables
@@ -98,3 +98,4 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 |--------------|
 {{ .NonDeterministicMessagesTable }}
 
+{{ .GeneratorComment }}
