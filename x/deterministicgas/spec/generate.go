@@ -100,7 +100,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	if err := os.WriteFile("x/deterministicgas/spec/README.md", readmeBuf.Bytes(), 0644); err != nil {
+
+	if err := os.WriteFile(os.Args[1], readmeBuf.Bytes(), 0644); err != nil {
 		panic(err)
 	}
 }

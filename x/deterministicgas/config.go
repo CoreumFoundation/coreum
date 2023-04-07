@@ -22,7 +22,7 @@ import (
 	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
-//go:generate go run ./spec/generate.go
+//go:generate go run spec/generate.go spec/README.md
 
 const (
 	BankSendPerCoinGas            = 24000
