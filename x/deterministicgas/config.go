@@ -22,6 +22,14 @@ import (
 	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
+//go:generate go run ./spec/generate.go
+
+const (
+	BankSendPerCoinGas            = 24000
+	BankMultiSendPerOperationsGas = 11000
+	AuthzExecOverhead             = 2000
+)
+
 type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
 
 // Config specifies gas required by all transaction types
@@ -30,8 +38,8 @@ type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
 type Config struct {
 	FixedGas uint64
 
-	freeBytes      uint64
-	freeSignatures uint64
+	FreeBytes      uint64
+	FreeSignatures uint64
 
 	gasByMsg map[string]gasByMsgFunc
 }
@@ -42,8 +50,8 @@ type Config struct {
 func DefaultConfig() Config {
 	cfg := Config{
 		FixedGas:       50000,
-		freeBytes:      2048,
-		freeSignatures: 1,
+		FreeBytes:      2048,
+		FreeSignatures: 1,
 	}
 
 	cfg.gasByMsg = map[string]gasByMsgFunc{
@@ -67,13 +75,13 @@ func DefaultConfig() Config {
 		MsgType(&assetnfttypes.MsgRemoveFromWhitelist{}): constantGasFunc(3500),
 
 		// authz
-		MsgType(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(2000),
+		MsgType(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
 		MsgType(&authz.MsgGrant{}):  constantGasFunc(7000),
 		MsgType(&authz.MsgRevoke{}): constantGasFunc(2500),
 
 		// bank
-		MsgType(&banktypes.MsgSend{}):      bankSendMsgGasFunc(24000),
-		MsgType(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(11000),
+		MsgType(&banktypes.MsgSend{}):      bankSendMsgGasFunc(BankSendPerCoinGas),
+		MsgType(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(BankMultiSendPerOperationsGas),
 
 		// distribution
 		MsgType(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(15000),
@@ -147,7 +155,7 @@ func DefaultConfig() Config {
 // TxBaseGas is the free gas we give to every transaction to cover costs of
 // tx size and signature verification. TxBaseGas is covered by FixedGas.
 func (cfg Config) TxBaseGas(params authtypes.Params) uint64 {
-	return cfg.freeBytes*params.TxSizeCostPerByte + cfg.freeSignatures*params.SigVerifyCostSecp256k1
+	return cfg.FreeBytes*params.TxSizeCostPerByte + cfg.FreeSignatures*params.SigVerifyCostSecp256k1
 }
 
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
@@ -163,6 +171,10 @@ func (cfg Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
 	// identifying if message is known and report unknown messages to monitoring.
 	reportUnknownMessageMetric(MsgType(msg))
 	return 0, false
+}
+
+func (cfg Config) GasByMessageMap() map[string]gasByMsgFunc {
+	return cfg.gasByMsg
 }
 
 // MsgType returns TypeURL of a msg in cosmos SDK style.
