@@ -1,5 +1,5 @@
-[//]: # (Doc generate at: 2023-04-07 18:57:17)
-[//]: # (DO NOT EDIT MANUALLY)
+[//]: # (GENERATED DOC.)
+[//]: # (DO NOT EDIT MANUALLY!!!)
 
 # x/deterministicgas
 

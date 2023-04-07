@@ -10,7 +10,6 @@ import (
 	"os"
 	"sort"
 	"text/template"
-	"time"
 )
 
 var (
@@ -31,8 +30,8 @@ func main() {
 	}
 	var nonDetermMsgs []string
 
-	generatorComment := fmt.Sprintf(`[//]: # (Doc generate at: %v)
-[//]: # (DO NOT EDIT MANUALLY)`, time.Now().Format(time.DateTime))
+	generatorComment := `[//]: # (GENERATED DOC.)
+[//]: # (DO NOT EDIT MANUALLY!!!)`
 
 	cfg := deterministicgas.DefaultConfig()
 	for msgType, gasFunc := range cfg.GasByMessageMap() {
