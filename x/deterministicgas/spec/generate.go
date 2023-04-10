@@ -32,9 +32,6 @@ func main() {
 	}
 	var nonDetermMsgs []string
 
-	generatorComment := `[//]: # (GENERATED DOC.)
-[//]: # (DO NOT EDIT MANUALLY!!!)`
-
 	cfg := deterministicgas.DefaultConfig()
 	for msgType, gasFunc := range cfg.GasByMessageMap() {
 		if lo.Contains(specialCases, msgType) {
@@ -68,6 +65,9 @@ func main() {
 	for _, msgType := range nonDetermMsgs {
 		nonDetermMsgsTableFormatted += fmt.Sprintf("| `%-60v` |\n", msgType)
 	}
+
+	generatorComment := `[//]: # (GENERATED DOC.)
+[//]: # (DO NOT EDIT MANUALLY!!!)`
 
 	readmeBuf := new(bytes.Buffer)
 	msgIssueGasPrice, _ := cfg.GasRequiredByMessage(&assetfttypes.MsgIssue{})

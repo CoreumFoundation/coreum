@@ -4,7 +4,7 @@
 
 ## Intro
 
-Coreum is using a deterministic gas model for its transactions. Meaning that given a transaction type (e.g
+Coreum uses a deterministic gas model for its transactions. Meaning that given a transaction type (e.g
 `/coreum.asset.ft.v1.MsgIssueGasPrice`) one can know how much gas will be used beforehand, and this amount is fixed if some
 preconditions are met. Of course this deterministic gas does not apply to the type of transactions that have a
 complicated, nondeterministic execution path (e.g `/cosmwasm.wasm.v1.MsgExecuteContract`). We provide tables with all
