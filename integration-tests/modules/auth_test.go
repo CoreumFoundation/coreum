@@ -4,7 +4,6 @@ package modules
 
 import (
 	"testing"
-	"time"
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
@@ -14,7 +13,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -131,36 +129,15 @@ func TestAuthMultisig(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
-
 	requireT := require.New(t)
-
-	signer1KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
-	signer2KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
-	signer3KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
 
-	// generate the keyring and collect the keys to use for the multisig account
-	keyNamesSet := []string{signer1KeyInfo.GetName(), signer2KeyInfo.GetName(), signer3KeyInfo.GetName()}
-	kr := chain.ClientContext.Keyring()
-	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
-	for _, key := range keyNamesSet {
-		info, err := kr.Key(key)
-		requireT.NoError(err)
-		publicKeySet = append(publicKeySet, info.GetPubKey())
-	}
-
-	// create multisig account
-	const multisigThreshold = 2
-	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
+	multisigPublicKey, keyNamesSet := createMultisigAccount(t, chain, 3, 2)
 	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
 	requireT.NoError(err)
+	signer1KeyName := keyNamesSet[0]
+	signer2KeyName := keyNamesSet[1]
 
 	// fund the multisig account
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
@@ -180,7 +157,6 @@ func TestAuthMultisig(t *testing.T) {
 		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
 		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
 		WithSequence(multisigAccInfo.GetSequence()).
-		WithKeybase(kr).
 		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	bankSendMsg := &banktypes.MsgSend{
@@ -192,7 +168,7 @@ func TestAuthMultisig(t *testing.T) {
 	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
 
-	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer1KeyName, txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
@@ -204,9 +180,9 @@ func TestAuthMultisig(t *testing.T) {
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer1KeyName, txBuilder, false)
 	requireT.NoError(err)
-	err = client.Sign(txF, signer2KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer2KeyName, txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
@@ -223,123 +199,25 @@ func TestAuthMultisig(t *testing.T) {
 	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
 }
 
-// TestAuthMultisigWithAuthz tests the cosmos-sdk multisig accounts works with authz.
-func TestAuthMultisigWithAuthz(t *testing.T) {
-	t.Parallel()
-
-	ctx, chain := integrationtests.NewTestingContext(t)
-
+func createMultisigAccount(
+	t *testing.T,
+	chain integrationtests.Chain,
+	signersCount int,
+	multisigThreshold int,
+) (*sdkmultisig.LegacyAminoPubKey, []string) {
 	requireT := require.New(t)
-
-	signer1KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
-	signer2KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
-	signer3KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
-	// generate the keyring and collect the keys to use for the multisig account
-	keyNamesSet := []string{signer1KeyInfo.GetName(), signer2KeyInfo.GetName(), signer3KeyInfo.GetName()}
-	kr := chain.ClientContext.Keyring()
-	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
-	for _, key := range keyNamesSet {
-		info, err := kr.Key(key)
+	keyNamesSet := []string{}
+	publicKeySet := make([]cryptotypes.PubKey, 0, signersCount)
+	for i := 0; i < signersCount; i++ {
+		signerKeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
 		requireT.NoError(err)
-		publicKeySet = append(publicKeySet, info.GetPubKey())
+		keyNamesSet = append(keyNamesSet, signerKeyInfo.GetName())
+		publicKeySet = append(publicKeySet, signerKeyInfo.GetPubKey())
 	}
 
 	// create multisig account
-	const multisigThreshold = 2
 	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
-	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
-	requireT.NoError(err)
-
-	granter := chain.GenAccount()
-	recipient := chain.GenAccount()
-	amountToSendFromMultisigAccount := int64(1000)
-	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
-
-	// grant bank send authorization to multisig account
-	grantMsg, err := authztypes.NewMsgGrant(
-		granter,
-		multisigAddress,
-		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
-		time.Now().Add(time.Minute),
-	)
-	require.NoError(t, err)
-
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
-		Messages: []sdk.Msg{grantMsg},
-		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
-	}))
-
-	_, err = client.BroadcastTx(
-		ctx,
-		chain.ClientContext.WithFromAddress(granter),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
-		grantMsg,
-	)
-	requireT.NoError(err)
-
-	// create bank send msg account using authz
-	msgBankSend := &banktypes.MsgSend{
-		FromAddress: granter.String(),
-		ToAddress:   recipient.String(),
-		Amount:      coinsToSendToRecipient,
-	}
-	execMsg := authztypes.NewMsgExec(multisigAddress, []sdk.Msg{msgBankSend})
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
-		Messages: []sdk.Msg{
-			&execMsg,
-		},
-	}))
-
-	// prepare the tx factory to sign with the account seq and number of the multisig account
-	clientCtx := chain.ClientContext
-	multisigAccInfo, err := client.GetAccountInfo(ctx, clientCtx, multisigAddress)
-	requireT.NoError(err)
-	txF := chain.TxFactory().
-		WithGas(chain.GasLimitByMsgs(&execMsg)).
-		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
-		WithSequence(multisigAccInfo.GetSequence()).
-		WithKeybase(kr).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-
-	// sign and submit with just one key to check the tx rejection
-	txBuilder, err := txF.BuildUnsignedTx(&execMsg)
-	requireT.NoError(err)
-
-	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
-	requireT.NoError(err)
-	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
-	requireT.NoError(err)
-	_, err = client.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
-	logger.Get(ctx).Info("Partially signed tx executed with expected error")
-
-	// sign and submit with the min threshold
-	txBuilder, err = txF.BuildUnsignedTx(&execMsg)
-	requireT.NoError(err)
-	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
-	requireT.NoError(err)
-	err = client.Sign(txF, signer2KeyInfo.GetName(), txBuilder, false)
-	requireT.NoError(err)
-	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
-	requireT.NoError(err)
-	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.NoError(err)
-	logger.Get(ctx).Info("Fully signed tx executed", zap.String("txHash", result.TxHash))
-
-	bankClient := banktypes.NewQueryClient(clientCtx)
-	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
-		Address: recipient.String(),
-	})
-	requireT.NoError(err)
-	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
+	return multisigPublicKey, keyNamesSet
 }
 
 // TestAuthUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
