@@ -7,7 +7,6 @@ import (
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -133,9 +132,8 @@ func TestAuthMultisig(t *testing.T) {
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
 
-	multisigPublicKey, keyNamesSet := createMultisigAccount(t, chain, 3, 2)
-	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
-	requireT.NoError(err)
+	multisigPublicKey, keyNamesSet := chain.GenMultisigAccount(t, 3, 2)
+	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 	signer1KeyName := keyNamesSet[0]
 	signer2KeyName := keyNamesSet[1]
 
@@ -197,27 +195,6 @@ func TestAuthMultisig(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
-}
-
-func createMultisigAccount(
-	t *testing.T,
-	chain integrationtests.Chain,
-	signersCount int,
-	multisigThreshold int,
-) (*sdkmultisig.LegacyAminoPubKey, []string) {
-	requireT := require.New(t)
-	keyNamesSet := []string{}
-	publicKeySet := make([]cryptotypes.PubKey, 0, signersCount)
-	for i := 0; i < signersCount; i++ {
-		signerKeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-		requireT.NoError(err)
-		keyNamesSet = append(keyNamesSet, signerKeyInfo.GetName())
-		publicKeySet = append(publicKeySet, signerKeyInfo.GetPubKey())
-	}
-
-	// create multisig account
-	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
-	return multisigPublicKey, keyNamesSet
 }
 
 // TestAuthUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
