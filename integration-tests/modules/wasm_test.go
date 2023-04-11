@@ -393,6 +393,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
+	chain.SkipUnsafe(t)
 
 	admin := chain.GenAccount()
 	proposer := chain.GenAccount()

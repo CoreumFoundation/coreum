@@ -25,6 +25,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
+	chain.SkipUnsafe(t)
 
 	requireT := require.New(t)
 	gov := chain.Governance

@@ -45,6 +45,7 @@ func init() {
 		fundingMnemonic, coredAddress, logFormat string
 		chainID                                  string
 		stakerMnemonics                          stringsFlag
+		skipUnsafe                               bool
 	)
 
 	flag.StringVar(&coredAddress, "cored-address", "localhost:9090", "Address of cored node started by znet")
@@ -52,6 +53,7 @@ func init() {
 	flag.Var(&stakerMnemonics, "staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.StringVar(&chainID, "chain-id", string(constant.ChainIDDev), "Which chain-id to use (coreum-devnet-1, coreum-testnet-1,...)")
+	flag.BoolVar(&skipUnsafe, "skip-unsafe", true, "skip unsafe tests for example ones related to governance")
 
 	// accept testing flags
 	testing.Init()
@@ -88,6 +90,7 @@ func init() {
 		FundingMnemonic: cfg.FundingMnemonic,
 		StakerMnemonics: cfg.StakerMnemonics,
 	})
+	chain.SetSkipUnsafe(skipUnsafe)
 }
 
 // NewTestingContext returns the configured chain and new context for the integration tests.

@@ -94,6 +94,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// That's why t.Parallel() is not here.
 
 	ctx, chain := integrationtests.NewTestingContext(t)
+	chain.SkipUnsafe(t)
 	requireT := require.New(t)
 	origIssueFee := chain.NetworkConfig.AssetFTConfig.IssueFee
 

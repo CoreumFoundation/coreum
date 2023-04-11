@@ -2,6 +2,7 @@ package integrationtests
 
 import (
 	"reflect"
+	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -163,6 +164,21 @@ type Chain struct {
 	ChainContext
 	Faucet     Faucet
 	Governance Governance
+	skipUnsafe bool
+}
+
+// SetSkipUnsafe sets skip unsafe flag.
+func (c *Chain) SetSkipUnsafe(skipUnsafe bool) {
+	c.skipUnsafe = skipUnsafe
+}
+
+// SkipUnsafe will skip the tests that are not safe to run against a real running chain.
+// unsafe tests can only be run against a locally running chain since they modify parameters
+// of the chain.
+func (c Chain) SkipUnsafe(t *testing.T) {
+	if c.skipUnsafe {
+		t.SkipNow()
+	}
 }
 
 // NewChain creates an instance of the new Chain.
