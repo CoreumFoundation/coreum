@@ -261,7 +261,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 		multisigAddress,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
-		time.Now().Add(time.Hour),
+		time.Now().Add(time.Minute),
 	)
 	require.NoError(t, err)
 
