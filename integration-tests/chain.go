@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
@@ -19,14 +20,16 @@ import (
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
+	EncodingConfig         config.EncodingConfig
 	ClientContext          client.Context
 	NetworkConfig          config.NetworkConfig
 	DeterministicGasConfig deterministicgas.Config
 }
 
 // NewChainContext returns a new instance if the ChainContext.
-func NewChainContext(clientCtx client.Context, networkCfg config.NetworkConfig) ChainContext {
+func NewChainContext(encodingConfig config.EncodingConfig, clientCtx client.Context, networkCfg config.NetworkConfig) ChainContext {
 	return ChainContext{
+		EncodingConfig:         encodingConfig,
 		ClientContext:          clientCtx,
 		NetworkConfig:          networkCfg,
 		DeterministicGasConfig: deterministicgas.DefaultConfig(),
@@ -37,7 +40,7 @@ func NewChainContext(clientCtx client.Context, networkCfg config.NetworkConfig) 
 // private key and stores it in the chains ClientContext Keyring.
 func (c ChainContext) GenAccount() sdk.AccAddress {
 	// Generate and store a new mnemonic using temporary keyring
-	_, mnemonic, err := keyring.NewInMemory().NewMnemonic(
+	_, mnemonic, err := keyring.NewInMemory(c.EncodingConfig.Codec).NewMnemonic(
 		"tmp",
 		keyring.English,
 		sdk.GetConfig().GetFullBIP44Path(),
@@ -65,7 +68,12 @@ func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 		panic(err)
 	}
 
-	return keyInfo.GetAddress()
+	address, err := keyInfo.GetAddress()
+	if err != nil {
+		panic(err)
+	}
+
+	return address
 }
 
 // TxFactory returns factory with present values for the Chain.
@@ -167,22 +175,24 @@ type Chain struct {
 
 // NewChain creates an instance of the new Chain.
 func NewChain(cfg ChainConfig) Chain {
+	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID)).
-		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
-		WithBroadcastMode(flags.BroadcastBlock)
+		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
+		WithBroadcastMode(flags.BroadcastSync).
+		WithAwaitTx(true)
 
-	grpcClient, err := grpc.Dial(cfg.GRPCAddress, grpc.WithInsecure())
+	grpcClient, err := grpc.Dial(cfg.GRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(err)
 	}
 	clientCtx = clientCtx.WithGRPCClient(grpcClient)
 
-	chainCtx := NewChainContext(clientCtx, cfg.NetworkConfig)
+	chainCtx := NewChainContext(encodingConfig, clientCtx, cfg.NetworkConfig)
 	governance := NewGovernance(chainCtx, cfg.StakerMnemonics)
 
 	faucetAddr := chainCtx.ImportMnemonic(cfg.FundingMnemonic)
-	faucet := NewFaucet(NewChainContext(clientCtx.WithFromAddress(faucetAddr), cfg.NetworkConfig))
+	faucet := NewFaucet(NewChainContext(encodingConfig, clientCtx.WithFromAddress(faucetAddr), cfg.NetworkConfig))
 	return Chain{
 		ChainContext: chainCtx,
 		Governance:   governance,

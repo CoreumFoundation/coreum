@@ -57,11 +57,12 @@ func TestAuthz(t *testing.T) {
 	}))
 
 	// grant the bank send authorization
+	expiration := time.Now().Add(time.Minute)
 	grantMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
-		time.Now().Add(time.Minute),
+		&expiration,
 	)
 	require.NoError(t, err)
 

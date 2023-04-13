@@ -3,8 +3,8 @@ package customparams
 import (
 	"context"
 	"encoding/json"
-	"math/rand"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -15,7 +15,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CoreumFoundation/coreum/x/customparams/keeper"
 	"github.com/CoreumFoundation/coreum/x/customparams/types"
@@ -100,15 +99,17 @@ func (AppModule) Name() string { return types.ModuleName }
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
 // Route returns the message routing key for the customparams module.
-func (am AppModule) Route() sdk.Route { return sdk.Route{} }
+// FIXME(v47-module-config): remove or replace with corresponding component
+// func (am AppModule) Route() sdk.Route { return sdk.Route{} }
 
 // QuerierRoute returns the customparams module's querier route name.
 func (AppModule) QuerierRoute() string { return types.RouterKey }
 
 // LegacyQuerierHandler returns the customparams module sdk.Querier.
-func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return nil
-}
+// FIXME(v47-module-config): remove or replace with corresponding component
+//func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
+//	return nil
+//}
 
 // InitGenesis performs genesis initialization for the customparams module. It returns
 // no validator updates.
@@ -152,9 +153,10 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 }
 
 // RandomizedParams creates randomized customparams param changes for the simulator.
-func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-	return nil
-}
+// FIXME(v47-module-config): remove or replace with corresponding component
+//func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
+//	return nil
+//}
 
 // RegisterStoreDecoder registers a decoder for supply module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}

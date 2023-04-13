@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
@@ -16,15 +17,15 @@ type ParamSubspace interface {
 // Keeper is a fee model keeper.
 type Keeper struct {
 	paramSubspace     ParamSubspace
-	storeKey          sdk.StoreKey
-	transientStoreKey sdk.StoreKey
+	storeKey          storetypes.StoreKey
+	transientStoreKey storetypes.StoreKey
 }
 
 // NewKeeper returns a new keeper object providing storage options required by fee model.
 func NewKeeper(
 	paramSubspace ParamSubspace,
-	storeKey sdk.StoreKey,
-	transientStoreKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
+	transientStoreKey storetypes.StoreKey,
 ) Keeper {
 	return Keeper{
 		paramSubspace:     paramSubspace,

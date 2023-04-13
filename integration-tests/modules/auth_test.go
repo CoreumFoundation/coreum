@@ -145,19 +145,21 @@ func TestAuthMultisig(t *testing.T) {
 	amountToSendFromMultisigAccount := int64(1000)
 
 	// generate the keyring and collect the keys to use for the multisig account
-	keyNamesSet := []string{signer1KeyInfo.GetName(), signer2KeyInfo.GetName(), signer3KeyInfo.GetName()}
+	keyNamesSet := []string{signer1KeyInfo.Name, signer2KeyInfo.Name, signer3KeyInfo.Name}
 	kr := chain.ClientContext.Keyring()
 	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
 	for _, key := range keyNamesSet {
 		info, err := kr.Key(key)
 		requireT.NoError(err)
-		publicKeySet = append(publicKeySet, info.GetPubKey())
+		pubkey, err := info.GetPubKey()
+		requireT.NoError(err)
+		publicKeySet = append(publicKeySet, pubkey)
 	}
 
 	// create multisig account
 	const multisigThreshold = 2
 	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
-	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
+	multisigAddress, err := sdk.AccAddressFromHexUnsafe(multisigPublicKey.Address().String())
 	requireT.NoError(err)
 
 	// fund the multisig account
@@ -190,7 +192,7 @@ func TestAuthMultisig(t *testing.T) {
 	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
 
-	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer1KeyInfo.Name, txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
@@ -202,9 +204,9 @@ func TestAuthMultisig(t *testing.T) {
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer1KeyInfo.Name, txBuilder, false)
 	requireT.NoError(err)
-	err = client.Sign(txF, signer2KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer2KeyInfo.Name, txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -27,7 +28,7 @@ type ParamSubspace interface {
 type Keeper struct {
 	cdc           codec.BinaryCodec
 	paramSubspace ParamSubspace
-	storeKey      sdk.StoreKey
+	storeKey      storetypes.StoreKey
 	nftKeeper     types.NFTKeeper
 	bankKeeper    types.BankKeeper
 }
@@ -36,7 +37,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	paramSubspace ParamSubspace,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	nftKeeper types.NFTKeeper,
 	bankKeeper types.BankKeeper,
 ) Keeper {

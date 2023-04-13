@@ -10,6 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
@@ -59,19 +61,21 @@ func (s *IntegrationTestSuite) SetupSuite() { //nolint:revive // test helper
 
 	// gen account to use as nft owner
 	keyInfo, mnemonic := genAccount(s)
-	s.T().Logf("Created new account address:%s", keyInfo.GetAddress())
+	address, err := keyInfo.GetAddress()
+	s.Require().NoError(err)
+	s.T().Logf("Created new account address:%s", address)
 
 	// fund account to pay for the transactions
 	cfg, err := network.ApplyConfigOptions(s.cfg, network.WithChainDenomFundedAccounts(
 		[]network.FundedAccount{
 			{
-				Address: keyInfo.GetAddress(),
+				Address: address,
 				Amount:  sdk.NewInt(10_000_000),
 			},
 		}))
 	s.Require().NoError(err)
 	s.cfg = cfg
-	s.owner = keyInfo.GetAddress().String()
+	s.owner = address.String()
 
 	// set owner in the genesis
 	genesisState := s.cfg.GenesisState
@@ -92,7 +96,7 @@ func (s *IntegrationTestSuite) SetupSuite() { //nolint:revive // test helper
 	s.Require().NoError(err)
 
 	// import key
-	s.owner = keyInfo.GetAddress().String()
+	s.owner = address.String()
 	s.importMnemonic(s.owner, mnemonic, s.network.Validators[0].ClientCtx)
 
 	_, err = s.network.WaitForHeight(1)
@@ -108,7 +112,7 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 	args := []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.owner),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10000))).String()),
 	}
 	testCases := []struct {
@@ -150,9 +154,9 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 	}
 }
 
-func genAccount(s *IntegrationTestSuite) (keyring.Info, string) {
+func genAccount(s *IntegrationTestSuite) (*keyring.Record, string) {
 	// Generate and store a new mnemonic using temporary keyring
-	keyInfo, mnemonic, err := keyring.NewInMemory().NewMnemonic(
+	keyRecord, mnemonic, err := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec).NewMnemonic(
 		"tmp",
 		keyring.English,
 		sdk.GetConfig().GetFullBIP44Path(),
@@ -161,7 +165,7 @@ func genAccount(s *IntegrationTestSuite) (keyring.Info, string) {
 	)
 	s.Require().NoError(err)
 
-	return keyInfo, mnemonic
+	return keyRecord, mnemonic
 }
 
 func (s *IntegrationTestSuite) importMnemonic(name, mnemonic string, clientCtx client.Context) {
