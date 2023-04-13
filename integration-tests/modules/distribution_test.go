@@ -22,10 +22,10 @@ import (
 
 // TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
 func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
-	chain.SkipUnsafe(t)
 
 	requireT := require.New(t)
 

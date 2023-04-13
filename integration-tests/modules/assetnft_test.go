@@ -380,8 +380,8 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
 
+	integrationtests.SkipUnsafe(t)
 	ctx, chain := integrationtests.NewTestingContext(t)
-	chain.SkipUnsafe(t)
 	requireT := require.New(t)
 	origMintFee := chain.NetworkConfig.AssetNFTConfig.MintFee
 

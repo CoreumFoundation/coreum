@@ -27,10 +27,10 @@ import (
 
 // TestStakingProposalParamChange checks that staking param change proposal works correctly.
 func TestStakingProposalParamChange(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
-	chain.SkipUnsafe(t)
 
 	targetMaxValidators := 2 * chain.NetworkConfig.StakingConfig.MaxValidators
 	requireT := require.New(t)
@@ -79,10 +79,10 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
-	chain.SkipUnsafe(t)
 
 	// fastUnbondingTime is the coins unbonding time we use for the test only
 	const fastUnbondingTime = time.Second * 10
@@ -253,10 +253,10 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 // TestValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
 // delegation is higher than current validator self delegation.
 func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
-	chain.SkipUnsafe(t)
 
 	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
