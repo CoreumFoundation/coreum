@@ -7,7 +7,6 @@ import (
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -129,36 +128,14 @@ func TestAuthMultisig(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
-
 	requireT := require.New(t)
-
-	signer1KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
-	signer2KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
-	signer3KeyInfo, err := chain.ClientContext.Keyring().KeyByAddress(chain.GenAccount())
-	requireT.NoError(err)
-
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
 
-	// generate the keyring and collect the keys to use for the multisig account
-	keyNamesSet := []string{signer1KeyInfo.GetName(), signer2KeyInfo.GetName(), signer3KeyInfo.GetName()}
-	kr := chain.ClientContext.Keyring()
-	publicKeySet := make([]cryptotypes.PubKey, 0, len(keyNamesSet))
-	for _, key := range keyNamesSet {
-		info, err := kr.Key(key)
-		requireT.NoError(err)
-		publicKeySet = append(publicKeySet, info.GetPubKey())
-	}
-
-	// create multisig account
-	const multisigThreshold = 2
-	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
-	multisigAddress, err := sdk.AccAddressFromHex(multisigPublicKey.Address().String())
-	requireT.NoError(err)
+	multisigPublicKey, keyNamesSet := chain.GenMultisigAccount(t, 3, 2)
+	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
+	signer1KeyName := keyNamesSet[0]
+	signer2KeyName := keyNamesSet[1]
 
 	// fund the multisig account
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
@@ -178,7 +155,6 @@ func TestAuthMultisig(t *testing.T) {
 		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
 		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
 		WithSequence(multisigAccInfo.GetSequence()).
-		WithKeybase(kr).
 		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	bankSendMsg := &banktypes.MsgSend{
@@ -190,7 +166,7 @@ func TestAuthMultisig(t *testing.T) {
 	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
 
-	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer1KeyName, txBuilder, false)
 	requireT.NoError(err)
 	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
@@ -202,9 +178,9 @@ func TestAuthMultisig(t *testing.T) {
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
 	requireT.NoError(err)
-	err = client.Sign(txF, signer1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer1KeyName, txBuilder, false)
 	requireT.NoError(err)
-	err = client.Sign(txF, signer2KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, signer2KeyName, txBuilder, false)
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
