@@ -194,6 +194,7 @@ func NewChain(cfg ChainConfig) Chain {
 	}
 }
 
+// GenMultisigAccount generates a multisig account.
 func (c ChainContext) GenMultisigAccount(
 	t *testing.T,
 	signersCount int,
