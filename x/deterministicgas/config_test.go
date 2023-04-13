@@ -27,7 +27,7 @@ var revProtoTypes map[reflect.Type]string
 func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor nondeterministic.
-	ignoredMsgTypes := []string{
+	ignoredMsgTypes := []deterministicgas.MsgType{
 		// Not-integrated modules:
 		// IBC:
 
@@ -71,7 +71,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	}
 
 	// WASM messages will be added here
-	nondeterministicMsgTypes := []string{
+	nondeterministicMsgTypes := []deterministicgas.MsgType{
 		// gov
 		"/cosmos.gov.v1beta1.MsgSubmitProposal",
 
@@ -105,15 +105,15 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		}
 
 		// Skip unknown messages.
-		if lo.ContainsBy(ignoredMsgTypes, func(msgType string) bool {
-			return deterministicgas.MsgType(sdkMsg) == msgType
+		if lo.ContainsBy(ignoredMsgTypes, func(msgType deterministicgas.MsgType) bool {
+			return deterministicgas.MsgTypeURL(sdkMsg) == msgType
 		}) {
 			continue
 		}
 
 		// Add message to nondeterministic.
-		if lo.ContainsBy(nondeterministicMsgTypes, func(msgType string) bool {
-			return deterministicgas.MsgType(sdkMsg) == msgType
+		if lo.ContainsBy(nondeterministicMsgTypes, func(msgType deterministicgas.MsgType) bool {
+			return deterministicgas.MsgTypeURL(sdkMsg) == msgType
 		}) {
 			nondeterministicMsgs = append(nondeterministicMsgs, sdkMsg)
 			continue
@@ -131,7 +131,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg
-		t.Run("deterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
+		t.Run("deterministic: "+deterministicgas.MsgTypeURL(sdkMsg), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
 			assert.True(t, ok)
 			assert.Positive(t, gas)
@@ -140,7 +140,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range nondeterministicMsgs {
 		sdkMsg := sdkMsg
-		t.Run("nondeterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
+		t.Run("nondeterministic: "+deterministicgas.MsgTypeURL(sdkMsg), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
 			assert.False(t, ok)
 			assert.Zero(t, gas)

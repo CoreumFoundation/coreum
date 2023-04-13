@@ -16,7 +16,7 @@ var (
 	//go:embed README.tmpl.md
 	readmeTmpl string
 
-	specialCases = []string{
+	specialCases = []deterministicgas.MsgType{
 		"/cosmos.authz.v1beta1.MsgExec",
 		"/cosmos.bank.v1beta1.MsgMultiSend",
 		"/cosmos.bank.v1beta1.MsgSend",
@@ -25,12 +25,12 @@ var (
 
 func main() {
 	type determMsg struct {
-		Type string
+		Type deterministicgas.MsgType
 		Gas  uint64
 	}
 	var determMsgs []determMsg
 
-	var nonDetermMsgs []string
+	var nonDetermMsgs []deterministicgas.MsgType
 
 	cfg := deterministicgas.DefaultConfig()
 	for msgType, gasFunc := range cfg.GasByMessageMap() {
@@ -75,9 +75,9 @@ func main() {
 		BankMultiSendPerOperationsGas uint64
 		AuthzExecOverhead             uint64
 
-		DetermMsgsSpecialCases []string
+		DetermMsgsSpecialCases []deterministicgas.MsgType
 		DetermMsgs             []determMsg
-		NonDetermMsgs          []string
+		NonDetermMsgs          []deterministicgas.MsgType
 
 		DeterministicMessagesTable    string
 		NonDeterministicMessagesTable string
