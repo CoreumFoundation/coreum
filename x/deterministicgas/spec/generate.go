@@ -2,11 +2,14 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
+	"reflect"
+	"regexp"
+	"runtime"
 	"sort"
+	"strings"
 	"text/template"
-
-	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
@@ -15,12 +18,6 @@ import (
 var (
 	//go:embed README.tmpl.md
 	readmeTmpl string
-
-	specialCases = []deterministicgas.MsgType{
-		"/cosmos.authz.v1beta1.MsgExec",
-		"/cosmos.bank.v1beta1.MsgMultiSend",
-		"/cosmos.bank.v1beta1.MsgSend",
-	}
 )
 
 func main() {
@@ -28,21 +25,37 @@ func main() {
 		Type deterministicgas.MsgType
 		Gas  uint64
 	}
-	var determMsgs []determMsg
 
-	var nonDetermMsgs []deterministicgas.MsgType
+	var (
+		determMsgs                 []determMsg
+		nonDetermMsgTypes          []deterministicgas.MsgType
+		determSpeicialCaseMsgTypes []deterministicgas.MsgType
+
+		determMsgGasFuncNameRegexp    = regexp.MustCompile(`^deterministicgas.DefaultConfig.func[0-9]{1,2}$`)
+		nonDetermMsgGasFuncNameRegexp = regexp.MustCompile(`^deterministicgas.registerNondeterministicGasFuncs.func[0-9]{1,2}$`)
+	)
 
 	cfg := deterministicgas.DefaultConfig()
 	for msgType, gasFunc := range cfg.GasByMessageMap() {
-		if lo.Contains(specialCases, msgType) {
-			continue
-		}
+		// In this loop we use reflection to get function name. And depending on the name we try to match it with regexp
+		// to determine gas type.
+		fnFullName := runtime.FuncForPC(reflect.ValueOf(gasFunc).Pointer()).Name()
+		fnParts := strings.Split(fnFullName, "/")
+		fnShortName := fnParts[len(fnParts)-1]
+		fmt.Println("Function name:", fnShortName)
 
-		gas, ok := gasFunc(nil)
-		if ok {
+		if determMsgGasFuncNameRegexp.MatchString(fnShortName) {
+			gas, ok := gasFunc(nil)
 			determMsgs = append(determMsgs, determMsg{msgType, gas})
+			if !ok {
+				panic(fmt.Errorf("non-deterministic values returned from function expected to be deterministic: %v", fnShortName))
+			}
+		} else if nonDetermMsgGasFuncNameRegexp.MatchString(fnShortName) {
+			nonDetermMsgTypes = append(nonDetermMsgTypes, msgType)
 		} else {
-			nonDetermMsgs = append(nonDetermMsgs, msgType)
+			// NOTE: For simplicity we don't match func name with regexp here because some funcs are defined as methods
+			// and others are not. So we consider all funcs not matching deterministic or non-deterministic as special cases.
+			determSpeicialCaseMsgTypes = append(determSpeicialCaseMsgTypes, msgType)
 		}
 	}
 
@@ -50,7 +63,7 @@ func main() {
 		return determMsgs[i].Type < determMsgs[j].Type
 	})
 
-	sort.Strings(nonDetermMsgs)
+	sort.Strings(nonDetermMsgTypes)
 
 	msgIssueGasPrice, _ := cfg.GasRequiredByMessage(&assetfttypes.MsgIssue{})
 
@@ -94,9 +107,9 @@ func main() {
 		BankMultiSendPerOperationsGas: deterministicgas.BankMultiSendPerOperationsGas,
 		AuthzExecOverhead:             deterministicgas.AuthzExecOverhead,
 
-		DetermMsgsSpecialCases: specialCases,
+		DetermMsgsSpecialCases: determSpeicialCaseMsgTypes,
 		DetermMsgs:             determMsgs,
-		NonDetermMsgs:          nonDetermMsgs,
+		NonDetermMsgs:          nonDetermMsgTypes,
 	})
 	if err != nil {
 		panic(err)
