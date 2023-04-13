@@ -270,8 +270,8 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 	}
 }
 
-func reportUnknownMessageMetric(msgName MsgType) {
+func reportUnknownMessageMetric(msgType MsgType) {
 	metrics.IncrCounterWithLabels([]string{"deterministic_gas_unknown_message"}, 1, []metrics.Label{
-		{Name: "msg_name", Value: msgName},
+		{Name: "msg_name", Value: msgType},
 	})
 }
