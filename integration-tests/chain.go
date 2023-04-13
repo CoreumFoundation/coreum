@@ -2,13 +2,17 @@ package integrationtests
 
 import (
 	"reflect"
+	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -188,4 +192,25 @@ func NewChain(cfg ChainConfig) Chain {
 		Governance:   governance,
 		Faucet:       faucet,
 	}
+}
+
+// GenMultisigAccount generates a multisig account.
+func (c ChainContext) GenMultisigAccount(
+	t *testing.T,
+	signersCount int,
+	multisigThreshold int,
+) (*sdkmultisig.LegacyAminoPubKey, []string) {
+	requireT := require.New(t)
+	keyNamesSet := []string{}
+	publicKeySet := make([]cryptotypes.PubKey, 0, signersCount)
+	for i := 0; i < signersCount; i++ {
+		signerKeyInfo, err := c.ClientContext.Keyring().KeyByAddress(c.GenAccount())
+		requireT.NoError(err)
+		keyNamesSet = append(keyNamesSet, signerKeyInfo.GetName())
+		publicKeySet = append(publicKeySet, signerKeyInfo.GetPubKey())
+	}
+
+	// create multisig account
+	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
+	return multisigPublicKey, keyNamesSet
 }
