@@ -1,7 +1,6 @@
 package deterministicgas_test
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	_ "unsafe"
@@ -134,7 +133,6 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		sdkMsg := sdkMsg
 		t.Run("deterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
-			fmt.Printf("%v: %v\n", deterministicgas.MsgType(sdkMsg), gas)
 			assert.True(t, ok)
 			assert.Positive(t, gas)
 		})
@@ -144,7 +142,6 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		sdkMsg := sdkMsg
 		t.Run("nondeterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
-			fmt.Printf("%v: %v\n", deterministicgas.MsgType(sdkMsg), gas)
 			assert.False(t, ok)
 			assert.Zero(t, gas)
 		})

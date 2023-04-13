@@ -67,7 +67,12 @@ TotalGas = {{ .FixedGas }} + 2 * {{ .MsgIssueGasPrice }} + 2 * {{ .SigVerifyCost
 
 | Message Type | Gas |
 |--------------|-----|
-{{ .DeterministicMessagesTable }}
+{{- range .DetermMsgsSpecialCases }}
+{{ printf "| %-70v | [special case](#special-cases) |" (printf "`%v`" .) }}
+{{- end -}}
+{{- range .DetermMsgs }}
+{{ printf "| %-70v | %-30v |" (printf "`%v`" .Type) .Gas }}
+{{- end }}
 
 #### Special Cases
 
@@ -96,6 +101,8 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 | Message Type |
 |--------------|
-{{ .NonDeterministicMessagesTable }}
+{{- range .NonDetermMsgs }}
+{{ printf "| %-70v |" (printf "`%v`" .) }}
+{{- end }}
 
 {{ .GeneratorComment }}

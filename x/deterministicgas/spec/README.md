@@ -68,46 +68,45 @@ TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 
 | Message Type | Gas |
 |--------------|-----|
-| `/cosmos.authz.v1beta1.MsgExec                               ` | [special case](#special-cases) |
-| `/cosmos.bank.v1beta1.MsgMultiSend                           ` | [special case](#special-cases) |
-| `/cosmos.bank.v1beta1.MsgSend                                ` | [special case](#special-cases) |
-| `/coreum.asset.ft.v1.MsgBurn                                 ` | 23000                          |
-| `/coreum.asset.ft.v1.MsgFreeze                               ` | 5000                           |
-| `/coreum.asset.ft.v1.MsgGloballyFreeze                       ` | 5000                           |
-| `/coreum.asset.ft.v1.MsgGloballyUnfreeze                     ` | 2500                           |
-| `/coreum.asset.ft.v1.MsgIssue                                ` | 70000                          |
-| `/coreum.asset.ft.v1.MsgMint                                 ` | 11000                          |
-| `/coreum.asset.ft.v1.MsgSetWhitelistedLimit                  ` | 5000                           |
-| `/coreum.asset.ft.v1.MsgUnfreeze                             ` | 2500                           |
-| `/coreum.asset.nft.v1.MsgAddToWhitelist                      ` | 7000                           |
-| `/coreum.asset.nft.v1.MsgBurn                                ` | 16000                          |
-| `/coreum.asset.nft.v1.MsgFreeze                              ` | 7000                           |
-| `/coreum.asset.nft.v1.MsgIssueClass                          ` | 16000                          |
-| `/coreum.asset.nft.v1.MsgMint                                ` | 39000                          |
-| `/coreum.asset.nft.v1.MsgRemoveFromWhitelist                 ` | 3500                           |
-| `/coreum.asset.nft.v1.MsgUnfreeze                            ` | 5000                           |
-| `/coreum.nft.v1beta1.MsgSend                                 ` | 16000                          |
-| `/cosmos.authz.v1beta1.MsgGrant                              ` | 7000                           |
-| `/cosmos.authz.v1beta1.MsgRevoke                             ` | 2500                           |
-| `/cosmos.distribution.v1beta1.MsgFundCommunityPool           ` | 15000                          |
-| `/cosmos.distribution.v1beta1.MsgSetWithdrawAddress          ` | 5000                           |
-| `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward     ` | 65000                          |
-| `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission ` | 22000                          |
-| `/cosmos.feegrant.v1beta1.MsgGrantAllowance                  ` | 10000                          |
-| `/cosmos.feegrant.v1beta1.MsgRevokeAllowance                 ` | 2500                           |
-| `/cosmos.gov.v1beta1.MsgDeposit                              ` | 52000                          |
-| `/cosmos.gov.v1beta1.MsgVote                                 ` | 7000                           |
-| `/cosmos.gov.v1beta1.MsgVoteWeighted                         ` | 9000                           |
-| `/cosmos.slashing.v1beta1.MsgUnjail                          ` | 25000                          |
-| `/cosmos.staking.v1beta1.MsgBeginRedelegate                  ` | 142000                         |
-| `/cosmos.staking.v1beta1.MsgCreateValidator                  ` | 76000                          |
-| `/cosmos.staking.v1beta1.MsgDelegate                         ` | 69000                          |
-| `/cosmos.staking.v1beta1.MsgEditValidator                    ` | 13000                          |
-| `/cosmos.staking.v1beta1.MsgUndelegate                       ` | 112000                         |
-| `/cosmos.vesting.v1beta1.MsgCreateVestingAccount             ` | 25000                          |
-| `/cosmwasm.wasm.v1.MsgClearAdmin                             ` | 6500                           |
-| `/cosmwasm.wasm.v1.MsgUpdateAdmin                            ` | 8000                           |
-
+| `/cosmos.authz.v1beta1.MsgExec`                                        | [special case](#special-cases) |
+| `/cosmos.bank.v1beta1.MsgMultiSend`                                    | [special case](#special-cases) |
+| `/cosmos.bank.v1beta1.MsgSend`                                         | [special case](#special-cases) |
+| `/coreum.asset.ft.v1.MsgBurn`                                          | 23000                          |
+| `/coreum.asset.ft.v1.MsgFreeze`                                        | 5000                           |
+| `/coreum.asset.ft.v1.MsgGloballyFreeze`                                | 5000                           |
+| `/coreum.asset.ft.v1.MsgGloballyUnfreeze`                              | 2500                           |
+| `/coreum.asset.ft.v1.MsgIssue`                                         | 70000                          |
+| `/coreum.asset.ft.v1.MsgMint`                                          | 11000                          |
+| `/coreum.asset.ft.v1.MsgSetWhitelistedLimit`                           | 5000                           |
+| `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 2500                           |
+| `/coreum.asset.nft.v1.MsgAddToWhitelist`                               | 7000                           |
+| `/coreum.asset.nft.v1.MsgBurn`                                         | 16000                          |
+| `/coreum.asset.nft.v1.MsgFreeze`                                       | 7000                           |
+| `/coreum.asset.nft.v1.MsgIssueClass`                                   | 16000                          |
+| `/coreum.asset.nft.v1.MsgMint`                                         | 39000                          |
+| `/coreum.asset.nft.v1.MsgRemoveFromWhitelist`                          | 3500                           |
+| `/coreum.asset.nft.v1.MsgUnfreeze`                                     | 5000                           |
+| `/coreum.nft.v1beta1.MsgSend`                                          | 16000                          |
+| `/cosmos.authz.v1beta1.MsgGrant`                                       | 7000                           |
+| `/cosmos.authz.v1beta1.MsgRevoke`                                      | 2500                           |
+| `/cosmos.distribution.v1beta1.MsgFundCommunityPool`                    | 15000                          |
+| `/cosmos.distribution.v1beta1.MsgSetWithdrawAddress`                   | 5000                           |
+| `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward`              | 65000                          |
+| `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission`          | 22000                          |
+| `/cosmos.feegrant.v1beta1.MsgGrantAllowance`                           | 10000                          |
+| `/cosmos.feegrant.v1beta1.MsgRevokeAllowance`                          | 2500                           |
+| `/cosmos.gov.v1beta1.MsgDeposit`                                       | 52000                          |
+| `/cosmos.gov.v1beta1.MsgVote`                                          | 7000                           |
+| `/cosmos.gov.v1beta1.MsgVoteWeighted`                                  | 9000                           |
+| `/cosmos.slashing.v1beta1.MsgUnjail`                                   | 25000                          |
+| `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           | 142000                         |
+| `/cosmos.staking.v1beta1.MsgCreateValidator`                           | 76000                          |
+| `/cosmos.staking.v1beta1.MsgDelegate`                                  | 69000                          |
+| `/cosmos.staking.v1beta1.MsgEditValidator`                             | 13000                          |
+| `/cosmos.staking.v1beta1.MsgUndelegate`                                | 112000                         |
+| `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`                      | 25000                          |
+| `/cosmwasm.wasm.v1.MsgClearAdmin`                                      | 6500                           |
+| `/cosmwasm.wasm.v1.MsgUpdateAdmin`                                     | 8000                           |
 
 #### Special Cases
 
@@ -136,17 +135,16 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 | Message Type |
 |--------------|
-| `/cosmos.crisis.v1beta1.MsgVerifyInvariant                   ` |
-| `/cosmos.evidence.v1beta1.MsgSubmitEvidence                  ` |
-| `/cosmos.gov.v1beta1.MsgSubmitProposal                       ` |
-| `/cosmwasm.wasm.v1.MsgExecuteContract                        ` |
-| `/cosmwasm.wasm.v1.MsgIBCCloseChannel                        ` |
-| `/cosmwasm.wasm.v1.MsgIBCSend                                ` |
-| `/cosmwasm.wasm.v1.MsgInstantiateContract                    ` |
-| `/cosmwasm.wasm.v1.MsgInstantiateContract2                   ` |
-| `/cosmwasm.wasm.v1.MsgMigrateContract                        ` |
-| `/cosmwasm.wasm.v1.MsgStoreCode                              ` |
-
+| `/cosmos.crisis.v1beta1.MsgVerifyInvariant`                            |
+| `/cosmos.evidence.v1beta1.MsgSubmitEvidence`                           |
+| `/cosmos.gov.v1beta1.MsgSubmitProposal`                                |
+| `/cosmwasm.wasm.v1.MsgExecuteContract`                                 |
+| `/cosmwasm.wasm.v1.MsgIBCCloseChannel`                                 |
+| `/cosmwasm.wasm.v1.MsgIBCSend`                                         |
+| `/cosmwasm.wasm.v1.MsgInstantiateContract`                             |
+| `/cosmwasm.wasm.v1.MsgInstantiateContract2`                            |
+| `/cosmwasm.wasm.v1.MsgMigrateContract`                                 |
+| `/cosmwasm.wasm.v1.MsgStoreCode`                                       |
 
 [//]: # (GENERATED DOC.)
 [//]: # (DO NOT EDIT MANUALLY!!!)

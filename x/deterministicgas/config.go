@@ -31,7 +31,11 @@ const (
 	AuthzExecOverhead             = 2000
 )
 
-type gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
+type (
+	gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
+
+	//MsgType = string
+)
 
 // Config specifies gas required by all transaction types
 // Crisis module is intentionally skipped here because it is already deterministic by design and fee is specified
