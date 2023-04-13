@@ -33,6 +33,7 @@ type testingConfig struct {
 	StakerMnemonics []string
 	LogFormat       logger.Format
 	LogVerbose      bool
+	SkipUnsafe      bool
 }
 
 var (
@@ -80,6 +81,7 @@ func init() {
 		StakerMnemonics: stakerMnemonics,
 		LogFormat:       logger.Format(logFormat),
 		LogVerbose:      flag.Lookup("test.v").Value.String() == "true",
+		SkipUnsafe:      skipUnsafe,
 	}
 
 	config.NewNetwork(cfg.NetworkConfig).SetSDKConfig()
@@ -90,7 +92,6 @@ func init() {
 		FundingMnemonic: cfg.FundingMnemonic,
 		StakerMnemonics: cfg.StakerMnemonics,
 	})
-	chain.SetSkipUnsafe(skipUnsafe)
 }
 
 // NewTestingContext returns the configured chain and new context for the integration tests.
