@@ -8,7 +8,10 @@ Offering 7,000 TPS, it guarantees elevated throughput, cost-effective fees, and 
 WASM-based smart contracts enable diverse use cases, while the low-latency, PoS network propels rapid,
 secure, and modular applications, expediting decentralized tech adoption in large-scale organizations.
 
-Read more on [our website](https://www.coreum.com) and [documentation portal](https://docs.coreum.dev).
+Read more on [our website](https://www.coreum.com) and 
+<!-- markdown-link-check-disable --> 
+[documentation portal](https://docs.coreum.dev).
+<!-- markdown-link-check-enable -->
 
 ## Build and Play
 
@@ -93,4 +96,4 @@ You may connect to Coreum devnet network by connecting to host `s-0.devnet-1.cor
 $ cored status --chain-id=coreum-devnet-1 --node=https://s-0.devnet-1.coreum.dev:443
 ```
 
-Block explorer for devnet is available at [https://explorer.coreum.com](https://explorer.coreum.com)
+Block explorer for devnet is available at [https://explorer.coreum.com](https://explorer.coreum.com/coreum)
