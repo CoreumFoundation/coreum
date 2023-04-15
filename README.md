@@ -8,9 +8,8 @@ Offering 7,000 TPS, it guarantees elevated throughput, cost-effective fees, and 
 WASM-based smart contracts enable diverse use cases, while the low-latency, PoS network propels rapid,
 secure, and modular applications, expediting decentralized tech adoption in large-scale organizations.
 
-Read more on [our website](https://www.coreum.com) and 
 <!-- markdown-link-check-disable --> 
-[documentation portal](https://docs.coreum.dev).
+Read more on [our website](https://www.coreum.com) and [documentation portal](https://docs.coreum.dev).
 <!-- markdown-link-check-enable -->
 
 ## Build and Play
