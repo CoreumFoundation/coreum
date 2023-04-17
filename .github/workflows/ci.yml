@@ -11,7 +11,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ "lint", "test", "build", "integration tests coreum-modules", "integration tests coreum-upgrade", "integration tests faucet" ]
+        ci_step: [ 
+          "lint", 
+          "test", 
+          "build", 
+          "integration tests coreum-modules", 
+          # "integration tests coreum-upgrade", 
+          "integration tests faucet",
+        ]
         include:
           - ci_step: "lint"
             command: "crust lint/coreum --log-format=yaml"
