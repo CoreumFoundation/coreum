@@ -144,7 +144,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig config.EncodingConfig) {
 	cfg.Seal()
 
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		debug.Cmd(),
 		clientconfig.Cmd(),
 		pruning.PruningCmd(newApp),
