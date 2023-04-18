@@ -445,17 +445,24 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 
 // EncodeGenesis returns the json encoded representation of the genesis file.
 func (n Network) EncodeGenesis() ([]byte, error) {
-	genesisDoc, err := n.GenesisDoc()
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to get genesis doc")
-	}
+	switch n.chainID {
+	case constant.ChainIDMain:
+		return genesis.MainnetGenesis, nil
+	case constant.ChainIDTest:
+		return genesis.TestnetGenesis, nil
+	default:
+		genesisDoc, err := n.GenesisDoc()
+		if err != nil {
+			return nil, errors.Wrap(err, "not able to get genesis doc")
+		}
 
-	bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to marshal genesis doc")
-	}
+		bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
+		if err != nil {
+			return nil, errors.Wrap(err, "not able to marshal genesis doc")
+		}
 
-	return bs, nil
+		return bs, nil
+	}
 }
 
 // SaveGenesis saves json encoded representation of the genesis config into file.
