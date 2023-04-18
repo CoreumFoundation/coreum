@@ -32,7 +32,7 @@ func main() {
 		nonDetermMsgURLs          []deterministicgas.MsgURL
 		determSpeicialCaseMsgURLs []deterministicgas.MsgURL
 
-		nonDetermMsgGasFuncNameRegexp = regexp.MustCompile(`^deterministicgas.registerNondeterministicGasFuncs.func[0-9]{1,2}$`)
+		nonDetermMsgGasFuncNameRegexp = regexp.MustCompile(`^deterministicgas.registerNondeterministicGasFuncs.func[0-9]+$`)
 	)
 
 	cfg := deterministicgas.DefaultConfig()
