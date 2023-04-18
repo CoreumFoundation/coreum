@@ -169,15 +169,6 @@ type Chain struct {
 	Governance Governance
 }
 
-// SkipUnsafe will skip the tests that are not safe to run against a real running chain.
-// unsafe tests can only be run against a locally running chain since they modify parameters
-// of the chain.
-func SkipUnsafe(t *testing.T) {
-	if cfg.SkipUnsafe {
-		t.SkipNow()
-	}
-}
-
 // NewChain creates an instance of the new Chain.
 func NewChain(cfg ChainConfig) Chain {
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
