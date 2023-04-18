@@ -32,9 +32,10 @@ const (
 )
 
 type (
-	gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
+	// MsgURL is a type used to uniquely identify msg in URL-like format. E.g "/coreum.asset.ft.v1.MsgMint".
+	MsgURL string
 
-	MsgType = string
+	gasByMsgFunc = func(msg sdk.Msg) (uint64, bool)
 )
 
 // Config specifies gas required by all transaction types
@@ -46,7 +47,7 @@ type Config struct {
 	FreeBytes      uint64
 	FreeSignatures uint64
 
-	gasByMsg map[MsgType]gasByMsgFunc
+	gasByMsg map[MsgURL]gasByMsgFunc
 }
 
 // DefaultConfig returns default config for deterministic gas.
@@ -59,69 +60,69 @@ func DefaultConfig() Config {
 		FreeSignatures: 1,
 	}
 
-	cfg.gasByMsg = map[MsgType]gasByMsgFunc{
+	cfg.gasByMsg = map[MsgURL]gasByMsgFunc{
 		// asset/ft
-		MsgTypeURL(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
-		MsgTypeURL(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
-		MsgTypeURL(&assetfttypes.MsgBurn{}):                constantGasFunc(23000),
-		MsgTypeURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(5000),
-		MsgTypeURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(2500),
-		MsgTypeURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
-		MsgTypeURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
-		MsgTypeURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
+		MsgToMsgURL(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
+		MsgToMsgURL(&assetfttypes.MsgMint{}):                constantGasFunc(11000),
+		MsgToMsgURL(&assetfttypes.MsgBurn{}):                constantGasFunc(23000),
+		MsgToMsgURL(&assetfttypes.MsgFreeze{}):              constantGasFunc(5000),
+		MsgToMsgURL(&assetfttypes.MsgUnfreeze{}):            constantGasFunc(2500),
+		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
+		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
+		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
 
 		// asset/nft
-		MsgTypeURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(16000),
-		MsgTypeURL(&assetnfttypes.MsgIssueClass{}):          constantGasFunc(16000),
-		MsgTypeURL(&assetnfttypes.MsgMint{}):                constantGasFunc(39000),
-		MsgTypeURL(&assetnfttypes.MsgFreeze{}):              constantGasFunc(7000),
-		MsgTypeURL(&assetnfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
-		MsgTypeURL(&assetnfttypes.MsgAddToWhitelist{}):      constantGasFunc(7000),
-		MsgTypeURL(&assetnfttypes.MsgRemoveFromWhitelist{}): constantGasFunc(3500),
+		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(16000),
+		MsgToMsgURL(&assetnfttypes.MsgIssueClass{}):          constantGasFunc(16000),
+		MsgToMsgURL(&assetnfttypes.MsgMint{}):                constantGasFunc(39000),
+		MsgToMsgURL(&assetnfttypes.MsgFreeze{}):              constantGasFunc(7000),
+		MsgToMsgURL(&assetnfttypes.MsgUnfreeze{}):            constantGasFunc(5000),
+		MsgToMsgURL(&assetnfttypes.MsgAddToWhitelist{}):      constantGasFunc(7000),
+		MsgToMsgURL(&assetnfttypes.MsgRemoveFromWhitelist{}): constantGasFunc(3500),
 
 		// authz
-		MsgTypeURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
-		MsgTypeURL(&authz.MsgGrant{}):  constantGasFunc(7000),
-		MsgTypeURL(&authz.MsgRevoke{}): constantGasFunc(2500),
+		MsgToMsgURL(&authz.MsgExec{}):   cfg.authzMsgExecGasFunc(AuthzExecOverhead),
+		MsgToMsgURL(&authz.MsgGrant{}):  constantGasFunc(7000),
+		MsgToMsgURL(&authz.MsgRevoke{}): constantGasFunc(2500),
 
 		// bank
-		MsgTypeURL(&banktypes.MsgSend{}):      bankSendMsgGasFunc(BankSendPerCoinGas),
-		MsgTypeURL(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(BankMultiSendPerOperationsGas),
+		MsgToMsgURL(&banktypes.MsgSend{}):      bankSendMsgGasFunc(BankSendPerCoinGas),
+		MsgToMsgURL(&banktypes.MsgMultiSend{}): bankMultiSendMsgGasFunc(BankMultiSendPerOperationsGas),
 
 		// distribution
-		MsgTypeURL(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(15000),
-		MsgTypeURL(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(5000),
-		MsgTypeURL(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(65000),
-		MsgTypeURL(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(22000),
+		MsgToMsgURL(&distributiontypes.MsgFundCommunityPool{}):           constantGasFunc(15000),
+		MsgToMsgURL(&distributiontypes.MsgSetWithdrawAddress{}):          constantGasFunc(5000),
+		MsgToMsgURL(&distributiontypes.MsgWithdrawDelegatorReward{}):     constantGasFunc(65000),
+		MsgToMsgURL(&distributiontypes.MsgWithdrawValidatorCommission{}): constantGasFunc(22000),
 
 		// feegrant
-		MsgTypeURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(10000),
-		MsgTypeURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
+		MsgToMsgURL(&feegranttypes.MsgGrantAllowance{}):  constantGasFunc(10000),
+		MsgToMsgURL(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
-		MsgTypeURL(&govtypes.MsgVote{}):         constantGasFunc(7000),
-		MsgTypeURL(&govtypes.MsgVoteWeighted{}): constantGasFunc(9000),
-		MsgTypeURL(&govtypes.MsgDeposit{}):      constantGasFunc(52000),
+		MsgToMsgURL(&govtypes.MsgVote{}):         constantGasFunc(7000),
+		MsgToMsgURL(&govtypes.MsgVoteWeighted{}): constantGasFunc(9000),
+		MsgToMsgURL(&govtypes.MsgDeposit{}):      constantGasFunc(52000),
 
 		// nft
-		MsgTypeURL(&nfttypes.MsgSend{}): constantGasFunc(16000),
+		MsgToMsgURL(&nfttypes.MsgSend{}): constantGasFunc(16000),
 
 		// slashing
-		MsgTypeURL(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
+		MsgToMsgURL(&slashingtypes.MsgUnjail{}): constantGasFunc(25000),
 
 		// staking
-		MsgTypeURL(&stakingtypes.MsgDelegate{}):        constantGasFunc(69000),
-		MsgTypeURL(&stakingtypes.MsgUndelegate{}):      constantGasFunc(112000),
-		MsgTypeURL(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(142000),
-		MsgTypeURL(&stakingtypes.MsgCreateValidator{}): constantGasFunc(76000),
-		MsgTypeURL(&stakingtypes.MsgEditValidator{}):   constantGasFunc(13000),
+		MsgToMsgURL(&stakingtypes.MsgDelegate{}):        constantGasFunc(69000),
+		MsgToMsgURL(&stakingtypes.MsgUndelegate{}):      constantGasFunc(112000),
+		MsgToMsgURL(&stakingtypes.MsgBeginRedelegate{}): constantGasFunc(142000),
+		MsgToMsgURL(&stakingtypes.MsgCreateValidator{}): constantGasFunc(76000),
+		MsgToMsgURL(&stakingtypes.MsgEditValidator{}):   constantGasFunc(13000),
 
 		// vesting
-		MsgTypeURL(&vestingtypes.MsgCreateVestingAccount{}): constantGasFunc(25000),
+		MsgToMsgURL(&vestingtypes.MsgCreateVestingAccount{}): constantGasFunc(25000),
 
 		// wasm
-		MsgTypeURL(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
-		MsgTypeURL(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
+		MsgToMsgURL(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
+		MsgToMsgURL(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
 	}
 
 	registerNondeterministicGasFuncs(
@@ -166,7 +167,7 @@ func (cfg Config) TxBaseGas(params authtypes.Params) uint64 {
 // GasRequiredByMessage returns gas required by message and true if message is deterministic.
 // Function returns 0 and false if message is nondeterministic or unknown.
 func (cfg Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
-	gasFunc, ok := cfg.gasByMsg[MsgTypeURL(msg)]
+	gasFunc, ok := cfg.gasByMsg[MsgToMsgURL(msg)]
 	if ok {
 		return gasFunc(msg)
 	}
@@ -174,25 +175,25 @@ func (cfg Config) GasRequiredByMessage(msg sdk.Msg) (uint64, bool) {
 	// Currently we treat unknown message types as nondeterministic.
 	// In the future other approach could be to return third boolean parameter
 	// identifying if message is known and report unknown messages to monitoring.
-	reportUnknownMessageMetric(MsgTypeURL(msg))
+	reportUnknownMessageMetric(MsgToMsgURL(msg))
 	return 0, false
 }
 
 // GasByMessageMap returns copy mapping of message types and functions to calculate gas for specific type.
-func (cfg Config) GasByMessageMap() map[MsgType]gasByMsgFunc {
-	newGasByMsg := make(map[MsgType]gasByMsgFunc, len(cfg.gasByMsg))
+func (cfg Config) GasByMessageMap() map[MsgURL]gasByMsgFunc {
+	newGasByMsg := make(map[MsgURL]gasByMsgFunc, len(cfg.gasByMsg))
 	for k, v := range cfg.gasByMsg {
 		newGasByMsg[k] = v
 	}
 	return newGasByMsg
 }
 
-// MsgTypeURL returns TypeURL of a msg in cosmos SDK style.
+// MsgToMsgURL returns TypeURL of a msg in cosmos SDK style.
 // Samples of values returned by the function:
 // "/cosmos.distribution.v1beta1.MsgFundCommunityPool"
 // "/coreum.asset.ft.v1.MsgMint".
-func MsgTypeURL(msg sdk.Msg) MsgType {
-	return sdk.MsgTypeURL(msg)
+func MsgToMsgURL(msg sdk.Msg) MsgURL {
+	return MsgURL(sdk.MsgTypeURL(msg))
 }
 
 // NOTE: we need to pass Config by pointer here because
@@ -222,7 +223,7 @@ func (cfg *Config) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc
 
 func registerNondeterministicGasFuncs(cfg *Config, msgs []sdk.Msg) {
 	for _, msg := range msgs {
-		cfg.gasByMsg[MsgTypeURL(msg)] = nondeterministicGasFunc()
+		cfg.gasByMsg[MsgToMsgURL(msg)] = nondeterministicGasFunc()
 	}
 }
 
@@ -270,8 +271,8 @@ func bankMultiSendMsgGasFunc(bankMultiSendPerOperationGas uint64) gasByMsgFunc {
 	}
 }
 
-func reportUnknownMessageMetric(msgType MsgType) {
+func reportUnknownMessageMetric(msgURL MsgURL) {
 	metrics.IncrCounterWithLabels([]string{"deterministic_gas_unknown_message"}, 1, []metrics.Label{
-		{Name: "msg_name", Value: msgType},
+		{Name: "msg_name", Value: string(msgURL)},
 	})
 }

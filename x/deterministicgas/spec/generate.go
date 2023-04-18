@@ -2,7 +2,6 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
 	"os"
 	"reflect"
 	"regexp"
@@ -10,6 +9,8 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+
+	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
@@ -22,48 +23,48 @@ var (
 
 func main() {
 	type determMsg struct {
-		Type deterministicgas.MsgType
+		Type deterministicgas.MsgURL
 		Gas  uint64
 	}
 
 	var (
-		determMsgs                 []determMsg
-		nonDetermMsgTypes          []deterministicgas.MsgType
-		determSpeicialCaseMsgTypes []deterministicgas.MsgType
+		determMsgs                []determMsg
+		nonDetermMsgURLs          []deterministicgas.MsgURL
+		determSpeicialCaseMsgURLs []deterministicgas.MsgURL
 
-		determMsgGasFuncNameRegexp    = regexp.MustCompile(`^deterministicgas.DefaultConfig.func[0-9]{1,2}$`)
 		nonDetermMsgGasFuncNameRegexp = regexp.MustCompile(`^deterministicgas.registerNondeterministicGasFuncs.func[0-9]{1,2}$`)
 	)
 
 	cfg := deterministicgas.DefaultConfig()
-	for msgType, gasFunc := range cfg.GasByMessageMap() {
-		// In this loop we use reflection to get function name. And depending on the name we try to match it with regexp
-		// to determine gas type.
+	for msgURL, gasFunc := range cfg.GasByMessageMap() {
 		fnFullName := runtime.FuncForPC(reflect.ValueOf(gasFunc).Pointer()).Name()
 		fnParts := strings.Split(fnFullName, "/")
 		fnShortName := fnParts[len(fnParts)-1]
-		fmt.Println("Function name:", fnShortName)
 
-		if determMsgGasFuncNameRegexp.MatchString(fnShortName) {
-			gas, ok := gasFunc(nil)
-			determMsgs = append(determMsgs, determMsg{msgType, gas})
-			if !ok {
-				panic(fmt.Errorf("non-deterministic values returned from function expected to be deterministic: %v", fnShortName))
-			}
-		} else if nonDetermMsgGasFuncNameRegexp.MatchString(fnShortName) {
-			nonDetermMsgTypes = append(nonDetermMsgTypes, msgType)
+		if nonDetermMsgGasFuncNameRegexp.MatchString(fnShortName) {
+			nonDetermMsgURLs = append(nonDetermMsgURLs, msgURL)
+			continue
+		}
+
+		gas, ok := gasFunc(nil)
+		// gasFunc returns ok equal to true only for deterministic messages which are not special cases.
+		// For special cases it returns false because type-casting to a specific message type inside function fails.
+		if ok {
+			determMsgs = append(determMsgs, determMsg{msgURL, gas})
 		} else {
-			// NOTE: For simplicity we don't match func name with regexp here because some funcs are defined as methods
-			// and others are not. So we consider all funcs not matching deterministic or non-deterministic as special cases.
-			determSpeicialCaseMsgTypes = append(determSpeicialCaseMsgTypes, msgType)
+			determSpeicialCaseMsgURLs = append(determSpeicialCaseMsgURLs, msgURL)
 		}
 	}
 
 	sort.Slice(determMsgs, func(i, j int) bool {
 		return determMsgs[i].Type < determMsgs[j].Type
 	})
-
-	sort.Strings(nonDetermMsgTypes)
+	sort.Slice(determSpeicialCaseMsgURLs, func(i, j int) bool {
+		return determSpeicialCaseMsgURLs[i] < determSpeicialCaseMsgURLs[j]
+	})
+	sort.Slice(nonDetermMsgURLs, func(i, j int) bool {
+		return nonDetermMsgURLs[i] < nonDetermMsgURLs[j]
+	})
 
 	msgIssueGasPrice, _ := cfg.GasRequiredByMessage(&assetfttypes.MsgIssue{})
 
@@ -88,17 +89,17 @@ func main() {
 		BankMultiSendPerOperationsGas uint64
 		AuthzExecOverhead             uint64
 
-		DetermMsgsSpecialCases []deterministicgas.MsgType
+		DetermMsgsSpecialCases []deterministicgas.MsgURL
 		DetermMsgs             []determMsg
-		NonDetermMsgs          []deterministicgas.MsgType
+		NonDetermMsgs          []deterministicgas.MsgURL
 
 		DeterministicMessagesTable    string
 		NonDeterministicMessagesTable string
 	}{
 		GeneratorComment:  generatorComment,
 		FixedGas:          cfg.FixedGas,
-		SigVerifyCost:     1000,
-		TxSizeCostPerByte: 10,
+		SigVerifyCost:     auth.DefaultSigVerifyCostSecp256k1,
+		TxSizeCostPerByte: auth.DefaultTxSizeCostPerByte,
 		FreeBytes:         cfg.FreeBytes,
 		FreeSignatures:    cfg.FreeSignatures,
 
@@ -107,9 +108,9 @@ func main() {
 		BankMultiSendPerOperationsGas: deterministicgas.BankMultiSendPerOperationsGas,
 		AuthzExecOverhead:             deterministicgas.AuthzExecOverhead,
 
-		DetermMsgsSpecialCases: determSpeicialCaseMsgTypes,
+		DetermMsgsSpecialCases: determSpeicialCaseMsgURLs,
 		DetermMsgs:             determMsgs,
-		NonDetermMsgs:          nonDetermMsgTypes,
+		NonDetermMsgs:          nonDetermMsgURLs,
 	})
 	if err != nil {
 		panic(err)
