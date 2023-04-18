@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -249,8 +248,8 @@ type App struct {
 	// make scoped keepers public for test purposes
 	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
 
-	// ModuleManager is the module manager
-	ModuleManager *module.Manager
+	// mm is the module manager
+	mm *module.Manager
 
 	// sm is the simulation manager
 	sm *module.SimulationManager
@@ -535,6 +534,7 @@ func New(
 	)
 
 	// enable all wasm proposals
+	// FIXME(v47-legacy): remove once we finish with full migration
 	govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, wasm.EnableAllProposals))
 
 	// FIXME(v47-legacy): remove once we finish with full migration
@@ -559,13 +559,12 @@ func New(
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
-	app.ModuleManager = module.NewManager(
+	app.mm = module.NewManager(
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx, txConfig),
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		wbank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
-		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
@@ -583,13 +582,14 @@ func New(
 		assetNFTModule,
 		wnftModule,
 		customParamsModule,
+		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
-	app.ModuleManager.SetOrderBeginBlockers(
+	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,
 		capabilitytypes.ModuleName,
 		minttypes.ModuleName,
@@ -615,7 +615,7 @@ func New(
 		nft.ModuleName,
 	)
 
-	app.ModuleManager.SetOrderEndBlockers(
+	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		customparamstypes.ModuleName,
@@ -673,18 +673,18 @@ func New(
 		assetnfttypes.ModuleName,
 	}
 
-	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
-	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
+	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
+	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
 
-	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
+	app.mm.RegisterInvariants(app.CrisisKeeper)
 
 	// FIXME(v47-deterministic): fix the DeterministicMsgServer and enable it
 	// app.configurator = module.NewConfigurator(app.appCodec,
 	//	deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig), app.GRPCQueryRouter())
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.ModuleManager.RegisterServices(app.configurator)
+	app.mm.RegisterServices(app.configurator)
 
-	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
+	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.mm.Modules))
 
 	reflectionSvc, err := runtimeservices.NewReflectionService()
 	if err != nil {
@@ -702,7 +702,7 @@ func New(
 	overrideModules := map[string]module.AppModuleSimulation{
 		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 	}
-	app.sm = module.NewSimulationManagerFromAppModules(app.ModuleManager.Modules, overrideModules)
+	app.sm = module.NewSimulationManagerFromAppModules(app.mm.Modules, overrideModules)
 	app.sm.RegisterStoreDecoders()
 
 	// initialize stores
@@ -775,12 +775,12 @@ func New(
 
 	/**** Upgrades ****/
 	upgrades := []appupgrade.Upgrade{
-		appupgradev1.NewV1Upgrade(app.ModuleManager, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
+		appupgradev1.NewV1Upgrade(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
-		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+		panic(errors.Errorf("failed to read upgrade info from disk %s", err))
 	}
 
 	isSkipHeight := app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height)
@@ -822,12 +822,12 @@ func (app *App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // BeginBlocker application updates every begin block.
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	return app.ModuleManager.BeginBlock(ctx, req)
+	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block.
 func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.ModuleManager.EndBlock(ctx, req)
+	return app.mm.EndBlock(ctx, req)
 }
 
 func (app *App) Configurator() module.Configurator {
@@ -840,8 +840,8 @@ func (app *App) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.Res
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
-	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
 // LoadHeight loads a particular height.
@@ -962,31 +962,6 @@ func (app *App) RegisterTendermintService(clientCtx client.Context) {
 
 func (app *App) RegisterNodeService(clientCtx client.Context) {
 	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
-}
-
-// GetMaccPerms returns a copy of the module account permissions
-//
-// NOTE: This is solely to be used for testing purposes.
-func GetMaccPerms() map[string][]string {
-	dupMaccPerms := make(map[string][]string)
-	for k, v := range maccPerms {
-		dupMaccPerms[k] = v
-	}
-
-	return dupMaccPerms
-}
-
-// BlockedAddresses returns all the app's blocked account addresses.
-func BlockedAddresses() map[string]bool {
-	modAccAddrs := make(map[string]bool)
-	for acc := range GetMaccPerms() {
-		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
-	}
-
-	// allow the following addresses to receive funds
-	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
-
-	return modAccAddrs
 }
 
 // initParamsKeeper init params keeper and its subspaces

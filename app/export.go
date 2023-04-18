@@ -27,13 +27,16 @@ func (app *App) ExportAppStateAndValidators(forZeroHeight bool, jailAllowedAddrs
 		app.prepForZeroHeightGenesis(ctx, jailAllowedAddrs)
 	}
 
-	genState := app.ModuleManager.ExportGenesisForModules(ctx, app.appCodec, modulesToExport)
+	genState := app.mm.ExportGenesisForModules(ctx, app.appCodec, modulesToExport)
 	appState, err := json.MarshalIndent(genState, "", "  ")
 	if err != nil {
 		return servertypes.ExportedApp{}, err
 	}
 
 	validators, err := staking.WriteValidators(ctx, app.StakingKeeper)
+	if err != nil {
+		return servertypes.ExportedApp{}, err
+	}
 	return servertypes.ExportedApp{
 		AppState:        appState,
 		Validators:      validators,
@@ -71,7 +74,10 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 
 	// withdraw all validator commission
 	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
-		_, _ = app.DistrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
+		_, err := app.DistrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
+		if err != nil {
+			panic(err)
+		}
 		return false
 	})
 
@@ -85,7 +91,10 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 
 		delAddr := sdk.MustAccAddressFromBech32(delegation.DelegatorAddress)
 
-		_, _ = app.DistrKeeper.WithdrawDelegationRewards(ctx, delAddr, valAddr)
+		_, err = app.DistrKeeper.WithdrawDelegationRewards(ctx, delAddr, valAddr)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// clear validator slash events

@@ -2,7 +2,6 @@
 package simapp
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -66,7 +65,7 @@ func New(options ...Option) *App {
 	genesisState := app.ModuleBasics.DefaultGenesis(encoding.Codec)
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
-		panic(fmt.Sprintf("can't Marshal genesisState: %v", err))
+		panic(errors.Errorf("can't Marshal genesisState: %v", err))
 	}
 	coreApp.InitChain(abci.RequestInitChain{
 		ConsensusParams: simtestutil.DefaultConsensusParams,

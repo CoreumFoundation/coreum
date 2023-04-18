@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
@@ -13,10 +13,9 @@ import (
 )
 
 func main() {
-	logger := log.NewNopLogger()
 	network, err := cosmoscmd.PreProcessFlags()
 	if err != nil {
-		logger.Error("Error processing chain id flag", "err", err)
+		fmt.Printf("Error processing chain id flag, err: %s", err)
 		os.Exit(1)
 	}
 	network.SetSDKConfig()
@@ -26,10 +25,10 @@ func main() {
 	cosmoscmd.OverwriteDefaultChainIDFlags(rootCmd)
 	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	if err := svrcmd.Execute(rootCmd, "", app.DefaultNodeHome); err != nil {
+		fmt.Printf("Error executing cmd, err: %s", err)
 		switch e := err.(type) {
 		case server.ErrorCode:
 			os.Exit(e.Code)
-
 		default:
 			os.Exit(1)
 		}

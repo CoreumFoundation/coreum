@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/pkg/errors"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -69,7 +71,7 @@ func init() {
 
 	networkConfig, err := NewNetworkConfig(constant.ChainID(chainID))
 	if err != nil {
-		panic(fmt.Sprintf("can't create network config for the integration tests: %s", err))
+		panic(errors.Errorf("can't create network config for the integration tests: %s", err))
 	}
 	cfg = testingConfig{
 		GRPCAddress:     coredAddress,

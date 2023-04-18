@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -171,12 +170,12 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 
 		file, err := genTxsFs.Open(path)
 		if err != nil {
-			panic(fmt.Sprintf("can't open file %q from GenTxs FS", path))
+			panic(errors.Errorf("can't open file %q from GenTxs FS", path))
 		}
 		defer file.Close()
 		txBytes, err := io.ReadAll(file)
 		if err != nil {
-			panic(fmt.Sprintf("can't read file %+v from GenTxs FS", file))
+			panic(errors.Errorf("can't read file %+v from GenTxs FS", file))
 		}
 		genTxs = append(genTxs, txBytes)
 		return nil
