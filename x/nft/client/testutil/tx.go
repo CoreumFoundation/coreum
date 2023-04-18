@@ -3,11 +3,13 @@ package testutil
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -70,7 +72,7 @@ func (s *IntegrationTestSuite) SetupSuite() { //nolint:revive // test helper
 		[]network.FundedAccount{
 			{
 				Address: address,
-				Amount:  sdk.NewInt(10_000_000),
+				Amount:  sdkmath.NewInt(10_000_000),
 			},
 		}))
 	s.Require().NoError(err)
@@ -113,7 +115,7 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.owner),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10000))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdkmath.NewInt(10000))).String()),
 	}
 	testCases := []struct {
 		name         string
@@ -150,6 +152,8 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &txResp), out.String())
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 			}
+			err = s.network.WaitForNextBlock()
+			require.NoError(s.T(), err)
 		})
 	}
 }

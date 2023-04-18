@@ -1,8 +1,9 @@
 package types
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
@@ -27,7 +28,7 @@ const (
 // ValidateBasic checks that message fields are valid.
 func (msg *MsgIssueClass) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Issuer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer account %s", msg.Issuer)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid issuer account %s", msg.Issuer)
 	}
 
 	if len(msg.Name) > ClassMaxNameLength {
@@ -71,7 +72,7 @@ func (msg *MsgIssueClass) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg *MsgMint) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
 
 	if err := ValidateTokenID(msg.ID); err != nil {
@@ -107,7 +108,7 @@ func (msg *MsgMint) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg *MsgBurn) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
 
 	if err := ValidateTokenID(msg.ID); err != nil {
@@ -131,7 +132,7 @@ func (msg *MsgBurn) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg *MsgFreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
 
 	if err := ValidateTokenID(msg.ID); err != nil {
@@ -155,7 +156,7 @@ func (msg *MsgFreeze) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg *MsgUnfreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
 
 	if err := ValidateTokenID(msg.ID); err != nil {
@@ -179,11 +180,11 @@ func (msg *MsgUnfreeze) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg *MsgAddToWhitelist) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
 
 	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid account %s", msg.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid account %s", msg.Sender)
 	}
 
 	if err := ValidateTokenID(msg.ID); err != nil {
@@ -207,11 +208,11 @@ func (msg *MsgAddToWhitelist) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg *MsgRemoveFromWhitelist) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", msg.Sender)
 	}
 
 	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid account %s", msg.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid account %s", msg.Sender)
 	}
 
 	if err := ValidateTokenID(msg.ID); err != nil {

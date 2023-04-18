@@ -1,8 +1,9 @@
 package nft
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -24,12 +25,12 @@ func (m MsgSend) ValidateBasic() error {
 
 	_, err := sdk.AccAddressFromBech32(m.Sender)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender address (%s)", m.Sender)
 	}
 
 	_, err = sdk.AccAddressFromBech32(m.Receiver)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", m.Receiver)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid receiver address (%s)", m.Receiver)
 	}
 	return nil
 }

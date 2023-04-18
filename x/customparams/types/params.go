@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/pkg/errors"
@@ -34,7 +35,7 @@ func (p StakingParams) ValidateBasic() error {
 }
 
 func validateMinSelfDelegation(i interface{}) error {
-	v, ok := i.(sdk.Int)
+	v, ok := i.(sdkmath.Int)
 	if !ok {
 		return errors.Errorf("invalid parameter type: %T", i)
 	}

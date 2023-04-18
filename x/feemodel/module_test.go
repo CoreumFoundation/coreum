@@ -3,6 +3,7 @@ package feemodel_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -70,7 +71,7 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 				LongEmaBlockLength:      3,
 			},
 		},
-		MinGasPrice: sdk.NewDecCoin("coin", sdk.NewInt(155)),
+		MinGasPrice: sdk.NewDecCoin("coin", sdkmath.NewInt(155)),
 	}
 	cdc := config.NewEncodingConfig(module.NewBasicManager()).Codec
 	keeper := newKeeperMock(genesisState)

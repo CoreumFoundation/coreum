@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -291,7 +293,7 @@ func (k Keeper) Burn(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) erro
 // Freeze freezes specified token from the specified account.
 func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
 	def, err := k.GetDefinition(ctx, coin.Denom)
@@ -300,7 +302,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 	}
 
 	if def.IsIssuer(addr) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	if err = def.CheckFeatureAllowed(sender, types.Feature_freezing); err != nil {
@@ -323,7 +325,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 // Unfreeze unfreezes specified tokens from the specified account.
 func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if !coin.IsPositive() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "freeze amount should be positive")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "freeze amount should be positive")
 	}
 
 	def, err := k.GetDefinition(ctx, coin.Denom)
@@ -338,7 +340,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 	frozenStore := k.frozenAccountBalanceStore(ctx, addr)
 	frozenBalance := frozenStore.Balance(coin.Denom)
 	if !frozenBalance.IsGTE(coin) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds,
+		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds,
 			"unfreeze request %s is greater than the available frozen balance %s",
 			coin.String(),
 			frozenBalance.String(),
@@ -428,7 +430,7 @@ func (k Keeper) SetGlobalFreeze(ctx sdk.Context, denom string, frozen bool) {
 // SetWhitelistedBalance sets whitelisted limit for the account.
 func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error {
 	if coin.IsNil() || coin.IsNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidCoins, "whitelisted limit amount should be greater than or equal to 0")
 	}
 
 	def, err := k.GetDefinition(ctx, coin.Denom)
@@ -437,7 +439,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 	}
 
 	if def.IsIssuer(addr) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
 	if err = def.CheckFeatureAllowed(sender, types.Feature_whitelisting); err != nil {
@@ -486,7 +488,7 @@ func (k Keeper) SetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, coi
 	}
 }
 
-func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount sdk.Int, recipient sdk.AccAddress) error {
+func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount sdkmath.Int, recipient sdk.AccAddress) error {
 	if !amount.IsPositive() {
 		return nil
 	}
@@ -506,7 +508,7 @@ func (k Keeper) mintIfReceivable(ctx sdk.Context, def types.Definition, amount s
 	return nil
 }
 
-func (k Keeper) burnIfSpendable(ctx sdk.Context, account sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+func (k Keeper) burnIfSpendable(ctx sdk.Context, account sdk.AccAddress, def types.Definition, amount sdkmath.Int) error {
 	if err := k.isCoinSpendable(ctx, account, def, amount); err != nil {
 		return sdkerrors.Wrapf(err, "coins are not spendable")
 	}
@@ -526,7 +528,7 @@ func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, coinsToBurn sdk.Co
 	return nil
 }
 
-func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdkmath.Int) error {
 	if !def.IsFeatureEnabled(types.Feature_freezing) || def.IsIssuer(addr) {
 		return nil
 	}
@@ -537,13 +539,13 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 
 	availableBalance := k.availableBalance(ctx, addr, def.Denom)
 	if !availableBalance.Amount.GTE(amount) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available, available %s",
+		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFunds, "%s is not available, available %s",
 			sdk.NewCoin(def.Denom, amount), availableBalance)
 	}
 	return nil
 }
 
-func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdkmath.Int) error {
 	if !def.IsFeatureEnabled(types.Feature_whitelisting) || def.IsIssuer(addr) {
 		return nil
 	}

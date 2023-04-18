@@ -449,7 +449,6 @@ func New(
 		// for the assetnft we use the clear bank keeper without the assets integration because it interacts only with native token.
 		originalBankKeeper,
 	)
-
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
 	// Register the proposal types
@@ -830,6 +829,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 	return app.ModuleManager.EndBlock(ctx, req)
 }
 
+// Configurator returns the app Configurator.
 func (app *App) Configurator() module.Configurator {
 	return app.configurator
 }
@@ -960,6 +960,7 @@ func (app *App) RegisterTendermintService(clientCtx client.Context) {
 	)
 }
 
+// RegisterNodeService registers the app node service.
 func (app *App) RegisterNodeService(clientCtx client.Context) {
 	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
 }
@@ -989,7 +990,7 @@ func BlockedAddresses() map[string]bool {
 	return modAccAddrs
 }
 
-// initParamsKeeper init params keeper and its subspaces
+// initParamsKeeper init params keeper and its subspaces.
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 

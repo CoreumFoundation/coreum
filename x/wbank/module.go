@@ -56,8 +56,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // FIXME(v47-module-config): remove or replace with corresponding component
-//// Route returns the message routing key for the bank module.
-//func (am AppModule) Route() sdk.Route {
-//	// we need to pass the wrapped keeper to the handler to use it instead of the default
-//	return sdk.NewRoute(banktypes.RouterKey, bank.NewHandler(am.keeper))
-//}
+// Route returns the message routing key for the bank module.
+/* func (am AppModule) Route() sdk.Route {
+	// we need to pass the wrapped keeper to the handler to use it instead of the default
+	return sdk.NewRoute(banktypes.RouterKey, bank.NewHandler(am.keeper))
+} */

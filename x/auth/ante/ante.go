@@ -4,10 +4,11 @@
 package ante
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	authkeeper "github.com/CoreumFoundation/coreum/x/auth/keeper"
@@ -29,19 +30,19 @@ type HandlerOptions struct {
 // signer.
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	if options.AccountKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "account keeper is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "account keeper is required for ante builder")
 	}
 
 	if options.BankKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "bank keeper is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "bank keeper is required for ante builder")
 	}
 
 	if options.FeeModelKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "fee model keeper is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "fee model keeper is required for ante builder")
 	}
 
 	if options.SignModeHandler == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "sign mode handler is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "sign mode handler is required for ante builder")
 	}
 
 	if options.SigGasConsumer == nil {
@@ -49,7 +50,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	}
 
 	if options.WasmTXCounterStoreKey == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "tx counter key is required for ante builder")
 	}
 
 	infiniteAccountKeeper := authkeeper.NewInfiniteAccountKeeper(options.AccountKeeper)

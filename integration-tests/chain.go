@@ -3,6 +3,7 @@ package integrationtests
 import (
 	"reflect"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -86,7 +87,7 @@ func (c ChainContext) TxFactory() client.Factory {
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
-func (c ChainContext) NewCoin(amount sdk.Int) sdk.Coin {
+func (c ChainContext) NewCoin(amount sdkmath.Int) sdk.Coin {
 	return sdk.NewCoin(c.NetworkConfig.Denom, amount)
 }
 
@@ -130,11 +131,11 @@ type BalancesOptions struct {
 	Messages                    []sdk.Msg
 	NondeterministicMessagesGas uint64
 	GasPrice                    sdk.Dec
-	Amount                      sdk.Int
+	Amount                      sdkmath.Int
 }
 
 // ComputeNeededBalanceFromOptions computes the required balance based on the input options.
-func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) sdk.Int {
+func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) sdkmath.Int {
 	if options.GasPrice.IsNil() {
 		options.GasPrice = c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
 	}

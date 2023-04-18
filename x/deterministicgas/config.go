@@ -8,13 +8,17 @@ import (
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -46,6 +50,7 @@ func DefaultConfig() Config {
 		freeSignatures: 1,
 	}
 
+	// FIXME(v47-deterministic): re-estimate and update all values + regenerate doc
 	cfg.gasByMsg = map[string]gasByMsgFunc{
 		// asset/ft
 		MsgType(&assetfttypes.MsgIssue{}):               constantGasFunc(70000),
@@ -86,6 +91,11 @@ func DefaultConfig() Config {
 		MsgType(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
+		// FIXME(v47-deterministic): check that if we want to support both go types
+		MsgType(&govtypesv1beta1.MsgVote{}):         constantGasFunc(7000),
+		MsgType(&govtypesv1beta1.MsgVoteWeighted{}): constantGasFunc(9000),
+		MsgType(&govtypesv1beta1.MsgDeposit{}):      constantGasFunc(52000),
+
 		MsgType(&govtypesv1.MsgVote{}):         constantGasFunc(7000),
 		MsgType(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(9000),
 		MsgType(&govtypesv1.MsgDeposit{}):      constantGasFunc(52000),
@@ -111,13 +121,35 @@ func DefaultConfig() Config {
 		MsgType(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
 	}
 
+	// FIXME(v47-deterministic): validate all new un-deterministic messages and move to deterministic if possible
 	registerNondeterministicGasFuncs(
 		&cfg,
 		[]sdk.Msg{
+			// auth
+			&authtypes.MsgUpdateParams{},
+
+			// bank
+			&banktypes.MsgSetSendEnabled{},
+			&banktypes.MsgUpdateParams{},
+
+			// consensus
+			&consensustypes.MsgUpdateParams{},
+
+			// crisis
+			&crisistypes.MsgUpdateParams{},
+
+			// distribution
+			&distributiontypes.MsgUpdateParams{},
+			&distributiontypes.MsgCommunityPoolSpend{},
+
 			// gov
 			// MsgSubmitProposal is defined as nondeterministic because it runs a proposal handler function
 			// specific for each proposal and those functions consume unknown amount of gas.
+			&govtypesv1beta1.MsgSubmitProposal{},
+
 			&govtypesv1.MsgSubmitProposal{},
+			&govtypesv1.MsgExecLegacyContent{},
+			&govtypesv1.MsgUpdateParams{},
 
 			// crisis
 			// MsgVerifyInvariant is defined as nondeterministic since fee
@@ -130,6 +162,30 @@ func DefaultConfig() Config {
 			// ValidateBasic step.
 			&evidencetypes.MsgSubmitEvidence{},
 
+			// mint
+			&minttypes.MsgUpdateParams{},
+
+			// staking
+			&stakingtypes.MsgUpdateParams{},
+			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
+			&stakingtypes.MsgCancelUnbondingDelegation{},
+
+			// slashing
+			&slashingtypes.MsgUpdateParams{},
+
+			// slashing
+			&slashingtypes.MsgUpdateParams{},
+
+			// upgrade
+			&upgradetypes.MsgCancelUpgrade{},
+			&upgradetypes.MsgSoftwareUpgrade{},
+
+			// vesting
+			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
+			&vestingtypes.MsgCreatePeriodicVestingAccount{},
+			// FIXME(v47-deterministic): add message to deterministic (we have separate task for it)
+			&vestingtypes.MsgCreatePermanentLockedAccount{},
+
 			// wasm
 			&wasmtypes.MsgStoreCode{},
 			&wasmtypes.MsgInstantiateContract{},
@@ -138,6 +194,12 @@ func DefaultConfig() Config {
 			&wasmtypes.MsgMigrateContract{},
 			&wasmtypes.MsgIBCSend{},
 			&wasmtypes.MsgIBCCloseChannel{},
+			&wasmtypes.MsgUpdateInstantiateConfig{},
+			&wasmtypes.MsgUpdateParams{},
+			&wasmtypes.MsgUnpinCodes{},
+			&wasmtypes.MsgPinCodes{},
+			&wasmtypes.MsgSudoContract{},
+			&wasmtypes.MsgStoreAndInstantiateContract{},
 		},
 	)
 

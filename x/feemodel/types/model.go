@@ -1,6 +1,9 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // DefaultModel returns model with default params.
 func DefaultModel() Model {
@@ -80,7 +83,7 @@ func (m Model) calculateNextGasPriceInDiscountRegion(shortEMA, longEMA int64) sd
 	// the faster price goes up)
 	const exponent = 2
 	height := m.params.InitialGasPrice.Sub(gasPriceWithMaxDiscount)
-	width := sdk.NewDecFromInt(sdk.NewInt(longEMA))
+	width := sdk.NewDecFromInt(sdkmath.NewInt(longEMA))
 	x := sdk.NewDec(shortEMA)
 
 	offset := height.Mul(x.Quo(width).Sub(sdk.OneDec()).Abs().Power(exponent))

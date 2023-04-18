@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -20,10 +21,10 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	gogoproto "github.com/gogo/protobuf/proto"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -90,7 +91,7 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation.
-// FIXME(v47-new-client) check all new features of the client ctx and add them to our wrapper
+// FIXME(v47-new-client) check all new features of the client ctx and add them to our wrapper.
 type Context struct {
 	config    ContextConfig
 	clientCtx client.Context
@@ -356,7 +357,7 @@ func (c Context) WithViper(prefix string) Context {
 	return c
 }
 
-// WithAwaitTx set the flag that the  client should wait for the tx after the tx execution,
+// WithAwaitTx set the flag that the  client should wait for the tx after the tx execution.
 func (c Context) WithAwaitTx(value bool) Context {
 	c.awaitTx = value
 	return c
@@ -400,7 +401,7 @@ func (c Context) Invoke(ctx context.Context, method string, req, reply interface
 
 func (c Context) invokeRPC(ctx context.Context, method string, req, reply interface{}, opts []grpc.CallOption) error {
 	if reflect.ValueOf(req).IsNil() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request cannot be nil")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidRequest, "request cannot be nil")
 	}
 
 	reqBz, err := protoCodec.Marshal(req)
@@ -419,7 +420,7 @@ func (c Context) invokeRPC(ctx context.Context, method string, req, reply interf
 		}
 		if height < 0 {
 			return sdkerrors.Wrapf(
-				sdkerrors.ErrInvalidRequest,
+				cosmoserrors.ErrInvalidRequest,
 				"client.Context.Invoke: height (%d) from %q must be >= 0", height, grpctypes.GRPCBlockHeightHeader)
 		}
 	}
@@ -487,11 +488,11 @@ func (c Context) queryABCI(ctx context.Context, req abci.RequestQuery) (abci.Res
 
 func sdkErrorToGRPCError(resp abci.ResponseQuery) error {
 	switch resp.Code {
-	case sdkerrors.ErrInvalidRequest.ABCICode():
+	case cosmoserrors.ErrInvalidRequest.ABCICode():
 		return status.Error(codes.InvalidArgument, resp.Log)
-	case sdkerrors.ErrUnauthorized.ABCICode():
+	case cosmoserrors.ErrUnauthorized.ABCICode():
 		return status.Error(codes.Unauthenticated, resp.Log)
-	case sdkerrors.ErrKeyNotFound.ABCICode():
+	case cosmoserrors.ErrKeyNotFound.ABCICode():
 		return status.Error(codes.NotFound, resp.Log)
 	default:
 		return status.Error(codes.Unknown, resp.Log)

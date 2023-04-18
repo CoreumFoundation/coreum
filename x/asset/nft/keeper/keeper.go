@@ -3,11 +3,12 @@ package keeper
 import (
 	"bytes"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/pkg/errors"
@@ -213,7 +214,7 @@ func (k Keeper) Mint(ctx sdk.Context, settings types.MintSettings) error {
 	}
 
 	if !definition.IsIssuer(settings.Sender) {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", settings.Sender.String())
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "address %q is unauthorized to perform the mint operation", settings.Sender.String())
 	}
 
 	if !k.nftKeeper.HasClass(ctx, settings.ClassID) {
@@ -272,7 +273,7 @@ func (k Keeper) Burn(ctx sdk.Context, owner sdk.AccAddress, classID, id string) 
 	}
 
 	if k.nftKeeper.GetOwner(ctx, classID, id).String() != owner.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only owner can burn the nft")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only owner can burn the nft")
 	}
 
 	if err := k.checkBurnable(ctx, owner, ndfd, classID, id); err != nil {
@@ -301,7 +302,7 @@ func (k Keeper) checkBurnable(ctx sdk.Context, owner sdk.AccAddress, ndfd types.
 
 	// non issuer is not allowed to burn frozen NFT, but the issuer can
 	if frozen && owner.String() != ndfd.Issuer {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "frozen token cannot be burnt")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "frozen token cannot be burnt")
 	}
 
 	return nil
@@ -611,7 +612,7 @@ func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, a
 	}
 
 	if classDefinition.Issuer == account.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
 	}
 
 	if err := k.SetWhitelisting(ctx, classID, nftID, account, true); err != nil {
@@ -641,7 +642,7 @@ func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, send
 	}
 
 	if classDefinition.Issuer == account.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
 	}
 
 	if err := k.SetWhitelisting(ctx, classID, nftID, account, false); err != nil {
@@ -690,7 +691,7 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 	}
 
 	if classDefinition.IsFeatureEnabled(types.ClassFeature_disable_sending) {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s has sending disabled", classID, nftID)
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s has sending disabled", classID, nftID)
 	}
 
 	frozen, err := k.IsFrozen(ctx, classID, nftID)
@@ -701,7 +702,7 @@ func (k Keeper) isNFTSendable(ctx sdk.Context, classID, nftID string) error {
 		return err
 	}
 	if frozen {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is frozen", classID, nftID)
 	}
 	return nil
 }
@@ -735,7 +736,7 @@ func (k Keeper) isNFTReceivable(ctx sdk.Context, classID, nftID string, receiver
 		return err
 	}
 	if !whitelisted {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "nft with classID:%s and ID:%s is not whitelisted for account %s", classID, nftID, receiver)
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "nft with classID:%s and ID:%s is not whitelisted for account %s", classID, nftID, receiver)
 	}
 	return nil
 }

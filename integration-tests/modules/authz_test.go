@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
@@ -31,7 +32,7 @@ func TestAuthz(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	totalAmountToSend := sdk.NewInt(2_000)
+	totalAmountToSend := sdkmath.NewInt(2_000)
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
@@ -45,7 +46,7 @@ func TestAuthz(t *testing.T) {
 		FromAddress: granter.String(),
 		ToAddress:   recipient.String(),
 		// send a half to have 2 messages in the Exec
-		Amount: sdk.NewCoins(chain.NewCoin(sdk.NewInt(1_000))),
+		Amount: sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1_000))),
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
@@ -90,7 +91,7 @@ func TestAuthz(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBankSend)),
 		msgBankSend,
 	)
-	requireT.ErrorIs(err, sdkerrors.ErrInvalidPubKey)
+	requireT.ErrorIs(err, cosmoserrors.ErrInvalidPubKey)
 
 	// try to send using the authz
 	txResult, err = client.BroadcastTx(
@@ -133,5 +134,5 @@ func TestAuthz(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
 		&execMsg,
 	)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
