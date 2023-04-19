@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"os"
 	"reflect"
-	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -31,8 +30,6 @@ func main() {
 		determMsgs                []determMsg
 		nonDetermMsgURLs          []deterministicgas.MsgURL
 		determSpeicialCaseMsgURLs []deterministicgas.MsgURL
-
-		nonDetermMsgGasFuncNameRegexp = regexp.MustCompile(`^deterministicgas.registerNondeterministicGasFuncs.func[0-9]+$`)
 	)
 
 	cfg := deterministicgas.DefaultConfig()
@@ -41,7 +38,7 @@ func main() {
 		fnParts := strings.Split(fnFullName, "/")
 		fnShortName := fnParts[len(fnParts)-1]
 
-		if nonDetermMsgGasFuncNameRegexp.MatchString(fnShortName) {
+		if fnShortName == "deterministicgas.nondeterministicGasFunc" {
 			nonDetermMsgURLs = append(nonDetermMsgURLs, msgURL)
 			continue
 		}
