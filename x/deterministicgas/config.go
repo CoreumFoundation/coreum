@@ -223,7 +223,7 @@ func (cfg *Config) authzMsgExecGasFunc(authzMsgExecOverhead uint64) gasByMsgFunc
 
 func registerNondeterministicGasFuncs(cfg *Config, msgs []sdk.Msg) {
 	for _, msg := range msgs {
-		cfg.gasByMsg[MsgToMsgURL(msg)] = nondeterministicGasFunc()
+		cfg.gasByMsg[MsgToMsgURL(msg)] = nondeterministicGasFunc
 	}
 }
 
@@ -233,10 +233,8 @@ func constantGasFunc(constGasVal uint64) gasByMsgFunc {
 	}
 }
 
-func nondeterministicGasFunc() gasByMsgFunc {
-	return func(msg sdk.Msg) (uint64, bool) {
-		return 0, false
-	}
+func nondeterministicGasFunc(_ sdk.Msg) (uint64, bool) {
+	return 0, false
 }
 
 func bankSendMsgGasFunc(bankSendPerCoinGas uint64) gasByMsgFunc {
