@@ -71,7 +71,7 @@ func TestMintBurn(t *testing.T) {
 	// mint new tokens
 	coinToMint := sdk.NewInt64Coin(denom, 100)
 	args := append([]string{coinToMint.String()}, txValidator1Args(testNetwork)...)
-	_, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxMint(), args)
+	_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
 	requireT.NoError(err)
 
 	var balanceRsp banktypes.QueryAllBalancesResponse
@@ -85,7 +85,7 @@ func TestMintBurn(t *testing.T) {
 	// burn tokens
 	coinToMint = sdk.NewInt64Coin(denom, 200)
 	args = append([]string{coinToMint.String()}, txValidator1Args(testNetwork)...)
-	_, err = testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxBurn(), args)
+	_, err = testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxBurn(), args)
 	requireT.NoError(err)
 
 	requireT.NoError(testutilcli.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String()}, &balanceRsp))
@@ -117,7 +117,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	// freeze part of the token
 	coinToFreeze := sdk.NewInt64Coin(denom, 100)
 	args := append([]string{recipient.String(), coinToFreeze.String()}, txValidator1Args(testNetwork)...)
-	_, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxFreeze(), args)
+	_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
 	requireT.NoError(err)
 
 	var frozenBalanceResp types.QueryFrozenBalanceResponse
@@ -131,7 +131,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 		newDenom := issue(requireT, ctx, token, initialAmount, testNetwork)
 		coinToFreeze = sdk.NewInt64Coin(newDenom, 100)
 		args := append([]string{recipient.String(), coinToFreeze.String()}, txValidator1Args(testNetwork)...)
-		_, err = testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxFreeze(), args)
+		_, err = testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
 		requireT.NoError(err)
 	}
 
@@ -145,7 +145,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	// unfreeze part of the frozen token
 	unfreezeTokens := sdk.NewInt64Coin(denom, 75)
 	args = append([]string{recipient.String(), unfreezeTokens.String()}, txValidator1Args(testNetwork)...)
-	_, err = testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxUnfreeze(), args)
+	_, err = testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnfreeze(), args)
 	requireT.NoError(err)
 
 	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom}, &frozenBalanceResp))
@@ -175,7 +175,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 
 	// globally freeze the token
 	args := append([]string{denom}, txValidator1Args(testNetwork)...)
-	_, err = testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxGloballyFreeze(), args)
+	_, err = testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxGloballyFreeze(), args)
 	requireT.NoError(err)
 
 	var resp types.QueryTokenResponse
@@ -184,7 +184,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 
 	// globally unfreeze the token
 	args = append([]string{denom}, txValidator1Args(testNetwork)...)
-	_, err = testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxGloballyUnfreeze(), args)
+	_, err = testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxGloballyUnfreeze(), args)
 	requireT.NoError(err)
 
 	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
@@ -219,7 +219,7 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 
 		coinToWhitelist := sdk.NewInt64Coin(denom, 100)
 		args := append([]string{recipient.String(), coinToWhitelist.String()}, txValidator1Args(testNetwork)...)
-		_, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxSetWhitelistedLimit(), args)
+		_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxSetWhitelistedLimit(), args)
 		requireT.NoError(err)
 
 		var balancesResp types.QueryWhitelistedBalanceResponse
@@ -256,7 +256,7 @@ func issue(requireT *require.Assertions, clientCtx client.Context, token types.T
 	}
 
 	args = append(args, txValidator1Args(testNetwork)...)
-	res, err := testutilcli.ExecTxCmdAndWaitNextBlock(clientCtx, testNetwork, cli.CmdTxIssue(), args)
+	res, err := testutilcli.ExecTxCmd(clientCtx, testNetwork, cli.CmdTxIssue(), args)
 	requireT.NoError(err)
 
 	eventIssuedName := proto.MessageName(&types.EventIssued{})

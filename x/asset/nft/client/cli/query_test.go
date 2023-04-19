@@ -75,7 +75,7 @@ func issueClass(
 	if royaltyRate != "" {
 		args = append(args, "--royalty-rate", royaltyRate)
 	}
-	_, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxIssueClass(), args)
+	_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
 	return types.BuildClassID(symbol, validator.Address)
@@ -89,6 +89,6 @@ func mint(
 ) {
 	args := []string{classID, nftID, url, urlHash}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxMint(), args)
+	_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
 	requireT.NoError(err)
 }

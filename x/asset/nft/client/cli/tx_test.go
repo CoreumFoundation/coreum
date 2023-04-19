@@ -34,7 +34,7 @@ func TestCmdTxIssueClass(t *testing.T) {
 		fmt.Sprintf("--features=%s", types.ClassFeature_burning.String()),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
-	res, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxIssueClass(), args)
+	res, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
 	requireT.NotEmpty(res.TxHash)
@@ -77,7 +77,7 @@ func TestCmdFreeze(t *testing.T) {
 	// freeze
 	args := []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxFreeze(), args)
+	_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
 	requireT.NoError(err)
 
 	// query frozen
@@ -88,7 +88,7 @@ func TestCmdFreeze(t *testing.T) {
 	// unfreeze
 	args = []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxUnfreeze(), args)
+	_, err = testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnfreeze(), args)
 	requireT.NoError(err)
 
 	// query frozen
@@ -134,7 +134,7 @@ func TestCmdWhitelist(t *testing.T) {
 	// whitelist
 	args := []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxWhitelist(), args)
+	_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxWhitelist(), args)
 	requireT.NoError(err)
 
 	// query whitelisted
@@ -152,7 +152,7 @@ func TestCmdWhitelist(t *testing.T) {
 	// unwhitelist
 	args = []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, cli.CmdTxUnwhitelist(), args)
+	_, err = testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnwhitelist(), args)
 	requireT.NoError(err)
 
 	// query whitelisted

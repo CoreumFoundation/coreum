@@ -77,7 +77,7 @@ func TestAutoGasPrices(t *testing.T) {
 			bankTx := bankcli.NewTxCmd()
 			addQueryGasPriceToAllLeafs(bankTx)
 
-			res, err := testutilcli.ExecTxCmdAndWaitNextBlock(ctx, testNetwork, bankTx, args)
+			res, err := testutilcli.ExecTxCmd(ctx, testNetwork, bankTx, args)
 			if tc.expectError {
 				requireT.Error(err)
 				return
