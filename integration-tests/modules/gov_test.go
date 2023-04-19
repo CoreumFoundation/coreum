@@ -22,6 +22,7 @@ import (
 // 2. depositing missing amount to proposal created on the 1st step,
 // 3. voting using weighted votes.
 func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

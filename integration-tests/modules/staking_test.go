@@ -27,6 +27,7 @@ import (
 
 // TestStakingProposalParamChange checks that staking param change proposal works correctly.
 func TestStakingProposalParamChange(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -78,6 +79,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
@@ -251,6 +253,7 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 // TestValidatorUpdateWithLowMinSelfDelegation checks validator can update its parameters even if the new min self
 // delegation is higher than current validator self delegation.
 func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

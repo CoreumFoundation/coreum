@@ -33,6 +33,7 @@ type testingConfig struct {
 	StakerMnemonics []string
 	LogFormat       logger.Format
 	LogVerbose      bool
+	RunUnsafe       bool
 }
 
 var (
@@ -45,6 +46,7 @@ func init() {
 		fundingMnemonic, coredAddress, logFormat string
 		chainID                                  string
 		stakerMnemonics                          stringsFlag
+		runUnsafe                                bool
 	)
 
 	flag.StringVar(&coredAddress, "cored-address", "localhost:9090", "Address of cored node started by znet")
@@ -52,6 +54,7 @@ func init() {
 	flag.Var(&stakerMnemonics, "staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.StringVar(&chainID, "chain-id", string(constant.ChainIDDev), "Which chain-id to use (coreum-devnet-1, coreum-testnet-1,...)")
+	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 
 	// accept testing flags
 	testing.Init()
@@ -78,6 +81,7 @@ func init() {
 		StakerMnemonics: stakerMnemonics,
 		LogFormat:       logger.Format(logFormat),
 		LogVerbose:      flag.Lookup("test.v").Value.String() == "true",
+		RunUnsafe:       runUnsafe,
 	}
 
 	config.NewNetwork(cfg.NetworkConfig).SetSDKConfig()
