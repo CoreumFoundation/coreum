@@ -126,7 +126,7 @@ func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasConfig
 	return ctx, gasBefore, exists
 }
 
-func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgName string) {
+func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgURL string) {
 	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
 	if deterministicGas == 0 {
 		return
@@ -136,6 +136,6 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 
 	gasFactor := float32(nondeterministicGas) / float32(deterministicGas)
 	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
-		{Name: "msg_name", Value: msgName},
+		{Name: "msg_name", Value: msgURL},
 	})
 }

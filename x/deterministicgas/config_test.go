@@ -27,7 +27,7 @@ var revProtoTypes map[reflect.Type]string
 func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor nondeterministic.
-	ignoredMsgTypes := []string{
+	ignoredMsgURLs := []deterministicgas.MsgURL{
 		// Not-integrated modules:
 		// IBC:
 
@@ -71,7 +71,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	}
 
 	// WASM messages will be added here
-	nondeterministicMsgTypes := []string{
+	nondeterministicMsgURLs := []deterministicgas.MsgURL{
 		// gov
 		"/cosmos.gov.v1beta1.MsgSubmitProposal",
 
@@ -105,15 +105,15 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		}
 
 		// Skip unknown messages.
-		if lo.ContainsBy(ignoredMsgTypes, func(msgType string) bool {
-			return deterministicgas.MsgType(sdkMsg) == msgType
+		if lo.ContainsBy(ignoredMsgURLs, func(msgURL deterministicgas.MsgURL) bool {
+			return deterministicgas.MsgToMsgURL(sdkMsg) == msgURL
 		}) {
 			continue
 		}
 
 		// Add message to nondeterministic.
-		if lo.ContainsBy(nondeterministicMsgTypes, func(msgType string) bool {
-			return deterministicgas.MsgType(sdkMsg) == msgType
+		if lo.ContainsBy(nondeterministicMsgURLs, func(msgURL deterministicgas.MsgURL) bool {
+			return deterministicgas.MsgToMsgURL(sdkMsg) == msgURL
 		}) {
 			nondeterministicMsgs = append(nondeterministicMsgs, sdkMsg)
 			continue
@@ -131,7 +131,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg
-		t.Run("deterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
+		t.Run("deterministic: "+string(deterministicgas.MsgToMsgURL(sdkMsg)), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
 			assert.True(t, ok)
 			assert.Positive(t, gas)
@@ -140,7 +140,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	for _, sdkMsg := range nondeterministicMsgs {
 		sdkMsg := sdkMsg
-		t.Run("nondeterministic: "+deterministicgas.MsgType(sdkMsg), func(t *testing.T) {
+		t.Run("nondeterministic: "+string(deterministicgas.MsgToMsgURL(sdkMsg)), func(t *testing.T) {
 			gas, ok := cfg.GasRequiredByMessage(sdkMsg)
 			assert.False(t, ok)
 			assert.Zero(t, gas)
@@ -154,10 +154,10 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 		denom   = "ducore"
 		address = "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6"
 
-		assetFTIssue             = 70000
-		bankSendPerEntryGas      = 24000
-		bankMultiSendPerEntryGas = 11000
-		authzMsgExecOverhead     = 2000
+		assetFTIssue                 = 70000
+		bankSendPerCoinGas           = deterministicgas.BankSendPerCoinGas
+		bankMultiSendPerOperationGas = deterministicgas.BankMultiSendPerOperationsGas
+		authzMsgExecOverhead         = deterministicgas.AuthzExecOverhead
 	)
 
 	cfg := deterministicgas.DefaultConfig()
@@ -183,13 +183,13 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 		{
 			name:                    "bank.MsgSend: 0 entries",
 			msg:                     &banktypes.MsgSend{},
-			expectedGas:             bankSendPerEntryGas,
+			expectedGas:             bankSendPerCoinGas,
 			expectedIsDeterministic: true,
 		},
 		{
 			name:                    "bank.MsgSend: 1 entry",
 			msg:                     &banktypes.MsgSend{Amount: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
-			expectedGas:             bankSendPerEntryGas,
+			expectedGas:             bankSendPerCoinGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -199,13 +199,13 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 					return sdk.NewCoin(denom, sdk.NewInt(int64(i)))
 				}),
 			},
-			expectedGas:             6 * bankSendPerEntryGas,
+			expectedGas:             6 * bankSendPerCoinGas,
 			expectedIsDeterministic: true,
 		},
 		{
 			name:                    "bank.MsgMultiSend 0 input & 0 output",
 			msg:                     &banktypes.MsgMultiSend{},
-			expectedGas:             bankMultiSendPerEntryGas * 2,
+			expectedGas:             bankMultiSendPerOperationGas * 2,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -218,7 +218,7 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
 				},
 			},
-			expectedGas:             bankMultiSendPerEntryGas * 2,
+			expectedGas:             bankMultiSendPerOperationGas * 2,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -232,7 +232,7 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
 				},
 			},
-			expectedGas:             3 * bankMultiSendPerEntryGas,
+			expectedGas:             3 * bankMultiSendPerOperationGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -248,7 +248,7 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(3)))},
 				},
 			},
-			expectedGas:             5 * bankMultiSendPerEntryGas,
+			expectedGas:             5 * bankMultiSendPerOperationGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -265,7 +265,7 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 					[]sdk.Msg{&banktypes.MsgSend{}, &banktypes.MsgMultiSend{}},
 				),
 			),
-			expectedGas:             authzMsgExecOverhead + bankSendPerEntryGas + 2*bankMultiSendPerEntryGas,
+			expectedGas:             authzMsgExecOverhead + bankSendPerCoinGas + 2*bankMultiSendPerOperationGas,
 			expectedIsDeterministic: true,
 		},
 		{
@@ -279,7 +279,7 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 					},
 				),
 			),
-			expectedGas:             authzMsgExecOverhead + authzMsgExecOverhead + bankSendPerEntryGas + 2*bankMultiSendPerEntryGas + bankSendPerEntryGas,
+			expectedGas:             authzMsgExecOverhead + authzMsgExecOverhead + bankSendPerCoinGas + 2*bankMultiSendPerOperationGas + bankSendPerCoinGas,
 			expectedIsDeterministic: true,
 		},
 		{
