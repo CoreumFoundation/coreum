@@ -6,7 +6,7 @@ import "testing"
 // unsafe tests can only be run against a locally running chain since they modify parameters
 // of the chain.
 func SkipUnsafe(t *testing.T) {
-	if cfg.SkipUnsafe {
+	if !cfg.RunUnsafe {
 		t.SkipNow()
 	}
 }
