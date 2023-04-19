@@ -390,6 +390,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 // TestWASMPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
 // pinning and unpinning through proposals works correctly. We also verify that pinned smart contract consumes less gas.
 func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

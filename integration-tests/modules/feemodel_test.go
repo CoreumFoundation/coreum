@@ -41,6 +41,7 @@ func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
 func TestFeeModelProposalParamChange(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)

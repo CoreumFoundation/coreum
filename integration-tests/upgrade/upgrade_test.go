@@ -26,6 +26,7 @@ import (
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
+	integrationtests.SkipUnsafe(t)
 	ctx, chain := integrationtests.NewTestingContext(t)
 
 	log := logger.Get(ctx)
