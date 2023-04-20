@@ -95,4 +95,5 @@ As an example here is a command to connect to the devnet to get the status:
 $ cored status --chain-id=coreum-devnet-1 --node=https://full-node.devnet-1.coreum.dev:26657
 ```
 
-You can also find block explorers for each chain in this [link](https://docs.coreum.dev/tools-ecosystem/block-explorer.html),
+You can also find block explorers for each chain in this 
+[link](https://docs.coreum.dev/tools-ecosystem/block-explorer.html).
