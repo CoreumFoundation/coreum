@@ -25,7 +25,7 @@
     "assetft": {
       "params": {
         "issue_fee": {
-          "denom": "udevcore",
+          "denom": "{{ .Denom }}",
           "amount": "10000000"
         }
       }
@@ -33,7 +33,7 @@
     "assetnft": {
       "params": {
         "mint_fee": {
-          "denom": "udevcore",
+          "denom": "{{ .Denom }}",
           "amount": "0"
         }
       }
@@ -60,10 +60,10 @@
       "supply": [],
       "denom_metadata": [
         {
-          "description": "udevcore coin",
+          "description": "{{ .Denom }} coin",
           "denom_units": [
             {
-              "denom": "udevcore",
+              "denom": "{{ .Denom }}",
               "exponent": 0,
               "aliases": []
             },
@@ -73,10 +73,10 @@
               "aliases": []
             }
           ],
-          "base": "udevcore",
+          "base": "{{ .Denom }}",
           "display": "devcore",
-          "name": "udevcore",
-          "symbol": "udevcore"
+          "name": "{{ .Denom }}",
+          "symbol": "{{ .Denom }}"
         }
       ]
     },
@@ -86,7 +86,7 @@
     },
     "crisis": {
       "constant_fee": {
-        "denom": "udevcore",
+        "denom": "{{ .Denom }}",
         "amount": "500000000000"
       }
     },
@@ -126,7 +126,7 @@
       "deposit_params": {
         "min_deposit": [
           {
-            "denom": "udevcore",
+            "denom": "{{ .Denom }}",
             "amount": "{{ .Gov.ProposalConfig.MinDepositAmount }}"
           }
         ],
@@ -180,7 +180,7 @@
         "annual_provisions": "0.000000000000000000"
       },
       "params": {
-        "mint_denom": "udevcore",
+        "mint_denom": "{{ .Denom }}",
         "inflation_rate_change": "0.130000000000000000",
         "inflation_max": "0.200000000000000000",
         "inflation_min": "0.000000000000000000",
@@ -225,7 +225,7 @@
         "max_validators": 32,
         "max_entries": 7,
         "historical_entries": 10000,
-        "bond_denom": "udevcore"
+        "bond_denom": "{{ .Denom }}"
       },
       "last_total_power": "0",
       "last_validator_powers": [],
@@ -267,7 +267,7 @@
         }
       },
       "min_gas_price": {
-        "denom": "udevcore",
+        "denom": "{{ .Denom }}",
         "amount": "0.0625"
       }
     },

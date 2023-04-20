@@ -147,11 +147,13 @@ func (dcp DirectConfigProvider) genesisByTemplate() ([]byte, error) {
 	err := template.Must(template.New("genesis").Funcs(funcMap).Parse(genesisTemplate)).Execute(genesisBuf, struct {
 		GenesisTimeUTC     string
 		ChainID            constant.ChainID
+		Denom              string
 		Gov                GovConfig
 		CustomParamsConfig CustomParamsConfig
 	}{
 		GenesisTimeUTC:     dcp.GenesisTime.UTC().Format(time.RFC3339),
 		ChainID:            dcp.ChainID,
+		Denom:              dcp.Denom,
 		Gov:                dcp.GovConfig,
 		CustomParamsConfig: dcp.CustomParamsConfig,
 	})
