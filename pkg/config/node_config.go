@@ -27,24 +27,6 @@ type NodeConfig struct {
 	SeedPeers      []string
 }
 
-// Clone creates a copy of the NodeConfig so that mutable fields like slices.
-// are copied as immutable.
-func (nc NodeConfig) Clone() NodeConfig {
-	copied := NodeConfig{
-		Name:           nc.Name,
-		PrometheusPort: nc.PrometheusPort,
-		NodeKey:        make([]byte, len(nc.NodeKey)),
-		ValidatorKey:   make([]byte, len(nc.ValidatorKey)),
-		SeedPeers:      make([]string, len(nc.SeedPeers)),
-	}
-
-	copy(copied.NodeKey, nc.NodeKey)
-	copy(copied.ValidatorKey, nc.ValidatorKey)
-	copy(copied.SeedPeers, nc.SeedPeers)
-
-	return copied
-}
-
 // SavePrivateKeys saves private keys to files.
 func (nc NodeConfig) SavePrivateKeys(homeDir string) error {
 	err := os.MkdirAll(homeDir+"/config", 0o700)
@@ -98,6 +80,22 @@ func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
 	cfg.Consensus.TimeoutCommit = time.Second
 
 	return cfg
+}
+
+func (nc NodeConfig) clone() NodeConfig {
+	copied := NodeConfig{
+		Name:           nc.Name,
+		PrometheusPort: nc.PrometheusPort,
+		NodeKey:        make([]byte, len(nc.NodeKey)),
+		ValidatorKey:   make([]byte, len(nc.ValidatorKey)),
+		SeedPeers:      make([]string, len(nc.SeedPeers)),
+	}
+
+	copy(copied.NodeKey, nc.NodeKey)
+	copy(copied.ValidatorKey, nc.ValidatorKey)
+	copy(copied.SeedPeers, nc.SeedPeers)
+
+	return copied
 }
 
 // WriteTendermintConfigToFile saves tendermint config to file.
