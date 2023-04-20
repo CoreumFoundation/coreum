@@ -171,7 +171,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 
 func TestGloballyFreezeUnfreeze(t *testing.T) {
 	requireT := require.New(t)
-	networkCfg, err := config.NetworkByChainID(constant.ChainIDDev)
+	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
 	app.ChosenNetwork = networkCfg
 	testNetwork := network.New(t)

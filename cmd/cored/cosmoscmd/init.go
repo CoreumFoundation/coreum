@@ -29,7 +29,7 @@ const (
 )
 
 // InitCmd returns the init cobra command.
-func InitCmd(network config.Network, defaultNodeHome string) *cobra.Command {
+func InitCmd(network config.NetworkConfig, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [moniker]",
 		Short: "Initialize configuration files for private validator, p2p, genesis, and application",
@@ -72,9 +72,8 @@ func InitCmd(network config.Network, defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			networkNodeConfig := network.NodeConfig()
-			networkNodeConfig.Name = args[0]
-			cfg = network.NodeConfig().TendermintNodeConfig(cfg)
+			network.NodeConfig.Name = args[0]
+			cfg = network.NodeConfig.TendermintNodeConfig(cfg)
 
 			_, _, err = genutil.InitializeNodeValidatorFilesFromMnemonic(cfg, mnemonic)
 			if err != nil {

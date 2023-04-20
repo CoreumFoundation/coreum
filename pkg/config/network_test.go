@@ -44,7 +44,10 @@ func TestAddFundsToTheNetwork(t *testing.T) {
 	// default 5 + two additional
 	requireT.Len(provider2.FundedAccounts, len(provider.FundedAccounts)+2)
 
-	genDocBytes, err := n.EncodeGenesis()
+	n2 := n
+	n2.Provider = provider2
+
+	genDocBytes, err := n2.EncodeGenesis()
 	requireT.NoError(err)
 
 	parsedGenesisDoc, err := tmtypes.GenesisDocFromJSON(genDocBytes)
@@ -137,7 +140,7 @@ func TestGenesisHash(t *testing.T) {
 	}{
 		{
 			chainID:     constant.ChainIDMain,
-			genesisHash: "b7a9fa3445d6233372e72534c37e947d939e32a18f12928b23d407fc2b8ecc4d",
+			genesisHash: "5be3b3e0fee69842c4c73eb5f54eb64684420736473f0f5cef0ba6b81d44f253",
 		},
 		{
 			chainID:     constant.ChainIDTest,

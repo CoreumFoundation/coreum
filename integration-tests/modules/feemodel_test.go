@@ -30,13 +30,12 @@ func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 
 	logger.Get(ctx).Info("Queried minimum gas price required", zap.Stringer("gasPrice", res.MinGasPrice))
 
-	params := chain.NetworkConfig.Fee.FeeModel.Params()
-	model := feemodeltypes.NewModel(params)
+	model := feemodeltypes.NewModel(chain.FeeModelParams.Model)
 
 	require.False(t, res.MinGasPrice.Amount.IsNil())
 	assert.True(t, res.MinGasPrice.Amount.GTE(model.CalculateGasPriceWithMaxDiscount()))
 	assert.True(t, res.MinGasPrice.Amount.LTE(model.CalculateMaxGasPrice()))
-	assert.Equal(t, chain.NetworkConfig.Denom, res.MinGasPrice.Denom)
+	assert.Equal(t, chain.NetworkConfig.Denom(), res.MinGasPrice.Denom)
 }
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
