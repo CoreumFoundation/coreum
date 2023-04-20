@@ -49,7 +49,7 @@ func (c *configuratorMock) RegisterMigration(moduleName string, forVersion uint6
 // The test checks the migration registration of the original bank.
 // Since we override the "Register Services" we want to be sure that the after the update of the SDK,
 // The original bank won't have unexpected migrations.
-func TestAppModuleOriginalBak_RegisterServices(t *testing.T) {
+func TestAppModuleOriginalBank_RegisterServices(t *testing.T) {
 	bankModule := bank.NewAppModule(&codec.AminoCodec{}, bankkeeper.BaseKeeper{}, keeper.AccountKeeper{}, nil)
 	configurator := newConfiguratorMock()
 	bankModule.RegisterServices(configurator)
