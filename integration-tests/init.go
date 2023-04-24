@@ -5,10 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -103,7 +103,7 @@ func init() {
 
 	grpcClient, err := grpc.Dial(coredAddress, grpc.WithInsecure())
 	if err != nil {
-		panic(err)
+		panic(errors.WithStack(err))
 	}
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithChainID(string(cfg.NetworkConfig.ChainID())).
@@ -113,12 +113,12 @@ func init() {
 
 	feemodelClient := feemodeltypes.NewQueryClient(clientCtx)
 
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
 	defer cancel()
 
 	_, err = feemodelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	if err != nil {
-		panic(err)
+		panic(errors.WithStack(err))
 	}
 
 	chain = NewChain(ChainConfig{

@@ -26,7 +26,7 @@ func NewNetworkConfig(chainID constant.ChainID) (config.NetworkConfig, error) {
 		return networkConfig, nil
 	}
 
-	networkConfig.Provider = config.DirectConfigProvider{
+	networkConfig.Provider = config.DynamicConfigProvider{
 		ChainID:     constant.ChainIDDev,
 		GenesisTime: time.Now(),
 		Denom:       constant.DenomDev,

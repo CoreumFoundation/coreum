@@ -35,7 +35,7 @@ func init() {
 	// configs
 	networkConfigs = map[constant.ChainID]NetworkConfig{
 		constant.ChainIDMain: {
-			Provider:      NewJSONConfigProvider(genesis.MainnetGenesis),
+			Provider:      NewStaticConfigProvider(genesis.MainnetGenesis),
 			AddressPrefix: constant.AddressPrefixMain,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
@@ -45,7 +45,7 @@ func init() {
 			},
 		},
 		constant.ChainIDTest: {
-			Provider:      NewJSONConfigProvider(genesis.TestnetGenesis),
+			Provider:      NewStaticConfigProvider(genesis.TestnetGenesis),
 			AddressPrefix: constant.AddressPrefixTest,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
@@ -55,7 +55,7 @@ func init() {
 			},
 		},
 		constant.ChainIDDev: {
-			Provider: DirectConfigProvider{
+			Provider: DynamicConfigProvider{
 				ChainID:     constant.ChainIDDev,
 				GenesisTime: time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 				Denom:       constant.DenomDev,

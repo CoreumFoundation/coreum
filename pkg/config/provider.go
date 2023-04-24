@@ -31,8 +31,8 @@ type NetworkConfigProvider interface {
 	GenesisDoc() (*tmtypes.GenesisDoc, error)
 }
 
-// DirectConfigProvider provides configuration generated from fields in this structure.
-type DirectConfigProvider struct {
+// DynamicConfigProvider provides configuration generated from fields in this structure.
+type DynamicConfigProvider struct {
 	ChainID            constant.ChainID
 	GenesisTime        time.Time
 	GovConfig          GovConfig
@@ -44,7 +44,7 @@ type DirectConfigProvider struct {
 }
 
 // WithAccount funds address with balances at genesis.
-func (dcp DirectConfigProvider) WithAccount(accAddress sdk.AccAddress, balances sdk.Coins) DirectConfigProvider {
+func (dcp DynamicConfigProvider) WithAccount(accAddress sdk.AccAddress, balances sdk.Coins) DynamicConfigProvider {
 	dcp = dcp.clone()
 	dcp.FundedAccounts = append(dcp.FundedAccounts, FundedAccount{
 		Address:  accAddress.String(),
@@ -54,24 +54,24 @@ func (dcp DirectConfigProvider) WithAccount(accAddress sdk.AccAddress, balances 
 }
 
 // WithGenesisTx adds transaction to the genesis file.
-func (dcp DirectConfigProvider) WithGenesisTx(signedTx json.RawMessage) DirectConfigProvider {
+func (dcp DynamicConfigProvider) WithGenesisTx(signedTx json.RawMessage) DynamicConfigProvider {
 	dcp = dcp.clone()
 	dcp.GenTxs = append(dcp.GenTxs, signedTx)
 	return dcp
 }
 
 // GetChainID returns chain ID.
-func (dcp DirectConfigProvider) GetChainID() constant.ChainID {
+func (dcp DynamicConfigProvider) GetChainID() constant.ChainID {
 	return dcp.ChainID
 }
 
 // GetDenom returns denom.
-func (dcp DirectConfigProvider) GetDenom() string {
+func (dcp DynamicConfigProvider) GetDenom() string {
 	return dcp.Denom
 }
 
 // GenesisDoc returns the genesis doc of the network.
-func (dcp DirectConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
+func (dcp DynamicConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	codec := NewEncodingConfig(module.NewBasicManager(
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
@@ -131,14 +131,14 @@ func (dcp DirectConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	return genesisDoc, nil
 }
 
-func (dcp DirectConfigProvider) clone() DirectConfigProvider {
+func (dcp DynamicConfigProvider) clone() DynamicConfigProvider {
 	dcp.FundedAccounts = append([]FundedAccount{}, dcp.FundedAccounts...)
 	dcp.GenTxs = append([]json.RawMessage{}, dcp.GenTxs...)
 
 	return dcp
 }
 
-func (dcp DirectConfigProvider) genesisByTemplate() ([]byte, error) {
+func (dcp DynamicConfigProvider) genesisByTemplate() ([]byte, error) {
 	funcMap := template.FuncMap{
 		"ToUpper": strings.ToUpper,
 	}
@@ -195,8 +195,8 @@ func applyFundedAccountToGenesis(
 	return accountState
 }
 
-// NewJSONConfigProvider creates new JSONConfigProvider.
-func NewJSONConfigProvider(content []byte) JSONConfigProvider {
+// NewStaticConfigProvider creates new StaticConfigProvider.
+func NewStaticConfigProvider(content []byte) StaticConfigProvider {
 	genesisDoc, err := tmtypes.GenesisDocFromJSON(content)
 	if err != nil {
 		panic(err)
@@ -212,7 +212,7 @@ func NewJSONConfigProvider(content []byte) JSONConfigProvider {
 	)).Codec
 	stakingGenesisState := stakingtypes.GetGenesisStateFromAppState(codec, appStateMapJSONRawMessage)
 
-	provider := JSONConfigProvider{
+	provider := StaticConfigProvider{
 		genesisDoc: genesisDoc,
 		denom:      stakingGenesisState.Params.BondDenom,
 	}
@@ -220,23 +220,23 @@ func NewJSONConfigProvider(content []byte) JSONConfigProvider {
 	return provider
 }
 
-// JSONConfigProvider provides configuration based on genesis JSON.
-type JSONConfigProvider struct {
+// StaticConfigProvider provides configuration based on genesis JSON.
+type StaticConfigProvider struct {
 	genesisDoc *tmtypes.GenesisDoc
 	denom      string
 }
 
 // GetChainID returns chain ID.
-func (jcp JSONConfigProvider) GetChainID() constant.ChainID {
+func (jcp StaticConfigProvider) GetChainID() constant.ChainID {
 	return constant.ChainID(jcp.genesisDoc.ChainID)
 }
 
 // GetDenom returns denom.
-func (jcp JSONConfigProvider) GetDenom() string {
+func (jcp StaticConfigProvider) GetDenom() string {
 	return jcp.denom
 }
 
 // GenesisDoc returns the genesis doc of the network.
-func (jcp JSONConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
+func (jcp StaticConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	return jcp.genesisDoc, nil
 }

@@ -103,7 +103,7 @@ func DefaultConfig() network.Config {
 		panic(errors.Wrap(err, "can't get network config"))
 	}
 	// set to nil the devnet config we don't need
-	provider := devNetwork.Provider.(config.DirectConfigProvider)
+	provider := devNetwork.Provider.(config.DynamicConfigProvider)
 	provider.FundedAccounts = nil
 	provider.GenTxs = nil
 	provider.CustomParamsConfig.Staking.MinSelfDelegation = sdk.NewInt(1)

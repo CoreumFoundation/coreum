@@ -36,7 +36,7 @@ func TestAddFundsToTheNetwork(t *testing.T) {
 	pubKey2 := cosmossecp256k1.GenPrivKey().PubKey()
 	accountAddress2 := sdk.AccAddress(pubKey2.Address())
 
-	provider := n.Provider.(config.DirectConfigProvider)
+	provider := n.Provider.(config.DynamicConfigProvider)
 	provider2 := provider.
 		WithAccount(accountAddress, sdk.NewCoins(sdk.NewInt64Coin("someTestToken", 1000))).
 		WithAccount(accountAddress2, sdk.NewCoins(sdk.NewInt64Coin("someTestToken", 2000)))
@@ -112,7 +112,7 @@ func TestNetworkNotMutable(t *testing.T) {
 	n, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
 
-	provider := n.Provider.(config.DirectConfigProvider)
+	provider := n.Provider.(config.DynamicConfigProvider)
 	provider2 := provider.
 		WithAccount(sdk.AccAddress(pubKey.Address()), sdk.NewCoins(sdk.NewInt64Coin("someTestToken", 1000))).
 		WithGenesisTx([]byte("test string"))
@@ -126,7 +126,7 @@ func TestNetworkNotMutable(t *testing.T) {
 	// re-init the config and check that length remains the same
 	n, err = config.NetworkConfigByChainID(constant.ChainIDDev)
 	requireT.NoError(err)
-	provider = n.Provider.(config.DirectConfigProvider)
+	provider = n.Provider.(config.DynamicConfigProvider)
 
 	assertT.Len(provider.FundedAccounts, 4)
 	assertT.Len(provider.GenTxs, 3)
