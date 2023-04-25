@@ -65,7 +65,7 @@ func QueryGasPrice(cmd *cobra.Command) (*types.QueryMinGasPriceResponse, error) 
 	return queryClient.MinGasPrice(ctx, &types.QueryMinGasPriceRequest{})
 }
 
-// QueryGasPrice queries the gas price.
+// QueryParams queries the params.
 func QueryParams(cmd *cobra.Command) (*types.QueryParamsResponse, error) {
 	clientCtx, err := client.GetClientQueryContext(cmd)
 	if err != nil {
