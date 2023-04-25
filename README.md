@@ -89,11 +89,12 @@ Remember to replace address with the one existing in your keystore.
 Coreum has `mainnet`, `testnet` and `devnet` chains running. In order to connect to any of those networks, get the
 network variables from the docs [here](https://docs.coreum.dev/tutorials/network-variables.html), and
 provide the correct `node` and `chain-id` flags to the cli command. 
-As an example here is a command to connect to the devnet to get the status:
+As an example here is a command to connect to the testnet to get the status:
 
 ```
-$ cored status --chain-id=coreum-devnet-1 --node=https://full-node.devnet-1.coreum.dev:26657
+$ cored status --chain-id=coreum-devnet-1 --node=https://full-node.testnet-1.coreum.dev:26657
 ```
+It should also be mentioned that for development purposes testnet is more stable than devnet.
 
-You can also find block explorers for each chain in this 
+You can also find block explorers for each chain by this
 [link](https://docs.coreum.dev/tools-ecosystem/block-explorer.html).
