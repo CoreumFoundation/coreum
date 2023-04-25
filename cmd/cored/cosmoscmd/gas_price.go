@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	autoValue                 = "auto"
-	defaultGasPriceMultiplier = "1.1"
+	autoValue = "auto"
 )
 
 func mergeRunEs(runEs ...func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
@@ -60,7 +59,7 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 
 	gasPriceWithOverhead := sdk.DecCoin{
 		Denom:  gasPrice.MinGasPrice.Denom,
-		Amount: params.GetParams().Model.InitialGasPrice.Mul(sdk.MustNewDecFromStr(defaultGasPriceMultiplier)),
+		Amount: params.GetParams().Model.InitialGasPrice,
 	}
 	return gasPriceFlag.Value.Set(gasPriceWithOverhead.String())
 }
