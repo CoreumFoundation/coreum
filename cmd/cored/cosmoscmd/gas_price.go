@@ -48,6 +48,11 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	params, err := feecli.QueryParams(cmd)
+	if err != nil {
+		return err
+	}
+
 	gasPrice, err := feecli.QueryGasPrice(cmd)
 	if err != nil {
 		return err
@@ -55,7 +60,7 @@ func queryGasPriceRunE(cmd *cobra.Command, args []string) error {
 
 	gasPriceWithOverhead := sdk.DecCoin{
 		Denom:  gasPrice.MinGasPrice.Denom,
-		Amount: gasPrice.MinGasPrice.Amount.Mul(sdk.MustNewDecFromStr(defaultGasPriceMultiplier)),
+		Amount: params.GetParams().Model.InitialGasPrice.Mul(sdk.MustNewDecFromStr(defaultGasPriceMultiplier)),
 	}
 	return gasPriceFlag.Value.Set(gasPriceWithOverhead.String())
 }
