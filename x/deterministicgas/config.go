@@ -22,8 +22,6 @@ import (
 	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
-//go:generate go run spec/generate.go spec/README.md
-
 // These constants define gas for messages which have custom calculation logic.
 const (
 	BankSendPerCoinGas            = 24000
