@@ -10,6 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
@@ -57,12 +58,11 @@ func TestAuthz(t *testing.T) {
 	}))
 
 	// grant the bank send authorization
-	expiration := time.Now().Add(time.Minute)
 	grantMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
-		&expiration,
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 

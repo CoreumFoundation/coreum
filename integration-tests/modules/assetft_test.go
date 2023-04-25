@@ -13,6 +13,7 @@ import (
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -2334,21 +2335,19 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		},
 	}
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, granter)
-	expiration := time.Now().Add(time.Minute)
 	grantFreezeMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgFreeze{})),
-		&expiration,
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 
-	expiration = time.Now().Add(time.Minute)
 	grantWhitelistMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgSetWhitelistedLimit{})),
-		&expiration,
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 

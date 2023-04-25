@@ -15,6 +15,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/gogo/protobuf/proto"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -1322,12 +1323,11 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	}
 
 	// grant authorization to freeze nft
-	expiration := time.Now().Add(time.Minute)
 	grantMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetnfttypes.MsgFreeze{})),
-		&expiration,
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	requireT.NoError(err)
 
