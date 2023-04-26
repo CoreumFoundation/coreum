@@ -3,7 +3,10 @@
 Coreum addresses the existing limitations of the current blockchains and empowers a solid foundation for future decentralized projects.
 Coreum’s unique approach is to provide built-in, on-chain solutions to process transactions in a deterministic way to ensure fast, secure, cheap and a green network for a variety of use-cases.
 
-The chain is designed to solve real-world problems at scale by providing native token management systems, Decentralized Exchange (DEX), while being fully decentralized. In addition to the built-on-chain solutions, Coreum uses WebAssembly (WASM) to process smart contracts, and utilizes the Tendermint Byzantine Fault Tolerance (BFT) consensus mechanism and Cosmos SDK’s proven Bonded Proof of Stake (BPoS).    
+The chain is designed to solve real-world problems at scale by providing native token management systems and Decentralized 
+Exchange (DEX), while being fully decentralized. In addition to the built-on-chain solutions, Coreum uses WebAssembly (WASM)
+to process smart contracts, and utilizes the Tendermint Byzantine Fault Tolerance (BFT) consensus mechanism and Cosmos SDK’s 
+proven Bonded Proof of Stake (BPoS).
 
 Read more on [our website](https://www.coreum.com) and [documentation portal](https://docs.coreum.dev).
 
@@ -13,34 +16,34 @@ Coreum blockchain is under development and all the features are going to be adde
 Everyone is encouraged to run a chain locally for development and testing purposes.
 
 Entire process of running local chain is automated by our tooling. The only prerequisites are:
-- `docker` and `tmux` installed from your favorite package manager
+- `docker` installed from your favorite package manager
 - `go 1.18` or newer installed and available in your `PATH`
 
 ### Build binaries
 
 Steps to build required binaries:
-1. Clone our [crust repository](https://github.com/CoreumFoundation/crust) to your `$HOME` directory:
+1. Clone our [crust repository](https://github.com/CoreumFoundation/crust) to the directory of your choice (let's call it `$COREUM_PATH`):
 ```
-$ cd $HOME
+$ cd $COREUM_PATH
 $ git clone https://github.com/CoreumFoundation/crust
 ```
-2. Not required but recommended: Add `$HOME/crust/bin` to your `PATH` environment variable:
+2. Not required but recommended: Add `$COREUM_PATH/crust/bin` to your `PATH` environment variable:
 ```
-$ export PATH="$HOME/crust/bin:$PATH"
+$ export PATH="$COREUM_PATH/crust/bin:$PATH"
 ```
 3. Compile all the required binaries and docker images:
 ```
-$ $HOME/crust/bin/crust build images
+$ $COREUM_PATH/crust/bin/crust build images
 ```
 
-After the command completes you may find executable `$HOME/crust/bin/cored`, being both blockchain node and client.
+After the command completes you may find executable `$COREUM_PATH/crust/bin/cored`, being both blockchain node and client.
 
 ### Start local chain
 
 To start local Coreum blockchain execute:
 
 ```
-$ $HOME/crust/bin/crust znet
+$ $COREUM_PATH/crust/bin/crust znet
 (znet) [znet] $ start
 ```
 
@@ -82,12 +85,16 @@ Remember to replace address with the one existing in your keystore.
 (znet) [znet] $ coredev-00 tx bank send alice devcore1cjs7qela0trw2qyyfxw5e5e7cvwzprkjaycnem 10core
 ```
 
-## Devnet
-
-You may connect to Coreum devnet network by connecting to host `s-0.devnet-1.coreum.dev` on port `443`:
+## Connect to Running Chains
+Coreum has `mainnet`, `testnet` and `devnet` chains running. In order to connect to any of those networks, get the
+network variables from the docs [here](https://docs.coreum.dev/tutorials/network-variables.html), and
+provide the correct `node` and `chain-id` flags to the cli command. 
+As an example here is a command to connect to the testnet to get the status:
 
 ```
-$ cored status --chain-id=coreum-devnet-1 --node=https://s-0.devnet-1.coreum.dev:443
+$ cored status --chain-id=coreum-devnet-1 --node=https://full-node.testnet-1.coreum.dev:26657
 ```
+It should also be mentioned that for development purposes testnet is more stable than devnet.
 
-Block explorer for devnet is available at [https://explorer.coreum.com](https://explorer.coreum.com)
+You can also find block explorers for each chain by this
+[link](https://docs.coreum.dev/tools-ecosystem/block-explorer.html).

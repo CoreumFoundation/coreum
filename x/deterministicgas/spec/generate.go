@@ -15,6 +15,8 @@ import (
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
 
+//go:generate go run . ./README.md
+
 var (
 	//go:embed README.tmpl.md
 	readmeTmpl string
