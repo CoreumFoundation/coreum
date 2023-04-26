@@ -12,6 +12,8 @@ import (
 	"github.com/CoreumFoundation/coreum/cmd/cored/cosmoscmd"
 )
 
+const coreumEnvPrefix = "CORED"
+
 func main() {
 	network, err := cosmoscmd.PreProcessFlags()
 	if err != nil {
@@ -24,7 +26,7 @@ func main() {
 	rootCmd := cosmoscmd.NewRootCmd()
 	cosmoscmd.OverwriteDefaultChainIDFlags(rootCmd)
 	rootCmd.PersistentFlags().String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
-	if err := svrcmd.Execute(rootCmd, "", app.DefaultNodeHome); err != nil {
+	if err := svrcmd.Execute(rootCmd, coreumEnvPrefix, app.DefaultNodeHome); err != nil {
 		fmt.Printf("Error executing cmd, err: %s", err)
 		switch e := err.(type) {
 		case server.ErrorCode:
