@@ -19,6 +19,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -28,7 +29,8 @@ import (
 type NetworkConfigProvider interface {
 	GetChainID() constant.ChainID
 	GetDenom() string
-	GenesisDoc() (*tmtypes.GenesisDoc, error)
+	EncodeGenesis() ([]byte, error)
+	AppState() (map[string]json.RawMessage, error)
 }
 
 // DynamicConfigProvider provides configuration generated from fields in this structure.
@@ -70,8 +72,23 @@ func (dcp DynamicConfigProvider) GetDenom() string {
 	return dcp.Denom
 }
 
-// GenesisDoc returns the genesis doc of the network.
-func (dcp DynamicConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
+// EncodeGenesis returns encoded genesis doc.
+func (dcp DynamicConfigProvider) EncodeGenesis() ([]byte, error) {
+	genesisDoc, err := dcp.genesisDoc()
+	if err != nil {
+		return nil, errors.Wrap(err, "not able to get genesis doc")
+	}
+
+	bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
+	if err != nil {
+		return nil, errors.Wrap(err, "not able to marshal genesis doc")
+	}
+
+	return append(bs, '\n'), nil
+}
+
+// AppState returns the app state from the genesis doc of the network.
+func (dcp DynamicConfigProvider) AppState() (map[string]json.RawMessage, error) {
 	codec := NewEncodingConfig(module.NewBasicManager(
 		auth.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
@@ -88,9 +105,9 @@ func (dcp DynamicConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to parse genesis json bytes")
 	}
-	var appState map[string]json.RawMessage
 
-	if err = json.Unmarshal(genesisDoc.AppState, &appState); err != nil {
+	var appState map[string]json.RawMessage
+	if err := json.Unmarshal(genesisDoc.AppState, &appState); err != nil {
 		return nil, errors.Wrap(err, "not able to parse genesis app state")
 	}
 
@@ -122,6 +139,26 @@ func (dcp DynamicConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 
 	bankState.Balances = banktypes.SanitizeGenesisBalances(bankState.Balances)
 	appState[banktypes.ModuleName] = codec.MustMarshalJSON(bankState)
+
+	return appState, nil
+}
+
+// GenesisDoc returns the genesis doc of the network.
+func (dcp DynamicConfigProvider) genesisDoc() (*tmtypes.GenesisDoc, error) {
+	genesisJSON, err := dcp.genesisByTemplate()
+	if err != nil {
+		return nil, errors.Wrap(err, "not able get genesis")
+	}
+
+	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
+	if err != nil {
+		return nil, errors.Wrap(err, "not able to parse genesis json bytes")
+	}
+
+	appState, err := dcp.AppState()
+	if err != nil {
+		return nil, err
+	}
 
 	genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
 	if err != nil {
@@ -213,6 +250,7 @@ func NewStaticConfigProvider(content []byte) StaticConfigProvider {
 	stakingGenesisState := stakingtypes.GetGenesisStateFromAppState(codec, appStateMapJSONRawMessage)
 
 	provider := StaticConfigProvider{
+		content:    content,
 		genesisDoc: genesisDoc,
 		denom:      stakingGenesisState.Params.BondDenom,
 	}
@@ -222,6 +260,7 @@ func NewStaticConfigProvider(content []byte) StaticConfigProvider {
 
 // StaticConfigProvider provides configuration based on genesis JSON.
 type StaticConfigProvider struct {
+	content    []byte
 	genesisDoc *tmtypes.GenesisDoc
 	denom      string
 }
@@ -236,7 +275,17 @@ func (jcp StaticConfigProvider) GetDenom() string {
 	return jcp.denom
 }
 
-// GenesisDoc returns the genesis doc of the network.
-func (jcp StaticConfigProvider) GenesisDoc() (*tmtypes.GenesisDoc, error) {
-	return jcp.genesisDoc, nil
+// EncodeGenesis returns encoded genesis doc.
+func (jcp StaticConfigProvider) EncodeGenesis() ([]byte, error) {
+	return jcp.content, nil
+}
+
+// AppState returns the app state from the genesis doc of the network.
+func (jcp StaticConfigProvider) AppState() (map[string]json.RawMessage, error) {
+	var appState map[string]json.RawMessage
+	if err := json.Unmarshal(jcp.genesisDoc.AppState, &appState); err != nil {
+		return nil, errors.Wrap(err, "not able to parse genesis app state")
+	}
+
+	return appState, nil
 }

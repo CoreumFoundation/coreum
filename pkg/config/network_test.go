@@ -184,14 +184,10 @@ func TestGenesisCoreTotalSupply(t *testing.T) {
 
 			unsealConfig()
 			n.SetSDKConfig()
-			genesisDoc, err := n.GenesisDoc()
+			appState, err := n.Provider.AppState()
 			require.NoError(t, err)
 
-			var appStateMapJSONRawMessage map[string]json.RawMessage
-			err = json.Unmarshal(genesisDoc.AppState, &appStateMapJSONRawMessage)
-			require.NoError(t, err)
-
-			bankGenesis, ok := appStateMapJSONRawMessage[banktypes.ModuleName]
+			bankGenesis, ok := appState[banktypes.ModuleName]
 			require.True(t, ok)
 
 			var bankGenesisState banktypes.GenesisState

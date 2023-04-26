@@ -6,13 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/genesis"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -201,39 +198,9 @@ func (c NetworkConfig) ChainID() constant.ChainID {
 	return c.Provider.GetChainID()
 }
 
-// GenesisDoc returns the genesis doc of the network.
-func (c NetworkConfig) GenesisDoc() (*tmtypes.GenesisDoc, error) {
-	return c.Provider.GenesisDoc()
-}
-
 // EncodeGenesis returns the json encoded representation of the genesis file.
 func (c NetworkConfig) EncodeGenesis() ([]byte, error) {
-	genesisDoc, err := c.GenesisDoc()
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to get genesis doc")
-	}
-
-	bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to marshal genesis doc")
-	}
-
-	return append(bs, '\n'), nil
-}
-
-// SaveGenesis saves json encoded representation of the genesis config into file.
-func (c NetworkConfig) SaveGenesis(homeDir string) error {
-	genDocBytes, err := c.EncodeGenesis()
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
-		return errors.Wrap(err, "unable to make config directory")
-	}
-
-	err = os.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
-	return errors.Wrap(err, "unable to write genesis bytes to file")
+	return c.Provider.EncodeGenesis()
 }
 
 // NetworkConfigByChainID returns predefined NetworkConfig for a ChainID.

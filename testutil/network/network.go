@@ -1,7 +1,6 @@
 package network
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"testing"
@@ -116,14 +115,9 @@ func DefaultConfig() network.Config {
 	setNetworkConfigOnce.Do(func() {
 		devNetwork.SetSDKConfig()
 	})
-	genesisDoc, err := devNetwork.GenesisDoc()
+	appState, err := devNetwork.Provider.AppState()
 	if err != nil {
-		panic(errors.Wrap(err, "can't get network genesis doc"))
-	}
-
-	var genesisAppState map[string]json.RawMessage
-	if err = json.Unmarshal(genesisDoc.AppState, &genesisAppState); err != nil {
-		panic(errors.Wrapf(err, "can unmarshal genesis app state to %T", genesisAppState))
+		panic(errors.Wrap(err, "can't get network's app state"))
 	}
 
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
@@ -143,7 +137,7 @@ func DefaultConfig() network.Config {
 				baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 			)
 		},
-		GenesisState:    genesisAppState,
+		GenesisState:    appState,
 		TimeoutCommit:   2 * time.Second,
 		ChainID:         "chain-" + tmrand.NewRand().Str(6),
 		NumValidators:   1,

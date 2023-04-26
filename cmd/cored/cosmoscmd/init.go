@@ -2,6 +2,7 @@ package cosmoscmd
 
 import (
 	"bufio"
+	"os"
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -67,9 +68,18 @@ func InitCmd(network config.NetworkConfig, defaultNodeHome string) *cobra.Comman
 				return errors.Errorf("genesis.json file already exists: %v", genFile)
 			}
 
-			err = network.SaveGenesis(clientCtx.HomeDir)
+			genDocBytes, err := network.EncodeGenesis()
 			if err != nil {
 				return err
+			}
+
+			configDir := filepath.Join(clientCtx.HomeDir, "config")
+			if err := os.MkdirAll(configDir, 0o700); err != nil {
+				return errors.Wrap(err, "unable to make config directory")
+			}
+
+			if err := os.WriteFile(filepath.Join(configDir, "genesis.json"), genDocBytes, 0644); err != nil {
+				return errors.Wrap(err, "unable to write genesis bytes to file")
 			}
 
 			network.NodeConfig.Name = args[0]
