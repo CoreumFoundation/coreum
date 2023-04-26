@@ -116,7 +116,7 @@ func init() {
 	ctx, cancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
 	defer cancel()
 
-	_, err = feemodelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
+	resp, err := feemodelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
@@ -125,7 +125,7 @@ func init() {
 		ClientContext:   clientCtx,
 		GRPCAddress:     cfg.GRPCAddress,
 		NetworkConfig:   cfg.NetworkConfig,
-		FeeModelParams:  feemodeltypes.DefaultParams(),
+		InitialGasPrice: resp.Params.Model.InitialGasPrice,
 		FundingMnemonic: cfg.FundingMnemonic,
 		StakerMnemonics: cfg.StakerMnemonics,
 	})

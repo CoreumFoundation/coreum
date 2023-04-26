@@ -16,14 +16,13 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
-	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
 	ClientContext          client.Context
 	NetworkConfig          config.NetworkConfig
-	FeeModelParams         feemodeltypes.Params
+	InitialGasPrice        sdk.Dec
 	DeterministicGasConfig deterministicgas.Config
 }
 
@@ -31,12 +30,12 @@ type ChainContext struct {
 func NewChainContext(
 	clientCtx client.Context,
 	networkCfg config.NetworkConfig,
-	feeModelParams feemodeltypes.Params,
+	initialGasPrice sdk.Dec,
 ) ChainContext {
 	return ChainContext{
 		ClientContext:          clientCtx,
 		NetworkConfig:          networkCfg,
-		FeeModelParams:         feeModelParams,
+		InitialGasPrice:        initialGasPrice,
 		DeterministicGasConfig: deterministicgas.DefaultConfig(),
 	}
 }
@@ -82,7 +81,7 @@ func (c ChainContext) TxFactory() client.Factory {
 		WithKeybase(c.ClientContext.Keyring()).
 		WithChainID(string(c.NetworkConfig.ChainID())).
 		WithTxConfig(c.ClientContext.TxConfig()).
-		WithGasPrices(c.NewDecCoin(c.FeeModelParams.Model.InitialGasPrice).String())
+		WithGasPrices(c.NewDecCoin(c.InitialGasPrice).String())
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
@@ -136,7 +135,7 @@ type BalancesOptions struct {
 // ComputeNeededBalanceFromOptions computes the required balance based on the input options.
 func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) sdk.Int {
 	if options.GasPrice.IsNil() {
-		options.GasPrice = c.FeeModelParams.Model.InitialGasPrice
+		options.GasPrice = c.InitialGasPrice
 	}
 
 	if options.Amount.IsNil() {
@@ -163,7 +162,7 @@ type ChainConfig struct {
 	ClientContext   client.Context
 	GRPCAddress     string
 	NetworkConfig   config.NetworkConfig
-	FeeModelParams  feemodeltypes.Params
+	InitialGasPrice sdk.Dec
 	FundingMnemonic string
 	StakerMnemonics []string
 }
@@ -177,11 +176,11 @@ type Chain struct {
 
 // NewChain creates an instance of the new Chain.
 func NewChain(cfg ChainConfig) Chain {
-	chainCtx := NewChainContext(cfg.ClientContext, cfg.NetworkConfig, cfg.FeeModelParams)
+	chainCtx := NewChainContext(cfg.ClientContext, cfg.NetworkConfig, cfg.InitialGasPrice)
 	governance := NewGovernance(chainCtx, cfg.StakerMnemonics)
 
 	faucetAddr := chainCtx.ImportMnemonic(cfg.FundingMnemonic)
-	faucet := NewFaucet(NewChainContext(cfg.ClientContext.WithFromAddress(faucetAddr), cfg.NetworkConfig, cfg.FeeModelParams))
+	faucet := NewFaucet(NewChainContext(cfg.ClientContext.WithFromAddress(faucetAddr), cfg.NetworkConfig, cfg.InitialGasPrice))
 	return Chain{
 		ChainContext: chainCtx,
 		Governance:   governance,

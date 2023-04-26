@@ -276,7 +276,7 @@ func TestWASMBankSendContract(t *testing.T) {
 	txf = txf.
 		WithSimulateAndExecute(false).
 		// the gas here is to try to execute the tx and don't fail on the gas estimation
-		WithGas(uint64(chain.FeeModelParams.Model.MaxBlockGas))
+		WithGas(uint64(getFeemodelParams(ctx, t, chain.ClientContext).MaxBlockGas))
 	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, withdrawPayload, sdk.Coin{})
 	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
