@@ -3,10 +3,10 @@ package testutil
 import (
 	"fmt"
 
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdknetwork "github.com/cosmos/cosmos-sdk/testutil/network"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/CoreumFoundation/coreum/x/nft/client/cli"
 )

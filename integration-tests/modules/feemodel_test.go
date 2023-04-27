@@ -5,12 +5,13 @@ package modules
 import (
 	"testing"
 
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -97,10 +98,10 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// Verify that voting period started.
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
 	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
@@ -108,7 +109,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
 
 	// Check the proposed change is applied.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})

@@ -2,52 +2,33 @@
 package simapp
 
 import (
-	"fmt"
+	"math/rand"
 	"time"
 
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/ibc-go/v4/testing/simapp/helpers"
 	"github.com/pkg/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
-var defaultConsensusParams = &abci.ConsensusParams{
-	Block: &abci.BlockParams{
-		MaxBytes: 200000,
-		MaxGas:   2000000,
-	},
-	Evidence: &tmproto.EvidenceParams{
-		MaxAgeNumBlocks: 302400,
-		MaxAgeDuration:  504 * time.Hour,
-		MaxBytes:        10000,
-	},
-	Validator: &tmproto.ValidatorParams{
-		PubKeyTypes: []string{
-			tmtypes.ABCIPubKeyTypeEd25519,
-		},
-	},
-}
-
 // Option represents simapp customisations.
-type Option func() tmdb.DB
+type Option func() dbm.DB
 
 // WithCustomDB returns the simapp Option to run with different DB.
-func WithCustomDB(db tmdb.DB) Option {
-	return func() tmdb.DB {
+func WithCustomDB(db dbm.DB) Option {
+	return func() dbm.DB {
 		return db
 	}
 }
@@ -59,9 +40,9 @@ type App struct {
 
 // New creates application instance with in-memory database and disabled logging.
 func New(options ...Option) *App {
-	var db tmdb.DB
+	var db dbm.DB
 
-	db = tmdb.NewMemDB()
+	db = dbm.NewMemDB()
 	logger := log.NewNopLogger()
 
 	for _, option := range options {
@@ -79,16 +60,15 @@ func New(options ...Option) *App {
 	app.ChosenNetwork = network
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
 
-	coreApp := app.New(logger, db, nil, true, map[int64]bool{}, "", 0, encoding,
-		simapp.EmptyAppOptions{})
+	coreApp := app.New(logger, db, nil, true, simtestutil.EmptyAppOptions{})
 
 	genesisState := app.ModuleBasics.DefaultGenesis(encoding.Codec)
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
-		panic(fmt.Sprintf("can't Marshal genesisState: %v", err))
+		panic(errors.Errorf("can't Marshal genesisState: %v", err))
 	}
 	coreApp.InitChain(abci.RequestInitChain{
-		ConsensusParams: defaultConsensusParams,
+		ConsensusParams: simtestutil.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 
@@ -151,10 +131,11 @@ func (s *App) SendTx(
 	accountNum := account.GetAccountNumber()
 	accountSeq := account.GetSequence()
 
-	txGen := config.NewEncodingConfig(app.ModuleBasics).TxConfig
+	txCfg := config.NewEncodingConfig(app.ModuleBasics).TxConfig
 
-	tx, err := helpers.GenTx(
-		txGen,
+	tx, err := simtestutil.GenSignedMockTx(
+		rand.New(rand.NewSource(time.Now().UnixNano())),
+		txCfg,
 		messages,
 		sdk.NewCoins(feeAmt),
 		gas,
@@ -167,5 +148,5 @@ func (s *App) SendTx(
 		return sdk.GasInfo{}, nil, err
 	}
 
-	return s.Deliver(txGen.TxEncoder(), tx)
+	return s.SimDeliver(txCfg.TxEncoder(), tx)
 }

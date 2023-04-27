@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cometbft/cometbft/mempool"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -19,8 +21,6 @@ import (
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/pkg/errors"
-	"github.com/tendermint/tendermint/mempool"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -80,7 +80,7 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 		if err != nil {
 			return nil, errors.Errorf("failed to get key by the address %q from the keyring", clientCtx.FromAddress().String())
 		}
-		fromName = key.GetName()
+		fromName = key.Name
 	}
 
 	err = tx.Sign(txf, fromName, unsignedTx, true)
@@ -104,7 +104,7 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 		return nil, 0, err
 	}
 
-	txBytes, err := tx.BuildSimTx(txf, msgs...)
+	txBytes, err := txf.BuildSimTx(msgs...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -126,19 +126,32 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 
 // BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
 func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
+	var (
+		txRes *sdk.TxResponse
+		err   error
+	)
 	switch clientCtx.BroadcastMode() {
 	case flags.BroadcastSync:
-		return broadcastTxSync(ctx, clientCtx, txBytes)
+		txRes, err = broadcastTxSync(ctx, clientCtx, txBytes)
 
 	case flags.BroadcastAsync:
-		return broadcastTxAsync(ctx, clientCtx, txBytes)
-
-	case flags.BroadcastBlock:
-		return broadcastTxBlock(ctx, clientCtx, txBytes)
+		txRes, err = broadcastTxAsync(ctx, clientCtx, txBytes)
 
 	default:
 		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode())
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	if clientCtx.GetAwaitTx() {
+		txRes, err = AwaitTx(ctx, clientCtx, txRes.TxHash)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return txRes, nil
 }
 
 // GetAccountInfo returns account number and account sequence for provided address.
@@ -276,21 +289,6 @@ func broadcastTxAsync(ctx context.Context, clientCtx Context, txBytes []byte) (*
 	return res.TxResponse, nil
 }
 
-// broadcastTxBlock broadcasts encoded transaction, waits until it is included in a block.
-func broadcastTxBlock(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
-	txRes, err := broadcastTxSync(ctx, clientCtx, txBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	awaitRes, err := AwaitTx(ctx, clientCtx, txRes.TxHash)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return awaitRes, nil
-}
-
 func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 	defer cancel()
@@ -300,7 +298,7 @@ func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*s
 	if clientCtx.RPCClient() != nil {
 		res, err := clientCtx.RPCClient().BroadcastTxSync(requestCtx, txBytes)
 		if err != nil {
-			if err := processBroadcastBlockTxCommitError(requestCtx, err); err != nil {
+			if err := processTxCommitError(requestCtx, err); err != nil {
 				return nil, err
 			}
 		} else if res.Code != 0 {
@@ -318,7 +316,7 @@ func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*s
 		Mode:    sdktx.BroadcastMode_BROADCAST_MODE_SYNC,
 	})
 	if err != nil {
-		if err := processBroadcastBlockTxCommitError(requestCtx, err); err != nil {
+		if err := processTxCommitError(requestCtx, err); err != nil {
 			return nil, err
 		}
 	} else if res.TxResponse.Code != 0 {
@@ -329,7 +327,7 @@ func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*s
 	return res.TxResponse, nil
 }
 
-func processBroadcastBlockTxCommitError(ctx context.Context, err error) error {
+func processTxCommitError(ctx context.Context, err error) error {
 	if errors.Is(err, ctx.Err()) {
 		return errors.WithStack(err)
 	}

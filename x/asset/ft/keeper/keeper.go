@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -27,7 +28,7 @@ type ParamSubspace interface {
 type Keeper struct {
 	cdc           codec.BinaryCodec
 	paramSubspace ParamSubspace
-	storeKey      sdk.StoreKey
+	storeKey      storetypes.StoreKey
 	bankKeeper    types.BankKeeper
 }
 
@@ -35,7 +36,7 @@ type Keeper struct {
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	paramSubspace ParamSubspace,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
 ) Keeper {
 	return Keeper{

@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"time"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -21,11 +23,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	protobufgrpc "github.com/gogo/protobuf/grpc"
 	gogoproto "github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/encoding"
@@ -91,10 +90,11 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation.
+// FIXME(v47-new-client) check all new features of the client ctx and add them to our wrapper
 type Context struct {
-	config     ContextConfig
-	clientCtx  client.Context
-	grpcClient protobufgrpc.ClientConn
+	config    ContextConfig
+	clientCtx client.Context
+	awaitTx   bool
 }
 
 // ChainID returns chain ID.
@@ -137,9 +137,9 @@ func (c Context) WithRPCClient(client rpcclient.Client) Context {
 	return c
 }
 
-// WithGRPCClient returns a copy of the context with an updated GRPCClient client.
-func (c Context) WithGRPCClient(grpcClient protobufgrpc.ClientConn) Context {
-	c.grpcClient = grpcClient
+// WithGRPCClient returns a copy of the context with an updated GRPC client instance.
+func (c Context) WithGRPCClient(grpcClient *grpc.ClientConn) Context {
+	c.clientCtx = c.clientCtx.WithGRPCClient(grpcClient)
 	return c
 }
 
@@ -181,7 +181,7 @@ func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method st
 	}
 
 	if c.GRPCClient() != nil {
-		return c.grpcClient.NewStream(ctx, desc, method, opts...)
+		return c.clientCtx.GRPCClient.NewStream(ctx, desc, method, opts...)
 	}
 
 	return nil, errors.New("neither RPC nor GRPC client is set")
@@ -208,13 +208,13 @@ func (c Context) BroadcastMode() string {
 }
 
 // RPCClient returns RPC client.
-func (c Context) RPCClient() rpcclient.Client {
+func (c Context) RPCClient() client.TendermintRPC {
 	return c.clientCtx.Client
 }
 
 // GRPCClient returns GRPCClient client.
-func (c Context) GRPCClient() protobufgrpc.ClientConn {
-	return c.grpcClient
+func (c Context) GRPCClient() *grpc.ClientConn {
+	return c.clientCtx.GRPCClient
 }
 
 // InterfaceRegistry returns interface registry of SDK context.
@@ -354,6 +354,17 @@ func (c Context) WithInterfaceRegistry(interfaceRegistry codectypes.InterfaceReg
 func (c Context) WithViper(prefix string) Context {
 	c.clientCtx = c.clientCtx.WithViper(prefix)
 	return c
+}
+
+// WithAwaitTx set the flag that the  client should wait for the tx after the tx execution,
+func (c Context) WithAwaitTx(value bool) Context {
+	c.awaitTx = value
+	return c
+}
+
+// GetAwaitTx returns awaitTx flag.
+func (c Context) GetAwaitTx() bool {
+	return c.awaitTx
 }
 
 // PrintString prints the raw string to ctx.Output if it's defined, otherwise to os.Stdout.

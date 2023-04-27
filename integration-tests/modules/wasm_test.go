@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -459,15 +459,15 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
 
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
 
 	requireT.True(isWASMContractPinned(ctx, clientCtx, codeID))
 
@@ -485,13 +485,13 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	proposal, err = chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
 
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 	finalStatus, err = chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
 
 	requireT.False(isWASMContractPinned(ctx, clientCtx, codeID))
 

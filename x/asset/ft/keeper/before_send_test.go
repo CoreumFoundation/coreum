@@ -23,6 +23,8 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+// FIMXE add task to fix unit tests + simapp
+
 //nolint:funlen // there are too many tests cases
 func TestCalculateRateShares(t *testing.T) {
 	genAccount := func() string {

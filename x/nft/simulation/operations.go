@@ -3,10 +3,10 @@ package simulation
 import (
 	"math/rand"
 
+	simappparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
@@ -77,7 +77,7 @@ func SimulateMsgSend(
 			return simtypes.NoOpMsg(nft.ModuleName, TypeMsgSend, err.Error()), nil, err
 		}
 
-		spendLimit := spendableCoins.Sub(fees)
+		spendLimit := spendableCoins.Sub(fees...)
 		if spendLimit == nil {
 			return simtypes.NoOpMsg(nft.ModuleName, TypeMsgSend, "spend limit is nil"), nil, nil
 		}
@@ -110,7 +110,7 @@ func SimulateMsgSend(
 			return simtypes.NoOpMsg(nft.ModuleName, TypeMsgSend, "unable to generate mock tx"), nil, err
 		}
 
-		_, _, err = app.Deliver(txCfg.TxEncoder(), tx)
+		_, _, err = app.SimDeliver(txCfg.TxEncoder(), tx)
 		if err != nil {
 			return simtypes.NoOpMsg(nft.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
 		}

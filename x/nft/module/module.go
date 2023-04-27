@@ -3,8 +3,8 @@ package nft
 import (
 	"context"
 	"encoding/json"
-	"math/rand"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CoreumFoundation/coreum/x/nft"
 	"github.com/CoreumFoundation/coreum/x/nft/client/cli"
@@ -117,9 +116,10 @@ func (AppModule) Name() string {
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // Route returns the message routing key for the staking module.
-func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(nft.RouterKey, nil)
-}
+// FIXME(v47-module-config): remove or replace with corresponding component
+//func (am AppModule) Route() sdk.Route {
+//	return sdk.NewRoute(nft.RouterKey, nil)
+//}
 
 // NewHandler returns the new module handler.
 func (am AppModule) NewHandler() sdk.Handler {
@@ -130,9 +130,9 @@ func (am AppModule) NewHandler() sdk.Handler {
 func (AppModule) QuerierRoute() string { return "" }
 
 // LegacyQuerierHandler returns the nft module sdk.Querier.
-func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return nil
-}
+//func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
+//	return nil
+//}
 
 // InitGenesis performs genesis initialization for the nft module. It returns
 // no validator updates.
@@ -181,9 +181,10 @@ func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes
 }
 
 // RandomizedParams creates randomized nft param changes for the simulator.
-func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-	return nil
-}
+// FIXME(v47-module-config): remove or replace with corresponding component
+//func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
+//	return nil
+//}
 
 // RegisterStoreDecoder registers a decoder for nft module's types.
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {

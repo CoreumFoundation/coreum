@@ -56,7 +56,7 @@ func createIncrementalAccounts(accNum int) []sdk.AccAddress {
 
 		buffer.WriteString(numString) // adding on final two digits
 		// to make addresses unique
-		res, _ := sdk.AccAddressFromHex(buffer.String())
+		res, _ := sdk.AccAddressFromHexUnsafe(buffer.String())
 		bech := res.String()
 		addr, _ := testAddr(buffer.String(), bech)
 
@@ -68,7 +68,7 @@ func createIncrementalAccounts(accNum int) []sdk.AccAddress {
 }
 
 func testAddr(addr, bech string) (sdk.AccAddress, error) {
-	res, err := sdk.AccAddressFromHex(addr)
+	res, err := sdk.AccAddressFromHexUnsafe(addr)
 	if err != nil {
 		return nil, err
 	}

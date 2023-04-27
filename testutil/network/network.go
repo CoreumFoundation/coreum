@@ -7,19 +7,20 @@ import (
 	"testing"
 	"time"
 
+	dbm "github.com/cometbft/cometbft-db"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
-	tmrand "github.com/tendermint/tendermint/libs/rand"
-	tmdb "github.com/tendermint/tm-db"
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -90,7 +91,8 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 	} else {
 		cfg = configs[0]
 	}
-	net := network.New(t, cfg)
+	net, err := network.New(t, t.TempDir(), cfg)
+	require.NoError(t, err)
 	t.Cleanup(net.Cleanup)
 	return net
 }
@@ -128,32 +130,33 @@ func DefaultConfig() network.Config {
 
 	return network.Config{
 		Codec:             encoding.Codec,
-		TxConfig:          encoding.TxConfig,
 		LegacyAmino:       encoding.Amino,
 		InterfaceRegistry: encoding.InterfaceRegistry,
+		TxConfig:          encoding.TxConfig,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor: func(val network.Validator) servertypes.Application {
+		AppConstructor: func(val network.ValidatorI) servertypes.Application {
 			return app.New(
-				val.Ctx.Logger, tmdb.NewMemDB(), nil, true, map[int64]bool{}, val.Ctx.Config.RootDir, 0,
-				encoding,
-				simapp.EmptyAppOptions{},
-				baseapp.SetPruning(storetypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
-				baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
+				val.GetCtx().Logger,
+				dbm.NewMemDB(),
+				nil,
+				true,
+				simtestutil.NewAppOptionsWithFlagHome(app.DefaultNodeHome),
+				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
+				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
 			)
 		},
-		GenesisState:    genesisAppState,
-		TimeoutCommit:   2 * time.Second,
-		ChainID:         "chain-" + tmrand.NewRand().Str(6),
-		NumValidators:   1,
-		BondDenom:       devCfg.Denom,
-		MinGasPrices:    fmt.Sprintf("0.000006%s", devCfg.Denom),
-		AccountTokens:   sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
-		StakingTokens:   sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
-		BondedTokens:    sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
-		PruningStrategy: storetypes.PruningOptionNothing,
-		CleanupDir:      true,
-		SigningAlgo:     string(hd.Secp256k1Type),
-		KeyringOptions:  []keyring.Option{},
+		GenesisState:   genesisAppState,
+		TimeoutCommit:  2 * time.Second,
+		ChainID:        "chain-" + tmrand.NewRand().Str(6),
+		NumValidators:  1,
+		BondDenom:      devCfg.Denom,
+		MinGasPrices:   fmt.Sprintf("0.000006%s", devCfg.Denom),
+		AccountTokens:  sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
+		StakingTokens:  sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
+		BondedTokens:   sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		CleanupDir:     true,
+		SigningAlgo:    string(hd.Secp256k1Type),
+		KeyringOptions: []keyring.Option{},
 	}
 }
 

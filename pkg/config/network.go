@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"text/template"
 	"time"
 
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -23,8 +24,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/pkg/errors"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/genesis"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -171,12 +170,12 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 
 		file, err := genTxsFs.Open(path)
 		if err != nil {
-			panic(fmt.Sprintf("can't open file %q from GenTxs FS", path))
+			panic(errors.Errorf("can't open file %q from GenTxs FS", path))
 		}
 		defer file.Close()
 		txBytes, err := io.ReadAll(file)
 		if err != nil {
-			panic(fmt.Sprintf("can't read file %+v from GenTxs FS", file))
+			panic(errors.Errorf("can't read file %+v from GenTxs FS", file))
 		}
 		genTxs = append(genTxs, txBytes)
 		return nil

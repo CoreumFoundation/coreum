@@ -727,7 +727,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	requireT.NoError(err)
 
 	// sign from sender1
-	err = client.Sign(txF, sender1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, sender1KeyInfo.Name, txBuilder, false)
 	requireT.NoError(err)
 
 	sender2AccInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, sender2)
@@ -741,7 +741,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	// sign from sender2
-	err = client.Sign(txF, sender2KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, sender2KeyInfo.Name, txBuilder, false)
 	requireT.NoError(err)
 
 	// encode tx and broadcast

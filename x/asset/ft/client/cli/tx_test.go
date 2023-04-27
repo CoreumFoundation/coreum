@@ -308,7 +308,7 @@ func issue(requireT *require.Assertions, ctx client.Context, token types.Token, 
 func txValidator1Args(testNetwork *network.Network) []string {
 	return []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, testNetwork.Validators[0].Address.String()),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(testNetwork.Config.BondDenom, 1000000)).String()),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	}

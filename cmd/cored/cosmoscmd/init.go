@@ -1,52 +1,86 @@
 package cosmoscmd
 
+// The command init.go copied from https://github.com/cosmos/cosmos-sdk/blob/v0.47.1/x/genutil/client/cli/init.go.
 import (
 	"bufio"
+	"encoding/json"
+	"fmt"
+	"os"
 	"path/filepath"
 
+	cfg "github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/tendermint/libs/cli"
-	tmos "github.com/tendermint/tendermint/libs/os"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
-// Used flags.
-const (
-	// FlagOverwrite defines a flag to overwrite an existing genesis JSON file.
-	FlagOverwrite = "overwrite"
+type printInfo struct {
+	Moniker    string          `json:"moniker" yaml:"moniker"`
+	ChainID    string          `json:"chain_id" yaml:"chain_id"`
+	NodeID     string          `json:"node_id" yaml:"node_id"`
+	GenTxsDir  string          `json:"gentxs_dir" yaml:"gentxs_dir"`
+	AppMessage json.RawMessage `json:"app_message" yaml:"app_message"`
+}
 
-	// FlagRecover defines a flag which determines whether to init private keys from mnemonic or generate new ones.
-	FlagRecover = "recover"
-)
+func newPrintInfo(moniker, chainID, nodeID, genTxsDir string, appMessage json.RawMessage) printInfo {
+	return printInfo{
+		Moniker:    moniker,
+		ChainID:    chainID,
+		NodeID:     nodeID,
+		GenTxsDir:  genTxsDir,
+		AppMessage: appMessage,
+	}
+}
 
-// InitCmd returns the init cobra command.
-func InitCmd(network config.Network, defaultNodeHome string) *cobra.Command {
+func displayInfo(info printInfo) error {
+	out, err := json.MarshalIndent(info, "", " ")
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(os.Stderr, "%s\n", sdk.MustSortJSON(out))
+
+	return err
+}
+
+// InitCmd returns a command that initializes all files needed for Tendermint
+// and the respective application.
+func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [moniker]",
-		Short: "Initialize configuration files for private validator, p2p, genesis, and application",
+		Short: "Initialize private validator, p2p, genesis, and application configuration files",
 		Long:  `Initialize validators's and node's configuration files.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
-			cfg := server.GetServerContextFromCmd(cmd).Config
-			cfg.SetRoot(clientCtx.HomeDir)
+			serverCtx := server.GetServerContextFromCmd(cmd)
+			config := app.ChosenNetwork.NodeConfig().TendermintNodeConfig(serverCtx.Config)
+			config.SetRoot(clientCtx.HomeDir)
+
+			chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
+			switch {
+			case chainID != "":
+			case clientCtx.ChainID != "":
+				chainID = clientCtx.ChainID
+			default:
+				return errors.Errorf("undefined chain ID %s", chainID)
+			}
 
 			// Get bip39 mnemonic
 			var mnemonic string
-			isRecover, err := cmd.Flags().GetBool(FlagRecover)
-			if err != nil {
-				return errors.Wrapf(err, "got error parsing recover flag")
-			}
+			isRecover, _ := cmd.Flags().GetBool(genutilcli.FlagRecover)
 			if isRecover {
 				inBuf := bufio.NewReader(cmd.InOrStdin())
 				value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
@@ -60,38 +94,42 @@ func InitCmd(network config.Network, defaultNodeHome string) *cobra.Command {
 				}
 			}
 
-			genFile := cfg.GenesisFile()
-			overwrite, _ := cmd.Flags().GetBool(FlagOverwrite)
-
-			if !overwrite && tmos.FileExists(genFile) {
-				return errors.Errorf("genesis.json file already exists: %v", genFile)
-			}
-
-			err = network.SaveGenesis(clientCtx.HomeDir)
+			nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
 			if err != nil {
 				return err
 			}
 
-			networkNodeConfig := network.NodeConfig()
-			networkNodeConfig.Name = args[0]
-			cfg = network.NodeConfig().TendermintNodeConfig(cfg)
+			config.Moniker = args[0]
 
-			_, _, err = genutil.InitializeNodeValidatorFilesFromMnemonic(cfg, mnemonic)
+			genFile := config.GenesisFile()
+			overwrite, _ := cmd.Flags().GetBool(genutilcli.FlagOverwrite)
+
+			// use os.Stat to check if the file exists
+			_, err = os.Stat(genFile)
+			if !overwrite && !os.IsNotExist(err) {
+				return fmt.Errorf("genesis.json file already exists: %v", genFile)
+			}
+
+			if err = app.ChosenNetwork.SaveGenesis(clientCtx.HomeDir); err != nil {
+				return err
+			}
+
+			genesisBytes, err := app.ChosenNetwork.EncodeGenesis()
 			if err != nil {
 				return err
 			}
 
-			return config.WriteTendermintConfigToFile(
-				filepath.Join(cfg.RootDir, config.DefaultNodeConfigPath),
-				cfg,
-			)
+			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "", genesisBytes)
+
+			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+			return displayInfo(toPrint)
 		},
 	}
 
 	cmd.Flags().String(cli.HomeFlag, defaultNodeHome, "node's home directory")
-	cmd.Flags().String(flags.FlagChainID, string(app.DefaultChainID), "genesis file chain-id, if left blank will be randomly created")
-	cmd.Flags().BoolP(FlagOverwrite, "o", false, "overwrite the genesis.json file")
-	cmd.Flags().Bool(FlagRecover, false, "provide seed phrase to recover existing key instead of creating")
+	cmd.Flags().BoolP(genutilcli.FlagOverwrite, "o", false, "overwrite the genesis.json file")
+	cmd.Flags().Bool(genutilcli.FlagRecover, false, "provide seed phrase to recover existing key instead of creating")
+	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 
 	return cmd
 }

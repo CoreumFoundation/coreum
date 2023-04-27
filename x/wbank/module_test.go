@@ -8,9 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/gogo/protobuf/grpc"
+	"github.com/cosmos/gogoproto/grpc"
+	googlegrpc "github.com/cosmos/gogoproto/grpc"
 	"github.com/stretchr/testify/require"
-	googlegrpc "google.golang.org/grpc"
 )
 
 type grpcServerMock struct{}

@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

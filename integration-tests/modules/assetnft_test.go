@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -14,9 +15,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/gogo/protobuf/proto"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
@@ -1326,7 +1327,7 @@ func TestAssetNFTAuthZ(t *testing.T) {
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetnfttypes.MsgFreeze{})),
-		time.Now().Add(time.Minute),
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	requireT.NoError(err)
 

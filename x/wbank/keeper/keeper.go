@@ -2,11 +2,11 @@ package keeper
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/x/wbank/types"
 )
@@ -21,14 +21,14 @@ type BaseKeeperWrapper struct {
 // NewKeeper returns a new BaseKeeperWrapper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	ak banktypes.AccountKeeper,
-	paramSpace paramtypes.Subspace,
 	blockedAddrs map[string]bool,
 	ftProvider types.FungibleTokenProvider,
+	authority string,
 ) BaseKeeperWrapper {
 	return BaseKeeperWrapper{
-		BaseKeeper: bankkeeper.NewBaseKeeper(cdc, storeKey, ak, paramSpace, blockedAddrs),
+		BaseKeeper: bankkeeper.NewBaseKeeper(cdc, storeKey, ak, blockedAddrs, authority),
 		ak:         ak,
 		ftProvider: ftProvider,
 	}
@@ -38,6 +38,7 @@ func NewKeeper(
 // It will panic if the module account does not exist. An error is returned if
 // the recipient address is black-listed or if sending the tokens fails.
 // !!! The code is the copy of the corresponding func of the bank module !!!
+// FIXME(v47-validate-wrapping): validate that we wrap all required methods and update existing.
 func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
 	senderAddr := k.ak.GetModuleAddress(senderModule)
 	if senderAddr == nil {

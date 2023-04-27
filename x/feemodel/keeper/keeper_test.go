@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"testing"
 
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/x/feemodel/keeper"
@@ -45,8 +46,8 @@ func setup() (sdk.Context, keeper.Keeper) {
 
 	db := dbm.NewMemDB()
 	cms := store.NewCommitMultiStore(db)
-	cms.MountStoreWithDB(key, sdk.StoreTypeIAVL, db)
-	cms.MountStoreWithDB(tKey, sdk.StoreTypeTransient, db)
+	cms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db)
+	cms.MountStoreWithDB(tKey, storetypes.StoreTypeTransient, db)
 	must.OK(cms.LoadLatestVersion())
 	ctx := sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())
 

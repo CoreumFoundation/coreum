@@ -12,7 +12,7 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/samber/lo"
@@ -86,9 +86,9 @@ func DefaultConfig() Config {
 		MsgType(&feegranttypes.MsgRevokeAllowance{}): constantGasFunc(2500),
 
 		// gov
-		MsgType(&govtypes.MsgVote{}):         constantGasFunc(7000),
-		MsgType(&govtypes.MsgVoteWeighted{}): constantGasFunc(9000),
-		MsgType(&govtypes.MsgDeposit{}):      constantGasFunc(52000),
+		MsgType(&govtypesv1.MsgVote{}):         constantGasFunc(7000),
+		MsgType(&govtypesv1.MsgVoteWeighted{}): constantGasFunc(9000),
+		MsgType(&govtypesv1.MsgDeposit{}):      constantGasFunc(52000),
 
 		// nft
 		MsgType(&nfttypes.MsgSend{}): constantGasFunc(16000),
@@ -117,7 +117,7 @@ func DefaultConfig() Config {
 			// gov
 			// MsgSubmitProposal is defined as nondeterministic because it runs a proposal handler function
 			// specific for each proposal and those functions consume unknown amount of gas.
-			&govtypes.MsgSubmitProposal{},
+			&govtypesv1.MsgSubmitProposal{},
 
 			// crisis
 			// MsgVerifyInvariant is defined as nondeterministic since fee

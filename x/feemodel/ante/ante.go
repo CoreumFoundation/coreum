@@ -3,7 +3,6 @@ package ante
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/ibc-go/v4/testing/simapp/helpers"
 )
 
 // Keeper interface exposes methods required by ante handler decorator of fee model.
@@ -28,7 +27,8 @@ func NewFeeDecorator(keeper Keeper) FeeDecorator {
 
 // AnteHandle handles transaction in ante decorator.
 func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	if ctx.BlockHeight() == 0 || simulate || ctx.ChainID() == helpers.SimAppChainID {
+	// FIXME(v47-simulation): check that we need that additional check here `ctx.ChainID() == "simulation"`
+	if ctx.BlockHeight() == 0 || simulate {
 		// Don't enforce fee model on genesis block and during simulation
 		return next(ctx, tx, simulate)
 	}
