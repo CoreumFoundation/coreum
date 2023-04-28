@@ -4,6 +4,7 @@ package modules
 
 import (
 	"bytes"
+	"context"
 	"testing"
 	"time"
 
@@ -31,12 +32,9 @@ func TestAssetNFTQueryParams(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewTestingContext(t)
+	mintFee := getMintFee(ctx, t, chain.ClientContext)
 
-	queryClient := assetnfttypes.NewQueryClient(chain.ClientContext)
-	resp, err := queryClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
-	require.NoError(t, err)
-
-	assert.Equal(t, sdk.NewCoin(chain.NetworkConfig.Denom, chain.NetworkConfig.AssetNFTConfig.MintFee).String(), resp.Params.MintFee.String())
+	assert.Equal(t, chain.NetworkConfig.Denom(), mintFee.Denom)
 }
 
 // TestAssetNFTIssueClass tests non-fungible token class creation.
@@ -205,7 +203,7 @@ func TestAssetNFTMint(t *testing.T) {
 				&assetnfttypes.MsgMint{},
 				&nft.MsgSend{},
 			},
-			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+			Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
 		}),
 	)
 
@@ -369,7 +367,7 @@ func TestAssetNFTMint(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: issuer.String(),
-		Denom:   chain.NetworkConfig.Denom,
+		Denom:   chain.NetworkConfig.Denom(),
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
@@ -383,11 +381,11 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	integrationtests.SkipUnsafe(t)
 	ctx, chain := integrationtests.NewTestingContext(t)
 	requireT := require.New(t)
-	origMintFee := chain.NetworkConfig.AssetNFTConfig.MintFee
+	origMintFee := getMintFee(ctx, t, chain.ClientContext)
 
 	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing MintFee in the assetnft module",
 		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.OneInt()))))),
+			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origMintFee.Denom, sdk.OneInt()))))),
 		}))
 
 	issuer := chain.GenAccount()
@@ -434,14 +432,14 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 
 	burntStr, err := event.FindStringEventAttribute(res.Events, banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.OneInt()).String(), burntStr)
+	requireT.Equal(sdk.NewCoin(chain.NetworkConfig.Denom(), sdk.OneInt()).String(), burntStr)
 
 	// check that balance is 0 meaning mint fee was taken
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: issuer.String(),
-		Denom:   chain.NetworkConfig.Denom,
+		Denom:   chain.NetworkConfig.Denom(),
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
@@ -449,7 +447,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	// Revert to original mint fee
 	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing MintFee in the assetnft module",
 		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(chain.NetworkConfig.Denom, origMintFee))))),
+			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(origMintFee)))),
 		}))
 }
 
@@ -594,7 +592,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 				&assetnfttypes.MsgFreeze{},
 				&assetnfttypes.MsgUnfreeze{},
 			},
-			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+			Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
 		}),
 	)
 	requireT.NoError(
@@ -739,7 +737,7 @@ func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
 				&assetnfttypes.MsgFreeze{},
 				&assetnfttypes.MsgBurn{},
 			},
-			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+			Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
 		}),
 	)
 
@@ -845,7 +843,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 				&assetnfttypes.MsgFreeze{},
 				&assetnfttypes.MsgUnfreeze{},
 			},
-			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+			Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
 		}),
 	)
 	requireT.NoError(
@@ -1045,7 +1043,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 				&assetnfttypes.MsgRemoveFromWhitelist{},
 				&assetnfttypes.MsgAddToWhitelist{},
 			},
-			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+			Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
 		}),
 	)
 
@@ -1300,7 +1298,7 @@ func TestAssetNFTAuthZ(t *testing.T) {
 				&assetnfttypes.MsgMint{},
 				&authztypes.MsgGrant{},
 			},
-			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+			Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
 		}),
 	)
 
@@ -1353,7 +1351,7 @@ func TestAssetNFTAuthZ(t *testing.T) {
 			Messages: []sdk.Msg{
 				&execMsg,
 			},
-			Amount: chain.NetworkConfig.AssetNFTConfig.MintFee,
+			Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
 		}),
 	)
 
@@ -1372,4 +1370,12 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.True(queryRes.Frozen)
+}
+
+func getMintFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {
+	queryClient := assetnfttypes.NewQueryClient(clientCtx)
+	resp, err := queryClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	return resp.Params.MintFee
 }

@@ -15,7 +15,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	n, err := config.NetworkByChainID(constant.ChainIDDev)
+	n, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
