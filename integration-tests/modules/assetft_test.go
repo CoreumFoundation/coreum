@@ -9,7 +9,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
-	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
@@ -2337,7 +2336,6 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		},
 	}
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, granter)
-	expiration := time.Now().Add(time.Minute)
 	grantFreezeMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
@@ -2346,7 +2344,6 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	expiration = time.Now().Add(time.Minute)
 	grantWhitelistMsg, err := authztypes.NewMsgGrant(
 		granter,
 		grantee,
