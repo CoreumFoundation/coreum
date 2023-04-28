@@ -73,6 +73,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          ref: v0.47-migration
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Run ${{ matrix.ci_step }}
