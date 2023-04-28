@@ -107,4 +107,4 @@ Here is the description of behavior of the whitelisting feature:
   can extend or override the **Default** functionality.
 * **+** - Allowing
 * **ⓘ** - Custom behaviour
-	
+
