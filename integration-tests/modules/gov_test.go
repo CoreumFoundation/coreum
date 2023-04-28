@@ -84,7 +84,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	accBalanceFunc := func(prop sdk.AccAddress) sdk.Coin {
 		accBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: prop.String(),
-			Denom:   chain.NetworkConfig.Denom,
+			Denom:   chain.NetworkConfig.Denom(),
 		})
 		requireT.NoError(err)
 		return *accBalance.Balance

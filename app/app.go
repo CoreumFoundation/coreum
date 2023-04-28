@@ -127,7 +127,7 @@ const (
 
 // ChosenNetwork is a hacky solution to pass network config
 // from cmd package to app.
-var ChosenNetwork config.Network
+var ChosenNetwork config.NetworkConfig
 
 var (
 	// DefaultNodeHome default home directories for the application daemon.

@@ -3,6 +3,7 @@
 package modules
 
 import (
+	"context"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
@@ -30,13 +32,12 @@ func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 
 	logger.Get(ctx).Info("Queried minimum gas price required", zap.Stringer("gasPrice", res.MinGasPrice))
 
-	params := chain.NetworkConfig.Fee.FeeModel.Params()
-	model := feemodeltypes.NewModel(params)
+	model := feemodeltypes.NewModel(getFeemodelParams(ctx, t, chain.ClientContext))
 
 	require.False(t, res.MinGasPrice.Amount.IsNil())
 	assert.True(t, res.MinGasPrice.Amount.GTE(model.CalculateGasPriceWithMaxDiscount()))
 	assert.True(t, res.MinGasPrice.Amount.LTE(model.CalculateMaxGasPrice()))
-	assert.Equal(t, chain.NetworkConfig.Denom, res.MinGasPrice.Denom)
+	assert.Equal(t, chain.NetworkConfig.Denom(), res.MinGasPrice.Denom)
 }
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
@@ -121,4 +122,12 @@ func marshalParamChangeProposal(requireT *require.Assertions, modelParams feemod
 	str, err := tmjson.Marshal(modelParams)
 	requireT.NoError(err)
 	return string(str)
+}
+
+func getFeemodelParams(ctx context.Context, t *testing.T, clientCtx client.Context) feemodeltypes.ModelParams {
+	queryClient := feemodeltypes.NewQueryClient(clientCtx)
+	resp, err := queryClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	return resp.Params.Model
 }
