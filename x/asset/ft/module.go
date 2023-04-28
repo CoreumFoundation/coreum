@@ -123,7 +123,7 @@ func (am AppModule) Name() string {
 // FIXME(v47-module-config): remove or replace with corresponding component
 /* func (am AppModule) Route() sdk.Route {
 	return sdk.Route{}
-} *?
+}
 
 // QuerierRoute returns the asset ft module's query routing key.
 func (AppModule) QuerierRoute() string { return types.QuerierRoute }

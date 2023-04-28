@@ -82,7 +82,7 @@ func New(options ...Option) *App {
 		[]authtypes.GenesisAccount{acc},
 	)
 	if err != nil {
-		panic(fmt.Sprintf("can't generate genesis state with valet, err: %s", err))
+		panic(fmt.Sprintf("can't generate genesis state with wallet, err: %s", err))
 	}
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
