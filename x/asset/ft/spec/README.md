@@ -108,3 +108,202 @@ Here is the description of behavior of the whitelisting feature:
 * **+** - Allowing
 * **ⓘ** - Custom behaviour
 	
+
+### TESTING
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-c3ow{border-color:inherit;text-align:center;vertical-align:top}
+.tg .tg-0pky{border-color:inherit;text-align:left;vertical-align:top}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-0pky"></th>
+    <th class="tg-c3ow"><span style="font-weight:bold">**Features**</span></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"></th>
+    <th class="tg-c3ow"><span style="font-weight:bold">**Extentions**</span></th>
+    <th class="tg-c3ow"></th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-0pky"></td>
+    <td class="tg-c3ow"><span style="font-weight:bold">**Default**</span></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"><span style="font-weight:bold">**Burning**</span></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"><span style="font-weight:bold">**Freezing**</span></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"><span style="font-weight:bold">**Whitelisting**</span></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"><span style="font-weight:bold">**Disable Sending**</span></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"><span style="font-weight:bold">**Royality rate**</span></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky"></td>
+    <td class="tg-c3ow">Issuer</td>
+    <td class="tg-c3ow">Owner</td>
+    <td class="tg-c3ow">Issuer</td>
+    <td class="tg-c3ow">Owner</td>
+    <td class="tg-c3ow">Issuer</td>
+    <td class="tg-c3ow">Owner</td>
+    <td class="tg-c3ow">Issuer</td>
+    <td class="tg-c3ow">Recipient</td>
+    <td class="tg-c3ow">Issuer</td>
+    <td class="tg-c3ow">Owner</td>
+    <td class="tg-c3ow">Issuer</td>
+    <td class="tg-c3ow">Owner</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Mint</td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Burn</td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Freeze</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Unfreeze</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Whitelist</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Unwhitelist</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Send</td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">ⓘ</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">-</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">ⓘ</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Send to issuer</td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">Receive</td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow">+</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow">ⓘ</td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+    <td class="tg-c3ow"></td>
+  </tr>
+</tbody>
+</table>
+
