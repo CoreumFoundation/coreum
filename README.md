@@ -48,7 +48,7 @@ $ $COREUM_PATH/crust/bin/crust znet
 ```
 
 After a while applications will be deployed to your docker:
-- `coredev-00`: single `cored` validator
+- `cored-00`: single `cored` validator
 - `explorer-postgres`, `explorer-hasura` and `explorer-bdjuno`: components of the block explorer (work in progress)
 
 To stop and purge the testing environment run:
@@ -70,19 +70,19 @@ $ $HOME/crust/bin/crust znet
 you may use client to interact with the chain:
 1. List pregenerated wallets:
 ```
-(znet) [znet] $ coredev-00 keys list
+(znet) [znet] $ cored-00 keys list
 ```
 You may use those wallets to issue transactions and queries
 
 2. Query balances:
 ```
-(znet) [znet] $ coredev-00 q bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
+(znet) [znet] $ cored-00 q bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
 ```
 Remember to replace address with the one existing in your keystore.
 
 3. Send tokens from one account to another:
 ```
-(znet) [znet] $ coredev-00 tx bank send alice devcore1cjs7qela0trw2qyyfxw5e5e7cvwzprkjaycnem 10core
+(znet) [znet] $ cored-00 tx bank send alice devcore1cjs7qela0trw2qyyfxw5e5e7cvwzprkjaycnem 10core
 ```
 
 ## Connect to Running Chains
