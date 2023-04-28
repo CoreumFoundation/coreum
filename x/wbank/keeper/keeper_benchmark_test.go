@@ -20,7 +20,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 	simApp := createSimApp(b)
 	bankKeeper := simApp.BankKeeper
 	sdkContext := simApp.NewUncachedContext(false, types.Header{})
-	chainConfig, err := config.NetworkByChainID(constant.ChainIDDev)
+	chainConfig, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	require.NoError(b, err)
 	singleCoinDenom := chainConfig.Denom()
 	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000)))
@@ -74,7 +74,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	bankKeeper := simApp.BankKeeper
 	sdkContext := simApp.NewUncachedContext(false, types.Header{})
 
-	chainConfig, err := config.NetworkByChainID(constant.ChainIDDev)
+	chainConfig, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	require.NoError(b, err)
 	singleCoinDenom := chainConfig.Denom()
 	coin := sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000))

@@ -89,7 +89,7 @@ func (s *rootOptions) apply(options ...Option) {
 func NewRootCmd(
 	appName,
 	defaultNodeHome string,
-	network config.Network,
+	network config.NetworkConfig,
 	moduleBasics module.BasicManager,
 	buildApp AppBuilder,
 	options ...Option,
@@ -377,7 +377,7 @@ func (a appCreator) appExport(
 
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
-func initAppConfig(network config.Network) (string, interface{}) {
+func initAppConfig(network config.NetworkConfig) (string, interface{}) {
 	// Optionally allow the chain developer to overwrite the SDK's default
 	// server config.
 	srvCfg := serverconfig.DefaultConfig()

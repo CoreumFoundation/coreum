@@ -71,7 +71,7 @@ func New(options ...Option) *App {
 		}
 	}
 
-	network, err := config.NetworkByChainID(constant.ChainIDDev)
+	network, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}

@@ -5,7 +5,7 @@
   "consensus_params": {
     "block": {
       "max_bytes": "22020096",
-      "max_gas": "{{ .FeeModelParams.MaxBlockGas }}",
+      "max_gas": "50000000",
       "time_iota_ms": "1000"
     },
     "evidence": {
@@ -26,7 +26,7 @@
       "params": {
         "issue_fee": {
           "denom": "{{ .Denom }}",
-          "amount": "{{ .AssetFTConfig.IssueFee }}"
+          "amount": "10000000"
         }
       }
     },
@@ -34,7 +34,7 @@
       "params": {
         "mint_fee": {
           "denom": "{{ .Denom }}",
-          "amount": "{{ .AssetNFTConfig.MintFee }}"
+          "amount": "0"
         }
       }
     },
@@ -68,15 +68,15 @@
               "aliases": []
             },
             {
-              "denom": "{{ .MetadataDisplayDenom }}",
+              "denom": "devcore",
               "exponent": 6,
               "aliases": []
             }
           ],
           "base": "{{ .Denom }}",
-          "display": "{{ .MetadataDisplayDenom }}",
+          "display": "devcore",
           "name": "{{ .Denom }}",
-          "symbol": "{{ .Denom | ToUpper }}"
+          "symbol": "{{ .Denom }}"
         }
       ]
     },
@@ -221,8 +221,8 @@
     },
     "staking": {
       "params": {
-        "unbonding_time": "{{ .Staking.UnbondingTime }}",
-        "max_validators": {{ .Staking.MaxValidators }},
+        "unbonding_time": "168h",
+        "max_validators": 32,
         "max_entries": 7,
         "historical_entries": 10000,
         "bond_denom": "{{ .Denom }}"
@@ -257,18 +257,18 @@
     "feemodel": {
       "params": {
         "model": {
-          "initial_gas_price": "{{ .FeeModelParams.InitialGasPrice }}",
-          "max_gas_price_multiplier": "{{ .FeeModelParams.MaxGasPriceMultiplier }}",
-          "max_discount": "{{ .FeeModelParams.MaxDiscount }}",
-          "escalation_start_fraction": "{{ .FeeModelParams.EscalationStartFraction }}",
-          "max_block_gas": {{ .FeeModelParams.MaxBlockGas }},
-          "short_ema_block_length": {{ .FeeModelParams.ShortEmaBlockLength }},
-          "long_ema_block_length": {{ .FeeModelParams.LongEmaBlockLength }}
+          "initial_gas_price": "0.0625",
+          "max_gas_price_multiplier": "1000.0",
+          "max_discount": "0.5",
+          "escalation_start_fraction": "0.8",
+          "max_block_gas": 50000000,
+          "short_ema_block_length": 50,
+          "long_ema_block_length": 1000
         }
       },
       "min_gas_price": {
         "denom": "{{ .Denom }}",
-        "amount": "{{ .FeeModelParams.InitialGasPrice }}"
+        "amount": "0.0625"
       }
     },
     "cnft": {},

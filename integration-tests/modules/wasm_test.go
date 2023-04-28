@@ -209,7 +209,7 @@ func TestWASMBankSendContract(t *testing.T) {
 	ctx, chain := integrationtests.NewTestingContext(t)
 
 	admin := chain.GenAccount()
-	nativeDenom := chain.NetworkConfig.Denom
+	nativeDenom := chain.NetworkConfig.Denom()
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
@@ -276,7 +276,7 @@ func TestWASMBankSendContract(t *testing.T) {
 	txf = txf.
 		WithSimulateAndExecute(false).
 		// the gas here is to try to execute the tx and don't fail on the gas estimation
-		WithGas(uint64(chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas))
+		WithGas(uint64(getFeemodelParams(ctx, t, chain.ClientContext).MaxBlockGas))
 	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, withdrawPayload, sdk.Coin{})
 	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
@@ -355,7 +355,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
 			Amount:    "5000",
-			Denom:     chain.NetworkConfig.Denom,
+			Denom:     chain.NetworkConfig.Denom(),
 			Recipient: recipient.String(),
 		},
 	})
@@ -371,7 +371,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	bankSend := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.Denom, sdk.NewInt(1000))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.Denom(), sdk.NewInt(1000))),
 	}
 
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
@@ -652,7 +652,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		ftWASM,
 		instantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
-			amount:     chain.NewCoin(chain.NetworkConfig.AssetFTConfig.IssueFee),
+			amount:     getIssueFee(ctx, t, chain.ClientContext),
 			accessType: wasmtypes.AccessTypeUnspecified,
 			payload:    issuerFTInstantiatePayload,
 			label:      "fungible_token",
