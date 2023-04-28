@@ -2,7 +2,7 @@
 package simapp
 
 import (
-	"math/rand"
+	"fmt"
 	"math/rand"
 	"time"
 

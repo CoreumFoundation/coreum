@@ -201,8 +201,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 			WithGas(g.chainCtx.GasLimitByMsgs(msg))
 
 		clientCtx := g.chainCtx.ClientContext.
-			WithAwaitTx(false).
-			WithAwaitTx(true)
+			WithAwaitTx(false)
 
 		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
 		if err != nil {

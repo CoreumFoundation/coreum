@@ -9,7 +9,6 @@ import (
 	bankexported "github.com/cosmos/cosmos-sdk/x/bank/exported"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/wbank/keeper"
 )
@@ -55,13 +54,10 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 		panic(fmt.Sprintf("failed to migrate x/bank from version 3 to 4: %v", err))
 	}
 
-	if err := cfg.RegisterMigration(banktypes.ModuleName, 2, m.Migrate2to3); err != nil {
-		panic(errors.Errorf("failed to migrate x/bank from version 2 to 3: %v", err))
-	}
-
-// FIXME(v47-module-config): remove or replace with corresponding component
-// Route returns the message routing key for the bank module.
-/* func (am AppModule) Route() sdk.Route {
-	// we need to pass the wrapped keeper to the handler to use it instead of the default
-	return sdk.NewRoute(banktypes.RouterKey, bank.NewHandler(am.keeper))
-} */
+	// FIXME(v47-module-config): remove or replace with corresponding component
+	// Route returns the message routing key for the bank module.
+	/* func (am AppModule) Route() sdk.Route {
+		// we need to pass the wrapped keeper to the handler to use it instead of the default
+		return sdk.NewRoute(banktypes.RouterKey, bank.NewHandler(am.keeper))
+	} */
+}
