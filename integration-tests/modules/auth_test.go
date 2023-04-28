@@ -30,14 +30,15 @@ func TestAuthFeeLimits(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	maxBlockGas := chain.NetworkConfig.Fee.FeeModel.Params().MaxBlockGas
+	feeModel := getFeemodelParams(ctx, t, chain.ClientContext)
+	maxBlockGas := feeModel.MaxBlockGas
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
 		},
 		NondeterministicMessagesGas: uint64(maxBlockGas) + 100,
-		Amount:                      chain.NetworkConfig.AssetFTConfig.IssueFee,
+		Amount:                      getIssueFee(ctx, t, chain.ClientContext).Amount,
 	}))
 
 	msg := &banktypes.MsgSend{
@@ -46,8 +47,8 @@ func TestAuthFeeLimits(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
 	}
 
-	gasPriceWithMaxDiscount := chain.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice.
-		Mul(sdk.OneDec().Sub(chain.NetworkConfig.Fee.FeeModel.Params().MaxDiscount))
+	gasPriceWithMaxDiscount := feeModel.InitialGasPrice.
+		Mul(sdk.OneDec().Sub(feeModel.MaxDiscount))
 
 	// the gas price is too low
 	_, err := client.BroadcastTx(ctx,

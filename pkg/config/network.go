@@ -1,34 +1,18 @@
 package config
 
 import (
-	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
-	"strings"
-	"sync"
-	"text/template"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authcosmostypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/pkg/errors"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/genesis"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 var (
@@ -41,58 +25,15 @@ var (
 	networkConfigs map[constant.ChainID]NetworkConfig
 )
 
-//nolint:funlen
 func init() {
-	// common vars
-	var (
-		feeConfig = FeeConfig{
-			FeeModel: feemodeltypes.DefaultModel(),
-		}
-
-		govConfig = GovConfig{
-			ProposalConfig: GovProposalConfig{
-				MinDepositAmount: "4000000000", // 4,000 CORE
-				VotingPeriod:     "4h",         // 4 hours
-			},
-		}
-
-		stakingConfig = StakingConfig{
-			UnbondingTime: "168h", // 7 days
-			MaxValidators: 32,
-		}
-
-		customParamsConfig = CustomParamsConfig{
-			Staking: CustomParamsStakingConfig{
-				MinSelfDelegation: sdk.NewInt(20_000_000_000), // 20k core
-			},
-		}
-
-		assetFTConfig = AssetFTConfig{
-			IssueFee: sdk.NewIntFromUint64(10_000_000),
-		}
-
-		assetNFTConfig = AssetNFTConfig{
-			MintFee: sdk.ZeroInt(),
-		}
-	)
-
-	// devnet vars
-
 	// 10m delegated and 1m extra to the txs
 	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
-
-	devGovConfig := govConfig
-	devGovConfig.ProposalConfig.VotingPeriod = "4h"
 
 	// configs
 	networkConfigs = map[constant.ChainID]NetworkConfig{
 		constant.ChainIDMain: {
-			ChainID:              constant.ChainIDMain,
-			GenesisTime:          time.Date(2023, 3, 12, 0, 0, 0, 0, time.UTC),
-			AddressPrefix:        constant.AddressPrefixMain,
-			MetadataDisplayDenom: constant.DenomMainDisplay,
-			Denom:                constant.DenomMain,
-			Fee:                  feeConfig,
+			Provider:      NewStaticConfigProvider(genesis.MainnetGenesis),
+			AddressPrefix: constant.AddressPrefixMain,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
 					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@34.171.208.193:26656", // seed-iron
@@ -101,12 +42,8 @@ func init() {
 			},
 		},
 		constant.ChainIDTest: {
-			ChainID:              constant.ChainIDTest,
-			GenesisTime:          time.Date(2023, 1, 16, 12, 0, 0, 0, time.UTC),
-			AddressPrefix:        constant.AddressPrefixTest,
-			MetadataDisplayDenom: constant.DenomTestDisplay,
-			Denom:                constant.DenomTest,
-			Fee:                  feeConfig,
+			Provider:      NewStaticConfigProvider(genesis.TestnetGenesis),
+			AddressPrefix: constant.AddressPrefixTest,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
 					"64391878009b8804d90fda13805e45041f492155@35.232.157.206:26656", // seed-sirius
@@ -115,46 +52,52 @@ func init() {
 			},
 		},
 		constant.ChainIDDev: {
-			ChainID:              constant.ChainIDDev,
-			GenesisTime:          time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-			AddressPrefix:        constant.AddressPrefixDev,
-			MetadataDisplayDenom: constant.DenomDevDisplay,
-			Denom:                constant.DenomDev,
-			Fee:                  feeConfig,
+			Provider: DynamicConfigProvider{
+				ChainID:     constant.ChainIDDev,
+				GenesisTime: time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+				Denom:       constant.DenomDev,
+				GovConfig: GovConfig{
+					ProposalConfig: GovProposalConfig{
+						MinDepositAmount: "4000000000", // 4,000 CORE
+						VotingPeriod:     "4h",         // 4 hours
+					},
+				},
+				CustomParamsConfig: CustomParamsConfig{
+					Staking: CustomParamsStakingConfig{
+						MinSelfDelegation: sdk.NewInt(20_000_000_000), // 20k core
+					},
+				},
+				FundedAccounts: []FundedAccount{
+					// Staker of validator Mercury
+					{
+						Address:  "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6",
+						Balances: devStakerValidatorBalance,
+					},
+					// Staker of validator Venus
+					{
+						Address:  "devcore105ct3vl89ar53jrj23zl6e09cmqwym2ua5hegf",
+						Balances: devStakerValidatorBalance,
+					},
+					// Staker of validator Earth
+					{
+						Address:  "devcore14x46r5eflga696sd5my900euvlplu2prhny5ae",
+						Balances: devStakerValidatorBalance,
+					},
+					// Faucet's account storing the rest of total supply
+					{
+						Address:  "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
+						Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
+					},
+				},
+				GenTxs: readGenTxs(devGenTxsFS),
+			},
+			AddressPrefix: constant.AddressPrefixDev,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
 					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.135.242.117:26656",
 					"88d1266e086bfe33589886cc10d4c58e85a69d14@34.135.191.69:26656",
 				},
 			},
-			GovConfig:          devGovConfig,
-			StakingConfig:      stakingConfig,
-			CustomParamsConfig: customParamsConfig,
-			AssetFTConfig:      assetFTConfig,
-			AssetNFTConfig:     assetNFTConfig,
-			FundedAccounts: []FundedAccount{
-				// Staker of validator Mercury
-				{
-					Address:  "devcore15eqsya33vx9p5zt7ad8fg3k674tlsllk3pvqp6",
-					Balances: devStakerValidatorBalance,
-				},
-				// Staker of validator Venus
-				{
-					Address:  "devcore105ct3vl89ar53jrj23zl6e09cmqwym2ua5hegf",
-					Balances: devStakerValidatorBalance,
-				},
-				// Staker of validator Earth
-				{
-					Address:  "devcore14x46r5eflga696sd5my900euvlplu2prhny5ae",
-					Balances: devStakerValidatorBalance,
-				},
-				// Faucet's account storing the rest of total supply
-				{
-					Address:  "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
-					Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
-				},
-			},
-			GenTxs: readGenTxs(devGenTxsFS),
 		},
 	}
 }
@@ -188,20 +131,6 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 	return genTxs
 }
 
-// Networks returns slice of available networks.
-func Networks() []Network {
-	networks := make([]Network, 0, len(networkConfigs))
-	for _, nc := range networkConfigs {
-		networks = append(networks, NewNetwork(nc))
-	}
-	return networks
-}
-
-// FeeConfig is the part of network config defining parameters of our fee model.
-type FeeConfig struct {
-	FeeModel feemodeltypes.Model
-}
-
 // GovConfig contains gov module configs.
 type GovConfig struct {
 	ProposalConfig GovProposalConfig
@@ -216,15 +145,6 @@ type GovProposalConfig struct {
 	VotingPeriod string
 }
 
-// StakingConfig contains staking module configuration.
-type StakingConfig struct {
-	// UnbondingTime is the time duration after which bonded coins will become to be released
-	UnbondingTime string
-
-	// MaxValidators is the maximum number of validators that could be created
-	MaxValidators int
-}
-
 // CustomParamsStakingConfig contains custom params for the staking module configuration.
 type CustomParamsStakingConfig struct {
 	// MinSelfDelegation is the minimum allowed amount of the stake coin for the validator to be created.
@@ -236,77 +156,6 @@ type CustomParamsConfig struct {
 	Staking CustomParamsStakingConfig
 }
 
-// AssetFTConfig is the part of network config defining parameters of ft assets.
-type AssetFTConfig struct {
-	IssueFee sdk.Int
-}
-
-// AssetNFTConfig is the part of network config defining parameters of nft assets.
-type AssetNFTConfig struct {
-	MintFee sdk.Int
-}
-
-// NetworkConfig helps initialize Network instance.
-type NetworkConfig struct {
-	ChainID              constant.ChainID
-	GenesisTime          time.Time
-	AddressPrefix        string
-	MetadataDisplayDenom string
-	Denom                string
-	Fee                  FeeConfig
-	FundedAccounts       []FundedAccount
-	GenTxs               []json.RawMessage
-	NodeConfig           NodeConfig
-	GovConfig            GovConfig
-	StakingConfig        StakingConfig
-	CustomParamsConfig   CustomParamsConfig
-	AssetFTConfig        AssetFTConfig
-	AssetNFTConfig       AssetNFTConfig
-}
-
-// Network holds all the configuration for different predefined networks.
-type Network struct {
-	chainID              constant.ChainID
-	genesisTime          time.Time
-	addressPrefix        string
-	metadataDisplayDenom string
-	denom                string
-	fee                  FeeConfig
-	nodeConfig           NodeConfig
-	gov                  GovConfig
-	staking              StakingConfig
-	customParams         CustomParamsConfig
-	assetFT              AssetFTConfig
-	assetNFT             AssetNFTConfig
-
-	mu             *sync.Mutex
-	fundedAccounts []FundedAccount
-	genTxs         []json.RawMessage
-}
-
-// NewNetwork returns a new instance of Network.
-func NewNetwork(c NetworkConfig) Network {
-	n := Network{
-		genesisTime:          c.GenesisTime,
-		chainID:              c.ChainID,
-		addressPrefix:        c.AddressPrefix,
-		metadataDisplayDenom: c.MetadataDisplayDenom,
-		denom:                c.Denom,
-		nodeConfig:           c.NodeConfig.Clone(),
-		fee:                  c.Fee,
-		gov:                  c.GovConfig,
-		staking:              c.StakingConfig,
-		customParams:         c.CustomParamsConfig,
-		assetFT:              c.AssetFTConfig,
-		assetNFT:             c.AssetNFTConfig,
-		mu:                   &sync.Mutex{},
-		fundedAccounts:       append([]FundedAccount{}, c.FundedAccounts...),
-		genTxs:               append([]json.RawMessage{}, c.GenTxs...),
-	}
-
-	return n
-}
-
 // FundedAccount is used to provide information about prefunded
 // accounts in network config.
 type FundedAccount struct {
@@ -315,180 +164,23 @@ type FundedAccount struct {
 	Balances sdk.Coins
 }
 
-func validateNoDuplicateFundedAccounts(accounts []FundedAccount) error {
-	accountsIndexMap := map[string]interface{}{}
-	for _, fundEntry := range accounts {
-		fundEntry := fundEntry
-		_, exists := accountsIndexMap[fundEntry.Address]
-		if exists {
-			return errors.New("duplicate funded account is not allowed")
-		}
-		accountsIndexMap[fundEntry.Address] = true
-	}
+// NetworkConfig helps initialize Network instance.
+type NetworkConfig struct {
+	Provider NetworkConfigProvider
 
-	return nil
-}
-
-// FundAccount funds address with balances at genesis.
-func (n *Network) FundAccount(accAddress sdk.AccAddress, balances sdk.Coins) error {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	n.fundedAccounts = append(n.fundedAccounts, FundedAccount{
-		Address:  accAddress.String(),
-		Balances: balances,
-	})
-	return nil
-}
-
-// NodeConfig returns NodeConfig.
-func (n *Network) NodeConfig() *NodeConfig {
-	nodeConfig := n.nodeConfig.Clone()
-	return &nodeConfig
-}
-
-// AddGenesisTx adds transaction to the genesis file.
-func (n *Network) AddGenesisTx(signedTx json.RawMessage) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	n.genTxs = append(n.genTxs, signedTx)
-}
-
-func applyFundedAccountToGenesis(
-	fa FundedAccount,
-	accountState authcosmostypes.GenesisAccounts,
-	bankState *banktypes.GenesisState,
-) authcosmostypes.GenesisAccounts {
-	accountAddress := sdk.MustAccAddressFromBech32(fa.Address)
-	accountState = append(accountState, authcosmostypes.NewBaseAccount(accountAddress, nil, 0, 0))
-	coins := fa.Balances
-	bankState.Balances = append(
-		bankState.Balances,
-		banktypes.Balance{Address: accountAddress.String(), Coins: coins},
-	)
-	bankState.Supply = bankState.Supply.Add(coins...)
-
-	return accountState
-}
-
-// GenesisDoc returns the genesis doc of the network.
-func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
-	switch n.chainID {
-	case constant.ChainIDMain:
-		return tmtypes.GenesisDocFromJSON(genesis.MainnetGenesis)
-	case constant.ChainIDTest:
-		return tmtypes.GenesisDocFromJSON(genesis.TestnetGenesis)
-	default:
-		codec := NewEncodingConfig(module.NewBasicManager(
-			auth.AppModuleBasic{},
-			authzmodule.AppModuleBasic{},
-			genutil.AppModuleBasic{},
-			bank.AppModuleBasic{},
-		)).Codec
-
-		genesisJSON, err := genesisByTemplate(n)
-		if err != nil {
-			return nil, errors.Wrap(err, "not able get genesis")
-		}
-
-		genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
-		if err != nil {
-			return nil, errors.Wrap(err, "not able to parse genesis json bytes")
-		}
-		var appState map[string]json.RawMessage
-
-		if err = json.Unmarshal(genesisDoc.AppState, &appState); err != nil {
-			return nil, errors.Wrap(err, "not able to parse genesis app state")
-		}
-
-		authState := authcosmostypes.GetGenesisStateFromAppState(codec, appState)
-		accountState, err := authcosmostypes.UnpackAccounts(authState.Accounts)
-		if err != nil {
-			return nil, errors.Wrap(err, "not able to unpack auth accounts")
-		}
-
-		genutilState := genutiltypes.GetGenesisStateFromAppState(codec, appState)
-		bankState := banktypes.GetGenesisStateFromAppState(codec, appState)
-
-		n.mu.Lock()
-		defer n.mu.Unlock()
-
-		if err := validateNoDuplicateFundedAccounts(n.fundedAccounts); err != nil {
-			return nil, err
-		}
-
-		for _, fundedAcc := range n.fundedAccounts {
-			accountState = applyFundedAccountToGenesis(fundedAcc, accountState, bankState)
-		}
-
-		genutilState.GenTxs = append(genutilState.GenTxs, n.genTxs...)
-
-		genutiltypes.SetGenesisStateInAppState(codec, appState, genutilState)
-		authState.Accounts, err = authcosmostypes.PackAccounts(authcosmostypes.SanitizeGenesisAccounts(accountState))
-		if err != nil {
-			return nil, errors.Wrap(err, "not able to sanitize and pack accounts")
-		}
-		appState[authcosmostypes.ModuleName] = codec.MustMarshalJSON(&authState)
-
-		bankState.Balances = banktypes.SanitizeGenesisBalances(bankState.Balances)
-		appState[banktypes.ModuleName] = codec.MustMarshalJSON(bankState)
-
-		genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
-		if err != nil {
-			return nil, err
-		}
-
-		return genesisDoc, nil
-	}
-}
-
-// EncodeGenesis returns the json encoded representation of the genesis file.
-func (n Network) EncodeGenesis() ([]byte, error) {
-	switch n.chainID {
-	case constant.ChainIDMain:
-		return genesis.MainnetGenesis, nil
-	case constant.ChainIDTest:
-		return genesis.TestnetGenesis, nil
-	default:
-		genesisDoc, err := n.GenesisDoc()
-		if err != nil {
-			return nil, errors.Wrap(err, "not able to get genesis doc")
-		}
-
-		bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
-		if err != nil {
-			return nil, errors.Wrap(err, "not able to marshal genesis doc")
-		}
-
-		return bs, nil
-	}
-}
-
-// SaveGenesis saves json encoded representation of the genesis config into file.
-func (n Network) SaveGenesis(homeDir string) error {
-	genDocBytes, err := n.EncodeGenesis()
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
-		return errors.Wrap(err, "unable to make config directory")
-	}
-
-	err = os.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
-	return errors.Wrap(err, "unable to write genesis bytes to file")
+	AddressPrefix string
+	NodeConfig    NodeConfig
 }
 
 // SetSDKConfig sets global SDK config to some network-specific values.
 // In typical applications this func should be called right after network initialization.
-func (n Network) SetSDKConfig() {
+func (c NetworkConfig) SetSDKConfig() {
 	config := sdk.GetConfig()
 
 	// Set address & public key prefixes
-	config.SetBech32PrefixForAccount(n.addressPrefix, n.addressPrefix+"pub")
-	config.SetBech32PrefixForValidator(n.addressPrefix+"valoper", n.addressPrefix+"valoperpub")
-	config.SetBech32PrefixForConsensusNode(n.addressPrefix+"valcons", n.addressPrefix+"valconspub")
+	config.SetBech32PrefixForAccount(c.AddressPrefix, c.AddressPrefix+"pub")
+	config.SetBech32PrefixForValidator(c.AddressPrefix+"valoper", c.AddressPrefix+"valoperpub")
+	config.SetBech32PrefixForConsensusNode(c.AddressPrefix+"valcons", c.AddressPrefix+"valconspub")
 
 	// Set BIP44 coin type corresponding to CORE
 	config.SetCoinType(constant.CoinType)
@@ -496,50 +188,19 @@ func (n Network) SetSDKConfig() {
 	config.Seal()
 }
 
-// AddressPrefix returns the address prefix to be used in network config.
-func (n Network) AddressPrefix() string {
-	return n.addressPrefix
+// Denom returns denom.
+func (c NetworkConfig) Denom() string {
+	return c.Provider.GetDenom()
 }
 
-// ChainID returns the chain ID used in network config.
-func (n Network) ChainID() constant.ChainID {
-	return n.chainID
+// ChainID returns chain ID.
+func (c NetworkConfig) ChainID() constant.ChainID {
+	return c.Provider.GetChainID()
 }
 
-// GenesisTime returns the genesis time of the network.
-func (n Network) GenesisTime() time.Time {
-	return n.genesisTime
-}
-
-// FundedAccounts returns the funded accounts.
-func (n Network) FundedAccounts() []FundedAccount {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	fundedAccounts := make([]FundedAccount, len(n.fundedAccounts))
-	copy(fundedAccounts, n.fundedAccounts)
-	return fundedAccounts
-}
-
-// GenTxs returns the genesis transactions.
-func (n Network) GenTxs() []json.RawMessage {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	genTxs := make([]json.RawMessage, len(n.genTxs))
-	copy(genTxs, n.genTxs)
-	return genTxs
-}
-
-// Denom returns the base chain denom. This is different
-// for each network(i.e. mainnet, testnet, etc).
-func (n Network) Denom() string {
-	return n.denom
-}
-
-// FeeModel returns fee model configuration.
-func (n Network) FeeModel() feemodeltypes.Model {
-	return n.fee.FeeModel
+// EncodeGenesis returns the json encoded representation of the genesis file.
+func (c NetworkConfig) EncodeGenesis() ([]byte, error) {
+	return c.Provider.EncodeGenesis()
 }
 
 // NetworkConfigByChainID returns predefined NetworkConfig for a ChainID.
@@ -549,52 +210,7 @@ func NetworkConfigByChainID(id constant.ChainID) (NetworkConfig, error) {
 		return NetworkConfig{}, errors.Errorf("chainID %s not found", id)
 	}
 
+	nc.NodeConfig = nc.NodeConfig.clone()
+
 	return nc, nil
-}
-
-// NetworkByChainID returns predefined Network for a ChainID.
-func NetworkByChainID(id constant.ChainID) (Network, error) {
-	nc, err := NetworkConfigByChainID(id)
-	if err != nil {
-		return Network{}, err
-	}
-
-	return NewNetwork(nc), nil
-}
-
-// genesisByTemplate returns the genesis formatted by the input template.
-func genesisByTemplate(n Network) ([]byte, error) {
-	funcMap := template.FuncMap{
-		"ToUpper": strings.ToUpper,
-	}
-
-	genesisBuf := new(bytes.Buffer)
-	err := template.Must(template.New("genesis").Funcs(funcMap).Parse(genesisTemplate)).Execute(genesisBuf, struct {
-		GenesisTimeUTC       string
-		ChainID              constant.ChainID
-		MetadataDisplayDenom string
-		Denom                string
-		FeeModelParams       feemodeltypes.ModelParams
-		Gov                  GovConfig
-		Staking              StakingConfig
-		CustomParamsConfig   CustomParamsConfig
-		AssetFTConfig        AssetFTConfig
-		AssetNFTConfig       AssetNFTConfig
-	}{
-		GenesisTimeUTC:       n.genesisTime.UTC().Format(time.RFC3339),
-		ChainID:              n.chainID,
-		MetadataDisplayDenom: n.metadataDisplayDenom,
-		Denom:                n.denom,
-		FeeModelParams:       n.FeeModel().Params(),
-		Gov:                  n.gov,
-		Staking:              n.staking,
-		CustomParamsConfig:   n.customParams,
-		AssetFTConfig:        n.assetFT,
-		AssetNFTConfig:       n.assetNFT,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to template genesis file")
-	}
-
-	return genesisBuf.Bytes(), nil
 }

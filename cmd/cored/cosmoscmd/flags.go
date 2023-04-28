@@ -28,7 +28,7 @@ func OverwriteDefaultChainIDFlags(parentCmd *cobra.Command) {
 }
 
 // PreProcessFlags prepares the initial flags config for the cli.
-func PreProcessFlags() (config.Network, error) {
+func PreProcessFlags() (config.NetworkConfig, error) {
 	// define flags
 	const flagHelp = "help"
 	flagSet := pflag.NewFlagSet("pre-process", pflag.ExitOnError)
@@ -42,14 +42,14 @@ func PreProcessFlags() (config.Network, error) {
 	// we consider the issued command to be a help command if no args are provided.
 	// in that case we will not check the chain-id and will return
 	if len(os.Args) == 1 || *help {
-		return config.Network{}, nil
+		return config.NetworkConfig{}, nil
 	}
 
 	// overwrite home flag
 	if flagSet.Changed(flags.FlagHome) {
 		err := appendStringFlag(os.Args, flags.FlagHome, *chainID)
 		if err != nil {
-			return config.Network{}, err
+			return config.NetworkConfig{}, err
 		}
 	} else {
 		appendedHome := filepath.Join(app.DefaultNodeHome, *chainID)
@@ -57,9 +57,9 @@ func PreProcessFlags() (config.Network, error) {
 	}
 
 	// get chain config
-	network, err := config.NetworkByChainID(constant.ChainID(*chainID))
+	network, err := config.NetworkConfigByChainID(constant.ChainID(*chainID))
 	if err != nil {
-		return config.Network{}, err
+		return config.NetworkConfig{}, err
 	}
 
 	return network, nil

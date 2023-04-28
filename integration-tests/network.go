@@ -26,17 +26,20 @@ func NewNetworkConfig(chainID constant.ChainID) (config.NetworkConfig, error) {
 		return networkConfig, nil
 	}
 
-	networkConfig.GovConfig.ProposalConfig = config.GovProposalConfig{
-		MinDepositAmount: "1000",
-		VotingPeriod:     votingPeriod.String(),
-	}
-
-	networkConfig.FundedAccounts = nil
-	networkConfig.GenTxs = nil
-
-	networkConfig.CustomParamsConfig = config.CustomParamsConfig{
-		Staking: config.CustomParamsStakingConfig{
-			MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+	networkConfig.Provider = config.DynamicConfigProvider{
+		ChainID:     constant.ChainIDDev,
+		GenesisTime: time.Now(),
+		Denom:       constant.DenomDev,
+		GovConfig: config.GovConfig{
+			ProposalConfig: config.GovProposalConfig{
+				MinDepositAmount: "1000",
+				VotingPeriod:     votingPeriod.String(),
+			},
+		},
+		CustomParamsConfig: config.CustomParamsConfig{
+			Staking: config.CustomParamsStakingConfig{
+				MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+			},
 		},
 	}
 
