@@ -1,7 +1,6 @@
 package network
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 	"testing"
@@ -98,30 +97,27 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 // DefaultConfig will initialize config for the network with custom application,
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig.
 func DefaultConfig() network.Config {
-	devCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+	devNetwork, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(errors.Wrap(err, "can't get network config"))
 	}
 	// set to nil the devnet config we don't need
-	devCfg.FundedAccounts = nil
-	devCfg.GenTxs = nil
-	devCfg.CustomParamsConfig.Staking.MinSelfDelegation = sdk.NewInt(1)
+	provider := devNetwork.Provider.(config.DynamicConfigProvider)
+	provider.FundedAccounts = nil
+	provider.GenTxs = nil
+	provider.CustomParamsConfig.Staking.MinSelfDelegation = sdk.NewInt(1)
+
+	devNetwork.Provider = provider
 
 	// init the network and set params
-	devNetwork := config.NewNetwork(devCfg)
 	app.ChosenNetwork = devNetwork
 	// set and seal once
 	setNetworkConfigOnce.Do(func() {
 		devNetwork.SetSDKConfig()
 	})
-	genesisDoc, err := devNetwork.GenesisDoc()
+	appState, err := devNetwork.Provider.AppState()
 	if err != nil {
-		panic(errors.Wrap(err, "can't get network genesis doc"))
-	}
-
-	var genesisAppState map[string]json.RawMessage
-	if err = json.Unmarshal(genesisDoc.AppState, &genesisAppState); err != nil {
-		panic(errors.Wrapf(err, "can unmarshal genesis app state to %T", genesisAppState))
+		panic(errors.Wrap(err, "can't get network's app state"))
 	}
 
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
@@ -141,12 +137,12 @@ func DefaultConfig() network.Config {
 				baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 			)
 		},
-		GenesisState:    genesisAppState,
+		GenesisState:    appState,
 		TimeoutCommit:   2 * time.Second,
 		ChainID:         "chain-" + tmrand.NewRand().Str(6),
 		NumValidators:   1,
-		BondDenom:       devCfg.Denom,
-		MinGasPrices:    fmt.Sprintf("0.000006%s", devCfg.Denom),
+		BondDenom:       devNetwork.Denom(),
+		MinGasPrices:    fmt.Sprintf("0.000006%s", devNetwork.Denom()),
 		AccountTokens:   sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:   sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
 		BondedTokens:    sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),

@@ -229,7 +229,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 				&assetfttypes.MsgFreeze{},
 				&assetfttypes.MsgUnfreeze{},
 			},
-			Amount: chain.NetworkConfig.AssetFTConfig.IssueFee,
+			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 
 	// issue a fungible token

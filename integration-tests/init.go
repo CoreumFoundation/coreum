@@ -6,9 +6,17 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
 // stringsFlag allows setting a value multiple times to collect a list, as in -I=val1 -I=val2.
@@ -37,6 +45,7 @@ type testingConfig struct {
 }
 
 var (
+	ctx   context.Context
 	cfg   testingConfig
 	chain Chain
 )
@@ -84,11 +93,39 @@ func init() {
 		RunUnsafe:       runUnsafe,
 	}
 
-	config.NewNetwork(cfg.NetworkConfig).SetSDKConfig()
+	loggerConfig := logger.Config{
+		Format:  cfg.LogFormat,
+		Verbose: cfg.LogVerbose,
+	}
+	ctx = logger.WithLogger(context.Background(), logger.New(loggerConfig))
+
+	cfg.NetworkConfig.SetSDKConfig()
+
+	grpcClient, err := grpc.Dial(coredAddress, grpc.WithInsecure())
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
+	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
+		WithChainID(string(cfg.NetworkConfig.ChainID())).
+		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
+		WithBroadcastMode(flags.BroadcastBlock).
+		WithGRPCClient(grpcClient)
+
+	feemodelClient := feemodeltypes.NewQueryClient(clientCtx)
+
+	ctx, cancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
+	defer cancel()
+
+	resp, err := feemodelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
 
 	chain = NewChain(ChainConfig{
+		ClientContext:   clientCtx,
 		GRPCAddress:     cfg.GRPCAddress,
 		NetworkConfig:   cfg.NetworkConfig,
+		InitialGasPrice: resp.Params.Model.InitialGasPrice,
 		FundingMnemonic: cfg.FundingMnemonic,
 		StakerMnemonics: cfg.StakerMnemonics,
 	})
@@ -96,12 +133,7 @@ func init() {
 
 // NewTestingContext returns the configured chain and new context for the integration tests.
 func NewTestingContext(t *testing.T) (context.Context, Chain) {
-	loggerConfig := logger.Config{
-		Format:  cfg.LogFormat,
-		Verbose: cfg.LogVerbose,
-	}
-
-	ctx, cancel := context.WithCancel(logger.WithLogger(context.Background(), logger.New(loggerConfig)))
+	ctx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)
 
 	return ctx, chain

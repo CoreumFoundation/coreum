@@ -2,6 +2,7 @@ package cosmoscmd
 
 import (
 	"bufio"
+	"os"
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -29,7 +30,7 @@ const (
 )
 
 // InitCmd returns the init cobra command.
-func InitCmd(network config.Network, defaultNodeHome string) *cobra.Command {
+func InitCmd(network config.NetworkConfig, defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [moniker]",
 		Short: "Initialize configuration files for private validator, p2p, genesis, and application",
@@ -67,14 +68,22 @@ func InitCmd(network config.Network, defaultNodeHome string) *cobra.Command {
 				return errors.Errorf("genesis.json file already exists: %v", genFile)
 			}
 
-			err = network.SaveGenesis(clientCtx.HomeDir)
+			genDocBytes, err := network.EncodeGenesis()
 			if err != nil {
 				return err
 			}
 
-			networkNodeConfig := network.NodeConfig()
-			networkNodeConfig.Name = args[0]
-			cfg = network.NodeConfig().TendermintNodeConfig(cfg)
+			configDir := filepath.Join(clientCtx.HomeDir, "config")
+			if err := os.MkdirAll(configDir, 0o700); err != nil {
+				return errors.Wrap(err, "unable to make config directory")
+			}
+
+			if err := os.WriteFile(filepath.Join(configDir, "genesis.json"), genDocBytes, 0644); err != nil {
+				return errors.Wrap(err, "unable to write genesis bytes to file")
+			}
+
+			network.NodeConfig.Name = args[0]
+			cfg = network.NodeConfig.TendermintNodeConfig(cfg)
 
 			_, _, err = genutil.InitializeNodeValidatorFilesFromMnemonic(cfg, mnemonic)
 			if err != nil {
