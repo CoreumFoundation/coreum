@@ -45,11 +45,36 @@ A frozen token cannot be transferred until it is unfrozen by the issuer.
 ### Whitelisting
 If this feature is enabled, then for any user to receive any NFT of that class, they must be whitelisted to
 receive that specific NFT. It follows that this feature allows the issuer of the class to whitelist an
-account to hold an specific NFT of that class, or remove an account from whitelisted accounts for that NFT.
+account to hold a specific NFT of that class, or remove an account from whitelisted accounts for that NFT.
 
 ### Disable Sending
 If this feature is enabled, then the NFT cannot be directly transferred between users, meaning that user A cannot
 send the tokens they hold directly to user B. This feature opens up the door for different use cases, one of which is that it might be used to force transfer of ownership to go via DEX, so that the royalty fee is applied and the creator of the NFT always gets a royalty fee.
 
 ### Royalty Rate
-This feature is related to the DEX, and if it is enabled, every time that an NFT is traded on the DEX, a percentage of the the traded value is sent to the issuer as royalty fee.
+This feature is related to the DEX, and if it is enabled, every time that an NFT is traded on the DEX, a percentage of the traded value is sent to the issuer as royalty fee.
+
+## Access table
+
+| 	                | **Features** 	 |    	    |       	       |    	    |       	        |         	          |         	          |            	             |           	           |    	    | **Extentions**  	  |            	            |
+|------------------|:--------------:|:-------:|:-------------:|:-------:|:--------------:|:------------------:|:------------------:|:------------------------:|:---------------------:|:-------:|:------------------:|:-----------------------:|
+| 	                | **Default** 	  |    	    | **Burning** 	 |    	    | **Freezing** 	 |         	          | **Whitelisting** 	 |            	             | **Disable Sending** 	 |    	    | **Royalty rate** 	 |            	            |
+| 	                |  Issuer    	   | Owner 	 |  Issuer   	   | Owner 	 |  Issuer    	   |      Owner 	       |   Issuer      	    |       Recipient 	        |    Issuer       	     | Owner 	 |   Issuer      	    |         Owner 	         |
+| Mint           	 |    +      	    |    	    |       	       |    	    |       	        |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
+| Burn           	 |    +      	    |    	    |       	       |  +   	  |       	        |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
+| Freeze         	 |       	        |    	    |       	       |    	    |    +      	    |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
+| Unfreeze       	 |       	        |    	    |       	       |    	    |    +      	    |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
+| Whitelist      	 |       	        |    	    |       	       |    	    |       	        |         	          |     +        	     |            	             |           	           |    	    |         	          |            	            |
+| Unwhitelist    	 |       	        |    	    |       	       |    	    |       	        |         	          |     +        	     |            	             |           	           |    	    |         	          |            	            |
+| Send           	 |    +      	    |  +   	  |       	       |    	    |       	        | [ⓘ](#freezing)   	 |         	          |            	             |           	           |  -   	  |         	          | [ⓘ](#royalty-rate)    	 |
+| Send to issuer 	 |    +      	    |  +   	  |       	       |    	    |       	        |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
+| Receive        	 |    +      	    |  +   	  |       	       |    	    |       	        |         	          |         	          | [ⓘ](#whitelisting)     	 |           	           |    	    |         	          |            	            |
+
+**Legend**:
+
+* **Default** - The **Default** is the state that the NFT Class has without any feature. Adding the **Features** to the
+  NFT class, you can extend or override the **Default** functionality.
+* **+** - Allowing
+* **+** - Disallowing
+* **ⓘ** - Custom behaviour
+	

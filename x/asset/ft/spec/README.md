@@ -82,3 +82,29 @@ Here is the description of behavior of the whitelisting feature:
 - The issuer can set whitelisted amount higher or lower than what the user currently holds.
 - The issuer account is whitelisted to infinity by default and cannot be modified.
 - The user can receive tokens as long as their total balance, after the transaction execution, will not be higher than their whitelisted amount
+
+## Access table
+
+| 	                  | **Features**  	  |    	    |       	        |    	    |       	        |    	    |        	        |            	             |         	          |           	           | **Extentions** 	  |          	          |             	              |               	                |
+|--------------------|:----------------:|:-------:|:--------------:|:-------:|:--------------:|:-------:|:---------------:|:------------------------:|:------------------:|:---------------------:|:-----------------:|:-------------------:|:--------------------------:|:------------------------------:|
+| 	                  | **Default**    	 |    	    | **Minting**  	 |    	    | **Burning**  	 |    	    | **Freezing**  	 |            	             | **Whitelisting** 	 |           	           | **Burn rate**   	 |          	          | **Send commission rate** 	 |               	                |
+| 	                  |   Issuer    	    | Owner 	 |    Issuer 	    | Owner 	 |    Issuer 	    | Owner 	 |    Issuer  	    |         Owner 	          |    Issuer    	     |      Recipient 	      |   Issuer     	    |       Owner 	       |      Issuer        	       |            Owner 	             |
+| Mint             	 |        	         |    	    |     +    	     |    	    |       	        |    	    |        	        |            	             |         	          |           	           |         	         |          	          |             	              |               	                |
+| Burn             	 |     +      	     |    	    |       	        |    	    |       	        |  +   	  |        	        |            	             |         	          |           	           |         	         |          	          |             	              |               	                |
+| Freeze           	 |        	         |    	    |       	        |    	    |       	        |    	    |     +    	      |            	             |         	          |           	           |         	         |          	          |             	              |               	                |
+| Unfreeze         	 |        	         |    	    |       	        |    	    |       	        |    	    |     +    	      |            	             |         	          |           	           |         	         |          	          |             	              |               	                |
+| GloballyFreeze   	 |        	         |    	    |       	        |    	    |       	        |    	    |     +    	      |            	             |         	          |           	           |         	         |          	          |             	              |               	                |
+| GloballyUnFreeze 	 |        	         |    	    |       	        |    	    |       	        |    	    |     +    	      |            	             |         	          |           	           |         	         |          	          |             	              |               	                |
+| Whitelist        	 |        	         |    	    |       	        |    	    |       	        |    	    |        	        |            	             |      +      	      |           	           |         	         |          	          |             	              |               	                |
+| Unwhitelist      	 |        	         |    	    |       	        |    	    |       	        |    	    |        	        |            	             |      +      	      |           	           |         	         |          	          |             	              |               	                |
+| Send             	 |     +      	     |  +   	  |       	        |    	    |       	        |    	    |        	        | [ⓘ](#freezeunfreeze)   	 |         	          |           	           |         	         | [ⓘ](#burn-rate)   	 |             	              | [ⓘ](#send-commission-rate)   	 |
+| Send to issuer   	 |     +      	     |  +   	  |       	        |    	    |       	        |    	    |        	        |            	             |         	          |           	           |         	         |          	          |             	              |               	                |
+| Receive          	 |     +      	     |  +   	  |       	        |    	    |       	        |    	    |        	        |            	             |         	          | [ⓘ](#whitelist)     	 |         	         |          	          |             	              |               	                |
+
+**Legend**:
+
+* **Default** - The **Default** is the state that the FT has without any feature. Adding the **Features** to the FT, you
+  can extend or override the **Default** functionality.
+* **+** - Allowing
+* **ⓘ** - Custom behaviour
+	
