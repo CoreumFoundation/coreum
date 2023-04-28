@@ -534,6 +534,7 @@ func New(
 	)
 
 	// enable all wasm proposals
+	// FIXME(v47-legacy): remove once we finish with full migration
 	govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, wasm.EnableAllProposals))
 
 	// FIXME(v47-legacy): remove once we finish with full migration
@@ -582,6 +583,7 @@ func New(
 		assetNFTModule,
 		wnftModule,
 		customParamsModule,
+		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -694,6 +696,17 @@ func New(
 	// add test gRPC service for testing gRPC queries in isolation
 	// testdata_pulsar.RegisterQueryServer(app.GRPCQueryRouter(), testdata_pulsar.QueryImpl{})
 
+	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.mm.Modules))
+
+	reflectionSvc, err := runtimeservices.NewReflectionService()
+	if err != nil {
+		panic(err)
+	}
+	reflectionv1.RegisterReflectionServiceServer(app.GRPCQueryRouter(), reflectionSvc)
+
+	// add test gRPC service for testing gRPC queries in isolation
+	// testdata_pulsar.RegisterQueryServer(app.GRPCQueryRouter(), testdata_pulsar.QueryImpl{})
+
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
@@ -779,7 +792,7 @@ func New(
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
-		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+		panic(errors.Errorf("failed to read upgrade info from disk %s", err))
 	}
 
 	isSkipHeight := app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height)
@@ -830,6 +843,10 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 }
 
 // Configurator returns the app Configurator.
+func (app *App) Configurator() module.Configurator {
+	return app.configurator
+}
+
 func (app *App) Configurator() module.Configurator {
 	return app.configurator
 }
@@ -990,7 +1007,7 @@ func BlockedAddresses() map[string]bool {
 	return modAccAddrs
 }
 
-// initParamsKeeper init params keeper and its subspaces.
+// initParamsKeeper init params keeper and its subspaces
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 

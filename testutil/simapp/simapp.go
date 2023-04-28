@@ -2,7 +2,7 @@
 package simapp
 
 import (
-	"fmt"
+	"math/rand"
 	"math/rand"
 	"time"
 
@@ -87,7 +87,7 @@ func New(options ...Option) *App {
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
-		panic(fmt.Sprintf("can't Marshal genesisState: %s", err))
+		panic(errors.Errorf("can't Marshal genesisState: %s", err))
 	}
 
 	coreApp.InitChain(abci.RequestInitChain{

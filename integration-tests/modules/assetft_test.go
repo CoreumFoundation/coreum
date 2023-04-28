@@ -9,11 +9,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -2340,7 +2342,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgFreeze{})),
-		&expiration,
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 
@@ -2349,7 +2351,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgSetWhitelistedLimit{})),
-		&expiration,
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 

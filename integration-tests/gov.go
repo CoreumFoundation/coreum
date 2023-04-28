@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -202,7 +201,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 			WithGas(g.chainCtx.GasLimitByMsgs(msg))
 
 		clientCtx := g.chainCtx.ClientContext.
-			WithBroadcastMode(flags.BroadcastSync).
+			WithAwaitTx(false).
 			WithAwaitTx(true)
 
 		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)

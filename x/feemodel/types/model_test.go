@@ -153,8 +153,8 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 
 	return Params{
 		Model: ModelParams{
-			InitialGasPrice:         sdk.NewDecFromInt(sdkmath.NewIntFromUint64(initialGasPrice)),
-			MaxGasPriceMultiplier:   sdk.NewDecFromInt(sdkmath.NewIntFromUint64(maxGasPriceMultiplier)),
+			InitialGasPrice:         sdk.NewDecFromInt(sdk.NewDecFromInt(sdkmath.NewIntFromUint64(initialGasPrice)),
+			MaxGasPriceMultiplier:   sdk.NewDecFromInt(sdk.NewDecFromInt(sdkmath.NewIntFromUint64(maxGasPriceMultiplier)),
 			MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
 			EscalationStartFraction: sdk.MustNewDecFromStr(strconv.FormatFloat(escalationStartFraction, 'f', 4, 64)),
 			MaxBlockGas:             maxBlockGas,
