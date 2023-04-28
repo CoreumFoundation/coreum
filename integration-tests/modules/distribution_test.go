@@ -131,7 +131,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 
 	requireT := require.New(t)
 	// the amount of the delegation should be big enough to get at least some reward for the few blocks
-	amountToDelegate := sdk.NewInt(1_000_000)
+	amountToDelegate := sdk.NewInt(1_000_000_000)
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
