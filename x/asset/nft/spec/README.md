@@ -56,19 +56,177 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
 
 ## Access table
 
-| 	                | **Features** 	 |    	    |       	       |    	    |       	        |         	          |         	          |            	             |           	           |    	    | **Extentions**  	  |            	            |
-|------------------|:--------------:|:-------:|:-------------:|:-------:|:--------------:|:------------------:|:------------------:|:------------------------:|:---------------------:|:-------:|:------------------:|:-----------------------:|
-| 	                | **Default** 	  |    	    | **Burning** 	 |    	    | **Freezing** 	 |         	          | **Whitelisting** 	 |            	             | **Disable Sending** 	 |    	    | **Royalty rate** 	 |            	            |
-| 	                |  Issuer    	   | Owner 	 |  Issuer   	   | Owner 	 |  Issuer    	   |      Owner 	       |   Issuer      	    |       Recipient 	        |    Issuer       	     | Owner 	 |   Issuer      	    |         Owner 	         |
-| Mint           	 |    +      	    |    	    |       	       |    	    |       	        |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
-| Burn           	 |    +      	    |    	    |       	       |  +   	  |       	        |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
-| Freeze         	 |       	        |    	    |       	       |    	    |    +      	    |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
-| Unfreeze       	 |       	        |    	    |       	       |    	    |    +      	    |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
-| Whitelist      	 |       	        |    	    |       	       |    	    |       	        |         	          |     +        	     |            	             |           	           |    	    |         	          |            	            |
-| Unwhitelist    	 |       	        |    	    |       	       |    	    |       	        |         	          |     +        	     |            	             |           	           |    	    |         	          |            	            |
-| Send           	 |    +      	    |  +   	  |       	       |    	    |       	        | [ⓘ](#freezing)   	 |         	          |            	             |           	           |  -   	  |         	          | [ⓘ](#royalty-rate)    	 |
-| Send to issuer 	 |    +      	    |  +   	  |       	       |    	    |       	        |         	          |         	          |            	             |           	           |    	    |         	          |            	            |
-| Receive        	 |    +      	    |  +   	  |       	       |    	    |       	        |         	          |         	          | [ⓘ](#whitelisting)     	 |           	           |    	    |         	          |            	            |
+<!-- Original source: https://docs.google.com/spreadsheets/d/1wC51asxQF8gi7Egj0KvzsMf7zko5ojEL6l2CAdb_UNM -->
+<!-- Tool to generate table: https://www.tablesgenerator.com/html_tables -->
+
+<table>
+<thead>
+  <tr>
+    <th rowspan="3"></th>
+    <th colspan="10">Features</th>
+    <th colspan="2">Extentions</th>
+  </tr>
+  <tr>
+    <th colspan="2">Default</th>
+    <th colspan="2">Burning</th>
+    <th colspan="2">Freezing</th>
+    <th colspan="2">Whitelisting</th>
+    <th colspan="2">Disable Sending</th>
+    <th colspan="2">Royalty rate</th>
+  </tr>
+  <tr>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Recipient</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Mint</td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Burn</td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Freeze</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Unfreeze</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Whitelist</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Unwhitelist</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Send</td>
+    <td>+</td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><a href="#freezing">ⓘ</a></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>-</td>
+    <td></td>
+    <td><a>ⓘ</a></td>
+  </tr>
+  <tr>
+    <td>Send to issuer</td>
+    <td>+</td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Receive</td>
+    <td>+</td>
+    <td>+</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><a>ⓘ</a></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+</tbody>
+</table>
 
 **Legend**:
 
