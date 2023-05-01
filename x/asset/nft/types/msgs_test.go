@@ -164,6 +164,19 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 			},
 			expectedError: types.ErrInvalidInput,
 		},
+		{
+			name: "invalid duplicated class feature",
+			messageFunc: func() *types.MsgIssueClass {
+				msg := validMessage
+				msg.Features = []types.ClassFeature{
+					types.ClassFeature_burning,
+					types.ClassFeature_whitelisting,
+					types.ClassFeature_burning,
+				}
+				return &msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
 	}
 
 	for _, testCase := range testCases {

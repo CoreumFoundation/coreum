@@ -53,6 +53,14 @@ func (msg MsgIssue) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", msg.Description, maxDescriptionLength)
 	}
 
+	featuresSet := make(map[Feature]struct{})
+	for _, feature := range msg.Features {
+		if _, ok := featuresSet[feature]; ok {
+			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the features list")
+		}
+		featuresSet[feature] = struct{}{}
+	}
+
 	return nil
 }
 

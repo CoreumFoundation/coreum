@@ -58,6 +58,14 @@ func (msg *MsgIssueClass) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), MaxURIHashLength)
 	}
 
+	featuresSet := make(map[ClassFeature]struct{})
+	for _, feature := range msg.Features {
+		if _, ok := featuresSet[feature]; ok {
+			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated class features in the features list")
+		}
+		featuresSet[feature] = struct{}{}
+	}
+
 	return nil
 }
 
