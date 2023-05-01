@@ -1,8 +1,9 @@
 package types
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
@@ -21,7 +22,7 @@ func (msg MsgIssue) ValidateBasic() error {
 	const maxDescriptionLength = 200
 
 	if _, err := sdk.AccAddressFromBech32(msg.Issuer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer %s", msg.Issuer)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid issuer %s", msg.Issuer)
 	}
 
 	if err := ValidateSubunit(msg.Subunit); err != nil {
@@ -66,7 +67,7 @@ func (msg MsgIssue) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg MsgMint) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, _, err := DeconstructDenom(msg.Coin.Denom); err != nil {
@@ -86,7 +87,7 @@ func (msg MsgMint) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg MsgBurn) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, _, err := DeconstructDenom(msg.Coin.Denom); err != nil {
@@ -106,11 +107,11 @@ func (msg MsgBurn) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg MsgFreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	_, issuer, err := DeconstructDenom(msg.Coin.Denom)
@@ -119,7 +120,7 @@ func (msg MsgFreeze) ValidateBasic() error {
 	}
 
 	if issuer.String() == msg.Account {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	return msg.Coin.Validate()
@@ -135,11 +136,11 @@ func (msg MsgFreeze) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg MsgUnfreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	if _, _, err := DeconstructDenom(msg.Coin.Denom); err != nil {
@@ -159,7 +160,7 @@ func (msg MsgUnfreeze) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg MsgGloballyFreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, _, err := DeconstructDenom(msg.Denom); err != nil {
@@ -179,7 +180,7 @@ func (msg MsgGloballyFreeze) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg MsgGloballyUnfreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, _, err := DeconstructDenom(msg.Denom); err != nil {
@@ -199,11 +200,11 @@ func (msg MsgGloballyUnfreeze) GetSigners() []sdk.AccAddress {
 // ValidateBasic checks that message fields are valid.
 func (msg MsgSetWhitelistedLimit) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	_, issuer, err := DeconstructDenom(msg.Coin.Denom)
@@ -212,7 +213,7 @@ func (msg MsgSetWhitelistedLimit) ValidateBasic() error {
 	}
 
 	if issuer.String() == msg.Account {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
 	return msg.Coin.Validate()

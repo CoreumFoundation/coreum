@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -28,7 +29,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	requireT := require.New(t)
 	gov := chain.Governance
-	missingDepositAmount := chain.NewCoin(sdk.NewInt(10))
+	missingDepositAmount := chain.NewCoin(sdkmath.NewInt(10))
 
 	// Create new proposer.
 	proposer := chain.GenAccount()

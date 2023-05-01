@@ -3,7 +3,7 @@ package integrationtests
 import (
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -36,7 +36,7 @@ func NewNetworkConfig(chainID constant.ChainID) (config.NetworkConfig, error) {
 
 	networkConfig.CustomParamsConfig = config.CustomParamsConfig{
 		Staking: config.CustomParamsStakingConfig{
-			MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+			MinSelfDelegation: sdkmath.NewInt(10_000_000), // 10 core
 		},
 	}
 

@@ -3,8 +3,8 @@ package integrationtests
 import (
 	"reflect"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,16 +21,16 @@ import (
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
-	Codec                  codec.Codec
+	EncodingConfig         config.EncodingConfig
 	ClientContext          client.Context
 	NetworkConfig          config.NetworkConfig
 	DeterministicGasConfig deterministicgas.Config
 }
 
 // NewChainContext returns a new instance if the ChainContext.
-func NewChainContext(codec codec.Codec, clientCtx client.Context, networkCfg config.NetworkConfig) ChainContext {
+func NewChainContext(encodingConfig config.EncodingConfig, clientCtx client.Context, networkCfg config.NetworkConfig) ChainContext {
 	return ChainContext{
-		Codec:                  codec,
+		EncodingConfig:         encodingConfig,
 		ClientContext:          clientCtx,
 		NetworkConfig:          networkCfg,
 		DeterministicGasConfig: deterministicgas.DefaultConfig(),
@@ -41,7 +41,7 @@ func NewChainContext(codec codec.Codec, clientCtx client.Context, networkCfg con
 // private key and stores it in the chains ClientContext Keyring.
 func (c ChainContext) GenAccount() sdk.AccAddress {
 	// Generate and store a new mnemonic using temporary keyring
-	_, mnemonic, err := keyring.NewInMemory(c.Codec).NewMnemonic(
+	_, mnemonic, err := keyring.NewInMemory(c.EncodingConfig.Codec).NewMnemonic(
 		"tmp",
 		keyring.English,
 		sdk.GetConfig().GetFullBIP44Path(),
@@ -87,7 +87,7 @@ func (c ChainContext) TxFactory() client.Factory {
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
-func (c ChainContext) NewCoin(amount sdk.Int) sdk.Coin {
+func (c ChainContext) NewCoin(amount sdkmath.Int) sdk.Coin {
 	return sdk.NewCoin(c.NetworkConfig.Denom, amount)
 }
 
@@ -131,11 +131,11 @@ type BalancesOptions struct {
 	Messages                    []sdk.Msg
 	NondeterministicMessagesGas uint64
 	GasPrice                    sdk.Dec
-	Amount                      sdk.Int
+	Amount                      sdkmath.Int
 }
 
 // ComputeNeededBalanceFromOptions computes the required balance based on the input options.
-func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) sdk.Int {
+func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) sdkmath.Int {
 	if options.GasPrice.IsNil() {
 		options.GasPrice = c.NetworkConfig.Fee.FeeModel.Params().InitialGasPrice
 	}
@@ -189,11 +189,11 @@ func NewChain(cfg ChainConfig) Chain {
 	}
 	clientCtx = clientCtx.WithGRPCClient(grpcClient)
 
-	chainCtx := NewChainContext(encodingConfig.Codec, clientCtx, cfg.NetworkConfig)
+	chainCtx := NewChainContext(encodingConfig, clientCtx, cfg.NetworkConfig)
 	governance := NewGovernance(chainCtx, cfg.StakerMnemonics)
 
 	faucetAddr := chainCtx.ImportMnemonic(cfg.FundingMnemonic)
-	faucet := NewFaucet(NewChainContext(encodingConfig.Codec, clientCtx.WithFromAddress(faucetAddr), cfg.NetworkConfig))
+	faucet := NewFaucet(NewChainContext(encodingConfig, clientCtx.WithFromAddress(faucetAddr), cfg.NetworkConfig))
 	return Chain{
 		ChainContext: chainCtx,
 		Governance:   governance,

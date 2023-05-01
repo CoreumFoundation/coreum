@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
+	testutilcli "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -38,11 +38,8 @@ func TestQueryClass(t *testing.T) {
 		types.ClassFeature_disable_sending,
 	)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
-	requireT.NoError(err)
-
 	var resp types.QueryClassResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryClass(), []string{classID}, &resp))
 
 	requireT.Equal(types.Class{
 		Id:          classID,
@@ -78,7 +75,7 @@ func issueClass(
 	if royaltyRate != "" {
 		args = append(args, "--royalty-rate", royaltyRate)
 	}
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
+	_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
 	return types.BuildClassID(symbol, validator.Address)
@@ -92,6 +89,6 @@ func mint(
 ) {
 	args := []string{classID, nftID, url, urlHash}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
+	_, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
 	requireT.NoError(err)
 }

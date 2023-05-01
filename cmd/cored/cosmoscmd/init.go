@@ -1,6 +1,7 @@
 package cosmoscmd
 
 // The command init.go copied from https://github.com/cosmos/cosmos-sdk/blob/v0.47.1/x/genutil/client/cli/init.go.
+
 import (
 	"bufio"
 	"encoding/json"
@@ -25,6 +26,7 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 )
 
+//nolint:tagliatelle // default structure
 type printInfo struct {
 	Moniker    string          `json:"moniker" yaml:"moniker"`
 	ChainID    string          `json:"chain_id" yaml:"chain_id"`

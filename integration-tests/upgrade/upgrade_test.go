@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
@@ -46,7 +46,7 @@ func TestUpgrade(t *testing.T) {
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
 
-	upgradeHeight := latestBlockRes.Block.Header.Height + 30
+	upgradeHeight := latestBlockRes.SdkBlock.Header.Height + 30
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -96,11 +96,11 @@ func TestUpgrade(t *testing.T) {
 	// Verify that we are before the upgrade
 	infoWaitingBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
-	requireT.Less(infoWaitingBlockRes.Block.Header.Height, upgradeHeight)
+	requireT.Less(infoWaitingBlockRes.SdkBlock.Header.Height, upgradeHeight)
 
-	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
+	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.SdkBlock.Header.Height))
 	defer cancel()
-	log.Info("Waiting for upgrade", zap.Int64("upgradeHeight", upgradeHeight), zap.Int64("currentHeight", infoWaitingBlockRes.Block.Header.Height))
+	log.Info("Waiting for upgrade", zap.Int64("upgradeHeight", upgradeHeight), zap.Int64("currentHeight", infoWaitingBlockRes.SdkBlock.Header.Height))
 	err = retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
@@ -109,10 +109,10 @@ func TestUpgrade(t *testing.T) {
 		if err != nil {
 			return retry.Retryable(err)
 		}
-		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight+1 {
+		if infoAfterBlockRes.SdkBlock.Header.Height >= upgradeHeight+1 {
 			return nil
 		}
-		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height))
+		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.SdkBlock.Header.Height))
 	})
 	requireT.NoError(err)
 
@@ -140,6 +140,6 @@ func TestUpgrade(t *testing.T) {
 
 	// check that asset nft is available now
 	requireT.Equal(assetnfttypes.Params{
-		MintFee: chain.NewCoin(sdk.NewInt(0)),
+		MintFee: chain.NewCoin(sdkmath.NewInt(0)),
 	}, paramsRes.Params)
 }

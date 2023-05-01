@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -64,7 +65,7 @@ func (ms MsgServer) Mint(goCtx context.Context, req *types.MsgMint) (*types.Empt
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	err = ms.keeper.Mint(ctx, sender, req.Coin)
@@ -80,7 +81,7 @@ func (ms MsgServer) Burn(goCtx context.Context, req *types.MsgBurn) (*types.Empt
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	err = ms.keeper.Burn(ctx, sender, req.Coin)
@@ -96,12 +97,12 @@ func (ms MsgServer) Freeze(goCtx context.Context, req *types.MsgFreeze) (*types.
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	err = ms.keeper.Freeze(ctx, sender, account, req.Coin)
@@ -117,12 +118,12 @@ func (ms MsgServer) Unfreeze(goCtx context.Context, req *types.MsgUnfreeze) (*ty
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	err = ms.keeper.Unfreeze(ctx, sender, account, req.Coin)
@@ -138,7 +139,7 @@ func (ms MsgServer) GloballyFreeze(goCtx context.Context, req *types.MsgGlobally
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if err := ms.keeper.GloballyFreeze(ctx, sender, req.Denom); err != nil {
@@ -153,7 +154,7 @@ func (ms MsgServer) GloballyUnfreeze(goCtx context.Context, req *types.MsgGlobal
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if err := ms.keeper.GloballyUnfreeze(ctx, sender, req.Denom); err != nil {
@@ -168,12 +169,12 @@ func (ms MsgServer) SetWhitelistedLimit(goCtx context.Context, req *types.MsgSet
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	err = ms.keeper.SetWhitelistedBalance(ctx, sender, account, req.Coin)

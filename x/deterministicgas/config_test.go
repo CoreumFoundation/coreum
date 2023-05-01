@@ -5,6 +5,7 @@ import (
 	"testing"
 	_ "unsafe"
 
+	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
@@ -20,7 +21,7 @@ import (
 // To access private variable from github.com/gogo/protobuf we link it to local variable.
 // This is needed to iterate through all registered protobuf types.
 //
-//go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
+//go:linkname revProtoTypes github.com/cosmos/gogoproto/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
 //nolint:funlen
@@ -58,6 +59,10 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		// ibc.applications.transfer
 		"/ibc.applications.transfer.v1.MsgTransfer",
 
+		// ibc.applications.interchain_accounts
+		"/ibc.applications.interchain_accounts.controller.v1.MsgSendTx",
+		"/ibc.applications.interchain_accounts.controller.v1.MsgRegisterInterchainAccount",
+
 		// ibc.applications.fee
 		"/ibc.applications.fee.v1.MsgRegisterPayee",
 		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayee",
@@ -72,14 +77,57 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	// WASM messages will be added here
 	nondeterministicMsgTypes := []string{
-		// gov
-		"/cosmos.gov.v1beta1.MsgSubmitProposal",
+		// auth
+		"/cosmos.auth.v1beta1.MsgUpdateParams",
+
+		// bank
+		"/cosmos.bank.v1beta1.MsgSetSendEnabled",
+		"/cosmos.bank.v1beta1.MsgUpdateParams",
+
+		// distribution
+		"/cosmos.distribution.v1beta1.MsgUpdateParams",
+		"/cosmos.distribution.v1beta1.MsgCommunityPoolSpend",
+
+		// consensus
+		"/cosmos.consensus.v1.MsgUpdateParams",
+
+		// crisis
+		"/cosmos.crisis.v1beta1.MsgUpdateParams",
 
 		// crisis
 		"/cosmos.crisis.v1beta1.MsgVerifyInvariant",
 
 		// evidence
 		"/cosmos.evidence.v1beta1.MsgSubmitEvidence",
+
+		// gov
+		"/cosmos.gov.v1beta1.MsgSubmitProposal",
+
+		"/cosmos.gov.v1.MsgSubmitProposal",
+		"/cosmos.gov.v1.MsgExecLegacyContent",
+		"/cosmos.gov.v1.MsgUpdateParams",
+
+		"/cosmos.gov.v1.MsgSubmitProposal",
+		"/cosmos.gov.v1.MsgExecLegacyContent",
+		"/cosmos.gov.v1.MsgUpdateParams",
+
+		// mint
+		"/cosmos.mint.v1beta1.MsgUpdateParams",
+
+		// staking
+		"/cosmos.staking.v1beta1.MsgUpdateParams",
+		"/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation",
+
+		// slashing
+		"/cosmos.slashing.v1beta1.MsgUpdateParams",
+
+		// upgrade
+		"/cosmos.upgrade.v1beta1.MsgCancelUpgrade",
+		"/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+
+		// vesting
+		"/cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount",
+		"/cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount",
 
 		// wasm
 		"/cosmwasm.wasm.v1.MsgStoreCode",
@@ -89,6 +137,12 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/cosmwasm.wasm.v1.MsgMigrateContract",
 		"/cosmwasm.wasm.v1.MsgIBCCloseChannel",
 		"/cosmwasm.wasm.v1.MsgIBCSend",
+		"/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig",
+		"/cosmwasm.wasm.v1.MsgUpdateParams",
+		"/cosmwasm.wasm.v1.MsgUnpinCodes",
+		"/cosmwasm.wasm.v1.MsgPinCodes",
+		"/cosmwasm.wasm.v1.MsgSudoContract",
+		"/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract",
 	}
 
 	// This is required to compile all the messages used by the app, not only those included in deterministic gas config
@@ -126,8 +180,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 10, len(nondeterministicMsgs))
-	assert.Equal(t, 39, len(deterministicMsgs))
+	assert.Equal(t, 34, len(nondeterministicMsgs))
+	assert.Equal(t, 42, len(deterministicMsgs))
 
 	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg
@@ -196,7 +250,7 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 			name: "bank.MsgSend: 6 entries",
 			msg: &banktypes.MsgSend{
 				Amount: lo.RepeatBy(6, func(i int) sdk.Coin {
-					return sdk.NewCoin(denom, sdk.NewInt(int64(i)))
+					return sdk.NewCoin(denom, sdkmath.NewInt(int64(i)))
 				}),
 			},
 			expectedGas:             6 * bankSendPerEntryGas,
@@ -225,7 +279,7 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 			name: "bank.MsgMultiSend: 1 input & 2 outputs",
 			msg: &banktypes.MsgMultiSend{
 				Inputs: []banktypes.Input{
-					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(2)))},
+					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(2)))},
 				},
 				Outputs: []banktypes.Output{
 					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.OneInt()))},
@@ -239,13 +293,13 @@ func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 			name: "bank.MsgMultiSend: 3 inputs & 2 outputs",
 			msg: &banktypes.MsgMultiSend{
 				Inputs: []banktypes.Input{
-					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(2)))},
-					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(2)))},
-					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(2)))},
+					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(2)))},
+					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(2)))},
+					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(2)))},
 				},
 				Outputs: []banktypes.Output{
-					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(3)))},
-					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(3)))},
+					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(3)))},
+					{Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(3)))},
 				},
 			},
 			expectedGas:             5 * bankMultiSendPerEntryGas,

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -44,7 +45,7 @@ var setNetworkConfigOnce = sync.Once{}
 // FundedAccount is struct used for WithChainDenomFundedAccounts function.
 type FundedAccount struct {
 	Address sdk.AccAddress
-	Amount  sdk.Int
+	Amount  sdkmath.Int
 }
 
 // WithChainDenomFundedAccounts adds the funded account the config genesis.
@@ -107,7 +108,7 @@ func DefaultConfig() network.Config {
 	// set to nil the devnet config we don't need
 	devCfg.FundedAccounts = nil
 	devCfg.GenTxs = nil
-	devCfg.CustomParamsConfig.Staking.MinSelfDelegation = sdk.NewInt(1)
+	devCfg.CustomParamsConfig.Staking.MinSelfDelegation = sdkmath.NewInt(1)
 
 	// init the network and set params
 	devNetwork := config.NewNetwork(devCfg)
@@ -127,7 +128,7 @@ func DefaultConfig() network.Config {
 	}
 
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
-
+	chainID := "chain-" + tmrand.NewRand().Str(6)
 	return network.Config{
 		Codec:             encoding.Codec,
 		LegacyAmino:       encoding.Amino,
@@ -143,11 +144,12 @@ func DefaultConfig() network.Config {
 				simtestutil.NewAppOptionsWithFlagHome(app.DefaultNodeHome),
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
+				baseapp.SetChainID(chainID),
 			)
 		},
 		GenesisState:   genesisAppState,
 		TimeoutCommit:  2 * time.Second,
-		ChainID:        "chain-" + tmrand.NewRand().Str(6),
+		ChainID:        chainID,
 		NumValidators:  1,
 		BondDenom:      devCfg.Denom,
 		MinGasPrices:   fmt.Sprintf("0.000006%s", devCfg.Denom),

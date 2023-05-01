@@ -11,13 +11,14 @@ import (
 	"fmt"
 	"strings"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/mempool"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/pkg/errors"
@@ -236,7 +237,7 @@ func AwaitNextBlocks(
 			return retry.Retryable(errors.WithStack(err))
 		}
 
-		currentHeight := res.Block.Header.Height
+		currentHeight := res.SdkBlock.Header.Height
 		if heightToStart == 0 {
 			heightToStart = currentHeight
 		}
@@ -332,7 +333,7 @@ func processTxCommitError(ctx context.Context, err error) error {
 		return errors.WithStack(err)
 	}
 
-	if err := convertTendermintError(err); !sdkerrors.ErrTxInMempoolCache.Is(err) {
+	if err := convertTendermintError(err); !cosmoserrors.ErrTxInMempoolCache.Is(err) {
 		return errors.WithStack(err)
 	}
 
@@ -364,11 +365,11 @@ func convertTendermintError(err error) error {
 
 	switch {
 	case strings.Contains(errStr, strings.ToLower(mempool.ErrTxInCache.Error())):
-		return sdkerrors.ErrTxInMempoolCache.Wrap(err.Error())
-	case strings.Contains(errStr, sdkerrors.ErrMempoolIsFull.Error()):
-		return sdkerrors.ErrMempoolIsFull.Wrap(err.Error())
-	case strings.Contains(errStr, sdkerrors.ErrTxTooLarge.Error()):
-		return sdkerrors.ErrTxTooLarge.Wrap(err.Error())
+		return cosmoserrors.ErrTxInMempoolCache.Wrap(err.Error())
+	case strings.Contains(errStr, cosmoserrors.ErrMempoolIsFull.Error()):
+		return cosmoserrors.ErrMempoolIsFull.Wrap(err.Error())
+	case strings.Contains(errStr, cosmoserrors.ErrTxTooLarge.Error()):
+		return cosmoserrors.ErrTxTooLarge.Wrap(err.Error())
 	default:
 		return err
 	}

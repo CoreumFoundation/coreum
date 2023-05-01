@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	simulationtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
@@ -13,6 +14,7 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	testutilconstant "github.com/CoreumFoundation/coreum/testutil/constant"
 )
 
 func init() {
@@ -23,15 +25,15 @@ func init() {
 // Running using starport command:
 // `starport chain simulate -v --numBlocks 200 --blockSize 50`
 // Running as go benchmark test:
-// `go test -benchmem -run=^$ -bench ^BenchmarkSimulation ./app -NumBlocks=200 -BlockSize 50 -Commit=true -Verbose=true -Enabled=true`.
+// `go test -benchmem -run=^$ -bench ^BenchmarkSimulation ./app -NumBlocks=200 -BlockSize 50`.
 func BenchmarkSimulation(b *testing.B) {
 	clientcli.FlagEnabledValue = true
 	clientcli.FlagCommitValue = true
 
 	cfg := clientcli.NewConfigFromFlags()
-	cfg.ChainID = "simulation-app"
+	cfg.ChainID = testutilconstant.SimAppChainID
 
-	db, dir, logger, _, err := simtestutil.SetupSimulation(cfg, "goleveldb-app-sim", "Simulation", true, false)
+	db, dir, logger, _, err := simtestutil.SetupSimulation(cfg, "goleveldb-app-sim", "Simulation", true, true)
 	require.NoError(b, err, "simulation setup failed")
 
 	b.Cleanup(func() {
@@ -53,6 +55,7 @@ func BenchmarkSimulation(b *testing.B) {
 		nil,
 		true,
 		simtestutil.EmptyAppOptions{},
+		baseapp.SetChainID(cfg.ChainID),
 	)
 
 	// Run randomized simulations

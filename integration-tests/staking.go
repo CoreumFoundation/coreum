@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -15,7 +16,7 @@ import (
 )
 
 // CreateValidator creates a new validator on the chain and returns the staker addresses, validator addresses and callback function to deactivate it.
-func CreateValidator(ctx context.Context, chain Chain, stakingAmount, selfDelegationAmount sdk.Int) (sdk.AccAddress, sdk.ValAddress, func() error, error) {
+func CreateValidator(ctx context.Context, chain Chain, stakingAmount, selfDelegationAmount sdkmath.Int) (sdk.AccAddress, sdk.ValAddress, func() error, error) {
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 	staker := chain.GenAccount()
 

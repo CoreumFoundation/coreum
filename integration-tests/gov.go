@@ -234,8 +234,8 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 	if err != nil {
 		return proposal.Status, errors.WithStack(err)
 	}
-	if blockRes.Block.Header.Time.Before(proposal.VotingEndTime) {
-		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(blockRes.Block.Header.Time))
+	if blockRes.SdkBlock.Header.Time.Before(proposal.VotingEndTime) {
+		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(blockRes.SdkBlock.Header.Time))
 		defer waitCancel()
 
 		<-waitCtx.Done()

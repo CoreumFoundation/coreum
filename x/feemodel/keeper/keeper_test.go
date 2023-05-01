@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -87,12 +88,12 @@ func TestLongEMAGas(t *testing.T) {
 func TestMinGasPrice(t *testing.T) {
 	ctx, keeper := setup()
 
-	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdk.NewInt(10)))
+	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(10)))
 	minGasPrice := keeper.GetMinGasPrice(ctx)
 	assert.Equal(t, "10.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)
 
-	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdk.NewInt(20)))
+	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(20)))
 	minGasPrice = keeper.GetMinGasPrice(ctx)
 	assert.EqualValues(t, "20.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)

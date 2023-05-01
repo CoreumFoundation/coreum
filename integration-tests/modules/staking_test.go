@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -91,10 +92,10 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	// we stake the minimum possible staking amount
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
 	// Setup delegator
 	delegator := chain.GenAccount()
-	delegateAmount := sdk.NewInt(100)
+	delegateAmount := sdkmath.NewInt(100)
 	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
@@ -241,7 +242,7 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 
 	initialValidatorAmount := customStakingParams.Params.MinSelfDelegation
 
-	notEnoughValidatorAmount := initialValidatorAmount.Quo(sdk.NewInt(2))
+	notEnoughValidatorAmount := initialValidatorAmount.Quo(sdkmath.NewInt(2))
 
 	// Try to create a validator with the amount less than the minimum
 	_, _, _, err = integrationtests.CreateValidator(ctx, chain, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
@@ -275,7 +276,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	requireT.NoError(err)
 	minSelfDelegation := customStakingParams.Params.MinSelfDelegation
 	// we increase it here to test the update of the validators with the current min self delegation less than new param
-	newMinSelfDelegation := minSelfDelegation.Add(sdk.NewInt(1))
+	newMinSelfDelegation := minSelfDelegation.Add(sdkmath.NewInt(1))
 
 	err = changeMinSelfDelegationCustomParam(ctx, requireT, chain, customParamsClient, newMinSelfDelegation)
 	requireT.NoError(err)
@@ -322,7 +323,7 @@ func changeMinSelfDelegationCustomParam(
 	requireT *require.Assertions,
 	chain integrationtests.Chain,
 	customParamsClient customparamstypes.QueryClient,
-	newMinSelfDelegation sdk.Int,
+	newMinSelfDelegation sdkmath.Int,
 ) error {
 	// create new proposer
 	proposer := chain.GenAccount()

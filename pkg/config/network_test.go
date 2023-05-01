@@ -10,6 +10,7 @@ import (
 	"time"
 	"unsafe"
 
+	sdkmath "cosmossdk.io/math"
 	tmtypes "github.com/cometbft/cometbft/types"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -173,7 +174,7 @@ func TestGenesisHash(t *testing.T) {
 		},
 		{
 			chainID:     constant.ChainIDTest,
-			genesisHash: "8ece5edef851738ef3d8435a58bfbfe91b163ff199785ae1470da84466f0f1c1",
+			genesisHash: "276d5df3856ccfba9240687f463c9464e10176e0fc355efb7162e36b09b0e3af",
 		},
 	}
 	for _, tt := range tests {
@@ -202,7 +203,7 @@ func TestGenesisCoreTotalSupply(t *testing.T) {
 		{
 			name:       "testnet",
 			chainID:    constant.ChainIDTest,
-			wantSupply: sdk.NewCoin(constant.DenomTest, sdk.NewInt(500_000_000_000_000)),
+			wantSupply: sdk.NewCoin(constant.DenomTest, sdkmath.NewInt(500_000_000_000_000)),
 		},
 	}
 	for _, tt := range tests {

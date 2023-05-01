@@ -24,8 +24,10 @@ import (
 
 var (
 	_ module.AppModule           = AppModule{}
-	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.HasGenesis          = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
+	_ module.EndBlockAppModule   = AppModule{}
+	_ module.AppModuleBasic      = AppModuleBasic{}
 )
 
 // Keeper defines an interface of keeper required by fee module.
@@ -70,8 +72,10 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the fee module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	//nolint:errcheck // Welcome to Cosmos SDK
-	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+	err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetTxCmd returns the root tx command for the fee module.
@@ -113,16 +117,16 @@ func (AppModule) Name() string { return types.ModuleName }
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
 // FIXME(v47-module-config): remove or replace with corresponding component
-//// Route returns the message routing key for the fee module.
-//func (am AppModule) Route() sdk.Route { return sdk.Route{} }
+// Route returns the message routing key for the fee module.
+/* func (am AppModule) Route() sdk.Route { return sdk.Route{} } */
 // FIXME(v47-module-config): remove or replace with corresponding component
-//// QuerierRoute returns the fee module's querier route name.
-//func (AppModule) QuerierRoute() string { return types.RouterKey }
+// QuerierRoute returns the fee module's querier route name.
+/* func (AppModule) QuerierRoute() string { return types.RouterKey } */
 // FIXME(v47-module-config): remove or replace with corresponding component
-//// LegacyQuerierHandler returns the fee module sdk.Querier.
-//func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-//	return nil
-//}
+// LegacyQuerierHandler returns the fee module sdk.Querier.
+/* func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
+	return nil
+} */
 
 // InitGenesis performs genesis initialization for the fee module. It returns
 // no validator updates.
@@ -146,9 +150,6 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
-
-// BeginBlock performs a no-op.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock returns the end blocker for the fee module. It returns no validator
 // updates.
@@ -182,15 +183,15 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
+func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
 	return nil
 }
 
 // FIXME(v47-module-config): remove or replace with corresponding component
 // RandomizedParams creates randomized fee param changes for the simulator.
-//func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-//	return nil
-//}
+/* func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
+	return nil
+} */
 
 // RegisterStoreDecoder registers a decoder for supply module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}

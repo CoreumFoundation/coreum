@@ -12,6 +12,7 @@ import (
 	"text/template"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -62,12 +63,12 @@ func init() {
 
 		customParamsConfig = CustomParamsConfig{
 			Staking: CustomParamsStakingConfig{
-				MinSelfDelegation: sdk.NewInt(20_000_000_000), // 20k core
+				MinSelfDelegation: sdkmath.NewInt(20_000_000_000), // 20k core
 			},
 		}
 
 		assetFTConfig = AssetFTConfig{
-			IssueFee: sdk.NewIntFromUint64(10_000_000),
+			IssueFee: sdkmath.NewIntFromUint64(10_000_000),
 		}
 
 		assetNFTConfig = AssetNFTConfig{
@@ -78,7 +79,7 @@ func init() {
 	// devnet vars
 
 	// 10m delegated and 1m extra to the txs
-	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
+	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(11_000_000_000_000)))
 
 	devGovConfig := govConfig
 	devGovConfig.ProposalConfig.VotingPeriod = "4h"
@@ -150,7 +151,7 @@ func init() {
 				// Faucet's account storing the rest of total supply
 				{
 					Address:  "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
-					Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
+					Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))), // 100m faucet
 				},
 			},
 			GenTxs: readGenTxs(devGenTxsFS),
@@ -227,7 +228,7 @@ type StakingConfig struct {
 // CustomParamsStakingConfig contains custom params for the staking module configuration.
 type CustomParamsStakingConfig struct {
 	// MinSelfDelegation is the minimum allowed amount of the stake coin for the validator to be created.
-	MinSelfDelegation sdk.Int
+	MinSelfDelegation sdkmath.Int
 }
 
 // CustomParamsConfig contains custom params module configuration.
@@ -237,12 +238,12 @@ type CustomParamsConfig struct {
 
 // AssetFTConfig is the part of network config defining parameters of ft assets.
 type AssetFTConfig struct {
-	IssueFee sdk.Int
+	IssueFee sdkmath.Int
 }
 
 // AssetNFTConfig is the part of network config defining parameters of nft assets.
 type AssetNFTConfig struct {
-	MintFee sdk.Int
+	MintFee sdkmath.Int
 }
 
 // NetworkConfig helps initialize Network instance.
@@ -444,17 +445,24 @@ func (n Network) GenesisDoc() (*tmtypes.GenesisDoc, error) {
 
 // EncodeGenesis returns the json encoded representation of the genesis file.
 func (n Network) EncodeGenesis() ([]byte, error) {
-	genesisDoc, err := n.GenesisDoc()
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to get genesis doc")
-	}
+	switch n.chainID {
+	case constant.ChainIDMain:
+		return genesis.MainnetGenesis, nil
+	case constant.ChainIDTest:
+		return genesis.TestnetGenesis, nil
+	default:
+		genesisDoc, err := n.GenesisDoc()
+		if err != nil {
+			return nil, errors.Wrap(err, "not able to get genesis doc")
+		}
 
-	bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to marshal genesis doc")
-	}
+		bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
+		if err != nil {
+			return nil, errors.Wrap(err, "not able to marshal genesis doc")
+		}
 
-	return bs, nil
+		return bs, nil
+	}
 }
 
 // SaveGenesis saves json encoded representation of the genesis config into file.

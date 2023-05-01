@@ -3,9 +3,9 @@
 package modules
 
 import (
-	"context"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -21,100 +21,101 @@ import (
 
 // TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
 // FIXME(v47-spend-community-pool) fix the test
-//func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
-//	t.Parallel()
-//
-//	ctx, chain := integrationtests.NewTestingContext(t)
-//
-//	requireT := require.New(t)
-//
-//	bankClient := banktypes.NewQueryClient(chain.ClientContext)
-//	distributionClient := distributiontypes.NewQueryClient(chain.ClientContext)
-//
-//	// *** Check the MsgFundCommunityPool ***
-//
-//	communityPoolFunder := chain.GenAccount()
-//	fundAmount := sdk.NewInt(1_000)
-//	msgFundCommunityPool := &distributiontypes.MsgFundCommunityPool{
-//		Amount:    sdk.NewCoins(chain.NewCoin(fundAmount)),
-//		Depositor: communityPoolFunder.String(),
-//	}
-//
-//	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, communityPoolFunder, integrationtests.BalancesOptions{
-//		Messages: []sdk.Msg{
-//			msgFundCommunityPool,
-//		},
-//		Amount: fundAmount,
-//	}))
-//
-//	// capture the pool amount now to check it later
-//	poolBeforeFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
-//
-//	txResult, err := client.BroadcastTx(
-//		ctx,
-//		chain.ClientContext.WithFromAddress(communityPoolFunder),
-//		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFundCommunityPool)),
-//		msgFundCommunityPool,
-//	)
-//	requireT.NoError(err)
-//	// validate the deterministic gas
-//	requireT.Equal(chain.GasLimitByMsgs(msgFundCommunityPool), uint64(txResult.GasUsed))
-//
-//	poolAfterFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
-//
-//	// check that after funding we have more than before + funding amount
-//	requireT.True(poolAfterFunding.Sub(poolBeforeFunding).IsGTE(chain.NewCoin(fundAmount)))
-//
-//	// *** Check the CommunityPoolSpendProposal ***
-//
-//	// create new proposer
-//	proposer := chain.GenAccount()
-//	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-//	requireT.NoError(err)
-//
-//	communityPoolRecipient := chain.GenAccount()
-//
-//	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-//	requireT.NoError(err)
-//
-//	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
-//
-//	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, distributiontypes.MsgCommunityPoolSpend{}(
-//		"Spend community pool",
-//		"Spend community pool",
-//		communityPoolRecipient,
-//		sdk.NewCoins(poolCoin),
-//	))
-//	requireT.NoError(err)
-//	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
-//	requireT.NoError(err)
-//
-//	requireT.NoError(err)
-//	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
-//
-//	// verify that voting period started
-//	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
-//	requireT.NoError(err)
-//	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
-//
-//	// vote yes from all vote accounts
-//	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
-//	requireT.NoError(err)
-//
-//	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
-//
-//	// wait for proposal result.
-//	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
-//	requireT.NoError(err)
-//	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
-//
-//	// check that recipient has received the coins
-//	communityPoolRecipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
-//		Address: communityPoolRecipient.String(),
-//	})
-//	requireT.NoError(err)
-//	requireT.Equal(sdk.NewCoins(poolCoin), communityPoolRecipientBalancesRes.Balances)
-//}
+//nolint:dupword // commented code
+/* func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewTestingContext(t)
+
+	requireT := require.New(t)
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+	distributionClient := distributiontypes.NewQueryClient(chain.ClientContext)
+
+	// *** Check the MsgFundCommunityPool ***
+
+	communityPoolFunder := chain.GenAccount()
+	fundAmount := sdkmath.NewInt(1_000)
+	msgFundCommunityPool := &distributiontypes.MsgFundCommunityPool{
+		Amount:    sdk.NewCoins(chain.NewCoin(fundAmount)),
+		Depositor: communityPoolFunder.String(),
+	}
+
+	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, communityPoolFunder, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			msgFundCommunityPool,
+		},
+		Amount: fundAmount,
+	}))
+
+	// capture the pool amount now to check it later
+	poolBeforeFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
+
+	txResult, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(communityPoolFunder),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFundCommunityPool)),
+		msgFundCommunityPool,
+	)
+	requireT.NoError(err)
+	// validate the deterministic gas
+	requireT.Equal(chain.GasLimitByMsgs(msgFundCommunityPool), uint64(txResult.GasUsed))
+
+	poolAfterFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
+
+	// check that after funding we have more than before + funding amount
+	requireT.True(poolAfterFunding.Sub(poolBeforeFunding).IsGTE(chain.NewCoin(fundAmount)))
+
+	// *** Check the CommunityPoolSpendProposal ***
+
+	// create new proposer
+	proposer := chain.GenAccount()
+	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	requireT.NoError(err)
+
+	communityPoolRecipient := chain.GenAccount()
+
+	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
+	requireT.NoError(err)
+
+	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
+
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, distributiontypes.MsgCommunityPoolSpend{}(
+		"Spend community pool",
+		"Spend community pool",
+		communityPoolRecipient,
+		sdk.NewCoins(poolCoin),
+	))
+	requireT.NoError(err)
+	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	requireT.NoError(err)
+
+	requireT.NoError(err)
+	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
+
+	// verify that voting period started
+	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
+
+	// vote yes from all vote accounts
+	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	requireT.NoError(err)
+
+	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
+
+	// wait for proposal result.
+	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	requireT.NoError(err)
+	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
+
+	// check that recipient has received the coins
+	communityPoolRecipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+		Address: communityPoolRecipient.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoins(poolCoin), communityPoolRecipientBalancesRes.Balances)
+} */
 
 // TestDistributionWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
 func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
@@ -130,7 +131,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 
 	requireT := require.New(t)
 	// the amount of the delegation should be big enough to get at least some reward for the few blocks
-	amountToDelegate := sdk.NewInt(1_000_000)
+	amountToDelegate := sdkmath.NewInt(1_000_000)
 	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
@@ -146,7 +147,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	// *** Create new validator to use it in the test and capture all required balances. ***
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
 	validatorStakerAddress, validatorAddress, deactivateValidator, err := integrationtests.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
@@ -300,7 +301,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	logger.Get(ctx).Info("Withdrawing of the validator commission is done", zap.String("amount", validatorStakerCommissionReward.String()))
 }
 
-func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, distributionClient distributiontypes.QueryClient) sdk.Coin {
+/* func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, distributionClient distributiontypes.QueryClient) sdk.Coin {
 	communityPoolRes, err := distributionClient.CommunityPool(ctx, &distributiontypes.QueryCommunityPoolRequest{})
 	requireT.NoError(err)
 
@@ -310,4 +311,4 @@ func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, dis
 	requireT.True(poolIntCoin.IsPositive())
 
 	return poolIntCoin
-}
+} */

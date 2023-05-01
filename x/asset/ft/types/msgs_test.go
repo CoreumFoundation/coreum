@@ -3,9 +3,11 @@ package types_test
 import (
 	"testing"
 
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,7 +36,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 			Subunit:       "btc",
 			Precision:     1,
 			Description:   "BTC Description",
-			InitialAmount: sdk.NewInt(777),
+			InitialAmount: sdkmath.NewInt(777),
 		}
 	}
 
@@ -58,11 +60,11 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 	requireT.Error(msg.ValidateBasic())
 
 	msg = msgF()
-	msg.InitialAmount = sdk.Int{}
+	msg.InitialAmount = sdkmath.Int{}
 	requireT.Error(msg.ValidateBasic())
 
 	msg = msgF()
-	msg.InitialAmount = sdk.NewInt(-100)
+	msg.InitialAmount = sdkmath.NewInt(-100)
 	requireT.Error(msg.ValidateBasic())
 
 	msg = msgF()
@@ -95,7 +97,7 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
 		},
@@ -106,10 +108,10 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid account",
@@ -118,10 +120,10 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "issuer freezing",
@@ -130,10 +132,10 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
-			expectedError: sdkerrors.ErrUnauthorized,
+			expectedError: cosmoserrors.ErrUnauthorized,
 		},
 	}
 
@@ -165,7 +167,7 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
 		},
@@ -176,10 +178,10 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid account",
@@ -188,10 +190,10 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid denom",
@@ -200,7 +202,7 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "0abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
 			expectedErrorString: "invalid denom",
@@ -232,7 +234,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 	defaultMsg := func() M {
 		return M{
 			Sender: acc.String(),
-			Coin:   sdk.NewCoin("abc"+"-"+acc.String(), sdk.NewInt(100)),
+			Coin:   sdk.NewCoin("abc"+"-"+acc.String(), sdkmath.NewInt(100)),
 		}
 	}
 
@@ -279,7 +281,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 	defaultMsg := func() M {
 		return M{
 			Sender: acc.String(),
-			Coin:   sdk.NewCoin("abc"+"-"+acc.String(), sdk.NewInt(100)),
+			Coin:   sdk.NewCoin("abc"+"-"+acc.String(), sdkmath.NewInt(100)),
 		}
 	}
 
@@ -332,7 +334,7 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
 		},
@@ -343,10 +345,10 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid account",
@@ -355,10 +357,10 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq+",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid denom",
@@ -367,7 +369,7 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 				Account: "devcore1k3mke3gyf9apyd8vxveutgp9h4j2e80e05yfuq",
 				Coin: sdk.Coin{
 					Denom:  "0abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
 			expectedErrorString: "invalid denom",
@@ -379,10 +381,10 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 				Account: "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
 				Coin: sdk.Coin{
 					Denom:  "abc-devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5",
-					Amount: sdk.NewInt(100),
+					Amount: sdkmath.NewInt(100),
 				},
 			},
-			expectedError: sdkerrors.ErrUnauthorized,
+			expectedError: cosmoserrors.ErrUnauthorized,
 		},
 	}
 

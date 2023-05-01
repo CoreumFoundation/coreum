@@ -1,8 +1,12 @@
 package ante
 
 import (
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	testutilconstant "github.com/CoreumFoundation/coreum/testutil/constant"
 )
 
 // Keeper interface exposes methods required by ante handler decorator of fee model.
@@ -27,15 +31,15 @@ func NewFeeDecorator(keeper Keeper) FeeDecorator {
 
 // AnteHandle handles transaction in ante decorator.
 func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// FIXME(v47-simulation): check that we need that additional check here `ctx.ChainID() == "simulation"`
-	if ctx.BlockHeight() == 0 || simulate {
+	// FIXME(v47-simulation): try to reduce the ctx.ChainID() == simapp.SimulationChainID, and remove testutil/constant/constant.go it's expected to work in any case
+	if ctx.BlockHeight() == 0 || simulate || ctx.ChainID() == testutilconstant.SimAppChainID {
 		// Don't enforce fee model on genesis block and during simulation
 		return next(ctx, tx, simulate)
 	}
 
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
-		return ctx, sdkerrors.Wrap(sdkerrors.ErrTxDecode, "tx must be a FeeTx")
+		return ctx, sdkerrors.Wrap(cosmoserrors.ErrTxDecode, "tx must be a FeeTx")
 	}
 
 	if err := fd.actOnFeeModelOutput(ctx, feeTx); err != nil {
@@ -50,20 +54,20 @@ func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, nex
 func (fd FeeDecorator) actOnFeeModelOutput(ctx sdk.Context, feeTx sdk.FeeTx) error {
 	fees := feeTx.GetFee()
 	if len(fees) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInsufficientFee, "no fee declared for transaction")
+		return sdkerrors.Wrap(cosmoserrors.ErrInsufficientFee, "no fee declared for transaction")
 	}
 
 	minGasPrice := fd.keeper.GetMinGasPrice(ctx)
 	if len(fees) > 1 || fees[0].Denom != minGasPrice.Denom {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "fee must be paid in '%s' coin only", minGasPrice.Denom)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidCoins, "fee must be paid in '%s' coin only", minGasPrice.Denom)
 	}
 
-	gasDeclared := sdk.NewDecFromInt(sdk.NewIntFromUint64(feeTx.GetGas()))
+	gasDeclared := sdk.NewDecFromInt(sdkmath.NewIntFromUint64(feeTx.GetGas()))
 	feeOffered := sdk.NewDecCoin(minGasPrice.Denom, fees.AmountOf(minGasPrice.Denom))
 	feeRequired := sdk.NewDecCoinFromDec(minGasPrice.Denom, gasDeclared.Mul(minGasPrice.Amount))
 
 	if feeOffered.IsLT(feeRequired) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeOffered, feeRequired)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeOffered, feeRequired)
 	}
 	return nil
 }

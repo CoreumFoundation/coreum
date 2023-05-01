@@ -1,13 +1,14 @@
 package wstaking
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingexported "github.com/cosmos/cosmos-sdk/x/staking/exported"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/wstaking/keeper"
 	wstakingtypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
@@ -51,12 +52,12 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 	m := stakingkeeper.NewMigrator(am.stakingKeeper, am.legacySubspace)
 	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 1, m.Migrate1to2); err != nil {
-		panic(errors.Errorf("failed to migrate x/%s from version 1 to 2: %v", stakingtypes.ModuleName, err))
+		panic(fmt.Sprintf("failed to migrate x/%s from version 1 to 2: %v", stakingtypes.ModuleName, err))
 	}
 	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 2, m.Migrate2to3); err != nil {
-		panic(errors.Errorf("failed to migrate x/%s from version 2 to 3: %v", stakingtypes.ModuleName, err))
+		panic(fmt.Sprintf("failed to migrate x/%s from version 2 to 3: %v", stakingtypes.ModuleName, err))
 	}
 	if err := cfg.RegisterMigration(stakingtypes.ModuleName, 3, m.Migrate3to4); err != nil {
-		panic(errors.Errorf("failed to migrate x/%s from version 3 to 4: %v", stakingtypes.ModuleName, err))
+		panic(fmt.Sprintf("failed to migrate x/%s from version 3 to 4: %v", stakingtypes.ModuleName, err))
 	}
 }
