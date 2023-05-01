@@ -64,7 +64,7 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
   <tr>
     <th rowspan="3"></th>
     <th colspan="10">Features</th>
-    <th colspan="2">Extentions</th>
+    <th colspan="2">Extensions</th>
   </tr>
   <tr>
     <th colspan="2">Default</th>
@@ -235,4 +235,3 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
 * **➕** : Allowing
 * **➖** : Disallowing
 * **ⓘ** : Custom behaviour
-	
