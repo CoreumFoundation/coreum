@@ -54,7 +54,7 @@ send the tokens they hold directly to user B. This feature opens up the door for
 ### Royalty Rate
 This feature is related to the DEX, and if it is enabled, every time that an NFT is traded on the DEX, a percentage of the traded value is sent to the issuer as royalty fee.
 
-## Access table
+## Feature interoperability table
 
 <!-- Original source: https://docs.google.com/spreadsheets/d/1wC51asxQF8gi7Egj0KvzsMf7zko5ojEL6l2CAdb_UNM -->
 <!-- Tool to generate table: https://www.tablesgenerator.com/html_tables -->
@@ -92,7 +92,7 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
 <tbody>
   <tr>
     <td>Mint</td>
-    <td>+</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
@@ -107,10 +107,10 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
   </tr>
   <tr>
     <td>Burn</td>
-    <td>+</td>
+    <td>➕</td>
     <td></td>
     <td></td>
-    <td>+</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
@@ -126,7 +126,7 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
     <td></td>
     <td></td>
     <td></td>
-    <td>+</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
@@ -141,7 +141,7 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
     <td></td>
     <td></td>
     <td></td>
-    <td>+</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
@@ -158,7 +158,7 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
     <td></td>
     <td></td>
     <td></td>
-    <td>+</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
@@ -173,7 +173,7 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
     <td></td>
     <td></td>
     <td></td>
-    <td>+</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
@@ -182,8 +182,8 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
   </tr>
   <tr>
     <td>Send</td>
-    <td>+</td>
-    <td>+</td>
+    <td>➕</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
@@ -191,14 +191,14 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
     <td></td>
     <td></td>
     <td></td>
-    <td>-</td>
+    <td>➖</td>
     <td></td>
-    <td><a>ⓘ</a></td>
+    <td><a href="#royalty-rate">ⓘ</a></td>
   </tr>
   <tr>
     <td>Send to issuer</td>
-    <td>+</td>
-    <td>+</td>
+    <td>➕</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
@@ -212,14 +212,14 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
   </tr>
   <tr>
     <td>Receive</td>
-    <td>+</td>
-    <td>+</td>
+    <td>➕</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
     <td></td>
     <td></td>
-    <td><a>ⓘ</a></td>
+    <td><a href="#whitelisting">ⓘ</a></td>
     <td></td>
     <td></td>
     <td></td>
@@ -230,9 +230,9 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
 
 **Legend**:
 
-* **Default** - The **Default** is the state that the NFT Class has without any feature. Adding the **Features** to the
+* **Default** : The **Default** is the state that the NFT Class has without any feature. Adding the **Features** to the
   NFT class, you can extend or override the **Default** functionality.
-* **+** - Allowing
-* **+** - Disallowing
-* **ⓘ** - Custom behaviour
+* **➕** : Allowing
+* **➖** : Disallowing
+* **ⓘ** : Custom behaviour
 	
