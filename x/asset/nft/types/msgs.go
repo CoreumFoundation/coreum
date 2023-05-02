@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
 )
 
 var (
@@ -58,12 +59,9 @@ func (msg *MsgIssueClass) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), MaxURIHashLength)
 	}
 
-	featuresSet := make(map[ClassFeature]struct{})
-	for _, feature := range msg.Features {
-		if _, exists := featuresSet[feature]; exists {
-			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated class features in the features list")
-		}
-		featuresSet[feature] = struct{}{}
+	duplicates := lo.FindDuplicates(msg.Features)
+	if len(duplicates) != 0 {
+		return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the class features list, duplicates: %v", duplicates)
 	}
 
 	return nil

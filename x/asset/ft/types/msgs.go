@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
 )
 
 var (
@@ -53,12 +54,9 @@ func (msg MsgIssue) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", msg.Description, maxDescriptionLength)
 	}
 
-	featuresSet := make(map[Feature]struct{})
-	for _, feature := range msg.Features {
-		if _, exists := featuresSet[feature]; exists {
-			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the features list")
-		}
-		featuresSet[feature] = struct{}{}
+	duplicates := lo.FindDuplicates(msg.Features)
+	if len(duplicates) != 0 {
+		return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the features list, duplicates: %v", duplicates)
 	}
 
 	return nil
