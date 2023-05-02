@@ -80,19 +80,19 @@ You may use those wallets to issue transactions and queries
 ```
 This will generate a wallet and print out the mnemonic at the end. It will also print 
 the address and public key. Use the address in the next commands to query its balance
-and and transfer funds to it
+and transfer funds to it.
 ```
 (znet) [znet] $ cored-00 q bank balances {YOUR_GENERATED_ADDRESS}
 ```
 Remember to replace address with the one existing in your keystore.
 
-You will see the balance is zero
+You will see the balance is zero.
 
 3. Send tokens from one account to another:
 ```
 (znet) [znet] $ cored-00 tx bank send alice {YOUR_GENERATED_ADDRESS} 10udevcore --broadcast-mode=block
 ```
-Run the query again and you will see that there are now funds the in the newly generated account.
+Run the query again and you will see that there are now funds in the newly generated account.
 ```
 (znet) [znet] $ cored-00 q bank balances {YOUR_GENERATED_ADDRESS}
 ```
