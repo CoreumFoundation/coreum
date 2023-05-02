@@ -11,12 +11,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ci_step: [ 
-          "lint", 
-          "test", 
-          "build", 
-          "integration tests coreum-modules", 
-          "integration tests coreum-upgrade", 
+        ci_step: [
+          "lint",
+          "test",
+          "build",
+          "integration tests coreum-modules",
+          "integration tests coreum-upgrade",
           "integration tests faucet",
         ]
         include:
@@ -101,6 +101,19 @@ jobs:
           path: crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+
+      - name: Print cache # FIXME remove
+        run: |
+          echo "docker images"
+          docker images
+          echo "lint cache size"
+          du -hs ~/.cache/golangci-lint
+          echo "go cache size"
+          du -hs ~/.cache/go-build
+          du -hs ~/go/pkg/mod
+          echo "wasm cache size"
+          du -hs ~/.cache/crust/wasm
+
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
