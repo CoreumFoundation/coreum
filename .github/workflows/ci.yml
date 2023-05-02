@@ -101,22 +101,6 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         if: ${{ matrix.docker-cache }}
         continue-on-error: true
-
-      - name: Print cache # FIXME remove
-        run: |
-          echo "docker images"
-          docker images
-          echo "go env"
-          go env
-          echo "~/.cache/golangci-lint lint cache size"
-          [ -d ~/.cache/golangci-lint ] && du -hs ~/.cache/golangci-lint
-          echo "~/.cache/go-build cache size"
-          [ -d ~/.cache/go-build ] && du -hs ~/.cache/go-build
-          echo "~/.cache/go/pkg/mod cache size"
-          [ -d ~/.cache/go/pkg/mod ] && du -hs ~/.cache/go/pkg/mod
-          echo "~/.cache/crust/wasm cache size"
-          [ -d ~/.cache/crust/wasm ] && du -hs ~/.cache/crust/wasm
-
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
