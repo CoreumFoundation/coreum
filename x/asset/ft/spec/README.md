@@ -314,6 +314,9 @@ Here is the description of behavior of the whitelisting feature:
 
 **Legend**:
 
+* **Issuer** : The FT issuer.
+* **Owner** : The account that owns some FT amount.
+* **Recipient** : The FT recipient in the `send` operation.
 * **Default** : The **Default** is the state that the FT has without any feature. Adding the **Features** to the FT, you
   can extend or override the **Default** functionality.
 * **➕** : Allowing

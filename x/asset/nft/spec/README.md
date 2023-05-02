@@ -230,6 +230,9 @@ This feature is related to the DEX, and if it is enabled, every time that an NFT
 
 **Legend**:
 
+* **Issuer** : The NFT Class issuer.
+* **Owner** : The account that owns an NFT.
+* **Recipient** : The NFT recipient in the `send` operation.
 * **Default** : The **Default** is the state that the NFT Class has without any feature. Adding the **Features** to the
   NFT class, you can extend or override the **Default** functionality.
 * **➕** : Allowing
