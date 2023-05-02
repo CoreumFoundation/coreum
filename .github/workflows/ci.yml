@@ -80,7 +80,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('../**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Setup WASM cache
@@ -101,6 +101,10 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         if: ${{ matrix.docker-cache }}
         continue-on-error: true
+        with:
+          key: ${{ runner.os }}-docker-${{ hashFiles('../**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
