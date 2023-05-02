@@ -30,11 +30,16 @@ func TestStakingProposalParamChange(t *testing.T) {
 	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
+	requireT := require.New(t)
+
 	ctx, chain := integrationtests.NewTestingContext(t)
 
-	targetMaxValidators := 2 * chain.NetworkConfig.StakingConfig.MaxValidators
-	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+	resp, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	stakingParams := resp.Params
+
+	targetMaxValidators := 2 * stakingParams.MaxValidators
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -47,7 +52,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 	// Create proposition to change max validators value.
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
 		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyMaxValidators), strconv.Itoa(targetMaxValidators)),
+			paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyMaxValidators), strconv.Itoa(int(targetMaxValidators))),
 		},
 	))
 	requireT.NoError(err)
@@ -72,9 +77,9 @@ func TestStakingProposalParamChange(t *testing.T) {
 	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
 	// Check the proposed change is applied.
-	stakingParams, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	resp, err = stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	requireT.Equal(uint32(targetMaxValidators), stakingParams.Params.MaxValidators)
+	requireT.Equal(targetMaxValidators, resp.Params.MaxValidators)
 }
 
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
@@ -393,7 +398,7 @@ func getBalance(ctx context.Context, t *testing.T, chain integrationtests.Chain,
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: addr.String(),
-		Denom:   chain.NetworkConfig.Denom,
+		Denom:   chain.NetworkConfig.Denom(),
 	})
 	require.NoError(t, err)
 

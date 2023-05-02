@@ -37,7 +37,7 @@ func BenchmarkSimulation(b *testing.B) {
 	})
 
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
-	network, err := config.NetworkByChainID(constant.ChainIDDev)
+	network, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
