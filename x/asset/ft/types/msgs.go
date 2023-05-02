@@ -55,7 +55,7 @@ func (msg MsgIssue) ValidateBasic() error {
 
 	featuresSet := make(map[Feature]struct{})
 	for _, feature := range msg.Features {
-		if _, ok := featuresSet[feature]; ok {
+		if _, exists := featuresSet[feature]; exists {
 			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the features list")
 		}
 		featuresSet[feature] = struct{}{}

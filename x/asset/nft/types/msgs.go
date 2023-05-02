@@ -60,7 +60,7 @@ func (msg *MsgIssueClass) ValidateBasic() error {
 
 	featuresSet := make(map[ClassFeature]struct{})
 	for _, feature := range msg.Features {
-		if _, ok := featuresSet[feature]; ok {
+		if _, exists := featuresSet[feature]; exists {
 			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated class features in the features list")
 		}
 		featuresSet[feature] = struct{}{}
