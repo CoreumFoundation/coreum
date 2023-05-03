@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
 )
 
 var (
@@ -51,6 +52,11 @@ func (msg MsgIssue) ValidateBasic() error {
 
 	if len(msg.Description) > maxDescriptionLength {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", msg.Description, maxDescriptionLength)
+	}
+
+	duplicates := lo.FindDuplicates(msg.Features)
+	if len(duplicates) != 0 {
+		return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the features list, duplicates: %v", duplicates)
 	}
 
 	return nil
