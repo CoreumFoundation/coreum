@@ -31,33 +31,6 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		// Not-integrated modules:
 		// IBC:
 
-		// ibc/core/client
-		"/ibc.core.client.v1.MsgCreateClient",
-		"/ibc.core.client.v1.MsgUpdateClient",
-		"/ibc.core.client.v1.MsgUpgradeClient",
-		"/ibc.core.client.v1.MsgSubmitMisbehaviour",
-
-		// ibc/core/connection
-		"/ibc.core.connection.v1.MsgConnectionOpenInit",
-		"/ibc.core.connection.v1.MsgConnectionOpenTry",
-		"/ibc.core.connection.v1.MsgConnectionOpenAck",
-		"/ibc.core.connection.v1.MsgConnectionOpenConfirm",
-
-		// ibc/core/channel
-		"/ibc.core.channel.v1.MsgChannelOpenInit",
-		"/ibc.core.channel.v1.MsgChannelOpenTry",
-		"/ibc.core.channel.v1.MsgChannelOpenAck",
-		"/ibc.core.channel.v1.MsgChannelOpenConfirm",
-		"/ibc.core.channel.v1.MsgChannelCloseInit",
-		"/ibc.core.channel.v1.MsgChannelCloseConfirm",
-		"/ibc.core.channel.v1.MsgRecvPacket",
-		"/ibc.core.channel.v1.MsgTimeout",
-		"/ibc.core.channel.v1.MsgTimeoutOnClose",
-		"/ibc.core.channel.v1.MsgAcknowledgement",
-
-		// ibc.applications.transfer
-		"/ibc.applications.transfer.v1.MsgTransfer",
-
 		// ibc.applications.fee
 		"/ibc.applications.fee.v1.MsgRegisterPayee",
 		"/ibc.applications.fee.v1.MsgRegisterCounterpartyPayee",
@@ -89,6 +62,30 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/cosmwasm.wasm.v1.MsgMigrateContract",
 		"/cosmwasm.wasm.v1.MsgIBCCloseChannel",
 		"/cosmwasm.wasm.v1.MsgIBCSend",
+
+		// ibc/core/client
+		"/ibc.core.client.v1.MsgCreateClient",
+		"/ibc.core.client.v1.MsgUpdateClient",
+		"/ibc.core.client.v1.MsgUpgradeClient",
+		"/ibc.core.client.v1.MsgSubmitMisbehaviour",
+
+		// ibc/core/connection
+		"/ibc.core.connection.v1.MsgConnectionOpenInit",
+		"/ibc.core.connection.v1.MsgConnectionOpenTry",
+		"/ibc.core.connection.v1.MsgConnectionOpenAck",
+		"/ibc.core.connection.v1.MsgConnectionOpenConfirm",
+
+		// ibc/core/channel
+		"/ibc.core.channel.v1.MsgChannelOpenInit",
+		"/ibc.core.channel.v1.MsgChannelOpenTry",
+		"/ibc.core.channel.v1.MsgChannelOpenAck",
+		"/ibc.core.channel.v1.MsgChannelOpenConfirm",
+		"/ibc.core.channel.v1.MsgChannelCloseInit",
+		"/ibc.core.channel.v1.MsgChannelCloseConfirm",
+		"/ibc.core.channel.v1.MsgRecvPacket",
+		"/ibc.core.channel.v1.MsgTimeout",
+		"/ibc.core.channel.v1.MsgTimeoutOnClose",
+		"/ibc.core.channel.v1.MsgAcknowledgement",
 	}
 
 	// This is required to compile all the messages used by the app, not only those included in deterministic gas config
@@ -126,8 +123,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 10, len(nondeterministicMsgs))
-	assert.Equal(t, 39, len(deterministicMsgs))
+	assert.Equal(t, 28, len(nondeterministicMsgs))
+	assert.Equal(t, 40, len(deterministicMsgs))
 
 	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg

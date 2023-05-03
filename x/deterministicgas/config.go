@@ -15,6 +15,10 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v4/modules/core/03-connection/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/samber/lo"
 
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -121,6 +125,9 @@ func DefaultConfig() Config {
 		// wasm
 		MsgToMsgURL(&wasmtypes.MsgUpdateAdmin{}): constantGasFunc(8000),
 		MsgToMsgURL(&wasmtypes.MsgClearAdmin{}):  constantGasFunc(6500),
+
+		// ibc transfer
+		MsgToMsgURL(&ibctransfertypes.MsgTransfer{}): constantGasFunc(37000),
 	}
 
 	registerNondeterministicGasFuncs(
@@ -150,6 +157,31 @@ func DefaultConfig() Config {
 			&wasmtypes.MsgMigrateContract{},
 			&wasmtypes.MsgIBCSend{},
 			&wasmtypes.MsgIBCCloseChannel{},
+
+			// ibc/core/client
+			&ibcclienttypes.MsgCreateClient{},
+			&ibcclienttypes.MsgCreateClient{},
+			&ibcclienttypes.MsgUpdateClient{},
+			&ibcclienttypes.MsgUpgradeClient{},
+			&ibcclienttypes.MsgSubmitMisbehaviour{},
+
+			// ibc/core/connection
+			&ibcconnectiontypes.MsgConnectionOpenInit{},
+			&ibcconnectiontypes.MsgConnectionOpenTry{},
+			&ibcconnectiontypes.MsgConnectionOpenAck{},
+			&ibcconnectiontypes.MsgConnectionOpenConfirm{},
+
+			// ibc/core/channel
+			&ibcchanneltypes.MsgChannelOpenInit{},
+			&ibcchanneltypes.MsgChannelOpenTry{},
+			&ibcchanneltypes.MsgChannelOpenAck{},
+			&ibcchanneltypes.MsgChannelOpenConfirm{},
+			&ibcchanneltypes.MsgChannelCloseInit{},
+			&ibcchanneltypes.MsgChannelCloseConfirm{},
+			&ibcchanneltypes.MsgRecvPacket{},
+			&ibcchanneltypes.MsgTimeout{},
+			&ibcchanneltypes.MsgTimeoutOnClose{},
+			&ibcchanneltypes.MsgAcknowledgement{},
 		},
 	)
 
