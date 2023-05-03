@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/samber/lo"
 )
 
 var (
@@ -56,6 +57,11 @@ func (msg *MsgIssueClass) ValidateBasic() error {
 
 	if len(msg.URIHash) > MaxURIHashLength {
 		return sdkerrors.Wrapf(ErrInvalidInput, "invalid URI hash %q, the length must be less than or equal %d", len(msg.URIHash), MaxURIHashLength)
+	}
+
+	duplicates := lo.FindDuplicates(msg.Features)
+	if len(duplicates) != 0 {
+		return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the class features list, duplicates: %v", duplicates)
 	}
 
 	return nil

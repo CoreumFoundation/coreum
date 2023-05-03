@@ -23,63 +23,142 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+//nolint:funlen // there are too many tests cases
 func TestMsgIssue_ValidateBasic(t *testing.T) {
-	requireT := require.New(t)
 	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-
-	msgF := func() types.MsgIssue {
-		return types.MsgIssue{
-			Issuer:        acc.String(),
-			Symbol:        "BTC",
-			Subunit:       "btc",
-			Precision:     1,
-			Description:   "BTC Description",
-			InitialAmount: sdk.NewInt(777),
-		}
+	validMessage := types.MsgIssue{
+		Issuer:        acc.String(),
+		Symbol:        "BTC",
+		Subunit:       "btc",
+		Precision:     1,
+		Description:   "BTC Description",
+		InitialAmount: sdk.NewInt(777),
 	}
 
-	msg := msgF()
-	requireT.NoError(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.Issuer = "invalid"
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.Symbol = ""
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.Symbol = string(make([]byte, 10000))
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.Symbol = "1BT"
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.InitialAmount = sdk.Int{}
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.InitialAmount = sdk.NewInt(-100)
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.Description = string(make([]byte, 10000))
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.Subunit = ""
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.BurnRate = sdk.MustNewDecFromStr("-0.1")
-	requireT.Error(msg.ValidateBasic())
-
-	msg = msgF()
-	msg.SendCommissionRate = sdk.MustNewDecFromStr("-0.1")
-	requireT.Error(msg.ValidateBasic())
+	testCases := []struct {
+		name          string
+		messageFunc   func(types.MsgIssue) types.MsgIssue
+		expectedError error
+	}{
+		{
+			name: "valid",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				return msg
+			},
+		},
+		{
+			name: "invalid issuer address",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.Issuer = "invalid"
+				return msg
+			},
+			expectedError: sdkerrors.ErrInvalidAddress,
+		},
+		{
+			name: "invalid missing symbol",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.Symbol = ""
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid long symbol",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.Symbol = string(make([]byte, 10000))
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid prohibited chars in symbol",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.Symbol = "1BT"
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid nil initial amount",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.InitialAmount = sdk.Int{} // nil
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid negative initial amount",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.InitialAmount = sdk.NewInt(-100)
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid long description",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.Description = string(make([]byte, 10000))
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid empty subunit",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.Subunit = ""
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid empty subunit",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.Subunit = ""
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid negative burn rate",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.BurnRate = sdk.MustNewDecFromStr("-0.1")
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid negative send commission rate",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.SendCommissionRate = sdk.MustNewDecFromStr("-0.1")
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+		{
+			name: "invalid duplicated feature",
+			messageFunc: func(msg types.MsgIssue) types.MsgIssue {
+				msg.Features = []types.Feature{
+					types.Feature_burning,
+					types.Feature_whitelisting,
+					types.Feature_burning,
+				}
+				return msg
+			},
+			expectedError: types.ErrInvalidInput,
+		},
+	}
+	for _, testCase := range testCases {
+		tc := testCase
+		t.Run(tc.name, func(t *testing.T) {
+			assertT := assert.New(t)
+			err := tc.messageFunc(validMessage).ValidateBasic()
+			if tc.expectedError == nil {
+				assertT.NoError(err)
+			} else {
+				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
+			}
+		})
+	}
 }
 
 func TestMsgFreeze_ValidateBasic(t *testing.T) {

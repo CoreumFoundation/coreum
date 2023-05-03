@@ -17,10 +17,8 @@ import (
 
 //go:generate go run . ./README.md
 
-var (
-	//go:embed README.tmpl.md
-	readmeTmpl string
-)
+//go:embed README.tmpl.md
+var readmeTmpl string
 
 func main() {
 	type determMsg struct {
