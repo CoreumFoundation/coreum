@@ -4,6 +4,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: '0 1 * * 1' # At 01:00 on Monday
   workflow_dispatch:
 
 jobs:
@@ -97,12 +99,17 @@ jobs:
         with:
           path: ~/.cache/golangci-lint
           key: ${{ runner.os }}-linter-cache
+      - name: Get Date
+        id: get-year-week
+        run: |
+          echo "date=$(/bin/date -u "+%Y-%U")" >> $GITHUB_OUTPUT
+        shell: bash
       - name: Set docker cache
         uses: satackey/action-docker-layer-caching@v0.0.11
         if: ${{ matrix.docker-cache }}
         continue-on-error: true
         with:
-          key: ${{ runner.os }}-docker-${{ hashFiles('**/go.sum') }} # FIXME discuss with team, each time we change the sum the cache will be invalidated
+          key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
           restore-keys: |
             ${{ runner.os }}-docker-
       - name: Run ${{ matrix.ci_step }}
