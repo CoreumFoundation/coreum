@@ -21,33 +21,39 @@ jobs:
         ]
         include:
           - ci_step: "lint"
-            command: "crust lint/coreum --log-format=yaml"
+            command: "crust wasm lint/coreum --log-format=yaml"
             go-cache: true
+            wasm-cache: true
             linter-cache: true
             docker-cache: false
           - ci_step: "test"
             command: "crust test/coreum --log-format=yaml"
             go-cache: true
+            wasm-cache: false
             linter-cache: false
             docker-cache: false
           - ci_step: "build"
-            command: "crust build --log-format=yaml"
+            command: "crust wasm build --log-format=yaml"
             go-cache: true
+            wasm-cache: true
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests coreum-modules"
-            command: "crust build/integration-tests images --log-format=yaml && crust znet test --test-groups=coreum-modules --log-format=yaml"
+            command: "crust wasm build/integration-tests images --log-format=yaml && crust znet test --test-groups=coreum-modules --log-format=yaml"
             go-cache: true
+            wasm-cache: true
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests coreum-upgrade"
-            command: "crust build/integration-tests images --log-format=yaml && crust znet test --cored-version=v0.1.1 --test-groups=coreum-upgrade,coreum-modules --log-format=yaml"
+            command: "crust wasm build/integration-tests images --log-format=yaml && crust znet test --cored-version=v0.1.1 --test-groups=coreum-upgrade,coreum-modules --log-format=yaml"
             go-cache: true
+            wasm-cache: true
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests faucet"
-            command: "crust build/integration-tests images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
+            command: "crust wasm build/integration-tests images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
             go-cache: true
+            wasm-cache: true
             linter-cache: false
             docker-cache: true
 
@@ -65,12 +71,20 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Setup WASM cache
+        uses: actions/cache@v3
+        if: ${{ matrix.wasm-cache }}
+        with:
+          path: ~/.cache/crust/wasm
+          key: ${{ runner.os }}-wasm-cache
+          restore-keys: |
+            ${{ runner.os }}-wasm-cache
       - name: Setup linter cache
         uses: actions/cache@v3
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-ci-cache
+          key: ${{ runner.os }}-linter-cache
       - name: Set docker cache
         uses: satackey/action-docker-layer-caching@v0.0.11
         if: ${{ matrix.docker-cache }}

@@ -82,3 +82,242 @@ Here is the description of behavior of the whitelisting feature:
 - The issuer can set whitelisted amount higher or lower than what the user currently holds.
 - The issuer account is whitelisted to infinity by default and cannot be modified.
 - The user can receive tokens as long as their total balance, after the transaction execution, will not be higher than their whitelisted amount
+
+## Feature interoperability table
+
+<!-- Original source: https://docs.google.com/spreadsheets/d/1wC51asxQF8gi7Egj0KvzsMf7zko5ojEL6l2CAdb_UNM -->
+<!-- Tool to generate table: https://www.tablesgenerator.com/html_tables -->
+
+<table>
+<thead>
+  <tr>
+    <th rowspan="3"></th>
+    <th colspan="10">Features</th>
+    <th colspan="4">Extensions</th>
+  </tr>
+  <tr>
+    <th colspan="2">Default</th>
+    <th colspan="2">Minting</th>
+    <th colspan="2">Burning</th>
+    <th colspan="2">Freezing</th>
+    <th colspan="2">Whitelisting</th>
+    <th colspan="2">Burn rate</th>
+    <th colspan="2">Send commission rate</th>
+  </tr>
+  <tr>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Recipient</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Mint</td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Burn</td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Freeze</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Unfreeze</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>GloballyFreeze</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>GloballyUnfreeze</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Whitelist</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Unwhitelist</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Send</td>
+    <td>➕</td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><a href="#freezeunfreeze">ⓘ</a></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><a href="#burn-rate">ⓘ</a></td>
+    <td></td>
+    <td><a href="#send-commission-rate">ⓘ</a></td>
+  </tr>
+  <tr>
+    <td>Send to issuer</td>
+    <td>➕</td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Receive</td>
+    <td>➕</td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><a href="#whitelist">ⓘ</a></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+</tbody>
+</table>
+
+**Legend**:
+
+* **Issuer** : The FT issuer.
+* **Owner** : The account that owns some FT amount.
+* **Recipient** : The FT recipient in the `send` operation.
+* **Default** : The **Default** is the state that the FT has without any feature. Adding the **Features** to the FT, you
+  can extend or override the **Default** functionality.
+* **➕** : Allowing
+* **ⓘ** : Custom behaviour
