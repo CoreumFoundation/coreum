@@ -31,7 +31,7 @@ func AwaitChannels(timeout time.Duration) {
 	ibcChannelClient := ibcchanneltypes.NewQueryClient(clientCtx)
 
 	expectedOpenChannels := 0
-	retry.Do(ctx, time.Second, func() error {
+	err := retry.Do(ctx, time.Second, func() error {
 		channels, err := ibcChannelClient.Channels(ctx, &ibcchanneltypes.QueryChannelsRequest{})
 		if err != nil {
 			return err
@@ -54,4 +54,7 @@ func AwaitChannels(timeout time.Duration) {
 
 		return retry.Retryable(errors.New("waiting for channels to open"))
 	})
+	if err != nil {
+		panic(err)
+	}
 }

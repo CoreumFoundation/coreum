@@ -63,7 +63,7 @@ func TestIBCTransfer(t *testing.T) {
 	retryCtx, retryCancel := context.WithTimeout(ctx, 20*time.Second)
 	defer retryCancel()
 	var balancesRecipient *banktypes.QueryAllBalancesResponse
-	retry.Do(retryCtx, time.Second, func() error {
+	err = retry.Do(retryCtx, time.Second, func() error {
 		balancesRecipient, err = gaiaBankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 			Address: recipient,
 		})
