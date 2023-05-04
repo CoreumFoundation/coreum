@@ -1,12 +1,14 @@
+use std::ops::{Add, Sub};
 use coreum_wasm_sdk::assetft;
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries};
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, QueryRequest, StdResult};
-use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response, StdError, SubMsg, Uint128};
+use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response, StdError, Uint128};
 use cw2::set_contract_version;
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use crate::msg::AmountResponse;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "creates.io:ft";
@@ -19,16 +21,15 @@ pub struct InstantiateMsg {
     pub subunit: String,
     pub precision: u32,
     pub initial_amount: Uint128,
-    pub description: Option<String>,
-    pub features: Option<Vec<u32>>,
-    pub burn_rate: Option<String>,
-    pub send_commission_rate: Option<String>,
+    pub airdrop_amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub owner: String,
     pub denom: String,
+    pub airdrop_amount: Uint128,
+    pub minted_for_airdrop: Uint128,
 }
 
 pub const STATE: Item<State> = Item::new("state");
@@ -51,15 +52,9 @@ pub enum ContractError {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Mint { amount: u128 },
-    Burn { amount: u128 },
-    Freeze { account: String, amount: u128 },
-    Unfreeze { account: String, amount: u128 },
-    GloballyFreeze {},
-    GloballyUnfreeze {},
+    MintForAirdrop { amount: u128 },
+    ReceiveAirdrop {},
     SetWhitelistedLimit { account: String, amount: u128 },
-    // custom message we use to show the submission of multiple messages
-    MintAndSend { account: String, amount: u128 },
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -70,16 +65,11 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response<CoreumMsg>, ContractError> {
     match msg {
-        ExecuteMsg::Mint { amount } => mint(deps, info, amount),
-        ExecuteMsg::Burn { amount } => burn(deps, info, amount),
-        ExecuteMsg::Freeze { account, amount } => freeze(deps, info, account, amount),
-        ExecuteMsg::Unfreeze { account, amount } => unfreeze(deps, info, account, amount),
-        ExecuteMsg::GloballyFreeze {} => globally_freeze(deps, info),
-        ExecuteMsg::GloballyUnfreeze {} => globally_unfreeze(deps, info),
+        ExecuteMsg::MintForAirdrop { amount } => mint_for_airdrop(deps, info, amount),
+        ExecuteMsg::ReceiveAirdrop {} => receive_airdrop(deps, info),
         ExecuteMsg::SetWhitelistedLimit { account, amount } => {
             set_whitelisted_limit(deps, info, account, amount)
         }
-        ExecuteMsg::MintAndSend { account, amount } => mint_and_send(deps, info, account, amount),
     }
 }
 
@@ -87,16 +77,14 @@ pub fn execute(
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     Token {},
-    FrozenBalance { account: String },
-    WhitelistedBalance { account: String },
+    MintedForAirdrop {},
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Token {} => to_binary(&token(deps)?),
-        QueryMsg::FrozenBalance { account } => to_binary(&frozen_balance(deps, account)?),
-        QueryMsg::WhitelistedBalance { account } => to_binary(&whitelisted_balance(deps, account)?),
+        QueryMsg::Token {} => token(deps),
+        QueryMsg::MintedForAirdrop {} => minted_for_airdrop(deps),
     }
 }
 
@@ -115,10 +103,10 @@ pub fn instantiate(
         subunit: msg.subunit.clone(),
         precision: msg.precision,
         initial_amount: msg.initial_amount,
-        description: msg.description,
-        features: msg.features,
-        burn_rate: msg.burn_rate,
-        send_commission_rate: msg.send_commission_rate,
+        description: None,
+        features: Some(vec![0, 3]), // 0 - minting, 3 - whitelisting
+        burn_rate: Some("0".into()),
+        send_commission_rate: Some("0.1".into()), // 10% commission for sending
     });
 
     let denom = format!("{}-{}", msg.subunit, env.contract.address).to_lowercase();
@@ -126,6 +114,8 @@ pub fn instantiate(
     let state = State {
         owner: info.sender.into(),
         denom,
+        minted_for_airdrop: msg.initial_amount,
+        airdrop_amount: msg.airdrop_amount,
     };
     STATE.save(deps.storage, &state)?;
 
@@ -137,12 +127,12 @@ pub fn instantiate(
 
 // ********** Transactions **********
 
-fn mint(
+fn mint_for_airdrop(
     deps: DepsMut,
     info: MessageInfo,
     amount: u128,
 ) -> Result<Response<CoreumMsg>, ContractError> {
-    let state = STATE.load(deps.storage)?;
+    let mut state = STATE.load(deps.storage)?;
     if info.sender != state.owner {
         return Err(ContractError::Unauthorized {});
     }
@@ -151,112 +141,13 @@ fn mint(
         coin: Coin::new(amount, state.denom.clone()),
     });
 
+    state.minted_for_airdrop = state.minted_for_airdrop.add(Uint128::new(amount));
+    STATE.save(deps.storage, &state)?;
+
     Ok(Response::new()
-        .add_attribute("method", "mint")
+        .add_attribute("method", "mint_for_airdrop")
         .add_attribute("denom", state.denom)
         .add_attribute("amount", amount.to_string())
-        .add_message(msg))
-}
-
-fn burn(
-    deps: DepsMut,
-    info: MessageInfo,
-    amount: u128,
-) -> Result<Response<CoreumMsg>, ContractError> {
-    let state = STATE.load(deps.storage)?;
-    if info.sender != state.owner {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    let msg = CoreumMsg::AssetFT(assetft::Msg::Burn {
-        coin: Coin::new(amount, state.denom.clone()),
-    });
-
-    Ok(Response::new()
-        .add_attribute("method", "burn")
-        .add_attribute("denom", state.denom)
-        .add_attribute("amount", amount.to_string())
-        .add_message(msg))
-}
-
-fn freeze(
-    deps: DepsMut,
-    info: MessageInfo,
-    account: String,
-    amount: u128,
-) -> Result<Response<CoreumMsg>, ContractError> {
-    let state = STATE.load(deps.storage)?;
-    if info.sender != state.owner {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    let msg = CoreumMsg::AssetFT(assetft::Msg::Freeze {
-        account,
-        coin: Coin::new(amount, state.denom.clone()),
-    });
-
-    Ok(Response::new()
-        .add_attribute("method", "freeze")
-        .add_attribute("denom", state.denom)
-        .add_attribute("amount", amount.to_string())
-        .add_message(msg))
-}
-
-fn unfreeze(
-    deps: DepsMut,
-    info: MessageInfo,
-    account: String,
-    amount: u128,
-) -> Result<Response<CoreumMsg>, ContractError> {
-    let state = STATE.load(deps.storage)?;
-    if info.sender != state.owner {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    let msg = CoreumMsg::AssetFT(assetft::Msg::Unfreeze {
-        account,
-        coin: Coin::new(amount, state.denom.clone()),
-    });
-
-    Ok(Response::new()
-        .add_attribute("method", "unfreeze")
-        .add_attribute("denom", state.denom)
-        .add_attribute("amount", amount.to_string())
-        .add_message(msg))
-}
-
-fn globally_freeze(deps: DepsMut, info: MessageInfo) -> Result<Response<CoreumMsg>, ContractError> {
-    let state = STATE.load(deps.storage)?;
-    if info.sender != state.owner {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    let msg = CoreumMsg::AssetFT(assetft::Msg::GloballyFreeze {
-        denom: state.denom.clone(),
-    });
-
-    Ok(Response::new()
-        .add_attribute("method", "globally_freeze")
-        .add_attribute("denom", state.denom)
-        .add_message(msg))
-}
-
-fn globally_unfreeze(
-    deps: DepsMut,
-    info: MessageInfo,
-) -> Result<Response<CoreumMsg>, ContractError> {
-    let state = STATE.load(deps.storage)?;
-    if info.sender != state.owner {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    let msg = CoreumMsg::AssetFT(assetft::Msg::GloballyUnfreeze {
-        denom: state.denom.clone(),
-    });
-
-    Ok(Response::new()
-        .add_attribute("method", "globally_unfreeze")
-        .add_attribute("denom", state.denom)
         .add_message(msg))
 }
 
@@ -283,72 +174,45 @@ fn set_whitelisted_limit(
         .add_message(msg))
 }
 
-fn mint_and_send(
+fn receive_airdrop(
     deps: DepsMut,
     info: MessageInfo,
-    account: String,
-    amount: u128,
 ) -> Result<Response<CoreumMsg>, ContractError> {
-    let state = STATE.load(deps.storage)?;
-    if info.sender != state.owner {
-        return Err(ContractError::Unauthorized {});
+    let mut state = STATE.load(deps.storage)?;
+    if state.minted_for_airdrop < state.airdrop_amount {
+        return Err(ContractError::CustomError { val: "not enough minted".into() });
     }
-
-    let mint_msg = SubMsg::new(CoreumMsg::AssetFT(assetft::Msg::Mint {
-        coin: Coin::new(amount, state.denom.clone()),
-    }));
-
-    let send_msg = SubMsg::new(cosmwasm_std::BankMsg::Send {
-        to_address: account.to_string(),
+    let send_msg = cosmwasm_std::BankMsg::Send {
+        to_address: info.sender.into(),
         amount: vec![Coin {
-            amount: amount.into(),
+            amount: state.airdrop_amount.into(),
             denom: state.denom.clone(),
         }],
-    });
+    };
+
+    state.minted_for_airdrop = state.minted_for_airdrop.sub(state.airdrop_amount);
+    STATE.save(deps.storage, &state)?;
 
     Ok(Response::new()
-        .add_attribute("method", "mint_and_send")
+        .add_attribute("method", "receive_airdrop")
         .add_attribute("denom", state.denom)
-        .add_attribute("amount", amount.to_string())
-        .add_submessages([mint_msg, send_msg]))
+        .add_attribute("amount", state.airdrop_amount.to_string())
+        .add_message(send_msg))
 }
 
 // ********** Queries **********
 
-fn token(deps: Deps<CoreumQueries>) -> StdResult<assetft::TokenResponse> {
+fn token(deps: Deps<CoreumQueries>) -> StdResult<Binary> {
     let state = STATE.load(deps.storage)?;
     let request: QueryRequest<CoreumQueries> =
         CoreumQueries::AssetFT(assetft::Query::Token { denom: state.denom }).into();
     let res: assetft::TokenResponse = deps.querier.query(&request)?;
-    Ok(res)
+    to_binary(&res)
 }
 
-fn frozen_balance(
-    deps: Deps<CoreumQueries>,
-    account: String,
-) -> StdResult<assetft::FrozenBalanceResponse> {
+fn minted_for_airdrop(deps: Deps<CoreumQueries>) -> StdResult<Binary> {
     let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<CoreumQueries> =
-        CoreumQueries::AssetFT(assetft::Query::FrozenBalance {
-            denom: state.denom,
-            account,
-        })
-            .into();
-    let res: assetft::FrozenBalanceResponse = deps.querier.query(&request)?;
-    Ok(res)
+    let res = AmountResponse { amount: state.minted_for_airdrop };
+    to_binary(&res)
 }
 
-fn whitelisted_balance(
-    deps: Deps<CoreumQueries>,
-    account: String,
-) -> StdResult<assetft::WhitelistedBalanceResponse> {
-    let state = STATE.load(deps.storage)?;
-    let request: QueryRequest<CoreumQueries> =
-        CoreumQueries::AssetFT(assetft::Query::WhitelistedBalance {
-            denom: state.denom,
-            account,
-        })
-            .into();
-    let res: assetft::WhitelistedBalanceResponse = deps.querier.query(&request)?;
-    Ok(res)
-}
