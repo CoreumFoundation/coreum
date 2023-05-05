@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub};
+use crate::msg::AmountResponse;
 use coreum_wasm_sdk::assetft;
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries};
 use cosmwasm_std::{entry_point, to_binary, Binary, Deps, QueryRequest, StdResult};
@@ -7,8 +7,8 @@ use cw2::set_contract_version;
 use cw_storage_plus::Item;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::ops::{Add, Sub};
 use thiserror::Error;
-use crate::msg::AmountResponse;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "creates.io:ft";
@@ -54,7 +54,6 @@ pub enum ContractError {
 pub enum ExecuteMsg {
     MintForAirdrop { amount: u128 },
     ReceiveAirdrop {},
-    SetWhitelistedLimit { account: String, amount: u128 },
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -67,9 +66,6 @@ pub fn execute(
     match msg {
         ExecuteMsg::MintForAirdrop { amount } => mint_for_airdrop(deps, info, amount),
         ExecuteMsg::ReceiveAirdrop {} => receive_airdrop(deps, info),
-        ExecuteMsg::SetWhitelistedLimit { account, amount } => {
-            set_whitelisted_limit(deps, info, account, amount)
-        }
     }
 }
 
@@ -104,7 +100,7 @@ pub fn instantiate(
         precision: msg.precision,
         initial_amount: msg.initial_amount,
         description: None,
-        features: Some(vec![0, 3]), // 0 - minting, 3 - whitelisting
+        features: Some(vec![0]), // 0 - minting
         burn_rate: Some("0".into()),
         send_commission_rate: Some("0.1".into()), // 10% commission for sending
     });
@@ -151,36 +147,12 @@ fn mint_for_airdrop(
         .add_message(msg))
 }
 
-fn set_whitelisted_limit(
-    deps: DepsMut,
-    info: MessageInfo,
-    account: String,
-    amount: u128,
-) -> Result<Response<CoreumMsg>, ContractError> {
-    let state = STATE.load(deps.storage)?;
-    if info.sender != state.owner {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    let msg = CoreumMsg::AssetFT(assetft::Msg::SetWhitelistedLimit {
-        account,
-        coin: Coin::new(amount, state.denom.clone()),
-    });
-
-    Ok(Response::new()
-        .add_attribute("method", "set_whitelisted_limit")
-        .add_attribute("denom", state.denom)
-        .add_attribute("amount", amount.to_string())
-        .add_message(msg))
-}
-
-fn receive_airdrop(
-    deps: DepsMut,
-    info: MessageInfo,
-) -> Result<Response<CoreumMsg>, ContractError> {
+fn receive_airdrop(deps: DepsMut, info: MessageInfo) -> Result<Response<CoreumMsg>, ContractError> {
     let mut state = STATE.load(deps.storage)?;
     if state.minted_for_airdrop < state.airdrop_amount {
-        return Err(ContractError::CustomError { val: "not enough minted".into() });
+        return Err(ContractError::CustomError {
+            val: "not enough minted".into(),
+        });
     }
     let send_msg = cosmwasm_std::BankMsg::Send {
         to_address: info.sender.into(),
@@ -212,7 +184,8 @@ fn token(deps: Deps<CoreumQueries>) -> StdResult<Binary> {
 
 fn minted_for_airdrop(deps: Deps<CoreumQueries>) -> StdResult<Binary> {
     let state = STATE.load(deps.storage)?;
-    let res = AmountResponse { amount: state.minted_for_airdrop };
+    let res = AmountResponse {
+        amount: state.minted_for_airdrop,
+    };
     to_binary(&res)
 }
-

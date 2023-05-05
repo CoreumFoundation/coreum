@@ -94,9 +94,8 @@ type ftMethod string
 
 const (
 	// tx.
-	ftMethodMintForAirdrop      ftMethod = "mint_for_airdrop"
-	ftReceiveAirdrop            ftMethod = "receive_airdrop"
-	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
+	ftMethodMintForAirdrop ftMethod = "mint_for_airdrop"
+	ftReceiveAirdrop       ftMethod = "receive_airdrop"
 	// query.
 	ftMethodToken            ftMethod = "token"
 	ftMethodMintedForAirdrop ftMethod = "minted_for_airdrop"
@@ -652,7 +651,6 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		GloballyFrozen: false,
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
-			assetfttypes.Feature_whitelisting,
 		},
 		BurnRate:           sdk.ZeroDec(),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
@@ -690,27 +688,6 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	newAmount := issuanceAmount.Add(airdropAmount)
 	requireT.Equal(newAmount.String(), balanceRes.Balance.Amount.String())
-
-	// ********** Whitelisting **********
-
-	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
-		ftMethodSetWhitelistedLimit: {
-			Account: admin.String(),
-			Amount:  airdropAmount.String(),
-		},
-	})
-	requireT.NoError(err)
-
-	txf = txf.WithSimulateAndExecute(true)
-	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, whitelistPayload, sdk.Coin{})
-	requireT.NoError(err)
-
-	whitelistedRes, err := ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
-		Account: admin.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(airdropAmount.String(), whitelistedRes.Balance.Amount.String())
 
 	// ********** Receive airdrop **********
 
