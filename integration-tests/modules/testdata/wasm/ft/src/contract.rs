@@ -155,7 +155,7 @@ fn receive_airdrop(deps: DepsMut, info: MessageInfo) -> Result<Response<CoreumMs
         });
     }
     let send_msg = cosmwasm_std::BankMsg::Send {
-        to_address: info.sender.into(),
+        to_address: info.sender,
         amount: vec![Coin {
             amount: state.airdrop_amount.into(),
             denom: state.denom.clone(),
