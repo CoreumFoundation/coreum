@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
@@ -23,6 +22,8 @@ import (
 
 func TestIBCTransfer(t *testing.T) {
 	t.Parallel()
+	channelsInfo := awaitChannels(t)
+	channelID := channelsInfo.gaiaChannelID
 
 	ctx, chain := integrationtests.NewTestingContext(t)
 
@@ -31,8 +32,13 @@ func TestIBCTransfer(t *testing.T) {
 	require.NoError(t, err)
 
 	sendCoin := chain.NewCoin(sdk.NewInt(1000))
-	channelID := chain.GaiaContext.ChannelID
 	// transfer tokens over ibc
+	height, err := queryLatestConsensusHeight(
+		chain.ChainContext.ClientContext,
+		ibctransfertypes.PortID,
+		channelID,
+	)
+	require.NoError(t, err)
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:    ibctransfertypes.PortID,
 		SourceChannel: channelID,
@@ -40,8 +46,8 @@ func TestIBCTransfer(t *testing.T) {
 		Sender:        sender.String(),
 		Receiver:      recipient,
 		TimeoutHeight: ibcclienttypes.Height{
-			RevisionNumber: 1,
-			RevisionHeight: 10000000, // TODO: calculate this value
+			RevisionNumber: height.RevisionNumber,
+			RevisionHeight: height.RevisionHeight + 1000,
 		},
 	}
 
@@ -51,7 +57,7 @@ func TestIBCTransfer(t *testing.T) {
 	}))
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(sender).WithBroadcastMode(flags.BroadcastBlock),
+		chain.ClientContext.WithFromAddress(sender),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&ibcSend)),
 		&ibcSend,
 	)
@@ -79,7 +85,9 @@ func TestIBCTransfer(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, balancesRecipient.Balances, 1)
 
-	ibcAmount := ibctransfertypes.GetTransferCoin(ibctransfertypes.PortID, channelID, sendCoin.Denom, sendCoin.Amount)
-	require.NoError(t, err)
-	assert.EqualValues(t, ibcAmount.String(), balancesRecipient.Balances[0].String())
+	ibcDenomTrace := ibctransfertypes.ParseDenomTrace(
+		ibctransfertypes.GetPrefixedDenom(ibctransfertypes.PortID, channelID, sendCoin.Denom),
+	)
+	ibcDenom := ibcDenomTrace.IBCDenom()
+	assert.EqualValues(t, sendCoin.Amount.String(), balancesRecipient.Balances.AmountOf(ibcDenom).String())
 }

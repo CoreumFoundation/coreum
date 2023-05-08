@@ -251,6 +251,11 @@ func (c Context) WithCodec(m codec.Codec) Context {
 	return c
 }
 
+// Codec returns the registered Codec.
+func (c Context) Codec() codec.Codec {
+	return c.clientCtx.Codec
+}
+
 // WithOutput returns a copy of the context with an updated output writer (e.g. stdout).
 func (c Context) WithOutput(w io.Writer) Context {
 	c.clientCtx = c.clientCtx.WithOutput(w)

@@ -10,5 +10,4 @@ const (
 // GaiaContext contains all the information related to the gaia chain.
 type GaiaContext struct {
 	ClientContext client.Context
-	ChannelID     string
 }

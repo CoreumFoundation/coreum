@@ -57,7 +57,7 @@ func init() {
 		chainID                                  string
 		stakerMnemonics                          stringsFlag
 		runUnsafe                                bool
-		gaiaAddress, gaiaChainID, gaiaChannelID  string
+		gaiaAddress, gaiaChainID                 string
 	)
 
 	flag.StringVar(&coredAddress, "cored-address", "localhost:9090", "Address of cored node started by znet")
@@ -67,7 +67,6 @@ func init() {
 	flag.StringVar(&chainID, "chain-id", string(constant.ChainIDDev), "Which chain-id to use (coreum-devnet-1, coreum-testnet-1,...)")
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 	flag.StringVar(&gaiaAddress, "gaia-address", "localhost:9080", "Address of gaia node started by znet")
-	flag.StringVar(&gaiaChannelID, "gaia-channel-id", "channel-0", "gaia ibc channel-id started by znet")
 	flag.StringVar(&gaiaChainID, "gaia-chain-id", "gaia-localnet-1", "gaia chain-id started by znet")
 
 	// accept testing flags
@@ -142,7 +141,6 @@ func init() {
 		ClientContext:     clientCtx,
 		GRPCAddress:       cfg.GRPCAddress,
 		GaiaClientContext: gaiaCtx,
-		GaiaChannelID:     gaiaChannelID,
 		NetworkConfig:     cfg.NetworkConfig,
 		InitialGasPrice:   resp.Params.Model.InitialGasPrice,
 		FundingMnemonic:   cfg.FundingMnemonic,
@@ -156,9 +154,4 @@ func NewTestingContext(t *testing.T) (context.Context, Chain) {
 	t.Cleanup(cancel)
 
 	return ctx, chain
-}
-
-// GetChain returns the configured chain.
-func GetChain() Chain {
-	return chain
 }

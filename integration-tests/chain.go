@@ -162,7 +162,6 @@ type ChainConfig struct {
 	ClientContext     client.Context
 	GRPCAddress       string
 	GaiaClientContext client.Context
-	GaiaChannelID     string
 	NetworkConfig     config.NetworkConfig
 	InitialGasPrice   sdk.Dec
 	FundingMnemonic   string
@@ -188,7 +187,6 @@ func NewChain(cfg ChainConfig) Chain {
 		ChainContext: chainCtx,
 		GaiaContext: GaiaContext{
 			ClientContext: cfg.GaiaClientContext,
-			ChannelID:     cfg.GaiaChannelID,
 		},
 		Governance: governance,
 		Faucet:     faucet,
