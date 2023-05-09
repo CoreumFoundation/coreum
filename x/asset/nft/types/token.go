@@ -56,28 +56,28 @@ func BuildClassID(symbol string, issuer sdk.AccAddress) string {
 }
 
 // DeconstructClassID splits the classID string into the symbol and issuer address.
-func DeconstructClassID(classID string) (issuer sdk.Address, err error) {
+func DeconstructClassID(classID string) (string, sdk.AccAddress, error) {
 	classIDParts := strings.Split(classID, nftClassIDSeparator)
 	if len(classIDParts) != 2 {
-		return nil, sdkerrors.Wrap(ErrInvalidInput, "classID must match format [symbol]-[issuer-address]")
+		return "", nil, sdkerrors.Wrap(ErrInvalidInput, "classID must match format [symbol]-[issuer-address]")
 	}
 
 	address, err := sdk.AccAddressFromBech32(classIDParts[1])
 	if err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid issuer address in classID,err:%s", err)
+		return "", nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid issuer address in classID,err:%s", err)
 	}
 
 	symbol := classIDParts[0]
 	if err := ValidateClassSymbol(symbol); err != nil {
-		return nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid symbol in classID,err:%s", err)
+		return "", nil, sdkerrors.Wrapf(ErrInvalidInput, "invalid symbol in classID,err:%s", err)
 	}
 
 	// ensure that symbol is all lowercase
 	if strings.ToLower(symbol) != symbol {
-		return nil, sdkerrors.Wrapf(ErrInvalidInput, "symbol in classID should be lowercase")
+		return "", nil, sdkerrors.Wrapf(ErrInvalidInput, "symbol in classID should be lowercase")
 	}
 
-	return address, nil
+	return symbol, address, nil
 }
 
 // ValidateClassSymbol checks the provided non-fungible token class symbol is valid.
