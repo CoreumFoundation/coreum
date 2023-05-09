@@ -17,7 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
-func TestQueryClass(t *testing.T) {
+func TestQueryClassAndClasses(t *testing.T) {
 	requireT := require.New(t)
 
 	testNetwork := network.New(t)
@@ -41,10 +41,10 @@ func TestQueryClass(t *testing.T) {
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
 	requireT.NoError(err)
 
-	var resp types.QueryClassResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+	var classRes types.QueryClassResponse
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &classRes))
 
-	requireT.Equal(types.Class{
+	expectedClass := types.Class{
 		Id:          classID,
 		Issuer:      testNetwork.Validators[0].Address.String(),
 		Name:        name,
@@ -57,7 +57,77 @@ func TestQueryClass(t *testing.T) {
 			types.ClassFeature_disable_sending,
 		},
 		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
-	}, resp.Class)
+	}
+
+	requireT.Equal(expectedClass, classRes.Class)
+
+	// classes
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClasses(),
+		[]string{fmt.Sprintf("--%s", cli.IssuerFlag), testNetwork.Validators[0].Address.String(), "--output", "json"},
+	)
+	requireT.NoError(err)
+
+	var classesRes types.QueryClassesResponse
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &classesRes))
+
+	requireT.Equal(expectedClass, classesRes.Classes[0])
+}
+
+func TestCmdTxMint(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+
+	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
+	requireT.NoError(err)
+
+	classID := types.BuildClassID(symbol, validator.Address)
+	args = []string{classID, "nft-1", "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
+	requireT.NoError(err)
+}
+
+func TestCmdTxBurn(t *testing.T) {
+	requireT := require.New(t)
+	testNetwork := network.New(t)
+
+	symbol := "nft" + uuid.NewString()[:4]
+	validator := testNetwork.Validators[0]
+	ctx := validator.ClientCtx
+
+	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
+	requireT.NoError(err)
+
+	classID := types.BuildClassID(symbol, validator.Address)
+	args = []string{classID, "nft-1", "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
+	requireT.NoError(err)
+
+	args = []string{classID, "nft-1"}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args)
+	requireT.NoError(err)
+}
+
+func mint(
+	requireT *require.Assertions,
+	ctx client.Context,
+	classID, nftID, url, urlHash string,
+	testNetwork *network.Network,
+) {
+	args := []string{classID, nftID, url, urlHash}
+	args = append(args, txValidator1Args(testNetwork)...)
+	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
+	requireT.NoError(err)
 }
 
 func issueClass(
@@ -73,25 +143,13 @@ func issueClass(
 	})
 	featuresString := strings.Join(featuresStringList, ",")
 	validator := testNetwork.Validators[0]
-	args := []string{symbol, name, description, url, urlHash, fmt.Sprintf("--features=%s", featuresString)}
+	args := []string{symbol, name, description, url, urlHash, fmt.Sprintf("--%s=%s", cli.FeaturesFlag, featuresString)}
 	args = append(args, txValidator1Args(testNetwork)...)
 	if royaltyRate != "" {
-		args = append(args, "--royalty-rate", royaltyRate)
+		args = append(args, fmt.Sprintf("--%s", cli.RoyaltyRateFlag), royaltyRate)
 	}
 	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
 	return types.BuildClassID(symbol, validator.Address)
-}
-
-func mint(
-	requireT *require.Assertions,
-	ctx client.Context,
-	classID, nftID, url, urlHash string,
-	testNetwork *network.Network,
-) {
-	args := []string{classID, nftID, url, urlHash}
-	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
-	requireT.NoError(err)
 }

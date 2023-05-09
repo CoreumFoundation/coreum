@@ -14,9 +14,6 @@ const (
 	// StoreKey defines the primary module store key.
 	StoreKey = ModuleName
 
-	// RouterKey is the message route for slashing.
-	RouterKey = ModuleName
-
 	// QuerierRoute defines the module's query routing key.
 	QuerierRoute = ModuleName
 )
@@ -34,8 +31,18 @@ var (
 )
 
 // CreateClassKey constructs the key for the non-fungible token class.
-func CreateClassKey(classID string) []byte {
-	return store.JoinKeys(NFTClassKeyPrefix, []byte(classID))
+func CreateClassKey(classID string) ([]byte, error) {
+	symbol, issuer, err := DeconstructClassID(classID)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "can't build class key from clasID, clasID:%s, err:%s", classID, err)
+	}
+	// use keys in the reverse order to query by the issuer
+	return store.JoinKeys(NFTClassKeyPrefix, issuer, []byte(symbol)), nil
+}
+
+// CreateIssuerClassPrefix constructs the key for the non-fungible token class for the specific issuer.
+func CreateIssuerClassPrefix(issuer sdk.AccAddress) []byte {
+	return store.JoinKeys(NFTClassKeyPrefix, issuer)
 }
 
 // CreateFreezingKey constructs the key for the freezing of non-fungible token.

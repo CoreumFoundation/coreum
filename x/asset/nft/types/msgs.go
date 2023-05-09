@@ -88,7 +88,7 @@ func (msg *MsgMint) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(msg.ClassID); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
@@ -120,7 +120,7 @@ func (msg *MsgBurn) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(msg.ClassID); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
@@ -144,7 +144,7 @@ func (msg *MsgFreeze) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(msg.ClassID); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
@@ -168,7 +168,7 @@ func (msg *MsgUnfreeze) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(msg.ClassID); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
@@ -196,7 +196,7 @@ func (msg *MsgAddToWhitelist) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(msg.ClassID); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
@@ -224,7 +224,7 @@ func (msg *MsgRemoveFromWhitelist) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 
-	if _, err := DeconstructClassID(msg.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(msg.ClassID); err != nil {
 		return sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 

@@ -163,7 +163,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(assetnfttypes.Class{
+	expectedClass := assetnfttypes.Class{
 		Id:          classID,
 		Issuer:      issuer.String(),
 		Symbol:      issueMsg.Symbol,
@@ -177,12 +177,21 @@ func TestAssetNFTIssueClass(t *testing.T) {
 			assetnfttypes.ClassFeature_disable_sending,
 		},
 		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
-	}, assetNftClassRes.Class)
+	}
+	requireT.Equal(expectedClass, assetNftClassRes.Class)
 
 	var data2 assetnfttypes.DataBytes
 	requireT.NoError(proto.Unmarshal(assetNftClassRes.Class.Data.Value, &data2))
 
 	requireT.Equal(jsonData, data2.Data)
+
+	assetNftClassesRes, err := assetNftClient.Classes(ctx, &assetnfttypes.QueryClassesRequest{
+		Issuer: issuer.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(assetNftClassesRes.Classes))
+	requireT.Equal(uint64(1), assetNftClassesRes.Pagination.Total)
+	requireT.Equal(expectedClass, assetNftClassesRes.Classes[0])
 }
 
 // TestAssetNFTMint tests non-fungible token minting.
