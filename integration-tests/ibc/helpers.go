@@ -59,8 +59,6 @@ func awaitChannels(t *testing.T) channelsInfo {
 			}
 		}
 
-		// currently we only expect gaia channel so the count should be 1
-		// TODO: increase the expected value to 2 after we add osmosis
 		if expectedOpenChannels == 1 {
 			return nil
 		}
