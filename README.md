@@ -48,7 +48,7 @@ $ $COREUM_PATH/crust/bin/crust znet
 ```
 
 After a while applications will be deployed to your docker:
-- `coredev-00`: single `cored` validator
+- `cored-00`: single `cored` validator
 - `explorer-postgres`, `explorer-hasura` and `explorer-bdjuno`: components of the block explorer (work in progress)
 
 To stop and purge the testing environment run:
@@ -59,7 +59,7 @@ $ $HOME/crust/bin/crust znet remove
 
 To get all the details on how `znet` tool might be used, go to the [crust repository](https://github.com/CoreumFoundation/crust).
 
-### Interact with the chain
+### Interact with the local chain
 
 After entering `znet` console by executing:
 
@@ -70,19 +70,31 @@ $ $HOME/crust/bin/crust znet
 you may use client to interact with the chain:
 1. List pregenerated wallets:
 ```
-(znet) [znet] $ coredev-00 keys list
+(znet) [znet] $ cored-00 keys list
 ```
 You may use those wallets to issue transactions and queries
 
-2. Query balances:
+2. Generate a Wallet and Query balances:
 ```
-(znet) [znet] $ coredev-00 q bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
+(znet) [znet] $ cored-00 keys add {YOUR_WALLET_NAME} 
+```
+This will generate a wallet and print out the mnemonic at the end. It will also print 
+the address and public key. Use the address in the next commands to query its balance
+and transfer funds to it.
+```
+(znet) [znet] $ cored-00 q bank balances {YOUR_GENERATED_ADDRESS}
 ```
 Remember to replace address with the one existing in your keystore.
 
+You will see the balance is zero.
+
 3. Send tokens from one account to another:
 ```
-(znet) [znet] $ coredev-00 tx bank send alice devcore1cjs7qela0trw2qyyfxw5e5e7cvwzprkjaycnem 10core
+(znet) [znet] $ cored-00 tx bank send alice {YOUR_GENERATED_ADDRESS} 10udevcore --broadcast-mode=block
+```
+Run the query again and you will see that there are now funds in the newly generated account.
+```
+(znet) [znet] $ cored-00 q bank balances {YOUR_GENERATED_ADDRESS}
 ```
 
 ## Connect to Running Chains
