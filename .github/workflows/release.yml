@@ -38,6 +38,10 @@ jobs:
           if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-rc[0-9]+$ ]]; then
               echo ::set-output name=release_candidate::true
           fi
+      - name: Link released binaries under right names
+        run: |
+          ln crust/bin/.cache/cored/docker.amd64/bin/cored cored-linux-amd64
+          ln crust/bin/.cache/cored/docker.arm64/bin/cored cored-linux-arm64
       - name: Create release
         if: steps.check-tag.outputs.release == 'true'
         uses: softprops/action-gh-release@v1
@@ -45,8 +49,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           generate_release_notes: true
           files: |
-            crust/bin/release/cored-linux-amd64
-            crust/bin/release/cored-linux-arm64
+            cored-linux-amd64
+            cored-linux-arm64
       - name: Create release candidate
         if: steps.check-tag.outputs.release_candidate == 'true'
         uses: softprops/action-gh-release@v1
@@ -55,5 +59,5 @@ jobs:
           prerelease: true
           generate_release_notes: true
           files: |
-            crust/bin/release/cored-linux-amd64
-            crust/bin/release/cored-linux-arm64
+            cored-linux-amd64
+            cored-linux-arm64
