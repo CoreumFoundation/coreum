@@ -66,11 +66,11 @@ func TestKeeper_IssueClass(t *testing.T) {
 	_, err = nftKeeper.IssueClass(ctx, settings)
 	requireT.True(types.ErrInvalidInput.Is(err))
 
-	// try to get non-invalid class
+	// try to get non-valid class
 	_, err = nftKeeper.GetClass(ctx, "invalid")
 	requireT.ErrorIs(err, types.ErrInvalidInput)
 
-	//// try to get nonexistent class
+	// try to get nonexistent class
 	_, err = nftKeeper.GetClass(ctx, types.BuildClassID("nonexistent", addr))
 	requireT.ErrorIs(err, types.ErrClassNotFound)
 }
