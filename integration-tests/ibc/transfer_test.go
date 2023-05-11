@@ -22,10 +22,11 @@ import (
 
 func TestIBCTransfer(t *testing.T) {
 	t.Parallel()
-	channelsInfo := awaitChannels(t)
-	channelID := channelsInfo.gaiaChannelID
 
 	ctx, chain := integrationtests.NewTestingContext(t)
+
+	channelsInfo := awaitChannels(ctx, chain.ClientContext, t)
+	channelID := channelsInfo.gaiaChannelID
 
 	sender := chain.GenAccount()
 	recipient, err := integrationtests.GenRandomAddress(integrationtests.GaiaAccountPrefix)

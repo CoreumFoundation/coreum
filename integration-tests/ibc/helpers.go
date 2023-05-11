@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
@@ -26,16 +25,20 @@ type channelsInfo struct {
 }
 
 // TODO: remove the await after we build this logic into crust.
-func awaitChannels(t *testing.T) channelsInfo {
-	ctx, chain := integrationtests.NewTestingContext(t)
-	clientCtx := chain.ChainContext.ClientContext
-
+func awaitChannels(ctx context.Context, clientCtx client.Context, t *testing.T) channelsInfo {
 	ibcChannelClient := ibcchanneltypes.NewQueryClient(clientCtx)
 	var gaiaChannelID string
 
 	expectedOpenChannels := 0
-	err := retry.Do(ctx, time.Second, func() error {
-		channels, err := ibcChannelClient.Channels(ctx, &ibcchanneltypes.QueryChannelsRequest{})
+
+	retryCtx, retryCancel := context.WithTimeout(ctx, 20*time.Second)
+	defer retryCancel()
+
+	err := retry.Do(retryCtx, time.Second, func() error {
+		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
+		defer requestCancel()
+
+		channels, err := ibcChannelClient.Channels(requestCtx, &ibcchanneltypes.QueryChannelsRequest{})
 		if err != nil {
 			return err
 		}
@@ -53,7 +56,7 @@ func awaitChannels(t *testing.T) channelsInfo {
 			if err != nil {
 				return err
 			}
-			if chainID == chain.GaiaContext.ClientContext.ChainID() {
+			if chainID == clientCtx.ChainID() {
 				expectedOpenChannels++
 				gaiaChannelID = ch.ChannelId
 			}
