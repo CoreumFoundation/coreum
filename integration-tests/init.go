@@ -36,6 +36,7 @@ func (m *stringsFlag) Set(val string) error {
 
 type testingConfig struct {
 	GRPCAddress     string
+	GaiaGRPCAddress string
 	NetworkConfig   config.NetworkConfig
 	FundingMnemonic string
 	StakerMnemonics []string
@@ -56,6 +57,7 @@ func init() {
 		chainID                                  string
 		stakerMnemonics                          stringsFlag
 		runUnsafe                                bool
+		gaiaAddress, gaiaChainID                 string
 	)
 
 	flag.StringVar(&coredAddress, "cored-address", "localhost:9090", "Address of cored node started by znet")
@@ -64,6 +66,8 @@ func init() {
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
 	flag.StringVar(&chainID, "chain-id", string(constant.ChainIDDev), "Which chain-id to use (coreum-devnet-1, coreum-testnet-1,...)")
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
+	flag.StringVar(&gaiaAddress, "gaia-address", "localhost:9080", "Address of gaia node started by znet")
+	flag.StringVar(&gaiaChainID, "gaia-chain-id", "gaia-localnet-1", "gaia chain-id started by znet")
 
 	// accept testing flags
 	testing.Init()
@@ -85,6 +89,7 @@ func init() {
 	}
 	cfg = testingConfig{
 		GRPCAddress:     coredAddress,
+		GaiaGRPCAddress: gaiaAddress,
 		NetworkConfig:   networkConfig,
 		FundingMnemonic: fundingMnemonic,
 		StakerMnemonics: stakerMnemonics,
@@ -111,6 +116,17 @@ func init() {
 		WithBroadcastMode(flags.BroadcastBlock).
 		WithGRPCClient(grpcClient)
 
+	gaiaGRPClient, err := grpc.Dial(gaiaAddress, grpc.WithInsecure())
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
+
+	gaiaCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
+		WithChainID(gaiaChainID).
+		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
+		WithBroadcastMode(flags.BroadcastBlock).
+		WithGRPCClient(gaiaGRPClient)
+
 	feemodelClient := feemodeltypes.NewQueryClient(clientCtx)
 
 	ctx, cancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
@@ -122,12 +138,13 @@ func init() {
 	}
 
 	chain = NewChain(ChainConfig{
-		ClientContext:   clientCtx,
-		GRPCAddress:     cfg.GRPCAddress,
-		NetworkConfig:   cfg.NetworkConfig,
-		InitialGasPrice: resp.Params.Model.InitialGasPrice,
-		FundingMnemonic: cfg.FundingMnemonic,
-		StakerMnemonics: cfg.StakerMnemonics,
+		ClientContext:     clientCtx,
+		GRPCAddress:       cfg.GRPCAddress,
+		GaiaClientContext: gaiaCtx,
+		NetworkConfig:     cfg.NetworkConfig,
+		InitialGasPrice:   resp.Params.Model.InitialGasPrice,
+		FundingMnemonic:   cfg.FundingMnemonic,
+		StakerMnemonics:   cfg.StakerMnemonics,
 	})
 }
 

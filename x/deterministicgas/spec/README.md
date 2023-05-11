@@ -107,6 +107,7 @@ TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`                      | 25000                          |
 | `/cosmwasm.wasm.v1.MsgClearAdmin`                                      | 6500                           |
 | `/cosmwasm.wasm.v1.MsgUpdateAdmin`                                     | 8000                           |
+| `/ibc.applications.transfer.v1.MsgTransfer`                            | 37000                          |
 
 #### Special Cases
 
@@ -145,6 +146,24 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 | `/cosmwasm.wasm.v1.MsgInstantiateContract2`                            |
 | `/cosmwasm.wasm.v1.MsgMigrateContract`                                 |
 | `/cosmwasm.wasm.v1.MsgStoreCode`                                       |
+| `/ibc.core.channel.v1.MsgAcknowledgement`                              |
+| `/ibc.core.channel.v1.MsgChannelCloseConfirm`                          |
+| `/ibc.core.channel.v1.MsgChannelCloseInit`                             |
+| `/ibc.core.channel.v1.MsgChannelOpenAck`                               |
+| `/ibc.core.channel.v1.MsgChannelOpenConfirm`                           |
+| `/ibc.core.channel.v1.MsgChannelOpenInit`                              |
+| `/ibc.core.channel.v1.MsgChannelOpenTry`                               |
+| `/ibc.core.channel.v1.MsgRecvPacket`                                   |
+| `/ibc.core.channel.v1.MsgTimeout`                                      |
+| `/ibc.core.channel.v1.MsgTimeoutOnClose`                               |
+| `/ibc.core.client.v1.MsgCreateClient`                                  |
+| `/ibc.core.client.v1.MsgSubmitMisbehaviour`                            |
+| `/ibc.core.client.v1.MsgUpdateClient`                                  |
+| `/ibc.core.client.v1.MsgUpgradeClient`                                 |
+| `/ibc.core.connection.v1.MsgConnectionOpenAck`                         |
+| `/ibc.core.connection.v1.MsgConnectionOpenConfirm`                     |
+| `/ibc.core.connection.v1.MsgConnectionOpenInit`                        |
+| `/ibc.core.connection.v1.MsgConnectionOpenTry`                         |
 
 [//]: # (GENERATED DOC.)
 [//]: # (DO NOT EDIT MANUALLY!!!)

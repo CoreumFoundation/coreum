@@ -159,19 +159,21 @@ func (c ChainContext) ComputeNeededBalanceFromOptions(options BalancesOptions) s
 
 // ChainConfig defines the config arguments required for the test chain initialisation.
 type ChainConfig struct {
-	ClientContext   client.Context
-	GRPCAddress     string
-	NetworkConfig   config.NetworkConfig
-	InitialGasPrice sdk.Dec
-	FundingMnemonic string
-	StakerMnemonics []string
+	ClientContext     client.Context
+	GRPCAddress       string
+	GaiaClientContext client.Context
+	NetworkConfig     config.NetworkConfig
+	InitialGasPrice   sdk.Dec
+	FundingMnemonic   string
+	StakerMnemonics   []string
 }
 
 // Chain holds network and client for the blockchain.
 type Chain struct {
 	ChainContext
-	Faucet     Faucet
-	Governance Governance
+	GaiaContext GaiaContext
+	Faucet      Faucet
+	Governance  Governance
 }
 
 // NewChain creates an instance of the new Chain.
@@ -183,8 +185,11 @@ func NewChain(cfg ChainConfig) Chain {
 	faucet := NewFaucet(NewChainContext(cfg.ClientContext.WithFromAddress(faucetAddr), cfg.NetworkConfig, cfg.InitialGasPrice))
 	return Chain{
 		ChainContext: chainCtx,
-		Governance:   governance,
-		Faucet:       faucet,
+		GaiaContext: GaiaContext{
+			ClientContext: cfg.GaiaClientContext,
+		},
+		Governance: governance,
+		Faucet:     faucet,
 	}
 }
 
