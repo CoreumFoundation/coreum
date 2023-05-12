@@ -41,7 +41,7 @@ func TestIBCFromCoreumToGaiaAndBack(t *testing.T) {
 	requireT.EqualValues(txRes.GasUsed, coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}))
 
 	t.Logf("Waiting for balance on gaia")
-	gaiaRecipientBalance, err := QueryNonZeroIBCBalance(ctx, gaiaChain, gaiaRecipient, ConvertToIBCDenom(coreumToGaiaChannelID, sendToGaiaCoin.Denom))
+	gaiaRecipientBalance, err := QueryNonZeroIBCBalance(ctx, gaiaChain, gaiaRecipient, ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom))
 	requireT.NoError(err)
 	assert.EqualValues(t, sendToGaiaCoin.Amount.String(), gaiaRecipientBalance.Amount.String())
 	t.Logf("Reveiced %s on gaia", gaiaRecipientBalance.String())
