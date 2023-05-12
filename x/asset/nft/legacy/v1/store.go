@@ -18,6 +18,8 @@ func MigrateStore(ctx sdk.Context, storeKey sdk.StoreKey) error {
 	oldStore := prefix.NewStore(moduleStore, types.NFTClassKeyPrefix)
 
 	oldStoreIter := oldStore.Iterator(nil, nil)
+	defer oldStoreIter.Close()
+
 	for ; oldStoreIter.Valid(); oldStoreIter.Next() {
 		oldKey := oldStoreIter.Key()
 		newKey, err := types.CreateClassKey(string(oldKey))
@@ -29,5 +31,5 @@ func MigrateStore(ctx sdk.Context, storeKey sdk.StoreKey) error {
 		oldStore.Delete(oldStoreIter.Key())
 	}
 
-	return oldStoreIter.Close()
+	return nil
 }

@@ -198,7 +198,11 @@ func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.Class
 func (k Keeper) GetClassDefinitions(ctx sdk.Context, issuer *sdk.AccAddress, pagination *query.PageRequest) ([]types.ClassDefinition, *query.PageResponse, error) {
 	fetchingKey := types.NFTClassKeyPrefix
 	if issuer != nil {
-		fetchingKey = types.CreateIssuerClassPrefix(*issuer)
+		var err error
+		fetchingKey, err = types.CreateIssuerClassPrefix(*issuer)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
