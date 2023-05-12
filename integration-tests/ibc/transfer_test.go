@@ -4,7 +4,6 @@ package ibc
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -91,6 +90,5 @@ func TestIBCTransfer(t *testing.T) {
 		ibctransfertypes.GetPrefixedDenom(ibctransfertypes.PortID, gaiaChannelID, sendCoin.Denom),
 	)
 	ibcDenom := ibcDenomTrace.IBCDenom()
-	fmt.Println(ibcDenom)
 	assert.EqualValues(t, sendCoin.Amount.String(), balancesRecipient.Balances.AmountOf(ibcDenom).String())
 }
