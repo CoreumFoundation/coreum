@@ -4,6 +4,7 @@ package ibc
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,7 +26,7 @@ func TestIBCTransfer(t *testing.T) {
 
 	ctx, chain := integrationtests.NewTestingContext(t)
 
-	channelsInfo := awaitChannels(ctx, chain.ClientContext, t)
+	channelsInfo := awaitChannels(ctx, chain, t)
 	channelID := channelsInfo.gaiaChannelID
 
 	sender := chain.GenAccount()
@@ -34,7 +35,7 @@ func TestIBCTransfer(t *testing.T) {
 
 	sendCoin := chain.NewCoin(sdk.NewInt(1000))
 	// transfer tokens over ibc
-	height, err := queryLatestConsensusHeight(
+	height, err := queryLatestConsensusHeight(ctx,
 		chain.ChainContext.ClientContext,
 		ibctransfertypes.PortID,
 		channelID,
@@ -87,8 +88,16 @@ func TestIBCTransfer(t *testing.T) {
 	require.Len(t, balancesRecipient.Balances, 1)
 
 	ibcDenomTrace := ibctransfertypes.ParseDenomTrace(
+		// FIXME: This line is buggy. Channel ID comes from the sending chain, while it should be taken from the receiving one.
 		ibctransfertypes.GetPrefixedDenom(ibctransfertypes.PortID, channelID, sendCoin.Denom),
 	)
+	fmt.Println("=====")
+	fmt.Println(balancesRecipient)
+	fmt.Println("=====")
+	fmt.Println(ibcDenomTrace)
+	fmt.Println("=====")
+
 	ibcDenom := ibcDenomTrace.IBCDenom()
+	fmt.Println(ibcDenom)
 	assert.EqualValues(t, sendCoin.Amount.String(), balancesRecipient.Balances.AmountOf(ibcDenom).String())
 }
