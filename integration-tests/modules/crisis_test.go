@@ -23,11 +23,11 @@ func TestVerifyInvariantMessageIsDenied(t *testing.T) {
 	// to query it, and we don't want to store it in network config either.
 	const invariantFee = 500_000_000_000
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Amount: sdk.NewIntFromUint64(invariantFee),
 	}))
 

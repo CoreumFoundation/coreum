@@ -22,10 +22,9 @@ import (
 // 2. depositing missing amount to proposal created on the 1st step,
 // 3. voting using weighted votes.
 func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
-	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
 
 	requireT := require.New(t)
 	gov := chain.Governance
@@ -40,7 +39,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
-	err = chain.Faucet.FundAccountsWithOptions(ctx, depositor, integrationtests.BalancesOptions{
+	err = chain.FundAccountsWithOptions(ctx, depositor, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&govtypes.MsgDeposit{}},
 		Amount:   missingDepositAmount.Amount,
 	})
@@ -84,7 +83,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	accBalanceFunc := func(prop sdk.AccAddress) sdk.Coin {
 		accBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: prop.String(),
-			Denom:   chain.NetworkConfig.Denom(),
+			Denom:   chain.ChainSettings.Denom,
 		})
 		requireT.NoError(err)
 		return *accBalance.Balance

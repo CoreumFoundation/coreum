@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
 // FundedAccount represents a requirement of a test to get some funds for an account.
@@ -151,13 +150,13 @@ func (f Faucet) prepareMultiSendMessage(requests []fundingRequest) *banktypes.Ms
 		for _, a := range r.AccountsToFund {
 			sum = sum.Add(a.Amount)
 			msg.Outputs = append(msg.Outputs, banktypes.Output{
-				Address: a.Address.String(),
+				Address: f.chainCtx.ConvertToBech32Address(a.Address),
 				Coins:   sdk.NewCoins(a.Amount),
 			})
 		}
 	}
 	msg.Inputs = []banktypes.Input{{
-		Address: f.chainCtx.ClientContext.FromAddress().String(),
+		Address: f.chainCtx.ConvertToBech32Address(f.chainCtx.ClientContext.FromAddress()),
 		Coins:   sum,
 	}}
 
@@ -169,10 +168,10 @@ func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) er
 	log.Info("Funding accounts for tests, it might take a while...")
 
 	// Transaction is broadcasted and awaited
-	_, err := client.BroadcastTx(
+	_, err := BroadcastTxWithSigner(
 		ctx,
-		f.chainCtx.ClientContext,
-		f.chainCtx.TxFactory().WithSimulateAndExecute(true),
+		f.chainCtx,
+		f.chainCtx.ClientContext.FromAddress(),
 		msg,
 	)
 	if err != nil {
@@ -181,13 +180,4 @@ func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) er
 	log.Info("Test accounts funded")
 
 	return nil
-}
-
-// FundAccountsWithOptions computes the needed balances and fund account with it.
-func (f Faucet) FundAccountsWithOptions(ctx context.Context, address sdk.AccAddress, options BalancesOptions) error {
-	amount := f.chainCtx.ComputeNeededBalanceFromOptions(options)
-	return f.FundAccounts(ctx, FundedAccount{
-		Address: address,
-		Amount:  f.chainCtx.NewCoin(amount),
-	})
 }

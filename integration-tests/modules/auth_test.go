@@ -26,13 +26,13 @@ import (
 func TestAuthFeeLimits(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 
 	feeModel := getFeemodelParams(ctx, t, chain.ClientContext)
 	maxBlockGas := feeModel.MaxBlockGas
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -128,7 +128,7 @@ func TestAuthFeeLimits(t *testing.T) {
 func TestAuthMultisig(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 	requireT := require.New(t)
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
@@ -139,7 +139,7 @@ func TestAuthMultisig(t *testing.T) {
 	signer2KeyName := keyNamesSet[1]
 
 	// fund the multisig account
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
 	}))
@@ -203,11 +203,11 @@ func TestAuthMultisig(t *testing.T) {
 func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(10),
 	}))
