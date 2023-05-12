@@ -22,10 +22,11 @@ import (
 
 func TestIBCTransfer(t *testing.T) {
 	t.Parallel()
-	channelsInfo := awaitChannels(t)
-	channelID := channelsInfo.gaiaChannelID
 
 	ctx, chain := integrationtests.NewTestingContext(t)
+
+	gaiaChannelID := awaitChannels(ctx, chain.ClientContext.ChainID(), chain.GaiaContext.ClientContext, t)
+	coreumChannelID := awaitChannels(ctx, chain.GaiaContext.ClientContext.ChainID(), chain.ClientContext, t)
 
 	sender := chain.GenAccount()
 	recipient, err := integrationtests.GenRandomAddress(integrationtests.GaiaAccountPrefix)
@@ -33,15 +34,15 @@ func TestIBCTransfer(t *testing.T) {
 
 	sendCoin := chain.NewCoin(sdk.NewInt(1000))
 	// transfer tokens over ibc
-	height, err := queryLatestConsensusHeight(
+	height, err := queryLatestConsensusHeight(ctx,
 		chain.ChainContext.ClientContext,
 		ibctransfertypes.PortID,
-		channelID,
+		coreumChannelID,
 	)
 	require.NoError(t, err)
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:    ibctransfertypes.PortID,
-		SourceChannel: channelID,
+		SourceChannel: coreumChannelID,
 		Token:         sendCoin,
 		Sender:        sender.String(),
 		Receiver:      recipient,
@@ -86,7 +87,7 @@ func TestIBCTransfer(t *testing.T) {
 	require.Len(t, balancesRecipient.Balances, 1)
 
 	ibcDenomTrace := ibctransfertypes.ParseDenomTrace(
-		ibctransfertypes.GetPrefixedDenom(ibctransfertypes.PortID, channelID, sendCoin.Denom),
+		ibctransfertypes.GetPrefixedDenom(ibctransfertypes.PortID, gaiaChannelID, sendCoin.Denom),
 	)
 	ibcDenom := ibcDenomTrace.IBCDenom()
 	assert.EqualValues(t, sendCoin.Amount.String(), balancesRecipient.Balances.AmountOf(ibcDenom).String())
