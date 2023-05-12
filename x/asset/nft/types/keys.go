@@ -37,12 +37,21 @@ func CreateClassKey(classID string) ([]byte, error) {
 		return nil, sdkerrors.Wrapf(ErrInvalidKey, "can't build class key from clasID, clasID:%s, err:%s", classID, err)
 	}
 	// use keys in the reverse order to query by the issuer
-	return store.JoinKeys(NFTClassKeyPrefix, issuer, []byte(symbol)), nil
+	classKey, err := store.JoinKeysWithLength(issuer, []byte(symbol))
+	if err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "can't join NFT class key with length, issuer:%s, symbol:%s, err:%s", issuer, symbol, err)
+	}
+
+	return store.JoinKeys(NFTClassKeyPrefix, classKey), nil
 }
 
 // CreateIssuerClassPrefix constructs the key for the non-fungible token class for the specific issuer.
-func CreateIssuerClassPrefix(issuer sdk.AccAddress) []byte {
-	return store.JoinKeys(NFTClassKeyPrefix, issuer)
+func CreateIssuerClassPrefix(issuer sdk.AccAddress) ([]byte, error) {
+	issuerKey, err := store.JoinKeysWithLength(issuer)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "can't join NFT class issuer key with length, issuer:%s, err:%s", issuer, err)
+	}
+	return store.JoinKeys(NFTClassKeyPrefix, issuerKey), nil
 }
 
 // CreateFreezingKey constructs the key for the freezing of non-fungible token.
