@@ -4,7 +4,6 @@ package ibc
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -18,18 +17,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
-type channelsInfo struct {
-	gaiaChannelID string
-}
-
 // TODO: remove the await after we build this logic into crust.
-func awaitChannels(ctx context.Context, chain integrationtests.Chain, t *testing.T) channelsInfo {
-	ibcChannelClient := ibcchanneltypes.NewQueryClient(chain.ClientContext)
-	var gaiaChannelID string
+func awaitChannels(ctx context.Context, srcChainID string, dstClientContext client.Context, t *testing.T) string {
+	ibcChannelClient := ibcchanneltypes.NewQueryClient(dstClientContext)
+	var channelID string
 
 	expectedOpenChannels := 0
 
@@ -50,20 +44,18 @@ func awaitChannels(ctx context.Context, chain integrationtests.Chain, t *testing
 				continue
 			}
 
-			if ch.ChannelId == gaiaChannelID {
+			if ch.ChannelId == channelID {
 				continue
 			}
 
-			chainID, err := getChainID(ctx, chain.ClientContext, ibctransfertypes.PortID, ch.ChannelId)
+			chainID, err := getChainID(ctx, dstClientContext, ibctransfertypes.PortID, ch.ChannelId)
 			if err != nil {
 				return err
 			}
 
-			if chainID == chain.GaiaContext.ClientContext.ChainID() {
-				fmt.Println(chainID)
-				fmt.Println(ch.ChannelId)
+			if chainID == srcChainID {
 				expectedOpenChannels++
-				gaiaChannelID = ch.ChannelId
+				channelID = ch.ChannelId
 			}
 		}
 
@@ -75,9 +67,7 @@ func awaitChannels(ctx context.Context, chain integrationtests.Chain, t *testing
 	})
 	require.NoError(t, err)
 
-	return channelsInfo{
-		gaiaChannelID: gaiaChannelID,
-	}
+	return channelID
 }
 
 func getChainID(
