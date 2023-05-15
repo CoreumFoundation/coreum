@@ -25,10 +25,11 @@ type ParamSubspace interface {
 
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc           codec.BinaryCodec
-	paramSubspace ParamSubspace
-	storeKey      sdk.StoreKey
-	bankKeeper    types.BankKeeper
+	cdc             codec.BinaryCodec
+	paramSubspace   ParamSubspace
+	storeKey        sdk.StoreKey
+	bankKeeper      types.BankKeeper
+	moduleAddresses map[string]bool
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -37,12 +38,14 @@ func NewKeeper(
 	paramSubspace ParamSubspace,
 	storeKey sdk.StoreKey,
 	bankKeeper types.BankKeeper,
+	moduleAddresses map[string]bool,
 ) Keeper {
 	return Keeper{
-		cdc:           cdc,
-		paramSubspace: paramSubspace,
-		storeKey:      storeKey,
-		bankKeeper:    bankKeeper,
+		cdc:             cdc,
+		paramSubspace:   paramSubspace,
+		storeKey:        storeKey,
+		bankKeeper:      bankKeeper,
+		moduleAddresses: moduleAddresses,
 	}
 }
 

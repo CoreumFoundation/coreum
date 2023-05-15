@@ -4,6 +4,8 @@ package ibc
 
 import (
 	"context"
+	"fmt"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"testing"
 	"time"
 
@@ -42,6 +44,9 @@ func (c ChannelsConfig) Ready() bool {
 // TODO(milad): remove the await after we build this logic into crust.
 func AwaitForIBCConfig(t *testing.T) ChannelsConfig {
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	log := logger.Get(ctx)
+	log.Info("Waiting for the IBC channels")
+
 	coreumIBCChannelClient := ibcchanneltypes.NewQueryClient(chains.Coreum.ClientContext)
 	gaiaIBCChannelClient := ibcchanneltypes.NewQueryClient(chains.Gaia.ClientContext)
 
@@ -62,8 +67,9 @@ func AwaitForIBCConfig(t *testing.T) ChannelsConfig {
 				return err
 			}
 
-			if chainID == chains.Gaia.ChainSettings.ChainID {
+			if chainID == chains.Gaia.ChainSettings.ChainID && ibcConfig.CoreumToGaiaChannelID == "" {
 				ibcConfig.CoreumToGaiaChannelID = ch.ChannelId
+				log.Info(fmt.Sprintf("Gaia channel on coreum is ready, channleID:%s", ch.ChannelId))
 			}
 		}
 
@@ -82,8 +88,9 @@ func AwaitForIBCConfig(t *testing.T) ChannelsConfig {
 				return err
 			}
 
-			if chainID == chains.Coreum.ChainSettings.ChainID {
+			if chainID == chains.Coreum.ChainSettings.ChainID && ibcConfig.GaiaToCoreumChannelID == "" {
 				ibcConfig.GaiaToCoreumChannelID = ch.ChannelId
+				log.Info(fmt.Sprintf("Coreum channel on gaia is ready, channleID:%s", ch.ChannelId))
 			}
 		}
 
@@ -91,7 +98,7 @@ func AwaitForIBCConfig(t *testing.T) ChannelsConfig {
 			return nil
 		}
 
-		return retry.Retryable(errors.New("waiting for channels to open"))
+		return retry.Retryable(errors.Errorf("expected channels are closed, opened: %+v", ibcConfig))
 	})
 	require.NoError(t, err)
 
@@ -111,10 +118,16 @@ func ExecuteIBCTransfer(
 	senderChain integrationtests.Chain,
 	senderAddress sdk.AccAddress,
 	channelID string,
-	sendCoin sdk.Coin,
+	coin sdk.Coin,
 	recipientChain integrationtests.Chain,
 	recipientAddress sdk.AccAddress,
 ) (*sdk.TxResponse, error) {
+	log := logger.Get(ctx)
+
+	sender := senderChain.ChainContext.ConvertToBech32Address(senderAddress)
+	receiver := recipientChain.ConvertToBech32Address(recipientAddress)
+	log.Info(fmt.Sprintf("Sending IBC transfer from %s, to %s, %s.", sender, receiver, coin.String()))
+
 	height, err := queryLatestConsensusHeight(
 		ctx,
 		senderChain.ChainContext.ClientContext,
@@ -128,9 +141,9 @@ func ExecuteIBCTransfer(
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:    ibctransfertypes.PortID,
 		SourceChannel: channelID,
-		Token:         sendCoin,
-		Sender:        senderChain.ChainContext.ConvertToBech32Address(senderAddress),
-		Receiver:      recipientChain.ConvertToBech32Address(recipientAddress),
+		Token:         coin,
+		Sender:        sender,
+		Receiver:      receiver,
 		TimeoutHeight: ibcclienttypes.Height{
 			RevisionNumber: height.RevisionNumber,
 			RevisionHeight: height.RevisionHeight + 1000,
@@ -145,17 +158,19 @@ func ExecuteIBCTransfer(
 	)
 }
 
-// QueryNonZeroIBCBalance queries for the balance with retry and timeout.
-func QueryNonZeroIBCBalance(
+// AwaitForBalance queries for the balance with retry and timeout.
+func AwaitForBalance(
 	ctx context.Context,
 	chain integrationtests.Chain,
 	address sdk.AccAddress,
-	denom string,
-) (sdk.Coin, error) {
+	coin sdk.Coin,
+) error {
+	log := logger.Get(ctx)
+	log.Info(fmt.Sprintf("Waiting for account %s balance, expected amount:%s.", chain.ConvertToBech32Address(address), coin.String()))
+
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()
-	var balance sdk.Coin
 	err := retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
 		defer requestCancel()
@@ -167,19 +182,18 @@ func QueryNonZeroIBCBalance(
 			return err
 		}
 
-		if balancesRes.Balances.AmountOf(denom).IsZero() {
-			return retry.Retryable(errors.Errorf("balances of %s is still empty, all balances:%s", denom, balancesRes.String()))
+		if balancesRes.Balances.AmountOf(coin.Denom).String() != coin.Amount.String() {
+			return retry.Retryable(errors.Errorf("balances is still not enough, all balances:%s", balancesRes.String()))
 		}
-
-		balance = sdk.NewCoin(denom, balancesRes.Balances.AmountOf(denom))
 
 		return nil
 	})
 	if err != nil {
-		return sdk.Coin{}, err
+		return err
 	}
+	log.Info("Received expected amount.")
 
-	return balance, nil
+	return nil
 }
 
 func getChainID(ctx context.Context, clientCtx client.Context, portID, channelID string) (string, error) {
