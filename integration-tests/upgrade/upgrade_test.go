@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
@@ -19,14 +18,28 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev1 "github.com/CoreumFoundation/coreum/app/upgrade/v1"
+	appupgradev2 "github.com/CoreumFoundation/coreum/app/upgrade/v2"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
 	integrationtests.SkipUnsafe(t)
+
+	// run upgrade v2
+	upgradeV2(t)
+}
+
+func upgradeV2(t *testing.T) {
+	runUpgrade(t, "v1.0.0", appupgradev2.Name, 30)
+}
+
+func runUpgrade(
+	t *testing.T,
+	oldBinaryVersion string,
+	upgradeName string,
+	blocksToWait int64,
+) {
 	ctx, chain := integrationtests.NewTestingContext(t)
 
 	log := logger.Get(ctx)
@@ -41,13 +54,13 @@ func TestUpgrade(t *testing.T) {
 	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-	// we start with the binary we if the v0.1.1
-	require.Equal(t, infoBeforeRes.ApplicationVersion.Version, "v0.1.1")
+	// we start with the old binary version
+	require.Equal(t, infoBeforeRes.ApplicationVersion.Version, oldBinaryVersion)
 
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
 
-	upgradeHeight := latestBlockRes.Block.Header.Height + 30
+	upgradeHeight := latestBlockRes.Block.Header.Height + blocksToWait
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -57,15 +70,23 @@ func TestUpgrade(t *testing.T) {
 	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	requireT.NoError(err)
 
-	log.Info("Creating proposal for upgrading", zap.Int64("upgradeHeight", upgradeHeight))
+	log.Info("Creating proposal for upgrading",
+		zap.String("upgradeName", upgradeName),
+		zap.Int64("upgradeHeight", upgradeHeight),
+	)
 
 	// Create proposal to upgrade chain.
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, upgradetypes.NewSoftwareUpgradeProposal("Upgrade test", "Testing if new version of node is started by cosmovisor",
-		upgradetypes.Plan{
-			Name:   appupgradev1.Name,
-			Height: upgradeHeight,
-		},
-	))
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		upgradetypes.NewSoftwareUpgradeProposal(
+			"Upgrade "+upgradeName,
+			"Running "+upgradeName+" in integration tests",
+			upgradetypes.Plan{
+				Name:   upgradeName,
+				Height: upgradeHeight,
+			},
+		))
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
@@ -91,7 +112,7 @@ func TestUpgrade(t *testing.T) {
 	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})
 	requireT.NoError(err)
 	requireT.NotNil(currentPlan.Plan)
-	assert.Equal(t, appupgradev1.Name, currentPlan.Plan.Name)
+	assert.Equal(t, upgradeName, currentPlan.Plan.Name)
 	assert.Equal(t, upgradeHeight, currentPlan.Plan.Height)
 
 	// Verify that we are before the upgrade
@@ -119,28 +140,15 @@ func TestUpgrade(t *testing.T) {
 
 	// Verify that upgrade was applied on chain.
 	appliedPlan, err := upgradeClient.AppliedPlan(ctx, &upgradetypes.QueryAppliedPlanRequest{
-		Name: appupgradev1.Name,
+		Name: upgradeName,
 	})
 	requireT.NoError(err)
 	assert.Equal(t, upgradeHeight, appliedPlan.Height)
-
 	log.Info(fmt.Sprintf("Upgrade passed, applied plan height: %d", appliedPlan.Height))
 
+	// The new binary isn't equal to initial
 	infoAfterRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-
 	log.Info(fmt.Sprintf("New binary version: %s", infoAfterRes.ApplicationVersion.Version))
-
-	// The new binary is from the dev upgrade isn't equal to initial
 	assert.NotEqual(t, infoAfterRes.ApplicationVersion.Version, infoBeforeRes.ApplicationVersion.Version)
-
-	// Test the upgrade introduces in the v1 upgrade
-	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
-	paramsRes, err := assetNftClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
-	requireT.NoError(err)
-
-	// check that asset nft is available now
-	requireT.Equal(assetnfttypes.Params{
-		MintFee: chain.NewCoin(sdk.NewInt(0)),
-	}, paramsRes.Params)
 }
