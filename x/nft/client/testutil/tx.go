@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -15,7 +16,6 @@ import (
 )
 
 const (
-	testClassID          = "kitty"
 	testClassName        = "Crypto Kitty"
 	testClassSymbol      = "kitty"
 	testClassDescription = "Crypto Kitty"
@@ -24,28 +24,14 @@ const (
 	testURI              = "kitty uri"
 )
 
-var (
-	ExpClass = nft.Class{ //nolint:revive // test constants
-		Id:          testClassID,
-		Name:        testClassName,
-		Symbol:      testClassSymbol,
-		Description: testClassDescription,
-		Uri:         testClassURI,
-	}
-
-	ExpNFT = nft.NFT{
-		ClassId: testClassID,
-		Id:      testID,
-		Uri:     testURI,
-	}
-)
-
 type IntegrationTestSuite struct { //nolint:revive // test helper
 	suite.Suite
 
-	cfg     network.Config
-	network *network.Network
-	owner   string
+	cfg      network.Config
+	network  *network.Network
+	owner    string
+	expClass nft.Class
+	expNFT   nft.NFT
 }
 
 func NewIntegrationTestSuite() *IntegrationTestSuite { //nolint:revive // test helper
@@ -73,13 +59,28 @@ func (s *IntegrationTestSuite) SetupSuite() { //nolint:revive // test helper
 	s.cfg = cfg
 	s.owner = keyInfo.GetAddress().String()
 
+	testClassID := fmt.Sprintf("%s-%s", "kitty", sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()))
+	s.expClass = nft.Class{
+		Id:          testClassID,
+		Name:        testClassName,
+		Symbol:      testClassSymbol,
+		Description: testClassDescription,
+		Uri:         testClassURI,
+	}
+
+	s.expNFT = nft.NFT{
+		ClassId: testClassID,
+		Id:      testID,
+		Uri:     testURI,
+	}
+
 	// set owner in the genesis
 	genesisState := s.cfg.GenesisState
 	nftGenesis := nft.GenesisState{
-		Classes: []*nft.Class{&ExpClass},
+		Classes: []*nft.Class{&s.expClass},
 		Entries: []*nft.Entry{{
 			Owner: s.owner,
-			Nfts:  []*nft.NFT{&ExpNFT},
+			Nfts:  []*nft.NFT{&s.expNFT},
 		}},
 	}
 	nftDataBz, err := s.cfg.Codec.MarshalJSON(&nftGenesis)
@@ -120,7 +121,7 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 		{
 			"valid transaction",
 			[]string{
-				testClassID,
+				s.expClass.Id,
 				testID,
 				val.Address.String(),
 			},

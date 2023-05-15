@@ -37,7 +37,7 @@ func (s *TestSuite) TestBalance() {
 			"fail invalid Owner addr",
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryBalanceRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Owner:   "owner",
 				}
 			},
@@ -50,7 +50,7 @@ func (s *TestSuite) TestBalance() {
 			func(index int, require *require.Assertions) {
 				s.TestMint()
 				req = &nft.QueryBalanceRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Owner:   s.addrs[0].String(),
 				}
 			},
@@ -104,7 +104,7 @@ func (s *TestSuite) TestOwner() {
 			"fail empty nft id",
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryOwnerRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 				}
 			},
 			"invalid nft id",
@@ -114,7 +114,7 @@ func (s *TestSuite) TestOwner() {
 			"success but nft id not exist",
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryOwnerRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Id:      "kitty2",
 				}
 			},
@@ -141,7 +141,7 @@ func (s *TestSuite) TestOwner() {
 			func(index int, require *require.Assertions) {
 				s.TestMint()
 				req = &nft.QueryOwnerRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Id:      testID,
 				}
 				owner = s.addrs[0].String()
@@ -205,7 +205,7 @@ func (s *TestSuite) TestSupply() {
 			"success but supply equal zero",
 			func(index int, require *require.Assertions) {
 				req = &nft.QuerySupplyRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 				}
 				s.TestSaveClass()
 			},
@@ -219,7 +219,7 @@ func (s *TestSuite) TestSupply() {
 			"Success",
 			func(index int, require *require.Assertions) {
 				n := nft.NFT{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Id:      testID,
 					Uri:     testURI,
 				}
@@ -227,7 +227,7 @@ func (s *TestSuite) TestSupply() {
 				require.NoError(err, "the error occurred on:%d", index)
 
 				req = &nft.QuerySupplyRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 				}
 			},
 			"",
@@ -294,7 +294,7 @@ func (s *TestSuite) TestNFTs() { //nolint:funlen // the default sdk test
 					ClassId: "kitty1",
 				}
 				n := nft.NFT{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Id:      testID,
 					Uri:     testURI,
 				}
@@ -350,12 +350,12 @@ func (s *TestSuite) TestNFTs() { //nolint:funlen // the default sdk test
 			"Success,query by classId and owner",
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryNFTsRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Owner:   s.addrs[0].String(),
 				}
 				nfts = []*nft.NFT{
 					{
-						ClassId: testClassID,
+						ClassId: s.testClassID,
 						Id:      testID,
 						Uri:     testURI,
 					},
@@ -408,7 +408,7 @@ func (s *TestSuite) TestNFT() {
 			"fail empty nft id",
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryNFTRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 				}
 			},
 			"invalid nft id",
@@ -430,7 +430,7 @@ func (s *TestSuite) TestNFT() {
 			"fail nft id not exist",
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryNFTRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Id:      "kitty2",
 				}
 			},
@@ -441,11 +441,11 @@ func (s *TestSuite) TestNFT() {
 			"success",
 			func(index int, require *require.Assertions) {
 				req = &nft.QueryNFTRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Id:      testID,
 				}
 				expNFT = nft.NFT{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 					Id:      testID,
 					Uri:     testURI,
 				}
@@ -508,7 +508,7 @@ func (s *TestSuite) TestClass() {
 			"success",
 			func(index int, require *require.Assertions) {
 				class = nft.Class{
-					Id:          testClassID,
+					Id:          s.testClassID,
 					Name:        testClassName,
 					Symbol:      testClassSymbol,
 					Description: testClassDescription,
@@ -516,7 +516,7 @@ func (s *TestSuite) TestClass() {
 					UriHash:     testClassURIHash,
 				}
 				req = &nft.QueryClassRequest{
-					ClassId: testClassID,
+					ClassId: s.testClassID,
 				}
 			},
 			"",
@@ -570,7 +570,7 @@ func (s *TestSuite) TestClasses() {
 				req = &nft.QueryClassesRequest{}
 				classes = []nft.Class{
 					{
-						Id:          testClassID,
+						Id:          s.testClassID,
 						Name:        testClassName,
 						Symbol:      testClassSymbol,
 						Description: testClassDescription,

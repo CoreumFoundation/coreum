@@ -38,7 +38,7 @@ func (s *IntegrationTestSuite) TestQueryBalanceGRPC() { //nolint:revive // test
 				ClassID string
 				Owner   string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 				Owner:   s.owner,
 			},
 			expectErr:   false,
@@ -50,7 +50,7 @@ func (s *IntegrationTestSuite) TestQueryBalanceGRPC() { //nolint:revive // test
 				ClassID string
 				Owner   string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 				Owner:   val.Address.String(),
 			},
 			expectErr:   false,
@@ -95,7 +95,7 @@ func (s *IntegrationTestSuite) TestQueryOwnerGRPC() { //nolint:revive // test
 				ID      string
 			}{
 				ClassID: "invalid_class_id",
-				ID:      ExpNFT.Id,
+				ID:      s.expNFT.Id,
 			},
 			expectErr:    true,
 			errMsg:       "invalid class id",
@@ -108,7 +108,7 @@ func (s *IntegrationTestSuite) TestQueryOwnerGRPC() { //nolint:revive // test
 				ID      string
 			}{
 				ClassID: "class-id",
-				ID:      ExpNFT.Id,
+				ID:      s.expNFT.Id,
 			},
 			expectErr:    false,
 			expectResult: "",
@@ -119,7 +119,7 @@ func (s *IntegrationTestSuite) TestQueryOwnerGRPC() { //nolint:revive // test
 				ClassID string
 				ID      string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 				ID:      "invalid_nft_id",
 			},
 			expectErr:    true,
@@ -131,7 +131,7 @@ func (s *IntegrationTestSuite) TestQueryOwnerGRPC() { //nolint:revive // test
 				ClassID string
 				ID      string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 				ID:      "nft-id",
 			},
 			expectErr:    false,
@@ -143,8 +143,8 @@ func (s *IntegrationTestSuite) TestQueryOwnerGRPC() { //nolint:revive // test
 				ClassID string
 				ID      string
 			}{
-				ClassID: ExpNFT.ClassId,
-				ID:      ExpNFT.Id,
+				ClassID: s.expNFT.ClassId,
+				ID:      s.expNFT.Id,
 			},
 			expectErr:    false,
 			expectResult: val.Address.String(),
@@ -207,7 +207,7 @@ func (s *IntegrationTestSuite) TestQuerySupplyGRPC() { //nolint:revive // test
 			args: struct {
 				ClassID string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 			},
 			expectErr:    false,
 			expectResult: 1,
@@ -282,10 +282,10 @@ func (s *IntegrationTestSuite) TestQueryNFTsGRPC() { //nolint:revive // test
 				ClassID string
 				Owner   string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 			},
 			expectErr:    false,
-			expectResult: []*nft.NFT{&ExpNFT},
+			expectResult: []*nft.NFT{&s.expNFT},
 		},
 		{
 			name: "success query by owner",
@@ -296,7 +296,7 @@ func (s *IntegrationTestSuite) TestQueryNFTsGRPC() { //nolint:revive // test
 				Owner: val.Address.String(),
 			},
 			expectErr:    false,
-			expectResult: []*nft.NFT{&ExpNFT},
+			expectResult: []*nft.NFT{&s.expNFT},
 		},
 		{
 			name: "success query by owner and classID",
@@ -304,11 +304,11 @@ func (s *IntegrationTestSuite) TestQueryNFTsGRPC() { //nolint:revive // test
 				ClassID string
 				Owner   string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 				Owner:   val.Address.String(),
 			},
 			expectErr:    false,
-			expectResult: []*nft.NFT{&ExpNFT},
+			expectResult: []*nft.NFT{&s.expNFT},
 		},
 	}
 	nftsOfClassURL := val.APIAddress + "/coreum/nft/v1beta1/nfts?class_id=%s&owner=%s"
@@ -348,7 +348,7 @@ func (s *IntegrationTestSuite) TestQueryNFTGRPC() { //nolint:revive // test
 				ID      string
 			}{
 				ClassID: "invalid_class_id",
-				ID:      ExpNFT.Id,
+				ID:      s.expNFT.Id,
 			},
 			expectErr: true,
 			errorMsg:  "invalid class id",
@@ -360,7 +360,7 @@ func (s *IntegrationTestSuite) TestQueryNFTGRPC() { //nolint:revive // test
 				ID      string
 			}{
 				ClassID: "class",
-				ID:      ExpNFT.Id,
+				ID:      s.expNFT.Id,
 			},
 			expectErr: true,
 			errorMsg:  "not found nft",
@@ -371,7 +371,7 @@ func (s *IntegrationTestSuite) TestQueryNFTGRPC() { //nolint:revive // test
 				ClassID string
 				ID      string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 				ID:      "invalid_nft_id",
 			},
 			expectErr: true,
@@ -383,7 +383,7 @@ func (s *IntegrationTestSuite) TestQueryNFTGRPC() { //nolint:revive // test
 				ClassID string
 				ID      string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 				ID:      "nft-id",
 			},
 			expectErr: true,
@@ -395,8 +395,8 @@ func (s *IntegrationTestSuite) TestQueryNFTGRPC() { //nolint:revive // test
 				ClassID string
 				ID      string
 			}{
-				ClassID: ExpNFT.ClassId,
-				ID:      ExpNFT.Id,
+				ClassID: s.expNFT.ClassId,
+				ID:      s.expNFT.Id,
 			},
 			expectErr: false,
 		},
@@ -414,7 +414,7 @@ func (s *IntegrationTestSuite) TestQueryNFTGRPC() { //nolint:revive // test
 				var result nft.QueryNFTResponse
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp, &result)
 				s.Require().NoError(err)
-				s.Require().EqualValues(ExpNFT, *result.Nft)
+				s.Require().EqualValues(s.expNFT, *result.Nft)
 			}
 		})
 	}
@@ -445,7 +445,7 @@ func (s *IntegrationTestSuite) TestQueryClassGRPC() { //nolint:revive // test
 			args: struct {
 				ClassID string
 			}{
-				ClassID: ExpNFT.ClassId,
+				ClassID: s.expNFT.ClassId,
 			},
 			expectErr: false,
 		},
@@ -463,7 +463,7 @@ func (s *IntegrationTestSuite) TestQueryClassGRPC() { //nolint:revive // test
 				var result nft.QueryClassResponse
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp, &result)
 				s.Require().NoError(err)
-				s.Require().EqualValues(ExpClass, *result.Class)
+				s.Require().EqualValues(s.expClass, *result.Class)
 			}
 		})
 	}
@@ -478,5 +478,5 @@ func (s *IntegrationTestSuite) TestQueryClassesGRPC() { //nolint:revive // test
 	err = val.ClientCtx.Codec.UnmarshalJSON(resp, &result)
 	s.Require().NoError(err)
 	s.Require().Len(result.Classes, 1)
-	s.Require().EqualValues(ExpClass, *result.Classes[0])
+	s.Require().EqualValues(s.expClass, *result.Classes[0])
 }
