@@ -98,6 +98,7 @@ import (
 	"github.com/CoreumFoundation/coreum/app/openapi"
 	appupgrade "github.com/CoreumFoundation/coreum/app/upgrade"
 	appupgradev1 "github.com/CoreumFoundation/coreum/app/upgrade/v1"
+	appupgradev2 "github.com/CoreumFoundation/coreum/app/upgrade/v2"
 	"github.com/CoreumFoundation/coreum/docs"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -687,6 +688,7 @@ func New(
 	/**** Upgrades ****/
 	upgrades := []appupgrade.Upgrade{
 		appupgradev1.NewV1Upgrade(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
+		appupgradev2.NewV2Upgrade(app.mm, app.configurator),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
