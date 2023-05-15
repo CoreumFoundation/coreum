@@ -158,7 +158,11 @@ func NewCoreumTestingContext(t *testing.T, skipUnsafe bool) (context.Context, Co
 }
 
 // NewChainsTestingContext returns the configured chains and new context for the integration tests.
-func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
+func NewChainsTestingContext(t *testing.T, skipUnsafe bool) (context.Context, Chains) {
+	if skipUnsafe && !runUnsafe {
+		t.SkipNow()
+	}
+
 	if !runUnsafe {
 		t.SkipNow()
 	}

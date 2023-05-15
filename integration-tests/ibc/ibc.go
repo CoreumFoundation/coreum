@@ -29,16 +29,13 @@ type ChannelsConfig struct {
 	GaiaToCoreumChannelID string
 }
 
-// Ready returns the true the config is fully ready.
+// Ready returns the true if the config is fully ready.
 func (c ChannelsConfig) Ready() bool {
 	return c.CoreumToGaiaChannelID != "" && c.GaiaToCoreumChannelID != ""
 }
 
-// AwaitForIBCConfig await for the IBC channels to be opened and returns them.
-// TODO(milad): remove the await after we build this logic into crust.
-func AwaitForIBCConfig(t *testing.T) ChannelsConfig {
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
-
+// AwaitForIBCConfig awaits for the IBC channels to be opened and returns them.
+func AwaitForIBCConfig(ctx context.Context, t *testing.T, chains integrationtests.Chains) ChannelsConfig {
 	var ibcConfig ChannelsConfig
 	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()

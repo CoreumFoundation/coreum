@@ -16,11 +16,11 @@ import (
 func TestIBCFromCoreumToGaiaAndBack(t *testing.T) {
 	t.Parallel()
 
-	channelsInfo := AwaitForIBCConfig(t)
+	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	channelsInfo := AwaitForIBCConfig(ctx, t, chains)
 	coreumToGaiaChannelID := channelsInfo.CoreumToGaiaChannelID
 	gaiaToCoreumChannelID := channelsInfo.GaiaToCoreumChannelID
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
@@ -44,7 +44,7 @@ func TestIBCFromCoreumToGaiaAndBack(t *testing.T) {
 	gaiaRecipientBalance, err := QueryNonZeroIBCBalance(ctx, gaiaChain, gaiaRecipient, ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom))
 	requireT.NoError(err)
 	assert.EqualValues(t, sendToGaiaCoin.Amount.String(), gaiaRecipientBalance.Amount.String())
-	t.Logf("Reveiced %s on gaia", gaiaRecipientBalance.String())
+	t.Logf("Received %s on gaia", gaiaRecipientBalance.String())
 
 	t.Logf("Sending %s back from gaia to coreum", gaiaRecipientBalance.String())
 	_, err = ExecuteIBCTransfer(ctx, gaiaChain, gaiaRecipient, gaiaToCoreumChannelID, gaiaRecipientBalance, coreumChain.Chain, coreumRecipient)
@@ -54,17 +54,17 @@ func TestIBCFromCoreumToGaiaAndBack(t *testing.T) {
 	coreumRecipientBalance, err := QueryNonZeroIBCBalance(ctx, coreumChain.Chain, coreumRecipient, sendToGaiaCoin.Denom)
 	requireT.NoError(err)
 	assert.EqualValues(t, gaiaRecipientBalance.Amount.String(), coreumRecipientBalance.Amount.String())
-	t.Logf("Reveiced %s on coreum", coreumRecipientBalance.String())
+	t.Logf("Received %s on coreum", coreumRecipientBalance.String())
 }
 
 func TestIBCFromGaiaToCoreumAndBack(t *testing.T) {
 	t.Parallel()
 
-	channelsInfo := AwaitForIBCConfig(t)
+	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	channelsInfo := AwaitForIBCConfig(ctx, t, chains)
 	coreumToGaiaChannelID := channelsInfo.CoreumToGaiaChannelID
 	gaiaToCoreumChannelID := channelsInfo.GaiaToCoreumChannelID
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
@@ -91,7 +91,7 @@ func TestIBCFromGaiaToCoreumAndBack(t *testing.T) {
 	coreumRecipientBalance, err := QueryNonZeroIBCBalance(ctx, coreumChain.Chain, coreumRecipient, ConvertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom))
 	requireT.NoError(err)
 	assert.EqualValues(t, sendToCoreumCoin.Amount.String(), coreumRecipientBalance.Amount.String())
-	t.Logf("Reveiced %s on coreum", coreumRecipientBalance.String())
+	t.Logf("Received %s on coreum", coreumRecipientBalance.String())
 
 	t.Logf("Sending %s back from coreum to gaia", coreumRecipientBalance.String())
 	_, err = ExecuteIBCTransfer(ctx, coreumChain.Chain, coreumRecipient, coreumToGaiaChannelID, coreumRecipientBalance, gaiaChain, gaiaRecipient)
@@ -101,5 +101,5 @@ func TestIBCFromGaiaToCoreumAndBack(t *testing.T) {
 	gaiaRecipientBalance, err := QueryNonZeroIBCBalance(ctx, gaiaChain, gaiaRecipient, sendToCoreumCoin.Denom)
 	requireT.NoError(err)
 	assert.EqualValues(t, gaiaRecipientBalance.Amount.String(), coreumRecipientBalance.Amount.String())
-	t.Logf("Reveiced %s on gaia", coreumRecipientBalance.String())
+	t.Logf("Received %s on gaia", coreumRecipientBalance.String())
 }
