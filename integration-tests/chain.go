@@ -272,6 +272,7 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 
 			if clientState.ChainId == peerChainID {
 				channelID = ch.ChannelId
+				return nil
 			}
 
 			return nil
