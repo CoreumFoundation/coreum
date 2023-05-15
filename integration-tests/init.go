@@ -132,7 +132,7 @@ func init() {
 	gaiaChainSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
 	gaiaChainSettings.GasPrice = sdk.ZeroDec()
 	gaiaChainSettings.GasAdjustment = 1.3
-	gaiaChainSettings.CoinType = 118 // gaia coin type
+	gaiaChainSettings.CoinType = sdk.CoinType // gaia coin type
 
 	gaiaChain := NewChain(
 		gaiaGRPClient,
@@ -147,18 +147,22 @@ func init() {
 
 // NewCoreumTestingContext returns the configured coreum chain and new context for the integration tests.
 func NewCoreumTestingContext(t *testing.T, skipUnsafe bool) (context.Context, CoreumChain) {
-	testCtx, testCtxCancel := context.WithCancel(ctx)
-	t.Cleanup(testCtxCancel)
-
 	if skipUnsafe && !runUnsafe {
 		t.SkipNow()
 	}
+
+	testCtx, testCtxCancel := context.WithCancel(ctx)
+	t.Cleanup(testCtxCancel)
 
 	return testCtx, chains.Coreum
 }
 
 // NewChainsTestingContext returns the configured chains and new context for the integration tests.
 func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
+	if !runUnsafe {
+		t.SkipNow()
+	}
+
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 

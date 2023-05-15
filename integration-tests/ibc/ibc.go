@@ -29,63 +29,34 @@ type ChannelsConfig struct {
 	GaiaToCoreumChannelID string
 }
 
-// Ready returns the if the config is fully ready.
+// Ready returns the true the config is fully ready.
 func (c ChannelsConfig) Ready() bool {
-	if c.CoreumToGaiaChannelID == "" || c.GaiaToCoreumChannelID == "" {
-		return false
-	}
-
-	return true
+	return c.CoreumToGaiaChannelID != "" && c.GaiaToCoreumChannelID != ""
 }
 
 // AwaitForIBCConfig await for the IBC channels to be opened and returns them.
 // TODO(milad): remove the await after we build this logic into crust.
 func AwaitForIBCConfig(t *testing.T) ChannelsConfig {
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
-	coreumIBCChannelClient := ibcchanneltypes.NewQueryClient(chains.Coreum.ClientContext)
-	gaiaIBCChannelClient := ibcchanneltypes.NewQueryClient(chains.Gaia.ClientContext)
 
 	var ibcConfig ChannelsConfig
-	err := retry.Do(ctx, time.Second, func() error {
-		coreumChannelsRes, err := coreumIBCChannelClient.Channels(ctx, &ibcchanneltypes.QueryChannelsRequest{})
+	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
+	defer retryCancel()
+	err := retry.Do(retryCtx, time.Second, func() error {
+		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
+		defer requestCancel()
+
+		coreumIBCChannels, err := getOpenChannelIDs(requestCtx, chains.Coreum.ClientContext)
 		if err != nil {
 			return err
 		}
+		ibcConfig.CoreumToGaiaChannelID = coreumIBCChannels[chains.Gaia.ChainSettings.ChainID]
 
-		for _, ch := range coreumChannelsRes.Channels {
-			if ch.State != ibcchanneltypes.OPEN {
-				continue
-			}
-
-			chainID, err := getChainID(ctx, chains.Coreum.ClientContext, ibctransfertypes.PortID, ch.ChannelId)
-			if err != nil {
-				return err
-			}
-
-			if chainID == chains.Gaia.ChainSettings.ChainID {
-				ibcConfig.CoreumToGaiaChannelID = ch.ChannelId
-			}
-		}
-
-		gaiaChannelsRes, err := gaiaIBCChannelClient.Channels(ctx, &ibcchanneltypes.QueryChannelsRequest{})
+		gaiaIBCChannels, err := getOpenChannelIDs(requestCtx, chains.Gaia.ClientContext)
 		if err != nil {
 			return err
 		}
-
-		for _, ch := range gaiaChannelsRes.Channels {
-			if ch.State != ibcchanneltypes.OPEN {
-				continue
-			}
-
-			chainID, err := getChainID(ctx, chains.Gaia.ClientContext, ibctransfertypes.PortID, ch.ChannelId)
-			if err != nil {
-				return err
-			}
-
-			if chainID == chains.Coreum.ChainSettings.ChainID {
-				ibcConfig.GaiaToCoreumChannelID = ch.ChannelId
-			}
-		}
+		ibcConfig.GaiaToCoreumChannelID = gaiaIBCChannels[chains.Coreum.ChainSettings.ChainID]
 
 		if ibcConfig.Ready() {
 			return nil
@@ -96,6 +67,29 @@ func AwaitForIBCConfig(t *testing.T) ChannelsConfig {
 	require.NoError(t, err)
 
 	return ibcConfig
+}
+
+func getOpenChannelIDs(ctx context.Context, clientCtx client.Context) (map[string]string, error) {
+	ibcClient := ibcchanneltypes.NewQueryClient(clientCtx)
+	channelsRes, err := ibcClient.Channels(ctx, &ibcchanneltypes.QueryChannelsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	chainToChannel := make(map[string]string)
+	for _, ch := range channelsRes.Channels {
+		if ch.State != ibcchanneltypes.OPEN {
+			continue
+		}
+
+		chainID, err := getChainID(ctx, clientCtx, ibctransfertypes.PortID, ch.ChannelId)
+		if err != nil {
+			return nil, err
+		}
+
+		chainToChannel[chainID] = ch.ChannelId
+	}
+
+	return chainToChannel, err
 }
 
 // ConvertToIBCDenom returns the IBC denom based on the channelID and denom.
@@ -140,6 +134,7 @@ func ExecuteIBCTransfer(
 	return integrationtests.BroadcastTxWithSigner(
 		ctx,
 		senderChain.ChainContext,
+		senderChain.TxFactory().WithSimulateAndExecute(true),
 		senderAddress,
 		&ibcSend,
 	)

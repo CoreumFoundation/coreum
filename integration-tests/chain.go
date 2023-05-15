@@ -73,7 +73,7 @@ func (c ChainContext) ConvertToBech32Address(address sdk.AccAddress) string {
 	return bech32Address
 }
 
-// ImportMnemonic imports the mnemonic into the ClientContext Keyring and return its address.
+// ImportMnemonic imports the mnemonic into the ClientContext Keyring and returns its address.
 // If the mnemonic is already imported the method will just return the address.
 func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 	keyInfo, err := c.ClientContext.Keyring().NewAccount(
