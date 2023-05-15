@@ -24,9 +24,9 @@ jobs:
         ]
         include:
           - ci_step: "lint"
-            command: "crust lint/coreum --log-format=yaml"
+            command: "crust wasm lint/coreum --log-format=yaml"
             go-cache: true
-            wasm-cache: false
+            wasm-cache: true
             linter-cache: true
             docker-cache: false
           - ci_step: "test"

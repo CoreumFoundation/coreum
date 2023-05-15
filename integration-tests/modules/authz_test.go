@@ -146,7 +146,8 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 
 	requireT := require.New(t)
 
-	multisigPublicKey, keyNamesSet := chain.GenMultisigAccount(t, 3, 2)
+	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(3, 2)
+	requireT.NoError(err)
 	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 	signer1KeyName := keyNamesSet[0]
 	signer2KeyName := keyNamesSet[1]
@@ -244,7 +245,8 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 
 	requireT := require.New(t)
 
-	multisigPublicKey, keyNamesSet := chain.GenMultisigAccount(t, 3, 2)
+	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(3, 2)
+	requireT.NoError(err)
 	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 	signer1KeyName := keyNamesSet[0]
 	signer2KeyName := keyNamesSet[1]
