@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
@@ -19,38 +18,16 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev1 "github.com/CoreumFoundation/coreum/app/upgrade/v1"
 	appupgradev2 "github.com/CoreumFoundation/coreum/app/upgrade/v2"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
 	integrationtests.SkipUnsafe(t)
 
-	// run upgrade v1
-	upgradeV1(t)
-
 	// run upgrade v2
 	upgradeV2(t)
-}
-
-func upgradeV1(t *testing.T) {
-	ctx, chain := integrationtests.NewTestingContext(t)
-	requireT := require.New(t)
-
-	runUpgrade(t, "v0.1.1", appupgradev1.Name, 30)
-
-	// Test the upgrade introduces assetnft in the v1 upgrade
-	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
-	paramsRes, err := assetNftClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
-	requireT.NoError(err)
-
-	// check that asset nft is available now
-	requireT.Equal(assetnfttypes.Params{
-		MintFee: chain.NewCoin(sdk.NewInt(0)),
-	}, paramsRes.Params)
 }
 
 func upgradeV2(t *testing.T) {
