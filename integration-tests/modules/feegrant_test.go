@@ -19,13 +19,13 @@ import (
 func TestFeeGrant(t *testing.T) {
 	t.Parallel()
 	requireT := require.New(t)
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	granter := chain.GenAccount()
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
@@ -33,7 +33,7 @@ func TestFeeGrant(t *testing.T) {
 			&feegrant.MsgRevokeAllowance{},
 		},
 	}))
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
 		Amount: sdk.NewInt(1),
 	}))
 	basicAllowance, err := codetypes.NewAnyWithValue(&feegrant.BasicAllowance{

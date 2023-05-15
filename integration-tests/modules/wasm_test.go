@@ -206,10 +206,10 @@ type nftRes struct {
 func TestWASMBankSendContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	admin := chain.GenAccount()
-	nativeDenom := chain.NetworkConfig.Denom()
+	nativeDenom := chain.ChainSettings.Denom
 
 	requireT := require.New(t)
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
@@ -319,7 +319,7 @@ func TestWASMBankSendContract(t *testing.T) {
 func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	admin := chain.GenAccount()
@@ -355,7 +355,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
 		withdraw: {
 			Amount:    "5000",
-			Denom:     chain.NetworkConfig.Denom(),
+			Denom:     chain.ChainSettings.Denom,
 			Recipient: recipient.String(),
 		},
 	})
@@ -371,7 +371,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	bankSend := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(chain.NetworkConfig.Denom(), sdk.NewInt(1000))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(chain.ChainSettings.Denom, sdk.NewInt(1000))),
 	}
 
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
@@ -390,10 +390,9 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 // TestWASMPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
 // pinning and unpinning through proposals works correctly. We also verify that pinned smart contract consumes less gas.
 func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
-	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
 
 	admin := chain.GenAccount()
 	proposer := chain.GenAccount()
@@ -511,7 +510,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	admin := chain.GenAccount()
 	newAdmin := chain.GenAccount()
@@ -520,7 +519,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	requireT.NoError(chain.Faucet.FundAccounts(ctx,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
 	))
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, newAdmin, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, newAdmin, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&wasmtypes.MsgClearAdmin{},
 		},
@@ -603,7 +602,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 func TestWASMFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	admin := chain.GenAccount()
 	recipient1 := chain.GenAccount()
@@ -928,7 +927,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	admin := chain.GenAccount()
 	recipient := chain.GenAccount()

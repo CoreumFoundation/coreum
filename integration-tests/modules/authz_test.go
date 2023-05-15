@@ -23,7 +23,7 @@ import (
 func TestAuthz(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 
@@ -35,7 +35,7 @@ func TestAuthz(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	totalAmountToSend := sdk.NewInt(2_000)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
 			&authztypes.MsgRevoke{},
@@ -51,7 +51,7 @@ func TestAuthz(t *testing.T) {
 		Amount: sdk.NewCoins(chain.NewCoin(sdk.NewInt(1_000))),
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgBankSend,
 			&execMsg,
@@ -142,11 +142,12 @@ func TestAuthz(t *testing.T) {
 func TestAuthZWithMultisigGrantee(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 
-	multisigPublicKey, keyNamesSet := chain.GenMultisigAccount(t, 3, 2)
+	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(3, 2)
+	requireT.NoError(err)
 	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 	signer1KeyName := keyNamesSet[0]
 	signer2KeyName := keyNamesSet[1]
@@ -165,7 +166,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{grantMsg},
 		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
 	}))
@@ -185,7 +186,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 		Amount:      coinsToSendToRecipient,
 	}
 	execMsg := authztypes.NewMsgExec(multisigAddress, []sdk.Msg{msgBankSend})
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -240,11 +241,12 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 func TestAuthZWithMultisigGranter(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 
-	multisigPublicKey, keyNamesSet := chain.GenMultisigAccount(t, 3, 2)
+	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(3, 2)
+	requireT.NoError(err)
 	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 	signer1KeyName := keyNamesSet[0]
 	signer2KeyName := keyNamesSet[1]
@@ -263,7 +265,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			grantMsg,
 		},
@@ -302,7 +304,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend})
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},

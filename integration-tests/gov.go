@@ -23,13 +23,14 @@ const submitProposalGas = 200_000
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {
 	chainCtx       ChainContext
+	faucet         Faucet
 	govClient      govtypes.QueryClient
 	stakerAccounts []sdk.AccAddress
 	muCh           chan struct{}
 }
 
 // NewGovernance returns the new instance of Governance.
-func NewGovernance(chainCtx ChainContext, stakerMnemonics []string) Governance {
+func NewGovernance(chainCtx ChainContext, stakerMnemonics []string, faucet Faucet) Governance {
 	stakerAccounts := make([]sdk.AccAddress, 0, len(stakerMnemonics))
 	for _, stakerMnemonic := range stakerMnemonics {
 		stakerAccounts = append(stakerAccounts, chainCtx.ImportMnemonic(stakerMnemonic))
@@ -37,6 +38,7 @@ func NewGovernance(chainCtx ChainContext, stakerMnemonics []string) Governance {
 
 	gov := Governance{
 		chainCtx:       chainCtx,
+		faucet:         faucet,
 		stakerAccounts: stakerAccounts,
 		govClient:      govtypes.NewQueryClient(chainCtx.ClientContext),
 		muCh:           make(chan struct{}, 1),
@@ -54,24 +56,19 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 	}
 
 	minDeposit := govParams.DepositParams.MinDeposit[0]
-	proposerInitialBalance := g.chainCtx.ComputeNeededBalanceFromOptions(BalancesOptions{
-		NondeterministicMessagesGas: submitProposalGas, // to cover MsgSubmitProposal
-		Amount:                      minDeposit.Amount,
-	})
-
-	return g.chainCtx.NewCoin(proposerInitialBalance), nil
+	return g.chainCtx.NewCoin(minDeposit.Amount.Add(g.chainCtx.ChainSettings.GasPrice.Mul(sdk.NewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
 }
 
 // UpdateParams goes through proposal process to update parameters.
 func (g Governance) UpdateParams(ctx context.Context, description string, updates []paramproposal.ParamChange) error {
 	// Fund accounts.
-	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposer := g.chainCtx.GenAccount()
+	proposerBalance, err := g.ComputeProposerBalance(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = chain.Faucet.FundAccounts(ctx, NewFundedAccount(proposer, proposerBalance))
+	err = g.faucet.FundAccounts(ctx, NewFundedAccount(proposer, proposerBalance))
 	if err != nil {
 		return err
 	}
@@ -198,7 +195,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 		msg := msgFunc(staker)
 
 		txf := g.chainCtx.TxFactory().
-			WithGas(g.chainCtx.GasLimitByMsgs(msg))
+			WithSimulateAndExecute(true)
 
 		clientCtx := g.chainCtx.ClientContext.
 			WithBroadcastMode(flags.BroadcastSync)

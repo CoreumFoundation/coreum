@@ -24,7 +24,7 @@ import (
 func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	feemodelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 	res, err := feemodelClient.MinGasPrice(ctx, &feemodeltypes.QueryMinGasPriceRequest{})
@@ -37,15 +37,14 @@ func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 	require.False(t, res.MinGasPrice.Amount.IsNil())
 	assert.True(t, res.MinGasPrice.Amount.GTE(model.CalculateGasPriceWithMaxDiscount()))
 	assert.True(t, res.MinGasPrice.Amount.LTE(model.CalculateMaxGasPrice()))
-	assert.Equal(t, chain.NetworkConfig.Denom(), res.MinGasPrice.Denom)
+	assert.Equal(t, chain.ChainSettings.Denom, res.MinGasPrice.Denom)
 }
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
 func TestFeeModelProposalParamChange(t *testing.T) {
-	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
 
 	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
 

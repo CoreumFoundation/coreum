@@ -27,24 +27,24 @@ import (
 func TestAssetFTQueryParams(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 	issueFee := getIssueFee(ctx, t, chain.ClientContext)
 
 	assert.True(t, issueFee.Amount.GT(sdk.ZeroInt()))
-	assert.Equal(t, chain.NetworkConfig.Denom(), issueFee.Denom)
+	assert.Equal(t, chain.ChainSettings.Denom, issueFee.Denom)
 }
 
 // TestAssetFTIssue tests issue functionality of fungible tokens.
 func TestAssetFTIssue(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 			},
@@ -80,7 +80,7 @@ func TestAssetFTIssue(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: issuer.String(),
-		Denom:   chain.NetworkConfig.Denom(),
+		Denom:   chain.ChainSettings.Denom,
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
@@ -91,8 +91,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
 
-	integrationtests.SkipUnsafe(t)
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
 	requireT := require.New(t)
 	origIssueFee := getIssueFee(ctx, t, chain.ClientContext)
 
@@ -103,7 +102,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 
 	issuer := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 			},
@@ -140,7 +139,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 func TestAssetIssueAndQueryTokens(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	clientCtx := chain.ClientContext
@@ -150,13 +149,13 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 	issueFee := getIssueFee(ctx, t, chain.ClientContext).Amount
 
 	issuer1 := chain.GenAccount()
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer1, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
 		Amount:   issueFee,
 	}))
 
 	issuer2 := chain.GenAccount()
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer2, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
 		Amount:   issueFee,
 	}))
@@ -217,7 +216,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 func TestAssetFTMint(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -226,7 +225,7 @@ func TestAssetFTMint(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgIssue{},
@@ -236,7 +235,7 @@ func TestAssetFTMint(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(2),
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgMint{},
 			},
@@ -351,7 +350,7 @@ func TestAssetFTMint(t *testing.T) {
 func TestAssetFTBurn(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -360,7 +359,7 @@ func TestAssetFTBurn(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 				&banktypes.MsgSend{},
@@ -372,7 +371,7 @@ func TestAssetFTBurn(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(2),
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgBurn{},
 				&assetfttypes.MsgBurn{},
@@ -537,7 +536,7 @@ func TestAssetFTBurn(t *testing.T) {
 func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -545,19 +544,19 @@ func TestAssetFTBurnRate(t *testing.T) {
 	recipient2 := chain.GenAccount()
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
 	}))
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -660,7 +659,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 	}
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				multiSendMsg,
 			},
@@ -687,7 +686,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 func TestAssetFTSendCommissionRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -695,19 +694,19 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	recipient2 := chain.GenAccount()
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
 			},
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
 	}))
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -810,7 +809,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	}
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				multiSendMsg,
 			},
@@ -835,7 +834,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 func TestAssetFTFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -848,7 +847,7 @@ func TestAssetFTFreeze(t *testing.T) {
 	recipient := chain.GenAccount()
 	randomAddress := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
@@ -861,7 +860,7 @@ func TestAssetFTFreeze(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 				&banktypes.MsgMultiSend{},
@@ -872,7 +871,7 @@ func TestAssetFTFreeze(t *testing.T) {
 			},
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgFreeze{},
 			},
@@ -1134,14 +1133,14 @@ func TestAssetFTFreeze(t *testing.T) {
 func TestAssetFTFreezeUnfreezable(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgFreeze{},
@@ -1191,12 +1190,12 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgFreeze{},
@@ -1245,13 +1244,13 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 func TestAssetFTGloballyFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 	requireT := require.New(t)
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgGloballyFreeze{},
@@ -1263,7 +1262,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 				&banktypes.MsgMultiSend{},
@@ -1411,7 +1410,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1419,7 +1418,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
@@ -1428,7 +1427,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 			},
@@ -1498,7 +1497,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1506,7 +1505,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
@@ -1515,7 +1514,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 			},
@@ -1589,7 +1588,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1597,7 +1596,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
@@ -1605,7 +1604,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 			},
@@ -1670,7 +1669,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1678,7 +1677,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&banktypes.MsgSend{},
@@ -1686,7 +1685,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 			},
@@ -1749,7 +1748,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 func TestAssetFTWhitelist(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1762,7 +1761,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	nonIssuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
@@ -1780,13 +1779,13 @@ func TestAssetFTWhitelist(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, nonIssuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, nonIssuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgSetWhitelistedLimit{},
 			},
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 			},
@@ -2041,14 +2040,14 @@ func TestAssetFTWhitelist(t *testing.T) {
 func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
@@ -2098,12 +2097,12 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
@@ -2156,14 +2155,14 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 func TestBareToken(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgMint{},
@@ -2176,7 +2175,7 @@ func TestBareToken(t *testing.T) {
 			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
 		}))
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgBurn{},
 			},
@@ -2300,7 +2299,7 @@ func TestBareToken(t *testing.T) {
 func TestAuthzWithAssetFT(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 
@@ -2311,7 +2310,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&authztypes.MsgGrant{},
@@ -2379,7 +2378,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgFreeze, msgWhitelist})
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -2413,13 +2412,13 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 	issuer := chain.GenAccount()
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&assetfttypes.MsgMint{},
@@ -2476,7 +2475,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2486,7 +2485,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 				&assetfttypes.MsgIssue{},
@@ -2496,7 +2495,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgBurn{},
 			},
@@ -2578,7 +2577,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 func TestAssetFTFreezeAndBurn(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2588,7 +2587,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&banktypes.MsgSend{},
 				&assetfttypes.MsgIssue{},
@@ -2599,7 +2598,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgBurn{},
 				&assetfttypes.MsgBurn{},
@@ -2715,7 +2714,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, chain := integrationtests.NewTestingContext(t)
+			ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 			requireT := require.New(t)
 			assertT := assert.New(t)
@@ -2724,7 +2723,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			recipient2 := chain.GenAccount()
 
 			requireT.NoError(
-				chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+				chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 					Messages: []sdk.Msg{
 						&banktypes.MsgSend{},
 						&assetfttypes.MsgIssue{},
@@ -2735,7 +2734,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			)
 
 			requireT.NoError(
-				chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+				chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 					Messages: []sdk.Msg{
 						&banktypes.MsgSend{},
 						&banktypes.MsgSend{},
