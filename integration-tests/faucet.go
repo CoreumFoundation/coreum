@@ -167,10 +167,11 @@ func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) er
 	log := logger.Get(ctx)
 	log.Info("Funding accounts for tests, it might take a while...")
 
-	// Transaction is broadcasted and awaited
+	// Transaction is broadcast and awaited
 	_, err := BroadcastTxWithSigner(
 		ctx,
 		f.chainCtx,
+		f.chainCtx.TxFactory().WithSimulateAndExecute(true),
 		f.chainCtx.ClientContext.FromAddress(),
 		msg,
 	)

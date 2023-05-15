@@ -133,7 +133,8 @@ func TestAuthMultisig(t *testing.T) {
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
 
-	multisigPublicKey, keyNamesSet := chain.GenMultisigAccount(t, 3, 2)
+	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(3, 2)
+	requireT.NoError(err)
 	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
 	signer1KeyName := keyNamesSet[0]
 	signer2KeyName := keyNamesSet[1]

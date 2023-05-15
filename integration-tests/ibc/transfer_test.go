@@ -12,17 +12,16 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 )
 
-func TestIBCFromCoreumToGaiaAndBack(t *testing.T) {
+func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	t.Parallel()
 
-	channelsInfo := AwaitForIBCConfig(t)
-	coreumToGaiaChannelID := channelsInfo.CoreumToGaiaChannelID
-	gaiaToCoreumChannelID := channelsInfo.GaiaToCoreumChannelID
-
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
+
+	gaiaToCoreumChannelID, err := gaiaChain.GetIBCChannelID(ctx, coreumChain.ChainSettings.ChainID)
+	requireT.NoError(err)
 
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
@@ -33,32 +32,31 @@ func TestIBCFromCoreumToGaiaAndBack(t *testing.T) {
 		Amount:   sendToGaiaCoin.Amount,
 	}))
 
-	txRes, err := ExecuteIBCTransfer(ctx, coreumChain.Chain, coreumSender, coreumToGaiaChannelID, sendToGaiaCoin, gaiaChain, gaiaRecipient)
+	txRes, err := coreumChain.ExecuteIBCTransfer(ctx, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient)
 	requireT.NoError(err)
 	requireT.EqualValues(txRes.GasUsed, coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}))
 
-	expectedGaiaRecipientBalance := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)
-	err = AwaitForBalance(ctx, gaiaChain, gaiaRecipient, expectedGaiaRecipientBalance)
+	expectedGaiaRecipientBalance := sdk.NewCoin(integrationtests.ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)
+	err = gaiaChain.AwaitForBalance(ctx, gaiaRecipient, expectedGaiaRecipientBalance)
 	requireT.NoError(err)
-	_, err = ExecuteIBCTransfer(ctx, gaiaChain, gaiaRecipient, gaiaToCoreumChannelID, expectedGaiaRecipientBalance, coreumChain.Chain, coreumSender)
+	_, err = gaiaChain.ExecuteIBCTransfer(ctx, gaiaRecipient, expectedGaiaRecipientBalance, coreumChain.Chain.ChainContext, coreumSender)
 	requireT.NoError(err)
 
 	expectedCoreumSenderBalance := sdk.NewCoin(sendToGaiaCoin.Denom, expectedGaiaRecipientBalance.Amount)
-	err = AwaitForBalance(ctx, coreumChain.Chain, coreumSender, expectedCoreumSenderBalance)
+	err = coreumChain.AwaitForBalance(ctx, coreumSender, expectedCoreumSenderBalance)
 	requireT.NoError(err)
 }
 
-func TestIBCFromGaiaToCoreumAndBack(t *testing.T) {
+func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	t.Parallel()
 
-	channelsInfo := AwaitForIBCConfig(t)
-	coreumToGaiaChannelID := channelsInfo.CoreumToGaiaChannelID
-	gaiaToCoreumChannelID := channelsInfo.GaiaToCoreumChannelID
-
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
+
+	coreumToGaiaChannelID, err := coreumChain.GetIBCChannelID(ctx, gaiaChain.ChainSettings.ChainID)
+	requireT.NoError(err)
 
 	gaiaSender := gaiaChain.GenAccount()
 	coreumRecipient := coreumChain.GenAccount()
@@ -73,17 +71,17 @@ func TestIBCFromGaiaToCoreumAndBack(t *testing.T) {
 		Amount:  sendToCoreumCoin,
 	}))
 
-	_, err := ExecuteIBCTransfer(ctx, gaiaChain, gaiaSender, gaiaToCoreumChannelID, sendToCoreumCoin, coreumChain.Chain, coreumRecipient)
+	_, err = gaiaChain.ExecuteIBCTransfer(ctx, gaiaSender, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumRecipient)
 	requireT.NoError(err)
 
-	expectedCoreumRecipientBalance := sdk.NewCoin(ConvertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
-	err = AwaitForBalance(ctx, coreumChain.Chain, coreumRecipient, expectedCoreumRecipientBalance)
+	expectedCoreumRecipientBalance := sdk.NewCoin(integrationtests.ConvertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
+	err = coreumChain.AwaitForBalance(ctx, coreumRecipient, expectedCoreumRecipientBalance)
 	requireT.NoError(err)
 
-	_, err = ExecuteIBCTransfer(ctx, coreumChain.Chain, coreumRecipient, coreumToGaiaChannelID, expectedCoreumRecipientBalance, gaiaChain, gaiaSender)
+	_, err = coreumChain.ExecuteIBCTransfer(ctx, coreumRecipient, expectedCoreumRecipientBalance, gaiaChain.ChainContext, gaiaSender)
 	requireT.NoError(err)
 
 	expectedGaiaSenderBalance := sdk.NewCoin(sendToCoreumCoin.Denom, expectedCoreumRecipientBalance.Amount)
-	err = AwaitForBalance(ctx, gaiaChain, gaiaSender, expectedGaiaSenderBalance)
+	err = gaiaChain.AwaitForBalance(ctx, gaiaSender, expectedGaiaSenderBalance)
 	requireT.NoError(err)
 }
