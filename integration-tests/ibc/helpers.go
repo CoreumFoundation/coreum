@@ -27,7 +27,7 @@ func awaitChannels(ctx context.Context, srcChainID string, dstClientContext clie
 
 	expectedOpenChannels := 0
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 20*time.Second)
+	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()
 
 	err := retry.Do(retryCtx, time.Second, func() error {
