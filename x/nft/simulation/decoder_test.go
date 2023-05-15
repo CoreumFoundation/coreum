@@ -26,11 +26,11 @@ func TestDecodeStore(t *testing.T) {
 	dec := simulation.NewDecodeStore(cdc)
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	classID := fmt.Sprintf("%s-%s", "class", addr.String())
+	classID := fmt.Sprintf("%s-%s", "myclass", addr.String())
 	class := nft.Class{
 		Id:          classID,
 		Name:        "ClassName",
-		Symbol:      "ClassSymbol",
+		Symbol:      "classsymbol",
 		Description: "ClassDescription",
 		Uri:         "ClassURI",
 	}

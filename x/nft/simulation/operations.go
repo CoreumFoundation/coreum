@@ -1,7 +1,9 @@
 package simulation
 
 import (
+	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -120,7 +122,7 @@ func SimulateMsgSend(
 }
 
 func randNFT(ctx sdk.Context, r *rand.Rand, k keeper.Keeper, minter sdk.AccAddress) (nft.NFT, error) {
-	c, err := randClass(ctx, r, k)
+	c, err := randClass(ctx, minter, r, k)
 	if err != nil {
 		return nft.NFT{}, err
 	}
@@ -141,13 +143,13 @@ func randNFT(ctx sdk.Context, r *rand.Rand, k keeper.Keeper, minter sdk.AccAddre
 	return n, nil
 }
 
-func randClass(ctx sdk.Context, r *rand.Rand, k keeper.Keeper) (nft.Class, error) {
+func randClass(ctx sdk.Context, minter sdk.AccAddress, r *rand.Rand, k keeper.Keeper) (nft.Class, error) {
 	classes := k.GetClasses(ctx)
 	if len(classes) == 0 {
 		c := nft.Class{
-			Id:          simtypes.RandStringOfLength(r, 10),
+			Id:          fmt.Sprintf("%s-%s", strings.ToLower(simtypes.RandStringOfLength(r, 10)), minter),
 			Name:        simtypes.RandStringOfLength(r, 10),
-			Symbol:      simtypes.RandStringOfLength(r, 10),
+			Symbol:      strings.ToLower(simtypes.RandStringOfLength(r, 10)),
 			Description: simtypes.RandStringOfLength(r, 10),
 			Uri:         simtypes.RandStringOfLength(r, 10),
 		}

@@ -28,7 +28,7 @@ func (s *IntegrationTestSuite) TestQueryClass() {
 			args: struct {
 				ClassID string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 			},
 			expectErr: false,
 		},
@@ -44,7 +44,7 @@ func (s *IntegrationTestSuite) TestQueryClass() {
 				var result nft.QueryClassResponse
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &result)
 				s.Require().NoError(err)
-				s.Require().EqualValues(ExpClass, *result.Class)
+				s.Require().EqualValues(s.expClass, *result.Class)
 			}
 		})
 	}
@@ -73,7 +73,7 @@ func (s *IntegrationTestSuite) TestQueryClasses() {
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &result)
 				s.Require().NoError(err)
 				s.Require().Len(result.Classes, 1)
-				s.Require().EqualValues(ExpClass, *result.Classes[0])
+				s.Require().EqualValues(s.expClass, *result.Classes[0])
 			}
 		})
 	}
@@ -106,7 +106,7 @@ func (s *IntegrationTestSuite) TestQueryNFT() {
 				ClassID string
 				ID      string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				ID:      "id",
 			},
 			expectErr: true,
@@ -117,7 +117,7 @@ func (s *IntegrationTestSuite) TestQueryNFT() {
 				ClassID string
 				ID      string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				ID:      testID,
 			},
 			expectErr: false,
@@ -134,7 +134,7 @@ func (s *IntegrationTestSuite) TestQueryNFT() {
 				var result nft.QueryNFTResponse
 				err = val.ClientCtx.Codec.UnmarshalJSON(resp.Bytes(), &result)
 				s.Require().NoError(err)
-				s.Require().EqualValues(ExpNFT, *result.Nft)
+				s.Require().EqualValues(s.expNFT, *result.Nft)
 			}
 		})
 	}
@@ -169,7 +169,7 @@ func (s *IntegrationTestSuite) TestQueryNFTs() {
 				ClassID string
 				Owner   string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				Owner:   s.owner,
 			},
 			expectErr:    false,
@@ -190,11 +190,11 @@ func (s *IntegrationTestSuite) TestQueryNFTs() {
 				ClassID string
 				Owner   string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				Owner:   val.Address.String(),
 			},
 			expectErr:    false,
-			expectResult: []*nft.NFT{&ExpNFT},
+			expectResult: []*nft.NFT{&s.expNFT},
 		},
 	}
 	for _, tc := range testCases {
@@ -257,7 +257,7 @@ func (s *IntegrationTestSuite) TestQueryOwner() {
 				ClassID string
 				ID      string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				ID:      "invalid_nft_id",
 			},
 			expectErr:    true,
@@ -269,7 +269,7 @@ func (s *IntegrationTestSuite) TestQueryOwner() {
 				ClassID string
 				ID      string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				ID:      "nft-id",
 			},
 			expectErr:    false,
@@ -281,7 +281,7 @@ func (s *IntegrationTestSuite) TestQueryOwner() {
 				ClassID string
 				ID      string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				ID:      testID,
 			},
 			expectErr:    false,
@@ -348,7 +348,7 @@ func (s *IntegrationTestSuite) TestQueryBalance() {
 				ClassID string
 				Owner   string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				Owner:   s.owner,
 			},
 			expectErr:    false,
@@ -360,7 +360,7 @@ func (s *IntegrationTestSuite) TestQueryBalance() {
 				ClassID string
 				Owner   string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 				Owner:   val.Address.String(),
 			},
 			expectErr:    false,
@@ -421,7 +421,7 @@ func (s *IntegrationTestSuite) TestQuerySupply() {
 			args: struct {
 				ClassID string
 			}{
-				ClassID: testClassID,
+				ClassID: s.expClass.Id,
 			},
 			expectErr:    false,
 			expectResult: 1,

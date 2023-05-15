@@ -1,9 +1,11 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -14,7 +16,6 @@ import (
 )
 
 const (
-	testClassID          = "kitty"
 	testClassName        = "Crypto Kitty"
 	testClassSymbol      = "kitty"
 	testClassDescription = "Crypto Kitty"
@@ -27,6 +28,7 @@ const (
 type TestSuite struct {
 	suite.Suite
 
+	testClassID string
 	app         *simapp.App
 	ctx         sdk.Context
 	addrs       []sdk.AccAddress
@@ -45,6 +47,7 @@ func (s *TestSuite) SetupTest() {
 	s.ctx = ctx
 	s.queryClient = queryClient
 	s.addrs = simapp.AddTestAddrsIncremental(app, ctx, 3, sdk.NewInt(30000000))
+	s.testClassID = fmt.Sprintf("%s-%s", "kitty", sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()))
 }
 
 func TestTestSuite(t *testing.T) {
@@ -53,7 +56,7 @@ func TestTestSuite(t *testing.T) {
 
 func (s *TestSuite) TestSaveClass() {
 	except := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -63,7 +66,7 @@ func (s *TestSuite) TestSaveClass() {
 	err := s.app.NFTKeeper.SaveClass(s.ctx, except)
 	s.Require().NoError(err)
 
-	actual, has := s.app.NFTKeeper.GetClass(s.ctx, testClassID)
+	actual, has := s.app.NFTKeeper.GetClass(s.ctx, s.testClassID)
 	s.Require().True(has)
 	s.Require().EqualValues(except, actual)
 
@@ -73,7 +76,7 @@ func (s *TestSuite) TestSaveClass() {
 
 func (s *TestSuite) TestUpdateClass() {
 	class := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -84,7 +87,7 @@ func (s *TestSuite) TestUpdateClass() {
 	s.Require().NoError(err)
 
 	noExistClass := nft.Class{
-		Id:          "kitty1",
+		Id:          fmt.Sprintf("%s-%s", "kitty1", sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())),
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -97,7 +100,7 @@ func (s *TestSuite) TestUpdateClass() {
 	s.Require().Contains(err.Error(), "nft class does not exist")
 
 	except := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        "My crypto Kitty",
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -108,14 +111,14 @@ func (s *TestSuite) TestUpdateClass() {
 	err = s.app.NFTKeeper.UpdateClass(s.ctx, except)
 	s.Require().NoError(err)
 
-	actual, has := s.app.NFTKeeper.GetClass(s.ctx, testClassID)
+	actual, has := s.app.NFTKeeper.GetClass(s.ctx, s.testClassID)
 	s.Require().True(has)
 	s.Require().EqualValues(except, actual)
 }
 
 func (s *TestSuite) TestMint() {
 	class := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -126,7 +129,7 @@ func (s *TestSuite) TestMint() {
 	s.Require().NoError(err)
 
 	expNFT := nft.NFT{
-		ClassId: testClassID,
+		ClassId: s.testClassID,
 		Id:      testID,
 		Uri:     testURI,
 	}
@@ -134,32 +137,32 @@ func (s *TestSuite) TestMint() {
 	s.Require().NoError(err)
 
 	// test GetNFT
-	actNFT, has := s.app.NFTKeeper.GetNFT(s.ctx, testClassID, testID)
+	actNFT, has := s.app.NFTKeeper.GetNFT(s.ctx, s.testClassID, testID)
 	s.Require().True(has)
 	s.Require().EqualValues(expNFT, actNFT)
 
 	// test GetOwner
-	owner := s.app.NFTKeeper.GetOwner(s.ctx, testClassID, testID)
+	owner := s.app.NFTKeeper.GetOwner(s.ctx, s.testClassID, testID)
 	s.Require().True(s.addrs[0].Equals(owner))
 
 	// test GetNFTsOfClass
-	actNFTs := s.app.NFTKeeper.GetNFTsOfClass(s.ctx, testClassID)
+	actNFTs := s.app.NFTKeeper.GetNFTsOfClass(s.ctx, s.testClassID)
 	s.Require().EqualValues([]nft.NFT{expNFT}, actNFTs)
 
 	// test GetNFTsOfClassByOwner
-	actNFTs = s.app.NFTKeeper.GetNFTsOfClassByOwner(s.ctx, testClassID, s.addrs[0])
+	actNFTs = s.app.NFTKeeper.GetNFTsOfClassByOwner(s.ctx, s.testClassID, s.addrs[0])
 	s.Require().EqualValues([]nft.NFT{expNFT}, actNFTs)
 
 	// test GetBalance
-	balance := s.app.NFTKeeper.GetBalance(s.ctx, testClassID, s.addrs[0])
+	balance := s.app.NFTKeeper.GetBalance(s.ctx, s.testClassID, s.addrs[0])
 	s.Require().EqualValues(uint64(1), balance)
 
 	// test GetTotalSupply
-	supply := s.app.NFTKeeper.GetTotalSupply(s.ctx, testClassID)
+	supply := s.app.NFTKeeper.GetTotalSupply(s.ctx, s.testClassID)
 	s.Require().EqualValues(uint64(1), supply)
 
 	expNFT2 := nft.NFT{
-		ClassId: testClassID,
+		ClassId: s.testClassID,
 		Id:      testID + "2",
 		Uri:     testURI + "2",
 	}
@@ -167,17 +170,17 @@ func (s *TestSuite) TestMint() {
 	s.Require().NoError(err)
 
 	// test GetNFTsOfClassByOwner
-	actNFTs = s.app.NFTKeeper.GetNFTsOfClassByOwner(s.ctx, testClassID, s.addrs[0])
+	actNFTs = s.app.NFTKeeper.GetNFTsOfClassByOwner(s.ctx, s.testClassID, s.addrs[0])
 	s.Require().EqualValues([]nft.NFT{expNFT, expNFT2}, actNFTs)
 
 	// test GetBalance
-	balance = s.app.NFTKeeper.GetBalance(s.ctx, testClassID, s.addrs[0])
+	balance = s.app.NFTKeeper.GetBalance(s.ctx, s.testClassID, s.addrs[0])
 	s.Require().EqualValues(uint64(2), balance)
 }
 
 func (s *TestSuite) TestBurn() {
 	except := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -188,44 +191,44 @@ func (s *TestSuite) TestBurn() {
 	s.Require().NoError(err)
 
 	expNFT := nft.NFT{
-		ClassId: testClassID,
+		ClassId: s.testClassID,
 		Id:      testID,
 		Uri:     testURI,
 	}
 	err = s.app.NFTKeeper.Mint(s.ctx, expNFT, s.addrs[0])
 	s.Require().NoError(err)
 
-	err = s.app.NFTKeeper.Burn(s.ctx, testClassID, testID)
+	err = s.app.NFTKeeper.Burn(s.ctx, s.testClassID, testID)
 	s.Require().NoError(err)
 
 	// test GetNFT
-	_, has := s.app.NFTKeeper.GetNFT(s.ctx, testClassID, testID)
+	_, has := s.app.NFTKeeper.GetNFT(s.ctx, s.testClassID, testID)
 	s.Require().False(has)
 
 	// test GetOwner
-	owner := s.app.NFTKeeper.GetOwner(s.ctx, testClassID, testID)
+	owner := s.app.NFTKeeper.GetOwner(s.ctx, s.testClassID, testID)
 	s.Require().Nil(owner)
 
 	// test GetNFTsOfClass
-	actNFTs := s.app.NFTKeeper.GetNFTsOfClass(s.ctx, testClassID)
+	actNFTs := s.app.NFTKeeper.GetNFTsOfClass(s.ctx, s.testClassID)
 	s.Require().Empty(actNFTs)
 
 	// test GetNFTsOfClassByOwner
-	actNFTs = s.app.NFTKeeper.GetNFTsOfClassByOwner(s.ctx, testClassID, s.addrs[0])
+	actNFTs = s.app.NFTKeeper.GetNFTsOfClassByOwner(s.ctx, s.testClassID, s.addrs[0])
 	s.Require().Empty(actNFTs)
 
 	// test GetBalance
-	balance := s.app.NFTKeeper.GetBalance(s.ctx, testClassID, s.addrs[0])
+	balance := s.app.NFTKeeper.GetBalance(s.ctx, s.testClassID, s.addrs[0])
 	s.Require().EqualValues(uint64(0), balance)
 
 	// test GetTotalSupply
-	supply := s.app.NFTKeeper.GetTotalSupply(s.ctx, testClassID)
+	supply := s.app.NFTKeeper.GetTotalSupply(s.ctx, s.testClassID)
 	s.Require().EqualValues(uint64(0), supply)
 }
 
 func (s *TestSuite) TestUpdate() {
 	class := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -236,7 +239,7 @@ func (s *TestSuite) TestUpdate() {
 	s.Require().NoError(err)
 
 	myNFT := nft.NFT{
-		ClassId: testClassID,
+		ClassId: s.testClassID,
 		Id:      testID,
 		Uri:     testURI,
 	}
@@ -244,7 +247,7 @@ func (s *TestSuite) TestUpdate() {
 	s.Require().NoError(err)
 
 	expNFT := nft.NFT{
-		ClassId: testClassID,
+		ClassId: s.testClassID,
 		Id:      testID,
 		Uri:     "updated",
 	}
@@ -253,14 +256,14 @@ func (s *TestSuite) TestUpdate() {
 	s.Require().NoError(err)
 
 	// test GetNFT
-	actNFT, has := s.app.NFTKeeper.GetNFT(s.ctx, testClassID, testID)
+	actNFT, has := s.app.NFTKeeper.GetNFT(s.ctx, s.testClassID, testID)
 	s.Require().True(has)
 	s.Require().EqualValues(expNFT, actNFT)
 }
 
 func (s *TestSuite) TestTransfer() {
 	class := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -271,7 +274,7 @@ func (s *TestSuite) TestTransfer() {
 	s.Require().NoError(err)
 
 	expNFT := nft.NFT{
-		ClassId: testClassID,
+		ClassId: s.testClassID,
 		Id:      testID,
 		Uri:     testURI,
 	}
@@ -279,27 +282,27 @@ func (s *TestSuite) TestTransfer() {
 	s.Require().NoError(err)
 
 	// valid owner
-	err = s.app.NFTKeeper.Transfer(s.ctx, testClassID, testID, s.addrs[1])
+	err = s.app.NFTKeeper.Transfer(s.ctx, s.testClassID, testID, s.addrs[1])
 	s.Require().NoError(err)
 
 	// test GetOwner
-	owner := s.app.NFTKeeper.GetOwner(s.ctx, testClassID, testID)
+	owner := s.app.NFTKeeper.GetOwner(s.ctx, s.testClassID, testID)
 	s.Require().Equal(s.addrs[1], owner)
 
-	balanceAddr0 := s.app.NFTKeeper.GetBalance(s.ctx, testClassID, s.addrs[0])
+	balanceAddr0 := s.app.NFTKeeper.GetBalance(s.ctx, s.testClassID, s.addrs[0])
 	s.Require().EqualValues(uint64(0), balanceAddr0)
 
-	balanceAddr1 := s.app.NFTKeeper.GetBalance(s.ctx, testClassID, s.addrs[1])
+	balanceAddr1 := s.app.NFTKeeper.GetBalance(s.ctx, s.testClassID, s.addrs[1])
 	s.Require().EqualValues(uint64(1), balanceAddr1)
 
 	// test GetNFTsOfClassByOwner
-	actNFTs := s.app.NFTKeeper.GetNFTsOfClassByOwner(s.ctx, testClassID, s.addrs[1])
+	actNFTs := s.app.NFTKeeper.GetNFTsOfClassByOwner(s.ctx, s.testClassID, s.addrs[1])
 	s.Require().EqualValues([]nft.NFT{expNFT}, actNFTs)
 }
 
 func (s *TestSuite) TestExportGenesis() {
 	class := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -310,7 +313,7 @@ func (s *TestSuite) TestExportGenesis() {
 	s.Require().NoError(err)
 
 	expNFT := nft.NFT{
-		ClassId: testClassID,
+		ClassId: s.testClassID,
 		Id:      testID,
 		Uri:     testURI,
 	}
@@ -330,7 +333,7 @@ func (s *TestSuite) TestExportGenesis() {
 
 func (s *TestSuite) TestInitGenesis() {
 	expClass := nft.Class{
-		Id:          testClassID,
+		Id:          s.testClassID,
 		Name:        testClassName,
 		Symbol:      testClassSymbol,
 		Description: testClassDescription,
@@ -338,7 +341,7 @@ func (s *TestSuite) TestInitGenesis() {
 		UriHash:     testClassURIHash,
 	}
 	expNFT := nft.NFT{
-		ClassId: testClassID,
+		ClassId: s.testClassID,
 		Id:      testID,
 		Uri:     testURI,
 	}
@@ -351,12 +354,12 @@ func (s *TestSuite) TestInitGenesis() {
 	}
 	s.app.NFTKeeper.InitGenesis(s.ctx, expGenesis)
 
-	actual, has := s.app.NFTKeeper.GetClass(s.ctx, testClassID)
+	actual, has := s.app.NFTKeeper.GetClass(s.ctx, s.testClassID)
 	s.Require().True(has)
 	s.Require().EqualValues(expClass, actual)
 
 	// test GetNFT
-	actNFT, has := s.app.NFTKeeper.GetNFT(s.ctx, testClassID, testID)
+	actNFT, has := s.app.NFTKeeper.GetNFT(s.ctx, s.testClassID, testID)
 	s.Require().True(has)
 	s.Require().EqualValues(expNFT, actNFT)
 }
