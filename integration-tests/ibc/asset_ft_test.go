@@ -38,7 +38,6 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	}))
 
 	coreumSender := coreumChain.GenAccount()
-	// coreumRecipient := coreumChain.GenAccount()
 	requireT.NoError(coreumChain.FundAccountsWithOptions(ctx, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
