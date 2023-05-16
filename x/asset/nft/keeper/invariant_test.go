@@ -37,11 +37,12 @@ func TestOriginalClassExistsInvariant(t *testing.T) {
 	requireT.False(isBroken)
 
 	// set class definition directly (break consistency)
-	nftKeeper.SetClassDefinition(ctx, types.ClassDefinition{
-		ID:       "sample-id1",
+	err = nftKeeper.SetClassDefinition(ctx, types.ClassDefinition{
+		ID:       types.BuildClassID("sampleid1", issuer),
 		Issuer:   sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String(),
 		Features: []types.ClassFeature{},
 	})
+	requireT.NoError(err)
 
 	// invariant is broken
 	_, isBroken = keeper.OriginalClassExistsInvariant(nftKeeper)(ctx)

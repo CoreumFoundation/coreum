@@ -16,9 +16,10 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
+// Flags defined on transactions.
 const (
-	featuresFlag    = "features"
-	royaltyRateFlag = "royalty-rate"
+	FeaturesFlag    = "features"
+	RoyaltyRateFlag = "royalty-rate"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -53,7 +54,7 @@ func CmdTxIssueClass() *cobra.Command {
 	allowedFeaturesString := strings.Join(allowedFeatures, ",")
 
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] [uri] [uri_hash] --from [issuer] --%s=%s", featuresFlag, allowedFeaturesString),
+		Use:   fmt.Sprintf("issue-class [symbol] [name] [description] [uri] [uri_hash] --from [issuer] --%s=%s", FeaturesFlag, allowedFeaturesString),
 		Args:  cobra.ExactArgs(5),
 		Short: "Issue new non-fungible token class",
 		Long: strings.TrimSpace(
@@ -62,7 +63,7 @@ func CmdTxIssueClass() *cobra.Command {
 Example:
 $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-meta.invalid/1 e000624 --from [issuer] --%s=%s"
 `,
-				version.AppName, types.ModuleName, featuresFlag, allowedFeaturesString,
+				version.AppName, types.ModuleName, FeaturesFlag, allowedFeaturesString,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -77,7 +78,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 			description := args[2]
 			uri := args[3]
 			uriHash := args[4]
-			royaltyStr, err := cmd.Flags().GetString(royaltyRateFlag)
+			royaltyStr, err := cmd.Flags().GetString(RoyaltyRateFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -86,7 +87,7 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 				return errors.WithStack(err)
 			}
 
-			featuresString, err := cmd.Flags().GetStringSlice(featuresFlag)
+			featuresString, err := cmd.Flags().GetStringSlice(FeaturesFlag)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -115,8 +116,8 @@ $ %s tx %s issue-class abc "ABC Name" "ABC class description." https://my-class-
 		},
 	}
 
-	cmd.Flags().StringSlice(featuresFlag, []string{}, fmt.Sprintf("Features to be enabled on non-fungible token. e.g --%s=%s", featuresFlag, allowedFeaturesString))
-	cmd.Flags().String(royaltyRateFlag, "0", "royalty-rate is a number between 0 and 1, and will be used to determine royalties sent to issuer, when an nft in this class is traded.")
+	cmd.Flags().StringSlice(FeaturesFlag, []string{}, fmt.Sprintf("Features to be enabled on non-fungible token. e.g --%s=%s", FeaturesFlag, allowedFeaturesString))
+	cmd.Flags().String(RoyaltyRateFlag, "0", fmt.Sprintf("%s is a number between 0 and 1, and will be used to determine royalties sent to issuer, when an nft in this class is traded.", RoyaltyRateFlag))
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd

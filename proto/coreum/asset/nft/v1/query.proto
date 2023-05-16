@@ -22,6 +22,11 @@ service Query {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{id}";
   }
 
+  // Classes queries the non-fungible token classes of the module.
+  rpc Classes(QueryClassesRequest) returns (QueryClassesResponse) {
+    option (google.api.http).get = "/coreum/asset/nft/v1/classes";
+  }
+
   // Frozen queries to check if an NFT is frozen or not.
   rpc Frozen (QueryFrozenRequest) returns (QueryFrozenResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen";
@@ -54,6 +59,20 @@ message QueryClassRequest {
 // QueryClassResponse is response type for the Query/Class RPC method.
 message QueryClassResponse {
   Class class = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryTokenRequest is request type for the Query/Classes RPC method.
+message QueryClassesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  string issuer = 2;
+}
+
+// QueryClassResponse is response type for the Query/Classes RPC method.
+message QueryClassesResponse {
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 1;
+  repeated Class classes = 2 [(gogoproto.nullable) = false];
 }
 
 message QueryFrozenRequest {
