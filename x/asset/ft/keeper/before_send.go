@@ -164,6 +164,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 }
 
 func (k Keeper) isAccountIBCEscrowAddress(ctx sdk.Context, account string) bool {
+	// TODO(dzmitryhil) check whether we can improve it once we integrate the IBC middleware for the send validations
 	isEscrow := false
 	k.ibcChannelKeeper.IterateChannels(ctx, func(channel ibcchanneltypes.IdentifiedChannel) bool {
 		escrowAddress := ibctransfertypes.GetEscrowAddress(channel.PortId, channel.ChannelId)
