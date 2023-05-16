@@ -1,31 +1,50 @@
 package keeper_test
 
 import (
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	ibctypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	"math/big"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
+	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-func TestMain(m *testing.M) {
+var _ types.IBCChannelKeeper = ibcChannelKeeperMock{}
+
+type ibcChannelKeeperMock struct {
+	portID    string
+	channelID string
+}
+
+func newIBCChannelKeeperMock(portID, channelID string) ibcChannelKeeperMock {
+	return ibcChannelKeeperMock{
+		portID:    portID,
+		channelID: channelID,
+	}
+}
+
+func (k ibcChannelKeeperMock) IterateChannels(ctx sdk.Context, cb func(ibcchanneltypes.IdentifiedChannel) bool) {
+	cb(ibcchanneltypes.IdentifiedChannel{
+		PortId:    k.portID,
+		ChannelId: k.channelID,
+	})
+}
+
+//nolint:funlen // there are too many tests cases
+func TestCalculateRateShares(t *testing.T) {
 	n, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
 	n.SetSDKConfig()
-	m.Run()
-}
 
-//nolint:funlen // there are too many tests cases
-func TestCalculateRateShares(t *testing.T) {
 	genAccount := func() string {
 		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
 	}
@@ -34,7 +53,10 @@ func TestCalculateRateShares(t *testing.T) {
 		accounts = append(accounts, genAccount())
 	}
 	issuer := genAccount()
-	ibcTransferModule := authtypes.NewModuleAddress(ibctypes.ModuleName).String()
+	ibcPort := "port"
+	ibcChannel := "1"
+	ibcEscrowAddress := ibctransfertypes.GetEscrowAddress(ibcPort, ibcChannel).String()
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, newIBCChannelKeeperMock(ibcPort, ibcChannel))
 	pow10 := func(ex int64) sdk.Int {
 		return sdk.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
 	}
@@ -247,31 +269,31 @@ func TestCalculateRateShares(t *testing.T) {
 			},
 		},
 		{
-			name: "one_senders_module_receiver",
+			name: "one_senders_ibc_escrow_receiver",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcTransferModule: sdk.NewInt(10),
+				ibcEscrowAddress: sdk.NewInt(10),
 			},
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 			},
 		},
 		{
-			name: "issuer_sender_module_receiver",
+			name: "issuer_sender_ibc_escrow_receiver",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				issuer: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcTransferModule: sdk.NewInt(10),
+				ibcEscrowAddress: sdk.NewInt(10),
 			},
 			shares: map[string]sdk.Int{},
 		},
 		{
-			name: "issuer_sender_two_senders_module_receiver",
+			name: "issuer_sender_two_senders_ibc_escrow_receiver",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				issuer:      sdk.NewInt(10),
@@ -279,7 +301,7 @@ func TestCalculateRateShares(t *testing.T) {
 				accounts[1]: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcTransferModule: sdk.NewInt(20),
+				ibcEscrowAddress: sdk.NewInt(20),
 			},
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
@@ -287,22 +309,22 @@ func TestCalculateRateShares(t *testing.T) {
 			},
 		},
 		{
-			name: "issuer_sender_module_sender_module_receiver",
+			name: "issuer_sender_ibc_escrow_sender_ibc_escrow_receiver",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
-				issuer:            sdk.NewInt(10),
-				ibcTransferModule: sdk.NewInt(10),
+				issuer:           sdk.NewInt(10),
+				ibcEscrowAddress: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcTransferModule: sdk.NewInt(20),
+				ibcEscrowAddress: sdk.NewInt(20),
 			},
 			shares: map[string]sdk.Int{},
 		},
 		{
-			name: "module_sender_one_receiver",
+			name: "ibc_escrow_sender_one_receiver",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
-				ibcTransferModule: sdk.NewInt(10),
+				ibcEscrowAddress: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(10),
@@ -310,10 +332,10 @@ func TestCalculateRateShares(t *testing.T) {
 			shares: map[string]sdk.Int{},
 		},
 		{
-			name: "module_sender_issuer_receiver",
+			name: "ibc_escrow_sender_issuer_receiver",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
-				ibcTransferModule: sdk.NewInt(10),
+				ibcEscrowAddress: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
 				issuer: sdk.NewInt(10),
@@ -326,8 +348,7 @@ func TestCalculateRateShares(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			assertT := assert.New(t)
-			testApp := simapp.New()
-			shares := testApp.AssetFTKeeper.CalculateRateShares(sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
+			shares := assetFTKeeper.CalculateRateShares(sdk.Context{}, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
 			for account, share := range shares {
 				assertT.EqualValues(tc.shares[account].String(), share.String())
 			}

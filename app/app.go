@@ -82,6 +82,7 @@ import (
 	ibc "github.com/cosmos/ibc-go/v4/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
+	ibcchannelkeeper "github.com/cosmos/ibc-go/v4/modules/core/04-channel/keeper"
 	ibcporttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
@@ -314,22 +315,7 @@ func New(
 		memKeys:           memKeys,
 	}
 
-	app.ParamsKeeper = paramskeeper.NewKeeper(appCodec, cdc, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
-	app.ParamsKeeper.Subspace(authtypes.ModuleName)
-	app.ParamsKeeper.Subspace(banktypes.ModuleName)
-	app.ParamsKeeper.Subspace(stakingtypes.ModuleName)
-	app.ParamsKeeper.Subspace(minttypes.ModuleName)
-	app.ParamsKeeper.Subspace(distrtypes.ModuleName)
-	app.ParamsKeeper.Subspace(slashingtypes.ModuleName)
-	app.ParamsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
-	app.ParamsKeeper.Subspace(crisistypes.ModuleName)
-	app.ParamsKeeper.Subspace(ibctransfertypes.ModuleName)
-	app.ParamsKeeper.Subspace(ibchost.ModuleName)
-	app.ParamsKeeper.Subspace(wasm.ModuleName)
-	app.ParamsKeeper.Subspace(feemodeltypes.ModuleName)
-	app.ParamsKeeper.Subspace(customparamstypes.CustomParamsStaking)
-	app.ParamsKeeper.Subspace(assetfttypes.ModuleName)
-	app.ParamsKeeper.Subspace(assetnfttypes.ModuleName)
+	app.ParamsKeeper = initParamsKeeper(appCodec, cdc, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
 
 	// set the BaseApp's parameter store
 	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
@@ -352,14 +338,14 @@ func New(
 	)
 
 	originalBankKeeper := bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs())
-
+	var ibcChannelKeeper ibcchannelkeeper.Keeper
 	assetFTKeeper := assetftkeeper.NewKeeper(
 		appCodec,
 		app.GetSubspace(assetfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetfttypes.Params{})),
 		keys[assetfttypes.StoreKey],
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
-		getModuleAddresses(),
+		&ibcChannelKeeper,
 	)
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
@@ -405,6 +391,7 @@ func New(
 
 	app.IBCKeeper = ibckeeper.NewKeeper(appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName),
 		app.StakingKeeper, app.UpgradeKeeper, app.ScopedIBCKeeper)
+	ibcChannelKeeper = app.IBCKeeper.ChannelKeeper
 
 	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
 	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
@@ -777,7 +764,12 @@ func (app *App) LoadHeight(height int64) error {
 
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *App) ModuleAccountAddrs() map[string]bool {
-	return getModuleAddresses()
+	modAccAddrs := make(map[string]bool)
+	for acc := range maccPerms {
+		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	}
+
+	return modAccAddrs
 }
 
 // LegacyAmino returns SimApp's amino codec.
@@ -861,15 +853,30 @@ func (app *App) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
 }
 
+// initParamsKeeper init params keeper and its subspaces.
+func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
+	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+
+	paramsKeeper.Subspace(authtypes.ModuleName)
+	paramsKeeper.Subspace(banktypes.ModuleName)
+	paramsKeeper.Subspace(stakingtypes.ModuleName)
+	paramsKeeper.Subspace(minttypes.ModuleName)
+	paramsKeeper.Subspace(distrtypes.ModuleName)
+	paramsKeeper.Subspace(slashingtypes.ModuleName)
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
+	paramsKeeper.Subspace(crisistypes.ModuleName)
+	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(wasm.ModuleName)
+	paramsKeeper.Subspace(feemodeltypes.ModuleName)
+	paramsKeeper.Subspace(customparamstypes.CustomParamsStaking)
+	paramsKeeper.Subspace(assetfttypes.ModuleName)
+	paramsKeeper.Subspace(assetnfttypes.ModuleName)
+
+	return paramsKeeper
+}
+
 // SimulationManager implements the SimulationApp interface.
 func (app *App) SimulationManager() *module.SimulationManager {
 	return app.sm
-}
-
-func getModuleAddresses() map[string]bool {
-	modAccAddrs := make(map[string]bool)
-	for acc := range maccPerms {
-		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
-	}
-	return modAccAddrs
 }
