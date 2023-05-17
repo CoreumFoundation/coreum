@@ -40,8 +40,9 @@ func (m *stringsFlag) Set(val string) error {
 
 // Chains defines the all chains used for the tests.
 type Chains struct {
-	Coreum CoreumChain
-	Gaia   Chain
+	Coreum  CoreumChain
+	Gaia    Chain
+	Osmosis Chain
 }
 
 var (
@@ -60,6 +61,9 @@ func init() {
 
 		gaiaAddress         string
 		gaiaFundingMnemonic string
+
+		osmosisAddress         string
+		osmosisFundingMnemonic string
 	)
 
 	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
@@ -70,6 +74,8 @@ func init() {
 	flag.Var(&coreumStakerMnemonics, "coreum-staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
 	flag.StringVar(&gaiaAddress, "gaia-address", "localhost:9080", "Address of gaia node started by znet")
 	flag.StringVar(&gaiaFundingMnemonic, "gaia-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
+	flag.StringVar(&osmosisAddress, "osmosis-address", "localhost:9070", "Address of osmosis node started by znet")
+	flag.StringVar(&osmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 
 	// accept testing flags
 	testing.Init()
@@ -139,9 +145,27 @@ func init() {
 		gaiaChainSettings,
 		gaiaFundingMnemonic)
 
+	// ********** Osmosis **********
+
+	osmosisGRPClient, err := grpc.Dial(osmosisAddress, grpc.WithInsecure())
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
+
+	osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
+	osmosisChainSettings.GasPrice = sdk.ZeroDec()
+	osmosisChainSettings.GasAdjustment = 1.3
+	osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
+
+	osmosisChain := NewChain(
+		osmosisGRPClient,
+		osmosisChainSettings,
+		osmosisFundingMnemonic)
+
 	chains = Chains{
-		Coreum: coreumChain,
-		Gaia:   gaiaChain,
+		Coreum:  coreumChain,
+		Gaia:    gaiaChain,
+		Osmosis: osmosisChain,
 	}
 }
 
