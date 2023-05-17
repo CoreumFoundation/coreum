@@ -42,7 +42,7 @@ func (gs GenesisState) Validate() error {
 
 // Validate performs basic validation on the fields of ClassDefinition.
 func (nftd ClassDefinition) Validate() error {
-	if _, err := DeconstructClassID(nftd.ID); err != nil {
+	if _, _, err := DeconstructClassID(nftd.ID); err != nil {
 		return err
 	}
 
@@ -51,7 +51,7 @@ func (nftd ClassDefinition) Validate() error {
 
 // Validate performs basic validation on the fields of FrozenNFT.
 func (f FrozenNFT) Validate() error {
-	if _, err := DeconstructClassID(f.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(f.ClassID); err != nil {
 		return err
 	}
 
@@ -66,7 +66,7 @@ func (f FrozenNFT) Validate() error {
 
 // Validate performs basic validation on the fields of WhitelistedNFTAccounts.
 func (w WhitelistedNFTAccounts) Validate() error {
-	if _, err := DeconstructClassID(w.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(w.ClassID); err != nil {
 		return err
 	}
 
@@ -84,7 +84,7 @@ func (w WhitelistedNFTAccounts) Validate() error {
 
 // Validate performs basic validation on the fields of BurntNFT.
 func (b BurntNFT) Validate() error {
-	if _, err := DeconstructClassID(b.ClassID); err != nil {
+	if _, _, err := DeconstructClassID(b.ClassID); err != nil {
 		return err
 	}
 

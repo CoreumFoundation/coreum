@@ -7,10 +7,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+)
+
+// Flags defined on queries.
+const (
+	IssuerFlag = "issuer"
 )
 
 // GetQueryCmd returns the cli query commands for the module.
@@ -26,6 +32,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdQueryClass(),
+		CmdQueryClasses(),
 		CmdQueryFrozen(),
 		CmdQueryWhitelisted(),
 		CmdQueryWhitelistedAccounts(),
@@ -33,7 +40,7 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// CmdQueryClass return the QueryToken cobra command.
+// CmdQueryClass return the QueryClass cobra command.
 func CmdQueryClass() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "class [id]",
@@ -64,6 +71,52 @@ $ %[1]s query %s class [id]
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryClasses return the QueryClasses cobra command.
+func CmdQueryClasses() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "classes",
+		Args:  cobra.ExactArgs(0),
+		Short: "Query non-fungible token classes",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query non-fungible token classes.
+
+Example:
+$ %[1]s query %s classes --issuer %s
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			issuerString, err := cmd.Flags().GetString(IssuerFlag)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			res, err := queryClient.Classes(cmd.Context(), &types.QueryClassesRequest{
+				Pagination: pageReq,
+				Issuer:     issuerString,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	cmd.Flags().String(IssuerFlag, "", fmt.Sprintf("Class issuer address. e.g %s", constant.AddressSampleTest))
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd

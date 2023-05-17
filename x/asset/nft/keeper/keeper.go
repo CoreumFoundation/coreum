@@ -87,6 +87,25 @@ func (k Keeper) GetClass(ctx sdk.Context, classID string) (types.Class, error) {
 	}, nil
 }
 
+// GetClasses returns the classes list, argument issuer is optional.
+func (k Keeper) GetClasses(ctx sdk.Context, issuer *sdk.AccAddress, pagination *query.PageRequest) ([]types.Class, *query.PageResponse, error) {
+	definitions, pageRes, err := k.GetClassDefinitions(ctx, issuer, pagination)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	classes := make([]types.Class, 0, len(definitions))
+	for _, definition := range definitions {
+		class, err := k.GetClass(ctx, definition.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		classes = append(classes, class)
+	}
+
+	return classes, pageRes, nil
+}
+
 // IssueClass issues new non-fungible token class and returns its id.
 func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (string, error) {
 	if err := types.ValidateClassSymbol(settings.Symbol); err != nil {
@@ -128,12 +147,14 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "can't save non-fungible token: %s", err)
 	}
 
-	k.SetClassDefinition(ctx, types.ClassDefinition{
+	if err := k.SetClassDefinition(ctx, types.ClassDefinition{
 		ID:          id,
 		Issuer:      settings.Issuer.String(),
 		Features:    settings.Features,
 		RoyaltyRate: settings.RoyaltyRate,
-	})
+	}); err != nil {
+		return "", err
+	}
 
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventClassIssued{
 		ID:          id,
@@ -154,7 +175,16 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 
 // GetClassDefinition reruns the ClassDefinition.
 func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.ClassDefinition, error) {
-	bz := ctx.KVStore(k.storeKey).Get(types.CreateClassKey(classID))
+	if _, _, err := types.DeconstructClassID(classID); err != nil {
+		return types.ClassDefinition{}, err
+	}
+
+	classKey, err := types.CreateClassKey(classID)
+	if err != nil {
+		return types.ClassDefinition{}, err
+	}
+
+	bz := ctx.KVStore(k.storeKey).Get(classKey)
 	if bz == nil {
 		return types.ClassDefinition{}, sdkerrors.Wrapf(types.ErrClassNotFound, "classID: %s", classID)
 	}
@@ -165,10 +195,18 @@ func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.Class
 }
 
 // GetClassDefinitions returns all non-fungible class token definitions.
-func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageRequest) ([]types.ClassDefinition, *query.PageResponse, error) {
+func (k Keeper) GetClassDefinitions(ctx sdk.Context, issuer *sdk.AccAddress, pagination *query.PageRequest) ([]types.ClassDefinition, *query.PageResponse, error) {
+	fetchingKey := types.NFTClassKeyPrefix
+	if issuer != nil {
+		var err error
+		fetchingKey, err = types.CreateIssuerClassPrefix(*issuer)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 	definitionsPointers, pageRes, err := query.GenericFilteredPaginate(
 		k.cdc,
-		prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassKeyPrefix),
+		prefix.NewStore(ctx.KVStore(k.storeKey), fetchingKey),
 		pagination,
 		// builder
 		func(key []byte, definition *types.ClassDefinition) (*types.ClassDefinition, error) {
@@ -192,8 +230,15 @@ func (k Keeper) GetClassDefinitions(ctx sdk.Context, pagination *query.PageReque
 }
 
 // SetClassDefinition stores the ClassDefinition.
-func (k Keeper) SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) {
-	ctx.KVStore(k.storeKey).Set(types.CreateClassKey(definition.ID), k.cdc.MustMarshal(&definition))
+func (k Keeper) SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) error {
+	classKey, err := types.CreateClassKey(definition.ID)
+	if err != nil {
+		return err
+	}
+
+	ctx.KVStore(k.storeKey).Set(classKey, k.cdc.MustMarshal(&definition))
+
+	return nil
 }
 
 // Mint mints new non-fungible token.
@@ -341,7 +386,7 @@ func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {
 // GetBurntNFTs return paginated burnt NFTs.
 //
 //nolint:dupl
-func (k Keeper) GetBurntNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.BurntNFT, error) {
+func (k Keeper) GetBurntNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.BurntNFT, *query.PageResponse, error) {
 	mp := make(map[string][]string, 0)
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix),
 		q, func(key, value []byte) error {
@@ -368,7 +413,7 @@ func (k Keeper) GetBurntNFTs(ctx sdk.Context, q *query.PageRequest) (*query.Page
 		})
 	}
 
-	return pageRes, burnt, nil
+	return burnt, pageRes, nil
 }
 
 // Freeze freezes a non-fungible token.
@@ -467,7 +512,7 @@ func (k Keeper) IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error) {
 // GetFrozenNFTs return paginated frozen NFTs.
 //
 //nolint:dupl
-func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.FrozenNFT, error) {
+func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.FrozenNFT, *query.PageResponse, error) {
 	mp := make(map[string][]string, 0)
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix),
 		q, func(key, value []byte) error {
@@ -494,7 +539,7 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) (*query.Pag
 		})
 	}
 
-	return pageRes, frozen, nil
+	return frozen, pageRes, nil
 }
 
 // IsWhitelisted checks to see if an account is whitelisted for an NFT.
@@ -520,8 +565,8 @@ func (k Keeper) IsWhitelisted(ctx sdk.Context, classID, nftID string, account sd
 	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), asset.StoreTrue), nil
 }
 
-// GetAllWhitelistedAccountsForNFT returns all whitelisted accounts for all NFTs.
-func (k Keeper) GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) (*query.PageResponse, []string, error) {
+// GetWhitelistedAccountsForNFT returns all whitelisted accounts for all NFTs.
+func (k Keeper) GetWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) ([]string, *query.PageResponse, error) {
 	if !k.nftKeeper.HasNFT(ctx, classID, nftID) {
 		return nil, nil, sdkerrors.Wrapf(types.ErrNFTNotFound, "nft with classID:%s and ID:%s not found", classID, nftID)
 	}
@@ -546,11 +591,11 @@ func (k Keeper) GetAllWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID 
 		return nil, nil, err
 	}
 
-	return pageRes, accounts, nil
+	return accounts, pageRes, nil
 }
 
-// GetAllWhitelisted returns all whitelisted accounts for all NFTs.
-func (k Keeper) GetAllWhitelisted(ctx sdk.Context, q *query.PageRequest) (*query.PageResponse, []types.WhitelistedNFTAccounts, error) {
+// GetWhitelistedAccounts returns all whitelisted accounts for all NFTs.
+func (k Keeper) GetWhitelistedAccounts(ctx sdk.Context, q *query.PageRequest) ([]types.WhitelistedNFTAccounts, *query.PageResponse, error) {
 	type nftUniqueID struct {
 		classID string
 		nftID   string
@@ -591,7 +636,7 @@ func (k Keeper) GetAllWhitelisted(ctx sdk.Context, q *query.PageRequest) (*query
 		})
 	}
 
-	return pageRes, whitelisted, nil
+	return whitelisted, pageRes, nil
 }
 
 // AddToWhitelist adds an account to the whitelisted list of accounts for the NFT.

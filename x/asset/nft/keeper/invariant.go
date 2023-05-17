@@ -31,7 +31,7 @@ func FreezingInvariant(k Keeper) sdk.Invariant {
 			violationsCount int
 		)
 
-		_, frozenNFTs, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+		frozenNFTs, _, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
 		if err != nil {
 			panic(err)
 		}
@@ -72,7 +72,7 @@ func OriginalClassExistsInvariant(k Keeper) sdk.Invariant {
 			notFoundCount int
 		)
 
-		classDefinitions, _, err := k.GetClassDefinitions(ctx, &query.PageRequest{Limit: query.MaxLimit})
+		classDefinitions, _, err := k.GetClassDefinitions(ctx, nil, &query.PageRequest{Limit: query.MaxLimit})
 		if err != nil {
 			panic(err)
 		}
@@ -100,7 +100,7 @@ func BurntNFTInvariant(k Keeper) sdk.Invariant {
 			violationCount int
 		)
 
-		_, burntNFTs, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+		burntNFTs, _, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
 		if err != nil {
 			panic(err)
 		}

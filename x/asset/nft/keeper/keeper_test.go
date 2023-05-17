@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"sort"
 	"strings"
 	"testing"
 
@@ -27,9 +28,6 @@ func TestKeeper_IssueClass(t *testing.T) {
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	dataString := "metadata"
-	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
-	requireT.NoError(err)
 	settings := types.IssueClassSettings{
 		Issuer:      addr,
 		Name:        "name",
@@ -37,7 +35,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 		Description: "description",
 		URI:         "https://my-class-meta.invalid/1",
 		URIHash:     "content-hash",
-		Data:        dataValue,
+		Data:        genNFTData(requireT),
 		Features: []types.ClassFeature{
 			types.ClassFeature_burning,
 		},
@@ -61,22 +59,89 @@ func TestKeeper_IssueClass(t *testing.T) {
 	requireT.NoError(err)
 
 	// we check line by line because of the data field
-	requireT.Equal(settings.Name, nftClass.Name)
-	requireT.Equal(settings.Symbol, nftClass.Symbol)
-	requireT.Equal(settings.Description, nftClass.Description)
-	requireT.Equal(settings.URI, nftClass.URI)
-	requireT.Equal(settings.URIHash, nftClass.URIHash)
-	requireT.Equal(string(settings.Data.Value), string(nftClass.Data.Value))
-	requireT.Equal([]types.ClassFeature{types.ClassFeature_burning}, nftClass.Features)
+	requireClassSettingsEqualClass(requireT, settings, nftClass)
 
 	// try to duplicate
 	settings.Symbol = "SYMBOL"
 	_, err = nftKeeper.IssueClass(ctx, settings)
 	requireT.True(types.ErrInvalidInput.Is(err))
 
-	// try to get non-existing class
+	// try to get non-valid class
 	_, err = nftKeeper.GetClass(ctx, "invalid")
+	requireT.ErrorIs(err, types.ErrInvalidInput)
+
+	// try to get nonexistent class
+	_, err = nftKeeper.GetClass(ctx, types.BuildClassID("nonexistent", addr))
 	requireT.ErrorIs(err, types.ErrClassNotFound)
+}
+
+func TestKeeper_GetClasses(t *testing.T) {
+	requireT := require.New(t)
+	testApp := simapp.New()
+	ctx := testApp.NewContext(false, tmproto.Header{})
+	nftKeeper := testApp.AssetNFTKeeper
+
+	issuer1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	issuer2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+
+	settings := types.IssueClassSettings{
+		Issuer:      issuer1,
+		Name:        "name",
+		Symbol:      "Symbol1",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		Data:        genNFTData(requireT),
+		Features: []types.ClassFeature{
+			types.ClassFeature_burning,
+		},
+	}
+
+	issuer1Settings1 := settings
+
+	issuer2Settings2 := settings
+	issuer2Settings2.Issuer = issuer2
+	issuer2Settings2.Symbol = "Symbol2"
+
+	issuer2Settings3 := settings
+	issuer2Settings3.Issuer = issuer2
+	issuer2Settings3.Symbol = "Symbol3"
+
+	allSettings := []types.IssueClassSettings{
+		issuer1Settings1, issuer2Settings2, issuer2Settings3,
+	}
+
+	for _, issueSettings := range allSettings {
+		_, err := nftKeeper.IssueClass(ctx, issueSettings)
+		requireT.NoError(err)
+	}
+
+	// get all classes without the issuer
+	classes, _, err := nftKeeper.GetClasses(ctx, nil, &query.PageRequest{Limit: query.MaxLimit})
+	requireT.NoError(err)
+	requireT.Equal(len(allSettings), len(classes))
+	sort.Slice(classes, func(i, j int) bool {
+		return classes[i].Symbol < classes[j].Symbol
+	})
+
+	for i := range classes {
+		requireClassSettingsEqualClass(requireT, allSettings[i], classes[i])
+	}
+
+	// get issuer 2 classes
+	classes, _, err = nftKeeper.GetClasses(ctx, &issuer2, &query.PageRequest{Limit: query.MaxLimit})
+	requireT.NoError(err)
+	requireT.Equal(2, len(classes))
+	sort.Slice(classes, func(i, j int) bool {
+		return classes[i].Symbol < classes[j].Symbol
+	})
+
+	issuer2Settings := []types.IssueClassSettings{
+		issuer2Settings2, issuer2Settings3,
+	}
+	for i := range classes {
+		requireClassSettingsEqualClass(requireT, issuer2Settings[i], classes[i])
+	}
 }
 
 func TestKeeper_Mint(t *testing.T) {
@@ -102,16 +167,13 @@ func TestKeeper_Mint(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(classSettings.Symbol+"-"+addr.String(), classID)
 
-	dataString := "metadata"
-	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
-	requireT.NoError(err)
 	settings := types.MintSettings{
 		Sender:  addr,
 		ClassID: classID,
 		ID:      "my-id",
 		URI:     "https://my-nft-meta.invalid/1",
 		URIHash: "content-hash",
-		Data:    dataValue,
+		Data:    genNFTData(requireT),
 	}
 
 	// mint first NFT
@@ -614,7 +676,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	requireT.NoError(assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient2))
 
-	_, frozenAccounts, err := assetNFTKeeper.GetAllWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: query.MaxLimit})
+	frozenAccounts, _, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: query.MaxLimit})
 	requireT.NoError(err)
 	requireT.Len(frozenAccounts, 2)
 	requireT.ElementsMatch(frozenAccounts, []string{
@@ -623,12 +685,12 @@ func TestKeeper_Whitelist(t *testing.T) {
 	})
 
 	incrementallyQueriedAccounts := []string{}
-	pageRes, frozenAccounts, err := assetNFTKeeper.GetAllWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: 1})
+	frozenAccounts, pageRes, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: 1})
 	requireT.NoError(err)
 	requireT.Len(frozenAccounts, 1)
 	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, frozenAccounts...)
 
-	pageRes, frozenAccounts, err = assetNFTKeeper.GetAllWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Key: pageRes.GetNextKey()})
+	frozenAccounts, pageRes, err = assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Key: pageRes.GetNextKey()})
 	requireT.NoError(err)
 	requireT.Len(frozenAccounts, 1)
 	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, frozenAccounts...)
@@ -725,4 +787,21 @@ func TestKeeper_Whitelist_NonExistent(t *testing.T) {
 	err = assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient)
 	requireT.Error(err)
 	requireT.True(types.ErrNFTNotFound.Is(err))
+}
+
+func genNFTData(requireT *require.Assertions) *codectypes.Any {
+	dataString := "metadata"
+	dataValue, err := codectypes.NewAnyWithValue(&types.DataBytes{Data: []byte(dataString)})
+	requireT.NoError(err)
+	return dataValue
+}
+
+func requireClassSettingsEqualClass(requireT *require.Assertions, settings types.IssueClassSettings, class types.Class) {
+	requireT.Equal(settings.Name, class.Name)
+	requireT.Equal(settings.Symbol, class.Symbol)
+	requireT.Equal(settings.Description, class.Description)
+	requireT.Equal(settings.URI, class.URI)
+	requireT.Equal(settings.URIHash, class.URIHash)
+	requireT.Equal(string(settings.Data.Value), string(class.Data.Value))
+	requireT.Equal(settings.Features, class.Features)
 }

@@ -25,10 +25,12 @@ func TestDecodeStore(t *testing.T) {
 	cdc := config.NewEncodingConfig(app.ModuleBasics).Codec
 	dec := simulation.NewDecodeStore(cdc)
 
+	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	classID := fmt.Sprintf("%s-%s", "myclass", addr.String())
 	class := nft.Class{
-		Id:          "ClassID",
+		Id:          classID,
 		Name:        "ClassName",
-		Symbol:      "ClassSymbol",
+		Symbol:      "classsymbol",
 		Description: "ClassDescription",
 		Uri:         "ClassURI",
 	}
@@ -36,7 +38,7 @@ func TestDecodeStore(t *testing.T) {
 	require.NoError(t, err)
 
 	nft := nft.NFT{
-		ClassId: "ClassID",
+		ClassId: classID,
 		Id:      "NFTID",
 		Uri:     "NFTURI",
 	}
