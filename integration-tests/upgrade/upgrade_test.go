@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
@@ -20,6 +21,10 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev2 "github.com/CoreumFoundation/coreum/app/upgrade/v2"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/testutil/event"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
@@ -29,7 +34,114 @@ func TestUpgrade(t *testing.T) {
 }
 
 func upgradeV2(t *testing.T) {
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	requireT := require.New(t)
+
+	// create NFT class and mint NFT to check the keys migration
+	issuer := chain.GenAccount()
+	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+	nfqQueryClient := nft.NewQueryClient(chain.ClientContext)
+	requireT.NoError(
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetnfttypes.MsgIssueClass{},
+				&assetnfttypes.MsgMint{},
+			},
+		}),
+	)
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		RoyaltyRate: sdk.ZeroDec(),
+	}
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+	tokenIssuedEvents, err := event.FindTypedEvents[*assetnfttypes.EventClassIssued](res.Events)
+	requireT.NoError(err)
+	issuedEvent := tokenIssuedEvents[0]
+
+	// query nft class
+	assetNftClassRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{
+		Id: issuedEvent.ID,
+	})
+	requireT.NoError(err)
+
+	expectedClass := assetnfttypes.Class{
+		Id:          issuedEvent.ID,
+		Issuer:      issuer.String(),
+		Symbol:      issueMsg.Symbol,
+		Name:        issueMsg.Name,
+		Description: issueMsg.Description,
+		URI:         issueMsg.URI,
+		URIHash:     issueMsg.URIHash,
+		RoyaltyRate: issueMsg.RoyaltyRate,
+	}
+	requireT.Equal(expectedClass, assetNftClassRes.Class)
+
+	mintMsg := &assetnfttypes.MsgMint{
+		Sender:  issuer.String(),
+		ID:      "id-1",
+		ClassID: issuedEvent.ID,
+		URI:     "https://my-class-meta.invalid/1",
+		URIHash: "content-hash",
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(mintMsg)),
+		mintMsg,
+	)
+	requireT.NoError(err)
+
+	expectedNFT := nft.NFT{
+		ClassId: issuedEvent.ID,
+		Id:      mintMsg.ID,
+		Uri:     mintMsg.URI,
+		UriHash: mintMsg.URIHash,
+	}
+
+	nftRes, err := nfqQueryClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: mintMsg.ClassID,
+		Id:      mintMsg.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(expectedNFT, *nftRes.Nft)
+
 	runUpgrade(t, "v1.0.0", appupgradev2.Name, 30)
+
+	// query same nft class after the upgrade
+	assetNftClassRes, err = assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{
+		Id: issuedEvent.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(expectedClass, assetNftClassRes.Class)
+
+	//  query same nft after the upgrade
+	nftRes, err = nfqQueryClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: mintMsg.ClassID,
+		Id:      mintMsg.ID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(expectedNFT, *nftRes.Nft)
+
+	// check that we can query the same NFT class now with the classes query
+	assetNftClassesRes, err := assetNftClient.Classes(ctx, &assetnfttypes.QueryClassesRequest{
+		Issuer: issuer.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(assetNftClassesRes.Classes))
+	requireT.Equal(uint64(1), assetNftClassesRes.Pagination.Total)
+	requireT.Equal(expectedClass, assetNftClassesRes.Classes[0])
 }
 
 func runUpgrade(
