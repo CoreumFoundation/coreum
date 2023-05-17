@@ -5,15 +5,11 @@ package upgrade
 import (
 	"context"
 	"fmt"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/testutil/event"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/x/nft"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
@@ -25,6 +21,10 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev2 "github.com/CoreumFoundation/coreum/app/upgrade/v2"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/testutil/event"
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
