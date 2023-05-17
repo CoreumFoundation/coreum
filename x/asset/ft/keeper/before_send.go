@@ -3,6 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -65,14 +67,14 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 
 		outOps := outputs[denom]
 
-		burnShares := CalculateRateShares(def.BurnRate, def.Issuer, inOps, outOps)
+		burnShares := k.CalculateRateShares(ctx, def.BurnRate, def.Issuer, inOps, outOps)
 		for account, amount := range burnShares {
 			if err := k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
 				return err
 			}
 		}
 
-		commissionShares := CalculateRateShares(def.SendCommissionRate, def.Issuer, inOps, outOps)
+		commissionShares := k.CalculateRateShares(ctx, def.SendCommissionRate, def.Issuer, inOps, outOps)
 		issuer := sdk.MustAccAddressFromBech32(def.Issuer)
 		for account, amount := range commissionShares {
 			coins := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
@@ -108,7 +110,7 @@ func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
 }
 
 // CalculateRateShares calculates how the burn or commission share amount should be split between different parties.
-func CalculateRateShares(rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdk.Int {
+func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdk.Int {
 	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
 	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
 
@@ -149,11 +151,30 @@ func CalculateRateShares(rate sdk.Dec, issuer string, inOps, outOps accountOpera
 
 	shares := make(accountOperationMap, 0)
 	for account, amount := range inOps {
-		if account != issuer {
-			// in order to reduce precision errors, we first multiply all sdk.Ints, and then multiply sdk.Decs, and then divide
-			finalShare := rate.MulInt(minNonIssuer.Mul(amount)).QuoInt(inputSumNonIssuer).Ceil().RoundInt()
-			shares[account] = finalShare
+		// if sender is issuer or IBC escrow
+		if account == issuer || k.isAccountIBCEscrowAddress(ctx, account) {
+			continue
 		}
+		// in order to reduce precision errors, we first multiply all sdk.Ints, and then multiply sdk.Decs, and then divide
+		finalShare := rate.MulInt(minNonIssuer.Mul(amount)).QuoInt(inputSumNonIssuer).Ceil().RoundInt()
+		shares[account] = finalShare
 	}
+
 	return shares
+}
+
+func (k Keeper) isAccountIBCEscrowAddress(ctx sdk.Context, account string) bool {
+	// TODO(dzmitryhil) check whether we can improve it once we integrate the IBC middleware for the send validations
+	isEscrow := false
+	k.ibcChannelKeeper.IterateChannels(ctx, func(channel ibcchanneltypes.IdentifiedChannel) bool {
+		escrowAddress := ibctransfertypes.GetEscrowAddress(channel.PortId, channel.ChannelId)
+		if account == escrowAddress.String() {
+			isEscrow = true
+			return true
+		}
+
+		return false
+	})
+
+	return isEscrow
 }
