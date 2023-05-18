@@ -235,7 +235,7 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 	log := logger.Get(ctx)
 	log.Info(fmt.Sprintf("Getting %s chain channel on %s.", peerChainID, c.ChainSettings.ChainID))
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 2*time.Minute)
+	retryCtx, retryCancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer retryCancel()
 
 	ibcClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
