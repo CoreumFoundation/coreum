@@ -1,3 +1,5 @@
+//go:build integrationtests
+
 package ibc
 
 import (
