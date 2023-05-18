@@ -22,10 +22,9 @@ import (
 
 // TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
 func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
-	integrationtests.SkipUnsafe(t)
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
 
 	requireT := require.New(t)
 
@@ -41,7 +40,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 		Depositor: communityPoolFunder.String(),
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, communityPoolFunder, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, communityPoolFunder, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgFundCommunityPool,
 		},
@@ -121,7 +120,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	delegator := chain.GenAccount()
 	delegatorRewardRecipient := chain.GenAccount()
@@ -132,7 +131,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	requireT := require.New(t)
 	// the amount of the delegation should be big enough to get at least some reward for the few blocks
 	amountToDelegate := sdk.NewInt(1_000_000_000)
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&distributiontypes.MsgWithdrawDelegatorReward{},
@@ -148,7 +147,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
-	validatorStakerAddress, validatorAddress, deactivateValidator, err := integrationtests.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
+	validatorStakerAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -270,7 +269,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	err = chain.Faucet.FundAccountsWithOptions(ctx, validatorStakerAddress, integrationtests.BalancesOptions{
+	err = chain.FundAccountsWithOptions(ctx, validatorStakerAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
 	requireT.NoError(err)

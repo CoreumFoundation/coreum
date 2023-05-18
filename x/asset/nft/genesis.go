@@ -11,7 +11,9 @@ import (
 // InitGenesis initializes the module's state from a provided genesis state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	for _, definition := range genState.ClassDefinitions {
-		k.SetClassDefinition(ctx, definition)
+		if err := k.SetClassDefinition(ctx, definition); err != nil {
+			panic(err)
+		}
 	}
 	k.SetParams(ctx, genState.Params)
 
@@ -57,22 +59,22 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 // ExportGenesis returns the module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	classDefinitions, _, err := k.GetClassDefinitions(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	classDefinitions, _, err := k.GetClassDefinitions(ctx, nil, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
-	_, frozen, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	frozen, _, err := k.GetFrozenNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
-	_, whitelisted, err := k.GetAllWhitelisted(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	whitelisted, _, err := k.GetWhitelistedAccounts(ctx, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
 		panic(err)
 	}
 
-	_, burnt, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	burnt, _, err := k.GetBurntNFTs(ctx, &query.PageRequest{Limit: query.MaxLimit})
 	if err != nil {
 		panic(err)
 	}

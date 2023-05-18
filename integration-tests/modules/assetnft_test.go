@@ -31,17 +31,17 @@ import (
 func TestAssetNFTQueryParams(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 	mintFee := getMintFee(ctx, t, chain.ClientContext)
 
-	assert.Equal(t, chain.NetworkConfig.Denom(), mintFee.Denom)
+	assert.Equal(t, chain.ChainSettings.Denom, mintFee.Denom)
 }
 
 // TestAssetNFTIssueClass tests non-fungible token class creation.
 func TestAssetNFTIssueClass(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -49,7 +49,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 			},
@@ -163,7 +163,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	requireT.Equal(assetnfttypes.Class{
+	expectedClass := assetnfttypes.Class{
 		Id:          classID,
 		Issuer:      issuer.String(),
 		Symbol:      issueMsg.Symbol,
@@ -177,19 +177,28 @@ func TestAssetNFTIssueClass(t *testing.T) {
 			assetnfttypes.ClassFeature_disable_sending,
 		},
 		RoyaltyRate: sdk.MustNewDecFromStr("0.1"),
-	}, assetNftClassRes.Class)
+	}
+	requireT.Equal(expectedClass, assetNftClassRes.Class)
 
 	var data2 assetnfttypes.DataBytes
 	requireT.NoError(proto.Unmarshal(assetNftClassRes.Class.Data.Value, &data2))
 
 	requireT.Equal(jsonData, data2.Data)
+
+	assetNftClassesRes, err := assetNftClient.Classes(ctx, &assetnfttypes.QueryClassesRequest{
+		Issuer: issuer.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(assetNftClassesRes.Classes))
+	requireT.Equal(uint64(1), assetNftClassesRes.Pagination.Total)
+	requireT.Equal(expectedClass, assetNftClassesRes.Classes[0])
 }
 
 // TestAssetNFTMint tests non-fungible token minting.
 func TestAssetNFTMint(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -197,7 +206,7 @@ func TestAssetNFTMint(t *testing.T) {
 
 	nftClient := nft.NewQueryClient(chain.ClientContext)
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
@@ -367,7 +376,7 @@ func TestAssetNFTMint(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: issuer.String(),
-		Denom:   chain.NetworkConfig.Denom(),
+		Denom:   chain.ChainSettings.Denom,
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
@@ -378,8 +387,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
 
-	integrationtests.SkipUnsafe(t)
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
 	requireT := require.New(t)
 	origMintFee := getMintFee(ctx, t, chain.ClientContext)
 
@@ -390,7 +398,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 
 	issuer := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
@@ -432,14 +440,14 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 
 	burntStr, err := event.FindStringEventAttribute(res.Events, banktypes.EventTypeCoinBurn, sdk.AttributeKeyAmount)
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(chain.NetworkConfig.Denom(), sdk.OneInt()).String(), burntStr)
+	requireT.Equal(sdk.NewCoin(chain.ChainSettings.Denom, sdk.OneInt()).String(), burntStr)
 
 	// check that balance is 0 meaning mint fee was taken
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: issuer.String(),
-		Denom:   chain.NetworkConfig.Denom(),
+		Denom:   chain.ChainSettings.Denom,
 	})
 	requireT.NoError(err)
 	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
@@ -455,14 +463,14 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 func TestAssetNFTBurn(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 
 	nftClient := nft.NewQueryClient(chain.ClientContext)
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
@@ -576,7 +584,7 @@ func TestAssetNFTBurn(t *testing.T) {
 func TestAssetNFTBurnFrozen(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -584,7 +592,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 	assetNFTClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
@@ -596,7 +604,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 		}),
 	)
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgBurn{},
 				&assetnfttypes.MsgBurn{},
@@ -722,7 +730,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -730,7 +738,7 @@ func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
 	nftClient := nft.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
@@ -827,7 +835,7 @@ func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
 func TestAssetNFTFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -835,7 +843,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
@@ -847,7 +855,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 		}),
 	)
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&nft.MsgSend{},
 				&nft.MsgSend{},
@@ -1024,7 +1032,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 func TestAssetNFTWhitelist(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -1032,7 +1040,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
@@ -1142,7 +1150,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 
 	// send from whitelisted recipient to non-whitelisted recipient2 (send must fail)
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&nft.MsgSend{},
 				&nft.MsgSend{},
@@ -1151,7 +1159,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 	)
 	recipient2 := chain.GenAccount()
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&nft.MsgSend{},
 				&nft.MsgSend{},
@@ -1284,7 +1292,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 func TestAssetNFTAuthZ(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 	granter := chain.GenAccount()
@@ -1292,7 +1300,7 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetnfttypes.MsgIssueClass{},
 				&assetnfttypes.MsgMint{},
@@ -1347,7 +1355,7 @@ func TestAssetNFTAuthZ(t *testing.T) {
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{freezeMsg})
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&execMsg,
 			},

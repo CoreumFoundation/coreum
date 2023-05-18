@@ -31,7 +31,7 @@ var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept max
 func TestBankMultiSendBatchOutputs(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	issuer := chain.GenAccount()
 	requireT := require.New(t)
@@ -80,7 +80,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		})
 	}
 
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 		Messages:                    append([]sdk.Msg{issueMsg}, multiSendMsgs...),
 		NondeterministicMessagesGas: 10_000_000, // to cover extra bytes because of the message size
 		Amount:                      getIssueFee(ctx, t, chain.ClientContext).Amount,
@@ -117,7 +117,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 func TestBankSendBatchMsgs(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	issuer := chain.GenAccount()
 	requireT := require.New(t)
@@ -156,7 +156,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	for i := 0; i < iterationsToFund; i++ {
 		fundMsgs = append(fundMsgs, bankSendSendMsgs...)
 	}
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 		Messages: fundMsgs,
 		Amount:   getIssueFee(ctx, t, chain.ClientContext).Amount,
 	}))
@@ -190,13 +190,13 @@ func TestBankSendBatchMsgs(t *testing.T) {
 func TestBankSendDeterministicGas(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	}))
@@ -224,7 +224,7 @@ func TestBankSendDeterministicGas(t *testing.T) {
 func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 	recipient1 := chain.GenAccount()
@@ -241,7 +241,7 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{bankSend1, bankSend2},
 		Amount:   sdk.NewInt(2000),
 	}))
@@ -258,7 +258,7 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	const numOfTokens = 3
 
@@ -279,7 +279,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 		})
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgSend{
 			Amount: make(sdk.Coins, numOfTokens),
 		}}, issueMsgs...),
@@ -333,12 +333,12 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	}))
@@ -365,12 +365,12 @@ func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 func TestBankSendGasEstimation(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
 	}))
@@ -397,7 +397,7 @@ func TestBankSendGasEstimation(t *testing.T) {
 func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	const numOfTokens = 3
 
@@ -418,7 +418,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 		})
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				{
@@ -486,7 +486,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 func TestBankMultiSend(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 	recipient1 := chain.GenAccount()
@@ -513,7 +513,7 @@ func TestBankMultiSend(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				{Coins: make(sdk.Coins, 2)},
@@ -601,7 +601,7 @@ func TestBankMultiSend(t *testing.T) {
 func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	requireT := require.New(t)
 
@@ -685,14 +685,14 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	issueFee := getIssueFee(ctx, t, chain.ClientContext).Amount
 
 	// fund accounts
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender1, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, sender1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			multiSendMsg,
 			issue1Msg,
 		},
 		Amount: issueFee.Add(nativeAmountToSend.Amount),
 	}))
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, sender2, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, sender2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{issue2Msg},
 		Amount:   issueFee,
 	}))
@@ -771,18 +771,18 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 func TestBankCoreSend(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
 	senderInitialAmount := sdk.NewInt(100)
 	recipientInitialAmount := sdk.NewInt(10)
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   senderInitialAmount,
 	}))
-	require.NoError(t, chain.Faucet.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+	require.NoError(t, chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
 		Amount: recipientInitialAmount,
 	}))
 
@@ -809,13 +809,13 @@ func TestBankCoreSend(t *testing.T) {
 
 	balancesSender, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: sender.String(),
-		Denom:   chain.NetworkConfig.Denom(),
+		Denom:   chain.ChainSettings.Denom,
 	})
 	require.NoError(t, err)
 
 	balancesRecipient, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: recipient.String(),
-		Denom:   chain.NetworkConfig.Denom(),
+		Denom:   chain.ChainSettings.Denom,
 	})
 	require.NoError(t, err)
 
@@ -825,7 +825,7 @@ func TestBankCoreSend(t *testing.T) {
 
 func assertBatchAccounts(
 	ctx context.Context,
-	chain integrationtests.Chain,
+	chain integrationtests.CoreumChain,
 	expectedCoins sdk.Coins,
 	fundedAccounts []sdk.AccAddress,
 	denom string,

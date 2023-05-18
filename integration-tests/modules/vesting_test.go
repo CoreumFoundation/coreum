@@ -24,7 +24,7 @@ import (
 func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	creator := chain.GenAccount()
 	vestingAcc := chain.GenAccount()
@@ -35,7 +35,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	amountToVest := sdk.NewInt(100)
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, creator, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, creator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&vestingtypes.MsgCreateVestingAccount{}},
 		Amount:   amountToVest,
 	}))
@@ -74,7 +74,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	requireT.Equal(vestingCoin.String(), balanceRes.Balance.String())
 
 	// fund the vesting account to pay fees
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
@@ -103,7 +103,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	}
 
 	// fund the vesting account to pay fees one more time
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 	}))
 
@@ -121,7 +121,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 func TestVestingAccountStaking(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	creator := chain.GenAccount()
 	vestingAcc := chain.GenAccount()
@@ -132,7 +132,7 @@ func TestVestingAccountStaking(t *testing.T) {
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
 	amountToVest := sdk.NewInt(100)
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, creator, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, creator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&vestingtypes.MsgCreateVestingAccount{}},
 		Amount:   amountToVest,
 	}))
@@ -141,7 +141,7 @@ func TestVestingAccountStaking(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation
-	_, validatorAddress, deactivateValidator, err := integrationtests.CreateValidator(ctx, chain, validatorStakingAmount, validatorStakingAmount)
+	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -183,7 +183,7 @@ func TestVestingAccountStaking(t *testing.T) {
 	requireT.Equal(vestingCoin.String(), balanceRes.Balance.String())
 
 	// fund the vesting account to pay fees for the staking
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 		},
@@ -209,7 +209,7 @@ func TestVestingAccountStaking(t *testing.T) {
 func TestVestingAccountWithFTInteraction(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewTestingContext(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
 	issuer := chain.GenAccount()
 	vestingAcc := chain.GenAccount()
@@ -219,7 +219,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	requireT.NoError(
-		chain.Faucet.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgSetWhitelistedLimit{},
 				&assetfttypes.MsgSetWhitelistedLimit{},
@@ -313,7 +313,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT.Equal(vestingCoin.String(), balanceRes.Balance.String())
 
 	// fund the vesting account to pay fees
-	requireT.NoError(chain.Faucet.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
+	requireT.NoError(chain.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgBurn{},
 			&assetfttypes.MsgBurn{},
