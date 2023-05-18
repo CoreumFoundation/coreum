@@ -247,6 +247,8 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
 		defer requestCancel()
 
+		ibcChannelRes, err := ibcClient.Channel(retryCtx, &ibcchanneltypes.QueryChannelRequest{ChannelId: peerChainID})
+
 		ibcChannelsRes, err := ibcClient.Channels(requestCtx, &ibcchanneltypes.QueryChannelsRequest{})
 		if err != nil {
 			return err
