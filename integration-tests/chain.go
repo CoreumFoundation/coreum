@@ -217,7 +217,7 @@ func (c ChainContext) AwaitForBalance(
 			return err
 		}
 
-		if balanceRes.Balance.Amount != expectedCoin.Amount {
+		if !balanceRes.Balance.Amount.Equal(expectedCoin.Amount) {
 			return retry.Retryable(errors.Errorf("balance is still not equal to exepected, current balance: %s", balanceRes.Balance.String()))
 		}
 
