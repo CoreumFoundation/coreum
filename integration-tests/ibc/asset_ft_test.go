@@ -102,7 +102,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	// issue balance before the IBC transfer
+	// issuer balance before the IBC transfer
 	coreumIssuerBalanceBeforeIBCTransfersRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: coreumIssuer.String(),
 		Denom:   sendCoin.Denom,
@@ -146,6 +146,94 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		coreumIssuerBalanceBeforeIBCTransfersRes.Balance.Amount.Add(sendCommissionAmount.MulRaw(2)).String(),
 		coreumIssuerBalanceAfterSenderToChainsTransferRes.Balance.Amount.String(),
 	)
+}
+
+func TestIBCAssetFTWhitelisting(t *testing.T) {
+	t.Parallel()
+
+	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	requireT := require.New(t)
+	coreumChain := chains.Coreum
+	gaiaChain := chains.Gaia
+
+	gaiaToCoreumChannelID, err := gaiaChain.GetIBCChannelID(ctx, coreumChain.ChainSettings.ChainID)
+	requireT.NoError(err)
+
+	coreumIssuer := coreumChain.GenAccount()
+	coreumRecipientBlocked := coreumChain.GenAccount()
+	coreumRecipientWhitelisted := coreumChain.GenAccount()
+	gaiaRecipient := gaiaChain.GenAccount()
+
+	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	requireT.NoError(coreumChain.FundAccountsWithOptions(ctx, coreumIssuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&ibctransfertypes.MsgTransfer{},
+			&ibctransfertypes.MsgTransfer{},
+		},
+		Amount: issueFee,
+	}))
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        coreumIssuer.String(),
+		Symbol:        "mysymbol",
+		Subunit:       "mysubunit",
+		Precision:     8,
+		InitialAmount: sdk.NewInt(1_000_000),
+		Features:      []assetfttypes.Feature{assetfttypes.Feature_whitelisting},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	require.NoError(t, err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
+	sendBackCoin := sdk.NewCoin(denom, sdk.NewInt(1000))
+	sendCoin := sdk.NewCoin(denom, sendBackCoin.Amount.MulRaw(2))
+
+	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  coreumIssuer.String(),
+		Account: coreumRecipientWhitelisted.String(),
+		Coin:    sendBackCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(whitelistMsg)),
+		whitelistMsg,
+	)
+	require.NoError(t, err)
+
+	// send minted coins to gaia
+	_, err = coreumChain.ExecuteIBCTransfer(ctx, coreumIssuer, sendCoin, gaiaChain.ChainContext, gaiaRecipient)
+	requireT.NoError(err)
+
+	ibcDenom := integrationtests.ConvertToIBCDenom(gaiaToCoreumChannelID, denom)
+	requireT.NoError(gaiaChain.AwaitForBalance(ctx, gaiaRecipient, sdk.NewCoin(ibcDenom, sendCoin.Amount)))
+
+	// send coins back to two accounts, one blocked, one whitelisted
+	ibcSendCoin := sdk.NewCoin(ibcDenom, sendBackCoin.Amount)
+	_, err = gaiaChain.ExecuteIBCTransfer(ctx, gaiaRecipient, ibcSendCoin, coreumChain.ChainContext, coreumRecipientBlocked)
+	requireT.NoError(err)
+	_, err = gaiaChain.ExecuteIBCTransfer(ctx, gaiaRecipient, ibcSendCoin, coreumChain.ChainContext, coreumRecipientWhitelisted)
+	requireT.NoError(err)
+
+	// transfer to whitelisted account is expected to succeed
+	requireT.NoError(coreumChain.AwaitForBalance(ctx, coreumRecipientWhitelisted, sendBackCoin))
+
+	// transfer to blocked account is expected to fail and funds should be returned back
+	requireT.NoError(gaiaChain.AwaitForBalance(ctx, gaiaRecipient, sdk.NewCoin(ibcDenom, sendBackCoin.Amount)))
+
+	bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: coreumRecipientBlocked.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdk.ZeroInt()).String(), balanceRes.Balance.String())
 }
 
 func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
