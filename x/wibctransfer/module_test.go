@@ -1,13 +1,11 @@
-package wbank
+package wibctransfer
 
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
 	"github.com/gogo/protobuf/grpc"
 	"github.com/stretchr/testify/require"
 	googlegrpc "google.golang.org/grpc"
@@ -46,13 +44,13 @@ func (c *configuratorMock) RegisterMigration(moduleName string, forVersion uint6
 	return nil
 }
 
-// The test checks the migration registration of the original bank.
+// The test checks the migration registration of the original IBC transfer module.
 // Since we override the "Register Services" we want to be sure that after the update of the SDK,
-// The original bank won't have unexpected migrations.
-func TestAppModuleOriginalBank_RegisterServices(t *testing.T) {
-	bankModule := bank.NewAppModule(&codec.AminoCodec{}, bankkeeper.BaseKeeper{}, keeper.AccountKeeper{})
+// The original transfer module won't have unexpected migrations.
+func TestAppModuleOriginalTransfer_RegisterServices(t *testing.T) {
+	transferModule := transfer.NewAppModule(ibctransferkeeper.Keeper{})
 	configurator := newConfiguratorMock()
-	bankModule.RegisterServices(configurator)
+	transferModule.RegisterServices(configurator)
 	require.Equal(t, []uint64{1}, configurator.capturedMigrationVersions)
-	require.Equal(t, uint64(2), bankModule.ConsensusVersion())
+	require.Equal(t, uint64(2), transferModule.ConsensusVersion())
 }
