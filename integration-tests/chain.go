@@ -276,7 +276,7 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 			}
 		}
 
-		return retry.Retryable(errors.Errorf("waiting for for the %s channel on the %s to open", peerChainID, c.ChainSettings.ChainID))
+		return retry.Retryable(errors.Errorf("waiting for the %s channel on the %s to open", peerChainID, c.ChainSettings.ChainID))
 	}); err != nil {
 		return "", err
 	}
