@@ -80,7 +80,6 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: dzmitryhil/add-osmosis-testing-flags # FIXME remove once merged
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache

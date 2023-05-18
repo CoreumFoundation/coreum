@@ -158,7 +158,8 @@ func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 	peerChainCtx integrationtests.ChainContext,
 	peerChainRecipient sdk.AccAddress,
 	peerChainToCoreumChannelID string,
-	coreumToPeerChainEscrowAddress sdk.AccAddress) {
+	coreumToPeerChainEscrowAddress sdk.AccAddress,
+) {
 	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
 	coreumIssuerBalanceBeforeTransferRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: coreumIssuer.String(),
@@ -216,7 +217,8 @@ func sendFromPeerChainAndValidateZeroCommissionOnEscrow(
 	peerChainCtx integrationtests.ChainContext,
 	peerChainRecipient sdk.AccAddress,
 	peerChainToCoreumChannelID string,
-	coreumToPeerChainEscrowAddress sdk.AccAddress) {
+	coreumToPeerChainEscrowAddress sdk.AccAddress,
+) {
 	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
 	sentFromPeerChainToCoreumCoin := sdk.NewCoin(integrationtests.ConvertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 	coreumIssuerBalanceBeforeTransferBackRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
