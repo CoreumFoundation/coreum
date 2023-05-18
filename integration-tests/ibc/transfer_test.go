@@ -36,7 +36,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(txRes.GasUsed, coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}))
 
-	expectedGaiaRecipientBalance := sdk.NewCoin(integrationtests.ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)
+	expectedGaiaRecipientBalance := sdk.NewCoin(ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)
 	err = gaiaChain.AwaitForBalance(ctx, gaiaRecipient, expectedGaiaRecipientBalance)
 	requireT.NoError(err)
 	_, err = gaiaChain.ExecuteIBCTransfer(ctx, gaiaRecipient, expectedGaiaRecipientBalance, coreumChain.Chain.ChainContext, coreumSender)
@@ -61,7 +61,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	gaiaSender := gaiaChain.GenAccount()
 	coreumRecipient := coreumChain.GenAccount()
 
-	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(1000))
+	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(2000))
 	requireT.NoError(coreumChain.FundAccountsWithOptions(ctx, coreumRecipient, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	}))
@@ -74,7 +74,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	_, err = gaiaChain.ExecuteIBCTransfer(ctx, gaiaSender, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumRecipient)
 	requireT.NoError(err)
 
-	expectedCoreumRecipientBalance := sdk.NewCoin(integrationtests.ConvertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
+	expectedCoreumRecipientBalance := sdk.NewCoin(ConvertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
 	err = coreumChain.AwaitForBalance(ctx, coreumRecipient, expectedCoreumRecipientBalance)
 	requireT.NoError(err)
 

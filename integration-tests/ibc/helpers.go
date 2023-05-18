@@ -1,6 +1,6 @@
 //go:build integrationtests
 
-package integrationtests
+package ibc
 
 import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"

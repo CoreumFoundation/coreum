@@ -218,7 +218,7 @@ func (c ChainContext) AwaitForBalance(
 		}
 
 		if balanceRes.Balance.Amount != expectedCoin.Amount {
-			return retry.Retryable(errors.Errorf("balances is still not equal to exepected, current balance: %s", balanceRes.Balance.String()))
+			return retry.Retryable(errors.Errorf("balance is still not equal to exepected, current balance: %s", balanceRes.Balance.String()))
 		}
 
 		return nil
@@ -247,7 +247,34 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
 		defer requestCancel()
 
-		ibcChannelRes, err := ibcClient.Channel(retryCtx, &ibcchanneltypes.QueryChannelRequest{ChannelId: peerChainID})
+		//ibcChannelRes, err := ibcClient.Channel(retryCtx, &ibcchanneltypes.QueryChannelRequest{ChannelId: peerChainID})
+		// if err != nil {
+		// return err
+		// }
+		//
+		// ch := ibcChannelRes.Channel
+		// if ch.State != ibcchanneltypes.OPEN {
+		//				continue
+		//			}
+		//
+		// channelClientStateRes, err := ibcChannelClient.ChannelClientState(requestCtx, &ibcchanneltypes.QueryChannelClientStateRequest{
+		//				PortId:    ibctransfertypes.PortID,
+		//				ChannelId: ch.ChannelId,
+		//			})
+		//			if err != nil {
+		//				return err
+		//			}
+		//
+		//			var clientState ibctmlightclienttypes.ClientState
+		//			err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
+		//			if err != nil {
+		//				return err
+		//			}
+		//
+		//			if clientState.ChainId == peerChainID {
+		//				channelID = ch.ChannelId
+		//				return nil
+		//			}
 
 		ibcChannelsRes, err := ibcClient.Channels(requestCtx, &ibcchanneltypes.QueryChannelsRequest{})
 		if err != nil {
