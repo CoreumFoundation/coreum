@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"fmt"
 	"testing"
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
@@ -80,4 +81,21 @@ func TestQueryToken(t *testing.T) {
 	expectedToken.Denom = denom
 	expectedToken.Issuer = testNetwork.Validators[0].Address.String()
 	requireT.Equal(expectedToken, resp.Token)
+}
+
+func TestCmdQueryParams(t *testing.T) {
+	requireT := require.New(t)
+
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryParams(), nil)
+	requireT.NoError(err)
+
+	var resp types.QueryParamsResponse
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+
+	fmt.Println("### ", resp.Params)
+	//requireT.Equal("", resp.Params.IssueFee)
 }

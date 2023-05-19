@@ -29,6 +29,8 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(CmdQueryFrozenBalances())
 	cmd.AddCommand(CmdQueryWhitelistedBalance())
 	cmd.AddCommand(CmdQueryWhitelistedBalances())
+	cmd.AddCommand(CmdQueryParams())
+
 	return cmd
 }
 
@@ -271,6 +273,43 @@ $ %[1]s query %s whitelisted-balance [account] [denom]
 			}
 
 			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryParams implements a command to fetch assetft parameters.
+func CmdQueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query the current assetft parameters",
+		Args:  cobra.NoArgs,
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query parameters for the assetft module:
+
+Example:
+$ %[1]s query %s params
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := &types.QueryParamsRequest{}
+			res, err := queryClient.Params(cmd.Context(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(&res.Params)
 		},
 	}
 
