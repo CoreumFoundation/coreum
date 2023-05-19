@@ -232,9 +232,9 @@ func (c ChainContext) AwaitForBalance(
 }
 
 // GetIBCChannelID returns the first opened channel of the IBC connected chain peer.
-func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (string, error) {
+func (c ChainContext) GetIBCChannelID(ctx context.Context, destChainID string) (string, error) {
 	log := logger.Get(ctx)
-	log.Info(fmt.Sprintf("Getting %s chain channel on %s.", peerChainID, c.ChainSettings.ChainID))
+	log.Info(fmt.Sprintf("Getting %s chain channel on %s.", destChainID, c.ChainSettings.ChainID))
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer retryCancel()
@@ -246,35 +246,6 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 	if err := retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
 		defer requestCancel()
-
-		//ibcChannelRes, err := ibcClient.Channel(retryCtx, &ibcchanneltypes.QueryChannelRequest{ChannelId: peerChainID})
-		// if err != nil {
-		// return err
-		// }
-		//
-		// ch := ibcChannelRes.Channel
-		// if ch.State != ibcchanneltypes.OPEN {
-		//				continue
-		//			}
-		//
-		// channelClientStateRes, err := ibcChannelClient.ChannelClientState(requestCtx, &ibcchanneltypes.QueryChannelClientStateRequest{
-		//				PortId:    ibctransfertypes.PortID,
-		//				ChannelId: ch.ChannelId,
-		//			})
-		//			if err != nil {
-		//				return err
-		//			}
-		//
-		//			var clientState ibctmlightclienttypes.ClientState
-		//			err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
-		//			if err != nil {
-		//				return err
-		//			}
-		//
-		//			if clientState.ChainId == peerChainID {
-		//				channelID = ch.ChannelId
-		//				return nil
-		//			}
 
 		ibcChannelsRes, err := ibcClient.Channels(requestCtx, &ibcchanneltypes.QueryChannelsRequest{})
 		if err != nil {
@@ -300,18 +271,18 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 				return err
 			}
 
-			if clientState.ChainId == peerChainID {
+			if clientState.ChainId == destChainID {
 				channelID = ch.ChannelId
 				return nil
 			}
 		}
 
-		return retry.Retryable(errors.Errorf("waiting for the %s channel on the %s to open", peerChainID, c.ChainSettings.ChainID))
+		return retry.Retryable(errors.Errorf("waiting for the %s channel on the %s to open", destChainID, c.ChainSettings.ChainID))
 	}); err != nil {
 		return "", err
 	}
 
-	log.Info(fmt.Sprintf("Got %s chain channel on %s, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID))
+	log.Info(fmt.Sprintf("Got %s chain channel on %s, channelID:%s ", destChainID, c.ChainSettings.ChainID, channelID))
 
 	return channelID, nil
 }
