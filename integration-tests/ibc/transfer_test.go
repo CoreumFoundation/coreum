@@ -61,7 +61,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	gaiaSender := gaiaChain.GenAccount()
 	coreumRecipient := coreumChain.GenAccount()
 
-	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(2000))
+	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(1001))
 	requireT.NoError(coreumChain.FundAccountsWithOptions(ctx, coreumRecipient, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	}))

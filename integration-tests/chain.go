@@ -232,9 +232,9 @@ func (c ChainContext) AwaitForBalance(
 }
 
 // GetIBCChannelID returns the first opened channel of the IBC connected chain peer.
-func (c ChainContext) GetIBCChannelID(ctx context.Context, destChainID string) (string, error) {
+func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (string, error) {
 	log := logger.Get(ctx)
-	log.Info(fmt.Sprintf("Getting %s chain channel on %s.", destChainID, c.ChainSettings.ChainID))
+	log.Info(fmt.Sprintf("Getting %s chain channel on %s.", peerChainID, c.ChainSettings.ChainID))
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer retryCancel()
@@ -271,18 +271,18 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, destChainID string) (
 				return err
 			}
 
-			if clientState.ChainId == destChainID {
+			if clientState.ChainId == peerChainID {
 				channelID = ch.ChannelId
 				return nil
 			}
 		}
 
-		return retry.Retryable(errors.Errorf("waiting for the %s channel on the %s to open", destChainID, c.ChainSettings.ChainID))
+		return retry.Retryable(errors.Errorf("waiting for the %s channel on the %s to open", peerChainID, c.ChainSettings.ChainID))
 	}); err != nil {
 		return "", err
 	}
 
-	log.Info(fmt.Sprintf("Got %s chain channel on %s, channelID:%s ", destChainID, c.ChainSettings.ChainID, channelID))
+	log.Info(fmt.Sprintf("Got %s chain channel on %s, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID))
 
 	return channelID, nil
 }
