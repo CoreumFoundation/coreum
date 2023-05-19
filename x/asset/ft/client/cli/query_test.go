@@ -1,7 +1,6 @@
 package cli_test
 
 import (
-	"fmt"
 	"testing"
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
@@ -9,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -90,12 +90,12 @@ func TestCmdQueryParams(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryParams(), nil)
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryParams(), []string{"--output", "json"})
 	requireT.NoError(err)
 
 	var resp types.QueryParamsResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
 
-	fmt.Println("### ", resp.Params)
-	//requireT.Equal("", resp.Params.IssueFee)
+	expectedIssueFee := sdk.Coin{Denom: constant.DenomDev, Amount: sdk.NewInt(10_000_000)}
+	requireT.Equal(expectedIssueFee, resp.Params.IssueFee)
 }

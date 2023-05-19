@@ -309,7 +309,7 @@ $ %[1]s query %s params
 				return err
 			}
 
-			return clientCtx.PrintProto(&res.Params)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
