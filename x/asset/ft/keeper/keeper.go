@@ -15,6 +15,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/x/wibc"
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
@@ -541,7 +542,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 	// Escrow addresses are like any others, which means issuer might freeze them leading to disaster.
 	// We can't simply return an error from SetFrozenBalances when issuer tries to freeze the escrow address,
 	// because at that time channel might not exist yet, while its address still might be predicted in advance.
-	if k.isAccountIBCEscrowAddress(ctx, addr.String()) {
+	if isIBCTransfer(ctx) {
 		return nil
 	}
 
@@ -556,7 +557,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
 	if !def.IsFeatureEnabled(types.Feature_whitelisting) ||
 		def.IsIssuer(addr) ||
-		k.isAccountIBCEscrowAddress(ctx, addr.String()) { // escrow addresses must work despite whitelisting because otherwise IBC transfers fail
+		isIBCTransfer(ctx) { // escrow addresses must work despite whitelisting because otherwise IBC transfers fail
 		return nil
 	}
 
@@ -701,4 +702,9 @@ func (k Keeper) whitelistedAccountBalanceStore(ctx sdk.Context, addr sdk.AccAddr
 // logger returns the Keeper logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+func isIBCTransfer(ctx sdk.Context) bool {
+	_, ok := wibc.GetInfo(ctx)
+	return ok
 }

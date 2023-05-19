@@ -3,8 +3,6 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -150,9 +148,10 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	}
 
 	shares := make(accountOperationMap, 0)
+	isIBC := isIBCTransfer(ctx)
 	for account, amount := range inOps {
 		// if sender is issuer or IBC escrow
-		if account == issuer || k.isAccountIBCEscrowAddress(ctx, account) {
+		if account == issuer || isIBC {
 			continue
 		}
 		// in order to reduce precision errors, we first multiply all sdk.Ints, and then multiply sdk.Decs, and then divide
@@ -161,20 +160,4 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	}
 
 	return shares
-}
-
-func (k Keeper) isAccountIBCEscrowAddress(ctx sdk.Context, account string) bool {
-	// TODO(dzmitryhil) check whether we can improve it once we integrate the IBC middleware for the send validations
-	isEscrow := false
-	k.ibcChannelKeeper.IterateChannels(ctx, func(channel ibcchanneltypes.IdentifiedChannel) bool {
-		escrowAddress := ibctransfertypes.GetEscrowAddress(channel.PortId, channel.ChannelId)
-		if account == escrowAddress.String() {
-			isEscrow = true
-			return true
-		}
-
-		return false
-	})
-
-	return isEscrow
 }

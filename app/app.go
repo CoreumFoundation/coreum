@@ -123,6 +123,7 @@ import (
 	wasmcustomhandler "github.com/CoreumFoundation/coreum/x/wasm/handler"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/x/wibc"
 	"github.com/CoreumFoundation/coreum/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/x/wstaking"
@@ -477,7 +478,7 @@ func New(
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transfer.NewIBCModule(app.TransferKeeper))
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, wibc.NewInfoMiddleware(transfer.NewIBCModule(app.TransferKeeper)))
 	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WASMKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
