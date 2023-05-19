@@ -175,12 +175,17 @@ type NetworkConfig struct {
 // SetSDKConfig sets global SDK config to some network-specific values.
 // In typical applications this func should be called right after network initialization.
 func (c NetworkConfig) SetSDKConfig() {
+	SetSDKConfig(c.AddressPrefix, constant.CoinType)
+}
+
+// SetSDKConfig sets global SDK config.
+func SetSDKConfig(addressPrefix string, coinType uint32) {
 	config := sdk.GetConfig()
 
 	// Set address & public key prefixes
-	config.SetBech32PrefixForAccount(c.AddressPrefix, c.AddressPrefix+"pub")
-	config.SetBech32PrefixForValidator(c.AddressPrefix+"valoper", c.AddressPrefix+"valoperpub")
-	config.SetBech32PrefixForConsensusNode(c.AddressPrefix+"valcons", c.AddressPrefix+"valconspub")
+	config.SetBech32PrefixForAccount(addressPrefix, addressPrefix+"pub")
+	config.SetBech32PrefixForValidator(addressPrefix+"valoper", addressPrefix+"valoperpub")
+	config.SetBech32PrefixForConsensusNode(addressPrefix+"valcons", addressPrefix+"valconspub")
 
 	// Set BIP44 coin type corresponding to CORE
 	config.SetCoinType(constant.CoinType)
