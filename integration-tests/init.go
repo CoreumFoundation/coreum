@@ -19,6 +19,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
@@ -107,11 +108,6 @@ func init() {
 		panic(errors.WithStack(err))
 	}
 	coreumSettings := queryCommonSettings(queryCtx, coreumGRPCClient)
-	coreumNetworkConfig, err := NewNetworkConfig(constant.ChainID(coreumSettings.ChainID))
-	if err != nil {
-		panic(fmt.Sprintf("can't create network config for the integration tests: %s", err))
-	}
-	coreumNetworkConfig.SetSDKConfig()
 
 	coreumClientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
@@ -122,6 +118,8 @@ func init() {
 	}
 	coreumSettings.GasPrice = coreumFeemodelParamsRes.Params.Model.InitialGasPrice
 	coreumSettings.CoinType = constant.CoinType
+
+	config.SetSDKConfig(coreumSettings.AddressPrefix, coreumSettings.CoinType)
 
 	coreumChain := NewCoreumChain(NewChain(
 		coreumGRPCClient,
