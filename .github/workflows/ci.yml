@@ -47,7 +47,7 @@ jobs:
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests coreum-upgrade"
-            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images --log-format=yaml && crust znet test --cored-version=v0.1.1 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --log-format=yaml"
+            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images --log-format=yaml && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --log-format=yaml"
             go-cache: true
             wasm-cache: true
             linter-cache: false
