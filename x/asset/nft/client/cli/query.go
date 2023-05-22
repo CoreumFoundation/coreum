@@ -251,15 +251,15 @@ $ %s query %s whitelisted [class-id] [id]
 func CmdQueryParams() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "params",
-		Short: "Query the current assetnft parameters",
+		Short: fmt.Sprintf("Query the current %s parameters", types.ModuleName),
 		Args:  cobra.NoArgs,
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query parameters for the assetnft module:
+			fmt.Sprintf(`Query parameters for the %s module:
 
 Example:
 $ %[1]s query %s params
 `,
-				version.AppName, types.ModuleName,
+				types.ModuleName, version.AppName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
