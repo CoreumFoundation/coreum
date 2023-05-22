@@ -20,6 +20,10 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
+	// TODO: here it should be coreumToGaiaChannelID := coreumChain.GetIBCChannelID
+	// TODO: In crust we should come up with another naming convention for channels
+	//  so they all don't have the same name and test don't pass because of this mistake.
+	//  Same comments apply to TestIBCTransferFromGaiaToCoreumAndBack.
 	gaiaToCoreumChannelID, err := gaiaChain.GetIBCChannelID(ctx, coreumChain.ChainSettings.ChainID)
 	requireT.NoError(err)
 

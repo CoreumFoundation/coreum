@@ -150,6 +150,13 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	)
 }
 
+// TODO:
+//
+//   - peerChainToCoreumChannelID this param is named like this in both functions but it should be vice versa in one of them
+//   - peerChainToCoreumChannelID & coreumToPeerChainEscrowAddress these 2 args are not really needed to be passed because you have both chains as args so it is easier to determine chainID & escrow address inside this function. This will simplify the func and make mistakes less likely.
+//   - each function should be have a single scope of responsibility and I don't really like that this one does 2 things. It should be refactored to either 2 funcs or maybe we can abstract it into single and have if or additional arg to determine if sender is issuer.
+//   - direct mentions of other peer chains (osmosis, gaia) should be removed inside this function eg: expectedOsmosisRecipientBalance
+//   - ideally we should refactor sendToPeerChainFromCoreumFTIssuerAndNonIssuer & sendFromPeerChainAndValidateZeroCommissionOnEscrow to a single func but I'm not sure if it is possibe
 func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 	ctx context.Context,
 	requireT *require.Assertions,
