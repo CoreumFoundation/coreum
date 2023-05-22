@@ -37,14 +37,18 @@ func (k ibcChannelKeeperMock) IterateChannels(ctx sdk.Context, cb func(ibcchanne
 	})
 }
 
-//nolint:funlen // there are too many tests cases
-func TestCalculateRateShares(t *testing.T) {
+// TODO(dzmitryhil) remove all TestMain from the code.
+func TestMain(m *testing.M) {
 	n, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
 		panic(err)
 	}
 	n.SetSDKConfig()
+	m.Run()
+}
 
+//nolint:funlen // there are too many tests cases
+func TestCalculateRateShares(t *testing.T) {
 	genAccount := func() string {
 		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
 	}
