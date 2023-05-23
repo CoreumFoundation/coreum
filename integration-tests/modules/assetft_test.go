@@ -257,11 +257,14 @@ func TestBalanceQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	denom := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	whitelistedCoin := sdk.NewInt64Coin(denom, 30)
+	frozenCoin := sdk.NewInt64Coin(denom, 20)
+	sendCoin := sdk.NewInt64Coin(denom, 10)
 
 	msgWhitelist := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewInt64Coin(denom, 30),
+		Coin:    whitelistedCoin,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -274,7 +277,7 @@ func TestBalanceQuery(t *testing.T) {
 	msgFreeze := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewInt64Coin(denom, 20),
+		Coin:    frozenCoin,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -287,7 +290,7 @@ func TestBalanceQuery(t *testing.T) {
 	msgSend := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 10)),
+		Amount:      sdk.NewCoins(sendCoin),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -304,9 +307,9 @@ func TestBalanceQuery(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assertT.Equal("30", resp.Whitelisted.String())
-	assertT.Equal("20", resp.Frozen.String())
-	assertT.Equal("10", resp.Balance.String())
+	assertT.Equal(whitelistedCoin.Amount.String(), resp.Whitelisted.String())
+	assertT.Equal(frozenCoin.Amount.String(), resp.Frozen.String())
+	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
 }
 
 // TestAssetFTMint tests mint functionality of fungible tokens.
