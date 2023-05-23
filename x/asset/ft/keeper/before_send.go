@@ -5,7 +5,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/x/wibctransfer"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
 // BeforeSendCoins checks that a transfer request is allowed or not.
@@ -135,7 +135,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	if rate.IsNil() || !rate.IsPositive() {
 		return nil
 	}
-	if wibctransfer.IsDirectionIn(ctx) {
+	if wibctransfertypes.IsDirectionIn(ctx) {
 		return nil
 	}
 

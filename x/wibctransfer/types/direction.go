@@ -18,17 +18,34 @@ const (
 
 type directionKey struct{}
 
-// GetDirection returns IBC transfer direction stored inside context.
-func GetDirection(ctx context.Context) (Direction, bool) {
+// WithDirection stores IBC transfer direction inside SDK context.
+func WithDirection(ctx sdk.Context, direction Direction) sdk.Context {
+	return ctx.WithValue(directionKey{}, direction)
+}
+
+// IsDirectionOut returns true if context is tagged with an outgoing transfer.
+func IsDirectionOut(ctx sdk.Context) bool {
+	d, ok := getDirection(ctx.Context())
+	if !ok {
+		return false
+	}
+	return d == DirectionOut
+}
+
+// IsDirectionIn returns true if context is tagged with an incoming transfer.
+func IsDirectionIn(ctx sdk.Context) bool {
+	d, ok := getDirection(ctx.Context())
+	if !ok {
+		return false
+	}
+	return d == DirectionIn
+}
+
+func getDirection(ctx context.Context) (Direction, bool) {
 	direction, ok := ctx.Value(directionKey{}).(Direction)
 	if !ok {
 		return "", false
 	}
 
 	return direction, true
-}
-
-// WithDirection stores IBC transfer direction inside SDK context.
-func WithDirection(ctx sdk.Context, direction Direction) sdk.Context {
-	return ctx.WithValue(directionKey{}, direction)
 }

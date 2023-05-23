@@ -32,21 +32,3 @@ func (im DirectionMiddleware) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	return im.IBCModule.OnRecvPacket(types.WithDirection(ctx, types.DirectionIn), packet, relayer)
 }
-
-// IsDirectionOut returns true if context is tagged with an outgoing transfer.
-func IsDirectionOut(ctx sdk.Context) bool {
-	d, ok := types.GetDirection(ctx.Context())
-	if !ok {
-		return false
-	}
-	return d == types.DirectionOut
-}
-
-// IsDirectionIn returns true if context is tagged with an incoming transfer.
-func IsDirectionIn(ctx sdk.Context) bool {
-	d, ok := types.GetDirection(ctx.Context())
-	if !ok {
-		return false
-	}
-	return d == types.DirectionIn
-}
