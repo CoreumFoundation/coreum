@@ -39,10 +39,15 @@ func PreProcessFlags() (config.NetworkConfig, error) {
 	chainID := flagSet.String(flags.FlagChainID, string(app.DefaultChainID), "The network chain ID")
 	//nolint:errcheck // since we have set ExitOnError on flagset, we don't need to check for errors here
 	flagSet.Parse(os.Args[1:])
+	// get chain config
+	network, err := config.NetworkConfigByChainID(constant.ChainID(*chainID))
+	if err != nil {
+		return config.NetworkConfig{}, err
+	}
 	// we consider the issued command to be a help command if no args are provided.
 	// in that case we will not check the chain-id and will return
 	if len(os.Args) == 1 || *help {
-		return config.NetworkConfig{}, nil
+		return network, nil
 	}
 
 	// overwrite home flag
@@ -54,12 +59,6 @@ func PreProcessFlags() (config.NetworkConfig, error) {
 	} else {
 		appendedHome := filepath.Join(app.DefaultNodeHome, *chainID)
 		os.Args = append(os.Args, fmt.Sprintf("--%s=%s", flags.FlagHome, appendedHome))
-	}
-
-	// get chain config
-	network, err := config.NetworkConfigByChainID(constant.ChainID(*chainID))
-	if err != nil {
-		return config.NetworkConfig{}, err
 	}
 
 	return network, nil
