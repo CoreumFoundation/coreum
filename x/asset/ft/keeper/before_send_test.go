@@ -15,7 +15,6 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/x/wibc"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
@@ -345,10 +344,10 @@ func TestCalculateRateShares(t *testing.T) {
 			assertT := assert.New(t)
 			ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 			if _, exists := tc.senders[ibcEscrowAddress]; exists {
-				ctx = wibc.WithSDKInfo(ctx, wibc.Info{Action: wibctransfertypes.ActionIn})
+				ctx = wibctransfertypes.WithDirection(ctx, wibctransfertypes.DirectionIn)
 			}
 			if _, exists := tc.receivers[ibcEscrowAddress]; exists {
-				ctx = wibc.WithSDKInfo(ctx, wibc.Info{Action: wibctransfertypes.ActionOut})
+				ctx = wibctransfertypes.WithDirection(ctx, wibctransfertypes.DirectionOut)
 			}
 
 			shares := assetFTKeeper.CalculateRateShares(ctx, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)

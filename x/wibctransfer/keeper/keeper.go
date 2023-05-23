@@ -10,7 +10,6 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 
-	"github.com/CoreumFoundation/coreum/x/wibc"
 	"github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
@@ -39,9 +38,6 @@ func NewKeeper(
 
 // Transfer defines a rpc handler method for MsgTransfer.
 func (k Wrapper) Transfer(goCtx context.Context, msg *ibctransfertypes.MsgTransfer) (*ibctransfertypes.MsgTransferResponse, error) {
-	return k.Keeper.Transfer(wibc.WithGOInfo(goCtx, wibc.Info{
-		Port:    msg.SourcePort,
-		Channel: msg.SourceChannel,
-		Action:  types.ActionOut,
-	}), msg)
+	//nolint:contextcheck // it is fine to produce the context this way
+	return k.Keeper.Transfer(sdk.WrapSDKContext(types.WithDirection(sdk.UnwrapSDKContext(goCtx), types.DirectionOut)), msg)
 }

@@ -135,7 +135,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	if rate.IsNil() || !rate.IsPositive() {
 		return nil
 	}
-	if isIBCAction(ctx, wibctransfertypes.ActionIn) {
+	if isIBCDirection(ctx, wibctransfertypes.DirectionIn) {
 		return nil
 	}
 

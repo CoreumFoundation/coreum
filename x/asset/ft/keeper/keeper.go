@@ -15,7 +15,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/x/wibc"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
@@ -543,7 +542,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 	// Escrow addresses are like any others, which means issuer might freeze them leading to disaster.
 	// We can't simply return an error from SetFrozenBalances when issuer tries to freeze the escrow address,
 	// because at that time channel might not exist yet, while its address still might be predicted in advance.
-	if isIBCAction(ctx, wibctransfertypes.ActionIn) {
+	if isIBCDirection(ctx, wibctransfertypes.DirectionIn) {
 		return nil
 	}
 
@@ -558,7 +557,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
 	if !def.IsFeatureEnabled(types.Feature_whitelisting) ||
 		def.IsIssuer(addr) ||
-		isIBCAction(ctx, wibctransfertypes.ActionOut) { // escrow addresses must work despite whitelisting because otherwise IBC transfers fail
+		isIBCDirection(ctx, wibctransfertypes.DirectionOut) { // escrow addresses must work despite whitelisting because otherwise IBC transfers fail
 		return nil
 	}
 
@@ -705,10 +704,10 @@ func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func isIBCAction(ctx sdk.Context, action wibc.Action) bool {
-	info, ok := wibc.GetInfo(ctx.Context())
+func isIBCDirection(ctx sdk.Context, direction wibctransfertypes.Direction) bool {
+	d, ok := wibctransfertypes.GetDirection(ctx.Context())
 	if !ok {
 		return false
 	}
-	return info.Action == action
+	return d == direction
 }
