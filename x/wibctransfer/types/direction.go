@@ -16,11 +16,11 @@ const (
 	DirectionIn Direction = "ibcTransferIn"
 )
 
-type infoKey struct{}
+type directionKey struct{}
 
 // GetDirection returns IBC transfer direction stored inside context.
 func GetDirection(ctx context.Context) (Direction, bool) {
-	direction, ok := ctx.Value(infoKey{}).(Direction)
+	direction, ok := ctx.Value(directionKey{}).(Direction)
 	if !ok {
 		return "", false
 	}
@@ -30,5 +30,5 @@ func GetDirection(ctx context.Context) (Direction, bool) {
 
 // WithDirection stores IBC transfer direction inside SDK context.
 func WithDirection(ctx sdk.Context, direction Direction) sdk.Context {
-	return ctx.WithValue(infoKey{}, direction)
+	return ctx.WithValue(directionKey{}, direction)
 }
