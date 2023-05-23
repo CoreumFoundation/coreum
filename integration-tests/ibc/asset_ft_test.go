@@ -19,7 +19,7 @@ import (
 func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	ctx, chains := integrationtests.NewChainsTestingContext(t, false)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
@@ -171,7 +171,7 @@ func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 
 	_, err = coreumChainCtx.ExecuteIBCTransfer(ctx, coreumIssuer, sendCoin, peerChainCtx, peerChainRecipient)
 	requireT.NoError(err)
-	expectedRecipientBalance := sdk.NewCoin(integrationtests.ConvertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
+	expectedRecipientBalance := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 	err = peerChainCtx.AwaitForBalance(ctx, peerChainRecipient, expectedRecipientBalance)
 	requireT.NoError(err)
 	// check that amount is locked on the escrow account
@@ -196,7 +196,7 @@ func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 	_, err = coreumChainCtx.ExecuteIBCTransfer(ctx, coreumSender, sendCoin, peerChainCtx, peerChainRecipient)
 	requireT.NoError(err)
 
-	expectedOsmosisRecipientBalance := sdk.NewCoin(integrationtests.ConvertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount.MulRaw(2))
+	expectedOsmosisRecipientBalance := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount.MulRaw(2))
 	err = peerChainCtx.AwaitForBalance(ctx, peerChainRecipient, expectedOsmosisRecipientBalance)
 	requireT.NoError(err)
 
@@ -222,7 +222,7 @@ func sendFromPeerChainAndValidateZeroCommissionOnEscrow(
 	coreumToPeerChainEscrowAddress sdk.AccAddress,
 ) {
 	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
-	sentFromPeerChainToCoreumCoin := sdk.NewCoin(integrationtests.ConvertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
+	sentFromPeerChainToCoreumCoin := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 	coreumIssuerBalanceBeforeTransferBackRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: coreumIssuer.String(),
 		Denom:   sendCoin.Denom,
