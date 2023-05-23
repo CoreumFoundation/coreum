@@ -80,7 +80,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	require.NoError(t, err)
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
 
-	sendCoin := sdk.NewCoin(denom, sdk.NewInt(2000))
+	sendCoin := sdk.NewCoin(denom, sdk.NewInt(1000))
 	burntAmount := issueMsg.BurnRate.Mul(sendCoin.Amount.ToDec()).TruncateInt()
 	sendCommissionAmount := issueMsg.SendCommissionRate.Mul(sendCoin.Amount.ToDec()).TruncateInt()
 	extraAmount := sdk.NewInt(77) // some amount to be left at the end
