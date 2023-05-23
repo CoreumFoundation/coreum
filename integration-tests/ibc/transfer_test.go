@@ -15,7 +15,7 @@ import (
 func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	ctx, chains := integrationtests.NewChainsTestingContext(t, false)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
@@ -36,7 +36,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(txRes.GasUsed, coreumChain.GasLimitByMsgs(&ibctransfertypes.MsgTransfer{}))
 
-	expectedGaiaRecipientBalance := sdk.NewCoin(integrationtests.ConvertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)
+	expectedGaiaRecipientBalance := sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)
 	err = gaiaChain.AwaitForBalance(ctx, gaiaRecipient, expectedGaiaRecipientBalance)
 	requireT.NoError(err)
 	_, err = gaiaChain.ExecuteIBCTransfer(ctx, gaiaRecipient, expectedGaiaRecipientBalance, coreumChain.Chain.ChainContext, coreumSender)
@@ -50,7 +50,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	ctx, chains := integrationtests.NewChainsTestingContext(t, false)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
@@ -74,7 +74,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	_, err = gaiaChain.ExecuteIBCTransfer(ctx, gaiaSender, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumRecipient)
 	requireT.NoError(err)
 
-	expectedCoreumRecipientBalance := sdk.NewCoin(integrationtests.ConvertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
+	expectedCoreumRecipientBalance := sdk.NewCoin(convertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
 	err = coreumChain.AwaitForBalance(ctx, coreumRecipient, expectedCoreumRecipientBalance)
 	requireT.NoError(err)
 

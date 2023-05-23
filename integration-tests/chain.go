@@ -197,10 +197,10 @@ func (c ChainContext) ExecuteIBCTransfer(
 func (c ChainContext) AwaitForBalance(
 	ctx context.Context,
 	address sdk.AccAddress,
-	coin sdk.Coin,
+	expectedBalance sdk.Coin,
 ) error {
 	log := logger.Get(ctx)
-	log.Info(fmt.Sprintf("Waiting for account %s balance, expected amount:%s.", c.ConvertToBech32Address(address), coin.String()))
+	log.Info(fmt.Sprintf("Waiting for account %s balance, expected amount: %s.", c.ConvertToBech32Address(address), expectedBalance.String()))
 
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
 	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
@@ -209,6 +209,7 @@ func (c ChainContext) AwaitForBalance(
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
 		defer requestCancel()
 
+		// We intentionally query all balances instead of single denom here to include this info inside error message.
 		balancesRes, err := bankClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{
 			Address: c.ConvertToBech32Address(address),
 		})
@@ -216,8 +217,8 @@ func (c ChainContext) AwaitForBalance(
 			return err
 		}
 
-		if balancesRes.Balances.AmountOf(coin.Denom).String() != coin.Amount.String() {
-			return retry.Retryable(errors.Errorf("balances is still not enough, all balances:%s", balancesRes.String()))
+		if balancesRes.Balances.AmountOf(expectedBalance.Denom).String() != expectedBalance.Amount.String() {
+			return retry.Retryable(errors.Errorf("%s balance is still not equal to expected, all balances: %s", expectedBalance.Denom, balancesRes.String()))
 		}
 
 		return nil
@@ -225,7 +226,7 @@ func (c ChainContext) AwaitForBalance(
 	if err != nil {
 		return err
 	}
-	log.Info("Received expected amount.")
+	log.Info(fmt.Sprintf("Received expected balance of %s.", expectedBalance.Denom))
 
 	return nil
 }
