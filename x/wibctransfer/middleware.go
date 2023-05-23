@@ -12,16 +12,16 @@ import (
 
 var _ porttypes.IBCModule = DirectionMiddleware{}
 
+// DirectionMiddleware adds information about IBC transfer direction to the context.
+type DirectionMiddleware struct {
+	transfer.IBCModule
+}
+
 // NewDirectionMiddleware returns middleware adding direction to the context.
 func NewDirectionMiddleware(module transfer.IBCModule) DirectionMiddleware {
 	return DirectionMiddleware{
 		IBCModule: module,
 	}
-}
-
-// DirectionMiddleware adds information about IBC transfer direction to the context.
-type DirectionMiddleware struct {
-	transfer.IBCModule
 }
 
 // OnRecvPacket adds direction to the context and calls the upper implementation.
@@ -31,4 +31,22 @@ func (im DirectionMiddleware) OnRecvPacket(
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
 	return im.IBCModule.OnRecvPacket(types.WithDirection(ctx, types.DirectionIn), packet, relayer)
+}
+
+// IsDirectionOut returns true if context is tagged with an outgoing transfer.
+func IsDirectionOut(ctx sdk.Context) bool {
+	d, ok := types.GetDirection(ctx.Context())
+	if !ok {
+		return false
+	}
+	return d == types.DirectionOut
+}
+
+// IsDirectionIn returns true if context is tagged with an incoming transfer.
+func IsDirectionIn(ctx sdk.Context) bool {
+	d, ok := types.GetDirection(ctx.Context())
+	if !ok {
+		return false
+	}
+	return d == types.DirectionIn
 }

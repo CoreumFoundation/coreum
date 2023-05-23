@@ -19,11 +19,11 @@ type AppModuleBasic struct {
 // AppModule implements an application module for the wrapped IBC trnasfer module.
 type AppModule struct {
 	transfer.AppModule
-	keeper keeper.Wrapper
+	keeper keeper.TransferKeeperWrapper
 }
 
 // NewAppModule creates a new IBC transfer module AppModule object.
-func NewAppModule(keeper keeper.Wrapper) AppModule {
+func NewAppModule(keeper keeper.TransferKeeperWrapper) AppModule {
 	return AppModule{
 		AppModule: transfer.NewAppModule(keeper.Keeper),
 		keeper:    keeper,

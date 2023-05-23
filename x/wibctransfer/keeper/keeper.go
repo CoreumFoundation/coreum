@@ -13,13 +13,13 @@ import (
 	"github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
-// Wrapper is a wrapper of the IBC transfer keeper.
-type Wrapper struct {
+// TransferKeeperWrapper is a wrapper of the IBC transfer keeper.
+type TransferKeeperWrapper struct {
 	ibctransferkeeper.Keeper
 }
 
-// NewKeeper returns a new Wrapper instance.
-func NewKeeper(
+// NewTransferKeeperWrapper returns a new TransferKeeperWrapper instance.
+func NewTransferKeeperWrapper(
 	cdc codec.BinaryCodec,
 	key sdk.StoreKey,
 	paramSpace paramtypes.Subspace,
@@ -29,15 +29,15 @@ func NewKeeper(
 	authKeeper ibctransfertypes.AccountKeeper,
 	bankKeeper ibctransfertypes.BankKeeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
-) Wrapper {
-	return Wrapper{
+) TransferKeeperWrapper {
+	return TransferKeeperWrapper{
 		Keeper: ibctransferkeeper.NewKeeper(cdc, key, paramSpace, ics4Wrapper, channelKeeper, portKeeper, authKeeper,
 			bankKeeper, scopedKeeper),
 	}
 }
 
 // Transfer defines a rpc handler method for MsgTransfer.
-func (k Wrapper) Transfer(goCtx context.Context, msg *ibctransfertypes.MsgTransfer) (*ibctransfertypes.MsgTransferResponse, error) {
+func (k TransferKeeperWrapper) Transfer(goCtx context.Context, msg *ibctransfertypes.MsgTransfer) (*ibctransfertypes.MsgTransferResponse, error) {
 	//nolint:contextcheck // it is fine to produce the context this way
 	return k.Keeper.Transfer(sdk.WrapSDKContext(types.WithDirection(sdk.UnwrapSDKContext(goCtx), types.DirectionOut)), msg)
 }
