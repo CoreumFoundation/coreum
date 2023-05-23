@@ -26,26 +26,16 @@ func WithDirection(ctx sdk.Context, direction Direction) sdk.Context {
 // IsDirectionOut returns true if context is tagged with an outgoing transfer.
 func IsDirectionOut(ctx sdk.Context) bool {
 	d, ok := getDirection(ctx.Context())
-	if !ok {
-		return false
-	}
-	return d == DirectionOut
+	return ok && d == DirectionOut
 }
 
 // IsDirectionIn returns true if context is tagged with an incoming transfer.
 func IsDirectionIn(ctx sdk.Context) bool {
 	d, ok := getDirection(ctx.Context())
-	if !ok {
-		return false
-	}
-	return d == DirectionIn
+	return ok && d == DirectionIn
 }
 
 func getDirection(ctx context.Context) (Direction, bool) {
 	direction, ok := ctx.Value(directionKey{}).(Direction)
-	if !ok {
-		return "", false
-	}
-
-	return direction, true
+	return direction, ok
 }
