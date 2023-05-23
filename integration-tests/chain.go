@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
@@ -192,20 +193,59 @@ func (c ChainContext) ExecuteIBCTransfer(
 	return txRes
 }
 
+// ExecuteTimingOutIBCTransfer executes IBC transfer which should time out.
+func (c ChainContext) ExecuteTimingOutIBCTransfer(
+	ctx context.Context,
+	t *testing.T,
+	senderAddress sdk.AccAddress,
+	coin sdk.Coin,
+	recipientChainContext ChainContext,
+	recipientAddress sdk.AccAddress,
+) (*sdk.TxResponse, error) {
+	t.Helper()
+
+	sender := c.ConvertToBech32Address(senderAddress)
+	receiver := recipientChainContext.ConvertToBech32Address(recipientAddress)
+	t.Logf("Sending IBC transfer from %s, to %s, %s.", sender, receiver, coin.String())
+
+	recipientChannelID := c.GetIBCChannelID(ctx, t, recipientChainContext.ChainSettings.ChainID)
+
+	tmQueryClient := tmservice.NewServiceClient(recipientChainContext.ClientContext)
+	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	require.NoError(t, err)
+
+	ibcSend := ibctransfertypes.MsgTransfer{
+		SourcePort:       ibctransfertypes.PortID,
+		SourceChannel:    recipientChannelID,
+		Token:            coin,
+		Sender:           sender,
+		Receiver:         receiver,
+		TimeoutTimestamp: uint64(latestBlockRes.Block.Header.Time.Add(-10 * time.Second).UnixNano()),
+	}
+
+	return BroadcastTxWithSigner(
+		ctx,
+		c,
+		c.TxFactory().WithSimulateAndExecute(true),
+		senderAddress,
+		&ibcSend,
+	)
+}
+
 // AwaitForBalance queries for the balance with retry and timeout.
 func (c ChainContext) AwaitForBalance(
 	ctx context.Context,
 	t *testing.T,
 	address sdk.AccAddress,
 	expectedBalance sdk.Coin,
-) {
+) error {
 	t.Helper()
 
 	t.Logf("Waiting for account %s balance, expected amount: %s.", c.ConvertToBech32Address(address), expectedBalance.String())
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
 	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()
-	require.NoError(t, retry.Do(retryCtx, time.Second, func() error {
+	err := retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
 		defer requestCancel()
 
@@ -222,9 +262,13 @@ func (c ChainContext) AwaitForBalance(
 		}
 
 		return nil
-	}))
+	})
+	if err != nil {
+		return err
+	}
 
 	t.Logf("Received expected balance of %s.", expectedBalance.Denom)
+	return nil
 }
 
 // GetIBCChannelID returns the first opened channel of the IBC connected chain peer.

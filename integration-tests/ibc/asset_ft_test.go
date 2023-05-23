@@ -173,7 +173,7 @@ func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 	_ = coreumChainCtx.ExecuteIBCTransfer(ctx, t, coreumIssuer, sendCoin, peerChainCtx, peerChainRecipient)
 	requireT.NoError(err)
 	expectedRecipientBalance := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
-	peerChainCtx.AwaitForBalance(ctx, t, peerChainRecipient, expectedRecipientBalance)
+	require.NoError(t, peerChainCtx.AwaitForBalance(ctx, t, peerChainRecipient, expectedRecipientBalance))
 	// check that amount is locked on the escrow account
 	escrowAddressRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: coreumChainCtx.ConvertToBech32Address(coreumToPeerChainEscrowAddress),
@@ -196,7 +196,7 @@ func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 	_ = coreumChainCtx.ExecuteIBCTransfer(ctx, t, coreumSender, sendCoin, peerChainCtx, peerChainRecipient)
 
 	expectedOsmosisRecipientBalance := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount.MulRaw(2))
-	peerChainCtx.AwaitForBalance(ctx, t, peerChainRecipient, expectedOsmosisRecipientBalance)
+	require.NoError(t, peerChainCtx.AwaitForBalance(ctx, t, peerChainRecipient, expectedOsmosisRecipientBalance))
 
 	// validate escrow balance on the osmosis channel
 	coreumToOsmosisEscrowAddressRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
@@ -244,7 +244,7 @@ func sendFromPeerChainAndValidateZeroCommissionOnEscrow(
 		sendCoin.Denom,
 		coreumIssuerBalanceBeforeTransferBackRes.Balance.Amount.Add(sentFromPeerChainToCoreumCoin.Amount),
 	)
-	coreumChainCtx.AwaitForBalance(ctx, t, coreumIssuer, expectedCoreumIssuerBalanceAfterTransferBack)
+	require.NoError(t, coreumChainCtx.AwaitForBalance(ctx, t, coreumIssuer, expectedCoreumIssuerBalanceAfterTransferBack))
 	// check that escrow balance is decreased now
 	coreumToPeerChainEscrowAddressRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: coreumChainCtx.ConvertToBech32Address(coreumToPeerChainEscrowAddress),
@@ -265,7 +265,7 @@ func sendFromPeerChainAndValidateZeroCommissionOnEscrow(
 	_ = peerChainCtx.ExecuteIBCTransfer(ctx, t, peerChainRecipient, sentFromPeerChainToCoreumCoin, coreumChainCtx, coreumSender)
 
 	expectedCoreumSenderBalanceAfterTransferBack := sdk.NewCoin(sendCoin.Denom, coreumSenderBalanceBeforeTransferBackRes.Balance.Amount.Add(sentFromPeerChainToCoreumCoin.Amount))
-	coreumChainCtx.AwaitForBalance(ctx, t, coreumSender, expectedCoreumSenderBalanceAfterTransferBack)
+	require.NoError(t, coreumChainCtx.AwaitForBalance(ctx, t, coreumSender, expectedCoreumSenderBalanceAfterTransferBack))
 	requireT.NoError(err)
 
 	// check zero balance on escrow address
