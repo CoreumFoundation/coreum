@@ -12,6 +12,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -116,6 +117,23 @@ func TestCmdTxBurn(t *testing.T) {
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args)
 	requireT.NoError(err)
+}
+
+func TestCmdQueryParams(t *testing.T) {
+	requireT := require.New(t)
+
+	testNetwork := network.New(t)
+
+	ctx := testNetwork.Validators[0].ClientCtx
+
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryParams(), []string{"--output", "json"})
+	requireT.NoError(err)
+
+	var resp types.QueryParamsResponse
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+
+	expectedMintFee := sdk.Coin{Denom: constant.DenomDev, Amount: sdk.NewInt(0)}
+	requireT.Equal(expectedMintFee, resp.Params.MintFee)
 }
 
 func mint(
