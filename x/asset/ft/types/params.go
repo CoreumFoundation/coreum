@@ -13,7 +13,7 @@ const (
 	DefaultIBCDecisionPeriod = time.Hour * 24 * 30
 
 	// DefaultIBCGracePeriod is the period after which IBC is effectively enabled.
-	DefaultIBCGracePeriod = time.Hour * 24 * 30
+	DefaultIBCGracePeriod = time.Hour * 24 * 7
 )
 
 // KeyIssueFee represents the issue fee param key.
