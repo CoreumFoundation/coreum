@@ -1,9 +1,11 @@
 package types
 
+import "time"
+
 // DefaultGenesis returns the default Token genesis state.
-func DefaultGenesis() *GenesisState {
+func DefaultGenesis(genesisTime time.Time) *GenesisState {
 	return &GenesisState{
-		Params: DefaultParams(),
+		Params: DefaultParams(genesisTime),
 	}
 }
 

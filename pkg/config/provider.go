@@ -28,6 +28,7 @@ import (
 // NetworkConfigProvider specifies methods required by config consumer.
 type NetworkConfigProvider interface {
 	GetChainID() constant.ChainID
+	GetGenesisTime() time.Time
 	GetDenom() string
 	EncodeGenesis() ([]byte, error)
 	AppState() (map[string]json.RawMessage, error)
@@ -65,6 +66,11 @@ func (dcp DynamicConfigProvider) WithGenesisTx(signedTx json.RawMessage) Dynamic
 // GetChainID returns chain ID.
 func (dcp DynamicConfigProvider) GetChainID() constant.ChainID {
 	return dcp.ChainID
+}
+
+// GetGenesisTime returns genesis time.
+func (dcp DynamicConfigProvider) GetGenesisTime() time.Time {
+	return dcp.GenesisTime
 }
 
 // GetDenom returns denom.
@@ -268,6 +274,11 @@ type StaticConfigProvider struct {
 // GetChainID returns chain ID.
 func (jcp StaticConfigProvider) GetChainID() constant.ChainID {
 	return constant.ChainID(jcp.genesisDoc.ChainID)
+}
+
+// GetGenesisTime returns genesis time.
+func (jcp StaticConfigProvider) GetGenesisTime() time.Time {
+	return jcp.genesisDoc.GenesisTime
 }
 
 // GetDenom returns denom.

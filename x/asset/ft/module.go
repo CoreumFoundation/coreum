@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math/rand"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -33,12 +34,19 @@ var (
 
 // AppModuleBasic implements the AppModuleBasic interface for the asset ft module.
 type AppModuleBasic struct {
-	cdc codec.BinaryCodec
+	cdc         codec.BinaryCodec
+	genesisTime time.Time
 }
 
 // NewAppModuleBasic return the asset ft AppModuleBasic.
-func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
-	return AppModuleBasic{cdc: cdc}
+func NewAppModuleBasic(
+	cdc codec.BinaryCodec,
+	genesisTime time.Time,
+) AppModuleBasic {
+	return AppModuleBasic{
+		cdc:         cdc,
+		genesisTime: genesisTime,
+	}
 }
 
 // Name returns the asset ft module's name.
@@ -55,8 +63,8 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 }
 
 // DefaultGenesis returns the asset ft module's default genesis state.
-func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(types.DefaultGenesis())
+func (a AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+	return cdc.MustMarshalJSON(types.DefaultGenesis(a.genesisTime))
 }
 
 // ValidateGenesis performs genesis state validation for the asset ft module.
@@ -97,20 +105,24 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper     keeper.Keeper
-	bankKeeper types.BankKeeper
+	keeper          keeper.Keeper
+	upgradeV3Keeper keeper.UpgradeV3Keeper
+	bankKeeper      types.BankKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
 func NewAppModule(
 	cdc codec.Codec,
+	genesisTime time.Time,
 	keeper keeper.Keeper,
+	upgradeV3Keeper keeper.UpgradeV3Keeper,
 	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic: NewAppModuleBasic(cdc),
-		keeper:         keeper,
-		bankKeeper:     bankKeeper,
+		AppModuleBasic:  NewAppModuleBasic(cdc, genesisTime),
+		keeper:          keeper,
+		upgradeV3Keeper: upgradeV3Keeper,
+		bankKeeper:      bankKeeper,
 	}
 }
 
@@ -135,8 +147,19 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper, am.upgradeV3Keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
+
+	err := cfg.RegisterMigration(types.ModuleName, 1, func(ctx sdk.Context) error {
+		params := am.keeper.GetParams(ctx)
+		params.IbcDecisionTimeout = ctx.BlockTime().Add(types.DefaultIBCDecisionPeriod)
+		params.IbcGracePeriod = types.DefaultIBCGracePeriod
+		am.keeper.SetParams(ctx, params)
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
 }
 
 // RegisterInvariants registers the asset ft module's invariants.
@@ -163,7 +186,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the asset ft module.
 func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}

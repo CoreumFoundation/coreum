@@ -1,9 +1,19 @@
 package types
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/pkg/errors"
+)
+
+const (
+	// DefaultIBCDecisionPeriod is the period when issuer must decide if IBC is going to be enabled for the token.
+	DefaultIBCDecisionPeriod = time.Hour * 24 * 30
+
+	// DefaultIBCGracePeriod is the period after which IBC is effectively enabled.
+	DefaultIBCGracePeriod = time.Hour * 24 * 30
 )
 
 // KeyIssueFee represents the issue fee param key.
@@ -18,9 +28,11 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 // DefaultParams returns params with default values.
-func DefaultParams() Params {
+func DefaultParams(genesisTime time.Time) Params {
 	return Params{
-		IssueFee: sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
+		IssueFee:           sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
+		IbcDecisionTimeout: genesisTime.Add(DefaultIBCDecisionPeriod),
+		IbcGracePeriod:     DefaultIBCGracePeriod,
 	}
 }
 

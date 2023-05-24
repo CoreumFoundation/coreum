@@ -17,6 +17,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgGloballyFreeze{},
 		&MsgGloballyUnfreeze{},
 		&MsgSetWhitelistedLimit{},
+		&MsgEnableIBCRequest{},
+		&MsgEnableIBCExecutor{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
