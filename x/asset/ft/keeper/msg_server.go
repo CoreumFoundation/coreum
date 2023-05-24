@@ -23,10 +23,9 @@ type MsgKeeper interface {
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 }
 
-// UpgradeV3Keeper defines method required from keeper managing v3 upgrade.
+// UpgradeV3Keeper defines methods required from keeper managing v3 upgrade.
 type UpgradeV3Keeper interface {
 	StoreEnableIBCRequest(ctx sdk.Context, sender sdk.AccAddress, denom string) error
-	EnableIBC(ctx sdk.Context, denom string) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -201,18 +200,6 @@ func (ms MsgServer) StoreEnableIBCRequest(goCtx context.Context, req *types.MsgE
 	}
 
 	err = ms.upgradeV3Keeper.StoreEnableIBCRequest(ctx, sender, req.Denom)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.EmptyResponse{}, nil
-}
-
-// EnableIBC enables IBC for the token.
-func (ms MsgServer) EnableIBC(goCtx context.Context, req *types.MsgEnableIBCExecutor) (*types.EmptyResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	err := ms.upgradeV3Keeper.EnableIBC(ctx, req.Denom)
 	if err != nil {
 		return nil, err
 	}

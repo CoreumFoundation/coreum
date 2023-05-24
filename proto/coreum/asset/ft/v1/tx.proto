@@ -42,9 +42,6 @@ service Msg {
 
   // EnableIBCRequest stores request for enabling IBC for the token.
   rpc StoreEnableIBCRequest(MsgEnableIBCRequest) returns (EmptyResponse);
-
-  // EnableIBC enables IBC for the token.
-  rpc EnableIBC(MsgEnableIBCExecutor) returns (EmptyResponse);
 }
 
 // MsgIssue defines message to issue new fungible token.

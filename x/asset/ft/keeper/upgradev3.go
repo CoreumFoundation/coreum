@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset"
@@ -17,7 +18,7 @@ var ibcEnablePrefix = []byte("upgradev3ibcenable")
 
 // DelayKeeper defines methods required from the delay keeper.
 type DelayKeeper interface {
-	DelayMessage(ctx sdk.Context, id string, msg sdk.Msg, delay time.Duration) error
+	DelayMessage(ctx sdk.Context, id string, msg proto.Message, delay time.Duration) error
 }
 
 // EnableIBCKeeper provides functionality required by v3 upgrade.

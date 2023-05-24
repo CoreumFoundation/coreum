@@ -6,13 +6,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 )
 
 // MessageToExecute contains info about delayed message to execute.
 type MessageToExecute struct {
 	Key     []byte
-	Message sdk.Msg
+	Message proto.Message
 }
 
 // Keeper is delay module Keeper.
@@ -33,7 +34,7 @@ func NewKeeper(
 }
 
 // DelayMessage stores a message to be executed later.
-func (k Keeper) DelayMessage(ctx sdk.Context, id string, msg sdk.Msg, delay time.Duration) error {
+func (k Keeper) DelayMessage(ctx sdk.Context, id string, msg proto.Message, delay time.Duration) error {
 	execTime := ctx.BlockTime().Add(delay).Unix()
 	if execTime < 0 {
 		panic("there were no blockchains before 1970-01-01")

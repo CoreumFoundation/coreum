@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/pkg/errors"
@@ -26,11 +26,6 @@ var (
 	_ module.AppModuleBasic      = AppModuleBasic{}
 	_ module.AppModuleSimulation = AppModule{}
 )
-
-// MsgServiceRouter defines method required from message service router.
-type MsgServiceRouter interface {
-	Handler(msg sdk.Msg) baseapp.MsgServiceHandler
-}
 
 // AppModuleBasic defines the basic application module used by the delay module.
 type AppModuleBasic struct{}
@@ -74,18 +69,18 @@ func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) 
 type AppModule struct {
 	AppModuleBasic
 
-	keeper           keeper.Keeper
-	msgServiceRouter MsgServiceRouter
+	keeper keeper.Keeper
+	router types.Router
 }
 
 // NewAppModule creates a new AppModule object.
 func NewAppModule(
 	keeper keeper.Keeper,
-	msgServiceRouter MsgServiceRouter,
+	router types.Router,
 ) AppModule {
 	return AppModule{
-		keeper:           keeper,
-		msgServiceRouter: msgServiceRouter,
+		keeper: keeper,
+		router: router,
 	}
 }
 
@@ -133,11 +128,11 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	}
 
 	for _, m := range msgs {
-		handler := am.msgServiceRouter.Handler(m.Message)
+		handler := am.router.Handler(m.Message)
 		if handler == nil {
-			panic(errors.Errorf("no handler for message %s found", sdk.MsgTypeURL(m.Message)))
+			panic(errors.Errorf("no handler for message %s found", proto.MessageName(m.Message)))
 		}
-		if _, err := handler(ctx, m.Message); err != nil {
+		if err := handler(ctx, m.Message); err != nil {
 			panic(err)
 		}
 	}

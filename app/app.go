@@ -496,11 +496,12 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
+	enableIBCKeeper := assetftkeeper.NewEnableIBCKeeper(appCodec, app.AssetFTKeeper, keys[assetfttypes.StoreKey], app.DelayKeeper)
 	assetFTModule := assetft.NewAppModule(
 		appCodec,
 		ChosenNetwork.Provider.GetGenesisTime(),
 		app.AssetFTKeeper,
-		assetftkeeper.NewEnableIBCKeeper(appCodec, app.AssetFTKeeper, keys[assetfttypes.StoreKey], app.DelayKeeper),
+		enableIBCKeeper,
 		app.BankKeeper)
 	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
@@ -508,8 +509,11 @@ func New(
 	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
 
 	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper)
-	delayModule := delay.NewAppModule(app.DelayKeeper, app.MsgServiceRouter())
 	wstakingModule := wstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.CustomParamsKeeper)
+
+	delayRouter := delaytypes.NewRouter()
+	delayRouter.RegisterMessage(&assetfttypes.MsgEnableIBCExecutor{}, assetfttypes.NewEnableIBCHandler(enableIBCKeeper))
+	delayModule := delay.NewAppModule(app.DelayKeeper, delayRouter)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

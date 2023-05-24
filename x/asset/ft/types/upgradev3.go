@@ -3,12 +3,12 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto"
+
+	delaytypes "github.com/CoreumFoundation/coreum/x/delay/types"
 )
 
-var (
-	_ sdk.Msg = &MsgEnableIBCRequest{}
-	_ sdk.Msg = &MsgEnableIBCExecutor{}
-)
+var _ sdk.Msg = &MsgEnableIBCRequest{}
 
 // ValidateBasic checks that message fields are valid.
 func (msg MsgEnableIBCRequest) ValidateBasic() error {
@@ -26,12 +26,14 @@ func (msg MsgEnableIBCRequest) GetSigners() []sdk.AccAddress {
 	}
 }
 
-// ValidateBasic checks that message fields are valid.
-func (msg MsgEnableIBCExecutor) ValidateBasic() error {
-	return nil
+// UpgradeV3Keeper defines methods required from keeper managing v3 upgrade.
+type UpgradeV3Keeper interface {
+	EnableIBC(ctx sdk.Context, denom string) error
 }
 
-// GetSigners returns the required signers of this message type.
-func (msg MsgEnableIBCExecutor) GetSigners() []sdk.AccAddress {
-	return nil
+// NewEnableIBCHandler enables IBC for the token.
+func NewEnableIBCHandler(keeper UpgradeV3Keeper) delaytypes.Handler {
+	return func(ctx sdk.Context, msg proto.Message) error {
+		return keeper.EnableIBC(ctx, msg.(*MsgEnableIBCExecutor).Denom)
+	}
 }
