@@ -27,7 +27,9 @@
         "issue_fee": {
           "denom": "{{ .Denom }}",
           "amount": "10000000"
-        }
+        },
+        "ibc_decision_timeout": "{{ .IBCDecisionTimeout }}",
+        "ibc_grace_period": "2592000s"
       }
     },
     "assetnft": {

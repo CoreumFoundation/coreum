@@ -23,6 +23,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // NetworkConfigProvider specifies methods required by config consumer.
@@ -193,12 +194,14 @@ func (dcp DynamicConfigProvider) genesisByTemplate() ([]byte, error) {
 		Denom              string
 		Gov                GovConfig
 		CustomParamsConfig CustomParamsConfig
+		IBCDecisionTimeout string
 	}{
 		GenesisTimeUTC:     dcp.GenesisTime.UTC().Format(time.RFC3339),
 		ChainID:            dcp.ChainID,
 		Denom:              dcp.Denom,
 		Gov:                dcp.GovConfig,
 		CustomParamsConfig: dcp.CustomParamsConfig,
+		IBCDecisionTimeout: dcp.GenesisTime.UTC().Add(assetfttypes.DefaultIBCDecisionPeriod).Format(time.RFC3339),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
