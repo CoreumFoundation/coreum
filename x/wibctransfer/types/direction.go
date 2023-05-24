@@ -10,9 +10,9 @@ import (
 type Direction string
 
 const (
-	// DirectionOut is used when IBC transfer to another chain is initialized by executing ibctransfertypes.MsgTransfer message.
+	// DirectionOut is used when IBC transfer from Coreum to peered chain is initialized by executing ibctransfertypes.MsgTransfer message.
 	DirectionOut Direction = "ibcTransferOut"
-	// DirectionIn is used when incoming IBC transfer comes to the target chain.
+	// DirectionIn is used when incoming IBC transfer comes from peered chain to Coreum.
 	DirectionIn Direction = "ibcTransferIn"
 )
 
