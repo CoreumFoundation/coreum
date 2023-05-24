@@ -17,9 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
@@ -45,8 +43,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
+	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
 	// Create proposition to change max validators value.
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
@@ -57,7 +54,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
+	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 
 	// Verify that voting period started.
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
@@ -68,7 +65,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
-	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
+	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
 
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
@@ -100,7 +97,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	// Setup delegator
 	delegator := chain.GenAccount()
 	delegateAmount := sdk.NewInt(100)
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&stakingtypes.MsgUndelegate{},
@@ -108,15 +105,12 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 			&stakingtypes.MsgEditValidator{},
 		},
 		Amount: delegateAmount,
-	}))
+	})
 
 	// Setup validator
-	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, validatorStakingAmount, validatorStakingAmount)
+	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
-	defer func() {
-		err := deactivateValidator()
-		require.NoError(t, err)
-	}()
+	defer deactivateValidator()
 
 	// Edit Validator
 	updatedDetail := "updated detail"
@@ -125,10 +119,9 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	err = chain.FundAccountsWithOptions(ctx, validatorAccAddress, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, validatorAccAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
-	require.NoError(t, err)
 
 	editValidatorRes, err := client.BroadcastTx(
 		ctx,
@@ -156,7 +149,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	logger.Get(ctx).Info("Delegation executed", zap.String("txHash", delegateResult.TxHash))
+	t.Logf("Delegation executed, txHash:%s", delegateResult.TxHash)
 
 	// Make sure coins have been delegated
 	ddResp, err := stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
@@ -166,12 +159,10 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	require.Equal(t, delegateAmount, ddResp.DelegationResponses[0].Balance.Amount)
 
 	// Redelegate Coins
-	_, validator2Address, deactivateValidator2, err := chain.CreateValidator(ctx, validatorStakingAmount, validatorStakingAmount)
+	_, validator2Address, deactivateValidator2, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
-	defer func() {
-		err := deactivateValidator2()
-		require.NoError(t, err)
-	}()
+	defer deactivateValidator2()
+
 	redelegateMsg := &stakingtypes.MsgBeginRedelegate{
 		DelegatorAddress:    delegator.String(),
 		ValidatorSrcAddress: validatorAddress.String(),
@@ -187,7 +178,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, int64(chain.GasLimitByMsgs(redelegateMsg)), redelegateResult.GasUsed)
-	logger.Get(ctx).Info("Redelegation executed", zap.String("txHash", redelegateResult.TxHash))
+	t.Logf("Redelegation executed, txHash:%s", redelegateResult.TxHash)
 
 	ddResp, err = stakingClient.DelegatorDelegations(ctx, &stakingtypes.QueryDelegatorDelegationsRequest{
 		DelegatorAddr: delegator.String(),
@@ -216,7 +207,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	logger.Get(ctx).Info("Undelegation executed", zap.String("txHash", undelegateResult.TxHash))
+	t.Logf("Undelegation executed, txHash:%s ", undelegateResult.TxHash)
 
 	// Wait for undelegation
 	time.Sleep(fastUnbondingTime + time.Second*2)
@@ -249,7 +240,7 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 	notEnoughValidatorAmount := initialValidatorAmount.Quo(sdk.NewInt(2))
 
 	// Try to create a validator with the amount less than the minimum
-	_, _, _, err = chain.CreateValidator(ctx, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
+	_, _, _, err = chain.CreateValidator(ctx, t, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
 	require.True(t, stakingtypes.ErrSelfDelegationBelowMinimum.Is(err))
 }
 
@@ -269,12 +260,9 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	initialValidatorAmount := customStakingParams.Params.MinSelfDelegation
 
 	// create new validator with min allowed self delegation
-	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, initialValidatorAmount, initialValidatorAmount)
+	validatorAccAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, initialValidatorAmount, initialValidatorAmount)
 	require.NoError(t, err)
-	defer func() {
-		err := deactivateValidator()
-		require.NoError(t, err)
-	}()
+	defer deactivateValidator()
 
 	customStakingParams, err = customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	requireT.NoError(err)
@@ -282,16 +270,11 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	// we increase it here to test the update of the validators with the current min self delegation less than new param
 	newMinSelfDelegation := minSelfDelegation.Add(sdk.NewInt(1))
 
-	err = changeMinSelfDelegationCustomParam(ctx, requireT, chain, customParamsClient, newMinSelfDelegation)
-	requireT.NoError(err)
-	defer func() {
-		// return the initial state back
-		err = changeMinSelfDelegationCustomParam(ctx, requireT, chain, customParamsClient, initialValidatorAmount)
-		require.NoError(t, err)
-	}()
+	changeMinSelfDelegationCustomParam(ctx, t, chain, customParamsClient, newMinSelfDelegation)
+	defer changeMinSelfDelegationCustomParam(ctx, t, chain, customParamsClient, initialValidatorAmount)
 
 	// try to create a validator with the initial amount which we have increased
-	_, _, _, err = chain.CreateValidator(ctx, initialValidatorAmount, initialValidatorAmount) //nolint:dogsled // we await for the error only
+	_, _, _, err = chain.CreateValidator(ctx, t, initialValidatorAmount, initialValidatorAmount) //nolint:dogsled // we await for the error only
 	requireT.ErrorIs(err, stakingtypes.ErrSelfDelegationBelowMinimum)
 
 	// edit validator
@@ -301,10 +284,9 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 		},
 		ValidatorAddress: validatorAddress.String(),
 	}
-	err = chain.FundAccountsWithOptions(ctx, validatorAccAddress, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, validatorAccAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
-	require.NoError(t, err)
 
 	_, err = client.BroadcastTx(
 		ctx,
@@ -324,23 +306,24 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 
 func changeMinSelfDelegationCustomParam(
 	ctx context.Context,
-	requireT *require.Assertions,
+	t *testing.T,
 	chain integrationtests.CoreumChain,
 	customParamsClient customparamstypes.QueryClient,
 	newMinSelfDelegation sdk.Int,
-) error {
+) {
 	// create new proposer
 	proposer := chain.GenAccount()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+
+	requireT := require.New(t)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
+	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
 	marshalledMinSelfDelegation, err := tmjson.Marshal(newMinSelfDelegation)
 	requireT.NoError(err)
 	// apply proposal
-	err = chain.Governance.ProposeAndVote(ctx, proposer,
+	chain.Governance.ProposeAndVote(ctx, t, proposer,
 		paramproposal.NewParameterChangeProposal(
 			"Custom staking params change proposal", "-",
 			[]paramproposal.ParamChange{
@@ -351,13 +334,11 @@ func changeMinSelfDelegationCustomParam(
 		),
 		govtypes.OptionYes,
 	)
-	requireT.NoError(err)
 
 	// check the proposed change is applied
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	requireT.NoError(err)
 	requireT.Equal(newMinSelfDelegation.String(), customStakingParams.Params.MinSelfDelegation.String())
-	return err
 }
 
 func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain integrationtests.CoreumChain, unbondingTime time.Duration) {
@@ -369,11 +350,10 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain inte
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
+	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
 	// Create proposition to change max the unbonding time value.
-	err = chain.Governance.ProposeAndVote(ctx, proposer,
+	chain.Governance.ProposeAndVote(ctx, t, proposer,
 		paramproposal.NewParameterChangeProposal(
 			fmt.Sprintf("Change the unbnunbondingdig time to %s", unbondingTime.String()),
 			"Changing unbonding time for the integration test",
@@ -383,7 +363,6 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain inte
 		),
 		govtypes.OptionYes,
 	)
-	requireT.NoError(err)
 
 	// Check the proposed change is applied.
 	stakingParams, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})

@@ -2,7 +2,7 @@ package integrationtests
 
 import (
 	"context"
-	"fmt"
+	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -22,8 +22,8 @@ import (
 	protobufgrpc "github.com/gogo/protobuf/grpc"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
@@ -147,30 +147,26 @@ func (c ChainContext) GenMultisigAccount(signersCount, multisigThreshold int) (*
 // ExecuteIBCTransfer executes IBC transfer transaction.
 func (c ChainContext) ExecuteIBCTransfer(
 	ctx context.Context,
+	t *testing.T,
 	senderAddress sdk.AccAddress,
 	coin sdk.Coin,
 	recipientChainContext ChainContext,
 	recipientAddress sdk.AccAddress,
-) (*sdk.TxResponse, error) {
-	log := logger.Get(ctx)
+) *sdk.TxResponse {
+	t.Helper()
+
 	sender := c.ConvertToBech32Address(senderAddress)
 	receiver := recipientChainContext.ConvertToBech32Address(recipientAddress)
-	log.Info(fmt.Sprintf("Sending IBC transfer from %s, to %s, %s.", sender, receiver, coin.String()))
+	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, receiver, coin.String())
 
-	recipientChannelID, err := c.GetIBCChannelID(ctx, recipientChainContext.ChainSettings.ChainID)
-	if err != nil {
-		return nil, err
-	}
-
+	recipientChannelID := c.GetIBCChannelID(ctx, t, recipientChainContext.ChainSettings.ChainID)
 	height, err := queryLatestConsensusHeight(
 		ctx,
 		c.ClientContext,
 		ibctransfertypes.PortID,
 		recipientChannelID,
 	)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:    ibctransfertypes.PortID,
@@ -184,28 +180,32 @@ func (c ChainContext) ExecuteIBCTransfer(
 		},
 	}
 
-	return BroadcastTxWithSigner(
+	txRes, err := BroadcastTxWithSigner(
 		ctx,
 		c,
 		c.TxFactory().WithSimulateAndExecute(true),
 		senderAddress,
 		&ibcSend,
 	)
+	require.NoError(t, err)
+
+	return txRes
 }
 
 // AwaitForBalance queries for the balance with retry and timeout.
 func (c ChainContext) AwaitForBalance(
 	ctx context.Context,
+	t *testing.T,
 	address sdk.AccAddress,
 	expectedBalance sdk.Coin,
-) error {
-	log := logger.Get(ctx)
-	log.Info(fmt.Sprintf("Waiting for account %s balance, expected amount: %s.", c.ConvertToBech32Address(address), expectedBalance.String()))
+) {
+	t.Helper()
 
+	t.Logf("Waiting for account %s balance, expected amount: %s.", c.ConvertToBech32Address(address), expectedBalance.String())
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
 	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
 	defer retryCancel()
-	err := retry.Do(retryCtx, time.Second, func() error {
+	require.NoError(t, retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
 		defer requestCancel()
 
@@ -222,19 +222,16 @@ func (c ChainContext) AwaitForBalance(
 		}
 
 		return nil
-	})
-	if err != nil {
-		return err
-	}
-	log.Info(fmt.Sprintf("Received expected balance of %s.", expectedBalance.Denom))
+	}))
 
-	return nil
+	t.Logf("Received expected balance of %s.", expectedBalance.Denom)
 }
 
 // GetIBCChannelID returns the first opened channel of the IBC connected chain peer.
-func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (string, error) {
-	log := logger.Get(ctx)
-	log.Info(fmt.Sprintf("Getting %s chain channel on %s.", peerChainID, c.ChainSettings.ChainID))
+func (c ChainContext) GetIBCChannelID(ctx context.Context, t *testing.T, peerChainID string) string {
+	t.Helper()
+
+	t.Logf("Getting %s chain channel on %s chain.", peerChainID, c.ChainSettings.ChainID)
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer retryCancel()
@@ -243,7 +240,7 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
 
 	var channelID string
-	if err := retry.Do(retryCtx, time.Second, func() error {
+	require.NoError(t, retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
 		defer requestCancel()
 
@@ -278,13 +275,11 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 		}
 
 		return retry.Retryable(errors.Errorf("waiting for the %s channel on the %s to open", peerChainID, c.ChainSettings.ChainID))
-	}); err != nil {
-		return "", err
-	}
+	}))
 
-	log.Info(fmt.Sprintf("Got %s chain channel on %s, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID))
+	t.Logf("Got %s chain channel on %s chain, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID)
 
-	return channelID, nil
+	return channelID
 }
 
 func queryLatestConsensusHeight(ctx context.Context, clientCtx client.Context, portID, channelID string) (ibcclienttypes.Height, error) {

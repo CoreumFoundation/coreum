@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"testing"
 
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
+	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
@@ -96,25 +96,27 @@ func (c CoreumChain) ComputeNeededBalanceFromOptions(options BalancesOptions) sd
 }
 
 // FundAccountsWithOptions computes the needed balances and fund account with it.
-func (c CoreumChain) FundAccountsWithOptions(ctx context.Context, address sdk.AccAddress, options BalancesOptions) error {
+func (c CoreumChain) FundAccountsWithOptions(ctx context.Context, t *testing.T, address sdk.AccAddress, options BalancesOptions) {
+	t.Helper()
+
 	amount := c.ComputeNeededBalanceFromOptions(options)
-	return c.Faucet.FundAccounts(ctx, FundedAccount{
+	c.Faucet.FundAccounts(ctx, t, FundedAccount{
 		Address: address,
 		Amount:  c.NewCoin(amount),
 	})
 }
 
 // CreateValidator creates a new validator on the chain and returns the staker addresses, validator addresses and callback function to deactivate it.
-func (c CoreumChain) CreateValidator(ctx context.Context, stakingAmount, selfDelegationAmount sdk.Int) (sdk.AccAddress, sdk.ValAddress, func() error, error) {
+func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingAmount, selfDelegationAmount sdk.Int) (sdk.AccAddress, sdk.ValAddress, func(), error) {
+	t.Helper()
+
 	stakingClient := stakingtypes.NewQueryClient(c.ClientContext)
 	staker := c.GenAccount()
 
-	if err := c.FundAccountsWithOptions(ctx, staker, BalancesOptions{
+	c.FundAccountsWithOptions(ctx, t, staker, BalancesOptions{
 		Messages: []sdk.Msg{&stakingtypes.MsgCreateValidator{}, &stakingtypes.MsgUndelegate{}},
 		Amount:   stakingAmount,
-	}); err != nil {
-		return nil, nil, nil, err
-	}
+	})
 
 	// Create staker
 	validatorAddr := sdk.ValAddress(staker)
@@ -126,9 +128,7 @@ func (c CoreumChain) CreateValidator(ctx context.Context, stakingAmount, selfDel
 		stakingtypes.NewCommissionRates(sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1"), sdk.MustNewDecFromStr("0.1")),
 		selfDelegationAmount,
 	)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	require.NoError(t, err)
 
 	result, err := client.BroadcastTx(
 		ctx,
@@ -137,26 +137,25 @@ func (c CoreumChain) CreateValidator(ctx context.Context, stakingAmount, selfDel
 		msg,
 	)
 	if err != nil {
+		// we still need that error to be returned since we assert it depending on the test
 		return nil, nil, nil, err
 	}
 
-	logger.Get(ctx).Info("Validator creation executed", zap.String("txHash", result.TxHash))
+	t.Logf("Validator creation executed, txHash:%s", result.TxHash)
 
 	// Make sure staker has been created
 	resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validatorAddr.String(),
 	})
-	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
-	}
+	require.NoError(t, err)
 	if stakingAmount.String() != resp.Validator.Tokens.String() {
-		return nil, nil, nil, errors.Errorf("unexpected validator %q tokens after creation: %s", validatorAddr, resp.Validator.Tokens)
+		t.Fatalf("unexpected validator %q tokens after creation: %s", validatorAddr, resp.Validator.Tokens)
 	}
 	if stakingtypes.Bonded != resp.Validator.Status {
-		return nil, nil, nil, errors.Errorf("unexpected validator %q status after creation: %s", validatorAddr, resp.Validator.Status)
+		t.Fatalf("unexpected validator %q status after creation: %s", validatorAddr, resp.Validator.Status)
 	}
 
-	return staker, validatorAddr, func() error {
+	return staker, validatorAddr, func() {
 		// Undelegate coins, i.e. deactivate staker
 		undelegateMsg := stakingtypes.NewMsgUndelegate(staker, validatorAddr, c.NewCoin(stakingAmount))
 		_, err = client.BroadcastTx(
@@ -165,22 +164,16 @@ func (c CoreumChain) CreateValidator(ctx context.Context, stakingAmount, selfDel
 			c.TxFactory().WithSimulateAndExecute(true),
 			undelegateMsg,
 		)
-		if err != nil {
-			return err
-		}
+		require.NoError(t, err)
 
 		// make sure the validator isn't bonded now
 		resp, err := stakingClient.Validator(ctx, &stakingtypes.QueryValidatorRequest{
 			ValidatorAddr: validatorAddr.String(),
 		})
-		if err != nil {
-			return errors.WithStack(err)
-		}
+		require.NoError(t, err)
 
 		if stakingtypes.Bonded == resp.Validator.Status {
-			return errors.Errorf("unexpected validator %q status after removal: %s", validatorAddr, resp.Validator.Status)
+			t.Fatalf("unexpected validator %q status after removal: %s", validatorAddr, resp.Validator.Status)
 		}
-
-		return nil
 	}, nil
 }
