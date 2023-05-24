@@ -2,6 +2,7 @@ package integrationtests
 
 import (
 	"context"
+	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -60,7 +61,7 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 }
 
 // UpdateParams goes through proposal process to update parameters.
-func (g Governance) UpdateParams(ctx context.Context, description string, updates []paramproposal.ParamChange) error {
+func (g Governance) UpdateParams(ctx context.Context, t *testing.T, description string, updates []paramproposal.ParamChange) error {
 	// Fund accounts.
 	proposer := g.chainCtx.GenAccount()
 	proposerBalance, err := g.ComputeProposerBalance(ctx)
@@ -73,7 +74,7 @@ func (g Governance) UpdateParams(ctx context.Context, description string, update
 		return err
 	}
 
-	err = g.ProposeAndVote(ctx, proposer,
+	err = g.ProposeAndVote(ctx, t, proposer,
 		paramproposal.NewParameterChangeProposal("Updating parameters", description, updates), govtypes.OptionYes)
 	if err != nil {
 		return err
@@ -83,13 +84,13 @@ func (g Governance) UpdateParams(ctx context.Context, description string, update
 }
 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
-func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) error {
+func (g Governance) ProposeAndVote(ctx context.Context, t *testing.T, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) error {
 	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, content)
 	if err != nil {
 		return err
 	}
 
-	proposalID, err := g.Propose(ctx, proposalMsg)
+	proposalID, err := g.Propose(ctx, t, proposalMsg)
 	if err != nil {
 		return err
 	}
@@ -123,7 +124,9 @@ func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress,
 }
 
 // Propose creates a new proposal.
-func (g Governance) Propose(ctx context.Context, msg *govtypes.MsgSubmitProposal) (uint64, error) {
+func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypes.MsgSubmitProposal) (uint64, error) {
+	SkipUnsafe(t)
+
 	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
 	result, err := client.BroadcastTx(
 		ctx,

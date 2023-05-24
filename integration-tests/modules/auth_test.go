@@ -26,7 +26,7 @@ import (
 func TestAuthFeeLimits(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	sender := chain.GenAccount()
 
@@ -128,7 +128,7 @@ func TestAuthFeeLimits(t *testing.T) {
 func TestAuthMultisig(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
@@ -204,7 +204,7 @@ func TestAuthMultisig(t *testing.T) {
 func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	sender := chain.GenAccount()
 

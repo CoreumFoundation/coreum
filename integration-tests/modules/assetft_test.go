@@ -27,7 +27,7 @@ import (
 func TestAssetFTQueryParams(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issueFee := getIssueFee(ctx, t, chain.ClientContext)
 
 	assert.True(t, issueFee.Amount.GT(sdk.ZeroInt()))
@@ -38,7 +38,7 @@ func TestAssetFTQueryParams(t *testing.T) {
 func TestAssetFTIssue(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -91,11 +91,11 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 	origIssueFee := getIssueFee(ctx, t, chain.ClientContext)
 
-	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing IssueFee in the assetft module",
+	requireT.NoError(chain.Governance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origIssueFee.Denom, sdk.ZeroInt()))))),
 		}))
@@ -129,7 +129,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT.NoError(err)
 
 	// Revert to original issue fee
-	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing IssueFee in the assetft module",
+	requireT.NoError(chain.Governance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(origIssueFee)))),
 		}))
@@ -139,7 +139,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 func TestAssetIssueAndQueryTokens(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	clientCtx := chain.ClientContext
@@ -216,7 +216,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 func TestAssetFTMint(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -350,7 +350,7 @@ func TestAssetFTMint(t *testing.T) {
 func TestAssetFTBurn(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -536,7 +536,7 @@ func TestAssetFTBurn(t *testing.T) {
 func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -686,7 +686,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 func TestAssetFTSendCommissionRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -834,7 +834,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 func TestAssetFTFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1133,7 +1133,7 @@ func TestAssetFTFreeze(t *testing.T) {
 func TestAssetFTFreezeUnfreezable(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1190,7 +1190,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -1244,7 +1244,7 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 func TestAssetFTGloballyFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
 	issuer := chain.GenAccount()
@@ -1410,7 +1410,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1497,7 +1497,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1588,7 +1588,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1669,7 +1669,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1748,7 +1748,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 func TestAssetFTWhitelist(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2040,7 +2040,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2097,7 +2097,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -2155,7 +2155,7 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 func TestBareToken(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2299,7 +2299,7 @@ func TestBareToken(t *testing.T) {
 func TestAuthzWithAssetFT(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 
@@ -2412,7 +2412,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
@@ -2475,7 +2475,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2577,7 +2577,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 func TestAssetFTFreezeAndBurn(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2714,7 +2714,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+			ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 			requireT := require.New(t)
 			assertT := assert.New(t)

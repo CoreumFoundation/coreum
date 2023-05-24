@@ -24,7 +24,7 @@ import (
 func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	creator := chain.GenAccount()
 	vestingAcc := chain.GenAccount()
@@ -121,7 +121,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 func TestVestingAccountStaking(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	creator := chain.GenAccount()
 	vestingAcc := chain.GenAccount()
@@ -141,7 +141,7 @@ func TestVestingAccountStaking(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation
-	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, validatorStakingAmount, validatorStakingAmount)
+	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
@@ -209,7 +209,7 @@ func TestVestingAccountStaking(t *testing.T) {
 func TestVestingAccountWithFTInteraction(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	issuer := chain.GenAccount()
 	vestingAcc := chain.GenAccount()

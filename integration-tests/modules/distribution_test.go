@@ -24,7 +24,7 @@ import (
 func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 
@@ -86,7 +86,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 		sdk.NewCoins(poolCoin),
 	))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
 	requireT.NoError(err)
@@ -120,7 +120,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	delegator := chain.GenAccount()
 	delegatorRewardRecipient := chain.GenAccount()
@@ -147,7 +147,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
-	validatorStakerAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, validatorStakingAmount, validatorStakingAmount)
+	validatorStakerAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer func() {
 		err := deactivateValidator()
