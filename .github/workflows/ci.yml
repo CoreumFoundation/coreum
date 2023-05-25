@@ -23,19 +23,18 @@ jobs:
         ]
         include:
           - ci_step: "lint"
-            command: "crust wasm lint/coreum"
+            command: "crust wasm lint/coreum --log-format=yaml"
             go-cache: true
             wasm-cache: true
             linter-cache: true
             docker-cache: false
           - ci_step: "test"
-            command: "crust test/coreum"
+            command: "crust test/coreum --log-format=yaml"
             go-cache: true
             wasm-cache: false
             linter-cache: false
             docker-cache: false
           - ci_step: "integration tests coreum-modules"
-            # TODO(dzmitryhil) discuss with the team whether we need the log-format in build
             command: "crust build/integration-tests/coreum/modules images --log-format=yaml && crust znet test --test-groups=coreum-modules"
             go-cache: true
             wasm-cache: true
