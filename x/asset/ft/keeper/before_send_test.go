@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -59,9 +58,9 @@ func TestCalculateRateShares(t *testing.T) {
 		accounts = append(accounts, genAccount())
 	}
 	issuer := genAccount()
+	dummyAddress := genAccount()
 	ibcPort := "port"
 	ibcChannel := "1"
-	ibcEscrowAddress := ibctransfertypes.GetEscrowAddress(ibcPort, ibcChannel).String()
 	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, newIBCChannelKeeperMock(ibcPort, ibcChannel))
 	pow10 := func(ex int64) sdk.Int {
 		return sdk.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
@@ -71,6 +70,8 @@ func TestCalculateRateShares(t *testing.T) {
 		rate      string
 		senders   map[string]sdk.Int
 		receivers map[string]sdk.Int
+		ibcIn     bool
+		ibcOut    bool
 		shares    map[string]sdk.Int
 	}{
 		{
@@ -275,31 +276,33 @@ func TestCalculateRateShares(t *testing.T) {
 			},
 		},
 		{
-			name: "one_senders_ibc_escrow_receiver",
+			name: "one_sender_ibc",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(10),
+				dummyAddress: sdk.NewInt(10),
 			},
+			ibcOut: true,
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 			},
 		},
 		{
-			name: "issuer_sender_ibc_escrow_receiver",
+			name: "issuer_sender_ibc",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				issuer: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(10),
+				dummyAddress: sdk.NewInt(10),
 			},
+			ibcOut: true,
 			shares: map[string]sdk.Int{},
 		},
 		{
-			name: "issuer_sender_two_senders_ibc_escrow_receiver",
+			name: "issuer_sender_two_senders_ibc",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				issuer:      sdk.NewInt(10),
@@ -307,33 +310,36 @@ func TestCalculateRateShares(t *testing.T) {
 				accounts[1]: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(20),
+				dummyAddress: sdk.NewInt(20),
 			},
+			ibcOut: true,
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 				accounts[1]: sdk.NewInt(5),
 			},
 		},
 		{
-			name: "ibc_escrow_sender_one_receiver",
+			name: "one_receiver_ibc",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(10),
+				dummyAddress: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(10),
 			},
+			ibcIn:  true,
 			shares: map[string]sdk.Int{},
 		},
 		{
 			name: "ibc_escrow_sender_issuer_receiver",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(10),
+				dummyAddress: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
 				issuer: sdk.NewInt(10),
 			},
+			ibcIn:  true,
 			shares: map[string]sdk.Int{},
 		},
 	}
@@ -343,10 +349,13 @@ func TestCalculateRateShares(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assertT := assert.New(t)
 			ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
-			if _, exists := tc.senders[ibcEscrowAddress]; exists {
+
+			switch {
+			case tc.ibcIn && tc.ibcOut:
+				panic("ibcIn and ibcOut cannot be set at the same time")
+			case tc.ibcIn:
 				ctx = wibctransfertypes.WithDirection(ctx, wibctransfertypes.DirectionIn)
-			}
-			if _, exists := tc.receivers[ibcEscrowAddress]; exists {
+			case tc.ibcOut:
 				ctx = wibctransfertypes.WithDirection(ctx, wibctransfertypes.DirectionOut)
 			}
 
