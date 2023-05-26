@@ -1,0 +1,1 @@
+a236b635c05bd3be5b88ed139527cdaafe76d108631d629ef344792f3880ecb0  ./target/wasm32-unknown-unknown/release/ibc_transfer.wasm

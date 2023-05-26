@@ -162,9 +162,8 @@ func (c ChainContext) ExecuteIBCTransfer(
 		return nil, err
 	}
 
-	height, err := queryLatestConsensusHeight(
+	height, err := c.QueryLatestConsensusHeight(
 		ctx,
-		c.ClientContext,
 		ibctransfertypes.PortID,
 		recipientChannelID,
 	)
@@ -287,8 +286,9 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, peerChainID string) (
 	return channelID, nil
 }
 
-func queryLatestConsensusHeight(ctx context.Context, clientCtx client.Context, portID, channelID string) (ibcclienttypes.Height, error) {
-	queryClient := ibcchanneltypes.NewQueryClient(clientCtx)
+// QueryLatestConsensusHeight returns the latest consensus height  for provided IBC port and channelID.
+func (c ChainContext) QueryLatestConsensusHeight(ctx context.Context, portID, channelID string) (ibcclienttypes.Height, error) {
+	queryClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
 	req := &ibcchanneltypes.QueryChannelClientStateRequest{
 		PortId:    portID,
 		ChannelId: channelID,
@@ -300,7 +300,7 @@ func queryLatestConsensusHeight(ctx context.Context, clientCtx client.Context, p
 	}
 
 	var clientState exported.ClientState
-	if err := clientCtx.InterfaceRegistry().UnpackAny(clientRes.IdentifiedClientState.ClientState, &clientState); err != nil {
+	if err := c.ClientContext.InterfaceRegistry().UnpackAny(clientRes.IdentifiedClientState.ClientState, &clientState); err != nil {
 		return ibcclienttypes.Height{}, err
 	}
 
