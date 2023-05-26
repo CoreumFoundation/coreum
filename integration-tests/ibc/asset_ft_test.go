@@ -160,13 +160,14 @@ func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 ) {
 	t.Helper()
 
+	requireT := require.New(t)
+
 	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
 	coreumIssuerBalanceBeforeTransferRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: coreumIssuer.String(),
 		Denom:   sendCoin.Denom,
 	})
 
-	requireT := require.New(t)
 	requireT.NoError(err)
 
 	_ = coreumChainCtx.ExecuteIBCTransfer(ctx, t, coreumIssuer, sendCoin, peerChainCtx, peerChainRecipient)
