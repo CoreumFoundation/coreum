@@ -16,9 +16,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
@@ -80,11 +78,11 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		})
 	}
 
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages:                    append([]sdk.Msg{issueMsg}, multiSendMsgs...),
 		NondeterministicMessagesGas: 10_000_000, // to cover extra bytes because of the message size
 		Amount:                      getIssueFee(ctx, t, chain.ClientContext).Amount,
-	}))
+	})
 
 	// issue fungible tokens
 	_, err := client.BroadcastTx(
@@ -106,9 +104,9 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 			msg,
 		)
 		requireT.NoError(err)
-		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch MultiSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed))
+		t.Logf("Successfully sent batch MultiSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed)
 	}
-	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with MultiSend", time.Since(start), numAccountsToFund*iterationsToFund))
+	t.Logf("It takes %s to fund %d accounts with MultiSend", time.Since(start), numAccountsToFund*iterationsToFund)
 
 	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
 }
@@ -156,10 +154,10 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	for i := 0; i < iterationsToFund; i++ {
 		fundMsgs = append(fundMsgs, bankSendSendMsgs...)
 	}
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: fundMsgs,
 		Amount:   getIssueFee(ctx, t, chain.ClientContext).Amount,
-	}))
+	})
 
 	// issue fungible tokens
 	_, err := client.BroadcastTx(
@@ -179,9 +177,9 @@ func TestBankSendBatchMsgs(t *testing.T) {
 			chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendSendMsgs...)),
 			bankSendSendMsgs...)
 		requireT.NoError(err)
-		logger.Get(ctx).Info(fmt.Sprintf("Successfully sent batch BankSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed))
+		t.Logf("Successfully sent batch BankSend tx, hash: %s, gasUse:%d", res.TxHash, res.GasUsed)
 	}
-	logger.Get(ctx).Info(fmt.Sprintf("It takes %s to fund %d accounts with BankSend", time.Since(start), numAccountsToFund*iterationsToFund))
+	t.Logf("It takes %s to fund %d accounts with BankSend", time.Since(start), numAccountsToFund*iterationsToFund)
 
 	assertBatchAccounts(ctx, chain, sdk.NewCoins(sdk.NewCoin(coinToFund.Denom, coinToFund.Amount.MulRaw(int64(iterationsToFund)))), fundedAccounts, denom, requireT)
 }
@@ -196,10 +194,10 @@ func TestBankSendDeterministicGas(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
-	}))
+	})
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -241,10 +239,10 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
 	}
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{bankSend1, bankSend2},
 		Amount:   sdk.NewInt(2000),
-	}))
+	})
 
 	gasExpected := chain.GasLimitByMultiSendMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)
@@ -279,12 +277,12 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 		})
 	}
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgSend{
 			Amount: make(sdk.Coins, numOfTokens),
 		}}, issueMsgs...),
 		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(numOfTokens),
-	}))
+	})
 
 	// Issue fungible tokens
 	res, err := client.BroadcastTx(
@@ -338,10 +336,10 @@ func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
-	}))
+	})
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -370,10 +368,10 @@ func TestBankSendGasEstimation(t *testing.T) {
 	sender := chain.GenAccount()
 
 	amountToSend := sdk.NewInt(1000)
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
-	}))
+	})
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -418,7 +416,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 		})
 	}
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				{
@@ -432,7 +430,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 			},
 		}}, issueMsgs...),
 		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(numOfTokens),
-	}))
+	})
 
 	// Issue fungible tokens
 	res, err := client.BroadcastTx(
@@ -513,7 +511,7 @@ func TestBankMultiSend(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: append([]sdk.Msg{&banktypes.MsgMultiSend{
 			Inputs: []banktypes.Input{
 				{Coins: make(sdk.Coins, 2)},
@@ -524,7 +522,7 @@ func TestBankMultiSend(t *testing.T) {
 			},
 		}}, issueMsgs...),
 		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(int64(len(issueMsgs))),
-	}))
+	})
 
 	// Issue fungible tokens
 	res, err := client.BroadcastTx(
@@ -685,17 +683,17 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	issueFee := getIssueFee(ctx, t, chain.ClientContext).Amount
 
 	// fund accounts
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, sender1, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			multiSendMsg,
 			issue1Msg,
 		},
 		Amount: issueFee.Add(nativeAmountToSend.Amount),
-	}))
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, sender2, integrationtests.BalancesOptions{
+	})
+	chain.FundAccountsWithOptions(ctx, t, sender2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{issue2Msg},
 		Amount:   issueFee,
-	}))
+	})
 
 	// issue first fungible token
 	_, err = client.BroadcastTx(
@@ -778,13 +776,13 @@ func TestBankCoreSend(t *testing.T) {
 
 	senderInitialAmount := sdk.NewInt(100)
 	recipientInitialAmount := sdk.NewInt(10)
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   senderInitialAmount,
-	}))
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
 		Amount: recipientInitialAmount,
-	}))
+	})
 
 	// transfer tokens from sender to recipient
 	amountToSend := sdk.NewInt(10)
@@ -802,7 +800,7 @@ func TestBankCoreSend(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
+	t.Logf("Transfer executed, txHash:%s", result.TxHash)
 
 	// Query wallets for current balance
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
