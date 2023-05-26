@@ -37,6 +37,7 @@ service Msg {
   rpc GloballyUnfreeze(MsgGloballyUnfreeze) returns (EmptyResponse);
 
   // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
+  rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
 
   // === Upgrade v3 ===
 
