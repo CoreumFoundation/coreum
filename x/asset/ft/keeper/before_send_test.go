@@ -66,13 +66,12 @@ func TestCalculateRateShares(t *testing.T) {
 		return sdk.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
 	}
 	testCases := []struct {
-		name      string
-		rate      string
-		senders   map[string]sdk.Int
-		receivers map[string]sdk.Int
-		ibcIn     bool
-		ibcOut    bool
-		shares    map[string]sdk.Int
+		name         string
+		rate         string
+		senders      map[string]sdk.Int
+		receivers    map[string]sdk.Int
+		ibcDirection wibctransfertypes.Direction
+		shares       map[string]sdk.Int
 	}{
 		{
 			name:    "empty_senders",
@@ -284,7 +283,7 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				dummyAddress: sdk.NewInt(10),
 			},
-			ibcOut: true,
+			ibcDirection: wibctransfertypes.DirectionOut,
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 			},
@@ -298,8 +297,8 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				dummyAddress: sdk.NewInt(10),
 			},
-			ibcOut: true,
-			shares: map[string]sdk.Int{},
+			ibcDirection: wibctransfertypes.DirectionOut,
+			shares:       map[string]sdk.Int{},
 		},
 		{
 			name: "issuer_sender_two_senders_ibc",
@@ -312,7 +311,7 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				dummyAddress: sdk.NewInt(20),
 			},
-			ibcOut: true,
+			ibcDirection: wibctransfertypes.DirectionOut,
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 				accounts[1]: sdk.NewInt(5),
@@ -327,8 +326,8 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(10),
 			},
-			ibcIn:  true,
-			shares: map[string]sdk.Int{},
+			ibcDirection: wibctransfertypes.DirectionIn,
+			shares:       map[string]sdk.Int{},
 		},
 		{
 			name: "ibc_escrow_sender_issuer_receiver",
@@ -339,8 +338,8 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				issuer: sdk.NewInt(10),
 			},
-			ibcIn:  true,
-			shares: map[string]sdk.Int{},
+			ibcDirection: wibctransfertypes.DirectionIn,
+			shares:       map[string]sdk.Int{},
 		},
 	}
 
@@ -350,13 +349,8 @@ func TestCalculateRateShares(t *testing.T) {
 			assertT := assert.New(t)
 			ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 
-			switch {
-			case tc.ibcIn && tc.ibcOut:
-				panic("ibcIn and ibcOut cannot be set at the same time")
-			case tc.ibcIn:
-				ctx = wibctransfertypes.WithDirection(ctx, wibctransfertypes.DirectionIn)
-			case tc.ibcOut:
-				ctx = wibctransfertypes.WithDirection(ctx, wibctransfertypes.DirectionOut)
+			if tc.ibcDirection != "" {
+				ctx = wibctransfertypes.WithDirection(ctx, tc.ibcDirection)
 			}
 
 			shares := assetFTKeeper.CalculateRateShares(ctx, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
