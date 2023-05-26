@@ -317,6 +317,7 @@ func queryLatestConsensusHeight(ctx context.Context, clientCtx client.Context, p
 type Chain struct {
 	ChainContext
 	Faucet Faucet
+	Wasm   Wasm
 }
 
 // NewChain creates an instance of the new Chain.
@@ -341,5 +342,6 @@ func NewChain(grpcClient protobufgrpc.ClientConn, chainSettings ChainSettings, f
 	return Chain{
 		ChainContext: chainCtx,
 		Faucet:       faucet,
+		Wasm:         NewWasm(chainCtx),
 	}
 }
