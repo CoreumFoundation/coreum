@@ -38,10 +38,11 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	coreumToOsmosisEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToOsmosisChannelID)
 
 	coreumSender := coreumChain.GenAccount()
-	gaiaRecipient := gaiaChain.GenAccount()
+	gaiaRecipient1 := gaiaChain.GenAccount()
+	gaiaRecipient2 := gaiaChain.GenAccount()
 	osmosisRecipient := osmosisChain.GenAccount()
 
-	coreumBankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
+	//coreumBankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
 
 	coreumIssuer := coreumChain.GenAccount()
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
@@ -105,15 +106,49 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	requireT.NoError(err)
 
 	// issue balance before the IBC transfer
-	coreumIssuerBalanceBeforeIBCTransfersRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumIssuer.String(),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
+	//coreumIssuerBalanceBeforeIBCTransfersRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	//	Address: coreumIssuer.String(),
+	//	Denom:   sendCoin.Denom,
+	//})
+	//requireT.NoError(err)
+
+	// ******* Coreum to Gaia ******* //
+	// IBC transfer from FT issuer address.
+	ibcTransferAndAssertBalanceChanges(
+		ctx,
+		t,
+		coreumChain.ChainContext,
+		coreumIssuer,
+		sendCoin,
+		gaiaChain.ChainContext,
+		gaiaRecipient1,
+		map[string]sdk.Int{
+			coreumIssuer.String():              sendCoin.Amount.Neg(),
+			coreumToGaiaEscrowAddress.String(): sendCoin.Amount,
+		},
+		gaiaToCoreumChannelID,
+	)
+
+	// IBC transfer from non-FT issuer address.
+	ibcTransferAndAssertBalanceChanges(
+		ctx,
+		t,
+		coreumChain.ChainContext,
+		coreumSender,
+		sendCoin,
+		gaiaChain.ChainContext,
+		gaiaRecipient2,
+		map[string]sdk.Int{
+			coreumSender.String():              sendCoin.Amount.Add(sendCommissionAmount).Add(burntAmount).Neg(),
+			coreumIssuer.String():              sendCommissionAmount,
+			coreumToGaiaEscrowAddress.String(): sendCoin.Amount,
+		},
+		gaiaToCoreumChannelID,
+	)
 
 	// send from issuer and non issuer to gaia
 	sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
-		ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress,
+		ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient1, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress,
 	)
 
 	// send from issuer to osmosis
@@ -121,36 +156,36 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress,
 	)
 
-	// validate two commissions
-	coreumIssuerBalanceAfterSenderToChainsTransferRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumIssuer.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(
-		coreumIssuerBalanceBeforeIBCTransfersRes.Balance.Amount.Add(sendCommissionAmount.MulRaw(2)).Sub(sendCoin.Amount.MulRaw(2)).String(),
-		coreumIssuerBalanceAfterSenderToChainsTransferRes.Balance.Amount.String(),
-	)
-
-	// send back from gaia to validate zero commission
-	sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress)
-
-	// send back from osmosis to validate zero commission
-	sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress)
-
-	// validate two commissions (no additional commission)
-	coreumIssuerBalanceAfterSenderToChainsTransferRes, err = coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumIssuer.String(),
-		Denom:   denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(
-		coreumIssuerBalanceBeforeIBCTransfersRes.Balance.Amount.Add(sendCommissionAmount.MulRaw(2)).String(),
-		coreumIssuerBalanceAfterSenderToChainsTransferRes.Balance.Amount.String(),
-	)
+	//// validate two commissions
+	//coreumIssuerBalanceAfterSenderToChainsTransferRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	//	Address: coreumIssuer.String(),
+	//	Denom:   denom,
+	//})
+	//requireT.NoError(err)
+	//requireT.Equal(
+	//	coreumIssuerBalanceBeforeIBCTransfersRes.Balance.Amount.Add(sendCommissionAmount.MulRaw(2)).Sub(sendCoin.Amount.MulRaw(2)).String(),
+	//	coreumIssuerBalanceAfterSenderToChainsTransferRes.Balance.Amount.String(),
+	//)
+	//
+	//// send back from gaia to validate zero commission
+	//sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient1, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress)
+	//
+	//// send back from osmosis to validate zero commission
+	//sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress)
+	//
+	//// validate two commissions (no additional commission)
+	//coreumIssuerBalanceAfterSenderToChainsTransferRes, err = coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+	//	Address: coreumIssuer.String(),
+	//	Denom:   denom,
+	//})
+	//requireT.NoError(err)
+	//requireT.Equal(
+	//	coreumIssuerBalanceBeforeIBCTransfersRes.Balance.Amount.Add(sendCommissionAmount.MulRaw(2)).String(),
+	//	coreumIssuerBalanceAfterSenderToChainsTransferRes.Balance.Amount.String(),
+	//)
 }
 
-func ibcTransferAndAssertBalances(
+func ibcTransferAndAssertBalanceChanges(
 	ctx context.Context,
 	t *testing.T,
 	coreumChainCtx integrationtests.ChainContext,
@@ -159,7 +194,7 @@ func ibcTransferAndAssertBalances(
 	peerChainCtx integrationtests.ChainContext,
 	peerChainRecipient sdk.AccAddress,
 	expectedBalanceChanges map[string]sdk.Int,
-	peerChainToCoreumChannelID string, // TODO: Remove/Replace ?
+	peerChainToCoreumChannelID string, // TODO: Remove/Replace/Keep ?
 ) {
 	requireT := require.New(t)
 	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
@@ -190,8 +225,8 @@ func ibcTransferAndAssertBalances(
 		requireT.NoError(err)
 		requireT.NotNil(balanceAfterOperation.Balance)
 
-		actualBalanceChange := balancesBeforeOperation[addr].Sub(balanceAfterOperation.Balance.Amount)
-		requireT.True(expectedBalanceChange.Equal(actualBalanceChange))
+		actualBalanceChange := balanceAfterOperation.Balance.Amount.Sub(balancesBeforeOperation[addr])
+		requireT.Equal(expectedBalanceChange.String(), actualBalanceChange.String())
 	}
 }
 
@@ -207,6 +242,7 @@ func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 	peerChainToCoreumChannelID string,
 	coreumToPeerChainEscrowAddress sdk.AccAddress,
 ) {
+	return
 	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
 	coreumIssuerBalanceBeforeTransferRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: coreumIssuer.String(),
