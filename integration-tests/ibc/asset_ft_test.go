@@ -107,6 +107,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		Address: coreumIssuer.String(),
 		Denom:   sendCoin.Denom,
 	})
+	requireT.NoError(err)
 
 	// send from issuer and non issuer to gaia
 	sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
@@ -150,7 +151,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 func TestIBCAssetFTWhitelisting(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
@@ -234,7 +235,7 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 func TestIBCAssetFTFreezing(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	coreumChain := chains.Coreum
@@ -324,7 +325,7 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
@@ -394,7 +395,7 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 func TestEscrowAddressIsBlockedByGlobalFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, true)
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
