@@ -76,11 +76,10 @@ func (g Governance) UpdateParams(ctx context.Context, t *testing.T, description 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
 func (g Governance) ProposeAndVote(ctx context.Context, t *testing.T, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) {
 	t.Helper()
-
 	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, content)
 	require.NoError(t, err)
 
-	proposalID, err := g.Propose(ctx, proposalMsg)
+	proposalID, err := g.Propose(ctx, t, proposalMsg)
 	require.NoError(t, err)
 
 	proposal, err := g.GetProposal(ctx, proposalID)
@@ -106,7 +105,9 @@ func (g Governance) ProposeAndVote(ctx context.Context, t *testing.T, proposer s
 }
 
 // Propose creates a new proposal.
-func (g Governance) Propose(ctx context.Context, msg *govtypes.MsgSubmitProposal) (uint64, error) {
+func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypes.MsgSubmitProposal) (uint64, error) {
+	SkipUnsafe(t)
+
 	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
 	result, err := client.BroadcastTx(
 		ctx,

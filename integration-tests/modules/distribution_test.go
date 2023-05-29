@@ -22,7 +22,7 @@ import (
 func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 
@@ -82,7 +82,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 		sdk.NewCoins(poolCoin),
 	))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
 	requireT.NoError(err)
@@ -116,7 +116,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	delegator := chain.GenAccount()
 	delegatorRewardRecipient := chain.GenAccount()
