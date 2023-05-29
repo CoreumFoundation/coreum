@@ -2,6 +2,7 @@ package integrationtests
 
 import (
 	"context"
+	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -10,9 +11,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
+	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
@@ -60,66 +60,49 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 }
 
 // UpdateParams goes through proposal process to update parameters.
-func (g Governance) UpdateParams(ctx context.Context, description string, updates []paramproposal.ParamChange) error {
+func (g Governance) UpdateParams(ctx context.Context, t *testing.T, description string, updates []paramproposal.ParamChange) {
+	t.Helper()
 	// Fund accounts.
 	proposer := g.chainCtx.GenAccount()
 	proposerBalance, err := g.ComputeProposerBalance(ctx)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
-	err = g.faucet.FundAccounts(ctx, NewFundedAccount(proposer, proposerBalance))
-	if err != nil {
-		return err
-	}
+	g.faucet.FundAccounts(ctx, t, NewFundedAccount(proposer, proposerBalance))
 
-	err = g.ProposeAndVote(ctx, proposer,
+	g.ProposeAndVote(ctx, t, proposer,
 		paramproposal.NewParameterChangeProposal("Updating parameters", description, updates), govtypes.OptionYes)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
-func (g Governance) ProposeAndVote(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) error {
+func (g Governance) ProposeAndVote(ctx context.Context, t *testing.T, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) {
+	t.Helper()
+
 	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, content)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	proposalID, err := g.Propose(ctx, proposalMsg)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	proposal, err := g.GetProposal(ctx, proposalID)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	if govtypes.StatusVotingPeriod != proposal.Status {
-		return errors.Errorf("unexpected proposal status after creation: %s", proposal.Status)
+		t.Fatalf("unexpected proposal status after creation: %s", proposal.Status)
 	}
 
 	err = g.VoteAll(ctx, option, proposal.ProposalId)
-	if err != nil {
-		return err
-	}
-	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
+	require.NoError(t, err)
+
+	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
 
 	finalStatus, err := g.WaitForVotingToFinalize(ctx, proposalID)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
+
 	if finalStatus != govtypes.StatusPassed {
-		return errors.Errorf("unexpected proposal status after voting: %s, expected: %s", finalStatus, govtypes.StatusPassed)
+		t.Fatalf("unexpected proposal status after voting: %s, expected: %s", finalStatus, govtypes.StatusPassed)
 	}
 
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
-
-	return nil
+	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 }
 
 // Propose creates a new proposal.

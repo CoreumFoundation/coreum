@@ -4,7 +4,6 @@ package upgrade
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -15,9 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev2 "github.com/CoreumFoundation/coreum/app/upgrade/v2"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
@@ -41,14 +38,12 @@ func upgradeV2(t *testing.T) {
 	issuer := chain.GenAccount()
 	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 	nfqQueryClient := nft.NewQueryClient(chain.ClientContext)
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetnfttypes.MsgIssueClass{},
-				&assetnfttypes.MsgMint{},
-			},
-		}),
-	)
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+			&assetnfttypes.MsgMint{},
+		},
+	})
 
 	issueMsg := &assetnfttypes.MsgIssueClass{
 		Issuer:      issuer.String(),
@@ -152,7 +147,6 @@ func runUpgrade(
 ) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
 
-	log := logger.Get(ctx)
 	requireT := require.New(t)
 	upgradeClient := upgradetypes.NewQueryClient(chain.ClientContext)
 
@@ -177,13 +171,9 @@ func runUpgrade(
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
+	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
-	log.Info("Creating proposal for upgrading",
-		zap.String("upgradeName", upgradeName),
-		zap.Int64("upgradeHeight", upgradeHeight),
-	)
+	t.Logf("Creating proposal for upgrading, upgradeName:%s, upgradeHeight:%d", upgradeName, upgradeHeight)
 
 	// Create proposal to upgrade chain.
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
@@ -200,7 +190,7 @@ func runUpgrade(
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
 	requireT.NoError(err)
-	log.Info("Upgrade proposal has been submitted", zap.Uint64("proposalID", proposalID))
+	t.Logf("Upgrade proposal has been submitted, proposalID:%d", proposalID)
 
 	// Verify that voting period started.
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
@@ -211,7 +201,7 @@ func runUpgrade(
 	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
-	log.Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
+	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime: %s", proposal.VotingEndTime)
 
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
@@ -232,7 +222,7 @@ func runUpgrade(
 
 	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
 	defer cancel()
-	log.Info("Waiting for upgrade", zap.Int64("upgradeHeight", upgradeHeight), zap.Int64("currentHeight", infoWaitingBlockRes.Block.Header.Height))
+	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.Block.Header.Height)
 	err = retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
@@ -254,11 +244,11 @@ func runUpgrade(
 	})
 	requireT.NoError(err)
 	assert.Equal(t, upgradeHeight, appliedPlan.Height)
-	log.Info(fmt.Sprintf("Upgrade passed, applied plan height: %d", appliedPlan.Height))
+	t.Logf("Upgrade passed, applied plan height: %d", appliedPlan.Height)
 
 	// The new binary isn't equal to initial
 	infoAfterRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
-	log.Info(fmt.Sprintf("New binary version: %s", infoAfterRes.ApplicationVersion.Version))
+	t.Logf("New binary version: %s", infoAfterRes.ApplicationVersion.Version)
 	assert.NotEqual(t, infoAfterRes.ApplicationVersion.Version, infoBeforeRes.ApplicationVersion.Version)
 }

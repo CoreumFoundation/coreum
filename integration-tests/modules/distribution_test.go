@@ -12,9 +12,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
@@ -40,12 +38,12 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 		Depositor: communityPoolFunder.String(),
 	}
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, communityPoolFunder, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, communityPoolFunder, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgFundCommunityPool,
 		},
 		Amount: fundAmount,
-	}))
+	})
 
 	// capture the pool amount now to check it later
 	poolBeforeFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
@@ -74,9 +72,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 
 	communityPoolRecipient := chain.GenAccount()
 
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
-
+	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, distributiontypes.NewCommunityPoolSpendProposal(
@@ -90,7 +86,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	requireT.NoError(err)
 
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
+	t.Logf("Proposal has been submitted, proposalID:%d", proposalID)
 
 	// verify that voting period started
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
@@ -101,7 +97,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
-	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
+	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
 
 	// wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
@@ -131,7 +127,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	requireT := require.New(t)
 	// the amount of the delegation should be big enough to get at least some reward for the few blocks
 	amountToDelegate := sdk.NewInt(1_000_000_000)
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, delegator, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&distributiontypes.MsgWithdrawDelegatorReward{},
@@ -139,7 +135,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 			&distributiontypes.MsgWithdrawDelegatorReward{},
 		},
 		Amount: amountToDelegate,
-	}))
+	})
 
 	delegatedCoin := chain.NewCoin(amountToDelegate)
 
@@ -147,12 +143,9 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
-	validatorStakerAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, validatorStakingAmount, validatorStakingAmount)
+	validatorStakerAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
-	defer func() {
-		err := deactivateValidator()
-		require.NoError(t, err)
-	}()
+	defer deactivateValidator()
 
 	// delegate coins
 	delegateMsg := &stakingtypes.MsgDelegate{
@@ -163,7 +156,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 
 	clientCtx := chain.ClientContext
 
-	logger.Get(ctx).Info("Delegating some coins to validator to withdraw later")
+	t.Log("Delegating some coins to validator to withdraw later")
 	_, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
@@ -194,7 +187,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	// *** Withdraw and check the delegator reward. ***
 
 	// normal delegator
-	logger.Get(ctx).Info("Withdrawing the delegator reward")
+	t.Log("Withdrawing the delegator reward")
 	// withdraw the normal reward
 	withdrawRewardMsg := &distributiontypes.MsgWithdrawDelegatorReward{
 		DelegatorAddress: delegator.String(),
@@ -223,12 +216,12 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 
 	delegatorReward := delegatorBalanceAfterWithdrawal.Amount.Sub(delegatorBalanceBeforeWithdrawal.Amount.Sub(feeSpentOnWithdrawReward))
 	requireT.True(delegatorReward.IsPositive())
-	logger.Get(ctx).Info("Withdrawing of the delegator reward is done", zap.String("amount", delegatorReward.String()))
+	t.Logf("Withdrawing of the delegator reward is done, amount:%s", delegatorReward.String())
 
 	// *** Change the reward owner and withdraw the delegator reward. ***
 
 	// Change the reward owner and withdraw the reward
-	logger.Get(ctx).Info("Changing the reward recipient and windowing the reward")
+	t.Log("Changing the reward recipient and windowing the reward")
 	// change withdraw address
 	setWithdrawAddressMsg := &distributiontypes.MsgSetWithdrawAddress{
 		DelegatorAddress: delegator.String(),
@@ -263,16 +256,15 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	// *** Withdraw the validator commission. ***
 
 	// validator commission
-	logger.Get(ctx).Info("Withdrawing the validator commission")
+	t.Log("Withdrawing the validator commission")
 	// withdraw the normal reward
 	withdrawCommissionMsg := &distributiontypes.MsgWithdrawValidatorCommission{
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	err = chain.FundAccountsWithOptions(ctx, validatorStakerAddress, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, validatorStakerAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
-	requireT.NoError(err)
 
 	txResult, err = client.BroadcastTx(
 		ctx,
@@ -297,7 +289,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 
 	validatorStakerCommissionReward := validatorStakerBalanceAfterWithdrawal.Amount.Sub(validatorStakerBalanceBeforeWithdrawal.Amount.Sub(feeSpentOnWithdrawCommission))
 	requireT.True(validatorStakerCommissionReward.IsPositive())
-	logger.Get(ctx).Info("Withdrawing of the validator commission is done", zap.String("amount", validatorStakerCommissionReward.String()))
+	t.Logf("Withdrawing of the validator commission is done, amount:%s", validatorStakerCommissionReward.String())
 }
 
 func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, distributionClient distributiontypes.QueryClient) sdk.Coin {

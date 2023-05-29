@@ -35,10 +35,10 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
 	amountToVest := sdk.NewInt(100)
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, creator, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, creator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&vestingtypes.MsgCreateVestingAccount{}},
 		Amount:   amountToVest,
-	}))
+	})
 
 	vestingDuration := 10 * time.Second
 	vestingCoin := chain.NewCoin(amountToVest)
@@ -74,11 +74,11 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	requireT.Equal(vestingCoin.String(), balanceRes.Balance.String())
 
 	// fund the vesting account to pay fees
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, vestingAcc, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
-	}))
+	})
 
 	msgSend := &banktypes.MsgSend{
 		FromAddress: vestingAcc.String(),
@@ -103,9 +103,9 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	}
 
 	// fund the vesting account to pay fees one more time
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, vestingAcc, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
-	}))
+	})
 
 	// try to send one more time, the coins should be unlocked at that time
 	_, err = client.BroadcastTx(
@@ -132,21 +132,18 @@ func TestVestingAccountStaking(t *testing.T) {
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
 	amountToVest := sdk.NewInt(100)
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, creator, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, creator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&vestingtypes.MsgCreateVestingAccount{}},
 		Amount:   amountToVest,
-	}))
+	})
 
 	// create new validator
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation
-	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, validatorStakingAmount, validatorStakingAmount)
+	_, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
-	defer func() {
-		err := deactivateValidator()
-		require.NoError(t, err)
-	}()
+	defer deactivateValidator()
 
 	vestingDuration := time.Hour
 	vestingCoin := chain.NewCoin(amountToVest)
@@ -183,11 +180,11 @@ func TestVestingAccountStaking(t *testing.T) {
 	requireT.Equal(vestingCoin.String(), balanceRes.Balance.String())
 
 	// fund the vesting account to pay fees for the staking
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, vestingAcc, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 		},
-	}))
+	})
 
 	msgDelegate := &stakingtypes.MsgDelegate{
 		DelegatorAddress: vestingAcc.String(),
@@ -218,19 +215,18 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT := require.New(t)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgSetWhitelistedLimit{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
-				&vestingtypes.MsgCreateVestingAccount{},
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgFreeze{},
-				&assetfttypes.MsgUnfreeze{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&vestingtypes.MsgCreateVestingAccount{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgUnfreeze{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	// issue a fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -313,7 +309,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT.Equal(vestingCoin.String(), balanceRes.Balance.String())
 
 	// fund the vesting account to pay fees
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, vestingAcc, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, vestingAcc, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgBurn{},
 			&assetfttypes.MsgBurn{},
@@ -322,7 +318,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
 		},
-	}))
+	})
 
 	// try to burn vesting locked coins
 	burnMsg := &assetfttypes.MsgBurn{
