@@ -150,6 +150,51 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	)
 }
 
+func ibcTransferAndAssertBalances(
+	ctx context.Context,
+	t *testing.T,
+	coreumChainCtx integrationtests.ChainContext,
+	coreumSender sdk.AccAddress,
+	sendCoin sdk.Coin,
+	peerChainCtx integrationtests.ChainContext,
+	peerChainRecipient sdk.AccAddress,
+	expectedBalanceChanges map[string]sdk.Int,
+	peerChainToCoreumChannelID string, // TODO: Remove/Replace ?
+) {
+	requireT := require.New(t)
+	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
+
+	balancesBeforeOperation := make(map[string]sdk.Int, len(expectedBalanceChanges))
+	for addr := range expectedBalanceChanges {
+		balanceBeforeOperation, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: addr,
+			Denom:   sendCoin.Denom,
+		})
+		requireT.NoError(err)
+		requireT.NotNil(balanceBeforeOperation.Balance)
+		balancesBeforeOperation[addr] = balanceBeforeOperation.Balance.Amount
+	}
+
+	_, err := coreumChainCtx.ExecuteIBCTransfer(ctx, coreumSender, sendCoin, peerChainCtx, peerChainRecipient)
+	requireT.NoError(err)
+
+	expectedRecipientBalance := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
+	err = peerChainCtx.AwaitForBalance(ctx, peerChainRecipient, expectedRecipientBalance)
+	requireT.NoError(err)
+
+	for addr, expectedBalanceChange := range expectedBalanceChanges {
+		balanceAfterOperation, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: addr,
+			Denom:   sendCoin.Denom,
+		})
+		requireT.NoError(err)
+		requireT.NotNil(balanceAfterOperation.Balance)
+
+		actualBalanceChange := balancesBeforeOperation[addr].Sub(balanceAfterOperation.Balance.Amount)
+		requireT.True(expectedBalanceChange.Equal(actualBalanceChange))
+	}
+}
+
 func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
 	ctx context.Context,
 	requireT *require.Assertions,
