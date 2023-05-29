@@ -20,6 +20,7 @@ import (
 
 func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	t.Parallel()
+	t.Helper()
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
@@ -150,6 +151,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 func TestIBCAssetFTWhitelisting(t *testing.T) {
 	t.Parallel()
+	t.Helper()
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
@@ -234,6 +236,7 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 
 func TestIBCAssetFTFreezing(t *testing.T) {
 	t.Parallel()
+	t.Helper()
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
@@ -324,6 +327,7 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 
 func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 	t.Parallel()
+	t.Helper()
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	coreumChain := chains.Coreum
@@ -394,6 +398,7 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 
 func TestEscrowAddressIsBlockedByGlobalFreeze(t *testing.T) {
 	t.Parallel()
+	t.Helper()
 
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
