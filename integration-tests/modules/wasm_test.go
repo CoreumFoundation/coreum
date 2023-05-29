@@ -17,9 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -205,15 +203,15 @@ type nftRes struct {
 func TestWASMBankSendContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	nativeDenom := chain.ChainSettings.Denom
 
 	requireT := require.New(t)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+	chain.Faucet.FundAccounts(ctx, t,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-	))
+	)
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactory().
@@ -322,14 +320,14 @@ func TestWASMBankSendContract(t *testing.T) {
 func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	admin := chain.GenAccount()
 
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+	chain.Faucet.FundAccounts(ctx, t,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-	))
+	)
 
 	// deployWASMContract and init contract with the initial coins amount
 	initialPayload, err := json.Marshal(struct{}{})
@@ -394,7 +392,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	proposer := chain.GenAccount()
@@ -405,10 +403,10 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.NoError(err)
 	proposerBalance.Amount = proposerBalance.Amount.MulRaw(2)
 
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+	chain.Faucet.FundAccounts(ctx, t,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
 		integrationtests.NewFundedAccount(proposer, proposerBalance),
-	))
+	)
 
 	// instantiateWASMContract the contract and set the initial counter state.
 	initialPayload, err := json.Marshal(simpleState{
@@ -456,7 +454,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		CodeIDs:     []uint64{codeID},
 	})
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
@@ -482,7 +480,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		CodeIDs:     []uint64{codeID},
 	})
 	requireT.NoError(err)
-	proposalID, err = chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err = chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
 	proposal, err = chain.Governance.GetProposal(ctx, proposalID)
@@ -499,9 +497,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	gasUsedAfterUnpinning := incrementAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1340)
 
-	logger.Get(ctx).Info("Gas saved on pinned contract",
-		zap.Int64("gasBeforePinning", gasUsedBeforePinning),
-		zap.Int64("gasAfterPinning", gasUsedAfterPinning))
+	t.Logf("Gas saved on pinned contract, gasBeforePinning:%d, gasAfterPinning:%d", gasUsedBeforePinning, gasUsedAfterPinning)
 
 	assertT := assert.New(t)
 	assertT.Less(gasUsedAfterPinning, gasUsedBeforePinning)
@@ -512,20 +508,20 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	newAdmin := chain.GenAccount()
 
 	requireT := require.New(t)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+	chain.Faucet.FundAccounts(ctx, t,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-	))
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, newAdmin, integrationtests.BalancesOptions{
+	)
+	chain.FundAccountsWithOptions(ctx, t, newAdmin, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&wasmtypes.MsgClearAdmin{},
 		},
-	}))
+	})
 
 	wasmClient := wasmtypes.NewQueryClient(chain.ClientContext)
 
@@ -604,16 +600,16 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 func TestWASMFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
 	requireT := require.New(t)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+	chain.Faucet.FundAccounts(ctx, t,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-	))
+	)
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactory().
@@ -922,15 +918,15 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	recipient := chain.GenAccount()
 
 	requireT := require.New(t)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx,
+	chain.Faucet.FundAccounts(ctx, t,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
-	))
+	)
 
 	clientCtx := chain.ClientContext
 	txf := chain.TxFactory().

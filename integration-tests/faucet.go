@@ -2,13 +2,13 @@ package integrationtests
 
 import (
 	"context"
+	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
-
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/stretchr/testify/require"
 )
 
 // FundedAccount represents a requirement of a test to get some funds for an account.
@@ -53,7 +53,15 @@ type fundingRequest struct {
 }
 
 // FundAccounts funds the list of the received wallets.
-func (f Faucet) FundAccounts(ctx context.Context, accountsToFund ...FundedAccount) (retErr error) {
+func (f Faucet) FundAccounts(ctx context.Context, t *testing.T, accountsToFund ...FundedAccount) {
+	t.Helper()
+
+	t.Log("Funding accounts for tests, it might take a while...")
+	require.NoError(t, f.fundAccounts(ctx, accountsToFund...))
+	t.Log("Test accounts funded")
+}
+
+func (f Faucet) fundAccounts(ctx context.Context, accountsToFund ...FundedAccount) (retErr error) {
 	const maxAccountsPerRequest = 20
 
 	if len(accountsToFund) > maxAccountsPerRequest {
@@ -164,9 +172,6 @@ func (f Faucet) prepareMultiSendMessage(requests []fundingRequest) *banktypes.Ms
 }
 
 func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) error {
-	log := logger.Get(ctx)
-	log.Info("Funding accounts for tests, it might take a while...")
-
 	// Transaction is broadcast and awaited
 	_, err := BroadcastTxWithSigner(
 		ctx,
@@ -178,7 +183,6 @@ func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) er
 	if err != nil {
 		return err
 	}
-	log.Info("Test accounts funded")
 
 	return nil
 }

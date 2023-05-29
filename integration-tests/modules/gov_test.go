@@ -10,9 +10,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 )
@@ -24,7 +22,7 @@ import (
 func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	gov := chain.Governance
@@ -35,24 +33,28 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	proposerBalance, err := gov.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 	proposerBalance = proposerBalance.Sub(missingDepositAmount)
-	requireT.NoError(chain.Faucet.FundAccounts(ctx, integrationtests.FundedAccount{Address: proposer, Amount: proposerBalance}))
+	chain.Faucet.FundAccounts(ctx, t,
+		integrationtests.FundedAccount{
+			Address: proposer,
+			Amount:  proposerBalance,
+		},
+	)
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
-	err = chain.FundAccountsWithOptions(ctx, depositor, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, depositor, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&govtypes.MsgDeposit{}},
 		Amount:   missingDepositAmount.Amount,
 	})
-	requireT.NoError(err)
 
 	// Create proposal with deposit less than min deposit.
 	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypes.NewTextProposal("Test proposal with weighted votes", strings.Repeat("Description", 20)))
 	requireT.NoError(err)
 	proposalMsg.InitialDeposit = proposalMsg.InitialDeposit.Sub(sdk.Coins{missingDepositAmount})
-	proposalID, err := gov.Propose(ctx, proposalMsg)
+	proposalID, err := gov.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
-	logger.Get(ctx).Info("proposal created", zap.Uint64("proposal_id", proposalID))
+	t.Logf("Proposal created, proposalID: %d", proposalID)
 
 	// Verify that proposal is waiting for deposit.
 	requirePropStatusFunc := func(expectedStatus govtypes.ProposalStatus) {
@@ -73,7 +75,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	requireT.NoError(err)
 	require.Equal(t, chain.GasLimitByMsgs(depositMsg), uint64(result.GasUsed))
 
-	logger.Get(ctx).Info("deposited more funds to proposal", zap.String("txHash", result.TxHash), zap.Int64("gas_used", result.GasUsed))
+	t.Logf("Deposited more funds to proposal, txHash:%s, gasUsed:%d", result.TxHash, result.GasUsed)
 
 	// Verify that proposal voting has started.
 	requirePropStatusFunc(govtypes.StatusVotingPeriod)
