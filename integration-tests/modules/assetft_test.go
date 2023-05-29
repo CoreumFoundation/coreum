@@ -217,7 +217,6 @@ func TestBalanceQuery(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
 
-	requireT := require.New(t)
 	assertT := assert.New(t)
 
 	issueFee := getIssueFee(ctx, t, chain.ClientContext).Amount
@@ -225,7 +224,7 @@ func TestBalanceQuery(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
@@ -233,7 +232,7 @@ func TestBalanceQuery(t *testing.T) {
 			&banktypes.MsgSend{},
 		},
 		Amount: issueFee,
-	}))
+	})
 
 	// issue the new fungible token form issuer
 	msgIssue := &assetfttypes.MsgIssue{
@@ -309,6 +308,30 @@ func TestBalanceQuery(t *testing.T) {
 	assertT.Equal(whitelistedCoin.Amount.String(), resp.Whitelisted.String())
 	assertT.Equal(frozenCoin.Amount.String(), resp.Frozen.String())
 	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
+	assertT.Equal("0", resp.Locked.String())
+}
+
+// TestEmptyBalanceQuery tests balance query.
+func TestEmptyBalanceQuery(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+
+	assertT := assert.New(t)
+
+	account := chain.GenAccount()
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: account.String(),
+		Denom:   "nonexistingdenom",
+	})
+	require.NoError(t, err)
+
+	assertT.Equal("0", resp.Whitelisted.String())
+	assertT.Equal("0", resp.Frozen.String())
+	assertT.Equal("0", resp.Balance.String())
+	assertT.Equal("0", resp.Locked.String())
 }
 
 // TestAssetFTMint tests mint functionality of fungible tokens.

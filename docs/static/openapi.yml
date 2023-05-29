@@ -548,6 +548,9 @@ paths:
               frozen:
                 type: string
                 description: frozen is the frozen amount of the denom on the account.
+              locked:
+                type: string
+                description: locked is the balance locked by vesting.
         default:
           description: An unexpected error response.
           schema:
@@ -40025,6 +40028,9 @@ definitions:
       frozen:
         type: string
         description: frozen is the frozen amount of the denom on the account.
+      locked:
+        type: string
+        description: locked is the balance locked by vesting.
   coreum.asset.ft.v1.QueryFrozenBalanceResponse:
     type: object
     properties:

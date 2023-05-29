@@ -26,6 +26,7 @@ type QueryKeeper interface {
 // BankKeeper represents required methods of bank keeper.
 type BankKeeper interface {
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	LockedCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 }
 
 // QueryService serves grpc query requests for assets module.
@@ -86,11 +87,14 @@ func (qs QueryService) Balance(goCtx context.Context, req *types.QueryBalanceReq
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
+	locked := qs.bankKeeper.LockedCoins(ctx, account)
+
 	denom := req.GetDenom()
 	return &types.QueryBalanceResponse{
 		Balance:     qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
 		Whitelisted: qs.keeper.GetWhitelistedBalance(ctx, account, denom).Amount,
 		Frozen:      qs.keeper.GetFrozenBalance(ctx, account, denom).Amount,
+		Locked:      locked.AmountOf(denom),
 	}, nil
 }
 
