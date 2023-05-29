@@ -163,11 +163,7 @@ func init() {
 }
 
 // NewCoreumTestingContext returns the configured coreum chain and new context for the integration tests.
-func NewCoreumTestingContext(t *testing.T, isTestUnsafe bool) (context.Context, CoreumChain) {
-	if isTestUnsafe && !runUnsafe {
-		t.SkipNow()
-	}
-
+func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 
@@ -175,11 +171,7 @@ func NewCoreumTestingContext(t *testing.T, isTestUnsafe bool) (context.Context, 
 }
 
 // NewChainsTestingContext returns the configured chains and new context for the integration tests.
-func NewChainsTestingContext(t *testing.T, isTestUnsafe bool) (context.Context, Chains) {
-	if isTestUnsafe && !runUnsafe {
-		t.SkipNow()
-	}
-
+func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 

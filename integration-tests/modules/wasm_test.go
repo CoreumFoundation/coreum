@@ -204,7 +204,7 @@ type nftRes struct {
 func TestWASMBankSendContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	nativeDenom := chain.ChainSettings.Denom
@@ -317,7 +317,7 @@ func TestWASMBankSendContract(t *testing.T) {
 func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	admin := chain.GenAccount()
@@ -390,7 +390,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	proposer := chain.GenAccount()
@@ -452,7 +452,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		CodeIDs:     []uint64{codeID},
 	})
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
@@ -478,7 +478,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		CodeIDs:     []uint64{codeID},
 	})
 	requireT.NoError(err)
-	proposalID, err = chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err = chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
 	proposal, err = chain.Governance.GetProposal(ctx, proposalID)
@@ -506,7 +506,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	newAdmin := chain.GenAccount()
@@ -598,7 +598,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 func TestWASMFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	recipient1 := chain.GenAccount()
@@ -923,7 +923,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	admin := chain.GenAccount()
 	recipient := chain.GenAccount()
