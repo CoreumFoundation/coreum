@@ -315,8 +315,6 @@ func changeMinSelfDelegationCustomParam(
 	// create new proposer
 	proposer := chain.GenAccount()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-
-	requireT := require.New(t)
 	requireT.NoError(err)
 
 	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))

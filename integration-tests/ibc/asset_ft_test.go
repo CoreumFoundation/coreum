@@ -41,7 +41,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 	coreumIssuer := coreumChain.GenAccount()
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
-	requireT.NoError(coreumChain.FundAccountsWithOptions(ctx, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -49,14 +49,14 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 			&ibctransfertypes.MsgTransfer{},
 		},
 		Amount: issueFee,
-	}))
+	})
 
-	requireT.NoError(coreumChain.FundAccountsWithOptions(ctx, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
 		},
-	}))
+	})
 
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:             coreumIssuer.String(),
@@ -67,7 +67,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
 	}
-	_, err = client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
 		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
@@ -109,12 +109,12 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 	// send from issuer and non issuer to gaia
 	sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
-		ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress,
+		ctx, t, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress,
 	)
 
 	// send from issuer to osmosis
 	sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
-		ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress,
+		ctx, t, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress,
 	)
 
 	// validate two commissions
@@ -129,10 +129,10 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	)
 
 	// send back from gaia to validate zero commission
-	sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress)
+	sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, t, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress)
 
 	// send back from osmosis to validate zero commission
-	sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress)
+	sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, t, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress)
 
 	// validate two commissions (no additional commission)
 	coreumIssuerBalanceAfterSenderToChainsTransferRes, err = coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
