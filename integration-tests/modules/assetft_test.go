@@ -215,7 +215,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 func TestBalanceQuery(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	assertT := assert.New(t)
 
@@ -315,7 +315,7 @@ func TestBalanceQuery(t *testing.T) {
 func TestEmptyBalanceQuery(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	assertT := assert.New(t)
 
