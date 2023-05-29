@@ -31,7 +31,7 @@ func TestUpgrade(t *testing.T) {
 }
 
 func upgradeV2(t *testing.T) {
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
 	// create NFT class and mint NFT to check the keys migration
@@ -145,7 +145,7 @@ func runUpgrade(
 	upgradeName string,
 	blocksToWait int64,
 ) {
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	upgradeClient := upgradetypes.NewQueryClient(chain.ClientContext)
@@ -188,7 +188,7 @@ func runUpgrade(
 			},
 		))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 	t.Logf("Upgrade proposal has been submitted, proposalID:%d", proposalID)
 

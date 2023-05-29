@@ -31,7 +31,7 @@ import (
 func TestAssetNFTQueryParams(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	mintFee := getMintFee(ctx, t, chain.ClientContext)
 
 	assert.Equal(t, chain.ChainSettings.Denom, mintFee.Denom)
@@ -41,7 +41,7 @@ func TestAssetNFTQueryParams(t *testing.T) {
 func TestAssetNFTIssueClass(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -196,7 +196,7 @@ func TestAssetNFTIssueClass(t *testing.T) {
 func TestAssetNFTMint(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -383,7 +383,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 	origMintFee := getMintFee(ctx, t, chain.ClientContext)
 
@@ -458,7 +458,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 func TestAssetNFTBurn(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -577,7 +577,7 @@ func TestAssetNFTBurn(t *testing.T) {
 func TestAssetNFTBurnFrozen(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -720,7 +720,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -823,7 +823,7 @@ func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
 func TestAssetNFTFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -1017,7 +1017,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 func TestAssetNFTWhitelist(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
@@ -1271,7 +1271,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 func TestAssetNFTAuthZ(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	granter := chain.GenAccount()

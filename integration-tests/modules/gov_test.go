@@ -22,7 +22,7 @@ import (
 func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	gov := chain.Governance
@@ -51,7 +51,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypes.NewTextProposal("Test proposal with weighted votes", strings.Repeat("Description", 20)))
 	requireT.NoError(err)
 	proposalMsg.InitialDeposit = proposalMsg.InitialDeposit.Sub(sdk.Coins{missingDepositAmount})
-	proposalID, err := gov.Propose(ctx, proposalMsg)
+	proposalID, err := gov.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
 	t.Logf("Proposal created, proposalID: %d", proposalID)

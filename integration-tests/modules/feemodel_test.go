@@ -22,7 +22,7 @@ import (
 func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	feemodelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 	res, err := feemodelClient.MinGasPrice(ctx, &feemodeltypes.QueryMinGasPriceRequest{})
@@ -42,7 +42,7 @@ func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 func TestFeeModelProposalParamChange(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
 
@@ -71,7 +71,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-	_, err = chain.Governance.Propose(ctx, proposalMsg)
+	_, err = chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
 
 	// Create proposal to change MaxDiscount.
@@ -88,7 +88,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 	t.Logf("Proposal has been submitted, proposalID:%d", proposalID)
 

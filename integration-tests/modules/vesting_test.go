@@ -24,7 +24,7 @@ import (
 func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	creator := chain.GenAccount()
 	vestingAcc := chain.GenAccount()
@@ -121,7 +121,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 func TestVestingAccountStaking(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	creator := chain.GenAccount()
 	vestingAcc := chain.GenAccount()
@@ -206,7 +206,7 @@ func TestVestingAccountStaking(t *testing.T) {
 func TestVestingAccountWithFTInteraction(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	issuer := chain.GenAccount()
 	vestingAcc := chain.GenAccount()
