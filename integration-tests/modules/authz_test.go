@@ -12,9 +12,7 @@ import (
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 )
@@ -35,13 +33,13 @@ func TestAuthz(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	totalAmountToSend := sdk.NewInt(2_000)
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
 			&authztypes.MsgRevoke{},
 		},
 		Amount: totalAmountToSend,
-	}))
+	})
 
 	// init the messages provisionally to use in the authztypes.MsgExec
 	msgBankSend := &banktypes.MsgSend{
@@ -51,13 +49,13 @@ func TestAuthz(t *testing.T) {
 		Amount: sdk.NewCoins(chain.NewCoin(sdk.NewInt(1_000))),
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgBankSend,
 			&execMsg,
 			&execMsg,
 		},
-	}))
+	})
 
 	// grant the bank send authorization
 	grantMsg, err := authztypes.NewMsgGrant(
@@ -166,10 +164,10 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{grantMsg},
 		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
-	}))
+	})
 
 	_, err = client.BroadcastTx(
 		ctx,
@@ -186,11 +184,11 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 		Amount:      coinsToSendToRecipient,
 	}
 	execMsg := authztypes.NewMsgExec(multisigAddress, []sdk.Msg{msgBankSend})
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
-	}))
+	})
 
 	// prepare the tx factory to sign with the account seq and number of the multisig account
 	clientCtx := chain.ClientContext
@@ -213,7 +211,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	requireT.NoError(err)
 	_, err = client.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
-	logger.Get(ctx).Info("Partially signed tx executed with expected error")
+	t.Log("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(&execMsg)
@@ -227,7 +225,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	requireT.NoError(err)
 	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Fully signed tx executed", zap.String("txHash", result.TxHash))
+	t.Logf("Fully signed tx executed, txHash:%s", result.TxHash)
 
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
@@ -265,12 +263,12 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			grantMsg,
 		},
 		Amount: sdk.NewInt(amountToSendFromMultisigAccount),
-	}))
+	})
 
 	// prepare the tx factory to sign with the account seq and number of the multisig account
 	clientCtx := chain.ClientContext
@@ -294,7 +292,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	requireT.NoError(err)
 	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Fully signed tx executed", zap.String("txHash", result.TxHash))
+	t.Logf("Fully signed tx executed, txHash:%s", result.TxHash)
 
 	// create bank send msg account using authz
 	msgBankSend := &banktypes.MsgSend{
@@ -304,11 +302,11 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend})
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
-	}))
+	})
 
 	_, err = client.BroadcastTx(
 		ctx,

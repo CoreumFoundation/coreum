@@ -14,9 +14,7 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
@@ -32,14 +30,14 @@ func TestAuthFeeLimits(t *testing.T) {
 
 	feeModel := getFeemodelParams(ctx, t, chain.ClientContext)
 	maxBlockGas := feeModel.MaxBlockGas
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
 		},
 		NondeterministicMessagesGas: uint64(maxBlockGas) + 100,
 		Amount:                      getIssueFee(ctx, t, chain.ClientContext).Amount,
-	}))
+	})
 
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
@@ -140,10 +138,10 @@ func TestAuthMultisig(t *testing.T) {
 	signer2KeyName := keyNamesSet[1]
 
 	// fund the multisig account
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
-	}))
+	})
 
 	// prepare account to be funded from the multisig
 	recipientAddr := recipient.String()
@@ -175,7 +173,7 @@ func TestAuthMultisig(t *testing.T) {
 	requireT.NoError(err)
 	_, err = client.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
-	logger.Get(ctx).Info("Partially signed tx executed with expected error")
+	t.Log("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
 	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
@@ -189,7 +187,7 @@ func TestAuthMultisig(t *testing.T) {
 	requireT.NoError(err)
 	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Fully signed tx executed", zap.String("txHash", result.TxHash))
+	t.Logf("Fully signed tx executed, txHash:%s", result.TxHash)
 
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
@@ -208,10 +206,10 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(10),
-	}))
+	})
 
 	clientCtx := chain.ClientContext
 	accInfo, err := client.GetAccountInfo(ctx, clientCtx, sender)

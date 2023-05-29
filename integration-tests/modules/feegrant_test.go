@@ -25,17 +25,17 @@ func TestFeeGrant(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
 			&feegrant.MsgGrantAllowance{},
 			&feegrant.MsgRevokeAllowance{},
 		},
-	}))
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+	})
+	chain.FundAccountsWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
 		Amount: sdk.NewInt(1),
-	}))
+	})
 	basicAllowance, err := codetypes.NewAnyWithValue(&feegrant.BasicAllowance{
 		SpendLimit: nil, // empty means no limit
 		Expiration: nil, // empty means no limit

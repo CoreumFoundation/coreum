@@ -14,9 +14,9 @@ import (
 	protobufgrpc "github.com/gogo/protobuf/grpc"
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"google.golang.org/grpc"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -54,8 +54,6 @@ var (
 
 func init() {
 	var (
-		logFormat string
-
 		coreumAddress         string
 		coreumFundingMnemonic string
 		coreumStakerMnemonics stringsFlag
@@ -67,7 +65,8 @@ func init() {
 		osmosisFundingMnemonic string
 	)
 
-	flag.StringVar(&logFormat, "log-format", string(logger.ToolDefaultConfig.Format), "Format of logs produced by tests")
+	// TODO(dzmitryhil) remove the flag once we update the crust
+	flag.StringVar(lo.ToPtr(""), "log-format", "", "Format of logs produced by tests")
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 
 	flag.StringVar(&coreumAddress, "coreum-address", "localhost:9090", "Address of cored node started by znet")
@@ -83,11 +82,7 @@ func init() {
 	// parse additional flags
 	flag.Parse()
 
-	loggerConfig := logger.Config{
-		Format:  logger.Format(logFormat),
-		Verbose: flag.Lookup("test.v").Value.String() == "true",
-	}
-	ctx = logger.WithLogger(context.Background(), logger.New(loggerConfig))
+	ctx = context.Background()
 
 	// set the default staker mnemonic used in the dev znet by default
 	if len(coreumStakerMnemonics) == 0 {
@@ -168,7 +163,11 @@ func init() {
 }
 
 // NewCoreumTestingContext returns the configured coreum chain and new context for the integration tests.
-func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
+func NewCoreumTestingContext(t *testing.T, isTestUnsafe bool) (context.Context, CoreumChain) {
+	if isTestUnsafe && !runUnsafe {
+		t.SkipNow()
+	}
+
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 
@@ -176,7 +175,15 @@ func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
 }
 
 // NewChainsTestingContext returns the configured chains and new context for the integration tests.
-func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
+func NewChainsTestingContext(t *testing.T, skipUnsafe bool) (context.Context, Chains) {
+	if skipUnsafe && !runUnsafe {
+		t.SkipNow()
+	}
+
+	if !runUnsafe {
+		t.SkipNow()
+	}
+
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 

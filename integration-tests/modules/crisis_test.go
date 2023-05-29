@@ -27,9 +27,9 @@ func TestVerifyInvariantMessageIsDenied(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, sender, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Amount: sdk.NewIntFromUint64(invariantFee),
-	}))
+	})
 
 	// the gas price is too low
 	_, err := client.BroadcastTx(ctx,

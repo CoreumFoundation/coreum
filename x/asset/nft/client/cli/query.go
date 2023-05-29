@@ -119,6 +119,7 @@ $ %[1]s query %s classes --issuer %s
 	}
 
 	cmd.Flags().String(IssuerFlag, "", fmt.Sprintf("Class issuer address. e.g %s", constant.AddressSampleTest))
+	flags.AddPaginationFlagsToCmd(cmd, "classes")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
@@ -243,6 +244,7 @@ $ %s query %s whitelisted [class-id] [id]
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "whitelisted accounts")
 
 	return cmd
 }
