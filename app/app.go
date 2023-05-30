@@ -345,6 +345,8 @@ func New(
 		keys[authz.ModuleName], appCodec, app.MsgServiceRouter(),
 	)
 
+	app.DelayKeeper = delaykeeper.NewKeeper(appCodec, keys[delaytypes.StoreKey])
+
 	originalBankKeeper := bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs())
 	var ibcChannelKeeper ibcchannelkeeper.Keeper
 	assetFTKeeper := assetftkeeper.NewKeeper(
@@ -354,6 +356,7 @@ func New(
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
 		&ibcChannelKeeper,
+		app.DelayKeeper,
 	)
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
@@ -396,7 +399,6 @@ func New(
 	)
 
 	app.CustomParamsKeeper = customparamskeeper.NewKeeper(app.GetSubspace(customparamstypes.CustomParamsStaking))
-	app.DelayKeeper = delaykeeper.NewKeeper(appCodec, keys[delaytypes.StoreKey])
 
 	app.IBCKeeper = ibckeeper.NewKeeper(appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName),
 		app.StakingKeeper, app.UpgradeKeeper, app.ScopedIBCKeeper)
@@ -496,12 +498,10 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	enableIBCKeeper := assetftkeeper.NewEnableIBCKeeper(appCodec, app.AssetFTKeeper, keys[assetfttypes.StoreKey], app.DelayKeeper)
 	assetFTModule := assetft.NewAppModule(
 		appCodec,
 		ChosenNetwork.Provider.GetGenesisTime(),
 		app.AssetFTKeeper,
-		enableIBCKeeper,
 		app.BankKeeper)
 	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
@@ -512,7 +512,7 @@ func New(
 	wstakingModule := wstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.CustomParamsKeeper)
 
 	delayRouter := delaytypes.NewRouter()
-	delayRouter.RegisterMessage(&assetfttypes.MsgEnableIBCExecutor{}, assetfttypes.NewEnableIBCHandler(enableIBCKeeper))
+	delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))
 	delayModule := delay.NewAppModule(app.DelayKeeper, delayRouter)
 
 	// NOTE: Any module instantiated in the module manager that is later modified

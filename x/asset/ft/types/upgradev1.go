@@ -8,10 +8,10 @@ import (
 	delaytypes "github.com/CoreumFoundation/coreum/x/delay/types"
 )
 
-var _ sdk.Msg = &MsgEnableIBCRequest{}
+var _ sdk.Msg = &MsgTokenUpgradeV1{}
 
 // ValidateBasic checks that message fields are valid.
-func (msg MsgEnableIBCRequest) ValidateBasic() error {
+func (msg MsgTokenUpgradeV1) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
@@ -20,20 +20,20 @@ func (msg MsgEnableIBCRequest) ValidateBasic() error {
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgEnableIBCRequest) GetSigners() []sdk.AccAddress {
+func (msg MsgTokenUpgradeV1) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}
 }
 
-// UpgradeV3Keeper defines methods required from keeper managing v3 upgrade.
-type UpgradeV3Keeper interface {
-	EnableIBC(ctx sdk.Context, denom string) error
+// UpgradeV1Keeper defines methods required to update tokens to V1.
+type UpgradeV1Keeper interface {
+	UpgradeTokenToV1(ctx sdk.Context, data *DelayedTokenUpgradeV1) error
 }
 
-// NewEnableIBCHandler enables IBC for the token.
-func NewEnableIBCHandler(keeper UpgradeV3Keeper) delaytypes.Handler {
-	return func(ctx sdk.Context, msg proto.Message) error {
-		return keeper.EnableIBC(ctx, msg.(*MsgEnableIBCExecutor).Denom)
+// NewTokenUpgradeV1Handler handles token V1 upgrade.
+func NewTokenUpgradeV1Handler(keeper UpgradeV1Keeper) delaytypes.Handler {
+	return func(ctx sdk.Context, data proto.Message) error {
+		return keeper.UpgradeTokenToV1(ctx, data.(*DelayedTokenUpgradeV1))
 	}
 }

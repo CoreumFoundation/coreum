@@ -30,6 +30,7 @@ type Keeper struct {
 	storeKey         sdk.StoreKey
 	bankKeeper       types.BankKeeper
 	ibcChannelKeeper types.IBCChannelKeeper
+	delayKeeper      DelayKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -39,6 +40,7 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	bankKeeper types.BankKeeper,
 	ibcChannelKeeper types.IBCChannelKeeper,
+	delayKeeper DelayKeeper,
 ) Keeper {
 	return Keeper{
 		cdc:              cdc,
@@ -46,6 +48,7 @@ func NewKeeper(
 		storeKey:         storeKey,
 		bankKeeper:       bankKeeper,
 		ibcChannelKeeper: ibcChannelKeeper,
+		delayKeeper:      delayKeeper,
 	}
 }
 

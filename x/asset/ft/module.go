@@ -105,9 +105,8 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper          keeper.Keeper
-	upgradeV3Keeper keeper.UpgradeV3Keeper
-	bankKeeper      types.BankKeeper
+	keeper     keeper.Keeper
+	bankKeeper types.BankKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
@@ -115,14 +114,12 @@ func NewAppModule(
 	cdc codec.Codec,
 	genesisTime time.Time,
 	keeper keeper.Keeper,
-	upgradeV3Keeper keeper.UpgradeV3Keeper,
 	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic:  NewAppModuleBasic(cdc, genesisTime),
-		keeper:          keeper,
-		upgradeV3Keeper: upgradeV3Keeper,
-		bankKeeper:      bankKeeper,
+		AppModuleBasic: NewAppModuleBasic(cdc, genesisTime),
+		keeper:         keeper,
+		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -147,7 +144,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper, am.upgradeV3Keeper))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 
 	err := cfg.RegisterMigration(types.ModuleName, 1, func(ctx sdk.Context) error {

@@ -3,7 +3,6 @@ package keeper
 import (
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -14,44 +13,21 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-var ibcEnablePrefix = []byte("upgradev3ibcenable")
+var ibcEnablePrefix = []byte("upgradev1")
 
 // DelayKeeper defines methods required from the delay keeper.
 type DelayKeeper interface {
 	DelayMessage(ctx sdk.Context, id string, msg proto.Message, delay time.Duration) error
 }
 
-// EnableIBCKeeper provides functionality required by v3 upgrade.
-type EnableIBCKeeper struct {
-	cdc         codec.BinaryCodec
-	keeper      Keeper
-	storeKey    sdk.StoreKey
-	delayKeeper DelayKeeper
-}
-
-// NewEnableIBCKeeper returns EnableIBCKeeper keeper.
-func NewEnableIBCKeeper(
-	cdc codec.BinaryCodec,
-	keeper Keeper,
-	storeKey sdk.StoreKey,
-	delayKeeper DelayKeeper,
-) EnableIBCKeeper {
-	return EnableIBCKeeper{
-		cdc:         cdc,
-		keeper:      keeper,
-		storeKey:    storeKey,
-		delayKeeper: delayKeeper,
-	}
-}
-
-// StoreEnableIBCRequest stores request for enabling IBC.
-func (k EnableIBCKeeper) StoreEnableIBCRequest(ctx sdk.Context, sender sdk.AccAddress, denom string) error {
-	params := k.keeper.GetParams(ctx)
+// StoreDelayedUpgradeV1 stores request for upgrading token to V1.
+func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
+	params := k.GetParams(ctx)
 	if ctx.BlockTime().After(params.IbcDecisionTimeout) {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "it is no longer possible IBC")
 	}
 
-	def, err := k.keeper.GetDefinition(ctx, denom)
+	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
 	}
@@ -70,7 +46,11 @@ func (k EnableIBCKeeper) StoreEnableIBCRequest(ctx sdk.Context, sender sdk.AccAd
 		return errors.Errorf("pending request for enabling IBC already exists for denom: %s", denom)
 	}
 
-	err = k.delayKeeper.DelayMessage(ctx, "assetft-ibcenable-"+denom, &types.MsgEnableIBCExecutor{Denom: denom}, params.IbcGracePeriod)
+	delayedData := &types.DelayedTokenUpgradeV1{
+		Denom:      denom,
+		IbcEnabled: ibcEnabled,
+	}
+	err = k.delayKeeper.DelayMessage(ctx, "assetft-ibcenable-"+denom, delayedData, params.IbcGracePeriod)
 	if err != nil {
 		return err
 	}
@@ -80,27 +60,27 @@ func (k EnableIBCKeeper) StoreEnableIBCRequest(ctx sdk.Context, sender sdk.AccAd
 	return nil
 }
 
-// EnableIBC enables IBC.
-func (k EnableIBCKeeper) EnableIBC(ctx sdk.Context, denom string) error {
-	def, err := k.keeper.GetDefinition(ctx, denom)
+// UpgradeTokenToV1 upgrades token to version V1.
+func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgradeV1) error {
+	def, err := k.GetDefinition(ctx, data.Denom)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", denom)
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", data.Denom)
 	}
 
 	if def.IsFeatureEnabled(types.Feature_ibc) {
-		return errors.Errorf("ibc has been already enabled for denom: %s", denom)
+		return errors.Errorf("ibc has been already enabled for denom: %s", data.Denom)
 	}
 
-	subunit, issuer, err := types.DeconstructDenom(denom)
+	subunit, issuer, err := types.DeconstructDenom(data.Denom)
 	if err != nil {
 		return err
 	}
 
 	def.Features = append(def.Features, types.Feature_ibc)
-	k.keeper.SetDefinition(ctx, issuer, subunit, def)
+	k.SetDefinition(ctx, issuer, subunit, def)
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), ibcEnablePrefix)
-	key := []byte(denom)
+	key := []byte(data.Denom)
 	store.Delete(key)
 
 	return nil

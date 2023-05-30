@@ -7,7 +7,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
 
 import "coreum/asset/ft/v1/token.proto";
-import "coreum/asset/ft/v1/upgradev3.proto";
+import "coreum/asset/ft/v1/upgradev1.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
 option (gogoproto.goproto_getters_all) = false;
@@ -39,10 +39,8 @@ service Msg {
   // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
   rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
 
-  // === Upgrade v3 ===
-
-  // EnableIBCRequest stores request for enabling IBC for the token.
-  rpc StoreEnableIBCRequest(MsgEnableIBCRequest) returns (EmptyResponse);
+  // TokenUpgradeV1 upgrades token to version V1.
+  rpc TokenUpgradeV1(MsgTokenUpgradeV1) returns (EmptyResponse);
 }
 
 // MsgIssue defines message to issue new fungible token.

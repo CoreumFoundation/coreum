@@ -60,7 +60,7 @@ func TestCalculateRateShares(t *testing.T) {
 	ibcPort := "port"
 	ibcChannel := "1"
 	ibcEscrowAddress := ibctransfertypes.GetEscrowAddress(ibcPort, ibcChannel).String()
-	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, newIBCChannelKeeperMock(ibcPort, ibcChannel))
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, newIBCChannelKeeperMock(ibcPort, ibcChannel), nil)
 	pow10 := func(ex int64) sdk.Int {
 		return sdk.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
 	}

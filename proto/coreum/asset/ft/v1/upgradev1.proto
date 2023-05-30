@@ -6,13 +6,15 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
 option (gogoproto.goproto_getters_all) = false;
 
-// MsgEnableIBCRequest means that sender wants to enable IBC for the token.
-message MsgEnableIBCRequest {
+// MsgTokenUpgradeV1 is the message upgrading token to V1.
+message MsgTokenUpgradeV1 {
   string sender = 1;
   string denom = 2;
+  bool ibc_enabled = 3;
 }
 
-// MsgEnableIBCExecutor is executed by the delay module when it's time to enable IBC.
-message MsgEnableIBCExecutor {
+// DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.
+message DelayedTokenUpgradeV1 {
   string denom = 1;
+  bool ibc_enabled = 2;
 }

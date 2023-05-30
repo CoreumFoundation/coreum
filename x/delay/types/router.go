@@ -14,8 +14,8 @@ type Handler = func(ctx sdk.Context, msg proto.Message) error
 
 // Router links message type to its handler.
 type Router interface {
-	RegisterMessage(msg proto.Message, h Handler) (rtr Router)
-	Handler(msg proto.Message) (h Handler)
+	RegisterHandler(msg proto.Message, h Handler) (rtr Router)
+	Handler(data proto.Message) (h Handler)
 }
 
 type router struct {
@@ -30,22 +30,22 @@ func NewRouter() Router {
 }
 
 // RegisterMessage adds a handler for a message.
-func (rtr *router) RegisterMessage(msg proto.Message, h Handler) Router {
-	msgName := proto.MessageName(msg)
-	if _, exists := rtr.routes[msgName]; exists {
-		panic(fmt.Sprintf("route %q has already been added", msgName))
+func (rtr *router) RegisterHandler(data proto.Message, h Handler) Router {
+	name := proto.MessageName(data)
+	if _, exists := rtr.routes[name]; exists {
+		panic(fmt.Sprintf("route %q has already been added", name))
 	}
 
-	rtr.routes[msgName] = h
+	rtr.routes[name] = h
 	return rtr
 }
 
 // Handler returns a handler for a given message.
-func (rtr *router) Handler(msg proto.Message) Handler {
-	msgName := proto.MessageName(msg)
-	h, exists := rtr.routes[msgName]
+func (rtr *router) Handler(data proto.Message) Handler {
+	name := proto.MessageName(data)
+	h, exists := rtr.routes[name]
 	if !exists {
-		panic(fmt.Sprintf("route %q does not exist", msgName))
+		panic(fmt.Sprintf("route %q does not exist", name))
 	}
 
 	return h

@@ -21,24 +21,18 @@ type MsgKeeper interface {
 	GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
-}
-
-// UpgradeV3Keeper defines methods required from keeper managing v3 upgrade.
-type UpgradeV3Keeper interface {
-	StoreEnableIBCRequest(ctx sdk.Context, sender sdk.AccAddress, denom string) error
+	StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
 type MsgServer struct {
-	keeper          MsgKeeper
-	upgradeV3Keeper UpgradeV3Keeper
+	keeper MsgKeeper
 }
 
 // NewMsgServer returns a new instance of the MsgServer.
-func NewMsgServer(keeper MsgKeeper, upgradeV3Keeper UpgradeV3Keeper) MsgServer {
+func NewMsgServer(keeper MsgKeeper) MsgServer {
 	return MsgServer{
-		keeper:          keeper,
-		upgradeV3Keeper: upgradeV3Keeper,
+		keeper: keeper,
 	}
 }
 
@@ -191,15 +185,15 @@ func (ms MsgServer) SetWhitelistedLimit(goCtx context.Context, req *types.MsgSet
 	return &types.EmptyResponse{}, nil
 }
 
-// StoreEnableIBCRequest stores a request to enable IBC transfer.
-func (ms MsgServer) StoreEnableIBCRequest(goCtx context.Context, req *types.MsgEnableIBCRequest) (*types.EmptyResponse, error) {
+// TokenUpgradeV1 stores a request to upgrade token to V1.
+func (ms MsgServer) TokenUpgradeV1(goCtx context.Context, req *types.MsgTokenUpgradeV1) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	err = ms.upgradeV3Keeper.StoreEnableIBCRequest(ctx, sender, req.Denom)
+	err = ms.keeper.StoreDelayedUpgradeV1(ctx, sender, req.Denom, req.IbcEnabled)
 	if err != nil {
 		return nil, err
 	}
