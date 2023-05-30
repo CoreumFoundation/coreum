@@ -229,43 +229,45 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		},
 	)
 
-	// send from issuer and non issuer to gaia
-	//sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
-	//	ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient1, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress,
-	//)
-	//
-	//// send from issuer to osmosis
-	//sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
-	//	ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress,
-	//)
+	// ********** Osmosis to Coreum (send back) ********** //
+	// IBC transfer back to issuer address.
+	ibcTransferAndAssertBalanceChanges(
+		ctx,
+		t,
+		osmosisChain.ChainContext,
+		osmosisRecipient1,
+		receiveCoinOsmosis,
+		coreumChain.ChainContext,
+		coreumIssuer,
+		sendCoin,
+		map[string]sdk.Int{
+			osmosisChain.ConvertToBech32Address(osmosisRecipient1): sendCoin.Amount.Neg(),
+		},
+		map[string]sdk.Int{
+			coreumChain.ConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount.Neg(),
+			coreumChain.ConvertToBech32Address(coreumIssuer):                 sendCoin.Amount,
+		},
+	)
 
-	//// validate two commissions
-	//coreumIssuerBalanceAfterSenderToChainsTransferRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-	//	Address: coreumIssuer.String(),
-	//	Denom:   denom,
-	//})
-	//requireT.NoError(err)
-	//requireT.Equal(
-	//	coreumIssuerBalanceBeforeIBCTransfersRes.Balance.Amount.Add(sendCommissionAmount.MulRaw(2)).Sub(sendCoin.Amount.MulRaw(2)).String(),
-	//	coreumIssuerBalanceAfterSenderToChainsTransferRes.Balance.Amount.String(),
-	//)
-	//
-	//// send back from gaia to validate zero commission
-	//sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, gaiaChain.ChainContext, gaiaRecipient1, gaiaToCoreumChannelID, coreumToGaiaEscrowAddress)
-	//
-	//// send back from osmosis to validate zero commission
-	//sendFromPeerChainAndValidateZeroCommissionOnEscrow(ctx, requireT, coreumIssuer, coreumSender, coreumChain.ChainContext, sendCoin, osmosisChain.ChainContext, osmosisRecipient, osmosisToCoreumChannelID, coreumToOsmosisEscrowAddress)
-	//
-	//// validate two commissions (no additional commission)
-	//coreumIssuerBalanceAfterSenderToChainsTransferRes, err = coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-	//	Address: coreumIssuer.String(),
-	//	Denom:   denom,
-	//})
-	//requireT.NoError(err)
-	//requireT.Equal(
-	//	coreumIssuerBalanceBeforeIBCTransfersRes.Balance.Amount.Add(sendCommissionAmount.MulRaw(2)).String(),
-	//	coreumIssuerBalanceAfterSenderToChainsTransferRes.Balance.Amount.String(),
-	//)
+	// IBC transfer back to non-issuer address.
+	ibcTransferAndAssertBalanceChanges(
+		ctx,
+		t,
+		osmosisChain.ChainContext,
+		osmosisRecipient2,
+		receiveCoinOsmosis,
+		coreumChain.ChainContext,
+		coreumSender,
+		sendCoin,
+		map[string]sdk.Int{
+			osmosisChain.ConvertToBech32Address(osmosisRecipient2): sendCoin.Amount.Neg(),
+		},
+		map[string]sdk.Int{
+			coreumChain.ConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount.Neg(),
+			coreumChain.ConvertToBech32Address(coreumSender):                 sendCoin.Amount,
+			coreumChain.ConvertToBech32Address(coreumIssuer):                 sdk.ZeroInt(),
+		},
+	)
 }
 
 func ibcTransferAndAssertBalanceChanges(
@@ -282,8 +284,8 @@ func ibcTransferAndAssertBalanceChanges(
 ) {
 	requireT := require.New(t)
 
-	srcBalancesBeforeOperation := fetchBalancesForMultipleAddresses(ctx, t, srcChainCtx, sendCoin.Denom, lo.Keys(srcExpectedBalanceChanges))
-	dstBalancesBeforeOperation := fetchBalancesForMultipleAddresses(ctx, t, dstChainCtx, receiveCoin.Denom, lo.Keys(dstExpectedBalanceChanges))
+	srcBalancesBeforeOperation := fetchBalanceForMultipleAddresses(ctx, t, srcChainCtx, sendCoin.Denom, lo.Keys(srcExpectedBalanceChanges))
+	dstBalancesBeforeOperation := fetchBalanceForMultipleAddresses(ctx, t, dstChainCtx, receiveCoin.Denom, lo.Keys(dstExpectedBalanceChanges))
 
 	dstBankClient := banktypes.NewQueryClient(dstChainCtx.ClientContext)
 	dstChainRecipientBalanceBefore, err := dstBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
@@ -299,14 +301,20 @@ func ibcTransferAndAssertBalanceChanges(
 	err = dstChainCtx.AwaitForBalance(ctx, dstChainRecipient, dstChainRecipientBalanceExpected)
 	requireT.NoError(err)
 
-	srcBalancesAfterOperation := fetchBalancesForMultipleAddresses(ctx, t, srcChainCtx, sendCoin.Denom, lo.Keys(srcExpectedBalanceChanges))
-	dstBalancesAfterOperation := fetchBalancesForMultipleAddresses(ctx, t, dstChainCtx, receiveCoin.Denom, lo.Keys(dstExpectedBalanceChanges))
+	srcBalancesAfterOperation := fetchBalanceForMultipleAddresses(ctx, t, srcChainCtx, sendCoin.Denom, lo.Keys(srcExpectedBalanceChanges))
+	dstBalancesAfterOperation := fetchBalanceForMultipleAddresses(ctx, t, dstChainCtx, receiveCoin.Denom, lo.Keys(dstExpectedBalanceChanges))
 
 	assertBalanceChanges(t, srcExpectedBalanceChanges, srcBalancesBeforeOperation, srcBalancesAfterOperation)
 	assertBalanceChanges(t, dstExpectedBalanceChanges, dstBalancesBeforeOperation, dstBalancesAfterOperation)
 }
 
-func fetchBalancesForMultipleAddresses(ctx context.Context, t *testing.T, chainCtx integrationtests.ChainContext, denom string, addresses []string) map[string]sdk.Int {
+func fetchBalanceForMultipleAddresses(
+	ctx context.Context,
+	t *testing.T,
+	chainCtx integrationtests.ChainContext,
+	denom string,
+	addresses []string,
+) map[string]sdk.Int {
 	requireT := require.New(t)
 	bankClient := banktypes.NewQueryClient(chainCtx.ClientContext)
 	balances := make(map[string]sdk.Int, len(addresses))
@@ -324,142 +332,13 @@ func fetchBalancesForMultipleAddresses(ctx context.Context, t *testing.T, chainC
 	return balances
 }
 
-func assertBalanceChanges(t *testing.T, expectedBalanceChanges, balancesBeforeOperation, balancesAfterOperation map[string]sdk.Int) {
+func assertBalanceChanges(t *testing.T, expectedBalanceChanges, balancesBefore, balancesAfter map[string]sdk.Int) {
 	requireT := require.New(t)
 
 	for addr, expectedBalanceChange := range expectedBalanceChanges {
-		actualBalanceChange := balancesAfterOperation[addr].Sub(balancesBeforeOperation[addr])
+		actualBalanceChange := balancesAfter[addr].Sub(balancesBefore[addr])
 		requireT.Equal(expectedBalanceChange.String(), actualBalanceChange.String())
 	}
-}
-
-func sendToPeerChainFromCoreumFTIssuerAndNonIssuer(
-	ctx context.Context,
-	requireT *require.Assertions,
-	coreumIssuer sdk.AccAddress,
-	coreumSender sdk.AccAddress,
-	coreumChainCtx integrationtests.ChainContext,
-	sendCoin sdk.Coin,
-	peerChainCtx integrationtests.ChainContext,
-	peerChainRecipient sdk.AccAddress,
-	peerChainToCoreumChannelID string,
-	coreumToPeerChainEscrowAddress sdk.AccAddress,
-) {
-	return
-	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
-	coreumIssuerBalanceBeforeTransferRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumIssuer.String(),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-
-	_, err = coreumChainCtx.ExecuteIBCTransfer(ctx, coreumIssuer, sendCoin, peerChainCtx, peerChainRecipient)
-	requireT.NoError(err)
-	expectedRecipientBalance := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
-	err = peerChainCtx.AwaitForBalance(ctx, peerChainRecipient, expectedRecipientBalance)
-	requireT.NoError(err)
-	// check that amount is locked on the escrow account
-	escrowAddressRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumChainCtx.ConvertToBech32Address(coreumToPeerChainEscrowAddress),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(sendCoin.Amount.String(), escrowAddressRes.Balance.Amount.String())
-	// check that we don't apply the commissions since the sender is issuer
-	coreumIssuerBalanceAfterTransferRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumIssuer.String(),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(
-		coreumIssuerBalanceBeforeTransferRes.Balance.Amount.Sub(sendCoin.Amount).String(),
-		coreumIssuerBalanceAfterTransferRes.Balance.Amount.String(),
-	)
-
-	// send from non-issuer
-	_, err = coreumChainCtx.ExecuteIBCTransfer(ctx, coreumSender, sendCoin, peerChainCtx, peerChainRecipient)
-	requireT.NoError(err)
-
-	expectedOsmosisRecipientBalance := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount.MulRaw(2))
-	err = peerChainCtx.AwaitForBalance(ctx, peerChainRecipient, expectedOsmosisRecipientBalance)
-	requireT.NoError(err)
-
-	// validate escrow balance on the osmosis channel
-	coreumToOsmosisEscrowAddressRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumChainCtx.ConvertToBech32Address(coreumToPeerChainEscrowAddress),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(sendCoin.Amount.MulRaw(2).String(), coreumToOsmosisEscrowAddressRes.Balance.Amount.String())
-}
-
-func sendFromPeerChainAndValidateZeroCommissionOnEscrow(
-	ctx context.Context,
-	requireT *require.Assertions,
-	coreumIssuer sdk.AccAddress,
-	coreumSender sdk.AccAddress,
-	coreumChainCtx integrationtests.ChainContext,
-	sendCoin sdk.Coin,
-	peerChainCtx integrationtests.ChainContext,
-	peerChainRecipient sdk.AccAddress,
-	peerChainToCoreumChannelID string,
-	coreumToPeerChainEscrowAddress sdk.AccAddress,
-) {
-	coreumBankClient := banktypes.NewQueryClient(coreumChainCtx.ClientContext)
-	sentFromPeerChainToCoreumCoin := sdk.NewCoin(convertToIBCDenom(peerChainToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
-	coreumIssuerBalanceBeforeTransferBackRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumIssuer.String(),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-	// check that escrow balance is decreased now
-	coreumToPeerChainEscrowAddressBeforeTranserRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumChainCtx.ConvertToBech32Address(coreumToPeerChainEscrowAddress),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-
-	_, err = peerChainCtx.ExecuteIBCTransfer(ctx, peerChainRecipient, sentFromPeerChainToCoreumCoin, coreumChainCtx, coreumIssuer)
-	requireT.NoError(err)
-
-	// check new issuer balance (no commission)
-	expectedCoreumIssuerBalanceAfterTransferBack := sdk.NewCoin(
-		sendCoin.Denom,
-		coreumIssuerBalanceBeforeTransferBackRes.Balance.Amount.Add(sentFromPeerChainToCoreumCoin.Amount),
-	)
-	err = coreumChainCtx.AwaitForBalance(ctx, coreumIssuer, expectedCoreumIssuerBalanceAfterTransferBack)
-	requireT.NoError(err)
-	// check that escrow balance is decreased now
-	coreumToPeerChainEscrowAddressRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumChainCtx.ConvertToBech32Address(coreumToPeerChainEscrowAddress),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(
-		coreumToPeerChainEscrowAddressBeforeTranserRes.Balance.Amount.Sub(sendCoin.Amount).String(),
-		coreumToPeerChainEscrowAddressRes.Balance.Amount.String(),
-	)
-	// check new sender balance
-	coreumSenderBalanceBeforeTransferBackRes, err := coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumSender.String(),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-
-	_, err = peerChainCtx.ExecuteIBCTransfer(ctx, peerChainRecipient, sentFromPeerChainToCoreumCoin, coreumChainCtx, coreumSender)
-	requireT.NoError(err)
-
-	expectedCoreumSenderBalanceAfterTransferBack := sdk.NewCoin(sendCoin.Denom, coreumSenderBalanceBeforeTransferBackRes.Balance.Amount.Add(sentFromPeerChainToCoreumCoin.Amount))
-	err = coreumChainCtx.AwaitForBalance(ctx, coreumSender, expectedCoreumSenderBalanceAfterTransferBack)
-	requireT.NoError(err)
-
-	// check zero balance on escrow address
-	coreumToPeerChainEscrowAddressRes, err = coreumBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumChainCtx.ConvertToBech32Address(coreumToPeerChainEscrowAddress),
-		Denom:   sendCoin.Denom,
-	})
-	requireT.NoError(err)
-	requireT.Equal(sdk.ZeroInt().String(), coreumToPeerChainEscrowAddressRes.Balance.Amount.String())
 }
 
 func getIssueFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {
