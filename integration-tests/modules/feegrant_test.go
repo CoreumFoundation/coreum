@@ -19,7 +19,7 @@ import (
 func TestFeeGrant(t *testing.T) {
 	t.Parallel()
 	requireT := require.New(t)
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	granter := chain.GenAccount()
 	grantee := chain.GenAccount()

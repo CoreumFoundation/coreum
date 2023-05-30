@@ -29,7 +29,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 	requireT := require.New(t)
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 	resp, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
@@ -52,7 +52,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 
@@ -82,7 +82,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	// fastUnbondingTime is the coins unbonding time we use for the test only
 	const fastUnbondingTime = time.Second * 10
@@ -228,7 +228,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
@@ -249,7 +249,7 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
@@ -311,11 +311,10 @@ func changeMinSelfDelegationCustomParam(
 	customParamsClient customparamstypes.QueryClient,
 	newMinSelfDelegation sdk.Int,
 ) {
+	requireT := require.New(t)
 	// create new proposer
 	proposer := chain.GenAccount()
 	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-
-	requireT := require.New(t)
 	requireT.NoError(err)
 
 	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))

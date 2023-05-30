@@ -15,7 +15,7 @@ import (
 func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, false)
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
@@ -45,7 +45,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t, false)
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
