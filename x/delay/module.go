@@ -10,10 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -70,17 +68,12 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper keeper.Keeper
-	router types.Router
 }
 
 // NewAppModule creates a new AppModule object.
-func NewAppModule(
-	keeper keeper.Keeper,
-	router types.Router,
-) AppModule {
+func NewAppModule(keeper keeper.Keeper) AppModule {
 	return AppModule{
 		keeper: keeper,
-		router: router,
 	}
 }
 
@@ -118,27 +111,15 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock performs a no-op.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
-
-// EndBlock returns the end blocker for the delay module.
-func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	msgs, err := am.keeper.MessagesToExecute(ctx)
+func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
+	err := am.keeper.ExecuteDelayedItems(ctx)
 	if err != nil {
 		panic(err)
 	}
+}
 
-	for _, m := range msgs {
-		handler := am.router.Handler(m.Message)
-		if handler == nil {
-			panic(errors.Errorf("no handler for message %s found", proto.MessageName(m.Message)))
-		}
-		if err := handler(ctx, m.Message); err != nil {
-			panic(err)
-		}
-	}
-
-	am.keeper.DeleteMessage(ctx, msgs)
-
+// EndBlock returns the end blocker for the delay module.
+func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }
 

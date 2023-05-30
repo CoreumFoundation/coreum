@@ -345,7 +345,12 @@ func New(
 		keys[authz.ModuleName], appCodec, app.MsgServiceRouter(),
 	)
 
-	app.DelayKeeper = delaykeeper.NewKeeper(appCodec, keys[delaytypes.StoreKey])
+	delayRouter := delaytypes.NewRouter()
+	err := delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))
+	if err != nil {
+		panic(err)
+	}
+	app.DelayKeeper = delaykeeper.NewKeeper(appCodec, keys[delaytypes.StoreKey], delayRouter)
 
 	originalBankKeeper := bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs())
 	var ibcChannelKeeper ibcchannelkeeper.Keeper
@@ -511,9 +516,7 @@ func New(
 	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper)
 	wstakingModule := wstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.CustomParamsKeeper)
 
-	delayRouter := delaytypes.NewRouter()
-	delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))
-	delayModule := delay.NewAppModule(app.DelayKeeper, delayRouter)
+	delayModule := delay.NewAppModule(app.DelayKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

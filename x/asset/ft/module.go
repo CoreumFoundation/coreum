@@ -147,13 +147,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 
-	err := cfg.RegisterMigration(types.ModuleName, 1, func(ctx sdk.Context) error {
-		params := am.keeper.GetParams(ctx)
-		params.IbcDecisionTimeout = ctx.BlockTime().Add(types.DefaultIBCDecisionPeriod)
-		params.IbcGracePeriod = types.DefaultIBCGracePeriod
-		am.keeper.SetParams(ctx, params)
-		return nil
-	})
+	m := keeper.NewMigrator(am.keeper)
+	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
 	if err != nil {
 		panic(err)
 	}

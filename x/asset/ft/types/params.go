@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	// DefaultIBCDecisionPeriod is the period when issuer must decide if IBC is going to be enabled for the token.
-	DefaultIBCDecisionPeriod = time.Hour * 24 * 30
+	// DefaultTokenUpgradeDecisionPeriod is the period when issuer must decide if token should be upgraded.
+	DefaultTokenUpgradeDecisionPeriod = time.Hour * 24 * 30
 
-	// DefaultIBCGracePeriod is the period after which IBC is effectively enabled.
-	DefaultIBCGracePeriod = time.Hour * 24 * 7
+	// DefaultTokenUpgradeGracePeriod is the period after which upgrade is effectively executed.
+	DefaultTokenUpgradeGracePeriod = time.Hour * 24 * 7
 )
 
 // KeyIssueFee represents the issue fee param key.
@@ -30,9 +30,9 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // DefaultParams returns params with default values.
 func DefaultParams(genesisTime time.Time) Params {
 	return Params{
-		IssueFee:           sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
-		IbcDecisionTimeout: genesisTime.Add(DefaultIBCDecisionPeriod),
-		IbcGracePeriod:     DefaultIBCGracePeriod,
+		IssueFee:                    sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
+		TokenUpgradeDecisionTimeout: genesisTime.Add(DefaultTokenUpgradeDecisionPeriod),
+		TokenUpgradeGracePeriod:     DefaultTokenUpgradeGracePeriod,
 	}
 }
 

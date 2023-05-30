@@ -17,16 +17,16 @@ message Params {
   ];
 
   // ibc_decision_timeout defines the end of the decision period for enabling IBC
-  google.protobuf.Timestamp ibc_decision_timeout = 2 [
+  google.protobuf.Timestamp token_upgrade_decision_timeout = 2 [
     (gogoproto.nullable) = false,
     (gogoproto.stdtime) = true,
-    (gogoproto.moretags) = "yaml:\"ibc_decision_timeout\""
+    (gogoproto.moretags) = "yaml:\"token_upgrade_decision_timeout\""
   ];
 
   // ibc_grace_period defines the period after which IBC is effectively enabled
-  google.protobuf.Duration ibc_grace_period = 3 [
+  google.protobuf.Duration token_upgrade_grace_period = 3 [
     (gogoproto.nullable) = false,
     (gogoproto.stdduration) = true,
-    (gogoproto.moretags) = "yaml:\"ibc_grace_period\""
+    (gogoproto.moretags) = "yaml:\"token_upgrade_grace_period\""
   ];
 }

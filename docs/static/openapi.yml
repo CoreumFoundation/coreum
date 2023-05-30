@@ -1085,13 +1085,13 @@ paths:
                       custom method
 
                       signatures required by gogoproto.
-                  ibc_decision_timeout:
+                  token_upgrade_decision_timeout:
                     type: string
                     format: date-time
                     title: >-
                       ibc_decision_timeout defines the end of the decision
                       period for enabling IBC
-                  ibc_grace_period:
+                  token_upgrade_grace_period:
                     type: string
                     title: >-
                       ibc_grace_period defines the period after which IBC is
@@ -38767,13 +38767,13 @@ definitions:
 
           NOTE: The amount field is an Int which implements the custom method
           signatures required by gogoproto.
-      ibc_decision_timeout:
+      token_upgrade_decision_timeout:
         type: string
         format: date-time
         title: >-
           ibc_decision_timeout defines the end of the decision period for
           enabling IBC
-      ibc_grace_period:
+      token_upgrade_grace_period:
         type: string
         title: >-
           ibc_grace_period defines the period after which IBC is effectively
@@ -38853,13 +38853,13 @@ definitions:
               method
 
               signatures required by gogoproto.
-          ibc_decision_timeout:
+          token_upgrade_decision_timeout:
             type: string
             format: date-time
             title: >-
               ibc_decision_timeout defines the end of the decision period for
               enabling IBC
-          ibc_grace_period:
+          token_upgrade_grace_period:
             type: string
             title: >-
               ibc_grace_period defines the period after which IBC is effectively

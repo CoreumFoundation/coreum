@@ -28,8 +28,8 @@
           "denom": "{{ .Denom }}",
           "amount": "10000000"
         },
-        "ibc_decision_timeout": "{{ .IBCDecisionTimeout }}",
-        "ibc_grace_period": "604800s"
+        "token_upgrade_decision_timeout": "{{ .TokenUpgradeDecisionTimeout }}",
+        "token_upgrade_grace_period": "604800s"
       }
     },
     "assetnft": {

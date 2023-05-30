@@ -23,7 +23,7 @@ type DelayKeeper interface {
 // StoreDelayedUpgradeV1 stores request for upgrading token to V1.
 func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
 	params := k.GetParams(ctx)
-	if ctx.BlockTime().After(params.IbcDecisionTimeout) {
+	if ctx.BlockTime().After(params.TokenUpgradeDecisionTimeout) {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "it is no longer possible IBC")
 	}
 
@@ -50,7 +50,7 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		Denom:      denom,
 		IbcEnabled: ibcEnabled,
 	}
-	err = k.delayKeeper.DelayMessage(ctx, "assetft-ibcenable-"+denom, delayedData, params.IbcGracePeriod)
+	err = k.delayKeeper.DelayMessage(ctx, "assetft-ibcenable-"+denom, delayedData, params.TokenUpgradeGracePeriod)
 	if err != nil {
 		return err
 	}

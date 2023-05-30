@@ -101,7 +101,7 @@ func New(options ...Option) *App {
 func (s *App) BeginNextBlock() sdk.Context {
 	header := tmproto.Header{Height: s.LastBlockHeight() + 1}
 	s.BeginBlock(abci.RequestBeginBlock{Header: header})
-	return s.BaseApp.NewContext(false, header)
+	return s.BaseApp.NewContext(false, header).WithBlockTime(time.Now())
 }
 
 // EndBlockAndCommit ends the current block and commit the state.
