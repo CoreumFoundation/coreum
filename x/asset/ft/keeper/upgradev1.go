@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -12,8 +13,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
-
-var upgradeV1Prefix = []byte("upgradev1")
 
 const (
 	upgradePlanIntroducingTokenV1 = "v2"
@@ -46,7 +45,7 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return errors.Errorf("denom %s has been already upgraded to v1", denom)
 	}
 
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), upgradeV1Prefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateVersionUpgradeKey(upgradeV1Version))
 	key := []byte(denom)
 	if store.Has(key) {
 		return errors.Errorf("pending request for v1 upgrade already exists for denom: %s", denom)
@@ -65,7 +64,7 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return nil
 	}
 
-	err = k.delayKeeper.DelayExecution(ctx, "assetft-ibcenable-"+denom, data, params.TokenUpgradeGracePeriod)
+	err = k.delayKeeper.DelayExecution(ctx, tokenUpgradeID(upgradeV1Version, data.Denom), data, params.TokenUpgradeGracePeriod)
 	if err != nil {
 		return err
 	}
@@ -97,9 +96,13 @@ func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgrad
 		k.SetVersion(ctx, data.Denom, version)
 	}
 
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), upgradeV1Prefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateVersionUpgradeKey(upgradeV1Version))
 	key := []byte(data.Denom)
 	store.Delete(key)
 
 	return nil
+}
+
+func tokenUpgradeID(version int, denom string) string {
+	return fmt.Sprintf("%s-upgrade-%d-%s", types.ModuleName, version, denom)
 }

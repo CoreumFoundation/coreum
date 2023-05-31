@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/binary"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -34,15 +33,10 @@ func NewKeeper(
 
 // DelayExecution stores an item to be executed later.
 func (k Keeper) DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error {
-	execTime := ctx.BlockTime().Add(delay).Unix()
-	if execTime < 0 {
-		return errors.New("there were no blockchains before 1970-01-01")
+	key, err := types.CreateDelayedItemKey(ctx, id, delay)
+	if err != nil {
+		return err
 	}
-
-	key := make([]byte, 8, 8+len(id))
-	// big endian is used to be sure that results are sortable lexicographically when stored messages are iterated
-	binary.BigEndian.PutUint64(key, uint64(execTime))
-	key = append(key, []byte(id)...)
 
 	store := ctx.KVStore(k.storeKey)
 	if store.Has(key) {
@@ -76,9 +70,13 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 			return errors.New("key is too short")
 		}
 
+		execTime, err := types.ExtractUnixTimestampFromDelayedItemKey(key)
+		if err != nil {
+			return err
+		}
+
 		// due to the order of items returned by the iterator, if we find that execution time is after
 		// the current block time, then there is no reason to iterate further
-		execTime := binary.BigEndian.Uint64(key[:8])
 		if execTime > blockTimeUnsigned {
 			return nil
 		}
