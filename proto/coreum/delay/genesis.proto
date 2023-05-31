@@ -2,6 +2,7 @@ syntax = "proto3";
 package coreum.delay.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/delay/types";
@@ -13,7 +14,7 @@ message GenesisState {
 }
 
 message DelayedItem {
-  string denom = 1;
-  uint32 version = 2;
+  string id = 1;
+  google.protobuf.Timestamp execution_time = 2 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
   google.protobuf.Any data = 3;
 }

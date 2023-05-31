@@ -283,12 +283,12 @@ func (k Keeper) ImportVersions(ctx sdk.Context, versions []types.GenesisTokenVer
 }
 
 // ExportVersions exports versions for all the tokens.
-func (k Keeper) ExportVersions(ctx sdk.Context, pagination *query.PageRequest) ([]types.GenesisTokenVersion, *query.PageResponse, error) {
+func (k Keeper) ExportVersions(ctx sdk.Context) ([]types.GenesisTokenVersion, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenVersionKeyPrefix)
-	versionPointers, pageRes, err := query.GenericFilteredPaginate(
+	versionPointers, _, err := query.GenericFilteredPaginate(
 		k.cdc,
 		store,
-		pagination,
+		&query.PageRequest{Limit: query.MaxLimit},
 		// builder
 		func(key []byte, version *types.TokenVersion) (*types.GenesisTokenVersion, error) {
 			return &types.GenesisTokenVersion{
@@ -302,7 +302,7 @@ func (k Keeper) ExportVersions(ctx sdk.Context, pagination *query.PageRequest) (
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	versions := make([]types.GenesisTokenVersion, 0, len(versionPointers))
@@ -310,7 +310,7 @@ func (k Keeper) ExportVersions(ctx sdk.Context, pagination *query.PageRequest) (
 		versions = append(versions, *version)
 	}
 
-	return versions, pageRes, err
+	return versions, err
 }
 
 // SetDenomMetadata registers denom metadata on the bank keeper.

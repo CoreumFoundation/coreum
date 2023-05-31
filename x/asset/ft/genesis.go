@@ -84,7 +84,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
-	tokenVersions, _, err := k.ExportVersions(ctx, &query.PageRequest{Limit: query.MaxLimit})
+	tokenVersions, err := k.ExportVersions(ctx)
 	if err != nil {
 		panic(err)
 	}
