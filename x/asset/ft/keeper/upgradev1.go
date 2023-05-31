@@ -52,22 +52,40 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return errors.Errorf("pending request for v1 upgrade already exists for denom: %s", denom)
 	}
 
-	delayedData := &types.DelayedTokenUpgradeV1{
+	data := &types.DelayedTokenUpgradeV1{
 		Denom:      denom,
 		IbcEnabled: ibcEnabled,
 	}
-	err = k.delayKeeper.DelayExecution(ctx, "assetft-ibcenable-"+denom, delayedData, params.TokenUpgradeGracePeriod)
+
+	if !ibcEnabled {
+		// if issuer does not want to enable IBC we may upgrade the token immediately
+		// because it's behaviour is not changed
+		return k.upgradeTokenToV1(ctx, data)
+	}
+
+	err = k.delayKeeper.DelayExecution(ctx, "assetft-ibcenable-"+denom, data, params.TokenUpgradeGracePeriod)
 	if err != nil {
 		return err
 	}
 
 	store.Set(key, asset.StoreTrue)
-
 	return nil
 }
 
 // UpgradeTokenToV1 upgrades token to version V1.
 func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgradeV1) error {
+	if err := k.upgradeTokenToV1(ctx, data); err != nil {
+		return err
+	}
+
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), upgradeV1Prefix)
+	key := []byte(data.Denom)
+	store.Delete(key)
+
+	return nil
+}
+
+func (k Keeper) upgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgradeV1) error {
 	subunit, issuer, err := types.DeconstructDenom(data.Denom)
 	if err != nil {
 		return err
@@ -88,10 +106,6 @@ func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgrad
 		version.Version = upgradeV1Version
 		k.SetVersion(ctx, data.Denom, version)
 	}
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), upgradeV1Prefix)
-	key := []byte(data.Denom)
-	store.Delete(key)
 
 	return nil
 }

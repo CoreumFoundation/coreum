@@ -20,6 +20,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
+// UpgradeKeeper defines methods delivered by the upgrade keeper.
 type UpgradeKeeper interface {
 	AppliedPlan(ctx context.Context, req *upgradetypes.QueryAppliedPlanRequest) (*upgradetypes.QueryAppliedPlanResponse, error)
 }
