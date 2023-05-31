@@ -32,7 +32,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// token definitions
 	var tokens []types.Token
-	for i := 0; i < 5; i++ {
+	var genesisTokenVersions []types.GenesisTokenVersion
+	for i := uint32(0); i < 5; i++ {
 		token := types.Token{
 			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
 			Issuer:             issuer.String(),
@@ -52,6 +53,15 @@ func TestInitAndExportGenesis(t *testing.T) {
 		}
 		tokens = append(tokens, token)
 		requireT.NoError(ftKeeper.SetDenomMetadata(ctx, token.Denom, token.Symbol, token.Description, token.Precision))
+		if i > 0 {
+			ftKeeper.SetVersion(ctx, token.Denom, types.TokenVersion{
+				Version: i,
+			})
+			genesisTokenVersions = append(genesisTokenVersions, types.GenesisTokenVersion{
+				Denom:   token.Denom,
+				Version: i,
+			})
+		}
 	}
 
 	// frozen balances
@@ -88,6 +98,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		Tokens:              tokens,
 		FrozenBalances:      frozenBalances,
 		WhitelistedBalances: whitelistedBalances,
+		TokenVersions:       genesisTokenVersions,
 	}
 
 	// init the keeper
@@ -105,6 +116,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 		storedToken, err := ftKeeper.GetToken(ctx, definition.Denom)
 		requireT.NoError(err)
 		assertT.EqualValues(definition, storedToken)
+	}
+
+	// token versions
+	for _, genesisVersion := range genesisTokenVersions {
+		version := ftKeeper.GetVersion(ctx, genesisVersion.Denom)
+		assertT.EqualValues(version.Version, genesisVersion.Version)
 	}
 
 	// frozen balances
@@ -125,11 +142,21 @@ func TestInitAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
+	// whitelisted balances
+	for _, balance := range whitelistedBalances {
+		address, err := sdk.AccAddressFromBech32(balance.Address)
+		requireT.NoError(err)
+		coins, _, err := ftKeeper.GetWhitelistedBalances(ctx, address, nil)
+		requireT.NoError(err)
+		assertT.EqualValues(balance.Coins.String(), coins.String())
+	}
+
 	// check that export is equal import
 	exportedGenState := ft.ExportGenesis(ctx, ftKeeper)
 
 	assertT.EqualValues(genState.Params, exportedGenState.Params)
 	assertT.ElementsMatch(genState.Tokens, exportedGenState.Tokens)
+	assertT.ElementsMatch(genState.TokenVersions, exportedGenState.TokenVersions)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)
 }

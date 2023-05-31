@@ -32,8 +32,8 @@ func NewKeeper(
 	}
 }
 
-// DelayMessage stores a message to be executed later.
-func (k Keeper) DelayMessage(ctx sdk.Context, id string, msg proto.Message, delay time.Duration) error {
+// DelayExecution stores an item to be executed later.
+func (k Keeper) DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error {
 	execTime := ctx.BlockTime().Add(delay).Unix()
 	if execTime < 0 {
 		return errors.New("there were no blockchains before 1970-01-01")
@@ -46,12 +46,12 @@ func (k Keeper) DelayMessage(ctx sdk.Context, id string, msg proto.Message, dela
 
 	store := ctx.KVStore(k.storeKey)
 	if store.Has(key) {
-		return errors.Errorf("delayed message is already stored under the key, id: %s", id)
+		return errors.Errorf("delayed item is already stored under the key, id: %s", id)
 	}
 
-	b, err := k.cdc.MarshalInterface(msg)
+	b, err := k.cdc.Marshal(data)
 	if err != nil {
-		return errors.Wrap(err, "marshaling delayed message failed")
+		return errors.Wrap(err, "marshaling delayed item failed")
 	}
 	store.Set(key, b)
 	return nil
@@ -83,8 +83,8 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 			return nil
 		}
 
-		var data proto.Message
-		if err := k.cdc.UnmarshalInterface(iter.Value(), &data); err != nil {
+		var data codec.ProtoMarshaler
+		if err := k.cdc.Unmarshal(iter.Value(), data); err != nil {
 			return errors.Wrap(err, "decoding delayed message failed")
 		}
 

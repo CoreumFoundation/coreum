@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -11,11 +12,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
+
+type UpgradeKeeper interface {
+	AppliedPlan(ctx context.Context, req *upgradetypes.QueryAppliedPlanRequest) (*upgradetypes.QueryAppliedPlanResponse, error)
+}
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
 type ParamSubspace interface {
@@ -31,6 +38,7 @@ type Keeper struct {
 	bankKeeper       types.BankKeeper
 	ibcChannelKeeper types.IBCChannelKeeper
 	delayKeeper      DelayKeeper
+	upgradeKeeper    UpgradeKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -41,6 +49,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	ibcChannelKeeper types.IBCChannelKeeper,
 	delayKeeper DelayKeeper,
+	upgradeKeeper UpgradeKeeper,
 ) Keeper {
 	return Keeper{
 		cdc:              cdc,
@@ -49,6 +58,7 @@ func NewKeeper(
 		bankKeeper:       bankKeeper,
 		ibcChannelKeeper: ibcChannelKeeper,
 		delayKeeper:      delayKeeper,
+		upgradeKeeper:    upgradeKeeper,
 	}
 }
 
@@ -126,7 +136,7 @@ func (k Keeper) GetDefinition(ctx sdk.Context, denom string) (types.Definition, 
 	return definition, nil
 }
 
-// GetToken return the fungible token by it's denom.
+// GetToken returns the fungible token by it's denom.
 func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {
@@ -192,6 +202,19 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 	}
 	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
+	upgradePlan, err := k.upgradeKeeper.AppliedPlan(ctx.Context(), &upgradetypes.QueryAppliedPlanRequest{
+		Name: upgradePlanIntroducingTokenV1,
+	})
+	// err is always nil in current implementation
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	if upgradePlan.Height > 0 {
+		k.SetVersion(ctx, denom, types.TokenVersion{
+			Version: upgradeV1Version,
+		})
+	}
+
 	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
 		return "", err
 	}
@@ -230,6 +253,62 @@ func (k Keeper) SetSymbol(ctx sdk.Context, symbol string, issuer sdk.AccAddress)
 // SetDefinition stores the Definition.
 func (k Keeper) SetDefinition(ctx sdk.Context, issuer sdk.AccAddress, subunit string, definition types.Definition) {
 	ctx.KVStore(k.storeKey).Set(types.CreateTokenKey(issuer, subunit), k.cdc.MustMarshal(&definition))
+}
+
+// GetVersion stores the version.
+func (k Keeper) GetVersion(ctx sdk.Context, denom string) types.TokenVersion {
+	bz := ctx.KVStore(k.storeKey).Get(types.CreateTokenVersionKey(denom))
+	if bz == nil {
+		return types.TokenVersion{}
+	}
+	var version types.TokenVersion
+	k.cdc.MustUnmarshal(bz, &version)
+	return version
+}
+
+// SetVersion stores the version.
+func (k Keeper) SetVersion(ctx sdk.Context, denom string, version types.TokenVersion) {
+	ctx.KVStore(k.storeKey).Set(types.CreateTokenVersionKey(denom), k.cdc.MustMarshal(&version))
+}
+
+// ImportVersions imports versions all versions.
+func (k Keeper) ImportVersions(ctx sdk.Context, versions []types.GenesisTokenVersion) {
+	for _, v := range versions {
+		k.SetVersion(ctx, v.Denom, types.TokenVersion{
+			Version: v.Version,
+		})
+	}
+}
+
+// ExportVersions exports versions for all the tokens.
+func (k Keeper) ExportVersions(ctx sdk.Context, pagination *query.PageRequest) ([]types.GenesisTokenVersion, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenVersionKeyPrefix)
+	versionPointers, pageRes, err := query.GenericFilteredPaginate(
+		k.cdc,
+		store,
+		pagination,
+		// builder
+		func(key []byte, version *types.TokenVersion) (*types.GenesisTokenVersion, error) {
+			return &types.GenesisTokenVersion{
+				Denom:   string(key),
+				Version: version.Version,
+			}, nil
+		},
+		// constructor
+		func() *types.TokenVersion {
+			return &types.TokenVersion{}
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	versions := make([]types.GenesisTokenVersion, 0, len(versionPointers))
+	for _, version := range versionPointers {
+		versions = append(versions, *version)
+	}
+
+	return versions, pageRes, err
 }
 
 // SetDenomMetadata registers denom metadata on the bank keeper.

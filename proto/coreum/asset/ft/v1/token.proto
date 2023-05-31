@@ -2,7 +2,6 @@ syntax = "proto3";
 package coreum.asset.ft.v1;
 
 import "gogoproto/gogo.proto";
-import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
 
@@ -60,4 +59,9 @@ message Token {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
+}
+
+// TokenVersion stores token version.
+message TokenVersion {
+  uint32 version = 1;
 }

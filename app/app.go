@@ -361,6 +361,7 @@ func New(
 		originalBankKeeper,
 		&ibcChannelKeeper,
 		app.DelayKeeper,
+		app.UpgradeKeeper,
 	)
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
