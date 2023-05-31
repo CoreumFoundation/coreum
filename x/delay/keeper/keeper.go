@@ -4,7 +4,10 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 
@@ -16,6 +19,7 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey sdk.StoreKey
 	router   types.Router
+	registry codectypes.InterfaceRegistry
 }
 
 // NewKeeper returns a new Keeper instance.
@@ -23,17 +27,24 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey sdk.StoreKey,
 	router types.Router,
+	registry codectypes.InterfaceRegistry,
 ) Keeper {
 	return Keeper{
 		cdc:      cdc,
 		storeKey: storeKey,
 		router:   router,
+		registry: registry,
 	}
 }
 
 // DelayExecution stores an item to be executed later.
 func (k Keeper) DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error {
-	key, err := types.CreateDelayedItemKey(ctx, id, delay)
+	return k.StoreDelayedExecution(ctx, id, data, ctx.BlockTime().Add(delay))
+}
+
+// StoreDelayedExecution stores delayed execution item using absolute time.
+func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, t time.Time) error {
+	key, err := types.CreateDelayedItemKey(id, t)
 	if err != nil {
 		return err
 	}
@@ -53,31 +64,26 @@ func (k Keeper) DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarsh
 
 // ExecuteDelayedItems executes delayed logic.
 func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
-	store := ctx.KVStore(k.storeKey)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelayedItemKeyPrefix)
 
 	// messages will be returned from this iterator in the execution time ascending order
 	iter := store.Iterator(nil, nil)
 
-	blockTime := ctx.BlockTime().Unix()
-	if blockTime < 0 {
-		return errors.New("there were no blockchains before 1970-01-01")
-	}
-	blockTimeUnsigned := uint64(blockTime)
-
+	blockTime := ctx.BlockTime()
 	for ; iter.Valid(); iter.Next() {
 		key := iter.Key()
 		if len(key) < 8 {
 			return errors.New("key is too short")
 		}
 
-		execTime, err := types.ExtractUnixTimestampFromDelayedItemKey(key)
+		execTime, _, err := types.ExtractTimeAndIDFromDelayedItemKey(key)
 		if err != nil {
 			return err
 		}
 
 		// due to the order of items returned by the iterator, if we find that execution time is after
 		// the current block time, then there is no reason to iterate further
-		if execTime > blockTimeUnsigned {
+		if execTime.After(blockTime) {
 			return nil
 		}
 
@@ -100,4 +106,55 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 		store.Delete(key)
 	}
 	return nil
+}
+
+// ImportDelayedItems imports delayed items.
+func (k Keeper) ImportDelayedItems(ctx sdk.Context, items []types.DelayedItem) error {
+	for _, i := range items {
+		var data codec.ProtoMarshaler
+		if err := k.registry.UnpackAny(i.Data, &data); err != nil {
+			return errors.WithStack(err)
+		}
+
+		if err := k.StoreDelayedExecution(ctx, i.Id, data, i.ExecutionTime); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ExportDelayedItems exports delayed items.
+func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelayedItemKeyPrefix)
+	delayedItems := []types.DelayedItem{}
+	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key []byte, value []byte) error {
+		executionTime, id, err := types.ExtractTimeAndIDFromDelayedItemKey(key)
+		if err != nil {
+			return err
+		}
+
+		var data codec.ProtoMarshaler
+		if err := k.cdc.Unmarshal(value, data); err != nil {
+			return err
+		}
+
+		anyData, err := codectypes.NewAnyWithValue(data)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		delayedItems = append(delayedItems, types.DelayedItem{
+			Id:            id,
+			ExecutionTime: executionTime,
+			Data:          anyData,
+		})
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return delayedItems, nil
 }
