@@ -12,12 +12,9 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	"github.com/cosmos/ibc-go/v4/modules/core/exported"
 	ibctmlightclienttypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
 	protobufgrpc "github.com/gogo/protobuf/grpc"
 	"github.com/google/uuid"
@@ -144,53 +141,6 @@ func (c ChainContext) GenMultisigAccount(signersCount, multisigThreshold int) (*
 	return multisigPublicKey, keyNamesSet, nil
 }
 
-// ExecuteIBCTransfer executes IBC transfer transaction.
-func (c ChainContext) ExecuteIBCTransfer(
-	ctx context.Context,
-	t *testing.T,
-	senderAddress sdk.AccAddress,
-	coin sdk.Coin,
-	recipientChainContext ChainContext,
-	recipientAddress sdk.AccAddress,
-) (*sdk.TxResponse, error) {
-	t.Helper()
-
-	sender := c.ConvertToBech32Address(senderAddress)
-	receiver := recipientChainContext.ConvertToBech32Address(recipientAddress)
-	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, receiver, coin.String())
-
-	recipientChannelID := c.GetIBCChannelID(ctx, t, recipientChainContext.ChainSettings.ChainID)
-	height, err := queryLatestConsensusHeight(
-		ctx,
-		c.ClientContext,
-		ibctransfertypes.PortID,
-		recipientChannelID,
-	)
-	require.NoError(t, err)
-
-	ibcSend := ibctransfertypes.MsgTransfer{
-		SourcePort:    ibctransfertypes.PortID,
-		SourceChannel: recipientChannelID,
-		Token:         coin,
-		Sender:        sender,
-		Receiver:      receiver,
-		TimeoutHeight: ibcclienttypes.Height{
-			RevisionNumber: height.RevisionNumber,
-			RevisionHeight: height.RevisionHeight + 1000,
-		},
-	}
-
-	txRes, err := BroadcastTxWithSigner(
-		ctx,
-		c,
-		c.TxFactory().WithSimulateAndExecute(true),
-		senderAddress,
-		&ibcSend,
-	)
-
-	return txRes, err
-}
-
 // AwaitForBalance queries for the balance with retry and timeout.
 func (c ChainContext) AwaitForBalance(
 	ctx context.Context,
@@ -279,32 +229,6 @@ func (c ChainContext) GetIBCChannelID(ctx context.Context, t *testing.T, peerCha
 	t.Logf("Got %s chain channel on %s chain, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID)
 
 	return channelID
-}
-
-func queryLatestConsensusHeight(ctx context.Context, clientCtx client.Context, portID, channelID string) (ibcclienttypes.Height, error) {
-	queryClient := ibcchanneltypes.NewQueryClient(clientCtx)
-	req := &ibcchanneltypes.QueryChannelClientStateRequest{
-		PortId:    portID,
-		ChannelId: channelID,
-	}
-
-	clientRes, err := queryClient.ChannelClientState(ctx, req)
-	if err != nil {
-		return ibcclienttypes.Height{}, err
-	}
-
-	var clientState exported.ClientState
-	if err := clientCtx.InterfaceRegistry().UnpackAny(clientRes.IdentifiedClientState.ClientState, &clientState); err != nil {
-		return ibcclienttypes.Height{}, err
-	}
-
-	clientHeight, ok := clientState.GetLatestHeight().(ibcclienttypes.Height)
-	if !ok {
-		return ibcclienttypes.Height{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidHeight, "invalid height type. expected type: %T, got: %T",
-			ibcclienttypes.Height{}, clientHeight)
-	}
-
-	return clientHeight, nil
 }
 
 // Chain holds network and client for the blockchain.

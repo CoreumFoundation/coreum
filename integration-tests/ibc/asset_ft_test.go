@@ -22,12 +22,12 @@ import (
 func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumRawChain, ibcChains := NewIBCTestingContext(t)
 	requireT := require.New(t)
 
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
-	osmosisChain := chains.Osmosis
+	coreumChain := ibcChains.Coreum
+	gaiaChain := ibcChains.Gaia
+	osmosisChain := ibcChains.Osmosis
 
 	gaiaToCoreumChannelID := gaiaChain.GetIBCChannelID(ctx, t, coreumChain.ChainSettings.ChainID)
 	coreumToGaiaChannelID := coreumChain.GetIBCChannelID(ctx, t, gaiaChain.ChainSettings.ChainID)
@@ -45,7 +45,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 	coreumIssuer := coreumChain.GenAccount()
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumRawChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -55,7 +55,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		Amount: issueFee,
 	})
 
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumRawChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
@@ -74,7 +74,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	_, err := client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		coreumChain.TxFactory().WithGas(coreumRawChain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
 	require.NoError(t, err)
@@ -99,7 +99,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	_, err = client.BroadcastTx(
 		ctx,
 		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
-		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(msgSend)),
+		coreumChain.TxFactory().WithGas(coreumRawChain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
 	requireT.NoError(err)
