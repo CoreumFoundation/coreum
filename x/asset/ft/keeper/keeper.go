@@ -15,6 +15,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
@@ -537,6 +538,14 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
+	// Checking for escrow address is done here, because those accounts should be affected by global freeze checked above.
+	// Escrow addresses are like any others, which means issuer might freeze them leading to disaster.
+	// We can't simply return an error from SetFrozenBalances when issuer tries to freeze the escrow address,
+	// because at that time channel might not exist yet, while its address still might be predicted in advance.
+	if wibctransfertypes.IsDirectionIn(ctx) {
+		return nil
+	}
+
 	availableBalance := k.availableBalance(ctx, addr, def.Denom)
 	if !availableBalance.Amount.GTE(amount) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available, available %s",
@@ -546,7 +555,9 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 }
 
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
-	if !def.IsFeatureEnabled(types.Feature_whitelisting) || def.IsIssuer(addr) {
+	if !def.IsFeatureEnabled(types.Feature_whitelisting) ||
+		def.IsIssuer(addr) ||
+		wibctransfertypes.IsDirectionOut(ctx) { // escrow addresses must work despite whitelisting because otherwise IBC transfers fail
 		return nil
 	}
 

@@ -77,7 +77,6 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v4/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
@@ -124,6 +123,8 @@ import (
 	wasmcustomhandler "github.com/CoreumFoundation/coreum/x/wasm/handler"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/x/wibctransfer"
+	wibctransferkeeper "github.com/CoreumFoundation/coreum/x/wibctransfer/keeper"
 	"github.com/CoreumFoundation/coreum/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/x/wstaking"
@@ -174,7 +175,7 @@ var (
 		ibc.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		transfer.AppModuleBasic{},
+		wibctransfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
@@ -244,7 +245,7 @@ type App struct {
 	UpgradeKeeper    upgradekeeper.Keeper
 	ParamsKeeper     paramskeeper.Keeper
 	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	TransferKeeper   ibctransferkeeper.Keeper
+	TransferKeeper   wibctransferkeeper.TransferKeeperWrapper
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	WASMKeeper       wasm.Keeper
@@ -409,7 +410,7 @@ func New(
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
 	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+	app.TransferKeeper = wibctransferkeeper.NewTransferKeeperWrapper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
 		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, app.BankKeeper, app.ScopedTransferKeeper,
@@ -480,7 +481,7 @@ func New(
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transfer.NewIBCModule(app.TransferKeeper))
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, wibctransfer.NewDirectionMiddleware(transfer.NewIBCModule(app.TransferKeeper.Keeper)))
 	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WASMKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -524,7 +525,7 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		transfer.NewAppModule(app.TransferKeeper),
+		wibctransfer.NewAppModule(app.TransferKeeper),
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
 		assetFTModule,
@@ -644,7 +645,7 @@ func New(
 		wstakingModule,
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
-		transfer.NewAppModule(app.TransferKeeper),
+		wibctransfer.NewAppModule(app.TransferKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
