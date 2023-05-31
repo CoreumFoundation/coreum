@@ -69,6 +69,7 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return err
 	}
 
+	// FIXME (wojtek): This thing must be imported and exported
 	store.Set(key, asset.StoreTrue)
 	return nil
 }
