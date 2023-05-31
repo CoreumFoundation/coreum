@@ -20,7 +20,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
-	gaiaToCoreumChannelID := gaiaChain.GetIBCChannelID(ctx, t, coreumChain.ChainSettings.ChainID)
+	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
@@ -29,6 +29,11 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 		Amount:   sendToGaiaCoin.Amount,
+	})
+
+	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+		Address: gaiaRecipient,
+		Amount:  gaiaChain.NewCoin(sdk.NewInt(1000000)), // coin for the fees
 	})
 
 	txRes := coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient)
@@ -49,9 +54,10 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
-	coreumToGaiaChannelID := coreumChain.GetIBCChannelID(ctx, t, gaiaChain.ChainSettings.ChainID)
+	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
 
 	gaiaSender := gaiaChain.GenAccount()
+	gaiaRecipient := gaiaChain.GenAccount()
 	coreumRecipient := coreumChain.GenAccount()
 
 	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(1000))
@@ -61,7 +67,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 
 	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
 		Address: gaiaSender,
-		Amount:  sendToCoreumCoin,
+		Amount:  sendToCoreumCoin.Add(gaiaChain.NewCoin(sdk.NewInt(1000000))), // coin to send + coin for the fee
 	})
 
 	_ = gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaSender, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumRecipient)
@@ -69,8 +75,8 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	expectedCoreumRecipientBalance := sdk.NewCoin(convertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
 	coreumChain.AwaitForBalance(ctx, t, coreumRecipient, expectedCoreumRecipientBalance)
 
-	_ = coreumChain.ExecuteIBCTransfer(ctx, t, coreumRecipient, expectedCoreumRecipientBalance, gaiaChain.ChainContext, gaiaSender)
+	_ = coreumChain.ExecuteIBCTransfer(ctx, t, coreumRecipient, expectedCoreumRecipientBalance, gaiaChain.ChainContext, gaiaRecipient)
 
 	expectedGaiaSenderBalance := sdk.NewCoin(sendToCoreumCoin.Denom, expectedCoreumRecipientBalance.Amount)
-	gaiaChain.AwaitForBalance(ctx, t, gaiaSender, expectedGaiaSenderBalance)
+	gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, expectedGaiaSenderBalance)
 }

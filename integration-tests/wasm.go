@@ -66,7 +66,7 @@ func (w Wasm) ExecuteWASMContract(ctx context.Context, txf client.Factory, fromA
 		Funds:    funds,
 	}
 
-	res, err := BroadcastTxWithSigner(ctx, w.chainCtx, addGasMultiplier(txf), fromAddress, msg)
+	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
 	if err != nil {
 		return 0, err
 	}
@@ -96,7 +96,7 @@ func (w Wasm) DeployWASMContract(ctx context.Context, txf client.Factory, fromAd
 		WASMByteCode: wasmData,
 	}
 
-	res, err := BroadcastTxWithSigner(ctx, w.chainCtx, addGasMultiplier(txf), fromAddress, msg)
+	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
 	if err != nil {
 		return 0, err
 	}
@@ -130,7 +130,7 @@ func (w Wasm) InstantiateWASMContract(ctx context.Context, txf client.Factory, f
 		Funds:  funds,
 	}
 
-	res, err := BroadcastTxWithSigner(ctx, w.chainCtx, addGasMultiplier(txf), fromAddress, msg)
+	res, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
 	if err != nil {
 		return "", err
 	}

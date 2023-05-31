@@ -2,7 +2,7 @@
 name = "bank-send"
 version = "0.1.0"
 authors = ["Coreum"]
-edition = "2018"
+edition = "2021"
 
 exclude = [
   "bank_send.wasm",
