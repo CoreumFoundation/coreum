@@ -3,10 +3,9 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
 // BeforeSendCoins checks that a transfer request is allowed or not.
@@ -133,7 +132,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// Note that if we used original rate it would be 75 * 10% = 7.5
 	// Here is the final formula we use to calculate adjusted burn/commission amount for multisend txs:
 	// amount * rate * min(non_issuer_inputs_sum, non_issuer_outputs_sum) / non_issuer_inputs_sum
-	if rate.IsNil() || !rate.IsPositive() {
+	if rate.IsNil() || !rate.IsPositive() || wibctransfertypes.IsDirectionIn(ctx) {
 		return nil
 	}
 
@@ -152,7 +151,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	shares := make(accountOperationMap, 0)
 	for account, amount := range inOps {
 		// if sender is issuer or IBC escrow
-		if account == issuer || k.isAccountIBCEscrowAddress(ctx, account) {
+		if account == issuer {
 			continue
 		}
 		// in order to reduce precision errors, we first multiply all sdk.Ints, and then multiply sdk.Decs, and then divide
@@ -161,20 +160,4 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	}
 
 	return shares
-}
-
-func (k Keeper) isAccountIBCEscrowAddress(ctx sdk.Context, account string) bool {
-	// TODO(dzmitryhil) check whether we can improve it once we integrate the IBC middleware for the send validations
-	isEscrow := false
-	k.ibcChannelKeeper.IterateChannels(ctx, func(channel ibcchanneltypes.IdentifiedChannel) bool {
-		escrowAddress := ibctransfertypes.GetEscrowAddress(channel.PortId, channel.ChannelId)
-		if account == escrowAddress.String() {
-			isEscrow = true
-			return true
-		}
-
-		return false
-	})
-
-	return isEscrow
 }
