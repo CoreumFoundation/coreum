@@ -27,7 +27,7 @@ import (
 func TestAssetFTQueryParams(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issueFee := getIssueFee(ctx, t, chain.ClientContext)
 
 	assert.True(t, issueFee.Amount.GT(sdk.ZeroInt()))
@@ -38,18 +38,17 @@ func TestAssetFTQueryParams(t *testing.T) {
 func TestAssetFTIssue(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
@@ -91,22 +90,22 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
 	// That's why t.Parallel() is not here.
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 	origIssueFee := getIssueFee(ctx, t, chain.ClientContext)
 
-	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing IssueFee in the assetft module",
+	chain.Governance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origIssueFee.Denom, sdk.ZeroInt()))))),
-		}))
+		})
 
 	issuer := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-			},
-		}))
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+	})
 
 	// Issue token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -129,17 +128,17 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT.NoError(err)
 
 	// Revert to original issue fee
-	requireT.NoError(chain.Governance.UpdateParams(ctx, "Propose changing IssueFee in the assetft module",
+	chain.Governance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(origIssueFee)))),
-		}))
+		})
 }
 
 // TestAssetIssueAndQueryTokens checks that tokens query works as expected.
 func TestAssetIssueAndQueryTokens(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	clientCtx := chain.ClientContext
@@ -149,16 +148,16 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 	issueFee := getIssueFee(ctx, t, chain.ClientContext).Amount
 
 	issuer1 := chain.GenAccount()
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer1, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, issuer1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
 		Amount:   issueFee,
-	}))
+	})
 
 	issuer2 := chain.GenAccount()
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, issuer2, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, issuer2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&assetfttypes.MsgIssue{}},
 		Amount:   issueFee,
-	}))
+	})
 
 	// issue the new fungible token form issuer1
 	msg1 := &assetfttypes.MsgIssue{
@@ -216,7 +215,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 func TestAssetFTMint(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -224,22 +223,21 @@ func TestAssetFTMint(t *testing.T) {
 	randomAddress := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgMint{},
-				&assetfttypes.MsgMint{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(2),
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgMint{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgMint{},
+			&assetfttypes.MsgMint{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(2),
+	})
+
+	chain.FundAccountsWithOptions(ctx, t, randomAddress, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgMint{},
+		},
+	})
 
 	// Issue an unmintable fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -350,7 +348,7 @@ func TestAssetFTMint(t *testing.T) {
 func TestAssetFTBurn(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -358,25 +356,24 @@ func TestAssetFTBurn(t *testing.T) {
 	recipient := chain.GenAccount()
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgBurn{},
-				&assetfttypes.MsgBurn{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(2),
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgBurn{},
-				&assetfttypes.MsgBurn{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgBurn{},
+			&assetfttypes.MsgBurn{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(2),
+	})
+
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgBurn{},
+			&assetfttypes.MsgBurn{},
+		},
+	})
 
 	// Issue an unburnable fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -536,31 +533,30 @@ func TestAssetFTBurn(t *testing.T) {
 func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&banktypes.MsgSend{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
-	}))
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
-	}))
+	})
 
 	// Issue a fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -658,13 +654,11 @@ func TestAssetFTBurnRate(t *testing.T) {
 		},
 	}
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				multiSendMsg,
-			},
-		}),
-	)
+	chain.FundAccountsWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			multiSendMsg,
+		},
+	})
 
 	_, err = client.BroadcastTx(
 		ctx,
@@ -686,31 +680,30 @@ func TestAssetFTBurnRate(t *testing.T) {
 func TestAssetFTSendCommissionRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&banktypes.MsgSend{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
-	}))
-	requireT.NoError(chain.FundAccountsWithOptions(ctx, recipient2, integrationtests.BalancesOptions{
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient2, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
-	}))
+	})
 
 	// Issue a fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -808,13 +801,11 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		},
 	}
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				multiSendMsg,
-			},
-		}),
-	)
+	chain.FundAccountsWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			multiSendMsg,
+		},
+	})
 
 	_, err = client.BroadcastTx(
 		ctx,
@@ -834,7 +825,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 func TestAssetFTFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -846,36 +837,33 @@ func TestAssetFTFreeze(t *testing.T) {
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
 	randomAddress := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgFreeze{},
-				&assetfttypes.MsgFreeze{},
-				&assetfttypes.MsgUnfreeze{},
-				&assetfttypes.MsgUnfreeze{},
-				&assetfttypes.MsgUnfreeze{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-				&banktypes.MsgMultiSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgMultiSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-			},
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, randomAddress, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgFreeze{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgUnfreeze{},
+			&assetfttypes.MsgUnfreeze{},
+			&assetfttypes.MsgUnfreeze{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+	})
+	chain.FundAccountsWithOptions(ctx, t, randomAddress, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgFreeze{},
+		},
+	})
 
 	// Issue the new fungible token
 	msg := &assetfttypes.MsgIssue{
@@ -1133,20 +1121,19 @@ func TestAssetFTFreeze(t *testing.T) {
 func TestAssetFTFreezeUnfreezable(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgFreeze{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	// Issue an unfreezable fungible token
 	msg := &assetfttypes.MsgIssue{
@@ -1190,18 +1177,17 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgFreeze{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	// Issue an freezable fungible token
 	msg := &assetfttypes.MsgIssue{
@@ -1244,31 +1230,29 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 func TestAssetFTGloballyFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgGloballyFreeze{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgMultiSend{},
-				&assetfttypes.MsgGloballyUnfreeze{},
-				&banktypes.MsgSend{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-				&banktypes.MsgMultiSend{},
-				&banktypes.MsgSend{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgGloballyFreeze{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&assetfttypes.MsgGloballyUnfreeze{},
+			&banktypes.MsgSend{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+		},
+	})
 
 	// Issue the new fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -1410,28 +1394,26 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgFreeze{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
 
 	// Issue the new fungible token
 	msgIssue := &assetfttypes.MsgIssue{
@@ -1497,29 +1479,27 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgFreeze{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-			},
-			Amount: sdk.NewInt(1000),
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+		Amount: sdk.NewInt(1000),
+	})
 
 	// Issue the new fungible token
 	msgIssue := &assetfttypes.MsgIssue{
@@ -1588,27 +1568,25 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&banktypes.MsgSend{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
 
 	// Issue the new fungible token
 	msgIssue := &assetfttypes.MsgIssue{
@@ -1669,27 +1647,25 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&banktypes.MsgSend{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
 
 	// Issue the new fungible token
 	msgIssue := &assetfttypes.MsgIssue{
@@ -1748,7 +1724,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 func TestAssetFTWhitelist(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1760,36 +1736,33 @@ func TestAssetFTWhitelist(t *testing.T) {
 	issuer := chain.GenAccount()
 	nonIssuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgMultiSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-				&banktypes.MsgSend{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, nonIssuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgSetWhitelistedLimit{},
-			},
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgMultiSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+			&banktypes.MsgSend{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, nonIssuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+		},
+	})
 
 	// Issue the new fungible token
 	amount := sdk.NewInt(20000)
@@ -2040,20 +2013,19 @@ func TestAssetFTWhitelist(t *testing.T) {
 func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	// Issue an unwhitelistable fungible token
 	subunit := "uabcnotwhitelistable"
@@ -2097,18 +2069,17 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	issuer := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	// Issue an whitelistable fungible token
 	subunit := "uabcwhitelistable"
@@ -2155,31 +2126,29 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 func TestBareToken(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
 	issuer := chain.GenAccount()
 	recipient := chain.GenAccount()
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgMint{},
-				&assetfttypes.MsgBurn{},
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgFreeze{},
-				&assetfttypes.MsgGloballyFreeze{},
-				&assetfttypes.MsgSetWhitelistedLimit{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}))
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgBurn{},
-			},
-		}))
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgMint{},
+			&assetfttypes.MsgBurn{},
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgFreeze{},
+			&assetfttypes.MsgGloballyFreeze{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgBurn{},
+		},
+	})
 
 	// Issue a bare token
 	amount := sdk.NewInt(1000)
@@ -2299,7 +2268,7 @@ func TestBareToken(t *testing.T) {
 func TestAuthzWithAssetFT(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 
@@ -2310,14 +2279,14 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, granter, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&authztypes.MsgGrant{},
 			&authztypes.MsgGrant{},
 		},
 		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-	}))
+	})
 
 	// mint and grant authorization
 	issueMsg := &assetfttypes.MsgIssue{
@@ -2378,11 +2347,11 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgFreeze, msgWhitelist})
-	require.NoError(t, chain.FundAccountsWithOptions(ctx, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
-	}))
+	})
 
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2412,20 +2381,18 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgMint{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}),
-	)
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgMint{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	// Issue a fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -2475,7 +2442,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2484,24 +2451,20 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgIssue{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}),
-	)
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgBurn{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}),
-	)
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgBurn{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	// Issue a fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -2577,7 +2540,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 func TestAssetFTFreezeAndBurn(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -2586,26 +2549,22 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&banktypes.MsgSend{},
-				&assetfttypes.MsgIssue{},
-				&assetfttypes.MsgFreeze{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}),
-	)
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&banktypes.MsgSend{},
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgFreeze{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
-	requireT.NoError(
-		chain.FundAccountsWithOptions(ctx, recipient, integrationtests.BalancesOptions{
-			Messages: []sdk.Msg{
-				&assetfttypes.MsgBurn{},
-				&assetfttypes.MsgBurn{},
-			},
-			Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-		}),
-	)
+	chain.FundAccountsWithOptions(ctx, t, recipient, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgBurn{},
+			&assetfttypes.MsgBurn{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
 
 	// Issue a fungible token
 	issueMsg := &assetfttypes.MsgIssue{
@@ -2714,7 +2673,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			t.Parallel()
 
-			ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+			ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 			requireT := require.New(t)
 			assertT := assert.New(t)
@@ -2722,26 +2681,22 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			recipient1 := chain.GenAccount()
 			recipient2 := chain.GenAccount()
 
-			requireT.NoError(
-				chain.FundAccountsWithOptions(ctx, issuer, integrationtests.BalancesOptions{
-					Messages: []sdk.Msg{
-						&banktypes.MsgSend{},
-						&assetfttypes.MsgIssue{},
-						&assetfttypes.MsgFreeze{},
-					},
-					Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-				}),
-			)
+			chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+					&assetfttypes.MsgIssue{},
+					&assetfttypes.MsgFreeze{},
+				},
+				Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+			})
 
-			requireT.NoError(
-				chain.FundAccountsWithOptions(ctx, recipient1, integrationtests.BalancesOptions{
-					Messages: []sdk.Msg{
-						&banktypes.MsgSend{},
-						&banktypes.MsgSend{},
-					},
-					Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
-				}),
-			)
+			chain.FundAccountsWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
+				Messages: []sdk.Msg{
+					&banktypes.MsgSend{},
+					&banktypes.MsgSend{},
+				},
+				Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+			})
 
 			// Issue a fungible token
 			issueMsg := &assetfttypes.MsgIssue{

@@ -6,14 +6,15 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
 var _ types.IBCChannelKeeper = ibcChannelKeeperMock{}
@@ -57,19 +58,20 @@ func TestCalculateRateShares(t *testing.T) {
 		accounts = append(accounts, genAccount())
 	}
 	issuer := genAccount()
+	dummyAddress := genAccount()
 	ibcPort := "port"
 	ibcChannel := "1"
-	ibcEscrowAddress := ibctransfertypes.GetEscrowAddress(ibcPort, ibcChannel).String()
 	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, newIBCChannelKeeperMock(ibcPort, ibcChannel))
 	pow10 := func(ex int64) sdk.Int {
 		return sdk.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
 	}
 	testCases := []struct {
-		name      string
-		rate      string
-		senders   map[string]sdk.Int
-		receivers map[string]sdk.Int
-		shares    map[string]sdk.Int
+		name         string
+		rate         string
+		senders      map[string]sdk.Int
+		receivers    map[string]sdk.Int
+		ibcDirection wibctransfertypes.Direction
+		shares       map[string]sdk.Int
 	}{
 		{
 			name:    "empty_senders",
@@ -273,31 +275,33 @@ func TestCalculateRateShares(t *testing.T) {
 			},
 		},
 		{
-			name: "one_senders_ibc_escrow_receiver",
+			name: "one_sender_ibc",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(10),
+				dummyAddress: sdk.NewInt(10),
 			},
+			ibcDirection: wibctransfertypes.DirectionOut,
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 			},
 		},
 		{
-			name: "issuer_sender_ibc_escrow_receiver",
+			name: "issuer_sender_ibc",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				issuer: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(10),
+				dummyAddress: sdk.NewInt(10),
 			},
-			shares: map[string]sdk.Int{},
+			ibcDirection: wibctransfertypes.DirectionOut,
+			shares:       map[string]sdk.Int{},
 		},
 		{
-			name: "issuer_sender_two_senders_ibc_escrow_receiver",
+			name: "issuer_sender_two_senders_ibc",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
 				issuer:      sdk.NewInt(10),
@@ -305,46 +309,37 @@ func TestCalculateRateShares(t *testing.T) {
 				accounts[1]: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(20),
+				dummyAddress: sdk.NewInt(20),
 			},
+			ibcDirection: wibctransfertypes.DirectionOut,
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 				accounts[1]: sdk.NewInt(5),
 			},
 		},
 		{
-			name: "issuer_sender_ibc_escrow_sender_ibc_escrow_receiver",
+			name: "one_receiver_ibc",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
-				issuer:           sdk.NewInt(10),
-				ibcEscrowAddress: sdk.NewInt(10),
-			},
-			receivers: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(20),
-			},
-			shares: map[string]sdk.Int{},
-		},
-		{
-			name: "ibc_escrow_sender_one_receiver",
-			rate: "0.5",
-			senders: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(10),
+				dummyAddress: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(10),
 			},
-			shares: map[string]sdk.Int{},
+			ibcDirection: wibctransfertypes.DirectionIn,
+			shares:       map[string]sdk.Int{},
 		},
 		{
 			name: "ibc_escrow_sender_issuer_receiver",
 			rate: "0.5",
 			senders: map[string]sdk.Int{
-				ibcEscrowAddress: sdk.NewInt(10),
+				dummyAddress: sdk.NewInt(10),
 			},
 			receivers: map[string]sdk.Int{
 				issuer: sdk.NewInt(10),
 			},
-			shares: map[string]sdk.Int{},
+			ibcDirection: wibctransfertypes.DirectionIn,
+			shares:       map[string]sdk.Int{},
 		},
 	}
 
@@ -352,7 +347,13 @@ func TestCalculateRateShares(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			assertT := assert.New(t)
-			shares := assetFTKeeper.CalculateRateShares(sdk.Context{}, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
+			ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
+
+			if tc.ibcDirection != "" {
+				ctx = wibctransfertypes.WithDirection(ctx, tc.ibcDirection)
+			}
+
+			shares := assetFTKeeper.CalculateRateShares(ctx, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
 			for account, share := range shares {
 				assertT.EqualValues(tc.shares[account].String(), share.String())
 			}

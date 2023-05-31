@@ -12,9 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -24,13 +22,13 @@ import (
 func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, false)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	feemodelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 	res, err := feemodelClient.MinGasPrice(ctx, &feemodeltypes.QueryMinGasPriceRequest{})
 	require.NoError(t, err)
 
-	logger.Get(ctx).Info("Queried minimum gas price required", zap.Stringer("gasPrice", res.MinGasPrice))
+	t.Logf("Queried minimum gas price required, gasPrice:%s", res.MinGasPrice)
 
 	model := feemodeltypes.NewModel(getFeemodelParams(ctx, t, chain.ClientContext))
 
@@ -44,7 +42,7 @@ func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 func TestFeeModelProposalParamChange(t *testing.T) {
 	t.Parallel()
 
-	ctx, chain := integrationtests.NewCoreumTestingContext(t, true)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
 
@@ -57,8 +55,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// For the test we need to create the proposal twice.
 	proposerBalance = proposerBalance.Add(proposerBalance)
 	requireT.NoError(err)
-	err = chain.Faucet.FundAccounts(ctx, integrationtests.NewFundedAccount(proposer, proposerBalance))
-	requireT.NoError(err)
+	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
 	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
@@ -74,7 +71,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-	_, err = chain.Governance.Propose(ctx, proposalMsg)
+	_, err = chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
 
 	// Create proposal to change MaxDiscount.
@@ -91,9 +88,9 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 		},
 	))
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, proposalMsg)
+	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
-	logger.Get(ctx).Info("Proposal has been submitted", zap.Uint64("proposalID", proposalID))
+	t.Logf("Proposal has been submitted, proposalID:%d", proposalID)
 
 	// Verify that voting period started.
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
@@ -104,7 +101,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
-	logger.Get(ctx).Info("Voters have voted successfully, waiting for voting period to be finished", zap.Time("votingEndTime", proposal.VotingEndTime))
+	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
 
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
