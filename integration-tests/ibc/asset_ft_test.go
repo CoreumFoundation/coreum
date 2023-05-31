@@ -107,7 +107,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	receiveCoinGaia := sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 	receiveCoinOsmosis := sdk.NewCoin(convertToIBCDenom(osmosisToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)
 
-	// ********** Coreum to Gaia ********** //
+	// ********** Coreum to Gaia **********
 	// IBC transfer from FT issuer address.
 	ibcTransferAndAssertBalanceChanges(
 		ctx,
@@ -147,7 +147,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		},
 	)
 
-	// ********** Coreum to Osmosis ********** //
+	// ********** Coreum to Osmosis **********
 	// IBC transfer from FT issuer address.
 	ibcTransferAndAssertBalanceChanges(
 		ctx,
@@ -187,7 +187,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		},
 	)
 
-	// ********** Gaia to Coreum (send back) ********** //
+	// ********** Gaia to Coreum (send back) **********
 	// IBC transfer back to issuer address.
 	ibcTransferAndAssertBalanceChanges(
 		ctx,
@@ -227,7 +227,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		},
 	)
 
-	// ********** Osmosis to Coreum (send back) ********** //
+	// ********** Osmosis to Coreum (send back) **********
 	// IBC transfer back to issuer address.
 	ibcTransferAndAssertBalanceChanges(
 		ctx,
