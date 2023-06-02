@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	sdklient "github.com/cosmos/cosmos-sdk/client"
+	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -129,7 +129,7 @@ func init() {
 
 	config.SetSDKConfig(coreumSettings.AddressPrefix, constant.CoinType)
 
-	coreumRPClient, err := sdklient.NewClientFromNode(coreumRPCAddress)
+	coreumRPClient, err := sdkclient.NewClientFromNode(coreumRPCAddress)
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
@@ -153,7 +153,7 @@ func init() {
 	gaiaSettings.CoinType = sdk.CoinType // gaia coin type
 	gaiaSettings.RPCAddress = gaiaRPCAddress
 
-	gaiaRPClient, err := sdklient.NewClientFromNode(gaiaRPCAddress)
+	gaiaRPClient, err := sdkclient.NewClientFromNode(gaiaRPCAddress)
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
@@ -177,7 +177,7 @@ func init() {
 	osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
 	osmosisChainSettings.RPCAddress = osmosisRPCAddress
 
-	osmosisRPClient, err := sdklient.NewClientFromNode(osmosisRPCAddress)
+	osmosisRPClient, err := sdkclient.NewClientFromNode(osmosisRPCAddress)
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
