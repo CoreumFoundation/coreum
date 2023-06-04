@@ -47,7 +47,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 }
 
 // TestIBCTransferFromGaiaToCoreumAndBack checks IBC transfer in the following order:
-// gaiaAccount [IBC]-> coreumToCoreumSender [bank.Send]-> coreumToGaiaSender [IBC]-> gaiaAccount
+// gaiaAccount [IBC]-> coreumToCoreumSender [bank.Send]-> coreumToGaiaSender [IBC]-> gaiaAccount.
 func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	t.Parallel()
 	requireT := require.New(t)
