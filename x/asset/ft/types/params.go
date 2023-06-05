@@ -16,14 +16,24 @@ const (
 	DefaultTokenUpgradeGracePeriod = time.Hour * 24 * 7
 )
 
-// KeyIssueFee represents the issue fee param key.
-var KeyIssueFee = []byte("IssueFee")
+var (
+	// KeyIssueFee represents the issue fee param key.
+	KeyIssueFee = []byte("IssueFee")
+
+	// KeyTokenUpgradeDecisionTimeout represents the token upgrade decision timeout param key.
+	KeyTokenUpgradeDecisionTimeout = []byte("TokenUpgradeDecisionTimeout")
+
+	// KeyTokenUpgradeGracePeriod represents the token upgrade grace period param key.
+	KeyTokenUpgradeGracePeriod = []byte("TokenUpgradeGracePeriod")
+)
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // of module parameters.
 func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyIssueFee, &m.IssueFee, validateIssueFee),
+		paramtypes.NewParamSetPair(KeyTokenUpgradeDecisionTimeout, &m.TokenUpgradeDecisionTimeout, validateTokenUpgradeDecisionTimeout),
+		paramtypes.NewParamSetPair(KeyTokenUpgradeGracePeriod, &m.TokenUpgradeGracePeriod, validateTokenUpgradeGracePeriod),
 	}
 }
 
@@ -48,6 +58,21 @@ func validateIssueFee(i interface{}) error {
 	}
 	if fee.IsNil() || !fee.IsValid() {
 		return errors.New("issue fee must be a non-negative value")
+	}
+	return nil
+}
+
+func validateTokenUpgradeDecisionTimeout(i interface{}) error {
+	return nil
+}
+
+func validateTokenUpgradeGracePeriod(i interface{}) error {
+	gracePeriod, ok := i.(time.Duration)
+	if !ok {
+		return errors.Errorf("invalid parameter type: %T", i)
+	}
+	if gracePeriod <= 0 {
+		return errors.New("grace period must be greater than 0")
 	}
 	return nil
 }
