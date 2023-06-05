@@ -23,5 +23,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*codec.ProtoMarshaler)(nil),
 		&DelayedTokenUpgradeV1{},
 	)
+	registry.RegisterImplementations((*codec.ProtoMarshaler)(nil),
+		&DelayedTokenUpgradeV1{},
+	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

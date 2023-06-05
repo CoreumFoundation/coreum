@@ -49,5 +49,5 @@ func ExtractTimeAndIDFromDelayedItemKey(key []byte) (time.Time, string, error) {
 		return time.Time{}, "", errors.New("key is too short")
 	}
 
-	return time.Unix(int64(binary.BigEndian.Uint64(key[:uint64Length])), 0), string(key[uint64Length:]), nil
+	return time.Unix(int64(binary.BigEndian.Uint64(key[:uint64Length])), 0).UTC(), string(key[uint64Length:]), nil
 }

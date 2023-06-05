@@ -54,7 +54,12 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data codec.Pro
 		return errors.Errorf("delayed item is already stored under the key, id: %s", id)
 	}
 
-	b, err := k.cdc.Marshal(data)
+	dataAny, err := codectypes.NewAnyWithValue(data)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	b, err := k.cdc.Marshal(dataAny)
 	if err != nil {
 		return errors.Wrap(err, "marshaling delayed item failed")
 	}
@@ -133,20 +138,15 @@ func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error)
 			return err
 		}
 
-		var data codec.ProtoMarshaler
+		data := &codectypes.Any{}
 		if err := k.cdc.Unmarshal(value, data); err != nil {
-			return err
-		}
-
-		anyData, err := codectypes.NewAnyWithValue(data)
-		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		delayedItems = append(delayedItems, types.DelayedItem{
 			Id:            id,
 			ExecutionTime: executionTime,
-			Data:          anyData,
+			Data:          data,
 		})
 
 		return nil
