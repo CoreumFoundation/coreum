@@ -33,6 +33,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// token definitions
 	var tokens []types.Token
 	var genesisTokenVersions []types.GenesisTokenVersion
+	var genesisPendingUpgrades []types.GenesisTokenVersion
 	for i := uint32(0); i < 5; i++ {
 		token := types.Token{
 			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
@@ -60,6 +61,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 			genesisTokenVersions = append(genesisTokenVersions, types.GenesisTokenVersion{
 				Denom:   token.Denom,
 				Version: i,
+			})
+		} else {
+			genesisPendingUpgrades = append(genesisPendingUpgrades, types.GenesisTokenVersion{
+				Denom:   token.Denom,
+				Version: 1,
 			})
 		}
 	}
@@ -94,11 +100,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	genesisTime := time.Now()
 	genState := types.GenesisState{
-		Params:              types.DefaultParams(genesisTime),
-		Tokens:              tokens,
-		FrozenBalances:      frozenBalances,
-		WhitelistedBalances: whitelistedBalances,
-		TokenVersions:       genesisTokenVersions,
+		Params:               types.DefaultParams(genesisTime),
+		Tokens:               tokens,
+		FrozenBalances:       frozenBalances,
+		WhitelistedBalances:  whitelistedBalances,
+		TokenVersions:        genesisTokenVersions,
+		PendingTokenUpgrades: genesisPendingUpgrades,
 	}
 
 	// init the keeper
@@ -157,6 +164,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	assertT.EqualValues(genState.Params, exportedGenState.Params)
 	assertT.ElementsMatch(genState.Tokens, exportedGenState.Tokens)
 	assertT.ElementsMatch(genState.TokenVersions, exportedGenState.TokenVersions)
+	assertT.ElementsMatch(genState.PendingTokenUpgrades, exportedGenState.PendingTokenUpgrades)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)
 }

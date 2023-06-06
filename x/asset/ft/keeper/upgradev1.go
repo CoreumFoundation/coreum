@@ -5,12 +5,10 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
@@ -45,10 +43,8 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return errors.Errorf("denom %s has been already upgraded to v1", denom)
 	}
 
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateVersionUpgradeKey(upgradeV1Version))
-	key := []byte(denom)
-	if store.Has(key) {
-		return errors.Errorf("pending request for v1 upgrade already exists for denom: %s", denom)
+	if err := k.setPendingVersion(ctx, denom, upgradeV1Version); err != nil {
+		return err
 	}
 
 	data := &types.DelayedTokenUpgradeV1{
@@ -68,9 +64,6 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 	if err != nil {
 		return err
 	}
-
-	// FIXME (wojtek): This thing must be imported and exported
-	store.Set(key, asset.StoreTrue)
 	return nil
 }
 
@@ -92,14 +85,9 @@ func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgrad
 	}
 
 	version := k.GetVersion(ctx, data.Denom)
-	if version.Version < upgradeV1Version {
-		version.Version = upgradeV1Version
-		k.SetVersion(ctx, data.Denom, version)
-	}
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateVersionUpgradeKey(upgradeV1Version))
-	key := []byte(data.Denom)
-	store.Delete(key)
+	version.Version = upgradeV1Version
+	k.SetVersion(ctx, data.Denom, version)
+	k.clearPendingVersion(ctx, data.Denom)
 
 	return nil
 }

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/binary"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,8 +37,8 @@ var (
 	WhitelistedBalancesKeyPrefix = []byte{0x05}
 	// TokenVersionKeyPrefix defines the key prefix for the fungible token version.
 	TokenVersionKeyPrefix = []byte{0x06}
-	// VersionUpgradeKeyPrefix defines the key prefix for the upgrades.
-	VersionUpgradeKeyPrefix = []byte{0x07}
+	// PendingVersionUpgradeKeyPrefix defines the key prefix for the pending version upgrades.
+	PendingVersionUpgradeKeyPrefix = []byte{0x07}
 )
 
 // CreateTokenKey constructs the key for the fungible token.
@@ -75,13 +74,6 @@ func CreateGlobalFreezeKey(denom string) []byte {
 // CreateWhitelistedBalancesKey creates the prefix for an account's whitelisted balances.
 func CreateWhitelistedBalancesKey(addr []byte) []byte {
 	return store.JoinKeys(WhitelistedBalancesKeyPrefix, address.MustLengthPrefix(addr))
-}
-
-// CreateVersionUpgradeKey constructs the prefix for the version upgrade.
-func CreateVersionUpgradeKey(version int32) []byte {
-	buf := make([]byte, binary.MaxVarintLen32)
-	n := binary.PutVarint(buf, int64(version))
-	return store.JoinKeys(VersionUpgradeKeyPrefix, buf[:n])
 }
 
 // AddressFromBalancesStore returns an account address from a balances prefix

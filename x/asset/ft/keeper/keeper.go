@@ -302,7 +302,7 @@ func (k Keeper) ExportVersions(ctx sdk.Context) ([]types.GenesisTokenVersion, er
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	versions := make([]types.GenesisTokenVersion, 0, len(versionPointers))
@@ -310,7 +310,7 @@ func (k Keeper) ExportVersions(ctx sdk.Context) ([]types.GenesisTokenVersion, er
 		versions = append(versions, *version)
 	}
 
-	return versions, err
+	return versions, nil
 }
 
 // SetDenomMetadata registers denom metadata on the bank keeper.

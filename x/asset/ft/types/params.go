@@ -41,7 +41,7 @@ func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func DefaultParams(genesisTime time.Time) Params {
 	return Params{
 		IssueFee:                    sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
-		TokenUpgradeDecisionTimeout: genesisTime.Add(DefaultTokenUpgradeDecisionPeriod),
+		TokenUpgradeDecisionTimeout: genesisTime.Add(DefaultTokenUpgradeDecisionPeriod).UTC(),
 		TokenUpgradeGracePeriod:     DefaultTokenUpgradeGracePeriod,
 	}
 }
