@@ -23,15 +23,23 @@ type QueryKeeper interface {
 	GetWhitelistedBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
+// BankKeeper represents required methods of bank keeper.
+type BankKeeper interface {
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	LockedCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+}
+
 // QueryService serves grpc query requests for assets module.
 type QueryService struct {
-	keeper QueryKeeper
+	keeper     QueryKeeper
+	bankKeeper BankKeeper
 }
 
 // NewQueryService initiates the new instance of query service.
-func NewQueryService(keeper QueryKeeper) QueryService {
+func NewQueryService(keeper QueryKeeper, bankKeeper BankKeeper) QueryService {
 	return QueryService{
-		keeper: keeper,
+		keeper:     keeper,
+		bankKeeper: bankKeeper,
 	}
 }
 
@@ -68,6 +76,25 @@ func (qs QueryService) Token(ctx context.Context, req *types.QueryTokenRequest) 
 
 	return &types.QueryTokenResponse{
 		Token: token,
+	}, nil
+}
+
+// Balance returns balance of the denom for the account.
+func (qs QueryService) Balance(goCtx context.Context, req *types.QueryBalanceRequest) (*types.QueryBalanceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	account, err := sdk.AccAddressFromBech32(req.Account)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+	}
+
+	locked := qs.bankKeeper.LockedCoins(ctx, account)
+
+	denom := req.GetDenom()
+	return &types.QueryBalanceResponse{
+		Balance:     qs.bankKeeper.GetBalance(ctx, account, denom).Amount,
+		Whitelisted: qs.keeper.GetWhitelistedBalance(ctx, account, denom).Amount,
+		Frozen:      qs.keeper.GetFrozenBalance(ctx, account, denom).Amount,
+		Locked:      locked.AmountOf(denom),
 	}, nil
 }
 

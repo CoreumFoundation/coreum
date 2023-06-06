@@ -128,11 +128,19 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
 	requireT.NoError(err)
 
-	var resp types.QueryFrozenBalanceResponse
+	// query frozen balance
+	var respFrozen types.QueryFrozenBalanceResponse
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom, "--output", "json"})
 	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
-	requireT.Equal(coinToFreeze.String(), resp.Balance.String())
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respFrozen))
+	requireT.Equal(coinToFreeze.String(), respFrozen.Balance.String())
+
+	// query balance
+	var respBalance types.QueryBalanceResponse
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBalance(), []string{recipient.String(), denom, "--output", "json"})
+	requireT.NoError(err)
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respBalance))
+	requireT.Equal(coinToFreeze.Amount.String(), respBalance.Frozen.String())
 
 	// issue and freeze more to test pagination
 	for i := 0; i < 2; i++ {
@@ -164,9 +172,9 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom, "--output", "json"})
 	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respFrozen))
 
-	requireT.Equal(sdk.NewInt64Coin(denom, 25).String(), resp.Balance.String())
+	requireT.Equal(sdk.NewInt64Coin(denom, 25).String(), respFrozen.Balance.String())
 }
 
 func TestGloballyFreezeUnfreeze(t *testing.T) {
@@ -243,11 +251,19 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 		_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxSetWhitelistedLimit(), args)
 		requireT.NoError(err)
 
-		var balancesResp types.QueryWhitelistedBalanceResponse
+		// query whitelisted balance
+		var respWhitelisted types.QueryWhitelistedBalanceResponse
 		buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelistedBalance(), []string{recipient.String(), denom, "--output", "json"})
 		requireT.NoError(err)
-		requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
-		requireT.Equal(coinToWhitelist.String(), balancesResp.Balance.String())
+		requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respWhitelisted))
+		requireT.Equal(coinToWhitelist.String(), respWhitelisted.Balance.String())
+
+		// query balance
+		var respBalance types.QueryBalanceResponse
+		buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBalance(), []string{recipient.String(), denom, "--output", "json"})
+		requireT.NoError(err)
+		requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respBalance))
+		requireT.Equal(coinToWhitelist.Amount.String(), respBalance.Whitelisted.String())
 	}
 
 	var balancesResp types.QueryWhitelistedBalancesResponse

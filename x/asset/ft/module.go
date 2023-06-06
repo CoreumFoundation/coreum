@@ -136,7 +136,7 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
-	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper, am.bankKeeper))
 }
 
 // RegisterInvariants registers the asset ft module's invariants.

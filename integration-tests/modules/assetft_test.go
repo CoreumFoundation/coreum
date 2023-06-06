@@ -211,6 +211,129 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 	}, gotToken.Tokens[0])
 }
 
+// TestBalanceQuery tests balance query.
+func TestBalanceQuery(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	assertT := assert.New(t)
+
+	issueFee := getIssueFee(ctx, t, chain.ClientContext).Amount
+
+	issuer := chain.GenAccount()
+	recipient := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgSetWhitelistedLimit{},
+			&assetfttypes.MsgFreeze{},
+			&banktypes.MsgSend{},
+		},
+		Amount: issueFee,
+	})
+
+	// issue the new fungible token form issuer
+	msgIssue := &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "WBTC",
+		Subunit:            "wsatoshi",
+		Precision:          8,
+		Description:        "Wrapped BTC",
+		InitialAmount:      sdk.NewInt(200),
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing, assetfttypes.Feature_whitelisting},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgIssue)),
+		msgIssue,
+	)
+	require.NoError(t, err)
+
+	denom := assetfttypes.BuildDenom(msgIssue.Subunit, issuer)
+	whitelistedCoin := sdk.NewInt64Coin(denom, 30)
+	frozenCoin := sdk.NewInt64Coin(denom, 20)
+	sendCoin := sdk.NewInt64Coin(denom, 10)
+
+	msgWhitelist := &assetfttypes.MsgSetWhitelistedLimit{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    whitelistedCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgWhitelist)),
+		msgWhitelist,
+	)
+	require.NoError(t, err)
+
+	msgFreeze := &assetfttypes.MsgFreeze{
+		Sender:  issuer.String(),
+		Account: recipient.String(),
+		Coin:    frozenCoin,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFreeze)),
+		msgFreeze,
+	)
+	require.NoError(t, err)
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   recipient.String(),
+		Amount:      sdk.NewCoins(sendCoin),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
+		msgSend,
+	)
+	require.NoError(t, err)
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: recipient.String(),
+		Denom:   denom,
+	})
+	require.NoError(t, err)
+
+	assertT.Equal(whitelistedCoin.Amount.String(), resp.Whitelisted.String())
+	assertT.Equal(frozenCoin.Amount.String(), resp.Frozen.String())
+	assertT.Equal(sendCoin.Amount.String(), resp.Balance.String())
+	assertT.Equal("0", resp.Locked.String())
+}
+
+// TestEmptyBalanceQuery tests balance query.
+func TestEmptyBalanceQuery(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	assertT := assert.New(t)
+
+	account := chain.GenAccount()
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := ftClient.Balance(ctx, &assetfttypes.QueryBalanceRequest{
+		Account: account.String(),
+		Denom:   "nonexistingdenom",
+	})
+	require.NoError(t, err)
+
+	assertT.Equal("0", resp.Whitelisted.String())
+	assertT.Equal("0", resp.Frozen.String())
+	assertT.Equal("0", resp.Balance.String())
+	assertT.Equal("0", resp.Locked.String())
+}
+
 // TestAssetFTMint tests mint functionality of fungible tokens.
 func TestAssetFTMint(t *testing.T) {
 	t.Parallel()

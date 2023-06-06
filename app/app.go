@@ -440,7 +440,7 @@ func New(
 	wasmOpts := []wasm.Option{
 		wasmkeeper.WithMessageEncoders(wasmcustomhandler.NewCoreumMsgHandler()),
 		wasmkeeper.WithQueryPlugins(wasmcustomhandler.NewCoreumQueryHandler(
-			assetftkeeper.NewQueryService(app.AssetFTKeeper),
+			assetftkeeper.NewQueryService(app.AssetFTKeeper, app.BankKeeper),
 			assetnftkeeper.NewQueryService(app.AssetNFTKeeper),
 			app.NFTKeeper,
 		)),
