@@ -43,21 +43,21 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return errors.Errorf("denom %s has been already upgraded to v1", denom)
 	}
 
-	if err := k.setPendingVersion(ctx, denom, upgradeV1Version); err != nil {
+	if err := k.SetPendingVersion(ctx, denom, upgradeV1Version); err != nil {
 		return err
-	}
-
-	data := &types.DelayedTokenUpgradeV1{
-		Denom:      denom,
-		IbcEnabled: ibcEnabled,
 	}
 
 	if !ibcEnabled {
 		// if issuer does not want to enable IBC we may upgrade the token immediately
 		// because it's behaviour is not changed
 		version.Version = upgradeV1Version
-		k.SetVersion(ctx, data.Denom, version)
+		k.SetVersion(ctx, denom, version)
+		k.ClearPendingVersion(ctx, denom)
 		return nil
+	}
+
+	data := &types.DelayedTokenUpgradeV1{
+		Denom: denom,
 	}
 
 	err = k.delayKeeper.DelayExecution(ctx, tokenUpgradeID(upgradeV1Version, data.Denom), data, params.TokenUpgradeGracePeriod)
@@ -69,25 +69,23 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 
 // UpgradeTokenToV1 upgrades token to version V1.
 func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgradeV1) error {
-	if data.IbcEnabled {
-		def, err := k.GetDefinition(ctx, data.Denom)
-		if err != nil {
-			return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", data.Denom)
-		}
-
-		subunit, issuer, err := types.DeconstructDenom(data.Denom)
-		if err != nil {
-			return err
-		}
-
-		def.Features = append(def.Features, types.Feature_ibc)
-		k.SetDefinition(ctx, issuer, subunit, def)
+	def, err := k.GetDefinition(ctx, data.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", data.Denom)
 	}
+
+	subunit, issuer, err := types.DeconstructDenom(data.Denom)
+	if err != nil {
+		return err
+	}
+
+	def.Features = append(def.Features, types.Feature_ibc)
+	k.SetDefinition(ctx, issuer, subunit, def)
 
 	version := k.GetVersion(ctx, data.Denom)
 	version.Version = upgradeV1Version
 	k.SetVersion(ctx, data.Denom, version)
-	k.clearPendingVersion(ctx, data.Denom)
+	k.ClearPendingVersion(ctx, data.Denom)
 
 	return nil
 }

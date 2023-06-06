@@ -14,7 +14,7 @@ import (
 // ImportPendingTokenUpgrades imports pending version upgrades from genesis state.
 func (k Keeper) ImportPendingTokenUpgrades(ctx sdk.Context, versions []types.GenesisTokenVersion) error {
 	for _, v := range versions {
-		if err := k.setPendingVersion(ctx, v.Denom, v.Version); err != nil {
+		if err := k.SetPendingVersion(ctx, v.Denom, v.Version); err != nil {
 			return err
 		}
 	}
@@ -42,8 +42,8 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.GenesisToke
 	return versions, nil
 }
 
-// setPendingVersion sets pending vrsion for token upgrade.
-func (k Keeper) setPendingVersion(ctx sdk.Context, denom string, version uint32) error {
+// SetPendingVersion sets pending vrsion for token upgrade.
+func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingVersionUpgradeKeyPrefix)
 	key := []byte(denom)
 	if store.Has(key) {
@@ -57,7 +57,7 @@ func (k Keeper) setPendingVersion(ctx sdk.Context, denom string, version uint32)
 	return nil
 }
 
-// clearPendingVersion clears pending version marker.
-func (k Keeper) clearPendingVersion(ctx sdk.Context, denom string) {
+// ClearPendingVersion clears pending version marker.
+func (k Keeper) ClearPendingVersion(ctx sdk.Context, denom string) {
 	prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingVersionUpgradeKeyPrefix).Delete([]byte(denom))
 }
