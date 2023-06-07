@@ -5,12 +5,10 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
@@ -45,61 +43,49 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return errors.Errorf("denom %s has been already upgraded to v1", denom)
 	}
 
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateVersionUpgradeKey(upgradeV1Version))
-	key := []byte(denom)
-	if store.Has(key) {
-		return errors.Errorf("pending request for v1 upgrade already exists for denom: %s", denom)
-	}
-
-	data := &types.DelayedTokenUpgradeV1{
-		Denom:      denom,
-		IbcEnabled: ibcEnabled,
+	if err := k.SetPendingVersion(ctx, denom, upgradeV1Version); err != nil {
+		return err
 	}
 
 	if !ibcEnabled {
 		// if issuer does not want to enable IBC we may upgrade the token immediately
 		// because it's behaviour is not changed
 		version.Version = upgradeV1Version
-		k.SetVersion(ctx, data.Denom, version)
+		k.SetVersion(ctx, denom, version)
+		k.ClearPendingVersion(ctx, denom)
 		return nil
+	}
+
+	data := &types.DelayedTokenUpgradeV1{
+		Denom: denom,
 	}
 
 	err = k.delayKeeper.DelayExecution(ctx, tokenUpgradeID(upgradeV1Version, data.Denom), data, params.TokenUpgradeGracePeriod)
 	if err != nil {
 		return err
 	}
-
-	// FIXME (wojtek): This thing must be imported and exported
-	store.Set(key, asset.StoreTrue)
 	return nil
 }
 
 // UpgradeTokenToV1 upgrades token to version V1.
 func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgradeV1) error {
-	if data.IbcEnabled {
-		def, err := k.GetDefinition(ctx, data.Denom)
-		if err != nil {
-			return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", data.Denom)
-		}
-
-		subunit, issuer, err := types.DeconstructDenom(data.Denom)
-		if err != nil {
-			return err
-		}
-
-		def.Features = append(def.Features, types.Feature_ibc)
-		k.SetDefinition(ctx, issuer, subunit, def)
+	def, err := k.GetDefinition(ctx, data.Denom)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "not able to get token info for denom:%s", data.Denom)
 	}
+
+	subunit, issuer, err := types.DeconstructDenom(data.Denom)
+	if err != nil {
+		return err
+	}
+
+	def.Features = append(def.Features, types.Feature_ibc)
+	k.SetDefinition(ctx, issuer, subunit, def)
 
 	version := k.GetVersion(ctx, data.Denom)
-	if version.Version < upgradeV1Version {
-		version.Version = upgradeV1Version
-		k.SetVersion(ctx, data.Denom, version)
-	}
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateVersionUpgradeKey(upgradeV1Version))
-	key := []byte(data.Denom)
-	store.Delete(key)
+	version.Version = upgradeV1Version
+	k.SetVersion(ctx, data.Denom, version)
+	k.ClearPendingVersion(ctx, data.Denom)
 
 	return nil
 }

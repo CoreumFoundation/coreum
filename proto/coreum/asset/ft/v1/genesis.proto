@@ -21,6 +21,8 @@ message GenesisState {
   repeated Balance whitelisted_balances = 4 [(gogoproto.nullable) = false];
   // token_versions contains versions of the tokens
   repeated GenesisTokenVersion token_versions = 5 [(gogoproto.nullable) = false];
+  // pending_token_upgrades contains pending token upgrades.
+  repeated GenesisTokenVersion pending_token_upgrades = 6  [(gogoproto.nullable) = false];
 }
 
 // Balance defines an account address and balance pair used module genesis genesis state.
@@ -33,6 +35,7 @@ message Balance {
   [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.nullable) = false];
 }
 
+// GenesisTokenVersion stores te version for a denom in genesis.
 message GenesisTokenVersion {
   string denom = 1;
   uint32 version = 2;

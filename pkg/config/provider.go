@@ -71,7 +71,7 @@ func (dcp DynamicConfigProvider) GetChainID() constant.ChainID {
 
 // GetGenesisTime returns genesis time.
 func (dcp DynamicConfigProvider) GetGenesisTime() time.Time {
-	return dcp.GenesisTime
+	return dcp.GenesisTime.UTC()
 }
 
 // GetDenom returns denom.
@@ -281,7 +281,7 @@ func (jcp StaticConfigProvider) GetChainID() constant.ChainID {
 
 // GetGenesisTime returns genesis time.
 func (jcp StaticConfigProvider) GetGenesisTime() time.Time {
-	return jcp.genesisDoc.GenesisTime
+	return jcp.genesisDoc.GenesisTime.UTC()
 }
 
 // GetDenom returns denom.

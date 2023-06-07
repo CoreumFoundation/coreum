@@ -16,7 +16,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/delay/types"
 )
 
-//nolint:funlen
 func TestInitAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)
@@ -34,8 +33,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		Amount:      sdk.NewCoins(sdk.NewCoin("denom", sdk.OneInt())),
 	}
 	msg2 := &assetfttypes.DelayedTokenUpgradeV1{
-		Denom:      "denom",
-		IbcEnabled: true,
+		Denom: "denom",
 	}
 	msg3 := &banktypes.MsgSend{
 		FromAddress: "senderAddress2",

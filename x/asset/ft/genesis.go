@@ -62,6 +62,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Init token versions
 	k.ImportVersions(ctx, genState.TokenVersions)
+
+	// Init pending version upgrades
+	if err := k.ImportPendingTokenUpgrades(ctx, genState.PendingTokenUpgrades); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the asset module's exported genesis.
@@ -89,11 +94,17 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	pendingTokenUpgrades, err := k.ExportPendingTokenUpgrades(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
-		Params:              k.GetParams(ctx),
-		Tokens:              tokens,
-		FrozenBalances:      frozenBalances,
-		WhitelistedBalances: whitelistedBalances,
-		TokenVersions:       tokenVersions,
+		Params:               k.GetParams(ctx),
+		Tokens:               tokens,
+		FrozenBalances:       frozenBalances,
+		WhitelistedBalances:  whitelistedBalances,
+		TokenVersions:        tokenVersions,
+		PendingTokenUpgrades: pendingTokenUpgrades,
 	}
 }

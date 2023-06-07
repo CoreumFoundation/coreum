@@ -153,7 +153,7 @@ func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error)
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return delayedItems, nil
