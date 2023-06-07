@@ -37,6 +37,10 @@ func NewKeeper(
 	}
 }
 
+func (k Keeper) Router() types.Router {
+	return k.router
+}
+
 // DelayExecution stores an item to be executed later.
 func (k Keeper) DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error {
 	return k.StoreDelayedExecution(ctx, id, data, ctx.BlockTime().Add(delay))
@@ -92,9 +96,14 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 			return nil
 		}
 
-		var data codec.ProtoMarshaler
-		if err := k.cdc.Unmarshal(iter.Value(), data); err != nil {
+		dataAny := &codectypes.Any{}
+		if err := k.cdc.Unmarshal(iter.Value(), dataAny); err != nil {
 			return errors.Wrap(err, "decoding delayed message failed")
+		}
+
+		var data codec.ProtoMarshaler
+		if err := k.cdc.UnpackAny(dataAny, &data); err != nil {
+			return errors.Wrap(err, "unpacking delayed message failed")
 		}
 
 		handler, err := k.router.Handler(data)
@@ -102,7 +111,7 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 			return err
 		}
 		if handler == nil {
-			return errors.Errorf("no handler for %s found", proto.MessageName(data))
+			return errors.Errorf("no handler for %s found", proto.MessageName(dataAny))
 		}
 		if err := handler(ctx, data); err != nil {
 			return err
