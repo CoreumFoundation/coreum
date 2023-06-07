@@ -20,6 +20,7 @@ import (
 //nolint:tagliatelle // we keep the name same as consume
 type assetFTQuery struct {
 	Token              *assetfttypes.QueryTokenRequest              `json:"Token"`
+	Balance            *assetfttypes.QueryBalanceRequest            `json:"Balance"`
 	FrozenBalance      *assetfttypes.QueryFrozenBalanceRequest      `json:"FrozenBalance"`
 	WhitelistedBalance *assetfttypes.QueryWhitelistedBalanceRequest `json:"WhitelistedBalance"`
 }
@@ -139,6 +140,11 @@ func processAssetFTQuery(ctx sdk.Context, assetFTQuery *assetFTQuery, assetFTQue
 	if assetFTQuery.Token != nil {
 		return executeQuery(ctx, assetFTQuery.Token, func(ctx context.Context, req *assetfttypes.QueryTokenRequest) (*assetfttypes.QueryTokenResponse, error) {
 			return assetFTQueryServer.Token(ctx, req)
+		})
+	}
+	if assetFTQuery.Balance != nil {
+		return executeQuery(ctx, assetFTQuery.Balance, func(ctx context.Context, req *assetfttypes.QueryBalanceRequest) (*assetfttypes.QueryBalanceResponse, error) {
+			return assetFTQueryServer.Balance(ctx, req)
 		})
 	}
 	if assetFTQuery.FrozenBalance != nil {

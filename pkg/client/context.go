@@ -97,6 +97,11 @@ type Context struct {
 	grpcClient protobufgrpc.ClientConn
 }
 
+// SDKContext returns original sdk client context required by some functions.
+func (c Context) SDKContext() client.Context {
+	return c.clientCtx
+}
+
 // ChainID returns chain ID.
 func (c Context) ChainID() string {
 	return c.clientCtx.ChainID
@@ -246,8 +251,8 @@ func (c Context) WithInput(r io.Reader) Context {
 }
 
 // WithCodec returns a copy of the Context with an updated Codec.
-func (c Context) WithCodec(m codec.Codec) Context {
-	c.clientCtx = c.clientCtx.WithCodec(m)
+func (c Context) WithCodec(cdc codec.Codec) Context {
+	c.clientCtx = c.clientCtx.WithCodec(cdc)
 	return c
 }
 
