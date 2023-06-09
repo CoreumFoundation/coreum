@@ -76,17 +76,25 @@ func TestDelayedExecution(t *testing.T) {
 	delayed3 := &delayedItem{
 		Value: "value3",
 	}
+	delayed4 := &delayedItem{
+		Value: "value4",
+	}
 
 	delayKeeper := testApp.DelayKeeper
 
 	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-value1", delayed1, time.Second))
+	requireT.Error(delayKeeper.DelayExecution(ctx, "delayed-value1", delayed1, time.Second))
 	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-value2", delayed2, 2*time.Second))
+
+	// two items intentionally executed at the same time
 	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-value3", delayed3, 3*time.Second))
+	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-value4", delayed4, 3*time.Second))
+
 	requireT.Error(delayKeeper.StoreDelayedExecution(ctx, "delayed-denom4", delayed1, time.Date(1969, 12, 31, 23, 59, 59, 0, time.UTC)))
 
 	delayedItems, err := delayKeeper.ExportDelayedItems(ctx)
 	requireT.NoError(err)
-	requireT.Len(delayedItems, 3)
+	requireT.Len(delayedItems, 4)
 
 	expectedDelayedItems := []types.DelayedItem{
 		{
@@ -103,6 +111,11 @@ func TestDelayedExecution(t *testing.T) {
 			Id:            "delayed-value3",
 			ExecutionTime: blockTime.Add(3 * time.Second),
 			Data:          newAny(requireT, delayed3),
+		},
+		{
+			Id:            "delayed-value4",
+			ExecutionTime: blockTime.Add(3 * time.Second),
+			Data:          newAny(requireT, delayed4),
 		},
 	}
 
@@ -127,9 +140,10 @@ func TestDelayedExecution(t *testing.T) {
 	// two items should be executed
 	executedItems = []*delayedItem{}
 	testApp.BeginNextBlock(blockTime.Add(3 * time.Second))
-	requireT.Len(executedItems, 2)
+	requireT.Len(executedItems, 3)
 	requireT.Equal(delayed2, executedItems[0])
 	requireT.Equal(delayed3, executedItems[1])
+	requireT.Equal(delayed4, executedItems[2])
 
 	// no delayed items should be stored now
 	delayedItems, err = delayKeeper.ExportDelayedItems(ctx)
