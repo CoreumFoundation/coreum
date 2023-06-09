@@ -107,8 +107,7 @@ func (qs QueryService) WhitelistedAccountsForNFT(ctx context.Context, req *types
 	}, err
 }
 
-// func (qs QueryService) Bur(ctx context.Context, req *types.QueryWhitelistedAccountsForNFTRequest) (*types.QueryWhitelistedAccountsForNFTResponse, error) {
-
+// BurntNFT checks if an NFT is burnt or not.
 func (qs QueryService) BurntNFT(ctx context.Context, req *types.QueryBurntNFTRequest) (*types.QueryBurntNFTResponse, error) {
 	isBurnt, err := qs.keeper.IsBurnt(sdk.UnwrapSDKContext(ctx), req.ClassId, req.NftId)
 	if err != nil {
@@ -120,6 +119,7 @@ func (qs QueryService) BurntNFT(ctx context.Context, req *types.QueryBurntNFTReq
 	}, nil
 }
 
+// BurntNFTsInClass returns the list of burnt NFTs in a class.
 func (qs QueryService) BurntNFTsInClass(ctx context.Context, req *types.QueryBurntNFTsInClassRequest) (*types.QueryBurntNFTsInClassResponse, error) {
 	pageRes, list, err := qs.keeper.ListBurnt(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Pagination)
 	if err != nil {

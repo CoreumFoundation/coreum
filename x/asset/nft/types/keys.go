@@ -110,7 +110,7 @@ func CreateBurningKey(classID, nftID string) ([]byte, error) {
 	return store.JoinKeys(NFTBurningKeyPrefix, compositeKey), nil
 }
 
-// CreateBurningKey constructs the key for the burning of non-fungible token.
+// CreateClassBurningKey constructs the key for the burning of non-fungible token.
 func CreateClassBurningKey(classID string) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID))
 	if err != nil {

@@ -614,7 +614,6 @@ func TestAssetNFTBurn(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.True(burntNft.IsBurnt)
-
 }
 
 // TestAssetNFTBurnFrozen tests that frozen NFT cannot be burnt.
