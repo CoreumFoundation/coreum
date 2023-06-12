@@ -81,9 +81,16 @@ func TestQueryToken(t *testing.T) {
 	expectedToken.Denom = denom
 	expectedToken.Issuer = testNetwork.Validators[0].Address.String()
 	requireT.Equal(expectedToken, resp.Token)
+
+	// query balance
+	var respBalance types.QueryBalanceResponse
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBalance(), []string{expectedToken.Issuer, denom, "--output", "json"})
+	requireT.NoError(err)
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respBalance))
+	requireT.Equal(initialAmount.String(), respBalance.Balance.String())
 }
 
-func TestCmdQueryParams(t *testing.T) {
+func TestQueryParams(t *testing.T) {
 	requireT := require.New(t)
 
 	testNetwork := network.New(t)
