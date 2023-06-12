@@ -348,10 +348,6 @@ func New(
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
 	delayRouter := delaytypes.NewRouter()
-	err := delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))
-	if err != nil {
-		panic(err)
-	}
 	app.DelayKeeper = delaykeeper.NewKeeper(appCodec, keys[delaytypes.StoreKey], delayRouter, app.interfaceRegistry)
 
 	originalBankKeeper := bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs())
@@ -366,6 +362,11 @@ func New(
 		app.DelayKeeper,
 		app.UpgradeKeeper,
 	)
+
+	err := delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))
+	if err != nil {
+		panic(err)
+	}
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
 		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), assetFTKeeper,
