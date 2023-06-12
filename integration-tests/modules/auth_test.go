@@ -242,7 +242,9 @@ func TestAuthMultisigSequences(t *testing.T) {
 		msg)
 	require.NoError(t, err)
 	signer1AccInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer1Address)
+
 	// signer1 account sequence increased to 1.
+	requireT.NoError(err)
 	requireT.EqualValues(1, signer1AccInfo.GetSequence())
 
 	// prepare account to be funded from the multisig
