@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
@@ -65,10 +66,10 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	coreumToGaiaSender := coreumChain.GenAccount()
 
 	// Fund accounts
-	coreumChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
-		Address: coreumToCoreumSender,
-		Amount:  coreumChain.NewCoin(sdk.NewInt(1000000)),
+	coreumChain.FundAccountsWithOptions(ctx, t, coreumToCoreumSender, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 	})
+
 	coreumChain.FundAccountsWithOptions(ctx, t, coreumToGaiaSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	})
@@ -77,14 +78,14 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 		Amount:  sendToCoreumCoin,
 	})
 
-	// 1. Send from gaiaAccount to coreumToCoreumSender
+	// Send from gaiaAccount to coreumToCoreumSender
 	_, err := gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaAccount, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumToCoreumSender)
 	requireT.NoError(err)
 
 	expectedBalanceAtCoreum := sdk.NewCoin(convertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
 	coreumChain.AwaitForBalance(ctx, t, coreumToCoreumSender, expectedBalanceAtCoreum)
 
-	// 2. Send from coreumToCoreumSender to coreumToGaiaSender
+	// Send from coreumToCoreumSender to coreumToGaiaSender
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: coreumToCoreumSender.String(),
 		ToAddress:   coreumToGaiaSender.String(),
@@ -97,9 +98,16 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 		sendMsg,
 	)
 	requireT.NoError(err)
-	coreumChain.AwaitForBalance(ctx, t, coreumToGaiaSender, expectedBalanceAtCoreum)
 
-	// 3. Send from coreumToGaiaSender back to gaiaAccount
+	bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
+	queryBalanceResponse, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: coreumToGaiaSender.String(),
+		Denom:   expectedBalanceAtCoreum.Denom,
+	})
+	requireT.NoError(err)
+	assert.Equal(t, expectedBalanceAtCoreum.Amount, queryBalanceResponse.Balance.Amount)
+
+	// Send from coreumToGaiaSender back to gaiaAccount
 	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumToGaiaSender, expectedBalanceAtCoreum, gaiaChain.ChainContext, gaiaAccount)
 	requireT.NoError(err)
 
