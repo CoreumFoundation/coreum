@@ -148,13 +148,12 @@ func TestAuthMultisig(t *testing.T) {
 	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
 
 	clientCtx := chain.ClientContext
-	// prepare the tx factory to sign with the account seq and number of the multisig account
+	// prepare the tx factory to sign with the account number of the multisig account
 	multisigAccInfo, err := client.GetAccountInfo(ctx, clientCtx, multisigAddress)
 	requireT.NoError(err)
 	txF := chain.TxFactory().
 		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
 		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
-		WithSequence(multisigAccInfo.GetSequence()).
 		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	bankSendMsg := &banktypes.MsgSend{
@@ -184,6 +183,110 @@ func TestAuthMultisig(t *testing.T) {
 	requireT.NoError(err)
 	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
 	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
+	requireT.NoError(err)
+	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
+	requireT.NoError(err)
+	t.Logf("Fully signed tx executed, txHash:%s", result.TxHash)
+
+	bankClient := banktypes.NewQueryClient(clientCtx)
+	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+		Address: recipientAddr,
+	})
+	requireT.NoError(err)
+	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
+}
+
+// TestAuthMultisigSequences tests the cosmos-sdk sequences behaviour for multisig account.
+func TestAuthMultisigSequences(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+	recipient := chain.GenAccount()
+
+	amountToSendFromMultisigAccount := int64(1000)
+	amountToSendFromSigner1Account := int64(2000)
+
+	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(3, 2)
+	requireT.NoError(err)
+	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
+	signer1KeyName := keyNamesSet[0]
+	signer2KeyName := keyNamesSet[1]
+
+	signer1Info, err := chain.ClientContext.Keyring().Key(signer1KeyName)
+	requireT.NoError(err)
+	signer1Address := signer1Info.GetAddress()
+
+	// fund the multisig account
+	chain.FundAccountsWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
+	})
+
+	// fund the sender1 account
+	chain.FundAccountsWithOptions(ctx, t, signer1Address, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&banktypes.MsgSend{}},
+		Amount:   sdk.NewInt(amountToSendFromSigner1Account),
+	})
+
+	// send a tx from sender1 account so the sequence is increased
+	msg := &banktypes.MsgSend{
+		FromAddress: signer1Address.String(),
+		ToAddress:   chain.GenAccount().String(),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromSigner1Account))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(signer1Address),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})),
+		msg)
+	require.NoError(t, err)
+	signer1AccInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, signer1Address)
+	// signer1 account sequence increased to 1.
+	requireT.EqualValues(1, signer1AccInfo.GetSequence())
+
+	// prepare account to be funded from the multisig
+	recipientAddr := recipient.String()
+	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
+
+	clientCtx := chain.ClientContext
+	// prepare the tx factory to sign with the account number of the multisig account
+	multisigAccInfo, err := client.GetAccountInfo(ctx, clientCtx, multisigAddress)
+	requireT.NoError(err)
+	requireT.EqualValues(0, multisigAccInfo.GetSequence())
+	txF := chain.TxFactory().
+		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
+		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
+		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
+
+	bankSendMsg := &banktypes.MsgSend{
+		FromAddress: multisigAddress.String(),
+		ToAddress:   recipientAddr,
+		Amount:      coinsToSendToRecipient,
+	}
+
+	// sign and submit with the min threshold
+	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
+	requireT.NoError(err)
+
+	// sign from signer1 account
+	err = client.Sign(txF, signer1KeyName, txBuilder, false)
+	requireT.NoError(err)
+	signatures, err := txBuilder.GetTx().GetSignaturesV2()
+	requireT.NoError(err)
+	requireT.Len(signatures, 1)
+	// Even though signer1 account sequence is 1 in multisig it uses sequence for multisig acc which is 0.
+	requireT.EqualValues(multisigAccInfo.GetSequence(), signatures[0].Sequence)
+
+	err = client.Sign(txF, signer2KeyName, txBuilder, false)
+	requireT.NoError(err)
+	signatures, err = txBuilder.GetTx().GetSignaturesV2()
+	requireT.NoError(err)
+	requireT.Len(signatures, 2)
+	requireT.EqualValues(multisigAccInfo.GetSequence(), signatures[1].Sequence)
+
+	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
+	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
 	requireT.NoError(err)
 	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
 	requireT.NoError(err)
