@@ -29,12 +29,15 @@ var (
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
 // of module parameters.
-func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
+func (m *ParamsV1) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyIssueFee, &m.IssueFee, validateIssueFee),
-		paramtypes.NewParamSetPair(KeyTokenUpgradeDecisionTimeout, &m.TokenUpgradeDecisionTimeout, validateTokenUpgradeDecisionTimeout),
-		paramtypes.NewParamSetPair(KeyTokenUpgradeGracePeriod, &m.TokenUpgradeGracePeriod, validateTokenUpgradeGracePeriod),
 	}
+}
+
+// ValidateBasic validates parameters.
+func (m ParamsV1) ValidateBasic() error {
+	return validateIssueFee(m.IssueFee)
 }
 
 // DefaultParams returns params with default values.
@@ -46,9 +49,25 @@ func DefaultParams(genesisTime time.Time) Params {
 	}
 }
 
+// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
+// of module parameters.
+func (m *Params) ParamSetPairs() paramtypes.ParamSetPairs {
+	return paramtypes.ParamSetPairs{
+		paramtypes.NewParamSetPair(KeyIssueFee, &m.IssueFee, validateIssueFee),
+		paramtypes.NewParamSetPair(KeyTokenUpgradeDecisionTimeout, &m.TokenUpgradeDecisionTimeout, validateTokenUpgradeDecisionTimeout),
+		paramtypes.NewParamSetPair(KeyTokenUpgradeGracePeriod, &m.TokenUpgradeGracePeriod, validateTokenUpgradeGracePeriod),
+	}
+}
+
 // ValidateBasic validates parameters.
 func (m Params) ValidateBasic() error {
-	return validateIssueFee(m.IssueFee)
+	if err := validateIssueFee(m.IssueFee); err != nil {
+		return err
+	}
+	if err := validateTokenUpgradeDecisionTimeout(m.TokenUpgradeDecisionTimeout); err != nil {
+		return err
+	}
+	return validateTokenUpgradeGracePeriod(m.TokenUpgradeGracePeriod)
 }
 
 func validateIssueFee(i interface{}) error {

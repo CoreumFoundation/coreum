@@ -8,16 +8,16 @@ import (
 
 // Keeper specifies methods of keeper required by the migration.
 type Keeper interface {
-	GetParams(ctx sdk.Context) types.Params
+	GetParamsV1(ctx sdk.Context) types.ParamsV1
 	SetParams(ctx sdk.Context, params types.Params)
 }
 
 // MigrateParams migrates asset ft params state from v1 to v2.
-func MigrateParams(ctx sdk.Context, keeper Keeper) error {
-	params := keeper.GetParams(ctx)
-	params.TokenUpgradeDecisionTimeout = ctx.BlockTime().Add(types.DefaultTokenUpgradeDecisionPeriod)
-	params.TokenUpgradeGracePeriod = types.DefaultTokenUpgradeGracePeriod
-	keeper.SetParams(ctx, params)
-
-	return nil
+func MigrateParams(ctx sdk.Context, keeper Keeper) {
+	paramsV1 := keeper.GetParamsV1(ctx)
+	keeper.SetParams(ctx, types.Params{
+		IssueFee:                    paramsV1.IssueFee,
+		TokenUpgradeDecisionTimeout: ctx.BlockTime().Add(types.DefaultTokenUpgradeDecisionPeriod),
+		TokenUpgradeGracePeriod:     types.DefaultTokenUpgradeGracePeriod,
+	})
 }
