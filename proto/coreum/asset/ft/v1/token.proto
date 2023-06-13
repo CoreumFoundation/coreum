@@ -33,6 +33,7 @@ message Definition {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
+  uint32 version = 6;
 }
 
 // Token is a full representation of the fungible token.
@@ -59,9 +60,5 @@ message Token {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
-}
-
-// TokenVersion stores token version.
-message TokenVersion {
-  uint32 version = 1;
+  uint32 version = 11;
 }

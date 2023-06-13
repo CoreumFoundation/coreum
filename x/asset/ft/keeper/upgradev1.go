@@ -38,8 +38,7 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer may upgrade the token")
 	}
 
-	version := k.GetVersion(ctx, denom)
-	if version.Version >= upgradeV1Version {
+	if def.Version >= upgradeV1Version {
 		return errors.Errorf("denom %s has been already upgraded to v1", denom)
 	}
 
@@ -50,8 +49,12 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 	if !ibcEnabled {
 		// if issuer does not want to enable IBC we may upgrade the token immediately
 		// because it's behaviour is not changed
-		version.Version = upgradeV1Version
-		k.SetVersion(ctx, denom, version)
+		def.Version = upgradeV1Version
+		subunit, issuer, err := types.DeconstructDenom(denom)
+		if err != nil {
+			return err
+		}
+		k.SetDefinition(ctx, issuer, subunit, def)
 		k.ClearPendingVersion(ctx, denom)
 		return nil
 	}
@@ -82,9 +85,8 @@ func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgrad
 	def.Features = append(def.Features, types.Feature_ibc)
 	k.SetDefinition(ctx, issuer, subunit, def)
 
-	version := k.GetVersion(ctx, data.Denom)
-	version.Version = upgradeV1Version
-	k.SetVersion(ctx, data.Denom, version)
+	def.Version = upgradeV1Version
+	k.SetDefinition(ctx, issuer, subunit, def)
 	k.ClearPendingVersion(ctx, data.Denom)
 
 	return nil

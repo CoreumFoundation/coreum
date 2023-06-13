@@ -23,7 +23,6 @@ func TestUpgradeV1(t *testing.T) {
 	cdc := config.NewEncodingConfig(app.ModuleBasics).Codec
 	testApp := simapp.New()
 	ctxSDK := testApp.BaseApp.NewContext(false, tmproto.Header{})
-	ctxSDK = ctxSDK.WithContext(sdk.WrapSDKContext(ctxSDK))
 
 	ftKeeper := testApp.AssetFTKeeper
 	delayKeeper := testApp.DelayKeeper
@@ -55,7 +54,7 @@ func TestUpgradeV1(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	// upgrade requested after timeout shoul fail
+	// upgrade requested after timeout should fail
 	ctxSDK = ctxSDK.WithBlockTime(params.TokenUpgradeDecisionTimeout.Add(time.Second))
 	requireT.Error(ftKeeper.StoreDelayedUpgradeV1(ctxSDK, issuer1, denom1, false))
 	requireT.Error(ftKeeper.StoreDelayedUpgradeV1(ctxSDK, issuer1, denom1, true))
@@ -75,8 +74,7 @@ func TestUpgradeV1(t *testing.T) {
 	token1, err := ftKeeper.GetToken(ctxSDK, denom1)
 	requireT.NoError(err)
 	requireT.Empty(token1.Features)
-	version1 := ftKeeper.GetVersion(ctxSDK, denom1)
-	requireT.EqualValues(1, version1.Version)
+	requireT.EqualValues(1, token1.Version)
 
 	// delay module should not contain delayed item
 	delayedItems, err := delayKeeper.ExportDelayedItems(ctxSDK)
@@ -96,8 +94,7 @@ func TestUpgradeV1(t *testing.T) {
 	token2, err := ftKeeper.GetToken(ctxSDK, denom2)
 	requireT.NoError(err)
 	requireT.Empty(token2.Features)
-	version2 := ftKeeper.GetVersion(ctxSDK, denom2)
-	requireT.EqualValues(0, version2.Version)
+	requireT.EqualValues(0, token2.Version)
 
 	// delay module should contain delayed item
 	delayedItems, err = delayKeeper.ExportDelayedItems(ctxSDK)
@@ -128,8 +125,7 @@ func TestUpgradeV1(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Len(token2.Features, 1)
 	requireT.Equal(types.Feature_ibc, token2.Features[0])
-	version2 = ftKeeper.GetVersion(ctxSDK, denom2)
-	requireT.EqualValues(1, version2.Version)
+	requireT.EqualValues(1, token2.Version)
 
 	// next call fails
 	requireT.Error(ftKeeper.StoreDelayedUpgradeV1(ctxSDK, issuer2, denom2, true))

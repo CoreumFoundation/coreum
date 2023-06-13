@@ -32,7 +32,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// token definitions
 	var tokens []types.Token
-	var genesisTokenVersions []types.GenesisTokenVersion
 	var genesisPendingUpgrades []types.GenesisTokenVersion
 	for i := uint32(0); i < 5; i++ {
 		token := types.Token{
@@ -47,6 +46,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 				types.Feature_freezing,
 				types.Feature_whitelisting,
 			},
+			Version: i,
 		}
 		// Globally freeze some Tokens.
 		if i%2 == 0 {
@@ -54,15 +54,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		}
 		tokens = append(tokens, token)
 		requireT.NoError(ftKeeper.SetDenomMetadata(ctx, token.Denom, token.Symbol, token.Description, token.Precision))
-		if i > 0 {
-			ftKeeper.SetVersion(ctx, token.Denom, types.TokenVersion{
-				Version: i,
-			})
-			genesisTokenVersions = append(genesisTokenVersions, types.GenesisTokenVersion{
-				Denom:   token.Denom,
-				Version: i,
-			})
-		} else {
+		if i == 0 {
 			genesisPendingUpgrades = append(genesisPendingUpgrades, types.GenesisTokenVersion{
 				Denom:   token.Denom,
 				Version: 1,
@@ -104,7 +96,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 		Tokens:               tokens,
 		FrozenBalances:       frozenBalances,
 		WhitelistedBalances:  whitelistedBalances,
-		TokenVersions:        genesisTokenVersions,
 		PendingTokenUpgrades: genesisPendingUpgrades,
 	}
 
@@ -123,12 +114,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 		storedToken, err := ftKeeper.GetToken(ctx, definition.Denom)
 		requireT.NoError(err)
 		assertT.EqualValues(definition, storedToken)
-	}
-
-	// token versions
-	for _, genesisVersion := range genesisTokenVersions {
-		version := ftKeeper.GetVersion(ctx, genesisVersion.Denom)
-		assertT.EqualValues(version.Version, genesisVersion.Version)
 	}
 
 	// frozen balances
@@ -163,7 +148,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	assertT.EqualValues(genState.Params, exportedGenState.Params)
 	assertT.ElementsMatch(genState.Tokens, exportedGenState.Tokens)
-	assertT.ElementsMatch(genState.TokenVersions, exportedGenState.TokenVersions)
 	assertT.ElementsMatch(genState.PendingTokenUpgrades, exportedGenState.PendingTokenUpgrades)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)

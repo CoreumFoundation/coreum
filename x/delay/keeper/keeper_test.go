@@ -21,6 +21,7 @@ type delayedItem struct {
 	Value string
 }
 
+//nolint:revive,stylecheck // underscore is required
 func (di *delayedItem) XXX_MessageName() string {
 	return "test.DummyDelayedItem"
 }

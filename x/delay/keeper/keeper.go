@@ -37,6 +37,7 @@ func NewKeeper(
 	}
 }
 
+// Router returns router.
 func (k Keeper) Router() types.Router {
 	return k.router
 }

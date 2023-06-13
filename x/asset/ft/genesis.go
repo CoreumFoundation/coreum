@@ -29,6 +29,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			Features:           token.Features,
 			BurnRate:           token.BurnRate,
 			SendCommissionRate: token.SendCommissionRate,
+			Version:            token.Version,
 		}
 
 		k.SetDefinition(ctx, issuer, subunit, definition)
@@ -60,9 +61,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.SetWhitelistedBalances(ctx, address, whitelistedBalance.Coins)
 	}
 
-	// Init token versions
-	k.ImportVersions(ctx, genState.TokenVersions)
-
 	// Init pending version upgrades
 	if err := k.ImportPendingTokenUpgrades(ctx, genState.PendingTokenUpgrades); err != nil {
 		panic(err)
@@ -89,11 +87,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
-	tokenVersions, err := k.ExportVersions(ctx)
-	if err != nil {
-		panic(err)
-	}
-
 	pendingTokenUpgrades, err := k.ExportPendingTokenUpgrades(ctx)
 	if err != nil {
 		panic(err)
@@ -104,7 +97,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		Tokens:               tokens,
 		FrozenBalances:       frozenBalances,
 		WhitelistedBalances:  whitelistedBalances,
-		TokenVersions:        tokenVersions,
 		PendingTokenUpgrades: pendingTokenUpgrades,
 	}
 }
