@@ -506,7 +506,6 @@ func New(
 
 	assetFTModule := assetft.NewAppModule(
 		appCodec,
-		ChosenNetwork.Provider.GetGenesisTime(),
 		app.AssetFTKeeper,
 		app.BankKeeper)
 	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)

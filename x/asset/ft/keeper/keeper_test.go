@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -33,7 +32,7 @@ func TestKeeper_Issue(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
-	ftParams := types.DefaultParams(time.Now())
+	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
 	ftKeeper.SetParams(ctx, ftParams)
 
@@ -129,7 +128,7 @@ func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
 
 	ftKeeper := testApp.AssetFTKeeper
 
-	ftParams := types.DefaultParams(time.Now())
+	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
 	ftKeeper.SetParams(ctx, ftParams)
 
@@ -285,7 +284,7 @@ func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
 
 	ftKeeper := testApp.AssetFTKeeper
 
-	ftParams := types.DefaultParams(time.Now())
+	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewCoin(constant.DenomDev, sdk.ZeroInt())
 	ftKeeper.SetParams(ctx, ftParams)
 
@@ -313,7 +312,7 @@ func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 
 	ftKeeper := testApp.AssetFTKeeper
 
-	ftParams := types.DefaultParams(time.Now())
+	ftParams := types.DefaultParams()
 	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
 	ftKeeper.SetParams(ctx, ftParams)
 

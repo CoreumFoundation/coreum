@@ -41,10 +41,10 @@ func (m ParamsV1) ValidateBasic() error {
 }
 
 // DefaultParams returns params with default values.
-func DefaultParams(genesisTime time.Time) Params {
+func DefaultParams() Params {
 	return Params{
 		IssueFee:                    sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
-		TokenUpgradeDecisionTimeout: genesisTime.Add(DefaultTokenUpgradeDecisionPeriod).UTC(),
+		TokenUpgradeDecisionTimeout: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 		TokenUpgradeGracePeriod:     DefaultTokenUpgradeGracePeriod,
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -90,9 +89,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 			})
 	}
 
-	genesisTime := time.Now()
 	genState := types.GenesisState{
-		Params:               types.DefaultParams(genesisTime),
+		Params:               types.DefaultParams(),
 		Tokens:               tokens,
 		FrozenBalances:       frozenBalances,
 		WhitelistedBalances:  whitelistedBalances,
@@ -107,7 +105,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	// params
 
 	params := ftKeeper.GetParams(ctx)
-	assertT.EqualValues(types.DefaultParams(genesisTime), params)
+	assertT.EqualValues(types.DefaultParams(), params)
 
 	// token definitions
 	for _, definition := range tokens {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"math/rand"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -34,18 +33,13 @@ var (
 
 // AppModuleBasic implements the AppModuleBasic interface for the asset ft module.
 type AppModuleBasic struct {
-	cdc         codec.BinaryCodec
-	genesisTime time.Time
+	cdc codec.BinaryCodec
 }
 
 // NewAppModuleBasic return the asset ft AppModuleBasic.
-func NewAppModuleBasic(
-	cdc codec.BinaryCodec,
-	genesisTime time.Time,
-) AppModuleBasic {
+func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
 	return AppModuleBasic{
-		cdc:         cdc,
-		genesisTime: genesisTime,
+		cdc: cdc,
 	}
 }
 
@@ -64,7 +58,7 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 
 // DefaultGenesis returns the asset ft module's default genesis state.
 func (a AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(types.DefaultGenesis(a.genesisTime))
+	return cdc.MustMarshalJSON(types.DefaultGenesis())
 }
 
 // ValidateGenesis performs genesis state validation for the asset ft module.
@@ -112,12 +106,11 @@ type AppModule struct {
 // NewAppModule returns the new instance of the AppModule.
 func NewAppModule(
 	cdc codec.Codec,
-	genesisTime time.Time,
 	keeper keeper.Keeper,
 	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic: NewAppModuleBasic(cdc, genesisTime),
+		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
 		bankKeeper:     bankKeeper,
 	}

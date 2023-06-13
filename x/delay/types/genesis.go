@@ -21,7 +21,7 @@ func (di DelayedItem) Validate() error {
 		return errors.New("data is nil")
 	}
 	if di.ExecutionTime.Unix() < 0 {
-		return errors.New("there were no blockchains before 1970-01-01")
+		return errors.New("unix timestamp of the execution time must be non-negative")
 	}
 	return nil
 }

@@ -33,7 +33,7 @@ func CreateDelayedItemKey(id string, t time.Time) ([]byte, error) {
 
 	execTime := t.Unix()
 	if execTime < 0 {
-		return nil, errors.New("there were no blockchains before 1970-01-01")
+		return nil, errors.New("unix timestamp of the execution time must be non-negative")
 	}
 
 	key := make([]byte, uint64Length)
