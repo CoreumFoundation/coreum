@@ -121,10 +121,9 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
-// BeginBlock performs a no-op.
+// BeginBlock executes delayed items.
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
-	err := am.keeper.ExecuteDelayedItems(ctx)
-	if err != nil {
+	if err := am.keeper.ExecuteDelayedItems(ctx); err != nil {
 		panic(err)
 	}
 }

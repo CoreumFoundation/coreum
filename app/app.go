@@ -352,7 +352,7 @@ func New(
 
 	originalBankKeeper := bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs())
 	var ibcChannelKeeper ibcchannelkeeper.Keeper
-	assetFTKeeper := assetftkeeper.NewKeeper(
+	app.AssetFTKeeper = assetftkeeper.NewKeeper(
 		appCodec,
 		app.GetSubspace(assetfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetfttypes.Params{})),
 		keys[assetfttypes.StoreKey],
@@ -369,10 +369,8 @@ func New(
 	}
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), assetFTKeeper,
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), app.AssetFTKeeper,
 	)
-
-	app.AssetFTKeeper = assetFTKeeper
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),

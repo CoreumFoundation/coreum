@@ -63,11 +63,7 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		Denom: denom,
 	}
 
-	err = k.delayKeeper.DelayExecution(ctx, tokenUpgradeID(upgradeV1Version, data.Denom), data, params.TokenUpgradeGracePeriod)
-	if err != nil {
-		return err
-	}
-	return nil
+	return k.delayKeeper.DelayExecution(ctx, tokenUpgradeID(upgradeV1Version, data.Denom), data, params.TokenUpgradeGracePeriod)
 }
 
 // UpgradeTokenToV1 upgrades token to version V1.
@@ -83,8 +79,6 @@ func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgrad
 	}
 
 	def.Features = append(def.Features, types.Feature_ibc)
-	k.SetDefinition(ctx, issuer, subunit, def)
-
 	def.Version = upgradeV1Version
 	k.SetDefinition(ctx, issuer, subunit, def)
 	k.ClearPendingVersion(ctx, data.Denom)

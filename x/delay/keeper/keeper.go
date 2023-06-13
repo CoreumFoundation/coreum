@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/delay/types"
@@ -110,9 +109,6 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 		handler, err := k.router.Handler(data)
 		if err != nil {
 			return err
-		}
-		if handler == nil {
-			return errors.Errorf("no handler for %s found", proto.MessageName(dataAny))
 		}
 		if err := handler(ctx, data); err != nil {
 			return err
