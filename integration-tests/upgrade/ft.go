@@ -12,19 +12,19 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-type ibcTest struct {
+type ftTest struct {
 	issuer     sdk.AccAddress
 	denomV0AAA string
 	denomV0BBB string
 }
 
-func (i *ibcTest) Before(t *testing.T) {
+func (ft *ftTest) Before(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	i.issuer = chain.GenAccount()
+	ft.issuer = chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, i.issuer, integrationtests.BalancesOptions{
+	chain.FundAccountsWithOptions(ctx, t, ft.issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
@@ -38,7 +38,7 @@ func (i *ibcTest) Before(t *testing.T) {
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        i.issuer.String(),
+		Issuer:        ft.issuer.String(),
 		Symbol:        "AAA",
 		Subunit:       "uaaa",
 		Precision:     6,
@@ -53,15 +53,15 @@ func (i *ibcTest) Before(t *testing.T) {
 	}
 	_, err := client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(i.issuer),
+		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
 	requireT.NoError(err)
-	i.denomV0AAA = assetfttypes.BuildDenom(issueMsg.Subunit, i.issuer)
+	ft.denomV0AAA = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 
 	issueMsg = &assetfttypes.MsgIssue{
-		Issuer:        i.issuer.String(),
+		Issuer:        ft.issuer.String(),
 		Symbol:        "BBB",
 		Subunit:       "ubbb",
 		Precision:     6,
@@ -76,36 +76,36 @@ func (i *ibcTest) Before(t *testing.T) {
 	}
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(i.issuer),
+		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
 	requireT.NoError(err)
-	i.denomV0BBB = assetfttypes.BuildDenom(issueMsg.Subunit, i.issuer)
+	ft.denomV0BBB = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 
 	// upgrading token before chain upgrade should not work
 	upgradeMsg := &assetfttypes.MsgTokenUpgradeV1{
-		Sender:     i.issuer.String(),
-		Denom:      i.denomV0AAA,
+		Sender:     ft.issuer.String(),
+		Denom:      ft.denomV0AAA,
 		IbcEnabled: true,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(i.issuer),
+		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
 	requireT.Error(err)
 }
 
-func (i *ibcTest) After(t *testing.T) {
+func (ft *ftTest) After(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	// issuing token without IBC should succeed
 	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        i.issuer.String(),
+		Issuer:        ft.issuer.String(),
 		Symbol:        "CDE",
 		Subunit:       "ucde",
 		Precision:     6,
@@ -114,17 +114,17 @@ func (i *ibcTest) After(t *testing.T) {
 	}
 	_, err := client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(i.issuer),
+		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
 	requireT.NoError(err)
 
-	denomCDE := assetfttypes.BuildDenom(issueMsg.Subunit, i.issuer)
+	denomCDE := assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 
 	// issuing token with IBC should succeed after the upgrade
 	issueMsg = &assetfttypes.MsgIssue{
-		Issuer:        i.issuer.String(),
+		Issuer:        ft.issuer.String(),
 		Symbol:        "XYZ",
 		Subunit:       "uxyz",
 		Precision:     6,
@@ -134,35 +134,35 @@ func (i *ibcTest) After(t *testing.T) {
 	}
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(i.issuer),
+		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
 	requireT.NoError(err)
-	denomXYZ := assetfttypes.BuildDenom(issueMsg.Subunit, i.issuer)
+	denomXYZ := assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 
 	// upgrading v1 tokens should fail
 	upgradeMsg := &assetfttypes.MsgTokenUpgradeV1{
-		Sender:     i.issuer.String(),
+		Sender:     ft.issuer.String(),
 		Denom:      denomXYZ,
 		IbcEnabled: false,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(i.issuer),
+		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
 	requireT.Error(err)
 
 	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
-		Sender:     i.issuer.String(),
+		Sender:     ft.issuer.String(),
 		Denom:      denomCDE,
 		IbcEnabled: true,
 	}
 	_, err = client.BroadcastTx(
 		ctx,
-		chain.ClientContext.WithFromAddress(i.issuer),
+		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
