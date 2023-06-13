@@ -105,7 +105,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 		Denom:   expectedBalanceAtCoreum.Denom,
 	})
 	requireT.NoError(err)
-	assert.Equal(t, expectedBalanceAtCoreum.Amount, queryBalanceResponse.Balance.Amount)
+	assert.Equal(t, expectedBalanceAtCoreum.Amount.String(), queryBalanceResponse.Balance.Amount.String())
 
 	// Send from coreumToGaiaSender back to gaiaAccount
 	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumToGaiaSender, expectedBalanceAtCoreum, gaiaChain.ChainContext, gaiaAccount)
