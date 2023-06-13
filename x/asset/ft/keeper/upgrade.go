@@ -26,7 +26,10 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.GenesisToke
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingVersionUpgradeKeyPrefix)
 	versions := []types.GenesisTokenVersion{}
 	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key []byte, value []byte) error {
-		version, _ := binary.Uvarint(value)
+		version, n := binary.Uvarint(value)
+		if n <= 0 {
+			return errors.New("unmarshaling varint failed")
+		}
 		versions = append(versions, types.GenesisTokenVersion{
 			Denom:   string(key),
 			Version: uint32(version),
