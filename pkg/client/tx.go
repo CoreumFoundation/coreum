@@ -188,7 +188,7 @@ func AwaitTx(
 		txResponse = res.TxResponse
 		if txResponse.Code != 0 {
 			return errors.Wrapf(sdkerrors.ABCIError(txResponse.Codespace, txResponse.Code, txResponse.Logs.String()),
-				"transaction '%s' failed", txResponse.TxHash)
+				"transaction '%s' failed, raw log:%s", txResponse.TxHash, txResponse.RawLog)
 		}
 
 		if txResponse.Height == 0 {
