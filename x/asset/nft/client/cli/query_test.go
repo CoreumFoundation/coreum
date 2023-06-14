@@ -124,7 +124,7 @@ func TestCmdTxBurn(t *testing.T) {
 
 	var resp types.QueryBurntNFTResponse
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
-	requireT.True(resp.IsBurnt)
+	requireT.True(resp.Burnt)
 
 	args = []string{classID, "--output", "json"}
 	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBurnt(), args)

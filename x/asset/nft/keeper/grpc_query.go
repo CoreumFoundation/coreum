@@ -115,7 +115,7 @@ func (qs QueryService) BurntNFT(ctx context.Context, req *types.QueryBurntNFTReq
 	}
 
 	return &types.QueryBurntNFTResponse{
-		IsBurnt: isBurnt,
+		Burnt: isBurnt,
 	}, nil
 }
 
