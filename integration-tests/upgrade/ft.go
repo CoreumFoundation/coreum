@@ -2,6 +2,7 @@ package upgrade
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -31,6 +32,7 @@ func (ft *ftTest) Before(t *testing.T) {
 
 	chain.FundAccountsWithOptions(ctx, t, ft.issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
@@ -119,7 +121,7 @@ func (ft *ftTest) Before(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, "tx parse error")
 }
 
 func (ft *ftTest) After(t *testing.T) {
@@ -185,7 +187,7 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, fmt.Sprintf("denom %s has been already upgraded to v1", denomXYZ))
 
 	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
 		Sender:     ft.issuer.String(),
@@ -198,7 +200,8 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, fmt.Sprintf("denom %s has been already upgraded to v1", denomCDE))
+
 	resp, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
 		Denom: denomCDE,
 	})
@@ -226,7 +229,8 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, "unauthorized")
+
 	resp, err = ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
 		Denom: ft.denomV0AAA,
 	})
@@ -245,7 +249,7 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, "unauthorized")
 
 	// upgrading with disabled IBC should take effect immediately
 	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
@@ -276,7 +280,7 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, fmt.Sprintf("denom %s has been already upgraded to v1", ft.denomV0AAA))
 
 	// setting grace period to some small value
 	const gracePeriod = 15 * time.Second
@@ -323,7 +327,7 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, fmt.Sprintf("token upgrade is already pending for denom %q", ft.denomV0BBB))
 
 	select {
 	case <-ctx.Done():
@@ -356,7 +360,7 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, fmt.Sprintf("denom %s has been already upgraded to v1", ft.denomV0BBB))
 
 	// setting decision timeout to sth in the past
 	decisionTimeout := time.Now().UTC().Add(-time.Hour)
@@ -381,7 +385,7 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, "it is no longer possible to upgrade the token")
 
 	upgradeMsg.IbcEnabled = true
 	_, err = client.BroadcastTx(
@@ -390,7 +394,7 @@ func (ft *ftTest) After(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
 		upgradeMsg,
 	)
-	requireT.Error(err)
+	requireT.ErrorContains(err, "it is no longer possible to upgrade the token")
 }
 
 func getIssueFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {
