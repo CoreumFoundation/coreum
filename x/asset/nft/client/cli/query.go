@@ -36,6 +36,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryFrozen(),
 		CmdQueryWhitelisted(),
 		CmdQueryWhitelistedAccounts(),
+		CmdQueryBurnt(),
 		CmdQueryParams(),
 	)
 
@@ -282,6 +283,64 @@ $ %[1]s query %s params
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryBurnt return the CmdQueryBurnt cobra command.
+func CmdQueryBurnt() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burnt [class-id] [id]",
+		Args:  cobra.RangeArgs(1, 2),
+		Short: "Query for the burnt NFTs",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query for the burnt NFTs in a class.
+
+Example:
+$ %s query %s burnt [class-id] [id]
+$ %s query %s burnt [class-id] 
+`,
+				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			classID := args[0]
+
+			if len(args) == 2 {
+				id := args[1]
+				res, err := queryClient.BurntNFT(cmd.Context(), &types.QueryBurntNFTRequest{
+					ClassId: classID,
+					NftId:   id,
+				})
+				if err != nil {
+					return err
+				}
+				return clientCtx.PrintProto(res)
+			}
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.BurntNFTsInClass(cmd.Context(), &types.QueryBurntNFTsInClassRequest{
+				Pagination: pageReq,
+				ClassId:    classID,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "burnt NFTs")
 
 	return cmd
 }
