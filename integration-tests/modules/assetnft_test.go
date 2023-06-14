@@ -11,6 +11,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
@@ -464,10 +465,12 @@ func TestAssetNFTBurn(t *testing.T) {
 	issuer := chain.GenAccount()
 
 	nftClient := nft.NewQueryClient(chain.ClientContext)
+	assetnftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
 			&assetnfttypes.MsgMint{},
+			&assetnfttypes.MsgBurn{},
 			&assetnfttypes.MsgBurn{},
 			&assetnfttypes.MsgMint{},
 			&assetnfttypes.MsgMint{},
@@ -571,6 +574,46 @@ func TestAssetNFTBurn(t *testing.T) {
 		mintMsg,
 	)
 	requireT.NoError(err)
+
+	// burn the second NFT
+	msgBurn = &assetnfttypes.MsgBurn{
+		Sender:  issuer.String(),
+		ClassID: classID,
+		ID:      "id-1-2",
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBurn)),
+		msgBurn,
+	)
+	requireT.NoError(err)
+
+	// query burnt NFTs
+	burntListRes, err := assetnftClient.BurntNFTsInClass(ctx, &assetnfttypes.QueryBurntNFTsInClassRequest{
+		Pagination: &query.PageRequest{},
+		ClassId:    mintMsg.ClassID,
+	})
+	requireT.NoError(err)
+	requireT.Len(burntListRes.NftIds, 2)
+
+	// test pagination works
+	burntListRes, err = assetnftClient.BurntNFTsInClass(ctx, &assetnfttypes.QueryBurntNFTsInClassRequest{
+		Pagination: &query.PageRequest{
+			Offset: 1,
+		},
+		ClassId: mintMsg.ClassID,
+	})
+	requireT.NoError(err)
+	requireT.Len(burntListRes.NftIds, 1)
+
+	// query is nft burnt
+	burntNft, err := assetnftClient.BurntNFT(ctx, &assetnfttypes.QueryBurntNFTRequest{
+		ClassId: mintMsg.ClassID,
+		NftId:   "id-1",
+	})
+	requireT.NoError(err)
+	requireT.True(burntNft.Burnt)
 }
 
 // TestAssetNFTBurnFrozen tests that frozen NFT cannot be burnt.
