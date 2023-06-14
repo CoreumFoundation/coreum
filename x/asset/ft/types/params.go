@@ -16,6 +16,7 @@ const (
 	DefaultTokenUpgradeGracePeriod = time.Hour * 24 * 7
 )
 
+// DefaultTokenUpgradeDecisionTimeout is the timeout for a decision to upgrade the token.
 var DefaultTokenUpgradeDecisionTimeout = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
 
 var (
