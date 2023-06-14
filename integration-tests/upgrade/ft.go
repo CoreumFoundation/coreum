@@ -20,6 +20,7 @@ type ftTest struct {
 	issuer     sdk.AccAddress
 	denomV0AAA string
 	denomV0BBB string
+	denomV0CCC string
 }
 
 func (ft *ftTest) Before(t *testing.T) {
@@ -42,8 +43,10 @@ func (ft *ftTest) Before(t *testing.T) {
 			&assetfttypes.MsgTokenUpgradeV1{},
 			&assetfttypes.MsgTokenUpgradeV1{},
 			&assetfttypes.MsgTokenUpgradeV1{},
+			&assetfttypes.MsgTokenUpgradeV1{},
+			&assetfttypes.MsgTokenUpgradeV1{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(4),
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(5),
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -86,6 +89,23 @@ func (ft *ftTest) Before(t *testing.T) {
 	)
 	requireT.NoError(err)
 	ft.denomV0BBB = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
+
+	issueMsg = &assetfttypes.MsgIssue{
+		Issuer:        ft.issuer.String(),
+		Symbol:        "CCC",
+		Subunit:       "uccc",
+		Precision:     6,
+		Description:   "CCC Description",
+		InitialAmount: sdk.NewInt(1000),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(ft.issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+	ft.denomV0CCC = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 
 	// upgrading token before chain upgrade should not work
 	upgradeMsg := &assetfttypes.MsgTokenUpgradeV1{
@@ -330,6 +350,40 @@ func (ft *ftTest) After(t *testing.T) {
 		Denom:      ft.denomV0BBB,
 		IbcEnabled: false,
 	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(ft.issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
+		upgradeMsg,
+	)
+	requireT.Error(err)
+
+	// setting decision timeout to sth in the past
+	decisionTimeout := time.Now().UTC().Add(-time.Hour)
+	chain.Governance.UpdateParams(ctx, t, "Propose changing TokenUpgradeDecisionTimeout in the assetft module",
+		[]paramproposal.ParamChange{
+			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeDecisionTimeout), string(must.Bytes(tmjson.Marshal(decisionTimeout)))),
+		})
+
+	ftParams, err = ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	requireT.Equal(decisionTimeout, ftParams.Params.TokenUpgradeDecisionTimeout)
+
+	// upgrade after timeout should fail
+	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+		Sender:     ft.issuer.String(),
+		Denom:      ft.denomV0CCC,
+		IbcEnabled: false,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(ft.issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
+		upgradeMsg,
+	)
+	requireT.Error(err)
+
+	upgradeMsg.IbcEnabled = true
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(ft.issuer),
