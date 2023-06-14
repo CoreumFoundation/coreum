@@ -31,7 +31,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// token definitions
 	var tokens []types.Token
-	var genesisPendingUpgrades []types.GenesisTokenVersion
+	var pendingTokenUpgrades []types.PendingTokenUpgrade
 	for i := uint32(0); i < 5; i++ {
 		token := types.Token{
 			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
@@ -54,7 +54,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		tokens = append(tokens, token)
 		requireT.NoError(ftKeeper.SetDenomMetadata(ctx, token.Denom, token.Symbol, token.Description, token.Precision))
 		if i == 0 {
-			genesisPendingUpgrades = append(genesisPendingUpgrades, types.GenesisTokenVersion{
+			pendingTokenUpgrades = append(pendingTokenUpgrades, types.PendingTokenUpgrade{
 				Denom:   token.Denom,
 				Version: 1,
 			})
@@ -94,7 +94,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		Tokens:               tokens,
 		FrozenBalances:       frozenBalances,
 		WhitelistedBalances:  whitelistedBalances,
-		PendingTokenUpgrades: genesisPendingUpgrades,
+		PendingTokenUpgrades: pendingTokenUpgrades,
 	}
 
 	// init the keeper

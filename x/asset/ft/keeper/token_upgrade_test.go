@@ -9,7 +9,7 @@ import (
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 )
 
-func TestOneUpgradeAtATimeIsAllowed(t *testing.T) {
+func TestOneTokenUpgradeAtATimeIsAllowed(t *testing.T) {
 	requireT := require.New(t)
 
 	testApp := simapp.New()

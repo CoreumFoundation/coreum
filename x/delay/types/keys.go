@@ -23,7 +23,7 @@ const (
 // DelayedItemKeyPrefix defines the key prefix for the delayed item.
 var DelayedItemKeyPrefix = []byte{0x01}
 
-const uint64Length = 8
+const timestampLength = 8
 
 // CreateDelayedItemKey creates key for delayed item.
 func CreateDelayedItemKey(id string, t time.Time) ([]byte, error) {
@@ -36,7 +36,7 @@ func CreateDelayedItemKey(id string, t time.Time) ([]byte, error) {
 		return nil, errors.New("unix timestamp of the execution time must be non-negative")
 	}
 
-	key := make([]byte, uint64Length)
+	key := make([]byte, timestampLength)
 	// big endian is used to be sure that results are sortable lexicographically when stored messages are iterated
 	binary.BigEndian.PutUint64(key, uint64(execTime))
 
@@ -45,9 +45,9 @@ func CreateDelayedItemKey(id string, t time.Time) ([]byte, error) {
 
 // ExtractTimeAndIDFromDelayedItemKey extracts from the key the timestamp and ID of delayed message execution.
 func ExtractTimeAndIDFromDelayedItemKey(key []byte) (time.Time, string, error) {
-	if len(key) < uint64Length+1 {
+	if len(key) < timestampLength+1 {
 		return time.Time{}, "", errors.New("key is too short")
 	}
 
-	return time.Unix(int64(binary.BigEndian.Uint64(key[:uint64Length])), 0).UTC(), string(key[uint64Length:]), nil
+	return time.Unix(int64(binary.BigEndian.Uint64(key[:timestampLength])), 0).UTC(), string(key[timestampLength:]), nil
 }

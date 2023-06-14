@@ -14,7 +14,7 @@ import (
 
 const (
 	upgradePlanIntroducingTokenV1 = "v2"
-	upgradeV1Version              = 1
+	tokenUpgradeV1Version         = 1
 )
 
 // DelayKeeper defines methods required from the delay keeper.
@@ -22,8 +22,8 @@ type DelayKeeper interface {
 	DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error
 }
 
-// StoreDelayedUpgradeV1 stores request for upgrading token to V1.
-func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
+// StoreDelayedTokenUpgradeV1 stores request for upgrading token to V1.
+func (k Keeper) StoreDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
 	params := k.GetParams(ctx)
 	if ctx.BlockTime().After(params.TokenUpgradeDecisionTimeout) {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "it is no longer possible to upgrade the token")
@@ -38,18 +38,18 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer may upgrade the token")
 	}
 
-	if def.Version >= upgradeV1Version {
+	if def.Version >= tokenUpgradeV1Version {
 		return errors.Errorf("denom %s has been already upgraded to v1", denom)
 	}
 
-	if err := k.SetPendingVersion(ctx, denom, upgradeV1Version); err != nil {
+	if err := k.SetPendingVersion(ctx, denom, tokenUpgradeV1Version); err != nil {
 		return err
 	}
 
 	if !ibcEnabled {
 		// if issuer does not want to enable IBC we may upgrade the token immediately
 		// because it's behaviour is not changed
-		def.Version = upgradeV1Version
+		def.Version = tokenUpgradeV1Version
 		subunit, issuer, err := types.DeconstructDenom(denom)
 		if err != nil {
 			return err
@@ -63,7 +63,7 @@ func (k Keeper) StoreDelayedUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, de
 		Denom: denom,
 	}
 
-	return k.delayKeeper.DelayExecution(ctx, tokenUpgradeID(upgradeV1Version, data.Denom), data, params.TokenUpgradeGracePeriod)
+	return k.delayKeeper.DelayExecution(ctx, tokenUpgradeID(tokenUpgradeV1Version, data.Denom), data, params.TokenUpgradeGracePeriod)
 }
 
 // UpgradeTokenToV1 upgrades token to version V1.
@@ -79,7 +79,7 @@ func (k Keeper) UpgradeTokenToV1(ctx sdk.Context, data *types.DelayedTokenUpgrad
 	}
 
 	def.Features = append(def.Features, types.Feature_ibc)
-	def.Version = upgradeV1Version
+	def.Version = tokenUpgradeV1Version
 	k.SetDefinition(ctx, issuer, subunit, def)
 	k.ClearPendingVersion(ctx, data.Denom)
 

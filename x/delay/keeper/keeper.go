@@ -81,9 +81,6 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 	blockTime := ctx.BlockTime()
 	for ; iter.Valid(); iter.Next() {
 		key := iter.Key()
-		if len(key) < 8 {
-			return errors.New("key is too short")
-		}
 
 		execTime, _, err := types.ExtractTimeAndIDFromDelayedItemKey(key)
 		if err != nil {

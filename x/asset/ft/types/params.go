@@ -16,6 +16,8 @@ const (
 	DefaultTokenUpgradeGracePeriod = time.Hour * 24 * 7
 )
 
+var DefaultTokenUpgradeDecisionTimeout = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
+
 var (
 	// KeyIssueFee represents the issue fee param key.
 	KeyIssueFee = []byte("IssueFee")
@@ -44,7 +46,7 @@ func (m ParamsV1) ValidateBasic() error {
 func DefaultParams() Params {
 	return Params{
 		IssueFee:                    sdk.NewInt64Coin(sdk.DefaultBondDenom, 0),
-		TokenUpgradeDecisionTimeout: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
+		TokenUpgradeDecisionTimeout: DefaultTokenUpgradeDecisionTimeout,
 		TokenUpgradeGracePeriod:     DefaultTokenUpgradeGracePeriod,
 	}
 }
@@ -82,6 +84,14 @@ func validateIssueFee(i interface{}) error {
 }
 
 func validateTokenUpgradeDecisionTimeout(i interface{}) error {
+	decisionTimeout, ok := i.(time.Time)
+	if !ok {
+		return errors.Errorf("invalid parameter type: %T", i)
+	}
+	if decisionTimeout.Before(DefaultTokenUpgradeDecisionTimeout) {
+		return errors.Errorf("decision timeout cannot be set before %s", DefaultTokenUpgradeDecisionTimeout)
+	}
+
 	return nil
 }
 

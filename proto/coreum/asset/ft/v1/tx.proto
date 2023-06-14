@@ -7,7 +7,6 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
 
 import "coreum/asset/ft/v1/token.proto";
-import "coreum/asset/ft/v1/upgradev1.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
 option (gogoproto.goproto_getters_all) = false;
@@ -40,7 +39,7 @@ service Msg {
   rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
 
   // TokenUpgradeV1 upgrades token to version V1.
-  rpc TokenUpgradeV1(MsgTokenUpgradeV1) returns (EmptyResponse);
+  rpc UpgradeTokenV1(MsgTokenUpgradeV1) returns (EmptyResponse);
 }
 
 // MsgIssue defines message to issue new fungible token.
@@ -105,6 +104,13 @@ message MsgSetWhitelistedLimit {
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+// MsgTokenUpgradeV1 is the message upgrading token to V1.
+message MsgTokenUpgradeV1 {
+  string sender = 1;
+  string denom = 2;
+  bool ibc_enabled = 3;
 }
 
 message EmptyResponse {}

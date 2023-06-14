@@ -31,13 +31,12 @@ type ParamSubspace interface {
 
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc              codec.BinaryCodec
-	paramSubspace    ParamSubspace
-	storeKey         sdk.StoreKey
-	bankKeeper       types.BankKeeper
-	ibcChannelKeeper types.IBCChannelKeeper
-	delayKeeper      DelayKeeper
-	upgradeKeeper    UpgradeKeeper
+	cdc           codec.BinaryCodec
+	paramSubspace ParamSubspace
+	storeKey      sdk.StoreKey
+	bankKeeper    types.BankKeeper
+	delayKeeper   DelayKeeper
+	upgradeKeeper UpgradeKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -46,18 +45,16 @@ func NewKeeper(
 	paramSubspace ParamSubspace,
 	storeKey sdk.StoreKey,
 	bankKeeper types.BankKeeper,
-	ibcChannelKeeper types.IBCChannelKeeper,
 	delayKeeper DelayKeeper,
 	upgradeKeeper UpgradeKeeper,
 ) Keeper {
 	return Keeper{
-		cdc:              cdc,
-		paramSubspace:    paramSubspace,
-		storeKey:         storeKey,
-		bankKeeper:       bankKeeper,
-		ibcChannelKeeper: ibcChannelKeeper,
-		delayKeeper:      delayKeeper,
-		upgradeKeeper:    upgradeKeeper,
+		cdc:           cdc,
+		paramSubspace: paramSubspace,
+		storeKey:      storeKey,
+		bankKeeper:    bankKeeper,
+		delayKeeper:   delayKeeper,
+		upgradeKeeper: upgradeKeeper,
 	}
 }
 
@@ -214,7 +211,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 
 	upgradeHeight := k.upgradeKeeper.GetDoneHeight(ctx, upgradePlanIntroducingTokenV1)
 	if upgradeHeight > 0 {
-		definition.Version = upgradeV1Version
+		definition.Version = tokenUpgradeV1Version
 	}
 
 	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)

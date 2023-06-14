@@ -12,7 +12,7 @@ import (
 )
 
 // ImportPendingTokenUpgrades imports pending version upgrades from genesis state.
-func (k Keeper) ImportPendingTokenUpgrades(ctx sdk.Context, versions []types.GenesisTokenVersion) error {
+func (k Keeper) ImportPendingTokenUpgrades(ctx sdk.Context, versions []types.PendingTokenUpgrade) error {
 	for _, v := range versions {
 		if err := k.SetPendingVersion(ctx, v.Denom, v.Version); err != nil {
 			return err
@@ -22,15 +22,15 @@ func (k Keeper) ImportPendingTokenUpgrades(ctx sdk.Context, versions []types.Gen
 }
 
 // ExportPendingTokenUpgrades exports pending version upgrades.
-func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.GenesisTokenVersion, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingVersionUpgradeKeyPrefix)
-	versions := []types.GenesisTokenVersion{}
+func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingTokenUpgrade, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingTokenUpgradeKeyPrefix)
+	versions := []types.PendingTokenUpgrade{}
 	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key []byte, value []byte) error {
 		version, n := binary.Uvarint(value)
 		if n <= 0 {
 			return errors.New("unmarshaling varint failed")
 		}
-		versions = append(versions, types.GenesisTokenVersion{
+		versions = append(versions, types.PendingTokenUpgrade{
 			Denom:   string(key),
 			Version: uint32(version),
 		})
@@ -47,10 +47,10 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.GenesisToke
 
 // SetPendingVersion sets pending vrsion for token upgrade.
 func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingVersionUpgradeKeyPrefix)
-	key := []byte(denom)
+	store := ctx.KVStore(k.storeKey)
+	key := types.CreatePendingTokenUpgradeKey(denom)
 	if store.Has(key) {
-		return errors.Errorf("upgrade is already pending for denom %q", denom)
+		return errors.Errorf("token upgrade is already pending for denom %q", denom)
 	}
 
 	value := make([]byte, binary.MaxVarintLen32)
@@ -62,5 +62,5 @@ func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32)
 
 // ClearPendingVersion clears pending version marker.
 func (k Keeper) ClearPendingVersion(ctx sdk.Context, denom string) {
-	prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingVersionUpgradeKeyPrefix).Delete([]byte(denom))
+	prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingTokenUpgradeKeyPrefix).Delete([]byte(denom))
 }

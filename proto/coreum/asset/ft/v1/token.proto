@@ -62,3 +62,8 @@ message Token {
   ];
   uint32 version = 11;
 }
+
+// DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.
+message DelayedTokenUpgradeV1 {
+  string denom = 1;
+}
