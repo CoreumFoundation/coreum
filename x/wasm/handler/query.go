@@ -19,10 +19,14 @@ import (
 //
 //nolint:tagliatelle // we keep the name same as consume
 type assetFTQuery struct {
-	Token              *assetfttypes.QueryTokenRequest              `json:"Token"`
-	Balance            *assetfttypes.QueryBalanceRequest            `json:"Balance"`
-	FrozenBalance      *assetfttypes.QueryFrozenBalanceRequest      `json:"FrozenBalance"`
-	WhitelistedBalance *assetfttypes.QueryWhitelistedBalanceRequest `json:"WhitelistedBalance"`
+	Params              *assetfttypes.QueryParamsRequest              `json:"Params"`
+	Token               *assetfttypes.QueryTokenRequest               `json:"Token"`
+	Tokens              *assetfttypes.QueryTokensRequest              `json:"Tokens"`
+	Balance             *assetfttypes.QueryBalanceRequest             `json:"Balance"`
+	FrozenBalance       *assetfttypes.QueryFrozenBalanceRequest       `json:"FrozenBalance"`
+	FrozenBalances      *assetfttypes.QueryFrozenBalancesRequest      `json:"FrozenBalances"`
+	WhitelistedBalance  *assetfttypes.QueryWhitelistedBalanceRequest  `json:"WhitelistedBalance"`
+	WhitelistedBalances *assetfttypes.QueryWhitelistedBalancesRequest `json:"WhitelistedBalances"`
 }
 
 // assetNFTClass is the asset nft Class with string data.
@@ -46,13 +50,28 @@ type assetNFTClassResponse struct {
 	Class assetNFTClass `json:"class"`
 }
 
+// PageResponse is the structure used for pagination
+type pageResponse struct {
+	NextKey []byte `json:"next_key"`
+	Total   uint64 `json:"total"`
+}
+
+// assetNFTClassesResponse is the asset nft Classes response with string data.
+type assetNFTClassesResponse struct {
+	Pagination pageResponse    `json:"pagination"`
+	Classes    []assetNFTClass `json:"classes"`
+}
+
 // assetNFTQuery represents asset nft module queries integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
 type assetNFTQuery struct {
-	Class       *assetnfttypes.QueryClassRequest       `json:"Class"`
-	Frozen      *assetnfttypes.QueryFrozenRequest      `json:"Frozen"`
-	Whitelisted *assetnfttypes.QueryWhitelistedRequest `json:"Whitelisted"`
+	Params                    *assetnfttypes.QueryParamsRequest                    `json:"Params"`
+	Class                     *assetnfttypes.QueryClassRequest                     `json:"Class"`
+	Classes                   *assetnfttypes.QueryClassesRequest                   `json:"Classes"`
+	Frozen                    *assetnfttypes.QueryFrozenRequest                    `json:"Frozen"`
+	Whitelisted               *assetnfttypes.QueryWhitelistedRequest               `json:"Whitelisted"`
+	WhitelistedAccountsforNFT *assetnfttypes.QueryWhitelistedAccountsForNFTRequest `json:"WhitelistedAccountsforNft"`
 }
 
 // nft is the nft with string data.
@@ -137,9 +156,19 @@ func processCoreumQuery(
 }
 
 func processAssetFTQuery(ctx sdk.Context, assetFTQuery *assetFTQuery, assetFTQueryServer assetfttypes.QueryServer) ([]byte, error) {
+	if assetFTQuery.Params != nil {
+		return executeQuery(ctx, assetFTQuery.Params, func(ctx context.Context, req *assetfttypes.QueryParamsRequest) (*assetfttypes.QueryParamsResponse, error) {
+			return assetFTQueryServer.Params(ctx, req)
+		})
+	}
 	if assetFTQuery.Token != nil {
 		return executeQuery(ctx, assetFTQuery.Token, func(ctx context.Context, req *assetfttypes.QueryTokenRequest) (*assetfttypes.QueryTokenResponse, error) {
 			return assetFTQueryServer.Token(ctx, req)
+		})
+	}
+	if assetFTQuery.Tokens != nil {
+		return executeQuery(ctx, assetFTQuery.Tokens, func(ctx context.Context, req *assetfttypes.QueryTokensRequest) (*assetfttypes.QueryTokensResponse, error) {
+			return assetFTQueryServer.Tokens(ctx, req)
 		})
 	}
 	if assetFTQuery.Balance != nil {
@@ -152,9 +181,19 @@ func processAssetFTQuery(ctx sdk.Context, assetFTQuery *assetFTQuery, assetFTQue
 			return assetFTQueryServer.FrozenBalance(ctx, req)
 		})
 	}
+	if assetFTQuery.FrozenBalances != nil {
+		return executeQuery(ctx, assetFTQuery.FrozenBalances, func(ctx context.Context, req *assetfttypes.QueryFrozenBalancesRequest) (*assetfttypes.QueryFrozenBalancesResponse, error) {
+			return assetFTQueryServer.FrozenBalances(ctx, req)
+		})
+	}
 	if assetFTQuery.WhitelistedBalance != nil {
 		return executeQuery(ctx, assetFTQuery.WhitelistedBalance, func(ctx context.Context, req *assetfttypes.QueryWhitelistedBalanceRequest) (*assetfttypes.QueryWhitelistedBalanceResponse, error) {
 			return assetFTQueryServer.WhitelistedBalance(ctx, req)
+		})
+	}
+	if assetFTQuery.WhitelistedBalances != nil {
+		return executeQuery(ctx, assetFTQuery.WhitelistedBalances, func(ctx context.Context, req *assetfttypes.QueryWhitelistedBalancesRequest) (*assetfttypes.QueryWhitelistedBalancesResponse, error) {
+			return assetFTQueryServer.WhitelistedBalances(ctx, req)
 		})
 	}
 
@@ -162,6 +201,11 @@ func processAssetFTQuery(ctx sdk.Context, assetFTQuery *assetFTQuery, assetFTQue
 }
 
 func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *assetNFTQuery, assetNFTQueryServer assetnfttypes.QueryServer) ([]byte, error) {
+	if assetNFTQuery.Params != nil {
+		return executeQuery(ctx, assetNFTQuery.Params, func(ctx context.Context, req *assetnfttypes.QueryParamsRequest) (*assetnfttypes.QueryParamsResponse, error) {
+			return assetNFTQueryServer.Params(ctx, req)
+		})
+	}
 	if assetNFTQuery.Class != nil {
 		return executeQuery(ctx, assetNFTQuery.Class, func(ctx context.Context, req *assetnfttypes.QueryClassRequest) (*assetNFTClassResponse, error) {
 			classRes, err := assetNFTQueryServer.Class(ctx, req)
@@ -192,6 +236,42 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *assetNFTQuery, assetNF
 			}, nil
 		})
 	}
+	if assetNFTQuery.Classes != nil {
+		return executeQuery(ctx, assetNFTQuery.Classes, func(ctx context.Context, req *assetnfttypes.QueryClassesRequest) (*assetNFTClassesResponse, error) {
+			classesRes, err := assetNFTQueryServer.Classes(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+
+			var classesResponse assetNFTClassesResponse
+
+			classesResponse.Pagination.NextKey = classesRes.Pagination.NextKey
+			classesResponse.Pagination.Total = classesRes.Pagination.Total
+			for i := 0; i < len(classesRes.Classes); i++ {
+				if classesRes.Classes[i].Data != nil {
+					var dataString string
+					dataString, err = unmarshalDataBytes(classesRes.Classes[i].Data)
+					if err != nil {
+						return nil, err
+					}
+					classesResponse.Classes = append(classesResponse.Classes, assetNFTClass{
+						ID:          classesRes.Classes[i].Id,
+						Issuer:      classesRes.Classes[i].Issuer,
+						Name:        classesRes.Classes[i].Name,
+						Symbol:      classesRes.Classes[i].Symbol,
+						Description: classesRes.Classes[i].Description,
+						URI:         classesRes.Classes[i].URI,
+						URIHash:     classesRes.Classes[i].URIHash,
+						Data:        dataString,
+						Features:    classesRes.Classes[i].Features,
+						RoyaltyRate: classesRes.Classes[i].RoyaltyRate,
+					})
+				}
+			}
+			return &classesResponse, nil
+		})
+	}
+
 	if assetNFTQuery.Frozen != nil {
 		return executeQuery(ctx, assetNFTQuery.Frozen, func(ctx context.Context, req *assetnfttypes.QueryFrozenRequest) (*assetnfttypes.QueryFrozenResponse, error) {
 			return assetNFTQueryServer.Frozen(ctx, req)
@@ -200,6 +280,11 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *assetNFTQuery, assetNF
 	if assetNFTQuery.Whitelisted != nil {
 		return executeQuery(ctx, assetNFTQuery.Whitelisted, func(ctx context.Context, req *assetnfttypes.QueryWhitelistedRequest) (*assetnfttypes.QueryWhitelistedResponse, error) {
 			return assetNFTQueryServer.Whitelisted(ctx, req)
+		})
+	}
+	if assetNFTQuery.WhitelistedAccountsforNFT != nil {
+		return executeQuery(ctx, assetNFTQuery.WhitelistedAccountsforNFT, func(ctx context.Context, req *assetnfttypes.QueryWhitelistedAccountsForNFTRequest) (*assetnfttypes.QueryWhitelistedAccountsForNFTResponse, error) {
+			return assetNFTQueryServer.WhitelistedAccountsForNFT(ctx, req)
 		})
 	}
 
