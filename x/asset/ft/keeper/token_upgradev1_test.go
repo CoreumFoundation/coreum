@@ -34,24 +34,24 @@ func TestTokenUpgradeV1(t *testing.T) {
 	issuer1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	issuer2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
-	denom1, err := ftKeeper.Issue(ctxSDK, types.IssueSettings{
+	denom1, err := ftKeeper.IssueVersioned(ctxSDK, types.IssueSettings{
 		Issuer:        issuer1,
 		Symbol:        "ABC",
 		Description:   "ABC Desc",
 		Subunit:       "abc",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(777),
-	})
+	}, 0)
 	requireT.NoError(err)
 
-	denom2, err := ftKeeper.Issue(ctxSDK, types.IssueSettings{
+	denom2, err := ftKeeper.IssueVersioned(ctxSDK, types.IssueSettings{
 		Issuer:        issuer2,
 		Symbol:        "XYZ",
 		Description:   "XYZ Desc",
 		Subunit:       "xyz",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(888),
-	})
+	}, 0)
 	requireT.NoError(err)
 
 	// upgrade requested after timeout should fail

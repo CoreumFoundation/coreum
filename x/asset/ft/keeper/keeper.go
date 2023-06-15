@@ -148,6 +148,12 @@ func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 
 // Issue issues new fungible token and returns it's denom.
 func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, error) {
+	return k.IssueVersioned(ctx, settings, tokenUpgradeV1Version)
+}
+
+// IssueVersioned issues new fungible token and sets its version.
+// To be used only in unit tests !!!
+func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, version uint32) (string, error) {
 	if err := types.ValidateSubunit(settings.Subunit); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
@@ -195,7 +201,7 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		Features:           settings.Features,
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
-		Version:            tokenUpgradeV1Version,
+		Version:            version,
 	}
 
 	if err := k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision); err != nil {

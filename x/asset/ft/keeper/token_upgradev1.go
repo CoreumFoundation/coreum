@@ -12,10 +12,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-const (
-	upgradePlanIntroducingTokenV1 = "v2"
-	tokenUpgradeV1Version         = 1
-)
+const tokenUpgradeV1Version = 1
 
 // DelayKeeper defines methods required from the delay keeper.
 type DelayKeeper interface {
