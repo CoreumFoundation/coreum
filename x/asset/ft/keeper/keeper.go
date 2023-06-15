@@ -18,11 +18,6 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
-// UpgradeKeeper defines methods delivered by the upgrade keeper.
-type UpgradeKeeper interface {
-	GetDoneHeight(ctx sdk.Context, name string) int64
-}
-
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
 type ParamSubspace interface {
 	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
@@ -36,7 +31,6 @@ type Keeper struct {
 	storeKey      sdk.StoreKey
 	bankKeeper    types.BankKeeper
 	delayKeeper   DelayKeeper
-	upgradeKeeper UpgradeKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -46,7 +40,6 @@ func NewKeeper(
 	storeKey sdk.StoreKey,
 	bankKeeper types.BankKeeper,
 	delayKeeper DelayKeeper,
-	upgradeKeeper UpgradeKeeper,
 ) Keeper {
 	return Keeper{
 		cdc:           cdc,
@@ -54,7 +47,6 @@ func NewKeeper(
 		storeKey:      storeKey,
 		bankKeeper:    bankKeeper,
 		delayKeeper:   delayKeeper,
-		upgradeKeeper: upgradeKeeper,
 	}
 }
 
@@ -203,15 +195,11 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		Features:           settings.Features,
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
+		Version:            tokenUpgradeV1Version,
 	}
 
 	if err := k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision); err != nil {
 		return "", err
-	}
-
-	upgradeHeight := k.upgradeKeeper.GetDoneHeight(ctx, upgradePlanIntroducingTokenV1)
-	if upgradeHeight > 0 {
-		definition.Version = tokenUpgradeV1Version
 	}
 
 	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
