@@ -58,7 +58,6 @@ func (ft *ftTest) Before(t *testing.T) {
 		Precision:     6,
 		Description:   "AAA Description",
 		InitialAmount: sdk.NewInt(1000),
-		Features:      []assetfttypes.Feature{},
 	}
 	_, err := client.BroadcastTx(
 		ctx,
@@ -207,8 +206,12 @@ func (ft *ftTest) After(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.EqualValues(1, resp.Token.Version)
-	requireT.Len(resp.Token.Features, 4)
-	requireT.NotContains(resp.Token.Features, assetfttypes.Feature_ibc)
+	requireT.Equal([]assetfttypes.Feature{
+		assetfttypes.Feature_minting,
+		assetfttypes.Feature_freezing,
+		assetfttypes.Feature_whitelisting,
+		assetfttypes.Feature_burning,
+	}, resp.Token.Features)
 
 	// upgrading by the non-issuer should fail
 	nonIssuer := chain.GenAccount()
@@ -236,7 +239,7 @@ func (ft *ftTest) After(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.EqualValues(0, resp.Token.Version)
-	requireT.NotContains(resp.Token.Features, assetfttypes.Feature_ibc)
+	requireT.Len(resp.Token.Features, 0)
 
 	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
 		Sender:     nonIssuer.String(),
@@ -271,7 +274,6 @@ func (ft *ftTest) After(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(1, resp.Token.Version)
 	requireT.Len(resp.Token.Features, 0)
-	requireT.NotContains(resp.Token.Features, assetfttypes.Feature_ibc)
 
 	// upgrading second time should fail
 	_, err = client.BroadcastTx(
@@ -312,8 +314,12 @@ func (ft *ftTest) After(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.EqualValues(0, resp.Token.Version)
-	requireT.Len(resp.Token.Features, 4)
-	requireT.NotContains(resp.Token.Features, assetfttypes.Feature_ibc)
+	requireT.Equal([]assetfttypes.Feature{
+		assetfttypes.Feature_minting,
+		assetfttypes.Feature_freezing,
+		assetfttypes.Feature_whitelisting,
+		assetfttypes.Feature_burning,
+	}, resp.Token.Features)
 
 	// upgrading second time should fail
 	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
@@ -341,12 +347,13 @@ func (ft *ftTest) After(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.EqualValues(1, resp.Token.Version)
-	requireT.Len(resp.Token.Features, 5)
-	requireT.Contains(resp.Token.Features, assetfttypes.Feature_ibc)
-	requireT.Contains(resp.Token.Features, assetfttypes.Feature_minting)
-	requireT.Contains(resp.Token.Features, assetfttypes.Feature_freezing)
-	requireT.Contains(resp.Token.Features, assetfttypes.Feature_whitelisting)
-	requireT.Contains(resp.Token.Features, assetfttypes.Feature_burning)
+	requireT.Equal([]assetfttypes.Feature{
+		assetfttypes.Feature_minting,
+		assetfttypes.Feature_freezing,
+		assetfttypes.Feature_whitelisting,
+		assetfttypes.Feature_burning,
+		assetfttypes.Feature_ibc,
+	}, resp.Token.Features)
 
 	// following upgrade should fail again
 	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{

@@ -27,6 +27,6 @@ func TestMigrateParams(t *testing.T) {
 	paramsNew := keeper.GetParams(ctx)
 
 	assertT.Equal(paramsOld.IssueFee, paramsNew.IssueFee)
-	assertT.Equal(blockTime.Add(types.DefaultTokenUpgradeDecisionPeriod), paramsNew.TokenUpgradeDecisionTimeout)
+	assertT.Equal(blockTime.Add(v1.InitialTokenUpgradeDecisionPeriod), paramsNew.TokenUpgradeDecisionTimeout)
 	assertT.Equal(types.DefaultTokenUpgradeGracePeriod, paramsNew.TokenUpgradeGracePeriod)
 }

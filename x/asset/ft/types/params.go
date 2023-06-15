@@ -8,13 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	// DefaultTokenUpgradeDecisionPeriod is the period when issuer must decide if token should be upgraded.
-	DefaultTokenUpgradeDecisionPeriod = time.Hour * 24 * 30
-
-	// DefaultTokenUpgradeGracePeriod is the period after which upgrade is effectively executed.
-	DefaultTokenUpgradeGracePeriod = time.Hour * 24 * 7
-)
+// DefaultTokenUpgradeGracePeriod is the period after which upgrade is effectively executed.
+const DefaultTokenUpgradeGracePeriod = time.Hour * 24 * 7
 
 // DefaultTokenUpgradeDecisionTimeout is the timeout for a decision to upgrade the token.
 var DefaultTokenUpgradeDecisionTimeout = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)

@@ -62,5 +62,5 @@ func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32)
 
 // ClearPendingVersion clears pending version marker.
 func (k Keeper) ClearPendingVersion(ctx sdk.Context, denom string) {
-	prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingTokenUpgradeKeyPrefix).Delete([]byte(denom))
+	ctx.KVStore(k.storeKey).Delete(types.CreatePendingTokenUpgradeKey(denom))
 }
