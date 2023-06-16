@@ -2,10 +2,10 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{Coin, CosmosMsg, Uint128};
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
-use cw_ownable::{initialize_owner, assert_owner};
+use cw_ownable::{assert_owner, initialize_owner};
 
 use crate::error::ContractError;
-use crate::msg::{InstantiateMsg, ExecuteMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg};
 // version info for migration info
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -17,7 +17,6 @@ pub fn instantiate(
     info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     initialize_owner(deps.storage, deps.api, Some(info.sender.as_ref()))?;
 
