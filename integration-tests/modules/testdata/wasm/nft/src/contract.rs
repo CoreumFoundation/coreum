@@ -231,7 +231,9 @@ pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<B
         QueryMsg::Classes { issuer } => to_binary(&query_classes(deps, issuer)?),
         QueryMsg::Frozen { id } => to_binary(&query_frozen(deps, id)?),
         QueryMsg::Whitelisted { id, account } => to_binary(&query_whitelisted(deps, id, account)?),
-        QueryMsg::WhitelistedAccountsForNft { id } => to_binary(&query_whitelisted_accounts_for_nft(deps, id)?),
+        QueryMsg::WhitelistedAccountsForNft { id } => {
+            to_binary(&query_whitelisted_accounts_for_nft(deps, id)?)
+        }
         QueryMsg::Balance { owner } => to_binary(&query_balance(deps, owner)?),
         QueryMsg::Owner { id } => to_binary(&query_owner(deps, id)?),
         QueryMsg::Supply {} => to_binary(&query_supply(deps)?),
@@ -293,7 +295,11 @@ fn query_frozen(deps: Deps<CoreumQueries>, id: String) -> StdResult<FrozenRespon
     Ok(res)
 }
 
-fn query_whitelisted(deps: Deps<CoreumQueries>, id: String, account: String) -> StdResult<WhitelistedResponse> {
+fn query_whitelisted(
+    deps: Deps<CoreumQueries>,
+    id: String,
+    account: String,
+) -> StdResult<WhitelistedResponse> {
     let class_id = CLASS_ID.load(deps.storage)?;
     let request: QueryRequest<CoreumQueries> =
         CoreumQueries::AssetNFT(assetnft::Query::Whitelisted {

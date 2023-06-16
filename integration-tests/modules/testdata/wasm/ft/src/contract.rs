@@ -1,6 +1,6 @@
 use coreum_wasm_sdk::assetft::{
-    self, FrozenBalanceResponse, ParamsResponse, Query, TokenResponse, TokensResponse,
-    WhitelistedBalanceResponse, BalanceResponse, FrozenBalancesResponse, WhitelistedBalancesResponse,
+    self, BalanceResponse, FrozenBalanceResponse, FrozenBalancesResponse, ParamsResponse, Query,
+    TokenResponse, TokensResponse, WhitelistedBalanceResponse, WhitelistedBalancesResponse,
 };
 use coreum_wasm_sdk::core::{CoreumMsg, CoreumQueries, CoreumResult};
 use coreum_wasm_sdk::pagination::PageRequest;
@@ -236,7 +236,9 @@ pub fn query(deps: Deps<CoreumQueries>, _env: Env, msg: QueryMsg) -> StdResult<B
         }
         QueryMsg::Balance { account } => to_binary(&query_balance(deps, account)?),
         QueryMsg::FrozenBalances { account } => to_binary(&query_frozen_balances(deps, account)?),
-        QueryMsg::WhitelistedBalances { account } => to_binary(&query_whitelisted_balances(deps, account)?),
+        QueryMsg::WhitelistedBalances { account } => {
+            to_binary(&query_whitelisted_balances(deps, account)?)
+        }
     }
 }
 
@@ -286,7 +288,7 @@ fn query_tokens(deps: Deps<CoreumQueries>, issuer: String) -> StdResult<TokensRe
 
 fn query_balance(deps: Deps<CoreumQueries>, account: String) -> StdResult<BalanceResponse> {
     let denom = DENOM.load(deps.storage)?;
-    let request = CoreumQueries::AssetFT(Query::Balance { account, denom}).into();
+    let request = CoreumQueries::AssetFT(Query::Balance { account, denom }).into();
     let res = deps.querier.query(&request)?;
     Ok(res)
 }
@@ -302,7 +304,10 @@ fn query_frozen_balance(
     Ok(res)
 }
 
-fn query_frozen_balances(deps: Deps<CoreumQueries>, account: String) -> StdResult<FrozenBalancesResponse> {
+fn query_frozen_balances(
+    deps: Deps<CoreumQueries>,
+    account: String,
+) -> StdResult<FrozenBalancesResponse> {
     let mut pagination = None;
     let mut balances = vec![];
     let mut res: FrozenBalancesResponse;
@@ -344,12 +349,15 @@ fn query_whitelisted_balance(
     Ok(res)
 }
 
-fn query_whitelisted_balances(deps: Deps<CoreumQueries>, account: String) -> StdResult<WhitelistedBalancesResponse> {
+fn query_whitelisted_balances(
+    deps: Deps<CoreumQueries>,
+    account: String,
+) -> StdResult<WhitelistedBalancesResponse> {
     let mut pagination = None;
     let mut balances = vec![];
     let mut res: WhitelistedBalancesResponse;
     loop {
-        let request = CoreumQueries::AssetFT(Query::WhitelistedBalances{
+        let request = CoreumQueries::AssetFT(Query::WhitelistedBalances {
             pagination,
             account: account.clone(),
         })

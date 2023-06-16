@@ -37,3 +37,4 @@ coreum-wasm-sdk = { path = "./packages/coreum-wasm-sdk" }
 cosmwasm-schema = "1.2.6"
 cw-ownable = "0.5.1"
 
+

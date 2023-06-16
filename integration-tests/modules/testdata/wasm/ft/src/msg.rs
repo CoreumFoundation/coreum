@@ -32,7 +32,7 @@ pub enum QueryMsg {
     Token {},
     Tokens { issuer: String },
     Balance { account: String },
-    FrozenBalances { account: String }, 
+    FrozenBalances { account: String },
     FrozenBalance { account: String },
     WhitelistedBalances { account: String },
     WhitelistedBalance { account: String },
