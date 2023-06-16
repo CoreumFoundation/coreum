@@ -31,7 +31,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// token definitions
 	var tokens []types.Token
-	for i := 0; i < 5; i++ {
+	var pendingTokenUpgrades []types.PendingTokenUpgrade
+	for i := uint32(0); i < 5; i++ {
 		token := types.Token{
 			Denom:              types.BuildDenom(fmt.Sprintf("abc%d", i), issuer),
 			Issuer:             issuer.String(),
@@ -44,6 +45,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 				types.Feature_freezing,
 				types.Feature_whitelisting,
 			},
+			Version: i,
 		}
 		// Globally freeze some Tokens.
 		if i%2 == 0 {
@@ -51,6 +53,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 		}
 		tokens = append(tokens, token)
 		requireT.NoError(ftKeeper.SetDenomMetadata(ctx, token.Denom, token.Symbol, token.Description, token.Precision))
+		if i == 0 {
+			pendingTokenUpgrades = append(pendingTokenUpgrades, types.PendingTokenUpgrade{
+				Denom:   token.Denom,
+				Version: types.CurrentTokenVersion,
+			})
+		}
 	}
 
 	// frozen balances
@@ -82,10 +90,11 @@ func TestInitAndExportGenesis(t *testing.T) {
 	}
 
 	genState := types.GenesisState{
-		Params:              types.DefaultParams(),
-		Tokens:              tokens,
-		FrozenBalances:      frozenBalances,
-		WhitelistedBalances: whitelistedBalances,
+		Params:               types.DefaultParams(),
+		Tokens:               tokens,
+		FrozenBalances:       frozenBalances,
+		WhitelistedBalances:  whitelistedBalances,
+		PendingTokenUpgrades: pendingTokenUpgrades,
 	}
 
 	// init the keeper
@@ -123,11 +132,21 @@ func TestInitAndExportGenesis(t *testing.T) {
 		assertT.EqualValues(balance.Coins.String(), coins.String())
 	}
 
+	// whitelisted balances
+	for _, balance := range whitelistedBalances {
+		address, err := sdk.AccAddressFromBech32(balance.Address)
+		requireT.NoError(err)
+		coins, _, err := ftKeeper.GetWhitelistedBalances(ctx, address, nil)
+		requireT.NoError(err)
+		assertT.EqualValues(balance.Coins.String(), coins.String())
+	}
+
 	// check that export is equal import
 	exportedGenState := ft.ExportGenesis(ctx, ftKeeper)
 
 	assertT.EqualValues(genState.Params, exportedGenState.Params)
 	assertT.ElementsMatch(genState.Tokens, exportedGenState.Tokens)
+	assertT.ElementsMatch(genState.PendingTokenUpgrades, exportedGenState.PendingTokenUpgrades)
 	assertT.ElementsMatch(genState.FrozenBalances, exportedGenState.FrozenBalances)
 	assertT.ElementsMatch(genState.WhitelistedBalances, exportedGenState.WhitelistedBalances)
 }

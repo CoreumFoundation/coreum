@@ -29,6 +29,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			Features:           token.Features,
 			BurnRate:           token.BurnRate,
 			SendCommissionRate: token.SendCommissionRate,
+			Version:            token.Version,
 		}
 
 		k.SetDefinition(ctx, issuer, subunit, definition)
@@ -59,6 +60,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		address := sdk.MustAccAddressFromBech32(whitelistedBalance.Address)
 		k.SetWhitelistedBalances(ctx, address, whitelistedBalance.Coins)
 	}
+
+	// Init pending version upgrades
+	if err := k.ImportPendingTokenUpgrades(ctx, genState.PendingTokenUpgrades); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the asset module's exported genesis.
@@ -81,10 +87,16 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		panic(err)
 	}
 
+	pendingTokenUpgrades, err := k.ExportPendingTokenUpgrades(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
-		Params:              k.GetParams(ctx),
-		Tokens:              tokens,
-		FrozenBalances:      frozenBalances,
-		WhitelistedBalances: whitelistedBalances,
+		Params:               k.GetParams(ctx),
+		Tokens:               tokens,
+		FrozenBalances:       frozenBalances,
+		WhitelistedBalances:  whitelistedBalances,
+		PendingTokenUpgrades: pendingTokenUpgrades,
 	}
 }

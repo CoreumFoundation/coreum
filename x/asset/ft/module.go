@@ -19,6 +19,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
+	v1 "github.com/CoreumFoundation/coreum/x/asset/ft/legacy/v1"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
@@ -38,7 +39,9 @@ type AppModuleBasic struct {
 
 // NewAppModuleBasic return the asset ft AppModuleBasic.
 func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
-	return AppModuleBasic{cdc: cdc}
+	return AppModuleBasic{
+		cdc: cdc,
+	}
 }
 
 // Name returns the asset ft module's name.
@@ -55,7 +58,7 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 }
 
 // DefaultGenesis returns the asset ft module's default genesis state.
-func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+func (a AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesis())
 }
 
@@ -97,8 +100,9 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper     keeper.Keeper
-	bankKeeper types.BankKeeper
+	keeper       keeper.Keeper
+	bankKeeper   types.BankKeeper
+	paramsKeeper v1.ParamsKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
@@ -106,11 +110,13 @@ func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
 	bankKeeper types.BankKeeper,
+	paramsKeeper v1.ParamsKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
 		bankKeeper:     bankKeeper,
+		paramsKeeper:   paramsKeeper,
 	}
 }
 
@@ -137,6 +143,12 @@ func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sd
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper, am.bankKeeper))
+
+	m := keeper.NewMigrator(am.paramsKeeper)
+	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // RegisterInvariants registers the asset ft module's invariants.
@@ -163,7 +175,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the asset ft module.
 func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}

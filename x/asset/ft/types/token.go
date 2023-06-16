@@ -8,10 +8,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	delaytypes "github.com/CoreumFoundation/coreum/x/delay/types"
 )
 
 var (
@@ -26,6 +28,9 @@ var (
 )
 
 const (
+	// CurrentTokenVersion is the version of the token produced by the current version of the app.
+	CurrentTokenVersion = 1
+
 	denomSeparator = "-"
 	// MaxPrecision used when issuing a token.
 	MaxPrecision = 20
@@ -214,4 +219,16 @@ func validateRate(rate sdk.Dec) error {
 // checks that dec precision is limited to the provided value.
 func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
 	return dec.Mul(sdk.NewDecFromInt(sdk.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
+}
+
+// TokenUpgradeV1Keeper defines methods required to update tokens to V1.
+type TokenUpgradeV1Keeper interface {
+	UpgradeTokenToV1(ctx sdk.Context, data *DelayedTokenUpgradeV1) error
+}
+
+// NewTokenUpgradeV1Handler handles token V1 upgrade.
+func NewTokenUpgradeV1Handler(keeper TokenUpgradeV1Keeper) delaytypes.Handler {
+	return func(ctx sdk.Context, data proto.Message) error {
+		return keeper.UpgradeTokenToV1(ctx, data.(*DelayedTokenUpgradeV1))
+	}
 }

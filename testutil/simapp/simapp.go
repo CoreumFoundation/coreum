@@ -98,8 +98,11 @@ func New(options ...Option) *App {
 }
 
 // BeginNextBlock begins new SimApp block and returns the ctx of the new block.
-func (s *App) BeginNextBlock() sdk.Context {
-	header := tmproto.Header{Height: s.LastBlockHeight() + 1}
+func (s *App) BeginNextBlock(blockTime time.Time) sdk.Context {
+	if blockTime.IsZero() {
+		blockTime = time.Now()
+	}
+	header := tmproto.Header{Height: s.LastBlockHeight() + 1, Time: blockTime}
 	s.BeginBlock(abci.RequestBeginBlock{Header: header})
 	return s.BaseApp.NewContext(false, header)
 }

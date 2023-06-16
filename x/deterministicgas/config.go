@@ -72,6 +72,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
 		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
+		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):      constantGasFunc(5000),
 
 		// asset/nft
 		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(16000),

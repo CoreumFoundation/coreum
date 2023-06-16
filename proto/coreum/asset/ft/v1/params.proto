@@ -2,15 +2,31 @@ syntax = "proto3";
 package coreum.asset.ft.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
 
 // Params store gov manageable parameters.
 message Params {
-  // issue_fee is the fee burnt each time new token is issued
+  // issue_fee is the fee burnt each time new token is issued.
   cosmos.base.v1beta1.Coin issue_fee = 1 [
     (gogoproto.nullable) = false,
     (gogoproto.moretags) = "yaml:\"issue_fee\""
+  ];
+
+  // token_upgrade_decision_timeout defines the end of the decision period for upgrading the token.
+  google.protobuf.Timestamp token_upgrade_decision_timeout = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdtime) = true,
+    (gogoproto.moretags) = "yaml:\"token_upgrade_decision_timeout\""
+  ];
+
+  // token_upgrade_grace_period the period after which the token upgrade is executed effectively.
+  google.protobuf.Duration token_upgrade_grace_period = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.moretags) = "yaml:\"token_upgrade_grace_period\""
   ];
 }

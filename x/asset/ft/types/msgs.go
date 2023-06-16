@@ -15,6 +15,7 @@ var (
 	_ sdk.Msg = &MsgGloballyFreeze{}
 	_ sdk.Msg = &MsgGloballyUnfreeze{}
 	_ sdk.Msg = &MsgSetWhitelistedLimit{}
+	_ sdk.Msg = &MsgUpgradeTokenV1{}
 )
 
 // ValidateBasic validates the message.
@@ -226,6 +227,31 @@ func (msg MsgSetWhitelistedLimit) ValidateBasic() error {
 
 // GetSigners returns the required signers of this message type.
 func (msg MsgSetWhitelistedLimit) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{
+		sdk.MustAccAddressFromBech32(msg.Sender),
+	}
+}
+
+// ValidateBasic checks that message fields are valid.
+func (msg MsgUpgradeTokenV1) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+	}
+
+	_, issuer, err := DeconstructDenom(msg.Denom)
+	if err != nil {
+		return err
+	}
+
+	if issuer.String() != msg.Sender {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer can upgrade the denom")
+	}
+
+	return nil
+}
+
+// GetSigners returns the required signers of this message type.
+func (msg MsgUpgradeTokenV1) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
 		sdk.MustAccAddressFromBech32(msg.Sender),
 	}

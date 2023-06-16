@@ -35,11 +35,18 @@ var (
 	GlobalFreezeKeyPrefix = []byte{0x04}
 	// WhitelistedBalancesKeyPrefix defines the key prefix to track whitelisted balances.
 	WhitelistedBalancesKeyPrefix = []byte{0x05}
+	// PendingTokenUpgradeKeyPrefix defines the key prefix for the pending version upgrades.
+	PendingTokenUpgradeKeyPrefix = []byte{0x06}
 )
 
 // CreateTokenKey constructs the key for the fungible token.
 func CreateTokenKey(issuer sdk.AccAddress, subunit string) []byte {
 	return store.JoinKeys(CreateIssuerTokensPrefix(issuer), []byte(strings.ToLower(subunit)))
+}
+
+// CreatePendingTokenUpgradeKey constructs the prefix for the fungible token version upgrade.
+func CreatePendingTokenUpgradeKey(denom string) []byte {
+	return store.JoinKeys(PendingTokenUpgradeKeyPrefix, []byte(denom))
 }
 
 // CreateIssuerTokensPrefix constructs the prefix for the fungible token issued by account.
