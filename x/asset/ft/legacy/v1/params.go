@@ -4,8 +4,8 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -22,7 +22,7 @@ type ParamsKeeper interface {
 func MigrateParams(ctx sdk.Context, paramsKeeper ParamsKeeper) error {
 	ftSubspace, ok := paramsKeeper.GetSubspace(types.ModuleName)
 	if !ok {
-		return errors.New("params subspace does not exist")
+		return sdkerrors.Wrap(types.ErrInvalidState, "params subspace does not exist")
 	}
 
 	ftSubspace.Set(ctx, types.KeyTokenUpgradeDecisionTimeout, ctx.BlockTime().Add(InitialTokenUpgradeDecisionPeriod))

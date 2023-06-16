@@ -4,8 +4,8 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/pkg/errors"
 )
 
 // DefaultTokenUpgradeGracePeriod is the period after which upgrade is effectively executed.
@@ -58,10 +58,10 @@ func (m Params) ValidateBasic() error {
 func validateIssueFee(i interface{}) error {
 	fee, ok := i.(sdk.Coin)
 	if !ok {
-		return errors.Errorf("invalid parameter type: %T", i)
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T", i)
 	}
 	if fee.IsNil() || !fee.IsValid() {
-		return errors.New("issue fee must be a non-negative value")
+		return sdkerrors.Wrap(ErrInvalidInput, "issue fee must be a non-negative value")
 	}
 	return nil
 }
@@ -69,10 +69,10 @@ func validateIssueFee(i interface{}) error {
 func validateTokenUpgradeDecisionTimeout(i interface{}) error {
 	decisionTimeout, ok := i.(time.Time)
 	if !ok {
-		return errors.Errorf("invalid parameter type: %T", i)
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T", i)
 	}
 	if decisionTimeout.Before(DefaultTokenUpgradeDecisionTimeout) {
-		return errors.Errorf("decision timeout cannot be set before %s", DefaultTokenUpgradeDecisionTimeout)
+		return sdkerrors.Wrapf(ErrInvalidInput, "decision timeout cannot be set before %s", DefaultTokenUpgradeDecisionTimeout)
 	}
 
 	return nil
@@ -81,10 +81,10 @@ func validateTokenUpgradeDecisionTimeout(i interface{}) error {
 func validateTokenUpgradeGracePeriod(i interface{}) error {
 	gracePeriod, ok := i.(time.Duration)
 	if !ok {
-		return errors.Errorf("invalid parameter type: %T", i)
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid parameter type: %T", i)
 	}
 	if gracePeriod <= 0 {
-		return errors.New("grace period must be greater than 0")
+		return sdkerrors.Wrap(ErrInvalidInput, "grace period must be greater than 0")
 	}
 	return nil
 }

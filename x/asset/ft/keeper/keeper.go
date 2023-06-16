@@ -30,7 +30,7 @@ type Keeper struct {
 	paramSubspace ParamSubspace
 	storeKey      sdk.StoreKey
 	bankKeeper    types.BankKeeper
-	delayKeeper   DelayKeeper
+	delayKeeper   types.DelayKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -39,7 +39,7 @@ func NewKeeper(
 	paramSubspace ParamSubspace,
 	storeKey sdk.StoreKey,
 	bankKeeper types.BankKeeper,
-	delayKeeper DelayKeeper,
+	delayKeeper types.DelayKeeper,
 ) Keeper {
 	return Keeper{
 		cdc:           cdc,

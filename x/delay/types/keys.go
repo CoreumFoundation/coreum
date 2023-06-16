@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"time"
 
-	"github.com/pkg/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CoreumFoundation/coreum/pkg/store"
 )
@@ -28,12 +28,12 @@ const timestampLength = 8
 // CreateDelayedItemKey creates key for delayed item.
 func CreateDelayedItemKey(id string, t time.Time) ([]byte, error) {
 	if id == "" {
-		return nil, errors.New("id cannot be empty")
+		return nil, sdkerrors.Wrap(ErrInvalidInput, "id cannot be empty")
 	}
 
 	execTime := t.Unix()
 	if execTime < 0 {
-		return nil, errors.New("unix timestamp of the execution time must be non-negative")
+		return nil, sdkerrors.Wrap(ErrInvalidInput, "unix timestamp of the execution time must be non-negative")
 	}
 
 	key := make([]byte, timestampLength)
@@ -46,7 +46,7 @@ func CreateDelayedItemKey(id string, t time.Time) ([]byte, error) {
 // ExtractTimeAndIDFromDelayedItemKey extracts from the key the timestamp and ID of delayed message execution.
 func ExtractTimeAndIDFromDelayedItemKey(key []byte) (time.Time, string, error) {
 	if len(key) < timestampLength+1 {
-		return time.Time{}, "", errors.New("key is too short")
+		return time.Time{}, "", sdkerrors.Wrap(ErrInvalidInput, "key is too short")
 	}
 
 	return time.Unix(int64(binary.BigEndian.Uint64(key[:timestampLength])), 0).UTC(), string(key[timestampLength:]), nil
