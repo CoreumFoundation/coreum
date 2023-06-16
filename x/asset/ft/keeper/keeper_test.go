@@ -77,7 +77,7 @@ func TestKeeper_Issue(t *testing.T) {
 		Features:           []types.Feature{types.Feature_freezing},
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
-		Version:            1,
+		Version:            types.CurrentTokenVersion,
 	}, gotToken)
 
 	// check the metadata

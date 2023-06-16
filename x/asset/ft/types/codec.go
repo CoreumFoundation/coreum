@@ -18,7 +18,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgGloballyFreeze{},
 		&MsgGloballyUnfreeze{},
 		&MsgSetWhitelistedLimit{},
-		&MsgTokenUpgradeV1{},
+		&MsgUpgradeTokenV1{},
 	)
 	registry.RegisterImplementations((*codec.ProtoMarshaler)(nil),
 		&DelayedTokenUpgradeV1{},

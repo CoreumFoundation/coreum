@@ -186,7 +186,7 @@ func (ms MsgServer) SetWhitelistedLimit(goCtx context.Context, req *types.MsgSet
 }
 
 // UpgradeTokenV1 stores a request to upgrade token to V1.
-func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgTokenUpgradeV1) (*types.EmptyResponse, error) {
+func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgUpgradeTokenV1) (*types.EmptyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {

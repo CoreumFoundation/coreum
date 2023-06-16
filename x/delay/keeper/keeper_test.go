@@ -83,15 +83,17 @@ func TestDelayedExecution(t *testing.T) {
 
 	delayKeeper := testApp.DelayKeeper
 
-	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-value1", delayed1, time.Second))
-	requireT.Error(delayKeeper.DelayExecution(ctx, "delayed-value1", delayed1, time.Second))
-	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-value2", delayed2, 2*time.Second))
+	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-id-1", delayed1, time.Second))
+	// same id and time fails
+	requireT.Error(delayKeeper.DelayExecution(ctx, "delayed-id-1", delayed1, time.Second))
+	// same id but different time succeeds
+	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-id-1", delayed2, 2*time.Second))
 
 	// two items intentionally executed at the same time
-	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-value3", delayed3, 3*time.Second))
-	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-value4", delayed4, 3*time.Second))
+	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-id-3", delayed3, 3*time.Second))
+	requireT.NoError(delayKeeper.DelayExecution(ctx, "delayed-id-4", delayed4, 3*time.Second))
 
-	requireT.Error(delayKeeper.StoreDelayedExecution(ctx, "delayed-denom4", delayed1, time.Date(1969, 12, 31, 23, 59, 59, 0, time.UTC)))
+	requireT.Error(delayKeeper.StoreDelayedExecution(ctx, "delayed-id-4", delayed1, time.Date(1969, 12, 31, 23, 59, 59, 0, time.UTC)))
 
 	delayedItems, err := delayKeeper.ExportDelayedItems(ctx)
 	requireT.NoError(err)
@@ -99,22 +101,22 @@ func TestDelayedExecution(t *testing.T) {
 
 	expectedDelayedItems := []types.DelayedItem{
 		{
-			Id:            "delayed-value1",
+			Id:            "delayed-id-1",
 			ExecutionTime: blockTime.Add(time.Second),
 			Data:          newAny(requireT, delayed1),
 		},
 		{
-			Id:            "delayed-value2",
+			Id:            "delayed-id-1",
 			ExecutionTime: blockTime.Add(2 * time.Second),
 			Data:          newAny(requireT, delayed2),
 		},
 		{
-			Id:            "delayed-value3",
+			Id:            "delayed-id-3",
 			ExecutionTime: blockTime.Add(3 * time.Second),
 			Data:          newAny(requireT, delayed3),
 		},
 		{
-			Id:            "delayed-value4",
+			Id:            "delayed-id-4",
 			ExecutionTime: blockTime.Add(3 * time.Second),
 			Data:          newAny(requireT, delayed4),
 		},

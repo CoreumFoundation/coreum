@@ -69,11 +69,6 @@ func (k Keeper) GetParamsV1(ctx sdk.Context) types.ParamsV1 {
 	return params
 }
 
-// SetParamsV1 sets the parameters of the model for v1 version of the module.
-func (k Keeper) SetParamsV1(ctx sdk.Context, params types.ParamsV1) {
-	k.paramSubspace.SetParamSet(ctx, &params)
-}
-
 // GetTokens returns all fungible tokens.
 func (k Keeper) GetTokens(ctx sdk.Context, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error) {
 	defs, pageResponse, err := k.getDefinitions(ctx, pagination)
@@ -148,7 +143,7 @@ func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 
 // Issue issues new fungible token and returns it's denom.
 func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, error) {
-	return k.IssueVersioned(ctx, settings, tokenUpgradeV1Version)
+	return k.IssueVersioned(ctx, settings, types.CurrentTokenVersion)
 }
 
 // IssueVersioned issues new fungible token and sets its version.

@@ -39,7 +39,7 @@ service Msg {
   rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
 
   // TokenUpgradeV1 upgrades token to version V1.
-  rpc UpgradeTokenV1(MsgTokenUpgradeV1) returns (EmptyResponse);
+  rpc UpgradeTokenV1(MsgUpgradeTokenV1) returns (EmptyResponse);
 }
 
 // MsgIssue defines message to issue new fungible token.
@@ -106,8 +106,8 @@ message MsgSetWhitelistedLimit {
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
 }
 
-// MsgTokenUpgradeV1 is the message upgrading token to V1.
-message MsgTokenUpgradeV1 {
+// MsgUpgradeTokenV1 is the message upgrading token to V1.
+message MsgUpgradeTokenV1 {
   string sender = 1;
   string denom = 2;
   bool ibc_enabled = 3;

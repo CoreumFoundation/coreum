@@ -37,16 +37,16 @@ func (ft *ftTest) Before(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
 		},
 		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(5),
 	})
@@ -109,7 +109,7 @@ func (ft *ftTest) Before(t *testing.T) {
 	ft.denomV0CCC = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 
 	// upgrading token before chain upgrade should not work
-	upgradeMsg := &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg := &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     ft.issuer.String(),
 		Denom:      ft.denomV0AAA,
 		IbcEnabled: true,
@@ -175,7 +175,7 @@ func (ft *ftTest) After(t *testing.T) {
 	denomXYZ := assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 
 	// upgrading v1 tokens should fail
-	upgradeMsg := &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg := &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     ft.issuer.String(),
 		Denom:      denomXYZ,
 		IbcEnabled: false,
@@ -188,7 +188,7 @@ func (ft *ftTest) After(t *testing.T) {
 	)
 	requireT.ErrorContains(err, fmt.Sprintf("denom %s has been already upgraded to v1", denomXYZ))
 
-	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     ft.issuer.String(),
 		Denom:      denomCDE,
 		IbcEnabled: true,
@@ -217,11 +217,11 @@ func (ft *ftTest) After(t *testing.T) {
 	nonIssuer := chain.GenAccount()
 	chain.FundAccountsWithOptions(ctx, t, nonIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
-			&assetfttypes.MsgTokenUpgradeV1{},
-			&assetfttypes.MsgTokenUpgradeV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+			&assetfttypes.MsgUpgradeTokenV1{},
 		},
 	})
-	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     nonIssuer.String(),
 		Denom:      ft.denomV0AAA,
 		IbcEnabled: true,
@@ -241,7 +241,7 @@ func (ft *ftTest) After(t *testing.T) {
 	requireT.EqualValues(0, resp.Token.Version)
 	requireT.Len(resp.Token.Features, 0)
 
-	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     nonIssuer.String(),
 		Denom:      ft.denomV0BBB,
 		IbcEnabled: false,
@@ -255,7 +255,7 @@ func (ft *ftTest) After(t *testing.T) {
 	requireT.ErrorContains(err, "unauthorized")
 
 	// upgrading with disabled IBC should take effect immediately
-	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     ft.issuer.String(),
 		Denom:      ft.denomV0AAA,
 		IbcEnabled: false,
@@ -296,7 +296,7 @@ func (ft *ftTest) After(t *testing.T) {
 	requireT.Equal(gracePeriod, ftParams.Params.TokenUpgradeGracePeriod)
 
 	// upgrading with enabled IBC should take effect after delay
-	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     ft.issuer.String(),
 		Denom:      ft.denomV0BBB,
 		IbcEnabled: true,
@@ -322,7 +322,7 @@ func (ft *ftTest) After(t *testing.T) {
 	}, resp.Token.Features)
 
 	// upgrading second time should fail
-	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     ft.issuer.String(),
 		Denom:      ft.denomV0BBB,
 		IbcEnabled: false,
@@ -356,7 +356,7 @@ func (ft *ftTest) After(t *testing.T) {
 	}, resp.Token.Features)
 
 	// following upgrade should fail again
-	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     ft.issuer.String(),
 		Denom:      ft.denomV0BBB,
 		IbcEnabled: false,
@@ -381,7 +381,7 @@ func (ft *ftTest) After(t *testing.T) {
 	requireT.Equal(decisionTimeout, ftParams.Params.TokenUpgradeDecisionTimeout)
 
 	// upgrade after timeout should fail
-	upgradeMsg = &assetfttypes.MsgTokenUpgradeV1{
+	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
 		Sender:     ft.issuer.String(),
 		Denom:      ft.denomV0CCC,
 		IbcEnabled: false,

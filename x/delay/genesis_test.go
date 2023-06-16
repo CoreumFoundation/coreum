@@ -71,12 +71,12 @@ func TestInitAndExportGenesis(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Len(itemsExported, len(items))
 
-	assertT.Equal(ignoreCache(items[2]), ignoreCache(itemsExported[0]))
-	assertT.Equal(ignoreCache(items[1]), ignoreCache(itemsExported[1]))
-	assertT.Equal(ignoreCache(items[0]), ignoreCache(itemsExported[2]))
+	assertT.Equal(newDelayedItemWithoutCache(items[2]), newDelayedItemWithoutCache(itemsExported[0]))
+	assertT.Equal(newDelayedItemWithoutCache(items[1]), newDelayedItemWithoutCache(itemsExported[1]))
+	assertT.Equal(newDelayedItemWithoutCache(items[0]), newDelayedItemWithoutCache(itemsExported[2]))
 }
 
-func ignoreCache(item types.DelayedItem) types.DelayedItem {
+func newDelayedItemWithoutCache(item types.DelayedItem) types.DelayedItem {
 	return types.DelayedItem{
 		Id:            item.Id,
 		ExecutionTime: item.ExecutionTime,

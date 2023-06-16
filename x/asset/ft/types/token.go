@@ -28,6 +28,9 @@ var (
 )
 
 const (
+	// CurrentTokenVersion is the version of the token produced by the current version of the app.
+	CurrentTokenVersion = 1
+
 	denomSeparator = "-"
 	// MaxPrecision used when issuing a token.
 	MaxPrecision = 20

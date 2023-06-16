@@ -56,7 +56,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 		if i == 0 {
 			pendingTokenUpgrades = append(pendingTokenUpgrades, types.PendingTokenUpgrade{
 				Denom:   token.Denom,
-				Version: 1,
+				Version: types.CurrentTokenVersion,
 			})
 		}
 	}
