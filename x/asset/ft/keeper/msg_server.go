@@ -21,7 +21,7 @@ type MsgKeeper interface {
 	GloballyFreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
-	StoreDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
+	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -193,7 +193,7 @@ func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgUpgradeT
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	err = ms.keeper.StoreDelayedTokenUpgradeV1(ctx, sender, req.Denom, req.IbcEnabled)
+	err = ms.keeper.AddDelayedTokenUpgradeV1(ctx, sender, req.Denom, req.IbcEnabled)
 	if err != nil {
 		return nil, err
 	}

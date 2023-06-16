@@ -56,19 +56,19 @@ func TestTokenUpgradeV1(t *testing.T) {
 
 	// upgrade requested after timeout should fail
 	ctxSDK = ctxSDK.WithBlockTime(params.TokenUpgradeDecisionTimeout.Add(time.Second))
-	requireT.Error(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer1, denom1, false))
-	requireT.Error(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer1, denom1, true))
+	requireT.Error(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer1, denom1, false))
+	requireT.Error(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer1, denom1, true))
 
 	ctxSDK = ctxSDK.WithBlockTime(params.TokenUpgradeDecisionTimeout)
 
 	// call for non-existing denom fails
-	requireT.Error(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer1, "denom", false))
+	requireT.Error(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer1, "denom", false))
 
 	// call from non-issuer account fails
-	requireT.Error(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer1, denom2, false))
+	requireT.Error(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer1, denom2, false))
 
 	// first call succeeds
-	requireT.NoError(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer1, denom1, false))
+	requireT.NoError(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer1, denom1, false))
 
 	// ibc is set to false so the change should be applied immediately
 	token1, err := ftKeeper.GetToken(ctxSDK, denom1)
@@ -82,13 +82,13 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.Empty(delayedItems)
 
 	// second call fails
-	requireT.Error(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer1, denom1, false))
+	requireT.Error(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer1, denom1, false))
 
 	// setting pending version should work
 	requireT.NoError(ftKeeper.SetPendingVersion(ctxSDK, denom1, 2))
 
 	// for second denom we turn IBC on
-	requireT.NoError(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer2, denom2, true))
+	requireT.NoError(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer2, denom2, true))
 
 	// ibc is set to true so the change should be posponed and parameters should stay the same for now
 	token2, err := ftKeeper.GetToken(ctxSDK, denom2)
@@ -109,8 +109,8 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.Equal(denom2, delayedItem.(*types.DelayedTokenUpgradeV1).Denom)
 
 	// next call fails
-	requireT.Error(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer2, denom2, true))
-	requireT.Error(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer2, denom2, false))
+	requireT.Error(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer2, denom2, true))
+	requireT.Error(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer2, denom2, false))
 
 	// setting pending version should fail
 	requireT.Error(ftKeeper.SetPendingVersion(ctxSDK, denom2, 1))
@@ -128,7 +128,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.EqualValues(1, token2.Version)
 
 	// next call fails
-	requireT.Error(ftKeeper.StoreDelayedTokenUpgradeV1(ctxSDK, issuer2, denom2, true))
+	requireT.Error(ftKeeper.AddDelayedTokenUpgradeV1(ctxSDK, issuer2, denom2, true))
 
 	// setting pending version should work
 	requireT.NoError(ftKeeper.SetPendingVersion(ctxSDK, denom2, 1))
