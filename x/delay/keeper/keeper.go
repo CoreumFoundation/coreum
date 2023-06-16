@@ -7,8 +7,8 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/delay/types"
 )
@@ -55,17 +55,17 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data codec.Pro
 
 	store := ctx.KVStore(k.storeKey)
 	if store.Has(key) {
-		return errors.Errorf("delayed item is already stored under the key, id: %s", id)
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "delayed item is already stored under the key, id: %s", id)
 	}
 
 	dataAny, err := codectypes.NewAnyWithValue(data)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	b, err := k.cdc.Marshal(dataAny)
 	if err != nil {
-		return errors.Wrap(err, "marshaling delayed item failed")
+		return sdkerrors.Wrapf(types.ErrInvalidData, "marshaling delayed item failed: %s", err.Error())
 	}
 	store.Set(key, b)
 	return nil
@@ -95,12 +95,12 @@ func (k Keeper) ExecuteDelayedItems(ctx sdk.Context) error {
 
 		dataAny := &codectypes.Any{}
 		if err := k.cdc.Unmarshal(iter.Value(), dataAny); err != nil {
-			return errors.Wrap(err, "decoding delayed message failed")
+			return sdkerrors.Wrapf(types.ErrInvalidData, "decoding delayed message failed: %s", err.Error())
 		}
 
 		var data codec.ProtoMarshaler
 		if err := k.cdc.UnpackAny(dataAny, &data); err != nil {
-			return errors.Wrap(err, "unpacking delayed message failed")
+			return sdkerrors.Wrapf(types.ErrInvalidData, "unpacking delayed message failed: %s", err.Error())
 		}
 
 		handler, err := k.router.Handler(data)
@@ -121,7 +121,7 @@ func (k Keeper) ImportDelayedItems(ctx sdk.Context, items []types.DelayedItem) e
 	for _, i := range items {
 		var data codec.ProtoMarshaler
 		if err := k.registry.UnpackAny(i.Data, &data); err != nil {
-			return errors.WithStack(err)
+			return sdkerrors.Wrapf(types.ErrInvalidData, "unpacking delayed message failed: %s", err.Error())
 		}
 
 		if err := k.StoreDelayedExecution(ctx, i.Id, data, i.ExecutionTime); err != nil {
@@ -143,7 +143,7 @@ func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error)
 
 		data := &codectypes.Any{}
 		if err := k.cdc.Unmarshal(value, data); err != nil {
-			return errors.WithStack(err)
+			return sdkerrors.Wrapf(types.ErrInvalidData, "unpacking delayed message failed: %s", err.Error())
 		}
 
 		delayedItems = append(delayedItems, types.DelayedItem{
@@ -156,7 +156,7 @@ func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error)
 	})
 
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	return delayedItems, nil
