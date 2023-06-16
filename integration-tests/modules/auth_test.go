@@ -217,6 +217,10 @@ func TestAuthMultisigSequences(t *testing.T) {
 	requireT.NoError(err)
 	signer1Address := signer1Info.GetAddress()
 
+	signer2Info, err := chain.ClientContext.Keyring().Key(signer2KeyName)
+	requireT.NoError(err)
+	signer2Address := signer2Info.GetAddress()
+
 	// fund the multisig account
 	chain.FundAccountsWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
@@ -300,6 +304,16 @@ func TestAuthMultisigSequences(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(coinsToSendToRecipient, recipientBalances.Balances)
+
+	// check sequences for signer accs after multisig tx execution
+	// signer1 account sequence stays 1.
+	signer1AccInfo, err = client.GetAccountInfo(ctx, chain.ClientContext, signer1Address)
+	requireT.NoError(err)
+	requireT.EqualValues(1, signer1AccInfo.GetSequence())
+
+	// signer2 account doesn't exist on chain.
+	_, err = client.GetAccountInfo(ctx, chain.ClientContext, signer2Address)
+	requireT.ErrorContains(err, "not found")
 }
 
 // TestAuthUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
