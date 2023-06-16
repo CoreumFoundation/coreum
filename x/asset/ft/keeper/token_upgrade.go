@@ -5,8 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
@@ -28,7 +28,7 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingToke
 	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key []byte, value []byte) error {
 		version, n := binary.Uvarint(value)
 		if n <= 0 {
-			return errors.New("unmarshaling varint failed")
+			return sdkerrors.Wrap(types.ErrInvalidState, "unmarshaling varint failed")
 		}
 		versions = append(versions, types.PendingTokenUpgrade{
 			Denom:   string(key),
@@ -39,7 +39,7 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingToke
 	})
 
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	return versions, nil
@@ -50,7 +50,7 @@ func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32)
 	store := ctx.KVStore(k.storeKey)
 	key := types.CreatePendingTokenUpgradeKey(denom)
 	if store.Has(key) {
-		return errors.Errorf("token upgrade is already pending for denom %q", denom)
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "token upgrade is already pending for denom %q", denom)
 	}
 
 	value := make([]byte, binary.MaxVarintLen32)

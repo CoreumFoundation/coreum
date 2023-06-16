@@ -31,11 +31,11 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params store gov manageable parameters.
 type Params struct {
-	// issue_fee is the fee burnt each time new token is issued
+	// issue_fee is the fee burnt each time new token is issued.
 	IssueFee types.Coin `protobuf:"bytes,1,opt,name=issue_fee,json=issueFee,proto3" json:"issue_fee" yaml:"issue_fee"`
-	// ibc_decision_timeout defines the end of the decision period for enabling IBC
+	// token_upgrade_decision_timeout defines the end of the decision period for upgrading the token.
 	TokenUpgradeDecisionTimeout time.Time `protobuf:"bytes,2,opt,name=token_upgrade_decision_timeout,json=tokenUpgradeDecisionTimeout,proto3,stdtime" json:"token_upgrade_decision_timeout" yaml:"token_upgrade_decision_timeout"`
-	// ibc_grace_period defines the period after which IBC is effectively enabled
+	// token_upgrade_grace_period the period after which the token upgrade is executed effectively.
 	TokenUpgradeGracePeriod time.Duration `protobuf:"bytes,3,opt,name=token_upgrade_grace_period,json=tokenUpgradeGracePeriod,proto3,stdduration" json:"token_upgrade_grace_period" yaml:"token_upgrade_grace_period"`
 }
 

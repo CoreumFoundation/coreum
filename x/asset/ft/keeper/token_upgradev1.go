@@ -2,22 +2,14 @@ package keeper
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 const tokenUpgradeV1Version = 1
-
-// DelayKeeper defines methods required from the delay keeper.
-type DelayKeeper interface {
-	DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error
-}
 
 // StoreDelayedTokenUpgradeV1 stores request for upgrading token to V1.
 func (k Keeper) StoreDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
@@ -36,7 +28,7 @@ func (k Keeper) StoreDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddres
 	}
 
 	if def.Version >= tokenUpgradeV1Version {
-		return errors.Errorf("denom %s has been already upgraded to v1", denom)
+		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "denom %s has been already upgraded to v1", denom)
 	}
 
 	if err := k.SetPendingVersion(ctx, denom, tokenUpgradeV1Version); err != nil {

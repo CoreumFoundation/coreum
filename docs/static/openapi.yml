@@ -1294,32 +1294,24 @@ paths:
                 type: object
                 properties:
                   issue_fee:
-                    title: issue_fee is the fee burnt each time new token is issued
+                    description: issue_fee is the fee burnt each time new token is issued.
                     type: object
                     properties:
                       denom:
                         type: string
                       amount:
                         type: string
-                    description: >-
-                      Coin defines a token with a denomination and an amount.
-
-
-                      NOTE: The amount field is an Int which implements the
-                      custom method
-
-                      signatures required by gogoproto.
                   token_upgrade_decision_timeout:
                     type: string
                     format: date-time
-                    title: >-
-                      ibc_decision_timeout defines the end of the decision
-                      period for enabling IBC
+                    description: >-
+                      token_upgrade_decision_timeout defines the end of the
+                      decision period for upgrading the token.
                   token_upgrade_grace_period:
                     type: string
-                    title: >-
-                      ibc_grace_period defines the period after which IBC is
-                      effectively enabled
+                    description: >-
+                      token_upgrade_grace_period the period after which the
+                      token upgrade is executed effectively.
                 description: Params store gov manageable parameters.
             description: >-
               QueryParamsResponse defines the response type for querying
@@ -38285,29 +38277,24 @@ definitions:
     type: object
     properties:
       issue_fee:
-        title: issue_fee is the fee burnt each time new token is issued
+        description: issue_fee is the fee burnt each time new token is issued.
         type: object
         properties:
           denom:
             type: string
           amount:
             type: string
-        description: |-
-          Coin defines a token with a denomination and an amount.
-
-          NOTE: The amount field is an Int which implements the custom method
-          signatures required by gogoproto.
       token_upgrade_decision_timeout:
         type: string
         format: date-time
-        title: >-
-          ibc_decision_timeout defines the end of the decision period for
-          enabling IBC
+        description: >-
+          token_upgrade_decision_timeout defines the end of the decision period
+          for upgrading the token.
       token_upgrade_grace_period:
         type: string
-        title: >-
-          ibc_grace_period defines the period after which IBC is effectively
-          enabled
+        description: >-
+          token_upgrade_grace_period the period after which the token upgrade is
+          executed effectively.
     description: Params store gov manageable parameters.
   coreum.asset.ft.v1.QueryBalanceResponse:
     type: object
@@ -38383,32 +38370,24 @@ definitions:
         type: object
         properties:
           issue_fee:
-            title: issue_fee is the fee burnt each time new token is issued
+            description: issue_fee is the fee burnt each time new token is issued.
             type: object
             properties:
               denom:
                 type: string
               amount:
                 type: string
-            description: >-
-              Coin defines a token with a denomination and an amount.
-
-
-              NOTE: The amount field is an Int which implements the custom
-              method
-
-              signatures required by gogoproto.
           token_upgrade_decision_timeout:
             type: string
             format: date-time
-            title: >-
-              ibc_decision_timeout defines the end of the decision period for
-              enabling IBC
+            description: >-
+              token_upgrade_decision_timeout defines the end of the decision
+              period for upgrading the token.
           token_upgrade_grace_period:
             type: string
-            title: >-
-              ibc_grace_period defines the period after which IBC is effectively
-              enabled
+            description: >-
+              token_upgrade_grace_period the period after which the token
+              upgrade is executed effectively.
         description: Params store gov manageable parameters.
     description: >-
       QueryParamsResponse defines the response type for querying x/asset/ft
