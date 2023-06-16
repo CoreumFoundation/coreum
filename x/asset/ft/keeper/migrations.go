@@ -8,16 +8,15 @@ import (
 
 // Migrator is a struct for handling in-place store migrations.
 type Migrator struct {
-	keeper Keeper
+	paramsKeeper v1.ParamsKeeper
 }
 
 // NewMigrator returns a new Migrator.
-func NewMigrator(keeper Keeper) Migrator {
-	return Migrator{keeper: keeper}
+func NewMigrator(paramsKeeper v1.ParamsKeeper) Migrator {
+	return Migrator{paramsKeeper: paramsKeeper}
 }
 
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	v1.MigrateParams(ctx, m.keeper)
-	return nil
+	return v1.MigrateParams(ctx, m.paramsKeeper)
 }

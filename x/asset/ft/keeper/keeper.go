@@ -62,13 +62,6 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSubspace.SetParamSet(ctx, &params)
 }
 
-// GetParamsV1 gets the parameters of the model for v1 version of the module.
-func (k Keeper) GetParamsV1(ctx sdk.Context) types.ParamsV1 {
-	var params types.ParamsV1
-	k.paramSubspace.GetParamSet(ctx, &params)
-	return params
-}
-
 // GetTokens returns all fungible tokens.
 func (k Keeper) GetTokens(ctx sdk.Context, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error) {
 	defs, pageResponse, err := k.getDefinitions(ctx, pagination)

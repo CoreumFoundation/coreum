@@ -25,19 +25,6 @@ var (
 	KeyTokenUpgradeGracePeriod = []byte("TokenUpgradeGracePeriod")
 )
 
-// ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
-// of module parameters.
-func (m *ParamsV1) ParamSetPairs() paramtypes.ParamSetPairs {
-	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyIssueFee, &m.IssueFee, validateIssueFee),
-	}
-}
-
-// ValidateBasic validates parameters.
-func (m ParamsV1) ValidateBasic() error {
-	return validateIssueFee(m.IssueFee)
-}
-
 // DefaultParams returns params with default values.
 func DefaultParams() Params {
 	return Params{

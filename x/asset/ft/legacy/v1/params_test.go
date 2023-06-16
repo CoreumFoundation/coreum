@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
@@ -13,6 +14,7 @@ import (
 )
 
 func TestMigrateParams(t *testing.T) {
+	requireT := require.New(t)
 	assertT := assert.New(t)
 
 	testApp := simapp.New()
@@ -20,13 +22,13 @@ func TestMigrateParams(t *testing.T) {
 	ctx := testApp.NewContext(false, tmproto.Header{}).WithBlockTime(blockTime)
 
 	keeper := testApp.AssetFTKeeper
-	paramsOld := keeper.GetParamsV1(ctx)
+	paramsKeeper := testApp.ParamsKeeper
 
-	v1.MigrateParams(ctx, keeper)
+	requireT.NoError(v1.MigrateParams(ctx, paramsKeeper))
 
-	paramsNew := keeper.GetParams(ctx)
+	params := keeper.GetParams(ctx)
 
-	assertT.Equal(paramsOld.IssueFee, paramsNew.IssueFee)
-	assertT.Equal(blockTime.Add(v1.InitialTokenUpgradeDecisionPeriod), paramsNew.TokenUpgradeDecisionTimeout)
-	assertT.Equal(types.DefaultTokenUpgradeGracePeriod, paramsNew.TokenUpgradeGracePeriod)
+	assertT.Equal("0stake", params.IssueFee.String())
+	assertT.Equal(blockTime.Add(v1.InitialTokenUpgradeDecisionPeriod), params.TokenUpgradeDecisionTimeout)
+	assertT.Equal(types.DefaultTokenUpgradeGracePeriod, params.TokenUpgradeGracePeriod)
 }

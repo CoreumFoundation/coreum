@@ -502,7 +502,9 @@ func New(
 	assetFTModule := assetft.NewAppModule(
 		appCodec,
 		app.AssetFTKeeper,
-		app.BankKeeper)
+		app.BankKeeper.BaseKeeper,
+		app.ParamsKeeper,
+	)
 	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
