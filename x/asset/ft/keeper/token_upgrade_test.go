@@ -23,7 +23,7 @@ func TestOneTokenUpgradeAtATimeIsAllowed(t *testing.T) {
 	// second call is rejected
 	requireT.Error(ftKeeper.SetPendingVersion(ctx, "denom", 1))
 
-	// second call is rejected ieven if version is higher
+	// second call is rejected even if version is higher
 	requireT.Error(ftKeeper.SetPendingVersion(ctx, "denom", 2))
 
 	// but it should succeed for another denom
