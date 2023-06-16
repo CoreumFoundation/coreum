@@ -11,7 +11,7 @@ import (
 
 const tokenUpgradeV1Version = 1
 
-// StoreDelayedTokenUpgradeV1 stores request for upgrading token to V1.
+// AddDelayedTokenUpgradeV1 stores request for upgrading token to V1.
 func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
 	params := k.GetParams(ctx)
 	if ctx.BlockTime().After(params.TokenUpgradeDecisionTimeout) {
