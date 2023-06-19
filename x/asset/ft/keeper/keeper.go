@@ -546,10 +546,10 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
-	// Checking for escrow address is done here, because those accounts should be affected by global freeze checked above.
-	// Escrow addresses are like any others, which means issuer might freeze them leading to disaster.
-	// We can't simply return an error from SetFrozenBalances when issuer tries to freeze the escrow address,
-	// because at that time channel might not exist yet, while its address still might be predicted in advance.
+	// Checking for IBC-received transfer is done here (after call to k.isGloballyFrozen), because those transfers
+	// should be affected by the global freeze checked above. We decided that if token is frozen globally it means
+	// none of the balances for that token can be affected during freezing period.
+	// Otherwise, the transfer must work despite the fact that escrow address might have been frozen by the issuer.
 	if wibctransfertypes.IsDirectionIn(ctx) {
 		return nil
 	}
@@ -563,9 +563,21 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 }
 
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+	// This check is done when funds for IBC transfers are received by the escrow address.
+	// If IBC is enabled we always accept escrow address as a receiver of the funds because it must work
+	// despite the fact that address is not whitelisted.
+	// On the other hand, if IBC is disabled for the token, we reject the transfer to the escrow address.
+	// We don't block on IsDirectionIn condition when IBC transfer is received because if token cannot be sent,
+	// it cannot be received back by definition.
+	if wibctransfertypes.IsDirectionOut(ctx) {
+		if !def.IsFeatureEnabled(types.Feature_ibc) {
+			return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "ibc transfers are disabled for %s", def.Denom)
+		}
+		return nil
+	}
+
 	if !def.IsFeatureEnabled(types.Feature_whitelisting) ||
-		def.IsIssuer(addr) ||
-		wibctransfertypes.IsDirectionOut(ctx) { // escrow addresses must work despite whitelisting because otherwise IBC transfers fail
+		def.IsIssuer(addr) {
 		return nil
 	}
 
