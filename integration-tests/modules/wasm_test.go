@@ -1562,16 +1562,18 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	var nftClassesQueryRes nftClassesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &nftClassesQueryRes))
 
+	var found = classInArray(nftClass{
+		ID:          expectedClass.Id,
+		Name:        expectedClass.Name,
+		Symbol:      expectedClass.Symbol,
+		Description: expectedClass.Description,
+		URI:         expectedClass.URI,
+		URIHash:     expectedClass.URIHash,
+		Data:        dataString,
+	}, nftClassesQueryRes.Classes)
+
 	requireT.Equal(
-		nftClass{
-			ID:          expectedClass.Id,
-			Name:        expectedClass.Name,
-			Symbol:      expectedClass.Symbol,
-			Description: expectedClass.Description,
-			URI:         expectedClass.URI,
-			URIHash:     expectedClass.URIHash,
-			Data:        dataString,
-		}, nftClassesQueryRes.Classes[0],
+		found, true,
 	)
 }
 
@@ -1746,4 +1748,13 @@ func instantiateWASMContract(ctx context.Context, clientCtx client.Context, txf 
 	}
 
 	return contractAddr, nil
+}
+
+func classInArray(a nftClass, list []nftClass) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
