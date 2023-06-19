@@ -90,6 +90,36 @@ type NFTResponse struct {
 	NFT nft `json:"nft"`
 }
 
+// NFTsResponse is the nfts response with string data.
+type NFTsResponse struct {
+	NFTs       []nft        `json:"nfts"`
+	Pagination pageResponse `json:"pagination"`
+}
+
+// NFTclass is the NFTclass with string data.
+//
+//nolint:tagliatelle // we keep the name same as consume
+type NFTClass struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Symbol      string `json:"symbol"`
+	Description string `json:"description"`
+	URI         string `json:"uri"`
+	URIHash     string `json:"uri_hash"`
+	Data        string `json:"data"`
+}
+
+// ClassResponse is the nft response with string data.
+type NFTClassResponse struct {
+	Class NFTClass `json:"class"`
+}
+
+// ClassResponse is the nft response with string data.
+type NFTClassesResponse struct {
+	Classes    []NFTClass   `json:"classes"`
+	Pagination pageResponse `json:"pagination"`
+}
+
 // nftQuery represents nft module queries integrated with the wasm handler.
 //
 //nolint:tagliatelle // we keep the name same as consume
@@ -98,6 +128,9 @@ type nftQuery struct {
 	Owner   *nfttypes.QueryOwnerRequest   `json:"Owner"`
 	Supply  *nfttypes.QuerySupplyRequest  `json:"Supply"`
 	NFT     *nfttypes.QueryNFTRequest     `json:"nft"`
+	NFTs    *nfttypes.QueryNFTsRequest    `json:"nfts"`
+	Class   *nfttypes.QueryClassRequest   `json:"Class"`
+	Classes *nfttypes.QueryClassesRequest `json:"Classes"`
 }
 
 // coreumQuery represents all coreum module queries integrated with the wasm handler.
@@ -248,25 +281,25 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *assetNFTQuery, assetNF
 			classesResponse.Pagination.NextKey = classesRes.Pagination.NextKey
 			classesResponse.Pagination.Total = classesRes.Pagination.Total
 			for i := 0; i < len(classesRes.Classes); i++ {
+				var dataString string
 				if classesRes.Classes[i].Data != nil {
-					var dataString string
 					dataString, err = unmarshalDataBytes(classesRes.Classes[i].Data)
 					if err != nil {
 						return nil, err
 					}
-					classesResponse.Classes = append(classesResponse.Classes, assetNFTClass{
-						ID:          classesRes.Classes[i].Id,
-						Issuer:      classesRes.Classes[i].Issuer,
-						Name:        classesRes.Classes[i].Name,
-						Symbol:      classesRes.Classes[i].Symbol,
-						Description: classesRes.Classes[i].Description,
-						URI:         classesRes.Classes[i].URI,
-						URIHash:     classesRes.Classes[i].URIHash,
-						Data:        dataString,
-						Features:    classesRes.Classes[i].Features,
-						RoyaltyRate: classesRes.Classes[i].RoyaltyRate,
-					})
 				}
+				classesResponse.Classes = append(classesResponse.Classes, assetNFTClass{
+					ID:          classesRes.Classes[i].Id,
+					Issuer:      classesRes.Classes[i].Issuer,
+					Name:        classesRes.Classes[i].Name,
+					Symbol:      classesRes.Classes[i].Symbol,
+					Description: classesRes.Classes[i].Description,
+					URI:         classesRes.Classes[i].URI,
+					URIHash:     classesRes.Classes[i].URIHash,
+					Data:        dataString,
+					Features:    classesRes.Classes[i].Features,
+					RoyaltyRate: classesRes.Classes[i].RoyaltyRate,
+				})
 			}
 			return &classesResponse, nil
 		})
@@ -334,6 +367,108 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 					Data:    dataString,
 				},
 			}, nil
+		})
+	}
+	if nftQuery.NFTs != nil { //nolint:nestif // the ifs are for the error checks mostly
+		return executeQuery(ctx, nftQuery.NFTs, func(ctx context.Context, req *nfttypes.QueryNFTsRequest) (*NFTsResponse, error) {
+			nftsRes, err := nftQueryServer.NFTs(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(nftsRes.Nfts) == 0 {
+				return &NFTsResponse{}, nil
+			}
+
+			var nftsResponse NFTsResponse
+
+			nftsResponse.Pagination.NextKey = nftsRes.Pagination.NextKey
+			nftsResponse.Pagination.Total = nftsRes.Pagination.Total
+			for i := 0; i < len(nftsRes.Nfts); i++ {
+				var dataString string
+				if nftsRes.Nfts[i].Data != nil {
+					dataString, err = unmarshalDataBytes(nftsRes.Nfts[i].Data)
+					if err != nil {
+						return nil, err
+					}
+				}
+				nftsResponse.NFTs = append(nftsResponse.NFTs, nft{
+					ClassID: nftsRes.Nfts[i].ClassId,
+					ID:      nftsRes.Nfts[i].Id,
+					URI:     nftsRes.Nfts[i].Uri,
+					URIHash: nftsRes.Nfts[i].UriHash,
+					Data:    dataString,
+				})
+			}
+			return &nftsResponse, nil
+		})
+	}
+	if nftQuery.Class != nil { //nolint:nestif // the ifs are for the error checks mostly
+		return executeQuery(ctx, nftQuery.Class, func(ctx context.Context, req *nfttypes.QueryClassRequest) (*NFTClassResponse, error) {
+			nftClassRes, err := nftQueryServer.Class(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+
+			if nftClassRes.Class == nil {
+				return &NFTClassResponse{}, nil
+			}
+
+			var dataString string
+			if nftClassRes.Class.Data != nil {
+				dataString, err = unmarshalDataBytes(nftClassRes.Class.Data)
+				if err != nil {
+					return nil, err
+				}
+			}
+			return &NFTClassResponse{
+				Class: NFTClass{
+					ID:          nftClassRes.Class.Id,
+					Name:        nftClassRes.Class.Name,
+					Symbol:      nftClassRes.Class.Symbol,
+					Description: nftClassRes.Class.Description,
+					URI:         nftClassRes.Class.Uri,
+					URIHash:     nftClassRes.Class.UriHash,
+					Data:        dataString,
+				},
+			}, nil
+		})
+	}
+	if nftQuery.Classes != nil { //nolint:nestif // the ifs are for the error checks mostly
+		return executeQuery(ctx, nftQuery.Classes, func(ctx context.Context, req *nfttypes.QueryClassesRequest) (*NFTClassesResponse, error) {
+			nftClassesRes, err := nftQueryServer.Classes(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(nftClassesRes.Classes) == 0 {
+				return &NFTClassesResponse{}, nil
+			}
+
+			var nftClassesResponse NFTClassesResponse
+
+			nftClassesResponse.Pagination.NextKey = nftClassesRes.Pagination.NextKey
+			nftClassesResponse.Pagination.Total = nftClassesRes.Pagination.Total
+
+			for i := 0; i < len(nftClassesRes.Classes); i++ {
+				var dataString string
+				if nftClassesRes.Classes[i].Data != nil {
+					dataString, err = unmarshalDataBytes(nftClassesRes.Classes[i].Data)
+					if err != nil {
+						return nil, err
+					}
+				}
+				nftClassesResponse.Classes = append(nftClassesResponse.Classes, NFTClass{
+					ID:          nftClassesRes.Classes[i].Id,
+					Name:        nftClassesRes.Classes[i].Name,
+					Symbol:      nftClassesRes.Classes[i].Symbol,
+					Description: nftClassesRes.Classes[i].Description,
+					URI:         nftClassesRes.Classes[i].Uri,
+					URIHash:     nftClassesRes.Classes[i].UriHash,
+					Data:        dataString,
+				})
+			}
+			return &nftClassesResponse, nil
 		})
 	}
 

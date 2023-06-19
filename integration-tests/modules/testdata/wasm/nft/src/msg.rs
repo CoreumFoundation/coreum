@@ -56,4 +56,7 @@ pub enum QueryMsg {
     Owner { id: String },
     Supply {},
     Nft { id: String }, // we use Nft not NFT since NFT is decoded as n_f_t
+    Nfts { owner: Option<String> }, // we use Nfts not NFTs since NFTs is decoded as n_f_ts
+    ClassNft {}, // we use ClassNft instead of Class because there is already a Class query being used
+    ClassesNft {}, // we use ClassesNft instead of Class because there is already a Classes query being used
 }

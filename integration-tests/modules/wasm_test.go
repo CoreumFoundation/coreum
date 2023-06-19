@@ -182,10 +182,13 @@ const (
 	nftMethodOwner                     nftMethod = "owner"
 	nftMethodSupply                    nftMethod = "supply"
 	nftMethodNFT                       nftMethod = "nft"
+	nftMethodNFTs                      nftMethod = "nfts"
+	nftMethodClassNFT                  nftMethod = "class_nft"
+	nftMethodClassesNFT                nftMethod = "classes_nft"
 )
 
 //nolint:tagliatelle
-type nftClass struct {
+type assetnftClass struct {
 	ID          string                       `json:"id"`
 	Issuer      string                       `json:"issuer"`
 	Name        string                       `json:"name"`
@@ -198,8 +201,8 @@ type nftClass struct {
 	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
 }
 
-type nftClassResponse struct {
-	Class nftClass `json:"class"`
+type assetnftClassResponse struct {
+	Class assetnftClass `json:"class"`
 }
 
 //nolint:tagliatelle
@@ -213,6 +216,36 @@ type nftItem struct {
 
 type nftRes struct {
 	NFT nftItem `json:"nft"`
+}
+
+type pageResponse struct {
+	NextKey []byte `json:"next_key"`
+	Total   uint64 `json:"total"`
+}
+
+type nftsRes struct {
+	NFTs       []nftItem    `json:"nfts"`
+	Pagination pageResponse `json:"pagination"`
+}
+
+//nolint:tagliatelle
+type nftClass struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Symbol      string `json:"symbol"`
+	Description string `json:"description"`
+	URI         string `json:"uri"`
+	URIHash     string `json:"uri_hash"`
+	Data        string `json:"data"`
+}
+
+type nftClassResponse struct {
+	Class nftClass `json:"class"`
+}
+
+type nftClassesResponse struct {
+	Classes    []nftClass   `json:"classes"`
+	Pagination pageResponse `json:"pagination"`
 }
 
 // TestWASMBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
@@ -1297,10 +1330,10 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, classPayload)
 	requireT.NoError(err)
-	var classQueryRes nftClassResponse
+	var classQueryRes assetnftClassResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classQueryRes))
 	requireT.Equal(
-		nftClass{
+		assetnftClass{
 			ID:          expectedClass.Id,
 			Issuer:      expectedClass.Issuer,
 			Name:        expectedClass.Name,
@@ -1327,7 +1360,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	var classesQueryRes assetnfttypes.QueryClassesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classesQueryRes))
 	requireT.Equal(
-		nftClass{
+		assetnftClass{
 			ID:          expectedClass.Id,
 			Issuer:      expectedClass.Issuer,
 			Name:        expectedClass.Name,
@@ -1338,7 +1371,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Data:        dataString,
 			Features:    expectedClass.Features,
 			RoyaltyRate: expectedClass.RoyaltyRate,
-		}, nftClass{
+		}, assetnftClass{
 			ID:          classesQueryRes.Classes[0].Id,
 			Issuer:      classesQueryRes.Classes[0].Issuer,
 			Name:        classesQueryRes.Classes[0].Name,
@@ -1467,6 +1500,75 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			URIHash: mintNFTReq2.URIHash,
 			Data:    dataString,
 		}, nftQueryRes.NFT,
+	)
+
+	// ********** NFTs **********
+
+	nftsPayload, err := json.Marshal(map[nftMethod]nftOwnerRequest{
+		nftMethodNFTs: {
+			Owner: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftsPayload)
+	requireT.NoError(err)
+	var nftsQueryRes nftsRes
+	requireT.NoError(json.Unmarshal(queryOut, &nftsQueryRes))
+
+	requireT.Equal(
+		nftItem{
+			ClassID: classID,
+			ID:      mintNFTReq2.ID,
+			URI:     mintNFTReq2.URI,
+			URIHash: mintNFTReq2.URIHash,
+			Data:    dataString,
+		}, nftsQueryRes.NFTs[0],
+	)
+
+	// ********** Class **********
+
+	nftClassPayload, err := json.Marshal(map[nftMethod]struct{}{
+		nftMethodClassNFT: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftClassPayload)
+	requireT.NoError(err)
+	var nftClassQueryRes nftClassResponse
+	requireT.NoError(json.Unmarshal(queryOut, &nftClassQueryRes))
+
+	requireT.Equal(
+		nftClass{
+			ID:          expectedClass.Id,
+			Name:        expectedClass.Name,
+			Symbol:      expectedClass.Symbol,
+			Description: expectedClass.Description,
+			URI:         expectedClass.URI,
+			URIHash:     expectedClass.URIHash,
+			Data:        dataString,
+		}, nftClassQueryRes.Class,
+	)
+
+	// ********** Classes **********
+
+	nftClassesPayload, err := json.Marshal(map[nftMethod]struct{}{
+		nftMethodClassesNFT: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftClassesPayload)
+	requireT.NoError(err)
+	var nftClassesQueryRes nftClassesResponse
+	requireT.NoError(json.Unmarshal(queryOut, &nftClassesQueryRes))
+
+	requireT.Equal(
+		nftClass{
+			ID:          expectedClass.Id,
+			Name:        expectedClass.Name,
+			Symbol:      expectedClass.Symbol,
+			Description: expectedClass.Description,
+			URI:         expectedClass.URI,
+			URIHash:     expectedClass.URIHash,
+			Data:        dataString,
+		}, nftClassesQueryRes.Classes[0],
 	)
 }
 

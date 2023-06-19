@@ -32,19 +32,19 @@ For more detailed information of the AssetNFT module and functionality go to [As
 
 The contract (issuer) will mint an NFT with the information provided (only id is mandatory).
 
-### Burn (id)
+### Burn (id) [Burning](https://github.com/CoreumFoundation/coreum/tree/master/x/asset/nft/spec#burning)
 
 Burns the NFT with a certain id.
 
-### Freeze (id)
+### Freeze (id) [Freezing](https://github.com/CoreumFoundation/coreum/tree/master/x/asset/nft/spec#freezing)
 
 Freezes the NFT with that id.
 
-### Unfreeze (id)
+### Unfreeze (id) 
 
 Unfreezes a frozen NFT.
 
-### AddToWhitelist (id, account)
+### AddToWhitelist (id, account) [Whitelisting](https://github.com/CoreumFoundation/coreum/tree/master/x/asset/nft/spec#whitelisting)
 
 Whitelists an address so that it can receive the NFT with that id.
 
@@ -101,3 +101,15 @@ Queries the number of NFTs.
 ### Nft (id)
 
 Queries the NFT of a given id.
+
+### Nfts (Optional: Owner)
+
+Queries all the NFTs by a ClassID or by an Owner if provided.
+
+### Class
+
+Queries a Class with a given ClassID
+
+### Classes
+
+Queries all the Classes
