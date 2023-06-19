@@ -49,4 +49,3 @@ pub struct PageResponse {
     pub next_key: Option<String>,
     pub total: Option<u64>,
 }
-

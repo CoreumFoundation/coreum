@@ -50,7 +50,9 @@ type assetNFTClassResponse struct {
 	Class assetNFTClass `json:"class"`
 }
 
-// PageResponse is the structure used for pagination
+// PageResponse is the structure used for pagination.
+//
+//nolint:tagliatelle // we keep the name same as consume
 type pageResponse struct {
 	NextKey []byte `json:"next_key"`
 	Total   uint64 `json:"total"`
@@ -96,7 +98,7 @@ type NFTsResponse struct {
 	Pagination pageResponse `json:"pagination"`
 }
 
-// NFTclass is the NFTclass with string data.
+// NFTClass is the NFTClass with string data.
 //
 //nolint:tagliatelle // we keep the name same as consume
 type NFTClass struct {
@@ -109,12 +111,12 @@ type NFTClass struct {
 	Data        string `json:"data"`
 }
 
-// ClassResponse is the nft response with string data.
+// NFTClassResponse is the NFTClassResponse response with string data.
 type NFTClassResponse struct {
 	Class NFTClass `json:"class"`
 }
 
-// ClassResponse is the nft response with string data.
+// NFTClassesResponse is the NFTClassesResponse with string data.
 type NFTClassesResponse struct {
 	Classes    []NFTClass   `json:"classes"`
 	Pagination pageResponse `json:"pagination"`
@@ -324,6 +326,7 @@ func processAssetNFTQuery(ctx sdk.Context, assetNFTQuery *assetNFTQuery, assetNF
 	return nil, nil
 }
 
+//nolint:funlen
 func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttypes.QueryServer) ([]byte, error) {
 	if nftQuery.Balance != nil {
 		return executeQuery(ctx, nftQuery.Balance, func(ctx context.Context, req *nfttypes.QueryBalanceRequest) (*nfttypes.QueryBalanceResponse, error) {

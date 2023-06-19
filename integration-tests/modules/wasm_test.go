@@ -218,6 +218,7 @@ type nftRes struct {
 	NFT nftItem `json:"nft"`
 }
 
+//nolint:tagliatelle
 type pageResponse struct {
 	NextKey []byte `json:"next_key"`
 	Total   uint64 `json:"total"`
