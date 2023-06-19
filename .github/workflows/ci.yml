@@ -73,7 +73,6 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: wojtek/versioned-genesis # TODO (wojtek): remove once genesis versioning is included in crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
