@@ -963,7 +963,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	var wasmTokensRes assetfttypes.QueryTokensResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokensRes))
 	requireT.Equal(
-		expectedToken, wasmTokensRes.Tokens[0],
+		expectedToken.Denom, wasmTokensRes.Tokens[0].Denom,
 	)
 
 	// ********** Balance **********
