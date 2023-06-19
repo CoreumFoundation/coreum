@@ -725,6 +725,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 		BurnRate:           burnRate,
 		SendCommissionRate: sendCommissionRate,
+		Version:            tokenRes.Token.Version, // test should work with any token version
 	}
 	requireT.Equal(
 		expectedToken, tokenRes.Token,
@@ -943,6 +944,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 	var wasmTokenRes assetfttypes.QueryTokenResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokenRes))
+	wasmTokenRes.Token.Version = expectedToken.Version // test should work with any version
 	requireT.Equal(
 		expectedToken, wasmTokenRes.Token,
 	)

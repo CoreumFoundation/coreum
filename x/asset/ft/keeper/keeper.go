@@ -26,11 +26,11 @@ type ParamSubspace interface {
 
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc              codec.BinaryCodec
-	paramSubspace    ParamSubspace
-	storeKey         sdk.StoreKey
-	bankKeeper       types.BankKeeper
-	ibcChannelKeeper types.IBCChannelKeeper
+	cdc           codec.BinaryCodec
+	paramSubspace ParamSubspace
+	storeKey      sdk.StoreKey
+	bankKeeper    types.BankKeeper
+	delayKeeper   types.DelayKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -39,14 +39,14 @@ func NewKeeper(
 	paramSubspace ParamSubspace,
 	storeKey sdk.StoreKey,
 	bankKeeper types.BankKeeper,
-	ibcChannelKeeper types.IBCChannelKeeper,
+	delayKeeper types.DelayKeeper,
 ) Keeper {
 	return Keeper{
-		cdc:              cdc,
-		paramSubspace:    paramSubspace,
-		storeKey:         storeKey,
-		bankKeeper:       bankKeeper,
-		ibcChannelKeeper: ibcChannelKeeper,
+		cdc:           cdc,
+		paramSubspace: paramSubspace,
+		storeKey:      storeKey,
+		bankKeeper:    bankKeeper,
+		delayKeeper:   delayKeeper,
 	}
 }
 
@@ -124,7 +124,7 @@ func (k Keeper) GetDefinition(ctx sdk.Context, denom string) (types.Definition, 
 	return definition, nil
 }
 
-// GetToken return the fungible token by it's denom.
+// GetToken returns the fungible token by it's denom.
 func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {
@@ -136,6 +136,12 @@ func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 
 // Issue issues new fungible token and returns it's denom.
 func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, error) {
+	return k.IssueVersioned(ctx, settings, types.CurrentTokenVersion)
+}
+
+// IssueVersioned issues new fungible token and sets its version.
+// To be used only in unit tests !!!
+func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, version uint32) (string, error) {
 	if err := types.ValidateSubunit(settings.Subunit); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
@@ -183,11 +189,13 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		Features:           settings.Features,
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
+		Version:            version,
 	}
 
 	if err := k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision); err != nil {
 		return "", err
 	}
+
 	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
 	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
@@ -633,6 +641,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		BurnRate:           definition.BurnRate,
 		SendCommissionRate: definition.SendCommissionRate,
 		GloballyFrozen:     k.isGloballyFrozen(ctx, definition.Denom),
+		Version:            definition.Version,
 	}, nil
 }
 

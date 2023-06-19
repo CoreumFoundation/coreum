@@ -47,6 +47,7 @@ func TestQueryTokens(t *testing.T) {
 	expectedToken := token
 	expectedToken.Denom = denom
 	expectedToken.Issuer = testNetwork.Validators[0].Address.String()
+	expectedToken.Version = types.CurrentTokenVersion
 	requireT.Equal(expectedToken, resp.Tokens[0])
 }
 
@@ -80,6 +81,7 @@ func TestQueryToken(t *testing.T) {
 	expectedToken := token
 	expectedToken.Denom = denom
 	expectedToken.Issuer = testNetwork.Validators[0].Address.String()
+	expectedToken.Version = types.CurrentTokenVersion
 	requireT.Equal(expectedToken, resp.Token)
 
 	// query balance

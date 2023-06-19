@@ -27,7 +27,9 @@
         "issue_fee": {
           "denom": "{{ .Denom }}",
           "amount": "10000000"
-        }
+        },
+        "token_upgrade_decision_timeout": "0001-01-01T00:00:00Z",
+        "token_upgrade_grace_period": "604800s"
       }
     },
     "assetnft": {
@@ -276,6 +278,7 @@
       "staking_params": {
         "min_self_delegation": "{{ .CustomParamsConfig.Staking.MinSelfDelegation }}"
       }
-    }
+    },
+    "delay": {}
   }
 }

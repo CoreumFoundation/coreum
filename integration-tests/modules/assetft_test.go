@@ -208,6 +208,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		Description:        msg1.Description,
 		BurnRate:           msg1.BurnRate,
 		SendCommissionRate: msg1.SendCommissionRate,
+		Version:            gotToken.Tokens[0].Version, // test should work with all versions
 	}, gotToken.Tokens[0])
 }
 

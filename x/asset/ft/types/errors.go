@@ -19,4 +19,6 @@ var (
 	ErrGloballyFrozen = sdkerrors.Register(ModuleName, 6, "token is globally frozen")
 	// ErrWhitelistedLimitExceeded is returned when new balance after receiving coins exceeds the whitelisted limit.
 	ErrWhitelistedLimitExceeded = sdkerrors.Register(ModuleName, 7, "whitelisted limit exceeded")
+	// ErrInvalidState is returned when state of the module is invalid.
+	ErrInvalidState = sdkerrors.Register(ModuleName, 8, "invalid state")
 )

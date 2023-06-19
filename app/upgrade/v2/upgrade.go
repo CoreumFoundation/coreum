@@ -9,6 +9,7 @@ import (
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 
 	"github.com/CoreumFoundation/coreum/app/upgrade"
+	delaytypes "github.com/CoreumFoundation/coreum/x/delay/types"
 )
 
 // Name defines the upgrade name.
@@ -22,6 +23,7 @@ func NewV2Upgrade(mm *module.Manager, configurator module.Configurator) upgrade.
 			Added: []string{
 				ibchost.StoreKey,
 				ibctransfertypes.StoreKey,
+				delaytypes.StoreKey,
 			},
 		},
 		Upgrade: func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {

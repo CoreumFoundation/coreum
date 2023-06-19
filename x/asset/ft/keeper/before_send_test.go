@@ -6,37 +6,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
-
-var _ types.IBCChannelKeeper = ibcChannelKeeperMock{}
-
-type ibcChannelKeeperMock struct {
-	portID    string
-	channelID string
-}
-
-func newIBCChannelKeeperMock(portID, channelID string) ibcChannelKeeperMock {
-	return ibcChannelKeeperMock{
-		portID:    portID,
-		channelID: channelID,
-	}
-}
-
-func (k ibcChannelKeeperMock) IterateChannels(ctx sdk.Context, cb func(ibcchanneltypes.IdentifiedChannel) bool) {
-	cb(ibcchanneltypes.IdentifiedChannel{
-		PortId:    k.portID,
-		ChannelId: k.channelID,
-	})
-}
 
 // TODO(dzmitryhil) remove all TestMain from the code.
 func TestMain(m *testing.M) {
@@ -59,9 +36,7 @@ func TestCalculateRateShares(t *testing.T) {
 	}
 	issuer := genAccount()
 	dummyAddress := genAccount()
-	ibcPort := "port"
-	ibcChannel := "1"
-	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, newIBCChannelKeeperMock(ibcPort, ibcChannel))
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, nil)
 	pow10 := func(ex int64) sdk.Int {
 		return sdk.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
 	}
