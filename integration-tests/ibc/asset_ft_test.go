@@ -19,6 +19,51 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
+func TestIBCFailsIfNotEnabled(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	coreumChain := chains.Coreum
+	coreumIssuer := coreumChain.GenAccount()
+
+	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&ibctransfertypes.MsgTransfer{},
+		},
+		Amount: issueFee,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        coreumIssuer.String(),
+		Symbol:        "mysymbol",
+		Subunit:       "mysubunit",
+		Precision:     8,
+		InitialAmount: sdk.NewInt(1_000_000),
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	require.NoError(t, err)
+
+	gaiaChain := chains.Gaia
+	_, err = coreumChain.ExecuteIBCTransfer(
+		ctx,
+		t,
+		coreumIssuer,
+		sdk.NewCoin(assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer), sdk.NewInt(1000)),
+		gaiaChain.ChainContext,
+		gaiaChain.GenAccount(),
+	)
+	requireT.ErrorContains(err, "unauthorized")
+}
+
 func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	t.Parallel()
 
@@ -70,6 +115,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		InitialAmount:      sdk.NewInt(1_000_000),
 		BurnRate:           sdk.MustNewDecFromStr("0.1"),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		Features:           []assetfttypes.Feature{assetfttypes.Feature_ibc},
 	}
 	_, err := client.BroadcastTx(
 		ctx,
@@ -300,7 +346,10 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 		Subunit:       "mysubunit",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(1_000_000),
-		Features:      []assetfttypes.Feature{assetfttypes.Feature_whitelisting},
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_whitelisting,
+		},
 	}
 	_, err := client.BroadcastTx(
 		ctx,
@@ -392,7 +441,10 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 		Subunit:       "mysubunit",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(1_000_000),
-		Features:      []assetfttypes.Feature{assetfttypes.Feature_freezing},
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+		},
 	}
 	_, err := client.BroadcastTx(
 		ctx,
@@ -479,7 +531,11 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 		Subunit:       "mysubunit",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(1_000_000),
-		Features:      []assetfttypes.Feature{assetfttypes.Feature_freezing, assetfttypes.Feature_whitelisting},
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+		},
 	}
 	_, err := client.BroadcastTx(
 		ctx,
@@ -554,7 +610,10 @@ func TestEscrowAddressIsBlockedByGlobalFreeze(t *testing.T) {
 		Subunit:       "mysubunit",
 		Precision:     8,
 		InitialAmount: sdk.NewInt(1_000_000),
-		Features:      []assetfttypes.Feature{assetfttypes.Feature_freezing},
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+		},
 	}
 	_, err := client.BroadcastTx(
 		ctx,
