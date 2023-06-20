@@ -1563,7 +1563,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	var nftClassesQueryRes nftClassesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &nftClassesQueryRes))
 
-	var found = classInArray(nftClass{
+	requireT.Contains(nftClass{
 		ID:          expectedClass.Id,
 		Name:        expectedClass.Name,
 		Symbol:      expectedClass.Symbol,
@@ -1573,9 +1573,6 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Data:        dataString,
 	}, nftClassesQueryRes.Classes)
 
-	requireT.Equal(
-		found, true,
-	)
 }
 
 func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
@@ -1749,13 +1746,4 @@ func instantiateWASMContract(ctx context.Context, clientCtx client.Context, txf 
 	}
 
 	return contractAddr, nil
-}
-
-func classInArray(a nftClass, list []nftClass) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }
