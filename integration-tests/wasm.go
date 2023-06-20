@@ -3,6 +3,7 @@ package integrationtests
 import (
 	"context"
 	"encoding/json"
+	"github.com/pkg/errors"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -141,6 +142,21 @@ func (w Wasm) InstantiateWASMContract(ctx context.Context, txf client.Factory, f
 	}
 
 	return contractAddr, nil
+}
+
+// IsWASMContractPinned returns true if smart contract is pinned.
+func (w Wasm) IsWASMContractPinned(ctx context.Context, codeID uint64) (bool, error) {
+	wasmClient := wasmtypes.NewQueryClient(w.chainCtx.ClientContext)
+	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})
+	if err != nil {
+		return false, errors.Wrap(err, "WASMQueryClient returned an error after querying pinned contracts")
+	}
+	for _, c := range resp.CodeIDs {
+		if c == codeID {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func addGasMultiplier(txf client.Factory) client.Factory {

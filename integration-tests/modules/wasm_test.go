@@ -14,7 +14,6 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -414,7 +413,6 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	clientCtx := chain.ClientContext
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 
@@ -445,7 +443,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	gasUsedBeforePinning := incrementAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1338)
 
 	// verify that smart contract is not pinned
-	requireT.False(isWASMContractPinned(ctx, clientCtx, codeID))
+	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	// pin smart contract
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.PinCodesProposal{
@@ -469,7 +467,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
-	requireT.True(isWASMContractPinned(ctx, clientCtx, codeID))
+	requireT.True(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	gasUsedAfterPinning := incrementAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1339)
 
@@ -493,7 +491,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Equal(govtypes.StatusPassed, finalStatus)
 
-	requireT.False(isWASMContractPinned(ctx, clientCtx, codeID))
+	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	gasUsedAfterUnpinning := incrementAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1340)
 
@@ -1330,19 +1328,4 @@ func incrementAndVerify(
 	requireT.Equal(expectedValue, response.Count)
 
 	return gasUsed
-}
-
-// isWASMContractPinned returns true if smart contract is pinned.
-func isWASMContractPinned(ctx context.Context, clientCtx client.Context, codeID uint64) (bool, error) {
-	wasmClient := wasmtypes.NewQueryClient(clientCtx)
-	resp, err := wasmClient.PinnedCodes(ctx, &wasmtypes.QueryPinnedCodesRequest{})
-	if err != nil {
-		return false, errors.Wrap(err, "WASMQueryClient returned an error after querying pinned contracts")
-	}
-	for _, c := range resp.CodeIDs {
-		if c == codeID {
-			return true, nil
-		}
-	}
-	return false, nil
 }

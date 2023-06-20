@@ -27,10 +27,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 )
 
-// FIXME add/check that linter works with integration tests since now it's a separate module
-// FIXME update the crust with new run args
-// FIXME update the crust to build the integration tests since now it's a separate module
-
 // ExecuteIBCTransfer executes IBC transfer transaction.
 func (c ChainContext) ExecuteIBCTransfer(
 	ctx context.Context,
