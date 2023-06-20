@@ -87,6 +87,10 @@ type accountAmountBodyFTRequest struct {
 	Amount  string `json:"amount"`
 }
 
+type issuerBodyFTRequest struct {
+	Issuer string `json:"issuer"`
+}
+
 type accountBodyFTRequest struct {
 	Account string `json:"account"`
 }
@@ -104,9 +108,14 @@ const (
 	ftMethodSetWhitelistedLimit ftMethod = "set_whitelisted_limit"
 	ftMethodMintAndSend         ftMethod = "mint_and_send"
 	// query.
-	ftMethodToken              ftMethod = "token"
-	ftMethodFrozenBalance      ftMethod = "frozen_balance"
-	ftMethodWhitelistedBalance ftMethod = "whitelisted_balance"
+	ftMethodParams              ftMethod = "params"
+	ftMethodTokens              ftMethod = "tokens"
+	ftMethodToken               ftMethod = "token"
+	ftMethodBalance             ftMethod = "balance"
+	ftMethodFrozenBalance       ftMethod = "frozen_balance"
+	ftMethodWhitelistedBalance  ftMethod = "whitelisted_balance"
+	ftMethodFrozenBalances      ftMethod = "frozen_balances"
+	ftMethodWhitelistedBalances ftMethod = "whitelisted_balances"
 )
 
 //nolint:tagliatelle
@@ -131,6 +140,10 @@ type nftMintRequest struct {
 
 type nftIDRequest struct {
 	ID string `json:"id"`
+}
+
+type nftIssuerRequest struct {
+	Issuer string `json:"issuer"`
 }
 
 type nftIDWithAccountRequest struct {
@@ -159,17 +172,23 @@ const (
 	nftMethodRemoveFromWhiteList nftMethod = "remove_from_whitelist"
 	nftMethodSend                nftMethod = "send"
 	// query.
-	nftMethodClass       nftMethod = "class"
-	nftMethodFrozen      nftMethod = "frozen"
-	nftMethodWhitelisted nftMethod = "whitelisted"
-	nftMethodBalance     nftMethod = "balance"
-	nftMethodOwner       nftMethod = "owner"
-	nftMethodSupply      nftMethod = "supply"
-	nftMethodNFT         nftMethod = "nft"
+	nftMethodParams                    nftMethod = "params"
+	nftMethodClass                     nftMethod = "class"
+	nftMethodClasses                   nftMethod = "classes"
+	nftMethodFrozen                    nftMethod = "frozen"
+	nftMethodWhitelisted               nftMethod = "whitelisted"
+	nftMethodWhitelistedAccountsForNft nftMethod = "whitelisted_accounts_for_nft"
+	nftMethodBalance                   nftMethod = "balance"
+	nftMethodOwner                     nftMethod = "owner"
+	nftMethodSupply                    nftMethod = "supply"
+	nftMethodNFT                       nftMethod = "nft"
+	nftMethodNFTs                      nftMethod = "nfts"
+	nftMethodClassNFT                  nftMethod = "class_nft"
+	nftMethodClassesNFT                nftMethod = "classes_nft"
 )
 
 //nolint:tagliatelle
-type nftClass struct {
+type assetnftClass struct {
 	ID          string                       `json:"id"`
 	Issuer      string                       `json:"issuer"`
 	Name        string                       `json:"name"`
@@ -182,8 +201,8 @@ type nftClass struct {
 	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
 }
 
-type nftClassResponse struct {
-	Class nftClass `json:"class"`
+type assetnftClassResponse struct {
+	Class assetnftClass `json:"class"`
 }
 
 //nolint:tagliatelle
@@ -197,6 +216,37 @@ type nftItem struct {
 
 type nftRes struct {
 	NFT nftItem `json:"nft"`
+}
+
+//nolint:tagliatelle
+type pageResponse struct {
+	NextKey []byte `json:"next_key"`
+	Total   uint64 `json:"total"`
+}
+
+type nftsRes struct {
+	NFTs       []nftItem    `json:"nfts"`
+	Pagination pageResponse `json:"pagination"`
+}
+
+//nolint:tagliatelle
+type nftClass struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Symbol      string `json:"symbol"`
+	Description string `json:"description"`
+	URI         string `json:"uri"`
+	URIHash     string `json:"uri_hash"`
+	Data        string `json:"data"`
+}
+
+type nftClassResponse struct {
+	Class nftClass `json:"class"`
+}
+
+type nftClassesResponse struct {
+	Classes    []nftClass   `json:"classes"`
+	Pagination pageResponse `json:"pagination"`
 }
 
 // TestWASMBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
@@ -871,19 +921,66 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** Query **********
 
+	// ********** Params **********
+
+	paramsPayLoad, err := json.Marshal(map[ftMethod]struct{}{
+		ftMethodParams: {},
+	})
+	requireT.NoError(err)
+	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, paramsPayLoad)
+	requireT.NoError(err)
+	var wasmParamsRes assetfttypes.QueryParamsResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
+	requireT.Equal(
+		getIssueFee(ctx, t, chain.ClientContext), wasmParamsRes.Params.IssueFee,
+	)
+
 	// ********** Token **********
 
 	tokenPayload, err := json.Marshal(map[ftMethod]struct{}{
 		ftMethodToken: {},
 	})
 	requireT.NoError(err)
-	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, tokenPayload)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, tokenPayload)
 	requireT.NoError(err)
 	var wasmTokenRes assetfttypes.QueryTokenResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokenRes))
 	wasmTokenRes.Token.Version = expectedToken.Version // test should work with any version
 	requireT.Equal(
 		expectedToken, wasmTokenRes.Token,
+	)
+
+	// ********** Tokens **********
+
+	tokensPayload, err := json.Marshal(map[ftMethod]issuerBodyFTRequest{
+		ftMethodTokens: {
+			Issuer: contractAddr,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, tokensPayload)
+	requireT.NoError(err)
+	var wasmTokensRes assetfttypes.QueryTokensResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmTokensRes))
+	wasmTokensRes.Tokens[0].Version = expectedToken.Version
+	requireT.Equal(
+		expectedToken, wasmTokensRes.Tokens[0],
+	)
+
+	// ********** Balance **********
+
+	balancePayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
+		ftMethodBalance: {
+			Account: contractAddr,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, balancePayload)
+	requireT.NoError(err)
+	var wasmBalanceRes assetfttypes.QueryBalanceResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmBalanceRes))
+	requireT.Equal(
+		newAmount.String(), wasmBalanceRes.Balance.String(),
 	)
 
 	// ********** FrozenBalance **********
@@ -902,6 +999,22 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		sdk.NewCoin(denom, amountToFreeze.Sub(amountToUnfreeze)).String(), wasmFrozenBalanceRes.Balance.String(),
 	)
 
+	// ********** FrozenBalances **********
+
+	frozenBalancesPayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
+		ftMethodFrozenBalances: {
+			Account: recipient1.String(),
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, frozenBalancesPayload)
+	requireT.NoError(err)
+	var wasmFrozenBalancesRes assetfttypes.QueryFrozenBalancesResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmFrozenBalancesRes))
+	requireT.Equal(
+		sdk.NewCoin(denom, amountToFreeze.Sub(amountToUnfreeze)).String(), wasmFrozenBalancesRes.Balances[0].String(),
+	)
+
 	// ********** WhitelistedBalance **********
 
 	whitelistedBalancePayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
@@ -916,6 +1029,22 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(json.Unmarshal(queryOut, &wasmWhitelistedBalanceRes))
 	requireT.Equal(
 		sdk.NewCoin(denom, amountToWhitelist), wasmWhitelistedBalanceRes.Balance,
+	)
+
+	// ********** WhitelistedBalances **********
+
+	whitelistedBalancesPayload, err := json.Marshal(map[ftMethod]accountBodyFTRequest{
+		ftMethodWhitelistedBalances: {
+			Account: recipient1.String(),
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, whitelistedBalancesPayload)
+	requireT.NoError(err)
+	var wasmWhitelistedBalancesRes assetfttypes.QueryWhitelistedBalancesResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmWhitelistedBalancesRes))
+	requireT.Equal(
+		sdk.NewCoin(denom, amountToWhitelist), wasmWhitelistedBalancesRes.Balances[0],
 	)
 }
 
@@ -1183,18 +1312,32 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Query **********
 
+	// ********** Params **********
+
+	paramsPayLoad, err := json.Marshal(map[nftMethod]struct{}{
+		nftMethodParams: {},
+	})
+	requireT.NoError(err)
+	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, paramsPayLoad)
+	requireT.NoError(err)
+	var wasmParamsRes assetnfttypes.QueryParamsResponse
+	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
+	requireT.Equal(
+		getMintFee(ctx, t, chain.ClientContext), wasmParamsRes.Params.MintFee,
+	)
+
 	// ********** Class **********
 
 	classPayload, err := json.Marshal(map[nftMethod]struct{}{
 		nftMethodClass: {},
 	})
 	requireT.NoError(err)
-	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, classPayload)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, classPayload)
 	requireT.NoError(err)
-	var classQueryRes nftClassResponse
+	var classQueryRes assetnftClassResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classQueryRes))
 	requireT.Equal(
-		nftClass{
+		assetnftClass{
 			ID:          expectedClass.Id,
 			Issuer:      expectedClass.Issuer,
 			Name:        expectedClass.Name,
@@ -1206,6 +1349,44 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Features:    expectedClass.Features,
 			RoyaltyRate: expectedClass.RoyaltyRate,
 		}, classQueryRes.Class,
+	)
+
+	// ********** Classes **********
+
+	classesPayload, err := json.Marshal(map[nftMethod]nftIssuerRequest{
+		nftMethodClasses: {
+			Issuer: contractAddr,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, classesPayload)
+	requireT.NoError(err)
+	var classesQueryRes assetnfttypes.QueryClassesResponse
+	requireT.NoError(json.Unmarshal(queryOut, &classesQueryRes))
+	requireT.Equal(
+		assetnftClass{
+			ID:          expectedClass.Id,
+			Issuer:      expectedClass.Issuer,
+			Name:        expectedClass.Name,
+			Symbol:      expectedClass.Symbol,
+			Description: expectedClass.Description,
+			URI:         expectedClass.URI,
+			URIHash:     expectedClass.URIHash,
+			Data:        dataString,
+			Features:    expectedClass.Features,
+			RoyaltyRate: expectedClass.RoyaltyRate,
+		}, assetnftClass{
+			ID:          classesQueryRes.Classes[0].Id,
+			Issuer:      classesQueryRes.Classes[0].Issuer,
+			Name:        classesQueryRes.Classes[0].Name,
+			Symbol:      classesQueryRes.Classes[0].Symbol,
+			Description: classesQueryRes.Classes[0].Description,
+			URI:         classesQueryRes.Classes[0].URI,
+			URIHash:     classesQueryRes.Classes[0].URIHash,
+			Data:        dataString,
+			Features:    classesQueryRes.Classes[0].Features,
+			RoyaltyRate: classesQueryRes.Classes[0].RoyaltyRate,
+		},
 	)
 
 	// ********** Frozen **********
@@ -1248,6 +1429,20 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(json.Unmarshal(queryOut, &whitelistedQueryRes))
 	requireT.True(whitelistedQueryRes.Whitelisted)
 
+	// ********** WhitelistedAccountsforNFT **********
+
+	whitelistedAccountsForNFTPayload, err := json.Marshal(map[nftMethod]nftIDRequest{
+		nftMethodWhitelistedAccountsForNft: {
+			ID: mintNFTReq2.ID,
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, whitelistedAccountsForNFTPayload)
+	requireT.NoError(err)
+	var whitelistedAccountsForNFTQueryRes assetnfttypes.QueryWhitelistedAccountsForNFTResponse
+	requireT.NoError(json.Unmarshal(queryOut, &whitelistedAccountsForNFTQueryRes))
+	requireT.Equal(whitelistedAccountsForNFTQueryRes.Accounts[0], recipient.String())
+
 	// ********** Balance **********
 
 	balancePayload, err := json.Marshal(map[nftMethod]nftOwnerRequest{
@@ -1278,10 +1473,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Supply **********
 
-	supplyPayload, err := json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodSupply: {
-			ID: mintNFTReq2.ID,
-		},
+	supplyPayload, err := json.Marshal(map[nftMethod]struct{}{
+		nftMethodSupply: {},
 	})
 	requireT.NoError(err)
 	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, supplyPayload)
@@ -1312,6 +1505,73 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Data:    dataString,
 		}, nftQueryRes.NFT,
 	)
+
+	// ********** NFTs **********
+
+	nftsPayload, err := json.Marshal(map[nftMethod]nftOwnerRequest{
+		nftMethodNFTs: {
+			Owner: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftsPayload)
+	requireT.NoError(err)
+	var nftsQueryRes nftsRes
+	requireT.NoError(json.Unmarshal(queryOut, &nftsQueryRes))
+
+	requireT.Equal(
+		nftItem{
+			ClassID: classID,
+			ID:      mintNFTReq2.ID,
+			URI:     mintNFTReq2.URI,
+			URIHash: mintNFTReq2.URIHash,
+			Data:    dataString,
+		}, nftsQueryRes.NFTs[0],
+	)
+
+	// ********** Class **********
+
+	nftClassPayload, err := json.Marshal(map[nftMethod]struct{}{
+		nftMethodClassNFT: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftClassPayload)
+	requireT.NoError(err)
+	var nftClassQueryRes nftClassResponse
+	requireT.NoError(json.Unmarshal(queryOut, &nftClassQueryRes))
+
+	requireT.Equal(
+		nftClass{
+			ID:          expectedClass.Id,
+			Name:        expectedClass.Name,
+			Symbol:      expectedClass.Symbol,
+			Description: expectedClass.Description,
+			URI:         expectedClass.URI,
+			URIHash:     expectedClass.URIHash,
+			Data:        dataString,
+		}, nftClassQueryRes.Class,
+	)
+
+	// ********** Classes **********
+
+	nftClassesPayload, err := json.Marshal(map[nftMethod]struct{}{
+		nftMethodClassesNFT: {},
+	})
+	requireT.NoError(err)
+	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftClassesPayload)
+	requireT.NoError(err)
+	var nftClassesQueryRes nftClassesResponse
+	requireT.NoError(json.Unmarshal(queryOut, &nftClassesQueryRes))
+
+	requireT.Contains(nftClassesQueryRes.Classes, nftClass{
+		ID:          expectedClass.Id,
+		Name:        expectedClass.Name,
+		Symbol:      expectedClass.Symbol,
+		Description: expectedClass.Description,
+		URI:         expectedClass.URI,
+		URIHash:     expectedClass.URIHash,
+		Data:        dataString,
+	})
 }
 
 func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
