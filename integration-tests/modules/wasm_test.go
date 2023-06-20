@@ -1572,7 +1572,6 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		URIHash:     expectedClass.URIHash,
 		Data:        dataString,
 	}, nftClassesQueryRes.Classes)
-
 }
 
 func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
