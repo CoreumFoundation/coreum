@@ -7,11 +7,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"testing"
+	"time"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
@@ -35,6 +37,8 @@ var (
 	ftWASM []byte
 	//go:embed testdata/wasm/nft/artifacts/nft.wasm
 	nftWASM []byte
+	//go:embed testdata/wasm/authz/artifacts/authz.wasm
+	authzWASM []byte
 )
 
 // bank wasm models
@@ -62,6 +66,24 @@ type simpleStateMethod string
 const (
 	simpleGetCount  simpleStateMethod = "get_count"
 	simpleIncrement simpleStateMethod = "increment"
+)
+
+// authz models
+
+type authz struct {
+	Granter string `json:"granter"`
+}
+
+type authzTransferRequest struct {
+	Address string `json:"address"`
+	Amount  int    `json:"amount"`
+	Denom   string `json:"denom"`
+}
+
+type authzMethod string
+
+const (
+	transfer authzMethod = "transfer"
 )
 
 // fungible token wasm models
@@ -642,6 +664,96 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues("", contractInfo.Admin)
 	requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
+}
+
+// TestWASMAuthzContract runs a contract deployment flow and tests that the contract is able to use the Authz module
+// to send native coins in place of another one.
+func TestWASMAuthzContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	granter := chain.GenAccount()
+	receiver := chain.GenAccount()
+	nativeDenom := chain.ChainSettings.Denom
+	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+	totalAmountToSend := sdk.NewInt(2_000)
+
+	chain.Faucet.FundAccounts(ctx, t,
+		integrationtests.NewFundedAccount(granter, chain.NewCoin(sdk.NewInt(5000000000))),
+	)
+
+	// deployWASMContract and init contract with the granter.
+	initialPayload, err := json.Marshal(authz{
+		Granter: granter.String(),
+	})
+	requireT.NoError(err)
+
+	clientCtx := chain.ClientContext.WithFromAddress(granter)
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+	bankClient := banktypes.NewQueryClient(clientCtx)
+
+	contractAddr, _, err := deployAndInstantiateWASMContract(
+		ctx,
+		clientCtx,
+		txf,
+		authzWASM,
+		instantiateConfig{
+			accessType: wasmtypes.AccessTypeUnspecified,
+			payload:    initialPayload,
+			label:      "authz",
+		},
+	)
+	requireT.NoError(err)
+
+	// grant the bank send authorization
+	grantMsg, err := authztypes.NewMsgGrant(
+		granter,
+		sdk.MustAccAddressFromBech32(contractAddr),
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
+		time.Now().Add(time.Minute),
+	)
+	require.NoError(t, err)
+
+	txResult, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(granter),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
+	)
+	requireT.NoError(err)
+	requireT.Equal(chain.GasLimitByMsgs(grantMsg), uint64(txResult.GasUsed))
+	// assert granted
+	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
+		Granter: granter.String(),
+		Grantee: contractAddr,
+	})
+	requireT.NoError(err)
+	requireT.Equal(1, len(gransRes.Grants))
+
+	// ********** Transfer **********
+
+	transferFundsPayload, err := json.Marshal(map[authzMethod]authzTransferRequest{
+		transfer: {
+			Address: receiver.String(),
+			Amount:  int(totalAmountToSend.Int64()),
+			Denom:   nativeDenom,
+		},
+	})
+	requireT.NoError(err)
+	txf = txf.WithSimulateAndExecute(true)
+	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, transferFundsPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	// check receiver balance
+
+	receiverBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
+		Address: receiver.String(),
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoins(chain.NewCoin(totalAmountToSend)).String(), receiverBalancesRes.Balances.String())
 }
 
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.
