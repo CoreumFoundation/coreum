@@ -182,6 +182,16 @@ func (def Definition) IsIssuer(addr sdk.Address) bool {
 	return def.Issuer == addr.String()
 }
 
+// ValidateFeatures verifies that provided features belong to the defined set.
+func ValidateFeatures(features []Feature) error {
+	for _, f := range features {
+		if _, exists := Feature_name[int32(f)]; !exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "non-existing feature provided: %d", f)
+		}
+	}
+	return nil
+}
+
 // ValidateBurnRate checks that the provided burn rate is valid.
 func ValidateBurnRate(burnRate sdk.Dec) error {
 	if err := validateRate(burnRate); err != nil {

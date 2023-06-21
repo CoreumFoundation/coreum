@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	v1 "github.com/CoreumFoundation/coreum/x/asset/nft/legacy/v1"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -18,5 +19,8 @@ func NewMigrator(keeper Keeper) Migrator {
 
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	return v1.MigrateStore(ctx, m.keeper.storeKey)
+	if err := v1.MigrateStore(ctx, m.keeper.storeKey); err != nil {
+		return err
+	}
+	return v1.MigrateClassFeatures(ctx, m.keeper, types.ClassFeature_name)
 }

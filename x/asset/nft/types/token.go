@@ -89,6 +89,16 @@ func ValidateClassSymbol(symbol string) error {
 	return nil
 }
 
+// ValidateClassFeatures verifies that provided features belong to the defined set.
+func ValidateClassFeatures(features []ClassFeature) error {
+	for _, f := range features {
+		if _, exists := ClassFeature_name[int32(f)]; !exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "non-existing feature provided: %d", f)
+		}
+	}
+	return nil
+}
+
 // ValidateTokenID checks the provided non-fungible token id is valid.
 func ValidateTokenID(id string) error {
 	if !nftIDRegex.MatchString(id) {
