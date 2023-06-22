@@ -114,7 +114,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 
 // TestDistributionWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
 //
-//nolint:funlen // there are many tests cases
+//nolint:funlen // there are many tests
 func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	t.Parallel()
 

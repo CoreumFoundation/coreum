@@ -383,7 +383,7 @@ func (ft *ftTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
 	requireT.Len(resp.Token.Features, 0)
 }
 
-//nolint:funlen // there are many tests cases
+//nolint:funlen // there are many tests
 func (ft *ftTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)

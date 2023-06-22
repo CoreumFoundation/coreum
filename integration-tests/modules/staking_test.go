@@ -80,7 +80,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
 //
-//nolint:funlen // there are many tests cases
+//nolint:funlen // there are many tests
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	t.Parallel()
 
