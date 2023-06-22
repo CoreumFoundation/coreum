@@ -1,0 +1,32 @@
+name: Proto docs diff check
+
+on:
+  push:
+
+jobs:
+  proto-docs-diff-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Checkout crust
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/crust
+          path: crust
+      - name: Set up crust
+        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+      - name: update crust
+        run: crust build/crust
+      - name: Generate proto docs
+        run: crust docs/proto --log-format=yaml
+      - name: git diff
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "There are differences in the Git repository."
+            exit 1
+          else
+            echo "No differences found in the Git repository."
+          fi
