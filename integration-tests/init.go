@@ -53,7 +53,7 @@ var (
 	runUnsafe bool
 )
 
-func init() {
+func init() { //nolint:funlen // will be shortened after the crust merge
 	var (
 		coreumGRPCAddress string
 		coreumRPCAddress  string

@@ -1,3 +1,5 @@
+//go:build integrationtests
+
 package ibc
 
 import (
@@ -160,6 +162,8 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 }
 
 // TestIBCCallFromSmartContract tests the IBC contract calls.
+//
+//nolint:funlen // there are many tests cases
 func TestIBCCallFromSmartContract(t *testing.T) {
 	// we don't enable the t.Parallel here since that test uses the config unseal hack because of the cosmos relayer
 	// implementation

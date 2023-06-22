@@ -271,6 +271,8 @@ type nftClassesResponse struct {
 
 // TestWASMBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
+//
+//nolint:funlen // there are many tests cases
 func TestWASMBankSendContract(t *testing.T) {
 	t.Parallel()
 
@@ -460,6 +462,8 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 
 // TestWASMPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
 // pinning and unpinning through proposals works correctly. We also verify that pinned smart contract consumes less gas.
+//
+//nolint:funlen // there are many tests cases
 func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	t.Parallel()
 
@@ -754,6 +758,8 @@ func TestWASMAuthzContract(t *testing.T) {
 }
 
 // TestWASMFungibleTokenInContract verifies that smart contract is able to execute all fungible token message and core queries.
+//
+//nolint:funlen // there are many tests cases
 func TestWASMFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
@@ -1152,7 +1158,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 // TestWASMNonFungibleTokenInContract verifies that smart contract is able to execute all non-fungible token message and core queries.
 //
-//nolint:nosnakecase
+//nolint:funlen,nosnakecase // there are many tests cases
 func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	t.Parallel()
 
