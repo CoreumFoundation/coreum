@@ -16,6 +16,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          ref: artem/docs-gen
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: update crust
