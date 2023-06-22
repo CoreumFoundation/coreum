@@ -676,8 +676,10 @@ func TestWASMAuthzContract(t *testing.T) {
 	requireT := require.New(t)
 	granter := chain.GenAccount()
 	receiver := chain.GenAccount()
-	nativeDenom := chain.ChainSettings.Denom
+
 	authzClient := authztypes.NewQueryClient(chain.ClientContext)
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
 	totalAmountToSend := sdk.NewInt(2_000)
 
 	chain.Faucet.FundAccounts(ctx, t,
@@ -690,20 +692,15 @@ func TestWASMAuthzContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	clientCtx := chain.ClientContext.WithFromAddress(granter)
-	txf := chain.TxFactory().
-		WithSimulateAndExecute(true)
-	bankClient := banktypes.NewQueryClient(clientCtx)
-
-	contractAddr, _, err := deployAndInstantiateWASMContract(
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		clientCtx,
-		txf,
+		chain.TxFactory(),
+		granter,
 		authzWASM,
-		instantiateConfig{
-			accessType: wasmtypes.AccessTypeUnspecified,
-			payload:    initialPayload,
-			label:      "authz",
+		integrationtests.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Label:      "authz",
 		},
 	)
 	requireT.NoError(err)
@@ -739,12 +736,12 @@ func TestWASMAuthzContract(t *testing.T) {
 		transfer: {
 			Address: receiver.String(),
 			Amount:  int(totalAmountToSend.Int64()),
-			Denom:   nativeDenom,
+			Denom:   chain.ChainSettings.Denom,
 		},
 	})
 	requireT.NoError(err)
-	txf = txf.WithSimulateAndExecute(true)
-	_, err = executeWASMContract(ctx, clientCtx, txf, contractAddr, transferFundsPayload, sdk.Coin{})
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory(), granter, contractAddr, transferFundsPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check receiver balance
@@ -1032,7 +1029,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		ftMethodParams: {},
 	})
 	requireT.NoError(err)
-	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, paramsPayLoad)
+	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayLoad)
 	requireT.NoError(err)
 	var wasmParamsRes assetfttypes.QueryParamsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
@@ -1063,7 +1060,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, tokensPayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, tokensPayload)
 	requireT.NoError(err)
 	var wasmTokensRes assetfttypes.QueryTokensResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmTokensRes))
@@ -1080,7 +1077,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, balancePayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, balancePayload)
 	requireT.NoError(err)
 	var wasmBalanceRes assetfttypes.QueryBalanceResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmBalanceRes))
@@ -1112,7 +1109,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, frozenBalancesPayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, frozenBalancesPayload)
 	requireT.NoError(err)
 	var wasmFrozenBalancesRes assetfttypes.QueryFrozenBalancesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmFrozenBalancesRes))
@@ -1144,7 +1141,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, whitelistedBalancesPayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, whitelistedBalancesPayload)
 	requireT.NoError(err)
 	var wasmWhitelistedBalancesRes assetfttypes.QueryWhitelistedBalancesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmWhitelistedBalancesRes))
@@ -1414,7 +1411,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		nftMethodParams: {},
 	})
 	requireT.NoError(err)
-	queryOut, err := queryWASMContract(ctx, clientCtx, contractAddr, paramsPayLoad)
+	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayLoad)
 	requireT.NoError(err)
 	var wasmParamsRes assetnfttypes.QueryParamsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
@@ -1455,7 +1452,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, classesPayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classesPayload)
 	requireT.NoError(err)
 	var classesQueryRes assetnfttypes.QueryClassesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classesQueryRes))
@@ -1532,7 +1529,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, whitelistedAccountsForNFTPayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, whitelistedAccountsForNFTPayload)
 	requireT.NoError(err)
 	var whitelistedAccountsForNFTQueryRes assetnfttypes.QueryWhitelistedAccountsForNFTResponse
 	requireT.NoError(json.Unmarshal(queryOut, &whitelistedAccountsForNFTQueryRes))
@@ -1609,7 +1606,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftsPayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, nftsPayload)
 	requireT.NoError(err)
 	var nftsQueryRes nftsRes
 	requireT.NoError(json.Unmarshal(queryOut, &nftsQueryRes))
@@ -1630,7 +1627,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		nftMethodClassNFT: {},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftClassPayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, nftClassPayload)
 	requireT.NoError(err)
 	var nftClassQueryRes nftClassResponse
 	requireT.NoError(json.Unmarshal(queryOut, &nftClassQueryRes))
@@ -1653,7 +1650,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		nftMethodClassesNFT: {},
 	})
 	requireT.NoError(err)
-	queryOut, err = queryWASMContract(ctx, clientCtx, contractAddr, nftClassesPayload)
+	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, nftClassesPayload)
 	requireT.NoError(err)
 	var nftClassesQueryRes nftClassesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &nftClassesQueryRes))

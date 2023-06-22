@@ -25,7 +25,7 @@ func (k Keeper) ImportPendingTokenUpgrades(ctx sdk.Context, versions []types.Pen
 func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingTokenUpgrade, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PendingTokenUpgradeKeyPrefix)
 	versions := []types.PendingTokenUpgrade{}
-	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key []byte, value []byte) error {
+	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key, value []byte) error {
 		version, n := binary.Uvarint(value)
 		if n <= 0 {
 			return sdkerrors.Wrap(types.ErrInvalidState, "unmarshaling varint failed")
@@ -37,7 +37,6 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingToke
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

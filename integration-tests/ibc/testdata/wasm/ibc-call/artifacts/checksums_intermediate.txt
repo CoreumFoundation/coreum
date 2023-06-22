@@ -1,1 +1,0 @@
-eeadb21269767f2228008aa8e5986c6df382827c4ef621a3e00aa0c152cad350  ./target/wasm32-unknown-unknown/release/ibc_call.wasm

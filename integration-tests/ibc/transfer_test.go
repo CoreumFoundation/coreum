@@ -63,11 +63,6 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
-
-	gaiaSender := gaiaChain.GenAccount()
-	gaiaRecipient := gaiaChain.GenAccount()
-	coreumRecipient := coreumChain.GenAccount()
-
 	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(1000))
 
 	// Generate accounts

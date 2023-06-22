@@ -15,7 +15,7 @@ require (
 	github.com/CoreumFoundation/coreum-tools v0.4.0
 	github.com/CosmWasm/wasmd v0.30.0
 	github.com/cosmos/cosmos-sdk v0.45.16
-	github.com/cosmos/ibc-go/v4 v4.3.0
+	github.com/cosmos/ibc-go/v4 v4.3.1
 	github.com/cosmos/relayer/v2 v2.0.0-rc4.0.20220801224614-89d897395bc1
 	github.com/gogo/protobuf v1.3.3
 	github.com/google/uuid v1.3.0

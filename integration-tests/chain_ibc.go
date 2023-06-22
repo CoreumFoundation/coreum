@@ -35,7 +35,7 @@ func (c ChainContext) ExecuteIBCTransfer(
 	coin sdk.Coin,
 	recipientChainContext ChainContext,
 	recipientAddress sdk.AccAddress,
-) *sdk.TxResponse {
+) (*sdk.TxResponse, error) {
 	t.Helper()
 
 	sender := c.ConvertToBech32Address(senderAddress)
@@ -62,15 +62,12 @@ func (c ChainContext) ExecuteIBCTransfer(
 		},
 	}
 
-	txRes, err := c.BroadcastTxWithSigner(
+	return c.BroadcastTxWithSigner(
 		ctx,
 		c.TxFactory().WithSimulateAndExecute(true),
 		senderAddress,
 		&ibcSend,
 	)
-	require.NoError(t, err)
-
-	return txRes
 }
 
 // AwaitForBalance queries for the balance with retry and timeout.
