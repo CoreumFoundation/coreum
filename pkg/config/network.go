@@ -16,8 +16,13 @@ import (
 )
 
 var (
-	//go:embed genesis/genesis.tmpl.json
-	genesisTemplate string
+	// GenesisV1Template is the genesis template used by v1 version of the chain.
+	//go:embed genesis/genesis.v1.tmpl.json
+	GenesisV1Template string
+
+	// GenesisV2Template is the genesis template used by v2 version of the chain.
+	//go:embed genesis/genesis.v2.tmpl.json
+	GenesisV2Template string
 
 	//go:embed genesis/gentx/coreum-devnet-1
 	devGenTxsFS embed.FS
@@ -53,9 +58,10 @@ func init() {
 		},
 		constant.ChainIDDev: {
 			Provider: DynamicConfigProvider{
-				ChainID:     constant.ChainIDDev,
-				GenesisTime: time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
-				Denom:       constant.DenomDev,
+				GenesisTemplate: GenesisV2Template,
+				ChainID:         constant.ChainIDDev,
+				GenesisTime:     time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+				Denom:           constant.DenomDev,
 				GovConfig: GovConfig{
 					ProposalConfig: GovProposalConfig{
 						MinDepositAmount: "4000000000", // 4,000 CORE

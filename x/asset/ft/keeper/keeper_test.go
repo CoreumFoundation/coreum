@@ -21,6 +21,7 @@ import (
 	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
 func TestKeeper_Issue(t *testing.T) {
@@ -32,9 +33,8 @@ func TestKeeper_Issue(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 	bankKeeper := testApp.BankKeeper
 
-	ftParams := types.Params{
-		IssueFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
-	}
+	ftParams := types.DefaultParams()
+	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
 	ftKeeper.SetParams(ctx, ftParams)
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -78,6 +78,7 @@ func TestKeeper_Issue(t *testing.T) {
 		Features:           []types.Feature{types.Feature_freezing},
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
+		Version:            types.CurrentTokenVersion,
 	}, gotToken)
 
 	// check the metadata
@@ -129,9 +130,8 @@ func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {
 
 	ftKeeper := testApp.AssetFTKeeper
 
-	ftParams := types.Params{
-		IssueFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
-	}
+	ftParams := types.DefaultParams()
+	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
 	ftKeeper.SetParams(ctx, ftParams)
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -286,9 +286,8 @@ func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
 
 	ftKeeper := testApp.AssetFTKeeper
 
-	ftParams := types.Params{
-		IssueFee: sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
-	}
+	ftParams := types.DefaultParams()
+	ftParams.IssueFee = sdk.NewCoin(constant.DenomDev, sdk.ZeroInt())
 	ftKeeper.SetParams(ctx, ftParams)
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -315,9 +314,8 @@ func TestKeeper_Issue_WithNoFundsCoveringFee(t *testing.T) {
 
 	ftKeeper := testApp.AssetFTKeeper
 
-	ftParams := types.Params{
-		IssueFee: sdk.NewInt64Coin(constant.DenomDev, 10_000_000),
-	}
+	ftParams := types.DefaultParams()
+	ftParams.IssueFee = sdk.NewInt64Coin(constant.DenomDev, 10_000_000)
 	ftKeeper.SetParams(ctx, ftParams)
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -1392,6 +1390,67 @@ func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom2, sdk.NewInt(15)))},
 		})
 	requireT.ErrorIs(err, types.ErrWhitelistedLimitExceeded)
+}
+
+func TestKeeper_IBC(t *testing.T) {
+	requireT := require.New(t)
+	assertT := assert.New(t)
+
+	testApp := simapp.New()
+	ctx := testApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	ftKeeper := testApp.AssetFTKeeper
+	bankKeeper := testApp.BankKeeper
+
+	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+
+	settingsWithoutIBC := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "DEF",
+		Subunit:       "def",
+		Precision:     1,
+		Description:   "DEF Desc",
+		InitialAmount: sdk.NewInt(666),
+	}
+
+	denomWithoutIBC, err := ftKeeper.Issue(ctx, settingsWithoutIBC)
+	requireT.NoError(err)
+
+	settingsWithIBC := types.IssueSettings{
+		Issuer:        issuer,
+		Symbol:        "ABC",
+		Subunit:       "abc",
+		Precision:     1,
+		Description:   "ABC Desc",
+		InitialAmount: sdk.NewInt(666),
+		Features:      []types.Feature{types.Feature_ibc},
+	}
+
+	denomWithIBC, err := ftKeeper.Issue(ctx, settingsWithIBC)
+	requireT.NoError(err)
+
+	// Trick the ctx to look like an outgoing IBC,
+	// so we may use regular bank send to test the logic.
+	ctx = wibctransfertypes.WithDirection(ctx, wibctransfertypes.DirectionOut)
+
+	// transferring denom with disabled IBC should fail
+	err = bankKeeper.SendCoins(
+		ctx,
+		issuer,
+		recipient,
+		sdk.NewCoins(sdk.NewCoin(denomWithoutIBC, sdk.NewInt(100))),
+	)
+	assertT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+
+	// transferring denom with enabled IBC should succeed
+	err = bankKeeper.SendCoins(
+		ctx,
+		issuer,
+		recipient,
+		sdk.NewCoins(sdk.NewCoin(denomWithIBC, sdk.NewInt(100))),
+	)
+	assertT.NoError(err)
 }
 
 // TestKeeper_AllInOne tests send and multi send with tokens that have all features enabled

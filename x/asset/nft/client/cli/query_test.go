@@ -117,6 +117,22 @@ func TestCmdTxBurn(t *testing.T) {
 	args = append(args, txValidator1Args(testNetwork)...)
 	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args)
 	requireT.NoError(err)
+
+	args = []string{classID, "nft-1", "--output", "json"}
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBurnt(), args)
+	requireT.NoError(err)
+
+	var resp types.QueryBurntNFTResponse
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+	requireT.True(resp.Burnt)
+
+	args = []string{classID, "--output", "json"}
+	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBurnt(), args)
+	requireT.NoError(err)
+
+	var respList types.QueryBurntNFTsInClassResponse
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respList))
+	requireT.Len(respList.NftIds, 1)
 }
 
 func TestCmdQueryParams(t *testing.T) {

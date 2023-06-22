@@ -19,6 +19,8 @@ message GenesisState {
   repeated Balance frozen_balances = 3 [(gogoproto.nullable) = false];
   // whitelisted_balances contains the whitelisted balances on all of the accounts
   repeated Balance whitelisted_balances = 4 [(gogoproto.nullable) = false];
+  // pending_token_upgrades contains pending token upgrades.
+  repeated PendingTokenUpgrade pending_token_upgrades = 5  [(gogoproto.nullable) = false];
 }
 
 // Balance defines an account address and balance pair used module genesis genesis state.
@@ -29,4 +31,10 @@ message Balance {
   // coins defines the different coins this balance holds.
   repeated cosmos.base.v1beta1.Coin coins = 2
   [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins", (gogoproto.nullable) = false];
+}
+
+// PendingTokenUpgrade stores the version of pending token upgrade.
+message PendingTokenUpgrade {
+  string denom = 1;
+  uint32 version = 2;
 }

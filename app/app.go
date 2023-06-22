@@ -77,13 +77,11 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v4/modules/core"
 	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
 	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	ibcchannelkeeper "github.com/cosmos/ibc-go/v4/modules/core/04-channel/keeper"
 	ibcporttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
@@ -114,6 +112,9 @@ import (
 	"github.com/CoreumFoundation/coreum/x/customparams"
 	customparamskeeper "github.com/CoreumFoundation/coreum/x/customparams/keeper"
 	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/x/delay"
+	delaykeeper "github.com/CoreumFoundation/coreum/x/delay/keeper"
+	delaytypes "github.com/CoreumFoundation/coreum/x/delay/types"
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 	deterministicgastypes "github.com/CoreumFoundation/coreum/x/deterministicgas/types"
 	"github.com/CoreumFoundation/coreum/x/feemodel"
@@ -124,6 +125,8 @@ import (
 	wasmcustomhandler "github.com/CoreumFoundation/coreum/x/wasm/handler"
 	"github.com/CoreumFoundation/coreum/x/wbank"
 	wbankkeeper "github.com/CoreumFoundation/coreum/x/wbank/keeper"
+	"github.com/CoreumFoundation/coreum/x/wibctransfer"
+	wibctransferkeeper "github.com/CoreumFoundation/coreum/x/wibctransfer/keeper"
 	"github.com/CoreumFoundation/coreum/x/wnft"
 	wnftkeeper "github.com/CoreumFoundation/coreum/x/wnft/keeper"
 	"github.com/CoreumFoundation/coreum/x/wstaking"
@@ -174,7 +177,7 @@ var (
 		ibc.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		transfer.AppModuleBasic{},
+		wibctransfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		feemodel.AppModuleBasic{},
@@ -182,6 +185,7 @@ var (
 		assetft.AppModuleBasic{},
 		assetnft.AppModuleBasic{},
 		customparams.AppModuleBasic{},
+		delay.AppModuleBasic{},
 	)
 
 	// module account permissions.
@@ -244,7 +248,7 @@ type App struct {
 	UpgradeKeeper    upgradekeeper.Keeper
 	ParamsKeeper     paramskeeper.Keeper
 	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	TransferKeeper   ibctransferkeeper.Keeper
+	TransferKeeper   wibctransferkeeper.TransferKeeperWrapper
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	WASMKeeper       wasm.Keeper
@@ -255,6 +259,7 @@ type App struct {
 	BankKeeper         wbankkeeper.BaseKeeperWrapper
 	NFTKeeper          wnftkeeper.Wrapper
 	CustomParamsKeeper customparamskeeper.Keeper
+	DelayKeeper        delaykeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -297,12 +302,11 @@ func New(
 	bApp.SetRouter(deterministicgastypes.NewDeterministicGasRouter(bApp.Router(), deterministicGasConfig))
 
 	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey, stakingtypes.StoreKey,
-		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
-		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
-		evidencetypes.StoreKey, capabilitytypes.StoreKey,
-		wasm.StoreKey, feemodeltypes.StoreKey, assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey,
-		ibchost.StoreKey, ibctransfertypes.StoreKey,
+		authtypes.StoreKey, authz.ModuleName, banktypes.StoreKey, stakingtypes.StoreKey, minttypes.StoreKey,
+		distrtypes.StoreKey, slashingtypes.StoreKey, govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
+		feegrant.StoreKey, evidencetypes.StoreKey, capabilitytypes.StoreKey, wasm.StoreKey, feemodeltypes.StoreKey,
+		assetfttypes.StoreKey, assetnfttypes.StoreKey, nftkeeper.StoreKey, ibchost.StoreKey, ibctransfertypes.StoreKey,
+		delaytypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, feemodeltypes.TransientStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -340,22 +344,29 @@ func New(
 		keys[authz.ModuleName], appCodec, app.MsgServiceRouter(),
 	)
 
+	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
+
+	delayRouter := delaytypes.NewRouter()
+	app.DelayKeeper = delaykeeper.NewKeeper(appCodec, keys[delaytypes.StoreKey], delayRouter, app.interfaceRegistry)
+
 	originalBankKeeper := bankkeeper.NewBaseKeeper(appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs())
-	var ibcChannelKeeper ibcchannelkeeper.Keeper
-	assetFTKeeper := assetftkeeper.NewKeeper(
+	app.AssetFTKeeper = assetftkeeper.NewKeeper(
 		appCodec,
 		app.GetSubspace(assetfttypes.ModuleName).WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&assetfttypes.Params{})),
 		keys[assetfttypes.StoreKey],
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
-		&ibcChannelKeeper,
+		app.DelayKeeper,
 	)
+
+	err := delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))
+	if err != nil {
+		panic(err)
+	}
 
 	app.BankKeeper = wbankkeeper.NewKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), assetFTKeeper,
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(), app.AssetFTKeeper,
 	)
-
-	app.AssetFTKeeper = assetFTKeeper
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
@@ -376,7 +387,6 @@ func New(
 	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
-	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
@@ -394,7 +404,6 @@ func New(
 
 	app.IBCKeeper = ibckeeper.NewKeeper(appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName),
 		app.StakingKeeper, app.UpgradeKeeper, app.ScopedIBCKeeper)
-	ibcChannelKeeper = app.IBCKeeper.ChannelKeeper
 
 	nftKeeper := nftkeeper.NewKeeper(keys[nftkeeper.StoreKey], appCodec, app.AccountKeeper, app.BankKeeper)
 	app.AssetNFTKeeper = assetnftkeeper.NewKeeper(
@@ -409,7 +418,7 @@ func New(
 	app.NFTKeeper = wnftkeeper.NewWrappedNFTKeeper(nftKeeper, app.AssetNFTKeeper)
 
 	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+	app.TransferKeeper = wibctransferkeeper.NewTransferKeeperWrapper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
 		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, app.BankKeeper, app.ScopedTransferKeeper,
@@ -439,7 +448,7 @@ func New(
 	wasmOpts := []wasm.Option{
 		wasmkeeper.WithMessageEncoders(wasmcustomhandler.NewCoreumMsgHandler()),
 		wasmkeeper.WithQueryPlugins(wasmcustomhandler.NewCoreumQueryHandler(
-			assetftkeeper.NewQueryService(app.AssetFTKeeper),
+			assetftkeeper.NewQueryService(app.AssetFTKeeper, app.BankKeeper),
 			assetnftkeeper.NewQueryService(app.AssetNFTKeeper),
 			app.NFTKeeper,
 		)),
@@ -480,7 +489,7 @@ func New(
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transfer.NewIBCModule(app.TransferKeeper))
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, wibctransfer.NewDirectionMiddleware(transfer.NewIBCModule(app.TransferKeeper.Keeper)))
 	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WASMKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -490,15 +499,21 @@ func New(
 	// we prefer to be more strict in what arguments the modules expect.
 	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
-	assetFTModule := assetft.NewAppModule(appCodec, app.AssetFTKeeper, app.BankKeeper)
+	assetFTModule := assetft.NewAppModule(
+		appCodec,
+		app.AssetFTKeeper,
+		app.BankKeeper.BaseKeeper,
+		app.ParamsKeeper,
+	)
 	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
 	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)
 
 	customParamsModule := customparams.NewAppModule(app.CustomParamsKeeper)
-
 	wstakingModule := wstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.CustomParamsKeeper)
+
+	delayModule := delay.NewAppModule(app.DelayKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -524,13 +539,14 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		transfer.NewAppModule(app.TransferKeeper),
+		wibctransfer.NewAppModule(app.TransferKeeper),
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
 		assetFTModule,
 		assetNFTModule,
 		wnftModule,
 		customParamsModule,
+		delayModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -562,6 +578,7 @@ func New(
 		assetfttypes.ModuleName,
 		assetnfttypes.ModuleName,
 		nft.ModuleName,
+		delaytypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -589,6 +606,7 @@ func New(
 		assetfttypes.ModuleName,
 		assetnfttypes.ModuleName,
 		nft.ModuleName,
+		delaytypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -621,6 +639,7 @@ func New(
 		nft.ModuleName,
 		assetfttypes.ModuleName,
 		assetnfttypes.ModuleName,
+		delaytypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -644,7 +663,7 @@ func New(
 		wstakingModule,
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
-		transfer.NewAppModule(app.TransferKeeper),
+		wibctransfer.NewAppModule(app.TransferKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		wasm.NewAppModule(appCodec, &app.WASMKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		feeModule,
@@ -652,6 +671,7 @@ func New(
 		assetNFTModule,
 		wnftModule,
 		customParamsModule,
+		delayModule,
 	)
 	app.sm.RegisterStoreDecoders()
 

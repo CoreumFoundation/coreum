@@ -28,6 +28,11 @@ service Query {
     option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}";
   }
 
+  // Balance returns balance of the denom for the account.
+  rpc Balance(QueryBalanceRequest) returns (QueryBalanceResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/summary/{denom}";
+  }
+
   // FrozenBalances returns all the frozen balances for the account.
   rpc FrozenBalances(QueryFrozenBalancesRequest) returns (QueryFrozenBalancesResponse) {
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/frozen";
@@ -77,6 +82,36 @@ message QueryTokensResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 1;
 
   repeated Token tokens = 2 [(gogoproto.nullable) = false];
+}
+
+message QueryBalanceRequest {
+  // account specifies the account onto which we query balances
+  string account = 1;
+  // denom specifies balances on a specific denom
+  string denom = 2;
+}
+
+message QueryBalanceResponse {
+  // balance contains the balance with the queried account and denom
+  string balance = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // whitelisted is the whitelisted amount of the denom on the account.
+  string whitelisted = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // frozen is the frozen amount of the denom on the account.
+  string frozen = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // locked is the balance locked by vesting.
+  string locked = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message QueryFrozenBalancesRequest {

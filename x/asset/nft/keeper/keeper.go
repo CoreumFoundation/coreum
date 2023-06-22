@@ -361,6 +361,32 @@ func (k Keeper) IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error) {
 	return bytes.Equal(ctx.KVStore(k.storeKey).Get(key), asset.StoreTrue), nil
 }
 
+// GetBurnt return the list of burnt NFTs in class.
+func (k Keeper) GetBurnt(ctx sdk.Context, classID string, q *query.PageRequest) (*query.PageResponse, []string, error) {
+	key, err := types.CreateClassBurningKey(classID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	nfts := []string{}
+	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key), q,
+		func(key, value []byte) error {
+			if !bytes.Equal(value, asset.StoreTrue) {
+				return errors.Errorf("value stored in burnt store is not %x, value %x", asset.StoreTrue, value)
+			}
+
+			nft := string(key[1:]) // the first byte contains the length prefix
+			nfts = append(nfts, nft)
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return pageRes, nfts, nil
+}
+
 // SetBurnt marks the nft burnt, but does not make any checks
 // should not be used directly outside the module except for genesis.
 func (k Keeper) SetBurnt(ctx sdk.Context, classID, nftID string) error {

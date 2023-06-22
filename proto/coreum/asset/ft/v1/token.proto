@@ -2,7 +2,6 @@ syntax = "proto3";
 package coreum.asset.ft.v1;
 
 import "gogoproto/gogo.proto";
-import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
 
@@ -12,6 +11,7 @@ enum Feature {
   burning = 1;
   freezing = 2;
   whitelisting = 3;
+  ibc = 4;
 }
 
 // Definition defines the fungible token settings to store.
@@ -33,6 +33,7 @@ message Definition {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
+  uint32 version = 6;
 }
 
 // Token is a full representation of the fungible token.
@@ -59,4 +60,10 @@ message Token {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
   ];
+  uint32 version = 11;
+}
+
+// DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.
+message DelayedTokenUpgradeV1 {
+  string denom = 1;
 }

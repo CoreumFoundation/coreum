@@ -25,6 +25,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(CmdQueryToken())
 	cmd.AddCommand(CmdQueryTokens())
+	cmd.AddCommand(CmdQueryBalance())
 	cmd.AddCommand(CmdQueryFrozenBalance())
 	cmd.AddCommand(CmdQueryFrozenBalances())
 	cmd.AddCommand(CmdQueryWhitelistedBalance())
@@ -34,7 +35,7 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// CmdQueryTokens return the QueryTokens cobra command.
+// CmdQueryTokens returns the QueryTokens cobra command.
 //
 //nolint:dupl // most code is identical, but reusing logic is not beneficial here.
 func CmdQueryTokens() *cobra.Command {
@@ -79,7 +80,7 @@ $ %[1]s query %s tokens [issuer]
 	return cmd
 }
 
-// CmdQueryToken return the QueryToken cobra command.
+// CmdQueryToken returns the QueryToken cobra command.
 func CmdQueryToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token [denom]",
@@ -101,6 +102,44 @@ $ %[1]s query %s token [denom]
 			denom := args[0]
 			res, err := queryClient.Token(cmd.Context(), &types.QueryTokenRequest{
 				Denom: denom,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryBalance returns the QueryFrozenBalance cobra command.
+func CmdQueryBalance() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "balance [account] [denom]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query fungible token balance information",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query fungible token balance information of an account and denom.
+
+Example:
+$ %[1]s query %s balance [account] [denom]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			account := args[0]
+			denom := args[1]
+			res, err := queryClient.Balance(cmd.Context(), &types.QueryBalanceRequest{
+				Account: account,
+				Denom:   denom,
 			})
 			if err != nil {
 				return err
@@ -160,7 +199,7 @@ $ %[1]s query %s frozen-balances [account]
 	return cmd
 }
 
-// CmdQueryFrozenBalance return the QueryFrozenBalance cobra command.
+// CmdQueryFrozenBalance returns the QueryFrozenBalance cobra command.
 func CmdQueryFrozenBalance() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "frozen-balance [account] [denom]",
@@ -198,7 +237,7 @@ $ %[1]s query %s frozen-balance [account] [denom]
 	return cmd
 }
 
-// CmdQueryWhitelistedBalances return the QueryWhitelistedBalances cobra command.
+// CmdQueryWhitelistedBalances returns the QueryWhitelistedBalances cobra command.
 //
 //nolint:dupl // most code is identical, but reusing logic is not beneficial here.
 func CmdQueryWhitelistedBalances() *cobra.Command {
@@ -243,7 +282,7 @@ $ %[1]s query %s whitelisted-balances [account]
 	return cmd
 }
 
-// CmdQueryWhitelistedBalance return the QueryWhitelistedBalance cobra command.
+// CmdQueryWhitelistedBalance returns the QueryWhitelistedBalance cobra command.
 func CmdQueryWhitelistedBalance() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "whitelisted-balance [account] [denom]",

@@ -15,6 +15,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum/x/asset"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
@@ -25,11 +26,11 @@ type ParamSubspace interface {
 
 // Keeper is the asset module keeper.
 type Keeper struct {
-	cdc              codec.BinaryCodec
-	paramSubspace    ParamSubspace
-	storeKey         sdk.StoreKey
-	bankKeeper       types.BankKeeper
-	ibcChannelKeeper types.IBCChannelKeeper
+	cdc           codec.BinaryCodec
+	paramSubspace ParamSubspace
+	storeKey      sdk.StoreKey
+	bankKeeper    types.BankKeeper
+	delayKeeper   types.DelayKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -38,14 +39,14 @@ func NewKeeper(
 	paramSubspace ParamSubspace,
 	storeKey sdk.StoreKey,
 	bankKeeper types.BankKeeper,
-	ibcChannelKeeper types.IBCChannelKeeper,
+	delayKeeper types.DelayKeeper,
 ) Keeper {
 	return Keeper{
-		cdc:              cdc,
-		paramSubspace:    paramSubspace,
-		storeKey:         storeKey,
-		bankKeeper:       bankKeeper,
-		ibcChannelKeeper: ibcChannelKeeper,
+		cdc:           cdc,
+		paramSubspace: paramSubspace,
+		storeKey:      storeKey,
+		bankKeeper:    bankKeeper,
+		delayKeeper:   delayKeeper,
 	}
 }
 
@@ -123,7 +124,7 @@ func (k Keeper) GetDefinition(ctx sdk.Context, denom string) (types.Definition, 
 	return definition, nil
 }
 
-// GetToken return the fungible token by it's denom.
+// GetToken returns the fungible token by it's denom.
 func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 	def, err := k.GetDefinition(ctx, denom)
 	if err != nil {
@@ -135,6 +136,12 @@ func (k Keeper) GetToken(ctx sdk.Context, denom string) (types.Token, error) {
 
 // Issue issues new fungible token and returns it's denom.
 func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, error) {
+	return k.IssueVersioned(ctx, settings, types.CurrentTokenVersion)
+}
+
+// IssueVersioned issues new fungible token and sets its version.
+// To be used only in unit tests !!!
+func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, version uint32) (string, error) {
 	if err := types.ValidateSubunit(settings.Subunit); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided subunit: %s", settings.Subunit)
 	}
@@ -182,11 +189,13 @@ func (k Keeper) Issue(ctx sdk.Context, settings types.IssueSettings) (string, er
 		Features:           settings.Features,
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
+		Version:            version,
 	}
 
 	if err := k.SetDenomMetadata(ctx, denom, settings.Symbol, settings.Description, settings.Precision); err != nil {
 		return "", err
 	}
+
 	k.SetDefinition(ctx, settings.Issuer, settings.Subunit, definition)
 
 	if err := k.mintIfReceivable(ctx, definition, settings.InitialAmount, settings.Issuer); err != nil {
@@ -537,6 +546,14 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return sdkerrors.Wrapf(types.ErrGloballyFrozen, "%s is globally frozen", def.Denom)
 	}
 
+	// Checking for IBC-received transfer is done here (after call to k.isGloballyFrozen), because those transfers
+	// should be affected by the global freeze checked above. We decided that if token is frozen globally it means
+	// none of the balances for that token can be affected during freezing period.
+	// Otherwise, the transfer must work despite the fact that escrow address might have been frozen by the issuer.
+	if wibctransfertypes.IsDirectionIn(ctx) {
+		return nil
+	}
+
 	availableBalance := k.availableBalance(ctx, addr, def.Denom)
 	if !availableBalance.Amount.GTE(amount) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "%s is not available, available %s",
@@ -546,7 +563,21 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 }
 
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
-	if !def.IsFeatureEnabled(types.Feature_whitelisting) || def.IsIssuer(addr) {
+	// This check is done when funds for IBC transfers are received by the escrow address.
+	// If IBC is enabled we always accept escrow address as a receiver of the funds because it must work
+	// despite the fact that address is not whitelisted.
+	// On the other hand, if IBC is disabled for the token, we reject the transfer to the escrow address.
+	// We don't block on IsDirectionIn condition when IBC transfer is received because if token cannot be sent,
+	// it cannot be received back by definition.
+	if wibctransfertypes.IsDirectionOut(ctx) {
+		if !def.IsFeatureEnabled(types.Feature_ibc) {
+			return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "ibc transfers are disabled for %s", def.Denom)
+		}
+		return nil
+	}
+
+	if !def.IsFeatureEnabled(types.Feature_whitelisting) ||
+		def.IsIssuer(addr) {
 		return nil
 	}
 
@@ -622,6 +653,7 @@ func (k Keeper) getTokenFullInfo(ctx sdk.Context, definition types.Definition) (
 		BurnRate:           definition.BurnRate,
 		SendCommissionRate: definition.SendCommissionRate,
 		GloballyFrozen:     k.isGloballyFrozen(ctx, definition.Denom),
+		Version:            definition.Version,
 	}, nil
 }
 

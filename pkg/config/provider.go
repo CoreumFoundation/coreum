@@ -35,6 +35,7 @@ type NetworkConfigProvider interface {
 
 // DynamicConfigProvider provides configuration generated from fields in this structure.
 type DynamicConfigProvider struct {
+	GenesisTemplate    string
 	ChainID            constant.ChainID
 	GenesisTime        time.Time
 	GovConfig          GovConfig
@@ -181,7 +182,7 @@ func (dcp DynamicConfigProvider) genesisByTemplate() ([]byte, error) {
 	}
 
 	genesisBuf := new(bytes.Buffer)
-	err := template.Must(template.New("genesis").Funcs(funcMap).Parse(genesisTemplate)).Execute(genesisBuf, struct {
+	err := template.Must(template.New("genesis").Funcs(funcMap).Parse(dcp.GenesisTemplate)).Execute(genesisBuf, struct {
 		GenesisTimeUTC     string
 		ChainID            constant.ChainID
 		Denom              string

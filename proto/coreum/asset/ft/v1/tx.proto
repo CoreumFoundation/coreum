@@ -37,6 +37,9 @@ service Msg {
 
   // SetWhitelistedLimit sets the limit of how many tokens a specific account may hold.
   rpc SetWhitelistedLimit(MsgSetWhitelistedLimit) returns (EmptyResponse);
+
+  // TokenUpgradeV1 upgrades token to version V1.
+  rpc UpgradeTokenV1(MsgUpgradeTokenV1) returns (EmptyResponse);
 }
 
 // MsgIssue defines message to issue new fungible token.
@@ -101,6 +104,13 @@ message MsgSetWhitelistedLimit {
   string sender = 1;
   string account = 2;
   cosmos.base.v1beta1.Coin coin = 3 [(gogoproto.nullable) = false];
+}
+
+// MsgUpgradeTokenV1 is the message upgrading token to V1.
+message MsgUpgradeTokenV1 {
+  string sender = 1;
+  string denom = 2;
+  bool ibc_enabled = 3;
 }
 
 message EmptyResponse {}
