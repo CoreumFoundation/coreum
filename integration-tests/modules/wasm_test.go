@@ -698,7 +698,7 @@ func TestWASMAuthzContract(t *testing.T) {
 
 	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
-		chain.TxFactory(),
+		chain.TxFactory().WithSimulateAndExecute(true),
 		granter,
 		authzWASM,
 		integrationtests.InstantiateConfig{
@@ -745,7 +745,7 @@ func TestWASMAuthzContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 
-	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory(), granter, contractAddr, transferFundsPayload, sdk.Coin{})
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, chain.TxFactory().WithSimulateAndExecute(true), granter, contractAddr, transferFundsPayload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// check receiver balance
