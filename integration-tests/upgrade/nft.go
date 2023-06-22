@@ -184,6 +184,8 @@ func (nt *nftFeaturesTest) Before(t *testing.T) {
 
 func (nt *nftFeaturesTest) After(t *testing.T) {
 	nt.verifyClassIsFixed(t)
+	nt.tryCreatingClassWithInvalidFeature(t)
+	nt.createValidClass(t)
 }
 
 func (nt *nftFeaturesTest) verifyClassIsFixed(t *testing.T) {
