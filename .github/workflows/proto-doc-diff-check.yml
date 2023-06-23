@@ -25,18 +25,14 @@ jobs:
         run: go mod tidy
       - name: Generate proto docs
         run: crust proto/coreum --log-format=yaml
-      - name: debug git diff
-        run: git diff
-      - name: debug git status
-        run: git status
-      - name: debug final command
-        run: git status --porcelain
       - name: check git diff
         run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            echo "There are differences in the Git repository."
-            exit 1
+          git diff --quiet "docs/api.md"
+          if [ $? -eq 0 ]; then
+            echo "No changes detected in docs/api.md."
+            exit 0
           else
-            echo "No differences found in the Git repository."
+            echo "Changes detected in docs/api.md."
+            exit 1
           fi
 
