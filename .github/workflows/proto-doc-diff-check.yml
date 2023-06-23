@@ -23,8 +23,13 @@ jobs:
         run: crust build/crust
       - name: Debug
         run: |
+          pwd
           echo ${HOME}
           ls /home/runner/go/pkg/mod/github.com
+      - name: install deps
+        run: |
+          cd $(pwd)/coreum && go mod tidy
+          ls /home/runner/go/pkg/mod/github.com/cosmos/
       - name: Generate proto docs
         run: crust proto/coreum --log-format=yaml
       - name: check git diff
