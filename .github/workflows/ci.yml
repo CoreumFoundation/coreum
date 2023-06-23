@@ -73,6 +73,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          ref: wojtek/upgrade-cosmwasm # FIXME (wojtek): remove once merged
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
