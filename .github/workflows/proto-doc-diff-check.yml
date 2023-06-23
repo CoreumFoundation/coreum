@@ -21,17 +21,12 @@ jobs:
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: update crust
         run: crust build/crust
-      - name: Debug
-        run: |
-          pwd
-          echo ${HOME}
-          ls /home/runner/go/pkg/mod/github.com
       - name: install deps
-        run: |
-          go mod tidy
-          ls /home/runner/go/pkg/mod/github.com/cosmos/
+        run: go mod tidy
       - name: Generate proto docs
         run: crust proto/coreum --log-format=yaml
+      - name: debug git diff
+        run: git diff
       - name: check git diff
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
