@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Checkout crust
@@ -19,8 +19,7 @@ jobs:
           ref: artem/docs-gen
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-      - name: update crust
-        run: crust build/crust
+      # FIXME crust tidy doesn't work, that's why I added manual installation as a temp solution
       - name: install deps
         run: go mod tidy
       - name: Generate proto docs
@@ -35,4 +34,3 @@ jobs:
             echo "Changes detected in docs/api.md."
             exit 1
           fi
-
