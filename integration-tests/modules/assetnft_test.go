@@ -39,6 +39,8 @@ func TestAssetNFTQueryParams(t *testing.T) {
 }
 
 // TestAssetNFTIssueClass tests non-fungible token class creation.
+//
+//nolint:funlen // there are many tests
 func TestAssetNFTIssueClass(t *testing.T) {
 	t.Parallel()
 
@@ -194,6 +196,8 @@ func TestAssetNFTIssueClass(t *testing.T) {
 }
 
 // TestAssetNFTMint tests non-fungible token minting.
+//
+//nolint:funlen // there are many tests
 func TestAssetNFTMint(t *testing.T) {
 	t.Parallel()
 
@@ -456,6 +460,8 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 }
 
 // TestAssetNFTBurn tests non-fungible token burning.
+//
+//nolint:funlen // there are many tests
 func TestAssetNFTBurn(t *testing.T) {
 	t.Parallel()
 
@@ -617,6 +623,8 @@ func TestAssetNFTBurn(t *testing.T) {
 }
 
 // TestAssetNFTBurnFrozen tests that frozen NFT cannot be burnt.
+//
+//nolint:funlen // there are many tests
 func TestAssetNFTBurnFrozen(t *testing.T) {
 	t.Parallel()
 
@@ -863,6 +871,8 @@ func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
 }
 
 // TestAssetNFTFreeze tests non-fungible token freezing.
+//
+//nolint:funlen // there are many tests
 func TestAssetNFTFreeze(t *testing.T) {
 	t.Parallel()
 
@@ -1057,6 +1067,8 @@ func TestAssetNFTFreeze(t *testing.T) {
 }
 
 // TestAssetNFTWhitelist tests non-fungible token whitelisting.
+//
+//nolint:funlen // there are many tests
 func TestAssetNFTWhitelist(t *testing.T) {
 	t.Parallel()
 

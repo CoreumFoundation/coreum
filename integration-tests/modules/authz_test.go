@@ -18,6 +18,8 @@ import (
 )
 
 // TestAuthz tests the authz module Grant/Execute/Revoke messages execution and their deterministic gas.
+//
+//nolint:funlen // there are many tests
 func TestAuthz(t *testing.T) {
 	t.Parallel()
 

@@ -135,7 +135,7 @@ func (k Keeper) ImportDelayedItems(ctx sdk.Context, items []types.DelayedItem) e
 func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DelayedItemKeyPrefix)
 	delayedItems := []types.DelayedItem{}
-	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key []byte, value []byte) error {
+	_, err := query.Paginate(store, &query.PageRequest{Limit: query.MaxLimit}, func(key, value []byte) error {
 		executionTime, id, err := types.ExtractTimeAndIDFromDelayedItemKey(key)
 		if err != nil {
 			return err
@@ -154,7 +154,6 @@ func (k Keeper) ExportDelayedItems(ctx sdk.Context) ([]types.DelayedItem, error)
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

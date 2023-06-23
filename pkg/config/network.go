@@ -194,7 +194,7 @@ func SetSDKConfig(addressPrefix string, coinType uint32) {
 	config.SetBech32PrefixForConsensusNode(addressPrefix+"valcons", addressPrefix+"valconspub")
 
 	// Set BIP44 coin type corresponding to CORE
-	config.SetCoinType(constant.CoinType)
+	config.SetCoinType(coinType)
 
 	config.Seal()
 }
