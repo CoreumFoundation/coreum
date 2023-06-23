@@ -29,32 +29,37 @@ func TestMigrateFeatures(t *testing.T) {
 		Issuer:      issuer,
 		Symbol:      "DEF",
 		Description: "DEF Desc",
-		Features: []types.ClassFeature{
-			types.ClassFeature_disable_sending,
-			types.ClassFeature_whitelisting,
-			types.ClassFeature_freezing,
-			types.ClassFeature_burning,
-		},
 	}
 
 	classID, err := keeper.IssueClass(ctx, settings)
 	requireT.NoError(err)
 
-	requireT.NoError(v1.MigrateClassFeatures(ctx, keeper, types.ClassFeature_name))
-
-	defUnchanged, err := keeper.GetClassDefinition(ctx, classID)
+	def, err := keeper.GetClassDefinition(ctx, classID)
 	requireT.NoError(err)
-	assertT.Equal(settings.Features, defUnchanged.Features)
 
-	requireT.NoError(v1.MigrateClassFeatures(ctx, keeper, map[int32]string{
-		1: "freezing",
-		2: "whitelisting",
-	}))
+	def.Features = []types.ClassFeature{
+		types.ClassFeature_disable_sending,
+		4000,                               // should be removed
+		types.ClassFeature_disable_sending, // should be removed
+		4000,                               // should be removed
+		types.ClassFeature_whitelisting,
+		types.ClassFeature_whitelisting, // should be removed
+		types.ClassFeature_freezing,
+		1000,                        // should be removed
+		types.ClassFeature_freezing, // should be removed
+		types.ClassFeature_burning,
+		types.ClassFeature_burning, // should be removed
+	}
+	requireT.NoError(keeper.SetClassDefinition(ctx, def))
+
+	requireT.NoError(v1.MigrateClassFeatures(ctx, keeper))
 
 	defChanged, err := keeper.GetClassDefinition(ctx, classID)
 	requireT.NoError(err)
 	assertT.Equal([]types.ClassFeature{
+		types.ClassFeature_disable_sending,
 		types.ClassFeature_whitelisting,
 		types.ClassFeature_freezing,
+		types.ClassFeature_burning,
 	}, defChanged.Features)
 }

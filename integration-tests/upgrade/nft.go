@@ -167,6 +167,12 @@ func (nt *nftFeaturesTest) Before(t *testing.T) {
 			assetnfttypes.ClassFeature_whitelisting,
 			3000, // should be removed
 			assetnfttypes.ClassFeature_disable_sending,
+			assetnfttypes.ClassFeature_burning,         // should be removed
+			assetnfttypes.ClassFeature_freezing,        // should be removed
+			2000,                                       // should be removed
+			assetnfttypes.ClassFeature_whitelisting,    // should be removed
+			3000,                                       // should be removed
+			assetnfttypes.ClassFeature_disable_sending, // should be removed
 		},
 	}
 	res, err := client.BroadcastTx(
@@ -185,6 +191,7 @@ func (nt *nftFeaturesTest) Before(t *testing.T) {
 func (nt *nftFeaturesTest) After(t *testing.T) {
 	nt.verifyClassIsFixed(t)
 	nt.tryCreatingClassWithInvalidFeature(t)
+	nt.tryCreatingClassWithDuplicatedFeature(t)
 	nt.createValidClass(t)
 }
 
@@ -233,6 +240,43 @@ func (nt *nftFeaturesTest) tryCreatingClassWithInvalidFeature(t *testing.T) {
 			2000,
 			assetnfttypes.ClassFeature_whitelisting,
 			assetnfttypes.ClassFeature_disable_sending,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "invalid input")
+}
+
+func (nt *nftFeaturesTest) tryCreatingClassWithDuplicatedFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+		},
+	})
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		RoyaltyRate: sdk.ZeroDec(),
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+			assetnfttypes.ClassFeature_burning,
 		},
 	}
 	_, err := client.BroadcastTx(

@@ -14,13 +14,18 @@ type NFTKeeper interface {
 
 // MigrateClassFeatures migrates asset nft class features state from v1 to v2.
 // It removes features which are outside the allowed scope.
-func MigrateClassFeatures(ctx sdk.Context, keeper NFTKeeper, allowedFeatures map[int32]string) error {
+func MigrateClassFeatures(ctx sdk.Context, keeper NFTKeeper) error {
 	return keeper.IterateAllClassDefinitions(ctx, func(classDef types.ClassDefinition) (bool, error) {
+		present := map[types.ClassFeature]struct{}{}
 		newFeatures := make([]types.ClassFeature, 0, len(classDef.Features))
 		for _, f := range classDef.Features {
-			if _, exists := allowedFeatures[int32(f)]; !exists {
+			if _, exists := types.ClassFeature_name[int32(f)]; !exists {
 				continue
 			}
+			if _, exists := present[f]; exists {
+				continue
+			}
+			present[f] = struct{}{}
 			newFeatures = append(newFeatures, f)
 		}
 		if len(newFeatures) < len(classDef.Features) {

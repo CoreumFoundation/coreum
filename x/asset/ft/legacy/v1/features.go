@@ -14,13 +14,21 @@ type FTKeeper interface {
 
 // MigrateFeatures migrates asset ft features state from v1 to v2.
 // It removes features which are outside the allowed scope.
-func MigrateFeatures(ctx sdk.Context, keeper FTKeeper, allowedFeatures map[int32]string) error {
+func MigrateFeatures(ctx sdk.Context, keeper FTKeeper) error {
 	return keeper.IterateAllDefinitions(ctx, func(def types.Definition) (bool, error) {
+		present := map[types.Feature]struct{}{}
 		newFeatures := make([]types.Feature, 0, len(def.Features))
 		for _, f := range def.Features {
-			if _, exists := allowedFeatures[int32(f)]; !exists || f == types.Feature_ibc {
+			if f == types.Feature_ibc {
 				continue
 			}
+			if _, exists := types.Feature_name[int32(f)]; !exists {
+				continue
+			}
+			if _, exists := present[f]; exists {
+				continue
+			}
+			present[f] = struct{}{}
 			newFeatures = append(newFeatures, f)
 		}
 		if len(newFeatures) < len(def.Features) {

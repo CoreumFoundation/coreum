@@ -33,37 +33,37 @@ func TestMigrateFeatures(t *testing.T) {
 		Precision:     1,
 		Description:   "DEF Desc",
 		InitialAmount: sdk.NewInt(1000),
-		Features: []types.Feature{
-			types.Feature_minting,
-			types.Feature_whitelisting,
-			types.Feature_freezing,
-			types.Feature_burning,
-			types.Feature_ibc,
-		},
 	}
 	denom, err := keeper.Issue(ctx, settings)
 	requireT.NoError(err)
+	def, err := keeper.GetDefinition(ctx, denom)
+	requireT.NoError(err)
 
-	requireT.NoError(v1.MigrateFeatures(ctx, keeper, types.Feature_name))
+	def.Features = []types.Feature{
+		types.Feature_minting,
+		types.Feature_minting, // should be removed
+		types.Feature_whitelisting,
+		3000,                       // should be removed
+		types.Feature_whitelisting, // should be removed
+		types.Feature_freezing,
+		types.Feature_freezing, // should be removed
+		types.Feature_burning,
+		1000,                  // should be removed
+		types.Feature_burning, // should be removed
+		types.Feature_ibc,     // should be removed
+		types.Feature_ibc,     // should be removed
+		3000,                  // should be removed
+	}
+	keeper.SetDefinition(ctx, issuer, settings.Subunit, def)
 
-	defChanged1, err := keeper.GetDefinition(ctx, denom)
+	requireT.NoError(v1.MigrateFeatures(ctx, keeper))
+
+	defChanged, err := keeper.GetDefinition(ctx, denom)
 	requireT.NoError(err)
 	assertT.Equal([]types.Feature{
 		types.Feature_minting,
 		types.Feature_whitelisting,
 		types.Feature_freezing,
 		types.Feature_burning,
-	}, defChanged1.Features)
-
-	requireT.NoError(v1.MigrateFeatures(ctx, keeper, map[int32]string{
-		1: "burning",
-		3: "whitelisting",
-	}))
-
-	defChanged2, err := keeper.GetDefinition(ctx, denom)
-	requireT.NoError(err)
-	assertT.Equal([]types.Feature{
-		types.Feature_whitelisting,
-		types.Feature_burning,
-	}, defChanged2.Features)
+	}, defChanged.Features)
 }

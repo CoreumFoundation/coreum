@@ -91,10 +91,16 @@ func ValidateClassSymbol(symbol string) error {
 
 // ValidateClassFeatures verifies that provided features belong to the defined set.
 func ValidateClassFeatures(features []ClassFeature) error {
+	present := map[ClassFeature]struct{}{}
 	for _, f := range features {
-		if _, exists := ClassFeature_name[int32(f)]; !exists {
-			return sdkerrors.Wrapf(ErrInvalidInput, "non-existing feature provided: %d", f)
+		name, exists := ClassFeature_name[int32(f)]
+		if !exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "non-existing class feature provided: %d", f)
 		}
+		if _, exists := present[f]; exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated class feature: %s", name)
+		}
+		present[f] = struct{}{}
 	}
 	return nil
 }

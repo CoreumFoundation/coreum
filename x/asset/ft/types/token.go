@@ -184,10 +184,16 @@ func (def Definition) IsIssuer(addr sdk.Address) bool {
 
 // ValidateFeatures verifies that provided features belong to the defined set.
 func ValidateFeatures(features []Feature) error {
+	present := map[Feature]struct{}{}
 	for _, f := range features {
-		if _, exists := Feature_name[int32(f)]; !exists {
+		name, exists := Feature_name[int32(f)]
+		if !exists {
 			return sdkerrors.Wrapf(ErrInvalidInput, "non-existing feature provided: %d", f)
 		}
+		if _, exists := present[f]; exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated feature: %s", name)
+		}
+		present[f] = struct{}{}
 	}
 	return nil
 }

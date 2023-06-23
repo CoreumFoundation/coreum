@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	v1 "github.com/CoreumFoundation/coreum/x/asset/ft/legacy/v1"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -26,5 +25,5 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	if err := v1.MigrateParams(ctx, m.paramsKeeper); err != nil {
 		return err
 	}
-	return v1.MigrateFeatures(ctx, m.ftKeeper, types.Feature_name)
+	return v1.MigrateFeatures(ctx, m.ftKeeper)
 }
