@@ -22,7 +22,7 @@ jobs:
       - name: update crust
         run: crust build/crust
       - name: Generate proto docs
-        run: crust docs/proto --log-format=yaml
+        run: crust proto/coreum --log-format=yaml
       - name: check git diff
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
