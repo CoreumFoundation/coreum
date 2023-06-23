@@ -23,7 +23,7 @@ jobs:
         run: crust build/crust
       - name: Generate proto docs
         run: crust docs/proto --log-format=yaml
-      - name: git diff
+      - name: check git diff
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
             echo "There are differences in the Git repository."
