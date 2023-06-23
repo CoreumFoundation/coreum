@@ -23,13 +23,7 @@ jobs:
         run: crust build/crust
       - name: Debug
         run: |
-          pwd
-          echo ${GOPATH}
-          echo ${GOROOT}
-          ls /home/runner
-          ls /home/runner/go
-          ls /home/runner/go/pkg
-          ls /home/runner/go/pkg/mod
+          echo ${HOME}
           ls /home/runner/go/pkg/mod/github.com
       - name: Generate proto docs
         run: crust proto/coreum --log-format=yaml
