@@ -28,7 +28,7 @@ jobs:
           ls /home/runner/go/pkg/mod/github.com
       - name: install deps
         run: |
-          cd $(pwd)/coreum && go mod tidy
+          go mod tidy
           ls /home/runner/go/pkg/mod/github.com/cosmos/
       - name: Generate proto docs
         run: crust proto/coreum --log-format=yaml
