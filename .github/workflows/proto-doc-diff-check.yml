@@ -27,6 +27,10 @@ jobs:
         run: crust proto/coreum --log-format=yaml
       - name: debug git diff
         run: git diff
+      - name: debug git status
+        run: git status
+      - name: debug final command
+        run: git status --porcelain
       - name: check git diff
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
@@ -35,3 +39,4 @@ jobs:
           else
             echo "No differences found in the Git repository."
           fi
+
