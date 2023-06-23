@@ -1,10 +1,6 @@
 package integrationtests
 
 import (
-	"context"
-	"testing"
-	"time"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -12,19 +8,10 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	"github.com/cosmos/ibc-go/v4/modules/core/exported"
-	ibctmlightclienttypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
 	protobufgrpc "github.com/gogo/protobuf/grpc"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
+	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 )
@@ -37,6 +24,7 @@ type ChainSettings struct {
 	GasPrice      sdk.Dec
 	GasAdjustment float64
 	CoinType      uint32
+	RPCAddress    string
 }
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
@@ -144,177 +132,15 @@ func (c ChainContext) GenMultisigAccount(signersCount, multisigThreshold int) (*
 	return multisigPublicKey, keyNamesSet, nil
 }
 
-// ExecuteIBCTransfer executes IBC transfer transaction.
-func (c ChainContext) ExecuteIBCTransfer(
-	ctx context.Context,
-	t *testing.T,
-	senderAddress sdk.AccAddress,
-	coin sdk.Coin,
-	recipientChainContext ChainContext,
-	recipientAddress sdk.AccAddress,
-) (*sdk.TxResponse, error) {
-	t.Helper()
-
-	sender := c.ConvertToBech32Address(senderAddress)
-	receiver := recipientChainContext.ConvertToBech32Address(recipientAddress)
-	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, receiver, coin.String())
-
-	recipientChannelID := c.GetIBCChannelID(ctx, t, recipientChainContext.ChainSettings.ChainID)
-	height, err := queryLatestConsensusHeight(
-		ctx,
-		c.ClientContext,
-		ibctransfertypes.PortID,
-		recipientChannelID,
-	)
-	require.NoError(t, err)
-
-	ibcSend := ibctransfertypes.MsgTransfer{
-		SourcePort:    ibctransfertypes.PortID,
-		SourceChannel: recipientChannelID,
-		Token:         coin,
-		Sender:        sender,
-		Receiver:      receiver,
-		TimeoutHeight: ibcclienttypes.Height{
-			RevisionNumber: height.RevisionNumber,
-			RevisionHeight: height.RevisionHeight + 1000,
-		},
-	}
-
-	txRes, err := BroadcastTxWithSigner(
-		ctx,
-		c,
-		c.TxFactory().WithSimulateAndExecute(true),
-		senderAddress,
-		&ibcSend,
-	)
-
-	return txRes, err
-}
-
-// AwaitForBalance queries for the balance with retry and timeout.
-func (c ChainContext) AwaitForBalance(
-	ctx context.Context,
-	t *testing.T,
-	address sdk.AccAddress,
-	expectedBalance sdk.Coin,
-) {
-	t.Helper()
-
-	t.Logf("Waiting for account %s balance, expected amount: %s.", c.ConvertToBech32Address(address), expectedBalance.String())
-	bankClient := banktypes.NewQueryClient(c.ClientContext)
-	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
-	defer retryCancel()
-	require.NoError(t, retry.Do(retryCtx, time.Second, func() error {
-		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
-		defer requestCancel()
-
-		// We intentionally query all balances instead of single denom here to include this info inside error message.
-		balancesRes, err := bankClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{
-			Address: c.ConvertToBech32Address(address),
-		})
-		if err != nil {
-			return err
-		}
-
-		if balancesRes.Balances.AmountOf(expectedBalance.Denom).String() != expectedBalance.Amount.String() {
-			return retry.Retryable(errors.Errorf("%s balance is still not equal to expected, all balances: %s", expectedBalance.Denom, balancesRes.String()))
-		}
-
-		return nil
-	}))
-
-	t.Logf("Received expected balance of %s.", expectedBalance.Denom)
-}
-
-// GetIBCChannelID returns the first opened channel of the IBC connected chain peer.
-func (c ChainContext) GetIBCChannelID(ctx context.Context, t *testing.T, peerChainID string) string {
-	t.Helper()
-
-	t.Logf("Getting %s chain channel on %s chain.", peerChainID, c.ChainSettings.ChainID)
-
-	retryCtx, retryCancel := context.WithTimeout(ctx, 3*time.Minute)
-	defer retryCancel()
-
-	ibcClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
-	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
-
-	var channelID string
-	require.NoError(t, retry.Do(retryCtx, time.Second, func() error {
-		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
-		defer requestCancel()
-
-		ibcChannelsRes, err := ibcClient.Channels(requestCtx, &ibcchanneltypes.QueryChannelsRequest{})
-		if err != nil {
-			return err
-		}
-
-		for _, ch := range ibcChannelsRes.Channels {
-			if ch.State != ibcchanneltypes.OPEN {
-				continue
-			}
-
-			channelClientStateRes, err := ibcChannelClient.ChannelClientState(requestCtx, &ibcchanneltypes.QueryChannelClientStateRequest{
-				PortId:    ibctransfertypes.PortID,
-				ChannelId: ch.ChannelId,
-			})
-			if err != nil {
-				return err
-			}
-
-			var clientState ibctmlightclienttypes.ClientState
-			err = c.ClientContext.Codec().Unmarshal(channelClientStateRes.IdentifiedClientState.ClientState.Value, &clientState)
-			if err != nil {
-				return err
-			}
-
-			if clientState.ChainId == peerChainID {
-				channelID = ch.ChannelId
-				return nil
-			}
-		}
-
-		return retry.Retryable(errors.Errorf("waiting for the %s channel on the %s to open", peerChainID, c.ChainSettings.ChainID))
-	}))
-
-	t.Logf("Got %s chain channel on %s chain, channelID:%s ", peerChainID, c.ChainSettings.ChainID, channelID)
-
-	return channelID
-}
-
-func queryLatestConsensusHeight(ctx context.Context, clientCtx client.Context, portID, channelID string) (ibcclienttypes.Height, error) {
-	queryClient := ibcchanneltypes.NewQueryClient(clientCtx)
-	req := &ibcchanneltypes.QueryChannelClientStateRequest{
-		PortId:    portID,
-		ChannelId: channelID,
-	}
-
-	clientRes, err := queryClient.ChannelClientState(ctx, req)
-	if err != nil {
-		return ibcclienttypes.Height{}, err
-	}
-
-	var clientState exported.ClientState
-	if err := clientCtx.InterfaceRegistry().UnpackAny(clientRes.IdentifiedClientState.ClientState, &clientState); err != nil {
-		return ibcclienttypes.Height{}, err
-	}
-
-	clientHeight, ok := clientState.GetLatestHeight().(ibcclienttypes.Height)
-	if !ok {
-		return ibcclienttypes.Height{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidHeight, "invalid height type. expected type: %T, got: %T",
-			ibcclienttypes.Height{}, clientHeight)
-	}
-
-	return clientHeight, nil
-}
-
 // Chain holds network and client for the blockchain.
 type Chain struct {
 	ChainContext
 	Faucet Faucet
+	Wasm   Wasm
 }
 
 // NewChain creates an instance of the new Chain.
-func NewChain(grpcClient protobufgrpc.ClientConn, chainSettings ChainSettings, fundingMnemonic string) Chain {
+func NewChain(grpcClient protobufgrpc.ClientConn, rpcClient *rpchttp.HTTP, chainSettings ChainSettings, fundingMnemonic string) Chain {
 	clientCtxConfig := client.DefaultContextConfig()
 	clientCtxConfig.GasConfig.GasPriceAdjustment = sdk.NewDec(1)
 	clientCtxConfig.GasConfig.GasAdjustment = 1
@@ -322,7 +148,8 @@ func NewChain(grpcClient protobufgrpc.ClientConn, chainSettings ChainSettings, f
 		WithChainID(chainSettings.ChainID).
 		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
 		WithBroadcastMode(flags.BroadcastBlock).
-		WithGRPCClient(grpcClient)
+		WithGRPCClient(grpcClient).
+		WithRPCClient(rpcClient)
 
 	chainCtx := NewChainContext(clientCtx, chainSettings)
 
@@ -335,5 +162,6 @@ func NewChain(grpcClient protobufgrpc.ClientConn, chainSettings ChainSettings, f
 	return Chain{
 		ChainContext: chainCtx,
 		Faucet:       faucet,
+		Wasm:         NewWasm(chainCtx),
 	}
 }

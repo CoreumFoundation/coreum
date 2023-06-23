@@ -14,8 +14,10 @@ import (
 	"github.com/CoreumFoundation/coreum/x/delay/types"
 )
 
-var _ codec.ProtoMarshaler = &delayedItem{}
-var _ proto.Message = &delayedItem{}
+var (
+	_ codec.ProtoMarshaler = &delayedItem{}
+	_ proto.Message        = &delayedItem{}
+)
 
 type delayedItem struct {
 	Value string

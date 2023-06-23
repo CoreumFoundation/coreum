@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -52,29 +53,40 @@ var (
 	runUnsafe bool
 )
 
-func init() {
+func init() { //nolint:funlen // will be shortened after the crust merge
 	var (
-		coreumAddress         string
+		coreumGRPCAddress string
+		coreumRPCAddress  string
+
 		coreumFundingMnemonic string
 		coreumStakerMnemonics stringsFlag
 
-		gaiaAddress         string
+		gaiaGRPCAddress     string
+		gaiaRPCAddress      string
 		gaiaFundingMnemonic string
 
-		osmosisAddress         string
+		osmosisGRPCAddress     string
+		osmosisRPCAddress      string
 		osmosisFundingMnemonic string
 	)
 
-	// TODO(dzmitryhil) remove the flag once we update the crust
-	flag.StringVar(lo.ToPtr(""), "log-format", "", "Format of logs produced by tests")
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 
-	flag.StringVar(&coreumAddress, "coreum-address", "localhost:9090", "Address of cored node started by znet")
+	// TODO(dzmitryhil) remove the flag once we update the crust
+	flag.StringVar(lo.ToPtr(""), "coreum-address", "localhost:9090", "Address of cored node started by znet")
+	flag.StringVar(&coreumGRPCAddress, "coreum-grpc-address", "localhost:9090", "GRPC address of cored node started by znet")
+	flag.StringVar(&coreumRPCAddress, "coreum-rpc-address", "http://localhost:26657", "RPC address of cored node started by znet")
 	flag.StringVar(&coreumFundingMnemonic, "coreum-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 	flag.Var(&coreumStakerMnemonics, "coreum-staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
-	flag.StringVar(&gaiaAddress, "gaia-address", "localhost:9080", "Address of gaia node started by znet")
+	// TODO(dzmitryhil) remove the flag once we update the crust
+	flag.StringVar(lo.ToPtr(""), "gaia-address", "localhost:9080", "Address of gaia node started by znet")
+	flag.StringVar(&gaiaGRPCAddress, "gaia-grpc-address", "localhost:9080", "GRPC address of gaia node started by znet")
+	flag.StringVar(&gaiaRPCAddress, "gaia-rpc-address", "http://localhost:26557", "RPC address of gaia node started by znet")
 	flag.StringVar(&gaiaFundingMnemonic, "gaia-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
-	flag.StringVar(&osmosisAddress, "osmosis-address", "localhost:9070", "Address of osmosis node started by znet")
+	// TODO(dzmitryhil) remove the flag once we update the crust
+	flag.StringVar(lo.ToPtr(""), "osmosis-address", "localhost:9070", "Address of osmosis node started by znet")
+	flag.StringVar(&osmosisGRPCAddress, "osmosis-grpc-address", "localhost:9070", "GRPC address of osmosis node started by znet")
+	flag.StringVar(&osmosisRPCAddress, "osmosis-rpc-address", "http://localhost:26457", "RPC address of osmosis node started by znet")
 	flag.StringVar(&osmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 
 	// accept testing flags
@@ -98,7 +110,7 @@ func init() {
 
 	// ********** Coreum **********
 
-	coreumGRPCClient, err := grpc.Dial(coreumAddress, grpc.WithInsecure())
+	coreumGRPCClient, err := grpc.Dial(coreumGRPCAddress, grpc.WithInsecure())
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
@@ -113,45 +125,66 @@ func init() {
 	}
 	coreumSettings.GasPrice = coreumFeemodelParamsRes.Params.Model.InitialGasPrice
 	coreumSettings.CoinType = constant.CoinType
+	coreumSettings.RPCAddress = coreumRPCAddress
 
-	config.SetSDKConfig(coreumSettings.AddressPrefix, coreumSettings.CoinType)
+	config.SetSDKConfig(coreumSettings.AddressPrefix, constant.CoinType)
+
+	coreumRPClient, err := sdkclient.NewClientFromNode(coreumRPCAddress)
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
 
 	coreumChain := NewCoreumChain(NewChain(
 		coreumGRPCClient,
+		coreumRPClient,
 		coreumSettings,
 		coreumFundingMnemonic), coreumStakerMnemonics)
 
 	// ********** Gaia **********
 
-	gaiaGRPClient, err := grpc.Dial(gaiaAddress, grpc.WithInsecure())
+	gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithInsecure())
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
 
-	gaiaChainSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
-	gaiaChainSettings.GasPrice = sdk.ZeroDec()
-	gaiaChainSettings.GasAdjustment = 1.3
-	gaiaChainSettings.CoinType = sdk.CoinType // gaia coin type
+	gaiaSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
+	gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
+	gaiaSettings.GasAdjustment = 1.5
+	gaiaSettings.CoinType = sdk.CoinType // gaia coin type
+	gaiaSettings.RPCAddress = gaiaRPCAddress
+
+	gaiaRPClient, err := sdkclient.NewClientFromNode(gaiaRPCAddress)
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
 
 	gaiaChain := NewChain(
 		gaiaGRPClient,
-		gaiaChainSettings,
+		gaiaRPClient,
+		gaiaSettings,
 		gaiaFundingMnemonic)
 
 	// ********** Osmosis **********
 
-	osmosisGRPClient, err := grpc.Dial(osmosisAddress, grpc.WithInsecure())
+	osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithInsecure())
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
 
 	osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
-	osmosisChainSettings.GasPrice = sdk.ZeroDec()
-	osmosisChainSettings.GasAdjustment = 1.3
+	osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
+	osmosisChainSettings.GasAdjustment = 1.5
 	osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
+	osmosisChainSettings.RPCAddress = osmosisRPCAddress
+
+	osmosisRPClient, err := sdkclient.NewClientFromNode(osmosisRPCAddress)
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
 
 	osmosisChain := NewChain(
 		osmosisGRPClient,
+		osmosisRPClient,
 		osmosisChainSettings,
 		osmosisFundingMnemonic)
 

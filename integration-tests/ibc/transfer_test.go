@@ -23,7 +23,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
-	gaiaToCoreumChannelID := gaiaChain.GetIBCChannelID(ctx, t, coreumChain.ChainSettings.ChainID)
+	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
@@ -32,6 +32,11 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 		Amount:   sendToGaiaCoin.Amount,
+	})
+
+	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+		Address: gaiaRecipient,
+		Amount:  gaiaChain.NewCoin(sdk.NewInt(1000000)), // coin for the fees
 	})
 
 	txRes, err := coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient)
@@ -48,7 +53,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 }
 
 // TestIBCTransferFromGaiaToCoreumAndBack checks IBC transfer in the following order:
-// gaiaAccount [IBC]-> coreumToCoreumSender [bank.Send]-> coreumToGaiaSender [IBC]-> gaiaAccount.
+// gaiaAccount1 [IBC]-> coreumToCoreumSender [bank.Send]-> coreumToGaiaSender [IBC]-> gaiaAccount2.
 func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	t.Parallel()
 	requireT := require.New(t)
@@ -57,11 +62,12 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	coreumChain := chains.Coreum
 	gaiaChain := chains.Gaia
 
-	coreumToGaiaChannelID := coreumChain.GetIBCChannelID(ctx, t, gaiaChain.ChainSettings.ChainID)
+	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
 	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(1000))
 
 	// Generate accounts
-	gaiaAccount := gaiaChain.GenAccount()
+	gaiaAccount1 := gaiaChain.GenAccount()
+	gaiaAccount2 := gaiaChain.GenAccount()
 	coreumToCoreumSender := coreumChain.GenAccount()
 	coreumToGaiaSender := coreumChain.GenAccount()
 
@@ -74,12 +80,12 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
-		Address: gaiaAccount,
-		Amount:  sendToCoreumCoin,
+		Address: gaiaAccount1,
+		Amount:  sendToCoreumCoin.Add(gaiaChain.NewCoin(sdk.NewInt(1000000))), // coin to send + coin for the fee
 	})
 
 	// Send from gaiaAccount to coreumToCoreumSender
-	_, err := gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaAccount, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumToCoreumSender)
+	_, err := gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaAccount1, sendToCoreumCoin, coreumChain.Chain.ChainContext, coreumToCoreumSender)
 	requireT.NoError(err)
 
 	expectedBalanceAtCoreum := sdk.NewCoin(convertToIBCDenom(coreumToGaiaChannelID, sendToCoreumCoin.Denom), sendToCoreumCoin.Amount)
@@ -108,9 +114,8 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	assert.Equal(t, expectedBalanceAtCoreum.Amount.String(), queryBalanceResponse.Balance.Amount.String())
 
 	// Send from coreumToGaiaSender back to gaiaAccount
-	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumToGaiaSender, expectedBalanceAtCoreum, gaiaChain.ChainContext, gaiaAccount)
+	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumToGaiaSender, expectedBalanceAtCoreum, gaiaChain.ChainContext, gaiaAccount2)
 	requireT.NoError(err)
-
 	expectedGaiaSenderBalance := sdk.NewCoin(sendToCoreumCoin.Denom, expectedBalanceAtCoreum.Amount)
-	gaiaChain.AwaitForBalance(ctx, t, gaiaAccount, expectedGaiaSenderBalance)
+	gaiaChain.AwaitForBalance(ctx, t, gaiaAccount2, expectedGaiaSenderBalance)
 }

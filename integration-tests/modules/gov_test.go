@@ -19,6 +19,8 @@ import (
 // 1. proposal submission without enough deposit,
 // 2. depositing missing amount to proposal created on the 1st step,
 // 3. voting using weighted votes.
+//
+//nolint:funlen // there are many tests
 func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	t.Parallel()
 

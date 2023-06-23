@@ -173,9 +173,8 @@ func (f Faucet) prepareMultiSendMessage(requests []fundingRequest) *banktypes.Ms
 
 func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) error {
 	// Transaction is broadcast and awaited
-	_, err := BroadcastTxWithSigner(
+	_, err := f.chainCtx.BroadcastTxWithSigner(
 		ctx,
-		f.chainCtx,
 		f.chainCtx.TxFactory().WithSimulateAndExecute(true),
 		f.chainCtx.ClientContext.FromAddress(),
 		msg,
