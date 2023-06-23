@@ -17,11 +17,11 @@ import (
 // BroadcastTxWithSigner prepares the tx with the provided signer address and broadcasts it.
 // The main difference from the client.BroadcastTx is that this function uses the custom account addresses decoding with
 // the custom chain prefixes, which allows to execute transactions for different chains.
-func BroadcastTxWithSigner(ctx context.Context, chainCtx ChainContext, txf client.Factory, signerAddress sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
-	clientCtx := chainCtx.ClientContext.WithFromAddress(signerAddress)
+func (c ChainContext) BroadcastTxWithSigner(ctx context.Context, txf client.Factory, signerAddress sdk.AccAddress, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
+	clientCtx := c.ClientContext.WithFromAddress(signerAddress)
 
 	// add account info
-	txf, err := addAccountInfoToTxFactory(ctx, clientCtx, txf, chainCtx.ConvertToBech32Address(signerAddress))
+	txf, err := addAccountInfoToTxFactory(ctx, clientCtx, txf, c.ConvertToBech32Address(signerAddress))
 	if err != nil {
 		return nil, err
 	}

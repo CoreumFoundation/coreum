@@ -481,6 +481,8 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 }
 
 // TestBankMultiSend tests MultiSend message.
+//
+//nolint:funlen // there are many tests
 func TestBankMultiSend(t *testing.T) {
 	t.Parallel()
 
@@ -596,6 +598,8 @@ func TestBankMultiSend(t *testing.T) {
 }
 
 // TestBankMultiSendFromMultipleAccounts tests MultiSend message form multiple accounts.
+//
+//nolint:funlen // there are many tests
 func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	t.Parallel()
 
