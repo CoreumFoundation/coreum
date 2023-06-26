@@ -39,7 +39,7 @@ func TestKeeper_Issue(t *testing.T) {
 	ftKeeper.SetParams(ctx, ftParams)
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(sdk.NewCoin(ftParams.IssueFee.Denom, ftParams.IssueFee.Amount.MulRaw(4)))))
+	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(sdk.NewCoin(ftParams.IssueFee.Denom, ftParams.IssueFee.Amount.MulRaw(5)))))
 
 	settings := types.IssueSettings{
 		Issuer:        addr,
@@ -126,6 +126,13 @@ func TestKeeper_Issue(t *testing.T) {
 	settings.Symbol = "CDE"
 	settings.Subunit = "subunit2"
 	settings.Features = append(settings.Features, 10000)
+	_, err = ftKeeper.Issue(ctx, settings)
+	requireT.ErrorIs(err, types.ErrInvalidInput)
+
+	// try to create token containing doubled feature
+	settings.Symbol = "EFG"
+	settings.Subunit = "subunit3"
+	settings.Features = append(settings.Features, settings.Features[0])
 	_, err = ftKeeper.Issue(ctx, settings)
 	requireT.ErrorIs(err, types.ErrInvalidInput)
 }
