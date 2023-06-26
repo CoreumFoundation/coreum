@@ -285,7 +285,7 @@ func TestWASMBankSendContract(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		BankSendWASM,
+		bankSendWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -401,7 +401,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		BankSendWASM,
+		bankSendWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -483,7 +483,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		SimpleStateWASM,
+		simpleStateWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -593,7 +593,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		admin,
-		BankSendWASM,
+		bankSendWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Admin:      admin,
@@ -687,7 +687,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		granter,
-		AuthzWASM,
+		authzWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -1202,7 +1202,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		NftWASM,
+		nftWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerNFTInstantiatePayload,
