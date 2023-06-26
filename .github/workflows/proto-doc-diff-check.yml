@@ -16,7 +16,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: artem/docs-gen
+          ref: artem/add-api-md-to-linter-exceptions
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       # FIXME crust tidy doesn't work, that's why I added manual installation as a temp solution
