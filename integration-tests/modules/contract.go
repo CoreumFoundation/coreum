@@ -5,14 +5,18 @@ import (
 )
 
 var (
+	//nolint
 	//go:embed testdata/wasm/bank-send/artifacts/bank_send.wasm
-	bankSendWASM []byte
+	BankSendWASM []byte
+	//nolint
 	//go:embed testdata/wasm/simple-state/artifacts/simple_state.wasm
-	simpleStateWASM []byte
+	SimpleStateWASM []byte
+	//nolint
 	//go:embed testdata/wasm/nft/artifacts/nft.wasm
-	nftWASM []byte
+	NftWASM []byte
+	//nolint
 	//go:embed testdata/wasm/authz/artifacts/authz.wasm
-	authzWASM []byte
+	AuthzWASM []byte
 	//nolint
 	//go:embed testdata/wasm/ft/artifacts/ft.wasm
 	FTWASM []byte
