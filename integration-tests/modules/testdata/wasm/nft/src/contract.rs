@@ -476,8 +476,8 @@ fn query_nft_classes(deps: Deps<CoreumQueries>) -> StdResult<nft::ClassesRespons
         }
     }
     let res = nft::ClassesResponse {
-        pagination: res.pagination,
         classes,
+        pagination: res.pagination,
     };
     Ok(res)
 }

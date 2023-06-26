@@ -4,7 +4,7 @@ package modules
 
 import (
 	"context"
-	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 	"time"
@@ -24,19 +24,6 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
-)
-
-var (
-	//go:embed testdata/wasm/bank-send/artifacts/bank_send.wasm
-	bankSendWASM []byte
-	//go:embed testdata/wasm/simple-state/artifacts/simple_state.wasm
-	simpleStateWASM []byte
-	//go:embed testdata/wasm/ft/artifacts/ft.wasm
-	ftWASM []byte
-	//go:embed testdata/wasm/nft/artifacts/nft.wasm
-	nftWASM []byte
-	//go:embed testdata/wasm/authz/artifacts/authz.wasm
-	authzWASM []byte
 )
 
 // bank wasm models
@@ -809,7 +796,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		ftWASM,
+		FTWASM,
 		integrationtests.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
 			Amount:     getIssueFee(ctx, t, chain.ClientContext),
@@ -1182,7 +1169,9 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	royaltyRate := sdk.MustNewDecFromStr("0.1")
 	dataString := "data"
-	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte(dataString)})
+	databytes, err := base64.StdEncoding.DecodeString(dataString)
+	requireT.NoError(err)
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: databytes})
 	// we need to do this, otherwise assertion fails because some private fields are set differently
 	dataToCompare := &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,

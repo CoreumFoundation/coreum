@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -163,7 +164,11 @@ func NewCoreumQueryHandler(
 }
 
 func convertStringToDataBytes(dataString string) (*codectypes.Any, error) {
-	dataValue, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte(dataString)})
+	databytes, err := base64.StdEncoding.DecodeString(dataString)
+	if err != nil {
+		return nil, err
+	}
+	dataValue, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: databytes})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -379,7 +384,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 				return nil, err
 			}
 
-			if len(nftsRes.Nfts) == 0 {
+			if nftsRes.Nfts == nil {
 				return &NFTsResponse{}, nil
 			}
 
@@ -444,7 +449,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 				return nil, err
 			}
 
-			if len(nftClassesRes.Classes) == 0 {
+			if nftClassesRes.Classes == nil {
 				return &NFTClassesResponse{}, nil
 			}
 
@@ -461,6 +466,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 						return nil, err
 					}
 				}
+
 				nftClassesResponse.Classes = append(nftClassesResponse.Classes, NFTClass{
 					ID:          nftClassesRes.Classes[i].Id,
 					Name:        nftClassesRes.Classes[i].Name,
@@ -502,5 +508,5 @@ func unmarshalDataBytes(data *codectypes.Any) (string, error) {
 		return "", errors.WithStack(err)
 	}
 
-	return string(dataBytes.Data), nil
+	return base64.StdEncoding.EncodeToString(dataBytes.Data), nil
 }
