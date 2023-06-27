@@ -4,7 +4,6 @@ package modules
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"testing"
 	"time"
@@ -1168,16 +1167,6 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	// ********** Issuance **********
 
 	royaltyRate := sdk.MustNewDecFromStr("0.1")
-	dataString := "data"
-	databytes, err := base64.StdEncoding.DecodeString(dataString)
-	requireT.NoError(err)
-	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: databytes})
-	// we need to do this, otherwise assertion fails because some private fields are set differently
-	dataToCompare := &codectypes.Any{
-		TypeUrl: dataBytes.TypeUrl,
-		Value:   dataBytes.Value,
-	}
-	requireT.NoError(err)
 
 	issueClassReq := issueNFTRequest{
 		Name:        "name",
@@ -1213,6 +1202,15 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	classID := assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddr))
 	classRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
+	requireT.NoError(err)
+
+	dataString := "data"
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte(dataString)})
+	// we need to do this, otherwise assertion fails because some private fields are set differently
+	dataToCompare := &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
+	}
 	requireT.NoError(err)
 
 	expectedClass := assetnfttypes.Class{
