@@ -5,6 +5,7 @@ package modules
 import (
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 	"time"
@@ -1219,7 +1220,9 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	dataString := "data"
-	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte(dataString)})
+	dataBase64Bytes, err := base64.StdEncoding.DecodeString(dataString)
+	requireT.NoError(err)
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: dataBase64Bytes})
 	// we need to do this, otherwise assertion fails because some private fields are set differently
 	dataToCompare := &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
