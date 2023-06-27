@@ -18,9 +18,6 @@ jobs:
           path: crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-      # FIXME crust tidy doesn't work, that's why I added manual installation as a temp solution
-      - name: install deps
-        run: go mod tidy
       - name: Generate proto docs
         run: crust proto/coreum --log-format=yaml
       - name: check git diff
