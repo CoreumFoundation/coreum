@@ -17,7 +17,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/integration-tests/modules"
+	modules "github.com/CoreumFoundation/coreum/integration-tests/modules/testdata/wasm"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
