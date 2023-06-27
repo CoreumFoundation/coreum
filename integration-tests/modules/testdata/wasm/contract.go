@@ -7,15 +7,19 @@ import (
 )
 
 var (
-	//go:embed /bank-send/artifacts/bank_send.wasm
+	//nolint
+	//go:embed testdata/wasm/bank-send/artifacts/bank_send.wasm
 	BankSendWASM []byte
-	//go:embed /simple-state/artifacts/simple_state.wasm
+	//nolint
+	//go:embed testdata/wasm/simple-state/artifacts/simple_state.wasm
 	SimpleStateWASM []byte
 	//nolint
-	//go:embed /ft/artifacts/ft.wasm
+	//go:embed testdata/wasm/ft/artifacts/ft.wasm
 	FTWASM []byte
-	//go:embed /nft/artifacts/nft.wasm
+	//nolint
+	//go:embed testdata/wasm/nft/artifacts/nft.wasm
 	NftWASM []byte
-	//go:embed /authz/artifacts/authz.wasm
+	//nolint
+	//go:embed testdata/wasm/authz/artifacts/authz.wasm
 	AuthzWASM []byte
 )
