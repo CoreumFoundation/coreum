@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -164,11 +163,7 @@ func NewCoreumQueryHandler(
 }
 
 func convertStringToDataBytes(dataString string) (*codectypes.Any, error) {
-	databytes, err := base64.StdEncoding.DecodeString(dataString)
-	if err != nil {
-		return nil, err
-	}
-	dataValue, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: databytes})
+	dataValue, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte(dataString)})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -508,5 +503,5 @@ func unmarshalDataBytes(data *codectypes.Any) (string, error) {
 		return "", errors.WithStack(err)
 	}
 
-	return base64.StdEncoding.EncodeToString(dataBytes.Data), nil
+	return string(dataBytes.Data), nil
 }
