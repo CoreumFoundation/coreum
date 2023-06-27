@@ -21,7 +21,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	modules "github.com/CoreumFoundation/coreum/integration-tests/ibc/testdata/wasm"
+	ibc "github.com/CoreumFoundation/coreum/integration-tests/ibc/testdata/wasm"
 )
 
 type ibcTimeoutBlock struct {
@@ -92,7 +92,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 		ctx,
 		coreumChain.TxFactory().WithSimulateAndExecute(true),
 		coreumAdmin,
-		modules.IbcTransferWASM,
+		ibc.IbcTransferWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -195,7 +195,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		ctx,
 		coreumChain.TxFactory().WithSimulateAndExecute(true),
 		coreumCaller,
-		modules.IbcClassWASM,
+		ibc.IbcClassWASM,
 		integrationtests.InstantiateConfig{
 			Admin:      coreumCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
@@ -209,7 +209,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		ctx,
 		osmosisChain.TxFactory().WithSimulateAndExecute(true),
 		osmosisCaller,
-		modules.IbcClassWASM,
+		ibc.IbcClassWASM,
 		integrationtests.InstantiateConfig{
 			Admin:      osmosisCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
