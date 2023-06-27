@@ -18,6 +18,10 @@ jobs:
           path: crust
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+      # FIXME crust Tidy doesn't work at CI, that's why I added manual installation
+      # Error to fix: ERROR Application returned error: lstat /home/runner/go/pkg/mod/github.com/cosmos/cosmos-sdk@v0.45.16/proto: no such file or directory"
+      - name: install deps
+        run: go mod tidy
       - name: Generate proto docs
         run: crust proto/coreum --log-format=yaml
       - name: check git diff
