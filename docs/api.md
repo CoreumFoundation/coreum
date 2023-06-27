@@ -1,4 +1,5 @@
 <!-- This file is auto-generated. Please do not modify it yourself. -->
+<!-- markdown-link-check-disable -->
 # Protobuf Documentation
 <a name="top"></a>
 
@@ -15670,3 +15671,5 @@ ContractCodeHistoryOperationType actions that caused a code change
 | <a name="string" /> string | A string must always contain UTF-8 encoded or 7-bit ASCII text. | string | String | str/unicode | string | string | string | String (UTF-8) |
 | <a name="bytes" /> bytes | May contain any arbitrary sequence of bytes. | string | ByteString | str | []byte | ByteString | string | String (ASCII-8BIT) |
 
+
+<!-- markdown-link-check-enable -->
