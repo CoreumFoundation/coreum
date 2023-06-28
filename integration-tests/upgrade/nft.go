@@ -13,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-type nftTest struct {
+type nftStoreTest struct {
 	issuer        sdk.AccAddress
 	issuedEvent   *assetnfttypes.EventClassIssued
 	expectedClass assetnfttypes.Class
@@ -21,7 +21,7 @@ type nftTest struct {
 	expectedNFT   nft.NFT
 }
 
-func (n *nftTest) Before(t *testing.T) {
+func (n *nftStoreTest) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
@@ -104,7 +104,7 @@ func (n *nftTest) Before(t *testing.T) {
 	requireT.Equal(n.expectedNFT, *nftRes.Nft)
 }
 
-func (n *nftTest) After(t *testing.T) {
+func (n *nftStoreTest) After(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
@@ -134,4 +134,192 @@ func (n *nftTest) After(t *testing.T) {
 	requireT.Equal(1, len(assetNftClassesRes.Classes))
 	requireT.Equal(uint64(1), assetNftClassesRes.Pagination.Total)
 	requireT.Equal(n.expectedClass, assetNftClassesRes.Classes[0])
+}
+
+type nftFeaturesTest struct {
+	classID string
+}
+
+func (nt *nftFeaturesTest) Before(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+		},
+	})
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		RoyaltyRate: sdk.ZeroDec(),
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			2000, // should be removed
+			assetnfttypes.ClassFeature_whitelisting,
+			3000, // should be removed
+			assetnfttypes.ClassFeature_disable_sending,
+			assetnfttypes.ClassFeature_burning,         // should be removed
+			assetnfttypes.ClassFeature_freezing,        // should be removed
+			2000,                                       // should be removed
+			assetnfttypes.ClassFeature_whitelisting,    // should be removed
+			3000,                                       // should be removed
+			assetnfttypes.ClassFeature_disable_sending, // should be removed
+		},
+	}
+	res, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+
+	tokenIssuedEvents, err := event.FindTypedEvents[*assetnfttypes.EventClassIssued](res.Events)
+	requireT.NoError(err)
+	nt.classID = tokenIssuedEvents[0].ID
+}
+
+func (nt *nftFeaturesTest) After(t *testing.T) {
+	nt.verifyClassIsFixed(t)
+	nt.tryCreatingClassWithInvalidFeature(t)
+	nt.tryCreatingClassWithDuplicatedFeature(t)
+	nt.createValidClass(t)
+}
+
+func (nt *nftFeaturesTest) verifyClassIsFixed(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	nftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := nftClient.Class(ctx, &assetnfttypes.QueryClassRequest{
+		Id: nt.classID,
+	})
+	requireT.NoError(err)
+
+	requireT.Equal([]assetnfttypes.ClassFeature{
+		assetnfttypes.ClassFeature_burning,
+		assetnfttypes.ClassFeature_freezing,
+		assetnfttypes.ClassFeature_whitelisting,
+		assetnfttypes.ClassFeature_disable_sending,
+	}, resp.Class.Features)
+}
+
+func (nt *nftFeaturesTest) tryCreatingClassWithInvalidFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+		},
+	})
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		RoyaltyRate: sdk.ZeroDec(),
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			2000,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "invalid input")
+}
+
+func (nt *nftFeaturesTest) tryCreatingClassWithDuplicatedFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+		},
+	})
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		RoyaltyRate: sdk.ZeroDec(),
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+			assetnfttypes.ClassFeature_burning,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "invalid input")
+}
+
+func (nt *nftFeaturesTest) createValidClass(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+		},
+	})
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		RoyaltyRate: sdk.ZeroDec(),
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
 }

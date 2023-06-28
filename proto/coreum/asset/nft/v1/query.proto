@@ -12,7 +12,7 @@ option go_package = "github.com/CoreumFoundation/coreum/x/asset/nft/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Params queries the parameters of x/asset/ft module.
+  // Params queries the parameters of x/asset/nft module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/coreum/asset/nft/v1/params";
   }
