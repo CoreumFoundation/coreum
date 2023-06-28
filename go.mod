@@ -10,7 +10,7 @@ replace (
 replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
 
 require (
-	github.com/CoreumFoundation/coreum-tools v0.4.0
+	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CosmWasm/wasmd v0.30.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/cosmos/cosmos-sdk v0.45.16

@@ -1,4 +1,5 @@
 <!-- This file is auto-generated. Please do not modify it yourself. -->
+<!-- markdown-link-check-disable -->
 # Protobuf Documentation
 <a name="top"></a>
 
@@ -103,3 +104,5 @@
 {{range .Scalars -}}
   | <a name="{{.ProtoType}}" /> {{.ProtoType}} | {{.Notes}} | {{.CppType}} | {{.JavaType}} | {{.PythonType}} | {{.GoType}} | {{.CSharp}} | {{.PhpType}} | {{.RubyType}} |
 {{end}}
+
+<!-- markdown-link-check-enable -->

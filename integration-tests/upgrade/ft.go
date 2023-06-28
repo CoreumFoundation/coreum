@@ -773,6 +773,194 @@ func (ft *ftV1UpgradeTest) changeGracePeriod(t *testing.T) {
 		})
 }
 
+type ftFeaturesTest struct {
+	denom string
+}
+
+func (ft *ftFeaturesTest) Before(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "AAA",
+		Subunit:       "uaaa",
+		Precision:     6,
+		Description:   "AAA Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_ibc, // should be removed by the migration
+			assetfttypes.Feature_freezing,
+			1000,                              // should be removed by the migration
+			assetfttypes.Feature_whitelisting, // should be removed by the migration
+			assetfttypes.Feature_minting,      // should be removed by the migration
+			assetfttypes.Feature_burning,      // should be removed by the migration
+			assetfttypes.Feature_ibc,          // should be removed by the migration
+			assetfttypes.Feature_freezing,     // should be removed by the migration
+			2000,                              // should be removed by the migration
+			1000,                              // should be removed by the migration
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+	ft.denom = assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+}
+
+func (ft *ftFeaturesTest) After(t *testing.T) {
+	ft.verifyTokenIsFixed(t)
+	ft.tryCreatingTokenWithInvalidFeature(t)
+	ft.tryCreatingTokenWithDuplicatedFeature(t)
+	ft.createValidToken(t)
+}
+
+func (ft *ftFeaturesTest) verifyTokenIsFixed(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: ft.denom,
+	})
+	requireT.NoError(err)
+
+	requireT.Equal([]assetfttypes.Feature{
+		assetfttypes.Feature_minting,
+		assetfttypes.Feature_burning,
+		assetfttypes.Feature_freezing,
+		assetfttypes.Feature_whitelisting,
+	}, resp.Token.Features)
+}
+
+func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "AAA",
+		Subunit:       "uaaa",
+		Precision:     6,
+		Description:   "AAA Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+			100,
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "invalid input")
+}
+
+func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "AAA",
+		Subunit:       "uaaa",
+		Precision:     6,
+		Description:   "AAA Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+			assetfttypes.Feature_ibc,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "invalid input")
+}
+
+func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "AAA",
+		Subunit:       "uaaa",
+		Precision:     6,
+		Description:   "AAA Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+}
+
 func getIssueFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {
 	queryClient := assetfttypes.NewQueryClient(clientCtx)
 	resp, err := queryClient.Params(ctx, &assetfttypes.QueryParamsRequest{})

@@ -89,6 +89,22 @@ func ValidateClassSymbol(symbol string) error {
 	return nil
 }
 
+// ValidateClassFeatures verifies that provided features belong to the defined set.
+func ValidateClassFeatures(features []ClassFeature) error {
+	present := map[ClassFeature]struct{}{}
+	for _, f := range features {
+		name, exists := ClassFeature_name[int32(f)]
+		if !exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "non-existing class feature provided: %d", f)
+		}
+		if _, exists := present[f]; exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated class feature: %s", name)
+		}
+		present[f] = struct{}{}
+	}
+	return nil
+}
+
 // ValidateTokenID checks the provided non-fungible token id is valid.
 func ValidateTokenID(id string) error {
 	if !nftIDRegex.MatchString(id) {

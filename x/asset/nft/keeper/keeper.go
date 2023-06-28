@@ -112,6 +112,10 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		return "", err
 	}
 
+	if err := types.ValidateClassFeatures(settings.Features); err != nil {
+		return "", err
+	}
+
 	if err := types.ValidateRoyaltyRate(settings.RoyaltyRate); err != nil {
 		return "", err
 	}
@@ -192,6 +196,27 @@ func (k Keeper) GetClassDefinition(ctx sdk.Context, classID string) (types.Class
 	k.cdc.MustUnmarshal(bz, &definition)
 
 	return definition, nil
+}
+
+// IterateAllClassDefinitions iterates over all class definitions and applies the provided callback.
+// If true is returned from the callback, iteration is halted.
+func (k Keeper) IterateAllClassDefinitions(ctx sdk.Context, cb func(types.ClassDefinition) (bool, error)) error {
+	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTClassKeyPrefix).Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var definition types.ClassDefinition
+		k.cdc.MustUnmarshal(iterator.Value(), &definition)
+
+		stop, err := cb(definition)
+		if err != nil {
+			return err
+		}
+		if stop {
+			break
+		}
+	}
+	return nil
 }
 
 // GetClassDefinitions returns all non-fungible class token definitions.
