@@ -27,6 +27,7 @@ type ftMethod string
 const (
 	// tx.
 	ftMethodUpgradeTokenV1 ftMethod = "upgrade_token_v1"
+	gracePeriod                     = 15 * time.Second
 )
 
 //nolint:tagliatelle
@@ -514,9 +515,6 @@ func (ft *ftTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	// setting grace period to some small value
-	const gracePeriod = 15 * time.Second
-
 	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
 	requireT.NoError(err)
@@ -665,7 +663,6 @@ func (ft *ftTest) upgradeFromV0ToV1ToEnableIBCWASM(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	txf := chain.TxFactory().WithSimulateAndExecute(true)
-	const gracePeriod = 15 * time.Second
 
 	// upgrading with enabled IBC should take effect after delay
 	upgradePayload, err := json.Marshal(map[ftMethod]ibcEnabledBodyFTRequest{
@@ -771,7 +768,6 @@ func (ft *ftTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) {
 
 func (ft *ftTest) changeGracePeriod(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	const gracePeriod = 15 * time.Second
 	chain.Governance.UpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeGracePeriod), string(must.Bytes(tmjson.Marshal(gracePeriod)))),
