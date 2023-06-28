@@ -150,9 +150,6 @@ func (ft *ftTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 
 	// ********** Issuance **********
 
-	burnRate := sdk.MustNewDecFromStr("0.1")
-	sendCommissionRate := sdk.MustNewDecFromStr("0.2")
-
 	issuanceAmount := sdk.NewInt(1000)
 	issuanceReq := issueFTRequest{
 		Symbol:        "symbol",
@@ -166,8 +163,6 @@ func (ft *ftTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
 		},
-		BurnRate:           burnRate.String(),
-		SendCommissionRate: sendCommissionRate.String(),
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
@@ -199,18 +194,13 @@ func (ft *ftTest) issueV0TokenWithoutFeaturesWASM(t *testing.T) {
 
 	// ********** Issuance **********
 
-	burnRate := sdk.MustNewDecFromStr("0.1")
-	sendCommissionRate := sdk.MustNewDecFromStr("0.2")
-
 	issuanceAmount := sdk.NewInt(1000)
 	issuanceReq := issueFTRequest{
-		Symbol:             "symbol",
-		Subunit:            "subunit",
-		Precision:          6,
-		InitialAmount:      issuanceAmount.String(),
-		Description:        "my wasm fungible token",
-		BurnRate:           burnRate.String(),
-		SendCommissionRate: sendCommissionRate.String(),
+		Symbol:        "symbol",
+		Subunit:       "subunit",
+		Precision:     6,
+		InitialAmount: issuanceAmount.String(),
+		Description:   "my wasm fungible token",
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
@@ -284,6 +274,8 @@ func (ft *ftTest) After(t *testing.T) {
 	ft.tryToUpgradeV1TokenToEnableIBC(t)
 	ft.tryToUpgradeV1TokenToDisableIBC(t)
 	ft.tryToUpgradeV0ToV1ByNonIssuer(t)
+
+	ft.changeGracePeriod(t)
 
 	ft.upgradeFromV0ToV1ToDisableIBC(t)
 	ft.upgradeFromV0ToV1ToEnableIBC(t)
@@ -524,10 +516,6 @@ func (ft *ftTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 
 	// setting grace period to some small value
 	const gracePeriod = 15 * time.Second
-	chain.Governance.UpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeGracePeriod), string(must.Bytes(tmjson.Marshal(gracePeriod)))),
-		})
 
 	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
 	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
@@ -678,10 +666,6 @@ func (ft *ftTest) upgradeFromV0ToV1ToEnableIBCWASM(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	txf := chain.TxFactory().WithSimulateAndExecute(true)
 	const gracePeriod = 15 * time.Second
-	chain.Governance.UpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeGracePeriod), string(must.Bytes(tmjson.Marshal(gracePeriod)))),
-		})
 
 	// upgrading with enabled IBC should take effect after delay
 	upgradePayload, err := json.Marshal(map[ftMethod]ibcEnabledBodyFTRequest{
@@ -783,6 +767,15 @@ func (ft *ftTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(0, resp.Token.Version)
 	requireT.Len(resp.Token.Features, 0)
+}
+
+func (ft *ftTest) changeGracePeriod(t *testing.T) {
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	const gracePeriod = 15 * time.Second
+	chain.Governance.UpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
+		[]paramproposal.ParamChange{
+			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeGracePeriod), string(must.Bytes(tmjson.Marshal(gracePeriod)))),
+		})
 }
 
 func getIssueFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {

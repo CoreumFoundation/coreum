@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	modules "github.com/CoreumFoundation/coreum/integration-tests/modules/testdata/wasm"
+	moduleswasm "github.com/CoreumFoundation/coreum/integration-tests/modules/testdata/wasm"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -285,7 +285,7 @@ func TestWASMBankSendContract(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		modules.BankSendWASM,
+		moduleswasm.BankSendWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -401,7 +401,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		modules.BankSendWASM,
+		moduleswasm.BankSendWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -483,7 +483,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		modules.SimpleStateWASM,
+		moduleswasm.SimpleStateWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -593,7 +593,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		admin,
-		modules.BankSendWASM,
+		moduleswasm.BankSendWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Admin:      admin,
@@ -687,7 +687,7 @@ func TestWASMAuthzContract(t *testing.T) {
 		ctx,
 		chain.TxFactory().WithSimulateAndExecute(true),
 		granter,
-		modules.AuthzWASM,
+		moduleswasm.AuthzWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -796,7 +796,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		modules.FTWASM,
+		moduleswasm.FTWASM,
 		integrationtests.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
 			Amount:     getIssueFee(ctx, t, chain.ClientContext),
@@ -1192,7 +1192,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		ctx,
 		txf,
 		admin,
-		modules.NftWASM,
+		moduleswasm.NftWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerNFTInstantiatePayload,

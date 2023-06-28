@@ -9,8 +9,8 @@ import (
 var (
 	//nolint
 	//go:embed ibc-transfer/artifacts/ibc_transfer.wasm
-	IbcTransferWASM []byte
+	IBCTransferWASM []byte
 	//nolint
 	//go:embed ibc-call/artifacts/ibc_call.wasm
-	IbcClassWASM []byte
+	IBCClassWASM []byte
 )
