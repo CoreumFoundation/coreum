@@ -63,7 +63,7 @@ func TestKeeper_Issue(t *testing.T) {
 	// check that balance is 0 meaning issue fee was taken
 
 	balance := bankKeeper.GetBalance(ctx, addr, constant.DenomDev)
-	requireT.Equal(ftParams.IssueFee.Amount.MulRaw(3).String(), balance.Amount.String())
+	requireT.Equal(ftParams.IssueFee.Amount.MulRaw(4).String(), balance.Amount.String())
 
 	requireT.Equal(types.BuildDenom(settings.Subunit, settings.Issuer), denom)
 
