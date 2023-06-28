@@ -2,7 +2,7 @@
 <!-- markdown-link-check-disable -->
 # Protobuf Documentation
 <a name="top"></a>
-
+ manual edit
 ## Table of Contents
 
 - [coreum/asset/ft/v1/event.proto](#coreum/asset/ft/v1/event.proto)
