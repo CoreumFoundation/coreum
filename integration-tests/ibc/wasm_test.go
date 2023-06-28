@@ -26,6 +26,8 @@ import (
 var (
 	//go:embed testdata/wasm/ibc-transfer/artifacts/ibc_transfer.wasm
 	ibcTransferWASM []byte
+
+	// TODO: Why is it called ibcClassWASM not ibcCallWASM ?
 	//go:embed testdata/wasm/ibc-call/artifacts/ibc_call.wasm
 	ibcClassWASM []byte
 )
@@ -68,6 +70,7 @@ const (
 	ibcCallMethodGetCount  ibcCallMethod = "get_count"
 )
 
+// TODO: Should we interact with gaia in one IBC<>WASM test & with osmosis in another test to cover more chains ?
 // TestIBCTransferFromSmartContract tests the IBCTransfer from the contract.
 func TestIBCTransferFromSmartContract(t *testing.T) {
 	t.Parallel()
@@ -161,6 +164,10 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	osmosisChain.AwaitForBalance(ctx, t, osmosisRecipient, expectedOsmosisRecipientBalance)
 }
 
+// TODO: I prefer to split this into 2 files because the logic is IBC <> WASM for both but one just simply creates a message
+//
+//	while another interacts with another chain directly from contract as far as I understand.
+//
 // TestIBCCallFromSmartContract tests the IBC contract calls.
 //
 //nolint:funlen // there are many tests
@@ -203,7 +210,8 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		coreumCaller,
 		ibcClassWASM,
 		integrationtests.InstantiateConfig{
-			Admin:      coreumCaller,
+			Admin: coreumCaller,
+			// TODO: Access to what does it define ? I read the descr but it is not clear.
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
 			Label:      "ibc_call",
@@ -257,6 +265,10 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	t.Logf("Channels are ready coreum channel ID:%s, osmosis channel ID:%s", coreumToOsmosisChannelID, osmosisToCoreumChannelID)
 
 	t.Logf("Sendng two IBC transactions from coreum contract to osmosis contract")
+	// TODO: the difference between awaitWasmCallContractCounter & executeWasmCallContractCounter is not clear.
+	// 		I guess one uses direct WASM contract call & another one calls WASM via IBC ?
+	//		IMO we should reflect this in func names so one of them should include IBC.
+	// 		also I see that one is a query and another is msg I would also use this in names.
 	awaitWasmCallContractCounter(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
 	awaitWasmCallContractCounter(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 0)
 
@@ -264,11 +276,13 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	executeWasmCallContractCounter(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
 	executeWasmCallContractCounter(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
 
+	// TODO: why the order of assertion is important ? I think if we swap osmosis & coreum assertion here everything should be ok.
 	// check that current state is expected, the order of assertion is important
 	awaitWasmCallContractCounter(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
 	awaitWasmCallContractCounter(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
 
 	t.Logf("Sendng three IBC transactions from osmosis contract to coreum contract")
+	// TODO: minor: you can use lo.Times() instead it will look a bit better IMO. Maybe in other places also.
 	executeWasmCallContractCounter(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
 	executeWasmCallContractCounter(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
 	executeWasmCallContractCounter(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
