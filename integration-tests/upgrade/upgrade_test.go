@@ -33,7 +33,7 @@ func TestUpgrade(t *testing.T) {
 func upgradeV2(t *testing.T) {
 	tests := []upgradeTest{
 		&nftTest{},
-		&ftTest{},
+		&ftV1UpgradeTest{},
 	}
 
 	for _, test := range tests {

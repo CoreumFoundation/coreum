@@ -48,7 +48,7 @@ type issueFTRequest struct {
 	SendCommissionRate string                 `json:"send_commission_rate"`
 }
 
-type ftTest struct {
+type ftV1UpgradeTest struct {
 	issuer                         sdk.AccAddress
 	contractAddressWithFeatures    string
 	contractAddressWithoutFeatures string
@@ -59,7 +59,7 @@ type ftTest struct {
 	denomV0WasmWithoutFeatures     string
 }
 
-func (ft *ftTest) Before(t *testing.T) {
+func (ft *ftV1UpgradeTest) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	ft.issuer = chain.GenAccount()
 
@@ -94,7 +94,7 @@ func (ft *ftTest) Before(t *testing.T) {
 	ft.tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t)
 }
 
-func (ft *ftTest) issueV0TokenWithoutFeatures(t *testing.T) {
+func (ft *ftV1UpgradeTest) issueV0TokenWithoutFeatures(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -116,7 +116,7 @@ func (ft *ftTest) issueV0TokenWithoutFeatures(t *testing.T) {
 	ft.denomV0WithoutFeatures = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 }
 
-func (ft *ftTest) issueV0TokenWithFeatures(t *testing.T) {
+func (ft *ftV1UpgradeTest) issueV0TokenWithFeatures(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -144,7 +144,7 @@ func (ft *ftTest) issueV0TokenWithFeatures(t *testing.T) {
 	ft.denomV0WithFeatures = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 }
 
-func (ft *ftTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
+func (ft *ftV1UpgradeTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -188,7 +188,7 @@ func (ft *ftTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 	ft.denomV0WasmWithFeatures = assetfttypes.BuildDenom(issuanceReq.Subunit, sdk.MustAccAddressFromBech32(ft.contractAddressWithFeatures))
 }
 
-func (ft *ftTest) issueV0TokenWithoutFeaturesWASM(t *testing.T) {
+func (ft *ftV1UpgradeTest) issueV0TokenWithoutFeaturesWASM(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -226,7 +226,7 @@ func (ft *ftTest) issueV0TokenWithoutFeaturesWASM(t *testing.T) {
 	ft.denomV0WasmWithoutFeatures = assetfttypes.BuildDenom(issuanceReq.Subunit, sdk.MustAccAddressFromBech32(ft.contractAddressWithoutFeatures))
 }
 
-func (ft *ftTest) tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -270,7 +270,7 @@ func (ft *ftTest) tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t *testing.T)
 	requireT.Len(resp.Token.Features, 0)
 }
 
-func (ft *ftTest) After(t *testing.T) {
+func (ft *ftV1UpgradeTest) After(t *testing.T) {
 	ft.tryToUpgradeV1TokenToEnableIBC(t)
 	ft.tryToUpgradeV1TokenToDisableIBC(t)
 	ft.tryToUpgradeV0ToV1ByNonIssuer(t)
@@ -284,7 +284,7 @@ func (ft *ftTest) After(t *testing.T) {
 	ft.tryToUpgradeV0ToV1AfterDecisionTimeout(t)
 }
 
-func (ft *ftTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -352,7 +352,7 @@ func (ft *ftTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
 	}, resp.Token.Features)
 }
 
-func (ft *ftTest) tryToUpgradeV1TokenToDisableIBC(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToDisableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -406,7 +406,7 @@ func (ft *ftTest) tryToUpgradeV1TokenToDisableIBC(t *testing.T) {
 	requireT.Equal([]assetfttypes.Feature{assetfttypes.Feature_ibc}, resp.Token.Features)
 }
 
-func (ft *ftTest) tryToUpgradeV0ToV1ByNonIssuer(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1ByNonIssuer(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -465,7 +465,7 @@ func (ft *ftTest) tryToUpgradeV0ToV1ByNonIssuer(t *testing.T) {
 	}, resp.Token.Features)
 }
 
-func (ft *ftTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
+func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -510,7 +510,7 @@ func (ft *ftTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
 }
 
 //nolint:funlen // there are many tests
-func (ft *ftTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
+func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -620,7 +620,7 @@ func (ft *ftTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	}, resp.Token.Features)
 }
 
-func (ft *ftTest) upgradeFromV0ToV1ToDisableIBCWASM(t *testing.T) {
+func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToDisableIBCWASM(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	txf := chain.TxFactory().WithSimulateAndExecute(true)
@@ -658,7 +658,7 @@ func (ft *ftTest) upgradeFromV0ToV1ToDisableIBCWASM(t *testing.T) {
 	requireT.ErrorContains(err, fmt.Sprintf("denom %s has been already upgraded to v1", ft.denomV0WasmWithFeatures))
 }
 
-func (ft *ftTest) upgradeFromV0ToV1ToEnableIBCWASM(t *testing.T) {
+func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBCWASM(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	txf := chain.TxFactory().WithSimulateAndExecute(true)
@@ -711,7 +711,7 @@ func (ft *ftTest) upgradeFromV0ToV1ToEnableIBCWASM(t *testing.T) {
 	requireT.ErrorContains(err, fmt.Sprintf("denom %s has been already upgraded to v1", ft.denomV0WasmWithoutFeatures))
 }
 
-func (ft *ftTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -765,7 +765,7 @@ func (ft *ftTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) {
 	requireT.Len(resp.Token.Features, 0)
 }
 
-func (ft *ftTest) changeGracePeriod(t *testing.T) {
+func (ft *ftV1UpgradeTest) changeGracePeriod(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	chain.Governance.UpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
 		[]paramproposal.ParamChange{
