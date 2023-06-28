@@ -182,6 +182,22 @@ func (def Definition) IsIssuer(addr sdk.Address) bool {
 	return def.Issuer == addr.String()
 }
 
+// ValidateFeatures verifies that provided features belong to the defined set.
+func ValidateFeatures(features []Feature) error {
+	present := map[Feature]struct{}{}
+	for _, f := range features {
+		name, exists := Feature_name[int32(f)]
+		if !exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "non-existing feature provided: %d", f)
+		}
+		if _, exists := present[f]; exists {
+			return sdkerrors.Wrapf(ErrInvalidInput, "duplicated feature: %s", name)
+		}
+		present[f] = struct{}{}
+	}
+	return nil
+}
+
 // ValidateBurnRate checks that the provided burn rate is valid.
 func ValidateBurnRate(burnRate sdk.Dec) error {
 	if err := validateRate(burnRate); err != nil {

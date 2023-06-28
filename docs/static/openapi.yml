@@ -4220,7 +4220,7 @@ paths:
         - Query
   /coreum/asset/nft/v1/params:
     get:
-      summary: Params queries the parameters of x/asset/ft module.
+      summary: Params queries the parameters of x/asset/nft module.
       operationId: CoreumAssetNftV1Params
       responses:
         '200':
