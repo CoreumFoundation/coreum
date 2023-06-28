@@ -2424,7 +2424,7 @@ Query defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Params` | [QueryParamsRequest](#coreum.asset.nft.v1.QueryParamsRequest) | [QueryParamsResponse](#coreum.asset.nft.v1.QueryParamsResponse) | Params queries the parameters of x/asset/ft module. | GET|/coreum/asset/nft/v1/params|
+| `Params` | [QueryParamsRequest](#coreum.asset.nft.v1.QueryParamsRequest) | [QueryParamsResponse](#coreum.asset.nft.v1.QueryParamsResponse) | Params queries the parameters of x/asset/nft module. | GET|/coreum/asset/nft/v1/params|
 | `Class` | [QueryClassRequest](#coreum.asset.nft.v1.QueryClassRequest) | [QueryClassResponse](#coreum.asset.nft.v1.QueryClassResponse) | Class queries the non-fungible token class of the module. | GET|/coreum/asset/nft/v1/classes/{id}|
 | `Classes` | [QueryClassesRequest](#coreum.asset.nft.v1.QueryClassesRequest) | [QueryClassesResponse](#coreum.asset.nft.v1.QueryClassesResponse) | Classes queries the non-fungible token classes of the module. | GET|/coreum/asset/nft/v1/classes|
 | `Frozen` | [QueryFrozenRequest](#coreum.asset.nft.v1.QueryFrozenRequest) | [QueryFrozenResponse](#coreum.asset.nft.v1.QueryFrozenResponse) | Frozen queries to check if an NFT is frozen or not. | GET|/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen|
