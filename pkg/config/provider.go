@@ -7,6 +7,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/cosmos/btcutil/bech32"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -25,10 +26,16 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
+var (
+	_ NetworkConfigProvider = DynamicConfigProvider{}
+	_ NetworkConfigProvider = StaticConfigProvider{}
+)
+
 // NetworkConfigProvider specifies methods required by config consumer.
 type NetworkConfigProvider interface {
 	GetChainID() constant.ChainID
 	GetDenom() string
+	GetAddressPrefix() string
 	EncodeGenesis() ([]byte, error)
 	AppState() (map[string]json.RawMessage, error)
 }
@@ -37,13 +44,13 @@ type NetworkConfigProvider interface {
 type DynamicConfigProvider struct {
 	GenesisTemplate    string
 	ChainID            constant.ChainID
+	Denom              string
+	AddressPrefix      string
 	GenesisTime        time.Time
 	GovConfig          GovConfig
 	CustomParamsConfig CustomParamsConfig
 	FundedAccounts     []FundedAccount
 	GenTxs             []json.RawMessage
-
-	Denom string
 }
 
 // WithAccount funds address with balances at genesis.
@@ -71,6 +78,11 @@ func (dcp DynamicConfigProvider) GetChainID() constant.ChainID {
 // GetDenom returns denom.
 func (dcp DynamicConfigProvider) GetDenom() string {
 	return dcp.Denom
+}
+
+// GetAddressPrefix returns address prefix.
+func (dcp DynamicConfigProvider) GetAddressPrefix() string {
+	return dcp.AddressPrefix
 }
 
 // EncodeGenesis returns encoded genesis doc.
@@ -249,11 +261,17 @@ func NewStaticConfigProvider(content []byte) StaticConfigProvider {
 		staking.AppModuleBasic{},
 	)).Codec
 	stakingGenesisState := stakingtypes.GetGenesisStateFromAppState(codec, appStateMapJSONRawMessage)
+	bankGenesisState := banktypes.GetGenesisStateFromAppState(codec, appStateMapJSONRawMessage)
+	addressPrefix, _, err := bech32.Decode(bankGenesisState.Balances[0].Address, 1023)
+	if err != nil {
+		panic(err)
+	}
 
 	provider := StaticConfigProvider{
-		content:    content,
-		genesisDoc: genesisDoc,
-		denom:      stakingGenesisState.Params.BondDenom,
+		content:       content,
+		genesisDoc:    genesisDoc,
+		denom:         stakingGenesisState.Params.BondDenom,
+		addressPrefix: addressPrefix,
 	}
 
 	return provider
@@ -261,9 +279,10 @@ func NewStaticConfigProvider(content []byte) StaticConfigProvider {
 
 // StaticConfigProvider provides configuration based on genesis JSON.
 type StaticConfigProvider struct {
-	content    []byte
-	genesisDoc *tmtypes.GenesisDoc
-	denom      string
+	content       []byte
+	genesisDoc    *tmtypes.GenesisDoc
+	denom         string
+	addressPrefix string
 }
 
 // GetChainID returns chain ID.
@@ -274,6 +293,11 @@ func (jcp StaticConfigProvider) GetChainID() constant.ChainID {
 // GetDenom returns denom.
 func (jcp StaticConfigProvider) GetDenom() string {
 	return jcp.denom
+}
+
+// GetAddressPrefix returns address prefix.
+func (jcp StaticConfigProvider) GetAddressPrefix() string {
+	return jcp.addressPrefix
 }
 
 // EncodeGenesis returns encoded genesis doc.
