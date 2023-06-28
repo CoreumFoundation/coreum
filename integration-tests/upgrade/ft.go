@@ -150,6 +150,9 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 
 	// ********** Issuance **********
 
+	burnRate := sdk.MustNewDecFromStr("0.0")
+	sendCommissionRate := sdk.MustNewDecFromStr("0.0")
+
 	issuanceAmount := sdk.NewInt(1000)
 	issuanceReq := issueFTRequest{
 		Symbol:        "symbol",
@@ -163,6 +166,8 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
 		},
+		BurnRate:           burnRate.String(),
+		SendCommissionRate: sendCommissionRate.String(),
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
@@ -194,13 +199,18 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithoutFeaturesWASM(t *testing.T) {
 
 	// ********** Issuance **********
 
+	burnRate := sdk.MustNewDecFromStr("0.0")
+	sendCommissionRate := sdk.MustNewDecFromStr("0.0")
+
 	issuanceAmount := sdk.NewInt(1000)
 	issuanceReq := issueFTRequest{
-		Symbol:        "symbol",
-		Subunit:       "subunit",
-		Precision:     6,
-		InitialAmount: issuanceAmount.String(),
-		Description:   "my wasm fungible token",
+		Symbol:             "symbol",
+		Subunit:            "subunit",
+		Precision:          6,
+		InitialAmount:      issuanceAmount.String(),
+		Description:        "my wasm fungible token",
+		BurnRate:           burnRate.String(),
+		SendCommissionRate: sendCommissionRate.String(),
 	}
 	issuerFTInstantiatePayload, err := json.Marshal(issuanceReq)
 	requireT.NoError(err)
