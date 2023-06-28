@@ -25,7 +25,6 @@ import (
 type ftMethod string
 
 const (
-	// tx.
 	ftMethodUpgradeTokenV1 ftMethod = "upgrade_token_v1"
 	gracePeriod                     = 15 * time.Second
 )
