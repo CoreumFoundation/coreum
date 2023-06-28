@@ -1182,9 +1182,11 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	// ********** Issuance **********
 
 	royaltyRate := sdk.MustNewDecFromStr("0.1")
-	dataString := "@#$%&+=This string when I encode it into base 64 has special characters ~~~~~^^^{^{^:!>!!?><"
-	bytesData := []byte(dataString)
-	encodedData := base64.StdEncoding.EncodeToString(bytesData)
+	data := make([]byte, 256)
+	for i := 0; i < 256; i++ {
+		data[i] = uint8(i)
+	}
+	encodedData := base64.StdEncoding.EncodeToString(data)
 
 	issueClassReq := issueNFTRequest{
 		Name:        "name",
@@ -1222,7 +1224,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	classRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
 	requireT.NoError(err)
 
-	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte(dataString)})
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: data})
 	// we need to do this, otherwise assertion fails because some private fields are set differently
 	dataToCompare := &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
