@@ -64,7 +64,7 @@ func TestKeeper_IssueClass(t *testing.T) {
 	// try to duplicate
 	settings.Symbol = "SYMBOL"
 	_, err = nftKeeper.IssueClass(ctx, settings)
-	requireT.True(types.ErrInvalidInput.Is(err))
+	requireT.ErrorIs(err, types.ErrInvalidInput)
 
 	// try to get non-valid class
 	_, err = nftKeeper.GetClass(ctx, "invalid")
@@ -73,6 +73,12 @@ func TestKeeper_IssueClass(t *testing.T) {
 	// try to get nonexistent class
 	_, err = nftKeeper.GetClass(ctx, types.BuildClassID("nonexistent", addr))
 	requireT.ErrorIs(err, types.ErrClassNotFound)
+
+	// try to create class containing non-existing feature
+	settings.Symbol = "symbol2"
+	settings.Features = append(settings.Features, 10000)
+	_, err = nftKeeper.IssueClass(ctx, settings)
+	requireT.ErrorIs(err, types.ErrInvalidInput)
 }
 
 func TestKeeper_GetClasses(t *testing.T) {

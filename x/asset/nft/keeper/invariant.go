@@ -72,17 +72,17 @@ func OriginalClassExistsInvariant(k Keeper) sdk.Invariant {
 			notFoundCount int
 		)
 
-		classDefinitions, _, err := k.GetClassDefinitions(ctx, nil, &query.PageRequest{Limit: query.MaxLimit})
-		if err != nil {
-			panic(err)
-		}
-
-		for _, classDef := range classDefinitions {
+		err := k.IterateAllClassDefinitions(ctx, func(classDef types.ClassDefinition) (bool, error) {
 			found := k.nftKeeper.HasClass(ctx, classDef.ID)
 			if !found {
 				notFoundCount++
 				msg += fmt.Sprintf("\t%s class does not have counterpart on original nft module", classDef.ID)
 			}
+
+			return false, nil
+		})
+		if err != nil {
+			panic(err)
 		}
 
 		return sdk.FormatInvariant(
