@@ -151,3 +151,54 @@ func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 	}
 	store.Set(gasPriceKey, bz)
 }
+
+// EstimateFutureGasPrice returns the smallest and highest possible values ofr min gas price in future blocks.
+func (k Keeper) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin) {
+	params := k.GetParams(ctx)
+	shortEMA := k.GetShortEMAGas(ctx)
+	longEMA := k.GetLongEMAGas(ctx)
+
+	maxShortEMA := shortEMA
+	minShortEMA := shortEMA
+
+	maxLongEMA := longEMA
+	minLongEMA := longEMA
+
+	model := types.NewModel(params.Model)
+	minGasPrice := sdk.NewDecCoinFromDec(
+		k.GetMinGasPrice(ctx).Denom,
+		model.CalculateNextGasPrice(shortEMA, longEMA),
+	)
+
+	lowMinGasPrice := minGasPrice
+	highMinGasPrice := minGasPrice
+
+	for i := 0; i < int(after); i++ {
+		maxShortEMA = types.CalculateEMA(maxShortEMA, params.Model.MaxBlockGas,
+			params.Model.ShortEmaBlockLength)
+		maxLongEMA = types.CalculateEMA(maxLongEMA, params.Model.MaxBlockGas,
+			params.Model.LongEmaBlockLength)
+		maxLoadMinGasPrice := sdk.NewDecCoinFromDec(minGasPrice.Denom, model.CalculateNextGasPrice(maxShortEMA, maxLongEMA))
+
+		minShortEMA = types.CalculateEMA(minShortEMA, 0,
+			params.Model.ShortEmaBlockLength)
+		minLongEMA = types.CalculateEMA(minLongEMA, 0,
+			params.Model.LongEmaBlockLength)
+		minLoadMinGasPrice := sdk.NewDecCoinFromDec(minGasPrice.Denom, model.CalculateNextGasPrice(minShortEMA, minLongEMA))
+
+		if maxLoadMinGasPrice.IsGTE(highMinGasPrice) {
+			highMinGasPrice = maxLoadMinGasPrice
+		}
+		if minLoadMinGasPrice.IsGTE(highMinGasPrice) {
+			highMinGasPrice = minLoadMinGasPrice
+		}
+		if maxLoadMinGasPrice.IsLT(lowMinGasPrice) {
+			lowMinGasPrice = maxLoadMinGasPrice
+		}
+		if minLoadMinGasPrice.IsLT(lowMinGasPrice) {
+			lowMinGasPrice = minLoadMinGasPrice
+		}
+	}
+
+	return lowMinGasPrice, highMinGasPrice
+}

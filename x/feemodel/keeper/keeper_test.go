@@ -112,3 +112,165 @@ func TestParams(t *testing.T) {
 	assert.Equal(t, defParams.Model.ShortEmaBlockLength, params.Model.ShortEmaBlockLength)
 	assert.Equal(t, defParams.Model.LongEmaBlockLength, params.Model.LongEmaBlockLength)
 }
+
+func TestEstimateGasPriceInFuture(t *testing.T) {
+	ctx, keeper := setup()
+	defParams := types.Params{
+		Model: types.ModelParams{
+			InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
+			MaxGasPriceMultiplier:   sdk.MustNewDecFromStr("1000.0"),
+			MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
+			EscalationStartFraction: sdk.MustNewDecFromStr("0.8"),
+			MaxBlockGas:             50000000, // 400 * BankSend message
+			ShortEmaBlockLength:     50,
+			LongEmaBlockLength:      1000,
+		},
+	}
+	keeper.SetParams(ctx, defParams)
+
+	testCases := []struct {
+		name        string
+		shortEMA    int64
+		longEMA     int64
+		afterBlocks uint32
+		assertions  func(t *testing.T, low, high sdk.DecCoin)
+	}{
+		{
+			name:        "short and long ema are 0. (10 blocks after)",
+			shortEMA:    0,
+			longEMA:     0,
+			afterBlocks: 10,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is max discount")
+				assertT.EqualValues(high.Amount, model.CalculateGasPriceWithMaxDiscount(), "high amount is max discount")
+			},
+		},
+		{
+			name:        "short and long ema are 0. (50 blocks after)",
+			shortEMA:    0,
+			longEMA:     0,
+			afterBlocks: 50,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.EqualValues(high.Amount, model.CalculateGasPriceWithMaxDiscount())
+			},
+		},
+		{
+			name:        "short and long ema are 0. (100 blocks after)",
+			shortEMA:    0,
+			longEMA:     0,
+			afterBlocks: 100,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+
+				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*100)
+			},
+		},
+		{
+			name:        "short and long ema are equal. (1 tx in block on average)",
+			shortEMA:    100_000,
+			longEMA:     100_000,
+			afterBlocks: 10,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+
+				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
+				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64())
+			},
+		},
+		{
+			name:        "short and long ema are equal. (10 tx in block on average)",
+			shortEMA:    1_000_000,
+			longEMA:     1_000_000,
+			afterBlocks: 10,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+
+				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
+				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64())
+			},
+		},
+		{
+			name:        "short ema is between long ema and escalation region. (10 block after)",
+			shortEMA:    5_000_000,
+			longEMA:     1_000_000,
+			afterBlocks: 10,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.EqualValues(high.Amount, model.CalculateGasPriceWithMaxDiscount())
+			},
+		},
+		{
+			name:        "short ema is between long ema and escalation region. (50 block after)",
+			shortEMA:    5_000_000,
+			longEMA:     1_000_000,
+			afterBlocks: 50,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
+				assertT.EqualValues(high.Amount, model.CalculateGasPriceWithMaxDiscount(), "high amount is equal to max discount")
+			},
+		},
+		{
+			name:        "short ema is between long ema and escalation region. (100 block after)",
+			shortEMA:    5_000_000,
+			longEMA:     1_000_000,
+			afterBlocks: 100,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64(), "low amount")
+				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*150, "high amount is much higher than the initial price. (in escalation)")
+			},
+		},
+		{
+			name:        "short ema is right before escalation region. (10 block after)",
+			shortEMA:    39_000_000,
+			longEMA:     10_000_000,
+			afterBlocks: 10,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64(), "low amount is equal to max discount")
+				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*10, "high amount is much higher than the initial price. (in escalation)")
+			},
+		},
+		{
+			name:        "short ema is right before escalation region. (100 block after)",
+			shortEMA:    39_000_000,
+			longEMA:     10_000_000,
+			afterBlocks: 100,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
+				assertT.Less(low.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64(), "low amount is less than initial price")
+				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*700, "high amount is much higher than the initial price. (in escalation)")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec("coin", sdk.MustNewDecFromStr("0.0625")))
+			keeper.SetShortEMAGas(ctx, tc.shortEMA)
+			keeper.SetLongEMAGas(ctx, tc.longEMA)
+			low, high := keeper.EstimateFutureGasPrice(ctx, tc.afterBlocks)
+			tc.assertions(t, low, high)
+		})
+	}
+}

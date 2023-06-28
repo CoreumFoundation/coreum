@@ -57,6 +57,10 @@ func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 	k.state.MinGasPrice = minGasPrice
 }
 
+func (k *keeperMock) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin) {
+	return sdk.NewDecCoin("", sdk.ZeroInt()), sdk.NewDecCoin("", sdk.ZeroInt())
+}
+
 func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Codec) {
 	genesisState := types.GenesisState{
 		Params: types.Params{

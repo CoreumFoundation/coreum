@@ -15,6 +15,11 @@ service Query {
     option (google.api.http).get = "/coreum/feemodel/v1/min_gas_price";
   }
 
+  // RecommendedGasPrice queries the recommended gas price for the next n blocks.
+  rpc RecommendedGasPrice(QueryRecommendedGasPriceRequest) returns (QueryRecommendedGasPriceResponse) {
+    option (google.api.http).get = "/coreum/feemodel/v1/recommended_gas_price";
+  }
+
   // Params queries the parameters of x/feemodel module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/coreum/feemodel/v1/params";
@@ -28,6 +33,16 @@ message QueryMinGasPriceRequest {}
 message QueryMinGasPriceResponse {
   // min_gas_price is the current minimum gas price required by the network.
   cosmos.base.v1beta1.DecCoin min_gas_price = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryRecommendedGasPriceRequest {
+  uint32 after_blocks = 1;
+}
+
+message QueryRecommendedGasPriceResponse {
+  cosmos.base.v1beta1.DecCoin low = 1 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.DecCoin med = 2 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.DecCoin high = 3 [(gogoproto.nullable) = false];
 }
 
 // QueryParamsRequest defines the request type for querying x/feemodel parameters.
