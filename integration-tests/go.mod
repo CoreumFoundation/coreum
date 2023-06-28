@@ -4,7 +4,7 @@ go 1.18
 
 replace (
 	github.com/CoreumFoundation/coreum => ../
-	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1
+	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1 // workaround for the btcd import conflicts
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
