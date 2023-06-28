@@ -23,37 +23,37 @@ jobs:
         ]
         include:
           - ci_step: "lint"
-            command: "crust lint/coreum --log-format=yaml"
+            command: "crust lint/coreum"
             go-cache: true
             wasm-cache: true
             linter-cache: true
             docker-cache: false
           - ci_step: "test"
-            command: "crust test/coreum --log-format=yaml"
+            command: "crust test/coreum"
             go-cache: true
             wasm-cache: false
             linter-cache: false
             docker-cache: false
           - ci_step: "integration tests coreum-modules"
-            command: "crust build/integration-tests/coreum/modules images --log-format=yaml && crust znet test --test-groups=coreum-modules"
+            command: "crust build/integration-tests/coreum/modules images && crust znet test --test-groups=coreum-modules"
             go-cache: true
             wasm-cache: true
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests coreum-ibc"
-            command: "crust build/integration-tests/coreum/ibc images --log-format=yaml && crust znet test --test-groups=coreum-ibc"
+            command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc"
             go-cache: true
             wasm-cache: false
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests coreum-upgrade"
-            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images --log-format=yaml && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc"
+            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc"
             go-cache: true
             wasm-cache: true
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests faucet"
-            command: "crust build/integration-tests/faucet images --log-format=yaml && crust znet test --test-groups=faucet"
+            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet"
             go-cache: true
             wasm-cache: false
             linter-cache: false

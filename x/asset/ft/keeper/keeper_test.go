@@ -24,6 +24,7 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
+//nolint:funlen
 func TestKeeper_Issue(t *testing.T) {
 	requireT := require.New(t)
 
@@ -38,7 +39,7 @@ func TestKeeper_Issue(t *testing.T) {
 	ftKeeper.SetParams(ctx, ftParams)
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
-	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(ftParams.IssueFee)))
+	requireT.NoError(testApp.FundAccount(ctx, addr, sdk.NewCoins(sdk.NewCoin(ftParams.IssueFee.Denom, ftParams.IssueFee.Amount.MulRaw(5)))))
 
 	settings := types.IssueSettings{
 		Issuer:        addr,
@@ -62,7 +63,7 @@ func TestKeeper_Issue(t *testing.T) {
 	// check that balance is 0 meaning issue fee was taken
 
 	balance := bankKeeper.GetBalance(ctx, addr, constant.DenomDev)
-	requireT.Equal(sdk.ZeroInt().String(), balance.Amount.String())
+	requireT.Equal(ftParams.IssueFee.Amount.MulRaw(4).String(), balance.Amount.String())
 
 	requireT.Equal(types.BuildDenom(settings.Subunit, settings.Issuer), denom)
 
@@ -120,6 +121,20 @@ func TestKeeper_Issue(t *testing.T) {
 	_, err = ftKeeper.Issue(ctx, st)
 	requireT.ErrorIs(err, types.ErrInvalidInput)
 	requireT.True(strings.Contains(err.Error(), "duplicate"))
+
+	// try to create token containing non-existing feature
+	settings.Symbol = "CDE"
+	settings.Subunit = "subunit2"
+	settings.Features = append(settings.Features, 10000)
+	_, err = ftKeeper.Issue(ctx, settings)
+	requireT.ErrorIs(err, types.ErrInvalidInput)
+
+	// try to create token containing doubled feature
+	settings.Symbol = "EFG"
+	settings.Subunit = "subunit3"
+	settings.Features = append(settings.Features, settings.Features[0])
+	_, err = ftKeeper.Issue(ctx, settings)
+	requireT.ErrorIs(err, types.ErrInvalidInput)
 }
 
 func TestKeeper_IssueEqualDisplayAndBaseDenom(t *testing.T) {

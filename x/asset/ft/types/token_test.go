@@ -169,6 +169,118 @@ func TestValidateSymbol(t *testing.T) {
 	}
 }
 
+//nolint:funlen
+func TestValidateFeatures(t *testing.T) {
+	t.Parallel()
+
+	assertT := assert.New(t)
+
+	type testCase struct {
+		Name     string
+		Features []types.Feature
+		Ok       bool
+	}
+
+	allFeatures := make([]types.Feature, 0, len(types.Feature_name))
+	for f := range types.Feature_name {
+		allFeatures = append(allFeatures, types.Feature(f))
+	}
+
+	testCases := []testCase{
+		// valid cases
+		{
+			Name:     "nil",
+			Features: nil,
+			Ok:       true,
+		},
+		{
+			Name:     "empty",
+			Features: []types.Feature{},
+			Ok:       true,
+		},
+		{
+			Name: "with one",
+			Features: []types.Feature{
+				types.Feature_burning,
+			},
+			Ok: true,
+		},
+		{
+			Name: "ibc only",
+			Features: []types.Feature{
+				types.Feature_ibc,
+			},
+			Ok: true,
+		},
+		{
+			Name:     "all",
+			Features: allFeatures,
+			Ok:       true,
+		},
+		{
+			Name:     "all except one",
+			Features: allFeatures[1:],
+			Ok:       true,
+		},
+
+		// invalid cases
+		{
+			Name:     "single out of scope",
+			Features: []types.Feature{1000},
+			Ok:       false,
+		},
+		{
+			Name: "one normal + out of scope at the end",
+			Features: []types.Feature{
+				types.Feature_minting,
+				2000,
+			},
+			Ok: false,
+		},
+		{
+			Name: "one normal + out of scope at the beginning",
+			Features: []types.Feature{
+				3000,
+				types.Feature_minting,
+			},
+			Ok: false,
+		},
+		{
+			Name: "two normal + out of scope in the middle",
+			Features: []types.Feature{
+				types.Feature_burning,
+				4000,
+				types.Feature_minting,
+			},
+			Ok: false,
+		},
+		{
+			Name:     "all normal + out of scope in the middle",
+			Features: append([]types.Feature{5000}, allFeatures...),
+			Ok:       false,
+		},
+		{
+			Name:     "duplicated",
+			Features: append([]types.Feature{allFeatures[0]}, allFeatures...),
+			Ok:       false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			err := types.ValidateFeatures(tc.Features)
+			if tc.Ok {
+				assertT.NoError(err)
+			} else {
+				assertT.Error(err)
+			}
+		})
+	}
+}
+
 //nolint:dupl // We don't care
 func TestValidateBurnRate(t *testing.T) {
 	testCases := []struct {
