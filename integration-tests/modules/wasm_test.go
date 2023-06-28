@@ -1182,6 +1182,9 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	// ********** Issuance **********
 
 	royaltyRate := sdk.MustNewDecFromStr("0.1")
+	dataString := "@#$%&+=This string when I encode it into base 64 has special characters ~~~~~^^^{^{^:!>!!?><"
+	bytesData := []byte(dataString)
+	encodedData := base64.StdEncoding.EncodeToString(bytesData)
 
 	issueClassReq := issueNFTRequest{
 		Name:        "name",
@@ -1189,7 +1192,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Description: "description",
 		URI:         "https://my-nft-class-meta.invalid/1",
 		URIHash:     "hash",
-		Data:        "data",
+		Data:        encodedData,
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_burning,
 			assetnfttypes.ClassFeature_freezing,
@@ -1219,10 +1222,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	classRes, err := assetNftClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
 	requireT.NoError(err)
 
-	dataString := "data"
-	dataBase64Bytes, err := base64.StdEncoding.DecodeString(dataString)
-	requireT.NoError(err)
-	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: dataBase64Bytes})
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte(dataString)})
 	// we need to do this, otherwise assertion fails because some private fields are set differently
 	dataToCompare := &codectypes.Any{
 		TypeUrl: dataBytes.TypeUrl,
@@ -1252,7 +1252,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		ID:      "id-1",
 		URI:     "https://my-nft-meta.invalid/1",
 		URIHash: "hash",
-		Data:    dataString,
+		Data:    encodedData,
 	}
 	mintPayload, err := json.Marshal(map[nftMethod]nftMintRequest{
 		nftMethodMint: mintNFTReq1,
@@ -1448,7 +1448,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Description: expectedClass.Description,
 			URI:         expectedClass.URI,
 			URIHash:     expectedClass.URIHash,
-			Data:        dataString,
+			Data:        encodedData,
 			Features:    expectedClass.Features,
 			RoyaltyRate: expectedClass.RoyaltyRate,
 		}, classQueryRes.Class,
@@ -1475,7 +1475,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Description: expectedClass.Description,
 			URI:         expectedClass.URI,
 			URIHash:     expectedClass.URIHash,
-			Data:        dataString,
+			Data:        encodedData,
 			Features:    expectedClass.Features,
 			RoyaltyRate: expectedClass.RoyaltyRate,
 		}, assetnftClass{
@@ -1486,7 +1486,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Description: classesQueryRes.Classes[0].Description,
 			URI:         classesQueryRes.Classes[0].URI,
 			URIHash:     classesQueryRes.Classes[0].URIHash,
-			Data:        dataString,
+			Data:        encodedData,
 			Features:    classesQueryRes.Classes[0].Features,
 			RoyaltyRate: classesQueryRes.Classes[0].RoyaltyRate,
 		},
@@ -1604,7 +1604,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			ID:      mintNFTReq2.ID,
 			URI:     mintNFTReq2.URI,
 			URIHash: mintNFTReq2.URIHash,
-			Data:    dataString,
+			Data:    encodedData,
 		}, nftQueryRes.NFT,
 	)
 
@@ -1627,7 +1627,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			ID:      mintNFTReq2.ID,
 			URI:     mintNFTReq2.URI,
 			URIHash: mintNFTReq2.URIHash,
-			Data:    dataString,
+			Data:    encodedData,
 		}, nftsQueryRes.NFTs[0],
 	)
 
@@ -1650,7 +1650,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Description: expectedClass.Description,
 			URI:         expectedClass.URI,
 			URIHash:     expectedClass.URIHash,
-			Data:        dataString,
+			Data:        encodedData,
 		}, nftClassQueryRes.Class,
 	)
 
@@ -1672,7 +1672,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 		Description: expectedClass.Description,
 		URI:         expectedClass.URI,
 		URIHash:     expectedClass.URIHash,
-		Data:        dataString,
+		Data:        encodedData,
 	})
 }
 
