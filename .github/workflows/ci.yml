@@ -110,8 +110,6 @@ jobs:
         continue-on-error: true
         with:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
-          restore-keys: |
-            ${{ runner.os }}-docker-
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
