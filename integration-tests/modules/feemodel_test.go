@@ -57,6 +57,9 @@ func TestFeeModelQueryingGasPriceRecommendation(t *testing.T) {
 	requireT.LessOrEqual(res.GetLow().Amount.MustFloat64(), model.CalculateMaxGasPrice().MustFloat64())
 	requireT.GreaterOrEqual(res.GetMed().Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
 	requireT.LessOrEqual(res.GetMed().Amount.MustFloat64(), model.CalculateMaxGasPrice().MustFloat64())
+
+	requireT.LessOrEqual(res.GetLow().Amount.MustFloat64(), res.GetMed().Amount.MustFloat64())
+	requireT.LessOrEqual(res.GetMed().Amount.MustFloat64(), res.GetHigh().Amount.MustFloat64())
 }
 
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.

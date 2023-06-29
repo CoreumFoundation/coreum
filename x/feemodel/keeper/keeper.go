@@ -173,7 +173,7 @@ func (k Keeper) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCo
 	lowMinGasPrice := minGasPrice
 	highMinGasPrice := minGasPrice
 
-	for i := 0; i < int(after); i++ {
+	for i := uint32(0); i < after; i++ {
 		maxShortEMA = types.CalculateEMA(maxShortEMA, params.Model.MaxBlockGas,
 			params.Model.ShortEmaBlockLength)
 		maxLongEMA = types.CalculateEMA(maxLongEMA, params.Model.MaxBlockGas,

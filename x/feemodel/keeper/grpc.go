@@ -42,8 +42,13 @@ func (qs QueryService) MinGasPrice(ctx context.Context, req *types.QueryMinGasPr
 
 // MinGasPrice returns current minimum gas price required by the network.
 func (qs QueryService) RecommendedGasPrice(ctx context.Context, req *types.QueryRecommendedGasPriceRequest) (*types.QueryRecommendedGasPriceResponse, error) {
+	const maxAfterBlocks uint32 = 50
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	if req.AfterBlocks > maxAfterBlocks {
+		return nil, status.Errorf(codes.InvalidArgument, "after blocks must be lower than %d", maxAfterBlocks)
 	}
 
 	low, high := qs.keeper.EstimateFutureGasPrice(sdk.UnwrapSDKContext(ctx), req.AfterBlocks)
