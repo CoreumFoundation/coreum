@@ -17,14 +17,14 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-type ftTest struct {
+type ftV1UpgradeTest struct {
 	issuer                      sdk.AccAddress
 	denomV0WithoutFeatures      string
 	denomV0WithFeatures         string
 	denomV0ForForbiddenUpgrades string
 }
 
-func (ft *ftTest) Before(t *testing.T) {
+func (ft *ftV1UpgradeTest) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	ft.issuer = chain.GenAccount()
 
@@ -54,7 +54,7 @@ func (ft *ftTest) Before(t *testing.T) {
 	ft.tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t)
 }
 
-func (ft *ftTest) issueV0TokenWithoutFeatures(t *testing.T) {
+func (ft *ftV1UpgradeTest) issueV0TokenWithoutFeatures(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -76,7 +76,7 @@ func (ft *ftTest) issueV0TokenWithoutFeatures(t *testing.T) {
 	ft.denomV0WithoutFeatures = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 }
 
-func (ft *ftTest) issueV0TokenWithFeatures(t *testing.T) {
+func (ft *ftV1UpgradeTest) issueV0TokenWithFeatures(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -104,7 +104,7 @@ func (ft *ftTest) issueV0TokenWithFeatures(t *testing.T) {
 	ft.denomV0WithFeatures = assetfttypes.BuildDenom(issueMsg.Subunit, ft.issuer)
 }
 
-func (ft *ftTest) tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -148,7 +148,7 @@ func (ft *ftTest) tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t *testing.T)
 	requireT.Len(resp.Token.Features, 0)
 }
 
-func (ft *ftTest) After(t *testing.T) {
+func (ft *ftV1UpgradeTest) After(t *testing.T) {
 	ft.tryToUpgradeV1TokenToEnableIBC(t)
 	ft.tryToUpgradeV1TokenToDisableIBC(t)
 	ft.tryToUpgradeV0ToV1ByNonIssuer(t)
@@ -158,7 +158,7 @@ func (ft *ftTest) After(t *testing.T) {
 	ft.tryToUpgradeV0ToV1AfterDecisionTimeout(t)
 }
 
-func (ft *ftTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -226,7 +226,7 @@ func (ft *ftTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
 	}, resp.Token.Features)
 }
 
-func (ft *ftTest) tryToUpgradeV1TokenToDisableIBC(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToDisableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -280,7 +280,7 @@ func (ft *ftTest) tryToUpgradeV1TokenToDisableIBC(t *testing.T) {
 	requireT.Equal([]assetfttypes.Feature{assetfttypes.Feature_ibc}, resp.Token.Features)
 }
 
-func (ft *ftTest) tryToUpgradeV0ToV1ByNonIssuer(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1ByNonIssuer(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -339,7 +339,7 @@ func (ft *ftTest) tryToUpgradeV0ToV1ByNonIssuer(t *testing.T) {
 	}, resp.Token.Features)
 }
 
-func (ft *ftTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
+func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -384,7 +384,7 @@ func (ft *ftTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
 }
 
 //nolint:funlen // there are many tests
-func (ft *ftTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
+func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -501,7 +501,7 @@ func (ft *ftTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	}, resp.Token.Features)
 }
 
-func (ft *ftTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) {
+func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
@@ -553,6 +553,194 @@ func (ft *ftTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(0, resp.Token.Version)
 	requireT.Len(resp.Token.Features, 0)
+}
+
+type ftFeaturesTest struct {
+	denom string
+}
+
+func (ft *ftFeaturesTest) Before(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "AAA",
+		Subunit:       "uaaa",
+		Precision:     6,
+		Description:   "AAA Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_ibc, // should be removed by the migration
+			assetfttypes.Feature_freezing,
+			1000,                              // should be removed by the migration
+			assetfttypes.Feature_whitelisting, // should be removed by the migration
+			assetfttypes.Feature_minting,      // should be removed by the migration
+			assetfttypes.Feature_burning,      // should be removed by the migration
+			assetfttypes.Feature_ibc,          // should be removed by the migration
+			assetfttypes.Feature_freezing,     // should be removed by the migration
+			2000,                              // should be removed by the migration
+			1000,                              // should be removed by the migration
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
+	ft.denom = assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+}
+
+func (ft *ftFeaturesTest) After(t *testing.T) {
+	ft.verifyTokenIsFixed(t)
+	ft.tryCreatingTokenWithInvalidFeature(t)
+	ft.tryCreatingTokenWithDuplicatedFeature(t)
+	ft.createValidToken(t)
+}
+
+func (ft *ftFeaturesTest) verifyTokenIsFixed(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: ft.denom,
+	})
+	requireT.NoError(err)
+
+	requireT.Equal([]assetfttypes.Feature{
+		assetfttypes.Feature_minting,
+		assetfttypes.Feature_burning,
+		assetfttypes.Feature_freezing,
+		assetfttypes.Feature_whitelisting,
+	}, resp.Token.Features)
+}
+
+func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "AAA",
+		Subunit:       "uaaa",
+		Precision:     6,
+		Description:   "AAA Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+			100,
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "invalid input")
+}
+
+func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "AAA",
+		Subunit:       "uaaa",
+		Precision:     6,
+		Description:   "AAA Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+			assetfttypes.Feature_ibc,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "invalid input")
+}
+
+func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "AAA",
+		Subunit:       "uaaa",
+		Precision:     6,
+		Description:   "AAA Description",
+		InitialAmount: sdk.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_freezing,
+			assetfttypes.Feature_whitelisting,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.NoError(err)
 }
 
 func getIssueFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {

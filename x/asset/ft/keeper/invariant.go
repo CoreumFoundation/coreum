@@ -82,15 +82,19 @@ func BankMetadataExistInvariant(k Keeper) sdk.Invariant {
 			count int
 		)
 
-		k.IterateAllDefinitions(ctx, func(definition types.Definition) bool {
+		err := k.IterateAllDefinitions(ctx, func(definition types.Definition) (bool, error) {
 			_, found := k.bankKeeper.GetDenomMetaData(ctx, definition.Denom)
 			if !found {
 				count++
 				msg += fmt.Sprintf("\t%s denom doesn't have corresponding bank metadata", definition.Denom)
 			}
 
-			return false
+			return false, nil
 		})
+		if err != nil {
+			// impossible
+			panic(err)
+		}
 
 		return sdk.FormatInvariant(
 			types.ModuleName, BankMetadataExistsInvariantName,

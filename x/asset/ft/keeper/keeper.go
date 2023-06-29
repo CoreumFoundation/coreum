@@ -92,9 +92,9 @@ func (k Keeper) GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, paginati
 	return tokens, pageResponse, nil
 }
 
-// IterateAllDefinitions iterates over all token definitions applies the provided callback.
+// IterateAllDefinitions iterates over all token definitions and applies the provided callback.
 // If true is returned from the callback, iteration is halted.
-func (k Keeper) IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition) bool) {
+func (k Keeper) IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition) (bool, error)) error {
 	iterator := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenKeyPrefix).Iterator(nil, nil)
 	defer iterator.Close()
 
@@ -102,10 +102,15 @@ func (k Keeper) IterateAllDefinitions(ctx sdk.Context, cb func(types.Definition)
 		var definition types.Definition
 		k.cdc.MustUnmarshal(iterator.Value(), &definition)
 
-		if cb(definition) {
+		stop, err := cb(definition)
+		if err != nil {
+			return err
+		}
+		if stop {
 			break
 		}
 	}
+	return nil
 }
 
 // GetDefinition returns the Definition by the denom.
@@ -148,6 +153,10 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 
 	if err := types.ValidatePrecision(settings.Precision); err != nil {
 		return "", sdkerrors.Wrapf(err, "provided precision: %d", settings.Precision)
+	}
+
+	if err := types.ValidateFeatures(settings.Features); err != nil {
+		return "", err
 	}
 
 	if err := types.ValidateBurnRate(settings.BurnRate); err != nil {

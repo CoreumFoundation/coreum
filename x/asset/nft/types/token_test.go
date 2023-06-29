@@ -121,3 +121,108 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 		})
 	}
 }
+
+//nolint:funlen
+func TestValidateClassFeatures(t *testing.T) {
+	t.Parallel()
+
+	assertT := assert.New(t)
+
+	type testCase struct {
+		Name     string
+		Features []types.ClassFeature
+		Ok       bool
+	}
+
+	allFeatures := make([]types.ClassFeature, 0, len(types.ClassFeature_name))
+	for f := range types.ClassFeature_name {
+		allFeatures = append(allFeatures, types.ClassFeature(f))
+	}
+
+	testCases := []testCase{
+		// valid cases
+		{
+			Name:     "nil",
+			Features: nil,
+			Ok:       true,
+		},
+		{
+			Name:     "empty",
+			Features: []types.ClassFeature{},
+			Ok:       true,
+		},
+		{
+			Name: "with one",
+			Features: []types.ClassFeature{
+				types.ClassFeature_burning,
+			},
+			Ok: true,
+		},
+		{
+			Name:     "all",
+			Features: allFeatures,
+			Ok:       true,
+		},
+		{
+			Name:     "all except one",
+			Features: allFeatures[1:],
+			Ok:       true,
+		},
+
+		// invalid cases
+		{
+			Name:     "single out of scope",
+			Features: []types.ClassFeature{1000},
+			Ok:       false,
+		},
+		{
+			Name: "one normal + out of scope at the end",
+			Features: []types.ClassFeature{
+				types.ClassFeature_whitelisting,
+				2000,
+			},
+			Ok: false,
+		},
+		{
+			Name: "one normal + out of scope at the beginning",
+			Features: []types.ClassFeature{
+				3000,
+				types.ClassFeature_whitelisting,
+			},
+			Ok: false,
+		},
+		{
+			Name: "two normal + out of scope in the middle",
+			Features: []types.ClassFeature{
+				types.ClassFeature_whitelisting,
+				4000,
+				types.ClassFeature_freezing,
+			},
+			Ok: false,
+		},
+		{
+			Name:     "all normal + out of scope in the middle",
+			Features: append([]types.ClassFeature{5000}, allFeatures...),
+			Ok:       false,
+		},
+		{
+			Name:     "duplicated",
+			Features: append([]types.ClassFeature{allFeatures[0]}, allFeatures...),
+			Ok:       false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			err := types.ValidateClassFeatures(tc.Features)
+			if tc.Ok {
+				assertT.NoError(err)
+			} else {
+				assertT.Error(err)
+			}
+		})
+	}
+}

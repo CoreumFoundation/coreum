@@ -920,7 +920,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Params queries the parameters of x/asset/ft module.
+	// Params queries the parameters of x/asset/nft module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// Class queries the non-fungible token class of the module.
 	Class(ctx context.Context, in *QueryClassRequest, opts ...grpc.CallOption) (*QueryClassResponse, error)
@@ -1020,7 +1020,7 @@ func (c *queryClient) BurntNFTsInClass(ctx context.Context, in *QueryBurntNFTsIn
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Params queries the parameters of x/asset/ft module.
+	// Params queries the parameters of x/asset/nft module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// Class queries the non-fungible token class of the module.
 	Class(context.Context, *QueryClassRequest) (*QueryClassResponse, error)
