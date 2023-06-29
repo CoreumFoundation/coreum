@@ -40,7 +40,7 @@ func (qs QueryService) MinGasPrice(ctx context.Context, req *types.QueryMinGasPr
 	}, nil
 }
 
-// MinGasPrice returns current minimum gas price required by the network.
+// RecommendedGasPrice returns an estimation of gas in the future blocks.
 func (qs QueryService) RecommendedGasPrice(ctx context.Context, req *types.QueryRecommendedGasPriceRequest) (*types.QueryRecommendedGasPriceResponse, error) {
 	const maxAfterBlocks uint32 = 50
 	if req == nil {
