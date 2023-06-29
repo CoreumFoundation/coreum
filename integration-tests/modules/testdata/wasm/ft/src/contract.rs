@@ -70,6 +70,7 @@ pub fn execute(
             set_whitelisted_limit(deps, info, account, amount)
         }
         ExecuteMsg::MintAndSend { account, amount } => mint_and_send(deps, info, account, amount),
+        ExecuteMsg::UpgradeTokenV1 { ibc_enabled } => upgrate_token_v1(deps, info, ibc_enabled),
     }
 }
 
@@ -221,6 +222,26 @@ fn mint_and_send(
         .add_attribute("denom", denom)
         .add_attribute("amount", amount.to_string())
         .add_submessages([mint_msg, send_msg]))
+}
+
+fn upgrate_token_v1(
+    deps: DepsMut,
+    info: MessageInfo,
+    ibc_enabled: bool,
+) -> CoreumResult<ContractError> {
+    assert_owner(deps.storage, &info.sender)?;
+    let denom = DENOM.load(deps.storage)?;
+
+    let upgrade_msg = CoreumMsg::AssetFT(assetft::Msg::UpgradeTokenV1 {
+        denom: denom.clone(),
+        ibc_enabled: ibc_enabled.clone(),
+    });
+
+    Ok(Response::new()
+        .add_attribute("method", "upgrade_token_v1")
+        .add_attribute("denom", denom)
+        .add_attribute("ibc_enabled", ibc_enabled.to_string())
+        .add_message(upgrade_msg))
 }
 
 // ********** Queries **********

@@ -24,6 +24,7 @@ pub enum ExecuteMsg {
     SetWhitelistedLimit { account: String, amount: u128 },
     // custom message we use to show the submission of multiple messages
     MintAndSend { account: String, amount: u128 },
+    UpgradeTokenV1 { ibc_enabled: bool },
 }
 
 #[cw_serde]
