@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/integration-tests/modules/testdata/wasm"
+	moduleswasm "github.com/CoreumFoundation/coreum/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -569,8 +569,6 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 }
 
 // TestWASMContractUpgrade deploys simple state smart contract do its upgrade.
-//
-//nolint:funlen // there are many tests
 func TestWASMContractUpgrade(t *testing.T) {
 	t.Parallel()
 
