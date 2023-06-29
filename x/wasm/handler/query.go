@@ -384,7 +384,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 				return nil, err
 			}
 
-			if len(nftsRes.Nfts) == 0 {
+			if nftsRes.Nfts == nil {
 				return &NFTsResponse{}, nil
 			}
 
@@ -449,7 +449,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 				return nil, err
 			}
 
-			if len(nftClassesRes.Classes) == 0 {
+			if nftClassesRes.Classes == nil {
 				return &NFTClassesResponse{}, nil
 			}
 
@@ -466,6 +466,7 @@ func processNFTQuery(ctx sdk.Context, nftQuery *nftQuery, nftQueryServer nfttype
 						return nil, err
 					}
 				}
+
 				nftClassesResponse.Classes = append(nftClassesResponse.Classes, NFTClass{
 					ID:          nftClassesRes.Classes[i].Id,
 					Name:        nftClassesRes.Classes[i].Name,
