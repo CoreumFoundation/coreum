@@ -139,6 +139,11 @@ func TestTimedOutTransfer(t *testing.T) {
 	retryCtx, retryCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer retryCancel()
 
+	// This is the retry loop where we try to trigger a timeout condition for IBC transfer.
+	// We can't reproduce it with 100% probability, so we may need to try it many times.
+	// On every trial we send funds from one chain to the other. Then we observe accounts on both chains
+	// to find if IBC transfer completed successfully or timed out. If tokens were delivered to the recipient
+	// we must retry. Otherwise, if tokens were returned back to the sender, we might continue the test.
 	err := retry.Do(retryCtx, time.Millisecond, func() error {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
@@ -162,6 +167,9 @@ func TestTimedOutTransfer(t *testing.T) {
 		defer parallelCancel()
 		errCh := make(chan error, 1)
 		go func() {
+			// In this goroutine we check if funds were returned back to the sender.
+			// If this happens it means timeout occurred.
+
 			defer parallelCancel()
 			if err := coreumChain.AwaitForBalance(parallelCtx, t, coreumSender, sendToGaiaCoin); err != nil {
 				select {
@@ -173,6 +181,9 @@ func TestTimedOutTransfer(t *testing.T) {
 			}
 		}()
 		go func() {
+			// In this goroutine we check if funds were delivered to the other chain.
+			// If this happens it means timeout didn't occur and we must try again.
+
 			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
 				select {
 				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
@@ -190,6 +201,8 @@ func TestTimedOutTransfer(t *testing.T) {
 				return err
 			}
 		}
+
+		// At this point we are sure that timeout happened.
 
 		// funds should not be received on gaia
 		bankClient := banktypes.NewQueryClient(gaiaChain.ClientContext)
