@@ -506,8 +506,6 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	// execute contract to increment the count
 	gasUsedBeforePinning := incrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1338)
 
-	// migration
-
 	// verify that smart contract is not pinned
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
