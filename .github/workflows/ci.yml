@@ -83,16 +83,12 @@ jobs:
             ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Setup WASM cache
         uses: actions/cache@v3
         if: ${{ matrix.wasm-cache }}
         with:
           path: ~/.cache/crust/wasm
           key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-wasm-cache
       - name: Setup linter cache
         uses: actions/cache@v3
         if: ${{ matrix.linter-cache }}
@@ -109,9 +105,7 @@ jobs:
         if: ${{ matrix.docker-cache }}
         continue-on-error: true
         with:
-          key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
-          restore-keys: |
-            ${{ runner.os }}-docker-
+          key: ${{ runner.os }}-docker-v2-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
