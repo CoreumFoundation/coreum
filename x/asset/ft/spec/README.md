@@ -40,6 +40,7 @@ When issuing a token, the issuer must decide which features are enabled on the t
 - burning
 - freezing
 - whitelisting
+- ibc
 
 #### Burn Rate
 The issuer has the option to provide `BurnRate` when issuing a new token. This value is a number between 0 and 1, and if it is above zero, in every transfer, some additional tokens will be burnt on top of the transferred value, from the senders address. The tokens to be burnt are calculated by multiplying the TransferAmount by burn rate, and rounding it up to an integer value.
