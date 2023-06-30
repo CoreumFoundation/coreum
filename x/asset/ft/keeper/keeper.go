@@ -557,7 +557,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 
 	// Checking for IBC-received transfer is done here (after call to k.isGloballyFrozen), because those transfers
 	// should be affected by the global freeze checked above. We decided that if token is frozen globally it means
-	// none of the balances for that token can be affected during freezing period.
+	// none of the balances for that token can be affected by the IBC incoming transfer during freezing period.
 	// Otherwise, the transfer must work despite the fact that escrow address might have been frozen by the issuer.
 	if wibctransfertypes.IsDirectionIn(ctx) {
 		return nil
