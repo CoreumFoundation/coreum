@@ -12,6 +12,7 @@ Here is the list of functionalities provided by this module, we will examine eac
 - Freeze
 - Global Freeze
 - Whitelist
+- IBC transfers
 
 ## Interaction with bank module, introducing wbank module
 Since Coreum is based on Cosmos SDK, We should mention that Cosmos SDK provides the native bank module which is responsible for tracking fungible token creation and balances of each account. But this module does not allow any public to create a fungible token, mint/burn it, and also does not allow for other features such as freezing and whitelisting. To work around this issue we have wrapped the `bank` module into the `wbank` module.
