@@ -96,7 +96,7 @@ func (c ChainContext) AwaitForBalance(
 		}
 
 		if balancesRes.Balances.AmountOf(expectedBalance.Denom).String() != expectedBalance.Amount.String() {
-			return retry.Retryable(errors.Errorf("%s balance is still not equal to expected, all balances: %s", expectedBalance.Denom, balancesRes.String()))
+			return retry.Retryable(errors.Errorf("%s balance is still not equal to expected, all balances: %s", expectedBalance.Denom, balancesRes.Balances.String()))
 		}
 
 		return nil
