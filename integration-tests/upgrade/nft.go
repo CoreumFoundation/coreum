@@ -17,7 +17,6 @@ import (
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
-	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
 type nftStoreTest struct {
@@ -337,6 +336,7 @@ type nftWasmDataTest struct {
 	nftID   string
 }
 
+//nolint:funlen // this is test case and breaking it up will reduce readability
 func (n *nftWasmDataTest) Before(t *testing.T) {
 	t.Parallel()
 
@@ -352,7 +352,7 @@ func (n *nftWasmDataTest) Before(t *testing.T) {
 	txf := chain.TxFactory().
 		WithSimulateAndExecute(true)
 	assetNFTClient := assetnfttypes.NewQueryClient(clientCtx)
-	nftClient := nfttypes.NewQueryClient(clientCtx)
+	nftClient := nft.NewQueryClient(clientCtx)
 
 	// ********** Issuance **********
 
@@ -434,14 +434,14 @@ func (n *nftWasmDataTest) Before(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	nftResp, err := nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+	nftResp, err := nftClient.NFT(ctx, &nft.QueryNFTRequest{
 		ClassId: classID,
 		Id:      mintNFTReq.ID,
 	})
 	requireT.NoError(err)
 	n.nftID = mintNFTReq.ID
 
-	expectedNFT1 := &nfttypes.NFT{
+	expectedNFT1 := &nft.NFT{
 		ClassId: classID,
 		Id:      mintNFTReq.ID,
 		Uri:     mintNFTReq.URI,

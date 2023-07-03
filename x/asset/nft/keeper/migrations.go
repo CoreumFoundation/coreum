@@ -31,9 +31,5 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 		return err
 	}
 
-	if err := v1.MigrateWasmCreatedNFTData(ctx, m.nftKeeper, m.keeper); err != nil {
-		return err
-	}
-
-	return nil
+	return v1.MigrateWasmCreatedNFTData(ctx, m.nftKeeper, m.keeper)
 }

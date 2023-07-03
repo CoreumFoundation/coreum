@@ -8,6 +8,7 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -18,9 +19,9 @@ import (
 	v1 "github.com/CoreumFoundation/coreum/x/asset/nft/legacy/v1"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
-	"github.com/cosmos/cosmos-sdk/simapp"
 )
 
+//nolint:funlen // breaking down this test function will make it harder to read
 func TestMigrateWasmCreatedNFTData(t *testing.T) {
 	requireT := require.New(t)
 	simapp.FlagEnabledValue = true
@@ -65,9 +66,9 @@ func TestMigrateWasmCreatedNFTData(t *testing.T) {
 	}{
 		{
 			name:   "issuer is smart contract",
-			issuer: wasmkeeper.BuildContractAddressClassic(1, 12),
+			issuer: wasmkeeper.BuildContractAddressClassic(1, 1),
 			data:   []byte("some data"),
-			symbol: "smartsymbol",
+			symbol: "symbol1",
 			nftID:  "nft1",
 			assertion: func(t *testing.T, class nft.Class, nft nft.NFT, data []byte) {
 				requireT := require.New(t)
@@ -82,21 +83,30 @@ func TestMigrateWasmCreatedNFTData(t *testing.T) {
 			},
 		},
 		{
+			name:   "nil data",
+			issuer: wasmkeeper.BuildContractAddressClassic(1, 2),
+			data:   nil,
+			symbol: "symbol2",
+			nftID:  "nft1",
+			assertion: func(t *testing.T, class nft.Class, nft nft.NFT, data []byte) {
+				requireT := require.New(t)
+				requireT.Nil(class.Data)
+				requireT.Nil(nft.Data)
+			},
+		},
+		{
 			name:   "issuer is normal user",
 			issuer: sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()),
-			symbol: "normalsymbol",
+			symbol: "symbol3",
 			nftID:  "nft1",
 			data:   []byte("some data"),
 			assertion: func(t *testing.T, class nft.Class, nft nft.NFT, data []byte) {
 				requireT := require.New(t)
 				// we write the encoded data, after migration the same encoded data should be returned
 				// because issuer is not smart contract
-				encodedBytes := base64.StdEncoding.EncodeToString(data)
-				dataBytes := &assetnfttypes.DataBytes{Data: []byte(encodedBytes)}
-				dataAny, err := codectypes.NewAnyWithValue(dataBytes)
-				requireT.NoError(err)
+				dataAny := encodeDataToAny(t, data)
 				// check class
-				requireT.EqualValues(class.Data.Value, dataAny.Value)
+				requireT.EqualValues(dataAny.Value, class.Data.Value)
 				// check nft
 				requireT.EqualValues(dataAny.Value, nft.Data.Value)
 			},
@@ -104,9 +114,7 @@ func TestMigrateWasmCreatedNFTData(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		encodedData := base64.StdEncoding.EncodeToString(tc.data)
-		encodedDataBytes := &assetnfttypes.DataBytes{Data: []byte(encodedData)}
-		encodedDataAny, err := codectypes.NewAnyWithValue(encodedDataBytes)
+		encodedDataAny := encodeDataToAny(t, tc.data)
 		requireT.NoError(err)
 		issueMsg := assetnfttypes.IssueClassSettings{
 			Issuer:      tc.issuer,
@@ -146,4 +154,15 @@ func TestMigrateWasmCreatedNFTData(t *testing.T) {
 			tc.assertion(t, class, nft, tc.data)
 		})
 	}
+}
+
+func encodeDataToAny(t *testing.T, data []byte) *codectypes.Any {
+	if data == nil {
+		return nil
+	}
+	encodedData := base64.StdEncoding.EncodeToString(data)
+	encodedDataBytes := &assetnfttypes.DataBytes{Data: []byte(encodedData)}
+	encodedDataAny, err := codectypes.NewAnyWithValue(encodedDataBytes)
+	require.NoError(t, err)
+	return encodedDataAny
 }

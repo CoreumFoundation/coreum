@@ -4,20 +4,20 @@ import (
 	"encoding/base64"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft/keeper"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
 func isSmartContractAddress(address sdk.AccAddress) bool {
 	return len(address) == wasmtypes.ContractAddrLen
 }
 
+// MigrateWasmCreatedNFTData migrates all the NFT data created by smart contracts.
 func MigrateWasmCreatedNFTData(ctx sdk.Context, nftKeeper keeper.Keeper, assetNFTKeeper NFTKeeper) error {
 	return assetNFTKeeper.IterateAllClassDefinitions(ctx, func(cd types.ClassDefinition) (bool, error) {
 		issuerAddress, err := sdk.AccAddressFromBech32(cd.Issuer)
@@ -34,20 +34,29 @@ func MigrateWasmCreatedNFTData(ctx sdk.Context, nftKeeper keeper.Keeper, assetNF
 			return true, errors.Errorf("class id (%s) present in definitions but not found in nft classes", cd.ID)
 		}
 
-		class.Data, err = convertAnyToDecodedAny(class.GetData())
-		if err != nil {
-			return true, err
-		}
+		if class.Data != nil {
+			class.Data, err = convertAnyToDecodedAny(class.GetData())
+			if err != nil {
+				return true, err
+			}
 
-		nftKeeper.UpdateClass(ctx, class)
+			if err := nftKeeper.UpdateClass(ctx, class); err != nil {
+				return true, err
+			}
+		}
 
 		nfts := nftKeeper.GetNFTsOfClass(ctx, cd.ID)
 		for _, n := range nfts {
+			if n.Data == nil {
+				continue
+			}
 			n.Data, err = convertAnyToDecodedAny(n.GetData())
 			if err != nil {
 				return true, err
 			}
-			nftKeeper.Update(ctx, n)
+			if err := nftKeeper.Update(ctx, n); err != nil {
+				return true, err
+			}
 		}
 
 		return false, nil
@@ -55,11 +64,7 @@ func MigrateWasmCreatedNFTData(ctx sdk.Context, nftKeeper keeper.Keeper, assetNF
 }
 
 func convertAnyToDecodedAny(input *codectypes.Any) (*codectypes.Any, error) {
-	if input == nil {
-		return nil, nil
-	}
-
-	var oldDataByes assetnfttypes.DataBytes
+	var oldDataByes types.DataBytes
 	err := proto.Unmarshal(input.GetValue(), &oldDataByes)
 	if err != nil {
 		return nil, err
@@ -71,11 +76,6 @@ func convertAnyToDecodedAny(input *codectypes.Any) (*codectypes.Any, error) {
 		return nil, err
 	}
 
-	newDataBytes := assetnfttypes.DataBytes{Data: decodedBytes}
-	output, err := codectypes.NewAnyWithValue(&newDataBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return output, nil
+	newDataBytes := types.DataBytes{Data: decodedBytes}
+	return codectypes.NewAnyWithValue(&newDataBytes)
 }
