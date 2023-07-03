@@ -82,7 +82,7 @@ Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled 
 ### Global Freeze/Unfreeze
 If the freezing feature is enabled on a token, then the issuer of the token can globally freeze that token, which means that nobody except the issuer can send that token. In other words, only the issuer will be able to send to other accounts. The issuer can also globally unfreeze and remove this limitation.
 
-If IBC is enabled for the token and token is globaly frozen then only the issuer can send them over IBC transfer protocol.
+If IBC is enabled for the token and token is globally frozen then only the issuer can send them over IBC transfer protocol.
 
 ### Whitelist
 If the whitelisting feature is enabled, then every account that wishes to receive this token, must first be whitelisted by the issuer, otherwise they will not be able to receive that token. This feature allows the issuer to set whitelisted limit on any account, and then that account will be able to receive tokens only up to the whitelisted limit. If someone tries to send tokens to an account which will result in the whitelisted amount to be exceeded, the transaction will fail.
