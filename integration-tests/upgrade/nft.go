@@ -3,16 +3,21 @@
 package upgrade
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"testing"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/integration-tests/modules/testdata/wasm"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
+	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
 )
 
 type nftStoreTest struct {
@@ -324,4 +329,156 @@ func (nt *nftFeaturesTest) createValidClass(t *testing.T) {
 		issueMsg,
 	)
 	requireT.NoError(err)
+}
+
+type nftWasmDataTest struct {
+	data    []byte
+	classID string
+	nftID   string
+}
+
+func (n *nftWasmDataTest) Before(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+
+	admin := chain.GenAccount()
+	chain.Faucet.FundAccounts(ctx, t,
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+	assetNFTClient := assetnfttypes.NewQueryClient(clientCtx)
+	nftClient := nfttypes.NewQueryClient(clientCtx)
+
+	// ********** Issuance **********
+
+	data := make([]byte, 256)
+	for i := 0; i < 256; i++ {
+		data[i] = uint8(i)
+	}
+	n.data = data
+
+	// we need to double encode to simulate the situation when the handler did not work correctly.
+	encodedBytesString := base64.StdEncoding.EncodeToString(data)
+
+	issueClassReq := moduleswasm.IssueNFTRequest{
+		Name:        "name",
+		Symbol:      "symbol",
+		Description: "description",
+		URI:         "https://my-nft-class-meta.invalid/1",
+		URIHash:     "hash",
+		Data:        encodedBytesString,
+		RoyaltyRate: sdk.ZeroDec().String(),
+	}
+	issuerNFTInstantiatePayload, err := json.Marshal(issueClassReq)
+	requireT.NoError(err)
+
+	// instantiate new contract
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		moduleswasm.NftWASM,
+		integrationtests.InstantiateConfig{
+			Payload: issuerNFTInstantiatePayload,
+			Label:   "non_fungible_token",
+		},
+	)
+	requireT.NoError(err)
+
+	classID := assetnfttypes.BuildClassID(issueClassReq.Symbol, sdk.MustAccAddressFromBech32(contractAddr))
+	classRes, err := assetNFTClient.Class(ctx, &assetnfttypes.QueryClassRequest{Id: classID})
+	requireT.NoError(err)
+	n.classID = classID
+
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: []byte(encodedBytesString)})
+	dataToCompare := &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
+	}
+	requireT.NoError(err)
+
+	expectedClass := assetnfttypes.Class{
+		Id:          classID,
+		Issuer:      contractAddr,
+		Name:        issueClassReq.Name,
+		Symbol:      issueClassReq.Symbol,
+		Description: issueClassReq.Description,
+		URI:         issueClassReq.URI,
+		URIHash:     issueClassReq.URIHash,
+		Data:        dataToCompare,
+		Features:    issueClassReq.Features,
+		RoyaltyRate: sdk.ZeroDec(),
+	}
+	requireT.Equal(
+		expectedClass, classRes.Class,
+	)
+
+	// ********** Mint **********
+
+	mintNFTReq := moduleswasm.NftMintRequest{
+		ID:      "id-1",
+		URI:     "https://my-nft-meta.invalid/1",
+		URIHash: "hash",
+		Data:    encodedBytesString,
+	}
+	mintPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMint: mintNFTReq,
+	})
+	requireT.NoError(err)
+
+	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mintPayload, sdk.Coin{})
+	requireT.NoError(err)
+
+	nftResp, err := nftClient.NFT(ctx, &nfttypes.QueryNFTRequest{
+		ClassId: classID,
+		Id:      mintNFTReq.ID,
+	})
+	requireT.NoError(err)
+	n.nftID = mintNFTReq.ID
+
+	expectedNFT1 := &nfttypes.NFT{
+		ClassId: classID,
+		Id:      mintNFTReq.ID,
+		Uri:     mintNFTReq.URI,
+		UriHash: mintNFTReq.URIHash,
+		Data:    dataToCompare,
+	}
+	requireT.Equal(
+		expectedNFT1, nftResp.Nft,
+	)
+}
+
+func (n *nftWasmDataTest) After(t *testing.T) {
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+
+	assetNFTClient := assetnfttypes.NewQueryClient(chain.ClientContext)
+	nftQueryClient := nft.NewQueryClient(chain.ClientContext)
+
+	dataBytes, err := codectypes.NewAnyWithValue(&assetnfttypes.DataBytes{Data: n.data})
+	requireT.NoError(err)
+	dataToCompare := &codectypes.Any{
+		TypeUrl: dataBytes.TypeUrl,
+		Value:   dataBytes.Value,
+	}
+
+	// query same nft class after the upgrade
+	assetNftClassRes, err := assetNFTClient.Class(ctx, &assetnfttypes.QueryClassRequest{
+		Id: n.classID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(dataToCompare, assetNftClassRes.Class.Data)
+
+	//  query the same nft after the upgrade
+	nftRes, err := nftQueryClient.NFT(ctx, &nft.QueryNFTRequest{
+		ClassId: n.classID,
+		Id:      n.nftID,
+	})
+	requireT.NoError(err)
+	requireT.Equal(dataToCompare, nftRes.Nft.Data)
 }
