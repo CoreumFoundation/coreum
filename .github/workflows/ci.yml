@@ -106,6 +106,12 @@ jobs:
         continue-on-error: true
         with:
           key: ${{ runner.os }}-docker-v2-${{ steps.get-year-week.outputs.date }} # year-week key
+      - name: Set crust binaries cache
+        uses: actions/cache@v3
+        continue-on-error: true
+        with:
+          path: ~/.cache/crust/bin
+          key: ${{ runner.os }}-bin-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
