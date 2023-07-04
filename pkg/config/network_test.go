@@ -198,6 +198,48 @@ func TestGenesisCoreTotalSupply(t *testing.T) {
 	}
 }
 
+func TestStaticConfigProviders(t *testing.T) {
+	tests := []struct {
+		name          string
+		chainID       constant.ChainID
+		denom         string
+		addressPrefix string
+	}{
+		{
+			name:          "devnetnet",
+			chainID:       constant.ChainIDDev,
+			denom:         constant.DenomDev,
+			addressPrefix: constant.AddressPrefixDev,
+		},
+		{
+			name:          "testnet",
+			chainID:       constant.ChainIDTest,
+			denom:         constant.DenomTest,
+			addressPrefix: constant.AddressPrefixTest,
+		},
+		{
+			name:          "mainnet",
+			chainID:       constant.ChainIDMain,
+			denom:         constant.DenomMain,
+			addressPrefix: constant.AddressPrefixMain,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			n, err := config.NetworkConfigByChainID(tt.chainID)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.chainID, n.ChainID())
+			assert.Equal(t, tt.denom, n.Denom())
+
+			assert.Equal(t, tt.chainID, n.Provider.GetChainID())
+			assert.Equal(t, tt.denom, n.Provider.GetDenom())
+			assert.Equal(t, tt.addressPrefix, n.Provider.GetAddressPrefix())
+		})
+	}
+}
+
 func unsealConfig() {
 	sdkConfig := sdk.GetConfig()
 	unsafeSetField(sdkConfig, "sealed", false)
