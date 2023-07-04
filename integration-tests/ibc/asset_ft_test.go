@@ -29,7 +29,7 @@ func TestIBCFailsIfNotEnabled(t *testing.T) {
 	coreumIssuer := coreumChain.GenAccount()
 
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&ibctransfertypes.MsgTransfer{},
@@ -107,7 +107,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 
 	coreumIssuer := coreumChain.GenAccount()
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -117,7 +117,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		Amount: issueFee,
 	})
 
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
@@ -351,7 +351,7 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 	})
 
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgSetWhitelistedLimit{},
@@ -446,7 +446,7 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 	})
 
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&banktypes.MsgSend{},
@@ -454,7 +454,7 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 		},
 		Amount: issueFee,
 	})
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
@@ -546,7 +546,7 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 	})
 
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgFreeze{},
@@ -631,7 +631,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 	})
 
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgGloballyFreeze{},
@@ -641,7 +641,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 		},
 		Amount: issueFee,
 	})
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&ibctransfertypes.MsgTransfer{},
 		},
