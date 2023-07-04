@@ -21,13 +21,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-)
-
-var (
-	//go:embed testdata/wasm/ibc-transfer/artifacts/ibc_transfer.wasm
-	ibcTransferWASM []byte
-	//go:embed testdata/wasm/ibc-call/artifacts/ibc_call.wasm
-	ibcClassWASM []byte
+	ibcwasm "github.com/CoreumFoundation/coreum/integration-tests/ibc/testdata/wasm"
 )
 
 type ibcTimeoutBlock struct {
@@ -98,7 +92,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 		ctx,
 		coreumChain.TxFactory().WithSimulateAndExecute(true),
 		coreumAdmin,
-		ibcTransferWASM,
+		ibcwasm.IBCTransferWASM,
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
@@ -158,7 +152,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	requireT.Equal(sdk.ZeroInt().String(), contractBalance.Balance.Amount.String())
 
 	expectedOsmosisRecipientBalance := sdk.NewCoin(convertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom), sendToOsmosisCoin.Amount)
-	osmosisChain.AwaitForBalance(ctx, t, osmosisRecipient, expectedOsmosisRecipientBalance)
+	requireT.NoError(osmosisChain.AwaitForBalance(ctx, t, osmosisRecipient, expectedOsmosisRecipientBalance))
 }
 
 // TestIBCCallFromSmartContract tests the IBC contract calls.
@@ -201,7 +195,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		ctx,
 		coreumChain.TxFactory().WithSimulateAndExecute(true),
 		coreumCaller,
-		ibcClassWASM,
+		ibcwasm.IBCClassWASM,
 		integrationtests.InstantiateConfig{
 			Admin:      coreumCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
@@ -215,7 +209,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		ctx,
 		osmosisChain.TxFactory().WithSimulateAndExecute(true),
 		osmosisCaller,
-		ibcClassWASM,
+		ibcwasm.IBCClassWASM,
 		integrationtests.InstantiateConfig{
 			Admin:      osmosisCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
