@@ -21,3 +21,8 @@ pub enum QueryMsg {
 pub struct CountResponse {
     pub count: i32,
 }
+
+#[cw_serde]
+pub struct MigrateMsg {
+    pub count: i32,
+}
