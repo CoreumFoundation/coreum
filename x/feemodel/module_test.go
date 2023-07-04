@@ -57,8 +57,8 @@ func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 	k.state.MinGasPrice = minGasPrice
 }
 
-func (k *keeperMock) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin) {
-	return sdk.NewDecCoin("", sdk.ZeroInt()), sdk.NewDecCoin("", sdk.ZeroInt())
+func (k *keeperMock) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
+	return sdk.NewDecCoin("", sdk.ZeroInt()), sdk.NewDecCoin("", sdk.ZeroInt()), nil
 }
 
 func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Codec) {

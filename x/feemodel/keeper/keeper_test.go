@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
@@ -161,19 +162,6 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			},
 		},
 		{
-			name:        "short and long ema are 0. (100 blocks after)",
-			shortEMA:    0,
-			longEMA:     0,
-			afterBlocks: 100,
-			assertions: func(t *testing.T, low, high sdk.DecCoin) {
-				assertT := assert.New(t)
-				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
-
-				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*100)
-			},
-		},
-		{
 			name:        "short and long ema are equal. (1 tx in block on average)",
 			shortEMA:    100_000,
 			longEMA:     100_000,
@@ -226,18 +214,6 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			},
 		},
 		{
-			name:        "short ema is between long ema and escalation region. (100 block after)",
-			shortEMA:    5_000_000,
-			longEMA:     1_000_000,
-			afterBlocks: 100,
-			assertions: func(t *testing.T, low, high sdk.DecCoin) {
-				assertT := assert.New(t)
-				model := types.NewModel(defParams.Model)
-				assertT.EqualValues(low.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64(), "low amount")
-				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*150, "high amount is much higher than the initial price. (in escalation)")
-			},
-		},
-		{
 			name:        "short ema is right before escalation region. (10 block after)",
 			shortEMA:    39_000_000,
 			longEMA:     10_000_000,
@@ -250,16 +226,16 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			},
 		},
 		{
-			name:        "short ema is right before escalation region. (100 block after)",
+			name:        "short ema is right before escalation region. (50 block after)",
 			shortEMA:    39_000_000,
 			longEMA:     10_000_000,
-			afterBlocks: 100,
+			afterBlocks: 50,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
 				assertT.Less(low.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64(), "low amount is less than initial price")
-				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*700, "high amount is much higher than the initial price. (in escalation)")
+				assertT.Greater(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64()*300, "high amount is much higher than the initial price. (in escalation)")
 			},
 		},
 	}
@@ -270,7 +246,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			keeper.SetMinGasPrice(ctx, sdk.NewDecCoinFromDec("coin", sdk.MustNewDecFromStr("0.0625")))
 			keeper.SetShortEMAGas(ctx, tc.shortEMA)
 			keeper.SetLongEMAGas(ctx, tc.longEMA)
-			low, high := keeper.EstimateFutureGasPrice(ctx, tc.afterBlocks)
+			low, high, err := keeper.EstimateFutureGasPrice(ctx, tc.afterBlocks)
+			require.NoError(t, err)
 			tc.assertions(t, low, high)
 		})
 	}

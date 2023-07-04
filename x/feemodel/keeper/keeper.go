@@ -2,6 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -153,7 +154,12 @@ func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 }
 
 // EstimateFutureGasPrice returns the smallest and highest possible values ofr min gas price in future blocks.
-func (k Keeper) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin) {
+func (k Keeper) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
+	shortEMABlockLength := k.GetParams(ctx).Model.ShortEmaBlockLength
+	if after > shortEMABlockLength {
+		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "after blocks must be lower than or equal to %d", shortEMABlockLength)
+	}
+
 	params := k.GetParams(ctx)
 	shortEMA := k.GetShortEMAGas(ctx)
 	longEMA := k.GetLongEMAGas(ctx)
@@ -200,5 +206,5 @@ func (k Keeper) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCo
 		}
 	}
 
-	return lowMinGasPrice, highMinGasPrice
+	return lowMinGasPrice, highMinGasPrice, nil
 }

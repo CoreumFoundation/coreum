@@ -14,7 +14,7 @@ import (
 type QueryKeeper interface {
 	GetParams(ctx sdk.Context) types.Params
 	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
-	EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin)
+	EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error)
 }
 
 // NewQueryService creates query service.
@@ -42,16 +42,15 @@ func (qs QueryService) MinGasPrice(ctx context.Context, req *types.QueryMinGasPr
 
 // RecommendedGasPrice returns an estimation of gas in the future blocks.
 func (qs QueryService) RecommendedGasPrice(ctx context.Context, req *types.QueryRecommendedGasPriceRequest) (*types.QueryRecommendedGasPriceResponse, error) {
-	const maxAfterBlocks uint32 = 50
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if req.AfterBlocks > maxAfterBlocks {
-		return nil, status.Errorf(codes.InvalidArgument, "after blocks must be lower than %d", maxAfterBlocks)
+	low, high, err := qs.keeper.EstimateFutureGasPrice(sdk.UnwrapSDKContext(ctx), req.AfterBlocks)
+	if err != nil {
+		return nil, err
 	}
 
-	low, high := qs.keeper.EstimateFutureGasPrice(sdk.UnwrapSDKContext(ctx), req.AfterBlocks)
 	med := sdk.NewDecCoinFromDec(low.Denom, low.Amount.Add(high.Amount).QuoInt64(2))
 	return &types.QueryRecommendedGasPriceResponse{
 		Low:  low,
