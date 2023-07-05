@@ -45,6 +45,7 @@ func GetTxCmd() *cobra.Command {
 		CmdTxGloballyFreeze(),
 		CmdTxGloballyUnfreeze(),
 		CmdTxSetWhitelistedLimit(),
+		CmdTxUpgradeV1(),
 	)
 
 	return cmd
@@ -445,6 +446,51 @@ $ %s tx %s globally-unfreeze ABC-%s --from [sender]
 		},
 	}
 
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTxUpgradeV1 returns UpgradeV1 cobra command.
+func CmdTxUpgradeV1() *cobra.Command {
+	const ibcFlag = "ibc-enabled"
+	var ibcEnabled bool
+	cmd := &cobra.Command{
+		Use:   "upgrade-v1 [denom] --ibc-enabled=true --from [sender]",
+		Args:  cobra.ExactArgs(1),
+		Short: "upgrades denom to version v1 and specifies if IBC should be enabled or disabled",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Upgrades denom to version v1 and specifies if IBC should be enabled or disabled.
+This is a one-time operation!!! Once executed, it can never be done again.
+
+Example:
+$ %s tx %s upgrade-v1 ABC-%s --ibc-enabled=true --from [sender]
+`,
+				version.AppName, types.ModuleName, constant.AddressSampleTest,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !cmd.Flags().Changed(ibcFlag) {
+				return errors.Errorf("flag --%s must be explicitely set", ibcFlag)
+			}
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sender := clientCtx.GetFromAddress()
+			denom := args[0]
+
+			msg := &types.MsgUpgradeTokenV1{
+				Sender:     sender.String(),
+				Denom:      denom,
+				IbcEnabled: ibcEnabled,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	cmd.Flags().BoolVar(&ibcEnabled, ibcFlag, false, "Specifies if IBC should be enabled or disabled for the token")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd

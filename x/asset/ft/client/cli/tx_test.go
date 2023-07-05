@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -8,12 +9,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -276,6 +279,76 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 1)
+}
+
+func TestUpgradeV1(t *testing.T) {
+	requireT := require.New(t)
+	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+	requireT.NoError(err)
+	app.ChosenNetwork = networkCfg
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_ibc,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdk.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+
+	// --ibc-enabled is missing
+	args := append([]string{
+		denom,
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
+	requireT.Error(err)
+
+	// upgrade the token with --ibc-enabled=true
+	args = append([]string{
+		denom,
+		"--ibc-enabled=true",
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	err = txError(clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
+	requireT.ErrorContains(err, "it is no longer possible to upgrade the token: unauthorized")
+
+	// upgrade the token with --ibc-enabled=false
+	args = append([]string{
+		denom,
+		"--ibc-enabled=false",
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	err = txError(clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
+	requireT.ErrorContains(err, "it is no longer possible to upgrade the token: unauthorized")
+}
+
+func txError(buf testutil.BufferWriter, err error) error {
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	result := struct {
+		Code   int    `json:"code"`
+		RawLog string `json:"raw_log"`
+	}{}
+
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		return errors.WithStack(err)
+	}
+
+	if result.Code == 0 {
+		return nil
+	}
+
+	return errors.New(result.RawLog)
 }
 
 func issue(requireT *require.Assertions, ctx client.Context, token types.Token, initialAmount sdk.Int, testNetwork *network.Network) string {
