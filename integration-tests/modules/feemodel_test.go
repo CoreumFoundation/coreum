@@ -46,7 +46,7 @@ func TestFeeModelQueryingGasPriceRecommendation(t *testing.T) {
 	requireT := require.New(t)
 
 	feemodelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
-	res, err := feemodelClient.RecommendedGasPrice(ctx, &feemodeltypes.QueryRecommendedGasPriceRequest{AfterBlocks: 100})
+	res, err := feemodelClient.RecommendedGasPrice(ctx, &feemodeltypes.QueryRecommendedGasPriceRequest{AfterBlocks: 50})
 	requireT.NoError(err)
 	requireT.NotNil(res)
 
