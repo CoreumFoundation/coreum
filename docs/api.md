@@ -144,6 +144,8 @@
     - [QueryMinGasPriceResponse](#coreum.feemodel.v1.QueryMinGasPriceResponse)
     - [QueryParamsRequest](#coreum.feemodel.v1.QueryParamsRequest)
     - [QueryParamsResponse](#coreum.feemodel.v1.QueryParamsResponse)
+    - [QueryRecommendedGasPriceRequest](#coreum.feemodel.v1.QueryRecommendedGasPriceRequest)
+    - [QueryRecommendedGasPriceResponse](#coreum.feemodel.v1.QueryRecommendedGasPriceResponse)
   
     - [Query](#coreum.feemodel.v1.Query)
   
@@ -2949,6 +2951,38 @@ QueryParamsResponse defines the response type for querying x/feemodel parameters
 
 
 
+
+<a name="coreum.feemodel.v1.QueryRecommendedGasPriceRequest"></a>
+
+### QueryRecommendedGasPriceRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `after_blocks` | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="coreum.feemodel.v1.QueryRecommendedGasPriceResponse"></a>
+
+### QueryRecommendedGasPriceResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `low` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
+| `med` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
+| `high` | [cosmos.base.v1beta1.DecCoin](#cosmos.base.v1beta1.DecCoin) |  |  |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -2964,6 +2998,7 @@ Query defines the gRPC querier service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `MinGasPrice` | [QueryMinGasPriceRequest](#coreum.feemodel.v1.QueryMinGasPriceRequest) | [QueryMinGasPriceResponse](#coreum.feemodel.v1.QueryMinGasPriceResponse) | MinGasPrice queries the current minimum gas price required by the network. | GET|/coreum/feemodel/v1/min_gas_price|
+| `RecommendedGasPrice` | [QueryRecommendedGasPriceRequest](#coreum.feemodel.v1.QueryRecommendedGasPriceRequest) | [QueryRecommendedGasPriceResponse](#coreum.feemodel.v1.QueryRecommendedGasPriceResponse) | RecommendedGasPrice queries the recommended gas price for the next n blocks. | GET|/coreum/feemodel/v1/recommended_gas_price|
 | `Params` | [QueryParamsRequest](#coreum.feemodel.v1.QueryParamsRequest) | [QueryParamsResponse](#coreum.feemodel.v1.QueryParamsResponse) | Params queries the parameters of x/feemodel module. | GET|/coreum/feemodel/v1/params|
 
  <!-- end services -->
