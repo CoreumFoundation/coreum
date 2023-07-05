@@ -160,7 +160,7 @@ func (k Keeper) EstimateFutureGasPrice(ctx sdk.Context, after uint32) (sdk.DecCo
 		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "after blocks must be lower than or equal to %d", shortEMABlockLength)
 	}
 
-	// if no after value is provide shortEMABlockLength is taken as default value
+	// if no after value is provided shortEMABlockLength is taken as default value
 	if after == 0 {
 		after = shortEMABlockLength
 	}
