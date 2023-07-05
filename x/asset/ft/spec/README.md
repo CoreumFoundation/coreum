@@ -12,6 +12,7 @@ Here is the list of functionalities provided by this module, we will examine eac
 - Freeze
 - Global Freeze
 - Whitelist
+- IBC transfers
 
 ## Interaction with bank module, introducing wbank module
 Since Coreum is based on Cosmos SDK, We should mention that Cosmos SDK provides the native bank module which is responsible for tracking fungible token creation and balances of each account. But this module does not allow any public to create a fungible token, mint/burn it, and also does not allow for other features such as freezing and whitelisting. To work around this issue we have wrapped the `bank` module into the `wbank` module.
@@ -40,12 +41,17 @@ When issuing a token, the issuer must decide which features are enabled on the t
 - burning
 - freezing
 - whitelisting
+- ibc
 
 #### Burn Rate
 The issuer has the option to provide `BurnRate` when issuing a new token. This value is a number between 0 and 1, and if it is above zero, in every transfer, some additional tokens will be burnt on top of the transferred value, from the senders address. The tokens to be burnt are calculated by multiplying the TransferAmount by burn rate, and rounding it up to an integer value.
 
+If IBC feature is enabled for the token then the burn rate is applied to outgoing IBC transfers.
+
 #### Send Commission Rate
 Exactly same as the Burn Rate, but the calculated value will be transferred to the issuer's account addressed instead of being burnt.
+
+If IBC feature is enabled for the token then the send commission rate is applied to outgoing IBC transfers.
 
 #### Issuance Fee
 Whenever a user wants to issue a fungible token, they have to pay some extra money as issuance fee, which is calculated on top of tx execution fee and will be burnt. The amount of the issuance fee is controlled by governance.
@@ -71,8 +77,12 @@ Here is the description of behavior of the freezing feature:
 - Frozen amount cannot be a negative value, it means that amount present in unfreeze transaction cannot be bigger than the current frozen amount
 - If either or both of BurnRate and SendCommissionRate are set above zero, then after transfer has taken place and those rates are applied, the sender's balance must not go below the frozen amount. Otherwise the transaction will fail.
 
+Same rules apply to sending tokens over IBC transfer protocol if IBC is enabled for the token.
+
 ### Global Freeze/Unfreeze
 If the freezing feature is enabled on a token, then the issuer of the token can globally freeze that token, which means that nobody except the issuer can send that token. In other words, only the issuer will be able to send to other accounts. The issuer can also globally unfreeze and remove this limitation.
+
+If IBC is enabled for the token and token is globally frozen then only the issuer can send them over IBC transfer protocol.
 
 ### Whitelist
 If the whitelisting feature is enabled, then every account that wishes to receive this token, must first be whitelisted by the issuer, otherwise they will not be able to receive that token. This feature allows the issuer to set whitelisted limit on any account, and then that account will be able to receive tokens only up to the whitelisted limit. If someone tries to send tokens to an account which will result in the whitelisted amount to be exceeded, the transaction will fail.
@@ -83,6 +93,12 @@ Here is the description of behavior of the whitelisting feature:
 - The issuer account is whitelisted to infinity by default and cannot be modified.
 - The user can receive tokens as long as their total balance, after the transaction execution, will not be higher than their whitelisted amount
 
+Same rules apply to receiving tokens over IBC transfer protocol if IBC is enabled for the token.
+
+## IBC
+When token is created, issuer decides if users may send and receive it over IBC transfer protocol.
+If IBC feature is disabled token can never leave the Coreum chain.
+
 ## Feature interoperability table
 
 <!-- Original source: https://docs.google.com/spreadsheets/d/1wC51asxQF8gi7Egj0KvzsMf7zko5ojEL6l2CAdb_UNM -->
@@ -92,7 +108,7 @@ Here is the description of behavior of the whitelisting feature:
 <thead>
   <tr>
     <th rowspan="3"></th>
-    <th colspan="10">Features</th>
+    <th colspan="12">Features</th>
     <th colspan="4">Extensions</th>
   </tr>
   <tr>
@@ -101,6 +117,7 @@ Here is the description of behavior of the whitelisting feature:
     <th colspan="2">Burning</th>
     <th colspan="2">Freezing</th>
     <th colspan="2">Whitelisting</th>
+    <th colspan="2">IBC</th>
     <th colspan="2">Burn rate</th>
     <th colspan="2">Send commission rate</th>
   </tr>
@@ -119,6 +136,8 @@ Here is the description of behavior of the whitelisting feature:
     <th>Owner</th>
     <th>Issuer</th>
     <th>Owner</th>
+    <th>Issuer</th>
+    <th>Owner</th>
   </tr>
 </thead>
 <tbody>
@@ -127,6 +146,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -155,6 +176,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>Freeze</td>
@@ -165,6 +188,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -189,6 +214,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>GloballyFreeze</td>
@@ -199,6 +226,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -223,6 +252,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>Whitelist</td>
@@ -235,6 +266,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -257,6 +290,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
     <td>Send</td>
@@ -271,6 +306,8 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td></td>
+    <td></td>
+    <td></td>
     <td><a href="#burn-rate">ⓘ</a></td>
     <td></td>
     <td><a href="#send-commission-rate">ⓘ</a></td>
@@ -279,6 +316,8 @@ Here is the description of behavior of the whitelisting feature:
     <td>Send to issuer</td>
     <td>➕</td>
     <td>➕</td>
+    <td></td>
+    <td></td>
     <td></td>
     <td></td>
     <td></td>
@@ -304,6 +343,65 @@ Here is the description of behavior of the whitelisting feature:
     <td></td>
     <td></td>
     <td><a href="#whitelist">ⓘ</a></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>IBC Send</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><a href="#freezeunfreeze">ⓘ</a></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td>➕</td>
+    <td></td>
+    <td><a href="#burn-rate">ⓘ</a></td>
+    <td></td>
+    <td><a href="#send-commission-rate">ⓘ</a></td>
+  </tr>
+  <tr>
+    <td>IBC Send to issuer</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>➕</td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>IBC Receive</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td><a href="#whitelist">ⓘ</a></td>
+    <td>➕</td>
+    <td>➕</td>
     <td></td>
     <td></td>
     <td></td>
