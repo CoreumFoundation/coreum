@@ -71,27 +71,27 @@ TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/cosmos.authz.v1beta1.MsgExec`                                        | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgMultiSend`                                    | [special case](#special-cases) |
 | `/cosmos.bank.v1beta1.MsgSend`                                         | [special case](#special-cases) |
-| `/coreum.asset.ft.v1.MsgBurn`                                          | 23000                          |
-| `/coreum.asset.ft.v1.MsgFreeze`                                        | 5000                           |
+| `/coreum.asset.ft.v1.MsgBurn`                                          | 30000                          |
+| `/coreum.asset.ft.v1.MsgFreeze`                                        | 8500                           |
 | `/coreum.asset.ft.v1.MsgGloballyFreeze`                                | 5000                           |
 | `/coreum.asset.ft.v1.MsgGloballyUnfreeze`                              | 2500                           |
 | `/coreum.asset.ft.v1.MsgIssue`                                         | 70000                          |
-| `/coreum.asset.ft.v1.MsgMint`                                          | 11000                          |
-| `/coreum.asset.ft.v1.MsgSetWhitelistedLimit`                           | 5000                           |
-| `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 2500                           |
+| `/coreum.asset.ft.v1.MsgMint`                                          | 30000                          |
+| `/coreum.asset.ft.v1.MsgSetWhitelistedLimit`                           | 8000                           |
+| `/coreum.asset.ft.v1.MsgUnfreeze`                                      | 4000                           |
 | `/coreum.asset.ft.v1.MsgUpgradeTokenV1`                                | 5000                           |
 | `/coreum.asset.nft.v1.MsgAddToWhitelist`                               | 7000                           |
-| `/coreum.asset.nft.v1.MsgBurn`                                         | 16000                          |
+| `/coreum.asset.nft.v1.MsgBurn`                                         | 24000                          |
 | `/coreum.asset.nft.v1.MsgFreeze`                                       | 7000                           |
 | `/coreum.asset.nft.v1.MsgIssueClass`                                   | 16000                          |
-| `/coreum.asset.nft.v1.MsgMint`                                         | 39000                          |
+| `/coreum.asset.nft.v1.MsgMint`                                         | 29000                          |
 | `/coreum.asset.nft.v1.MsgRemoveFromWhitelist`                          | 3500                           |
 | `/coreum.asset.nft.v1.MsgUnfreeze`                                     | 5000                           |
-| `/coreum.nft.v1beta1.MsgSend`                                          | 16000                          |
+| `/coreum.nft.v1beta1.MsgSend`                                          | 24000                          |
 | `/cosmos.authz.v1beta1.MsgGrant`                                       | 7000                           |
 | `/cosmos.authz.v1beta1.MsgRevoke`                                      | 2500                           |
 | `/cosmos.distribution.v1beta1.MsgFundCommunityPool`                    | 15000                          |
-| `/cosmos.distribution.v1beta1.MsgSetWithdrawAddress`                   | 5000                           |
+| `/cosmos.distribution.v1beta1.MsgSetWithdrawAddress`                   | 4400                           |
 | `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward`              | 65000                          |
 | `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission`          | 22000                          |
 | `/cosmos.feegrant.v1beta1.MsgGrantAllowance`                           | 10000                          |
@@ -101,14 +101,14 @@ TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/cosmos.gov.v1beta1.MsgVoteWeighted`                                  | 9000                           |
 | `/cosmos.slashing.v1beta1.MsgUnjail`                                   | 25000                          |
 | `/cosmos.staking.v1beta1.MsgBeginRedelegate`                           | 142000                         |
-| `/cosmos.staking.v1beta1.MsgCreateValidator`                           | 76000                          |
+| `/cosmos.staking.v1beta1.MsgCreateValidator`                           | 115000                         |
 | `/cosmos.staking.v1beta1.MsgDelegate`                                  | 69000                          |
 | `/cosmos.staking.v1beta1.MsgEditValidator`                             | 13000                          |
 | `/cosmos.staking.v1beta1.MsgUndelegate`                                | 112000                         |
-| `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`                      | 25000                          |
+| `/cosmos.vesting.v1beta1.MsgCreateVestingAccount`                      | 35000                          |
 | `/cosmwasm.wasm.v1.MsgClearAdmin`                                      | 6500                           |
 | `/cosmwasm.wasm.v1.MsgUpdateAdmin`                                     | 8000                           |
-| `/ibc.applications.transfer.v1.MsgTransfer`                            | 37000                          |
+| `/ibc.applications.transfer.v1.MsgTransfer`                            | 44000                          |
 
 #### Special Cases
 
