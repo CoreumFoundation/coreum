@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/armon/go-metrics"
@@ -102,7 +103,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 						isDeterministic &&
 						!newSDKCtx.IsCheckTx() &&
 						!newSDKCtx.IsReCheckTx() {
-						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg))
+						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, msg)
 					}
 					return res, err
 				})
@@ -126,15 +127,19 @@ func ctxForDeterministicGas(ctx sdk.Context, msg sdk.Msg, deterministicGasConfig
 	return ctx, gasBefore, exists
 }
 
-func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msgURL string) {
+func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas, msg sdk.Msg) {
+	msgURL := proto.MessageName(msg)
 	deterministicGas := oldCtx.GasMeter().GasConsumed() - gasBefore
 	if deterministicGas == 0 {
 		return
 	}
-
 	nondeterministicGas := newCtx.GasMeter().GasConsumed()
 
 	gasFactor := float32(nondeterministicGas) / float32(deterministicGas)
+
+	b, _ := json.Marshal(msg)
+	fmt.Printf("GasFactor:%f, MsgURL:%s, Message: %s\n", gasFactor, msgURL, string(b))
+
 	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
 		{Name: "msg_name", Value: msgURL},
 	})

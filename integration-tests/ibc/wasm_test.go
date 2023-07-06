@@ -259,7 +259,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	executeWasmIncrement(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
 
 	// check that current state is expected
-	// the order of assertion is important because we are waiting for the expected none zero counter first to be sure
+	// the order of assertion is important because we are waiting for the expected non-zero counter first to be sure
 	// that async operation is completed fully before the second assertion
 	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
 	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
@@ -274,7 +274,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
 }
 
-// executeWasmIncrement executes increment method on the contract which call another contract and increments the counter.
+// executeWasmIncrement executes increment method on the contract which calls another contract and increments the counter.
 func executeWasmIncrement(
 	ctx context.Context,
 	requireT *require.Assertions,
