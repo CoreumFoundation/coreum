@@ -95,8 +95,8 @@ func (c CoreumChain) ComputeNeededBalanceFromOptions(options BalancesOptions) sd
 	return totalAmount.Add(options.GasPrice.Mul(sdk.NewDec(int64(options.NondeterministicMessagesGas))).Ceil().RoundInt()).Add(options.Amount)
 }
 
-// FundAccountsWithOptions computes the needed balances and fund account with it.
-func (c CoreumChain) FundAccountsWithOptions(ctx context.Context, t *testing.T, address sdk.AccAddress, options BalancesOptions) {
+// FundAccountWithOptions computes the needed balances and fund account with it.
+func (c CoreumChain) FundAccountWithOptions(ctx context.Context, t *testing.T, address sdk.AccAddress, options BalancesOptions) {
 	t.Helper()
 
 	amount := c.ComputeNeededBalanceFromOptions(options)
@@ -114,7 +114,7 @@ func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingA
 	stakingClient := stakingtypes.NewQueryClient(c.ClientContext)
 	staker := c.GenAccount()
 
-	c.FundAccountsWithOptions(ctx, t, staker, BalancesOptions{
+	c.FundAccountWithOptions(ctx, t, staker, BalancesOptions{
 		Messages: []sdk.Msg{&stakingtypes.MsgCreateValidator{}, &stakingtypes.MsgUndelegate{}},
 		Amount:   stakingAmount,
 	})

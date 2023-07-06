@@ -21,7 +21,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	ibcwasm "github.com/CoreumFoundation/coreum/integration-tests/ibc/testdata/wasm"
+	ibcwasm "github.com/CoreumFoundation/coreum/integration-tests/contracts/ibc"
 )
 
 type ibcTimeoutBlock struct {

@@ -35,7 +35,7 @@ func TestAuthz(t *testing.T) {
 	recipient := chain.GenAccount()
 
 	totalAmountToSend := sdk.NewInt(2_000)
-	chain.FundAccountsWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
 			&authztypes.MsgRevoke{},
@@ -51,7 +51,7 @@ func TestAuthz(t *testing.T) {
 		Amount: sdk.NewCoins(chain.NewCoin(sdk.NewInt(1_000))),
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
-	chain.FundAccountsWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgBankSend,
 			&execMsg,
@@ -166,7 +166,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	chain.FundAccountsWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{grantMsg},
 		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
 	})
@@ -186,7 +186,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 		Amount:      coinsToSendToRecipient,
 	}
 	execMsg := authztypes.NewMsgExec(multisigAddress, []sdk.Msg{msgBankSend})
-	chain.FundAccountsWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
@@ -265,7 +265,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	chain.FundAccountsWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			grantMsg,
 		},
@@ -304,7 +304,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend})
-	chain.FundAccountsWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&execMsg,
 		},

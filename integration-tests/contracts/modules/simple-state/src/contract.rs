@@ -4,9 +4,9 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 
-use thiserror::Error;
+use crate::error::ContractError;
 
-use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::state::COUNTER;
 
 // version info for migration info
@@ -62,8 +62,15 @@ fn query_count(deps: Deps) -> StdResult<CountResponse> {
     Ok(CountResponse { count })
 }
 
-#[derive(Error, Debug)]
-pub enum ContractError {
-    #[error("{0}")]
-    Std(#[from] StdError),
+#[entry_point]
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    let ver = cw2::get_contract_version(deps.storage)?;
+    if ver.contract != CONTRACT_NAME {
+        return Err(StdError::generic_err("Can only upgrade from same contract type").into());
+    }
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    COUNTER.save(deps.storage, &msg.count)?;
+
+    Ok(Response::default())
 }

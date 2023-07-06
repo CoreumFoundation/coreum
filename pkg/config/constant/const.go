@@ -32,7 +32,5 @@ const (
 	AddressPrefixMain = "core"
 )
 
-const (
-	// AddressSampleTest is valid testnet address used for samples.
-	AddressSampleTest = "testcore1adst6w4e79tddzhcgaru2l2gms8jjep6a4caa7"
-)
+// AddressSampleTest is a valid testnet address used for samples.
+const AddressSampleTest = "testcore1adst6w4e79tddzhcgaru2l2gms8jjep6a4caa7"

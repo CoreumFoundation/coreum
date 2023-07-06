@@ -37,8 +37,7 @@ func init() {
 	// configs
 	networkConfigs = map[constant.ChainID]NetworkConfig{
 		constant.ChainIDMain: {
-			Provider:      NewStaticConfigProvider(genesis.MainnetGenesis),
-			AddressPrefix: constant.AddressPrefixMain,
+			Provider: NewStaticConfigProvider(genesis.MainnetGenesis),
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
 					"0df493af80fbaad41b9b26d6f4520b39ceb1d210@34.171.208.193:26656", // seed-iron
@@ -47,8 +46,7 @@ func init() {
 			},
 		},
 		constant.ChainIDTest: {
-			Provider:      NewStaticConfigProvider(genesis.TestnetGenesis),
-			AddressPrefix: constant.AddressPrefixTest,
+			Provider: NewStaticConfigProvider(genesis.TestnetGenesis),
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
 					"64391878009b8804d90fda13805e45041f492155@35.232.157.206:26656", // seed-sirius
@@ -62,6 +60,7 @@ func init() {
 				ChainID:         constant.ChainIDDev,
 				GenesisTime:     time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 				Denom:           constant.DenomDev,
+				AddressPrefix:   constant.AddressPrefixDev,
 				GovConfig: GovConfig{
 					ProposalConfig: GovProposalConfig{
 						MinDepositAmount: "4000000000", // 4,000 CORE
@@ -97,7 +96,6 @@ func init() {
 				},
 				GenTxs: readGenTxs(devGenTxsFS),
 			},
-			AddressPrefix: constant.AddressPrefixDev,
 			NodeConfig: NodeConfig{
 				SeedPeers: []string{
 					"602df7489bd45626af5c9a4ea7f700ceb2222b19@34.135.242.117:26656",
@@ -172,16 +170,14 @@ type FundedAccount struct {
 
 // NetworkConfig helps initialize Network instance.
 type NetworkConfig struct {
-	Provider NetworkConfigProvider
-
-	AddressPrefix string
-	NodeConfig    NodeConfig
+	Provider   NetworkConfigProvider
+	NodeConfig NodeConfig
 }
 
 // SetSDKConfig sets global SDK config to some network-specific values.
 // In typical applications this func should be called right after network initialization.
 func (c NetworkConfig) SetSDKConfig() {
-	SetSDKConfig(c.AddressPrefix, constant.CoinType)
+	SetSDKConfig(c.Provider.GetAddressPrefix(), constant.CoinType)
 }
 
 // SetSDKConfig sets global SDK config.

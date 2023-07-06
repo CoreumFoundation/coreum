@@ -159,6 +159,30 @@ func (w Wasm) IsWASMContractPinned(ctx context.Context, codeID uint64) (bool, er
 	return false, nil
 }
 
+// MigrateWASMContract migrates the wasm contract.
+func (w Wasm) MigrateWASMContract(
+	ctx context.Context,
+	txf client.Factory,
+	fromAddress sdk.AccAddress,
+	contractAddress string,
+	codeID uint64,
+	payload json.RawMessage,
+) error {
+	msg := &wasmtypes.MsgMigrateContract{
+		Sender:   w.chainCtx.ConvertToBech32Address(fromAddress),
+		Contract: contractAddress,
+		CodeID:   codeID,
+		Msg:      wasmtypes.RawContractMessage(payload),
+	}
+
+	_, err := w.chainCtx.BroadcastTxWithSigner(ctx, addGasMultiplier(txf), fromAddress, msg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func addGasMultiplier(txf client.Factory) client.Factory {
 	if txf.Gas() == 0 {
 		return txf.WithGasAdjustment(gasMultiplier)
