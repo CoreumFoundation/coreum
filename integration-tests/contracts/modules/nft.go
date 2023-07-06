@@ -1,10 +1,13 @@
 package modules
 
 import (
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
+// IssueNFTRequest is used to issue NFTs.
+//
 //nolint:tagliatelle
 type IssueNFTRequest struct {
 	Name        string                       `json:"name"`
@@ -17,6 +20,8 @@ type IssueNFTRequest struct {
 	RoyaltyRate string                       `json:"royalty_rate"`
 }
 
+// NftMintRequest is used to mint NFTs.
+//
 //nolint:tagliatelle
 type NftMintRequest struct {
 	ID      string `json:"id"`
@@ -25,32 +30,39 @@ type NftMintRequest struct {
 	Data    string `json:"data"`
 }
 
+// NftIDRequest is used to query NFT with ID.
 type NftIDRequest struct {
 	ID string `json:"id"`
 }
 
+// NftIssuerRequest is used to query NFT with issuer.
 type NftIssuerRequest struct {
 	Issuer string `json:"issuer"`
 }
 
+// NftIDWithAccountRequest is used to query NFT with id and account.
 type NftIDWithAccountRequest struct {
 	ID      string `json:"id"`
 	Account string `json:"account"`
 }
 
+// NftIDWithReceiverRequest is used query NFT with id and receiver.
 type NftIDWithReceiverRequest struct {
 	ID       string `json:"id"`
 	Receiver string `json:"receiver"`
 }
 
+// NftOwnerRequest is used to query the NFT with owner.
 type NftOwnerRequest struct {
 	Owner string `json:"owner"`
 }
 
+// NftMethod is a wrapper type for all the methods used in smart contract.
 type NftMethod string
 
+// all the methods used for smart contract.
 const (
-	// tx.
+	// transactions.
 	NftMethodMint                NftMethod = "mint"
 	NftMethodBurn                NftMethod = "burn"
 	NftMethodFreeze              NftMethod = "freeze"
@@ -58,7 +70,7 @@ const (
 	NftMethodAddToWhitelist      NftMethod = "add_to_whitelist"
 	NftMethodRemoveFromWhiteList NftMethod = "remove_from_whitelist"
 	NftMethodSend                NftMethod = "send"
-	// query.
+	// queries.
 	NftMethodParams                    NftMethod = "params"
 	NftMethodClass                     NftMethod = "class"
 	NftMethodClasses                   NftMethod = "classes"
@@ -74,6 +86,8 @@ const (
 	NftMethodClassesNFT                NftMethod = "classes_nft"
 )
 
+// AssetnftClass represents the Class in asset nft module.
+//
 //nolint:tagliatelle
 type AssetnftClass struct {
 	ID          string                       `json:"id"`
@@ -88,10 +102,13 @@ type AssetnftClass struct {
 	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
 }
 
+// AssetnftClassResponse is returned when querying for class info.
 type AssetnftClassResponse struct {
 	Class AssetnftClass `json:"class"`
 }
 
+// NftItem is represents the NFT returned from smart contract.
+//
 //nolint:tagliatelle
 type NftItem struct {
 	ClassID string `json:"class_id"`
@@ -101,21 +118,27 @@ type NftItem struct {
 	Data    string `json:"data"`
 }
 
+// NftRes is returned when querying for the NFT.
 type NftRes struct {
 	NFT NftItem `json:"nft"`
 }
 
+// PageResponse represents pagination response for listings.
+//
 //nolint:tagliatelle
 type PageResponse struct {
 	NextKey []byte `json:"next_key"`
 	Total   uint64 `json:"total"`
 }
 
+// NftsRes is used to return a list of NFTs.
 type NftsRes struct {
 	NFTs       []NftItem    `json:"nfts"`
 	Pagination PageResponse `json:"pagination"`
 }
 
+// NftClass returns class info.
+//
 //nolint:tagliatelle
 type NftClass struct {
 	ID          string `json:"id"`
@@ -127,10 +150,12 @@ type NftClass struct {
 	Data        string `json:"data"`
 }
 
+// NftClassResponse is the response returned when querying for class info.
 type NftClassResponse struct {
 	Class NftClass `json:"class"`
 }
 
+// NftClassesResponse is the response returned when querying for list of class info.
 type NftClassesResponse struct {
 	Classes    []NftClass   `json:"classes"`
 	Pagination PageResponse `json:"pagination"`

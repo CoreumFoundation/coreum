@@ -7,12 +7,13 @@ import (
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
-// AssetNFTKeeper represents nft keeper.
+// AssetNFTKeeper represents the assetnft keeper.
 type AssetNFTKeeper interface {
 	IterateAllClassDefinitions(ctx sdk.Context, cb func(types.ClassDefinition) (bool, error)) error
 	SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) error
 }
 
+// NFTKeeper represents the expected methods from the nft keeper.
 type NFTKeeper interface {
 	GetClass(ctx sdk.Context, classID string)
 	UpdateClass(ctx sdk.Context, class nft.Class)
@@ -20,6 +21,7 @@ type NFTKeeper interface {
 	Update(ctx sdk.Context, n nft.NFT)
 }
 
+// WasmKeeper represents the expected method from the wasm keeper.
 type WasmKeeper interface {
 	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
 }
