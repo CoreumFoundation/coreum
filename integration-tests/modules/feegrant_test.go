@@ -25,7 +25,7 @@ func TestFeeGrant(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&banktypes.MsgSend{},
@@ -33,7 +33,7 @@ func TestFeeGrant(t *testing.T) {
 			&feegrant.MsgRevokeAllowance{},
 		},
 	})
-	chain.FundAccountsWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
 		Amount: sdk.NewInt(1),
 	})
 	basicAllowance, err := codetypes.NewAnyWithValue(&feegrant.BasicAllowance{

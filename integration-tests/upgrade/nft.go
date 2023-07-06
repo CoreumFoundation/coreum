@@ -31,7 +31,7 @@ func (n *nftStoreTest) Before(t *testing.T) {
 	n.issuer = chain.GenAccount()
 	assetNftClient := assetnfttypes.NewQueryClient(chain.ClientContext)
 	nfqQueryClient := nft.NewQueryClient(chain.ClientContext)
-	chain.FundAccountsWithOptions(ctx, t, n.issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, n.issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
 			&assetnfttypes.MsgMint{},
@@ -148,7 +148,7 @@ func (nt *nftFeaturesTest) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
 		},
@@ -222,7 +222,7 @@ func (nt *nftFeaturesTest) tryCreatingClassWithInvalidFeature(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
 		},
@@ -259,7 +259,7 @@ func (nt *nftFeaturesTest) tryCreatingClassWithDuplicatedFeature(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
 		},
@@ -296,7 +296,7 @@ func (nt *nftFeaturesTest) createValidClass(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetnfttypes.MsgIssueClass{},
 		},

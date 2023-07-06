@@ -30,7 +30,7 @@ func TestAuthFeeLimits(t *testing.T) {
 
 	feeModel := getFeemodelParams(ctx, t, chain.ClientContext)
 	maxBlockGas := feeModel.MaxBlockGas
-	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 			&assetfttypes.MsgIssue{},
@@ -138,7 +138,7 @@ func TestAuthMultisig(t *testing.T) {
 	signer2KeyName := keyNamesSet[1]
 
 	// fund the multisig account
-	chain.FundAccountsWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
 	})
@@ -206,7 +206,7 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   sdk.NewInt(10),
 	})
