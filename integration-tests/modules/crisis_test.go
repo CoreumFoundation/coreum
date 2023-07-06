@@ -27,7 +27,7 @@ func TestVerifyInvariantMessageIsDenied(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Amount: sdk.NewIntFromUint64(invariantFee),
 	})
 

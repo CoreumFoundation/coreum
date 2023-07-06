@@ -44,7 +44,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 
 	// Create proposer depositor.
 	depositor := chain.GenAccount()
-	chain.FundAccountsWithOptions(ctx, t, depositor, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, depositor, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&govtypes.MsgDeposit{}},
 		Amount:   missingDepositAmount.Amount,
 	})

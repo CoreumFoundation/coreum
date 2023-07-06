@@ -63,7 +63,7 @@ func (ft *ftV1UpgradeTest) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	ft.issuer = chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, ft.issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, ft.issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&assetfttypes.MsgIssue{},
@@ -422,7 +422,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1ByNonIssuer(t *testing.T) {
 
 	// upgrading by the non-issuer should fail
 	nonIssuer := chain.GenAccount()
-	chain.FundAccountsWithOptions(ctx, t, nonIssuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, nonIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgUpgradeTokenV1{},
 			&assetfttypes.MsgUpgradeTokenV1{},
@@ -793,7 +793,7 @@ func (ft *ftFeaturesTest) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
@@ -864,7 +864,7 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
@@ -902,7 +902,7 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
@@ -940,7 +940,7 @@ func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issuer := chain.GenAccount()
 
-	chain.FundAccountsWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
