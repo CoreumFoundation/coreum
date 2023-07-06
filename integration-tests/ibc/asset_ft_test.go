@@ -762,6 +762,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumRecipient, sendCoinBack))
 }
 
+//nolint:funlen // we don't care
 func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 	t.Parallel()
 
