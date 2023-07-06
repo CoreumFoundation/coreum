@@ -24,6 +24,7 @@ const (
 	FeaturesFlag           = "features"
 	BurnRateFlag           = "burn-rate"
 	SendCommissionRateFlag = "send-commission-rate"
+	IBCEnabledFlag         = "ibc-enabled"
 )
 
 // GetTxCmd returns the transaction commands for this module.
@@ -453,10 +454,9 @@ $ %s tx %s globally-unfreeze ABC-%s --from [sender]
 
 // CmdTxUpgradeV1 returns UpgradeV1 cobra command.
 func CmdTxUpgradeV1() *cobra.Command {
-	const ibcFlag = "ibc-enabled"
 	var ibcEnabled bool
 	cmd := &cobra.Command{
-		Use:   "upgrade-v1 [denom] --ibc-enabled=true --from [sender]",
+		Use:   fmt.Sprintf("upgrade-v1 [denom] --%s=true --from [sender]", IBCEnabledFlag),
 		Args:  cobra.ExactArgs(1),
 		Short: "upgrades denom to version v1 and specifies if IBC should be enabled or disabled",
 		Long: strings.TrimSpace(
@@ -464,14 +464,14 @@ func CmdTxUpgradeV1() *cobra.Command {
 This is a one-time operation!!! Once executed, it can never be done again.
 
 Example:
-$ %s tx %s upgrade-v1 ABC-%s --ibc-enabled=true --from [sender]
+$ %s tx %s upgrade-v1 ABC-%s --%s=true --from [sender]
 `,
-				version.AppName, types.ModuleName, constant.AddressSampleTest,
+				version.AppName, types.ModuleName, constant.AddressSampleTest, IBCEnabledFlag,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !cmd.Flags().Changed(ibcFlag) {
-				return errors.Errorf("flag --%s must be explicitely set", ibcFlag)
+			if !cmd.Flags().Changed(IBCEnabledFlag) {
+				return errors.Errorf("flag --%s must be explicitly set", IBCEnabledFlag)
 			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -490,7 +490,7 @@ $ %s tx %s upgrade-v1 ABC-%s --ibc-enabled=true --from [sender]
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
-	cmd.Flags().BoolVar(&ibcEnabled, ibcFlag, false, "Specifies if IBC should be enabled or disabled for the token")
+	cmd.Flags().BoolVar(&ibcEnabled, IBCEnabledFlag, false, "Specifies if IBC should be enabled or disabled for the token")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd

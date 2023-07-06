@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
@@ -314,20 +315,20 @@ func TestUpgradeV1(t *testing.T) {
 	// upgrade the token with --ibc-enabled=true
 	args = append([]string{
 		denom,
-		"--ibc-enabled=true",
+		fmt.Sprintf("--%s=true", cli.IBCEnabledFlag),
 		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
 	err = txError(clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
-	requireT.ErrorContains(err, "it is no longer possible to upgrade the token: unauthorized")
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// upgrade the token with --ibc-enabled=false
 	args = append([]string{
 		denom,
-		"--ibc-enabled=false",
+		fmt.Sprintf("--%s=false", cli.IBCEnabledFlag),
 		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
 	err = txError(clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
-	requireT.ErrorContains(err, "it is no longer possible to upgrade the token: unauthorized")
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 }
 
 func txError(buf testutil.BufferWriter, err error) error {
@@ -335,20 +336,26 @@ func txError(buf testutil.BufferWriter, err error) error {
 		return errors.WithStack(err)
 	}
 
-	result := struct {
-		Code   int    `json:"code"`
-		RawLog string `json:"raw_log"`
+	// normally we would use sdk.TxResponse to decode json but that structure defines `Height` as int64,
+	// while in json it is a string, causing error during unmarshalling.
+	txResponse := struct {
+		TxHash    string              `json:"txhash"`
+		Code      uint32              `json:"code"`
+		Codespace string              `json:"codespace"`
+		Logs      sdk.ABCIMessageLogs `json:"logs"`
+		RawLog    string              `json:"raw_log"` //nolint:tagliatelle
 	}{}
 
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+	if err := json.Unmarshal(buf.Bytes(), &txResponse); err != nil {
 		return errors.WithStack(err)
 	}
 
-	if result.Code == 0 {
+	if txResponse.Code == 0 {
 		return nil
 	}
 
-	return errors.New(result.RawLog)
+	return errors.Wrapf(sdkerrors.ABCIError(txResponse.Codespace, txResponse.Code, txResponse.Logs.String()),
+		"transaction '%s' failed, raw log:%s", txResponse.TxHash, txResponse.RawLog)
 }
 
 func issue(requireT *require.Assertions, ctx client.Context, token types.Token, initialAmount sdk.Int, testNetwork *network.Network) string {
