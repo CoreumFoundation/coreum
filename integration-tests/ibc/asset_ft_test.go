@@ -784,7 +784,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
 
-		coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{
 				&assetfttypes.MsgIssue{},
 				&ibctransfertypes.MsgTransfer{},
@@ -893,7 +893,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 			&ibctransfertypes.MsgTransfer{},
@@ -945,7 +945,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 
 	// test that the reverse transfer from gaia to coreum is blocked too
 
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	})
 
