@@ -1,0 +1,25 @@
+package v1
+
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/x/nft"
+)
+
+// AssetNFTKeeper represents nft keeper.
+type AssetNFTKeeper interface {
+	IterateAllClassDefinitions(ctx sdk.Context, cb func(types.ClassDefinition) (bool, error)) error
+	SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) error
+}
+
+type NFTKeeper interface {
+	GetClass(ctx sdk.Context, classID string)
+	UpdateClass(ctx sdk.Context, class nft.Class)
+	GetNFTsOfClass(ctx sdk.Context, classID string)
+	Update(ctx sdk.Context, n nft.NFT)
+}
+
+type WasmKeeper interface {
+	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
+}

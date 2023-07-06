@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/integration-tests/modules/testdata/wasm"
+	moduleswasm "github.com/CoreumFoundation/coreum/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -338,8 +338,6 @@ type nftWasmDataTest struct {
 
 //nolint:funlen // this is test case and breaking it up will reduce readability
 func (n *nftWasmDataTest) Before(t *testing.T) {
-	t.Parallel()
-
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
@@ -362,7 +360,6 @@ func (n *nftWasmDataTest) Before(t *testing.T) {
 	}
 	n.data = data
 
-	// we need to double encode to simulate the situation when the handler did not work correctly.
 	encodedBytesString := base64.StdEncoding.EncodeToString(data)
 
 	issueClassReq := moduleswasm.IssueNFTRequest{

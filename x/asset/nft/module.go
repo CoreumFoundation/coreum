@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math/rand"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -98,8 +99,9 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper    keeper.Keeper
-	nftKeeper nftkeeper.Keeper
+	keeper     keeper.Keeper
+	nftKeeper  nftkeeper.Keeper
+	wasmKeeper wasm.Keeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
@@ -107,11 +109,13 @@ func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
 	nftKeeper nftkeeper.Keeper,
+	wasmKeeper wasm.Keeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
 		nftKeeper:      nftKeeper,
+		wasmKeeper:     wasmKeeper,
 	}
 }
 
@@ -139,7 +143,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 
-	m := keeper.NewMigrator(am.keeper, am.nftKeeper)
+	m := keeper.NewMigrator(am.keeper, am.nftKeeper, am.wasmKeeper)
 	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
 	if err != nil {
 		panic(errors.Errorf("can't register module %s migrations, err: %s", types.ModuleName, err))

@@ -2,20 +2,18 @@ package v1_test
 
 import (
 	"encoding/base64"
-	"os"
 	"testing"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/simapp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/testutil/simapp"
 	v1 "github.com/CoreumFoundation/coreum/x/asset/nft/legacy/v1"
 	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
@@ -24,35 +22,8 @@ import (
 //nolint:funlen // breaking down this test function will make it harder to read
 func TestMigrateWasmCreatedNFTData(t *testing.T) {
 	requireT := require.New(t)
-	simapp.FlagEnabledValue = true
-	_, db, dir, logger, _, err := simapp.SetupSimulation("goleveldb-app-sim", "Simulation")
-	requireT.NoError(err, "simulation setup failed")
 
-	t.Cleanup(func() {
-		db.Close()
-		err = os.RemoveAll(dir)
-		requireT.NoError(err)
-	})
-
-	encoding := config.NewEncodingConfig(app.ModuleBasics)
-	network, err := config.NetworkConfigByChainID(constant.ChainIDDev)
-	if err != nil {
-		panic(err)
-	}
-	network.SetSDKConfig()
-
-	app.ChosenNetwork = network
-	simApp := app.New(
-		logger,
-		db,
-		nil,
-		true,
-		map[int64]bool{},
-		app.DefaultNodeHome,
-		0,
-		encoding,
-		simapp.EmptyAppOptions{},
-	)
+	simApp := simapp.New()
 
 	ctx := simApp.NewContext(true, tmproto.Header{})
 
@@ -115,7 +86,6 @@ func TestMigrateWasmCreatedNFTData(t *testing.T) {
 
 	for _, tc := range testCases {
 		encodedDataAny := encodeDataToAny(t, tc.data)
-		requireT.NoError(err)
 		issueMsg := assetnfttypes.IssueClassSettings{
 			Issuer:      tc.issuer,
 			Symbol:      tc.symbol,
@@ -138,7 +108,7 @@ func TestMigrateWasmCreatedNFTData(t *testing.T) {
 	}
 
 	// migrate data
-	err = v1.MigrateWasmCreatedNFTData(ctx, simApp.NFTKeeper.Keeper, simApp.AssetNFTKeeper)
+	err := v1.MigrateWasmCreatedNFTData(ctx, simApp.NFTKeeper.Keeper, simApp.AssetNFTKeeper, mockWasmKeeper{})
 	requireT.NoError(err)
 
 	// run assertions
@@ -165,4 +135,14 @@ func encodeDataToAny(t *testing.T, data []byte) *codectypes.Any {
 	encodedDataAny, err := codectypes.NewAnyWithValue(encodedDataBytes)
 	require.NoError(t, err)
 	return encodedDataAny
+}
+
+type mockWasmKeeper struct{}
+
+func (m mockWasmKeeper) HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
+	return isSmartContractAddress(contractAddress)
+}
+
+func isSmartContractAddress(address sdk.AccAddress) bool {
+	return len(address) == wasmtypes.ContractAddrLen
 }

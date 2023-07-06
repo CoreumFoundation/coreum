@@ -3,29 +3,27 @@ package v1
 import (
 	"encoding/base64"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/x/nft/keeper"
+	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
 )
 
-func isSmartContractAddress(address sdk.AccAddress) bool {
-	return len(address) == wasmtypes.ContractAddrLen
-}
-
 // MigrateWasmCreatedNFTData migrates all the NFT data created by smart contracts.
-func MigrateWasmCreatedNFTData(ctx sdk.Context, nftKeeper keeper.Keeper, assetNFTKeeper NFTKeeper) error {
+// In the old binary, the encoded binary was stored in the keeper by smart contracts, and in the new
+// binary it is fixed to store the original data. So we need to migrate the data
+// stored by smart contracts with the old binary and store the decoded format of the old data.
+func MigrateWasmCreatedNFTData(ctx sdk.Context, nftKeeper nftkeeper.Keeper, assetNFTKeeper AssetNFTKeeper, wasmKeeper WasmKeeper) error {
 	return assetNFTKeeper.IterateAllClassDefinitions(ctx, func(cd types.ClassDefinition) (bool, error) {
 		issuerAddress, err := sdk.AccAddressFromBech32(cd.Issuer)
 		if err != nil {
 			return true, err
 		}
 
-		if !isSmartContractAddress(issuerAddress) {
+		if !wasmKeeper.HasContractInfo(ctx, issuerAddress) {
 			return false, nil
 		}
 
@@ -34,7 +32,7 @@ func MigrateWasmCreatedNFTData(ctx sdk.Context, nftKeeper keeper.Keeper, assetNF
 			return true, errors.Errorf("class id (%s) present in definitions but not found in nft classes", cd.ID)
 		}
 
-		if class.Data != nil {
+		if class.GetData() != nil {
 			class.Data, err = convertAnyToDecodedAny(class.GetData())
 			if err != nil {
 				return true, err
