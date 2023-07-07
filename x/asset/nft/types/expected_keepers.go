@@ -10,11 +10,13 @@ import (
 type NFTKeeper interface {
 	SaveClass(ctx sdk.Context, class nft.Class) error
 	GetClass(ctx sdk.Context, classID string) (nft.Class, bool)
-	GetNFTsOfClass(ctx sdk.Context, classID string) ([]nft.NFT, error)
+	UpdateClass(ctx sdk.Context, class nft.Class) error
+	GetNFTsOfClass(ctx sdk.Context, classID string) []nft.NFT
 	HasClass(ctx sdk.Context, classID string) bool
 	HasNFT(ctx sdk.Context, classID, id string) bool
 	Mint(ctx sdk.Context, token nft.NFT, receiver sdk.AccAddress) error
 	Burn(ctx sdk.Context, classID, nftID string) error
+	Update(ctx sdk.Context, n nft.NFT) error
 	GetOwner(ctx sdk.Context, classID, nftID string) sdk.AccAddress
 }
 

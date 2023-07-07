@@ -17,8 +17,8 @@ type AssetNFTKeeper interface {
 type NFTKeeper interface {
 	GetClass(ctx sdk.Context, classID string) (nft.Class, bool)
 	UpdateClass(ctx sdk.Context, class nft.Class) error
-	GetNFTsOfClass(ctx sdk.Context, classID string) ([]nft.NFT, error)
-	Update(ctx sdk.Context, n nft.NFT)
+	GetNFTsOfClass(ctx sdk.Context, classID string) []nft.NFT
+	Update(ctx sdk.Context, n nft.NFT) error
 }
 
 // WasmKeeper represents the expected method from the wasm keeper.
