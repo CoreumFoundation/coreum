@@ -10,6 +10,7 @@ import (
 type NFTKeeper interface {
 	SaveClass(ctx sdk.Context, class nft.Class) error
 	GetClass(ctx sdk.Context, classID string) (nft.Class, bool)
+	GetNFTsOfClass(ctx sdk.Context, classID string) ([]nft.NFT, error)
 	HasClass(ctx sdk.Context, classID string) bool
 	HasNFT(ctx sdk.Context, classID, id string) bool
 	Mint(ctx sdk.Context, token nft.NFT, receiver sdk.AccAddress) error
@@ -21,4 +22,9 @@ type NFTKeeper interface {
 type BankKeeper interface {
 	BurnCoins(ctx sdk.Context, moduleName string, amounts sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+}
+
+// WasmKeeper represents the expected method from the wasm keeper.
+type WasmKeeper interface {
+	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
 }

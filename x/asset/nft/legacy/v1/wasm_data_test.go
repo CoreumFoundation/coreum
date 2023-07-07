@@ -114,6 +114,7 @@ func TestMigrateWasmCreatedNFTData(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			requireT := require.New(t)
 			classID := assetnfttypes.BuildClassID(tc.symbol, tc.issuer)
 			class, found := simApp.NFTKeeper.GetClass(ctx, classID)
 			requireT.True(found)

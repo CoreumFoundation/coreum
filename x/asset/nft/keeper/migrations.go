@@ -1,22 +1,21 @@
 package keeper
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	v1 "github.com/CoreumFoundation/coreum/x/asset/nft/legacy/v1"
-	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
 // Migrator is a struct for handling in-place store migrations.
 type Migrator struct {
 	keeper     Keeper
-	nftKeeper  nftkeeper.Keeper
-	wasmKeeper wasm.Keeper
+	nftKeeper  types.NFTKeeper
+	wasmKeeper types.WasmKeeper
 }
 
 // NewMigrator returns a new Migrator.
-func NewMigrator(keeper Keeper, nftKeeper nftkeeper.Keeper, wasmKeeper wasm.Keeper) Migrator {
+func NewMigrator(keeper Keeper, nftKeeper types.NFTKeeper, wasmKeeper types.WasmKeeper) Migrator {
 	return Migrator{
 		keeper:     keeper,
 		nftKeeper:  nftKeeper,

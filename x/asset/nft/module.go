@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -21,7 +20,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
 )
 
 var (
@@ -100,16 +98,16 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper     keeper.Keeper
-	nftKeeper  nftkeeper.Keeper
-	wasmKeeper wasm.Keeper
+	nftKeeper  types.NFTKeeper
+	wasmKeeper types.WasmKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	nftKeeper nftkeeper.Keeper,
-	wasmKeeper wasm.Keeper,
+	nftKeeper types.NFTKeeper,
+	wasmKeeper types.WasmKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),

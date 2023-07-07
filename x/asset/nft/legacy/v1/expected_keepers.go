@@ -15,9 +15,9 @@ type AssetNFTKeeper interface {
 
 // NFTKeeper represents the expected methods from the nft keeper.
 type NFTKeeper interface {
-	GetClass(ctx sdk.Context, classID string)
-	UpdateClass(ctx sdk.Context, class nft.Class)
-	GetNFTsOfClass(ctx sdk.Context, classID string)
+	GetClass(ctx sdk.Context, classID string) (nft.Class, bool)
+	UpdateClass(ctx sdk.Context, class nft.Class) error
+	GetNFTsOfClass(ctx sdk.Context, classID string) ([]nft.NFT, error)
 	Update(ctx sdk.Context, n nft.NFT)
 }
 
