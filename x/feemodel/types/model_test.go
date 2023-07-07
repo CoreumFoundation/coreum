@@ -125,8 +125,8 @@ func TestWithRandomModels(t *testing.T) {
 				assert.True(t, nextGasPrice.GTE(model.CalculateGasPriceWithMaxDiscount()))
 			case shortEMA >= longEMA:
 				assert.True(t, nextGasPrice.Equal(model.CalculateGasPriceWithMaxDiscount()))
-			case shortEMA > 0:
-				assert.True(t, nextGasPrice.LT(modelParams.InitialGasPrice))
+			case shortEMA > 0 && !modelParams.InitialGasPrice.Equal(model.CalculateGasPriceWithMaxDiscount()):
+				assert.True(t, nextGasPrice.LT(modelParams.InitialGasPrice), nextGasPrice.String())
 			default:
 				assert.True(t, nextGasPrice.Equal(modelParams.InitialGasPrice))
 			}
