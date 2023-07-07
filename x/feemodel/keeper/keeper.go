@@ -183,7 +183,7 @@ func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) 
 
 	lowMinGasPrice := minGasPrice
 	highMinGasPrice := minGasPrice
-	var minBlockGas int64 = 0
+	minBlockGas := int64(0)
 	maxBlockGas := params.Model.MaxBlockGas
 
 	for i := uint32(0); i < after; i++ {
