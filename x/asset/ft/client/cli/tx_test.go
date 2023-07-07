@@ -1,7 +1,6 @@
 package cli_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -19,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -336,17 +336,9 @@ func txError(buf testutil.BufferWriter, err error) error {
 		return errors.WithStack(err)
 	}
 
-	// normally we would use sdk.TxResponse to decode json but that structure defines `Height` as int64,
-	// while in json it is a string, causing error during unmarshalling.
-	txResponse := struct {
-		TxHash    string              `json:"txhash"`
-		Code      uint32              `json:"code"`
-		Codespace string              `json:"codespace"`
-		Logs      sdk.ABCIMessageLogs `json:"logs"`
-		RawLog    string              `json:"raw_log"` //nolint:tagliatelle
-	}{}
+	var txResponse sdk.TxResponse
 
-	if err := json.Unmarshal(buf.Bytes(), &txResponse); err != nil {
+	if err := tmjson.Unmarshal(buf.Bytes(), &txResponse); err != nil {
 		return errors.WithStack(err)
 	}
 
