@@ -878,7 +878,6 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 	requireT.NoError(err)
 }
 
-//nolint:funlen // we don't care
 func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	t.Parallel()
 
@@ -972,6 +971,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	requireT.Equal("0", resp.Balance.Amount.String())
 }
 
+//nolint:funlen // we don't care
 func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	t.Parallel()
 
@@ -1095,6 +1095,7 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendCoin))
 }
 
+//nolint:funlen // we don't care
 func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 	t.Parallel()
 
