@@ -143,6 +143,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			longEMA:     0,
 			afterBlocks: 10,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.03215
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is max discount")
@@ -155,6 +157,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			longEMA:     0,
 			afterBlocks: 50,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.03215
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
@@ -167,11 +171,11 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			longEMA:     100_000,
 			afterBlocks: 10,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.032203830017345169
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
-
-				// the high value is about 0.032203830017345169
 				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
 				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64())
 			},
@@ -182,11 +186,11 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			longEMA:     1_000_000,
 			afterBlocks: 10,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.032203835927155826
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
-
-				// the high value is about 0.032203835927155826
 				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
 				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64())
 			},
@@ -197,6 +201,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			longEMA:     1_000_000,
 			afterBlocks: 10,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.03215
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
@@ -209,6 +215,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			longEMA:     1_000_000,
 			afterBlocks: 50,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.03215
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")
@@ -221,6 +229,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			longEMA:     10_000_000,
 			afterBlocks: 10,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.671267795027995000
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64(), "low amount is equal to max discount")
@@ -233,6 +243,8 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			longEMA:     10_000_000,
 			afterBlocks: 50,
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 22.475936159292449688
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount(), "low amount is equal to max discount")

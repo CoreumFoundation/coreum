@@ -176,10 +176,7 @@ func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) 
 	minLongEMA := longEMA
 
 	model := types.NewModel(params.Model)
-	minGasPrice := sdk.NewDecCoinFromDec(
-		k.GetMinGasPrice(ctx).Denom,
-		model.CalculateNextGasPrice(shortEMA, longEMA),
-	)
+	minGasPrice := model.CalculateNextGasPrice(shortEMA, longEMA)
 
 	lowMinGasPrice := minGasPrice
 	highMinGasPrice := minGasPrice
@@ -191,27 +188,20 @@ func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) 
 			params.Model.ShortEmaBlockLength)
 		maxLongEMA = types.CalculateEMA(maxLongEMA, params.Model.MaxBlockGas,
 			params.Model.LongEmaBlockLength)
-		maxLoadMinGasPrice := sdk.NewDecCoinFromDec(minGasPrice.Denom, model.CalculateNextGasPrice(maxShortEMA, maxLongEMA))
+		maxLoadMinGasPrice := model.CalculateNextGasPrice(maxShortEMA, maxLongEMA)
 
 		minShortEMA = types.CalculateEMA(minShortEMA, minBlockGas,
 			params.Model.ShortEmaBlockLength)
 		minLongEMA = types.CalculateEMA(minLongEMA, minBlockGas,
 			params.Model.LongEmaBlockLength)
-		minLoadMinGasPrice := sdk.NewDecCoinFromDec(minGasPrice.Denom, model.CalculateNextGasPrice(minShortEMA, minLongEMA))
+		minLoadMinGasPrice := model.CalculateNextGasPrice(minShortEMA, minLongEMA)
 
-		if maxLoadMinGasPrice.IsGTE(highMinGasPrice) {
-			highMinGasPrice = maxLoadMinGasPrice
-		}
-		if minLoadMinGasPrice.IsGTE(highMinGasPrice) {
-			highMinGasPrice = minLoadMinGasPrice
-		}
-		if maxLoadMinGasPrice.IsLT(lowMinGasPrice) {
-			lowMinGasPrice = maxLoadMinGasPrice
-		}
-		if minLoadMinGasPrice.IsLT(lowMinGasPrice) {
-			lowMinGasPrice = minLoadMinGasPrice
-		}
+		highMinGasPrice = sdk.MaxDec(highMinGasPrice, sdk.MaxDec(maxLoadMinGasPrice, minLoadMinGasPrice))
+		lowMinGasPrice = sdk.MinDec(lowMinGasPrice, sdk.MinDec(maxLoadMinGasPrice, minLoadMinGasPrice))
 	}
 
-	return lowMinGasPrice, highMinGasPrice, nil
+	denom := k.GetMinGasPrice(ctx).Denom
+	return sdk.NewDecCoinFromDec(denom, lowMinGasPrice),
+		sdk.NewDecCoinFromDec(denom, highMinGasPrice),
+		nil
 }
