@@ -878,6 +878,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 	requireT.NoError(err)
 }
 
+//nolint:funlen // we don't care
 func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	t.Parallel()
 
