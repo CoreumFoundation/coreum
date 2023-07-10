@@ -773,7 +773,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 30*time.Second)
+	retryCtx, retryCancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer retryCancel()
 
 	// This is the retry loop where we try to trigger a timeout condition for IBC transfer.
@@ -781,6 +781,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 	// On every trial we send funds from one chain to the other. Then we observe accounts on both chains
 	// to find if IBC transfer completed successfully or timed out. If tokens were delivered to the recipient
 	// we must retry. Otherwise, if tokens were returned back to the sender, we might continue the test.
+	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
 	err := retry.Do(retryCtx, time.Millisecond, func() error {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
@@ -790,7 +791,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 				&assetfttypes.MsgIssue{},
 				&ibctransfertypes.MsgTransfer{},
 			},
-			Amount: getIssueFee(ctx, t, coreumChain.ClientContext).Amount,
+			Amount: issueFee,
 		})
 
 		issueMsg := &assetfttypes.MsgIssue{
@@ -801,7 +802,6 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 			InitialAmount: sdk.NewInt(1_000_000),
 			Features: []assetfttypes.Feature{
 				assetfttypes.Feature_ibc,
-				assetfttypes.Feature_freezing,
 			},
 		}
 		_, err := client.BroadcastTx(
@@ -1092,6 +1092,181 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	// - escrow address being frozen
 	// - sender account not being whitelisted
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendCoin))
+}
+
+func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
+	t.Parallel()
+
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	requireT := require.New(t)
+	coreumChain := chains.Coreum
+	gaiaChain := chains.Osmosis
+
+	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
+
+	retryCtx, retryCancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer retryCancel()
+
+	// This is the retry loop where we try to trigger a timeout condition for IBC transfer.
+	// We can't reproduce it with 100% probability, so we may need to try it many times.
+	// On every trial we send funds from one chain to the other. Then we observe accounts on both chains
+	// to find if IBC transfer completed successfully or timed out. If tokens were delivered to the recipient
+	// we must retry. Otherwise, if tokens were returned back to the sender, we might continue the test.
+	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	err := retry.Do(retryCtx, time.Millisecond, func() error {
+		coreumIssuer := coreumChain.GenAccount()
+		coreumSender := coreumChain.GenAccount()
+		gaiaRecipient := gaiaChain.GenAccount()
+
+		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&assetfttypes.MsgFreeze{},
+				&assetfttypes.MsgSetWhitelistedLimit{},
+				&banktypes.MsgSend{},
+				&assetfttypes.MsgSetWhitelistedLimit{},
+			},
+			Amount: issueFee,
+		})
+		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{},
+			},
+		})
+
+		issueMsg := &assetfttypes.MsgIssue{
+			Issuer:        coreumIssuer.String(),
+			Symbol:        "mysymbol",
+			Subunit:       "mysubunit",
+			Precision:     8,
+			InitialAmount: sdk.NewInt(1_000_000),
+			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_ibc,
+				assetfttypes.Feature_whitelisting,
+				assetfttypes.Feature_freezing,
+			},
+		}
+		_, err := client.BroadcastTx(
+			ctx,
+			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+			issueMsg,
+		)
+		require.NoError(t, err)
+		denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
+		sendToGaiaCoin := sdk.NewCoin(denom, issueMsg.InitialAmount)
+
+		coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
+
+		// freeze escrow account
+		coreumToGaiaEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToGaiaChannelID)
+		freezeMsg := &assetfttypes.MsgFreeze{
+			Sender:  coreumIssuer.String(),
+			Account: coreumToGaiaEscrowAddress.String(),
+			Coin:    sendToGaiaCoin,
+		}
+		_, err = client.BroadcastTx(
+			ctx,
+			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(freezeMsg)),
+			freezeMsg,
+		)
+		require.NoError(t, err)
+
+		// whitelist sender
+		whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
+			Sender:  coreumIssuer.String(),
+			Account: coreumSender.String(),
+			Coin:    sendToGaiaCoin,
+		}
+		_, err = client.BroadcastTx(
+			ctx,
+			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(whitelistMsg)),
+			whitelistMsg,
+		)
+		require.NoError(t, err)
+
+		// send coins from issuer to sender
+		sendMsg := &banktypes.MsgSend{
+			FromAddress: coreumIssuer.String(),
+			ToAddress:   coreumSender.String(),
+			Amount:      sdk.NewCoins(sendToGaiaCoin),
+		}
+		_, err = client.BroadcastTx(
+			ctx,
+			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(sendMsg)),
+			sendMsg,
+		)
+		require.NoError(t, err)
+
+		// blacklist sender
+		blacklistMsg := &assetfttypes.MsgSetWhitelistedLimit{
+			Sender:  coreumIssuer.String(),
+			Account: coreumSender.String(),
+			Coin:    sdk.NewInt64Coin(sendToGaiaCoin.Denom, 0),
+		}
+		_, err = client.BroadcastTx(
+			ctx,
+			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(blacklistMsg)),
+			blacklistMsg,
+		)
+		require.NoError(t, err)
+
+		_, err = coreumChain.ExecuteTimingOutIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient)
+		switch {
+		case err == nil:
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+			return retry.Retryable(err)
+		default:
+			requireT.NoError(err)
+		}
+
+		parallelCtx, parallelCancel := context.WithCancel(ctx)
+		defer parallelCancel()
+		errCh := make(chan error, 1)
+		go func() {
+			// In this goroutine we check if funds were returned back to the sender.
+			// If this happens it means timeout occurred.
+
+			defer parallelCancel()
+			if err := coreumChain.AwaitForBalance(parallelCtx, t, coreumSender, sendToGaiaCoin); err != nil {
+				select {
+				case errCh <- retry.Retryable(err):
+				default:
+				}
+			} else {
+				errCh <- nil
+			}
+		}()
+		go func() {
+			// In this goroutine we check if funds were delivered to the other chain.
+			// If this happens it means timeout didn't occur and we must try again.
+
+			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
+				select {
+				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
+					parallelCancel()
+				default:
+				}
+			}
+		}()
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case err := <-errCh:
+			if err != nil {
+				return err
+			}
+		}
+
+		// At this point we are sure that timeout happened and coins has been sent back to the sender.
+		return nil
+	})
+	requireT.NoError(err)
 }
 
 func ibcTransferAndAssertBalanceChanges(

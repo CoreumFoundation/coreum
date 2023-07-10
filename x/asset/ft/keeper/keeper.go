@@ -560,6 +560,11 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 		return nil
 	}
 
+	// Same thing applies if IBC fails due to timeout.
+	if wibctransfertypes.IsPurposeTimeout(ctx) {
+		return nil
+	}
+
 	if !def.IsFeatureEnabled(types.Feature_freezing) || def.IsIssuer(addr) {
 		return nil
 	}
@@ -609,6 +614,11 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 	// Despite that, sender should receive his funds back because otherwise they are lost forever, being blocked
 	// on the escrow address.
 	if wibctransfertypes.IsPurposeAck(ctx) {
+		return nil
+	}
+
+	// Same thing applies if IBC fails due to timeout.
+	if wibctransfertypes.IsPurposeTimeout(ctx) {
 		return nil
 	}
 
