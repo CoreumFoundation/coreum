@@ -19,6 +19,7 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	v1 "github.com/CoreumFoundation/coreum/x/asset/ft/legacy/v1"
 	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
@@ -281,6 +282,8 @@ func (ft *ftV1UpgradeTest) tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t *t
 }
 
 func (ft *ftV1UpgradeTest) After(t *testing.T) {
+	ft.verifyParams(t)
+
 	ft.tryToUpgradeV1TokenToEnableIBC(t)
 	ft.tryToUpgradeV1TokenToDisableIBC(t)
 	ft.tryToUpgradeV0ToV1ByNonIssuer(t)
@@ -292,6 +295,18 @@ func (ft *ftV1UpgradeTest) After(t *testing.T) {
 	ft.upgradeFromV0ToV1ToDisableIBCWASM(t)
 	ft.upgradeFromV0ToV1ToEnableIBCWASM(t)
 	ft.tryToUpgradeV0ToV1AfterDecisionTimeout(t)
+}
+
+func (ft *ftV1UpgradeTest) verifyParams(t *testing.T) {
+	requireT := require.New(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	requireT.Equal(assetfttypes.DefaultTokenUpgradeGracePeriod, ftParams.Params.TokenUpgradeGracePeriod)
+	requireT.Greater(ftParams.Params.TokenUpgradeDecisionTimeout, time.Now().Add(v1.InitialTokenUpgradeDecisionPeriod-time.Hour))
 }
 
 func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
