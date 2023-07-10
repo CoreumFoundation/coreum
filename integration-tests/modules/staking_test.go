@@ -99,7 +99,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	// Setup delegator
 	delegator := chain.GenAccount()
 	delegateAmount := sdk.NewInt(100)
-	chain.FundAccountsWithOptions(ctx, t, delegator, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&stakingtypes.MsgUndelegate{},
@@ -121,7 +121,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	chain.FundAccountsWithOptions(ctx, t, validatorAccAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, validatorAccAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
 
@@ -286,7 +286,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 		},
 		ValidatorAddress: validatorAddress.String(),
 	}
-	chain.FundAccountsWithOptions(ctx, t, validatorAccAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, validatorAccAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{editValidatorMsg},
 	})
 

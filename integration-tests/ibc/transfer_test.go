@@ -9,6 +9,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
@@ -35,7 +36,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	gaiaRecipient := gaiaChain.GenAccount()
 
 	sendToGaiaCoin := coreumChain.NewCoin(sdk.NewInt(1000))
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 		Amount:   sendToGaiaCoin.Amount,
 	})
@@ -78,11 +79,11 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	coreumToGaiaSender := coreumChain.GenAccount()
 
 	// Fund accounts
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumToCoreumSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumToCoreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 	})
 
-	coreumChain.FundAccountsWithOptions(ctx, t, coreumToGaiaSender, integrationtests.BalancesOptions{
+	coreumChain.FundAccountWithOptions(ctx, t, coreumToGaiaSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
@@ -132,7 +133,7 @@ func TestTimedOutTransfer(t *testing.T) {
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
+	gaiaChain := chains.Osmosis
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -149,7 +150,7 @@ func TestTimedOutTransfer(t *testing.T) {
 		gaiaRecipient := gaiaChain.GenAccount()
 
 		sendToGaiaCoin := coreumChain.NewCoin(sdk.NewInt(1000))
-		coreumChain.FundAccountsWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 			Amount:   sendToGaiaCoin.Amount,
 		})
@@ -160,7 +161,7 @@ func TestTimedOutTransfer(t *testing.T) {
 		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
 			return retry.Retryable(err)
 		default:
-			requireT.NoError(err, t)
+			requireT.NoError(err)
 		}
 
 		parallelCtx, parallelCancel := context.WithCancel(ctx)
@@ -216,4 +217,73 @@ func TestTimedOutTransfer(t *testing.T) {
 		return nil
 	})
 	requireT.NoError(err)
+}
+
+func TestRejectedTransfer(t *testing.T) {
+	t.Parallel()
+
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	requireT := require.New(t)
+	coreumChain := chains.Coreum
+	gaiaChain := chains.Gaia
+
+	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
+
+	// Bank module rejects transfers targeting some module accounts. We use this feature to test that
+	// this type of IBC transfer is rejected by the receiving chain.
+	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
+	coreumSender := coreumChain.GenAccount()
+	gaiaRecipient := gaiaChain.GenAccount()
+
+	sendToGaiaCoin := coreumChain.NewCoin(sdk.NewInt(1000))
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
+		Amount:   sendToGaiaCoin.Amount,
+	})
+	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
+		Address: gaiaRecipient,
+		Amount:  gaiaChain.NewCoin(sdk.NewIntFromUint64(100000)),
+	})
+
+	_, err := coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, moduleAddress)
+	requireT.NoError(err)
+
+	// funds should be returned to coreum
+	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendToGaiaCoin))
+
+	// funds should not be received on gaia
+	ibcGaiaDenom := convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom)
+	bankClient := banktypes.NewQueryClient(gaiaChain.ClientContext)
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: gaiaChain.ConvertToBech32Address(moduleAddress),
+		Denom:   ibcGaiaDenom,
+	})
+	requireT.NoError(err)
+	requireT.Equal("0", resp.Balance.Amount.String())
+
+	// test that the reverse transfer from gaia to coreum is blocked too
+
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
+	})
+
+	sendToCoreumCoin := sdk.NewCoin(ibcGaiaDenom, sendToGaiaCoin.Amount)
+	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient)
+	requireT.NoError(err)
+	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sendToCoreumCoin))
+
+	_, err = gaiaChain.ExecuteIBCTransfer(ctx, t, gaiaRecipient, sendToCoreumCoin, coreumChain.ChainContext, moduleAddress)
+	requireT.NoError(err)
+
+	// funds should be returned to gaia
+	requireT.NoError(gaiaChain.AwaitForBalance(ctx, t, gaiaRecipient, sendToCoreumCoin))
+
+	// funds should not be received on coreum
+	bankClient = banktypes.NewQueryClient(coreumChain.ClientContext)
+	resp, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: coreumChain.ConvertToBech32Address(moduleAddress),
+		Denom:   sendToGaiaCoin.Denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal("0", resp.Balance.Amount.String())
 }

@@ -38,7 +38,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 		Depositor: communityPoolFunder.String(),
 	}
 
-	chain.FundAccountsWithOptions(ctx, t, communityPoolFunder, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, communityPoolFunder, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			msgFundCommunityPool,
 		},
@@ -129,7 +129,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	requireT := require.New(t)
 	// the amount of the delegation should be big enough to get at least some reward for the few blocks
 	amountToDelegate := sdk.NewInt(1_000_000_000)
-	chain.FundAccountsWithOptions(ctx, t, delegator, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
 			&distributiontypes.MsgWithdrawDelegatorReward{},
@@ -264,7 +264,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		ValidatorAddress: validatorAddress.String(),
 	}
 
-	chain.FundAccountsWithOptions(ctx, t, validatorStakerAddress, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, validatorStakerAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
 
