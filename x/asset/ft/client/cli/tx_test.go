@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -17,6 +16,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
@@ -318,7 +318,7 @@ func TestUpgradeV1(t *testing.T) {
 		fmt.Sprintf("--%s=true", cli.IBCEnabledFlag),
 		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
-	err = txError(clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
+	err = execTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// upgrade the token with --ibc-enabled=false
@@ -327,11 +327,12 @@ func TestUpgradeV1(t *testing.T) {
 		fmt.Sprintf("--%s=false", cli.IBCEnabledFlag),
 		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
-	err = txError(clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
+	err = execTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 }
 
-func txError(buf testutil.BufferWriter, err error) error {
+func execTestCLICmd(clientCtx client.Context, cmd *cobra.Command, extraArgs []string) error {
+	buf, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, extraArgs)
 	if err != nil {
 		return errors.WithStack(err)
 	}
