@@ -195,7 +195,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		ctx,
 		coreumChain.TxFactory().WithSimulateAndExecute(true),
 		coreumCaller,
-		ibcwasm.IBCClassWASM,
+		ibcwasm.IBCCallWASM,
 		integrationtests.InstantiateConfig{
 			Admin:      coreumCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
@@ -209,7 +209,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		ctx,
 		osmosisChain.TxFactory().WithSimulateAndExecute(true),
 		osmosisCaller,
-		ibcwasm.IBCClassWASM,
+		ibcwasm.IBCCallWASM,
 		integrationtests.InstantiateConfig{
 			Admin:      osmosisCaller,
 			AccessType: wasmtypes.AccessTypeUnspecified,
@@ -251,28 +251,31 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	t.Logf("Channels are ready coreum channel ID:%s, osmosis channel ID:%s", coreumToOsmosisChannelID, osmosisToCoreumChannelID)
 
 	t.Logf("Sendng two IBC transactions from coreum contract to osmosis contract")
-	awaitWasmCallContractCounter(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
-	awaitWasmCallContractCounter(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 0)
+	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
+	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 0)
 
 	// execute coreum counter twice
-	executeWasmCallContractCounter(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
-	executeWasmCallContractCounter(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
+	executeWasmIncrement(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
+	executeWasmIncrement(ctx, requireT, coreumChain.Chain, coreumCaller, coreumToOsmosisChannelID, coreumContractAddr)
 
-	// check that current state is expected, the order of assertion is important
-	awaitWasmCallContractCounter(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
-	awaitWasmCallContractCounter(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
+	// check that current state is expected
+	// the order of assertion is important because we are waiting for the expected non-zero counter first to be sure
+	// that async operation is completed fully before the second assertion
+	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
+	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 0)
 
 	t.Logf("Sendng three IBC transactions from osmosis contract to coreum contract")
-	executeWasmCallContractCounter(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
-	executeWasmCallContractCounter(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
-	executeWasmCallContractCounter(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
+	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
+	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
+	executeWasmIncrement(ctx, requireT, osmosisChain, osmosisCaller, osmosisToCoreumChannelID, osmosisContractAddr)
 
 	// check that current state is expected, the order of assertion is important
-	awaitWasmCallContractCounter(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 3)
-	awaitWasmCallContractCounter(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
+	awaitWasmCounterValue(ctx, t, coreumChain.Chain, coreumToOsmosisChannelID, coreumContractAddr, 3)
+	awaitWasmCounterValue(ctx, t, osmosisChain, osmosisToCoreumChannelID, osmosisContractAddr, 2)
 }
 
-func executeWasmCallContractCounter(
+// executeWasmIncrement executes increment method on the contract which calls another contract and increments the counter.
+func executeWasmIncrement(
 	ctx context.Context,
 	requireT *require.Assertions,
 	chain integrationtests.Chain,
@@ -297,7 +300,8 @@ func executeWasmCallContractCounter(
 	requireT.NoError(err)
 }
 
-func awaitWasmCallContractCounter(
+// awaitWasmCounterValue waits until the count on the counter contract reaches the expectedCount.
+func awaitWasmCounterValue(
 	ctx context.Context,
 	t *testing.T,
 	chain integrationtests.Chain,
