@@ -141,7 +141,7 @@ func (c ChainContext) AwaitForBalance(
 		return nil
 	})
 
-	if err != nil {
+	if err == nil {
 		t.Logf("Received expected balance of %s.", expectedBalance.Denom)
 	}
 

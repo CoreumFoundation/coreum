@@ -489,7 +489,7 @@ func New(
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, wibctransfer.NewDirectionMiddleware(transfer.NewIBCModule(app.TransferKeeper.Keeper)))
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, wibctransfer.NewPurposeMiddleware(transfer.NewIBCModule(app.TransferKeeper.Keeper)))
 	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WASMKeeper, app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
