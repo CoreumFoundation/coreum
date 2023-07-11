@@ -166,7 +166,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			},
 		},
 		{
-			name:        "short and long ema are equal. (1 tx in block on average)",
+			name:        "short and long ema are equal. (1 tx 50 blocks after)",
 			shortEMA:    100_000,
 			longEMA:     100_000,
 			afterBlocks: 10,
@@ -181,6 +181,21 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			},
 		},
 		{
+			name:        "short and long ema are equal. (1 tx in block 50 blocks after)",
+			shortEMA:    100_000,
+			longEMA:     100_000,
+			afterBlocks: 50,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.043154704024898720
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64(), "high amount is greater than max discount")
+				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64(), "high amount is less than initial gas price")
+			},
+		},
+		{
 			name:        "short and long ema are equal. (10 tx in block on average)",
 			shortEMA:    1_000_000,
 			longEMA:     1_000_000,
@@ -188,6 +203,21 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			assertions: func(t *testing.T, low, high sdk.DecCoin) {
 				// observed min: 0.03215
 				// observed max: 0.032203835927155826
+				assertT := assert.New(t)
+				model := types.NewModel(defParams.Model)
+				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
+				assertT.Greater(high.Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
+				assertT.Less(high.Amount.MustFloat64(), model.Params().InitialGasPrice.MustFloat64())
+			},
+		},
+		{
+			name:        "short ema is smaller than long ema.",
+			shortEMA:    4_000_000,
+			longEMA:     5_000_000,
+			afterBlocks: 10,
+			assertions: func(t *testing.T, low, high sdk.DecCoin) {
+				// observed min: 0.03215
+				// observed max: 0.034857583137282673
 				assertT := assert.New(t)
 				model := types.NewModel(defParams.Model)
 				assertT.EqualValues(low.Amount, model.CalculateGasPriceWithMaxDiscount())
