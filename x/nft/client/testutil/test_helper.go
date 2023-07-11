@@ -8,12 +8,13 @@ import (
 	sdknetwork "github.com/cosmos/cosmos-sdk/testutil/network"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
+	coreumclitestutil "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/x/nft/client/cli"
 )
 
-func ExecSend(val *sdknetwork.Validator, args []string) (testutil.BufferWriter, error) { //nolint:revive // test helper
+func ExecSend(val *sdknetwork.Validator, args []string) error { //nolint:revive // test helper
 	cmd := cli.NewCmdSend()
-	return clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
+	return coreumclitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 }
 
 func ExecQueryClass(val *sdknetwork.Validator, classID string) (testutil.BufferWriter, error) { //nolint:revive // test helper
