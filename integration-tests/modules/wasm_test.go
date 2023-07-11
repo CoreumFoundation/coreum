@@ -665,7 +665,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	chain.Faucet.FundAccounts(ctx, t,
 		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
 	)
-	chain.FundAccountsWithOptions(ctx, t, newAdmin, integrationtests.BalancesOptions{
+	chain.FundAccountWithOptions(ctx, t, newAdmin, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&wasmtypes.MsgClearAdmin{},
 		},
