@@ -223,7 +223,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
 	}); err != nil {
-		return "", sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, fmt.Sprintf("can't emit EventIssued event: %v", err))
+		return "", sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "can't emit EventIssued event: %v", err)
 	}
 
 	k.logger(ctx).Debug("issued new fungible token with denom %d", denom)
@@ -272,7 +272,7 @@ func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description str
 	}
 
 	if err := denomMetadata.Validate(); err != nil {
-		return sdkerrors.Wrap(types.ErrInvalidInput, fmt.Sprintf("failed to validate denom metadata: %v", err))
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to validate denom metadata: %v", err)
 	}
 
 	k.bankKeeper.SetDenomMetaData(ctx, denomMetadata)
@@ -339,7 +339,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 		CurrentAmount:  newFrozenBalance.Amount,
 	})
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, fmt.Sprintf("can't emit EventFrozenAmountChanged event: %v", err))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "can't emit EventFrozenAmountChanged event: %v", err)
 	}
 
 	return nil
@@ -380,7 +380,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		CurrentAmount:  newFrozenBalance.Amount,
 	})
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, fmt.Sprintf("can't emit EventFrozenAmountChanged event: %v", err))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "can't emit EventFrozenAmountChanged event: %v", err)
 	}
 
 	return nil
@@ -485,7 +485,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		CurrentAmount:  coin.Amount,
 	})
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, fmt.Sprintf("can't emit EventWhitelistedAmountChanged event: %v", err))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "can't emit EventWhitelistedAmountChanged event: %v", err)
 	}
 
 	return nil
@@ -696,7 +696,7 @@ func (k Keeper) getDefinitionsFromStore(store prefix.Store, pagination *query.Pa
 		},
 	)
 	if err != nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrInvalidInput, fmt.Sprintf("failed to paginate: %s", err))
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
 	}
 
 	definitions := make([]types.Definition, 0, len(definitionsPointers))

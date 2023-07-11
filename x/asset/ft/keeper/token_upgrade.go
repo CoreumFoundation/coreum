@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"encoding/binary"
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -39,7 +37,7 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingToke
 		return nil
 	})
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidInput, fmt.Sprintf("failed to paginate: %s", err))
+		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
 	}
 
 	return versions, nil

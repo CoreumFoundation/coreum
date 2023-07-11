@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,7 +47,7 @@ func (s balanceStore) Balances(pagination *query.PageRequest) (sdk.Coins, *query
 		},
 	)
 	if err != nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrInvalidInput, fmt.Sprintf("failed to paginate: %s", err))
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
 	}
 
 	coins := make(sdk.Coins, 0, len(coinPointers))
