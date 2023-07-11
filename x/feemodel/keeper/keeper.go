@@ -2,6 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
@@ -150,4 +151,57 @@ func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 		panic(err)
 	}
 	store.Set(gasPriceKey, bz)
+}
+
+// CalculateEdgeGasPriceAfterBlocks returns the smallest and highest possible values for min gas price in future blocks.
+func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
+	shortEMABlockLength := k.GetParams(ctx).Model.ShortEmaBlockLength
+	if after > shortEMABlockLength {
+		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "after blocks must be lower than or equal to %d", shortEMABlockLength)
+	}
+
+	// if no after value is provided shortEMABlockLength is taken as default value
+	if after == 0 {
+		after = shortEMABlockLength
+	}
+
+	params := k.GetParams(ctx)
+	shortEMA := k.GetShortEMAGas(ctx)
+	longEMA := k.GetLongEMAGas(ctx)
+
+	maxShortEMA := shortEMA
+	minShortEMA := shortEMA
+
+	maxLongEMA := longEMA
+	minLongEMA := longEMA
+
+	model := types.NewModel(params.Model)
+	minGasPrice := model.CalculateNextGasPrice(shortEMA, longEMA)
+
+	lowMinGasPrice := minGasPrice
+	highMinGasPrice := minGasPrice
+	minBlockGas := int64(0)
+	maxBlockGas := params.Model.MaxBlockGas
+
+	for i := uint32(0); i < after; i++ {
+		maxShortEMA = types.CalculateEMA(maxShortEMA, maxBlockGas,
+			params.Model.ShortEmaBlockLength)
+		maxLongEMA = types.CalculateEMA(maxLongEMA, params.Model.MaxBlockGas,
+			params.Model.LongEmaBlockLength)
+		maxLoadMinGasPrice := model.CalculateNextGasPrice(maxShortEMA, maxLongEMA)
+
+		minShortEMA = types.CalculateEMA(minShortEMA, minBlockGas,
+			params.Model.ShortEmaBlockLength)
+		minLongEMA = types.CalculateEMA(minLongEMA, minBlockGas,
+			params.Model.LongEmaBlockLength)
+		minLoadMinGasPrice := model.CalculateNextGasPrice(minShortEMA, minLongEMA)
+
+		highMinGasPrice = sdk.MaxDec(highMinGasPrice, sdk.MaxDec(maxLoadMinGasPrice, minLoadMinGasPrice))
+		lowMinGasPrice = sdk.MinDec(lowMinGasPrice, sdk.MinDec(maxLoadMinGasPrice, minLoadMinGasPrice))
+	}
+
+	denom := k.GetMinGasPrice(ctx).Denom
+	return sdk.NewDecCoinFromDec(denom, lowMinGasPrice),
+		sdk.NewDecCoinFromDec(denom, highMinGasPrice),
+		nil
 }
