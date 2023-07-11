@@ -10,11 +10,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
@@ -276,6 +280,75 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 1)
+}
+
+func TestUpgradeV1(t *testing.T) {
+	requireT := require.New(t)
+	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+	requireT.NoError(err)
+	app.ChosenNetwork = networkCfg
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_ibc,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdk.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+
+	// --ibc-enabled is missing
+	args := append([]string{
+		denom,
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
+	requireT.Error(err)
+
+	// upgrade the token with --ibc-enabled=true
+	args = append([]string{
+		denom,
+		fmt.Sprintf("--%s=true", cli.IBCEnabledFlag),
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	err = execTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+
+	// upgrade the token with --ibc-enabled=false
+	args = append([]string{
+		denom,
+		fmt.Sprintf("--%s=false", cli.IBCEnabledFlag),
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	err = execTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+}
+
+func execTestCLICmd(clientCtx client.Context, cmd *cobra.Command, extraArgs []string) error {
+	buf, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, extraArgs)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	var txResponse sdk.TxResponse
+
+	if err := tmjson.Unmarshal(buf.Bytes(), &txResponse); err != nil {
+		return errors.WithStack(err)
+	}
+
+	if txResponse.Code == 0 {
+		return nil
+	}
+
+	return errors.Wrapf(sdkerrors.ABCIError(txResponse.Codespace, txResponse.Code, txResponse.Logs.String()),
+		"transaction '%s' failed, raw log:%s", txResponse.TxHash, txResponse.RawLog)
 }
 
 func issue(requireT *require.Assertions, ctx client.Context, token types.Token, initialAmount sdk.Int, testNetwork *network.Network) string {
