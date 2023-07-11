@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
+	coreumclitestutil "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -78,8 +79,7 @@ func TestCmdFreeze(t *testing.T) {
 	// freeze
 	args := []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
 
 	// query frozen
 	var frozenResp types.QueryFrozenResponse
@@ -92,8 +92,7 @@ func TestCmdFreeze(t *testing.T) {
 	// unfreeze
 	args = []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args))
 
 	// query frozen
 	args = []string{classID, nftID}
@@ -140,8 +139,7 @@ func TestCmdWhitelist(t *testing.T) {
 	// whitelist
 	args := []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxWhitelist(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxWhitelist(), args))
 
 	// query whitelisted
 	var whitelistedResp types.QueryWhitelistedResponse
@@ -162,8 +160,7 @@ func TestCmdWhitelist(t *testing.T) {
 	// unwhitelist
 	args = []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnwhitelist(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnwhitelist(), args))
 
 	// query whitelisted
 	args = []string{classID, nftID, account.String()}
