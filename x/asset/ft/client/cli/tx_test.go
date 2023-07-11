@@ -15,14 +15,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
@@ -74,8 +72,7 @@ func TestMintBurn(t *testing.T) {
 	// mint new tokens
 	coinToMint := sdk.NewInt64Coin(denom, 100)
 	args := append([]string{coinToMint.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
 
 	var balanceRsp banktypes.QueryAllBalancesResponse
 	buf, err := clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})
@@ -93,8 +90,7 @@ func TestMintBurn(t *testing.T) {
 	// burn tokens
 	coinToMint = sdk.NewInt64Coin(denom, 200)
 	args = append([]string{coinToMint.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args))
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})
 	requireT.NoError(err)
@@ -129,8 +125,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	// freeze part of the token
 	coinToFreeze := sdk.NewInt64Coin(denom, 100)
 	args := append([]string{recipient.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
 
 	// query frozen balance
 	var respFrozen types.QueryFrozenBalanceResponse
@@ -153,8 +148,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 		newDenom := issue(requireT, ctx, token, initialAmount, testNetwork)
 		coinToFreeze = sdk.NewInt64Coin(newDenom, 100)
 		args = append([]string{recipient.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
-		requireT.NoError(err)
+		requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
 	}
 
 	var balancesResp types.QueryFrozenBalancesResponse
@@ -171,8 +165,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	// unfreeze part of the frozen token
 	unfreezeTokens := sdk.NewInt64Coin(denom, 75)
 	args = append([]string{recipient.String(), unfreezeTokens.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args))
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom, "--output", "json"})
 	requireT.NoError(err)
@@ -204,8 +197,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 
 	// globally freeze the token
 	args := append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyFreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyFreeze(), args))
 
 	var resp types.QueryTokenResponse
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
@@ -215,8 +207,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 
 	// globally unfreeze the token
 	args = append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreeze(), args))
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
@@ -252,8 +243,7 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 
 		coinToWhitelist := sdk.NewInt64Coin(denom, 100)
 		args := append([]string{recipient.String(), coinToWhitelist.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-		_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxSetWhitelistedLimit(), args)
-		requireT.NoError(err)
+		requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxSetWhitelistedLimit(), args))
 
 		// query whitelisted balance
 		var respWhitelisted types.QueryWhitelistedBalanceResponse
@@ -309,8 +299,7 @@ func TestUpgradeV1(t *testing.T) {
 		denom,
 		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
-	requireT.Error(err)
+	requireT.Error(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
 
 	// upgrade the token with --ibc-enabled=true
 	args = append([]string{
@@ -318,7 +307,7 @@ func TestUpgradeV1(t *testing.T) {
 		fmt.Sprintf("--%s=true", cli.IBCEnabledFlag),
 		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
-	err = execTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
+	err = coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// upgrade the token with --ibc-enabled=false
@@ -327,28 +316,8 @@ func TestUpgradeV1(t *testing.T) {
 		fmt.Sprintf("--%s=false", cli.IBCEnabledFlag),
 		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
-	err = execTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
+	err = coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
-}
-
-func execTestCLICmd(clientCtx client.Context, cmd *cobra.Command, extraArgs []string) error {
-	buf, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, extraArgs)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	var txResponse sdk.TxResponse
-
-	if err := tmjson.Unmarshal(buf.Bytes(), &txResponse); err != nil {
-		return errors.WithStack(err)
-	}
-
-	if txResponse.Code == 0 {
-		return nil
-	}
-
-	return errors.Wrapf(sdkerrors.ABCIError(txResponse.Codespace, txResponse.Code, txResponse.Logs.String()),
-		"transaction '%s' failed, raw log:%s", txResponse.TxHash, txResponse.RawLog)
 }
 
 func issue(requireT *require.Assertions, ctx client.Context, token types.Token, initialAmount sdk.Int, testNetwork *network.Network) string {
