@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gogo/protobuf/proto"
@@ -19,6 +20,7 @@ import (
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/testutil/event"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
@@ -70,8 +72,7 @@ func TestMintBurn(t *testing.T) {
 	// mint new tokens
 	coinToMint := sdk.NewInt64Coin(denom, 100)
 	args := append([]string{coinToMint.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
 
 	var balanceRsp banktypes.QueryAllBalancesResponse
 	buf, err := clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})
@@ -89,8 +90,7 @@ func TestMintBurn(t *testing.T) {
 	// burn tokens
 	coinToMint = sdk.NewInt64Coin(denom, 200)
 	args = append([]string{coinToMint.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args))
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})
 	requireT.NoError(err)
@@ -125,8 +125,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	// freeze part of the token
 	coinToFreeze := sdk.NewInt64Coin(denom, 100)
 	args := append([]string{recipient.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
 
 	// query frozen balance
 	var respFrozen types.QueryFrozenBalanceResponse
@@ -149,8 +148,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 		newDenom := issue(requireT, ctx, token, initialAmount, testNetwork)
 		coinToFreeze = sdk.NewInt64Coin(newDenom, 100)
 		args = append([]string{recipient.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-		_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args)
-		requireT.NoError(err)
+		requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
 	}
 
 	var balancesResp types.QueryFrozenBalancesResponse
@@ -167,8 +165,7 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	// unfreeze part of the frozen token
 	unfreezeTokens := sdk.NewInt64Coin(denom, 75)
 	args = append([]string{recipient.String(), unfreezeTokens.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args))
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom, "--output", "json"})
 	requireT.NoError(err)
@@ -200,8 +197,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 
 	// globally freeze the token
 	args := append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyFreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyFreeze(), args))
 
 	var resp types.QueryTokenResponse
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
@@ -211,8 +207,7 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 
 	// globally unfreeze the token
 	args = append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreeze(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreeze(), args))
 
 	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
 	requireT.NoError(err)
@@ -248,8 +243,7 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 
 		coinToWhitelist := sdk.NewInt64Coin(denom, 100)
 		args := append([]string{recipient.String(), coinToWhitelist.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-		_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxSetWhitelistedLimit(), args)
-		requireT.NoError(err)
+		requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxSetWhitelistedLimit(), args))
 
 		// query whitelisted balance
 		var respWhitelisted types.QueryWhitelistedBalanceResponse
@@ -276,6 +270,54 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
 	requireT.Len(balancesResp.Balances, 1)
+}
+
+func TestUpgradeV1(t *testing.T) {
+	requireT := require.New(t)
+	networkCfg, err := config.NetworkConfigByChainID(constant.ChainIDDev)
+	requireT.NoError(err)
+	app.ChosenNetwork = networkCfg
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features: []types.Feature{
+			types.Feature_freezing,
+			types.Feature_ibc,
+		},
+	}
+
+	ctx := testNetwork.Validators[0].ClientCtx
+	initialAmount := sdk.NewInt(777)
+	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+
+	// --ibc-enabled is missing
+	args := append([]string{
+		denom,
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	requireT.Error(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
+
+	// upgrade the token with --ibc-enabled=true
+	args = append([]string{
+		denom,
+		fmt.Sprintf("--%s=true", cli.IBCEnabledFlag),
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	err = coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+
+	// upgrade the token with --ibc-enabled=false
+	args = append([]string{
+		denom,
+		fmt.Sprintf("--%s=false", cli.IBCEnabledFlag),
+		"--output", "json",
+	}, txValidator1Args(testNetwork)...)
+	err = coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 }
 
 func issue(requireT *require.Assertions, ctx client.Context, token types.Token, initialAmount sdk.Int, testNetwork *network.Network) string {

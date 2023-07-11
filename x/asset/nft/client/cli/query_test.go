@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/testutil/network"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
@@ -84,14 +85,12 @@ func TestCmdTxMint(t *testing.T) {
 
 	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args))
 
 	classID := types.BuildClassID(symbol, validator.Address)
 	args = []string{classID, "nft-1", "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
 }
 
 func TestCmdTxBurn(t *testing.T) {
@@ -104,19 +103,16 @@ func TestCmdTxBurn(t *testing.T) {
 
 	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args))
 
 	classID := types.BuildClassID(symbol, validator.Address)
 	args = []string{classID, "nft-1", "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
 
 	args = []string{classID, "nft-1"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args))
 
 	args = []string{classID, "nft-1", "--output", "json"}
 	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBurnt(), args)
@@ -160,8 +156,7 @@ func mint(
 ) {
 	args := []string{classID, nftID, url, urlHash}
 	args = append(args, txValidator1Args(testNetwork)...)
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
 }
 
 func issueClass(
@@ -182,8 +177,7 @@ func issueClass(
 	if royaltyRate != "" {
 		args = append(args, fmt.Sprintf("--%s", cli.RoyaltyRateFlag), royaltyRate)
 	}
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
-	requireT.NoError(err)
+	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args))
 
 	return types.BuildClassID(symbol, validator.Address)
 }

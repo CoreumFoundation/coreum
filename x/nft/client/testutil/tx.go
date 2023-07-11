@@ -133,19 +133,12 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 	for _, tc := range testCases {
 		tc := tc
 		s.Run(tc.name, func() {
-			clientCtx := val.ClientCtx
 			args = append(args, tc.args...)
-			out, err := ExecSend(
-				val,
-				args,
-			)
+			err := ExecSend(val, args)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
-				var txResp sdk.TxResponse
 				s.Require().NoError(err)
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &txResp), out.String())
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
 			}
 		})
 	}
