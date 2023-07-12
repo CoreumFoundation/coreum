@@ -6,15 +6,9 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
-// NFTKeeper represents nft keeper.
-type NFTKeeper interface {
-	IterateAllClassDefinitions(ctx sdk.Context, cb func(types.ClassDefinition) (bool, error)) error
-	SetClassDefinition(ctx sdk.Context, definition types.ClassDefinition) error
-}
-
 // MigrateClassFeatures migrates asset nft class features state from v1 to v2.
 // It removes features which are outside the allowed scope.
-func MigrateClassFeatures(ctx sdk.Context, keeper NFTKeeper) error {
+func MigrateClassFeatures(ctx sdk.Context, keeper AssetNFTKeeper) error {
 	return keeper.IterateAllClassDefinitions(ctx, func(classDef types.ClassDefinition) (bool, error) {
 		present := map[types.ClassFeature]struct{}{}
 		newFeatures := make([]types.ClassFeature, 0, len(classDef.Features))
