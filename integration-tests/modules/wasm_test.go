@@ -127,137 +127,6 @@ const (
 	ftMethodWhitelistedBalances ftMethod = "whitelisted_balances"
 )
 
-//nolint:tagliatelle
-type issueNFTRequest struct {
-	Name        string                       `json:"name"`
-	Symbol      string                       `json:"symbol"`
-	Description string                       `json:"description"`
-	URI         string                       `json:"uri"`
-	URIHash     string                       `json:"uri_hash"`
-	Data        string                       `json:"data"`
-	Features    []assetnfttypes.ClassFeature `json:"features"`
-	RoyaltyRate string                       `json:"royalty_rate"`
-}
-
-//nolint:tagliatelle
-type nftMintRequest struct {
-	ID      string `json:"id"`
-	URI     string `json:"uri"`
-	URIHash string `json:"uri_hash"`
-	Data    string `json:"data"`
-}
-
-type nftIDRequest struct {
-	ID string `json:"id"`
-}
-
-type nftIssuerRequest struct {
-	Issuer string `json:"issuer"`
-}
-
-type nftIDWithAccountRequest struct {
-	ID      string `json:"id"`
-	Account string `json:"account"`
-}
-
-type nftIDWithReceiverRequest struct {
-	ID       string `json:"id"`
-	Receiver string `json:"receiver"`
-}
-
-type nftOwnerRequest struct {
-	Owner string `json:"owner"`
-}
-
-type nftMethod string
-
-const (
-	// tx.
-	nftMethodMint                nftMethod = "mint"
-	nftMethodBurn                nftMethod = "burn"
-	nftMethodFreeze              nftMethod = "freeze"
-	nftMethodUnfreeze            nftMethod = "unfreeze"
-	nftMethodAddToWhitelist      nftMethod = "add_to_whitelist"
-	nftMethodRemoveFromWhiteList nftMethod = "remove_from_whitelist"
-	nftMethodSend                nftMethod = "send"
-	// query.
-	nftMethodParams                    nftMethod = "params"
-	nftMethodClass                     nftMethod = "class"
-	nftMethodClasses                   nftMethod = "classes"
-	nftMethodFrozen                    nftMethod = "frozen"
-	nftMethodWhitelisted               nftMethod = "whitelisted"
-	nftMethodWhitelistedAccountsForNft nftMethod = "whitelisted_accounts_for_nft"
-	nftMethodBalance                   nftMethod = "balance"
-	nftMethodOwner                     nftMethod = "owner"
-	nftMethodSupply                    nftMethod = "supply"
-	nftMethodNFT                       nftMethod = "nft"
-	nftMethodNFTs                      nftMethod = "nfts"
-	nftMethodClassNFT                  nftMethod = "class_nft"
-	nftMethodClassesNFT                nftMethod = "classes_nft"
-)
-
-//nolint:tagliatelle
-type assetnftClass struct {
-	ID          string                       `json:"id"`
-	Issuer      string                       `json:"issuer"`
-	Name        string                       `json:"name"`
-	Symbol      string                       `json:"symbol"`
-	Description string                       `json:"description"`
-	URI         string                       `json:"uri"`
-	URIHash     string                       `json:"uri_hash"`
-	Data        string                       `json:"data"`
-	Features    []assetnfttypes.ClassFeature `json:"features"`
-	RoyaltyRate sdk.Dec                      `json:"royalty_rate"`
-}
-
-type assetnftClassResponse struct {
-	Class assetnftClass `json:"class"`
-}
-
-//nolint:tagliatelle
-type nftItem struct {
-	ClassID string `json:"class_id"`
-	ID      string `json:"id"`
-	URI     string `json:"uri"`
-	URIHash string `json:"uri_hash"`
-	Data    string `json:"data"`
-}
-
-type nftRes struct {
-	NFT nftItem `json:"nft"`
-}
-
-//nolint:tagliatelle
-type pageResponse struct {
-	NextKey []byte `json:"next_key"`
-	Total   uint64 `json:"total"`
-}
-
-type nftsRes struct {
-	NFTs       []nftItem    `json:"nfts"`
-	Pagination pageResponse `json:"pagination"`
-}
-
-//nolint:tagliatelle
-type nftClass struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Symbol      string `json:"symbol"`
-	Description string `json:"description"`
-	URI         string `json:"uri"`
-	URIHash     string `json:"uri_hash"`
-	Data        string `json:"data"`
-}
-
-type nftClassResponse struct {
-	Class nftClass `json:"class"`
-}
-
-type nftClassesResponse struct {
-	Classes    []nftClass   `json:"classes"`
-	Pagination pageResponse `json:"pagination"`
-}
-
 // TestWASMBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to disperse the native coins.
 //
@@ -1261,7 +1130,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	}
 	encodedData := base64.StdEncoding.EncodeToString(data)
 
-	issueClassReq := issueNFTRequest{
+	issueClassReq := moduleswasm.IssueNFTRequest{
 		Name:        "name",
 		Symbol:      "symbol",
 		Description: "description",
@@ -1323,14 +1192,14 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Mint **********
 
-	mintNFTReq1 := nftMintRequest{
+	mintNFTReq1 := moduleswasm.NftMintRequest{
 		ID:      "id-1",
 		URI:     "https://my-nft-meta.invalid/1",
 		URIHash: "hash",
 		Data:    encodedData,
 	}
-	mintPayload, err := json.Marshal(map[nftMethod]nftMintRequest{
-		nftMethodMint: mintNFTReq1,
+	mintPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMint: mintNFTReq1,
 	})
 	requireT.NoError(err)
 
@@ -1356,8 +1225,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Freeze **********
 
-	freezePayload, err := json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodFreeze: {
+	freezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodFreeze: {
 			ID: mintNFTReq1.ID,
 		},
 	})
@@ -1375,8 +1244,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Unfreeze **********
 
-	unfreezePayload, err := json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodUnfreeze: {
+	unfreezePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodUnfreeze: {
 			ID: mintNFTReq1.ID,
 		},
 	})
@@ -1394,8 +1263,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** AddToWhitelist **********
 
-	addToWhitelistPayload, err := json.Marshal(map[nftMethod]nftIDWithAccountRequest{
-		nftMethodAddToWhitelist: {
+	addToWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
+		moduleswasm.NftMethodAddToWhitelist: {
 			ID:      mintNFTReq1.ID,
 			Account: recipient.String(),
 		},
@@ -1415,8 +1284,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** RemoveFromWhitelist **********
 
-	removeFromWhitelistPayload, err := json.Marshal(map[nftMethod]nftIDWithAccountRequest{
-		nftMethodRemoveFromWhiteList: {
+	removeFromWhitelistPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
+		moduleswasm.NftMethodRemoveFromWhiteList: {
 			ID:      mintNFTReq1.ID,
 			Account: recipient.String(),
 		},
@@ -1436,8 +1305,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Burn **********
 
-	burnPayload, err := json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodBurn: {
+	burnPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodBurn: {
 			ID: mintNFTReq1.ID,
 		},
 	})
@@ -1458,16 +1327,16 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	// mint
 	mintNFTReq2 := mintNFTReq1
 	mintNFTReq2.ID = "id-2"
-	mint2Payload, err := json.Marshal(map[nftMethod]nftMintRequest{
-		nftMethodMint: mintNFTReq2,
+	mint2Payload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftMintRequest{
+		moduleswasm.NftMethodMint: mintNFTReq2,
 	})
 	requireT.NoError(err)
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, mint2Payload, sdk.Coin{})
 	requireT.NoError(err)
 
 	// addToWhitelistPayload
-	addToWhitelistPayload, err = json.Marshal(map[nftMethod]nftIDWithAccountRequest{
-		nftMethodAddToWhitelist: {
+	addToWhitelistPayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
+		moduleswasm.NftMethodAddToWhitelist: {
 			ID:      mintNFTReq2.ID,
 			Account: recipient.String(),
 		},
@@ -1478,8 +1347,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(err)
 
 	// send
-	sendPayload, err := json.Marshal(map[nftMethod]nftIDWithReceiverRequest{
-		nftMethodSend: {
+	sendPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithReceiverRequest{
+		moduleswasm.NftMethodSend: {
 			ID:       mintNFTReq2.ID,
 			Receiver: recipient.String(),
 		},
@@ -1492,8 +1361,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Params **********
 
-	paramsPayLoad, err := json.Marshal(map[nftMethod]struct{}{
-		nftMethodParams: {},
+	paramsPayLoad, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodParams: {},
 	})
 	requireT.NoError(err)
 	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, paramsPayLoad)
@@ -1506,16 +1375,16 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Class **********
 
-	classPayload, err := json.Marshal(map[nftMethod]struct{}{
-		nftMethodClass: {},
+	classPayload, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodClass: {},
 	})
 	requireT.NoError(err)
 	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, classPayload)
 	requireT.NoError(err)
-	var classQueryRes assetnftClassResponse
+	var classQueryRes moduleswasm.AssetnftClassResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classQueryRes))
 	requireT.Equal(
-		assetnftClass{
+		moduleswasm.AssetnftClass{
 			ID:          expectedClass.Id,
 			Issuer:      expectedClass.Issuer,
 			Name:        expectedClass.Name,
@@ -1531,8 +1400,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Classes **********
 
-	classesPayload, err := json.Marshal(map[nftMethod]nftIssuerRequest{
-		nftMethodClasses: {
+	classesPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIssuerRequest{
+		moduleswasm.NftMethodClasses: {
 			Issuer: contractAddr,
 		},
 	})
@@ -1542,7 +1411,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	var classesQueryRes assetnfttypes.QueryClassesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &classesQueryRes))
 	requireT.Equal(
-		assetnftClass{
+		moduleswasm.AssetnftClass{
 			ID:          expectedClass.Id,
 			Issuer:      expectedClass.Issuer,
 			Name:        expectedClass.Name,
@@ -1553,7 +1422,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 			Data:        encodedData,
 			Features:    expectedClass.Features,
 			RoyaltyRate: expectedClass.RoyaltyRate,
-		}, assetnftClass{
+		}, moduleswasm.AssetnftClass{
 			ID:          classesQueryRes.Classes[0].Id,
 			Issuer:      classesQueryRes.Classes[0].Issuer,
 			Name:        classesQueryRes.Classes[0].Name,
@@ -1569,8 +1438,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Frozen **********
 
-	freezePayload, err = json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodFreeze: {
+	freezePayload, err = json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodFreeze: {
 			ID: mintNFTReq2.ID,
 		},
 	})
@@ -1579,8 +1448,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	_, err = chain.Wasm.ExecuteWASMContract(ctx, txf, admin, contractAddr, freezePayload, sdk.Coin{})
 	requireT.NoError(err)
 
-	frozenPayload, err := json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodFrozen: {
+	frozenPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodFrozen: {
 			ID: mintNFTReq2.ID,
 		},
 	})
@@ -1593,8 +1462,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Whitelisted **********
 
-	whitelistedPayload, err := json.Marshal(map[nftMethod]nftIDWithAccountRequest{
-		nftMethodWhitelisted: {
+	whitelistedPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDWithAccountRequest{
+		moduleswasm.NftMethodWhitelisted: {
 			ID:      mintNFTReq2.ID,
 			Account: recipient.String(),
 		},
@@ -1608,8 +1477,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** WhitelistedAccountsforNFT **********
 
-	whitelistedAccountsForNFTPayload, err := json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodWhitelistedAccountsForNft: {
+	whitelistedAccountsForNFTPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodWhitelistedAccountsForNft: {
 			ID: mintNFTReq2.ID,
 		},
 	})
@@ -1622,8 +1491,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Balance **********
 
-	balancePayload, err := json.Marshal(map[nftMethod]nftOwnerRequest{
-		nftMethodBalance: {
+	balancePayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftOwnerRequest{
+		moduleswasm.NftMethodBalance: {
 			Owner: recipient.String(),
 		},
 	})
@@ -1636,8 +1505,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Owner **********
 
-	ownerPayload, err := json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodOwner: {
+	ownerPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodOwner: {
 			ID: mintNFTReq2.ID,
 		},
 	})
@@ -1650,8 +1519,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Supply **********
 
-	supplyPayload, err := json.Marshal(map[nftMethod]struct{}{
-		nftMethodSupply: {},
+	supplyPayload, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodSupply: {},
 	})
 	requireT.NoError(err)
 	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, supplyPayload)
@@ -1662,19 +1531,19 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** NFT **********
 
-	nftPayload, err := json.Marshal(map[nftMethod]nftIDRequest{
-		nftMethodNFT: {
+	nftPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftIDRequest{
+		moduleswasm.NftMethodNFT: {
 			ID: mintNFTReq2.ID,
 		},
 	})
 	requireT.NoError(err)
 	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, nftPayload)
 	requireT.NoError(err)
-	var nftQueryRes nftRes
+	var nftQueryRes moduleswasm.NftRes
 	requireT.NoError(json.Unmarshal(queryOut, &nftQueryRes))
 
 	requireT.Equal(
-		nftItem{
+		moduleswasm.NftItem{
 			ClassID: classID,
 			ID:      mintNFTReq2.ID,
 			URI:     mintNFTReq2.URI,
@@ -1685,19 +1554,19 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** NFTs **********
 
-	nftsPayload, err := json.Marshal(map[nftMethod]nftOwnerRequest{
-		nftMethodNFTs: {
+	nftsPayload, err := json.Marshal(map[moduleswasm.NftMethod]moduleswasm.NftOwnerRequest{
+		moduleswasm.NftMethodNFTs: {
 			Owner: recipient.String(),
 		},
 	})
 	requireT.NoError(err)
 	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, nftsPayload)
 	requireT.NoError(err)
-	var nftsQueryRes nftsRes
+	var nftsQueryRes moduleswasm.NftsRes
 	requireT.NoError(json.Unmarshal(queryOut, &nftsQueryRes))
 
 	requireT.Equal(
-		nftItem{
+		moduleswasm.NftItem{
 			ClassID: classID,
 			ID:      mintNFTReq2.ID,
 			URI:     mintNFTReq2.URI,
@@ -1708,17 +1577,17 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Class **********
 
-	nftClassPayload, err := json.Marshal(map[nftMethod]struct{}{
-		nftMethodClassNFT: {},
+	nftClassPayload, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodClassNFT: {},
 	})
 	requireT.NoError(err)
 	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, nftClassPayload)
 	requireT.NoError(err)
-	var nftClassQueryRes nftClassResponse
+	var nftClassQueryRes moduleswasm.NftClassResponse
 	requireT.NoError(json.Unmarshal(queryOut, &nftClassQueryRes))
 
 	requireT.Equal(
-		nftClass{
+		moduleswasm.NftClass{
 			ID:          expectedClass.Id,
 			Name:        expectedClass.Name,
 			Symbol:      expectedClass.Symbol,
@@ -1731,16 +1600,16 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	// ********** Classes **********
 
-	nftClassesPayload, err := json.Marshal(map[nftMethod]struct{}{
-		nftMethodClassesNFT: {},
+	nftClassesPayload, err := json.Marshal(map[moduleswasm.NftMethod]struct{}{
+		moduleswasm.NftMethodClassesNFT: {},
 	})
 	requireT.NoError(err)
 	queryOut, err = chain.Wasm.QueryWASMContract(ctx, contractAddr, nftClassesPayload)
 	requireT.NoError(err)
-	var nftClassesQueryRes nftClassesResponse
+	var nftClassesQueryRes moduleswasm.NftClassesResponse
 	requireT.NoError(json.Unmarshal(queryOut, &nftClassesQueryRes))
 
-	requireT.Contains(nftClassesQueryRes.Classes, nftClass{
+	requireT.Contains(nftClassesQueryRes.Classes, moduleswasm.NftClass{
 		ID:          expectedClass.Id,
 		Name:        expectedClass.Name,
 		Symbol:      expectedClass.Symbol,
