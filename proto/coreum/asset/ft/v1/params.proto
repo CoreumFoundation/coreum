@@ -6,7 +6,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types";
 
 // Params store gov manageable parameters.
 message Params {

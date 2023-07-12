@@ -21,11 +21,11 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/testutil/event"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/x/nft"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/testutil/event"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 // TestAssetNFTQueryParams queries parameters of asset/nft module.

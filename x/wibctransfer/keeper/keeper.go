@@ -10,7 +10,7 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 
-	"github.com/CoreumFoundation/coreum/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
 )
 
 // TransferKeeperWrapper is a wrapper of the IBC transfer keeper.

@@ -14,8 +14,8 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/x/feemodel/keeper"
-	"github.com/CoreumFoundation/coreum/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v2/x/feemodel/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
 func newParamSubspaceMock() *paramSubspaceMock {

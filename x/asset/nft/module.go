@@ -17,9 +17,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
 )
 
 var (

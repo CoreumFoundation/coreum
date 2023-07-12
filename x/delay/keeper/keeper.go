@@ -10,7 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v2/x/delay/types"
 )
 
 // Keeper is delay module Keeper.

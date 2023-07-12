@@ -13,8 +13,8 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/CoreumFoundation/coreum/x/nft"
-	"github.com/CoreumFoundation/coreum/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
 )
 
 const (

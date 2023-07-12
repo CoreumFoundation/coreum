@@ -6,11 +6,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/CoreumFoundation/coreum/app/upgrade"
-	"github.com/CoreumFoundation/coreum/pkg/config"
-	assetnftkeeper "github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	assetnftkeeper "github.com/CoreumFoundation/coreum/v2/x/asset/nft/keeper"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 // Name defines the upgrade name.

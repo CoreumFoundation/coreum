@@ -12,11 +12,11 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	coreumclitestutil "github.com/CoreumFoundation/coreum/testutil/cli"
-	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v2/testutil/cli"
+	"github.com/CoreumFoundation/coreum/v2/testutil/network"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
 )
 
 func TestQueryClassAndClasses(t *testing.T) {

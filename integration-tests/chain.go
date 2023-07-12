@@ -12,8 +12,8 @@ import (
 	"github.com/google/uuid"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 )
 
 // ChainSettings represent common settings for the chains.

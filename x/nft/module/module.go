@@ -17,10 +17,10 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/nft"
-	"github.com/CoreumFoundation/coreum/x/nft/client/cli"
-	"github.com/CoreumFoundation/coreum/x/nft/keeper"
-	"github.com/CoreumFoundation/coreum/x/nft/simulation"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/x/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/nft/simulation"
 )
 
 var (

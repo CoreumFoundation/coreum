@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev2 "github.com/CoreumFoundation/coreum/app/upgrade/v2"
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	appupgradev2 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 )
 
 type upgradeTest interface {

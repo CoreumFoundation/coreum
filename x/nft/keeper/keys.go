@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 
-	"github.com/CoreumFoundation/coreum/pkg/store"
-	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/pkg/store"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 var (

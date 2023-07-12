@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	delaytypes "github.com/CoreumFoundation/coreum/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	delaytypes "github.com/CoreumFoundation/coreum/v2/x/delay/types"
 )
 
 var (

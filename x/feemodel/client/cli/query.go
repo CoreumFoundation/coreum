@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
 // GetQueryCmd returns the parent command for all x/feemodel CLI query commands. The

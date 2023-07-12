@@ -12,9 +12,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/x/deterministicgas"
+	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
 )
 
 // To access private variable from github.com/gogo/protobuf we link it to local variable.

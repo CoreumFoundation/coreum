@@ -1,9 +1,9 @@
-module github.com/CoreumFoundation/coreum/integration-tests
+module github.com/CoreumFoundation/coreum/v2/integration-tests
 
 go 1.18
 
 replace (
-	github.com/CoreumFoundation/coreum => ../
+	github.com/CoreumFoundation/coreum/v2 => ../
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1 // workaround for the btcd import conflicts
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
@@ -11,8 +11,8 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-00010101000000-000000000000
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
+	github.com/CoreumFoundation/coreum/v2 v2.0.0-00010101000000-000000000000
 	github.com/CosmWasm/wasmd v0.30.0
 	github.com/cosmos/cosmos-sdk v0.45.16
 	github.com/cosmos/ibc-go/v4 v4.3.1
