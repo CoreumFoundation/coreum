@@ -97,17 +97,23 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper     keeper.Keeper
+	nftKeeper  types.NFTKeeper
+	wasmKeeper types.WasmKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
+	nftKeeper types.NFTKeeper,
+	wasmKeeper types.WasmKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		nftKeeper:      nftKeeper,
+		wasmKeeper:     wasmKeeper,
 	}
 }
 
@@ -135,7 +141,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 
-	m := keeper.NewMigrator(am.keeper)
+	m := keeper.NewMigrator(am.keeper, am.nftKeeper, am.wasmKeeper)
 	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
 	if err != nil {
 		panic(errors.Errorf("can't register module %s migrations, err: %s", types.ModuleName, err))
