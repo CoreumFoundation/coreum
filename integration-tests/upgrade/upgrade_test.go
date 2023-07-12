@@ -34,6 +34,7 @@ func upgradeV2(t *testing.T) {
 	tests := []upgradeTest{
 		&nftStoreTest{},
 		&nftFeaturesTest{},
+		&nftWasmDataTest{},
 		&ftV1UpgradeTest{},
 		&ftFeaturesTest{},
 	}
