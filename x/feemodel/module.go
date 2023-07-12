@@ -40,6 +40,7 @@ type Keeper interface {
 	SetLongEMAGas(ctx sdk.Context, emaGas int64)
 	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
 	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin)
+	CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error)
 }
 
 // AppModuleBasic defines the basic application module used by the fee module.

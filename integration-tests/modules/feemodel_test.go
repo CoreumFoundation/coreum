@@ -38,6 +38,30 @@ func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 	assert.Equal(t, chain.ChainSettings.Denom, res.MinGasPrice.Denom)
 }
 
+// TestFeeModelQueryingGasPriceRecommendation check that recommendation end point is called correctly.
+func TestFeeModelQueryingGasPriceRecommendation(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+
+	feemodelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
+	res, err := feemodelClient.RecommendedGasPrice(ctx, &feemodeltypes.QueryRecommendedGasPriceRequest{AfterBlocks: 50})
+	requireT.NoError(err)
+	requireT.NotNil(res)
+
+	model := feemodeltypes.NewModel(getFeemodelParams(ctx, t, chain.ClientContext))
+	requireT.GreaterOrEqual(res.GetHigh().Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
+	requireT.LessOrEqual(res.GetHigh().Amount.MustFloat64(), model.CalculateMaxGasPrice().MustFloat64())
+	requireT.GreaterOrEqual(res.GetLow().Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
+	requireT.LessOrEqual(res.GetLow().Amount.MustFloat64(), model.CalculateMaxGasPrice().MustFloat64())
+	requireT.GreaterOrEqual(res.GetMed().Amount.MustFloat64(), model.CalculateGasPriceWithMaxDiscount().MustFloat64())
+	requireT.LessOrEqual(res.GetMed().Amount.MustFloat64(), model.CalculateMaxGasPrice().MustFloat64())
+
+	requireT.LessOrEqual(res.GetLow().Amount.MustFloat64(), res.GetMed().Amount.MustFloat64())
+	requireT.LessOrEqual(res.GetMed().Amount.MustFloat64(), res.GetHigh().Amount.MustFloat64())
+}
+
 // TestFeeModelProposalParamChange checks that feemodel param change proposal works correctly.
 func TestFeeModelProposalParamChange(t *testing.T) {
 	t.Parallel()
