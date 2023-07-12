@@ -336,7 +336,6 @@ type nftWasmDataTest struct {
 	nftID   string
 }
 
-//nolint:funlen // this is test case and breaking it up will reduce readability
 func (n *nftWasmDataTest) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
