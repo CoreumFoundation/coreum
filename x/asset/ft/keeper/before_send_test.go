@@ -15,7 +15,6 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
-// TODO(dzmitryhil) remove all TestMain from the code.
 func TestMain(m *testing.M) {
 	n, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
