@@ -1,6 +1,8 @@
 package store
 
 import (
+	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/pkg/errors"
 )
 
@@ -22,10 +24,10 @@ func JoinKeysWithLength(keys ...[]byte) ([]byte, error) {
 	for index, key := range keys {
 		keyLen := len(key)
 		if keyLen == 0 {
-			return nil, errors.Errorf("received empty key on index %d", index)
+			return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "received empty key on index %d", index)
 		}
 		if keyLen > maxKeyLen {
-			return nil, errors.Errorf("key length should be max %d bytes, got %d", maxKeyLen, keyLen)
+			return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "key length should be max %d bytes, got %d", maxKeyLen, keyLen)
 		}
 
 		compositeKey = append(compositeKey, byte(keyLen))

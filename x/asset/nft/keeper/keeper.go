@@ -243,7 +243,7 @@ func (k Keeper) GetClassDefinitions(ctx sdk.Context, issuer *sdk.AccAddress, pag
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate, err: %s", err)
 	}
 
 	definitions := make([]types.ClassDefinition, 0, len(definitionsPointers))
@@ -251,7 +251,7 @@ func (k Keeper) GetClassDefinitions(ctx sdk.Context, issuer *sdk.AccAddress, pag
 		definitions = append(definitions, *definition)
 	}
 
-	return definitions, pageRes, err
+	return definitions, pageRes, nil
 }
 
 // SetClassDefinition stores the ClassDefinition.
@@ -442,7 +442,7 @@ func (k Keeper) GetBurntNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.Bur
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return errors.Errorf("value stored in burning store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(types.ErrInvalidInput, "value stored in burning store is not %x, value %x", asset.StoreTrue, value)
 			}
 			classID, nftID, err := types.ParseBurningKey(key)
 			if err != nil {
@@ -487,11 +487,16 @@ func (k Keeper) Freeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID st
 	}
 
 	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
-	return ctx.EventManager().EmitTypedEvent(&types.EventFrozen{
+	err = ctx.EventManager().EmitTypedEvent(&types.EventFrozen{
 		ClassId: classID,
 		Id:      nftID,
 		Owner:   owner.String(),
 	})
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventFrozen event: %s", err)
+	}
+
+	return nil
 }
 
 // Unfreeze unfreezes a non-fungible token.
@@ -514,11 +519,16 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID 
 	}
 
 	owner := k.nftKeeper.GetOwner(ctx, classID, nftID)
-	return ctx.EventManager().EmitTypedEvent(&types.EventUnfrozen{
+	err = ctx.EventManager().EmitTypedEvent(&types.EventUnfrozen{
 		ClassId: classID,
 		Id:      nftID,
 		Owner:   owner.String(),
 	})
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventUnfrozen event: %s", err)
+	}
+
+	return nil
 }
 
 // SetFrozen marks the nft frozen, but does not make any checks
@@ -568,7 +578,7 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.Fr
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return errors.Errorf("value stored in freezing store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "value stored in freezing store is not %x, value %x", asset.StoreTrue, value)
 			}
 			classID, nftID, err := types.ParseFreezingKey(key)
 			if err != nil {
@@ -631,7 +641,7 @@ func (k Keeper) GetWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID str
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return errors.Errorf("value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
 			}
 
 			account := sdk.AccAddress(key[1:]) // the first byte contains the length prefix
@@ -655,7 +665,7 @@ func (k Keeper) GetWhitelistedAccounts(ctx sdk.Context, q *query.PageRequest) ([
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTWhitelistingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return errors.Errorf("value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
 			}
 			classID, nftID, account, err := types.ParseWhitelistingKey(key)
 			if err != nil {
@@ -713,11 +723,16 @@ func (k Keeper) AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, a
 		return err
 	}
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventAddedToWhitelist{
+	err = ctx.EventManager().EmitTypedEvent(&types.EventAddedToWhitelist{
 		ClassId: classID,
 		Id:      nftID,
 		Account: account.String(),
 	})
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventAddedToWhitelist event: %s", err)
+	}
+
+	return nil
 }
 
 // RemoveFromWhitelist removes an account from the whitelisted list of accounts for the NFT.
@@ -743,11 +758,16 @@ func (k Keeper) RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, send
 		return err
 	}
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventRemovedFromWhitelist{
+	err = ctx.EventManager().EmitTypedEvent(&types.EventRemovedFromWhitelist{
 		ClassId: classID,
 		Id:      nftID,
 		Account: account.String(),
 	})
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventRemovedFromWhitelist event: %s", err)
+	}
+
+	return nil
 }
 
 // SetWhitelisting adds an account to the whitelisting of the NFT, if whitelisting is true
