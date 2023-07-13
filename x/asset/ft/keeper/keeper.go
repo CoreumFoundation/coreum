@@ -223,7 +223,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
 	}); err != nil {
-		return "", sdkerrors.Wrap(err, "can't emit EventIssued event")
+		return "", sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventIssued event: %s", err)
 	}
 
 	k.logger(ctx).Debug("issued new fungible token with denom %d", denom)
@@ -272,7 +272,7 @@ func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom, symbol, description str
 	}
 
 	if err := denomMetadata.Validate(); err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrInvalidInput, "failed to validate denom metadata: %s", err)
 	}
 
 	k.bankKeeper.SetDenomMetaData(ctx, denomMetadata)
@@ -332,12 +332,17 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 	newFrozenBalance := frozenBalance.Add(coin)
 	frozenStore.SetBalance(newFrozenBalance)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
+	err = ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: frozenBalance.Amount,
 		CurrentAmount:  newFrozenBalance.Amount,
 	})
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventFrozenAmountChanged event: %s", err)
+	}
+
+	return nil
 }
 
 // Unfreeze unfreezes specified tokens from the specified account.
@@ -368,12 +373,17 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 	newFrozenBalance := frozenBalance.Sub(coin)
 	frozenStore.SetBalance(newFrozenBalance)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
+	err = ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: frozenBalance.Amount,
 		CurrentAmount:  newFrozenBalance.Amount,
 	})
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventFrozenAmountChanged event: %s", err)
+	}
+
+	return nil
 }
 
 // GloballyFreeze enables global freeze on a fungible token. This function is idempotent.
@@ -468,12 +478,17 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 	previousWhitelistedBalance := whitelistedStore.Balance(coin.Denom)
 	whitelistedStore.SetBalance(coin)
 
-	return ctx.EventManager().EmitTypedEvent(&types.EventWhitelistedAmountChanged{
+	err = ctx.EventManager().EmitTypedEvent(&types.EventWhitelistedAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: previousWhitelistedBalance.Amount,
 		CurrentAmount:  coin.Amount,
 	})
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventWhitelistedAmountChanged event: %s", err)
+	}
+
+	return nil
 }
 
 // GetAccountsWhitelistedBalances returns the whitelisted balance of all the account.
@@ -681,7 +696,7 @@ func (k Keeper) getDefinitionsFromStore(store prefix.Store, pagination *query.Pa
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
 	}
 
 	definitions := make([]types.Definition, 0, len(definitionsPointers))
@@ -689,7 +704,7 @@ func (k Keeper) getDefinitionsFromStore(store prefix.Store, pagination *query.Pa
 		definitions = append(definitions, *definition)
 	}
 
-	return definitions, pageRes, err
+	return definitions, pageRes, nil
 }
 
 func (k Keeper) getTokensByDefinitions(ctx sdk.Context, defs []types.Definition) ([]types.Token, error) {
