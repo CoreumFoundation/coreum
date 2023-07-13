@@ -47,7 +47,7 @@ func (s balanceStore) Balances(pagination *query.PageRequest) (sdk.Coins, *query
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
 	}
 
 	coins := make(sdk.Coins, 0, len(coinPointers))
@@ -55,7 +55,7 @@ func (s balanceStore) Balances(pagination *query.PageRequest) (sdk.Coins, *query
 		coins = append(coins, *c)
 	}
 
-	return coins, pageRes, err
+	return coins, pageRes, nil
 }
 
 // IterateAllBalances iterates over all balances of all accounts and applies the provided callback.
