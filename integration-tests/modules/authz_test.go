@@ -8,7 +8,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
@@ -155,6 +154,8 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	amountToSendFromMultisigAccount := int64(1000)
 	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
 
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
 	// grant bank send authorization to multisig account
 	grantMsg, err := authztypes.NewMsgGrant(
 		granter,
@@ -190,44 +191,25 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 		},
 	})
 
-	// prepare the tx factory to sign with the account seq and number of the multisig account
-	clientCtx := chain.ClientContext
-	multisigAccInfo, err := client.GetAccountInfo(ctx, clientCtx, multisigAddress)
-	requireT.NoError(err)
-	txF := chain.TxFactory().
-		WithGas(chain.GasLimitByMsgs(&execMsg)).
-		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
-		WithSequence(multisigAccInfo.GetSequence()).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-
-	// sign and submit with just one key to check the tx rejection
-	txBuilder, err := txF.BuildUnsignedTx(&execMsg)
-	requireT.NoError(err)
-
-	err = client.Sign(txF, signer1KeyName, txBuilder, false)
-	requireT.NoError(err)
-	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
-	requireT.NoError(err)
-	_, err = client.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	_, err = chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKey,
+		&execMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		signer1KeyName)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
-	txBuilder, err = txF.BuildUnsignedTx(&execMsg)
+	txRes, err := chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKey,
+		&execMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
-	err = client.Sign(txF, signer1KeyName, txBuilder, false)
-	requireT.NoError(err)
-	err = client.Sign(txF, signer2KeyName, txBuilder, false)
-	requireT.NoError(err)
-	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
-	requireT.NoError(err)
-	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.NoError(err)
-	t.Logf("Fully signed tx executed, txHash:%s", result.TxHash)
+	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)
 
-	bankClient := banktypes.NewQueryClient(clientCtx)
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipient.String(),
 	})
@@ -254,6 +236,8 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	amountToSendFromMultisigAccount := int64(1000)
 	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
 
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
 	// grant bank send authorization to multisig account
 	grantMsg, err := authztypes.NewMsgGrant(
 		multisigAddress,
@@ -270,29 +254,14 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 		Amount: sdk.NewInt(amountToSendFromMultisigAccount),
 	})
 
-	// prepare the tx factory to sign with the account seq and number of the multisig account
-	clientCtx := chain.ClientContext
-	multisigAccInfo, err := client.GetAccountInfo(ctx, clientCtx, multisigAddress)
+	txRes, err := chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKey,
+		grantMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
-	txF := chain.TxFactory().
-		WithGas(chain.GasLimitByMsgs(grantMsg)).
-		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
-		WithSequence(multisigAccInfo.GetSequence()).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-
-	// sign and submit with the min threshold
-	txBuilder, err := txF.BuildUnsignedTx(grantMsg)
-	requireT.NoError(err)
-	err = client.Sign(txF, signer1KeyName, txBuilder, false)
-	requireT.NoError(err)
-	err = client.Sign(txF, signer2KeyName, txBuilder, false)
-	requireT.NoError(err)
-	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
-	requireT.NoError(err)
-	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.NoError(err)
-	t.Logf("Fully signed tx executed, txHash:%s", result.TxHash)
+	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)
 
 	// create bank send msg account using authz
 	msgBankSend := &banktypes.MsgSend{
@@ -316,7 +285,6 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	)
 	requireT.NoError(err)
 
-	bankClient := banktypes.NewQueryClient(clientCtx)
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipient.String(),
 	})

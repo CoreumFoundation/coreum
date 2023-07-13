@@ -103,7 +103,7 @@ func (suite *SimTestSuite) TestSimulateMsgSend() {
 	suite.Require().NoError(err)
 
 	var msg nft.MsgSend
-	suite.app.AppCodec().MustUnmarshalJSON(operationMsg.Msg, &msg)
+	suite.app.LegacyAmino().MustUnmarshalJSON(operationMsg.Msg, &msg)
 	suite.Require().True(operationMsg.OK)
 	suite.Require().Len(futureOperations, 0)
 }
