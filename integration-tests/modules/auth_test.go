@@ -5,13 +5,8 @@ package modules
 import (
 	"testing"
 
-	sdkclient "github.com/cosmos/cosmos-sdk/client"
-	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
@@ -137,6 +132,8 @@ func TestAuthMultisig(t *testing.T) {
 	signer1KeyName := keyNamesSet[0]
 	signer2KeyName := keyNamesSet[1]
 
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
 	// fund the multisig account
 	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
@@ -147,49 +144,30 @@ func TestAuthMultisig(t *testing.T) {
 	recipientAddr := recipient.String()
 	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
 
-	clientCtx := chain.ClientContext
-	// prepare the tx factory to sign with the account seq and number of the multisig account
-	multisigAccInfo, err := client.GetAccountInfo(ctx, clientCtx, multisigAddress)
-	requireT.NoError(err)
-	txF := chain.TxFactory().
-		WithGas(chain.GasLimitByMsgs(&banktypes.MsgSend{})).
-		WithAccountNumber(multisigAccInfo.GetAccountNumber()).
-		WithSequence(multisigAccInfo.GetSequence()).
-		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-
 	bankSendMsg := &banktypes.MsgSend{
 		FromAddress: multisigAddress.String(),
 		ToAddress:   recipientAddr,
 		Amount:      coinsToSendToRecipient,
 	}
-	// sign and submit with just one key to check the tx rejection
-	txBuilder, err := txF.BuildUnsignedTx(bankSendMsg)
-	requireT.NoError(err)
-
-	err = client.Sign(txF, signer1KeyName, txBuilder, false)
-	requireT.NoError(err)
-	multisigTx := createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err := clientCtx.TxConfig().TxEncoder()(multisigTx)
-	requireT.NoError(err)
-	_, err = client.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	_, err = chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKey,
+		bankSendMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
+		signer1KeyName)
+	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
-	txBuilder, err = txF.BuildUnsignedTx(bankSendMsg)
+	txRes, err := chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKey,
+		bankSendMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
+		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
-	err = client.Sign(txF, signer1KeyName, txBuilder, false)
-	requireT.NoError(err)
-	err = client.Sign(txF, signer2KeyName, txBuilder, false)
-	requireT.NoError(err)
-	multisigTx = createMulisignTx(requireT, txBuilder, multisigAccInfo.GetSequence(), multisigPublicKey)
-	encodedTx, err = clientCtx.TxConfig().TxEncoder()(multisigTx)
-	requireT.NoError(err)
-	result, err := client.BroadcastRawTx(ctx, clientCtx, encodedTx)
-	requireT.NoError(err)
-	t.Logf("Fully signed tx executed, txHash:%s", result.TxHash)
+	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)
 
-	bankClient := banktypes.NewQueryClient(clientCtx)
 	recipientBalances, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipientAddr,
 	})
@@ -229,24 +207,4 @@ func TestAuthUnexpectedSequenceNumber(t *testing.T) {
 			WithGas(chain.GasLimitByMsgs(msg)),
 		msg)
 	require.True(t, sdkerrors.ErrWrongSequence.Is(err))
-}
-
-func createMulisignTx(requireT *require.Assertions, txBuilder sdkclient.TxBuilder, accSec uint64, multisigPublicKey *sdkmultisig.LegacyAminoPubKey) authsigning.Tx {
-	signs, err := txBuilder.GetTx().GetSignaturesV2()
-	requireT.NoError(err)
-
-	multisigSig := multisigtypes.NewMultisig(len(multisigPublicKey.PubKeys))
-	for _, sig := range signs {
-		requireT.NoError(multisigtypes.AddSignatureV2(multisigSig, sig, multisigPublicKey.GetPubKeys()))
-	}
-
-	sigV2 := sdksigning.SignatureV2{
-		PubKey:   multisigPublicKey,
-		Data:     multisigSig,
-		Sequence: accSec,
-	}
-
-	requireT.NoError(txBuilder.SetSignatures(sigV2))
-
-	return txBuilder.GetTx()
 }

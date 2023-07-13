@@ -1,61 +1,101 @@
 package types
 
 import (
+	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	"github.com/samber/lo"
 )
 
-var (
-	_ sdk.Msg = &MsgIssue{}
-	_ sdk.Msg = &MsgMint{}
-	_ sdk.Msg = &MsgBurn{}
-	_ sdk.Msg = &MsgFreeze{}
-	_ sdk.Msg = &MsgUnfreeze{}
-	_ sdk.Msg = &MsgGloballyFreeze{}
-	_ sdk.Msg = &MsgGloballyUnfreeze{}
-	_ sdk.Msg = &MsgSetWhitelistedLimit{}
-	_ sdk.Msg = &MsgUpgradeTokenV1{}
+// Type of messages for amino.
+const (
+	TypeMsgIssue               = "issue"
+	TypeMsgMint                = "mint"
+	TypeMsgBurn                = "burn"
+	TypeMsgFreeze              = "freeze"
+	TypeMsgUnfreeze            = "unfreeze"
+	TypeMsgGloballyFreeze      = "globally-freeze"
+	TypeMsgGloballyUnfreeze    = "globally-unfreeze"
+	TypeMsgSetWhitelistedLimit = "set-whitelisted-limit"
+	TypeMsgUpgradeTokenV1      = "upgrade-token-v1"
 )
 
+var (
+	_ sdk.Msg            = &MsgIssue{}
+	_ legacytx.LegacyMsg = &MsgIssue{}
+	_ sdk.Msg            = &MsgMint{}
+	_ legacytx.LegacyMsg = &MsgMint{}
+	_ sdk.Msg            = &MsgBurn{}
+	_ legacytx.LegacyMsg = &MsgBurn{}
+	_ sdk.Msg            = &MsgFreeze{}
+	_ legacytx.LegacyMsg = &MsgFreeze{}
+	_ sdk.Msg            = &MsgUnfreeze{}
+	_ legacytx.LegacyMsg = &MsgUnfreeze{}
+	_ sdk.Msg            = &MsgGloballyFreeze{}
+	_ legacytx.LegacyMsg = &MsgGloballyFreeze{}
+	_ sdk.Msg            = &MsgGloballyUnfreeze{}
+	_ legacytx.LegacyMsg = &MsgGloballyUnfreeze{}
+	_ sdk.Msg            = &MsgSetWhitelistedLimit{}
+	_ legacytx.LegacyMsg = &MsgSetWhitelistedLimit{}
+	_ sdk.Msg            = &MsgUpgradeTokenV1{}
+	_ legacytx.LegacyMsg = &MsgUpgradeTokenV1{}
+)
+
+// RegisterLegacyAminoCodec registers the amino types and interfaces.
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	cdc.RegisterConcrete(&MsgIssue{}, fmt.Sprintf("%s/MsgIssue", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgMint{}, fmt.Sprintf("%s/MsgMint", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgBurn{}, fmt.Sprintf("%s/MsgBurn", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgFreeze{}, fmt.Sprintf("%s/MsgFreeze", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgUnfreeze{}, fmt.Sprintf("%s/MsgUnfreeze", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgGloballyFreeze{}, fmt.Sprintf("%s/MsgGloballyFreeze", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgGloballyUnfreeze{}, fmt.Sprintf("%s/MsgGloballyUnfreeze", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgSetWhitelistedLimit{}, fmt.Sprintf("%s/MsgUnMsgSetWhitelistedLimitfreeze", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgUpgradeTokenV1{}, fmt.Sprintf("%s/MsgUpgradeTokenV1", ModuleName), nil)
+}
+
 // ValidateBasic validates the message.
-func (msg MsgIssue) ValidateBasic() error {
+func (m MsgIssue) ValidateBasic() error {
 	const maxDescriptionLength = 200
 
-	if _, err := sdk.AccAddressFromBech32(msg.Issuer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer %s", msg.Issuer)
+	if _, err := sdk.AccAddressFromBech32(m.Issuer); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer %s", m.Issuer)
 	}
 
-	if err := ValidateSubunit(msg.Subunit); err != nil {
+	if err := ValidateSubunit(m.Subunit); err != nil {
 		return err
 	}
 
-	if err := ValidateSymbol(msg.Symbol); err != nil {
+	if err := ValidateSymbol(m.Symbol); err != nil {
 		return err
 	}
 
-	if err := ValidateBurnRate(msg.BurnRate); err != nil {
+	if err := ValidateBurnRate(m.BurnRate); err != nil {
 		return err
 	}
 
-	if err := ValidateSendCommissionRate(msg.SendCommissionRate); err != nil {
+	if err := ValidateSendCommissionRate(m.SendCommissionRate); err != nil {
 		return err
 	}
 
-	if err := ValidatePrecision(msg.Precision); err != nil {
+	if err := ValidatePrecision(m.Precision); err != nil {
 		return err
 	}
 
 	// we allow zero initial amount, in that case we won't mint it initially
-	if msg.InitialAmount.IsNil() || msg.InitialAmount.IsNegative() {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid initial amount %s, can't be negative", msg.InitialAmount.String())
+	if m.InitialAmount.IsNil() || m.InitialAmount.IsNegative() {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid initial amount %s, can't be negative", m.InitialAmount.String())
 	}
 
-	if len(msg.Description) > maxDescriptionLength {
-		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", msg.Description, maxDescriptionLength)
+	if len(m.Description) > maxDescriptionLength {
+		return sdkerrors.Wrapf(ErrInvalidInput, "invalid description %q, the length must be less than %d", m.Description, maxDescriptionLength)
 	}
 
-	duplicates := lo.FindDuplicates(msg.Features)
+	duplicates := lo.FindDuplicates(m.Features)
 	if len(duplicates) != 0 {
 		return sdkerrors.Wrapf(ErrInvalidInput, "duplicated features in the features list, duplicates: %v", duplicates)
 	}
@@ -64,112 +104,187 @@ func (msg MsgIssue) ValidateBasic() error {
 }
 
 // GetSigners returns the message signers.
-func (msg MsgIssue) GetSigners() []sdk.AccAddress {
+func (m MsgIssue) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Issuer),
+		sdk.MustAccAddressFromBech32(m.Issuer),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgIssue) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgIssue) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgIssue) Type() string {
+	return TypeMsgIssue
+}
+
 // ValidateBasic checks that message fields are valid.
-func (msg MsgMint) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgMint) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructDenom(msg.Coin.Denom); err != nil {
+	if _, _, err := DeconstructDenom(m.Coin.Denom); err != nil {
 		return err
 	}
 
-	return msg.Coin.Validate()
+	return m.Coin.Validate()
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgMint) GetSigners() []sdk.AccAddress {
+func (m MsgMint) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgMint) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgMint) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgMint) Type() string {
+	return TypeMsgMint
+}
+
 // ValidateBasic checks that message fields are valid.
-func (msg MsgBurn) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgBurn) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructDenom(msg.Coin.Denom); err != nil {
+	if _, _, err := DeconstructDenom(m.Coin.Denom); err != nil {
 		return err
 	}
 
-	return msg.Coin.Validate()
+	return m.Coin.Validate()
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgBurn) GetSigners() []sdk.AccAddress {
+func (m MsgBurn) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgBurn) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgBurn) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgBurn) Type() string {
+	return TypeMsgBurn
+}
+
 // ValidateBasic checks that message fields are valid.
-func (msg MsgFreeze) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgFreeze) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(msg.Coin.Denom)
+	_, issuer, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
 	}
 
-	if issuer.String() == msg.Account {
+	if issuer.String() == m.Account {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
-	return msg.Coin.Validate()
+	return m.Coin.Validate()
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgFreeze) GetSigners() []sdk.AccAddress {
+func (m MsgFreeze) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgFreeze) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgFreeze) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgFreeze) Type() string {
+	return TypeMsgFreeze
+}
+
 // ValidateBasic checks that message fields are valid.
-func (msg MsgUnfreeze) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgUnfreeze) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	if _, _, err := DeconstructDenom(msg.Coin.Denom); err != nil {
+	if _, _, err := DeconstructDenom(m.Coin.Denom); err != nil {
 		return err
 	}
 
-	return msg.Coin.Validate()
+	return m.Coin.Validate()
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgUnfreeze) GetSigners() []sdk.AccAddress {
+func (m MsgUnfreeze) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgUnfreeze) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgUnfreeze) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgUnfreeze) Type() string {
+	return TypeMsgUnfreeze
+}
+
 // ValidateBasic checks that message fields are valid.
-func (msg MsgGloballyFreeze) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgGloballyFreeze) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructDenom(msg.Denom); err != nil {
+	if _, _, err := DeconstructDenom(m.Denom); err != nil {
 		return err
 	}
 
@@ -177,19 +292,34 @@ func (msg MsgGloballyFreeze) ValidateBasic() error {
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgGloballyFreeze) GetSigners() []sdk.AccAddress {
+func (m MsgGloballyFreeze) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgGloballyFreeze) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgGloballyFreeze) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgGloballyFreeze) Type() string {
+	return TypeMsgGloballyFreeze
+}
+
 // ValidateBasic checks that message fields are valid.
-func (msg MsgGloballyUnfreeze) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgGloballyUnfreeze) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, _, err := DeconstructDenom(msg.Denom); err != nil {
+	if _, _, err := DeconstructDenom(m.Denom); err != nil {
 		return err
 	}
 
@@ -197,53 +327,83 @@ func (msg MsgGloballyUnfreeze) ValidateBasic() error {
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgGloballyUnfreeze) GetSigners() []sdk.AccAddress {
+func (m MsgGloballyUnfreeze) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgGloballyUnfreeze) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgGloballyUnfreeze) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgGloballyUnfreeze) Type() string {
+	return TypeMsgGloballyUnfreeze
+}
+
 // ValidateBasic checks that message fields are valid.
-func (msg MsgSetWhitelistedLimit) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgSetWhitelistedLimit) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	if _, err := sdk.AccAddressFromBech32(msg.Account); err != nil {
+	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
 	}
 
-	_, issuer, err := DeconstructDenom(msg.Coin.Denom)
+	_, issuer, err := DeconstructDenom(m.Coin.Denom)
 	if err != nil {
 		return err
 	}
 
-	if issuer.String() == msg.Account {
+	if issuer.String() == m.Account {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
-	return msg.Coin.Validate()
+	return m.Coin.Validate()
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgSetWhitelistedLimit) GetSigners() []sdk.AccAddress {
+func (m MsgSetWhitelistedLimit) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
 }
 
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgSetWhitelistedLimit) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgSetWhitelistedLimit) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgSetWhitelistedLimit) Type() string {
+	return TypeMsgSetWhitelistedLimit
+}
+
 // ValidateBasic checks that message fields are valid.
-func (msg MsgUpgradeTokenV1) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+func (m MsgUpgradeTokenV1) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
 	}
 
-	_, issuer, err := DeconstructDenom(msg.Denom)
+	_, issuer, err := DeconstructDenom(m.Denom)
 	if err != nil {
 		return err
 	}
 
-	if issuer.String() != msg.Sender {
+	if issuer.String() != m.Sender {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer can upgrade the denom")
 	}
 
@@ -251,8 +411,34 @@ func (msg MsgUpgradeTokenV1) ValidateBasic() error {
 }
 
 // GetSigners returns the required signers of this message type.
-func (msg MsgUpgradeTokenV1) GetSigners() []sdk.AccAddress {
+func (m MsgUpgradeTokenV1) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32(msg.Sender),
+		sdk.MustAccAddressFromBech32(m.Sender),
 	}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgUpgradeTokenV1) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgUpgradeTokenV1) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgUpgradeTokenV1) Type() string {
+	return TypeMsgUpgradeTokenV1
+}
+
+var (
+	amino          = codec.NewLegacyAmino()
+	moduleAminoCdc = codec.NewAminoCodec(amino)
+)
+
+func init() {
+	RegisterLegacyAminoCodec(amino)
+	cryptocodec.RegisterCrypto(amino)
+	amino.Seal()
 }
