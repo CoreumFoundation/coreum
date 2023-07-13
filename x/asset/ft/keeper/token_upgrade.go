@@ -63,3 +63,20 @@ func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32)
 func (k Keeper) ClearPendingVersion(ctx sdk.Context, denom string) {
 	ctx.KVStore(k.storeKey).Delete(types.CreatePendingTokenUpgradeKey(denom))
 }
+
+// GetTokenUpgradeStatuses returns the token upgrade statuses of a specified denom.
+func (k Keeper) GetTokenUpgradeStatuses(ctx sdk.Context, denom string) (types.TokenUpgradeStatuses, error) {
+	bz := ctx.KVStore(k.storeKey).Get(types.CreateTokenUpgradeStatusesKey(denom))
+	if bz == nil {
+		return types.TokenUpgradeStatuses{}, sdkerrors.Wrapf(types.ErrTokenNotFound, "no token upgrade statuses for denom: %s", denom)
+	}
+	var tokenUpgradeStatuses types.TokenUpgradeStatuses
+	k.cdc.MustUnmarshal(bz, &tokenUpgradeStatuses)
+
+	return tokenUpgradeStatuses, nil
+}
+
+// SetTokenUpgradeStatuses sets the token upgrade statuses of a specified denom.
+func (k Keeper) SetTokenUpgradeStatuses(ctx sdk.Context, denom string, tokenUpgradeStatuses types.TokenUpgradeStatuses) {
+	ctx.KVStore(k.storeKey).Set(types.CreateTokenUpgradeStatusesKey(denom), k.cdc.MustMarshal(&tokenUpgradeStatuses))
+}

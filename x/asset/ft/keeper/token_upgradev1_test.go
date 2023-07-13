@@ -76,6 +76,14 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.Empty(token1.Features)
 	requireT.EqualValues(1, token1.Version)
 
+	tokenUpgradeStatuses, err := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom1)
+	requireT.NoError(err)
+	requireT.Equal(&types.TokenUpgradeV1Status{
+		IbcEnabled: false,
+		StartTime:  ctxSDK.BlockTime(),
+		EndTime:    ctxSDK.BlockTime(),
+	}, tokenUpgradeStatuses.V1)
+
 	// delay module should not contain delayed item
 	delayedItems, err := delayKeeper.ExportDelayedItems(ctxSDK)
 	requireT.NoError(err)
@@ -95,6 +103,14 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.NoError(err)
 	requireT.Empty(token2.Features)
 	requireT.EqualValues(0, token2.Version)
+
+	tokenUpgradeStatuses2, err := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom2)
+	requireT.NoError(err)
+	requireT.Equal(&types.TokenUpgradeV1Status{
+		IbcEnabled: true,
+		StartTime:  ctxSDK.BlockTime(),
+		EndTime:    ctxSDK.BlockTime().Add(params.TokenUpgradeGracePeriod),
+	}, tokenUpgradeStatuses2.V1)
 
 	// delay module should contain delayed item
 	delayedItems, err = delayKeeper.ExportDelayedItems(ctxSDK)

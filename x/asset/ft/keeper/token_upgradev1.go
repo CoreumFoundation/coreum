@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -35,6 +34,14 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 		return err
 	}
 
+	tokenUpgradeStatuses := types.TokenUpgradeStatuses{
+		V1: &types.TokenUpgradeV1Status{
+			IbcEnabled: ibcEnabled,
+			StartTime:  ctx.BlockTime(),
+			EndTime:    ctx.BlockTime().Add(params.TokenUpgradeGracePeriod),
+		},
+	}
+
 	if !ibcEnabled {
 		// if issuer does not want to enable IBC we may upgrade the token immediately
 		// because it's behaviour is not changed
@@ -45,8 +52,12 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 		}
 		k.SetDefinition(ctx, issuer, subunit, def)
 		k.ClearPendingVersion(ctx, denom)
+		tokenUpgradeStatuses.V1.EndTime = tokenUpgradeStatuses.V1.StartTime
+		k.SetTokenUpgradeStatuses(ctx, denom, tokenUpgradeStatuses)
 		return nil
 	}
+
+	k.SetTokenUpgradeStatuses(ctx, denom, tokenUpgradeStatuses)
 
 	data := &types.DelayedTokenUpgradeV1{
 		Denom: denom,
