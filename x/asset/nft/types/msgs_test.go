@@ -7,6 +7,7 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -648,6 +649,84 @@ func TestMsgRemoveFromWhitelist_ValidateBasic(t *testing.T) {
 			} else {
 				assertT.True(sdkerrors.IsOf(err, tc.expectedError))
 			}
+		})
+	}
+}
+
+func TestAmino(t *testing.T) {
+	const address = "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"
+
+	tests := []struct {
+		name          string
+		msg           legacytx.LegacyMsg
+		wantAminoJSON string
+	}{
+		{
+			name: types.TypeMsgIssueClass,
+			msg: &types.MsgIssueClass{
+				Issuer: address,
+				Symbol: "ABC",
+			},
+			wantAminoJSON: `{"type":"assetnft/MsgIssueClass","value":{"issuer":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","royalty_rate":"0","symbol":"ABC"}}`,
+		},
+		{
+			name: types.TypeMsgMint,
+			msg: &types.MsgMint{
+				Sender:  address,
+				ClassID: "classID",
+			},
+			wantAminoJSON: `{"type":"assetnft/MsgMint","value":{"class_id":"classID","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+		},
+		{
+			name: types.TypeMsgBurn,
+			msg: &types.MsgBurn{
+				Sender:  address,
+				ClassID: "classID",
+				ID:      "nftID",
+			},
+			wantAminoJSON: `{"type":"assetnft/MsgBurn","value":{"class_id":"classID","id":"nftID","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+		},
+		{
+			name: types.TypeMsgFreeze,
+			msg: &types.MsgFreeze{
+				Sender:  address,
+				ClassID: "classID",
+				ID:      "nftID",
+			},
+			wantAminoJSON: `{"type":"assetnft/MsgFreeze","value":{"class_id":"classID","id":"nftID","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+		},
+		{
+			name: types.TypeMsgUnfreeze,
+			msg: &types.MsgUnfreeze{
+				Sender:  address,
+				ClassID: "classID",
+				ID:      "nftID",
+			},
+			wantAminoJSON: `{"type":"assetnft/MsgUnfreeze","value":{"class_id":"classID","id":"nftID","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+		},
+		{
+			name: types.TypeMsgAddToWhitelist,
+			msg: &types.MsgAddToWhitelist{
+				Sender:  address,
+				ClassID: "classID",
+				ID:      "nftID",
+			},
+			wantAminoJSON: `{"type":"assetnft/MsgAddToWhitelist","value":{"class_id":"classID","id":"nftID","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+		},
+		{
+			name: types.TypeMsgRemoveFromWhitelist,
+			msg: &types.MsgRemoveFromWhitelist{
+				Sender:  address,
+				ClassID: "classID",
+				ID:      "nftID",
+			},
+			wantAminoJSON: `{"type":"assetnft/MsgRemoveFromWhitelist","value":{"class_id":"classID","id":"nftID","sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.wantAminoJSON, string(tt.msg.GetSignBytes()))
 		})
 	}
 }
