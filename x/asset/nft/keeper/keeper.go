@@ -634,7 +634,7 @@ func (k Keeper) GetWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID str
 
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidKey, err.Error())
 	}
 	key := store.JoinKeys(types.NFTWhitelistingKeyPrefix, compositeKey)
 	accounts := []string{}

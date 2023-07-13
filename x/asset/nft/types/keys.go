@@ -61,7 +61,7 @@ func CreateIssuerClassPrefix(issuer sdk.AccAddress) ([]byte, error) {
 func CreateFreezingKey(classID, nftID string) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, err.Error())
 	}
 
 	return store.JoinKeys(NFTFreezingKeyPrefix, compositeKey), nil
@@ -84,7 +84,7 @@ func ParseFreezingKey(key []byte) (string, string, error) {
 func CreateWhitelistingKey(classID, nftID string, account sdk.AccAddress) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID), account)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, err.Error())
 	}
 
 	return store.JoinKeys(NFTWhitelistingKeyPrefix, compositeKey), nil
@@ -107,7 +107,7 @@ func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
 func CreateBurningKey(classID, nftID string) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, err.Error())
 	}
 
 	return store.JoinKeys(NFTBurningKeyPrefix, compositeKey), nil
@@ -117,7 +117,7 @@ func CreateBurningKey(classID, nftID string) ([]byte, error) {
 func CreateClassBurningKey(classID string) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID))
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, err.Error())
 	}
 
 	return store.JoinKeys(NFTBurningKeyPrefix, compositeKey), nil
