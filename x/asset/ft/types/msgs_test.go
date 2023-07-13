@@ -23,7 +23,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-//nolint:funlen // there are too many tests cases
 func TestMsgIssue_ValidateBasic(t *testing.T) {
 	acc := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	validMessage := types.MsgIssue{

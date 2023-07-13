@@ -255,7 +255,7 @@ func (s *TestSuite) TestSupply() {
 	}
 }
 
-func (s *TestSuite) TestNFTs() { //nolint:funlen // the default sdk test
+func (s *TestSuite) TestNFTs() {
 	var (
 		req  *nft.QueryNFTsRequest
 		nfts []*nft.NFT

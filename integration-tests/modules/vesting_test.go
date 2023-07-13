@@ -203,8 +203,6 @@ func TestVestingAccountStaking(t *testing.T) {
 }
 
 // TestVestingAccountWithFTInteraction tests that vesting accounts correctly work with the ft assets.
-//
-//nolint:funlen // there are many tests
 func TestVestingAccountWithFTInteraction(t *testing.T) {
 	t.Parallel()
 

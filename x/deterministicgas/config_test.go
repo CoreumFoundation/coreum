@@ -23,7 +23,6 @@ import (
 //go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
-//nolint:funlen
 func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// A list of valid message prefixes or messages which are unknown and not
 	// determined as neither deterministic nor nondeterministic.
@@ -145,7 +144,6 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	}
 }
 
-//nolint:funlen
 func TestDeterministicGas_GasRequiredByMessage(t *testing.T) {
 	const (
 		denom   = "ducore"

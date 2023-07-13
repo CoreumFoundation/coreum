@@ -25,7 +25,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-//nolint:funlen // there are too many tests cases
 func TestCalculateRateShares(t *testing.T) {
 	genAccount := func() string {
 		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()

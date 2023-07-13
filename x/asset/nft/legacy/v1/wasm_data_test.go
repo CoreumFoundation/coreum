@@ -18,7 +18,6 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
-//nolint:funlen // breaking down this test function will make it harder to read
 func TestMigrateWasmCreatedNFTData(t *testing.T) {
 	requireT := require.New(t)
 

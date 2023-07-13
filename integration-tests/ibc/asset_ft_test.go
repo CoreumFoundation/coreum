@@ -64,7 +64,6 @@ func TestIBCFailsIfNotEnabled(t *testing.T) {
 	requireT.ErrorContains(err, "unauthorized")
 }
 
-//nolint:funlen // there are many tests
 func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	t.Parallel()
 
@@ -609,7 +608,6 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumIssuer, sendCoin))
 }
 
-//nolint:funlen // there are many tests
 func TestIBCGlobalFreeze(t *testing.T) {
 	t.Parallel()
 

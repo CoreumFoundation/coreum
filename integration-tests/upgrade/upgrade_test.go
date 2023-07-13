@@ -50,7 +50,6 @@ func upgradeV2(t *testing.T) {
 	}
 }
 
-//nolint:funlen // there are many tests
 func runUpgrade(
 	t *testing.T,
 	oldBinaryVersion string,

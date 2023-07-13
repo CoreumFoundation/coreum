@@ -114,7 +114,6 @@ func TestParams(t *testing.T) {
 	assert.Equal(t, defParams.Model.LongEmaBlockLength, params.Model.LongEmaBlockLength)
 }
 
-//nolint:funlen // splitting tests will make the code less readable
 func TestEstimateGasPriceInFuture(t *testing.T) {
 	ctx, keeper := setup()
 	defParams := types.Params{
