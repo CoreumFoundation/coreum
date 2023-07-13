@@ -1441,7 +1441,7 @@ func TestKeeper_IBC(t *testing.T) {
 
 	// Trick the ctx to look like an outgoing IBC,
 	// so we may use regular bank send to test the logic.
-	ctx = wibctransfertypes.WithDirection(ctx, wibctransfertypes.DirectionOut)
+	ctx = wibctransfertypes.WithPurpose(ctx, wibctransfertypes.PurposeOut)
 
 	// transferring denom with disabled IBC should fail
 	err = bankKeeper.SendCoins(

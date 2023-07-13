@@ -562,6 +562,24 @@ func (k Keeper) burn(ctx sdk.Context, account sdk.AccAddress, coinsToBurn sdk.Co
 }
 
 func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
+	// This check is effective when IBC transfer is acknowledged by the peer chain. It happens in two situations:
+	// - when transfer succeeded
+	// - when transfer has been rejected by the other chain.
+	// `isCoinSpendable` is called only in the second case, that's why we don't need to differentiate them here.
+	// So, whenever it happens here, it means transfer has been rejected. It means that funds are going to be refunded
+	// back to the sender by the IBC transfer module.
+	// It should succeed even if the issuer decided, for whatever reason, to freeze the escrow address.
+	// It is done before cehcking for global freeze because refunding should not be blocked by this.
+	// Otherwise, funds would be lost forever, being blocked on the escrow account.
+	if wibctransfertypes.IsPurposeAck(ctx) {
+		return nil
+	}
+
+	// Same thing applies if IBC fails due to timeout.
+	if wibctransfertypes.IsPurposeTimeout(ctx) {
+		return nil
+	}
+
 	if !def.IsFeatureEnabled(types.Feature_freezing) || def.IsIssuer(addr) {
 		return nil
 	}
@@ -574,7 +592,7 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 	// should be affected by the global freeze checked above. We decided that if token is frozen globally it means
 	// none of the balances for that token can be affected by the IBC incoming transfer during freezing period.
 	// Otherwise, the transfer must work despite the fact that escrow address might have been frozen by the issuer.
-	if wibctransfertypes.IsDirectionIn(ctx) {
+	if wibctransfertypes.IsPurposeIn(ctx) {
 		return nil
 	}
 
@@ -587,16 +605,35 @@ func (k Keeper) isCoinSpendable(ctx sdk.Context, addr sdk.AccAddress, def types.
 }
 
 func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types.Definition, amount sdk.Int) error {
-	// This check is done when funds for IBC transfers are received by the escrow address.
+	// This check is effective when funds for IBC transfers are received by the escrow address.
 	// If IBC is enabled we always accept escrow address as a receiver of the funds because it must work
 	// despite the fact that address is not whitelisted.
 	// On the other hand, if IBC is disabled for the token, we reject the transfer to the escrow address.
-	// We don't block on IsDirectionIn condition when IBC transfer is received because if token cannot be sent,
+	// We don't block on IsPurposeIn condition when IBC transfer is received because if token cannot be sent,
 	// it cannot be received back by definition.
-	if wibctransfertypes.IsDirectionOut(ctx) {
+	if wibctransfertypes.IsPurposeOut(ctx) {
 		if !def.IsFeatureEnabled(types.Feature_ibc) {
 			return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "ibc transfers are disabled for %s", def.Denom)
 		}
+		return nil
+	}
+
+	// This check is effective when IBC transfer is acknowledged by the peer chain. It happens in two situations:
+	// - when transfer succeeded
+	// - when transfer has been rejected by the other chain.
+	// `isCoinReceivable` is called only in the second case, that's why we don't need to differentiate them here.
+	// So, whenever it happens here, it means transfer has been rejected. It means that funds are going to be refunded
+	// back to the sender by the IBC transfer module.
+	// That means we should allow to do this even if the sender is no longer whitelisted. It might happen that between
+	// sending IBC transfer and receiving ACK rejecting it, issuer decided to remove whitelisting for the sender.
+	// Despite that, sender should receive his funds back because otherwise they are lost forever, being blocked
+	// on the escrow address.
+	if wibctransfertypes.IsPurposeAck(ctx) {
+		return nil
+	}
+
+	// Same thing applies if IBC fails due to timeout.
+	if wibctransfertypes.IsPurposeTimeout(ctx) {
 		return nil
 	}
 

@@ -137,7 +137,7 @@ func TestTimedOutTransfer(t *testing.T) {
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
-	retryCtx, retryCancel := context.WithTimeout(ctx, 30*time.Second)
+	retryCtx, retryCancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer retryCancel()
 
 	// This is the retry loop where we try to trigger a timeout condition for IBC transfer.
