@@ -47,7 +47,9 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // RegisterLegacyAminoCodec registers the nft module's types for the given codec.
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	nft.RegisterLegacyAminoCodec(cdc)
+}
 
 // RegisterInterfaces registers the nft module's interface types.
 func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
