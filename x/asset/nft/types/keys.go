@@ -94,7 +94,7 @@ func CreateWhitelistingKey(classID, nftID string, account sdk.AccAddress) ([]byt
 func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
 	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
 	if err != nil {
-		return "", "", nil, sdkerrors.Wrapf(ErrInvalidInput, "failed to parse length prefix keys, err: %s", err)
+		return "", "", nil, sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 	if len(parsedKeys) != 3 {
 		err = sdkerrors.Wrapf(ErrInvalidKey, "whitelisting key must be composed of 3 length prefixed keys")
@@ -127,10 +127,10 @@ func CreateClassBurningKey(classID string) ([]byte, error) {
 func ParseBurningKey(key []byte) (string, string, error) {
 	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
 	if err != nil {
-		return "", "", sdkerrors.Wrapf(ErrInvalidInput, "failed to parse length prefixed keys, err: %s", err)
+		return "", "", sdkerrors.Wrap(ErrInvalidInput, err.Error())
 	}
 	if len(parsedKeys) != 2 {
-		err = sdkerrors.Wrapf(ErrInvalidInput, "burning key must be composed to 2 length prefixed keys")
+		err = sdkerrors.Wrapf(ErrInvalidKey, "burning key must be composed to 2 length prefixed keys")
 		return "", "", err
 	}
 	return string(parsedKeys[0]), string(parsedKeys[1]), nil
