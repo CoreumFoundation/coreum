@@ -75,8 +75,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.Empty(token1.Features)
 	requireT.EqualValues(1, token1.Version)
 
-	tokenUpgradeStatuses, err := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom1)
-	requireT.NoError(err)
+	tokenUpgradeStatuses := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom1)
 	requireT.Equal(&types.TokenUpgradeV1Status{
 		IbcEnabled: false,
 		StartTime:  ctxSDK.BlockTime(),
@@ -103,8 +102,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 	requireT.Empty(token2.Features)
 	requireT.EqualValues(0, token2.Version)
 
-	tokenUpgradeStatuses2, err := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom2)
-	requireT.NoError(err)
+	tokenUpgradeStatuses2 := ftKeeper.GetTokenUpgradeStatuses(ctxSDK, denom2)
 	requireT.Equal(&types.TokenUpgradeV1Status{
 		IbcEnabled: true,
 		StartTime:  ctxSDK.BlockTime(),

@@ -35,6 +35,7 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 		return err
 	}
 
+	// we don't read the current TokenUpgradeStatuses because we know that this is the initial state
 	tokenUpgradeStatuses := types.TokenUpgradeStatuses{
 		V1: &types.TokenUpgradeV1Status{
 			IbcEnabled: ibcEnabled,

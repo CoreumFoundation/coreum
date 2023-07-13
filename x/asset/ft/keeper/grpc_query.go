@@ -17,7 +17,7 @@ type QueryKeeper interface {
 	GetParams(ctx sdk.Context) types.Params
 	GetIssuerTokens(ctx sdk.Context, issuer sdk.AccAddress, pagination *query.PageRequest) ([]types.Token, *query.PageResponse, error)
 	GetToken(ctx sdk.Context, denom string) (types.Token, error)
-	GetTokenUpgradeStatuses(ctx sdk.Context, denom string) (types.TokenUpgradeStatuses, error)
+	GetTokenUpgradeStatuses(ctx sdk.Context, denom string) types.TokenUpgradeStatuses
 	GetFrozenBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
 	GetFrozenBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetWhitelistedBalances(ctx sdk.Context, addr sdk.AccAddress, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error)
@@ -82,10 +82,7 @@ func (qs QueryService) Token(ctx context.Context, req *types.QueryTokenRequest) 
 
 // TokenUpgradeStatuses returns the token upgrade statuses of a specified denom.
 func (qs QueryService) TokenUpgradeStatuses(ctx context.Context, req *types.QueryTokenUpgradeStatusesRequest) (*types.QueryTokenUpgradeStatusesResponse, error) {
-	tokenUpgradeStatuses, err := qs.keeper.GetTokenUpgradeStatuses(sdk.UnwrapSDKContext(ctx), req.GetDenom())
-	if err != nil {
-		return nil, err
-	}
+	tokenUpgradeStatuses := qs.keeper.GetTokenUpgradeStatuses(sdk.UnwrapSDKContext(ctx), req.GetDenom())
 
 	return &types.QueryTokenUpgradeStatusesResponse{
 		Statuses: tokenUpgradeStatuses,
