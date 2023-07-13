@@ -120,7 +120,7 @@ func (c ChainContext) AwaitForBalance(
 
 	t.Logf("Waiting for account %s balance, expected amount: %s.", c.ConvertToBech32Address(address), expectedBalance.String())
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
-	retryCtx, retryCancel := context.WithTimeout(ctx, time.Minute)
+	retryCtx, retryCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer retryCancel()
 	err := retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
@@ -140,7 +140,7 @@ func (c ChainContext) AwaitForBalance(
 
 		return nil
 	})
-	if err != nil {
+	if err == nil {
 		t.Logf("Received expected balance of %s.", expectedBalance.Denom)
 	}
 
