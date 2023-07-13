@@ -16,7 +16,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
 )
 
-//nolint:funlen
 func TestTokenUpgradeV1(t *testing.T) {
 	requireT := require.New(t)
 

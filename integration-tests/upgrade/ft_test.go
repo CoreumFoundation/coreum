@@ -543,7 +543,6 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
 	requireT.Equal(v1UpgradeStatus.StartTime, v1UpgradeStatus.EndTime)
 }
 
-//nolint:funlen // there are many tests
 func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
