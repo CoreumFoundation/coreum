@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//nolint:funlen
 func TestDelayedItemKey(t *testing.T) {
 	t.Parallel()
 
