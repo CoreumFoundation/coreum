@@ -2921,6 +2921,154 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 	}
 }
 
+// TestAssetFTAminoMultisig tests that assetnf module works seamlessly with amino multisig.
+func TestAssetFTAminoMultisig(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	multisigPublicKey, keyNamesSet, err := chain.GenMultisigAccount(2, 2)
+	requireT.NoError(err)
+	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
+	signer1KeyName := keyNamesSet[0]
+	signer2KeyName := keyNamesSet[1]
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	chain.FundAccountWithOptions(ctx, t, multisigAddress, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgBurn{},
+		},
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	// Issue a fungible token
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:             multisigAddress.String(),
+		Symbol:             "ABC",
+		Subunit:            "abc",
+		Precision:          6,
+		InitialAmount:      sdk.NewInt(1000),
+		Description:        "ABC Description",
+		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning, assetfttypes.Feature_freezing},
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+	}
+
+	_, err = chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKey,
+		issueMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		signer1KeyName, signer2KeyName)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, multisigAddress)
+
+	burnMsg := &assetfttypes.MsgBurn{
+		Sender: multisigAddress.String(),
+		Coin:   sdk.NewCoin(denom, sdk.NewInt(300)),
+	}
+	_, err = chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKey,
+		burnMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		signer1KeyName, signer2KeyName)
+	requireT.NoError(err)
+
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: multisigAddress.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(700)).String(), balanceRes.Balance.String())
+}
+
+// TestAssetFTAminoMultisigWithAuthz tests that assetnf module works seamlessly with amino multisig and authz.
+func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	multisigPublicKeyGranter, keyNamesSet, err := chain.GenMultisigAccount(2, 2)
+	requireT.NoError(err)
+	multisigGranterAddress := sdk.AccAddress(multisigPublicKeyGranter.Address())
+	granterSigner1KeyName := keyNamesSet[0]
+	granterSigner2KeyName := keyNamesSet[1]
+
+	multisigPublicKeyGrantee, keyNamesSet, err := chain.GenMultisigAccount(2, 2)
+	requireT.NoError(err)
+	multisigGranteeAddress := sdk.AccAddress(multisigPublicKeyGrantee.Address())
+	granteeSigner1KeyName := keyNamesSet[0]
+	granteeSigner2KeyName := keyNamesSet[1]
+
+	bankClient := banktypes.NewQueryClient(chain.ClientContext)
+
+	grantMsg, err := authztypes.NewMsgGrant(
+		multisigGranterAddress,
+		multisigGranteeAddress,
+		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgIssue{})),
+		time.Now().Add(time.Minute),
+	)
+	require.NoError(t, err)
+
+	chain.FundAccountWithOptions(ctx, t, multisigGranterAddress, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			grantMsg,
+		},
+		// the fee will be charged from the granter
+		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+	})
+
+	_, err = chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKeyGranter,
+		grantMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		granterSigner1KeyName, granterSigner2KeyName)
+	requireT.NoError(err)
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:             multisigGranterAddress.String(),
+		Symbol:             "ABC",
+		Subunit:            "abc",
+		Precision:          6,
+		InitialAmount:      sdk.NewInt(1000),
+		Description:        "ABC Description",
+		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning, assetfttypes.Feature_freezing},
+		BurnRate:           sdk.NewDec(0),
+		SendCommissionRate: sdk.NewDec(0),
+	}
+
+	execMsg := authztypes.NewMsgExec(multisigGranteeAddress, []sdk.Msg{issueMsg})
+
+	chain.FundAccountWithOptions(ctx, t, multisigGranteeAddress, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&execMsg,
+		},
+	})
+
+	_, err = chain.SignAndBroadcastMultisigTx(
+		ctx,
+		multisigPublicKeyGrantee,
+		&execMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		granteeSigner1KeyName, granteeSigner2KeyName)
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, multisigGranterAddress)
+	balanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: multisigGranterAddress.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(1000)).String(), balanceRes.Balance.String())
+}
+
 func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	requireT := require.New(t)

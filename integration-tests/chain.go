@@ -1,13 +1,17 @@
 package integrationtests
 
 import (
+	"context"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdkmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	multisigtypes "github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	protobufgrpc "github.com/gogo/protobuf/grpc"
 	"github.com/google/uuid"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
@@ -130,6 +134,64 @@ func (c ChainContext) GenMultisigAccount(signersCount, multisigThreshold int) (*
 	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
 
 	return multisigPublicKey, keyNamesSet, nil
+}
+
+// SignAndBroadcastMultisigTx signs the amino multisig tx with provided key names and broadcasts it.
+func (c ChainContext) SignAndBroadcastMultisigTx(
+	ctx context.Context,
+	multisigPublicKey *sdkmultisig.LegacyAminoPubKey,
+	msg sdk.Msg,
+	txf client.Factory,
+	signersKeyNames ...string,
+) (*sdk.TxResponse, error) {
+	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
+	multisigAccInfo, err := client.GetAccountInfo(ctx, c.ClientContext, multisigAddress)
+	if err != nil {
+		return nil, err
+	}
+	txf = txf.WithAccountNumber(multisigAccInfo.GetAccountNumber()).
+		WithSequence(multisigAccInfo.GetSequence()).
+		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
+
+	txBuilder, err := txf.BuildUnsignedTx(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, signersKeyName := range signersKeyNames {
+		if err := client.Sign(txf, signersKeyName, txBuilder, false); err != nil {
+			return nil, err
+		}
+	}
+
+	signs, err := txBuilder.GetTx().GetSignaturesV2()
+	if err != nil {
+		return nil, err
+	}
+
+	multisigSig := multisigtypes.NewMultisig(len(multisigPublicKey.PubKeys))
+	for _, sig := range signs {
+		if err := multisigtypes.AddSignatureV2(multisigSig, sig, multisigPublicKey.GetPubKeys()); err != nil {
+			return nil, err
+		}
+	}
+
+	sigV2 := sdksigning.SignatureV2{
+		PubKey:   multisigPublicKey,
+		Data:     multisigSig,
+		Sequence: multisigAccInfo.GetSequence(),
+	}
+
+	if err := txBuilder.SetSignatures(sigV2); err != nil {
+		return nil, err
+	}
+
+	encodedTx, err := c.ClientContext.TxConfig().TxEncoder()(txBuilder.GetTx())
+	if err != nil {
+		return nil, err
+	}
+
+	return client.BroadcastRawTx(ctx, c.ClientContext, encodedTx)
 }
 
 // Chain holds network and client for the blockchain.
