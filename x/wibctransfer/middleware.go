@@ -10,25 +10,44 @@ import (
 	"github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
-var _ porttypes.IBCModule = DirectionMiddleware{}
+var _ porttypes.IBCModule = PurposeMiddleware{}
 
-// DirectionMiddleware adds information about IBC transfer direction to the context.
-type DirectionMiddleware struct {
+// PurposeMiddleware adds information about IBC transfer purpose to the context.
+type PurposeMiddleware struct {
 	transfer.IBCModule
 }
 
-// NewDirectionMiddleware returns middleware adding direction to the context.
-func NewDirectionMiddleware(module transfer.IBCModule) DirectionMiddleware {
-	return DirectionMiddleware{
+// NewPurposeMiddleware returns middleware adding purpose to the context.
+func NewPurposeMiddleware(module transfer.IBCModule) PurposeMiddleware {
+	return PurposeMiddleware{
 		IBCModule: module,
 	}
 }
 
-// OnRecvPacket adds direction to the context and calls the upper implementation.
-func (im DirectionMiddleware) OnRecvPacket(
+// OnRecvPacket adds purpose-in to the context and calls the upper implementation.
+func (im PurposeMiddleware) OnRecvPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	return im.IBCModule.OnRecvPacket(types.WithDirection(ctx, types.DirectionIn), packet, relayer)
+	return im.IBCModule.OnRecvPacket(types.WithPurpose(ctx, types.PurposeIn), packet, relayer)
+}
+
+// OnAcknowledgementPacket adds purpose-ack to the context and calls the upper implementation.
+func (im PurposeMiddleware) OnAcknowledgementPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	acknowledgement []byte,
+	relayer sdk.AccAddress,
+) error {
+	return im.IBCModule.OnAcknowledgementPacket(types.WithPurpose(ctx, types.PurposeAck), packet, acknowledgement, relayer)
+}
+
+// OnTimeoutPacket adds purpose-timeout to the context and calls the upper implementation.
+func (im PurposeMiddleware) OnTimeoutPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) error {
+	return im.IBCModule.OnTimeoutPacket(types.WithPurpose(ctx, types.PurposeTimeout), packet, relayer)
 }

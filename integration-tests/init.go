@@ -15,7 +15,6 @@ import (
 	protobufgrpc "github.com/gogo/protobuf/grpc"
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -72,19 +71,13 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 
-	// TODO(dzmitryhil) remove the flag once we update the crust
-	flag.StringVar(lo.ToPtr(""), "coreum-address", "localhost:9090", "Address of cored node started by znet")
 	flag.StringVar(&coreumGRPCAddress, "coreum-grpc-address", "localhost:9090", "GRPC address of cored node started by znet")
 	flag.StringVar(&coreumRPCAddress, "coreum-rpc-address", "http://localhost:26657", "RPC address of cored node started by znet")
 	flag.StringVar(&coreumFundingMnemonic, "coreum-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 	flag.Var(&coreumStakerMnemonics, "coreum-staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
-	// TODO(dzmitryhil) remove the flag once we update the crust
-	flag.StringVar(lo.ToPtr(""), "gaia-address", "localhost:9080", "Address of gaia node started by znet")
 	flag.StringVar(&gaiaGRPCAddress, "gaia-grpc-address", "localhost:9080", "GRPC address of gaia node started by znet")
 	flag.StringVar(&gaiaRPCAddress, "gaia-rpc-address", "http://localhost:26557", "RPC address of gaia node started by znet")
 	flag.StringVar(&gaiaFundingMnemonic, "gaia-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
-	// TODO(dzmitryhil) remove the flag once we update the crust
-	flag.StringVar(lo.ToPtr(""), "osmosis-address", "localhost:9070", "Address of osmosis node started by znet")
 	flag.StringVar(&osmosisGRPCAddress, "osmosis-grpc-address", "localhost:9070", "GRPC address of osmosis node started by znet")
 	flag.StringVar(&osmosisRPCAddress, "osmosis-rpc-address", "http://localhost:26457", "RPC address of osmosis node started by znet")
 	flag.StringVar(&osmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")

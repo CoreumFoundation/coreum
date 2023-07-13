@@ -15,7 +15,6 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
-// TODO(dzmitryhil) remove all TestMain from the code.
 func TestMain(m *testing.M) {
 	n, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	if err != nil {
@@ -25,7 +24,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-//nolint:funlen // there are too many tests cases
 func TestCalculateRateShares(t *testing.T) {
 	genAccount := func() string {
 		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
@@ -258,7 +256,7 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				dummyAddress: sdk.NewInt(10),
 			},
-			ibcDirection: wibctransfertypes.DirectionOut,
+			ibcDirection: wibctransfertypes.PurposeOut,
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 			},
@@ -272,7 +270,7 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				dummyAddress: sdk.NewInt(10),
 			},
-			ibcDirection: wibctransfertypes.DirectionOut,
+			ibcDirection: wibctransfertypes.PurposeOut,
 			shares:       map[string]sdk.Int{},
 		},
 		{
@@ -286,7 +284,7 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				dummyAddress: sdk.NewInt(20),
 			},
-			ibcDirection: wibctransfertypes.DirectionOut,
+			ibcDirection: wibctransfertypes.PurposeOut,
 			shares: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(5),
 				accounts[1]: sdk.NewInt(5),
@@ -301,7 +299,7 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				accounts[0]: sdk.NewInt(10),
 			},
-			ibcDirection: wibctransfertypes.DirectionIn,
+			ibcDirection: wibctransfertypes.PurposeIn,
 			shares:       map[string]sdk.Int{},
 		},
 		{
@@ -313,7 +311,7 @@ func TestCalculateRateShares(t *testing.T) {
 			receivers: map[string]sdk.Int{
 				issuer: sdk.NewInt(10),
 			},
-			ibcDirection: wibctransfertypes.DirectionIn,
+			ibcDirection: wibctransfertypes.PurposeIn,
 			shares:       map[string]sdk.Int{},
 		},
 	}
@@ -325,7 +323,7 @@ func TestCalculateRateShares(t *testing.T) {
 			ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 
 			if tc.ibcDirection != "" {
-				ctx = wibctransfertypes.WithDirection(ctx, tc.ibcDirection)
+				ctx = wibctransfertypes.WithPurpose(ctx, tc.ibcDirection)
 			}
 
 			shares := assetFTKeeper.CalculateRateShares(ctx, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
