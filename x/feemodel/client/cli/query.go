@@ -22,6 +22,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		GetMinGasPriceCmd(),
+		GetRecommendedGasPriceCmd(),
 	)
 
 	return cmd
@@ -76,4 +77,38 @@ func QueryParams(cmd *cobra.Command) (*types.QueryParamsResponse, error) {
 
 	ctx := cmd.Context()
 	return queryClient.Params(ctx, &types.QueryParamsRequest{})
+}
+
+// GetRecommendedGasPriceCmd returns command for getting recommended gas price.
+func GetRecommendedGasPriceCmd() *cobra.Command {
+	afterFlag := "after"
+	cmd := &cobra.Command{
+		Use:   "recommended-gas-price",
+		Short: "Query for recommended gas price for `after` blocks in future",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			after, err := cmd.Flags().GetUint32(afterFlag)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.RecommendedGasPrice(cmd.Context(), &types.QueryRecommendedGasPriceRequest{
+				AfterBlocks: after,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	cmd.Flags().Uint32(afterFlag, 10, "how many blocks in future to predict gas price for.")
+
+	return cmd
 }
