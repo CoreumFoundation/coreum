@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -84,7 +86,7 @@ func GetRecommendedGasPriceCmd() *cobra.Command {
 	afterFlag := "after"
 	cmd := &cobra.Command{
 		Use:   "recommended-gas-price",
-		Short: "Query for recommended gas price for `after` blocks in future",
+		Short: fmt.Sprintf("Query for recommended gas price for `%s` blocks in future", afterFlag),
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -108,7 +110,7 @@ func GetRecommendedGasPriceCmd() *cobra.Command {
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
-	cmd.Flags().Uint32(afterFlag, 10, "how many blocks in future to predict gas price for.")
+	cmd.Flags().Uint32(afterFlag, 10, "how many blocks in future to estimate gas price for.")
 
 	return cmd
 }
