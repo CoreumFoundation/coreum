@@ -18,7 +18,6 @@ import (
 	rawnft "github.com/CoreumFoundation/coreum/x/nft"
 )
 
-//nolint:funlen
 func TestInitAndExportGenesis(t *testing.T) {
 	assertT := assert.New(t)
 	requireT := require.New(t)

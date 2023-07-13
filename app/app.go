@@ -505,7 +505,7 @@ func New(
 		app.BankKeeper.BaseKeeper,
 		app.ParamsKeeper,
 	)
-	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper)
+	assetNFTModule := assetnft.NewAppModule(appCodec, app.AssetNFTKeeper, app.NFTKeeper.Keeper, app.WASMKeeper)
 	feeModule := feemodel.NewAppModule(app.FeeModelKeeper)
 
 	wnftModule := wnft.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry)

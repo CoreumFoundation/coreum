@@ -38,13 +38,13 @@ func (k Keeper) ExportPendingTokenUpgrades(ctx sdk.Context) ([]types.PendingToke
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(types.ErrInvalidInput, "failed to paginate: %s", err)
 	}
 
 	return versions, nil
 }
 
-// SetPendingVersion sets pending vrsion for token upgrade.
+// SetPendingVersion sets pending version for token upgrade.
 func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32) error {
 	store := ctx.KVStore(k.storeKey)
 	key := types.CreatePendingTokenUpgradeKey(denom)

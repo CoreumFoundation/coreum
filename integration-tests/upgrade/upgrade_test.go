@@ -34,6 +34,7 @@ func upgradeV2(t *testing.T) {
 	tests := []upgradeTest{
 		&nftStoreTest{},
 		&nftFeaturesTest{},
+		&nftWasmDataTest{},
 		&ftV1UpgradeTest{},
 		&ftFeaturesTest{},
 	}
@@ -49,7 +50,6 @@ func upgradeV2(t *testing.T) {
 	}
 }
 
-//nolint:funlen // there are many tests
 func runUpgrade(
 	t *testing.T,
 	oldBinaryVersion string,

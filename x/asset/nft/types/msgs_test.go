@@ -31,7 +31,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-//nolint:funlen // many test cases
 func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 
@@ -194,7 +193,6 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:funlen
 func TestMsgMint_ValidateBasic(t *testing.T) {
 	requireT := require.New(t)
 

@@ -336,8 +336,6 @@ func TestEmptyBalanceQuery(t *testing.T) {
 }
 
 // TestAssetFTMint tests mint functionality of fungible tokens.
-//
-//nolint:funlen // there are many tests
 func TestAssetFTMint(t *testing.T) {
 	t.Parallel()
 
@@ -471,8 +469,6 @@ func TestAssetFTMint(t *testing.T) {
 }
 
 // TestAssetFTBurn tests burn functionality of fungible tokens.
-//
-//nolint:funlen // there are many tests
 func TestAssetFTBurn(t *testing.T) {
 	t.Parallel()
 
@@ -657,7 +653,7 @@ func TestAssetFTBurn(t *testing.T) {
 
 // TestAssetFTBurnRate tests burn rate functionality of fungible tokens.
 //
-//nolint:dupl,funlen // there are many tests
+//nolint:dupl
 func TestAssetFTBurnRate(t *testing.T) {
 	t.Parallel()
 
@@ -804,7 +800,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 
 // TestAssetFTSendCommissionRate tests send commission rate functionality of fungible tokens.
 //
-//nolint:dupl,funlen // there are many tests
+//nolint:dupl
 func TestAssetFTSendCommissionRate(t *testing.T) {
 	t.Parallel()
 
@@ -950,8 +946,6 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 }
 
 // TestAssetFTFreeze checks freeze functionality of fungible tokens.
-//
-//nolint:funlen // there are many tests
 func TestAssetFTFreeze(t *testing.T) {
 	t.Parallel()
 
@@ -1357,8 +1351,6 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 }
 
 // TestAssetFTGloballyFreeze checks global freeze functionality of fungible tokens.
-//
-//nolint:funlen // there are many tests
 func TestAssetFTGloballyFreeze(t *testing.T) {
 	t.Parallel()
 
@@ -1853,8 +1845,6 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 }
 
 // TestAssetFTWhitelist checks whitelist functionality of fungible tokens.
-//
-//nolint:funlen // there are many tests
 func TestAssetFTWhitelist(t *testing.T) {
 	t.Parallel()
 
@@ -2257,8 +2247,6 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 }
 
 // TestBareToken checks non of the features will work if the flags are not set.
-//
-//nolint:funlen // there are many tests
 func TestBareToken(t *testing.T) {
 	t.Parallel()
 
@@ -2401,8 +2389,6 @@ func TestBareToken(t *testing.T) {
 }
 
 // TestAuthz tests the authz module works well with assetft module.
-//
-//nolint:funlen // there are many tests
 func TestAuthzWithAssetFT(t *testing.T) {
 	t.Parallel()
 
@@ -2675,8 +2661,6 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 }
 
 // TestAssetFTFreezeAndBurn verifies that it is not possible to burn more tokens - outside of freezing limit.
-//
-//nolint:funlen // there are many tests
 func TestAssetFTFreezeAndBurn(t *testing.T) {
 	t.Parallel()
 
@@ -2795,8 +2779,6 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 
 // TestAssetFTFreeze_WithRates verifies freezing with both burn and send commission rates applied
 // and when one of the rates goes outside unfrozen balance.
-//
-//nolint:funlen // there are many tests
 func TestAssetFTFreeze_WithRates(t *testing.T) {
 	t.Parallel()
 
