@@ -109,9 +109,12 @@ func TestCmdTokenUpgradeStatuses(t *testing.T) {
 	initialAmount := sdk.NewInt(100)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
-	_, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTokenUpgradeStatuses(), []string{denom, "--output", "json"})
-	// we can't check positive case
-	requireT.ErrorContains(err, "no token upgrade statuses for denom")
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTokenUpgradeStatuses(), []string{denom, "--output", "json"})
+	var statusesRes types.QueryTokenUpgradeStatusesResponse
+	requireT.NoError(err)
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &statusesRes))
+	// we can't check non-empty values
+	requireT.Nil(statusesRes.Statuses.V1)
 }
 
 func TestQueryParams(t *testing.T) {
