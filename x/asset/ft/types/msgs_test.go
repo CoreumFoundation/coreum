@@ -482,7 +482,6 @@ func TestMsgSetWhitelistedLimit_ValidateBasic(t *testing.T) {
 	}
 }
 
-//nolint:funlen // there are too many tests cases
 func TestAmino(t *testing.T) {
 	const address = "devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"
 	coin := sdk.NewInt64Coin("my-denom", 1)
