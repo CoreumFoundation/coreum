@@ -24,7 +24,6 @@ import (
 	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
 )
 
-//nolint:funlen
 func TestKeeper_Issue(t *testing.T) {
 	requireT := require.New(t)
 
@@ -579,7 +578,6 @@ func TestKeeper_BurnRate_BankSend(t *testing.T) {
 	})
 }
 
-//nolint:funlen // This is a complex test scenario and breaking it down will make it harder to read
 func TestKeeper_BurnRate_BankMultiSend(t *testing.T) {
 	requireT := require.New(t)
 
@@ -894,7 +892,6 @@ func TestKeeper_BurnRateAndSendCommissionRate_BankSend(t *testing.T) {
 	})
 }
 
-//nolint:funlen // this is complex test scenario and breaking it down is not helpful
 func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1061,7 +1058,6 @@ func TestKeeper_FreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(100)), balance)
 }
 
-//nolint:funlen // this is complex tests scenario and breaking it down is not beneficial
 func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1176,7 +1172,6 @@ func TestKeeper_GlobalFreezeUnfreeze(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(freezableDenom, sdk.NewInt(12)), balance)
 }
 
-//nolint:funlen // this is complex test scenario and breaking it down is not helpful
 func TestKeeper_Whitelist(t *testing.T) {
 	requireT := require.New(t)
 	assertT := assert.New(t)
@@ -1298,7 +1293,6 @@ func TestKeeper_Whitelist(t *testing.T) {
 	assertT.NoError(err)
 }
 
-//nolint:funlen // this is complex test scenario and breaking it down is not helpful
 func TestKeeper_FreezeWhitelistMultiSend(t *testing.T) {
 	requireT := require.New(t)
 

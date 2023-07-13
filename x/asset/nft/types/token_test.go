@@ -13,7 +13,6 @@ import (
 	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
 )
 
-//nolint:funlen // this is complex test scenario and breaking it down is not helpful
 func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 	issuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	nonIssuer := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -122,7 +121,6 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 	}
 }
 
-//nolint:funlen
 func TestValidateClassFeatures(t *testing.T) {
 	t.Parallel()
 
