@@ -777,8 +777,7 @@ func (k Keeper) freezeOrUnfreeze(ctx sdk.Context, sender sdk.AccAddress, classID
 		}
 	}
 
-	err = ctx.EventManager().EmitTypedEvent(event)
-	if err != nil {
+	if err = ctx.EventManager().EmitTypedEvent(event); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit event: %v, err: %s", event, err)
 	}
 
@@ -822,8 +821,7 @@ func (k Keeper) addToWhitelistOrRemoveFromWhitelist(ctx sdk.Context, classID, nf
 		}
 	}
 
-	err = ctx.EventManager().EmitTypedEvent(event)
-	if err != nil {
+	if err = ctx.EventManager().EmitTypedEvent(event); err != nil {
 		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit event: %v, err: %s", event, err)
 	}
 
