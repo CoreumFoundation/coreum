@@ -2,6 +2,7 @@ syntax = "proto3";
 package coreum.asset.ft.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
 
@@ -66,4 +67,22 @@ message Token {
 // DelayedTokenUpgradeV1 is executed by the delay module when it's time to enable IBC.
 message DelayedTokenUpgradeV1 {
   string denom = 1;
+}
+
+// TokenUpgradeV1Status defines the current status of the v1 token migration.
+message TokenUpgradeV1Status {
+  bool ibc_enabled = 1;
+  google.protobuf.Timestamp start_time = 2 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+  google.protobuf.Timestamp end_time = 3 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// TokenUpgradeStatuses defines all statuses of the token migrations.
+message TokenUpgradeStatuses {
+  TokenUpgradeV1Status v1 = 1;
 }

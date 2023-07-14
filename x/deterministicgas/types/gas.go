@@ -13,7 +13,7 @@ import (
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
 
-const fuseGasMultiplier = 5
+const fuseGasMultiplier = 10
 
 // NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types.
 func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasConfig deterministicgas.Config) sdk.Router {

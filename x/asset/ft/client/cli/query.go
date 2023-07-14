@@ -25,6 +25,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(CmdQueryToken())
 	cmd.AddCommand(CmdQueryTokens())
+	cmd.AddCommand(CmdTokenUpgradeStatuses())
 	cmd.AddCommand(CmdQueryBalance())
 	cmd.AddCommand(CmdQueryFrozenBalance())
 	cmd.AddCommand(CmdQueryFrozenBalances())
@@ -101,6 +102,42 @@ $ %[1]s query %s token [denom]
 
 			denom := args[0]
 			res, err := queryClient.Token(cmd.Context(), &types.QueryTokenRequest{
+				Denom: denom,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdTokenUpgradeStatuses returns the CmdTokenUpgradeStatuses cobra command.
+func CmdTokenUpgradeStatuses() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "token-upgrade-statuses [denom]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query token upgrade statuses",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query token upgrade statuses.
+
+Example:
+$ %[1]s query %s token-upgrade-statuses [denom]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			denom := args[0]
+			res, err := queryClient.TokenUpgradeStatuses(cmd.Context(), &types.QueryTokenUpgradeStatusesRequest{
 				Denom: denom,
 			})
 			if err != nil {
