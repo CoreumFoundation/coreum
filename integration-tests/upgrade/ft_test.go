@@ -532,6 +532,15 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToDisableIBC(t *testing.T) {
 	requireT.NoError(err)
 	requireT.EqualValues(1, resp.Token.Version)
 	requireT.Len(resp.Token.Features, 0)
+
+	// check the token upgrade status
+	tokenUpgradeStatusesRes, err := ftClient.TokenUpgradeStatuses(ctx, &assetfttypes.QueryTokenUpgradeStatusesRequest{
+		Denom: ft.denomV0WithoutFeatures,
+	})
+	requireT.NoError(err)
+	v1UpgradeStatus := tokenUpgradeStatusesRes.Statuses.V1
+	requireT.False(v1UpgradeStatus.IbcEnabled)
+	requireT.Equal(v1UpgradeStatus.StartTime, v1UpgradeStatus.EndTime)
 }
 
 func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
@@ -569,6 +578,15 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 		assetfttypes.Feature_whitelisting,
 		assetfttypes.Feature_burning,
 	}, resp.Token.Features)
+
+	// check the token upgrade status
+	tokenUpgradeStatusesRes, err := ftClient.TokenUpgradeStatuses(ctx, &assetfttypes.QueryTokenUpgradeStatusesRequest{
+		Denom: ft.denomV0WithFeatures,
+	})
+	requireT.NoError(err)
+	v1UpgradeStatus := tokenUpgradeStatusesRes.Statuses.V1
+	requireT.True(v1UpgradeStatus.IbcEnabled)
+	requireT.Equal(v1UpgradeStatus.EndTime.Sub(v1UpgradeStatus.StartTime), ftParams.Params.TokenUpgradeGracePeriod)
 
 	// upgrading second time should fail
 	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{

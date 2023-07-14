@@ -2,7 +2,6 @@ syntax = "proto3";
 package coreum.customparams.v1;
 
 import "gogoproto/gogo.proto";
-import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/CoreumFoundation/coreum/x/customparams/types";
 
