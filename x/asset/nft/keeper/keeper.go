@@ -398,7 +398,7 @@ func (k Keeper) GetBurnt(ctx sdk.Context, classID string, q *query.PageRequest) 
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key), q,
 		func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return errors.Errorf("value stored in burnt store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(types.ErrInvalidState, "value stored in burnt store is not %x, value %x", asset.StoreTrue, value)
 			}
 
 			nft := string(key[1:]) // the first byte contains the length prefix
@@ -443,7 +443,7 @@ func (k Keeper) GetBurntNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.Bur
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTBurningKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return sdkerrors.Wrapf(types.ErrInvalidInput, "value stored in burning store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(types.ErrInvalidState, "value stored in burning store is not %x, value %x", asset.StoreTrue, value)
 			}
 			classID, nftID, err := types.ParseBurningKey(key)
 			if err != nil {
@@ -525,7 +525,7 @@ func (k Keeper) GetFrozenNFTs(ctx sdk.Context, q *query.PageRequest) ([]types.Fr
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTFreezingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "value stored in freezing store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(types.ErrInvalidState, "value stored in freezing store is not %x, value %x", asset.StoreTrue, value)
 			}
 			classID, nftID, err := types.ParseFreezingKey(key)
 			if err != nil {
@@ -581,14 +581,14 @@ func (k Keeper) GetWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID str
 
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
 	if err != nil {
-		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidKey, err.Error())
+		return nil, nil, err
 	}
 	key := store.JoinKeys(types.NFTWhitelistingKeyPrefix, compositeKey)
 	accounts := []string{}
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), key),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(types.ErrInvalidState, "value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
 			}
 
 			account := sdk.AccAddress(key[1:]) // the first byte contains the length prefix
@@ -612,7 +612,7 @@ func (k Keeper) GetWhitelistedAccounts(ctx sdk.Context, q *query.PageRequest) ([
 	pageRes, err := query.Paginate(prefix.NewStore(ctx.KVStore(k.storeKey), types.NFTWhitelistingKeyPrefix),
 		q, func(key, value []byte) error {
 			if !bytes.Equal(value, asset.StoreTrue) {
-				return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
+				return sdkerrors.Wrapf(types.ErrInvalidState, "value stored in whitelisting store is not %x, value %x", asset.StoreTrue, value)
 			}
 			classID, nftID, account, err := types.ParseWhitelistingKey(key)
 			if err != nil {
