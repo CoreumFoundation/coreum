@@ -9,4 +9,6 @@ var (
 	ErrInvalidData = sdkerrors.Register(ModuleName, 1, "invalid data")
 	// ErrInvalidInput error is returned if input data are invalid.
 	ErrInvalidInput = sdkerrors.Register(ModuleName, 2, "invalid input")
+	// ErrInvalidState is returned when state of the module is invalid.
+	ErrInvalidState = sdkerrors.Register(ModuleName, 3, "invalid state")
 )
