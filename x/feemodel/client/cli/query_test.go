@@ -40,7 +40,7 @@ func TestRecommendedGasPrice(t *testing.T) {
 	var resp types.QueryRecommendedGasPriceResponse
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &resp))
 
-	assert.Less(t, sdk.ZeroDec().MustFloat64(), resp.Low.Amount.MustFloat64())
-	assert.Less(t, sdk.ZeroDec().MustFloat64(), resp.Med.Amount.MustFloat64())
-	assert.Less(t, sdk.ZeroDec().MustFloat64(), resp.High.Amount.MustFloat64())
+	assert.Greater(t, resp.Low.Amount.MustFloat64(), sdk.ZeroDec().MustFloat64())
+	assert.Greater(t, resp.Med.Amount.MustFloat64(), sdk.ZeroDec().MustFloat64())
+	assert.Greater(t, resp.High.Amount.MustFloat64(), sdk.ZeroDec().MustFloat64())
 }
