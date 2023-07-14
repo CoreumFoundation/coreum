@@ -151,9 +151,11 @@ func TestAuthMultisig(t *testing.T) {
 	}
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
+		chain.ClientContext.WithFromAddress(multisigAddress),
+		// We intentionally use simulation instead of using `WithGas(chain.GasLimitByMsgs(bankSendMsg))`.
+		// We do it to test simulation for multisig account.
+		chain.TxFactory().WithSimulateAndExecute(true),
 		bankSendMsg,
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
 		signer1KeyName)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
@@ -161,9 +163,9 @@ func TestAuthMultisig(t *testing.T) {
 	// sign and submit with the min threshold
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		bankSendMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
+		bankSendMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)
