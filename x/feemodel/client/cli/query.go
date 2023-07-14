@@ -10,6 +10,8 @@ import (
 	"github.com/CoreumFoundation/coreum/x/feemodel/types"
 )
 
+const afterFlag = "after"
+
 // GetQueryCmd returns the parent command for all x/feemodel CLI query commands. The
 // provided clientCtx should have, at a minimum, a verifier, Tendermint RPC client,
 // and marshaler set.
@@ -83,7 +85,6 @@ func QueryParams(cmd *cobra.Command) (*types.QueryParamsResponse, error) {
 
 // GetRecommendedGasPriceCmd returns command for getting recommended gas price.
 func GetRecommendedGasPriceCmd() *cobra.Command {
-	afterFlag := "after"
 	cmd := &cobra.Command{
 		Use:   "recommended-gas-price",
 		Short: fmt.Sprintf("Query for recommended gas price for `%s` blocks in future", afterFlag),
