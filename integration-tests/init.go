@@ -8,7 +8,6 @@ import (
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -47,9 +46,9 @@ type Chains struct {
 }
 
 var (
-	ctx       context.Context
-	chains    Chains
-	runUnsafe bool
+	ctx          context.Context
+	ChainsHolder Chains
+	runUnsafe    bool
 )
 
 func init() { //nolint:funlen // will be shortened after the crust merge
@@ -59,14 +58,6 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 
 		coreumFundingMnemonic string
 		coreumStakerMnemonics stringsFlag
-
-		gaiaGRPCAddress     string
-		gaiaRPCAddress      string
-		gaiaFundingMnemonic string
-
-		osmosisGRPCAddress     string
-		osmosisRPCAddress      string
-		osmosisFundingMnemonic string
 	)
 
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
@@ -75,13 +66,6 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 	flag.StringVar(&coreumRPCAddress, "coreum-rpc-address", "http://localhost:26657", "RPC address of cored node started by znet")
 	flag.StringVar(&coreumFundingMnemonic, "coreum-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 	flag.Var(&coreumStakerMnemonics, "coreum-staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
-	flag.StringVar(&gaiaGRPCAddress, "gaia-grpc-address", "localhost:9080", "GRPC address of gaia node started by znet")
-	flag.StringVar(&gaiaRPCAddress, "gaia-rpc-address", "http://localhost:26557", "RPC address of gaia node started by znet")
-	flag.StringVar(&gaiaFundingMnemonic, "gaia-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
-	flag.StringVar(&osmosisGRPCAddress, "osmosis-grpc-address", "localhost:9070", "GRPC address of osmosis node started by znet")
-	flag.StringVar(&osmosisRPCAddress, "osmosis-rpc-address", "http://localhost:26457", "RPC address of osmosis node started by znet")
-	flag.StringVar(&osmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
-
 	// accept testing flags
 	testing.Init()
 	// parse additional flags
@@ -107,7 +91,7 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
-	coreumSettings := queryCommonSettings(queryCtx, coreumGRPCClient)
+	coreumSettings := QueryCommonSettings(queryCtx, coreumGRPCClient)
 
 	coreumClientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
@@ -133,59 +117,7 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 		coreumSettings,
 		coreumFundingMnemonic), coreumStakerMnemonics)
 
-	// ********** Gaia **********
-
-	gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithInsecure())
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	gaiaSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
-	gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
-	gaiaSettings.GasAdjustment = 1.5
-	gaiaSettings.CoinType = sdk.CoinType // gaia coin type
-	gaiaSettings.RPCAddress = gaiaRPCAddress
-
-	gaiaRPClient, err := sdkclient.NewClientFromNode(gaiaRPCAddress)
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	gaiaChain := NewChain(
-		gaiaGRPClient,
-		gaiaRPClient,
-		gaiaSettings,
-		gaiaFundingMnemonic)
-
-	// ********** Osmosis **********
-
-	osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithInsecure())
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
-	osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
-	osmosisChainSettings.GasAdjustment = 1.5
-	osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
-	osmosisChainSettings.RPCAddress = osmosisRPCAddress
-
-	osmosisRPClient, err := sdkclient.NewClientFromNode(osmosisRPCAddress)
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	osmosisChain := NewChain(
-		osmosisGRPClient,
-		osmosisRPClient,
-		osmosisChainSettings,
-		osmosisFundingMnemonic)
-
-	chains = Chains{
-		Coreum:  coreumChain,
-		Gaia:    gaiaChain,
-		Osmosis: osmosisChain,
-	}
+	ChainsHolder.Coreum = coreumChain
 }
 
 // NewCoreumTestingContext returns the configured coreum chain and new context for the integration tests.
@@ -193,7 +125,7 @@ func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 
-	return testCtx, chains.Coreum
+	return testCtx, ChainsHolder.Coreum
 }
 
 // NewChainsTestingContext returns the configured chains and new context for the integration tests.
@@ -201,10 +133,11 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 
-	return testCtx, chains
+	return testCtx, ChainsHolder
 }
 
-func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn) ChainSettings {
+// QueryCommonSettings queries chain settings from running chains.
+func QueryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn) ChainSettings {
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithGRPCClient(grpcClient)
 
