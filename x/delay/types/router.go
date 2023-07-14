@@ -46,7 +46,7 @@ func (rtr *router) Handler(data codec.ProtoMarshaler) (Handler, error) {
 	name := proto.MessageName(data)
 	h, exists := rtr.routes[name]
 	if !exists {
-		return nil, sdkerrors.Wrapf(ErrInvalidState, "route %q does not exist", name)
+		return nil, sdkerrors.Wrapf(ErrInvalidConfiguration, "route %q does not exist", name)
 	}
 
 	return h, nil
