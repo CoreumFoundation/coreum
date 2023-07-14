@@ -31,7 +31,7 @@ func (wk Wrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendRes
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "failed to create an AccAddress from a Bech32, err: %s", err)
+		return nil, err
 	}
 
 	owner := wk.GetOwner(ctx, msg.ClassId, msg.Id)
@@ -41,7 +41,7 @@ func (wk Wrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendRes
 
 	receiver, err := sdk.AccAddressFromBech32(msg.Receiver)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "failed to create an AccAddress from a Bech32, err: %s", err)
+		return nil, err
 	}
 
 	if err := wk.Transfer(ctx, msg.ClassId, msg.Id, receiver); err != nil {
@@ -55,7 +55,7 @@ func (wk Wrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendRes
 		Receiver: msg.Receiver,
 	})
 	if err != nil {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventSend event: %s", err)
+		return nil, err
 	}
 
 	return &nft.MsgSendResponse{}, nil
