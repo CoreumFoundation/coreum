@@ -193,9 +193,9 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		&execMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
 		signer1KeyName)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
@@ -203,9 +203,9 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	// sign and submit with the min threshold
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		&execMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)
@@ -256,9 +256,9 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		grantMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)

@@ -2959,9 +2959,9 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		issueMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 
@@ -2973,9 +2973,9 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 	}
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		burnMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 
@@ -3026,9 +3026,9 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKeyGranter,
-		grantMsg,
+		chain.ClientContext.WithFromAddress(multisigGranterAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
 		granterSigner1KeyName, granterSigner2KeyName)
 	requireT.NoError(err)
 
@@ -3054,9 +3054,9 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKeyGrantee,
-		&execMsg,
+		chain.ClientContext.WithFromAddress(multisigGranteeAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
 		granteeSigner1KeyName, granteeSigner2KeyName)
 	requireT.NoError(err)
 
