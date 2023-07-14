@@ -14,10 +14,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/mempool"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -103,10 +109,83 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 	if err != nil {
 		return nil, 0, err
 	}
+	if txf.GasAdjustment() == 0 {
+		txf = txf.WithGasAdjustment(clientCtx.GasAdjustment())
+	}
 
-	txBytes, err := tx.BuildSimTx(txf, msgs...)
+	keyInfo, err := txf.Keybase().KeyByAddress(clientCtx.FromAddress())
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.WithStack(err)
+	}
+
+	msgsAny := make([]*codectypes.Any, 0, len(msgs))
+	for _, msg := range msgs {
+		msgAny, err := codectypes.NewAnyWithValue(msg)
+		if err != nil {
+			return nil, 0, errors.WithStack(err)
+		}
+		msgsAny = append(msgsAny, msgAny)
+	}
+
+	txBodyBytes, err := proto.Marshal(&sdktx.TxBody{
+		Messages: msgsAny,
+		Memo:     txf.Memo(),
+	})
+	if err != nil {
+		return nil, 0, errors.WithStack(err)
+	}
+
+	pubKeyAny, err := codectypes.NewAnyWithValue(keyInfo.GetPubKey())
+	if err != nil {
+		return nil, 0, errors.WithStack(err)
+	}
+
+	var signatureData signing.SignatureData
+	if keyInfo.GetAlgo() == hd.MultiType {
+		multisigPubKey, ok := keyInfo.GetPubKey().(*multisig.LegacyAminoPubKey)
+		if !ok {
+			return nil, 0, errors.New("public key cannot be converted to multisig public key")
+		}
+		multiSignatureData := make([]signing.SignatureData, 0, multisigPubKey.Threshold)
+		for i := uint32(0); i < multisigPubKey.Threshold; i++ {
+			multiSignatureData = append(multiSignatureData, &signing.SingleSignatureData{
+				SignMode: txf.SignMode(),
+			})
+		}
+		signatureData = &signing.MultiSignatureData{
+			Signatures: multiSignatureData,
+		}
+	} else {
+		signatureData = &signing.SingleSignatureData{
+			SignMode: txf.SignMode(),
+		}
+	}
+
+	modeInfo, signature := authtx.SignatureDataToModeInfoAndSig(signatureData)
+
+	simAuthInfoBytes, err := proto.Marshal(&sdktx.AuthInfo{
+		SignerInfos: []*sdktx.SignerInfo{
+			{
+				PublicKey: pubKeyAny,
+				ModeInfo:  modeInfo,
+				Sequence:  txf.Sequence(),
+			},
+		},
+		Fee: &sdktx.Fee{},
+	})
+	if err != nil {
+		return nil, 0, errors.WithStack(err)
+	}
+
+	txBytes, err := proto.Marshal(&sdktx.TxRaw{
+		BodyBytes:     txBodyBytes,
+		AuthInfoBytes: simAuthInfoBytes,
+		Signatures: [][]byte{
+			signature,
+		},
+	})
+	if err != nil {
+		return nil, 0, errors.WithStack(err)
 	}
 
 	txSvcClient := sdktx.NewServiceClient(clientCtx)
@@ -115,10 +194,6 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 	})
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "transaction estimation failed")
-	}
-
-	if txf.GasAdjustment() == 0 {
-		txf = txf.WithGasAdjustment(clientCtx.GasAdjustment())
 	}
 
 	return simRes, uint64(txf.GasAdjustment() * float64(simRes.GasInfo.GasUsed)), nil
