@@ -14,6 +14,7 @@ import (
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	protobufgrpc "github.com/gogo/protobuf/grpc"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 
 	"github.com/CoreumFoundation/coreum/app"
@@ -133,25 +134,54 @@ func (c ChainContext) GenMultisigAccount(signersCount, multisigThreshold int) (*
 	// create multisig account
 	multisigPublicKey := sdkmultisig.NewLegacyAminoPubKey(multisigThreshold, publicKeySet)
 
+	_, err := c.ClientContext.Keyring().SaveMultisig(uuid.New().String(), multisigPublicKey)
+	if err != nil {
+		return nil, nil, errors.New("storing multisig public key in keystore failed")
+	}
+
 	return multisigPublicKey, keyNamesSet, nil
 }
 
 // SignAndBroadcastMultisigTx signs the amino multisig tx with provided key names and broadcasts it.
 func (c ChainContext) SignAndBroadcastMultisigTx(
 	ctx context.Context,
-	multisigPublicKey *sdkmultisig.LegacyAminoPubKey,
-	msg sdk.Msg,
+	clientCtx client.Context,
 	txf client.Factory,
+	msg sdk.Msg,
 	signersKeyNames ...string,
 ) (*sdk.TxResponse, error) {
-	multisigAddress := sdk.AccAddress(multisigPublicKey.Address())
-	multisigAccInfo, err := client.GetAccountInfo(ctx, c.ClientContext, multisigAddress)
+	keyInfo, err := txf.Keybase().KeyByAddress(clientCtx.FromAddress())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if keyInfo.GetAlgo() != hd.MultiType {
+		return nil, errors.Errorf("%s is not a multisig account", c.ConvertToBech32Address(keyInfo.GetAddress()))
+	}
+	multisigPubKey, ok := keyInfo.GetPubKey().(*sdkmultisig.LegacyAminoPubKey)
+	if !ok {
+		return nil, errors.New("public key cannot be converted to multisig public key")
+	}
+
+	multisigAccInfo, err := client.GetAccountInfo(ctx, c.ClientContext, keyInfo.GetAddress())
 	if err != nil {
 		return nil, err
 	}
 	txf = txf.WithAccountNumber(multisigAccInfo.GetAccountNumber()).
 		WithSequence(multisigAccInfo.GetSequence()).
 		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
+
+	// estimate gas and add adjustment
+	if txf.SimulateAndExecute() {
+		_, gas, err := client.CalculateGas(ctx, clientCtx, txf, msg)
+		if err != nil {
+			return nil, err
+		}
+		txf = txf.WithGas(gas)
+	}
+	if txf.GasAdjustment() != 0 {
+		gas := uint64(txf.GasAdjustment() * float64(txf.Gas()))
+		txf = txf.WithGas(gas)
+	}
 
 	txBuilder, err := txf.BuildUnsignedTx(msg)
 	if err != nil {
@@ -169,15 +199,15 @@ func (c ChainContext) SignAndBroadcastMultisigTx(
 		return nil, err
 	}
 
-	multisigSig := multisigtypes.NewMultisig(len(multisigPublicKey.PubKeys))
+	multisigSig := multisigtypes.NewMultisig(len(multisigPubKey.PubKeys))
 	for _, sig := range signs {
-		if err := multisigtypes.AddSignatureV2(multisigSig, sig, multisigPublicKey.GetPubKeys()); err != nil {
+		if err := multisigtypes.AddSignatureV2(multisigSig, sig, multisigPubKey.GetPubKeys()); err != nil {
 			return nil, err
 		}
 	}
 
 	sigV2 := sdksigning.SignatureV2{
-		PubKey:   multisigPublicKey,
+		PubKey:   multisigPubKey,
 		Data:     multisigSig,
 		Sequence: multisigAccInfo.GetSequence(),
 	}
