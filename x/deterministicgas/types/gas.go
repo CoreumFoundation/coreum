@@ -13,7 +13,10 @@ import (
 	"github.com/CoreumFoundation/coreum/x/deterministicgas"
 )
 
-const fuseGasMultiplier = 10
+const (
+	fuseGasMultiplier    = 10
+	expectedMaxGasFactor = 5
+)
 
 // NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types.
 func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasConfig deterministicgas.Config) sdk.Router {
@@ -138,4 +141,9 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor"}, gasFactor, []metrics.Label{
 		{Name: "msg_name", Value: msgURL},
 	})
+	if gasFactor > expectedMaxGasFactor {
+		metrics.AddSampleWithLabels([]string{"deterministic_gas_factor_exceed_expected_max"}, gasFactor, []metrics.Label{
+			{Name: "msg_name", Value: msgURL},
+		})
+	}
 }
