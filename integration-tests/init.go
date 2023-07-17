@@ -51,21 +51,35 @@ var (
 	runUnsafe    bool
 )
 
+var (
+	coreumGRPCAddress string
+	coreumRPCAddress  string
+
+	coreumFundingMnemonic string
+	coreumStakerMnemonics stringsFlag
+
+	GaiaGRPCAddress     string
+	GaiaRPCAddress      string
+	GaiaFundingMnemonic string
+
+	OsmosisGRPCAddress     string
+	OsmosisRPCAddress      string
+	OsmosisFundingMnemonic string
+)
+
 func init() { //nolint:funlen // will be shortened after the crust merge
-	var (
-		coreumGRPCAddress string
-		coreumRPCAddress  string
-
-		coreumFundingMnemonic string
-		coreumStakerMnemonics stringsFlag
-	)
-
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 
 	flag.StringVar(&coreumGRPCAddress, "coreum-grpc-address", "localhost:9090", "GRPC address of cored node started by znet")
 	flag.StringVar(&coreumRPCAddress, "coreum-rpc-address", "http://localhost:26657", "RPC address of cored node started by znet")
 	flag.StringVar(&coreumFundingMnemonic, "coreum-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 	flag.Var(&coreumStakerMnemonics, "coreum-staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
+	flag.StringVar(&GaiaGRPCAddress, "gaia-grpc-address", "localhost:9080", "GRPC address of gaia node started by znet")
+	flag.StringVar(&GaiaRPCAddress, "gaia-rpc-address", "http://localhost:26557", "RPC address of gaia node started by znet")
+	flag.StringVar(&GaiaFundingMnemonic, "gaia-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
+	flag.StringVar(&OsmosisGRPCAddress, "osmosis-grpc-address", "localhost:9070", "GRPC address of osmosis node started by znet")
+	flag.StringVar(&OsmosisRPCAddress, "osmosis-rpc-address", "http://localhost:26457", "RPC address of osmosis node started by znet")
+	flag.StringVar(&OsmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 	// accept testing flags
 	testing.Init()
 	// parse additional flags
