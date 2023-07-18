@@ -106,7 +106,12 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 						if recoveryObj := recover(); recoveryObj != nil {
 							_, isOutOfGasError := recoveryObj.(sdk.ErrorOutOfGas)
 							if isOutOfGasError && isDeterministicDeliverTx {
-								reportDeterministicGasFactorExceedMetric(fuseGasMultiplier, proto.MessageName(msg))
+								metrics.AddSampleWithLabels(
+									[]string{"deterministic_gas_factor_exceed_fuse_gas_multiplier"},
+									1,
+									[]metrics.Label{
+										{Name: "msg_name", Value: proto.MessageName(msg)},
+									})
 							}
 							// panic one more time to be handled by base app middleware
 							panic(recoveryObj)
@@ -152,12 +157,8 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 		{Name: "msg_name", Value: msgURL},
 	})
 	if gasFactor > expectedMaxGasFactor {
-		reportDeterministicGasFactorExceedMetric(gasFactor, msgURL)
+		metrics.AddSampleWithLabels([]string{"deterministic_gas_factor_exceed_expected_max"}, gasFactor, []metrics.Label{
+			{Name: "msg_name", Value: msgURL},
+		})
 	}
-}
-
-func reportDeterministicGasFactorExceedMetric(gasFactor float32, msgURL string) {
-	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor_exceed_expected_max"}, gasFactor, []metrics.Label{
-		{Name: "msg_name", Value: msgURL},
-	})
 }
