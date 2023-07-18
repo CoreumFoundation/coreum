@@ -11,8 +11,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/genesis"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v2/genesis"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 )
 
 var (

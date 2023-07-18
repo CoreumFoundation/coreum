@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	coreumclitestutil "github.com/CoreumFoundation/coreum/testutil/cli"
-	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v2/testutil/cli"
+	"github.com/CoreumFoundation/coreum/v2/testutil/network"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/client/cli"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
 )
 
 func TestCmdTxIssueClass(t *testing.T) {

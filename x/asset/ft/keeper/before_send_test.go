@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	assetftkeeper "github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	assetftkeeper "github.com/CoreumFoundation/coreum/v2/x/asset/ft/keeper"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
 )
 
 func TestMain(m *testing.M) {

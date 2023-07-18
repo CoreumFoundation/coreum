@@ -17,10 +17,10 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/asset/ft/client/cli"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/keeper"
-	v1 "github.com/CoreumFoundation/coreum/x/asset/ft/legacy/v1"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/keeper"
+	v1 "github.com/CoreumFoundation/coreum/v2/x/asset/ft/legacy/v1"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 )
 
 var (

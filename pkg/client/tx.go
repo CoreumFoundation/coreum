@@ -29,7 +29,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
 // Factory is a re-export of the cosmos sdk tx.Factory type, to make usage of this package more convenient.

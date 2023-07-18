@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/testutil/network"
-	"github.com/CoreumFoundation/coreum/x/feemodel/client/cli"
-	"github.com/CoreumFoundation/coreum/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v2/testutil/network"
+	"github.com/CoreumFoundation/coreum/v2/x/feemodel/client/cli"
+	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
 func TestMinGasPrice(t *testing.T) {

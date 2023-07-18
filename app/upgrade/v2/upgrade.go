@@ -8,8 +8,8 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 
-	"github.com/CoreumFoundation/coreum/app/upgrade"
-	delaytypes "github.com/CoreumFoundation/coreum/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
+	delaytypes "github.com/CoreumFoundation/coreum/v2/x/delay/types"
 )
 
 // Name defines the upgrade name.

@@ -6,7 +6,7 @@ import "cosmos/base/v1beta1/coin.proto";
 
 import "coreum/asset/ft/v1/token.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/x/asset/ft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.

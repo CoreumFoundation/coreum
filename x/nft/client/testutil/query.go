@@ -2,7 +2,7 @@
 package testutil
 
 import (
-	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 func (s *IntegrationTestSuite) TestQueryClass() {

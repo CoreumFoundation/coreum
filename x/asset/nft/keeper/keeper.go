@@ -12,10 +12,10 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/pkg/store"
-	"github.com/CoreumFoundation/coreum/x/asset"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/pkg/store"
+	"github.com/CoreumFoundation/coreum/v2/x/asset"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.

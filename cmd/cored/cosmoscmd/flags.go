@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 )
 
 // OverwriteDefaultChainIDFlags searches for the DefaultChainID flag and replaces its value of the current default.

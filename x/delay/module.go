@@ -16,8 +16,8 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/delay/keeper"
-	"github.com/CoreumFoundation/coreum/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v2/x/delay/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/delay/types"
 )
 
 var (

@@ -12,10 +12,10 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/x/asset/nft"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	rawnft "github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	rawnft "github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 func TestInitAndExportGenesis(t *testing.T) {

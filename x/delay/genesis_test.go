@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	"github.com/CoreumFoundation/coreum/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/delay/types"
 )
 
 func TestInitAndExportGenesis(t *testing.T) {

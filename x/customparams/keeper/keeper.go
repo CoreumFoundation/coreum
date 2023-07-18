@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/CoreumFoundation/coreum/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v2/x/customparams/types"
 )
 
 // Keeper is customparams module Keeper.

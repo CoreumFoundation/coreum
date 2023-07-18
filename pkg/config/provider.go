@@ -23,7 +23,7 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 )
 
 var (

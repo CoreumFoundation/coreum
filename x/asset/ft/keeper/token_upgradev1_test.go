@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 )
 
 func TestTokenUpgradeV1(t *testing.T) {

@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/keeper"
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 func TestOriginalClassExistsInvariant(t *testing.T) {

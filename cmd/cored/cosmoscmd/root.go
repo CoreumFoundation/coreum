@@ -38,8 +38,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 )
 
 type (

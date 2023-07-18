@@ -3,8 +3,8 @@ package testutil
 import (
 	"fmt"
 
-	"github.com/CoreumFoundation/coreum/testutil/rest"
-	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/testutil/rest"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 func (s *IntegrationTestSuite) TestQueryBalanceGRPC() { //nolint:revive // test

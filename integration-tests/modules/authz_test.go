@@ -12,8 +12,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/client"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 )
 
 // TestAuthz tests the authz module Grant/Execute/Revoke messages execution and their deterministic gas.

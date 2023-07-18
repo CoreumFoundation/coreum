@@ -18,9 +18,9 @@ import (
 	"github.com/stretchr/testify/require"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	customparamstypes "github.com/CoreumFoundation/coreum/x/customparams/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	customparamstypes "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
 )
 
 // TestStakingProposalParamChange checks that staking param change proposal works correctly.
