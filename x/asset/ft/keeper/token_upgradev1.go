@@ -35,6 +35,15 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 		return err
 	}
 
+	// we don't read the current TokenUpgradeStatuses because we know that this is the initial state
+	tokenUpgradeStatuses := types.TokenUpgradeStatuses{
+		V1: &types.TokenUpgradeV1Status{
+			IbcEnabled: ibcEnabled,
+			StartTime:  ctx.BlockTime(),
+			EndTime:    ctx.BlockTime().Add(params.TokenUpgradeGracePeriod),
+		},
+	}
+
 	if !ibcEnabled {
 		// if issuer does not want to enable IBC we may upgrade the token immediately
 		// because it's behaviour is not changed
@@ -45,8 +54,12 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 		}
 		k.SetDefinition(ctx, issuer, subunit, def)
 		k.ClearPendingVersion(ctx, denom)
+		tokenUpgradeStatuses.V1.EndTime = tokenUpgradeStatuses.V1.StartTime
+		k.SetTokenUpgradeStatuses(ctx, denom, tokenUpgradeStatuses)
 		return nil
 	}
+
+	k.SetTokenUpgradeStatuses(ctx, denom, tokenUpgradeStatuses)
 
 	data := &types.DelayedTokenUpgradeV1{
 		Denom: denom,

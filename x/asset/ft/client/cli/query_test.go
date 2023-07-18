@@ -92,6 +92,31 @@ func TestQueryToken(t *testing.T) {
 	requireT.Equal(initialAmount.String(), respBalance.Balance.String())
 }
 
+func TestCmdTokenUpgradeStatuses(t *testing.T) {
+	requireT := require.New(t)
+
+	testNetwork := network.New(t)
+
+	token := types.Token{
+		Symbol:      "btc" + uuid.NewString()[:4],
+		Subunit:     "satoshi" + uuid.NewString()[:4],
+		Precision:   8,
+		Description: "description",
+		Features:    []types.Feature{},
+	}
+	ctx := testNetwork.Validators[0].ClientCtx
+
+	initialAmount := sdk.NewInt(100)
+	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
+
+	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTokenUpgradeStatuses(), []string{denom, "--output", "json"})
+	var statusesRes types.QueryTokenUpgradeStatusesResponse
+	requireT.NoError(err)
+	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &statusesRes))
+	// we can't check non-empty values
+	requireT.Nil(statusesRes.Statuses.V1)
+}
+
 func TestQueryParams(t *testing.T) {
 	requireT := require.New(t)
 

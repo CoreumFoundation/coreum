@@ -37,41 +37,48 @@ var (
 	WhitelistedBalancesKeyPrefix = []byte{0x05}
 	// PendingTokenUpgradeKeyPrefix defines the key prefix for the pending version upgrades.
 	PendingTokenUpgradeKeyPrefix = []byte{0x06}
+	// TokenUpgradeStatusesKeyPrefix defines the key prefix for the fungible token upgrade statuses.
+	TokenUpgradeStatusesKeyPrefix = []byte{0x07}
 )
 
-// CreateTokenKey constructs the key for the fungible token.
+// CreateTokenKey creates the key for the fungible token.
 func CreateTokenKey(issuer sdk.AccAddress, subunit string) []byte {
 	return store.JoinKeys(CreateIssuerTokensPrefix(issuer), []byte(strings.ToLower(subunit)))
 }
 
-// CreatePendingTokenUpgradeKey constructs the prefix for the fungible token version upgrade.
+// CreatePendingTokenUpgradeKey creates the key for the fungible token version upgrade.
 func CreatePendingTokenUpgradeKey(denom string) []byte {
 	return store.JoinKeys(PendingTokenUpgradeKeyPrefix, []byte(denom))
 }
 
-// CreateIssuerTokensPrefix constructs the prefix for the fungible token issued by account.
+// CreateIssuerTokensPrefix creates the key for the fungible token issued by account.
 func CreateIssuerTokensPrefix(issuer sdk.AccAddress) []byte {
 	return store.JoinKeys(TokenKeyPrefix, address.MustLengthPrefix(issuer))
 }
 
-// CreateSymbolKey creates the prefix for a ft symbol.
+// CreateSymbolKey creates the key for a ft symbol.
 func CreateSymbolKey(addr []byte, symbol string) []byte {
 	return store.JoinKeys(store.JoinKeys(SymbolKeyPrefix, addr), []byte(symbol))
 }
 
-// CreateFrozenBalancesKey creates the prefix for an account's frozen balances.
+// CreateFrozenBalancesKey creates the key for an account's frozen balances.
 func CreateFrozenBalancesKey(addr []byte) []byte {
 	return store.JoinKeys(FrozenBalancesKeyPrefix, address.MustLengthPrefix(addr))
 }
 
-// CreateGlobalFreezeKey creates the prefix for fungible token global freeze key.
+// CreateGlobalFreezeKey creates the key for fungible token global freeze key.
 func CreateGlobalFreezeKey(denom string) []byte {
 	return store.JoinKeys(GlobalFreezeKeyPrefix, []byte(denom))
 }
 
-// CreateWhitelistedBalancesKey creates the prefix for an account's whitelisted balances.
+// CreateWhitelistedBalancesKey creates the key for an account's whitelisted balances.
 func CreateWhitelistedBalancesKey(addr []byte) []byte {
 	return store.JoinKeys(WhitelistedBalancesKeyPrefix, address.MustLengthPrefix(addr))
+}
+
+// CreateTokenUpgradeStatusesKey creates the key for the fungible token upgrade statuses.
+func CreateTokenUpgradeStatusesKey(denom string) []byte {
+	return store.JoinKeys(TokenUpgradeStatusesKeyPrefix, []byte(denom))
 }
 
 // AddressFromBalancesStore returns an account address from a balances prefix

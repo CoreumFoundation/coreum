@@ -60,7 +60,7 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data codec.Pro
 
 	dataAny, err := codectypes.NewAnyWithValue(data)
 	if err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrInvalidData, "failed to construct new Any, err: %s", err)
 	}
 
 	b, err := k.cdc.Marshal(dataAny)

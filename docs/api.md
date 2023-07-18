@@ -29,6 +29,8 @@
     - [QueryParamsResponse](#coreum.asset.ft.v1.QueryParamsResponse)
     - [QueryTokenRequest](#coreum.asset.ft.v1.QueryTokenRequest)
     - [QueryTokenResponse](#coreum.asset.ft.v1.QueryTokenResponse)
+    - [QueryTokenUpgradeStatusesRequest](#coreum.asset.ft.v1.QueryTokenUpgradeStatusesRequest)
+    - [QueryTokenUpgradeStatusesResponse](#coreum.asset.ft.v1.QueryTokenUpgradeStatusesResponse)
     - [QueryTokensRequest](#coreum.asset.ft.v1.QueryTokensRequest)
     - [QueryTokensResponse](#coreum.asset.ft.v1.QueryTokensResponse)
     - [QueryWhitelistedBalanceRequest](#coreum.asset.ft.v1.QueryWhitelistedBalanceRequest)
@@ -42,6 +44,8 @@
     - [Definition](#coreum.asset.ft.v1.Definition)
     - [DelayedTokenUpgradeV1](#coreum.asset.ft.v1.DelayedTokenUpgradeV1)
     - [Token](#coreum.asset.ft.v1.Token)
+    - [TokenUpgradeStatuses](#coreum.asset.ft.v1.TokenUpgradeStatuses)
+    - [TokenUpgradeV1Status](#coreum.asset.ft.v1.TokenUpgradeV1Status)
   
     - [Feature](#coreum.asset.ft.v1.Feature)
   
@@ -1455,6 +1459,36 @@ QueryParamsResponse defines the response type for querying x/asset/ft parameters
 
 
 
+<a name="coreum.asset.ft.v1.QueryTokenUpgradeStatusesRequest"></a>
+
+### QueryTokenUpgradeStatusesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.QueryTokenUpgradeStatusesResponse"></a>
+
+### QueryTokenUpgradeStatusesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `statuses` | [TokenUpgradeStatuses](#coreum.asset.ft.v1.TokenUpgradeStatuses) |  |  |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.QueryTokensRequest"></a>
 
 ### QueryTokensRequest
@@ -1566,6 +1600,7 @@ Query defines the gRPC querier service.
 | `Params` | [QueryParamsRequest](#coreum.asset.ft.v1.QueryParamsRequest) | [QueryParamsResponse](#coreum.asset.ft.v1.QueryParamsResponse) | Params queries the parameters of x/asset/ft module. | GET|/coreum/asset/ft/v1/params|
 | `Tokens` | [QueryTokensRequest](#coreum.asset.ft.v1.QueryTokensRequest) | [QueryTokensResponse](#coreum.asset.ft.v1.QueryTokensResponse) | Tokens queries the fungible tokens of the module. | GET|/coreum/asset/ft/v1/tokens|
 | `Token` | [QueryTokenRequest](#coreum.asset.ft.v1.QueryTokenRequest) | [QueryTokenResponse](#coreum.asset.ft.v1.QueryTokenResponse) | Token queries the fungible token of the module. | GET|/coreum/asset/ft/v1/tokens/{denom}|
+| `TokenUpgradeStatuses` | [QueryTokenUpgradeStatusesRequest](#coreum.asset.ft.v1.QueryTokenUpgradeStatusesRequest) | [QueryTokenUpgradeStatusesResponse](#coreum.asset.ft.v1.QueryTokenUpgradeStatusesResponse) | TokenUpgradeStatuses returns token upgrades info. | GET|/coreum/asset/ft/v1/tokens/{denom}/upgrade-statuses|
 | `Balance` | [QueryBalanceRequest](#coreum.asset.ft.v1.QueryBalanceRequest) | [QueryBalanceResponse](#coreum.asset.ft.v1.QueryBalanceResponse) | Balance returns balance of the denom for the account. | GET|/coreum/asset/ft/v1/accounts/{account}/balances/summary/{denom}|
 | `FrozenBalances` | [QueryFrozenBalancesRequest](#coreum.asset.ft.v1.QueryFrozenBalancesRequest) | [QueryFrozenBalancesResponse](#coreum.asset.ft.v1.QueryFrozenBalancesResponse) | FrozenBalances returns all the frozen balances for the account. | GET|/coreum/asset/ft/v1/accounts/{account}/balances/frozen|
 | `FrozenBalance` | [QueryFrozenBalanceRequest](#coreum.asset.ft.v1.QueryFrozenBalanceRequest) | [QueryFrozenBalanceResponse](#coreum.asset.ft.v1.QueryFrozenBalanceResponse) | FrozenBalance returns frozen balance of the denom for the account. | GET|/coreum/asset/ft/v1/accounts/{account}/balances/frozen/{denom}|
@@ -1637,6 +1672,38 @@ Token is a full representation of the fungible token.
 | `burn_rate` | [string](#string) |  | burn_rate is a number between 0 and 1 which will be multiplied by send amount to determine burn_amount. This value will be burnt on top of the send amount. |
 | `send_commission_rate` | [string](#string) |  | send_commission_rate is a number between 0 and 1 which will be multiplied by send amount to determine amount sent to the token issuer account. |
 | `version` | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.TokenUpgradeStatuses"></a>
+
+### TokenUpgradeStatuses
+TokenUpgradeStatuses defines all statuses of the token migrations.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `v1` | [TokenUpgradeV1Status](#coreum.asset.ft.v1.TokenUpgradeV1Status) |  |  |
+
+
+
+
+
+
+<a name="coreum.asset.ft.v1.TokenUpgradeV1Status"></a>
+
+### TokenUpgradeV1Status
+TokenUpgradeV1Status defines the current status of the v1 token migration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `ibc_enabled` | [bool](#bool) |  |  |
+| `start_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| `end_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
 
 
 

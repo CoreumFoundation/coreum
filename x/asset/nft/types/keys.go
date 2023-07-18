@@ -61,7 +61,7 @@ func CreateIssuerClassPrefix(issuer sdk.AccAddress) ([]byte, error) {
 func CreateFreezingKey(classID, nftID string) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to create a freezing key, err: %s", err)
 	}
 
 	return store.JoinKeys(NFTFreezingKeyPrefix, compositeKey), nil
@@ -71,7 +71,7 @@ func CreateFreezingKey(classID, nftID string) ([]byte, error) {
 func ParseFreezingKey(key []byte) (string, string, error) {
 	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
 	if err != nil {
-		return "", "", err
+		return "", "", sdkerrors.Wrapf(ErrInvalidKey, "failed to parse a freezing key, err: %s", err)
 	}
 	if len(parsedKeys) != 2 {
 		err = sdkerrors.Wrapf(ErrInvalidKey, "freezing key must be composed to 2 length prefixed keys")
@@ -84,7 +84,7 @@ func ParseFreezingKey(key []byte) (string, string, error) {
 func CreateWhitelistingKey(classID, nftID string, account sdk.AccAddress) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID), account)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to create a whitelisting key, err: %s", err)
 	}
 
 	return store.JoinKeys(NFTWhitelistingKeyPrefix, compositeKey), nil
@@ -94,7 +94,7 @@ func CreateWhitelistingKey(classID, nftID string, account sdk.AccAddress) ([]byt
 func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
 	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
 	if err != nil {
-		return "", "", nil, err
+		return "", "", nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to parse a whitelisting key, err: %s", err)
 	}
 	if len(parsedKeys) != 3 {
 		err = sdkerrors.Wrapf(ErrInvalidKey, "whitelisting key must be composed of 3 length prefixed keys")
@@ -107,7 +107,7 @@ func ParseWhitelistingKey(key []byte) (string, string, sdk.AccAddress, error) {
 func CreateBurningKey(classID, nftID string) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID), []byte(nftID))
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to create a burning key, err: %s", err)
 	}
 
 	return store.JoinKeys(NFTBurningKeyPrefix, compositeKey), nil
@@ -117,7 +117,7 @@ func CreateBurningKey(classID, nftID string) ([]byte, error) {
 func CreateClassBurningKey(classID string) ([]byte, error) {
 	compositeKey, err := store.JoinKeysWithLength([]byte(classID))
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(ErrInvalidKey, "failed to create a class burning key, err: %s", err)
 	}
 
 	return store.JoinKeys(NFTBurningKeyPrefix, compositeKey), nil
@@ -127,7 +127,7 @@ func CreateClassBurningKey(classID string) ([]byte, error) {
 func ParseBurningKey(key []byte) (string, string, error) {
 	parsedKeys, err := store.ParseLengthPrefixedKeys(key)
 	if err != nil {
-		return "", "", err
+		return "", "", sdkerrors.Wrapf(ErrInvalidKey, "failed to parse a burning key, err: %s", err)
 	}
 	if len(parsedKeys) != 2 {
 		err = sdkerrors.Wrapf(ErrInvalidKey, "burning key must be composed to 2 length prefixed keys")

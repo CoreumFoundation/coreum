@@ -28,6 +28,11 @@ service Query {
     option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}";
   }
 
+  // TokenUpgradeStatuses returns token upgrades info.
+  rpc TokenUpgradeStatuses(QueryTokenUpgradeStatusesRequest) returns (QueryTokenUpgradeStatusesResponse) {
+    option (google.api.http).get = "/coreum/asset/ft/v1/tokens/{denom}/upgrade-statuses";
+  }
+
   // Balance returns balance of the denom for the account.
   rpc Balance(QueryBalanceRequest) returns (QueryBalanceResponse) {
     option (google.api.http).get = "/coreum/asset/ft/v1/accounts/{account}/balances/summary/{denom}";
@@ -68,6 +73,14 @@ message QueryTokenRequest {
 
 message QueryTokenResponse {
   Token token = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryTokenUpgradeStatusesRequest {
+  string denom = 1;
+}
+
+message QueryTokenUpgradeStatusesResponse {
+  TokenUpgradeStatuses statuses = 1 [(gogoproto.nullable) = false];
 }
 
 message QueryTokensRequest {
@@ -120,13 +133,13 @@ message QueryFrozenBalancesRequest {
   // account specifies the account onto which we query frozen balances
   string account = 2;
 }
-  
+
 message QueryFrozenBalancesResponse {
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 1;
   // balances contains the frozen balances on the queried account
   repeated cosmos.base.v1beta1.Coin balances = 2 [
-    (gogoproto.nullable) = false, 
+    (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
