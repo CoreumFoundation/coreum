@@ -5,7 +5,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	assetNftTypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/x/nft"
 )
 
@@ -59,7 +58,7 @@ func (k Keeper) Burn(ctx sdk.Context, classID, nftID string) error {
 		Owner:   owner.String(),
 	})
 	if err != nil {
-		return sdkerrors.Wrapf(assetNftTypes.ErrInvalidState, "failed to emit EventBurn event: %s", err)
+		return err
 	}
 
 	return nil
