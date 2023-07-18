@@ -172,7 +172,7 @@ func (k Keeper) IssueClass(ctx sdk.Context, settings types.IssueClassSettings) (
 		Features:    settings.Features,
 		RoyaltyRate: settings.RoyaltyRate,
 	}); err != nil {
-		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit  event EventClassIssued: %s", err)
+		return "", sdkerrors.Wrapf(types.ErrInvalidInput, "failed to emit event EventClassIssued: %s", err)
 	}
 
 	return id, nil
@@ -778,7 +778,7 @@ func (k Keeper) freezeOrUnfreeze(ctx sdk.Context, sender sdk.AccAddress, classID
 	}
 
 	if err = ctx.EventManager().EmitTypedEvent(event); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit  event: %v, err: %s", event, err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit event: %v, err: %s", event, err)
 	}
 
 	return nil
@@ -822,7 +822,7 @@ func (k Keeper) addToWhitelistOrRemoveFromWhitelist(ctx sdk.Context, classID, nf
 	}
 
 	if err = ctx.EventManager().EmitTypedEvent(event); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit  event: %v, err: %s", event, err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit event: %v, err: %s", event, err)
 	}
 
 	return nil
