@@ -96,14 +96,16 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					sdkCtx := sdk.UnwrapSDKContext(ctx)
 					msg := req.(sdk.Msg)
 					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, msg, s.deterministicGasConfig)
+
+					// gas metrics are reported only if message type is deterministic, and was successful
+					// CheckTx and ReCheckTx phases are ignored, since are only interested in the real execution
+					// of the message at DeliverTx phase.
+					isDeterministicDeliverTx := isDeterministic && !newSDKCtx.IsCheckTx() && !newSDKCtx.IsReCheckTx()
 					defer func() {
 						// handle case when the expected deterministic message gas multiplied by fuseGasMultiplier exceeded spent gas
 						if recoveryObj := recover(); recoveryObj != nil {
 							_, isOutOfGasError := recoveryObj.(sdk.ErrorOutOfGas)
-							if isOutOfGasError &&
-								isDeterministic &&
-								!newSDKCtx.IsCheckTx() &&
-								!newSDKCtx.IsReCheckTx() {
+							if isOutOfGasError && isDeterministicDeliverTx {
 								reportDeterministicGasFactorExceedMetric(fuseGasMultiplier, proto.MessageName(msg))
 							}
 							// panic one more time to be handled by base app middleware
@@ -112,13 +114,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					}()
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
-					// gas metrics are reported only if message type is deterministic, and was successful
-					// CheckTx and ReCheckTx phases are ignored, since are only interested in the real execution
-					// of the message at DeliverTx phase.
-					if err == nil &&
-						isDeterministic &&
-						!newSDKCtx.IsCheckTx() &&
-						!newSDKCtx.IsReCheckTx() {
+					if err == nil && isDeterministicDeliverTx {
 						reportDeterministicGasMetric(sdkCtx, newSDKCtx, gasBefore, proto.MessageName(msg))
 					}
 					return res, err
