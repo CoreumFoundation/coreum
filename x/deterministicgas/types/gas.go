@@ -96,6 +96,20 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 					sdkCtx := sdk.UnwrapSDKContext(ctx)
 					msg := req.(sdk.Msg)
 					newSDKCtx, gasBefore, isDeterministic := ctxForDeterministicGas(sdkCtx, msg, s.deterministicGasConfig)
+					defer func() {
+						// handle case when the expected deterministic message gas multiplied by fuseGasMultiplier exceeded spent gas
+						if recoveryObj := recover(); recoveryObj != nil {
+							_, isOutOfGasError := recoveryObj.(sdk.ErrorOutOfGas)
+							if isOutOfGasError &&
+								isDeterministic &&
+								!newSDKCtx.IsCheckTx() &&
+								!newSDKCtx.IsReCheckTx() {
+								reportDeterministicGasFactorExceedMetric(fuseGasMultiplier, proto.MessageName(msg))
+							}
+							// panic one more time to be handled by base app middleware
+							panic(recoveryObj)
+						}
+					}()
 					//nolint:contextcheck // Naming sdk functions (sdk.WrapSDKContext) is not our responsibility
 					res, err := handler(sdk.WrapSDKContext(newSDKCtx), req)
 					// gas metrics are reported only if message type is deterministic, and was successful
@@ -142,8 +156,12 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 		{Name: "msg_name", Value: msgURL},
 	})
 	if gasFactor > expectedMaxGasFactor {
-		metrics.AddSampleWithLabels([]string{"deterministic_gas_factor_exceed_expected_max"}, gasFactor, []metrics.Label{
-			{Name: "msg_name", Value: msgURL},
-		})
+		reportDeterministicGasFactorExceedMetric(gasFactor, msgURL)
 	}
+}
+
+func reportDeterministicGasFactorExceedMetric(gasFactor float32, msgURL string) {
+	metrics.AddSampleWithLabels([]string{"deterministic_gas_factor_exceed_expected_max"}, gasFactor, []metrics.Label{
+		{Name: "msg_name", Value: msgURL},
+	})
 }
