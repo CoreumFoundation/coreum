@@ -107,7 +107,7 @@ func (s *deterministicMsgServer) RegisterService(sd *googlegrpc.ServiceDesc, han
 							_, isOutOfGasError := recoveryObj.(sdk.ErrorOutOfGas)
 							if isOutOfGasError && isDeterministicDeliverTx {
 								metrics.AddSampleWithLabels(
-									[]string{"deterministic_gas_factor_exceed_fuse_gas_multiplier"},
+									[]string{"deterministic_gas_exceed_fuse_gas_multiplier"},
 									1,
 									[]metrics.Label{
 										{Name: "msg_name", Value: proto.MessageName(msg)},
