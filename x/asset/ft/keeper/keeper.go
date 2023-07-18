@@ -223,7 +223,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
 	}); err != nil {
-		return "", sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventIssued event: %s", err)
+		return "", sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit  EventIssued event: %s", err)
 	}
 
 	k.logger(ctx).Debug("issued new fungible token with denom %d", denom)
@@ -339,7 +339,7 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 		CurrentAmount:  newFrozenBalance.Amount,
 	})
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventFrozenAmountChanged event: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit  EventFrozenAmountChanged event: %s", err)
 	}
 
 	return nil
@@ -380,7 +380,7 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 		CurrentAmount:  newFrozenBalance.Amount,
 	})
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventFrozenAmountChanged event: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit  EventFrozenAmountChanged event: %s", err)
 	}
 
 	return nil
@@ -485,7 +485,7 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 		CurrentAmount:  coin.Amount,
 	})
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventWhitelistedAmountChanged event: %s", err)
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit  EventWhitelistedAmountChanged event: %s", err)
 	}
 
 	return nil

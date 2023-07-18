@@ -59,7 +59,7 @@ func (k Keeper) Burn(ctx sdk.Context, classID, nftID string) error {
 		Owner:   owner.String(),
 	})
 	if err != nil {
-		return sdkerrors.Wrapf(assetNftTypes.ErrInvalidState, "can't emit EventBurn event: %s", err)
+		return sdkerrors.Wrapf(assetNftTypes.ErrInvalidState, "failed to emit  EventBurn event: %s", err)
 	}
 
 	return nil
