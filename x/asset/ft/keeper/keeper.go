@@ -223,7 +223,7 @@ func (k Keeper) IssueVersioned(ctx sdk.Context, settings types.IssueSettings, ve
 		BurnRate:           settings.BurnRate,
 		SendCommissionRate: settings.SendCommissionRate,
 	}); err != nil {
-		return "", sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventIssued event: %s", err)
+		return "", sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventIssued event: %s", err)
 	}
 
 	k.logger(ctx).Debug("issued new fungible token with denom %d", denom)
@@ -332,14 +332,13 @@ func (k Keeper) Freeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Co
 	newFrozenBalance := frozenBalance.Add(coin)
 	frozenStore.SetBalance(newFrozenBalance)
 
-	err = ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
+	if err = ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: frozenBalance.Amount,
 		CurrentAmount:  newFrozenBalance.Amount,
-	})
-	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventFrozenAmountChanged event: %s", err)
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventFrozenAmountChanged event: %s", err)
 	}
 
 	return nil
@@ -373,14 +372,13 @@ func (k Keeper) Unfreeze(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.
 	newFrozenBalance := frozenBalance.Sub(coin)
 	frozenStore.SetBalance(newFrozenBalance)
 
-	err = ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
+	if err = ctx.EventManager().EmitTypedEvent(&types.EventFrozenAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: frozenBalance.Amount,
 		CurrentAmount:  newFrozenBalance.Amount,
-	})
-	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventFrozenAmountChanged event: %s", err)
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventFrozenAmountChanged event: %s", err)
 	}
 
 	return nil
@@ -478,14 +476,13 @@ func (k Keeper) SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddre
 	previousWhitelistedBalance := whitelistedStore.Balance(coin.Denom)
 	whitelistedStore.SetBalance(coin)
 
-	err = ctx.EventManager().EmitTypedEvent(&types.EventWhitelistedAmountChanged{
+	if err = ctx.EventManager().EmitTypedEvent(&types.EventWhitelistedAmountChanged{
 		Account:        addr.String(),
 		Denom:          coin.Denom,
 		PreviousAmount: previousWhitelistedBalance.Amount,
 		CurrentAmount:  coin.Amount,
-	})
-	if err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidState, "can't emit EventWhitelistedAmountChanged event: %s", err)
+	}); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidState, "failed to emit EventWhitelistedAmountChanged event: %s", err)
 	}
 
 	return nil

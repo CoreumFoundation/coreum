@@ -17,4 +17,6 @@ var (
 	ErrNFTNotFound = sdkerrors.Register(ModuleName, 5, "non-fungible token not found")
 	// ErrInvalidKey is returned when the provided store key is invalid.
 	ErrInvalidKey = sdkerrors.Register(ModuleName, 6, "invalid key")
+	// ErrInvalidState is returned when state of the module is invalid.
+	ErrInvalidState = sdkerrors.Register(ModuleName, 7, "invalid state")
 )
