@@ -422,7 +422,7 @@ If IBC feature is disabled token can never leave the Coreum chain.
 
 # Upgrading token to v1
 
-In version `v2` of the blockchain we introduced an ability fot tokens to be sent to and received from other Cosmos SDK-based chains using IBC protocol.
+In version `v2` of the blockchain we introduced an ability for the tokens to be sent to and received from other Cosmos SDK-based chains using IBC protocol.
 
 Now, whenever new fungible token is created, the issuer might decide if IBC transfers are enabled or disabled for that token. The decision might be made once, when token is created, and can never be changed later. It is done by specifying `ibc` feature in the token issuance transaction.
 
