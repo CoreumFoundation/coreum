@@ -450,3 +450,11 @@ To upgrade the token and **disable IBC**, use this command:
 ```console
 cored tx assetft upgrade-v1 [denom] --ibc-enabled=false --from [sender]
 ``` 
+
+## Querying the upgrade status
+
+Everyone is able to check what decision has been made by the issuer, by running the query command:
+
+```console
+cored q assetft token-upgrade-statuses [denom]
+```
