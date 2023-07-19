@@ -815,11 +815,11 @@ func (ft *ftV1UpgradeTest) changeGracePeriod(t *testing.T) {
 		})
 }
 
-type ftFeaturesTest struct {
+type ftFeatureMigrationTest struct {
 	denom string
 }
 
-func (ft *ftFeaturesTest) Before(t *testing.T) {
+func (ft *ftFeatureMigrationTest) Before(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -864,14 +864,14 @@ func (ft *ftFeaturesTest) Before(t *testing.T) {
 	ft.denom = assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 }
 
-func (ft *ftFeaturesTest) After(t *testing.T) {
+func (ft *ftFeatureMigrationTest) After(t *testing.T) {
 	ft.verifyTokenIsFixed(t)
 	ft.tryCreatingTokenWithInvalidFeature(t)
 	ft.tryCreatingTokenWithDuplicatedFeature(t)
 	ft.createValidToken(t)
 }
 
-func (ft *ftFeaturesTest) verifyTokenIsFixed(t *testing.T) {
+func (ft *ftFeatureMigrationTest) verifyTokenIsFixed(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -890,7 +890,7 @@ func (ft *ftFeaturesTest) verifyTokenIsFixed(t *testing.T) {
 	}, resp.Token.Features)
 }
 
-func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
+func (ft *ftFeatureMigrationTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -925,10 +925,10 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid input")
+	requireT.ErrorContains(err, "invalid feature")
 }
 
-func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
+func (ft *ftFeatureMigrationTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -963,10 +963,10 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid input")
+	requireT.ErrorContains(err, "invalid feature")
 }
 
-func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
+func (ft *ftFeatureMigrationTest) createValidToken(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)

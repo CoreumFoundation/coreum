@@ -286,29 +286,29 @@ type StaticConfigProvider struct {
 }
 
 // GetChainID returns chain ID.
-func (jcp StaticConfigProvider) GetChainID() constant.ChainID {
-	return constant.ChainID(jcp.genesisDoc.ChainID)
+func (scp StaticConfigProvider) GetChainID() constant.ChainID {
+	return constant.ChainID(scp.genesisDoc.ChainID)
 }
 
 // GetDenom returns denom.
-func (jcp StaticConfigProvider) GetDenom() string {
-	return jcp.denom
+func (scp StaticConfigProvider) GetDenom() string {
+	return scp.denom
 }
 
 // GetAddressPrefix returns address prefix.
-func (jcp StaticConfigProvider) GetAddressPrefix() string {
-	return jcp.addressPrefix
+func (scp StaticConfigProvider) GetAddressPrefix() string {
+	return scp.addressPrefix
 }
 
 // EncodeGenesis returns encoded genesis doc.
-func (jcp StaticConfigProvider) EncodeGenesis() ([]byte, error) {
-	return jcp.content, nil
+func (scp StaticConfigProvider) EncodeGenesis() ([]byte, error) {
+	return scp.content, nil
 }
 
 // AppState returns the app state from the genesis doc of the network.
-func (jcp StaticConfigProvider) AppState() (map[string]json.RawMessage, error) {
+func (scp StaticConfigProvider) AppState() (map[string]json.RawMessage, error) {
 	var appState map[string]json.RawMessage
-	if err := json.Unmarshal(jcp.genesisDoc.AppState, &appState); err != nil {
+	if err := json.Unmarshal(scp.genesisDoc.AppState, &appState); err != nil {
 		return nil, errors.Wrap(err, "not able to parse genesis app state")
 	}
 

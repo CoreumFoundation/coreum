@@ -158,13 +158,13 @@ func (f Faucet) prepareMultiSendMessage(requests []fundingRequest) *banktypes.Ms
 		for _, a := range r.AccountsToFund {
 			sum = sum.Add(a.Amount)
 			msg.Outputs = append(msg.Outputs, banktypes.Output{
-				Address: f.chainCtx.ConvertToBech32Address(a.Address),
+				Address: f.chainCtx.MustConvertToBech32Address(a.Address),
 				Coins:   sdk.NewCoins(a.Amount),
 			})
 		}
 	}
 	msg.Inputs = []banktypes.Input{{
-		Address: f.chainCtx.ConvertToBech32Address(f.chainCtx.ClientContext.FromAddress()),
+		Address: f.chainCtx.MustConvertToBech32Address(f.chainCtx.ClientContext.FromAddress()),
 		Coins:   sum,
 	}}
 

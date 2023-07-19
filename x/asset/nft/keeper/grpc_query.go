@@ -20,7 +20,7 @@ type QueryKeeper interface {
 	IsFrozen(ctx sdk.Context, classID, nftID string) (bool, error)
 	IsWhitelisted(ctx sdk.Context, classID, nftID string, account sdk.AccAddress) (bool, error)
 	GetWhitelistedAccountsForNFT(ctx sdk.Context, classID, nftID string, q *query.PageRequest) ([]string, *query.PageResponse, error)
-	GetBurnt(ctx sdk.Context, classID string, q *query.PageRequest) (*query.PageResponse, []string, error)
+	GetBurntByClass(ctx sdk.Context, classID string, q *query.PageRequest) (*query.PageResponse, []string, error)
 	IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error)
 }
 
@@ -121,7 +121,7 @@ func (qs QueryService) BurntNFT(ctx context.Context, req *types.QueryBurntNFTReq
 
 // BurntNFTsInClass returns the list of burnt NFTs in a class.
 func (qs QueryService) BurntNFTsInClass(ctx context.Context, req *types.QueryBurntNFTsInClassRequest) (*types.QueryBurntNFTsInClassResponse, error) {
-	pageRes, list, err := qs.keeper.GetBurnt(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Pagination)
+	pageRes, list, err := qs.keeper.GetBurntByClass(sdk.UnwrapSDKContext(ctx), req.ClassId, req.Pagination)
 	if err != nil {
 		return nil, err
 	}

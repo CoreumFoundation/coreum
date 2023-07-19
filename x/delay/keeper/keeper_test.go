@@ -142,7 +142,7 @@ func TestDelayedExecution(t *testing.T) {
 	requireT.Len(executedItems, 1)
 	requireT.Equal(delayed1, executedItems[0])
 
-	// two items should be executed
+	// three items should be executed
 	executedItems = []*delayedItem{}
 	testApp.BeginNextBlock(blockTime.Add(3 * time.Second))
 	requireT.Len(executedItems, 3)

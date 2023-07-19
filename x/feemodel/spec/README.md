@@ -132,7 +132,7 @@ The feemodel module contains the following parameters:
 
 ### MaxDiscount
 
-`MaxDiscount` is th maximum discount we offer on top of `InitialGasPrice` if *short average block gas* is between *long average block gas* and `EscalationStartBlockGas` (`EscalationStartBlockGas = MaxBlockGas * EscalationStartFraction`).
+`MaxDiscount` is the maximum discount we offer on top of `InitialGasPrice` if *short average block gas* is between *long average block gas* and `EscalationStartBlockGas` (`EscalationStartBlockGas = MaxBlockGas * EscalationStartFraction`).
 
 ### EscalationStartFraction
 

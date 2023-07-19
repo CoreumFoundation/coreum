@@ -388,7 +388,7 @@ func (k Keeper) IsBurnt(ctx sdk.Context, classID, nftID string) (bool, error) {
 }
 
 // GetBurnt return the list of burnt NFTs in class.
-func (k Keeper) GetBurnt(ctx sdk.Context, classID string, q *query.PageRequest) (*query.PageResponse, []string, error) {
+func (k Keeper) GetBurntByClass(ctx sdk.Context, classID string, q *query.PageRequest) (*query.PageResponse, []string, error) {
 	key, err := types.CreateClassBurningKey(classID)
 	if err != nil {
 		return nil, nil, err

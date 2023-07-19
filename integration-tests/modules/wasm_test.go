@@ -431,7 +431,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	assertT.Greater(gasUsedAfterUnpinning, gasUsedAfterPinning)
 }
 
-// TestWASMContractUpgrade deploys simple state smart contract do its upgrade.
+// TestWASMContractUpgrade deploys simple state smart contract do its upgrade and upgrades/migrates it.
 func TestWASMContractUpgrade(t *testing.T) {
 	t.Parallel()
 
@@ -496,7 +496,7 @@ func TestWASMContractUpgrade(t *testing.T) {
 		Count: 999,
 	})
 	requireT.NoError(err)
-	// try to migrate from none admin.
+	// try to migrate from non-admin.
 	err = chain.Wasm.MigrateWASMContract(ctx, txf, noneAdmin, contractAddr, newCodeID, migrationPayload)
 	requireT.Error(err)
 	requireT.Contains(err.Error(), "unauthorized")
