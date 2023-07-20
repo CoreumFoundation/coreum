@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"testing"
+	"time"
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -98,7 +99,7 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 		}
 	}
 
-	queryCtx, queryCtxCancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
+	queryCtx, queryCtxCancel := context.WithTimeout(ctx, getTestContextConfig().TimeoutConfig.RequestTimeout)
 	defer queryCtxCancel()
 
 	// ********** Coreum **********
@@ -109,7 +110,7 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 	}
 	coreumSettings := queryCommonSettings(queryCtx, coreumGRPCClient)
 
-	coreumClientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
+	coreumClientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
 
 	coreumFeemodelParamsRes, err := feemodeltypes.NewQueryClient(coreumClientCtx).Params(queryCtx, &feemodeltypes.QueryParamsRequest{})
@@ -205,7 +206,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 }
 
 func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn) ChainSettings {
-	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
+	clientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
 		WithGRPCClient(grpcClient)
 
 	infoBeforeRes, err := tmservice.NewServiceClient(clientCtx).GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
@@ -251,4 +252,11 @@ func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn
 		Denom:         denom,
 		AddressPrefix: addressPrefix,
 	}
+}
+
+func getTestContextConfig() client.ContextConfig {
+	cfg := client.DefaultContextConfig()
+	cfg.TimeoutConfig.TxStatusPollInterval = 100 * time.Millisecond
+
+	return cfg
 }
