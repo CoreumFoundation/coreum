@@ -80,7 +80,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
-	SkipUnsafe(t)
+	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 

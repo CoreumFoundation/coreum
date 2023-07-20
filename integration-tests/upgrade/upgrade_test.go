@@ -36,7 +36,7 @@ func upgradeV2(t *testing.T) {
 		&nftFeaturesTest{},
 		&nftWasmDataTest{},
 		&ftV1UpgradeTest{},
-		&ftFeaturesTest{},
+		&ftFeatureMigrationTest{},
 	}
 
 	for _, test := range tests {
