@@ -67,28 +67,28 @@ var (
 	coreumFundingMnemonic string
 	coreumStakerMnemonics stringsFlag
 
-	GaiaGRPCAddress     string
-	GaiaRPCAddress      string
-	GaiaFundingMnemonic string
+	gaiaGRPCAddress     string
+	gaiaRPCAddress      string
+	gaiaFundingMnemonic string
 
-	OsmosisGRPCAddress     string
-	OsmosisRPCAddress      string
-	OsmosisFundingMnemonic string
+	osmosisGRPCAddress     string
+	osmosisRPCAddress      string
+	osmosisFundingMnemonic string
 )
 
-func init() { //nolint:funlen // will be shortened after the crust merge
+func init() {
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 
 	flag.StringVar(&coreumGRPCAddress, "coreum-grpc-address", "localhost:9090", "GRPC address of cored node started by znet")
 	flag.StringVar(&coreumRPCAddress, "coreum-rpc-address", "http://localhost:26657", "RPC address of cored node started by znet")
 	flag.StringVar(&coreumFundingMnemonic, "coreum-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 	flag.Var(&coreumStakerMnemonics, "coreum-staker-mnemonic", "Staker account mnemonics required by tests, supports multiple")
-	flag.StringVar(&GaiaGRPCAddress, "gaia-grpc-address", "localhost:9080", "GRPC address of gaia node started by znet")
-	flag.StringVar(&GaiaRPCAddress, "gaia-rpc-address", "http://localhost:26557", "RPC address of gaia node started by znet")
-	flag.StringVar(&GaiaFundingMnemonic, "gaia-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
-	flag.StringVar(&OsmosisGRPCAddress, "osmosis-grpc-address", "localhost:9070", "GRPC address of osmosis node started by znet")
-	flag.StringVar(&OsmosisRPCAddress, "osmosis-rpc-address", "http://localhost:26457", "RPC address of osmosis node started by znet")
-	flag.StringVar(&OsmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
+	flag.StringVar(&gaiaGRPCAddress, "gaia-grpc-address", "localhost:9080", "GRPC address of gaia node started by znet")
+	flag.StringVar(&gaiaRPCAddress, "gaia-rpc-address", "http://localhost:26557", "RPC address of gaia node started by znet")
+	flag.StringVar(&gaiaFundingMnemonic, "gaia-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
+	flag.StringVar(&osmosisGRPCAddress, "osmosis-grpc-address", "localhost:9070", "GRPC address of osmosis node started by znet")
+	flag.StringVar(&osmosisRPCAddress, "osmosis-rpc-address", "http://localhost:26457", "RPC address of osmosis node started by znet")
+	flag.StringVar(&osmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
 	// accept testing flags
 	testing.Init()
 	// parse additional flags
@@ -149,12 +149,12 @@ func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
 	return testCtx, coreumChain
 }
 
-// GetGaiaChain returns the configured gaia chain.
+// GetGaiaChain returns the configured gaia chain for testing.
 func GetGaiaChain(t *testing.T) Chain {
 	gaiaChainSyncOnce.Do(func() {
 		queryCtx, queryCtxCancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
 		defer queryCtxCancel()
-		gaiaGRPClient, err := grpc.Dial(GaiaGRPCAddress, grpc.WithInsecure())
+		gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithInsecure())
 		if err != nil {
 			panic(errors.WithStack(err))
 		}
@@ -163,9 +163,9 @@ func GetGaiaChain(t *testing.T) Chain {
 		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		gaiaSettings.GasAdjustment = 1.5
 		gaiaSettings.CoinType = sdk.CoinType // gaia coin type
-		gaiaSettings.RPCAddress = GaiaRPCAddress
+		gaiaSettings.RPCAddress = gaiaRPCAddress
 
-		gaiaRPClient, err := sdkclient.NewClientFromNode(GaiaRPCAddress)
+		gaiaRPClient, err := sdkclient.NewClientFromNode(gaiaRPCAddress)
 		if err != nil {
 			panic(errors.WithStack(err))
 		}
@@ -174,19 +174,19 @@ func GetGaiaChain(t *testing.T) Chain {
 			gaiaGRPClient,
 			gaiaRPClient,
 			gaiaSettings,
-			GaiaFundingMnemonic)
+			gaiaFundingMnemonic)
 	})
 
 	return gaiaChain
 }
 
-// NewOsmosisTestingChain returns the configured osmosis chain and new context for the integration tests.
+// GetOsmosisChain returns the configured osmosis chain for testing.
 func GetOsmosisChain(t *testing.T) Chain {
 	osmosisChainSyncOnce.Do(func() {
 		queryCtx, queryCtxCancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
 		defer queryCtxCancel()
 
-		osmosisGRPClient, err := grpc.Dial(OsmosisGRPCAddress, grpc.WithInsecure())
+		osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithInsecure())
 		if err != nil {
 			panic(errors.WithStack(err))
 		}
@@ -195,9 +195,9 @@ func GetOsmosisChain(t *testing.T) Chain {
 		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		osmosisChainSettings.GasAdjustment = 1.5
 		osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
-		osmosisChainSettings.RPCAddress = OsmosisRPCAddress
+		osmosisChainSettings.RPCAddress = osmosisRPCAddress
 
-		osmosisRPClient, err := sdkclient.NewClientFromNode(OsmosisRPCAddress)
+		osmosisRPClient, err := sdkclient.NewClientFromNode(osmosisRPCAddress)
 		if err != nil {
 			panic(errors.WithStack(err))
 		}
@@ -206,7 +206,7 @@ func GetOsmosisChain(t *testing.T) Chain {
 			osmosisGRPClient,
 			osmosisRPClient,
 			osmosisChainSettings,
-			OsmosisFundingMnemonic)
+			osmosisFundingMnemonic)
 	})
 
 	return osmosisChain
