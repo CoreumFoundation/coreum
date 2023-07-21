@@ -21,9 +21,9 @@ import (
 	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	"github.com/samber/lo"
 
-	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	nfttypes "github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 // These constants define gas for messages which have custom calculation logic.
@@ -72,7 +72,7 @@ func DefaultConfig() Config {
 		MsgToMsgURL(&assetfttypes.MsgGloballyFreeze{}):      constantGasFunc(5000),
 		MsgToMsgURL(&assetfttypes.MsgGloballyUnfreeze{}):    constantGasFunc(2500),
 		MsgToMsgURL(&assetfttypes.MsgSetWhitelistedLimit{}): constantGasFunc(5000),
-		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):      constantGasFunc(5000),
+		MsgToMsgURL(&assetfttypes.MsgUpgradeTokenV1{}):      constantGasFunc(25000),
 
 		// asset/nft
 		MsgToMsgURL(&assetnfttypes.MsgBurn{}):                constantGasFunc(16000),

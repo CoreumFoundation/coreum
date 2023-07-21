@@ -10,9 +10,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 )
 
 // TestAuthFeeLimits verifies that invalid message gas won't be accepted.
@@ -151,9 +151,11 @@ func TestAuthMultisig(t *testing.T) {
 	}
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
+		chain.ClientContext.WithFromAddress(multisigAddress),
+		// We intentionally use simulation instead of using `WithGas(chain.GasLimitByMsgs(bankSendMsg))`.
+		// We do it to test simulation for multisig account.
+		chain.TxFactory().WithSimulateAndExecute(true),
 		bankSendMsg,
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
 		signer1KeyName)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
@@ -161,9 +163,9 @@ func TestAuthMultisig(t *testing.T) {
 	// sign and submit with the min threshold
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		bankSendMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(bankSendMsg)),
+		bankSendMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)

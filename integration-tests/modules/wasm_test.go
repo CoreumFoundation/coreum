@@ -20,12 +20,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/integration-tests/contracts/modules"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	nfttypes "github.com/CoreumFoundation/coreum/x/nft"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v2/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	nfttypes "github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 // bank wasm models

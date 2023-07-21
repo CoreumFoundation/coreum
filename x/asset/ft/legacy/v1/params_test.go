@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	v1 "github.com/CoreumFoundation/coreum/x/asset/ft/legacy/v1"
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	v1 "github.com/CoreumFoundation/coreum/v2/x/asset/ft/legacy/v1"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 )
 
 func TestMigrateParams(t *testing.T) {

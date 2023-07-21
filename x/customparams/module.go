@@ -17,8 +17,8 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CoreumFoundation/coreum/x/customparams/keeper"
-	"github.com/CoreumFoundation/coreum/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v2/x/customparams/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/customparams/types"
 )
 
 var (

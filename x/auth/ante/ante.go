@@ -13,10 +13,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 
-	"github.com/CoreumFoundation/coreum/x/auth/keeper"
-	"github.com/CoreumFoundation/coreum/x/deterministicgas"
-	deterministicgasante "github.com/CoreumFoundation/coreum/x/deterministicgas/ante"
-	feemodelante "github.com/CoreumFoundation/coreum/x/feemodel/ante"
+	"github.com/CoreumFoundation/coreum/v2/x/auth/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
+	deterministicgasante "github.com/CoreumFoundation/coreum/v2/x/deterministicgas/ante"
+	feemodelante "github.com/CoreumFoundation/coreum/v2/x/feemodel/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.

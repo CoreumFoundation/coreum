@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
-	"github.com/CoreumFoundation/coreum/testutil/network"
+	"github.com/CoreumFoundation/coreum/v2/testutil/network"
 )
 
 func TestAutoGasPrices(t *testing.T) {

@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CoreumFoundation/coreum/testutil/simapp"
-	v1 "github.com/CoreumFoundation/coreum/x/asset/nft/legacy/v1"
-	assetnfttypes "github.com/CoreumFoundation/coreum/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	v1 "github.com/CoreumFoundation/coreum/v2/x/asset/nft/legacy/v1"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 func TestMigrateWasmCreatedNFTData(t *testing.T) {

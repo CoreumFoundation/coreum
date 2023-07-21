@@ -10,7 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v2/x/delay/types"
 )
 
 // Keeper is delay module Keeper.
@@ -60,7 +60,7 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data codec.Pro
 
 	dataAny, err := codectypes.NewAnyWithValue(data)
 	if err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrInvalidData, "failed to construct new Any, err: %s", err)
 	}
 
 	b, err := k.cdc.Marshal(dataAny)

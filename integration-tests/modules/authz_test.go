@@ -12,8 +12,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/client"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 )
 
 // TestAuthz tests the authz module Grant/Execute/Revoke messages execution and their deterministic gas.
@@ -193,9 +193,9 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		&execMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
 		signer1KeyName)
 	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
@@ -203,9 +203,9 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	// sign and submit with the min threshold
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		&execMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)
@@ -256,9 +256,9 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 
 	txRes, err := chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		grantMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 	t.Logf("Fully signed tx executed, txHash:%s", txRes.TxHash)

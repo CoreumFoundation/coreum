@@ -17,10 +17,10 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/testutil/event"
-	assetfttypes "github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/testutil/event"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 )
 
 // TestAssetFTQueryParams queries parameters of asset/ft module.
@@ -2959,9 +2959,9 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		issueMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 
@@ -2973,9 +2973,9 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 	}
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKey,
-		burnMsg,
+		chain.ClientContext.WithFromAddress(multisigAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
+		burnMsg,
 		signer1KeyName, signer2KeyName)
 	requireT.NoError(err)
 
@@ -3026,9 +3026,9 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKeyGranter,
-		grantMsg,
+		chain.ClientContext.WithFromAddress(multisigGranterAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
+		grantMsg,
 		granterSigner1KeyName, granterSigner2KeyName)
 	requireT.NoError(err)
 
@@ -3054,9 +3054,9 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
-		multisigPublicKeyGrantee,
-		&execMsg,
+		chain.ClientContext.WithFromAddress(multisigGranteeAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
+		&execMsg,
 		granteeSigner1KeyName, granteeSigner2KeyName)
 	requireT.NoError(err)
 

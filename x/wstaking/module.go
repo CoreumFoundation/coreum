@@ -8,8 +8,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/x/wstaking/keeper"
-	wstakingtypes "github.com/CoreumFoundation/coreum/x/wstaking/types"
+	"github.com/CoreumFoundation/coreum/v2/x/wstaking/keeper"
+	wstakingtypes "github.com/CoreumFoundation/coreum/v2/x/wstaking/types"
 )
 
 // AppModule implements an application module for the wrapped staking module.

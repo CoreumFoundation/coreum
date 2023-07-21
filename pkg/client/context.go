@@ -33,7 +33,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 )
 
 var protoCodec = encoding.GetCodec(proto.Name)

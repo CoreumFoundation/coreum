@@ -6,9 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/CoreumFoundation/coreum/x/nft"
-	nftkeeper "github.com/CoreumFoundation/coreum/x/nft/keeper"
-	"github.com/CoreumFoundation/coreum/x/wnft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
+	nftkeeper "github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/wnft/types"
 )
 
 // Wrapper wraps the original nft keeper and intercepts its original methods if needed.

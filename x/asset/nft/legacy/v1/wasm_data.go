@@ -8,7 +8,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
 )
 
 // MigrateWasmCreatedNFTData migrates all the NFT data created by smart contracts.

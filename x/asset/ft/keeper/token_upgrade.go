@@ -8,7 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/CoreumFoundation/coreum/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 )
 
 // ImportPendingTokenUpgrades imports pending version upgrades from genesis state.
@@ -62,4 +62,21 @@ func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32)
 // ClearPendingVersion clears pending version marker.
 func (k Keeper) ClearPendingVersion(ctx sdk.Context, denom string) {
 	ctx.KVStore(k.storeKey).Delete(types.CreatePendingTokenUpgradeKey(denom))
+}
+
+// GetTokenUpgradeStatuses returns the token upgrade statuses of a specified denom.
+func (k Keeper) GetTokenUpgradeStatuses(ctx sdk.Context, denom string) types.TokenUpgradeStatuses {
+	bz := ctx.KVStore(k.storeKey).Get(types.CreateTokenUpgradeStatusesKey(denom))
+	if bz == nil {
+		return types.TokenUpgradeStatuses{}
+	}
+	var tokenUpgradeStatuses types.TokenUpgradeStatuses
+	k.cdc.MustUnmarshal(bz, &tokenUpgradeStatuses)
+
+	return tokenUpgradeStatuses
+}
+
+// SetTokenUpgradeStatuses sets the token upgrade statuses of a specified denom.
+func (k Keeper) SetTokenUpgradeStatuses(ctx sdk.Context, denom string, tokenUpgradeStatuses types.TokenUpgradeStatuses) {
+	ctx.KVStore(k.storeKey).Set(types.CreateTokenUpgradeStatusesKey(denom), k.cdc.MustMarshal(&tokenUpgradeStatuses))
 }

@@ -9,11 +9,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/x/nft"
-	"github.com/CoreumFoundation/coreum/x/nft/keeper"
-	"github.com/CoreumFoundation/coreum/x/nft/simulation"
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
+	"github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v2/x/nft/simulation"
 )
 
 var (

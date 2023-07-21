@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/CoreumFoundation/coreum/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v2/x/customparams/types"
 )
 
 // InitGenesis initializes the customparams module's state with the provided genesis state.
