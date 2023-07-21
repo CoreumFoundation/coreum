@@ -48,18 +48,13 @@ type Chains struct {
 }
 
 var (
-	gaiaChainSyncOnce    sync.Once
-	osmosisChainSyncOnce sync.Once
+	ctx            context.Context
+	chains         Chains
+	chainsSyncOnce sync.Once
+	runUnsafe      bool
 )
 
-var (
-	ctx          context.Context
-	coreumChain  CoreumChain
-	gaiaChain    Chain
-	osmosisChain Chain
-	runUnsafe    bool
-)
-
+// flag variables.
 var (
 	coreumGRPCAddress string
 	coreumRPCAddress  string
@@ -89,6 +84,7 @@ func init() {
 	flag.StringVar(&osmosisGRPCAddress, "osmosis-grpc-address", "localhost:9070", "GRPC address of osmosis node started by znet")
 	flag.StringVar(&osmosisRPCAddress, "osmosis-rpc-address", "http://localhost:26457", "RPC address of osmosis node started by znet")
 	flag.StringVar(&osmosisFundingMnemonic, "osmosis-funding-mnemonic", "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake", "Funding account mnemonic required by tests")
+
 	// accept testing flags
 	testing.Init()
 	// parse additional flags
@@ -134,7 +130,7 @@ func init() {
 		panic(errors.WithStack(err))
 	}
 
-	coreumChain = NewCoreumChain(NewChain(
+	chains.Coreum = NewCoreumChain(NewChain(
 		coreumGRPCClient,
 		coreumRPClient,
 		coreumSettings,
@@ -146,14 +142,19 @@ func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 
-	return testCtx, coreumChain
+	return testCtx, chains.Coreum
 }
 
-// GetGaiaChain returns the configured gaia chain for testing.
-func GetGaiaChain(t *testing.T) Chain {
-	gaiaChainSyncOnce.Do(func() {
+// NewChainsTestingContext returns the configured chains and new context for the integration tests.
+func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
+	testCtx, testCtxCancel := context.WithCancel(ctx)
+	t.Cleanup(testCtxCancel)
+
+	chainsSyncOnce.Do(func() {
 		queryCtx, queryCtxCancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
 		defer queryCtxCancel()
+		// ********** Gaia **********
+
 		gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithInsecure())
 		if err != nil {
 			panic(errors.WithStack(err))
@@ -170,21 +171,13 @@ func GetGaiaChain(t *testing.T) Chain {
 			panic(errors.WithStack(err))
 		}
 
-		gaiaChain = NewChain(
+		chains.Gaia = NewChain(
 			gaiaGRPClient,
 			gaiaRPClient,
 			gaiaSettings,
 			gaiaFundingMnemonic)
-	})
 
-	return gaiaChain
-}
-
-// GetOsmosisChain returns the configured osmosis chain for testing.
-func GetOsmosisChain(t *testing.T) Chain {
-	osmosisChainSyncOnce.Do(func() {
-		queryCtx, queryCtxCancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
-		defer queryCtxCancel()
+		// ********** Osmosis **********
 
 		osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithInsecure())
 		if err != nil {
@@ -202,17 +195,16 @@ func GetOsmosisChain(t *testing.T) Chain {
 			panic(errors.WithStack(err))
 		}
 
-		osmosisChain = NewChain(
+		chains.Osmosis = NewChain(
 			osmosisGRPClient,
 			osmosisRPClient,
 			osmosisChainSettings,
 			osmosisFundingMnemonic)
 	})
 
-	return osmosisChain
+	return testCtx, chains
 }
 
-// queryCommonSettings queries chain settings from running chains.
 func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn) ChainSettings {
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithGRPCClient(grpcClient)

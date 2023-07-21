@@ -66,9 +66,10 @@ const (
 func TestIBCTransferFromSmartContract(t *testing.T) {
 	t.Parallel()
 
-	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
-	osmosisChain := integrationtests.GetOsmosisChain(t)
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
+	coreumChain := chains.Coreum
+	osmosisChain := chains.Osmosis
 
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, osmosisChain.ChainSettings.ChainID)
@@ -164,9 +165,10 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	// channelIBCVersion is the version defined in the ibc.rs in the smart contract
 	const channelIBCVersion = "counter-1"
 
-	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
-	osmosisChain := integrationtests.GetOsmosisChain(t)
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
+	coreumChain := chains.Coreum
+	osmosisChain := chains.Osmosis
 
 	coreumWasmClient := wasmtypes.NewQueryClient(coreumChain.ClientContext)
 	osmosisWasmClient := wasmtypes.NewQueryClient(osmosisChain.ClientContext)
