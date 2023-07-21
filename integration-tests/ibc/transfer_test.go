@@ -135,7 +135,7 @@ func TestTimedOutTransfer(t *testing.T) {
 	coreumChain := chains.Coreum
 	osmosisChain := chains.Osmosis
 
-	gaiaToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
+	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
 	retryCtx, retryCancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer retryCancel()
@@ -185,7 +185,7 @@ func TestTimedOutTransfer(t *testing.T) {
 			// In this goroutine we check if funds were delivered to the other chain.
 			// If this happens it means timeout didn't occur and we must try again.
 
-			if err := osmosisChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
+			if err := osmosisChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(osmosisToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
 				select {
 				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
 					parallelCancel()
@@ -209,7 +209,7 @@ func TestTimedOutTransfer(t *testing.T) {
 		bankClient := banktypes.NewQueryClient(osmosisChain.ClientContext)
 		resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: osmosisChain.ConvertToBech32Address(gaiaRecipient),
-			Denom:   convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom),
+			Denom:   convertToIBCDenom(osmosisToCoreumChannelID, sendToGaiaCoin.Denom),
 		})
 		requireT.NoError(err)
 		requireT.Equal("0", resp.Balance.Amount.String())
