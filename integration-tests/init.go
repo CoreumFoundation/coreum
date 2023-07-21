@@ -4,10 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"sync"
 	"testing"
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -46,8 +48,15 @@ type Chains struct {
 }
 
 var (
+	gaiaChainSyncOnce    sync.Once
+	osmosisChainSyncOnce sync.Once
+)
+
+var (
 	ctx          context.Context
-	ChainsHolder Chains
+	coreumChain  CoreumChain
+	gaiaChain    Chain
+	osmosisChain Chain
 	runUnsafe    bool
 )
 
@@ -105,7 +114,7 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
-	coreumSettings := QueryCommonSettings(queryCtx, coreumGRPCClient)
+	coreumSettings := queryCommonSettings(queryCtx, coreumGRPCClient)
 
 	coreumClientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithGRPCClient(coreumGRPCClient)
@@ -125,13 +134,11 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 		panic(errors.WithStack(err))
 	}
 
-	coreumChain := NewCoreumChain(NewChain(
+	coreumChain = NewCoreumChain(NewChain(
 		coreumGRPCClient,
 		coreumRPClient,
 		coreumSettings,
 		coreumFundingMnemonic), coreumStakerMnemonics)
-
-	ChainsHolder.Coreum = coreumChain
 }
 
 // NewCoreumTestingContext returns the configured coreum chain and new context for the integration tests.
@@ -139,19 +146,74 @@ func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
 
-	return testCtx, ChainsHolder.Coreum
+	return testCtx, coreumChain
 }
 
-// NewChainsTestingContext returns the configured chains and new context for the integration tests.
-func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
-	testCtx, testCtxCancel := context.WithCancel(ctx)
-	t.Cleanup(testCtxCancel)
+// GetGaiaChain returns the configured gaia chain.
+func GetGaiaChain(t *testing.T) Chain {
+	gaiaChainSyncOnce.Do(func() {
+		queryCtx, queryCtxCancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
+		defer queryCtxCancel()
+		gaiaGRPClient, err := grpc.Dial(GaiaGRPCAddress, grpc.WithInsecure())
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
 
-	return testCtx, ChainsHolder
+		gaiaSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
+		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
+		gaiaSettings.GasAdjustment = 1.5
+		gaiaSettings.CoinType = sdk.CoinType // gaia coin type
+		gaiaSettings.RPCAddress = GaiaRPCAddress
+
+		gaiaRPClient, err := sdkclient.NewClientFromNode(GaiaRPCAddress)
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
+
+		gaiaChain = NewChain(
+			gaiaGRPClient,
+			gaiaRPClient,
+			gaiaSettings,
+			GaiaFundingMnemonic)
+	})
+
+	return gaiaChain
 }
 
-// QueryCommonSettings queries chain settings from running chains.
-func QueryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn) ChainSettings {
+// NewOsmosisTestingChain returns the configured osmosis chain and new context for the integration tests.
+func GetOsmosisChain(t *testing.T) Chain {
+	osmosisChainSyncOnce.Do(func() {
+		queryCtx, queryCtxCancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
+		defer queryCtxCancel()
+
+		osmosisGRPClient, err := grpc.Dial(OsmosisGRPCAddress, grpc.WithInsecure())
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
+
+		osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
+		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
+		osmosisChainSettings.GasAdjustment = 1.5
+		osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
+		osmosisChainSettings.RPCAddress = OsmosisRPCAddress
+
+		osmosisRPClient, err := sdkclient.NewClientFromNode(OsmosisRPCAddress)
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
+
+		osmosisChain = NewChain(
+			osmosisGRPClient,
+			osmosisRPClient,
+			osmosisChainSettings,
+			OsmosisFundingMnemonic)
+	})
+
+	return osmosisChain
+}
+
+// queryCommonSettings queries chain settings from running chains.
+func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn) ChainSettings {
 	clientCtx := client.NewContext(client.DefaultContextConfig(), app.ModuleBasics).
 		WithGRPCClient(grpcClient)
 

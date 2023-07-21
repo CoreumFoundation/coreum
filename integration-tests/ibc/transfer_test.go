@@ -25,10 +25,9 @@ import (
 func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
+	gaiaChain := integrationtests.GetGaiaChain(t)
 	requireT := require.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -65,9 +64,8 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	t.Parallel()
 	requireT := require.New(t)
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
+	gaiaChain := integrationtests.GetGaiaChain(t)
 
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
 	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(1000))
@@ -130,10 +128,9 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 func TestTimedOutTransfer(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
+	gaiaChain := integrationtests.GetGaiaChain(t)
 	requireT := require.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Osmosis
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -222,10 +219,9 @@ func TestTimedOutTransfer(t *testing.T) {
 func TestRejectedTransfer(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
+	gaiaChain := integrationtests.GetGaiaChain(t)
 	requireT := require.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 

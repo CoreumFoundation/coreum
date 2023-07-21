@@ -30,8 +30,7 @@ func TestIBCFailsIfNotEnabled(t *testing.T) {
 
 	requireT := require.New(t)
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
-	coreumChain := chains.Coreum
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
 	coreumIssuer := coreumChain.GenAccount()
 
 	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
@@ -58,7 +57,7 @@ func TestIBCFailsIfNotEnabled(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	gaiaChain := chains.Gaia
+	gaiaChain := integrationtests.GetGaiaChain(t)
 	_, err = coreumChain.ExecuteIBCTransfer(
 		ctx,
 		t,
@@ -73,12 +72,11 @@ func TestIBCFailsIfNotEnabled(t *testing.T) {
 func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
-	osmosisChain := chains.Osmosis
+	gaiaChain := integrationtests.GetGaiaChain(t)
+	osmosisChain := integrationtests.GetOsmosisChain(t)
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
@@ -339,10 +337,9 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 func TestIBCAssetFTWhitelisting(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
+	gaiaChain := integrationtests.GetGaiaChain(t)
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
 	coreumIssuer := coreumChain.GenAccount()
@@ -433,11 +430,10 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 func TestIBCAssetFTFreezing(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 	assertT := assert.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
+	gaiaChain := integrationtests.GetGaiaChain(t)
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -536,9 +532,8 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 
 	requireT := require.New(t)
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
+	gaiaChain := integrationtests.GetGaiaChain(t)
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -617,10 +612,9 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 func TestIBCGlobalFreeze(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
+	gaiaChain := integrationtests.GetGaiaChain(t)
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -763,10 +757,9 @@ func TestIBCGlobalFreeze(t *testing.T) {
 func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Osmosis
+	gaiaChain := integrationtests.GetGaiaChain(t)
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -878,10 +871,9 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
+	gaiaChain := integrationtests.GetGaiaChain(t)
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -973,9 +965,8 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 
 	requireT := require.New(t)
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Gaia
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
+	gaiaChain := integrationtests.GetGaiaChain(t)
 
 	coreumIssuer := coreumChain.GenAccount()
 	coreumSender := coreumChain.GenAccount()
@@ -1094,10 +1085,9 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 	t.Parallel()
 
-	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	ctx, coreumChain := integrationtests.NewCoreumTestingContext(t)
+	gaiaChain := integrationtests.GetGaiaChain(t)
 	requireT := require.New(t)
-	coreumChain := chains.Coreum
-	gaiaChain := chains.Osmosis
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
