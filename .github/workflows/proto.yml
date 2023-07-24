@@ -9,7 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: bufbuild/buf-setup-action@v1
-      # TODO (milad) : uncomment after we merge /v2 package name change
-      # - uses: bufbuild/buf-breaking-action@v1 
-      #   with:
-      #     against: 'https://github.com/CoreumFoundation/coreum.git#branch=master'
+      - uses: bufbuild/buf-breaking-action@v1 
+        with:
+          against: 'https://github.com/CoreumFoundation/coreum.git#branch=master'
