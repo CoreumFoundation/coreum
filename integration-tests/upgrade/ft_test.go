@@ -300,12 +300,10 @@ func (ft *ftV1UpgradeTest) verifyParams(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	requireT.NoError(err)
+	ftParams := chain.QueryAssetFTParams(ctx, t)
 
-	requireT.Equal(assetfttypes.DefaultTokenUpgradeGracePeriod, ftParams.Params.TokenUpgradeGracePeriod)
-	requireT.Greater(ftParams.Params.TokenUpgradeDecisionTimeout, time.Now().Add(v1.InitialTokenUpgradeDecisionPeriod-time.Hour))
+	requireT.Equal(assetfttypes.DefaultTokenUpgradeGracePeriod, ftParams.TokenUpgradeGracePeriod)
+	requireT.Greater(ftParams.TokenUpgradeDecisionTimeout, time.Now().Add(v1.InitialTokenUpgradeDecisionPeriod-time.Hour))
 }
 
 func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
@@ -547,9 +545,8 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	requireT.NoError(err)
-	requireT.Equal(gracePeriod, ftParams.Params.TokenUpgradeGracePeriod)
+	ftParams := chain.QueryAssetFTParams(ctx, t)
+	requireT.Equal(gracePeriod, ftParams.TokenUpgradeGracePeriod)
 
 	// upgrading with enabled IBC should take effect after delay
 	upgradeMsg := &assetfttypes.MsgUpgradeTokenV1{
@@ -557,7 +554,7 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 		Denom:      ft.denomV0WithFeatures,
 		IbcEnabled: true,
 	}
-	_, err = client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
@@ -585,7 +582,7 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	requireT.NoError(err)
 	v1UpgradeStatus := tokenUpgradeStatusesRes.Statuses.V1
 	requireT.True(v1UpgradeStatus.IbcEnabled)
-	requireT.Equal(v1UpgradeStatus.EndTime.Sub(v1UpgradeStatus.StartTime), ftParams.Params.TokenUpgradeGracePeriod)
+	requireT.Equal(v1UpgradeStatus.EndTime.Sub(v1UpgradeStatus.StartTime), ftParams.TokenUpgradeGracePeriod)
 
 	// upgrading second time should fail
 	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
@@ -764,9 +761,8 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) 
 		})
 
 	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	requireT.NoError(err)
-	requireT.Equal(decisionTimeout, ftParams.Params.TokenUpgradeDecisionTimeout)
+	ftParams := chain.QueryAssetFTParams(ctx, t)
+	requireT.Equal(decisionTimeout, ftParams.TokenUpgradeDecisionTimeout)
 
 	// upgrade after timeout should fail
 	upgradeMsg := &assetfttypes.MsgUpgradeTokenV1{
@@ -774,7 +770,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) 
 		Denom:      ft.denomV0ForForbiddenUpgrades,
 		IbcEnabled: false,
 	}
-	_, err = client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
