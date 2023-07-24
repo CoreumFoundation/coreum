@@ -81,7 +81,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages:                    append([]sdk.Msg{issueMsg}, multiSendMsgs...),
 		NondeterministicMessagesGas: 10_000_000, // to cover extra bytes because of the message size
-		Amount:                      getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount:                      chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	// issue fungible tokens
@@ -156,7 +156,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 	}
 	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
 		Messages: fundMsgs,
-		Amount:   getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount:   chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	// issue fungible tokens
@@ -281,7 +281,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 		Messages: append([]sdk.Msg{&banktypes.MsgSend{
 			Amount: make(sdk.Coins, numOfTokens),
 		}}, issueMsgs...),
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(numOfTokens),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(numOfTokens),
 	})
 
 	// Issue fungible tokens
@@ -429,7 +429,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 				},
 			},
 		}}, issueMsgs...),
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(numOfTokens),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(numOfTokens),
 	})
 
 	// Issue fungible tokens
@@ -521,7 +521,7 @@ func TestBankMultiSend(t *testing.T) {
 				{Coins: make(sdk.Coins, 2)},
 			},
 		}}, issueMsgs...),
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(int64(len(issueMsgs))),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(int64(len(issueMsgs))),
 	})
 
 	// Issue fungible tokens
@@ -680,7 +680,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 		},
 	}
 
-	issueFee := getIssueFee(ctx, t, chain.ClientContext).Amount
+	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 
 	// fund accounts
 	chain.FundAccountWithOptions(ctx, t, sender1, integrationtests.BalancesOptions{

@@ -3,7 +3,6 @@
 package upgrade
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -85,7 +84,7 @@ func (ft *ftV1UpgradeTest) Before(t *testing.T) {
 			&assetfttypes.MsgUpgradeTokenV1{},
 			&assetfttypes.MsgUpgradeTokenV1{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(8),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(8),
 	})
 
 	ft.issueV0TokenWithoutFeatures(t)
@@ -183,7 +182,7 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 		modules.FTWASM,
 		integrationtests.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
-			Amount:     getIssueFee(ctx, t, chain.ClientContext),
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerFTInstantiatePayload,
 			Label:      "fungible_token",
@@ -226,7 +225,7 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithoutFeaturesWASM(t *testing.T) {
 		modules.FTWASM,
 		integrationtests.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
-			Amount:     getIssueFee(ctx, t, chain.ClientContext),
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerFTInstantiatePayload,
 			Label:      "fungible_token",
@@ -829,7 +828,7 @@ func (ft *ftFeaturesTest) Before(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -900,7 +899,7 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -938,7 +937,7 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -976,7 +975,7 @@ func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -1001,12 +1000,4 @@ func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
 		issueMsg,
 	)
 	requireT.NoError(err)
-}
-
-func getIssueFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {
-	queryClient := assetfttypes.NewQueryClient(clientCtx)
-	resp, err := queryClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	require.NoError(t, err)
-
-	return resp.Params.IssueFee
 }
