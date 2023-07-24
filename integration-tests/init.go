@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -48,28 +49,30 @@ type Chains struct {
 }
 
 var (
-	ctx       context.Context
-	chains    Chains
-	runUnsafe bool
+	ctx            context.Context
+	chains         Chains
+	chainsSyncOnce sync.Once
+	runUnsafe      bool
 )
 
-func init() { //nolint:funlen // will be shortened after the crust merge
-	var (
-		coreumGRPCAddress string
-		coreumRPCAddress  string
+// flag variables.
+var (
+	coreumGRPCAddress string
+	coreumRPCAddress  string
 
-		coreumFundingMnemonic string
-		coreumStakerMnemonics stringsFlag
+	coreumFundingMnemonic string
+	coreumStakerMnemonics stringsFlag
 
-		gaiaGRPCAddress     string
-		gaiaRPCAddress      string
-		gaiaFundingMnemonic string
+	gaiaGRPCAddress     string
+	gaiaRPCAddress      string
+	gaiaFundingMnemonic string
 
-		osmosisGRPCAddress     string
-		osmosisRPCAddress      string
-		osmosisFundingMnemonic string
-	)
+	osmosisGRPCAddress     string
+	osmosisRPCAddress      string
+	osmosisFundingMnemonic string
+)
 
+func init() {
 	flag.BoolVar(&runUnsafe, "run-unsafe", false, "run unsafe tests for example ones related to governance")
 
 	flag.StringVar(&coreumGRPCAddress, "coreum-grpc-address", "localhost:9090", "GRPC address of cored node started by znet")
@@ -128,65 +131,11 @@ func init() { //nolint:funlen // will be shortened after the crust merge
 		panic(errors.WithStack(err))
 	}
 
-	coreumChain := NewCoreumChain(NewChain(
+	chains.Coreum = NewCoreumChain(NewChain(
 		coreumGRPCClient,
 		coreumRPClient,
 		coreumSettings,
 		coreumFundingMnemonic), coreumStakerMnemonics)
-
-	// ********** Gaia **********
-
-	gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithInsecure())
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	gaiaSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
-	gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
-	gaiaSettings.GasAdjustment = 1.5
-	gaiaSettings.CoinType = sdk.CoinType // gaia coin type
-	gaiaSettings.RPCAddress = gaiaRPCAddress
-
-	gaiaRPClient, err := sdkclient.NewClientFromNode(gaiaRPCAddress)
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	gaiaChain := NewChain(
-		gaiaGRPClient,
-		gaiaRPClient,
-		gaiaSettings,
-		gaiaFundingMnemonic)
-
-	// ********** Osmosis **********
-
-	osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithInsecure())
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
-	osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
-	osmosisChainSettings.GasAdjustment = 1.5
-	osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
-	osmosisChainSettings.RPCAddress = osmosisRPCAddress
-
-	osmosisRPClient, err := sdkclient.NewClientFromNode(osmosisRPCAddress)
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
-
-	osmosisChain := NewChain(
-		osmosisGRPClient,
-		osmosisRPClient,
-		osmosisChainSettings,
-		osmosisFundingMnemonic)
-
-	chains = Chains{
-		Coreum:  coreumChain,
-		Gaia:    gaiaChain,
-		Osmosis: osmosisChain,
-	}
 }
 
 // NewCoreumTestingContext returns the configured coreum chain and new context for the integration tests.
@@ -201,6 +150,58 @@ func NewCoreumTestingContext(t *testing.T) (context.Context, CoreumChain) {
 func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 	testCtx, testCtxCancel := context.WithCancel(ctx)
 	t.Cleanup(testCtxCancel)
+
+	chainsSyncOnce.Do(func() {
+		queryCtx, queryCtxCancel := context.WithTimeout(ctx, client.DefaultContextConfig().TimeoutConfig.RequestTimeout)
+		defer queryCtxCancel()
+		// ********** Gaia **********
+
+		gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithInsecure())
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
+
+		gaiaSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
+		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
+		gaiaSettings.GasAdjustment = 1.5
+		gaiaSettings.CoinType = sdk.CoinType // gaia coin type
+		gaiaSettings.RPCAddress = gaiaRPCAddress
+
+		gaiaRPClient, err := sdkclient.NewClientFromNode(gaiaRPCAddress)
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
+
+		chains.Gaia = NewChain(
+			gaiaGRPClient,
+			gaiaRPClient,
+			gaiaSettings,
+			gaiaFundingMnemonic)
+
+		// ********** Osmosis **********
+
+		osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithInsecure())
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
+
+		osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
+		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
+		osmosisChainSettings.GasAdjustment = 1.5
+		osmosisChainSettings.CoinType = sdk.CoinType // osmosis coin type
+		osmosisChainSettings.RPCAddress = osmosisRPCAddress
+
+		osmosisRPClient, err := sdkclient.NewClientFromNode(osmosisRPCAddress)
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
+
+		chains.Osmosis = NewChain(
+			osmosisGRPClient,
+			osmosisRPClient,
+			osmosisChainSettings,
+			osmosisFundingMnemonic)
+	})
 
 	return testCtx, chains
 }
