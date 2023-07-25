@@ -183,6 +183,8 @@ func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingA
 
 // QueryAssetFTParams queries for asset/ft module params and returns them.
 func (c CoreumChain) QueryAssetFTParams(ctx context.Context, t *testing.T) assetfttypes.Params {
+	t.Helper()
+
 	queryClient := assetfttypes.NewQueryClient(c.ClientContext)
 	resp, err := queryClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
 	require.NoError(t, err)
@@ -192,6 +194,8 @@ func (c CoreumChain) QueryAssetFTParams(ctx context.Context, t *testing.T) asset
 
 // QueryAssetNFTParams queries for asset/nft module params and returns them.
 func (c CoreumChain) QueryAssetNFTParams(ctx context.Context, t *testing.T) assetnfttypes.Params {
+	t.Helper()
+
 	queryClient := assetnfttypes.NewQueryClient(c.ClientContext)
 	resp, err := queryClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
 	require.NoError(t, err)
