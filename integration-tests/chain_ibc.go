@@ -122,7 +122,7 @@ func (c ChainContext) AwaitForBalance(
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
 	retryCtx, retryCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer retryCancel()
-	err := retry.Do(retryCtx, time.Second, func() error {
+	err := retry.Do(retryCtx, 100*time.Millisecond, func() error {
 		requestCtx, requestCancel := context.WithTimeout(retryCtx, 5*time.Second)
 		defer requestCancel()
 
@@ -159,7 +159,7 @@ func (c ChainContext) AwaitForIBCChannelID(ctx context.Context, t *testing.T, po
 	ibcChannelClient := ibcchanneltypes.NewQueryClient(c.ClientContext)
 
 	var channelID string
-	require.NoError(t, retry.Do(retryCtx, time.Second, func() error {
+	require.NoError(t, retry.Do(retryCtx, 500*time.Millisecond, func() error {
 		requestCtx, requestCancel := context.WithTimeout(ctx, 5*time.Second)
 		defer requestCancel()
 
@@ -241,7 +241,7 @@ func (c ChainContext) AwaitForIBCClientAndConnectionIDs(ctx context.Context, t *
 		err                    error
 	)
 
-	require.NoError(t, retry.Do(retryCtx, time.Second, func() error {
+	require.NoError(t, retry.Do(retryCtx, 500*time.Millisecond, func() error {
 		clientID, connectionID, err = c.getIBCClientAndConnectionIDs(retryCtx, peerChainID)
 		if err != nil {
 			return retry.Retryable(errors.Errorf("client and connection are not ready yet, %s", err))
