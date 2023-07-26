@@ -778,8 +778,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 		BurnRate:           burnRate,
 		SendCommissionRate: sendCommissionRate,
-		// TODO Artem: We should use smth like: assefttypes.CurrentTokenVersion directly here
-		Version: tokenRes.Token.Version, // test should work with any token version
+		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
 	}
 	requireT.Equal(
 		expectedToken, tokenRes.Token,

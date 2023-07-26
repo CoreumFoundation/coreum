@@ -925,7 +925,7 @@ func (ft *ftFeatureMigrationTest) tryCreatingTokenWithInvalidFeature(t *testing.
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid feature")
+	requireT.ErrorContains(err, "invalid input")
 }
 
 func (ft *ftFeatureMigrationTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
@@ -963,7 +963,7 @@ func (ft *ftFeatureMigrationTest) tryCreatingTokenWithDuplicatedFeature(t *testi
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid feature")
+	requireT.ErrorContains(err, "invalid input")
 }
 
 func (ft *ftFeatureMigrationTest) createValidToken(t *testing.T) {

@@ -254,7 +254,7 @@ func (nt *nftFeaturesTest) tryCreatingClassWithInvalidFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid feature")
+	requireT.ErrorContains(err, "invalid input")
 }
 
 func (nt *nftFeaturesTest) tryCreatingClassWithDuplicatedFeature(t *testing.T) {
@@ -291,7 +291,7 @@ func (nt *nftFeaturesTest) tryCreatingClassWithDuplicatedFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid feature")
+	requireT.ErrorContains(err, "invalid input")
 }
 
 func (nt *nftFeaturesTest) createValidClass(t *testing.T) {
