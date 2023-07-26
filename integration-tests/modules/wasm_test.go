@@ -749,7 +749,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		moduleswasm.FTWASM,
 		integrationtests.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
-			Amount:     getIssueFee(ctx, t, chain.ClientContext),
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerFTInstantiatePayload,
 			Label:      "fungible_token",
@@ -977,7 +977,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	var wasmParamsRes assetfttypes.QueryParamsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
 	requireT.Equal(
-		getIssueFee(ctx, t, chain.ClientContext), wasmParamsRes.Params.IssueFee,
+		chain.QueryAssetFTParams(ctx, t).IssueFee, wasmParamsRes.Params.IssueFee,
 	)
 
 	// ********** Token **********
@@ -1364,7 +1364,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	var wasmParamsRes assetnfttypes.QueryParamsResponse
 	requireT.NoError(json.Unmarshal(queryOut, &wasmParamsRes))
 	requireT.Equal(
-		getMintFee(ctx, t, chain.ClientContext), wasmParamsRes.Params.MintFee,
+		chain.QueryAssetNFTParams(ctx, t).MintFee, wasmParamsRes.Params.MintFee,
 	)
 
 	// ********** Class **********

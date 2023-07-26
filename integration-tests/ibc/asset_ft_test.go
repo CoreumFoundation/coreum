@@ -34,7 +34,7 @@ func TestIBCFailsIfNotEnabled(t *testing.T) {
 	coreumChain := chains.Coreum
 	coreumIssuer := coreumChain.GenAccount()
 
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
@@ -111,7 +111,7 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 	})
 
 	coreumIssuer := coreumChain.GenAccount()
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
@@ -355,7 +355,7 @@ func TestIBCAssetFTWhitelisting(t *testing.T) {
 		Amount:  gaiaChain.NewCoin(sdk.NewInt(1000000)), // coin for the fees
 	})
 
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
@@ -450,7 +450,7 @@ func TestIBCAssetFTFreezing(t *testing.T) {
 		Amount:  gaiaChain.NewCoin(sdk.NewInt(1000000)), // coin for the fees
 	})
 
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
@@ -550,7 +550,7 @@ func TestEscrowAddressIsResistantToFreezingAndWhitelisting(t *testing.T) {
 		Amount:  gaiaChain.NewCoin(sdk.NewInt(1000000)), // coin for the fees
 	})
 
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
@@ -634,7 +634,7 @@ func TestIBCGlobalFreeze(t *testing.T) {
 		Amount:  gaiaChain.NewCoin(sdk.NewInt(1000000)), // coin for the fees
 	})
 
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
@@ -778,7 +778,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 	// On every trial we send funds from one chain to the other. Then we observe accounts on both chains
 	// to find if IBC transfer completed successfully or timed out. If tokens were delivered to the recipient
 	// we must retry. Otherwise, if tokens were returned back to the sender, we might continue the test.
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	err := retry.Do(retryCtx, time.Millisecond, func() error {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := gaiaChain.GenAccount()
@@ -897,7 +897,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 			&ibctransfertypes.MsgTransfer{},
 			&ibctransfertypes.MsgTransfer{},
 		},
-		Amount: getIssueFee(ctx, t, coreumChain.ClientContext).Amount,
+		Amount: coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
 		Address: gaiaRecipient,
@@ -983,7 +983,7 @@ func TestIBCRejectedTransferWithWhitelistingAndFreezing(t *testing.T) {
 	// this type of IBC transfer is rejected by the receiving chain.
 	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
 
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
@@ -1109,7 +1109,7 @@ func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 	// On every trial we send funds from one chain to the other. Then we observe accounts on both chains
 	// to find if IBC transfer completed successfully or timed out. If tokens were delivered to the recipient
 	// we must retry. Otherwise, if tokens were returned back to the sender, we might continue the test.
-	issueFee := getIssueFee(ctx, t, coreumChain.ClientContext).Amount
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
 	err := retry.Do(retryCtx, time.Millisecond, func() error {
 		coreumIssuer := coreumChain.GenAccount()
 		coreumSender := coreumChain.GenAccount()
@@ -1335,12 +1335,4 @@ func assertBalanceChanges(t *testing.T, expectedBalanceChanges, balancesBefore, 
 		actualBalanceChange := balancesAfter[addr].Sub(balancesBefore[addr])
 		requireT.Equal(expectedBalanceChange.String(), actualBalanceChange.String())
 	}
-}
-
-func getIssueFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {
-	queryClient := assetfttypes.NewQueryClient(clientCtx)
-	resp, err := queryClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	require.NoError(t, err)
-
-	return resp.Params.IssueFee
 }
