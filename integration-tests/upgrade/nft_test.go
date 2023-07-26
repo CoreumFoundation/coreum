@@ -291,7 +291,7 @@ func (nt *nftFeaturesTest) tryCreatingClassWithDuplicatedFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "duplicated class feature")
+	requireT.ErrorContains(err, "duplicated features in the class features list")
 }
 
 func (nt *nftFeaturesTest) createValidClass(t *testing.T) {
