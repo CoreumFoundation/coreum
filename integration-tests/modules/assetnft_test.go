@@ -4,7 +4,6 @@ package modules
 
 import (
 	"bytes"
-	"context"
 	"testing"
 	"time"
 
@@ -33,7 +32,7 @@ func TestAssetNFTQueryParams(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	mintFee := getMintFee(ctx, t, chain.ClientContext)
+	mintFee := chain.QueryAssetNFTParams(ctx, t).MintFee
 
 	assert.Equal(t, chain.ChainSettings.Denom, mintFee.Denom)
 }
@@ -210,7 +209,7 @@ func TestAssetNFTMint(t *testing.T) {
 			&assetnfttypes.MsgMint{},
 			&nft.MsgSend{},
 		},
-		Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	// issue new NFT class
@@ -386,7 +385,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
-	origMintFee := getMintFee(ctx, t, chain.ClientContext)
+	origMintFee := chain.QueryAssetNFTParams(ctx, t).MintFee
 
 	chain.Governance.UpdateParams(ctx, t, "Propose changing MintFee in the assetnft module",
 		[]paramproposal.ParamChange{
@@ -635,7 +634,7 @@ func TestAssetNFTBurnFrozen(t *testing.T) {
 			&assetnfttypes.MsgFreeze{},
 			&assetnfttypes.MsgUnfreeze{},
 		},
-		Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	chain.FundAccountWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
@@ -777,7 +776,7 @@ func TestAssetNFTBurnFrozen_Issuer(t *testing.T) {
 			&assetnfttypes.MsgFreeze{},
 			&assetnfttypes.MsgBurn{},
 		},
-		Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	// issue new NFT class
@@ -881,7 +880,7 @@ func TestAssetNFTFreeze(t *testing.T) {
 			&assetnfttypes.MsgFreeze{},
 			&assetnfttypes.MsgUnfreeze{},
 		},
-		Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	chain.FundAccountWithOptions(ctx, t, recipient1, integrationtests.BalancesOptions{
@@ -1078,7 +1077,7 @@ func TestAssetNFTWhitelist(t *testing.T) {
 			&assetnfttypes.MsgRemoveFromWhitelist{},
 			&assetnfttypes.MsgAddToWhitelist{},
 		},
-		Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	// issue new NFT class
@@ -1327,7 +1326,7 @@ func TestAssetNFTAuthZ(t *testing.T) {
 			&assetnfttypes.MsgMint{},
 			&authztypes.MsgGrant{},
 		},
-		Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	// issue new NFT class
@@ -1378,7 +1377,7 @@ func TestAssetNFTAuthZ(t *testing.T) {
 		Messages: []sdk.Msg{
 			&execMsg,
 		},
-		Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	_, err = client.BroadcastTx(
@@ -1421,7 +1420,7 @@ func TestAssetNFTAminoMultisig(t *testing.T) {
 			&assetnfttypes.MsgMint{},
 			&nft.MsgSend{},
 		},
-		Amount: getMintFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetNFTParams(ctx, t).MintFee.Amount,
 	})
 
 	// issue new NFT class
@@ -1482,12 +1481,4 @@ func TestAssetNFTAminoMultisig(t *testing.T) {
 		ClassId: classID,
 		Id:      nftID,
 	}, nftRes.Nft)
-}
-
-func getMintFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {
-	queryClient := assetnfttypes.NewQueryClient(clientCtx)
-	resp, err := queryClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
-	require.NoError(t, err)
-
-	return resp.Params.MintFee
 }
