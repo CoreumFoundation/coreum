@@ -842,16 +842,16 @@ func (ft *ftFeatureMigrationTest) Before(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_burning,
-			assetfttypes.Feature_ibc, // should be removed by the migration
+			assetfttypes.Feature_ibc, // must be removed as a result of migration
 			assetfttypes.Feature_freezing,
-			1000,                              // should be removed by the migration
-			assetfttypes.Feature_whitelisting, // should be removed by the migration
-			assetfttypes.Feature_minting,      // should be removed by the migration
-			assetfttypes.Feature_burning,      // should be removed by the migration
-			assetfttypes.Feature_ibc,          // should be removed by the migration
-			assetfttypes.Feature_freezing,     // should be removed by the migration
-			2000,                              // should be removed by the migration
-			1000,                              // should be removed by the migration
+			1000,                              // must be removed as a result of migration
+			assetfttypes.Feature_whitelisting, // must be removed as a result of migration
+			assetfttypes.Feature_minting,      // must be removed as a result of migration
+			assetfttypes.Feature_burning,      // must be removed as a result of migration
+			assetfttypes.Feature_ibc,          // must be removed as a result of migration
+			assetfttypes.Feature_freezing,     // must be removed as a result of migration
+			2000,                              // must be removed as a result of migration
+			1000,                              // must be removed as a result of migration
 		},
 	}
 	_, err := client.BroadcastTx(

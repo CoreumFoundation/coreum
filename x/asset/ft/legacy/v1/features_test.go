@@ -41,18 +41,18 @@ func TestMigrateFeatures(t *testing.T) {
 
 	def.Features = []types.Feature{
 		types.Feature_minting,
-		types.Feature_minting, // will be removed as a result of migration
+		types.Feature_minting, // must be removed as a result of migration
 		types.Feature_whitelisting,
-		3000,                       // will be removed as a result of migration
-		types.Feature_whitelisting, // will be removed as a result of migration
+		3000,                       // must be removed as a result of migration
+		types.Feature_whitelisting, // must be removed as a result of migration
 		types.Feature_freezing,
-		types.Feature_freezing, // will be removed as a result of migration
+		types.Feature_freezing, // must be removed as a result of migration
 		types.Feature_burning,
-		1000,                  // will be removed as a result of migration
-		types.Feature_burning, // will be removed as a result of migration
-		types.Feature_ibc,     // will be removed as a result of migration
-		types.Feature_ibc,     // will be removed as a result of migration
-		3000,                  // will be removed as a result of migration
+		1000,                  // must be removed as a result of migration
+		types.Feature_burning, // must be removed as a result of migration
+		types.Feature_ibc,     // must be removed as a result of migration
+		types.Feature_ibc,     // must be removed as a result of migration
+		3000,                  // must be removed as a result of migration
 	}
 	keeper.SetDefinition(ctx, issuer, settings.Subunit, def)
 

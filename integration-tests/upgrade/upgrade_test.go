@@ -70,7 +70,7 @@ func runUpgrade(
 	infoBeforeRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
 	requireT.NoError(err)
 	// we start with the old binary version
-	require.Equal(t, infoBeforeRes.ApplicationVersion.Version, oldBinaryVersion)
+	require.Equal(t, oldBinaryVersion, infoBeforeRes.ApplicationVersion.Version)
 
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)

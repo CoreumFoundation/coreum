@@ -778,7 +778,8 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 		BurnRate:           burnRate,
 		SendCommissionRate: sendCommissionRate,
-		Version:            tokenRes.Token.Version, // test should work with any token version
+		// TODO Artem: We should use smth like: assefttypes.CurrentTokenVersion directly here
+		Version: tokenRes.Token.Version, // test should work with any token version
 	}
 	requireT.Equal(
 		expectedToken, tokenRes.Token,
@@ -1379,6 +1380,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(json.Unmarshal(queryOut, &classQueryRes))
 	requireT.Equal(
 		moduleswasm.AssetnftClass{
+			// TODO Artem: compare it with Class[0].
 			ID:          expectedClass.Id,
 			Issuer:      expectedClass.Issuer,
 			Name:        expectedClass.Name,
