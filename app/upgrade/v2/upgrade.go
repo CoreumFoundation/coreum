@@ -1,5 +1,8 @@
 package v2
 
+// For testnet we use v2.0.0 binary for this plan.
+// For mainnet we use v2.0.1 binary for this plan.
+
 import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,8 +18,8 @@ import (
 // Name defines the upgrade name.
 const Name = "v2"
 
-// NewV2Upgrade makes an upgrade handler for v2 upgrade.
-func NewV2Upgrade(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
+// New makes an upgrade handler for v2 upgrade.
+func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 	return upgrade.Upgrade{
 		Name: Name,
 		StoreUpgrades: storetypes.StoreUpgrades{
