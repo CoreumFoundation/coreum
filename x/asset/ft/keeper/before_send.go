@@ -133,7 +133,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// Here is the final formula we use to calculate adjusted burn/commission amount for multisend txs:
 	// amount * rate * min(non_issuer_inputs_sum, non_issuer_outputs_sum) / non_issuer_inputs_sum
 
-	// If the transfer is incoming or rate is nil or negative - return nil
+	// If the transfer is incoming from IBC or rate is nil or negative - return nil
 	if wibctransfertypes.IsPurposeIn(ctx) || rate.IsNil() || !rate.IsPositive() {
 		return nil
 	}
