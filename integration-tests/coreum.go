@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
 	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
 )
 
@@ -177,4 +179,26 @@ func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingA
 			t.Fatalf("unexpected validator %q status after removal: %s", validatorAddr, resp.Validator.Status)
 		}
 	}, nil
+}
+
+// QueryAssetFTParams queries for asset/ft module params and returns them.
+func (c CoreumChain) QueryAssetFTParams(ctx context.Context, t *testing.T) assetfttypes.Params {
+	t.Helper()
+
+	queryClient := assetfttypes.NewQueryClient(c.ClientContext)
+	resp, err := queryClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	return resp.Params
+}
+
+// QueryAssetNFTParams queries for asset/nft module params and returns them.
+func (c CoreumChain) QueryAssetNFTParams(ctx context.Context, t *testing.T) assetnfttypes.Params {
+	t.Helper()
+
+	queryClient := assetnfttypes.NewQueryClient(c.ClientContext)
+	resp, err := queryClient.Params(ctx, &assetnfttypes.QueryParamsRequest{})
+	require.NoError(t, err)
+
+	return resp.Params
 }

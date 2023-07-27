@@ -31,7 +31,7 @@ func TestAuthFeeLimits(t *testing.T) {
 			&assetfttypes.MsgIssue{},
 		},
 		NondeterministicMessagesGas: uint64(maxBlockGas) + 100,
-		Amount:                      getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount:                      chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	msg := &banktypes.MsgSend{

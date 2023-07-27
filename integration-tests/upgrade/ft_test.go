@@ -3,7 +3,6 @@
 package upgrade
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -85,7 +84,7 @@ func (ft *ftV1UpgradeTest) Before(t *testing.T) {
 			&assetfttypes.MsgUpgradeTokenV1{},
 			&assetfttypes.MsgUpgradeTokenV1{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount.MulRaw(8),
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount.MulRaw(8),
 	})
 
 	ft.issueV0TokenWithoutFeatures(t)
@@ -183,7 +182,7 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 		modules.FTWASM,
 		integrationtests.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
-			Amount:     getIssueFee(ctx, t, chain.ClientContext),
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerFTInstantiatePayload,
 			Label:      "fungible_token",
@@ -226,7 +225,7 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithoutFeaturesWASM(t *testing.T) {
 		modules.FTWASM,
 		integrationtests.InstantiateConfig{
 			// we add the initial amount to let the contract issue the token on behalf of it
-			Amount:     getIssueFee(ctx, t, chain.ClientContext),
+			Amount:     chain.QueryAssetFTParams(ctx, t).IssueFee,
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    issuerFTInstantiatePayload,
 			Label:      "fungible_token",
@@ -301,12 +300,10 @@ func (ft *ftV1UpgradeTest) verifyParams(t *testing.T) {
 	requireT := require.New(t)
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	requireT.NoError(err)
+	ftParams := chain.QueryAssetFTParams(ctx, t)
 
-	requireT.Equal(assetfttypes.DefaultTokenUpgradeGracePeriod, ftParams.Params.TokenUpgradeGracePeriod)
-	requireT.Greater(ftParams.Params.TokenUpgradeDecisionTimeout, time.Now().Add(v1.InitialTokenUpgradeDecisionPeriod-time.Hour))
+	requireT.Equal(assetfttypes.DefaultTokenUpgradeGracePeriod, ftParams.TokenUpgradeGracePeriod)
+	requireT.Greater(ftParams.TokenUpgradeDecisionTimeout, time.Now().Add(v1.InitialTokenUpgradeDecisionPeriod-time.Hour))
 }
 
 func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
@@ -548,9 +545,8 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
 	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	requireT.NoError(err)
-	requireT.Equal(gracePeriod, ftParams.Params.TokenUpgradeGracePeriod)
+	ftParams := chain.QueryAssetFTParams(ctx, t)
+	requireT.Equal(gracePeriod, ftParams.TokenUpgradeGracePeriod)
 
 	// upgrading with enabled IBC should take effect after delay
 	upgradeMsg := &assetfttypes.MsgUpgradeTokenV1{
@@ -558,7 +554,7 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 		Denom:      ft.denomV0WithFeatures,
 		IbcEnabled: true,
 	}
-	_, err = client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
@@ -586,7 +582,7 @@ func (ft *ftV1UpgradeTest) upgradeFromV0ToV1ToEnableIBC(t *testing.T) {
 	requireT.NoError(err)
 	v1UpgradeStatus := tokenUpgradeStatusesRes.Statuses.V1
 	requireT.True(v1UpgradeStatus.IbcEnabled)
-	requireT.Equal(v1UpgradeStatus.EndTime.Sub(v1UpgradeStatus.StartTime), ftParams.Params.TokenUpgradeGracePeriod)
+	requireT.Equal(v1UpgradeStatus.EndTime.Sub(v1UpgradeStatus.StartTime), ftParams.TokenUpgradeGracePeriod)
 
 	// upgrading second time should fail
 	upgradeMsg = &assetfttypes.MsgUpgradeTokenV1{
@@ -765,9 +761,8 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) 
 		})
 
 	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	ftParams, err := ftClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	requireT.NoError(err)
-	requireT.Equal(decisionTimeout, ftParams.Params.TokenUpgradeDecisionTimeout)
+	ftParams := chain.QueryAssetFTParams(ctx, t)
+	requireT.Equal(decisionTimeout, ftParams.TokenUpgradeDecisionTimeout)
 
 	// upgrade after timeout should fail
 	upgradeMsg := &assetfttypes.MsgUpgradeTokenV1{
@@ -775,7 +770,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) 
 		Denom:      ft.denomV0ForForbiddenUpgrades,
 		IbcEnabled: false,
 	}
-	_, err = client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(ft.issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
@@ -829,7 +824,7 @@ func (ft *ftFeaturesTest) Before(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -900,7 +895,7 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -938,7 +933,7 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -976,7 +971,7 @@ func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
 		Messages: []sdk.Msg{
 			&assetfttypes.MsgIssue{},
 		},
-		Amount: getIssueFee(ctx, t, chain.ClientContext).Amount,
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
 	})
 
 	issueMsg := &assetfttypes.MsgIssue{
@@ -1001,12 +996,4 @@ func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
 		issueMsg,
 	)
 	requireT.NoError(err)
-}
-
-func getIssueFee(ctx context.Context, t *testing.T, clientCtx client.Context) sdk.Coin {
-	queryClient := assetfttypes.NewQueryClient(clientCtx)
-	resp, err := queryClient.Params(ctx, &assetfttypes.QueryParamsRequest{})
-	require.NoError(t, err)
-
-	return resp.Params.IssueFee
 }
