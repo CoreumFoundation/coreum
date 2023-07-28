@@ -104,7 +104,7 @@ provide the correct `node` and `chain-id` flags to the cli command.
 As an example here is a command to connect to the testnet to get the status:
 
 ```
-$ cored status --chain-id=coreum-devnet-1 --node=https://full-node.testnet-1.coreum.dev:26657
+$ cored status --chain-id=coreum-testnet-1 --node=https://full-node.testnet-1.coreum.dev:26657
 ```
 It should also be mentioned that for development purposes testnet is more stable than devnet.
 

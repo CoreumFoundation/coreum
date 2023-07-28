@@ -57,9 +57,9 @@ func (c CoreumChain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	return totalGasRequired
 }
 
-// GasLimitByMultiSendMsgs calculates sum of gas limits required for message types passed and includes the FixedGas once.
+// GasLimitForMultiMsgTx calculates sum of gas limits required for message types passed and includes the FixedGas once.
 // It panics if unsupported message type specified.
-func (c CoreumChain) GasLimitByMultiSendMsgs(msgs ...sdk.Msg) uint64 {
+func (c CoreumChain) GasLimitForMultiMsgTx(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64
 	for _, msg := range msgs {
 		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)

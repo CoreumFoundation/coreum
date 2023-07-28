@@ -21,7 +21,7 @@ func (c ChainContext) BroadcastTxWithSigner(ctx context.Context, txf client.Fact
 	clientCtx := c.ClientContext.WithFromAddress(signerAddress)
 
 	// add account info
-	txf, err := addAccountInfoToTxFactory(ctx, clientCtx, txf, c.ConvertToBech32Address(signerAddress))
+	txf, err := addAccountInfoToTxFactory(ctx, clientCtx, txf, c.MustConvertToBech32Address(signerAddress))
 	if err != nil {
 		return nil, err
 	}
