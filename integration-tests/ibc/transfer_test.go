@@ -208,7 +208,7 @@ func TestTimedOutTransfer(t *testing.T) {
 		// funds should not be received on gaia
 		bankClient := banktypes.NewQueryClient(osmosisChain.ClientContext)
 		resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-			Address: osmosisChain.ConvertToBech32Address(gaiaRecipient),
+			Address: osmosisChain.MustConvertToBech32Address(gaiaRecipient),
 			Denom:   convertToIBCDenom(osmosisToCoreumChannelID, sendToGaiaCoin.Denom),
 		})
 		requireT.NoError(err)
@@ -255,7 +255,7 @@ func TestRejectedTransfer(t *testing.T) {
 	ibcGaiaDenom := convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom)
 	bankClient := banktypes.NewQueryClient(gaiaChain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: gaiaChain.ConvertToBech32Address(moduleAddress),
+		Address: gaiaChain.MustConvertToBech32Address(moduleAddress),
 		Denom:   ibcGaiaDenom,
 	})
 	requireT.NoError(err)
@@ -281,7 +281,7 @@ func TestRejectedTransfer(t *testing.T) {
 	// funds should not be received on coreum
 	bankClient = banktypes.NewQueryClient(coreumChain.ClientContext)
 	resp, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumChain.ConvertToBech32Address(moduleAddress),
+		Address: coreumChain.MustConvertToBech32Address(moduleAddress),
 		Denom:   sendToGaiaCoin.Denom,
 	})
 	requireT.NoError(err)

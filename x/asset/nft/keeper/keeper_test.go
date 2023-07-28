@@ -682,24 +682,24 @@ func TestKeeper_Whitelist(t *testing.T) {
 	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	requireT.NoError(assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient2))
 
-	frozenAccounts, _, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: query.MaxLimit})
+	whitelistedNftAccounts, _, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: query.MaxLimit})
 	requireT.NoError(err)
-	requireT.Len(frozenAccounts, 2)
-	requireT.ElementsMatch(frozenAccounts, []string{
+	requireT.Len(whitelistedNftAccounts, 2)
+	requireT.ElementsMatch(whitelistedNftAccounts, []string{
 		recipient.String(),
 		recipient2.String(),
 	})
 
 	incrementallyQueriedAccounts := []string{}
-	frozenAccounts, pageRes, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: 1})
+	whitelistedNftAccounts, pageRes, err := assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Limit: 1})
 	requireT.NoError(err)
-	requireT.Len(frozenAccounts, 1)
-	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, frozenAccounts...)
+	requireT.Len(whitelistedNftAccounts, 1)
+	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, whitelistedNftAccounts...)
 
-	frozenAccounts, pageRes, err = assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Key: pageRes.GetNextKey()})
+	whitelistedNftAccounts, pageRes, err = assetNFTKeeper.GetWhitelistedAccountsForNFT(ctx, classID, nftID, &query.PageRequest{Key: pageRes.GetNextKey()})
 	requireT.NoError(err)
-	requireT.Len(frozenAccounts, 1)
-	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, frozenAccounts...)
+	requireT.Len(whitelistedNftAccounts, 1)
+	incrementallyQueriedAccounts = append(incrementallyQueriedAccounts, whitelistedNftAccounts...)
 	requireT.Nil(pageRes.GetNextKey())
 
 	requireT.ElementsMatch([]string{

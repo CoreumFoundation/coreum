@@ -431,7 +431,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	assertT.Greater(gasUsedAfterUnpinning, gasUsedAfterPinning)
 }
 
-// TestWASMContractUpgrade deploys simple state smart contract do its upgrade.
+// TestWASMContractUpgrade deploys simple state smart contract do its upgrade and upgrades/migrates it.
 func TestWASMContractUpgrade(t *testing.T) {
 	t.Parallel()
 
@@ -496,7 +496,7 @@ func TestWASMContractUpgrade(t *testing.T) {
 		Count: 999,
 	})
 	requireT.NoError(err)
-	// try to migrate from none admin.
+	// try to migrate from non-admin.
 	err = chain.Wasm.MigrateWASMContract(ctx, txf, noneAdmin, contractAddr, newCodeID, migrationPayload)
 	requireT.Error(err)
 	requireT.Contains(err.Error(), "unauthorized")
@@ -778,7 +778,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 		},
 		BurnRate:           burnRate,
 		SendCommissionRate: sendCommissionRate,
-		Version:            tokenRes.Token.Version, // test should work with any token version
+		Version:            assetfttypes.CurrentTokenVersion, // test should work with any token version
 	}
 	requireT.Equal(
 		expectedToken, tokenRes.Token,
@@ -1379,6 +1379,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	requireT.NoError(json.Unmarshal(queryOut, &classQueryRes))
 	requireT.Equal(
 		moduleswasm.AssetnftClass{
+			// TODO Artem: compare it with Class[0].
 			ID:          expectedClass.Id,
 			Issuer:      expectedClass.Issuer,
 			Name:        expectedClass.Name,

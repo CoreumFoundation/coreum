@@ -810,11 +810,11 @@ func (ft *ftV1UpgradeTest) changeGracePeriod(t *testing.T) {
 		})
 }
 
-type ftFeaturesTest struct {
+type ftFeatureMigrationTest struct {
 	denom string
 }
 
-func (ft *ftFeaturesTest) Before(t *testing.T) {
+func (ft *ftFeatureMigrationTest) Before(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -837,16 +837,16 @@ func (ft *ftFeaturesTest) Before(t *testing.T) {
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_burning,
-			assetfttypes.Feature_ibc, // should be removed by the migration
+			assetfttypes.Feature_ibc, // must be removed as a result of migration
 			assetfttypes.Feature_freezing,
-			1000,                              // should be removed by the migration
-			assetfttypes.Feature_whitelisting, // should be removed by the migration
-			assetfttypes.Feature_minting,      // should be removed by the migration
-			assetfttypes.Feature_burning,      // should be removed by the migration
-			assetfttypes.Feature_ibc,          // should be removed by the migration
-			assetfttypes.Feature_freezing,     // should be removed by the migration
-			2000,                              // should be removed by the migration
-			1000,                              // should be removed by the migration
+			1000,                              // must be removed as a result of migration
+			assetfttypes.Feature_whitelisting, // must be removed as a result of migration
+			assetfttypes.Feature_minting,      // must be removed as a result of migration
+			assetfttypes.Feature_burning,      // must be removed as a result of migration
+			assetfttypes.Feature_ibc,          // must be removed as a result of migration
+			assetfttypes.Feature_freezing,     // must be removed as a result of migration
+			2000,                              // must be removed as a result of migration
+			1000,                              // must be removed as a result of migration
 		},
 	}
 	_, err := client.BroadcastTx(
@@ -859,14 +859,14 @@ func (ft *ftFeaturesTest) Before(t *testing.T) {
 	ft.denom = assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 }
 
-func (ft *ftFeaturesTest) After(t *testing.T) {
+func (ft *ftFeatureMigrationTest) After(t *testing.T) {
 	ft.verifyTokenIsFixed(t)
 	ft.tryCreatingTokenWithInvalidFeature(t)
 	ft.tryCreatingTokenWithDuplicatedFeature(t)
 	ft.createValidToken(t)
 }
 
-func (ft *ftFeaturesTest) verifyTokenIsFixed(t *testing.T) {
+func (ft *ftFeatureMigrationTest) verifyTokenIsFixed(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -885,7 +885,7 @@ func (ft *ftFeaturesTest) verifyTokenIsFixed(t *testing.T) {
 	}, resp.Token.Features)
 }
 
-func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
+func (ft *ftFeatureMigrationTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -920,10 +920,10 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithInvalidFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid input")
+	requireT.ErrorContains(err, "non-existing feature provided")
 }
 
-func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
+func (ft *ftFeatureMigrationTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -958,10 +958,10 @@ func (ft *ftFeaturesTest) tryCreatingTokenWithDuplicatedFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid input")
+	requireT.ErrorContains(err, "duplicated feature")
 }
 
-func (ft *ftFeaturesTest) createValidToken(t *testing.T) {
+func (ft *ftFeatureMigrationTest) createValidToken(t *testing.T) {
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)

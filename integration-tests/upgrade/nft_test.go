@@ -169,16 +169,16 @@ func (nt *nftFeaturesTest) Before(t *testing.T) {
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_burning,
 			assetnfttypes.ClassFeature_freezing,
-			2000, // should be removed
+			2000, // must be removed as a result of migration
 			assetnfttypes.ClassFeature_whitelisting,
-			3000, // should be removed
+			3000, // must be removed as a result of migration
 			assetnfttypes.ClassFeature_disable_sending,
-			assetnfttypes.ClassFeature_burning,         // should be removed
-			assetnfttypes.ClassFeature_freezing,        // should be removed
-			2000,                                       // should be removed
-			assetnfttypes.ClassFeature_whitelisting,    // should be removed
-			3000,                                       // should be removed
-			assetnfttypes.ClassFeature_disable_sending, // should be removed
+			assetnfttypes.ClassFeature_burning,         // must be removed as a result of migration
+			assetnfttypes.ClassFeature_freezing,        // must be removed as a result of migration
+			2000,                                       // must be removed as a result of migration
+			assetnfttypes.ClassFeature_whitelisting,    // must be removed as a result of migration
+			3000,                                       // must be removed as a result of migration
+			assetnfttypes.ClassFeature_disable_sending, // must be removed as a result of migration
 		},
 	}
 	res, err := client.BroadcastTx(
@@ -254,7 +254,7 @@ func (nt *nftFeaturesTest) tryCreatingClassWithInvalidFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid input")
+	requireT.ErrorContains(err, "non-existing class feature provided")
 }
 
 func (nt *nftFeaturesTest) tryCreatingClassWithDuplicatedFeature(t *testing.T) {
@@ -291,7 +291,7 @@ func (nt *nftFeaturesTest) tryCreatingClassWithDuplicatedFeature(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
 		issueMsg,
 	)
-	requireT.ErrorContains(err, "invalid input")
+	requireT.ErrorContains(err, "duplicated features in the class features list")
 }
 
 func (nt *nftFeaturesTest) createValidClass(t *testing.T) {

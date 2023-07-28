@@ -244,7 +244,7 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 		Amount:   sdk.NewInt(2000),
 	})
 
-	gasExpected := chain.GasLimitByMultiSendMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
+	gasExpected := chain.GasLimitForMultiMsgTx(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)
 	txf := chain.ChainContext.TxFactory().WithGas(gasExpected)
 	result, err := client.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)

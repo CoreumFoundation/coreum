@@ -419,3 +419,42 @@ If IBC feature is disabled token can never leave the Coreum chain.
   can extend or override the **Default** functionality.
 * **➕** : Allowing
 * **ⓘ** : Custom behaviour
+
+# Upgrading token to v1
+
+In version `v2` of the blockchain we introduced an ability for the tokens to be sent to and received from other Cosmos SDK-based chains using IBC protocol.
+
+Now, whenever new fungible token is created, the issuer might decide if IBC transfers are enabled or disabled for that token. The decision might be made once, when token is created, and can never be changed later. It is done by specifying `ibc` feature in the token issuance transaction.
+
+For issuers of pre-existing tokens, those created on version `v1` of the blockchain, we open the time-limited opportunity to enable IBC transfers on those tokens.
+
+All the pre-existing tokens are now considered to be of version `v0`. New tokens, created after `v2` blockchain upgrade, will be of version `v1`.
+
+The mechanism described below enables issuers to upgrade tokens from version `v0` to `v1` after the blockchain itself is upgraded to version `v2`.
+
+After the blockchain upgrade, the 3-week period starts when issuer must make a decision if they want to enable IBC or not. Three possible outcomes exist:
+- issuer does not take any action during the transition period - after transition period ends, token stays in version `v0`, can never be upgraded to `v1` again, IBC transfers for that token are disabled forever,
+- issuer decides to disable IBC - token version is upgraded from `v0` to `v1` immediately, IBC transfers are disabled for that token forever, IBC can never be re-enabled even if issuer changes his mind before the transition period ends,
+- issuer decides to enable IBC - for next week nothing happens, it is called a `grace period`, when token holders might recognize the pending upgrade and decide if they still want to keep the token or liquidate it (if they don't support the decision made by the issuer). After the grace period, token is automatically upgraded from `v0` to `v1` and IBC is enabled. Issuer cannot change the decision even if grace period or transition period is still pending.
+
+## Commands to upgrade the token
+
+To upgrade the token and **enable IBC**, use this command:
+
+```console
+cored tx assetft upgrade-v1 [denom] --ibc-enabled=true --from [sender]
+```
+
+To upgrade the token and **disable IBC**, use this command:
+
+```console
+cored tx assetft upgrade-v1 [denom] --ibc-enabled=false --from [sender]
+``` 
+
+## Querying the upgrade status
+
+Everyone is able to check what decision has been made by the issuer, by running the query command:
+
+```console
+cored q assetft token-upgrade-statuses [denom]
+```

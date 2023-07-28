@@ -121,7 +121,7 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 	transferPayload, err := json.Marshal(map[ibcTransferMethod]ibcTransferRequest{
 		ibcTransferMethodTransfer: {
 			ChannelID: coreumToOsmosisChannelID,
-			ToAddress: osmosisChain.ConvertToBech32Address(osmosisRecipient),
+			ToAddress: osmosisChain.MustConvertToBech32Address(osmosisRecipient),
 			Amount:    sendToOsmosisCoin,
 			Timeout: ibcTimeout{
 				Block: ibcTimeoutBlock{

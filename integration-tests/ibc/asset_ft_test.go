@@ -187,11 +187,11 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		gaiaRecipient1,
 		receiveCoinGaia,
 		map[string]sdk.Int{
-			coreumChain.ConvertToBech32Address(coreumIssuer):              sendCoin.Amount.Neg(),
-			coreumChain.ConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount,
+			coreumChain.MustConvertToBech32Address(coreumIssuer):              sendCoin.Amount.Neg(),
+			coreumChain.MustConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount,
 		},
 		map[string]sdk.Int{
-			gaiaChain.ConvertToBech32Address(gaiaRecipient1): sendCoin.Amount,
+			gaiaChain.MustConvertToBech32Address(gaiaRecipient1): sendCoin.Amount,
 		},
 	)
 
@@ -206,12 +206,12 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		gaiaRecipient2,
 		receiveCoinGaia,
 		map[string]sdk.Int{
-			coreumChain.ConvertToBech32Address(coreumSender):              sendCoin.Amount.Add(sendCommissionAmount).Add(burntAmount).Neg(),
-			coreumChain.ConvertToBech32Address(coreumIssuer):              sendCommissionAmount,
-			coreumChain.ConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount,
+			coreumChain.MustConvertToBech32Address(coreumSender):              sendCoin.Amount.Add(sendCommissionAmount).Add(burntAmount).Neg(),
+			coreumChain.MustConvertToBech32Address(coreumIssuer):              sendCommissionAmount,
+			coreumChain.MustConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount,
 		},
 		map[string]sdk.Int{
-			gaiaChain.ConvertToBech32Address(gaiaRecipient2): sendCoin.Amount,
+			gaiaChain.MustConvertToBech32Address(gaiaRecipient2): sendCoin.Amount,
 		},
 	)
 
@@ -227,11 +227,11 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		osmosisRecipient1,
 		receiveCoinOsmosis,
 		map[string]sdk.Int{
-			coreumChain.ConvertToBech32Address(coreumIssuer):                 sendCoin.Amount.Neg(),
-			coreumChain.ConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount,
+			coreumChain.MustConvertToBech32Address(coreumIssuer):                 sendCoin.Amount.Neg(),
+			coreumChain.MustConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount,
 		},
 		map[string]sdk.Int{
-			osmosisChain.ConvertToBech32Address(osmosisRecipient1): sendCoin.Amount,
+			osmosisChain.MustConvertToBech32Address(osmosisRecipient1): sendCoin.Amount,
 		},
 	)
 
@@ -246,12 +246,12 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		osmosisRecipient2,
 		receiveCoinOsmosis,
 		map[string]sdk.Int{
-			coreumChain.ConvertToBech32Address(coreumSender):                 sendCoin.Amount.Add(sendCommissionAmount).Add(burntAmount).Neg(),
-			coreumChain.ConvertToBech32Address(coreumIssuer):                 sendCommissionAmount,
-			coreumChain.ConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount,
+			coreumChain.MustConvertToBech32Address(coreumSender):                 sendCoin.Amount.Add(sendCommissionAmount).Add(burntAmount).Neg(),
+			coreumChain.MustConvertToBech32Address(coreumIssuer):                 sendCommissionAmount,
+			coreumChain.MustConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount,
 		},
 		map[string]sdk.Int{
-			osmosisChain.ConvertToBech32Address(osmosisRecipient2): sendCoin.Amount,
+			osmosisChain.MustConvertToBech32Address(osmosisRecipient2): sendCoin.Amount,
 		},
 	)
 
@@ -267,11 +267,11 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		coreumIssuer,
 		sendCoin,
 		map[string]sdk.Int{
-			gaiaChain.ConvertToBech32Address(gaiaRecipient1): sendCoin.Amount.Neg(),
+			gaiaChain.MustConvertToBech32Address(gaiaRecipient1): sendCoin.Amount.Neg(),
 		},
 		map[string]sdk.Int{
-			coreumChain.ConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount.Neg(),
-			coreumChain.ConvertToBech32Address(coreumIssuer):              sendCoin.Amount,
+			coreumChain.MustConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount.Neg(),
+			coreumChain.MustConvertToBech32Address(coreumIssuer):              sendCoin.Amount,
 		},
 	)
 
@@ -286,12 +286,12 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		coreumSender,
 		sendCoin,
 		map[string]sdk.Int{
-			gaiaChain.ConvertToBech32Address(gaiaRecipient2): sendCoin.Amount.Neg(),
+			gaiaChain.MustConvertToBech32Address(gaiaRecipient2): sendCoin.Amount.Neg(),
 		},
 		map[string]sdk.Int{
-			coreumChain.ConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount.Neg(),
-			coreumChain.ConvertToBech32Address(coreumSender):              sendCoin.Amount,
-			coreumChain.ConvertToBech32Address(coreumIssuer):              sdk.ZeroInt(),
+			coreumChain.MustConvertToBech32Address(coreumToGaiaEscrowAddress): sendCoin.Amount.Neg(),
+			coreumChain.MustConvertToBech32Address(coreumSender):              sendCoin.Amount,
+			coreumChain.MustConvertToBech32Address(coreumIssuer):              sdk.ZeroInt(),
 		},
 	)
 
@@ -307,11 +307,11 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		coreumIssuer,
 		sendCoin,
 		map[string]sdk.Int{
-			osmosisChain.ConvertToBech32Address(osmosisRecipient1): sendCoin.Amount.Neg(),
+			osmosisChain.MustConvertToBech32Address(osmosisRecipient1): sendCoin.Amount.Neg(),
 		},
 		map[string]sdk.Int{
-			coreumChain.ConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount.Neg(),
-			coreumChain.ConvertToBech32Address(coreumIssuer):                 sendCoin.Amount,
+			coreumChain.MustConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount.Neg(),
+			coreumChain.MustConvertToBech32Address(coreumIssuer):                 sendCoin.Amount,
 		},
 	)
 
@@ -326,12 +326,12 @@ func TestIBCAssetFTSendCommissionAndBurnRate(t *testing.T) {
 		coreumSender,
 		sendCoin,
 		map[string]sdk.Int{
-			osmosisChain.ConvertToBech32Address(osmosisRecipient2): sendCoin.Amount.Neg(),
+			osmosisChain.MustConvertToBech32Address(osmosisRecipient2): sendCoin.Amount.Neg(),
 		},
 		map[string]sdk.Int{
-			coreumChain.ConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount.Neg(),
-			coreumChain.ConvertToBech32Address(coreumSender):                 sendCoin.Amount,
-			coreumChain.ConvertToBech32Address(coreumIssuer):                 sdk.ZeroInt(),
+			coreumChain.MustConvertToBech32Address(coreumToOsmosisEscrowAddress): sendCoin.Amount.Neg(),
+			coreumChain.MustConvertToBech32Address(coreumSender):                 sendCoin.Amount,
+			coreumChain.MustConvertToBech32Address(coreumIssuer):                 sdk.ZeroInt(),
 		},
 	)
 }
@@ -864,7 +864,7 @@ func TestIBCAssetFTTimedOutTransfer(t *testing.T) {
 		// funds should not be received on gaia
 		bankClient := banktypes.NewQueryClient(gaiaChain.ClientContext)
 		resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-			Address: gaiaChain.ConvertToBech32Address(gaiaRecipient),
+			Address: gaiaChain.MustConvertToBech32Address(gaiaRecipient),
 			Denom:   convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom),
 		})
 		requireT.NoError(err)
@@ -935,7 +935,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	ibcGaiaDenom := convertToIBCDenom(gaiaToCoreumChannelID, sendToGaiaCoin.Denom)
 	bankClient := banktypes.NewQueryClient(gaiaChain.ClientContext)
 	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: gaiaChain.ConvertToBech32Address(moduleAddress),
+		Address: gaiaChain.MustConvertToBech32Address(moduleAddress),
 		Denom:   ibcGaiaDenom,
 	})
 	requireT.NoError(err)
@@ -961,7 +961,7 @@ func TestIBCAssetFTRejectedTransfer(t *testing.T) {
 	// funds should not be received on coreum
 	bankClient = banktypes.NewQueryClient(coreumChain.ClientContext)
 	resp, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: coreumChain.ConvertToBech32Address(moduleAddress),
+		Address: coreumChain.MustConvertToBech32Address(moduleAddress),
 		Denom:   sendToGaiaCoin.Denom,
 	})
 	requireT.NoError(err)
@@ -1287,7 +1287,7 @@ func ibcTransferAndAssertBalanceChanges(
 
 	dstBankClient := banktypes.NewQueryClient(dstChainCtx.ClientContext)
 	dstChainRecipientBalanceBefore, err := dstBankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: dstChainCtx.ConvertToBech32Address(dstChainRecipient),
+		Address: dstChainCtx.MustConvertToBech32Address(dstChainRecipient),
 		Denom:   receiveCoin.Denom,
 	})
 	requireT.NoError(err)
