@@ -61,7 +61,7 @@ func (w Wasm) ExecuteWASMContract(ctx context.Context, txf client.Factory, fromA
 	}
 
 	msg := &wasmtypes.MsgExecuteContract{
-		Sender:   w.chainCtx.ConvertToBech32Address(fromAddress),
+		Sender:   w.chainCtx.MustConvertToBech32Address(fromAddress),
 		Contract: contractAddr,
 		Msg:      wasmtypes.RawContractMessage(payload),
 		Funds:    funds,
@@ -93,7 +93,7 @@ func (w Wasm) QueryWASMContract(ctx context.Context, contractAddr string, payloa
 // DeployWASMContract the wasm contract and returns its codeID.
 func (w Wasm) DeployWASMContract(ctx context.Context, txf client.Factory, fromAddress sdk.AccAddress, wasmData []byte) (uint64, error) {
 	msg := &wasmtypes.MsgStoreCode{
-		Sender:       w.chainCtx.ConvertToBech32Address(fromAddress),
+		Sender:       w.chainCtx.MustConvertToBech32Address(fromAddress),
 		WASMByteCode: wasmData,
 	}
 
@@ -118,10 +118,10 @@ func (w Wasm) InstantiateWASMContract(ctx context.Context, txf client.Factory, f
 	}
 
 	msg := &wasmtypes.MsgInstantiateContract{
-		Sender: w.chainCtx.ConvertToBech32Address(fromAddress),
+		Sender: w.chainCtx.MustConvertToBech32Address(fromAddress),
 		Admin: func() string {
 			if req.Admin != nil {
-				return w.chainCtx.ConvertToBech32Address(req.Admin)
+				return w.chainCtx.MustConvertToBech32Address(req.Admin)
 			}
 			return ""
 		}(),
@@ -169,7 +169,7 @@ func (w Wasm) MigrateWASMContract(
 	payload json.RawMessage,
 ) error {
 	msg := &wasmtypes.MsgMigrateContract{
-		Sender:   w.chainCtx.ConvertToBech32Address(fromAddress),
+		Sender:   w.chainCtx.MustConvertToBech32Address(fromAddress),
 		Contract: contractAddress,
 		CodeID:   codeID,
 		Msg:      wasmtypes.RawContractMessage(payload),

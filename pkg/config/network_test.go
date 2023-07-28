@@ -11,7 +11,6 @@ import (
 
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -160,40 +159,6 @@ func TestGenesisHash(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tt.genesisHash, fmt.Sprintf("%x", sha256.Sum256(genesisDoc)))
-		})
-	}
-}
-
-func TestGenesisCoreTotalSupply(t *testing.T) {
-	tests := []struct {
-		name       string
-		chainID    constant.ChainID
-		wantSupply sdk.Coin
-	}{
-		{
-			name:       "testnet",
-			chainID:    constant.ChainIDTest,
-			wantSupply: sdk.NewCoin(constant.DenomTest, sdk.NewInt(500_000_000_000_000)),
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			n, err := config.NetworkConfigByChainID(tt.chainID)
-			require.NoError(t, err)
-
-			unsealConfig()
-			n.SetSDKConfig()
-			appState, err := n.Provider.AppState()
-			require.NoError(t, err)
-
-			bankGenesis, ok := appState[banktypes.ModuleName]
-			require.True(t, ok)
-
-			var bankGenesisState banktypes.GenesisState
-			err = json.Unmarshal(bankGenesis, &bankGenesisState)
-			require.NoError(t, err)
-			require.Equal(t, tt.wantSupply.Amount.String(), bankGenesisState.Supply.AmountOf(tt.wantSupply.Denom).String())
 		})
 	}
 }

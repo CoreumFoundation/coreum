@@ -67,8 +67,8 @@ func (c ChainContext) GenAccount() sdk.AccAddress {
 	return c.ImportMnemonic(mnemonic)
 }
 
-// ConvertToBech32Address converts the address to bech32 address string.
-func (c ChainContext) ConvertToBech32Address(address sdk.AccAddress) string {
+// MustConvertToBech32Address converts the address to bech32 address string.
+func (c ChainContext) MustConvertToBech32Address(address sdk.AccAddress) string {
 	bech32Address, err := bech32.ConvertAndEncode(c.ChainSettings.AddressPrefix, address)
 	if err != nil {
 		panic(err)
@@ -155,7 +155,7 @@ func (c ChainContext) SignAndBroadcastMultisigTx(
 		return nil, errors.WithStack(err)
 	}
 	if keyInfo.GetAlgo() != hd.MultiType {
-		return nil, errors.Errorf("%s is not a multisig account", c.ConvertToBech32Address(keyInfo.GetAddress()))
+		return nil, errors.Errorf("%s is not a multisig account", c.MustConvertToBech32Address(keyInfo.GetAddress()))
 	}
 	multisigPubKey, ok := keyInfo.GetPubKey().(*sdkmultisig.LegacyAminoPubKey)
 	if !ok {

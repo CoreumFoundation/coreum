@@ -39,16 +39,16 @@ func TestMigrateFeatures(t *testing.T) {
 
 	def.Features = []types.ClassFeature{
 		types.ClassFeature_disable_sending,
-		4000,                               // should be removed
-		types.ClassFeature_disable_sending, // should be removed
-		4000,                               // should be removed
+		4000,                               // must be removed as a result of migration
+		types.ClassFeature_disable_sending, // must be removed as a result of migration
+		4000,                               // must be removed as a result of migration
 		types.ClassFeature_whitelisting,
-		types.ClassFeature_whitelisting, // should be removed
+		types.ClassFeature_whitelisting, // must be removed as a result of migration
 		types.ClassFeature_freezing,
-		1000,                        // should be removed
-		types.ClassFeature_freezing, // should be removed
+		1000,                        // must be removed as a result of migration
+		types.ClassFeature_freezing, // must be removed as a result of migration
 		types.ClassFeature_burning,
-		types.ClassFeature_burning, // should be removed
+		types.ClassFeature_burning, // must be removed as a result of migration
 	}
 	requireT.NoError(keeper.SetClassDefinition(ctx, def))
 

@@ -39,8 +39,8 @@ func (c ChainContext) ExecuteIBCTransfer(
 ) (*sdk.TxResponse, error) {
 	t.Helper()
 
-	sender := c.ConvertToBech32Address(senderAddress)
-	receiver := recipientChainContext.ConvertToBech32Address(recipientAddress)
+	sender := c.MustConvertToBech32Address(senderAddress)
+	receiver := recipientChainContext.MustConvertToBech32Address(recipientAddress)
 	t.Logf("Sending IBC transfer sender: %s, receiver: %s, amount: %s.", sender, receiver, coin.String())
 
 	recipientChannelID := c.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, recipientChainContext.ChainSettings.ChainID)
@@ -82,8 +82,8 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 ) (*sdk.TxResponse, error) {
 	t.Helper()
 
-	sender := c.ConvertToBech32Address(senderAddress)
-	receiver := recipientChainContext.ConvertToBech32Address(recipientAddress)
+	sender := c.MustConvertToBech32Address(senderAddress)
+	receiver := recipientChainContext.MustConvertToBech32Address(recipientAddress)
 	t.Logf("Sending timing out IBC transfer from %s, to %s, %s.", sender, receiver, coin.String())
 
 	recipientChannelID := c.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, recipientChainContext.ChainSettings.ChainID)
@@ -118,7 +118,7 @@ func (c ChainContext) AwaitForBalance(
 ) error {
 	t.Helper()
 
-	t.Logf("Waiting for account %s balance, expected amount: %s.", c.ConvertToBech32Address(address), expectedBalance.String())
+	t.Logf("Waiting for account %s balance, expected amount: %s.", c.MustConvertToBech32Address(address), expectedBalance.String())
 	bankClient := banktypes.NewQueryClient(c.ClientContext)
 	retryCtx, retryCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer retryCancel()
@@ -128,7 +128,7 @@ func (c ChainContext) AwaitForBalance(
 
 		// We intentionally query all balances instead of single denom here to include this info inside error message.
 		balancesRes, err := bankClient.AllBalances(requestCtx, &banktypes.QueryAllBalancesRequest{
-			Address: c.ConvertToBech32Address(address),
+			Address: c.MustConvertToBech32Address(address),
 		})
 		if err != nil {
 			return err
