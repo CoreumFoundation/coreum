@@ -1097,7 +1097,7 @@ func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 	ctx, chains := integrationtests.NewChainsTestingContext(t)
 	requireT := require.New(t)
 	coreumChain := chains.Coreum
-	gaiaChain := chains.Osmosis
+	gaiaChain := chains.Gaia
 
 	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
 
@@ -1261,6 +1261,235 @@ func TestIBCTimedOutTransferWithWhitelistingAndFreezing(t *testing.T) {
 		}
 
 		// At this point we are sure that timeout happened and coins has been sent back to the sender.
+		return nil
+	})
+	requireT.NoError(err)
+}
+
+func TestIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	coreumChain := chains.Coreum
+	gaiaChain := chains.Gaia
+
+	coreumIssuer := coreumChain.GenAccount()
+	coreumSender := coreumChain.GenAccount()
+	// Bank module rejects transfers targeting some module accounts. We use this feature to test that
+	// this type of IBC transfer is rejected by the receiving chain.
+	moduleAddress := authtypes.NewModuleAddress(ibctransfertypes.ModuleName)
+
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
+	coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&banktypes.MsgSend{},
+		},
+		Amount: issueFee,
+	})
+	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&ibctransfertypes.MsgTransfer{},
+		},
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        coreumIssuer.String(),
+		Symbol:        "mysymbol",
+		Subunit:       "mysubunit",
+		Precision:     8,
+		InitialAmount: sdk.NewInt(910_000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
+		},
+		BurnRate:           sdk.MustNewDecFromStr("0.1"),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	require.NoError(t, err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
+
+	// send coins from issuer to sender
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: coreumIssuer.String(),
+		ToAddress:   coreumSender.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, issueMsg.InitialAmount)),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+		coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	require.NoError(t, err)
+
+	// Send coins from sender to blocked address on Gaia.
+	// We send everything except amount required to cover burn rate and send commission.
+	sendCoin := sdk.NewCoin(denom, issueMsg.InitialAmount.ToDec().Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).TruncateInt())
+	_, err = coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendCoin, gaiaChain.ChainContext, moduleAddress)
+	requireT.NoError(err)
+
+	// Gaia should reject the IBC transfers and funds should be returned back to Coreum.
+	// Burn rate and send commission should be charged only once when IBC transfer is requested (we will probably change this in the future),
+	// but when IBC transfer is rolled back, rates should not be charged again.
+	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendCoin))
+
+	// Balance on escrow address should be 0.
+	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
+	coreumToGaiaEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToGaiaChannelID)
+	bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
+	balanceResp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: coreumToGaiaEscrowAddress.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal("0", balanceResp.Balance.Amount.String())
+}
+
+func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
+	t.Parallel()
+
+	ctx, chains := integrationtests.NewChainsTestingContext(t)
+	requireT := require.New(t)
+	coreumChain := chains.Coreum
+	gaiaChain := chains.Gaia
+
+	gaiaToCoreumChannelID := gaiaChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, coreumChain.ChainSettings.ChainID)
+
+	retryCtx, retryCancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer retryCancel()
+
+	// This is the retry loop where we try to trigger a timeout condition for IBC transfer.
+	// We can't reproduce it with 100% probability, so we may need to try it many times.
+	// On every trial we send funds from one chain to the other. Then we observe accounts on both chains
+	// to find if IBC transfer completed successfully or timed out. If tokens were delivered to the recipient
+	// we must retry. Otherwise, if tokens were returned back to the sender, we might continue the test.
+	issueFee := coreumChain.QueryAssetFTParams(ctx, t).IssueFee.Amount
+	err := retry.Do(retryCtx, time.Millisecond, func() error {
+		coreumIssuer := coreumChain.GenAccount()
+		coreumSender := coreumChain.GenAccount()
+		gaiaRecipient := gaiaChain.GenAccount()
+
+		coreumChain.FundAccountWithOptions(ctx, t, coreumIssuer, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&assetfttypes.MsgIssue{},
+				&banktypes.MsgSend{},
+			},
+			Amount: issueFee,
+		})
+		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
+			Messages: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{},
+			},
+		})
+
+		issueMsg := &assetfttypes.MsgIssue{
+			Issuer:        coreumIssuer.String(),
+			Symbol:        "mysymbol",
+			Subunit:       "mysubunit",
+			Precision:     8,
+			InitialAmount: sdk.NewInt(910_000),
+			Features: []assetfttypes.Feature{
+				assetfttypes.Feature_ibc,
+			},
+			BurnRate:           sdk.MustNewDecFromStr("0.1"),
+			SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
+		}
+		_, err := client.BroadcastTx(
+			ctx,
+			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(issueMsg)),
+			issueMsg,
+		)
+		require.NoError(t, err)
+		denom := assetfttypes.BuildDenom(issueMsg.Subunit, coreumIssuer)
+
+		// send coins from issuer to sender
+		sendMsg := &banktypes.MsgSend{
+			FromAddress: coreumIssuer.String(),
+			ToAddress:   coreumSender.String(),
+			Amount:      sdk.NewCoins(sdk.NewCoin(denom, issueMsg.InitialAmount)),
+		}
+		_, err = client.BroadcastTx(
+			ctx,
+			coreumChain.ClientContext.WithFromAddress(coreumIssuer),
+			coreumChain.TxFactory().WithGas(coreumChain.GasLimitByMsgs(sendMsg)),
+			sendMsg,
+		)
+		require.NoError(t, err)
+
+		// Send coins from sender to Gaia.
+		// We send everything except amount required to cover burn rate and send commission.
+		sendCoin := sdk.NewCoin(denom, issueMsg.InitialAmount.ToDec().Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).TruncateInt())
+
+		_, err = coreumChain.ExecuteTimingOutIBCTransfer(ctx, t, coreumSender, sendCoin, gaiaChain.ChainContext, gaiaRecipient)
+		switch {
+		case err == nil:
+		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
+			return retry.Retryable(err)
+		default:
+			requireT.NoError(err)
+		}
+
+		parallelCtx, parallelCancel := context.WithCancel(ctx)
+		defer parallelCancel()
+		errCh := make(chan error, 1)
+		go func() {
+			// In this goroutine we check if funds were returned back to the sender.
+			// If this happens it means timeout occurred.
+
+			defer parallelCancel()
+			if err := coreumChain.AwaitForBalance(parallelCtx, t, coreumSender, sendCoin); err != nil {
+				select {
+				case errCh <- retry.Retryable(err):
+				default:
+				}
+			} else {
+				errCh <- nil
+			}
+		}()
+		go func() {
+			// In this goroutine we check if funds were delivered to the other chain.
+			// If this happens it means timeout didn't occur and we must try again.
+
+			if err := gaiaChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(gaiaToCoreumChannelID, sendCoin.Denom), sendCoin.Amount)); err == nil {
+				select {
+				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
+					parallelCancel()
+				default:
+				}
+			}
+		}()
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case err := <-errCh:
+			if err != nil {
+				return err
+			}
+		}
+
+		// At this point we are sure that timeout happened and coins has been sent back to the sender.
+
+		// Balance on escrow address should be 0.
+		coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
+		coreumToGaiaEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToGaiaChannelID)
+		bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
+		balanceResp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: coreumToGaiaEscrowAddress.String(),
+			Denom:   denom,
+		})
+		requireT.NoError(err)
+		requireT.Equal("0", balanceResp.Balance.Amount.String())
+
 		return nil
 	})
 	requireT.NoError(err)

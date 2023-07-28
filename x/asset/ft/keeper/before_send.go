@@ -110,6 +110,27 @@ func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
 
 // CalculateRateShares calculates how the burn or commission share amount should be split between different parties.
 func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdk.Int {
+	// We decided that rates should not be charged on incoming IBC transfers.
+	// According to our current protocol, it cannot be done because sender pays the rates, meaning that escrow address
+	// would be charged leading to breaking the IBC mechanics.
+	if wibctransfertypes.IsPurposeIn(ctx) {
+		return nil
+	}
+
+	// Context is marked with ACK purpose in two cases:
+	// - when IBC transfer succeeded on the receiving chain (positive ACK)
+	// - when IBC transfer has been rejected by the other chain (negative ACK)
+	// This function is called only in the negative case, when the IBC transfer must be rolled back and funds
+	// must be sent back to the sender. In this case we should not charge the rates.
+	if wibctransfertypes.IsPurposeAck(ctx) {
+		return nil
+	}
+
+	// Same thing as above just in case of IBC timeout.
+	if wibctransfertypes.IsPurposeTimeout(ctx) {
+		return nil
+	}
+
 	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
 	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
 
@@ -132,9 +153,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// Note that if we used original rate it would be 75 * 10% = 7.5
 	// Here is the final formula we use to calculate adjusted burn/commission amount for multisend txs:
 	// amount * rate * min(non_issuer_inputs_sum, non_issuer_outputs_sum) / non_issuer_inputs_sum
-
-	// If the transfer is incoming from IBC or rate is nil or negative - return nil
-	if wibctransfertypes.IsPurposeIn(ctx) || rate.IsNil() || !rate.IsPositive() {
+	if rate.IsNil() || !rate.IsPositive() {
 		return nil
 	}
 

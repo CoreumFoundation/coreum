@@ -98,7 +98,7 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 		Token:            coin,
 		Sender:           sender,
 		Receiver:         receiver,
-		TimeoutTimestamp: uint64(latestBlockRes.Block.Header.Time.Add(-10 * time.Second).UnixNano()),
+		TimeoutTimestamp: uint64(latestBlockRes.Block.Header.Time.Add(-5 * time.Second).UnixNano()),
 	}
 
 	return c.BroadcastTxWithSigner(
