@@ -16,6 +16,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev2 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2"
+	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2/v2patch1"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 )
 
@@ -26,8 +27,21 @@ type upgradeTest interface {
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
-	// run upgrade v2
-	upgradeV2(t)
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	requireT := require.New(t)
+
+	tmQueryClient := tmservice.NewServiceClient(chain.ClientContext)
+	infoRes, err := tmQueryClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	requireT.NoError(err)
+
+	switch infoRes.ApplicationVersion.Version {
+	case "v1.0.0": // this is for mainnet
+		upgradeV2(t)
+	case "v2.0.0": // this is for testnet
+		runUpgrade(t, "v2.0.0", appupgradev2patch1.Name, 30)
+	default:
+		requireT.Failf("not supported verion: %s", infoRes.ApplicationVersion.Version)
+	}
 }
 
 func upgradeV2(t *testing.T) {

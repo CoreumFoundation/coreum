@@ -99,6 +99,7 @@ import (
 	appupgrade "github.com/CoreumFoundation/coreum/v2/app/upgrade"
 	appupgradev1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v1"
 	appupgradev2 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2"
+	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2/v2patch1"
 	"github.com/CoreumFoundation/coreum/v2/docs"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
@@ -714,8 +715,9 @@ func New(
 
 	/**** Upgrades ****/
 	upgrades := []appupgrade.Upgrade{
-		appupgradev1.NewV1Upgrade(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
-		appupgradev2.NewV2Upgrade(app.mm, app.configurator),
+		appupgradev1.New(app.mm, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
+		appupgradev2.New(app.mm, app.configurator),
+		appupgradev2patch1.New(app.mm, app.configurator),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
@@ -733,8 +735,12 @@ func New(
 		)
 
 		if upgradeInfo.Name == upgradeItem.Name && !isSkipHeight {
+			// The line below is essential. If `&upgradeItem.StoreUpgrades` is passed to `UpgradeStoreLoader`
+			// directly, then due to how `for` loop works in go, the `StoreUpgrades` of the last defined upgrade plan is
+			// always used. To overcome this, here we make a copy of the store upgrades before taking a pointer.
+			storeUpgrades := upgradeItem.StoreUpgrades
 			// configure store loader that checks if version == upgradeHeight and applies store upgrades
-			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgradeItem.StoreUpgrades))
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 		}
 	}
 
