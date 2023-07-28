@@ -1340,6 +1340,17 @@ func TestIBCRejectedTransferWithBurnRateAndSendCommission(t *testing.T) {
 	// Burn rate and send commission should be charged only once when IBC transfer is requested (we will probably change this in the future),
 	// but when IBC transfer is rolled back, rates should not be charged again.
 	requireT.NoError(coreumChain.AwaitForBalance(ctx, t, coreumSender, sendCoin))
+
+	// Balance on escrow address should be 0.
+	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
+	coreumToGaiaEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToGaiaChannelID)
+	bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
+	balanceResp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: coreumToGaiaEscrowAddress.String(),
+		Denom:   denom,
+	})
+	requireT.NoError(err)
+	requireT.Equal("0", balanceResp.Balance.Amount.String())
 }
 
 func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
@@ -1467,6 +1478,18 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 		}
 
 		// At this point we are sure that timeout happened and coins has been sent back to the sender.
+
+		// Balance on escrow address should be 0.
+		coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
+		coreumToGaiaEscrowAddress := ibctransfertypes.GetEscrowAddress(ibctransfertypes.PortID, coreumToGaiaChannelID)
+		bankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
+		balanceResp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: coreumToGaiaEscrowAddress.String(),
+			Denom:   denom,
+		})
+		requireT.NoError(err)
+		requireT.Equal("0", balanceResp.Balance.Amount.String())
+
 		return nil
 	})
 	requireT.NoError(err)
