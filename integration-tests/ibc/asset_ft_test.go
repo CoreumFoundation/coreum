@@ -1414,7 +1414,7 @@ func TestIBCTimedOutTransferWithBurnRateAndSendCommission(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		// Send coins from sender to blocked address on Gaia.
+		// Send coins from sender to Gaia.
 		// We send everything except amount required to cover burn rate and send commission.
 		sendCoin := sdk.NewCoin(denom, issueMsg.InitialAmount.ToDec().Quo(sdk.OneDec().Add(issueMsg.BurnRate).Add(issueMsg.SendCommissionRate)).TruncateInt())
 
