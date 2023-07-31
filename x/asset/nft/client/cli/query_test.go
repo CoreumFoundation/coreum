@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
+	testutilcli "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	coreumclitestutil "github.com/CoreumFoundation/coreum/v2/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v2/testutil/network"
@@ -40,11 +40,8 @@ func TestQueryClassAndClasses(t *testing.T) {
 		types.ClassFeature_disable_sending,
 	)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
-	requireT.NoError(err)
-
 	var classRes types.QueryClassResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &classRes))
+	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryClass(), []string{classID}, &classRes))
 
 	expectedClass := types.Class{
 		Id:          classID,

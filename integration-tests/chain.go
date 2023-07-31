@@ -3,6 +3,7 @@ package integrationtests
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -16,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum/v2/app"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
@@ -34,16 +36,18 @@ type ChainSettings struct {
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
+	EncodingConfig         config.EncodingConfig
 	ClientContext client.Context
 	ChainSettings ChainSettings
 }
 
 // NewChainContext returns a new instance if the ChainContext.
 func NewChainContext(
-	clientCtx client.Context,
+	encodingConfig config.EncodingConfig,clientCtx client.Context,
 	chainSettings ChainSettings,
 ) ChainContext {
 	return ChainContext{
+		EncodingConfig:         encodingConfig,
 		ClientContext: clientCtx,
 		ChainSettings: chainSettings,
 	}
@@ -53,7 +57,7 @@ func NewChainContext(
 // private key and stores it in the chains ClientContext Keyring.
 func (c ChainContext) GenAccount() sdk.AccAddress {
 	// Generate and store a new mnemonic using temporary keyring
-	_, mnemonic, err := keyring.NewInMemory().NewMnemonic(
+	_, mnemonic, err := keyring.NewInMemory(c.EncodingConfig.Codec).NewMnemonic(
 		"tmp",
 		keyring.English,
 		sdk.GetConfig().GetFullBIP44Path(),
@@ -91,7 +95,12 @@ func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 		panic(err)
 	}
 
-	return keyInfo.GetAddress()
+	address, err := keyInfo.GetAddress()
+	if err != nil {
+		panic(err)
+	}
+
+	return address
 }
 
 // TxFactory returns factory with present values for the Chain.
@@ -109,7 +118,7 @@ func (c ChainContext) TxFactory() client.Factory {
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
-func (c ChainContext) NewCoin(amount sdk.Int) sdk.Coin {
+func (c ChainContext) NewCoin(amount sdkmath.Int) sdk.Coin {
 	return sdk.NewCoin(c.ChainSettings.Denom, amount)
 }
 
@@ -248,7 +257,7 @@ func NewChain(grpcClient protobufgrpc.ClientConn, rpcClient *rpchttp.HTTP, chain
 	var faucet Faucet
 	if fundingMnemonic != "" {
 		faucetAddr := chainCtx.ImportMnemonic(fundingMnemonic)
-		faucet = NewFaucet(NewChainContext(clientCtx.WithFromAddress(faucetAddr), chainSettings))
+		faucet = NewFaucet(NewChainContext(encodingConfig, clientCtx.WithFromAddress(faucetAddr), chainSettings))
 	}
 
 	return Chain{

@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
@@ -21,7 +22,7 @@ func (k Keeper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendRespo
 
 	owner := k.GetOwner(ctx, msg.ClassId, msg.Id)
 	if !owner.Equals(sender) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s is not the owner of nft %s", sender, msg.Id)
+		return nil, sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "%s is not the owner of nft %s", sender, msg.Id)
 	}
 
 	receiver, err := sdk.AccAddressFromBech32(msg.Receiver)

@@ -20,6 +20,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/pkg/errors"
+
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
@@ -219,7 +221,7 @@ func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn
 
 	paramsRes, err := stakingtypes.NewQueryClient(clientCtx).Params(ctx, &stakingtypes.QueryParamsRequest{})
 	if err != nil {
-		panic(fmt.Sprintf("can't get staking params, err: %s", err))
+		panic(errors.Errorf("can't get staking params, err: %s", err))
 	}
 
 	denom := paramsRes.Params.BondDenom

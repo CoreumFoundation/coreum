@@ -3,11 +3,12 @@ package cli_test
 import (
 	"testing"
 
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	testutilcli "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/v2/testutil/network"
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/client/cli"
@@ -35,14 +36,11 @@ func TestQueryTokens(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	initialAmount := sdk.NewInt(100)
+	initialAmount := sdkmath.NewInt(100)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryTokens(), []string{issuer.String(), "--output", "json", "--limit", "1"})
-	requireT.NoError(err)
-
 	var resp types.QueryTokensResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryTokens(), []string{issuer.String(), "--limit", "1"}, &resp))
 
 	expectedToken := token
 	expectedToken.Denom = denom
@@ -69,14 +67,11 @@ func TestQueryToken(t *testing.T) {
 	}
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	initialAmount := sdk.NewInt(100)
+	initialAmount := sdkmath.NewInt(100)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
-	requireT.NoError(err)
-
 	var resp types.QueryTokenResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
 
 	expectedToken := token
 	expectedToken.Denom = denom

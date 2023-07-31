@@ -3,11 +3,12 @@ package integrationtests
 import (
 	"sync"
 
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+var _ keyring.Keyring = concurrentSafeKeyring{}
 
 // concurrentSafeKeyring wraps standard Cosmos SDK keyring implementation to make it concurrent safe.
 // Since we run our integration tests in parallel from time to time we get: "concurrent map read and map write"
@@ -30,21 +31,21 @@ func (csk concurrentSafeKeyring) SupportedAlgorithms() (keyring.SigningAlgoList,
 
 // Read operations:
 
-func (csk concurrentSafeKeyring) List() ([]keyring.Info, error) {
+func (csk concurrentSafeKeyring) List() ([]*keyring.Record, error) {
 	csk.mu.RLock()
 	defer csk.mu.RUnlock()
 
 	return csk.kr.List()
 }
 
-func (csk concurrentSafeKeyring) Key(uid string) (keyring.Info, error) {
+func (csk concurrentSafeKeyring) Key(uid string) (*keyring.Record, error) {
 	csk.mu.RLock()
 	defer csk.mu.RUnlock()
 
 	return csk.kr.Key(uid)
 }
 
-func (csk concurrentSafeKeyring) KeyByAddress(address sdk.Address) (keyring.Info, error) {
+func (csk concurrentSafeKeyring) KeyByAddress(address sdk.Address) (*keyring.Record, error) {
 	csk.mu.RLock()
 	defer csk.mu.RUnlock()
 
@@ -109,35 +110,28 @@ func (csk concurrentSafeKeyring) DeleteByAddress(address sdk.Address) error {
 	return csk.kr.DeleteByAddress(address)
 }
 
-func (csk concurrentSafeKeyring) NewMnemonic(uid string, language keyring.Language, hdPath, bip39Passphrase string, algo keyring.SignatureAlgo) (keyring.Info, string, error) {
+func (csk concurrentSafeKeyring) NewMnemonic(uid string, language keyring.Language, hdPath, bip39Passphrase string, algo keyring.SignatureAlgo) (*keyring.Record, string, error) {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
 
 	return csk.kr.NewMnemonic(uid, language, hdPath, bip39Passphrase, algo)
 }
 
-func (csk concurrentSafeKeyring) NewAccount(uid, mnemonic, bip39Passphrase, hdPath string, algo keyring.SignatureAlgo) (keyring.Info, error) {
+func (csk concurrentSafeKeyring) NewAccount(uid, mnemonic, bip39Passphrase, hdPath string, algo keyring.SignatureAlgo) (*keyring.Record, error) {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
 
 	return csk.kr.NewAccount(uid, mnemonic, bip39Passphrase, hdPath, algo)
 }
 
-func (csk concurrentSafeKeyring) SaveLedgerKey(uid string, algo keyring.SignatureAlgo, hrp string, coinType, account, index uint32) (keyring.Info, error) {
+func (csk concurrentSafeKeyring) SaveLedgerKey(uid string, algo keyring.SignatureAlgo, hrp string, coinType, account, index uint32) (*keyring.Record, error) {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
 
 	return csk.kr.SaveLedgerKey(uid, algo, hrp, coinType, account, index)
 }
 
-func (csk concurrentSafeKeyring) SavePubKey(uid string, pubkey types.PubKey, algo hd.PubKeyType) (keyring.Info, error) {
-	csk.mu.Lock()
-	defer csk.mu.Unlock()
-
-	return csk.kr.SavePubKey(uid, pubkey, algo)
-}
-
-func (csk concurrentSafeKeyring) SaveMultisig(uid string, pubkey types.PubKey) (keyring.Info, error) {
+func (csk concurrentSafeKeyring) SaveMultisig(uid string, pubkey types.PubKey) (*keyring.Record, error) {
 	csk.mu.Lock()
 	defer csk.mu.Unlock()
 
@@ -156,4 +150,29 @@ func (csk concurrentSafeKeyring) ImportPubKey(uid, armor string) error {
 	defer csk.mu.Unlock()
 
 	return csk.kr.ImportPubKey(uid, armor)
+}
+
+func (csk concurrentSafeKeyring) Backend() string {
+	return csk.kr.Backend()
+}
+
+func (csk concurrentSafeKeyring) Rename(from, to string) error {
+	csk.mu.Lock()
+	defer csk.mu.Unlock()
+
+	return csk.kr.Rename(from, to)
+}
+
+func (csk concurrentSafeKeyring) SaveOfflineKey(uid string, pubkey types.PubKey) (*keyring.Record, error) {
+	csk.mu.Lock()
+	defer csk.mu.Unlock()
+
+	return csk.kr.SaveOfflineKey(uid, pubkey)
+}
+
+func (csk concurrentSafeKeyring) MigrateAll() ([]*keyring.Record, error) {
+	csk.mu.Lock()
+	defer csk.mu.Unlock()
+
+	return csk.kr.MigrateAll()
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -40,7 +41,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 		Subunit:       "tok1",
 		Precision:     1,
 		Description:   "TOK1 Description",
-		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
+		InitialAmount: sdkmath.NewInt(100_000_000_000_000_000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing, // enable the feature to make the computation more complicated
 		},
@@ -56,7 +57,7 @@ func TestBankMultiSendBatchOutputs(t *testing.T) {
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 	outputItems := make([]banktypes.Output, 0, numAccountsToFund)
 	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
-	coinToFund := sdk.NewCoin(denom, sdk.NewInt(10_000_000_000))
+	coinToFund := sdk.NewCoin(denom, sdkmath.NewInt(10_000_000_000))
 
 	for i := 0; i < numAccountsToFund; i++ {
 		inputItem.Coins = inputItem.Coins.Add(coinToFund)
@@ -126,7 +127,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 		Subunit:       "tok1",
 		Precision:     1,
 		Description:   "TOK1 Description",
-		InitialAmount: sdk.NewInt(100_000_000_000_000_000),
+		InitialAmount: sdkmath.NewInt(100_000_000_000_000_000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing, // enable the feature to make the computation more complicated
 		},
@@ -137,7 +138,7 @@ func TestBankSendBatchMsgs(t *testing.T) {
 
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 	bankSendSendMsgs := make([]sdk.Msg, 0, numAccountsToFund)
-	coinToFund := sdk.NewCoin(denom, sdk.NewInt(10_000_000_000))
+	coinToFund := sdk.NewCoin(denom, sdkmath.NewInt(10_000_000_000))
 	fundedAccounts := make([]sdk.AccAddress, 0, numAccountsToFund)
 	for i := 0; i < numAccountsToFund; i++ {
 		recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -193,7 +194,7 @@ func TestBankSendDeterministicGas(t *testing.T) {
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	amountToSend := sdk.NewInt(1000)
+	amountToSend := sdkmath.NewInt(1000)
 	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
@@ -231,17 +232,17 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 	bankSend1 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   recipient1.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1000))),
 	}
 	bankSend2 := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1000))),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1000))),
 	}
 
 	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{bankSend1, bankSend2},
-		Amount:   sdk.NewInt(2000),
+		Amount:   sdkmath.NewInt(2000),
 	})
 
 	gasExpected := chain.GasLimitForMultiMsgTx(&banktypes.MsgSend{}, &banktypes.MsgSend{})
@@ -263,7 +264,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	amountToSend := sdk.NewInt(1000)
+	amountToSend := sdkmath.NewInt(1000)
 
 	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
 	for i := 0; i < numOfTokens; i++ {
@@ -335,7 +336,7 @@ func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	amountToSend := sdk.NewInt(1000)
+	amountToSend := sdkmath.NewInt(1000)
 	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
@@ -367,7 +368,7 @@ func TestBankSendGasEstimation(t *testing.T) {
 
 	sender := chain.GenAccount()
 
-	amountToSend := sdk.NewInt(1000)
+	amountToSend := sdkmath.NewInt(1000)
 	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   amountToSend,
@@ -402,7 +403,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	amountToSend := sdk.NewInt(1000)
+	amountToSend := sdkmath.NewInt(1000)
 
 	issueMsgs := make([]sdk.Msg, 0, numOfTokens)
 	for i := 0; i < numOfTokens; i++ {
@@ -490,7 +491,7 @@ func TestBankMultiSend(t *testing.T) {
 	recipient1 := chain.GenAccount()
 	recipient2 := chain.GenAccount()
 
-	amount := sdk.NewInt(1000)
+	amount := sdkmath.NewInt(1000)
 
 	issueMsgs := []sdk.Msg{
 		&assetfttypes.MsgIssue{
@@ -615,7 +616,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	recipient2 := chain.GenAccount()
 	recipient3 := chain.GenAccount()
 
-	assetAmount := sdk.NewInt(1000)
+	assetAmount := sdkmath.NewInt(1000)
 	issue1Msg := &assetfttypes.MsgIssue{
 		Issuer:        sender1.String(),
 		Symbol:        "TOK1",
@@ -636,7 +637,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	denom1 := assetfttypes.BuildDenom(issue1Msg.Subunit, sender1)
 	denom2 := assetfttypes.BuildDenom(issue2Msg.Subunit, sender2)
 
-	nativeAmountToSend := chain.NewCoin(sdk.NewInt(100))
+	nativeAmountToSend := chain.NewCoin(sdkmath.NewInt(100))
 
 	// define the message to send from multiple accounts to multiple
 	multiSendMsg := &banktypes.MsgMultiSend{
@@ -645,7 +646,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 				Address: sender1.String(),
 				Coins: sdk.NewCoins(
 					sdk.NewInt64Coin(denom1, 1000),
-					chain.NewCoin(sdk.NewInt(100)),
+					chain.NewCoin(sdkmath.NewInt(100)),
 				),
 			},
 			{
@@ -659,7 +660,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 			{
 				Address: recipient1.String(),
 				Coins: sdk.NewCoins(
-					chain.NewCoin(sdk.NewInt(30)),
+					chain.NewCoin(sdkmath.NewInt(30)),
 					sdk.NewInt64Coin(denom1, 600),
 					sdk.NewInt64Coin(denom2, 400),
 				),
@@ -674,7 +675,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 			{
 				Address: recipient3.String(),
 				Coins: sdk.NewCoins(
-					chain.NewCoin(sdk.NewInt(70)),
+					chain.NewCoin(sdkmath.NewInt(70)),
 				),
 			},
 		},
@@ -727,7 +728,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 	requireT.NoError(err)
 
 	// sign from sender1
-	err = client.Sign(txF, sender1KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, sender1KeyInfo.Name, txBuilder, false)
 	requireT.NoError(err)
 
 	sender2AccInfo, err := client.GetAccountInfo(ctx, chain.ClientContext, sender2)
@@ -741,7 +742,7 @@ func TestBankMultiSendFromMultipleAccounts(t *testing.T) {
 		WithSignMode(sdksigning.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 
 	// sign from sender2
-	err = client.Sign(txF, sender2KeyInfo.GetName(), txBuilder, false)
+	err = client.Sign(txF, sender2KeyInfo.Name, txBuilder, false)
 	requireT.NoError(err)
 
 	// encode tx and broadcast
@@ -774,8 +775,8 @@ func TestBankCoreSend(t *testing.T) {
 	sender := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	senderInitialAmount := sdk.NewInt(100)
-	recipientInitialAmount := sdk.NewInt(10)
+	senderInitialAmount := sdkmath.NewInt(100)
+	recipientInitialAmount := sdkmath.NewInt(10)
 	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&banktypes.MsgSend{}},
 		Amount:   senderInitialAmount,
@@ -785,7 +786,7 @@ func TestBankCoreSend(t *testing.T) {
 	})
 
 	// transfer tokens from sender to recipient
-	amountToSend := sdk.NewInt(10)
+	amountToSend := sdkmath.NewInt(10)
 	msg := &banktypes.MsgSend{
 		FromAddress: sender.String(),
 		ToAddress:   recipient.String(),

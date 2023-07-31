@@ -9,13 +9,16 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
@@ -59,10 +62,10 @@ func TestStakingProposalParamChange(t *testing.T) {
 	// Verify that voting period started.
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
@@ -70,7 +73,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
 
 	// Check the proposed change is applied.
 	resp, err = stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
@@ -93,10 +96,10 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
 	// we stake the minimum possible staking amount
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
 	// Setup delegator
 	delegator := chain.GenAccount()
-	delegateAmount := sdk.NewInt(100)
+	delegateAmount := sdkmath.NewInt(100)
 	chain.FundAccountWithOptions(ctx, t, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
@@ -237,7 +240,7 @@ func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
 
 	initialValidatorAmount := customStakingParams.Params.MinSelfDelegation
 
-	notEnoughValidatorAmount := initialValidatorAmount.Quo(sdk.NewInt(2))
+	notEnoughValidatorAmount := initialValidatorAmount.Quo(sdkmath.NewInt(2))
 
 	// Try to create a validator with the amount less than the minimum
 	_, _, _, err = chain.CreateValidator(ctx, t, notEnoughValidatorAmount, notEnoughValidatorAmount) //nolint:dogsled // we await for the error only
@@ -268,7 +271,7 @@ func TestValidatorUpdateWithLowMinSelfDelegation(t *testing.T) {
 	requireT.NoError(err)
 	minSelfDelegation := customStakingParams.Params.MinSelfDelegation
 	// we increase it here to test the update of the validators with the current min self delegation less than new param
-	newMinSelfDelegation := minSelfDelegation.Add(sdk.NewInt(1))
+	newMinSelfDelegation := minSelfDelegation.Add(sdkmath.NewInt(1))
 
 	changeMinSelfDelegationCustomParam(ctx, t, chain, customParamsClient, newMinSelfDelegation)
 	defer changeMinSelfDelegationCustomParam(ctx, t, chain, customParamsClient, initialValidatorAmount)
@@ -309,7 +312,7 @@ func changeMinSelfDelegationCustomParam(
 	t *testing.T,
 	chain integrationtests.CoreumChain,
 	customParamsClient customparamstypes.QueryClient,
-	newMinSelfDelegation sdk.Int,
+	newMinSelfDelegation sdkmath.Int,
 ) {
 	requireT := require.New(t)
 	// create new proposer
@@ -331,7 +334,7 @@ func changeMinSelfDelegationCustomParam(
 				),
 			},
 		),
-		govtypes.OptionYes,
+		govtypesv1beta1.OptionYes,
 	)
 
 	// check the proposed change is applied
@@ -360,7 +363,7 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain inte
 				paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyUnbondingTime), fmt.Sprintf("\"%d\"", unbondingTime)),
 			},
 		),
-		govtypes.OptionYes,
+		govtypesv1beta1.OptionYes,
 	)
 
 	// Check the proposed change is applied.

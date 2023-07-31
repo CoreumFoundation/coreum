@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
@@ -20,6 +21,7 @@ const (
 	TypeMsgUnfreeze            = "unfreeze"
 	TypeMsgAddToWhitelist      = "whitelist"
 	TypeMsgRemoveFromWhitelist = "remove-from-whitelist"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
@@ -62,7 +64,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 // ValidateBasic checks that message fields are valid.
 func (m *MsgIssueClass) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Issuer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer account %s", m.Issuer)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid issuer account %s", m.Issuer)
 	}
 
 	if len(m.Name) > ClassMaxNameLength {
@@ -126,7 +128,7 @@ func (m MsgIssueClass) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m *MsgMint) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
 	}
 
 	if err := ValidateTokenID(m.ID); err != nil {
@@ -177,7 +179,7 @@ func (m MsgMint) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m *MsgBurn) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
 	}
 
 	if err := ValidateTokenID(m.ID); err != nil {
@@ -216,7 +218,7 @@ func (m MsgBurn) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m *MsgFreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
 	}
 
 	if err := ValidateTokenID(m.ID); err != nil {
@@ -255,7 +257,7 @@ func (m MsgFreeze) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m *MsgUnfreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
 	}
 
 	if err := ValidateTokenID(m.ID); err != nil {
@@ -294,11 +296,11 @@ func (m MsgUnfreeze) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m *MsgAddToWhitelist) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
 	}
 
 	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid account %s", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid account %s", m.Sender)
 	}
 
 	if err := ValidateTokenID(m.ID); err != nil {
@@ -337,11 +339,11 @@ func (m MsgAddToWhitelist) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m *MsgRemoveFromWhitelist) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid sender account %s", m.Sender)
 	}
 
 	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid account %s", m.Sender)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid account %s", m.Sender)
 	}
 
 	if err := ValidateTokenID(m.ID); err != nil {

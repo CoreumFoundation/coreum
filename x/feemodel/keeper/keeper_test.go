@@ -4,7 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/assert"
@@ -46,8 +51,8 @@ func setup() (sdk.Context, keeper.Keeper) {
 
 	db := dbm.NewMemDB()
 	cms := store.NewCommitMultiStore(db)
-	cms.MountStoreWithDB(key, sdk.StoreTypeIAVL, db)
-	cms.MountStoreWithDB(tKey, sdk.StoreTypeTransient, db)
+	cms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db)
+	cms.MountStoreWithDB(tKey, storetypes.StoreTypeTransient, db)
 	must.OK(cms.LoadLatestVersion())
 	ctx := sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())
 
@@ -87,12 +92,12 @@ func TestLongEMAGas(t *testing.T) {
 func TestMinGasPrice(t *testing.T) {
 	ctx, keeper := setup()
 
-	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdk.NewInt(10)))
+	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(10)))
 	minGasPrice := keeper.GetMinGasPrice(ctx)
 	assert.Equal(t, "10.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)
 
-	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdk.NewInt(20)))
+	keeper.SetMinGasPrice(ctx, sdk.NewDecCoin("coin", sdkmath.NewInt(20)))
 	minGasPrice = keeper.GetMinGasPrice(ctx)
 	assert.EqualValues(t, "20.000000000000000000", minGasPrice.Amount.String())
 	assert.Equal(t, "coin", minGasPrice.Denom)

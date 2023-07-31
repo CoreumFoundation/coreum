@@ -3,8 +3,8 @@ package ft
 import (
 	"context"
 	"encoding/json"
-	"math/rand"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -15,7 +15,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/client/cli"
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/keeper"
@@ -25,6 +24,7 @@ import (
 
 var (
 	_ module.AppModule      = AppModule{}
+	_ module.HasGenesis     = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
@@ -128,7 +128,8 @@ func (am AppModule) Name() string {
 }
 
 // Route returns the asset ft module's message routing key.
-func (am AppModule) Route() sdk.Route {
+// FIXME(v47-module-config): remove or replace with corresponding component
+/* func (am AppModule) Route() sdk.Route {
 	return sdk.Route{}
 }
 
@@ -136,9 +137,10 @@ func (am AppModule) Route() sdk.Route {
 func (AppModule) QuerierRoute() string { return types.QuerierRoute }
 
 // LegacyQuerierHandler returns the asset ft module's Querier.
-func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
+// FIXME(v47-module-config): remove or replace with corresponding component
+/* func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
 	return nil
-}
+} */
 
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
@@ -179,29 +181,21 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // ConsensusVersion implements ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 2 }
 
-// BeginBlock executes all ABCI BeginBlock logic respective to the asset ft module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
-
-// EndBlock executes all ABCI EndBlock logic respective to the asset ft module. It
-// returns no validator updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
-}
-
 // AppModuleSimulation functions
 
 // GenerateGenesisState creates a randomized GenState of the asset ft module.
 func (AppModule) GenerateGenesisState(_ *module.SimulationState) {}
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
+func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
 	return nil
 }
 
 // RandomizedParams creates randomized asset ft param changes for the simulator.
-func (AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
+// FIXME(v47-module-config): remove or replace with corresponding component
+/* func (AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
 	return nil
-}
+} */
 
 // RegisterStoreDecoder registers a decoder for asset ft module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}

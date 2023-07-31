@@ -3,11 +3,13 @@ package config
 import (
 	"embed"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/fs"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
@@ -32,7 +34,7 @@ var (
 
 func init() {
 	// 10m delegated and 1m extra to the txs
-	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(11_000_000_000_000)))
+	devStakerValidatorBalance := sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(11_000_000_000_000)))
 
 	// configs
 	networkConfigs = map[constant.ChainID]NetworkConfig{
@@ -91,7 +93,7 @@ func init() {
 					// Faucet's account storing the rest of total supply
 					{
 						Address:  "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
-						Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdk.NewInt(100_000_000_000_000))), // 100m faucet
+						Balances: sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))), // 100m faucet
 					},
 				},
 				GenTxs: readGenTxs(devGenTxsFS),
@@ -118,12 +120,12 @@ func readGenTxs(genTxsFs fs.FS) []json.RawMessage {
 
 		file, err := genTxsFs.Open(path)
 		if err != nil {
-			panic(fmt.Sprintf("can't open file %q from GenTxs FS", path))
+			panic(errors.Errorf("can't open file %q from GenTxs FS", path))
 		}
 		defer file.Close()
 		txBytes, err := io.ReadAll(file)
 		if err != nil {
-			panic(fmt.Sprintf("can't read file %+v from GenTxs FS", file))
+			panic(errors.Errorf("can't read file %+v from GenTxs FS", file))
 		}
 		genTxs = append(genTxs, txBytes)
 		return nil
@@ -152,7 +154,7 @@ type GovProposalConfig struct {
 // CustomParamsStakingConfig contains custom params for the staking module configuration.
 type CustomParamsStakingConfig struct {
 	// MinSelfDelegation is the minimum allowed amount of the stake coin for the validator to be created.
-	MinSelfDelegation sdk.Int
+	MinSelfDelegation sdkmath.Int
 }
 
 // CustomParamsConfig contains custom params module configuration.

@@ -1,5 +1,7 @@
 package types
 
+// FIXME(v47-deterministic): uncomment and reimplement
+/*
 import (
 	"context"
 	"fmt"
@@ -7,8 +9,7 @@ import (
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/grpc"
-	"github.com/gogo/protobuf/proto"
-	googlegrpc "google.golang.org/grpc"
+	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
 )
@@ -19,7 +20,7 @@ const (
 )
 
 // NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types.
-func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasConfig deterministicgas.Config) sdk.Router {
+func NewDeterministicGasRouter(baseRouter sdk.MsgServiceRouter, deterministicGasConfig deterministicgas.Config) sdk.Router {
 	return &deterministicGasRouter{
 		baseRouter:             baseRouter,
 		deterministicGasConfig: deterministicGasConfig,
@@ -161,4 +162,4 @@ func reportDeterministicGasMetric(oldCtx, newCtx sdk.Context, gasBefore sdk.Gas,
 			{Name: "msg_name", Value: msgURL},
 		})
 	}
-}
+} */

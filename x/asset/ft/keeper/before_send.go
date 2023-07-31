@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -22,7 +23,7 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 	return k.applyFeatures(ctx, inputs, outputs)
 }
 
-type accountOperationMap map[string]sdk.Int
+type accountOperationMap map[string]sdkmath.Int
 
 type groupedByDenomAccountOperations map[string]accountOperationMap
 
@@ -30,7 +31,7 @@ func (g groupedByDenomAccountOperations) add(address string, coins sdk.Coins) {
 	for _, coin := range coins {
 		accountBalances, ok := g[coin.Denom]
 		if !ok {
-			accountBalances = make(map[string]sdk.Int)
+			accountBalances = make(map[string]sdkmath.Int)
 		}
 		oldAmount, ok := accountBalances[address]
 		if !ok {
@@ -98,7 +99,7 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 	return nil
 }
 
-func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
+func nonIssuerSum(ops accountOperationMap, issuer string) sdkmath.Int {
 	sum := sdk.ZeroInt()
 	for account, amount := range ops {
 		if account != issuer {
@@ -109,7 +110,7 @@ func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
 }
 
 // CalculateRateShares calculates how the burn or commission share amount should be split between different parties.
-func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdk.Int {
+func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdkmath.Int {
 	// We decided that rates should not be charged on incoming IBC transfers.
 	// According to our current protocol, it cannot be done because sender pays the rates, meaning that escrow address
 	// would be charged leading to breaking the IBC mechanics.
@@ -130,7 +131,6 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
 		return nil
 	}
-
 	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
 	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
 
@@ -175,7 +175,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 		if account == issuer {
 			continue
 		}
-		// in order to reduce precision errors, we first multiply all sdk.Ints, and then multiply sdk.Decs, and then divide
+		// in order to reduce precision errors, we first multiply all sdkmath.Ints, and then multiply sdk.Decs, and then divide
 		finalShare := rate.MulInt(minNonIssuer.Mul(amount)).QuoInt(inputSumNonIssuer).Ceil().RoundInt()
 		shares[account] = finalShare
 	}

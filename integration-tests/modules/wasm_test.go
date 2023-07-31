@@ -10,13 +10,14 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -139,7 +140,7 @@ func TestWASMBankSendContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	clientCtx := chain.ClientContext
@@ -158,7 +159,7 @@ func TestWASMBankSendContract(t *testing.T) {
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
-			Amount:     chain.NewCoin(sdk.NewInt(10000)),
+			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
 	)
@@ -171,7 +172,7 @@ func TestWASMBankSendContract(t *testing.T) {
 	msg := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   sdkContractAddress.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(5000))),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(5000))),
 	}
 
 	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, msg)
@@ -255,7 +256,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	admin := chain.GenAccount()
 
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	// deployWASMContract and init contract with the initial coins amount
@@ -274,7 +275,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 		integrationtests.InstantiateConfig{
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Payload:    initialPayload,
-			Amount:     chain.NewCoin(sdk.NewInt(10000)),
+			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
 	)
@@ -301,7 +302,7 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	bankSend := &banktypes.MsgSend{
 		FromAddress: admin.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(chain.ChainSettings.Denom, sdk.NewInt(1000))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(chain.ChainSettings.Denom, sdkmath.NewInt(1000))),
 	}
 
 	minGasExpected := chain.GasLimitByMsgs(&banktypes.MsgSend{}, &banktypes.MsgSend{})
@@ -333,7 +334,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	proposerBalance.Amount = proposerBalance.Amount.MulRaw(2)
 
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 		integrationtests.NewFundedAccount(proposer, proposerBalance),
 	)
 
@@ -375,7 +376,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	// pin smart contract
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.PinCodesProposal{
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.PinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
 		Title:       "Pin smart contract",
 		Description: "Testing smart contract pinning",
 		CodeIDs:     []uint64{codeID},
@@ -386,22 +387,22 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
 
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
 
 	requireT.True(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	gasUsedAfterPinning := incrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1339)
 
 	// unpin smart contract
-	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.UnpinCodesProposal{
+	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.UnpinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
 		Title:       "Unpin smart contract",
 		Description: "Testing smart contract unpinning",
 		CodeIDs:     []uint64{codeID},
@@ -412,13 +413,13 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	proposal, err = chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
 
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 	finalStatus, err = chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
 
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
@@ -528,7 +529,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 	chain.FundAccountWithOptions(ctx, t, newAdmin, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
@@ -550,7 +551,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 			AccessType: wasmtypes.AccessTypeUnspecified,
 			Admin:      admin,
 			Payload:    initialPayload,
-			Amount:     chain.NewCoin(sdk.NewInt(10000)),
+			Amount:     chain.NewCoin(sdkmath.NewInt(10000)),
 			Label:      "bank_send",
 		},
 	)
@@ -708,7 +709,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	clientCtx := chain.ClientContext
@@ -722,7 +723,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 	burnRate := sdk.MustNewDecFromStr("0.1")
 	sendCommissionRate := sdk.MustNewDecFromStr("0.2")
 
-	issuanceAmount := sdk.NewInt(10_000)
+	issuanceAmount := sdkmath.NewInt(10_000)
 	issuanceReq := issueFTRequest{
 		Symbol:        "symbol",
 		Subunit:       "subunit",
@@ -797,7 +798,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** Mint **********
 
-	amountToMint := sdk.NewInt(500)
+	amountToMint := sdkmath.NewInt(500)
 	mintPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
 		ftMethodMint: {
 			Amount: amountToMint.String(),
@@ -818,7 +819,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** Burn **********
 
-	amountToBurn := sdk.NewInt(100)
+	amountToBurn := sdkmath.NewInt(100)
 	burnPayload, err := json.Marshal(map[ftMethod]amountBodyFTRequest{
 		ftMethodBurn: {
 			Amount: amountToBurn.String(),
@@ -839,7 +840,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** Freeze **********
 
-	amountToFreeze := sdk.NewInt(100)
+	amountToFreeze := sdkmath.NewInt(100)
 	freezePayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodFreeze: {
 			Account: recipient1.String(),
@@ -860,7 +861,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** Unfreeze **********
 
-	amountToUnfreeze := sdk.NewInt(40)
+	amountToUnfreeze := sdkmath.NewInt(40)
 	unfreezePayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodUnfreeze: {
 			Account: recipient1.String(),
@@ -913,7 +914,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** Whitelisting **********
 
-	amountToWhitelist := sdk.NewInt(100)
+	amountToWhitelist := sdkmath.NewInt(100)
 	whitelistPayload, err := json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodSetWhitelistedLimit: {
 			Account: recipient1.String(),
@@ -934,7 +935,7 @@ func TestWASMFungibleTokenInContract(t *testing.T) {
 
 	// ********** MintAndSend **********
 
-	amountToMintAndSend := sdk.NewInt(100)
+	amountToMintAndSend := sdkmath.NewInt(100)
 	whitelistPayload, err = json.Marshal(map[ftMethod]accountAmountBodyFTRequest{
 		ftMethodSetWhitelistedLimit: {
 			Account: recipient2.String(),
@@ -1106,7 +1107,7 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 
 	requireT := require.New(t)
 	chain.Faucet.FundAccounts(ctx, t,
-		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
 	)
 
 	clientCtx := chain.ClientContext

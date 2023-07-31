@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -34,7 +35,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 	authClient := authtypes.NewQueryClient(chain.ClientContext)
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
-	amountToVest := sdk.NewInt(100)
+	amountToVest := sdkmath.NewInt(100)
 	chain.FundAccountWithOptions(ctx, t, creator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&vestingtypes.MsgCreateVestingAccount{}},
 		Amount:   amountToVest,
@@ -93,7 +94,7 @@ func TestVestingAccountCreationAndBankSend(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// await vesting time to unlock the vesting coins
 	select {
@@ -131,7 +132,7 @@ func TestVestingAccountStaking(t *testing.T) {
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 	customParamsClient := customparamstypes.NewQueryClient(chain.ClientContext)
 
-	amountToVest := sdk.NewInt(100)
+	amountToVest := sdkmath.NewInt(100)
 	chain.FundAccountWithOptions(ctx, t, creator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&vestingtypes.MsgCreateVestingAccount{}},
 		Amount:   amountToVest,
@@ -235,7 +236,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		Subunit:       "subunit",
 		Precision:     6,
 		Description:   "description",
-		InitialAmount: sdk.NewInt(10_000),
+		InitialAmount: sdkmath.NewInt(10_000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_burning,
 			assetfttypes.Feature_freezing,
@@ -252,7 +253,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 	requireT.NoError(err)
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 
-	vestingCoin := sdk.NewCoin(denom, sdk.NewInt(100))
+	vestingCoin := sdk.NewCoin(denom, sdkmath.NewInt(100))
 
 	// whitelist the vestingAcc
 	msgSetWhitelistedLimit := &assetfttypes.MsgSetWhitelistedLimit{
@@ -331,7 +332,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(burnMsg)),
 		burnMsg,
 	)
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// try to send vesting locker coins
 	msgSend := &banktypes.MsgSend{
@@ -345,7 +346,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// freeze coins, it should work even for the vested coins
 	freezeMsg := &assetfttypes.MsgFreeze{
@@ -398,7 +399,7 @@ func TestVestingAccountWithFTInteraction(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgSend)),
 		msgSend,
 	)
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// unfreeze coins, to let prev vesting account tx pass
 	unfreezeMsg := &assetfttypes.MsgUnfreeze{

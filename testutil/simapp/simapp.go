@@ -3,51 +3,36 @@ package simapp
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/ibc-go/v4/testing/simapp/helpers"
 	"github.com/pkg/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/CoreumFoundation/coreum/v2/app"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 )
 
-var defaultConsensusParams = &abci.ConsensusParams{
-	Block: &abci.BlockParams{
-		MaxBytes: 200000,
-		MaxGas:   2000000,
-	},
-	Evidence: &tmproto.EvidenceParams{
-		MaxAgeNumBlocks: 302400,
-		MaxAgeDuration:  504 * time.Hour,
-		MaxBytes:        10000,
-	},
-	Validator: &tmproto.ValidatorParams{
-		PubKeyTypes: []string{
-			tmtypes.ABCIPubKeyTypeEd25519,
-		},
-	},
-}
-
 // Option represents simapp customisations.
-type Option func() tmdb.DB
+type Option func() dbm.DB
 
 // WithCustomDB returns the simapp Option to run with different DB.
-func WithCustomDB(db tmdb.DB) Option {
-	return func() tmdb.DB {
+func WithCustomDB(db dbm.DB) Option {
+	return func() dbm.DB {
 		return db
 	}
 }
@@ -59,9 +44,9 @@ type App struct {
 
 // New creates application instance with in-memory database and disabled logging.
 func New(options ...Option) *App {
-	var db tmdb.DB
+	var db dbm.DB
 
-	db = tmdb.NewMemDB()
+	db = dbm.NewMemDB()
 	logger := log.NewNopLogger()
 
 	for _, option := range options {
@@ -79,16 +64,34 @@ func New(options ...Option) *App {
 	app.ChosenNetwork = network
 	encoding := config.NewEncodingConfig(app.ModuleBasics)
 
-	coreApp := app.New(logger, db, nil, true, map[int64]bool{}, "", 0, encoding,
-		simapp.EmptyAppOptions{})
+	coreApp := app.New(logger, db, nil, true, simtestutil.EmptyAppOptions{})
+	pubKey, err := cryptocodec.ToTmPubKeyInterface(ed25519.GenPrivKey().PubKey())
+	if err != nil {
+		panic(fmt.Sprintf("can't generate validator pub key genesisState: %v", err))
+	}
+	validator := tmtypes.NewValidator(pubKey, 1)
+	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	senderPrivateKey := secp256k1.GenPrivKey()
+	acc := authtypes.NewBaseAccount(senderPrivateKey.PubKey().Address().Bytes(), senderPrivateKey.PubKey(), 0, 0)
 
-	genesisState := app.ModuleBasics.DefaultGenesis(encoding.Codec)
+	defaultGenesis := app.ModuleBasics.DefaultGenesis(encoding.Codec)
+	genesisState, err := simtestutil.GenesisStateWithValSet(
+		encoding.Codec,
+		defaultGenesis,
+		valSet,
+		[]authtypes.GenesisAccount{acc},
+	)
+	if err != nil {
+		panic(fmt.Sprintf("can't generate genesis state with wallet, err: %s", err))
+	}
+
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
-		panic(fmt.Sprintf("can't Marshal genesisState: %v", err))
+		panic(errors.Errorf("can't Marshal genesisState: %s", err))
 	}
+
 	coreApp.InitChain(abci.RequestInitChain{
-		ConsensusParams: defaultConsensusParams,
+		ConsensusParams: simtestutil.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 
@@ -102,36 +105,36 @@ func (s *App) BeginNextBlock(blockTime time.Time) sdk.Context {
 	if blockTime.IsZero() {
 		blockTime = time.Now()
 	}
-	header := tmproto.Header{Height: s.LastBlockHeight() + 1, Time: blockTime}
-	s.BeginBlock(abci.RequestBeginBlock{Header: header})
-	return s.BaseApp.NewContext(false, header)
+	header := tmproto.Header{Height: s.App.LastBlockHeight() + 1, Time: blockTime}
+	s.App.BeginBlock(abci.RequestBeginBlock{Header: header})
+	return s.App.BaseApp.NewContext(false, header)
 }
 
 // EndBlockAndCommit ends the current block and commit the state.
 func (s *App) EndBlockAndCommit(ctx sdk.Context) {
-	s.EndBlocker(ctx, abci.RequestEndBlock{Height: ctx.BlockHeight()})
-	s.Commit()
+	s.App.EndBlocker(ctx, abci.RequestEndBlock{Height: ctx.BlockHeight()})
+	s.App.Commit()
 }
 
 // GenAccount creates a new account and registers it in the App.
 func (s *App) GenAccount(ctx sdk.Context) (sdk.AccAddress, *secp256k1.PrivKey) {
 	privateKey := secp256k1.GenPrivKey()
 	accountAddress := sdk.AccAddress(privateKey.PubKey().Address())
-	account := s.AccountKeeper.NewAccount(ctx, &authtypes.BaseAccount{
+	account := s.App.AccountKeeper.NewAccount(ctx, &authtypes.BaseAccount{
 		Address: accountAddress.String(),
 	})
-	s.AccountKeeper.SetAccount(ctx, account)
+	s.App.AccountKeeper.SetAccount(ctx, account)
 
 	return accountAddress, privateKey
 }
 
 // FundAccount mints and sends the coins to the provided App account.
 func (s *App) FundAccount(ctx sdk.Context, address sdk.AccAddress, balances sdk.Coins) error {
-	if err := s.BankKeeper.MintCoins(ctx, minttypes.ModuleName, balances); err != nil {
+	if err := s.App.BankKeeper.MintCoins(ctx, minttypes.ModuleName, balances); err != nil {
 		return errors.Wrap(err, "can't mint in simapp")
 	}
 
-	if err := s.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, address, balances); err != nil {
+	if err := s.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, address, balances); err != nil {
 		return errors.Wrap(err, "can't send funding coins in simapp")
 	}
 
@@ -147,17 +150,18 @@ func (s *App) SendTx(
 	messages ...sdk.Msg,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	signerAddress := sdk.AccAddress(priv.PubKey().Address())
-	account := s.AccountKeeper.GetAccount(ctx, signerAddress)
+	account := s.App.AccountKeeper.GetAccount(ctx, signerAddress)
 	if account == nil {
 		return sdk.GasInfo{}, nil, errors.Errorf("the account %s doesn't exist, check that it's created or state committed", signerAddress)
 	}
 	accountNum := account.GetAccountNumber()
 	accountSeq := account.GetSequence()
 
-	txGen := config.NewEncodingConfig(app.ModuleBasics).TxConfig
+	txCfg := config.NewEncodingConfig(app.ModuleBasics).TxConfig
 
-	tx, err := helpers.GenTx(
-		txGen,
+	tx, err := simtestutil.GenSignedMockTx(
+		rand.New(rand.NewSource(time.Now().UnixNano())),
+		txCfg,
 		messages,
 		sdk.NewCoins(feeAmt),
 		gas,
@@ -170,5 +174,5 @@ func (s *App) SendTx(
 		return sdk.GasInfo{}, nil, err
 	}
 
-	return s.Deliver(txGen.TxEncoder(), tx)
+	return s.App.SimDeliver(txCfg.TxEncoder(), tx)
 }

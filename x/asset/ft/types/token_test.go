@@ -6,8 +6,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -519,7 +519,7 @@ func TestDefinition_CheckFeatureAllowed(t *testing.T) {
 				feature: types.Feature_minting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
-				if assert.ErrorIs(t, err, sdkerrors.ErrUnauthorized) {
+				if assert.ErrorIs(t, err, cosmoserrors.ErrUnauthorized) {
 					return
 				}
 				t.FailNow()
