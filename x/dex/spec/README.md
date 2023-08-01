@@ -475,3 +475,231 @@ To match orders and reduce the order book two conditions must be met together fo
 
 In this case user does not specify the worst acceptable price, which means that any price is acceptable and order is matched
 as long as its amount remains greater than 0, no matter what the price offered by the counterparty order is.
+
+## Implementation details
+
+This section covers details related to practical implementation of concepts described earlier.
+
+### Order
+
+Order properties:
+- ID (`uint64`) - is the unique number identifying the order, it is taken from a sequential generator returning
+  consecutive numbers starting from 1 - it is important because 0 represents the fact that ID hasn't been assigned yet.
+  ID is assigned only if order must be stored in the persistent store.
+- BaseToken (`string`) - is the denom of the base token
+- QuoteToken (`string`) - is the denom of the quot token
+- BaseTokenAmount (`sdk.Int`) - specifies the amount of the base token to be exchanged
+- QuoteTokenAmount (`sdk.Int`) - specifies the amount of the quote token to be exchanged
+- Direction (`enum: SELL, BUY`) - `SELL` means that user owns the base tokens and wants to sell them to get the quote tokens,
+  `BUY` means that user owns the quote tokens and wants to pay them to buy the base tokens
+- Type (`enum: MARKET, LIMIT`) - type of the order
+
+### Denom in store keys
+
+In the following sections there are places where it is required to use a denom as a part of the key in the store.
+Whenever it happens, the denom must be prefixed with its length encoded using varint algorithm.
+
+### Order book prefix
+
+In the following sections there are places where it is required to organize orders in the store in a way that
+store iterator returns orders belonging to the same order book one after another. For these purposes the concatenation of:
+1. length-prefixed base denom
+2. length-prefixed quote denom
+
+is used as a prefix for the key. Wherever this doc mentions ***order book prefix*** term, it is related to the structure described above.
+
+### Order book side prefix
+
+When orders are stored persistently, they are grouped in the "buckets" related to a particular table (sell or buy) of the
+specific order book. To process order books efficiently it is required to be able to retrieve an order by its table quickly.
+
+For that purpose key prefix format is created being a result of concatenating:
+- *order book prefix*
+- byte representing the table: `0x01` - sell table and `0x02` - buy table
+
+Wherever in the doc the term ***order book side prefix*** is referenced, it should be understood that way. 
+
+### Execution price prefix
+
+Order matching algorithm requires orders to be sorted by price. In the sell table they must be sorted in ascending order,
+in the buy table they must be sorted in descending order. But that's not the only one sorting criterion. The other one
+is defined by the incoming sequence of orders and enforced by using the order ID as a suffix in the key.
+
+It is required to design the correct schema for storing the order execution price as a part of the key in the store to
+be able to retrieve orders of interest in the form of a FIFO queue when using store iterator provided by the Cosmos SDK.
+
+The execution price is a decimal number. In mathematical terms it is defined as `executionPrice = order.QuoteTokenAmount / order.BaseTokenAmount`.
+But the floating point result (encoded as string or whatever)m is not convenient from the perspective of our goals.
+Instead, to store it as a part of the key we may use two `uint64` numbers: first to encode
+the whole part, the second one to encode the decimal part.
+
+For the whole part we may use the full scope of `uint64`, `0..18_446_744_073_709_551_615`, resulting in maximum number
+greater than `10^19`.
+
+For the decimal part we are limited to the subscope of `uint64`, `0..9_999_999_999_999_999_999`, giving us 19 decimal places.
+
+This system gives us the ability to store numbers in the scope `0.0000000000000000000..18446744073709551615.9999999999999999999`,
+using 16 bytes. Take a note that maybe (this is huge "maybe" because I didn't do the full analysis) we could use the magic of
+`float64` and store the price as a mantissa and exponent getting much higher precision and scope, using only 8 bytes at the same time.
+I may figure it out, but only if the team decides that benefits are worth the time being spent, as it's not a trivial thing.
+
+Given that format, key prefix might be defined where both numbers are concatenated this way:
+- big-endian-encoded whole part
+- big endian-encoded decimal part
+
+This format is fine for the sell table as the ascending iterator will return orders in price-ascending order.
+But for the buy table, the ascending iterator must return orders in **price-descending** order. Thankfully there is a trick
+enabling it.
+
+If the result of the concatenation defined above is taken and mapped in a way, where we take each byte and subtract it from
+`0xFF` (255), then the mapped keys will be sorted by the ascending iterator in the opposite order, than the original ones,
+which is exactly what we need.
+
+The same mapped key might be generated in simpler way:
+- for the whole part: subtract it from the maximum `uint64` value and encode using big endian
+- for the decimal part: subtract it from `10^20-1` (`9_999_999_999_999_999_999`) and encode using big endian
+
+By concatenating th result, the execution price prefix for buy order is created.
+
+Wherever in the doc the term ***execution price prefix*** is referenced, it should be understood as defined above,
+for sell and buy tables respectively.
+
+Important note: The price defined in this section should never ever be used to make any calculations during the order
+matching. When orders are executed and tokens are exchanged, the exchange process should use only `BaseTokenAmount` and
+`QuoteTokenAmount` fields defined in the order structure. Price specified here only defines the sequence used to process
+orders by the order matching algorithm.
+
+It might happen that the mathematical result of the price calculation (`executionPrice = order.QuoteTokenAmount / order.BaseTokenAmount`)
+goes out of the scope which might be represented using described format. In that case:
+- we may reject that order
+- we may store it using maximum or minimum execution price
+
+Technically, the second option is possible, we just cannot guarantee the proper order execution defined earlier. But due to
+high uncertainty, especially for trading pairs presenting out-of-scope ratio consistently, I recommend rejecting those orders (**TBD**).
+Due to that some pairs might be non-tradable on our DEX. As an alternative solution we may research the possibility of using `float64`
+format mentioned earlier.
+
+### Transient order key
+
+When orders are collected by the message handlers, they are added to the transient FIFO queue to be processed
+later in the end blocker. To use that store as a FIFO efficiently, the key for the order record must be built as a concatenation
+of these parts:
+- *order book prefix*
+- number taken from a transient sequence generator
+
+Transient sequence generator, is the data structure and function using transient store reseted by Cosmos SDK at the beginning of each block,
+returning incremented number for each call.
+
+Wherever this doc mentions ***transient order key***, it is related to the structure described above.
+
+### Persistent order key
+
+When orders are saved to the persistent store, the key is constructed in a very special way, which allows to retrieve
+the orders in well-defined sequence when store is iterated. The key is defined as a concatenation of:
+- *order book side prefix*
+- *execution price prefix*
+- order ID encoded using big endian
+
+Wherever this doc mentions ***persistent order key***, it is related to the structure described above.
+
+If order ID hasn't been assigned yet (the value of `ID` field in the order structure is `0`) it is taken from the persistent
+sequence number generator.
+
+### Order collection
+
+New orders come in the form of a message inside the transaction, it means that the blockchain itself, by definition, sorts
+the orders - it is precisely defined which order comes first.
+
+In Cosmos SDK it is possible to create a transient in-memory store, managed by keeper, which is automatically recreated
+(pruned) at the beginning of each block.
+
+Two types of information are stored in that transient store:
+- state of the sequence number generator - generating incremented number on each request, it starts from 0 on every block
+- orders collected from the transaction in the block
+
+Considering these, this is the algorithm executed for each incoming order (by the message handler):
+1. for each new incoming order generate new *transient order key*
+2. store the order in the transient store under this key
+
+This way, orders are returned by their order books, and in the scope of an order book the orders are returned from the first
+to the last one.
+
+### Executing order matching algorithm
+
+Order matching algorithm is executed in the end blocker of the DEX module. At the moment of its execution all the orders
+included in a block are present in the transient FIFO queue discussed above.
+
+The structure of the *transient order key* causes that orders are iterated by the order books, and in the scope of each
+order book they are iterated in the sequence they accepted by the blockchain.
+
+Given that, the order matching algorithm might be finally defined. The sequence below defines the steps to be executed
+in the scope of the single order book. Whenever new order is fetched from the FIFO queue, not matching the currently
+processed order book, it means that processing of the previous order book has finished, results should be stored
+in the persistent store and processing state for the next order book should be initialized.
+
+To be able to read the orders from the persistent store, iterator is created for both order book tables (sell and buy) which
+iterates over a prefixed store, defined by the *order book side prefix*. Algorithm is created in the way, where only one
+order from persistent store might be required at a time. That order is always retrieved by taking the next value from
+the right iterator.
+
+Each time order is processed, the order from the other side of the order book is required to check if match is possible.
+That order might already live in the cache (RAM) as a result of the previous processing, or it must be read from the
+persistent store with one of the iterators described in the previous paragraph.
+The cache is maintained separately for each side of the order book, whenever multiple records must be stored in the cache
+they must be stored in the same sequence as used in the persistent store: first by price, then by sequence and whenever
+they are read from the cache, it should be done in this sequence. The cache might be imagined as an in-memory working area
+of the full order book.
+
+At the end of the order book processing the diff must be stored in the persistent store, including:
+- deleting cleared orders
+- updating amounts in not-fully cleared orders already existing in the persistent store
+- adding not-fully cleared new orders 
+
+Each time order is read from the transient FIFO it might be a sell or buy order, the algorithm for each side
+is a "mirror" of that defined for the other one. They are covered separately, starting with the sell order.
+
+Whenever the processing of the new order book starts the initial state is defined as:
+- `isSellStoreEmpty = false`
+- `isBuyStoreEmpty = false`
+- cache for sell table
+- cache for buy table
+
+This is how the algorithm for a sell order is defined:
+1. Read the next order from FIFO
+2. As mentioned above we assume that this is a sell order, so the following steps are specific to that scenario
+3. Take the top buy order from the cache. If cache is empty and `isBuyStoreEmpty = true` store the order in the cache and go to (1), otherwise take the top buy order from the persistent store. 
+4. If there are no buy orders (reading failed): store the order in the cache, set `isBuyStoreEmpty = true` and go to (1) 
+5. Check if the order matching condition between the sell and buy order is met. If not, store both orders in cache (if not there yet) and go to (1)
+6. Do the reduction (described separately below)
+7. If any of the orders (at least one for sure) is completely cleared, remove it from the cache and persistent store (if it is present there) and possibly one of the order might not be completely cleared - it must be added/updated in the cache (but not from the persistent store as it still might be cleared later)
+8. If the sell order has been cleared go to (1), if not go to (3)
+
+This is how the algorithm for a buy order is defined:
+1. Read the next order from FIFO
+2. As mentioned above we assume that this is a buy order, so the following steps are specific to that scenario
+3. Take the top sell order from the cache. If cache is empty and `isSellStoreEmpty = true` store the order in the cache and go to (1), otherwise take the top sell order from the persistent store.
+4. If there are no sell orders (reading failed): store the order in the cache, set `isSellStoreEmpty = true` and go to (1)
+5. Check if the order matching condition between the buy and sell order is met. If not, store both orders in cache (if not there yet) and go to (1)
+6. Do the reduction (described separately below)
+7. If any of the orders (at least one for sure) is completely cleared, remove it from the cache and persistent store (if it is present there) and possibly one of the order might not be completely cleared - it must be added/updated in the cache (but not from the persistent store as it still might be cleared later)
+8. If the buy order has been cleared go to (1), if not go to (3)
+
+Checking order matching condition details (5th step):
+
+Let's quote the order matching condition again: Matching is possible if the price in the first record of sell table is lower than or equal to the price in the first
+record of buy table.
+
+Because price is not stored directly in the order it must be computed (and possibly cached). The formula is: `executionPrice = order.QuoteTokenAmount / order.BaseTokenAmount`. It means that the result must be computed for each order and compared to verify the order matching condition.
+
+Following simple math we may transform the formula to use multiplication instead of division:
+
+`orderA.QuoteTokenAmount / orderA.BaseTokenAmount (><=)? orderB.QuoteTokenAmount / orderB.BaseTokenAmount => orderA.QuoteTokenAmount * orderB.BaseTokenAmount (><=)? orderB.QuoteTokenAmount * orderA.BaseTokenAmount`
+
+all the numbers are positive so inequality never changes the direction.
+
+Reduction step details (6th step):
+
+At this point of the algorithm it is known that there are buy and sell orders to be reduced. It is also known which order was created first.
+Keep in mind that during the reduction the price offered by the earlier order must be applied.
+
+To be continued...
