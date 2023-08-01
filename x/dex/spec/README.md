@@ -1,12 +1,12 @@
 # DEX
 
-This document defines the concepts and mechanics of Coreum on-chain DEX.
+This document defines the concepts and mechanics of Coreum on-chain DEX. It is a work in progress.
 
 ## Order book
 
 Coreum DEX is based on order books. Each trading pair defines its order book - which is defined by two sequences of orders, one grouping buy orders, the other one grouping sell orders.
 
-Whenever the lowest price offered by any sell order is lower than the highest price offered by any buy order, the match exists and tokens might be exchanged.
+Whenever the lowest price offered by any sell order is lower than or equal to the highest price offered by any buy order, the match exists and tokens might be exchanged.
 
 Trading pair (and its order book) is described by two tokens: base token and quote token. The quote token is used to define the price of the base token.
 
@@ -432,11 +432,11 @@ is impossible.
 
 In case of sell orders we must lock:
 - amount of base tokens specified in the order
-- all the fees (e.g. burn rate, commission rate) related to the base token
+- all the fees possible fees (if any) related to the base token (**TBD**: how it relates to burn rate and send commission)
 
 In case of buy orders we must lock:
 - amount of quote tokens computed as a product of the base token and price specified in the order
-- all the fees (e.g. burn rate, commission rate) related to the quote token
+- all the fees possible fees (if any) related to the quote token (**TBD**: how it relates to burn rate and send commission)
 
 When orders are matched and executed, locked amounts should be utilized appropriately.
 When order is canceled, corresponding amounts should be unlocked.
@@ -445,7 +445,7 @@ When order is canceled, corresponding amounts should be unlocked.
 
 To limit the amount of data stored in the order books, orders should be rejected under some circumstances:
 - order should be rejected immediately, when placed, if the offered price is too far from the currently traded one
-- each order should have a maximum lifetime, to prune it from the order book if it is not executed for some time
+- (**TBD**) each order should have a maximum lifetime, to prune it from the order book if it is not executed for some time
 - offered amount is too low to protect us against tones of tiny orders created by spammers (not sure about this)
 
 ## Order book creation
@@ -453,3 +453,25 @@ To limit the amount of data stored in the order books, orders should be rejected
 There is no such operation on Coreum blockchain. Anyone at any time may create an order book for any pair, just by adding
 a first order (sell or buy) for that pair. Only one order book may exist for a pair. There is no concept of an order book
 administrator or maintainer. All the pairs are legal, creating an order book does not require any permission or voting.
+
+## Order types
+
+This section describes the order types to be implemented in phase 1.
+
+### Limit order
+
+All the order examples presented so far are the limit orders. It means that:
+- in case of sell order - the minimum acceptable price is specified in the order
+- in case of buy order - the maximum acceptable price is specified in the order
+
+To match orders and reduce the order book two conditions must be met together for the new order triggering the reduction:
+- amount in the order must be greater than 0 - amount in the order is decreased after each reduction,
+  so at some point the amount reaches 0, this means that reduction algorithm stops and order is discarded
+- price is still acceptable - each reduction causes some order to be removed from the order book (because its amount reaches 0),
+  next matching is possible, might be done using next order offering the same or worse price. At some point price
+  is no longer acceptable and algorithm is stopped.
+
+### Market order
+
+In this case user does not specify the worst acceptable price, which means that any price is acceptable and order is matched
+as long as its amount remains greater than 0, no matter what the price offered by the counterparty order is.
