@@ -422,7 +422,150 @@ situation when there are many orders triggering order executions is possible.
 Thankfully, the many-to-many matching might be treated as an extension of one-to-many case (and in turn as an extension
 of one-to-one algorithm):
 1. Collecting phase: each new incoming order is added to the FIFO queue
-2. Execution phase: take one item at a time from FIFO queue, add it to the order book and execute one-to-many matching algorithm, 
+2. Execution phase: take one item at a time from FIFO queue, add it to the order book and execute one-to-many matching algorithm,
+
+## Order book mirroring
+
+So far, we discussed that each order book is characterized by the base token and quote token. In the `uaaa/ubbb` pair
+`uaaa` is the base token and `ubbb` is the quote token. We might also consider the opposite pair `ubbb/uaaa` where
+`ubbb` is the base token and `uaaa` is the quote token.
+
+This way we might imagine two order books `uaaa/ubbb` and `ubbb/uaaa`. Managing both of them at the same is technically
+possible but does not make any sense because liquidity is split between them. Also, it would be suboptimal because
+arbitrators would create additional transactions on chain to take the opportunities caused by possible market inefficiencies.
+
+Let's consider that there are 4 people who want to trade:
+- Alice: wants to exchange `10uaaa` to `5ubbb`
+- Bob: wants to exchange `4ubbb` to `1uaaa`
+- Charlie: wants to exchange `2uaaa` to `8ubbb`
+- Dave: wants to exchange `3ubbb` to `6uaaa`
+
+Let's assume that trading happens using `uaaa/ubbb` order book. We must rewrite the trades in the form of that order book:
+- Alice wants to sell `10uaaa` at a price of `0.5ubbb/uaaa`
+- Bob wants to buy `1uaaa` at a price of `4ubbb/uaaa`
+- Charlie wants to sell `2uaaa` at a price of `4ubbb/uaaa`
+- Dave wants to buy `6uaaa` at a price of `0.5ubbb/uaaa`
+
+After adding all those orders to the `uaaa/ubbb` order book it looks like this:
+
+| Sell amount `[uaaa]` | Sell price `[ubbb/uaaa]` | Buy amount `[uaaa]` | Buy price `[ubbb/uaaa]` |
+|----------------------|--------------------------|---------------------|-------------------------|
+| 10 (Alice)           | 0.5                      | 1 (Bob)             | 4                       |
+| 2 (Charlie)          | 4                        | 6 (Dave)            | 0.5                     |
+
+Now, let's consider the same set of desires, expressed at the beginning, but let's assume that trading happens using
+`ubbb/uaaa` order book instead. It means, that we must rewrite formulas in the terms of that order book:
+- Alice wants to buy `5ubbb` at a price of `2uaaa/ubbb`
+- Bob wants to sell `4ubbb` at a price of `0.25uaaa/ubbb`
+- Charlie wants to buy `8ubbb` at a price of `0.25uaaa/ubbb`
+- Dave wants to sell `3ubbb` at a price of `2uaaa/ubbb`
+
+The resulting `ubbb/uaaa` order book is:
+
+| Sell amount `[ubbb]` | Sell price `[uaaa/ubbb]` | Buy amount `[ubbb]` | Buy price `[uaaa/ubbb]` |
+|----------------------|--------------------------|---------------------|-------------------------|
+| 4 (Bob)              | 0.25                     | 5 (Alice)           | 2                       |
+| 3 (Dave)             | 2                        | 8 (Charlie)         | 0.25                    |
+
+A few very interesting and super-important facts to note after comparing both order books:
+- Each order changed the side: buy order from `uaaa/ubbb` is a sell order in `ubbb/uaaa`
+- The sequence of orders on corresponding side is the same:
+  Alice was first in the sell table of `uaaa/ubbb` and then she is the first in buy table of `ubbb/uaaa`.
+  Bob was first in the buy table of `uaaa/ubbb` and then he is the first in sell table of `uaaa/ubbb`
+- Both sides of both order books are correctly sorted: sell table is sorted by price in ascending order in both order books,
+  buy table is sorted by price in descending order in both order books, meaning that order matching algorithm might be correctly
+  executed without any additional steps
+- For each order, the formula `orderInOrderBookA.Price = 1 / orderInOrderBookB.Price` works in both directions
+
+All of these might be proven mathematically, but we leave this task as a home assignment to the reader :-).
+
+Now, let's consider another thing. There are three properties of the order:
+- base token amount
+- execution price
+- quote token amount
+
+There is a linear relation connecting them: `quote token = execution price * base token`. This means that `base token`
+and `execution price` are the inputs for the algorithm (they are provided by the user) and `quote token` is the output
+(result) of the algorithm. This way of reasoning is commonly used by the exchanges in financial world, where user provides
+the amount to buy/sell and the worst acceptable execution price, and then, `quote token` amount he/she pays/gets as a result
+of the order execution is taken from that formula.
+
+But we may look at the problem from different perspective. Order might be defined by having these properties instead:
+- owned token amount to sell
+- desired token amount to buy
+- price
+
+The formula might be defined as: `price = owned token / desired token`. Now, the `owned token` and `desired token`
+are the inputs (provided by user) and price is the output.
+
+So we have two different ways of thinking:
+- order book defines the base token and quote token, user must say if his/her order is about buying or selling the base token
+- there is no definition of order book, base token, nor quote token, user simply specifies what token he/she owns and what token he/she desires
+
+We decide to implement the second type of thinking. At the same time we need to define a relation between both ways because
+the industry standard is to present trading platforms in the form of order books. The intuitive definition has been already provided
+at the beginning of the section, showing how the same orders of Alice, Bob, Dave and Charlie has been presented in two complementary
+order books. Now we provide formal transformations.
+
+**Case 1:**
+
+Assumptions:
+- user owns `Auaaa` but desires `Bubbb`
+- `uaaa/ubbb` order book is used
+
+Formulas:
+- `base token = A`
+- `quote token = B`
+- `execution price = B / A`
+- this is a `sell` order
+
+**Case 2:**
+
+Assumptions:
+- user owns `Auaaa` but desires `Bubbb`
+- `ubbb/uaaa` order book is used
+
+Formulas:
+- `base token = B`
+- `quote token = A`
+- `execution price = A / B`
+- this is a `buy` order
+
+**Case 3:**
+
+Assumptions:
+- user owns `Bubbb` but desires `Auaaa`
+- `uaaa/ubbb` order book is used
+
+Formulas:
+- `base token = A`
+- `quote token = B`
+- `execution price = B / A`
+- this is a `buy` order
+
+**Case 4:**
+
+Assumptions:
+- user owns `Auaaa` but desires `Bubbb`
+- `ubbb/uaaa` order book is used
+
+Formulas:
+- `base token = B`
+- `quote token = A`
+- `execution price = A / B`
+- this is a `sell` order
+
+Things to notice:
+- how everything is switched between 1 and 2, and 3 and 4
+- how only order type is changed between 1 and 3, and 2 and 4
+- each case is unique in terms of results
+
+The most important outcome of this discussion is that any set of orders defining `uaaa->ubbb` or `ubbb->uaaa` exchange direction
+might be transformed into two order books: `uaaa/ubbb` and `ubbb/uaaa`.
+
+It means that by defining orders by owned and desired amounts, client application may generate both order books from
+the same source of data and even let users switch between them. That's why later, in the implementation phase, concept of
+order book is not defined.
 
 ## Fund locking
 
@@ -477,6 +620,8 @@ In this case user does not specify the worst acceptable price, which means that 
 as long as its amount remains greater than 0, no matter what the price offered by the counterparty order is.
 
 ## Implementation details
+
+TODO: A lot of stuff here must be rewritten due to introducing mirrored order books  
 
 This section covers details related to practical implementation of concepts described earlier.
 
