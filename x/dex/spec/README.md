@@ -576,7 +576,7 @@ So there are two sequences of orders:
 - `uaaa` -> `ubbb` added by people who want to exchange `uaaa` to `ubbb`, they are sorted in ascending order by `ubbb amount / uaaa amount`
 - `ubbb` -> `uaaa` added by people who want to exchange `ubbb` to `uaaa`, they are sorted in ascending order by `uaaa amount / ubbb amount`
 
-In general case, order is added to the queue described by the tuplet (offered token, desired token),
+In general case, order is added to the queue described by the tuplet `(offered token, desired token)`,
 and that queue is sorted in ascending order by `desired amount / offered amount`. Depending on possible optimizations the
 implemented formula might be different as long as it preserves the sequence defined here.
 
