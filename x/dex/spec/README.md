@@ -588,7 +588,19 @@ order matching rule, previously specified for order books, so it might work with
 
 For the upcoming discussion it is important to note these facts:
 - function `f(x) = 1 / x` is always monotonically decreasing
-- it means that if `g(x)` is monotonic (increasing or decreasing), then the monotonicity of `f(g(x))` has always the opposite direction than `g(x)` 
+- it means that if `g(x)` is monotonic (increasing or decreasing), then the monotonicity of `f(g(x))` has always the opposite direction than `g(x)`
+
+Assumptions:
+- `x` is never `0`
+- `g(x)` is never `0`
+
+Proof:
+- 1st derivative of `f(x) = 1 / x` is `f'(x) = -1 / x^2`
+- from the "chain rule" of derivatives: `[f(g(x))]' = f'(g(x)) * g'(x) = -1 / g(x)^2 * g'(x) = -g'(x)/g(x)^2`
+- denominator `g(x)^2` is always positive, so the sign of `f'(x)` is determined only by the nominator `-g'(x)`, meaning that signs of `f'(x)` and `g'(x)` are opposite
+- from the definition of derivative: if derivative's value is positive everywhere, it means that the function is monotonically increasing,
+  if derivative's value is negative everywhere, it means that the function is monotonically decreasing
+- by applying previous 2 points it is proven now that monotonicities of `f(x)` and `g(x)` are opposite
 
 `(tokenA, tokenB)` queue is sorted in **ascending** order by `tokenB amount / tokenA amount`. It means that the first item in that queue
 offers the lowest price of **selling** `tokenA` (expressed in `tokenB/tokenA` units). At the same time, as stated in the rule above,
