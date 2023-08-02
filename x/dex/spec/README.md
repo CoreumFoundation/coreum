@@ -580,6 +580,37 @@ In general case, order is added to the queue described by the tuplet `(offered t
 and that queue is sorted in ascending order by `desired amount / offered amount`. Depending on possible optimizations the
 implemented formula might be different as long as it preserves the sequence defined here.
 
+## Order matching between queues
+
+As defined in the previous section we have two queues described by tuplets: `(tokenA, tokenB)` and `(tokenB, tokenA)`.
+The first token in the tuplet is called `offered token`, second one is `desired token`. Now we need to redefine the
+order matching rule, previously specified for order books, so it might work with queues.
+
+For the upcoming discussion it is important to note these facts:
+- function `f(x) = 1 / x` is always monotonically decreasing
+- it means that if `g(x)` is monotonic (increasing or decreasing), then the monotonicity of `f(g(x))` has always the opposite direction than `g(x)` 
+
+`(tokenA, tokenB)` queue is sorted in **ascending** order by `tokenB amount / tokenA amount`. It means that the first item in that queue
+offers the lowest price of **selling** `tokenA` (expressed in `tokenB/tokenA` units). At the same time, as stated in the rule above,
+that queue is sorted in **descending** order by `tokenA amount / tokenB amount`. It means that the first item in the queue offers the
+highest price of **buying** `tokenB` (expressed in `tokenA/tokenB` units).
+
+`(tokenB, tokenA)` queue is sorted in **ascending** order by `tokenA amount / tokenB amount`. It means that the first item in that queue
+offers the lowest price of **selling** `tokenB` (expressed in `tokenA/tokenB` units). At the same time, as stated in the rule above,
+that queue is sorted in **descending** order by `tokenB amount / tokenA amount`. It means that the first item in the queue offers the
+highest price of **buying** `tokenA` (expressed in `tokenB/tokenA` units).
+
+From these two paragraphs it is possible to construct two understandings of the order matching rule:
+- order matching is possible if the first item in `(tokenA, tokenB)` queue has the `tokenB amount / tokenA amount` coefficient lower than
+  `tokenB amount / tokenA amount` coefficient of the first item in `(tokenB, tokenA)` queue
+- order matching is possible if the first item in `(tokenA, tokenB)` queue has the `tokenA amount / tokenB amount` coefficient higher than
+  `tokenA amount / tokenB amount` coefficient of the first item in `(tokenB, tokenA)` queue
+
+Both rules mean exactly the same so only one must be chosen.
+
+Side note: The fact that those two rules are equivalent, proves that it is possible to construct both mirrored order books
+from the same two sets of orders.
+
 ## Fund locking
 
 Whenever an order is placed, all the corresponding funds required to execute that order must be locked.
