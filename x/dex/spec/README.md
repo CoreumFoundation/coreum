@@ -495,7 +495,7 @@ But we may look at the problem from different perspective. Order might be define
 - desired token amount to buy
 - price
 
-The formula might be defined as: `price = offered token / desired token`. Now, the `offered token` and `desired token`
+The formula might be defined as: `price = desired token / offered token`. Now, the `offered token` and `desired token`
 are the inputs (provided by user) and price is the output.
 
 So we have two different ways of thinking:
