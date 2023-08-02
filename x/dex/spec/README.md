@@ -491,16 +491,16 @@ the amount to buy/sell and the worst acceptable execution price, and then, `quot
 of the order execution is taken from that formula.
 
 But we may look at the problem from different perspective. Order might be defined by having these properties instead:
-- owned token amount to sell
+- offered token amount to sell
 - desired token amount to buy
 - price
 
-The formula might be defined as: `price = owned token / desired token`. Now, the `owned token` and `desired token`
+The formula might be defined as: `price = offered token / desired token`. Now, the `offered token` and `desired token`
 are the inputs (provided by user) and price is the output.
 
 So we have two different ways of thinking:
 - order book defines the base token and quote token, user must say if his/her order is about buying or selling the base token
-- there is no definition of order book, base token, nor quote token, user simply specifies what token he/she owns and what token he/she desires
+- there is no definition of order book, base token, nor quote token, user simply specifies what token he/she offers and what token he/she desires
 
 We decide to implement the second type of thinking. At the same time we need to define a relation between both ways because
 the industry standard is to present trading platforms in the form of order books. The intuitive definition has been already provided
@@ -510,7 +510,7 @@ order books. Now we provide formal transformations.
 **Case 1:**
 
 Assumptions:
-- user owns `Auaaa` but desires `Bubbb`
+- user offers `Auaaa` but desires `Bubbb`
 - `uaaa/ubbb` order book is used
 
 Formulas:
@@ -522,7 +522,7 @@ Formulas:
 **Case 2:**
 
 Assumptions:
-- user owns `Auaaa` but desires `Bubbb`
+- user offers `Auaaa` but desires `Bubbb`
 - `ubbb/uaaa` order book is used
 
 Formulas:
@@ -534,7 +534,7 @@ Formulas:
 **Case 3:**
 
 Assumptions:
-- user owns `Bubbb` but desires `Auaaa`
+- user offers `Bubbb` but desires `Auaaa`
 - `uaaa/ubbb` order book is used
 
 Formulas:
@@ -546,7 +546,7 @@ Formulas:
 **Case 4:**
 
 Assumptions:
-- user owns `Auaaa` but desires `Bubbb`
+- user offers `Auaaa` but desires `Bubbb`
 - `ubbb/uaaa` order book is used
 
 Formulas:
@@ -563,9 +563,22 @@ Things to notice:
 The most important outcome of this discussion is that any set of orders defining `uaaa->ubbb` or `ubbb->uaaa` exchange direction
 might be transformed into two order books: `uaaa/ubbb` and `ubbb/uaaa`.
 
-It means that by defining orders by owned and desired amounts, client application may generate both order books from
+It means that by defining orders by the offered and desired amounts, client application may generate both order books from
 the same source of data and even let users switch between them. That's why later, in the implementation phase, concept of
-order book is not defined.
+order book is not defined. Here is the example state of defined system containing orders made by Alice, Bob, Charlie and Dave:
+
+| `uaaa` -> `ubbb`             | `ubbb` -> `uaaa`          |
+|------------------------------|---------------------------|
+| `10uaaa` -> `5ubbb` (Alice)  | `4ubbb` -> `1uaaa` (Bob)  |
+| `2uaaa` -> `8ubbb` (Charlie) | `3ubbb` -> `6uaaa` (Dave) |
+
+So there are two sequences of orders:
+- `uaaa` -> `ubbb` added by people who want to exchange `uaaa` to `ubbb`, they are sorted in ascending order by `ubbb amount / uaaa amount`
+- `ubbb` -> `uaaa` added by people who want to exchange `ubbb` to `uaaa`, they are sorted in ascending order by `uaaa amount / ubbb amount`
+
+In general case, order is added to the queue described by the tuplet (offered token, desired token),
+and that queue is sorted in ascending order by `desired amount / offered amount`. Depending on possible optimizations the
+implemented formula might be different as long as it preserves the sequence defined here.
 
 ## Fund locking
 
