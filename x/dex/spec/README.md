@@ -691,30 +691,41 @@ Order properties:
 
 ### Denom in store keys
 
-In the following sections there are places where it is required to use a denom as a part of the key in the store.
-Whenever it happens, the denom must be prefixed with its length encoded using varint algorithm.
+In the implementation described later, it is required to use denoms as keys in the store. The denom itself is a long string.
+Each order requires two denoms to be concatenated to construct the key (described in next sections). As a result,
+a lot of space in the store would be used to keep those keys.
+
+Alternatively, we may apply the same trick Cosmos SDK uses to store balances in the bank module.
+Instead of using addresses as keys, sequence number is generated for an account when it receives funds for the first time
+and mapping between address and number is maintained separately. This allows to store balances using 64-bit numbers in the store.
+
+So, whenever denom is used on DEX for the first time, same mapping might be created for later use in the queues.
+
+Wherever this doc mentions ***denom prefix*** term, it is related to the structure described above.
 
 ### Queue prefix
 
 In the following sections there are places where it is required to organize orders in queues in a way that
 store iterator returns orders belonging to the same queue one after another. For these purposes the concatenation of:
-1. length-prefixed offered denom
-2. length-prefixed desired denom
+1. offered *denom prefix*
+2. desired denom *denom prefix*
 
-is used as a prefix for the key. Wherever this doc mentions ***queue prefix*** term, it is related to the structure described above.
+is used as a prefix for the key.
 
-### Execution price prefix
+Wherever this doc mentions ***queue prefix*** term, it is related to the structure described above.
+
+### Sorting by price
 
 Order matching algorithm requires orders to be sorted by price. Both corresponding queues, `(tokenA, tokenB)` and `(tokenB, tokenA)`,
 must be sorted by the same deterministic formula. Because two prices might be calculated: `token A amount / token B amount` or
 `token B amount / token A amount`, it must be decided which one is used.
 
 The algorithm is:
-1. sort the token denoms
+1. sort the denoms by their *denom prefixes* 
 2. the amount corresponding to the first one goes to the **denominator**
 3. the amount corresponding to the remaining one goes to the **nominator**
 
-In this case, the sequence is: `[tokenA, tokenB]` so the formula is `tokenB / tokenA`. It means that from two forms
+Assuming, the sequence is: `[tokenA, tokenB]` then the price formula is `tokenB / tokenA`. It means that from the two forms
 of the order matching rule defined earlier, the first one is chosen: order matching is possible if the first item in
 `(tokenA, tokenB)` queue has the `tokenB amount / tokenA amount` coefficient lower than or equal to `tokenB amount / tokenA amount`
 coefficient of the first item in `(tokenB, tokenA)` queue
@@ -723,6 +734,8 @@ Important note: As a consequence, whenever someone would like to construct `toke
 is the sell side of the book and queue `(tokenB, tokenA)` corresponds to the buy side of that order book.
 At the same time, whenever someone would like to construct `tokenB/tokenA` order book, it means that queue `(tokenB, tokenA)`
 is the sell side of the book and queue `(tokenA, tokenB)` corresponds to the buy side of that order book.
+
+### Execution price prefix
 
 It is required to design the correct schema for storing the price as a part of the key in the store to be able to retrieve
 orders of interest in the form of a properly sorted FIFO queue when using store iterator provided by the Cosmos SDK.
@@ -770,6 +783,8 @@ of these parts:
 - offered denom or desired denom (length-prefixed) - whatever is the **first** item after sorting them
 - the **other denom** from the pair (length-prefixed)
 - number taken from a transient sequence generator
+
+Keep in mind that the result of concatenating two first items is the same for both corresponding queues: `(tokenA, tokenB)` and `(tokenB, tokenA)`.
 
 Transient sequence generator, is the data structure and function using transient store reseted by Cosmos SDK at the beginning of each block,
 returning incremented number for each call.
@@ -864,7 +879,7 @@ This is how the algorithm is defined for an order related to `(tokenB, tokenA)` 
 7. If any of the orders (at least one for sure) is completely cleared, remove it from the cache and persistent store (if it is present there), possibly one of the orders might not be completely cleared - it must be added/updated in the cache (but not saved to the persistent store as it still might be cleared later)
 8. If the processed order (the one read from FIFO) has been cleared go to (1), if not go to (3)
 
-Reduction step details (6th step):
+### Reduction step details (6th step)
 
 At this point of the algorithm it is known that there are two orders from corresponding queue which might be reduced.
 It is also known which order was created first. Keep in mind that during the reduction the price offered by the earlier
