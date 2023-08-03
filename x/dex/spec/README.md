@@ -1001,7 +1001,30 @@ affecting the sequence of orders in the queue. As a result, the updated order mu
 store and added again under new key, recalculated using the algorithm described in the "Sorting by price" and "Execution price prefix"
 sections.
 
-### Amount precision
+### Precision
 
-Let's say there is an order `10uaaa -> 9ubbb`. Then, the new counterparty order `4ubbb -> 5uaaa` comes. The order
-matching rule is met because `9 / 10 <= 5 / 4` is true. It means that orders might be reduced.
+Let's say that there is an order A: `10uaaa -> 9ubbb`. Now, someone comes and places the order B: `1ubbb -> 1uaaa`.
+The order matching condition is met because `9 / 10 <= 1 / 1`. Order B contains smaller amounts, so it will be cleared
+using the price defined by order A (`0.9ubbb/uaaa`).
+
+According to the previously defined rules:
+- `minubbbAmount = min(9ubbb, 1ubbb) = 1ubbb`
+- `minuaaa = min(10uaaa, 1uaaa) = 1uaaa`
+- `minubbbAmount != orderA.ubbbAmount`
+- `minuaaaAmount != orderA.uaaaAmount`
+
+These mean that the corresponding amount must be calculated from the proportion.
+
+```
+ubbbAmount = 1uaaa * 9ubbb / 10uaaa = 0.9uaaa ~= 0uaaa
+uaaaAmount = 1ubbb * 10ubbb / 9ubbb = 1.(1)ubbb ~= 1ubbb
+```
+
+First value is `0`, so algorithm cannot use it. Second one is positive, so algorithm could continue, but it would be
+use the execution price worse by more than 11%, than what the creator of the order A asked for. This is unacceptable.
+
+Possible solutions (**TBD**):
+- don't execute the orders, keep order B to the queue until someone else matches it more precisely
+- require some minimal amounts in the order (like `100`) to guarantee that the price is missed by `1%` in the worst case
+- put an additional fee on the order execution going to the order A creator to compensate, and at the same time discourage
+  the order B creator from placing it
