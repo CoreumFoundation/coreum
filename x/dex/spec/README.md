@@ -1028,3 +1028,9 @@ Possible solutions (**TBD**):
 - require some minimal amounts in the order (like `100`) to guarantee that the price is missed by `1%` in the worst case
 - put an additional fee on the order execution going to the order A creator to compensate, and at the same time discourage
   the order B creator from placing it
+
+## To be added
+
+- Good Till Time orders
+- Immediate or Cancel orders
+- Fill or Kill orders
