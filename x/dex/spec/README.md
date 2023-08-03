@@ -780,8 +780,8 @@ format mentioned earlier.
 When orders are collected by the message handlers, they are added to the transient FIFO queue to be processed
 later in the end blocker. To use that store as a FIFO efficiently, the key for the order record must be built as a concatenation
 of these parts:
-- offered denom or desired denom (length-prefixed) - whatever is the **first** item after sorting them
-- the **other denom** from the pair (length-prefixed)
+- offered denom or desired *denom prefix* - whatever is the **first** item after sorting them
+- the other *denom prefix* from the pair
 - number taken from a transient sequence generator
 
 Keep in mind that the result of concatenating two first items is the same for both corresponding queues: `(tokenA, tokenB)` and `(tokenB, tokenA)`.
