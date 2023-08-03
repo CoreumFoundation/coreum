@@ -47,7 +47,7 @@ type DynamicConfigProvider struct {
 	Denom              string
 	AddressPrefix      string
 	GenesisTime        time.Time
-	BlockTimeIotaMS    time.Duration
+	BlockTimeIota      time.Duration
 	GovConfig          GovConfig
 	CustomParamsConfig CustomParamsConfig
 	FundedAccounts     []FundedAccount
@@ -64,9 +64,9 @@ func (dcp DynamicConfigProvider) WithAccount(accAddress sdk.AccAddress, balances
 	return dcp
 }
 
-// WithBlockTimeIotaMS sets the time_iota_ms variable inside block section of genesis.
-func (dcp DynamicConfigProvider) WithBlockTimeIotaMS(blockTimeIotaMS time.Duration) DynamicConfigProvider {
-	dcp.BlockTimeIotaMS = blockTimeIotaMS
+// WithBlockTimeIota sets the time_iota_ms variable inside block section of genesis.
+func (dcp DynamicConfigProvider) WithBlockTimeIota(blockTimeIota time.Duration) DynamicConfigProvider {
+	dcp.BlockTimeIota = blockTimeIota
 	return dcp
 }
 
@@ -214,7 +214,7 @@ func (dcp DynamicConfigProvider) genesisByTemplate() ([]byte, error) {
 		Denom:              dcp.Denom,
 		Gov:                dcp.GovConfig,
 		CustomParamsConfig: dcp.CustomParamsConfig,
-		BlockTimeIotaMS:    dcp.BlockTimeIotaMS.Milliseconds(),
+		BlockTimeIotaMS:    dcp.BlockTimeIota.Milliseconds(),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")
