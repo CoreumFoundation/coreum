@@ -1020,8 +1020,8 @@ ubbbAmount = 1uaaa * 9ubbb / 10uaaa = 0.9uaaa ~= 0uaaa
 uaaaAmount = 1ubbb * 10ubbb / 9ubbb = 1.(1)ubbb ~= 1ubbb
 ```
 
-First value is `0`, so algorithm cannot use it. Second one is positive, so algorithm could continue, but it would be
-use the execution price worse by more than 11%, than what the creator of the order A asked for. This is unacceptable.
+First value is `0`, so algorithm cannot use it. Second one is positive, so algorithm could continue, but it would use
+the execution price worse by more than 11%, than what the creator of the order A asked for. This is unacceptable.
 
 Possible solutions (**TBD**):
 - don't execute the orders, keep order B to the queue until someone else matches it more precisely
