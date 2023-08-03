@@ -895,37 +895,98 @@ It means that the formula for the execution price between those denoms is: `pric
 
 It is like this because of the definition in the "Sorting by price" section.
 
-Let's discuss the trivial case first:
-- Alice placed an order: `6uaaa -> 2ubbb`
-- Then Bob placed an order: `2ubbb -> 6uaaa`
+#### Trivial case
+
+Let's discuss the obvious case first:
+- Alice placed an order: `60uaaa -> 20ubbb`
+- Then Bob placed an order: `20ubbb -> 60uaaa`
 
 Reduction step for them is simple, both corresponding amounts are equal so the orders are reduced and cleared completely.
 Nothing is left in the order book, even the execution price does not need to be calculated.
 
-Non-trivial case:
+#### Non-trivial case
+
+- Alice placed an `uaaa -> ubbb` order
+- then Bob placed an `ubbb -> uaaa` order
+
+Exact amounts are not specified intentionally.
+
+Let's play a bit with the order matching rule:
+
+```
+priceAlice <= priceBob
+aliceOrder.ubbbAmount / aliceOrder.uaaaAmount <= bobOrder.ubbbAmount / bobOrder.uaaaAmount
+aliceOrder.ubbbAmount * bobOrder.uaaaAmount <= bobOrder.ubbbAmount * aliceOrder.uaaaAmount
+```
+
+It might be concluded that:
+- if `aliceOrder.ubbbAmount <= bobOrder.ubbbAmount` and `bobOrder.uaaaAmount <= aliceOrder.uaaaAmount` then the order matching rule is true
+- if `aliceOrder.ubbbAmount <= aliceOrder.uaaaAmount` and `bobOrder.uaaaAmount <= bobOrder.ubbbAmount` then the order matching rule is true
+
+It means that for some cases, it is possible to determine the truthfulness of the order matching rule without computing the prices,
+avoiding dealing with fractional numbers. But even if both formulas are false, the order matching rule still might be true. 
+
+If the order matching rule works and amounts are not exact we know for sure that exactly one order will be cleared completely.
+It means, exactly one of two things must happen:
+- `minuaaaAmount = min(orderAlice.uaaaAmount, orderBob.uaaaAmount)` will be sent from Alice to Bob, or
+- `minubbbAmount = min(orderAlice.ubbbAmount, orderBob.ubbbmount)` will be sent from Bob to Alice
+
+In both cases, we need to find out the amount of the corresponding token to be sent in the opposite direction.
+
+First case:
+
+```
+ubbbAmount = minuaaaAmount * priceAlice
+ubbbAmount = minuaaaAmount * orderAlice.ubbbAmount / orderAlice.uaaaAmount
+```
+
+It might be found that in this case if `minuaaaAmount = orderAlice.uaaaAmount` then `ubbbAmount = orderAlice.ubbbAmount` without doing any calculation.
+If `ubbbAmount <= minubbbAmount` it means that this is the case to apply and the following one does not need to be checked.
+
+Otherwise, we know that the second case is true, but we need to compute the amount: 
+
+```
+uaaaAmount = minubbbAmount / priceAlice
+uaaaAmount = minubbbAmount / orderAlice.ubbbAmount / orderAlice.uaaaAmount
+uaaaAmount = minubbbAmount * orderAlice.uaaaAmount / orderAlice.ubbbAmount
+```
+
+It might be found that if `minubbbAmount = orderAlice.ubbbAmount` then `uaaaAmount = orderAlice.uaaaAmount` without doing any calculation.
+If `uaaaAmount <= minuaaaAmount` it means that this is the case to apply.
+
+Example:
+
 - Alice placed an order: `60uaaa -> 10ubbb`
 - Then Bob placed an order: `20ubbb -> 30uaaa`
 
 Things to be noticed immediately:
-- `30uaaa = min(60uaaa, 30uaaa)` is the upper limit of `uaaa` to be exchanged
-- `10ubbb = min(10ubbb, 20ubbb)` is the upper limit of `ubbb` to be exchanged
-- Price in the Alice's order is `priceAlice = 10 / 60 [ubbb/uaaa]`
-- Price in the Bob's order is `priceBob = 20 / 30 [ubbb/uaaa]`
-- Order matching rule is: `priceAlice <= priceBob` <=> `10 / 60 <= 20 / 30` <=> `300 <= 1200`, so the condition is met and orders might be reduced
-- Alice's order has been placed first so `priceAlice` will be used to reduce the orders, the fact that Alice's order is first, 
-  is determined by the sequence orders are fetched from the transient FIFO or persistent store in 
+- Order matching rule is true because `aliceOrder.ubbAmount < bobOrder.ubbAmount && bobOrder.uaaaAmount <= aliceOrder.uaaaAmount`
+- `30uaaa = min(orderAlice.uaaaAmount=60uaaa, orderBob.uaaaAmount=30uaaa)` is the upper limit of `uaaa` to be exchanged
+- `10ubbb = min(orderAlice.ubbbAmount=10ubbb, orderBob.ubbbAmount=20ubbb)` is the upper limit of `ubbb` to be exchanged
+- Alice's order has been placed first so `priceAlice` will be used to reduce the orders, the fact that Alice's order is first,
+  is determined by the sequence orders are fetched from the transient FIFO or persistent store in
 
 Now, it must be decided how many tokens should be exchanged. We know for sure that exactly one order will be cleared completely.
 It means that exactly one of the actions will be taken:
 - `10ubbb` will be transferred from Bob to Alice
 - `30uaaa` will be transferred from Alice to Bob
 
-For each case we need to compute the amount of the other token:
-- for the first case: `uaaaAmount [uaaa] = ubbbAmount [ubbb] / priceAlice [ubbb/uaaa] [ubbb = ubbb / ubbb / uaaa] = 10 / 10 / 60 = 10 * 60 / 10 = 60 [uaaa]`
-- for the second case: `ubbbAmount [ubbb] = uaaaAmount [uaaa] * priceAlice [ubbb/uaaa] [ubbb = uaaa * ubbb / uaaa] = 30 * 10 / 60 = 5 [ubbb]`
+We need to find the way to determine which case is true.
 
-The first case is impossible because the result `60uaaa` is greater than the upper limit of `30uaaa`.
-The second case is possible because the result `5ubbb` is lower than the upper limit of `10ubbb`.
+Because `orderAlice.ubbbAmount <= orderBob.ubbbAmount` (it is the minimum value) then we may check if `orderAlice.uaaaAmount <= orderBob.uaaaAmount`
+(if it is a minimum value). It is not so the first case is false.
+
+We must try the other one. `orderAlice.uaaaAmount > orderBob.uaaaAmount` (it is not a minimum) so the simplified rule of getting
+`ubbb` token does not apply. We compute it using the formula:
+
+```
+ubbbAmount = orderBob.uaaaAmount * orderAlice.ubbbAmount / orderAlice.uaaaAmount
+ubbbAmount = 30 * 10 / 60
+ubbAmount = 5
+```
+
+Important note: Using proportion to calculate the amount should be the last resort if nothing else is possible, to
+eliminate roundings. If proportion is used, and the result is fractional, it should be rounded down to the floor.
 
 Finally, we know that as a result of reducing the orders:
 - `30uaaa` should be sent from Alice to Bob
@@ -933,3 +994,14 @@ Finally, we know that as a result of reducing the orders:
 - Bob's order might be removed because it is cleared now (Bob got everything he wanted to)
 - Alice's oder must be updated and wait for other counterparty order by subtracting corresponding amounts,
   so it is transformed from `60uaaa -> 10uaaa` to `(60-30uaaa) -> (10-5ubbb)` which is `30uaaa -> 5ubbb`
+
+Important note: In the example, the prices in the Alice's order before and after the reduction is the same (`10 / 60 = 5 / 30`)
+but due to the math precision it is not true in general case. It means that in the updated order price might be different,
+affecting the sequence of orders in the queue. As a result, the updated order must be removed from the cache and persistent
+store and added again under new key, recalculated using the algorithm described in the "Sorting by price" and "Execution price prefix"
+sections.
+
+### Amount precision
+
+Let's say there is an order `10uaaa -> 9ubbb`. Then, the new counterparty order `4ubbb -> 5uaaa` comes. The order
+matching rule is met because `9 / 10 <= 5 / 4` is true. It means that orders might be reduced.
