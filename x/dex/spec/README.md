@@ -613,9 +613,9 @@ that queue is sorted in **descending** order by `tokenB amount / tokenA amount`.
 highest price of **buying** `tokenA` (expressed in `tokenB/tokenA` units).
 
 From these two paragraphs it is possible to construct two understandings of the order matching rule:
-- order matching is possible if the first item in `(tokenA, tokenB)` queue has the `tokenB amount / tokenA amount` coefficient lower than
+- order matching is possible if the first item in `(tokenA, tokenB)` queue has the `tokenB amount / tokenA amount` coefficient **lower** than
   or equal to `tokenB amount / tokenA amount` coefficient of the first item in `(tokenB, tokenA)` queue
-- order matching is possible if the first item in `(tokenA, tokenB)` queue has the `tokenA amount / tokenB amount` coefficient higher than
+- order matching is possible if the first item in `(tokenA, tokenB)` queue has the `tokenA amount / tokenB amount` coefficient **higher** than
   or equal to `tokenA amount / tokenB amount` coefficient of the first item in `(tokenB, tokenA)` queue
 
 Both rules mean exactly the same so only one must be chosen.
@@ -721,7 +721,7 @@ must be sorted by the same deterministic formula. Because two prices might be ca
 `token B amount / token A amount`, it must be decided which one is used.
 
 The algorithm is:
-1. sort the denoms by their *denom prefixes* 
+1. sort the denoms by their *denom prefixes* in ascending order
 2. the amount corresponding to the first one goes to the **denominator**
 3. the amount corresponding to the remaining one goes to the **nominator**
 
@@ -885,4 +885,51 @@ At this point of the algorithm it is known that there are two orders from corres
 It is also known which order was created first. Keep in mind that during the reduction the price offered by the earlier
 order must be applied.
 
-To be continued...
+Assumptions:
+- `uaaaa` denom has *denom prefix* equal to `1`
+- `ubbb` denom has *denom prefix* equal to `2`
+
+It means that the formula for the execution price between those denoms is: `price = B / A`, where:
+- `B` is the amount of `ubbb` token to be exchanged
+- `A` is the amount of `uaaa` token to be exchanged
+
+It is like this because of the definition in the "Sorting by price" section.
+
+Let's discuss the trivial case first:
+- Alice placed an order: `6uaaa -> 2ubbb`
+- Then Bob placed an order: `2ubbb -> 6uaaa`
+
+Reduction step for them is simple, both corresponding amounts are equal so the orders are reduced and cleared completely.
+Nothing is left in the order book, even the execution price does not need to be calculated.
+
+Non-trivial case:
+- Alice placed an order: `60uaaa -> 10ubbb`
+- Then Bob placed an order: `20ubbb -> 30uaaa`
+
+Things to be noticed immediately:
+- `30uaaa = min(60uaaa, 30uaaa)` is the upper limit of `uaaa` to be exchanged
+- `10ubbb = min(10ubbb, 20ubbb)` is the upper limit of `ubbb` to be exchanged
+- Price in the Alice's order is `priceAlice = 10 / 60 [ubbb/uaaa]`
+- Price in the Bob's order is `priceBob = 20 / 30 [ubbb/uaaa]`
+- Order matching rule is: `priceAlice <= priceBob` <=> `10 / 60 <= 20 / 30` <=> `300 <= 1200`, so the condition is met and orders might be reduced
+- Alice's order has been placed first so `priceAlice` will be used to reduce the orders, the fact that Alice's order is first, 
+  is determined by the sequence orders are fetched from the transient FIFO or persistent store in 
+
+Now, it must be decided how many tokens should be exchanged. We know for sure that exactly one order will be cleared completely.
+It means that exactly one of the actions will be taken:
+- `10ubbb` will be transferred from Bob to Alice
+- `30uaaa` will be transferred from Alice to Bob
+
+For each case we need to compute the amount of the other token:
+- for the first case: `uaaaAmount [uaaa] = ubbbAmount [ubbb] / priceAlice [ubbb/uaaa] [ubbb = ubbb / ubbb / uaaa] = 10 / 10 / 60 = 10 * 60 / 10 = 60 [uaaa]`
+- for the second case: `ubbbAmount [ubbb] = uaaaAmount [uaaa] * priceAlice [ubbb/uaaa] [ubbb = uaaa * ubbb / uaaa] = 30 * 10 / 60 = 5 [ubbb]`
+
+The first case is impossible because the result `60uaaa` is greater than the upper limit of `30uaaa`.
+The second case is possible because the result `5ubbb` is lower than the upper limit of `10ubbb`.
+
+Finally, we know that as a result of reducing the orders:
+- `30uaaa` should be sent from Alice to Bob
+- `5ubbb` should be sent from Bob to Alice
+- Bob's order might be removed because it is cleared now (Bob got everything he wanted to)
+- Alice's oder must be updated and wait for other counterparty order by subtracting corresponding amounts,
+  so it is transformed from `60uaaa -> 10uaaa` to `(60-30uaaa) -> (10-5ubbb)` which is `30uaaa -> 5ubbb`
