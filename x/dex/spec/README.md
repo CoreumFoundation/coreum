@@ -56,6 +56,8 @@ Order book for each trading pair contains two tables:
 - containing sell orders ("sell side") - this table is sorted by price in ascending order
 - containing buy orders ("buy side") - this table is sorted by price in descending order
 
+If any two orders in the same table have the same price, they are sorted in ascending order by the time of creation.
+
 This is how the two sorted sides of the order book, presented in the example above, look like:
 
 Sell side:
