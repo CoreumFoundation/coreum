@@ -1034,3 +1034,6 @@ Possible solutions (**TBD**):
 - Good Till Time orders
 - Immediate or Cancel orders
 - Fill or Kill orders
+- Indirect order matching
+- Implementation details of fund locking
+- Implementation details on Market orders
