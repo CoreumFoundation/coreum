@@ -689,7 +689,7 @@ Order properties:
 - DesiredAmount (`sdk.Coin`) - is the desired coin (it contains amount and denom)
 - Type (`enum: MARKET, LIMIT`) - type of the order
 
-### Denom in store keys
+### Denom prefix
 
 In the implementation described later, it is required to use denoms as keys in the store. The denom itself is a long string.
 Each order requires two denoms to be concatenated to construct the key (described in next sections). As a result,
