@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -58,7 +60,7 @@ func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs
 }
 
 func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccountOperations) error {
-	for denom, inOps := range inputs {
+	return iterateMapDeterministic(inputs, func(denom string, inOps accountOperationMap) error {
 		def, err := k.GetDefinition(ctx, denom)
 		if types.ErrInvalidDenom.Is(err) || types.ErrTokenNotFound.Is(err) {
 			return nil
@@ -67,35 +69,33 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 		outOps := outputs[denom]
 
 		burnShares := k.CalculateRateShares(ctx, def.BurnRate, def.Issuer, inOps, outOps)
-		for account, amount := range burnShares {
-			if err := k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
-				return err
-			}
+
+		if err := iterateMapDeterministic(burnShares, func(account string, amount sdk.Int) error {
+			return k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
+		}); err != nil {
+			return err
 		}
 
 		commissionShares := k.CalculateRateShares(ctx, def.SendCommissionRate, def.Issuer, inOps, outOps)
 		issuer := sdk.MustAccAddressFromBech32(def.Issuer)
-		for account, amount := range commissionShares {
+
+		if err := iterateMapDeterministic(commissionShares, func(account string, amount sdk.Int) error {
 			coins := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
-			if err := k.bankKeeper.SendCoins(ctx, sdk.MustAccAddressFromBech32(account), issuer, coins); err != nil {
-				return err
-			}
+			return k.bankKeeper.SendCoins(ctx, sdk.MustAccAddressFromBech32(account), issuer, coins)
+		}); err != nil {
+			return err
 		}
 
-		for account, amount := range inOps {
-			if err := k.isCoinSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
-				return err
-			}
+		if err := iterateMapDeterministic(inOps, func(account string, amount sdk.Int) error {
+			return k.isCoinSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
+		}); err != nil {
+			return err
 		}
 
-		for account, amount := range outOps {
-			if err := k.isCoinReceivable(ctx, sdk.MustAccAddressFromBech32(account), def, amount); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+		return iterateMapDeterministic(outOps, func(account string, amount sdk.Int) error {
+			return k.isCoinReceivable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
+		})
+	})
 }
 
 func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
@@ -181,4 +181,27 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	}
 
 	return shares
+}
+
+func sortedKeys[V any](m map[string]V) []string {
+	keys := make([]string, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	return keys
+}
+
+func iterateMapDeterministic[V any](m map[string]V, fn func(key string, value V) error) error {
+	keys := sortedKeys(m)
+	for _, key := range keys {
+		v := m[key]
+		if err := fn(key, v); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
