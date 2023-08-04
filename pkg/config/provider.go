@@ -64,12 +64,6 @@ func (dcp DynamicConfigProvider) WithAccount(accAddress sdk.AccAddress, balances
 	return dcp
 }
 
-// WithBlockTimeIota sets the time_iota_ms variable inside block section of genesis.
-func (dcp DynamicConfigProvider) WithBlockTimeIota(blockTimeIota time.Duration) DynamicConfigProvider {
-	dcp.BlockTimeIota = blockTimeIota
-	return dcp
-}
-
 // WithGenesisTx adds transaction to the genesis file.
 func (dcp DynamicConfigProvider) WithGenesisTx(signedTx json.RawMessage) DynamicConfigProvider {
 	dcp = dcp.clone()
