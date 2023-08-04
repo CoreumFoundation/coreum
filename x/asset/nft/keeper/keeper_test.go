@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -207,7 +208,7 @@ func TestKeeper_Mint(t *testing.T) {
 	// check that balance is 0 meaning issue fee was taken
 
 	balance := bankKeeper.GetBalance(ctx, addr, constant.DenomDev)
-	requireT.Equal(sdk.ZeroInt().String(), balance.Amount.String())
+	requireT.Equal(sdkmath.ZeroInt().String(), balance.Amount.String())
 
 	// mint second NFT with the same ID
 	err = nftKeeper.Mint(ctx, settings)
@@ -373,7 +374,7 @@ func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
 	nftKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
-		MintFee: sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
+		MintFee: sdk.NewCoin(constant.DenomDev, sdkmath.ZeroInt()),
 	}
 	nftKeeper.SetParams(ctx, nftParams)
 

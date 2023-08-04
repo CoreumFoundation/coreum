@@ -191,7 +191,7 @@ func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgUpgradeT
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	err = ms.keeper.AddDelayedTokenUpgradeV1(ctx, sender, req.Denom, req.IbcEnabled)

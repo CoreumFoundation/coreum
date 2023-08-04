@@ -612,7 +612,7 @@ func (k Keeper) isCoinReceivable(ctx sdk.Context, addr sdk.AccAddress, def types
 	// it cannot be received back by definition.
 	if wibctransfertypes.IsPurposeOut(ctx) {
 		if !def.IsFeatureEnabled(types.Feature_ibc) {
-			return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "ibc transfers are disabled for %s", def.Denom)
+			return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "ibc transfers are disabled for %s", def.Denom)
 		}
 		return nil
 	}
@@ -666,7 +666,7 @@ func (k Keeper) availableBalance(ctx sdk.Context, addr sdk.AccAddress, denom str
 
 	frozenBalance := k.GetFrozenBalance(ctx, addr, denom)
 	if frozenBalance.IsGTE(balance) {
-		return sdk.NewCoin(denom, sdk.ZeroInt())
+		return sdk.NewCoin(denom, sdkmath.ZeroInt())
 	}
 	return balance.Sub(frozenBalance)
 }

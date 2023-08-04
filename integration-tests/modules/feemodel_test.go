@@ -13,7 +13,6 @@ import (
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"

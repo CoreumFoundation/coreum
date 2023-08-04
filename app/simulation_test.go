@@ -14,7 +14,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/app"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	testutilconstant "github.com/CoreumFoundation/coreum/testutil/constant"
+	testutilconstant "github.com/CoreumFoundation/coreum/v2/testutil/constant"
 )
 
 func init() {

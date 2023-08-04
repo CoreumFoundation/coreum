@@ -18,7 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -26,7 +25,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
@@ -105,6 +104,8 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 
 // CalculateGas simulates the execution of a transaction and returns the
 // simulation response obtained by the query and the adjusted gas amount.
+//
+//	FIXME(v47-multisig-calculate-gas-test) add test to calculate
 func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
@@ -136,17 +137,12 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 		return nil, 0, errors.WithStack(err)
 	}
 
-	pubKeyAny, err := codectypes.NewAnyWithValue(keyInfo.GetPubKey())
+	pubKey, err := keyInfo.GetPubKey()
 	if err != nil {
 		return nil, 0, errors.WithStack(err)
 	}
-
 	var signatureData signing.SignatureData
-	if keyInfo.GetAlgo() == hd.MultiType {
-		multisigPubKey, ok := keyInfo.GetPubKey().(*multisig.LegacyAminoPubKey)
-		if !ok {
-			return nil, 0, errors.New("public key cannot be converted to multisig public key")
-		}
+	if multisigPubKey, ok := pubKey.(*multisig.LegacyAminoPubKey); ok {
 		multiSignatureData := make([]signing.SignatureData, 0, multisigPubKey.Threshold)
 		for i := uint32(0); i < multisigPubKey.Threshold; i++ {
 			multiSignatureData = append(multiSignatureData, &signing.SingleSignatureData{
@@ -167,7 +163,7 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 	simAuthInfoBytes, err := proto.Marshal(&sdktx.AuthInfo{
 		SignerInfos: []*sdktx.SignerInfo{
 			{
-				PublicKey: pubKeyAny,
+				PublicKey: keyInfo.PubKey,
 				ModeInfo:  modeInfo,
 				Sequence:  txf.Sequence(),
 			},

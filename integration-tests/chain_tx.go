@@ -90,9 +90,13 @@ func sign(clientCtx client.Context, txf client.Factory, signerAddress sdk.AccAdd
 
 	key, err := txf.Keybase().KeyByAddress(signerAddress)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
-	pubKey := key.GetPubKey()
+	pubKey, err := key.GetPubKey()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	signerData := authsigning.SignerData{
 		ChainID:       txf.ChainID(),
 		AccountNumber: txf.AccountNumber(),
@@ -110,19 +114,19 @@ func sign(clientCtx client.Context, txf client.Factory, signerAddress sdk.AccAdd
 	}
 	var prevSignatures []signing.SignatureV2
 	if err := txBuilder.SetSignatures(sig); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	// Generate the bytes to be signed.
 	bytesToSign, err := clientCtx.TxConfig().SignModeHandler().GetSignBytes(signMode, signerData, txBuilder.GetTx())
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	// Sign those bytes
 	sigBytes, _, err := txf.Keybase().SignByAddress(signerAddress, bytesToSign)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	// Construct the SignatureV2 struct

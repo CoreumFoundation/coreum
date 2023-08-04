@@ -6,11 +6,14 @@ package ante
 import (
 	sdkerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
 	authkeeper "github.com/CoreumFoundation/coreum/v2/x/auth/keeper"
 	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
@@ -23,6 +26,8 @@ type HandlerOptions struct {
 	authante.HandlerOptions
 	DeterministicGasConfig deterministicgas.Config
 	FeeModelKeeper         feemodelante.Keeper
+	WasmConfig             wasmtypes.WasmConfig
+	IBCKeeper              *ibckeeper.Keeper
 	WasmTXCounterStoreKey  storetypes.StoreKey
 }
 
@@ -40,6 +45,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 	if options.FeeModelKeeper == nil {
 		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "fee model keeper is required for ante builder")
+	}
+
+	if options.IBCKeeper == nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "IBC keeper is required for ante builder")
 	}
 
 	if options.SignModeHandler == nil {
@@ -90,10 +99,11 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		deterministicgasante.NewSetInfiniteGasMeterDecorator(options.DeterministicGasConfig),
 		NewDenyMessagesDecorator(&crisistypes.MsgVerifyInvariant{}),
-		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
 		authante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
+		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit), // after setup context to enforce limits early
+		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		feemodelante.NewFeeDecorator(options.FeeModelKeeper),
 		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
@@ -105,6 +115,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewConsumeGasForTxSizeDecorator(infiniteAccountKeeper),
 		authante.NewSigGasConsumeDecorator(infiniteAccountKeeper, options.SigGasConsumer),
 		deterministicgasante.NewChargeFixedGasDecorator(infiniteAccountKeeper, options.DeterministicGasConfig),
+		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil

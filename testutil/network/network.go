@@ -144,7 +144,7 @@ func DefaultConfig() network.Config {
 			)
 		},
 		GenesisState:   appState,
-		TimeoutCommit:  2 * time.Second,
+		TimeoutCommit:  300 * time.Millisecond,
 		ChainID:        chainID,
 		NumValidators:  1,
 		BondDenom:      devNetwork.Denom(),

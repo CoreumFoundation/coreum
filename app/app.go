@@ -569,7 +569,7 @@ func New(
 		app.BankKeeper,
 		app.StakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
-		nil, // ISC4 Wrapper: fee IBC middleware // FIXME(v47-ibc) add the fee wrapper
+		app.IBCKeeper.ChannelKeeper, // FIXME(v47-ibc) add the fee wrapper
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.ScopedWASMKeeper,
@@ -585,7 +585,7 @@ func New(
 
 	// enable all wasm proposals
 	// FIXME(v47-legacy): remove once we finish with full migration
-	govRouter.AddRoute(wasmtypes.RouterKey, wasmkeeper.NewWasmProposalHandler(app.WasmKeeper, wasmtypes.EnableAllProposals))
+	govRouter.AddRoute(wasmtypes.RouterKey, wasmkeeper.NewWasmProposalHandler(app.WasmKeeper, wasmtypes.EnableAllProposals)) //nolint:staticcheck // we need to keep backward compatibility
 
 	// FIXME(v47-legacy): remove once we finish with full migration
 	// Set legacy router for backwards compatibility with gov v1beta1
@@ -800,6 +800,7 @@ func New(
 				SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
 			},
 			DeterministicGasConfig: deterministicGasConfig,
+			IBCKeeper:              app.IBCKeeper,
 			FeeModelKeeper:         app.FeeModelKeeper,
 			WasmTXCounterStoreKey:  keys[wasmtypes.StoreKey],
 		},

@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +36,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
-	sendToGaiaCoin := coreumChain.NewCoin(sdk.NewInt(1000))
+	sendToGaiaCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 		Amount:   sendToGaiaCoin.Amount,
@@ -43,7 +44,7 @@ func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {
 
 	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
 		Address: gaiaRecipient,
-		Amount:  gaiaChain.NewCoin(sdk.NewInt(1000000)), // coin for the fees
+		Amount:  gaiaChain.NewCoin(sdkmath.NewInt(1000000)), // coin for the fees
 	})
 
 	txRes, err := coreumChain.ExecuteIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, gaiaChain.ChainContext, gaiaRecipient)
@@ -70,7 +71,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	gaiaChain := chains.Gaia
 
 	coreumToGaiaChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, ibctransfertypes.PortID, gaiaChain.ChainSettings.ChainID)
-	sendToCoreumCoin := gaiaChain.NewCoin(sdk.NewInt(1000))
+	sendToCoreumCoin := gaiaChain.NewCoin(sdkmath.NewInt(1000))
 
 	// Generate accounts
 	gaiaAccount1 := gaiaChain.GenAccount()
@@ -88,7 +89,7 @@ func TestIBCTransferFromGaiaToCoreumAndBack(t *testing.T) {
 	})
 	gaiaChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
 		Address: gaiaAccount1,
-		Amount:  sendToCoreumCoin.Add(gaiaChain.NewCoin(sdk.NewInt(1000000))), // coin to send + coin for the fee
+		Amount:  sendToCoreumCoin.Add(gaiaChain.NewCoin(sdkmath.NewInt(1000000))), // coin to send + coin for the fee
 	})
 
 	// Send from gaiaAccount to coreumToCoreumSender
@@ -149,7 +150,7 @@ func TestTimedOutTransfer(t *testing.T) {
 		coreumSender := coreumChain.GenAccount()
 		gaiaRecipient := osmosisChain.GenAccount()
 
-		sendToGaiaCoin := coreumChain.NewCoin(sdk.NewInt(1000))
+		sendToGaiaCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
 		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 			Amount:   sendToGaiaCoin.Amount,
@@ -235,7 +236,7 @@ func TestRejectedTransfer(t *testing.T) {
 	coreumSender := coreumChain.GenAccount()
 	gaiaRecipient := gaiaChain.GenAccount()
 
-	sendToGaiaCoin := coreumChain.NewCoin(sdk.NewInt(1000))
+	sendToGaiaCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
 	coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
 		Amount:   sendToGaiaCoin.Amount,

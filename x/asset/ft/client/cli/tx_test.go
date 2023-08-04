@@ -5,15 +5,15 @@ import (
 	"strings"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -44,7 +44,7 @@ func TestIssue(t *testing.T) {
 	}
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	initialAmount := sdk.NewInt(100)
+	initialAmount := sdkmath.NewInt(100)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 	requireT.Equal(types.BuildDenom(token.Subunit, testNetwork.Validators[0].Address), denom)
 }
@@ -65,41 +65,34 @@ func TestMintBurn(t *testing.T) {
 	}
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	initialAmount := sdk.NewInt(777)
+	initialAmount := sdkmath.NewInt(777)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 	issuer := testNetwork.Validators[0].Address
 
 	// mint new tokens
 	coinToMint := sdk.NewInt64Coin(denom, 100)
-	args := append([]string{coinToMint.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
+	args := append([]string{coinToMint.String()}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
+	requireT.NoError(err)
 
 	var balanceRsp banktypes.QueryAllBalancesResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balanceRsp))
-	requireT.Equal(sdk.NewInt(877).String(), balanceRsp.Balances.AmountOf(denom).String())
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String()}, &balanceRsp))
+	requireT.Equal(sdkmath.NewInt(877).String(), balanceRsp.Balances.AmountOf(denom).String())
 
 	var supplyRsp sdk.Coin
-	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetCmdQueryTotalSupply(), []string{issuer.String(), "--denom", denom, "--output", "json"})
-	requireT.NoError(err)
-	bs := buf.Bytes()
-	requireT.NoError(ctx.Codec.UnmarshalJSON(bs, &supplyRsp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetCmdQueryTotalSupply(), []string{"--denom", denom}, &supplyRsp))
 	requireT.Equal(sdk.NewInt64Coin(denom, 877).String(), supplyRsp.String())
 
 	// burn tokens
 	coinToMint = sdk.NewInt64Coin(denom, 200)
-	args = append([]string{coinToMint.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args))
-
-	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String(), "--output", "json"})
+	args = append([]string{coinToMint.String()}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxBurn(), args)
 	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balanceRsp))
-	requireT.Equal(sdk.NewInt(677).String(), balanceRsp.Balances.AmountOf(denom).String())
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, bankcli.GetCmdQueryTotalSupply(), []string{issuer.String(), "--denom", denom, "--output", "json"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &supplyRsp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetBalancesCmd(), []string{issuer.String()}, &balanceRsp))
+	requireT.Equal(sdkmath.NewInt(677).String(), balanceRsp.Balances.AmountOf(denom).String())
+
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, bankcli.GetCmdQueryTotalSupply(), []string{"--denom", denom}, &supplyRsp))
 	requireT.Equal(sdk.NewInt64Coin(denom, 677).String(), supplyRsp.String())
 }
 
@@ -118,27 +111,24 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 	}
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	initialAmount := sdk.NewInt(777)
+	initialAmount := sdkmath.NewInt(777)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	// freeze part of the token
 	coinToFreeze := sdk.NewInt64Coin(denom, 100)
-	args := append([]string{recipient.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
+	args := append([]string{recipient.String(), coinToFreeze.String()}, txValidator1Args(testNetwork)...)
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
+	requireT.NoError(err)
 
 	// query frozen balance
 	var respFrozen types.QueryFrozenBalanceResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom, "--output", "json"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respFrozen))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom}, &respFrozen))
 	requireT.Equal(coinToFreeze.String(), respFrozen.Balance.String())
 
 	// query balance
 	var respBalance types.QueryBalanceResponse
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBalance(), []string{recipient.String(), denom, "--output", "json"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respBalance))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBalance(), []string{recipient.String(), denom}, &respBalance))
 	requireT.Equal(coinToFreeze.Amount.String(), respBalance.Frozen.String())
 
 	// issue and freeze more to test pagination
@@ -147,30 +137,25 @@ func TestFreezeAndQueryFrozen(t *testing.T) {
 		token.Subunit = fmt.Sprintf("satoshi%d%s", i, uuid.NewString()[:4])
 		newDenom := issue(requireT, ctx, token, initialAmount, testNetwork)
 		coinToFreeze = sdk.NewInt64Coin(newDenom, 100)
-		args = append([]string{recipient.String(), coinToFreeze.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-		requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
+		args = append([]string{recipient.String(), coinToFreeze.String()}, txValidator1Args(testNetwork)...)
+		_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
+		requireT.NoError(err)
 	}
 
 	var balancesResp types.QueryFrozenBalancesResponse
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalances(), []string{recipient.String(), "--output", "json"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozenBalances(), []string{recipient.String()}, &balancesResp))
 	requireT.Len(balancesResp.Balances, 3)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalances(), []string{recipient.String(), "--output", "json", "--limit", "1"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozenBalances(), []string{recipient.String(), "--limit", "1"}, &balancesResp))
 	requireT.Len(balancesResp.Balances, 1)
 
 	// unfreeze part of the frozen token
 	unfreezeTokens := sdk.NewInt64Coin(denom, 75)
-	args = append([]string{recipient.String(), unfreezeTokens.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args))
-
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom, "--output", "json"})
+	args = append([]string{recipient.String(), unfreezeTokens.String()}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnfreeze(), args)
 	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respFrozen))
 
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozenBalance(), []string{recipient.String(), denom}, &respFrozen))
 	requireT.Equal(sdk.NewInt64Coin(denom, 25).String(), respFrozen.Balance.String())
 }
 
@@ -192,26 +177,24 @@ func TestGloballyFreezeUnfreeze(t *testing.T) {
 	}
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	initialAmount := sdk.NewInt(777)
+	initialAmount := sdkmath.NewInt(777)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
 	// globally freeze the token
-	args := append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyFreeze(), args))
+	args := append([]string{denom}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxGloballyFreeze(), args)
+	requireT.NoError(err)
 
 	var resp types.QueryTokenResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
 	requireT.True(resp.Token.GloballyFrozen)
 
 	// globally unfreeze the token
-	args = append([]string{denom, "--output", "json"}, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxGloballyUnfreeze(), args))
-
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryToken(), []string{denom, "--output", "json"})
+	args = append([]string{denom}, txValidator1Args(testNetwork)...)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxGloballyUnfreeze(), args)
 	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
 	requireT.False(resp.Token.GloballyFrozen)
 }
 
@@ -230,7 +213,7 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 	}
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	initialAmount := sdk.NewInt(777)
+	initialAmount := sdkmath.NewInt(777)
 	_ = issue(requireT, ctx, token, initialAmount, testNetwork)
 
 	recipient := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -242,33 +225,26 @@ func TestWhitelistAndQueryWhitelisted(t *testing.T) {
 		denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
 		coinToWhitelist := sdk.NewInt64Coin(denom, 100)
-		args := append([]string{recipient.String(), coinToWhitelist.String(), "--output", "json"}, txValidator1Args(testNetwork)...)
-		requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxSetWhitelistedLimit(), args))
+		args := append([]string{recipient.String(), coinToWhitelist.String()}, txValidator1Args(testNetwork)...)
+		_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxSetWhitelistedLimit(), args)
+		requireT.NoError(err)
 
 		// query whitelisted balance
 		var respWhitelisted types.QueryWhitelistedBalanceResponse
-		buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelistedBalance(), []string{recipient.String(), denom, "--output", "json"})
-		requireT.NoError(err)
-		requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respWhitelisted))
+		requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelistedBalance(), []string{recipient.String(), denom}, &respWhitelisted))
 		requireT.Equal(coinToWhitelist.String(), respWhitelisted.Balance.String())
 
 		// query balance
 		var respBalance types.QueryBalanceResponse
-		buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBalance(), []string{recipient.String(), denom, "--output", "json"})
-		requireT.NoError(err)
-		requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respBalance))
+		requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBalance(), []string{recipient.String(), denom}, &respBalance))
 		requireT.Equal(coinToWhitelist.Amount.String(), respBalance.Whitelisted.String())
 	}
 
 	var balancesResp types.QueryWhitelistedBalancesResponse
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelistedBalances(), []string{recipient.String(), "--output", "json"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelistedBalances(), []string{recipient.String()}, &balancesResp))
 	requireT.Len(balancesResp.Balances, 2)
 
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelistedBalances(), []string{recipient.String(), "--output", "json", "--limit", "1"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &balancesResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelistedBalances(), []string{recipient.String(), "--limit", "1"}, &balancesResp))
 	requireT.Len(balancesResp.Balances, 1)
 }
 
@@ -291,36 +267,34 @@ func TestUpgradeV1(t *testing.T) {
 	}
 
 	ctx := testNetwork.Validators[0].ClientCtx
-	initialAmount := sdk.NewInt(777)
+	initialAmount := sdkmath.NewInt(777)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
 	// --ibc-enabled is missing
 	args := append([]string{
 		denom,
-		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
-	requireT.Error(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args))
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpgradeV1(), args)
+	requireT.Error(err)
 
 	// upgrade the token with --ibc-enabled=true
 	args = append([]string{
 		denom,
 		fmt.Sprintf("--%s=true", cli.IBCEnabledFlag),
-		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
-	err = coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpgradeV1(), args)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// upgrade the token with --ibc-enabled=false
 	args = append([]string{
 		denom,
 		fmt.Sprintf("--%s=false", cli.IBCEnabledFlag),
-		"--output", "json",
 	}, txValidator1Args(testNetwork)...)
-	err = coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUpgradeV1(), args)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUpgradeV1(), args)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
-func issue(requireT *require.Assertions, ctx client.Context, token types.Token, initialAmount sdk.Int, testNetwork *network.Network) string {
+func issue(requireT *require.Assertions, ctx client.Context, token types.Token, initialAmount sdkmath.Int, testNetwork *network.Network) string {
 	features := make([]string, 0, len(token.Features))
 	for _, feature := range token.Features {
 		features = append(features, feature.String())
@@ -341,11 +315,9 @@ func issue(requireT *require.Assertions, ctx client.Context, token types.Token, 
 	}
 
 	args = append(args, txValidator1Args(testNetwork)...)
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssue(), args)
+	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssue(), args)
 	requireT.NoError(err)
 
-	var res sdk.TxResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
 	requireT.Equal(uint32(0), res.Code, "can't submit Issue tx for query", res)
 
@@ -366,7 +338,6 @@ func issue(requireT *require.Assertions, ctx client.Context, token types.Token, 
 func txValidator1Args(testNetwork *network.Network) []string {
 	return []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, testNetwork.Validators[0].Address.String()),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(testNetwork.Config.BondDenom, 1000000)).String()),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	}

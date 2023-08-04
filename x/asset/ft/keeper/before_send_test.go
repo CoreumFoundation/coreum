@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
@@ -25,9 +25,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-// FIMXE add task to fix unit tests + simapp
-
-//nolint:funlen // there are too many tests cases
 func TestCalculateRateShares(t *testing.T) {
 	genAccount := func() string {
 		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
@@ -254,69 +251,69 @@ func TestCalculateRateShares(t *testing.T) {
 		{
 			name: "one_sender_ibc",
 			rate: "0.5",
-			senders: map[string]sdk.Int{
-				accounts[0]: sdk.NewInt(10),
+			senders: map[string]sdkmath.Int{
+				accounts[0]: sdkmath.NewInt(10),
 			},
-			receivers: map[string]sdk.Int{
-				dummyAddress: sdk.NewInt(10),
+			receivers: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
 			},
 			ibcDirection: wibctransfertypes.PurposeOut,
-			shares: map[string]sdk.Int{
-				accounts[0]: sdk.NewInt(5),
+			shares: map[string]sdkmath.Int{
+				accounts[0]: sdkmath.NewInt(5),
 			},
 		},
 		{
 			name: "issuer_sender_ibc",
 			rate: "0.5",
-			senders: map[string]sdk.Int{
-				issuer: sdk.NewInt(10),
+			senders: map[string]sdkmath.Int{
+				issuer: sdkmath.NewInt(10),
 			},
-			receivers: map[string]sdk.Int{
-				dummyAddress: sdk.NewInt(10),
+			receivers: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
 			},
 			ibcDirection: wibctransfertypes.PurposeOut,
-			shares:       map[string]sdk.Int{},
+			shares:       map[string]sdkmath.Int{},
 		},
 		{
 			name: "issuer_sender_two_senders_ibc",
 			rate: "0.5",
-			senders: map[string]sdk.Int{
-				issuer:      sdk.NewInt(10),
-				accounts[0]: sdk.NewInt(10),
-				accounts[1]: sdk.NewInt(10),
+			senders: map[string]sdkmath.Int{
+				issuer:      sdkmath.NewInt(10),
+				accounts[0]: sdkmath.NewInt(10),
+				accounts[1]: sdkmath.NewInt(10),
 			},
-			receivers: map[string]sdk.Int{
-				dummyAddress: sdk.NewInt(20),
+			receivers: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(20),
 			},
 			ibcDirection: wibctransfertypes.PurposeOut,
-			shares: map[string]sdk.Int{
-				accounts[0]: sdk.NewInt(5),
-				accounts[1]: sdk.NewInt(5),
+			shares: map[string]sdkmath.Int{
+				accounts[0]: sdkmath.NewInt(5),
+				accounts[1]: sdkmath.NewInt(5),
 			},
 		},
 		{
 			name: "one_receiver_ibc",
 			rate: "0.5",
-			senders: map[string]sdk.Int{
-				dummyAddress: sdk.NewInt(10),
+			senders: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
 			},
-			receivers: map[string]sdk.Int{
-				accounts[0]: sdk.NewInt(10),
+			receivers: map[string]sdkmath.Int{
+				accounts[0]: sdkmath.NewInt(10),
 			},
 			ibcDirection: wibctransfertypes.PurposeIn,
-			shares:       map[string]sdk.Int{},
+			shares:       map[string]sdkmath.Int{},
 		},
 		{
 			name: "ibc_escrow_sender_issuer_receiver",
 			rate: "0.5",
-			senders: map[string]sdk.Int{
-				dummyAddress: sdk.NewInt(10),
+			senders: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
 			},
-			receivers: map[string]sdk.Int{
-				issuer: sdk.NewInt(10),
+			receivers: map[string]sdkmath.Int{
+				issuer: sdkmath.NewInt(10),
 			},
 			ibcDirection: wibctransfertypes.PurposeIn,
-			shares:       map[string]sdk.Int{},
+			shares:       map[string]sdkmath.Int{},
 		},
 	}
 

@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/testutil/network"
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
@@ -140,7 +140,7 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 		tc := tc
 		s.Run(tc.name, func() {
 			args = append(args, tc.args...)
-			err := ExecSend(val, args)
+			_, err := ExecSend(val, args)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {

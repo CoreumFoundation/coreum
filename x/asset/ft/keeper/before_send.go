@@ -35,7 +35,7 @@ func (g groupedByDenomAccountOperations) add(address string, coins sdk.Coins) {
 		}
 		oldAmount, ok := accountBalances[address]
 		if !ok {
-			oldAmount = sdk.ZeroInt()
+			oldAmount = sdkmath.ZeroInt()
 		}
 
 		oldAmount = oldAmount.Add(coin.Amount)
@@ -100,7 +100,7 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 }
 
 func nonIssuerSum(ops accountOperationMap, issuer string) sdkmath.Int {
-	sum := sdk.ZeroInt()
+	sum := sdkmath.ZeroInt()
 	for account, amount := range ops {
 		if account != issuer {
 			sum = sum.Add(amount)

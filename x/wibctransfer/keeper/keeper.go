@@ -4,11 +4,13 @@ import (
 	"context"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	"github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
 )
@@ -21,14 +23,14 @@ type TransferKeeperWrapper struct {
 // NewTransferKeeperWrapper returns a new TransferKeeperWrapper instance.
 func NewTransferKeeperWrapper(
 	cdc codec.BinaryCodec,
-	key sdk.StoreKey,
+	key storetypes.StoreKey,
 	paramSpace paramtypes.Subspace,
-	ics4Wrapper ibctransfertypes.ICS4Wrapper,
+	ics4Wrapper porttypes.ICS4Wrapper,
 	channelKeeper ibctransfertypes.ChannelKeeper,
 	portKeeper ibctransfertypes.PortKeeper,
 	authKeeper ibctransfertypes.AccountKeeper,
 	bankKeeper ibctransfertypes.BankKeeper,
-	scopedKeeper capabilitykeeper.ScopedKeeper,
+	scopedKeeper exported.ScopedKeeper,
 ) TransferKeeperWrapper {
 	return TransferKeeperWrapper{
 		Keeper: ibctransferkeeper.NewKeeper(cdc, key, paramSpace, ics4Wrapper, channelKeeper, portKeeper, authKeeper,

@@ -1,20 +1,21 @@
 package cosmoscmd
 
-// The command init.go copied from https://github.com/cosmos/cosmos-sdk/blob/v0.47.1/x/genutil/client/cli/init.go.
+// The command init.go copied from https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/x/genutil/client/cli/init.go.
 
 import (
 	"bufio"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
-	cfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/cli"
+	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/cosmos/go-bip39"
@@ -25,7 +26,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 )
 
-//nolint:tagliatelle // default structure
+//nolint:tagliatelle,tagalign // default structure
 type printInfo struct {
 	Moniker    string          `json:"moniker" yaml:"moniker"`
 	ChainID    string          `json:"chain_id" yaml:"chain_id"`
@@ -52,19 +53,24 @@ func displayInfo(info printInfo) error {
 
 	_, err = fmt.Fprintf(os.Stderr, "%s\n", sdk.MustSortJSON(out))
 
-// InitCmd returns the init cobra command.
-func InitCmd(network config.NetworkConfig, defaultNodeHome string) *cobra.Command {
+	return err
+}
+
+// InitCmd returns a command that initializes all files needed for Tendermint
+// and the respective application.
+func InitCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [moniker]",
 		Short: "Initialize private validator, p2p, genesis, and application configuration files",
 		Long:  `Initialize validators's and node's configuration files.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			network := app.ChosenNetwork
+
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
-			serverCtx := server.GetServerContextFromCmd(cmd)
-			config := app.ChosenNetwork.NodeConfig().TendermintNodeConfig(serverCtx.Config)
-			config.SetRoot(clientCtx.HomeDir)
+			cfg := server.GetServerContextFromCmd(cmd).Config
+			cfg.SetRoot(clientCtx.HomeDir)
 
 			chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
 			switch {
@@ -77,7 +83,10 @@ func InitCmd(network config.NetworkConfig, defaultNodeHome string) *cobra.Comman
 
 			// Get bip39 mnemonic
 			var mnemonic string
-			isRecover, _ := cmd.Flags().GetBool(genutilcli.FlagRecover)
+			isRecover, err := cmd.Flags().GetBool(genutilcli.FlagRecover)
+			if err != nil {
+				return errors.Wrapf(err, "got error parsing recover flag")
+			}
 			if isRecover {
 				inBuf := bufio.NewReader(cmd.InOrStdin())
 				value, err := input.GetString("Enter your bip39 mnemonic", inBuf)
@@ -92,7 +101,7 @@ func InitCmd(network config.NetworkConfig, defaultNodeHome string) *cobra.Comman
 			}
 
 			genFile := cfg.GenesisFile()
-			overwrite, _ := cmd.Flags().GetBool(FlagOverwrite)
+			overwrite, _ := cmd.Flags().GetBool(genutilcli.FlagOverwrite)
 
 			if !overwrite && tmos.FileExists(genFile) {
 				return errors.Errorf("genesis.json file already exists: %v", genFile)
@@ -115,25 +124,19 @@ func InitCmd(network config.NetworkConfig, defaultNodeHome string) *cobra.Comman
 			network.NodeConfig.Name = args[0]
 			cfg = network.NodeConfig.TendermintNodeConfig(cfg)
 
-			// use os.Stat to check if the file exists
-			_, err = os.Stat(genFile)
-			if !overwrite && !os.IsNotExist(err) {
-				return fmt.Errorf("genesis.json file already exists: %v", genFile)
-			}
-
-			if err = app.ChosenNetwork.SaveGenesis(clientCtx.HomeDir); err != nil {
-				return err
-			}
-
-			genesisBytes, err := app.ChosenNetwork.EncodeGenesis()
+			nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(cfg, mnemonic)
 			if err != nil {
 				return err
 			}
 
-			toPrint := newPrintInfo(config.Moniker, chainID, nodeID, "", genesisBytes)
+			if err := config.WriteTendermintConfigToFile(
+				filepath.Join(cfg.RootDir, config.DefaultNodeConfigPath),
+				cfg,
+			); err != nil {
+				return err
+			}
 
-			cfg.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
-			return displayInfo(toPrint)
+			return displayInfo(newPrintInfo(cfg.Moniker, chainID, nodeID, "", genDocBytes))
 		},
 	}
 

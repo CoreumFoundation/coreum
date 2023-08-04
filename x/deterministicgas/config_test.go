@@ -18,7 +18,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
 )
 
-// To access private variable from github.com/gogo/protobuf we link it to local variable.
+// To access private variable from github.com/cosmos/gogoproto we link it to local variable.
 // This is needed to iterate through all registered protobuf types.
 //
 //go:linkname revProtoTypes github.com/cosmos/gogoproto/proto.revProtoTypes
@@ -38,8 +38,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/ibc.applications.fee.v1.MsgPayPacketFeeAsync",
 
 		// Internal cosmos protos:
-		"/testdata.TestMsg",
-		"/testdata.MsgCreateDog",
+		"/testpb.TestMsg",
+		"/testpb.MsgCreateDog",
 		"/cosmos.tx.v1beta1.Tx",
 	}
 
@@ -111,6 +111,12 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 		"/cosmwasm.wasm.v1.MsgPinCodes",
 		"/cosmwasm.wasm.v1.MsgSudoContract",
 		"/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract",
+		"/cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses",
+		"/cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses",
+
+		// ibc/applications/interchain_accounts
+		"/ibc.applications.interchain_accounts.controller.v1.MsgRegisterInterchainAccount",
+		"/ibc.applications.interchain_accounts.controller.v1.MsgSendTx",
 
 		// ibc/core/client
 		"/ibc.core.client.v1.MsgCreateClient",
@@ -172,8 +178,8 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 34, len(nondeterministicMsgs))
-	assert.Equal(t, 42, len(deterministicMsgs))
+	assert.Equal(t, 56, len(nondeterministicMsgs))
+	assert.Equal(t, 44, len(deterministicMsgs))
 
 	for _, sdkMsg := range deterministicMsgs {
 		sdkMsg := sdkMsg

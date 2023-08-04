@@ -8,8 +8,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
@@ -25,6 +23,10 @@ var (
 	// GenesisV2Template is the genesis template used by v2 version of the chain.
 	//go:embed genesis/genesis.v2.tmpl.json
 	GenesisV2Template string
+
+	// GenesisV3Template is the genesis template used by v3 version of the chain.
+	//go:embed genesis/genesis.v3.tmpl.json
+	GenesisV3Template string
 
 	//go:embed genesis/gentx/coreum-devnet-1
 	devGenTxsFS embed.FS
@@ -58,7 +60,7 @@ func init() {
 		},
 		constant.ChainIDDev: {
 			Provider: DynamicConfigProvider{
-				GenesisTemplate: GenesisV2Template,
+				GenesisTemplate: GenesisV3Template,
 				ChainID:         constant.ChainIDDev,
 				GenesisTime:     time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
 				Denom:           constant.DenomDev,
@@ -71,7 +73,7 @@ func init() {
 				},
 				CustomParamsConfig: CustomParamsConfig{
 					Staking: CustomParamsStakingConfig{
-						MinSelfDelegation: sdk.NewInt(20_000_000_000), // 20k core
+						MinSelfDelegation: sdkmath.NewInt(20_000_000_000), // 20k core
 					},
 				},
 				FundedAccounts: []FundedAccount{

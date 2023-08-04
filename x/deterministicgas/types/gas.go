@@ -8,7 +8,7 @@ import (
 
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/grpc"
+	"github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"

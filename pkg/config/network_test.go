@@ -9,7 +9,6 @@ import (
 	"testing"
 	"unsafe"
 
-	sdkmath "cosmossdk.io/math"
 	tmtypes "github.com/cometbft/cometbft/types"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"

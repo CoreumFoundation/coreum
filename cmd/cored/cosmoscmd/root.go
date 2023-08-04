@@ -1,5 +1,5 @@
 // Package cosmoscmd contains the root of the commands.
-// The commands root.go copied from https://github.com/cosmos/cosmos-sdk/blob/v0.47.1/simapp/simd/cmd/root.go.
+// The commands root.go copied from https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/simapp/simd/cmd/root.go.
 // under APACHE2.0 LICENSE
 package cosmoscmd
 
@@ -11,6 +11,7 @@ import (
 
 	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/log"
@@ -21,6 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/snapshot"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -73,7 +75,7 @@ func NewRootCmd() *cobra.Command {
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
-			customTMConfig := app.ChosenNetwork.NodeConfig().TendermintNodeConfig(tmcfg.DefaultConfig())
+			customTMConfig := app.ChosenNetwork.NodeConfig.TendermintNodeConfig(initTendermintConfig())
 
 			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
 		},
@@ -82,6 +84,18 @@ func NewRootCmd() *cobra.Command {
 	initRootCmd(rootCmd, encodingConfig)
 
 	return rootCmd
+}
+
+// initTendermintConfig helps to override default Tendermint Config values.
+// return tmcfg.DefaultConfig if no custom configuration is required for the application.
+func initTendermintConfig() *tmcfg.Config {
+	cfg := tmcfg.DefaultConfig()
+
+	// these values put a higher strain on node memory
+	// cfg.P2P.MaxNumInboundPeers = 100
+	// cfg.P2P.MaxNumOutboundPeers = 40
+
+	return cfg
 }
 
 // initAppConfig helps to override default appConfig template and configs.
@@ -118,7 +132,7 @@ func initAppConfig() (string, interface{}) {
 		WASM WASMConfig
 	}
 
-	defaultWasmConfig := wasm.DefaultWasmConfig()
+	defaultWasmConfig := wasmtypes.DefaultWasmConfig()
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
 		WASM: WASMConfig{
@@ -144,10 +158,11 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig config.EncodingConfig) {
 	cfg.Seal()
 
 	rootCmd.AddCommand(
-		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		InitCmd(app.DefaultNodeHome),
 		debug.Cmd(),
 		clientconfig.Cmd(),
-		pruning.PruningCmd(newApp),
+		pruning.Cmd(newApp, app.DefaultNodeHome),
+		snapshot.Cmd(newApp),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)

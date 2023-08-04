@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -54,7 +54,7 @@ func TestMsgIssue_ValidateBasic(t *testing.T) {
 				msg.Issuer = "invalid"
 				return msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid missing symbol",

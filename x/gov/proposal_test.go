@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
 )
 
-// To access private variable from github.com/gogo/protobuf we link it to local variable.
+// To access private variable from github.com/cosmos/gogoproto we link it to local variable.
 // This is needed to iterate through all registered protobuf types.
 //
 //go:linkname revProtoTypes github.com/cosmos/gogoproto/proto.revProtoTypes

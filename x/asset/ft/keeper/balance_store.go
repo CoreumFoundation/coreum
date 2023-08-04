@@ -2,6 +2,7 @@ package keeper
 
 import (
 	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,7 +26,7 @@ type balanceStore struct {
 }
 
 func (s balanceStore) Balance(denom string) sdk.Coin {
-	balance := sdk.NewCoin(denom, sdk.ZeroInt())
+	balance := sdk.NewCoin(denom, sdkmath.ZeroInt())
 	if bz := s.store.Get([]byte(denom)); bz != nil {
 		s.cdc.MustUnmarshal(bz, &balance)
 	}

@@ -34,7 +34,7 @@ func TestCmdTxIssueClass(t *testing.T) {
 		fmt.Sprintf("--%s=%s", cli.FeaturesFlag, types.ClassFeature_burning.String()),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
-	res, err := testutilcli.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
+	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
 	requireT.NotEmpty(res.TxHash)
@@ -77,21 +77,23 @@ func TestCmdFreeze(t *testing.T) {
 	// freeze
 	args := []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
+	requireT.NoError(err)
 
 	// query frozen
 	var frozenResp types.QueryFrozenResponse
 	args = []string{classID, nftID}
-	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
 
 	// unfreeze
 	args = []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args))
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnfreeze(), args)
+	requireT.NoError(err)
 
 	// query frozen
 	args = []string{classID, nftID}
-	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
 	requireT.False(frozenResp.Frozen)
 }
 
@@ -132,28 +134,30 @@ func TestCmdWhitelist(t *testing.T) {
 	// whitelist
 	args := []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxWhitelist(), args))
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxWhitelist(), args)
+	requireT.NoError(err)
 
 	// query whitelisted
 	var whitelistedResp types.QueryWhitelistedResponse
 	args = []string{classID, nftID, account.String()}
-	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
 	requireT.True(whitelistedResp.Whitelisted)
 
 	// query with pagination
 	var resPage types.QueryWhitelistedAccountsForNFTResponse
 	args = []string{classID, nftID}
-	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryWhitelistedAccounts(), args, &resPage))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelistedAccounts(), args, &resPage))
 	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
 
 	// unwhitelist
 	args = []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnwhitelist(), args))
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnwhitelist(), args)
+	requireT.NoError(err)
 
 	// query whitelisted
 	args = []string{classID, nftID, account.String()}
-	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
 	requireT.False(whitelistedResp.Whitelisted)
 }
 

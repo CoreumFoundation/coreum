@@ -18,7 +18,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/testutil/event"
 )
 
-const submitProposalGas = 200_000
+const submitProposalGas = 400_000
 
 // Governance keep the test chain predefined account for the governance operations.
 type Governance struct {

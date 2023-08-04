@@ -11,11 +11,12 @@ import (
 	"time"
 	"unsafe"
 
+	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -79,9 +80,9 @@ func TestIBCTransferFromSmartContract(t *testing.T) {
 
 	coreumChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
 		Address: coreumAdmin,
-		Amount:  coreumChain.NewCoin(sdk.NewInt(2000000)),
+		Amount:  coreumChain.NewCoin(sdkmath.NewInt(2000000)),
 	})
-	sendToOsmosisCoin := coreumChain.NewCoin(sdk.NewInt(1000))
+	sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
 
 	coreumBankClient := banktypes.NewQueryClient(coreumChain.ClientContext)
 
@@ -178,12 +179,12 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 
 	coreumChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
 		Address: coreumCaller,
-		Amount:  coreumChain.NewCoin(sdk.NewInt(2000000)),
+		Amount:  coreumChain.NewCoin(sdkmath.NewInt(2000000)),
 	})
 
 	osmosisChain.Faucet.FundAccounts(ctx, t, integrationtests.FundedAccount{
 		Address: osmosisCaller,
-		Amount:  osmosisChain.NewCoin(sdk.NewInt(2000000)),
+		Amount:  osmosisChain.NewCoin(sdkmath.NewInt(2000000)),
 	})
 
 	initialPayload, err := json.Marshal(struct{}{})

@@ -1,10 +1,11 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
@@ -159,7 +160,7 @@ func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
 	shortEMABlockLength := k.GetParams(ctx).Model.ShortEmaBlockLength
 	if after > shortEMABlockLength {
-		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "after blocks must be lower than or equal to %d", shortEMABlockLength)
+		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(cosmoserrors.ErrInvalidRequest, "after blocks must be lower than or equal to %d", shortEMABlockLength)
 	}
 
 	// if no after value is provided shortEMABlockLength is taken as default value

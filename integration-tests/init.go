@@ -14,14 +14,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	protobufgrpc "github.com/gogo/protobuf/grpc"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum/v2/app"
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
@@ -109,7 +107,7 @@ func init() {
 
 	// ********** Coreum **********
 
-	coreumGRPCClient, err := grpc.Dial(coreumGRPCAddress, grpc.WithInsecure())
+	coreumGRPCClient, err := grpc.Dial(coreumGRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
@@ -128,14 +126,14 @@ func init() {
 
 	config.SetSDKConfig(coreumSettings.AddressPrefix, constant.CoinType)
 
-	coreumRPClient, err := sdkclient.NewClientFromNode(coreumRPCAddress)
+	coreumRPCClient, err := sdkclient.NewClientFromNode(coreumRPCAddress)
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
 
 	chains.Coreum = NewCoreumChain(NewChain(
 		coreumGRPCClient,
-		coreumRPClient,
+		coreumRPCClient,
 		coreumSettings,
 		coreumFundingMnemonic), coreumStakerMnemonics)
 }
@@ -158,7 +156,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		defer queryCtxCancel()
 		// ********** Gaia **********
 
-		gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithInsecure())
+		gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			panic(errors.WithStack(err))
 		}
@@ -182,7 +180,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 
 		// ********** Osmosis **********
 
-		osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithInsecure())
+		osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			panic(errors.WithStack(err))
 		}
@@ -208,7 +206,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 	return testCtx, chains
 }
 
-func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn) ChainSettings {
+func queryCommonSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainSettings {
 	clientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
 		WithGRPCClient(grpcClient)
 

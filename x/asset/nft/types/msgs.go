@@ -3,12 +3,12 @@ package types
 import (
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/samber/lo"
 )
 
@@ -21,7 +21,6 @@ const (
 	TypeMsgUnfreeze            = "unfreeze"
 	TypeMsgAddToWhitelist      = "whitelist"
 	TypeMsgRemoveFromWhitelist = "remove-from-whitelist"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (

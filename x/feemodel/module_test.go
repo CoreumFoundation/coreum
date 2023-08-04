@@ -59,7 +59,7 @@ func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 }
 
 func (k *keeperMock) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
-	return sdk.NewDecCoin("", sdk.ZeroInt()), sdk.NewDecCoin("", sdk.ZeroInt()), nil
+	return sdk.NewDecCoin("", sdkmath.ZeroInt()), sdk.NewDecCoin("", sdkmath.ZeroInt()), nil
 }
 
 func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Codec) {

@@ -5,12 +5,12 @@ import (
 	"math/rand"
 	"strings"
 
-	simappparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdktypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
@@ -32,7 +32,7 @@ var TypeMsgSend = sdk.MsgTypeURL(&nft.MsgSend{})
 
 // WeightedOperations returns all the operations from the module with their respective weights.
 func WeightedOperations(
-	registry cdctypes.InterfaceRegistry,
+	registry sdktypes.InterfaceRegistry,
 	appParams simtypes.AppParams,
 	cdc codec.JSONCodec,
 	ak nft.AccountKeeper,
@@ -96,7 +96,9 @@ func SimulateMsgSend(
 			Receiver: receiver.Address.String(),
 		}
 
-		txCfg := simappparams.MakeTestEncodingConfig().TxConfig
+		interfaceRegistry := sdktypes.NewInterfaceRegistry()
+		marshaler := codec.NewProtoCodec(interfaceRegistry)
+		txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
 		tx, err := GenSignedMockTx(
 			r,
 			txCfg,

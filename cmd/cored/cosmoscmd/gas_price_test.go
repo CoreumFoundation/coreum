@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	testutilcli "github.com/CoreumFoundation/coreum/testutil/cli"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v2/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v2/testutil/network"
 )
 
@@ -77,7 +77,7 @@ func TestAutoGasPrices(t *testing.T) {
 			bankTx := bankcli.NewTxCmd()
 			addQueryGasPriceToAllLeafs(bankTx)
 
-			res, err := testutilcli.ExecTxCmd(ctx, testNetwork, bankTx, args)
+			res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, bankTx, args)
 			if tc.expectError {
 				requireT.Error(err)
 				return

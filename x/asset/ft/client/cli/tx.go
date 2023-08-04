@@ -90,7 +90,7 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 			}
 
 			// if the initial amount wasn't provided the amount is zero
-			initialAmount := sdk.ZeroInt()
+			initialAmount := sdkmath.ZeroInt()
 			if args[3] != "" {
 				var ok bool
 				initialAmount, ok = sdkmath.NewIntFromString(args[3])

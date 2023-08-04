@@ -3,12 +3,12 @@ package types
 import (
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/samber/lo"
 )
 
@@ -396,7 +396,7 @@ func (m MsgSetWhitelistedLimit) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgUpgradeTokenV1) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	_, issuer, err := DeconstructDenom(m.Denom)
@@ -405,7 +405,7 @@ func (m MsgUpgradeTokenV1) ValidateBasic() error {
 	}
 
 	if issuer.String() != m.Sender {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer can upgrade the denom")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only issuer can upgrade the denom")
 	}
 
 	return nil

@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	testutilcli "github.com/CoreumFoundation/coreum/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v2/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v2/testutil/network"
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/client/cli"
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
@@ -40,7 +40,7 @@ func TestQueryTokens(t *testing.T) {
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
 	var resp types.QueryTokensResponse
-	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryTokens(), []string{issuer.String(), "--limit", "1"}, &resp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryTokens(), []string{issuer.String(), "--limit", "1"}, &resp))
 
 	expectedToken := token
 	expectedToken.Denom = denom
@@ -66,12 +66,11 @@ func TestQueryToken(t *testing.T) {
 		SendCommissionRate: sdk.MustNewDecFromStr("0.2"),
 	}
 	ctx := testNetwork.Validators[0].ClientCtx
-
 	initialAmount := sdkmath.NewInt(100)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
 	var resp types.QueryTokenResponse
-	requireT.NoError(testutilcli.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryToken(), []string{denom}, &resp))
 
 	expectedToken := token
 	expectedToken.Denom = denom
@@ -81,9 +80,7 @@ func TestQueryToken(t *testing.T) {
 
 	// query balance
 	var respBalance types.QueryBalanceResponse
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBalance(), []string{expectedToken.Issuer, denom, "--output", "json"})
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respBalance))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBalance(), []string{expectedToken.Issuer, denom}, &respBalance))
 	requireT.Equal(initialAmount.String(), respBalance.Balance.String())
 }
 
@@ -101,13 +98,11 @@ func TestCmdTokenUpgradeStatuses(t *testing.T) {
 	}
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	initialAmount := sdk.NewInt(100)
+	initialAmount := sdkmath.NewInt(100)
 	denom := issue(requireT, ctx, token, initialAmount, testNetwork)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTokenUpgradeStatuses(), []string{denom, "--output", "json"})
 	var statusesRes types.QueryTokenUpgradeStatusesResponse
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &statusesRes))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdTokenUpgradeStatuses(), []string{denom}, &statusesRes))
 	// we can't check non-empty values
 	requireT.Nil(statusesRes.Statuses.V1)
 }
@@ -119,12 +114,8 @@ func TestQueryParams(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryParams(), []string{"--output", "json"})
-	requireT.NoError(err)
-
 	var resp types.QueryParamsResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
-
-	expectedIssueFee := sdk.Coin{Denom: constant.DenomDev, Amount: sdk.NewInt(10_000_000)}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryParams(), []string{}, &resp))
+	expectedIssueFee := sdk.Coin{Denom: constant.DenomDev, Amount: sdkmath.NewInt(10_000_000)}
 	requireT.Equal(expectedIssueFee, resp.Params.IssueFee)
 }

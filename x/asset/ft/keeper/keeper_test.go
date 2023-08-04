@@ -303,7 +303,7 @@ func TestKeeper_Issue_WithZeroIssueFee(t *testing.T) {
 	ftKeeper := testApp.AssetFTKeeper
 
 	ftParams := types.DefaultParams()
-	ftParams.IssueFee = sdk.NewCoin(constant.DenomDev, sdk.ZeroInt())
+	ftParams.IssueFee = sdk.NewCoin(constant.DenomDev, sdkmath.ZeroInt())
 	ftKeeper.SetParams(ctx, ftParams)
 
 	addr := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -1422,7 +1422,7 @@ func TestKeeper_IBC(t *testing.T) {
 		Subunit:       "def",
 		Precision:     1,
 		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(666),
+		InitialAmount: sdkmath.NewInt(666),
 	}
 
 	denomWithoutIBC, err := ftKeeper.Issue(ctx, settingsWithoutIBC)
@@ -1434,7 +1434,7 @@ func TestKeeper_IBC(t *testing.T) {
 		Subunit:       "abc",
 		Precision:     1,
 		Description:   "ABC Desc",
-		InitialAmount: sdk.NewInt(666),
+		InitialAmount: sdkmath.NewInt(666),
 		Features:      []types.Feature{types.Feature_ibc},
 	}
 
@@ -1450,16 +1450,16 @@ func TestKeeper_IBC(t *testing.T) {
 		ctx,
 		issuer,
 		recipient,
-		sdk.NewCoins(sdk.NewCoin(denomWithoutIBC, sdk.NewInt(100))),
+		sdk.NewCoins(sdk.NewCoin(denomWithoutIBC, sdkmath.NewInt(100))),
 	)
-	assertT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	assertT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// transferring denom with enabled IBC should succeed
 	err = bankKeeper.SendCoins(
 		ctx,
 		issuer,
 		recipient,
-		sdk.NewCoins(sdk.NewCoin(denomWithIBC, sdk.NewInt(100))),
+		sdk.NewCoins(sdk.NewCoin(denomWithIBC, sdkmath.NewInt(100))),
 	)
 	assertT.NoError(err)
 }

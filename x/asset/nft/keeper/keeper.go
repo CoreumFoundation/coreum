@@ -11,7 +11,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/store"
@@ -801,7 +801,7 @@ func (k Keeper) addToWhitelistOrRemoveFromWhitelist(ctx sdk.Context, classID, nf
 	}
 
 	if classDefinition.Issuer == account.String() {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "setting whitelisting for the nft class issuer is forbidden")
 	}
 
 	if err := k.SetWhitelisting(ctx, classID, nftID, account, setWhitelisted); err != nil {

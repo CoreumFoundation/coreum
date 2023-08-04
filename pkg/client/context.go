@@ -9,34 +9,20 @@ package client
 import (
 	"context"
 	"io"
-	"reflect"
-	"strconv"
 	"time"
 
-	sdkerrors "cosmossdk.io/errors"
-	abci "github.com/cometbft/cometbft/abci/types"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	gogoproto "github.com/cosmos/gogoproto/proto"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/encoding"
-	"google.golang.org/grpc/encoding/proto"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 )
-
-var protoCodec = encoding.GetCodec(proto.Name)
 
 // ContextConfig stores context config.
 type ContextConfig struct {
@@ -96,11 +82,6 @@ type Context struct {
 	config    ContextConfig
 	clientCtx client.Context
 	awaitTx   bool
-}
-
-// SDKContext returns original sdk client context required by some functions.
-func (c Context) SDKContext() client.Context {
-	return c.clientCtx
 }
 
 // ChainID returns chain ID.
@@ -178,19 +159,6 @@ func (c Context) WithFromAddress(addr sdk.AccAddress) Context {
 func (c Context) WithFeeGranterAddress(addr sdk.AccAddress) Context {
 	c.clientCtx = c.clientCtx.WithFeeGranterAddress(addr)
 	return c
-}
-
-// NewStream implements the grpc ClientConn.NewStream method.
-func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	if c.RPCClient() != nil {
-		return nil, errors.New("streaming rpc not supported")
-	}
-
-	if c.GRPCClient() != nil {
-		return c.clientCtx.GRPCClient.NewStream(ctx, desc, method, opts...)
-	}
-
-	return nil, errors.New("neither RPC nor GRPC client is set")
 }
 
 // FeeGranterAddress returns the fee granter address from the context.
@@ -396,115 +364,12 @@ func (c Context) PrintProto(toPrint gogoproto.Message) error {
 	return c.clientCtx.PrintProto(toPrint)
 }
 
+// NewStream implements the grpc ClientConn.NewStream method.
+func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	return c.clientCtx.NewStream(ctx, desc, method, opts...)
+}
+
 // Invoke invokes GRPC method.
 func (c Context) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
-	if c.GRPCClient() != nil {
-		return c.GRPCClient().Invoke(ctx, method, req, reply, opts...)
-	}
-
-	if c.RPCClient() != nil {
-		return c.invokeRPC(ctx, method, req, reply, opts)
-	}
-
-	return errors.New("neither RPC nor GRPC client is set")
-}
-
-func (c Context) invokeRPC(ctx context.Context, method string, req, reply interface{}, opts []grpc.CallOption) error {
-	if reflect.ValueOf(req).IsNil() {
-		return sdkerrors.Wrap(cosmoserrors.ErrInvalidRequest, "request cannot be nil")
-	}
-
-	reqBz, err := protoCodec.Marshal(req)
-	if err != nil {
-		return err
-	}
-
-	// parse height header
-	md, _ := metadata.FromOutgoingContext(ctx)
-	height := c.clientCtx.Height
-	if heights := md.Get(grpctypes.GRPCBlockHeightHeader); len(heights) > 0 {
-		var err error
-		height, err = strconv.ParseInt(heights[0], 10, 64)
-		if err != nil {
-			return err
-		}
-		if height < 0 {
-			return sdkerrors.Wrapf(
-				cosmoserrors.ErrInvalidRequest,
-				"client.Context.Invoke: height (%d) from %q must be >= 0", height, grpctypes.GRPCBlockHeightHeader)
-		}
-	}
-
-	abciReq := abci.RequestQuery{
-		Path:   method,
-		Data:   reqBz,
-		Height: height,
-	}
-
-	res, err := c.queryABCI(ctx, abciReq)
-	if err != nil {
-		return err
-	}
-
-	err = protoCodec.Unmarshal(res.Value, reply)
-	if err != nil {
-		return err
-	}
-
-	// Create header metadata. For now the headers contain:
-	// - block height
-	// We then parse all the call options, if the call option is a
-	// HeaderCallOption, then we manually set the value of that header to the
-	// metadata.
-	md = metadata.Pairs(grpctypes.GRPCBlockHeightHeader, strconv.FormatInt(res.Height, 10))
-	for _, callOpt := range opts {
-		header, ok := callOpt.(grpc.HeaderCallOption)
-		if !ok {
-			continue
-		}
-
-		*header.HeaderAddr = md
-	}
-
-	if c.clientCtx.InterfaceRegistry != nil {
-		return codectypes.UnpackInterfaces(reply, c.clientCtx.InterfaceRegistry)
-	}
-
-	return nil
-}
-
-func (c Context) queryABCI(ctx context.Context, req abci.RequestQuery) (abci.ResponseQuery, error) {
-	node, err := c.clientCtx.GetNode()
-	if err != nil {
-		return abci.ResponseQuery{}, err
-	}
-
-	opts := rpcclient.ABCIQueryOptions{
-		Height: req.Height,
-		Prove:  req.Prove,
-	}
-
-	result, err := node.ABCIQueryWithOptions(ctx, req.Path, req.Data, opts)
-	if err != nil {
-		return abci.ResponseQuery{}, err
-	}
-
-	if !result.Response.IsOK() {
-		return abci.ResponseQuery{}, sdkErrorToGRPCError(result.Response)
-	}
-
-	return result.Response, nil
-}
-
-func sdkErrorToGRPCError(resp abci.ResponseQuery) error {
-	switch resp.Code {
-	case cosmoserrors.ErrInvalidRequest.ABCICode():
-		return status.Error(codes.InvalidArgument, resp.Log)
-	case cosmoserrors.ErrUnauthorized.ABCICode():
-		return status.Error(codes.Unauthenticated, resp.Log)
-	case cosmoserrors.ErrKeyNotFound.ABCICode():
-		return status.Error(codes.NotFound, resp.Log)
-	default:
-		return status.Error(codes.Unknown, resp.Log)
-	}
+	return c.clientCtx.Invoke(ctx, method, req, reply, opts...)
 }

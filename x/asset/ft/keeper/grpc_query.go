@@ -95,7 +95,7 @@ func (qs QueryService) Balance(goCtx context.Context, req *types.QueryBalanceReq
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	locked := qs.bankKeeper.LockedCoins(ctx, account)

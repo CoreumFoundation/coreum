@@ -4,11 +4,12 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/app"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
@@ -39,7 +40,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 		Description:   "ABC Desc",
 		Subunit:       "abc",
 		Precision:     8,
-		InitialAmount: sdk.NewInt(777),
+		InitialAmount: sdkmath.NewInt(777),
 	}, 0)
 	requireT.NoError(err)
 
@@ -49,7 +50,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 		Description:   "XYZ Desc",
 		Subunit:       "xyz",
 		Precision:     8,
-		InitialAmount: sdk.NewInt(888),
+		InitialAmount: sdkmath.NewInt(888),
 	}, 0)
 	requireT.NoError(err)
 

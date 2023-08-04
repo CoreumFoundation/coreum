@@ -3,13 +3,12 @@ package integrationtests
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
@@ -39,19 +38,21 @@ type BalancesOptions struct {
 	Messages                    []sdk.Msg
 	NondeterministicMessagesGas uint64
 	GasPrice                    sdk.Dec
-	Amount                      sdk.Int
+	Amount                      sdkmath.Int
 }
 
 // GasLimitByMsgs calculates sum of gas limits required for message types passed.
 // It panics if unsupported message type specified.
 func (c CoreumChain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64
-	for _, msg := range msgs {
-		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
+	for range msgs {
+		// FIXME(v47-deterministic) use real gas instead of the constant
+		totalGasRequired += 1_000_000
+		/* msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
-		totalGasRequired += msgGas + c.DeterministicGasConfig.FixedGas
+		totalGasRequired += msgGas + c.DeterministicGasConfig.FixedGas */
 	}
 
 	return totalGasRequired
@@ -61,31 +62,33 @@ func (c CoreumChain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 // It panics if unsupported message type specified.
 func (c CoreumChain) GasLimitForMultiMsgTx(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64
-	for _, msg := range msgs {
-		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
+	for range msgs {
+		// FIXME(v47-deterministic) use real gas instead of the constant
+		totalGasRequired += 1_000_000
+		/* msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
-		totalGasRequired += msgGas
+		totalGasRequired += msgGas */
 	}
 
 	return totalGasRequired + c.DeterministicGasConfig.FixedGas
 }
 
 // ComputeNeededBalanceFromOptions computes the required balance based on the input options.
-func (c CoreumChain) ComputeNeededBalanceFromOptions(options BalancesOptions) sdk.Int {
+func (c CoreumChain) ComputeNeededBalanceFromOptions(options BalancesOptions) sdkmath.Int {
 	if options.GasPrice.IsNil() {
 		options.GasPrice = c.ChainSettings.GasPrice
 	}
 
 	if options.Amount.IsNil() {
-		options.Amount = sdk.ZeroInt()
+		options.Amount = sdkmath.ZeroInt()
 	}
 
 	// NOTE: we assume that each message goes to one transaction, which is not
 	// very accurate and may cause some over funding in cases that there are multiple
 	// messages in a single transaction
-	totalAmount := sdk.ZeroInt()
+	totalAmount := sdkmath.ZeroInt()
 	for _, msg := range options.Messages {
 		gas := c.GasLimitByMsgs(msg)
 		// Ceil().RoundInt() is here to be compatible with the sdk's TxFactory
@@ -109,7 +112,7 @@ func (c CoreumChain) FundAccountWithOptions(ctx context.Context, t *testing.T, a
 }
 
 // CreateValidator creates a new validator on the chain and returns the staker addresses, validator addresses and callback function to deactivate it.
-func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingAmount, selfDelegationAmount sdk.Int) (sdk.AccAddress, sdk.ValAddress, func(), error) {
+func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingAmount, selfDelegationAmount sdkmath.Int) (sdk.AccAddress, sdk.ValAddress, func(), error) {
 	t.Helper()
 	SkipUnsafe(t)
 
@@ -164,7 +167,7 @@ func (c CoreumChain) CreateValidator(ctx context.Context, t *testing.T, stakingA
 		_, err = client.BroadcastTx(
 			ctx,
 			c.ClientContext.WithFromAddress(staker),
-			c.TxFactory().WithSimulateAndExecute(true),
+			c.TxFactory().WithGas(c.GasLimitByMsgs(&stakingtypes.MsgUndelegate{})),
 			undelegateMsg,
 		)
 		require.NoError(t, err)

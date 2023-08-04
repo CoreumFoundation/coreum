@@ -9,8 +9,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
 	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
