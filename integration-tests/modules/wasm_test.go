@@ -7,7 +7,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -1616,6 +1616,8 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 }
 
+// TestWASMBankSendContractWithMultipleFundsAttached tests sending multiple ft funds and core token to smart contract.
+// TODO: remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
 func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	t.Parallel()
 
@@ -1654,8 +1656,8 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 		// Issue the new fungible token
 		msgIssue := &assetfttypes.MsgIssue{
 			Issuer:        admin.String(),
-			Symbol:        "abc" + fmt.Sprint(i),
-			Subunit:       "abc" + fmt.Sprint(i),
+			Symbol:        randStringWithLength(20),
+			Subunit:       randStringWithLength(20),
 			Precision:     6,
 			InitialAmount: sdk.NewInt(10000000000000),
 		}
@@ -1698,6 +1700,9 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 		executeMsg,
 	)
 	requireT.NoError(err)
+	waitCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	t.Cleanup(cancel)
+	requireT.NoError(client.AwaitNextBlocks(waitCtx, chain.ClientContext, 2))
 }
 
 func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
@@ -1732,4 +1737,13 @@ func incrementSimpleStateAndVerify(
 	requireT.Equal(expectedValue, response.Count)
 
 	return gasUsed
+}
+
+func randStringWithLength(n int) string {
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz")
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
