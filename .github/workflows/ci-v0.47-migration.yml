@@ -1,9 +1,11 @@
 name: ci
 on:
   push:
-    branches: [ v0.47-migration ]
+    branches: [ v0.47-migration-v2 ]
   pull_request:
-    branches: [ v0.47-migration ]
+    branches: [ v0.47-migration-v2 ]
+  schedule:
+    - cron: '0 1 * * 1' # At 01:00 on Monday
   workflow_dispatch:
 
 jobs:
@@ -14,28 +16,53 @@ jobs:
         ci_step: [
           "lint",
           "test",
-          "build",
+          "integration tests coreum-modules",
+#          "integration tests coreum-ibc", FIXME(v47-restore CI)
+#          "integration tests coreum-upgrade-v1.0.0",
+#          "integration tests coreum-upgrade-v2.0.0",
           "integration tests faucet",
         ]
         include:
           - ci_step: "lint"
-            command: "crust lint/coreum --log-format=yaml"
+            command: "crust lint/coreum"
             go-cache: true
+            wasm-cache: true
             linter-cache: true
             docker-cache: false
           - ci_step: "test"
-            command: "crust test/coreum --log-format=yaml"
+            command: "crust test/coreum"
             go-cache: true
+            wasm-cache: false
             linter-cache: false
             docker-cache: false
-          - ci_step: "build"
-            command: "crust build --log-format=yaml"
+          - ci_step: "integration tests coreum-modules"
+            command: "crust build/integration-tests/coreum/modules images && crust znet test --test-groups=coreum-modules --timeout-commit 0.5s"
             go-cache: true
+            wasm-cache: true
             linter-cache: false
             docker-cache: true
+#          - ci_step: "integration tests coreum-ibc" FIXME(v47-restore CI)
+#            command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
+#            go-cache: true
+#            wasm-cache: false
+#            linter-cache: false
+#            docker-cache: true
+#          - ci_step: "integration tests coreum-upgrade-v1.0.0"
+#            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
+#            go-cache: true
+#            wasm-cache: true
+#            linter-cache: false
+#            docker-cache: true
+#          - ci_step: "integration tests coreum-upgrade-v2.0.0"
+#            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v2.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
+#            go-cache: true
+#            wasm-cache: true
+#            linter-cache: false
+#            docker-cache: true
           - ci_step: "integration tests faucet"
-            command: "crust build/integration-tests images --log-format=yaml && crust znet test --test-groups=faucet --log-format=yaml"
+            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
             go-cache: true
+            wasm-cache: false
             linter-cache: false
             docker-cache: true
 
@@ -43,26 +70,6 @@ jobs:
     steps:
       - name: Go version used to build crust tool
         run: go version
-      - name: Setup go cache
-        uses: actions/cache@v3
-        if: ${{ matrix.go-cache }}
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Setup linter cache
-        uses: actions/cache@v3
-        if: ${{ matrix.linter-cache }}
-        with:
-          path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-ci-cache
-      - name: Set docker cache
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        if: ${{ matrix.docker-cache }}
-        continue-on-error: true
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
@@ -73,9 +80,46 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: v0.47-migration
+          ref: dzmitryhil/update-v0.47-migration-to-v2-compatible # FIXME(dzmitryhil) change to v0.47-migration-v2
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+      - name: Setup go cache
+        uses: actions/cache@v3
+        if: ${{ matrix.go-cache }}
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Setup WASM cache
+        uses: actions/cache@v3
+        if: ${{ matrix.wasm-cache }}
+        with:
+          path: ~/.cache/crust/wasm
+          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }}
+      - name: Setup linter cache
+        uses: actions/cache@v3
+        if: ${{ matrix.linter-cache }}
+        with:
+          path: ~/.cache/golangci-lint
+          key: ${{ runner.os }}-linter-cache
+      - name: Get Date
+        id: get-year-week
+        run: |
+          echo "date=$(/bin/date -u "+%Y-%U")" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Set docker cache
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        if: ${{ matrix.docker-cache }}
+        continue-on-error: true
+        with:
+          key: ${{ runner.os }}-docker-v2-${{ steps.get-year-week.outputs.date }} # year-week key
+      - name: Set crust binaries cache
+        uses: actions/cache@v3
+        continue-on-error: true
+        with:
+          path: ~/.cache/crust/bin
+          key: ${{ runner.os }}-bin-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure

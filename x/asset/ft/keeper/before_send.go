@@ -71,7 +71,7 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 
 		burnShares := k.CalculateRateShares(ctx, def.BurnRate, def.Issuer, inOps, outOps)
 
-		if err := iterateMapDeterministic(burnShares, func(account string, amount sdk.Int) error {
+		if err := iterateMapDeterministic(burnShares, func(account string, amount sdkmath.Int) error {
 			return k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
 		}); err != nil {
 			return err
@@ -80,20 +80,20 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 		commissionShares := k.CalculateRateShares(ctx, def.SendCommissionRate, def.Issuer, inOps, outOps)
 		issuer := sdk.MustAccAddressFromBech32(def.Issuer)
 
-		if err := iterateMapDeterministic(commissionShares, func(account string, amount sdk.Int) error {
+		if err := iterateMapDeterministic(commissionShares, func(account string, amount sdkmath.Int) error {
 			coins := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
 			return k.bankKeeper.SendCoins(ctx, sdk.MustAccAddressFromBech32(account), issuer, coins)
 		}); err != nil {
 			return err
 		}
 
-		if err := iterateMapDeterministic(inOps, func(account string, amount sdk.Int) error {
+		if err := iterateMapDeterministic(inOps, func(account string, amount sdkmath.Int) error {
 			return k.isCoinSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
 		}); err != nil {
 			return err
 		}
 
-		return iterateMapDeterministic(outOps, func(account string, amount sdk.Int) error {
+		return iterateMapDeterministic(outOps, func(account string, amount sdkmath.Int) error {
 			return k.isCoinReceivable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
 		})
 	})
