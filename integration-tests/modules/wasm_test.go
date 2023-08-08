@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -1615,6 +1616,95 @@ func TestWASMNonFungibleTokenInContract(t *testing.T) {
 	})
 }
 
+// TestWASMBankSendContractWithMultipleFundsAttached tests sending multiple ft funds and core token to smart contract.
+// TODO: remove this test after this task is implemented. https://app.clickup.com/t/86857vqra
+func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	admin := chain.GenAccount()
+	recipient := chain.GenAccount()
+	nativeDenom := chain.ChainSettings.Denom
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdk.NewInt(5000_000_000))),
+	)
+
+	// deployWASMContract and init contract with the initial coins amount
+	initialPayload, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		chain.TxFactory().
+			WithSimulateAndExecute(true),
+		admin,
+		moduleswasm.BankSendWASM,
+		integrationtests.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Amount:     chain.NewCoin(sdk.NewInt(10000)),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	issueMsgs := make([]sdk.Msg, 0)
+	coinsToSend := make([]sdk.Coin, 0)
+	for i := 0; i < 20; i++ {
+		// Issue the new fungible token
+		msgIssue := &assetfttypes.MsgIssue{
+			Issuer:        admin.String(),
+			Symbol:        randStringWithLength(20),
+			Subunit:       randStringWithLength(20),
+			Precision:     6,
+			InitialAmount: sdk.NewInt(10000000000000),
+		}
+		denom := assetfttypes.BuildDenom(msgIssue.Subunit, admin)
+		coinsToSend = append(coinsToSend, sdk.NewInt64Coin(denom, 1_000_000))
+		issueMsgs = append(issueMsgs, msgIssue)
+	}
+	// issue tokens
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsgs...)),
+		issueMsgs...,
+	)
+	requireT.NoError(err)
+
+	// add additional native coins
+	coinsToSend = append(coinsToSend, chain.NewCoin(sdk.NewInt(10000)))
+
+	// send coin from the contract to test wallet
+	withdrawPayload, err := json.Marshal(map[bankMethod]bankWithdrawRequest{
+		withdraw: {
+			Amount:    "5000",
+			Denom:     nativeDenom,
+			Recipient: recipient.String(),
+		},
+	})
+	requireT.NoError(err)
+
+	executeMsg := &wasmtypes.MsgExecuteContract{
+		Sender:   admin.String(),
+		Contract: contractAddr,
+		Msg:      wasmtypes.RawContractMessage(withdrawPayload),
+		Funds:    sdk.NewCoins(coinsToSend...),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(admin),
+		chain.TxFactory().WithGasAdjustment(1.5).WithSimulateAndExecute(true),
+		executeMsg,
+	)
+	requireT.NoError(err)
+	waitCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	t.Cleanup(cancel)
+	requireT.NoError(client.AwaitNextBlocks(waitCtx, chain.ClientContext, 2))
+}
+
 func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
 	return json.Marshal(map[simpleStateMethod]struct{}{
 		methodName: {},
@@ -1647,4 +1737,13 @@ func incrementSimpleStateAndVerify(
 	requireT.Equal(expectedValue, response.Count)
 
 	return gasUsed
+}
+
+func randStringWithLength(n int) string {
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz")
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
