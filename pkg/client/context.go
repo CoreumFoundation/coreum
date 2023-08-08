@@ -9,20 +9,74 @@ package client
 import (
 	"context"
 	"io"
+	"reflect"
+	"strconv"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	gogoproto "github.com/cosmos/gogoproto/proto"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/encoding"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 )
+
+// fallBackCodec is used by Context in case Codec is not set.
+// it can process every gRPC type, except the ones which contain
+// interfaces in their types.
+var fallBackCodec = codec.NewProtoCodec(failingInterfaceRegistry{})
+
+var _ codectypes.InterfaceRegistry = failingInterfaceRegistry{}
+
+// failingInterfaceRegistry is used by the fallback codec
+// in case Context's Codec is not set.
+type failingInterfaceRegistry struct{}
+
+// errCodecNotSet is return by failingInterfaceRegistry in case there are attempt to decode
+// or encode a type which contains an interface field.
+var errCodecNotSet = errors.New("client: cannot encode or decode type which requires the application specific codec")
+
+func (f failingInterfaceRegistry) UnpackAny(_ *codectypes.Any, iface interface{}) error {
+	return errCodecNotSet
+}
+
+func (f failingInterfaceRegistry) Resolve(_ string) (gogoproto.Message, error) {
+	return nil, errCodecNotSet
+}
+
+func (f failingInterfaceRegistry) RegisterInterface(_ string, _ interface{}, _ ...gogoproto.Message) {
+	panic("cannot be called")
+}
+
+func (f failingInterfaceRegistry) RegisterImplementations(_ interface{}, _ ...gogoproto.Message) {
+	panic("cannot be called")
+}
+
+func (f failingInterfaceRegistry) ListAllInterfaces() []string {
+	panic("cannot be called")
+}
+
+func (f failingInterfaceRegistry) ListImplementations(_ string) []string {
+	panic("cannot be called")
+}
+
+func (f failingInterfaceRegistry) EnsureRegistered(_ interface{}) error {
+	panic("cannot be called")
+}
 
 // ContextConfig stores context config.
 type ContextConfig struct {
@@ -366,10 +420,141 @@ func (c Context) PrintProto(toPrint gogoproto.Message) error {
 
 // NewStream implements the grpc ClientConn.NewStream method.
 func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	return c.clientCtx.NewStream(ctx, desc, method, opts...)
+	if c.RPCClient() != nil {
+		return nil, errors.New("streaming rpc not supported")
+	}
+
+	if c.GRPCClient() != nil {
+		return c.GRPCClient().NewStream(ctx, desc, method, opts...)
+	}
+
+	return nil, errors.New("neither RPC nor GRPC client is set")
 }
 
 // Invoke invokes GRPC method.
 func (c Context) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
-	return c.clientCtx.Invoke(ctx, method, req, reply, opts...)
+	if c.GRPCClient() != nil {
+		return c.GRPCClient().Invoke(ctx, method, req, reply, opts...)
+	}
+
+	if c.RPCClient() != nil {
+		return c.invokeRPC(ctx, method, req, reply, opts)
+	}
+
+	return errors.New("neither RPC nor GRPC client is set")
+}
+
+func (c Context) invokeRPC(ctx context.Context, method string, req, reply interface{}, opts []grpc.CallOption) error {
+	if reflect.ValueOf(req).IsNil() {
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidRequest, "request cannot be nil")
+	}
+
+	reqBz, err := c.gRPCCodec().Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	// parse height header
+	md, _ := metadata.FromOutgoingContext(ctx)
+	height := c.clientCtx.Height
+	if heights := md.Get(grpctypes.GRPCBlockHeightHeader); len(heights) > 0 {
+		var err error
+		height, err = strconv.ParseInt(heights[0], 10, 64)
+		if err != nil {
+			return err
+		}
+		if height < 0 {
+			return sdkerrors.Wrapf(
+				cosmoserrors.ErrInvalidRequest,
+				"client.Context.Invoke: height (%d) from %q must be >= 0", height, grpctypes.GRPCBlockHeightHeader)
+		}
+	}
+
+	abciReq := abci.RequestQuery{
+		Path:   method,
+		Data:   reqBz,
+		Height: height,
+	}
+
+	res, err := c.queryABCI(ctx, abciReq)
+	if err != nil {
+		return err
+	}
+
+	err = c.gRPCCodec().Unmarshal(res.Value, reply)
+	if err != nil {
+		return err
+	}
+
+	// Create header metadata. For now the headers contain:
+	// - block height
+	// We then parse all the call options, if the call option is a
+	// HeaderCallOption, then we manually set the value of that header to the
+	// metadata.
+	md = metadata.Pairs(grpctypes.GRPCBlockHeightHeader, strconv.FormatInt(res.Height, 10))
+	for _, callOpt := range opts {
+		header, ok := callOpt.(grpc.HeaderCallOption)
+		if !ok {
+			continue
+		}
+
+		*header.HeaderAddr = md
+	}
+
+	if c.clientCtx.InterfaceRegistry != nil {
+		return codectypes.UnpackInterfaces(reply, c.clientCtx.InterfaceRegistry)
+	}
+
+	return nil
+}
+
+func (c Context) queryABCI(ctx context.Context, req abci.RequestQuery) (abci.ResponseQuery, error) {
+	node, err := c.clientCtx.GetNode()
+	if err != nil {
+		return abci.ResponseQuery{}, err
+	}
+
+	opts := rpcclient.ABCIQueryOptions{
+		Height: req.Height,
+		Prove:  req.Prove,
+	}
+
+	result, err := node.ABCIQueryWithOptions(ctx, req.Path, req.Data, opts)
+	if err != nil {
+		return abci.ResponseQuery{}, err
+	}
+
+	if !result.Response.IsOK() {
+		return abci.ResponseQuery{}, sdkErrorToGRPCError(result.Response)
+	}
+
+	return result.Response, nil
+}
+
+func sdkErrorToGRPCError(resp abci.ResponseQuery) error {
+	switch resp.Code {
+	case cosmoserrors.ErrInvalidRequest.ABCICode():
+		return status.Error(codes.InvalidArgument, resp.Log)
+	case cosmoserrors.ErrUnauthorized.ABCICode():
+		return status.Error(codes.Unauthenticated, resp.Log)
+	case cosmoserrors.ErrKeyNotFound.ABCICode():
+		return status.Error(codes.NotFound, resp.Log)
+	default:
+		return status.Error(codes.Unknown, resp.Log)
+	}
+}
+
+// gRPCCodec checks if Context's Codec is codec.GRPCCodecProvider
+// otherwise it returns fallBackCodec.
+func (c Context) gRPCCodec() encoding.Codec {
+	if c.clientCtx.Codec == nil {
+		return fallBackCodec.GRPCCodec()
+	}
+
+	pc, ok := c.clientCtx.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		return fallBackCodec.GRPCCodec()
+	}
+
+	return pc.GRPCCodec()
 }

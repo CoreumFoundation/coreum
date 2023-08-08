@@ -1745,7 +1745,7 @@ func incrementSimpleStateAndVerify(
 }
 
 func randStringWithLength(n int) string {
-	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz")
+	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
