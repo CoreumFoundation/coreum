@@ -644,9 +644,9 @@ When order is canceled, corresponding amounts should be unlocked.
 
 ## Order rejection
 
-To limit the amount of data stored in the order books, orders should be rejected under some circumstances:
+To limit the amount of data stored in the order books, orders should be rejected under some circumstances (**TBD**):
 - order should be rejected immediately, when placed, if the offered price is too far from the currently traded one
-- (**TBD**) each order should have a maximum lifetime, to prune it from the order book if it is not executed for some time
+- each order should have a maximum lifetime, to prune it from the order book if it is not executed for some time
 - offered amount is too low to protect us against tones of tiny orders created by spammers (not sure about this)
 
 ## Order book creation
@@ -742,23 +742,7 @@ is the sell side of the book and queue `(tokenA, tokenB)` corresponds to the buy
 It is required to design the correct schema for storing the price as a part of the key in the store to be able to retrieve
 orders of interest in the form of a properly sorted FIFO queue when using store iterator provided by the Cosmos SDK.
 
-The price is a decimal number, but the floating point result (encoded as string or whatever) is not convenient from
-the perspective of our goals. Instead, to store the price as a part of the key, we may use two `uint64` numbers: first to encode
-the whole part, the second one to encode the decimal part.
-
-For the whole part we may use the full scope of `uint64`, `0..18_446_744_073_709_551_615`, resulting in maximum number
-greater than `10^19`.
-
-For the decimal part we are limited to the subscope of `uint64`, `0..9_999_999_999_999_999_999`, fully covering 19 decimal places.
-
-This system gives us the ability to store numbers in the scope `0.0000000000000000000..18446744073709551615.9999999999999999999`,
-using 16 bytes. Take a note that maybe (this is huge "maybe" because I didn't do the full analysis) we could use the magic of
-`float64` and store the price as a mantissa and exponent, using only 8 bytes at the same time. I may figure it out, but
-only if the team decides that benefits are worth the time being spent, as it's not a trivial thing.
-
-Given that format, key prefix might be defined where both numbers are concatenated this way:
-- big-endian-encoded whole part
-- big endian-encoded decimal part
+We identified two possible ways of encoding the price for our purposes. Later on we will decide which format to use (**TBD**).
 
 Wherever in the doc the term ***execution price prefix*** is referenced, it should be understood as defined above.
 
@@ -776,6 +760,30 @@ Technically, the second option is possible, we just cannot guarantee the proper 
 high uncertainty, especially for trading pairs presenting out-of-scope ratio consistently, I recommend rejecting those orders (**TBD**).
 Due to that some pairs might be non-tradable on our DEX. As an alternative solution we may research the possibility of using `float64`
 format mentioned earlier.
+
+#### Using whole and decimal parts
+
+To store the price as a part of the key, we may use two `uint64` numbers: first to encode the whole part, the second one to encode the decimal part.
+
+For the whole part we may use the full scope of `uint64`, `0..18_446_744_073_709_551_615`, resulting in maximum number
+greater than `10^19`.
+
+For the decimal part we are limited to the subscope of `uint64`, `0..9_999_999_999_999_999_999`, fully covering 19 decimal places.
+
+This system gives us the ability to store numbers in the scope `0.0000000000000000000..18446744073709551615.9999999999999999999`,
+using 16 bytes. Take a note that maybe (this is huge "maybe" because I didn't do the full analysis) we could use the magic of
+`float64` and store the price as a mantissa and exponent, using only 8 bytes at the same time. I may figure it out, but
+only if the team decides that benefits are worth the time being spent, as it's not a trivial thing.
+
+Given that format, key prefix might be defined where both numbers are concatenated this way:
+- big-endian-encoded whole part
+- big endian-encoded decimal part
+
+#### Using fraction and exponent
+
+The concepts described here are similar (but also significant differences are present) to the IEEE 754 standard describing floating-point number format. For more info on that, check: https://en.wikipedia.org/wiki/Double-precision_floating-point_format.
+
+This needs to be further discussed and needs a lot of designing (**TBD**).
 
 ### Transient order key
 
