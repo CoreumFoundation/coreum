@@ -420,12 +420,12 @@ func (c Context) PrintProto(toPrint gogoproto.Message) error {
 
 // NewStream implements the grpc ClientConn.NewStream method.
 func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	if c.RPCClient() != nil {
-		return nil, errors.New("streaming rpc not supported")
-	}
-
 	if c.GRPCClient() != nil {
 		return c.GRPCClient().NewStream(ctx, desc, method, opts...)
+	}
+
+	if c.RPCClient() != nil {
+		return nil, errors.New("streaming rpc not supported")
 	}
 
 	return nil, errors.New("neither RPC nor GRPC client is set")
