@@ -1,7 +1,7 @@
 package v2
 
 // For testnet we use v2.0.0 binary for this plan.
-// For mainnet we use v2.0.1 binary for this plan.
+// For mainnet we use v2.0.2 binary for this plan.
 
 import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
