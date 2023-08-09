@@ -8,4 +8,4 @@
 - [ ] Provide a concise and meaningful description
 - [ ] Review the code yourself first, before making the PR.
 - [ ] Annotate your PR in places that require explanation.
-- [ ] Think and try to split the PR to smaller PR is it is big.
+- [ ] Think and try to split the PR to smaller PR if it is big.
