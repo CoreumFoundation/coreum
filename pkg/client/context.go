@@ -46,7 +46,7 @@ var _ codectypes.InterfaceRegistry = failingInterfaceRegistry{}
 // in case Context's Codec is not set.
 type failingInterfaceRegistry struct{}
 
-// errCodecNotSet is return by failingInterfaceRegistry in case there are attempt to decode
+// errCodecNotSet is returned by failingInterfaceRegistry in case there is an attempt to decode
 // or encode a type which contains an interface field.
 var errCodecNotSet = errors.New("client: cannot encode or decode type which requires the application specific codec")
 
