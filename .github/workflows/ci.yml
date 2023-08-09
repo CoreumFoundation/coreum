@@ -94,8 +94,12 @@ jobs:
         uses: actions/cache@v3
         if: ${{ matrix.wasm-cache }}
         with:
-          path: ~/.cache/crust/wasm
-          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }}
+          # we need to exclude code-hashes.json from the rest, since the invalidation condition for it is not
+          # same as WASM cache, but it is same as smart contract artifacts.
+          path: | 
+            ~/.cache/crust/wasm
+            !/.cache/crust/wasm/code-hashes.json
+          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('~/.cache/crust/wasm/**/*.rs') }}
       - name: Setup linter cache
         uses: actions/cache@v3
         if: ${{ matrix.linter-cache }}
@@ -119,6 +123,16 @@ jobs:
         with:
           path: ~/.cache/crust/bin
           key: ${{ runner.os }}-bin-${{ steps.get-year-week.outputs.date }} # year-week key
+      - name: Setup smart contract build cache
+        uses: actions/cache@v3
+        with:
+          # we need to cache code-hashes.json under the same key as the artifacts, since the invalidation condition
+          # for both of them are the same.
+          path: |
+            ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/* 
+            ~/.cache/crust/wasm/code-hashes.json
+          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
+        if: ${{ matrix.wasm-cache }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
