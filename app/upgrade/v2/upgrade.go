@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
 	delaytypes "github.com/CoreumFoundation/coreum/v2/x/delay/types"
@@ -24,7 +24,7 @@ func New(mm *module.Manager, configurator module.Configurator) upgrade.Upgrade {
 		Name: Name,
 		StoreUpgrades: storetypes.StoreUpgrades{
 			Added: []string{
-				ibchost.StoreKey,
+				ibcexported.StoreKey,
 				ibctransfertypes.StoreKey,
 				delaytypes.StoreKey,
 			},

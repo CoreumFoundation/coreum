@@ -3,12 +3,13 @@ package feemodel_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel"
@@ -58,7 +59,7 @@ func (k *keeperMock) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 }
 
 func (k *keeperMock) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
-	return sdk.NewDecCoin("", sdk.ZeroInt()), sdk.NewDecCoin("", sdk.ZeroInt()), nil
+	return sdk.NewDecCoin("", sdkmath.ZeroInt()), sdk.NewDecCoin("", sdkmath.ZeroInt()), nil
 }
 
 func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Codec) {
@@ -74,7 +75,7 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 				LongEmaBlockLength:      3,
 			},
 		},
-		MinGasPrice: sdk.NewDecCoin("coin", sdk.NewInt(155)),
+		MinGasPrice: sdk.NewDecCoin("coin", sdkmath.NewInt(155)),
 	}
 	cdc := config.NewEncodingConfig(module.NewBasicManager()).Codec
 	keeper := newKeeperMock(genesisState)

@@ -5,10 +5,11 @@ import (
 	"strings"
 	"testing"
 
+	sdkerrors "cosmossdk.io/errors"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
-	"github.com/gogo/protobuf/proto"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -85,7 +86,7 @@ func TestMsgIssueClass_ValidateBasic(t *testing.T) {
 				msg.Issuer = "devcore172rc5sz2uc"
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid name",
@@ -255,7 +256,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 				msg.Sender = invalidAccount
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid classID",
@@ -358,7 +359,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 				msg.Sender = invalidAccount
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid classID",
@@ -420,7 +421,7 @@ func TestMsgFreeze_ValidateBasic(t *testing.T) {
 				msg.Sender = invalidAccount
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid classID",
@@ -482,7 +483,7 @@ func TestMsgUnfreeze_ValidateBasic(t *testing.T) {
 				msg.Sender = invalidAccount
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid classID",
@@ -545,7 +546,7 @@ func TestMsgAddToWhitelist_ValidateBasic(t *testing.T) {
 				msg.Sender = invalidAccount
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid account",
@@ -554,7 +555,7 @@ func TestMsgAddToWhitelist_ValidateBasic(t *testing.T) {
 				msg.Account = "devcore172"
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid classID",
@@ -617,7 +618,7 @@ func TestMsgRemoveFromWhitelist_ValidateBasic(t *testing.T) {
 				msg.Sender = invalidAccount
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid account",
@@ -626,7 +627,7 @@ func TestMsgRemoveFromWhitelist_ValidateBasic(t *testing.T) {
 				msg.Account = "devcore172"
 				return &msg
 			},
-			expectedError: sdkerrors.ErrInvalidAddress,
+			expectedError: cosmoserrors.ErrInvalidAddress,
 		},
 		{
 			name: "invalid classID",

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // MigrateStore migrates asset nft module state from v1 to v2.
-func MigrateStore(ctx sdk.Context, storeKey sdk.StoreKey) error {
+func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey) error {
 	// old key format:
 	// prefix (0x02) || classID-addrBytes
 	// new key is of format

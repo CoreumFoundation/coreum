@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tendermint/tendermint/config"
-	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/p2p"
-	"github.com/tendermint/tendermint/privval"
+	tmcfg "github.com/cometbft/cometbft/config"
+	tmed25519 "github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/p2p"
+	"github.com/cometbft/cometbft/privval"
 )
 
 // DefaultNodeConfigPath is the default path there the config.toml is saved.
@@ -58,9 +58,9 @@ func (nc NodeConfig) SavePrivateKeys(homeDir string) error {
 }
 
 // TendermintNodeConfig applies node's tendermint config.
-func (nc NodeConfig) TendermintNodeConfig(cfg *config.Config) *config.Config {
+func (nc NodeConfig) TendermintNodeConfig(cfg *tmcfg.Config) *tmcfg.Config {
 	if cfg == nil {
-		cfg = config.DefaultConfig()
+		cfg = tmcfg.DefaultConfig()
 	}
 
 	if nc.Name != "" {
@@ -99,11 +99,11 @@ func (nc NodeConfig) clone() NodeConfig {
 }
 
 // WriteTendermintConfigToFile saves tendermint config to file.
-func WriteTendermintConfigToFile(filePath string, cfg *config.Config) error {
+func WriteTendermintConfigToFile(filePath string, cfg *tmcfg.Config) error {
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
-	config.WriteConfigFile(filePath, cfg)
+	tmcfg.WriteConfigFile(filePath, cfg)
 	return nil
 }

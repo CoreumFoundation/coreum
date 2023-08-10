@@ -1,8 +1,11 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
@@ -17,15 +20,15 @@ type ParamSubspace interface {
 // Keeper is a fee model keeper.
 type Keeper struct {
 	paramSubspace     ParamSubspace
-	storeKey          sdk.StoreKey
-	transientStoreKey sdk.StoreKey
+	storeKey          storetypes.StoreKey
+	transientStoreKey storetypes.StoreKey
 }
 
 // NewKeeper returns a new keeper object providing storage options required by fee model.
 func NewKeeper(
 	paramSubspace ParamSubspace,
-	storeKey sdk.StoreKey,
-	transientStoreKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
+	transientStoreKey storetypes.StoreKey,
 ) Keeper {
 	return Keeper{
 		paramSubspace:     paramSubspace,
@@ -38,7 +41,7 @@ func NewKeeper(
 func (k Keeper) TrackedGas(ctx sdk.Context) int64 {
 	tStore := ctx.TransientStore(k.transientStoreKey)
 
-	gasUsed := sdk.NewInt(0)
+	gasUsed := sdkmath.NewInt(0)
 	bz := tStore.Get(gasTrackingKey)
 
 	if bz != nil {
@@ -53,7 +56,7 @@ func (k Keeper) TrackedGas(ctx sdk.Context) int64 {
 // TrackGas increments gas tracked for current block.
 func (k Keeper) TrackGas(ctx sdk.Context, gas int64) {
 	tStore := ctx.TransientStore(k.transientStoreKey)
-	bz, err := sdk.NewInt(k.TrackedGas(ctx) + gas).Marshal()
+	bz, err := sdkmath.NewInt(k.TrackedGas(ctx) + gas).Marshal()
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +84,7 @@ func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
 		return 0
 	}
 
-	currentEMAGas := sdk.NewInt(0)
+	currentEMAGas := sdkmath.NewInt(0)
 	if err := currentEMAGas.Unmarshal(bz); err != nil {
 		panic(err)
 	}
@@ -92,7 +95,7 @@ func (k Keeper) GetShortEMAGas(ctx sdk.Context) int64 {
 func (k Keeper) SetShortEMAGas(ctx sdk.Context, emaGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz, err := sdk.NewInt(emaGas).Marshal()
+	bz, err := sdkmath.NewInt(emaGas).Marshal()
 	if err != nil {
 		panic(err)
 	}
@@ -109,7 +112,7 @@ func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
 		return 0
 	}
 
-	emaGas := sdk.NewInt(0)
+	emaGas := sdkmath.NewInt(0)
 	if err := emaGas.Unmarshal(bz); err != nil {
 		panic(err)
 	}
@@ -120,7 +123,7 @@ func (k Keeper) GetLongEMAGas(ctx sdk.Context) int64 {
 func (k Keeper) SetLongEMAGas(ctx sdk.Context, emaGas int64) {
 	store := ctx.KVStore(k.storeKey)
 
-	bz, err := sdk.NewInt(emaGas).Marshal()
+	bz, err := sdkmath.NewInt(emaGas).Marshal()
 	if err != nil {
 		panic(err)
 	}
@@ -157,7 +160,7 @@ func (k Keeper) SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin) {
 func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error) {
 	shortEMABlockLength := k.GetParams(ctx).Model.ShortEmaBlockLength
 	if after > shortEMABlockLength {
-		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "after blocks must be lower than or equal to %d", shortEMABlockLength)
+		return sdk.DecCoin{}, sdk.DecCoin{}, sdkerrors.Wrapf(cosmoserrors.ErrInvalidRequest, "after blocks must be lower than or equal to %d", shortEMABlockLength)
 	}
 
 	// if no after value is provided shortEMABlockLength is taken as default value

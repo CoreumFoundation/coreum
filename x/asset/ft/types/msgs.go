@@ -3,11 +3,12 @@ package types
 import (
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/samber/lo"
 )
 
@@ -63,7 +64,7 @@ func (m MsgIssue) ValidateBasic() error {
 	const maxDescriptionLength = 200
 
 	if _, err := sdk.AccAddressFromBech32(m.Issuer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid issuer %s", m.Issuer)
+		return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid issuer %s", m.Issuer)
 	}
 
 	if err := ValidateSubunit(m.Subunit); err != nil {
@@ -128,7 +129,7 @@ func (m MsgIssue) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgMint) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, _, err := DeconstructDenom(m.Coin.Denom); err != nil {
@@ -163,7 +164,7 @@ func (m MsgMint) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgBurn) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, _, err := DeconstructDenom(m.Coin.Denom); err != nil {
@@ -198,11 +199,11 @@ func (m MsgBurn) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgFreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	_, issuer, err := DeconstructDenom(m.Coin.Denom)
@@ -211,7 +212,7 @@ func (m MsgFreeze) ValidateBasic() error {
 	}
 
 	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be frozen")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be frozen")
 	}
 
 	return m.Coin.Validate()
@@ -242,11 +243,11 @@ func (m MsgFreeze) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgUnfreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	if _, _, err := DeconstructDenom(m.Coin.Denom); err != nil {
@@ -281,7 +282,7 @@ func (m MsgUnfreeze) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgGloballyFreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, _, err := DeconstructDenom(m.Denom); err != nil {
@@ -316,7 +317,7 @@ func (m MsgGloballyFreeze) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgGloballyUnfreeze) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, _, err := DeconstructDenom(m.Denom); err != nil {
@@ -351,11 +352,11 @@ func (m MsgGloballyUnfreeze) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgSetWhitelistedLimit) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	if _, err := sdk.AccAddressFromBech32(m.Account); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	_, issuer, err := DeconstructDenom(m.Coin.Denom)
@@ -364,7 +365,7 @@ func (m MsgSetWhitelistedLimit) ValidateBasic() error {
 	}
 
 	if issuer.String() == m.Account {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "issuer's balance can't be whitelisted")
 	}
 
 	return m.Coin.Validate()
@@ -395,7 +396,7 @@ func (m MsgSetWhitelistedLimit) Type() string {
 // ValidateBasic checks that message fields are valid.
 func (m MsgUpgradeTokenV1) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid sender address")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid sender address")
 	}
 
 	_, issuer, err := DeconstructDenom(m.Denom)
@@ -404,7 +405,7 @@ func (m MsgUpgradeTokenV1) ValidateBasic() error {
 	}
 
 	if issuer.String() != m.Sender {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer can upgrade the denom")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only issuer can upgrade the denom")
 	}
 
 	return nil

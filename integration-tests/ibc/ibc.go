@@ -3,7 +3,7 @@
 package ibc
 
 import (
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 )
 
 // convertToIBCDenom returns the IBC denom based on the channelID and denom.

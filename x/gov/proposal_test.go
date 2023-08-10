@@ -5,19 +5,20 @@ import (
 	"testing"
 	_ "unsafe"
 
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/gogo/protobuf/proto"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
 )
 
-// To access private variable from github.com/gogo/protobuf we link it to local variable.
+// To access private variable from github.com/cosmos/gogoproto we link it to local variable.
 // This is needed to iterate through all registered protobuf types.
 //
-//go:linkname revProtoTypes github.com/gogo/protobuf/proto.revProtoTypes
+//go:linkname revProtoTypes github.com/cosmos/gogoproto/proto.revProtoTypes
 var revProtoTypes map[reflect.Type]string
 
+// FIXME(v47-legacy): check that we need it, probably we should update it to new way of gov.
 func TestExpectedRegisteredProposals(t *testing.T) {
 	knownProposals := map[string]struct{}{
 		// proposals we have integration tests for
@@ -41,6 +42,7 @@ func TestExpectedRegisteredProposals(t *testing.T) {
 		"/cosmwasm.wasm.v1.ExecuteContractProposal":             {},
 		"/cosmwasm.wasm.v1.UpdateAdminProposal":                 {},
 		"/cosmwasm.wasm.v1.StoreCodeProposal":                   {},
+		"/cosmwasm.wasm.v1.InstantiateContract2Proposal":        {},
 		"/ibc.core.client.v1.UpgradeProposal":                   {},
 		"/ibc.core.client.v1.ClientUpdateProposal":              {},
 	}
@@ -51,7 +53,7 @@ func TestExpectedRegisteredProposals(t *testing.T) {
 	var unknownProposals []string
 	for protoType := range revProtoTypes {
 		instance := reflect.New(protoType.Elem()).Interface()
-		proposal, ok := instance.(govtypes.Content)
+		proposal, ok := instance.(govtypesv1beta1.Content)
 		if !ok {
 			continue
 		}

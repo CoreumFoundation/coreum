@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	coreumclitestutil "github.com/CoreumFoundation/coreum/v2/testutil/cli"
 	"github.com/CoreumFoundation/coreum/v2/testutil/network"
@@ -34,11 +34,9 @@ func TestCmdTxIssueClass(t *testing.T) {
 		fmt.Sprintf("--%s=%s", cli.FeaturesFlag, types.ClassFeature_burning.String()),
 	}
 	args = append(args, txValidator1Args(testNetwork)...)
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args)
+	res, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
 	requireT.NoError(err)
 
-	var res sdk.TxResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &res))
 	requireT.NotEmpty(res.TxHash)
 	requireT.Equal(uint32(0), res.Code, "can't submit IssueClass tx", res)
 }
@@ -79,26 +77,23 @@ func TestCmdFreeze(t *testing.T) {
 	// freeze
 	args := []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxFreeze(), args))
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxFreeze(), args)
+	requireT.NoError(err)
 
 	// query frozen
 	var frozenResp types.QueryFrozenResponse
 	args = []string{classID, nftID}
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozen(), args)
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &frozenResp))
-	requireT.True(frozenResp.Frozen)
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
 
 	// unfreeze
 	args = []string{classID, nftID}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnfreeze(), args))
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnfreeze(), args)
+	requireT.NoError(err)
 
 	// query frozen
 	args = []string{classID, nftID}
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryFrozen(), args)
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &frozenResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryFrozen(), args, &frozenResp))
 	requireT.False(frozenResp.Frozen)
 }
 
@@ -139,42 +134,38 @@ func TestCmdWhitelist(t *testing.T) {
 	// whitelist
 	args := []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxWhitelist(), args))
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxWhitelist(), args)
+	requireT.NoError(err)
 
 	// query whitelisted
 	var whitelistedResp types.QueryWhitelistedResponse
 	args = []string{classID, nftID, account.String()}
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelisted(), args)
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &whitelistedResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
 	requireT.True(whitelistedResp.Whitelisted)
 
 	// query with pagination
 	var resPage types.QueryWhitelistedAccountsForNFTResponse
 	args = []string{classID, nftID}
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelistedAccounts(), args)
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resPage))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelistedAccounts(), args, &resPage))
 	requireT.ElementsMatch([]string{account.String()}, resPage.Accounts)
 
 	// unwhitelist
 	args = []string{classID, nftID, account.String()}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxUnwhitelist(), args))
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxUnwhitelist(), args)
+	requireT.NoError(err)
 
 	// query whitelisted
 	args = []string{classID, nftID, account.String()}
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryWhitelisted(), args)
-	requireT.NoError(err)
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &whitelistedResp))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryWhitelisted(), args, &whitelistedResp))
 	requireT.False(whitelistedResp.Whitelisted)
 }
 
 func txValidator1Args(testNetwork *network.Network) []string {
 	return []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, testNetwork.Validators[0].Address.String()),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(testNetwork.Config.BondDenom, sdk.NewInt(1000000))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(testNetwork.Config.BondDenom, sdkmath.NewInt(1000000))).String()),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 	}
 }

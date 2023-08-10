@@ -11,22 +11,22 @@ import (
 	"fmt"
 	"strings"
 
+	sdkerrors "cosmossdk.io/errors"
+	"github.com/cometbft/cometbft/mempool"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
-	"github.com/tendermint/tendermint/mempool"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
@@ -86,7 +86,7 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 		if err != nil {
 			return nil, errors.Errorf("failed to get key by the address %q from the keyring", clientCtx.FromAddress().String())
 		}
-		fromName = key.GetName()
+		fromName = key.Name
 	}
 
 	err = tx.Sign(txf, fromName, unsignedTx, true)
@@ -104,6 +104,8 @@ func BroadcastTx(ctx context.Context, clientCtx Context, txf Factory, msgs ...sd
 
 // CalculateGas simulates the execution of a transaction and returns the
 // simulation response obtained by the query and the adjusted gas amount.
+//
+//	FIXME(v47-multisig-calculate-gas-test) add test to calculate
 func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...sdk.Msg) (*sdktx.SimulateResponse, uint64, error) {
 	txf, err := prepareFactory(ctx, clientCtx, txf)
 	if err != nil {
@@ -135,17 +137,12 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 		return nil, 0, errors.WithStack(err)
 	}
 
-	pubKeyAny, err := codectypes.NewAnyWithValue(keyInfo.GetPubKey())
+	pubKey, err := keyInfo.GetPubKey()
 	if err != nil {
 		return nil, 0, errors.WithStack(err)
 	}
-
 	var signatureData signing.SignatureData
-	if keyInfo.GetAlgo() == hd.MultiType {
-		multisigPubKey, ok := keyInfo.GetPubKey().(*multisig.LegacyAminoPubKey)
-		if !ok {
-			return nil, 0, errors.New("public key cannot be converted to multisig public key")
-		}
+	if multisigPubKey, ok := pubKey.(*multisig.LegacyAminoPubKey); ok {
 		multiSignatureData := make([]signing.SignatureData, 0, multisigPubKey.Threshold)
 		for i := uint32(0); i < multisigPubKey.Threshold; i++ {
 			multiSignatureData = append(multiSignatureData, &signing.SingleSignatureData{
@@ -166,7 +163,7 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 	simAuthInfoBytes, err := proto.Marshal(&sdktx.AuthInfo{
 		SignerInfos: []*sdktx.SignerInfo{
 			{
-				PublicKey: pubKeyAny,
+				PublicKey: keyInfo.PubKey,
 				ModeInfo:  modeInfo,
 				Sequence:  txf.Sequence(),
 			},
@@ -201,19 +198,32 @@ func CalculateGas(ctx context.Context, clientCtx Context, txf Factory, msgs ...s
 
 // BroadcastRawTx broadcast the txBytes using the clientCtx and set BroadcastMode.
 func BroadcastRawTx(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
+	var (
+		txRes *sdk.TxResponse
+		err   error
+	)
 	switch clientCtx.BroadcastMode() {
 	case flags.BroadcastSync:
-		return broadcastTxSync(ctx, clientCtx, txBytes)
+		txRes, err = broadcastTxSync(ctx, clientCtx, txBytes)
 
 	case flags.BroadcastAsync:
-		return broadcastTxAsync(ctx, clientCtx, txBytes)
-
-	case flags.BroadcastBlock:
-		return broadcastTxBlock(ctx, clientCtx, txBytes)
+		txRes, err = broadcastTxAsync(ctx, clientCtx, txBytes)
 
 	default:
 		return nil, errors.Errorf("unsupported broadcast mode %s; supported types: sync, async, block", clientCtx.BroadcastMode())
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	if clientCtx.GetAwaitTx() {
+		txRes, err = AwaitTx(ctx, clientCtx, txRes.TxHash)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return txRes, nil
 }
 
 // GetAccountInfo returns account number and account sequence for provided address.
@@ -298,7 +308,7 @@ func AwaitNextBlocks(
 			return retry.Retryable(errors.WithStack(err))
 		}
 
-		currentHeight := res.Block.Header.Height
+		currentHeight := res.SdkBlock.Header.Height
 		if heightToStart == 0 {
 			heightToStart = currentHeight
 		}
@@ -351,21 +361,6 @@ func broadcastTxAsync(ctx context.Context, clientCtx Context, txBytes []byte) (*
 	return res.TxResponse, nil
 }
 
-// broadcastTxBlock broadcasts encoded transaction, waits until it is included in a block.
-func broadcastTxBlock(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
-	txRes, err := broadcastTxSync(ctx, clientCtx, txBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	awaitRes, err := AwaitTx(ctx, clientCtx, txRes.TxHash)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return awaitRes, nil
-}
-
 func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*sdk.TxResponse, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, clientCtx.config.TimeoutConfig.RequestTimeout)
 	defer cancel()
@@ -375,7 +370,7 @@ func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*s
 	if clientCtx.RPCClient() != nil {
 		res, err := clientCtx.RPCClient().BroadcastTxSync(requestCtx, txBytes)
 		if err != nil {
-			if err := processBroadcastBlockTxCommitError(requestCtx, err); err != nil {
+			if err := processTxCommitError(requestCtx, err); err != nil {
 				return nil, err
 			}
 		} else if res.Code != 0 {
@@ -393,7 +388,7 @@ func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*s
 		Mode:    sdktx.BroadcastMode_BROADCAST_MODE_SYNC,
 	})
 	if err != nil {
-		if err := processBroadcastBlockTxCommitError(requestCtx, err); err != nil {
+		if err := processTxCommitError(requestCtx, err); err != nil {
 			return nil, err
 		}
 	} else if res.TxResponse.Code != 0 {
@@ -404,12 +399,12 @@ func broadcastTxSync(ctx context.Context, clientCtx Context, txBytes []byte) (*s
 	return res.TxResponse, nil
 }
 
-func processBroadcastBlockTxCommitError(ctx context.Context, err error) error {
+func processTxCommitError(ctx context.Context, err error) error {
 	if errors.Is(err, ctx.Err()) {
 		return errors.WithStack(err)
 	}
 
-	if err := convertTendermintError(err); !sdkerrors.ErrTxInMempoolCache.Is(err) {
+	if err := convertTendermintError(err); !cosmoserrors.ErrTxInMempoolCache.Is(err) {
 		return errors.WithStack(err)
 	}
 
@@ -441,11 +436,11 @@ func convertTendermintError(err error) error {
 
 	switch {
 	case strings.Contains(errStr, strings.ToLower(mempool.ErrTxInCache.Error())):
-		return sdkerrors.ErrTxInMempoolCache.Wrap(err.Error())
-	case strings.Contains(errStr, sdkerrors.ErrMempoolIsFull.Error()):
-		return sdkerrors.ErrMempoolIsFull.Wrap(err.Error())
-	case strings.Contains(errStr, sdkerrors.ErrTxTooLarge.Error()):
-		return sdkerrors.ErrTxTooLarge.Wrap(err.Error())
+		return cosmoserrors.ErrTxInMempoolCache.Wrap(err.Error())
+	case strings.Contains(errStr, cosmoserrors.ErrMempoolIsFull.Error()):
+		return cosmoserrors.ErrMempoolIsFull.Wrap(err.Error())
+	case strings.Contains(errStr, cosmoserrors.ErrTxTooLarge.Error()):
+		return cosmoserrors.ErrTxTooLarge.Wrap(err.Error())
 	default:
 		return err
 	}

@@ -4,10 +4,11 @@ import (
 	"regexp"
 	"strings"
 
+	sdkerrors "cosmossdk.io/errors"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/gogo/protobuf/proto"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
@@ -164,7 +165,7 @@ func (nftd ClassDefinition) CheckFeatureAllowed(addr sdk.AccAddress, feature Cla
 
 	// Features other than burning may be executed by the issuer only
 	if !nftd.IsIssuer(addr) {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 	}
 	return nil
 }

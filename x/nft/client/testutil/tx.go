@@ -3,14 +3,18 @@ package testutil
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/testutil/network"
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
@@ -45,19 +49,21 @@ func (s *IntegrationTestSuite) SetupSuite() { //nolint:revive // test helper
 
 	// gen account to use as nft owner
 	keyInfo, mnemonic := genAccount(s)
-	s.T().Logf("Created new account address:%s", keyInfo.GetAddress())
+	address, err := keyInfo.GetAddress()
+	s.Require().NoError(err)
+	s.T().Logf("Created new account address:%s", address)
 
 	// fund account to pay for the transactions
 	cfg, err := network.ApplyConfigOptions(s.cfg, network.WithChainDenomFundedAccounts(
 		[]network.FundedAccount{
 			{
-				Address: keyInfo.GetAddress(),
-				Amount:  sdk.NewInt(10_000_000),
+				Address: address,
+				Amount:  sdkmath.NewInt(10_000_000),
 			},
 		}))
 	s.Require().NoError(err)
 	s.cfg = cfg
-	s.owner = keyInfo.GetAddress().String()
+	s.owner = address.String()
 
 	testClassID := fmt.Sprintf("%s-%s", "kitty", sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()))
 	s.expClass = nft.Class{
@@ -93,7 +99,7 @@ func (s *IntegrationTestSuite) SetupSuite() { //nolint:revive // test helper
 	s.Require().NoError(err)
 
 	// import key
-	s.owner = keyInfo.GetAddress().String()
+	s.owner = address.String()
 	s.importMnemonic(s.owner, mnemonic, s.network.Validators[0].ClientCtx)
 
 	_, err = s.network.WaitForHeight(1)
@@ -109,8 +115,8 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 	args := []string{
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.owner),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10000))).String()),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdkmath.NewInt(10000))).String()),
 	}
 	testCases := []struct {
 		name         string
@@ -134,19 +140,21 @@ func (s *IntegrationTestSuite) TestCLITxSend() { //nolint:revive // test
 		tc := tc
 		s.Run(tc.name, func() {
 			args = append(args, tc.args...)
-			err := ExecSend(val, args)
+			_, err := ExecSend(val, args)
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err)
 			}
+			err = s.network.WaitForNextBlock()
+			require.NoError(s.T(), err)
 		})
 	}
 }
 
-func genAccount(s *IntegrationTestSuite) (keyring.Info, string) {
+func genAccount(s *IntegrationTestSuite) (*keyring.Record, string) {
 	// Generate and store a new mnemonic using temporary keyring
-	keyInfo, mnemonic, err := keyring.NewInMemory().NewMnemonic(
+	keyRecord, mnemonic, err := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec).NewMnemonic(
 		"tmp",
 		keyring.English,
 		sdk.GetConfig().GetFullBIP44Path(),
@@ -155,7 +163,7 @@ func genAccount(s *IntegrationTestSuite) (keyring.Info, string) {
 	)
 	s.Require().NoError(err)
 
-	return keyInfo, mnemonic
+	return keyRecord, mnemonic
 }
 
 func (s *IntegrationTestSuite) importMnemonic(name, mnemonic string, clientCtx client.Context) {

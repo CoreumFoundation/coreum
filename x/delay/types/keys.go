@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"time"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "cosmossdk.io/errors"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/store"
 )

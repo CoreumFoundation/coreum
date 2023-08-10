@@ -3,8 +3,9 @@ package keeper
 import (
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 )
@@ -15,7 +16,7 @@ const tokenUpgradeV1Version = 1
 func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error {
 	params := k.GetParams(ctx)
 	if ctx.BlockTime().After(params.TokenUpgradeDecisionTimeout) {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "it is no longer possible to upgrade the token")
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "it is no longer possible to upgrade the token")
 	}
 
 	def, err := k.GetDefinition(ctx, denom)
@@ -24,11 +25,11 @@ func (k Keeper) AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress,
 	}
 
 	if !def.IsIssuer(sender) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only issuer may upgrade the token")
+		return sdkerrors.Wrap(cosmoserrors.ErrUnauthorized, "only issuer may upgrade the token")
 	}
 
 	if def.Version >= tokenUpgradeV1Version {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "denom %s has been already upgraded to v1", denom)
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "denom %s has been already upgraded to v1", denom)
 	}
 
 	if err := k.SetPendingVersion(ctx, denom, tokenUpgradeV1Version); err != nil {

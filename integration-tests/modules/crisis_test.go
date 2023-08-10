@@ -5,7 +5,7 @@ package modules
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/stretchr/testify/require"
@@ -28,7 +28,7 @@ func TestVerifyInvariantMessageIsDenied(t *testing.T) {
 	sender := chain.GenAccount()
 
 	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
-		Amount: sdk.NewIntFromUint64(invariantFee),
+		Amount: sdkmath.NewIntFromUint64(invariantFee),
 	})
 
 	// the gas price is too low

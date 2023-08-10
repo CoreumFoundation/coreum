@@ -7,10 +7,10 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	sdktypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
@@ -32,7 +32,7 @@ var TypeMsgSend = sdk.MsgTypeURL(&nft.MsgSend{})
 
 // WeightedOperations returns all the operations from the module with their respective weights.
 func WeightedOperations(
-	registry cdctypes.InterfaceRegistry,
+	registry sdktypes.InterfaceRegistry,
 	appParams simtypes.AppParams,
 	cdc codec.JSONCodec,
 	ak nft.AccountKeeper,
@@ -79,7 +79,7 @@ func SimulateMsgSend(
 			return simtypes.NoOpMsg(nft.ModuleName, TypeMsgSend, err.Error()), nil, err
 		}
 
-		spendLimit := spendableCoins.Sub(fees)
+		spendLimit := spendableCoins.Sub(fees...)
 		if spendLimit == nil {
 			return simtypes.NoOpMsg(nft.ModuleName, TypeMsgSend, "spend limit is nil"), nil, nil
 		}
@@ -96,7 +96,9 @@ func SimulateMsgSend(
 			Receiver: receiver.Address.String(),
 		}
 
-		txCfg := simappparams.MakeTestEncodingConfig().TxConfig
+		interfaceRegistry := sdktypes.NewInterfaceRegistry()
+		marshaler := codec.NewProtoCodec(interfaceRegistry)
+		txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
 		tx, err := GenSignedMockTx(
 			r,
 			txCfg,
@@ -112,7 +114,7 @@ func SimulateMsgSend(
 			return simtypes.NoOpMsg(nft.ModuleName, TypeMsgSend, "unable to generate mock tx"), nil, err
 		}
 
-		_, _, err = app.Deliver(txCfg.TxEncoder(), tx)
+		_, _, err = app.SimDeliver(txCfg.TxEncoder(), tx)
 		if err != nil {
 			return simtypes.NoOpMsg(nft.ModuleName, sdk.MsgTypeURL(msg), "unable to deliver tx"), nil, err
 		}
