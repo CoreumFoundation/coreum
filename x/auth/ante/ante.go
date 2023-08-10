@@ -4,16 +4,18 @@
 package ante
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	"github.com/CoreumFoundation/coreum/v2/x/auth/keeper"
+	authkeeper "github.com/CoreumFoundation/coreum/v2/x/auth/keeper"
 	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
 	deterministicgasante "github.com/CoreumFoundation/coreum/v2/x/deterministicgas/ante"
 	feemodelante "github.com/CoreumFoundation/coreum/v2/x/feemodel/ante"
@@ -21,14 +23,12 @@ import (
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.
 type HandlerOptions struct {
+	authante.HandlerOptions
 	DeterministicGasConfig deterministicgas.Config
-	AccountKeeper          authante.AccountKeeper
-	BankKeeper             authtypes.BankKeeper
-	FeegrantKeeper         authante.FeegrantKeeper
 	FeeModelKeeper         feemodelante.Keeper
-	SignModeHandler        authsigning.SignModeHandler
-	SigGasConsumer         func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
-	WasmTXCounterStoreKey  sdk.StoreKey
+	WasmConfig             wasmtypes.WasmConfig
+	IBCKeeper              *ibckeeper.Keeper
+	WasmTXCounterStoreKey  storetypes.StoreKey
 }
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
@@ -36,19 +36,23 @@ type HandlerOptions struct {
 // signer.
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	if options.AccountKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "account keeper is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "account keeper is required for ante builder")
 	}
 
 	if options.BankKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "bank keeper is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "bank keeper is required for ante builder")
 	}
 
 	if options.FeeModelKeeper == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "fee model keeper is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "fee model keeper is required for ante builder")
+	}
+
+	if options.IBCKeeper == nil {
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "IBC keeper is required for ante builder")
 	}
 
 	if options.SignModeHandler == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "sign mode handler is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "sign mode handler is required for ante builder")
 	}
 
 	if options.SigGasConsumer == nil {
@@ -56,10 +60,10 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	}
 
 	if options.WasmTXCounterStoreKey == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrLogic, "tx counter key is required for ante builder")
 	}
 
-	infiniteAccountKeeper := keeper.NewInfiniteAccountKeeper(options.AccountKeeper)
+	infiniteAccountKeeper := authkeeper.NewInfiniteAccountKeeper(options.AccountKeeper)
 
 	anteDecorators := []sdk.AnteDecorator{
 		// We added 3 special decorators working together to provide deterministic gas consumption mechanism for selected message types.
@@ -94,14 +98,15 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 		authante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		deterministicgasante.NewSetInfiniteGasMeterDecorator(options.DeterministicGasConfig),
-		authante.NewRejectExtensionOptionsDecorator(),
 		NewDenyMessagesDecorator(&crisistypes.MsgVerifyInvariant{}),
+		authante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
+		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit), // after setup context to enforce limits early
 		wasmkeeper.NewCountTXDecorator(options.WasmTXCounterStoreKey),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
 		feemodelante.NewFeeDecorator(options.FeeModelKeeper),
-		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
+		authante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
 		authante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
 		authante.NewValidateSigCountDecorator(options.AccountKeeper),
 		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
@@ -110,6 +115,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		authante.NewConsumeGasForTxSizeDecorator(infiniteAccountKeeper),
 		authante.NewSigGasConsumeDecorator(infiniteAccountKeeper, options.SigGasConsumer),
 		deterministicgasante.NewChargeFixedGasDecorator(infiniteAccountKeeper, options.DeterministicGasConfig),
+		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...), nil

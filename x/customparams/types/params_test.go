@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 )
 
@@ -11,6 +11,6 @@ func TestStakingParams_ValidateBasic(t *testing.T) {
 	p := DefaultStakingParams()
 	require.NoError(t, p.ValidateBasic())
 
-	p.MinSelfDelegation = sdk.NewInt(-1)
+	p.MinSelfDelegation = sdkmath.NewInt(-1)
 	require.Error(t, p.ValidateBasic())
 }

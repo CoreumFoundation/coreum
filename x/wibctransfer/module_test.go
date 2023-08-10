@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
-	"github.com/gogo/protobuf/grpc"
+	"github.com/cosmos/gogoproto/grpc"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 	"github.com/stretchr/testify/require"
 	googlegrpc "google.golang.org/grpc"
 )
@@ -47,10 +47,11 @@ func (c *configuratorMock) RegisterMigration(moduleName string, forVersion uint6
 // The test checks the migration registration of the original IBC transfer module.
 // Since we override the "Register Services" we want to be sure that after the update of the SDK,
 // The original transfer module won't have unexpected migrations.
+// FIXME(v47-module-config): validate that the updated wrapping is correct and wraps all required methods.
 func TestAppModuleOriginalTransfer_RegisterServices(t *testing.T) {
 	transferModule := transfer.NewAppModule(ibctransferkeeper.Keeper{})
 	configurator := newConfiguratorMock()
 	transferModule.RegisterServices(configurator)
-	require.Equal(t, []uint64{1}, configurator.capturedMigrationVersions)
-	require.Equal(t, uint64(2), transferModule.ConsensusVersion())
+	require.Equal(t, []uint64{1, 2}, configurator.capturedMigrationVersions)
+	require.Equal(t, uint64(3), transferModule.ConsensusVersion())
 }

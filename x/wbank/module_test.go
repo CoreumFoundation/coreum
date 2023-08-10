@@ -8,14 +8,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/gogo/protobuf/grpc"
+	"github.com/cosmos/gogoproto/grpc"
 	"github.com/stretchr/testify/require"
-	googlegrpc "google.golang.org/grpc"
+	golanggrpc "google.golang.org/grpc"
 )
 
 type grpcServerMock struct{}
 
-func (s grpcServerMock) RegisterService(sd *googlegrpc.ServiceDesc, ss interface{}) {}
+func (s grpcServerMock) RegisterService(sd *golanggrpc.ServiceDesc, ss interface{}) {}
 
 type configuratorMock struct {
 	msgServer                 grpcServerMock
@@ -50,9 +50,9 @@ func (c *configuratorMock) RegisterMigration(moduleName string, forVersion uint6
 // Since we override the "Register Services" we want to be sure that after the update of the SDK,
 // The original bank won't have unexpected migrations.
 func TestAppModuleOriginalBank_RegisterServices(t *testing.T) {
-	bankModule := bank.NewAppModule(&codec.AminoCodec{}, bankkeeper.BaseKeeper{}, keeper.AccountKeeper{})
+	bankModule := bank.NewAppModule(&codec.AminoCodec{}, bankkeeper.BaseKeeper{}, keeper.AccountKeeper{}, nil)
 	configurator := newConfiguratorMock()
 	bankModule.RegisterServices(configurator)
-	require.Equal(t, []uint64{1}, configurator.capturedMigrationVersions)
-	require.Equal(t, uint64(2), bankModule.ConsensusVersion())
+	require.Equal(t, []uint64{1, 2, 3}, configurator.capturedMigrationVersions)
+	require.Equal(t, uint64(4), bankModule.ConsensusVersion())
 }

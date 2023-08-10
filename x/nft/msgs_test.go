@@ -3,7 +3,7 @@ package nft_test
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"

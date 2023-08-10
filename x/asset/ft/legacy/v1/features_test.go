@@ -4,11 +4,12 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
 	v1 "github.com/CoreumFoundation/coreum/v2/x/asset/ft/legacy/v1"
@@ -32,7 +33,7 @@ func TestMigrateFeatures(t *testing.T) {
 		Subunit:       "def",
 		Precision:     1,
 		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 	}
 	denom, err := keeper.Issue(ctx, settings)
 	requireT.NoError(err)

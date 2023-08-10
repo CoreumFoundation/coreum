@@ -6,7 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -86,7 +86,7 @@ func TestFTDefinition_CheckFeatureAllowed(t *testing.T) {
 				feature: types.ClassFeature_whitelisting,
 			},
 			wantErr: func(t require.TestingT, err error, i ...interface{}) {
-				if assert.ErrorIs(t, err, sdkerrors.ErrUnauthorized) {
+				if assert.ErrorIs(t, err, cosmoserrors.ErrUnauthorized) {
 					return
 				}
 				t.FailNow()

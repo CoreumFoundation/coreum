@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
@@ -55,7 +56,7 @@ func (qs QueryService) Params(ctx context.Context, req *types.QueryParamsRequest
 func (qs QueryService) Tokens(ctx context.Context, req *types.QueryTokensRequest) (*types.QueryTokensResponse, error) {
 	issuer, err := sdk.AccAddressFromBech32(req.Issuer)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "issuer is required and must be valid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "issuer is required and must be valid account address")
 	}
 	tokens, pageRes, err := qs.keeper.GetIssuerTokens(sdk.UnwrapSDKContext(ctx), issuer, req.Pagination)
 	if err != nil {
@@ -94,7 +95,7 @@ func (qs QueryService) Balance(goCtx context.Context, req *types.QueryBalanceReq
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 
 	locked := qs.bankKeeper.LockedCoins(ctx, account)
@@ -113,7 +114,7 @@ func (qs QueryService) FrozenBalances(goCtx context.Context, req *types.QueryFro
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 	balances, pageRes, err := qs.keeper.GetFrozenBalances(ctx, account, req.Pagination)
 	if err != nil {
@@ -131,7 +132,7 @@ func (qs QueryService) FrozenBalance(goCtx context.Context, req *types.QueryFroz
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 	balance := qs.keeper.GetFrozenBalance(ctx, account, req.GetDenom())
 
@@ -145,7 +146,7 @@ func (qs QueryService) WhitelistedBalances(goCtx context.Context, req *types.Que
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 	balances, pageRes, err := qs.keeper.GetWhitelistedBalances(ctx, account, req.Pagination)
 	if err != nil {
@@ -163,7 +164,7 @@ func (qs QueryService) WhitelistedBalance(goCtx context.Context, req *types.Quer
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	account, err := sdk.AccAddressFromBech32(req.Account)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid account address")
+		return nil, sdkerrors.Wrap(cosmoserrors.ErrInvalidAddress, "invalid account address")
 	}
 	balance := qs.keeper.GetWhitelistedBalance(ctx, account, req.GetDenom())
 

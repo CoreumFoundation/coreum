@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -18,7 +19,7 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 
 	// set min delegation param to 10k
 	ctx := simApp.BeginNextBlock(time.Time{})
-	minSelfDelegation := sdk.NewInt(10_000)
+	minSelfDelegation := sdkmath.NewInt(10_000)
 	simApp.CustomParamsKeeper.SetStakingParams(ctx, customparamstypes.StakingParams{
 		MinSelfDelegation: minSelfDelegation,
 	})
@@ -32,21 +33,21 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 	// fund account
 	ctx = simApp.BeginNextBlock(time.Time{})
 	bondDenom := simApp.StakingKeeper.BondDenom(ctx)
-	balance := sdk.NewCoins(sdk.NewCoin(bondDenom, sdk.NewInt(100_000_000_000)))
+	balance := sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(100_000_000_000)))
 	require.NoError(t, simApp.FundAccount(ctx, accountAddress, balance))
 	simApp.EndBlockAndCommit(ctx)
 
 	// create validator
 	ctx = simApp.BeginNextBlock(time.Time{})
 	description := stakingtypes.Description{Moniker: "moniker"}
-	selfDelegation := sdk.NewCoin(bondDenom, sdk.NewInt(10_000_000))
+	selfDelegation := sdk.NewCoin(bondDenom, sdkmath.NewInt(10_000_000))
 	commission := stakingtypes.CommissionRates{
 		Rate:          sdk.ZeroDec(),
 		MaxRate:       sdk.ZeroDec(),
 		MaxChangeRate: sdk.ZeroDec(),
 	}
 
-	feeAmt := sdk.NewCoin(bondDenom, sdk.NewInt(1_000_000))
+	feeAmt := sdk.NewCoin(bondDenom, sdkmath.NewInt(1_000_000))
 	gas := uint64(300_000)
 
 	// try to create with insufficient min self delegation

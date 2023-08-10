@@ -6,11 +6,12 @@ import (
 	"strconv"
 	"strings"
 
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -89,10 +90,10 @@ $ %s tx %s issue WBTC wsatoshi 8 100000 "Wrapped Bitcoin Token" --from [issuer]
 			}
 
 			// if the initial amount wasn't provided the amount is zero
-			initialAmount := sdk.ZeroInt()
+			initialAmount := sdkmath.ZeroInt()
 			if args[3] != "" {
 				var ok bool
-				initialAmount, ok = sdk.NewIntFromString(args[3])
+				initialAmount, ok = sdkmath.NewIntFromString(args[3])
 				if !ok {
 					return sdkerrors.Wrap(err, "invalid initial_amount")
 				}

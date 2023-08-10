@@ -3,10 +3,11 @@ package keeper_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/ed25519"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/keeper"
@@ -29,7 +30,7 @@ func TestFrozenBalancesInvariant(t *testing.T) {
 		Subunit:       "def",
 		Precision:     1,
 		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []types.Feature{
 			types.Feature_freezing,
 		},
@@ -49,7 +50,7 @@ func TestFrozenBalancesInvariant(t *testing.T) {
 	// break frozen state and check
 	ftKeeper.SetFrozenBalances(ctx, recipient, sdk.Coins{sdk.Coin{
 		Denom:  denom1,
-		Amount: sdk.NewInt(-1),
+		Amount: sdkmath.NewInt(-1),
 	}})
 	_, isBroken = keeper.FreezingInvariant(ftKeeper)(ctx)
 	requireT.True(isBroken)
@@ -70,7 +71,7 @@ func TestFrozenBalancesInvariant(t *testing.T) {
 		Subunit:       "def2",
 		Precision:     1,
 		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		// the freezing and whitelisting disabled
 		Features: []types.Feature{
 			types.Feature_minting,
@@ -105,7 +106,7 @@ func TestWhitelistedBalancesInvariant(t *testing.T) {
 		Subunit:       "def",
 		Precision:     1,
 		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []types.Feature{
 			types.Feature_whitelisting,
 		},
@@ -125,7 +126,7 @@ func TestWhitelistedBalancesInvariant(t *testing.T) {
 	// break whitelisted state and check
 	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.Coins{sdk.Coin{
 		Denom:  denom1,
-		Amount: sdk.NewInt(-1),
+		Amount: sdkmath.NewInt(-1),
 	}})
 	_, isBroken = keeper.WhitelistingInvariant(ftKeeper)(ctx)
 	requireT.True(isBroken)
@@ -133,7 +134,7 @@ func TestWhitelistedBalancesInvariant(t *testing.T) {
 	// make the state valid
 	ftKeeper.SetWhitelistedBalances(ctx, recipient, sdk.Coins{sdk.Coin{
 		Denom:  denom1,
-		Amount: sdk.NewInt(0),
+		Amount: sdkmath.NewInt(0),
 	}})
 	_, isBroken = keeper.WhitelistingInvariant(ftKeeper)(ctx)
 	requireT.False(isBroken)
@@ -144,7 +145,7 @@ func TestWhitelistedBalancesInvariant(t *testing.T) {
 		Subunit:       "def2",
 		Precision:     1,
 		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		// the freezing and whitelisting disabled
 		Features: []types.Feature{
 			types.Feature_minting,
@@ -177,7 +178,7 @@ func TestBankMetadataExistInvariant(t *testing.T) {
 		Subunit:       "def",
 		Precision:     1,
 		Description:   "DEF Desc",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []types.Feature{
 			types.Feature_freezing,
 			types.Feature_whitelisting,

@@ -5,11 +5,12 @@ import (
 	"math/rand"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/ed25519"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft"
@@ -68,8 +69,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 			types.Balance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
-					sdk.NewCoin(tokens[0].Denom, sdk.NewInt(rand.Int63())),
-					sdk.NewCoin(tokens[1].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(tokens[0].Denom, sdkmath.NewInt(rand.Int63())),
+					sdk.NewCoin(tokens[1].Denom, sdkmath.NewInt(rand.Int63())),
 				),
 			})
 	}
@@ -82,8 +83,8 @@ func TestInitAndExportGenesis(t *testing.T) {
 			types.Balance{
 				Address: addr.String(),
 				Coins: sdk.NewCoins(
-					sdk.NewCoin(tokens[0].Denom, sdk.NewInt(rand.Int63())),
-					sdk.NewCoin(tokens[1].Denom, sdk.NewInt(rand.Int63())),
+					sdk.NewCoin(tokens[0].Denom, sdkmath.NewInt(rand.Int63())),
+					sdk.NewCoin(tokens[1].Denom, sdkmath.NewInt(rand.Int63())),
 				),
 			})
 	}

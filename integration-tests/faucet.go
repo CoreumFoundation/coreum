@@ -175,7 +175,8 @@ func (f Faucet) broadcastTx(ctx context.Context, msg *banktypes.MsgMultiSend) er
 	// Transaction is broadcast and awaited
 	_, err := f.chainCtx.BroadcastTxWithSigner(
 		ctx,
-		f.chainCtx.TxFactory().WithSimulateAndExecute(true),
+		// FIXME(v47-deterministic) remove WithGasAdjustment and estimation once the deterministic gas if fixed
+		f.chainCtx.TxFactory().WithSimulateAndExecute(true).WithGasAdjustment(1.5),
 		f.chainCtx.ClientContext.FromAddress(),
 		msg,
 	)

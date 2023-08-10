@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 	"github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
@@ -40,7 +41,7 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 			supplyB = sdk.BigEndianToUint64(kvB.Value)
 			return fmt.Sprintf("%v\n%v", supplyA, supplyB)
 		default:
-			panic(fmt.Sprintf("invalid nft key %X", kvA.Key))
+			panic(errors.Errorf("invalid nft key %X", kvA.Key))
 		}
 	}
 }

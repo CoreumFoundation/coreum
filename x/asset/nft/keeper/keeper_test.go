@@ -5,14 +5,15 @@ import (
 	"strings"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/v2/testutil/event"
@@ -207,7 +208,7 @@ func TestKeeper_Mint(t *testing.T) {
 	// check that balance is 0 meaning issue fee was taken
 
 	balance := bankKeeper.GetBalance(ctx, addr, constant.DenomDev)
-	requireT.Equal(sdk.ZeroInt().String(), balance.Amount.String())
+	requireT.Equal(sdkmath.ZeroInt().String(), balance.Amount.String())
 
 	// mint second NFT with the same ID
 	err = nftKeeper.Mint(ctx, settings)
@@ -216,7 +217,7 @@ func TestKeeper_Mint(t *testing.T) {
 	// try to mint from not issuer account
 	settings.Sender = sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = nftKeeper.Mint(ctx, settings)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
 }
 
 func TestKeeper_Burn(t *testing.T) {
@@ -258,7 +259,7 @@ func TestKeeper_Burn(t *testing.T) {
 
 	// try to burn from not owner account
 	err = assetNFTKeeper.Burn(ctx, recipient, classID, nftID)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 
 	// burn the nft
 	err = assetNFTKeeper.Burn(ctx, issuer, classID, nftID)
@@ -363,7 +364,7 @@ func TestKeeper_Burn_Frozen(t *testing.T) {
 
 	// try burn the nft with the enabled feature from the recipient account
 	err = assetNFTKeeper.Burn(ctx, recipient, classID, settings.ID)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
@@ -373,7 +374,7 @@ func TestKeeper_Mint_WithZeroMintFee(t *testing.T) {
 	nftKeeper := testApp.AssetNFTKeeper
 
 	nftParams := types.Params{
-		MintFee: sdk.NewCoin(constant.DenomDev, sdk.ZeroInt()),
+		MintFee: sdk.NewCoin(constant.DenomDev, sdkmath.ZeroInt()),
 	}
 	nftKeeper.SetParams(ctx, nftParams)
 
@@ -432,7 +433,7 @@ func TestKeeper_Mint_WithNoFundsCoveringFee(t *testing.T) {
 	}
 
 	// mint NFT
-	requireT.ErrorIs(nftKeeper.Mint(ctx, settings), sdkerrors.ErrInsufficientFunds)
+	requireT.ErrorIs(nftKeeper.Mint(ctx, settings), cosmoserrors.ErrInsufficientFunds)
 }
 
 func TestKeeper_DisableSending(t *testing.T) {
@@ -481,7 +482,7 @@ func TestKeeper_DisableSending(t *testing.T) {
 	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
 	requireT.Error(err)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 func TestKeeper_Freeze(t *testing.T) {
@@ -536,7 +537,7 @@ func TestKeeper_Freeze(t *testing.T) {
 	recipient2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = nftKeeper.Transfer(ctx, classID, nftID, recipient2)
 	requireT.Error(err)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
 
 	// unfreeze
 	requireT.NoError(assetNFTKeeper.Unfreeze(ctx, issuer, classID, nftID))
@@ -666,7 +667,7 @@ func TestKeeper_Whitelist(t *testing.T) {
 	recipient := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	err = nftKeeper.Transfer(ctx, classID, nftID, recipient)
 	requireT.Error(err)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.True(cosmoserrors.ErrUnauthorized.Is(err))
 
 	// whitelist the account
 	requireT.NoError(assetNFTKeeper.AddToWhitelist(ctx, classID, nftID, issuer, recipient))
