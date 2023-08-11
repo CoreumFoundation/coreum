@@ -3,10 +3,10 @@ module github.com/CoreumFoundation/coreum/v2/integration-tests
 go 1.20
 
 replace (
-	github.com/CoreumFoundation/coreum/v2 => ../
 
 	// cosmos keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
+	github.com/CoreumFoundation/coreum/v2 => ../
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// TODO: remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
