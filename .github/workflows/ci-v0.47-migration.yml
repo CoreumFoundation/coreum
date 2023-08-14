@@ -80,7 +80,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: dzmitryhil/update-v0.47-migration-to-v2-compatible # FIXME(dzmitryhil) change to v0.47-migration-v2
+          ref: v0.47-migration-v2
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
