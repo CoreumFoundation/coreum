@@ -10,6 +10,7 @@ import (
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -107,10 +108,7 @@ func init() {
 
 	// ********** Coreum **********
 
-	coreumGRPCClient, err := grpc.Dial(coreumGRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
+	coreumGRPCClient := dialGRPCClient(coreumGRPCAddress)
 	coreumSettings := queryCommonSettings(queryCtx, coreumGRPCClient)
 
 	coreumClientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
@@ -156,11 +154,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		defer queryCtxCancel()
 		// ********** Gaia **********
 
-		gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			panic(errors.WithStack(err))
-		}
-
+		gaiaGRPClient := dialGRPCClient(gaiaGRPCAddress)
 		gaiaSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
 		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		gaiaSettings.GasAdjustment = 1.5
@@ -180,11 +174,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 
 		// ********** Osmosis **********
 
-		osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			panic(errors.WithStack(err))
-		}
-
+		osmosisGRPClient := dialGRPCClient(osmosisGRPCAddress)
 		osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
 		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		osmosisChainSettings.GasAdjustment = 1.5
@@ -260,4 +250,23 @@ func getTestContextConfig() client.ContextConfig {
 	cfg.TimeoutConfig.TxStatusPollInterval = 100 * time.Millisecond
 
 	return cfg
+}
+
+func dialGRPCClient(url string) *grpc.ClientConn {
+	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		panic("failed to cast codec to codec.GRPCCodecProvider)")
+	}
+
+	grpClient, err := grpc.Dial(
+		url,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
+
+	return grpClient
 }
