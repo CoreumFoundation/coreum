@@ -857,7 +857,16 @@ func New(
 		appupgradev1.New(app.ModuleManager, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
 		appupgradev2.New(app.ModuleManager, app.configurator),
 		appupgradev2patch1.New(app.ModuleManager, app.configurator),
-		appupgradev3.New(app.ModuleManager, app.configurator, app.ParamsKeeper, app.ConsensusParamsKeeper),
+		appupgradev3.New(
+			app.ModuleManager,
+			app.configurator,
+			app.appCodec,
+			app.ParamsKeeper,
+			app.ConsensusParamsKeeper,
+			app.IBCKeeper.ClientKeeper,
+			app.GovKeeper,
+			*app.StakingKeeper,
+		),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
