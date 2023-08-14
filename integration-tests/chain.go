@@ -260,8 +260,7 @@ func NewChain(grpcClient *grpc.ClientConn, rpcClient *rpchttp.HTTP, chainSetting
 		WithChainID(chainSettings.ChainID).
 		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
 		WithBroadcastMode(flags.BroadcastSync).
-		// FIXME(v47-grpc-client) the test TestEmptyBalanceQuery fails with error invalid Go type math.Int
-		// WithGRPCClient(grpcClient).
+		WithGRPCClient(grpcClient).
 		WithRPCClient(rpcClient).
 		WithAwaitTx(true)
 
