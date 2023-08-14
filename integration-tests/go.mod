@@ -3,7 +3,6 @@ module github.com/CoreumFoundation/coreum/v2/integration-tests
 go 1.20
 
 replace (
-
 	// cosmos keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/CoreumFoundation/coreum/v2 => ../
