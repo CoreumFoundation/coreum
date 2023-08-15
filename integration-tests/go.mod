@@ -2,7 +2,6 @@ module github.com/CoreumFoundation/coreum/v2/integration-tests
 
 go 1.20
 
-// FIXME(v47-dependencies): check that we need all of those replaces
 replace (
 	// cosmos keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
