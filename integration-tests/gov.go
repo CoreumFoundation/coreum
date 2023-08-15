@@ -62,6 +62,7 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 }
 
 // LegacyUpdateParams goes through proposal process to update parameters, the legacy way.
+// TODO: remove this function after all the customparams module is removed.
 func (g Governance) LegacyUpdateParams(ctx context.Context, t *testing.T, description string, updates []paramproposal.ParamChange) {
 	t.Helper()
 	// Fund accounts.
@@ -83,6 +84,7 @@ func (g Governance) LegacyUpdateParams(ctx context.Context, t *testing.T, descri
 }
 
 // NewLegacyParamsChangeProposal returns a legacy update parameters proposal.
+// TODO: remove this function after all the customparams module is removed.
 func (g Governance) NewLegacyParamsChangeProposal(
 	ctx context.Context,
 	t *testing.T,
