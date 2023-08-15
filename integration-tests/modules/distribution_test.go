@@ -22,8 +22,6 @@ import (
 )
 
 // TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
-//
-//nolint:dupword // commented code
 func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	t.Parallel()
 

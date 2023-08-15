@@ -57,7 +57,7 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 		return sdk.Coin{}, err
 	}
 
-	minDeposit := govParams.DepositParams.MinDeposit[0]
+	minDeposit := govParams.MinDeposit[0]
 	return g.chainCtx.NewCoin(minDeposit.Amount.Add(g.chainCtx.ChainSettings.GasPrice.Mul(sdk.NewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
 }
 
@@ -144,7 +144,7 @@ func (g Governance) ProposeAndVote(
 	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 }
 
-// ProposeV1 creates a new proposal.
+// Propose creates a new proposal.
 func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypesv1.MsgSubmitProposal) (uint64, error) {
 	SkipUnsafe(t)
 	proposer, err := sdk.AccAddressFromBech32(msg.Proposer)
@@ -170,7 +170,7 @@ func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypesv1.M
 	return proposalID, nil
 }
 
-// NewMsgSubmitProposal - is a helper which initializes MsgSubmitProposal with args passed and prefills min deposit.
+// NewLegacyMsgSubmitProposal - is a helper which initializes MsgSubmitProposal with legacy content.
 func (g Governance) NewLegacyMsgSubmitProposal(
 	ctx context.Context,
 	proposer sdk.AccAddress,
@@ -191,7 +191,7 @@ func (g Governance) NewLegacyMsgSubmitProposal(
 	)
 }
 
-// NewMsgSubmitV1Proposal - is a helper which initializes v1.MsgSubmitProposal with args passed and prefills min deposit.
+// NewMsgSubmitProposal - is a helper which initializes v1.MsgSubmitProposal with args passed and prefills min deposit.
 func (g Governance) NewMsgSubmitProposal(
 	ctx context.Context,
 	proposer sdk.AccAddress,
@@ -206,7 +206,7 @@ func (g Governance) NewMsgSubmitProposal(
 	}
 
 	msg, err := govtypesv1.NewMsgSubmitProposal(
-		messages, govParams.DepositParams.MinDeposit, proposer.String(), metadata, title, summary,
+		messages, govParams.MinDeposit, proposer.String(), metadata, title, summary,
 	)
 
 	if err != nil {
@@ -333,33 +333,11 @@ func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (*govtyp
 	return resp.Proposal, nil
 }
 
-func (g Governance) queryGovParams(ctx context.Context) (govtypesv1.QueryParamsResponse, error) {
-	govClient := g.govClient
-
-	votingParams, err := govClient.Params(ctx, &govtypesv1.QueryParamsRequest{
-		ParamsType: govtypesv1.ParamVoting,
-	})
+func (g Governance) queryGovParams(ctx context.Context) (*govtypesv1.Params, error) {
+	govParams, err := g.govClient.Params(ctx, &govtypesv1.QueryParamsRequest{})
 	if err != nil {
-		return govtypesv1.QueryParamsResponse{}, errors.WithStack(err)
+		return nil, err
 	}
 
-	depositParams, err := govClient.Params(ctx, &govtypesv1.QueryParamsRequest{
-		ParamsType: govtypesv1.ParamDeposit,
-	})
-	if err != nil {
-		return govtypesv1.QueryParamsResponse{}, errors.WithStack(err)
-	}
-
-	taillyParams, err := govClient.Params(ctx, &govtypesv1.QueryParamsRequest{
-		ParamsType: govtypesv1.ParamTallying,
-	})
-	if err != nil {
-		return govtypesv1.QueryParamsResponse{}, errors.WithStack(err)
-	}
-
-	return govtypesv1.QueryParamsResponse{
-		VotingParams:  votingParams.VotingParams,
-		DepositParams: depositParams.DepositParams,
-		TallyParams:   taillyParams.TallyParams,
-	}, nil
+	return govParams.Params, nil
 }
