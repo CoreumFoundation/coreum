@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
@@ -104,14 +106,17 @@ func runUpgrade(
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
 		ctx,
 		proposer,
-		upgradetypes.NewSoftwareUpgradeProposal(
-			"Upgrade "+upgradeName,
-			"Running "+upgradeName+" in integration tests",
-			upgradetypes.Plan{
+		[]sdk.Msg{&upgradetypes.MsgSoftwareUpgrade{
+			Plan: upgradetypes.Plan{
 				Name:   upgradeName,
 				Height: upgradeHeight,
 			},
-		))
+		}},
+		"Upgrade "+upgradeName,
+		"Running "+upgradeName+" in integration tests",
+		"",
+	)
+
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
@@ -123,7 +128,7 @@ func runUpgrade(
 	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime: %s", proposal.VotingEndTime)

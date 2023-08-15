@@ -3,12 +3,16 @@
 package modules
 
 import (
+	"context"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
@@ -18,9 +22,9 @@ import (
 )
 
 // TestDistributionSpendCommunityPoolProposal checks that FundCommunityPool and SpendCommunityPoolProposal work correctly.
-// FIXME(v47-spend-community-pool) fix the test
+//
 //nolint:dupword // commented code
-/* func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
+func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -49,7 +53,7 @@ import (
 	// capture the pool amount now to check it later
 	poolBeforeFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
-	txResult, err := client.BroadcastTx(
+	_, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(communityPoolFunder),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFundCommunityPool)),
@@ -57,7 +61,8 @@ import (
 	)
 	requireT.NoError(err)
 	// validate the deterministic gas
-	requireT.Equal(chain.GasLimitByMsgs(msgFundCommunityPool), uint64(txResult.GasUsed))
+	// FIXME(v47-deterministic): fix the DeterministicMsgServer and enable it
+	// requireT.Equal(chain.GasLimitByMsgs(msgFundCommunityPool), uint64(txResult.GasUsed))
 
 	poolAfterFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
@@ -76,12 +81,19 @@ import (
 	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, distributiontypes.MsgCommunityPoolSpend{}(
+	msgPoolSpend := &distributiontypes.MsgCommunityPoolSpend{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Recipient: communityPoolRecipient.String(),
+		Amount:    sdk.NewCoins(poolCoin),
+	}
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		[]sdk.Msg{msgPoolSpend},
 		"Spend community pool",
 		"Spend community pool",
-		communityPoolRecipient,
-		sdk.NewCoins(poolCoin),
-	))
+		"Spend community pool",
+	)
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
@@ -92,10 +104,10 @@ import (
 	// verify that voting period started
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
 	// vote yes from all vote accounts
-	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
@@ -103,7 +115,7 @@ import (
 	// wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// check that recipient has received the coins
 	communityPoolRecipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
@@ -111,7 +123,7 @@ import (
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoins(poolCoin), communityPoolRecipientBalancesRes.Balances)
-} */
+}
 
 // TestDistributionWithdrawRewardWithDeterministicGas checks that withdraw reward works correctly and gas is deterministic.
 func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
@@ -297,7 +309,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	t.Logf("Withdrawing of the validator commission is done, amount:%s", validatorStakerCommissionReward.String())
 }
 
-/* func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, distributionClient distributiontypes.QueryClient) sdk.Coin {
+func getCommunityPoolCoin(ctx context.Context, requireT *require.Assertions, distributionClient distributiontypes.QueryClient) sdk.Coin {
 	communityPoolRes, err := distributionClient.CommunityPool(ctx, &distributiontypes.QueryCommunityPoolRequest{})
 	requireT.NoError(err)
 
@@ -307,4 +319,4 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	requireT.True(poolIntCoin.IsPositive())
 
 	return poolIntCoin
-} */
+}
