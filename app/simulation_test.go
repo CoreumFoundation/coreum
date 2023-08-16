@@ -11,10 +11,10 @@ import (
 	clientcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/app"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	testutilconstant "github.com/CoreumFoundation/coreum/v2/testutil/constant"
+	"github.com/CoreumFoundation/coreum/v3/app"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	testutilconstant "github.com/CoreumFoundation/coreum/v3/testutil/constant"
 )
 
 func init() {

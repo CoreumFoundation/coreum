@@ -15,8 +15,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v2/x/delay/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/delay/types"
+	"github.com/CoreumFoundation/coreum/v3/x/delay/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/delay/types"
 )
 
 var (

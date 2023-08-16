@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/CoreumFoundation/coreum/v2/app/apptesting"
-	v3 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v3"
+	"github.com/CoreumFoundation/coreum/v3/app/apptesting"
+	v3 "github.com/CoreumFoundation/coreum/v3/app/upgrade/v3"
 )
 
 type UpgradeTestSuite struct {

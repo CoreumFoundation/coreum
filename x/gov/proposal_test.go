@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
 )
 
 // To access private variable from github.com/cosmos/gogoproto we link it to local variable.

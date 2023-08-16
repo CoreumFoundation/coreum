@@ -10,8 +10,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	customparamstypes "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
 func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {

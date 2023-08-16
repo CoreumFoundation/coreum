@@ -34,11 +34,11 @@ import (
 	ibccoreexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
-	customparamstypes "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v3/app/upgrade"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
 // juno reference: https://github.com/CosmosContracts/juno/pull/646/files#diff-8ae5168a16be54c5a00ba9dcf5e54cabc4d053c2f3d77ac700aeef3f3dffd87b

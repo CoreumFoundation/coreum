@@ -8,11 +8,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	coreumclitestutil "github.com/CoreumFoundation/coreum/v2/testutil/cli"
-	"github.com/CoreumFoundation/coreum/v2/testutil/network"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/client/cli"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	coreumclitestutil "github.com/CoreumFoundation/coreum/v3/testutil/cli"
+	"github.com/CoreumFoundation/coreum/v3/testutil/network"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/client/cli"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 func TestQueryTokens(t *testing.T) {

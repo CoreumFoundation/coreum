@@ -19,8 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
 )
 
 func TestIBCTransferFromCoreumToGaiaAndBack(t *testing.T) {

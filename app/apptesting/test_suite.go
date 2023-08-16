@@ -28,8 +28,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/CoreumFoundation/coreum/v2/app"
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/app"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
 	//"github.com/CosmosContracts/juno/v17/app"
 	//appparams "github.com/CosmosContracts/juno/v17/app/params"
 )
