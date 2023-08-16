@@ -47,6 +47,7 @@ type DynamicConfigProvider struct {
 	Denom              string
 	AddressPrefix      string
 	GenesisTime        time.Time
+	BlockTimeIota      time.Duration
 	GovConfig          GovConfig
 	CustomParamsConfig CustomParamsConfig
 	FundedAccounts     []FundedAccount
@@ -200,12 +201,14 @@ func (dcp DynamicConfigProvider) genesisByTemplate() ([]byte, error) {
 		Denom              string
 		Gov                GovConfig
 		CustomParamsConfig CustomParamsConfig
+		BlockTimeIotaMS    int64
 	}{
 		GenesisTimeUTC:     dcp.GenesisTime.UTC().Format(time.RFC3339),
 		ChainID:            dcp.ChainID,
 		Denom:              dcp.Denom,
 		Gov:                dcp.GovConfig,
 		CustomParamsConfig: dcp.CustomParamsConfig,
+		BlockTimeIotaMS:    dcp.BlockTimeIota.Milliseconds(),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to template genesis file")

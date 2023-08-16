@@ -63,6 +63,7 @@ func init() {
 				GenesisTemplate: GenesisV3Template,
 				ChainID:         constant.ChainIDDev,
 				GenesisTime:     time.Date(2022, 6, 27, 12, 0, 0, 0, time.UTC),
+				BlockTimeIota:   time.Second,
 				Denom:           constant.DenomDev,
 				AddressPrefix:   constant.AddressPrefixDev,
 				GovConfig: GovConfig{
