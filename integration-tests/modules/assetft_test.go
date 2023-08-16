@@ -96,9 +96,13 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origIssueFee := chain.QueryAssetFTParams(ctx, t).IssueFee
 
-	chain.Governance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
+	chain.Governance.LegacyUpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origIssueFee.Denom, sdkmath.ZeroInt()))))),
+			paramproposal.NewParamChange(
+				assetfttypes.ModuleName,
+				string(assetfttypes.KeyIssueFee),
+				string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origIssueFee.Denom, sdkmath.ZeroInt())))),
+			),
 		})
 
 	issuer := chain.GenAccount()
@@ -130,9 +134,13 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT.NoError(err)
 
 	// Revert to original issue fee
-	chain.Governance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
+	chain.Governance.LegacyUpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(origIssueFee)))),
+			paramproposal.NewParamChange(
+				assetfttypes.ModuleName,
+				string(assetfttypes.KeyIssueFee),
+				string(must.Bytes(tmjson.Marshal(origIssueFee))),
+			),
 		})
 }
 
