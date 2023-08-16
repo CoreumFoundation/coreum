@@ -20,7 +20,6 @@ replace (
 require (
 	cosmossdk.io/math v1.0.1
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v3 v2.0.0-00010101000000-000000000000
 	github.com/CosmWasm/wasmd v0.41.0
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cosmos/cosmos-sdk v0.47.4
@@ -41,7 +40,10 @@ require (
 	google.golang.org/grpc v1.57.0
 )
 
-require cosmossdk.io/errors v1.0.0
+require (
+	cosmossdk.io/errors v1.0.0
+	github.com/CoreumFoundation/coreum/v3 v3.0.0-00010101000000-000000000000
+)
 
 require (
 	cloud.google.com/go v0.110.4 // indirect
