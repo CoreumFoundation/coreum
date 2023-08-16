@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/require"
 
@@ -49,21 +50,22 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	})
 
 	// Create proposal with deposit less than min deposit.
-	proposalMsg, err := gov.NewMsgSubmitProposal(ctx, proposer, govtypesv1beta1.NewTextProposal("Test proposal with weighted votes", strings.Repeat("Description", 20)))
+	textProposal := govtypesv1beta1.NewTextProposal("Test proposal with weighted votes", strings.Repeat("Description", 20))
+	proposalMsg, err := gov.NewLegacyMsgSubmitProposal(ctx, proposer, textProposal)
 	requireT.NoError(err)
-	proposalMsg.InitialDeposit = proposalMsg.InitialDeposit.Sub(sdk.Coins{missingDepositAmount}...)
+	proposalMsg.InitialDeposit = sdk.NewCoins(proposalMsg.InitialDeposit...).Sub(sdk.Coins{missingDepositAmount}...)
 	proposalID, err := gov.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 
 	t.Logf("Proposal created, proposalID: %d", proposalID)
 
 	// Verify that proposal is waiting for deposit.
-	requirePropStatusFunc := func(expectedStatus govtypesv1beta1.ProposalStatus) {
+	requirePropStatusFunc := func(expectedStatus govtypesv1.ProposalStatus) {
 		proposal, err := gov.GetProposal(ctx, proposalID)
 		requireT.NoError(err)
 		requireT.Equal(expectedStatus, proposal.Status)
 	}
-	requirePropStatusFunc(govtypesv1beta1.StatusDepositPeriod)
+	requirePropStatusFunc(govtypesv1.StatusDepositPeriod)
 
 	// Deposit missing amount to proposal.
 	depositMsg := govtypesv1beta1.NewMsgDeposit(depositor, proposalID, sdk.Coins{missingDepositAmount})
@@ -80,7 +82,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	t.Logf("Deposited more funds to proposal, txHash:%s, gasUsed:%d", result.TxHash, result.GasUsed)
 
 	// Verify that proposal voting has started.
-	requirePropStatusFunc(govtypesv1beta1.StatusVotingPeriod)
+	requirePropStatusFunc(govtypesv1.StatusVotingPeriod)
 
 	// Store proposer and depositor balances before voting has finished.
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
@@ -98,22 +100,22 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	// Vote by all staker accounts:
 	// NoWithVeto 70% & No,Yes,Abstain 10% each.
 	err = gov.VoteAllWeighted(ctx,
-		govtypesv1beta1.WeightedVoteOptions{
-			govtypesv1beta1.WeightedVoteOption{
-				Option: govtypesv1beta1.OptionNoWithVeto,
-				Weight: sdk.MustNewDecFromStr("0.7"),
+		govtypesv1.WeightedVoteOptions{
+			&govtypesv1.WeightedVoteOption{
+				Option: govtypesv1.OptionNoWithVeto,
+				Weight: "0.7",
 			},
-			govtypesv1beta1.WeightedVoteOption{
-				Option: govtypesv1beta1.OptionNo,
-				Weight: sdk.MustNewDecFromStr("0.1"),
+			&govtypesv1.WeightedVoteOption{
+				Option: govtypesv1.OptionNo,
+				Weight: "0.1",
 			},
-			govtypesv1beta1.WeightedVoteOption{
-				Option: govtypesv1beta1.OptionYes,
-				Weight: sdk.MustNewDecFromStr("0.1"),
+			&govtypesv1.WeightedVoteOption{
+				Option: govtypesv1.OptionYes,
+				Weight: "0.1",
 			},
-			govtypesv1beta1.WeightedVoteOption{
-				Option: govtypesv1beta1.OptionAbstain,
-				Weight: sdk.MustNewDecFromStr("0.1"),
+			&govtypesv1.WeightedVoteOption{
+				Option: govtypesv1.OptionAbstain,
+				Weight: "0.1",
 			},
 		},
 		proposalID,
@@ -123,7 +125,7 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusRejected, finalStatus)
+	requireT.Equal(govtypesv1.StatusRejected, finalStatus)
 
 	// Assert that proposer & depositor deposits were not credited back.
 	proposerBalanceAfterVoting := accBalanceFunc(proposer)

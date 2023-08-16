@@ -9,7 +9,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
@@ -325,16 +324,12 @@ func changeMinSelfDelegationCustomParam(
 	marshalledMinSelfDelegation, err := tmjson.Marshal(newMinSelfDelegation)
 	requireT.NoError(err)
 	// apply proposal
-	chain.Governance.ProposeAndVote(ctx, t, proposer,
-		paramproposal.NewParameterChangeProposal(
-			"Custom staking params change proposal", "-",
-			[]paramproposal.ParamChange{
-				paramproposal.NewParamChange(
-					customparamstypes.CustomParamsStaking, string(customparamstypes.ParamStoreKeyMinSelfDelegation), string(marshalledMinSelfDelegation),
-				),
-			},
-		),
-		govtypesv1beta1.OptionYes,
+	chain.Governance.LegacyUpdateParams(ctx, t, "Custom staking params change proposal",
+		[]paramproposal.ParamChange{
+			paramproposal.NewParamChange(
+				customparamstypes.CustomParamsStaking, string(customparamstypes.ParamStoreKeyMinSelfDelegation), string(marshalledMinSelfDelegation),
+			),
+		},
 	)
 
 	// check the proposed change is applied
