@@ -18,7 +18,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -378,7 +378,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	// pin smart contract
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.PinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
+	proposalMsg, err := chain.Governance.NewLegacyMsgSubmitProposal(ctx, proposer, &wasmtypes.PinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
 		Title:       "Pin smart contract",
 		Description: "Testing smart contract pinning",
 		CodeIDs:     []uint64{codeID},
@@ -389,22 +389,22 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
-	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	requireT.True(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	gasUsedAfterPinning := incrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1339)
 
 	// unpin smart contract
-	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(ctx, proposer, &wasmtypes.UnpinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
+	proposalMsg, err = chain.Governance.NewLegacyMsgSubmitProposal(ctx, proposer, &wasmtypes.UnpinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
 		Title:       "Unpin smart contract",
 		Description: "Testing smart contract unpinning",
 		CodeIDs:     []uint64{codeID},
@@ -415,13 +415,13 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	proposal, err = chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
-	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 	finalStatus, err = chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 

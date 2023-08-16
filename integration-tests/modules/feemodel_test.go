@@ -9,7 +9,7 @@ import (
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,13 +88,13 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// Create invalid proposal MaxGasPrice = InitialGasPrice.
 	feeModelParams := feeModelParamsRes.Params.Model
 	feeModelParams.MaxGasPriceMultiplier = sdk.OneDec()
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Invalid proposal", "-",
+	proposalMsg := chain.Governance.NewLegacyParamsChangeProposal(ctx, t, proposer, "Invalid proposal", "-", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
 				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
 			),
 		},
-	))
+	)
 	requireT.NoError(err)
 	_, err = chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
@@ -105,13 +105,14 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	feeModelParams = feeModelParamsRes.Params.Model
 	feeModelParams.MaxDiscount = targetMaxDiscount
 	requireT.NoError(err)
-	proposalMsg, err = chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxDiscount", "-",
+	proposalMsg = chain.Governance.NewLegacyParamsChangeProposal(
+		ctx, t, proposer, "Change MaxDiscount", "-", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
 				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
 			),
 		},
-	))
+	)
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
@@ -120,10 +121,10 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// Verify that voting period started.
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
@@ -131,7 +132,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// Check the proposed change is applied.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})

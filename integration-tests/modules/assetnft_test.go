@@ -392,7 +392,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origMintFee := chain.QueryAssetNFTParams(ctx, t).MintFee
 
-	chain.Governance.UpdateParams(ctx, t, "Propose changing MintFee in the assetnft module",
+	chain.Governance.LegacyUpdateParams(ctx, t, "Propose changing MintFee in the assetnft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origMintFee.Denom, sdk.OneInt()))))),
 		})
@@ -453,7 +453,7 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
 
 	// Revert to original mint fee
-	chain.Governance.UpdateParams(ctx, t, "Propose changing MintFee in the assetnft module",
+	chain.Governance.LegacyUpdateParams(ctx, t, "Propose changing MintFee in the assetnft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(origMintFee)))),
 		})
