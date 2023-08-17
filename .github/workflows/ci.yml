@@ -41,34 +41,40 @@ jobs:
             wasm-cache: true
             linter-cache: false
             docker-cache: true
+            remove-znet: true
           - ci_step: "integration tests coreum-ibc"
             command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: false
             linter-cache: false
             docker-cache: true
+            remove-znet: true
           - ci_step: "integration tests coreum-upgrade-v1.0.0"
             command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: true
             linter-cache: false
             docker-cache: true
+            remove-znet: true
           - ci_step: "integration tests coreum-upgrade-v2.0.0"
             command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v2.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: true
             linter-cache: false
             docker-cache: true
+            remove-znet: true
           - ci_step: "integration tests faucet"
             command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
             go-cache: true
             wasm-cache: false
             linter-cache: false
             docker-cache: true
+            remove-znet: true
 
     runs-on: [self-hosted]
     steps:
       - uses: colpal/actions-clean@v1
+        if: runner.labels.self-hosted == 'true'
       - uses: actions/setup-go@v4
         with:
           go-version: "1.21.0"
@@ -137,6 +143,9 @@ jobs:
             ~/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
+      - name: Remove previous znet
+        if: ${{ matrix.remove-znet }} && runner.labels.self-hosted == 'true'
+        run: crust znet remove
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
