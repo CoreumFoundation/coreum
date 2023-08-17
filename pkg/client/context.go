@@ -171,16 +171,28 @@ func (c Context) WithGasPriceAdjustment(adj sdk.Dec) Context {
 	return c
 }
 
-// WithRPCClient returns a copy of the context with an updated RPC client
+// WithClient returns a copy of the context with an updated RPC client
 // instance.
-func (c Context) WithRPCClient(client rpcclient.Client) Context {
+func (c Context) WithClient(client rpcclient.Client) Context {
 	c.clientCtx = c.clientCtx.WithClient(client)
 	return c
+}
+
+// WithRPCClient returns a copy of the context with an updated RPC client
+// instance.
+// TODO: Should we deprecated this one ? Since cosmos context has WithClient
+func (c Context) WithRPCClient(client rpcclient.Client) Context {
+	return c.WithClient(client)
 }
 
 // WithGRPCClient returns a copy of the context with an updated GRPC client instance.
 func (c Context) WithGRPCClient(grpcClient *grpc.ClientConn) Context {
 	c.clientCtx = c.clientCtx.WithGRPCClient(grpcClient)
+	return c
+}
+
+func (c Context) WithFeePayerAddress(addr sdk.AccAddress) Context {
+	c.clientCtx = c.clientCtx.WithFeePayerAddress(addr)
 	return c
 }
 
