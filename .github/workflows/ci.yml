@@ -68,13 +68,12 @@ jobs:
 
     runs-on: [self-hosted]
     steps:
+      - uses: colpal/actions-clean@v1
       - uses: actions/setup-go@v4
         with:
           go-version: "1.21.0"
       - name: Go version used to build crust tool
         run: go version
-      - name: Purge docker volumes
-        run: docker system prune -af --volumes
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
