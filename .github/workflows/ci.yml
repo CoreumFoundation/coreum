@@ -40,31 +40,31 @@ jobs:
             go-cache: true
             wasm-cache: true
             linter-cache: false
-            docker-cache: false
+            docker-cache: true
           - ci_step: "integration tests coreum-ibc"
             command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: false
             linter-cache: false
-            docker-cache: false
+            docker-cache: true
           - ci_step: "integration tests coreum-upgrade-v1.0.0"
             command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: true
             linter-cache: false
-            docker-cache: false
+            docker-cache: true
           - ci_step: "integration tests coreum-upgrade-v2.0.0"
             command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v2.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: true
             linter-cache: false
-            docker-cache: false
+            docker-cache: true
           - ci_step: "integration tests faucet"
             command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
             go-cache: true
             wasm-cache: false
             linter-cache: false
-            docker-cache: false
+            docker-cache: true
 
     runs-on: [self-hosted]
     steps:
@@ -73,6 +73,8 @@ jobs:
           go-version: "1.21.0"
       - name: Go version used to build crust tool
         run: go version
+      - name: Purge docker volumes
+        run: docker system prune -af --volumes
       - name: Checkout coreum
         uses: actions/checkout@v3
         with:
