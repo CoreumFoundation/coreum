@@ -1,7 +1,7 @@
 name: ci
 on:
   push:
-    branches: [ master ]
+    branches: [ yaroslav/self-hosted-runners-v2 ]
   pull_request:
     branches: [ master ]
   schedule:
@@ -67,6 +67,9 @@ jobs:
             docker-cache: true
 
     runs-on: [self-hosted]
+    container:
+      image: ghcr.io/catthehacker/ubuntu:full-20.04
+      options: "--privileged"
     steps:
       - uses: actions/setup-go@v4
         with:
