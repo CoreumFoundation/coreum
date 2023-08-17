@@ -336,7 +336,9 @@ func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (*govtyp
 }
 
 func (g Governance) queryGovParams(ctx context.Context) (*govtypesv1.Params, error) {
-	govParams, err := g.govClient.Params(ctx, &govtypesv1.QueryParamsRequest{})
+	govParams, err := g.govClient.Params(ctx, &govtypesv1.QueryParamsRequest{
+		ParamsType: govtypesv1.ParamTallying,
+	})
 	if err != nil {
 		return nil, err
 	}
