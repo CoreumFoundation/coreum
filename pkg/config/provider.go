@@ -3,11 +3,11 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"text/template"
 	"time"
 
-	tmjson "github.com/cometbft/cometbft/libs/json"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/btcutil/bech32"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -87,12 +87,12 @@ func (dcp DynamicConfigProvider) GetAddressPrefix() string {
 
 // EncodeGenesis returns encoded genesis doc.
 func (dcp DynamicConfigProvider) EncodeGenesis() ([]byte, error) {
-	genesisDoc, err := dcp.genesisDoc()
+	genesisMap, err := dcp.genesisDoc()
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to get genesis doc")
 	}
 
-	bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
+	bs, err := json.MarshalIndent(genesisMap, "", "  ")
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to marshal genesis doc")
 	}
@@ -109,18 +109,22 @@ func (dcp DynamicConfigProvider) AppState() (map[string]json.RawMessage, error) 
 		bank.AppModuleBasic{},
 	)).Codec
 
+	fmt.Println("AppState v2")
+
 	genesisJSON, err := dcp.genesisByTemplate()
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
 	}
 
-	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to parse genesis json bytes")
+	var appState map[string]json.RawMessage
+
+	// New way
+	genesisMap := map[string]json.RawMessage{}
+	if err := json.Unmarshal(genesisJSON, &genesisMap); err != nil {
+		return nil, errors.Wrap(err, "not able to unmarshal genesis json")
 	}
 
-	var appState map[string]json.RawMessage
-	if err := json.Unmarshal(genesisDoc.AppState, &appState); err != nil {
+	if err := json.Unmarshal(genesisMap["app_state"], &appState); err != nil {
 		return nil, errors.Wrap(err, "not able to parse genesis app state")
 	}
 
@@ -157,28 +161,79 @@ func (dcp DynamicConfigProvider) AppState() (map[string]json.RawMessage, error) 
 }
 
 // GenesisDoc returns the genesis doc of the network.
-func (dcp DynamicConfigProvider) genesisDoc() (*tmtypes.GenesisDoc, error) {
+func (dcp DynamicConfigProvider) genesisDoc() (map[string]interface{}, error) {
 	genesisJSON, err := dcp.genesisByTemplate()
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
 	}
 
-	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to parse genesis json bytes")
+	var genesisMap map[string]interface{}
+	if err := json.Unmarshal(genesisJSON, &genesisMap); err != nil {
+		return nil, errors.Wrap(err, "not able to unmarshal genesis json")
 	}
+	//genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "not able to parse genesis json bytes")
+	//}
 
 	appState, err := dcp.AppState()
 	if err != nil {
 		return nil, err
 	}
 
-	genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
-	if err != nil {
-		return nil, err
+	appStateMap := make(map[string]interface{}, len(appState))
+	for k, v := range appState {
+		mp := make(map[string]interface{})
+		err = json.Unmarshal(v, &mp)
+		appStateMap[k] = mp
+		if err != nil {
+			return nil, errors.Wrapf(err, "not able to unmarshal app state: %s", k)
+		}
 	}
 
-	return genesisDoc, nil
+	if bankAppState, ok := appStateMap["bank"].(map[string]interface{}); ok {
+		delete(bankAppState, "send_enabled")
+		if denomMetadata, ok := bankAppState["denom_metadata"].([]interface{}); ok {
+			for i := range denomMetadata {
+				if metadata, ok := denomMetadata[i].(map[string]interface{}); ok {
+					// Remove "uri" and "uri_hash" fields
+					removeFields(metadata, "uri", "uri_hash")
+				}
+			}
+		}
+	}
+
+	if genUtil, ok := appStateMap["genutil"].(map[string]interface{}); ok {
+		if genTxs, ok := genUtil["gen_txs"].([]interface{}); ok {
+			for _, tx := range genTxs {
+				if txMap, ok := tx.(map[string]interface{}); ok {
+					if authInfo, ok := txMap["auth_info"].(map[string]interface{}); ok {
+						delete(authInfo, "tip")
+					}
+				}
+			}
+		}
+	}
+
+	genesisMap["app_state"] = appStateMap
+
+	//genesisMap["app_state"], err = appState
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	// Idea 1:
+	// genesisDoc["app_state"]["bank"] =
+
+	// Idea 2:
+	// Use templating directly without tmtypes.GenesisDocFromJSON.
+	return genesisMap, nil
+}
+
+func removeFields(obj map[string]interface{}, fields ...string) {
+	for _, field := range fields {
+		delete(obj, field)
+	}
 }
 
 func (dcp DynamicConfigProvider) clone() DynamicConfigProvider {
