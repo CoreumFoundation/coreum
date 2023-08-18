@@ -47,7 +47,6 @@ func (c *configuratorMock) RegisterMigration(moduleName string, forVersion uint6
 // The test checks the migration registration of the original IBC transfer module.
 // Since we override the "Register Services" we want to be sure that after the update of the SDK,
 // The original transfer module won't have unexpected migrations.
-// FIXME(v47-module-config): validate that the updated wrapping is correct and wraps all required methods.
 func TestAppModuleOriginalTransfer_RegisterServices(t *testing.T) {
 	transferModule := transfer.NewAppModule(ibctransferkeeper.Keeper{})
 	configurator := newConfiguratorMock()

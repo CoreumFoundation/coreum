@@ -117,18 +117,6 @@ func (AppModule) Name() string { return types.ModuleName }
 // RegisterInvariants registers the fee module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
-// FIXME(v47-module-config): remove or replace with corresponding component
-// Route returns the message routing key for the fee module.
-/* func (am AppModule) Route() sdk.Route { return sdk.Route{} } */
-// FIXME(v47-module-config): remove or replace with corresponding component
-// QuerierRoute returns the fee module's querier route name.
-/* func (AppModule) QuerierRoute() string { return types.RouterKey } */
-// FIXME(v47-module-config): remove or replace with corresponding component
-// LegacyQuerierHandler returns the fee module sdk.Querier.
-/* func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return nil
-} */
-
 // InitGenesis performs genesis initialization for the fee module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
@@ -187,12 +175,6 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
 	return nil
 }
-
-// FIXME(v47-module-config): remove or replace with corresponding component
-// RandomizedParams creates randomized fee param changes for the simulator.
-/* func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-	return nil
-} */
 
 // RegisterStoreDecoder registers a decoder for supply module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}

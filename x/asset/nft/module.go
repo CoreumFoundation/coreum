@@ -124,20 +124,8 @@ func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
-// Route returns the assetnft module's message routing key.
-// FIXME(v47-module-config): remove or replace with corresponding component
-//  func (am AppModule) Route() sdk.Route {
-//	  return sdk.Route{}
-//  }
-
 // QuerierRoute returns the assetnft module's query routing key.
 func (AppModule) QuerierRoute() string { return types.QuerierRoute }
-
-// LegacyQuerierHandler returns the asset module's Querier.
-// FIXME(v47-module-config): remove or replace with corresponding component
-/* func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return nil
-} */
 
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
@@ -187,12 +175,6 @@ func (AppModule) GenerateGenesisState(_ *module.SimulationState) {}
 func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
 	return nil
 }
-
-// RandomizedParams creates randomized fee param changes for the simulator.
-// FIXME(v47-module-config): remove or replace with corresponding component
-/* func (AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
-	  return nil
-} */
 
 // RegisterStoreDecoder registers a decoder for assetnft module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}

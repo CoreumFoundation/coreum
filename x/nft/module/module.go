@@ -118,12 +118,6 @@ func (AppModule) Name() string {
 // RegisterInvariants does nothing, there are no invariants to enforce.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the staking module.
-// FIXME(v47-module-config): remove or replace with corresponding component
-/* func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(nft.RouterKey, nil)
-} */
-
 // NewHandler returns the new module handler.
 func (am AppModule) NewHandler() sdk.Handler {
 	return nil
@@ -131,11 +125,6 @@ func (am AppModule) NewHandler() sdk.Handler {
 
 // QuerierRoute returns the route we respond to for abci queries.
 func (AppModule) QuerierRoute() string { return "" }
-
-// LegacyQuerierHandler returns the nft module sdk.Querier.
-/* func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return nil
-} */
 
 // InitGenesis performs genesis initialization for the nft module. It returns
 // no validator updates.
@@ -174,12 +163,6 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
 	return nil
 }
-
-// RandomizedParams creates randomized nft param changes for the simulator.
-// FIXME(v47-module-config): remove or replace with corresponding component
-/* func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-	return nil
-} */
 
 // RegisterStoreDecoder registers a decoder for nft module's types.
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {

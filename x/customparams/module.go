@@ -99,18 +99,8 @@ func (AppModule) Name() string { return types.ModuleName }
 // RegisterInvariants registers the customparams module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the customparams module.
-// FIXME(v47-module-config): remove or replace with corresponding component
-// func (am AppModule) Route() sdk.Route { return sdk.Route{} }
-
 // QuerierRoute returns the customparams module's querier route name.
 func (AppModule) QuerierRoute() string { return types.RouterKey }
-
-// LegacyQuerierHandler returns the customparams module sdk.Querier.
-// FIXME(v47-module-config): remove or replace with corresponding component
-/* func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return nil
-} */
 
 // InitGenesis performs genesis initialization for the customparams module. It returns
 // no validator updates.
@@ -144,12 +134,6 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
 	return nil
 }
-
-// RandomizedParams creates randomized customparams param changes for the simulator.
-// FIXME(v47-module-config): remove or replace with corresponding component
-/* func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-	return nil
-} */
 
 // RegisterStoreDecoder registers a decoder for supply module's types.
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
