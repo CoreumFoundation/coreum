@@ -208,7 +208,7 @@ func TestBankSendDeterministicGas(t *testing.T) {
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	_, err := client.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -216,8 +216,7 @@ func TestBankSendDeterministicGas(t *testing.T) {
 			WithGas(bankSendGas),
 		msg)
 	require.NoError(t, err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// require.Equal(t, bankSendGas, uint64(res.GasUsed))
+	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
 // TestBankSendDeterministicGasTwoBankSends checks that transfer takes the deterministic amount of gas.
@@ -243,16 +242,15 @@ func TestBankSendDeterministicGasTwoBankSends(t *testing.T) {
 
 	chain.FundAccountWithOptions(ctx, t, sender, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{bankSend1, bankSend2},
-		Amount:   sdkmath.NewInt(20_000), // FIXME(v47-deterministic) restore to prev 2000 values after the fix
+		Amount:   sdkmath.NewInt(2000),
 	})
 
 	gasExpected := chain.GasLimitForMultiMsgTx(&banktypes.MsgSend{}, &banktypes.MsgSend{})
 	clientCtx := chain.ChainContext.ClientContext.WithFromAddress(sender)
 	txf := chain.ChainContext.TxFactory().WithGas(gasExpected)
-	_, err := client.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
+	result, err := client.BroadcastTx(ctx, clientCtx, txf, bankSend1, bankSend2)
 	require.NoError(t, err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// require.EqualValues(t, gasExpected, uint64(result.GasUsed))
+	require.EqualValues(t, gasExpected, uint64(result.GasUsed))
 }
 
 // TestBankSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred.
@@ -315,12 +313,11 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 
 	bankSendGas := chain.GasLimitByMsgs(msg)
-	_, ok := chain.DeterministicGasConfig.GasRequiredByMessage(msg)
+	msgGas, ok := chain.DeterministicGasConfig.GasRequiredByMessage(msg)
 	require.True(t, ok)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// require.Equal(t, chain.DeterministicGasConfig.FixedGas+msgGas, bankSendGas)
+	require.Equal(t, chain.DeterministicGasConfig.FixedGas+msgGas, bankSendGas)
 
-	_, err = client.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -328,8 +325,7 @@ func TestBankSendDeterministicGasManyCoins(t *testing.T) {
 			WithGas(bankSendGas),
 		msg)
 	require.NoError(t, err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// require.Equal(t, bankSendGas, uint64(res.GasUsed))
+	require.Equal(t, bankSendGas, uint64(res.GasUsed))
 }
 
 // TestBankSendFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided.
@@ -353,15 +349,13 @@ func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	}
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
+	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
 	_, err := client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
-			// FIXME(v47-deterministic) uncomment after deterministic gas fix
-			// WithGas(bankSendGas-1), // gas less than expected
-			WithGas(1), // gas less than expected
+			WithGas(bankSendGas-1). // gas less than expected
+			WithGas(1),             // gas less than expected
 		msg)
 
 	require.True(t, cosmoserrors.ErrOutOfGas.Is(err))
@@ -389,15 +383,14 @@ func TestBankSendGasEstimation(t *testing.T) {
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankSendGas := chain.GasLimitByMsgs(&banktypes.MsgSend{})
-	_, _, err := client.CalculateGas(
+	_, estimatedGas, err := client.CalculateGas(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
 			WithGas(bankSendGas),
 		msg)
 	require.NoError(t, err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assert.Equal(t, bankSendGas, estimatedGas)
+	assert.Equal(t, bankSendGas, estimatedGas)
 }
 
 // TestBankMultiSendDeterministicGasManyCoins checks that transfer takes the higher deterministic amount of gas when more coins are transferred.
@@ -478,7 +471,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankMultiSendGas := chain.GasLimitByMsgs(msg)
 
-	_, err = client.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -486,8 +479,7 @@ func TestBankMultiSendDeterministicGasManyCoins(t *testing.T) {
 			WithGas(bankMultiSendGas),
 		msg)
 	require.NoError(t, err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
+	require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
 }
 
 // TestBankMultiSend tests MultiSend message.
@@ -580,7 +572,7 @@ func TestBankMultiSend(t *testing.T) {
 
 	clientCtx := chain.ClientContext.WithFromAddress(sender)
 	bankMultiSendGas := chain.GasLimitByMsgs(msg)
-	_, err = client.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		clientCtx,
 		chain.TxFactory().
@@ -588,8 +580,7 @@ func TestBankMultiSend(t *testing.T) {
 			WithGas(bankMultiSendGas),
 		msg)
 	require.NoError(t, err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
+	require.Equal(t, bankMultiSendGas, uint64(res.GasUsed))
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
