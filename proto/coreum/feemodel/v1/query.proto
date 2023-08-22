@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "coreum/feemodel/v1/params.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v2/x/feemodel/types";
+option go_package = "github.com/CoreumFoundation/coreum/v3/x/feemodel/types";
 
 // Query defines the gRPC querier service.
 service Query {

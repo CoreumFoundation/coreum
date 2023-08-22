@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
-	rawnft "github.com/CoreumFoundation/coreum/v2/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	rawnft "github.com/CoreumFoundation/coreum/v3/x/nft"
 )
 
 func TestInitAndExportGenesis(t *testing.T) {

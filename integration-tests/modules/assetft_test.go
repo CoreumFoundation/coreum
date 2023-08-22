@@ -19,10 +19,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/coreum/v2/testutil/event"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/event"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 // TestAssetFTQueryParams queries parameters of asset/ft module.

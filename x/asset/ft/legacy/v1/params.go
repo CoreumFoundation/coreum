@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 // InitialTokenUpgradeDecisionPeriod is the period applied on top of the current block time to produce initial value of upgrade decision timeout.
