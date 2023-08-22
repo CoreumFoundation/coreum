@@ -183,40 +183,9 @@ func (dcp DynamicConfigProvider) genesisDoc() (map[string]interface{}, error) {
 		appStateMap[k] = mp
 	}
 
-	// TODO: Move this logic to crust
-	//if bankAppState, ok := appStateMap["bank"].(map[string]interface{}); ok {
-	//	delete(bankAppState, "send_enabled")
-	//	if denomMetadata, ok := bankAppState["denom_metadata"].([]interface{}); ok {
-	//		for i := range denomMetadata {
-	//			if metadata, ok := denomMetadata[i].(map[string]interface{}); ok {
-	//				// Remove "uri" and "uri_hash" fields
-	//				removeFields(metadata, "uri", "uri_hash")
-	//			}
-	//		}
-	//	}
-	//}
-	//
-	//if genUtil, ok := appStateMap["genutil"].(map[string]interface{}); ok {
-	//	if genTxs, ok := genUtil["gen_txs"].([]interface{}); ok {
-	//		for _, tx := range genTxs {
-	//			if txMap, ok := tx.(map[string]interface{}); ok {
-	//				if authInfo, ok := txMap["auth_info"].(map[string]interface{}); ok {
-	//					delete(authInfo, "tip")
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
 	genesisMap["app_state"] = appStateMap
 	return genesisMap, nil
 }
-
-//func removeFields(obj map[string]interface{}, fields ...string) {
-//	for _, field := range fields {
-//		delete(obj, field)
-//	}
-//}
 
 func (dcp DynamicConfigProvider) clone() DynamicConfigProvider {
 	dcp.FundedAccounts = append([]FundedAccount{}, dcp.FundedAccounts...)
