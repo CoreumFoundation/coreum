@@ -31,7 +31,6 @@ func NewFeeDecorator(keeper Keeper) FeeDecorator {
 
 // AnteHandle handles transaction in ante decorator.
 func (fd FeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// FIXME(v47-simulation): try to reduce the ctx.ChainID() == simapp.SimulationChainID, and remove testutil/constant/constant.go it's expected to work in any case
 	if ctx.BlockHeight() == 0 || simulate || ctx.ChainID() == testutilconstant.SimAppChainID {
 		// Don't enforce fee model on genesis block and during simulation
 		return next(ctx, tx, simulate)
