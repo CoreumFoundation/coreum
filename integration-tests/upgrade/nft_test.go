@@ -12,12 +12,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
-	moduleswasm "github.com/CoreumFoundation/coreum/v3/integration-tests/contracts/modules"
-	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	"github.com/CoreumFoundation/coreum/v3/testutil/event"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v2/integration-tests/contracts/modules"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/testutil/event"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
 type nftStoreTest struct {

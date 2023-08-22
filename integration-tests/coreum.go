@@ -11,10 +11,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v3/pkg/client"
-	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
-	"github.com/CoreumFoundation/coreum/v3/x/deterministicgas"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
 )
 
 // CoreumChain is configured coreum chain.

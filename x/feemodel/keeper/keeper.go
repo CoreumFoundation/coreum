@@ -8,7 +8,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.

@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/CoreumFoundation/coreum/v3/x/deterministicgas"
+	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
 )
 
 const (
