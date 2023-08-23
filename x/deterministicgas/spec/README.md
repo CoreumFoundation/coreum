@@ -96,6 +96,9 @@ TotalGas = 50000 + 2 * 70000 + 2 * 1000 + max(0, 2050-2048) * 10
 | `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission`          | 22000                          |
 | `/cosmos.feegrant.v1beta1.MsgGrantAllowance`                           | 10000                          |
 | `/cosmos.feegrant.v1beta1.MsgRevokeAllowance`                          | 2500                           |
+| `/cosmos.gov.v1.MsgDeposit`                                            | 52000                          |
+| `/cosmos.gov.v1.MsgVote`                                               | 7000                           |
+| `/cosmos.gov.v1.MsgVoteWeighted`                                       | 9000                           |
 | `/cosmos.gov.v1beta1.MsgDeposit`                                       | 52000                          |
 | `/cosmos.gov.v1beta1.MsgVote`                                          | 7000                           |
 | `/cosmos.gov.v1beta1.MsgVoteWeighted`                                  | 9000                           |
@@ -137,16 +140,40 @@ Real examples of special case tests could be found [here](https://github.com/Cor
 
 | Message Type |
 |--------------|
+| `/cosmos.auth.v1beta1.MsgUpdateParams`                                 |
+| `/cosmos.bank.v1beta1.MsgSetSendEnabled`                               |
+| `/cosmos.bank.v1beta1.MsgUpdateParams`                                 |
+| `/cosmos.consensus.v1.MsgUpdateParams`                                 |
+| `/cosmos.crisis.v1beta1.MsgUpdateParams`                               |
 | `/cosmos.crisis.v1beta1.MsgVerifyInvariant`                            |
+| `/cosmos.distribution.v1beta1.MsgCommunityPoolSpend`                   |
+| `/cosmos.distribution.v1beta1.MsgUpdateParams`                         |
 | `/cosmos.evidence.v1beta1.MsgSubmitEvidence`                           |
+| `/cosmos.gov.v1.MsgExecLegacyContent`                                  |
+| `/cosmos.gov.v1.MsgSubmitProposal`                                     |
+| `/cosmos.gov.v1.MsgUpdateParams`                                       |
 | `/cosmos.gov.v1beta1.MsgSubmitProposal`                                |
+| `/cosmos.mint.v1beta1.MsgUpdateParams`                                 |
+| `/cosmos.slashing.v1beta1.MsgUpdateParams`                             |
+| `/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation`                 |
+| `/cosmos.staking.v1beta1.MsgUpdateParams`                              |
+| `/cosmos.upgrade.v1beta1.MsgCancelUpgrade`                             |
+| `/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade`                           |
+| `/cosmos.vesting.v1beta1.MsgCreatePeriodicVestingAccount`              |
+| `/cosmos.vesting.v1beta1.MsgCreatePermanentLockedAccount`              |
 | `/cosmwasm.wasm.v1.MsgExecuteContract`                                 |
 | `/cosmwasm.wasm.v1.MsgIBCCloseChannel`                                 |
 | `/cosmwasm.wasm.v1.MsgIBCSend`                                         |
 | `/cosmwasm.wasm.v1.MsgInstantiateContract`                             |
 | `/cosmwasm.wasm.v1.MsgInstantiateContract2`                            |
 | `/cosmwasm.wasm.v1.MsgMigrateContract`                                 |
+| `/cosmwasm.wasm.v1.MsgPinCodes`                                        |
+| `/cosmwasm.wasm.v1.MsgStoreAndInstantiateContract`                     |
 | `/cosmwasm.wasm.v1.MsgStoreCode`                                       |
+| `/cosmwasm.wasm.v1.MsgSudoContract`                                    |
+| `/cosmwasm.wasm.v1.MsgUnpinCodes`                                      |
+| `/cosmwasm.wasm.v1.MsgUpdateInstantiateConfig`                         |
+| `/cosmwasm.wasm.v1.MsgUpdateParams`                                    |
 | `/ibc.core.channel.v1.MsgAcknowledgement`                              |
 | `/ibc.core.channel.v1.MsgChannelCloseConfirm`                          |
 | `/ibc.core.channel.v1.MsgChannelCloseInit`                             |
