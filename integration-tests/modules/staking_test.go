@@ -324,7 +324,7 @@ func changeMinSelfDelegationCustomParam(
 	marshalledMinSelfDelegation, err := tmjson.Marshal(newMinSelfDelegation)
 	requireT.NoError(err)
 	// apply proposal
-	chain.Governance.LegacyUpdateParams(ctx, t, "Custom staking params change proposal",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Custom staking params change proposal",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
 				customparamstypes.CustomParamsStaking, string(customparamstypes.ParamStoreKeyMinSelfDelegation), string(marshalledMinSelfDelegation),

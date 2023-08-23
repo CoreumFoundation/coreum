@@ -21,6 +21,7 @@ import (
 type CoreumChain struct {
 	Chain
 	Governance             Governance
+	LegacyGovernance       GovernanceLegacy
 	DeterministicGasConfig deterministicgas.Config
 }
 
@@ -29,6 +30,7 @@ func NewCoreumChain(chain Chain, stakerMnemonics []string) CoreumChain {
 	return CoreumChain{
 		Chain:                  chain,
 		Governance:             NewGovernance(chain.ChainContext, stakerMnemonics, chain.Faucet),
+		LegacyGovernance:       NewGovernanceLegacy(chain.ChainContext, stakerMnemonics, chain.Faucet),
 		DeterministicGasConfig: deterministicgas.DefaultConfig(),
 	}
 }

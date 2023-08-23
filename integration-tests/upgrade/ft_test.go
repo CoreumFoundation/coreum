@@ -756,7 +756,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) 
 
 	// setting decision timeout to sth in the past
 	decisionTimeout := time.Now().UTC().Add(-time.Hour)
-	chain.Governance.LegacyUpdateParams(ctx, t, "Propose changing TokenUpgradeDecisionTimeout in the assetft module",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing TokenUpgradeDecisionTimeout in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeDecisionTimeout), string(must.Bytes(tmjson.Marshal(decisionTimeout)))),
 		})
@@ -805,7 +805,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) 
 
 func (ft *ftV1UpgradeTest) changeGracePeriod(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	chain.Governance.LegacyUpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeGracePeriod), string(must.Bytes(tmjson.Marshal(gracePeriod)))),
 		})
