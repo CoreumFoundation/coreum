@@ -4,11 +4,15 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
@@ -19,23 +23,13 @@ import (
 	customparamstypes "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
 )
 
-// FIXME(v-47 unbonding-time-param-change) fix the unbonding-time-param-change, current error:recovered: parameter UnbondingTime not registered)
 // TestStakingProposalParamChange checks that staking param change proposal works correctly.
-//nolint:dupword //temp nolint
-/*
 func TestStakingProposalParamChange(t *testing.T) {
 	t.Parallel()
 
 	requireT := require.New(t)
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-
-	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
-	resp, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
-	requireT.NoError(err)
-	stakingParams := resp.Params
-
-	targetMaxValidators := 2 * stakingParams.MaxValidators
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -44,24 +38,41 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
-	// Create proposition to change max validators value.
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, paramproposal.NewParameterChangeProposal("Change MaxValidators", "Propose changing MaxValidators in the staking module",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyMaxValidators), strconv.Itoa(int(targetMaxValidators))),
-		},
-	))
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+	resp, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
 	requireT.NoError(err)
+
+	// Since all parameters must be supplied for MsgUpdateParams, we update current staking params and pass it to the proposal
+	targetMaxValidators := 2 * resp.Params.MaxValidators // Let's increase MaxValidators
+	resp.Params.MaxValidators = targetMaxValidators
+
+	msgUpdateParam := &stakingtypes.MsgUpdateParams{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Params:    resp.Params,
+	}
+
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		[]sdk.Msg{msgUpdateParam},
+		fmt.Sprintf("Propose changing MaxValidators in the staking module to %v", targetMaxValidators),
+		fmt.Sprintf("Propose changing MaxValidators in the staking module to %v", targetMaxValidators),
+		fmt.Sprintf("Propose changing MaxValidators in the staking module to %v", targetMaxValidators),
+	)
+	requireT.NoError(err)
+
 	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
+
 	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 
 	// Verify that voting period started.
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
@@ -69,7 +80,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 	// Wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// Check the proposed change is applied.
 	resp, err = stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
@@ -77,6 +88,8 @@ func TestStakingProposalParamChange(t *testing.T) {
 	requireT.Equal(targetMaxValidators, resp.Params.MaxValidators)
 }
 
+//nolint:dupword //temp nolint
+/*
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	t.Parallel()
