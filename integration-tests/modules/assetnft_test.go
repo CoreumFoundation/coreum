@@ -1410,7 +1410,6 @@ func TestAssetNFTAuthZ(t *testing.T) {
 }
 
 // TestAssetNFTAminoMultisig tests that assetnft module works seamlessly with amino multisig.
-
 // FIXME(v47-nft-amino-multisig) fix test
 /*
 func TestAssetNFTAminoMultisig(t *testing.T) {
