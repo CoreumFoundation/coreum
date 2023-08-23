@@ -353,9 +353,7 @@ func TestBankSendFailsIfNotEnoughGasIsProvided(t *testing.T) {
 	_, err := client.BroadcastTx(
 		ctx,
 		clientCtx,
-		chain.TxFactory().
-			WithGas(bankSendGas-1). // gas less than expected
-			WithGas(1),             // gas less than expected
+		chain.TxFactory().WithGas(bankSendGas-1), // gas less than expected
 		msg)
 
 	require.True(t, cosmoserrors.ErrOutOfGas.Is(err))
