@@ -19,6 +19,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	appupgradev2 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2"
 	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2/v2patch1"
+	appupgradev3 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v3"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 )
 
@@ -40,9 +41,11 @@ func TestUpgrade(t *testing.T) {
 	case "v1.0.0": // this is for mainnet
 		upgradeV2(t)
 	case "v2.0.0": // this is for testnet
-		runUpgrade(t, "v2.0.0", appupgradev2patch1.Name, 30)
+		upgradeV2patch1(t)
+	case "v2.0.2":
+		upgradeV3(t)
 	default:
-		requireT.Failf("not supported verion: %s", infoRes.ApplicationVersion.Version)
+		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
 }
 
@@ -64,6 +67,14 @@ func upgradeV2(t *testing.T) {
 	for _, test := range tests {
 		test.After(t)
 	}
+}
+
+func upgradeV2patch1(t *testing.T) {
+	runUpgrade(t, "v2.0.0", appupgradev2patch1.Name, 30)
+}
+
+func upgradeV3(t *testing.T) {
+	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
 }
 
 func runUpgrade(
