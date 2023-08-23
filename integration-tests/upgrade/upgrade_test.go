@@ -72,7 +72,7 @@ func upgradeV2patch1(t *testing.T) {
 }
 
 func upgradeV3(t *testing.T) {
-	runUpgrade(t, "v2.0.2", appupgradev3.Name, 60)
+	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
 }
 
 func runUpgrade(
@@ -155,11 +155,11 @@ func runUpgrade(
 	// Verify that we are before the upgrade
 	infoWaitingBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
-	requireT.Less(infoWaitingBlockRes.SdkBlock.Header.Height, upgradeHeight)
+	requireT.Less(infoWaitingBlockRes.Block.Header.Height, upgradeHeight)
 
-	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.SdkBlock.Header.Height))
+	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
 	defer cancel()
-	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.SdkBlock.Header.Height)
+	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.Block.Header.Height)
 	err = retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
@@ -168,10 +168,10 @@ func runUpgrade(
 		if err != nil {
 			return retry.Retryable(err)
 		}
-		if infoAfterBlockRes.SdkBlock.Header.Height >= upgradeHeight+1 {
+		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight+1 {
 			return nil
 		}
-		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.SdkBlock.Header.Height))
+		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height))
 	})
 	requireT.NoError(err)
 
