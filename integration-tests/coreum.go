@@ -27,10 +27,11 @@ type CoreumChain struct {
 
 // NewCoreumChain returns a new instance of the CoreumChain.
 func NewCoreumChain(chain Chain, stakerMnemonics []string) CoreumChain {
+	gov := NewGovernance(chain.ChainContext, stakerMnemonics, chain.Faucet)
 	return CoreumChain{
 		Chain:                  chain,
-		Governance:             NewGovernance(chain.ChainContext, stakerMnemonics, chain.Faucet),
-		LegacyGovernance:       NewGovernanceLegacy(chain.ChainContext, stakerMnemonics, chain.Faucet),
+		Governance:             gov,
+		LegacyGovernance:       NewGovernanceLegacy(gov),
 		DeterministicGasConfig: deterministicgas.DefaultConfig(),
 	}
 }

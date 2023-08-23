@@ -20,6 +20,9 @@ import (
 )
 
 // GovernanceLegacy keep the test chain predefined account for the governance operations using v1beta1 API.
+// This structure will be removed in the future once we:
+// 1. fully migrate new params (which are stored inside each module instead of params module)
+// 2. get rid of interactions with cored v2 (inside upgrade tests) which uses v1beta1 API.
 type GovernanceLegacy struct {
 	chainCtx       ChainContext
 	faucet         Faucet
@@ -29,22 +32,14 @@ type GovernanceLegacy struct {
 }
 
 // NewGovernanceLegacy returns the new instance of GovernanceLegacy.
-func NewGovernanceLegacy(chainCtx ChainContext, stakerMnemonics []string, faucet Faucet) GovernanceLegacy {
-	stakerAccounts := make([]sdk.AccAddress, 0, len(stakerMnemonics))
-	for _, stakerMnemonic := range stakerMnemonics {
-		stakerAccounts = append(stakerAccounts, chainCtx.ImportMnemonic(stakerMnemonic))
+func NewGovernanceLegacy(gov Governance) GovernanceLegacy {
+	return GovernanceLegacy{
+		chainCtx:       gov.chainCtx,
+		faucet:         gov.faucet,
+		stakerAccounts: gov.stakerAccounts,
+		govClient:      govtypesv1beta1.NewQueryClient(gov.chainCtx.ClientContext),
+		muCh:           gov.muCh,
 	}
-
-	gov := GovernanceLegacy{
-		chainCtx:       chainCtx,
-		faucet:         faucet,
-		stakerAccounts: stakerAccounts,
-		govClient:      govtypesv1beta1.NewQueryClient(chainCtx.ClientContext),
-		muCh:           make(chan struct{}, 1),
-	}
-	gov.muCh <- struct{}{}
-
-	return gov
 }
 
 // ComputeProposerBalance computes the balance required for the proposer.
