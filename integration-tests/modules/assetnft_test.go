@@ -1410,8 +1410,6 @@ func TestAssetNFTAuthZ(t *testing.T) {
 }
 
 // TestAssetNFTAminoMultisig tests that assetnft module works seamlessly with amino multisig.
-// FIXME(v47-nft-amino-multisig) fix test
-/*
 func TestAssetNFTAminoMultisig(t *testing.T) {
 	t.Parallel()
 
@@ -1444,6 +1442,7 @@ func TestAssetNFTAminoMultisig(t *testing.T) {
 		Features: []assetnfttypes.ClassFeature{
 			assetnfttypes.ClassFeature_freezing,
 		},
+		RoyaltyRate: sdk.NewDec(0),
 	}
 
 	_, err = chain.SignAndBroadcastMultisigTx(
@@ -1496,4 +1495,3 @@ func TestAssetNFTAminoMultisig(t *testing.T) {
 		Id:      nftID,
 	}, nftRes.Nft)
 }
-*/
