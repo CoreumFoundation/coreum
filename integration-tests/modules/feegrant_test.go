@@ -49,15 +49,14 @@ func TestFeeGrant(t *testing.T) {
 		Allowance: basicAllowance,
 	}
 
-	_, err = client.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
 		grantMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(grantMsg))
+	requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(grantMsg))
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: grantee.String(),
 		ToAddress:   recipient.String(),
@@ -77,15 +76,14 @@ func TestFeeGrant(t *testing.T) {
 		Grantee: grantee.String(),
 	}
 
-	_, err = client.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(revokeMsg)),
 		revokeMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(revokeMsg))
+	requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(revokeMsg))
 
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: grantee.String(),
