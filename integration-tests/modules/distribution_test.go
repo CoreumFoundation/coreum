@@ -51,7 +51,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	// capture the pool amount now to check it later
 	poolBeforeFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
-	_, err := client.BroadcastTx(
+	txResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(communityPoolFunder),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgFundCommunityPool)),
@@ -59,8 +59,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// validate the deterministic gas
-	// FIXME(v47-deterministic): fix the DeterministicMsgServer and enable it
-	// requireT.Equal(chain.GasLimitByMsgs(msgFundCommunityPool), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(msgFundCommunityPool), uint64(txResult.GasUsed))
 
 	poolAfterFunding := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
@@ -204,7 +203,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		DelegatorAddress: delegator.String(),
 		ValidatorAddress: validatorAddress.String(),
 	}
-	_, err = client.BroadcastTx(
+	txResult, err := client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(withdrawRewardMsg)),
@@ -212,8 +211,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// validate the deterministic gas
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.Equal(chain.GasLimitByMsgs(withdrawRewardMsg), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(withdrawRewardMsg), uint64(txResult.GasUsed))
 
 	delegatorBalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: delegator.String(),
@@ -239,7 +237,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		DelegatorAddress: delegator.String(),
 		WithdrawAddress:  delegatorRewardRecipient.String(),
 	}
-	_, err = client.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(setWithdrawAddressMsg)),
@@ -247,10 +245,9 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// validate the deterministic gas
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.Equal(chain.GasLimitByMsgs(setWithdrawAddressMsg), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(setWithdrawAddressMsg), uint64(txResult.GasUsed))
 	// withdraw the reward second time
-	_, err = client.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(delegator),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(withdrawRewardMsg)),
@@ -258,8 +255,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// validate the deterministic gas
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.Equal(chain.GasLimitByMsgs(withdrawRewardMsg), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(withdrawRewardMsg), uint64(txResult.GasUsed))
 	delegatorRewardRecipientBalanceRes, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: delegatorRewardRecipient.String(),
 		Denom:   delegatedCoin.Denom,
@@ -280,7 +276,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 		Messages: []sdk.Msg{withdrawCommissionMsg},
 	})
 
-	_, err = client.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		clientCtx.WithFromAddress(validatorStakerAddress),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(withdrawCommissionMsg)),
@@ -288,8 +284,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// validate the deterministic gas
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.Equal(chain.GasLimitByMsgs(withdrawCommissionMsg), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(withdrawCommissionMsg), uint64(txResult.GasUsed))
 
 	validatorStakerBalanceRes, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
 		Address: validatorStakerAddress.String(),

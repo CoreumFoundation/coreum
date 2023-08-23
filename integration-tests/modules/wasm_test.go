@@ -311,12 +311,11 @@ func TestWASMGasBankSendAndBankSend(t *testing.T) {
 	maxGasExpected := minGasExpected * 10
 
 	txf = chain.ChainContext.TxFactory().WithGas(maxGasExpected)
-	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, wasmBankSend, bankSend)
+	result, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, wasmBankSend, bankSend)
 	require.NoError(t, err)
 
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assert.Greater(t, uint64(result.GasUsed), minGasExpected)
-	// assert.Less(t, uint64(result.GasUsed), maxGasExpected)
+	assert.Greater(t, uint64(result.GasUsed), minGasExpected)
+	assert.Less(t, uint64(result.GasUsed), maxGasExpected)
 }
 
 // TestWASMPinningAndUnpinningSmartContractUsingGovernance deploys simple smart contract, verifies that it works properly and then tests that
@@ -587,8 +586,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.EqualValues(newAdmin.String(), contractInfo.Admin)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.EqualValues(chain.GasLimitByMsgs(msgUpdateAdmin), res.GasUsed)
+	requireT.EqualValues(chain.GasLimitByMsgs(msgUpdateAdmin), res.GasUsed)
 
 	// clear admin
 	msgClearAdmin := &wasmtypes.MsgClearAdmin{
@@ -610,8 +608,7 @@ func TestUpdateAndClearAdminOfContract(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.EqualValues("", contractInfo.Admin)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
+	requireT.EqualValues(chain.GasLimitByMsgs(msgClearAdmin), res.GasUsed)
 }
 
 // TestWASMAuthzContract runs a contract deployment flow and tests that the contract is able to use the Authz module
@@ -662,15 +659,14 @@ func TestWASMAuthzContract(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, err = client.BroadcastTx(
+	txResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
 		grantMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.Equal(chain.GasLimitByMsgs(grantMsg), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(grantMsg), uint64(txResult.GasUsed))
 	// assert granted
 	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
 		Granter: granter.String(),
