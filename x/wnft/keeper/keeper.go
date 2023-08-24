@@ -28,7 +28,7 @@ func NewWrappedNFTKeeper(originalKeeper nftkeeper.Keeper, provider types.NonFung
 
 // Send overwrites Send method of the original keeper.
 // Copied from https://github.com/cosmos/cosmos-sdk/blob/a1143138716b64bc4fa0aa53c0f0fa59eb675bb7/x/nft/keeper/msg_server.go#L14
-// FIXME(v47-validate-wrapping): once we update the nft to sdk nft, that methods must be updated as well.
+// FIXME(v47-nft-migration): once we update the nft to sdk nft, that methods must be updated as well.
 func (wk Wrapper) Send(goCtx context.Context, msg *nft.MsgSend) (*nft.MsgSendResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
