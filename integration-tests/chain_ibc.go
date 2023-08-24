@@ -94,6 +94,14 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 	tmQueryClient := tmservice.NewServiceClient(recipientChainContext.ClientContext)
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	require.NoError(t, err)
+	var headerTime time.Time
+	if latestBlockRes.SdkBlock != nil {
+		headerTime = latestBlockRes.GetSdkBlock().GetHeader().Time
+	} else {
+		// TODO: remove this if condition once all the connected chains have migrated to cosmos sdk v0.47.
+		// Block is deprecated in favor of SdkBlock.
+		headerTime = latestBlockRes.GetBlock().GetHeader().Time
+	}
 
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:       ibctransfertypes.PortID,
@@ -101,7 +109,7 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 		Token:            coin,
 		Sender:           sender,
 		Receiver:         receiver,
-		TimeoutTimestamp: uint64(latestBlockRes.SdkBlock.Header.Time.Add(-5 * time.Second).UnixNano()),
+		TimeoutTimestamp: uint64(headerTime.Add(-5 * time.Second).UnixNano()),
 	}
 
 	return c.BroadcastTxWithSigner(
@@ -138,13 +146,13 @@ func (c ChainContext) AwaitForBalance(
 		}
 
 		if balancesRes.Balances.AmountOf(expectedBalance.Denom).String() != expectedBalance.Amount.String() {
-			return retry.Retryable(errors.Errorf("%s balance is still not equal to expected, all balances: %s", expectedBalance.Denom, balancesRes.Balances.String()))
+			return retry.Retryable(errors.Errorf("balance of %s is not as expected, all balances: %s", expectedBalance.String(), balancesRes.Balances.String()))
 		}
 
 		return nil
 	})
 	if err == nil {
-		t.Logf("Received expected balance of %s.", expectedBalance.Denom)
+		t.Logf("Received expected balance of %s.", expectedBalance.String())
 	}
 
 	return err
@@ -329,6 +337,7 @@ func setupRelayerChain(
 
 	relayerSrcChainProvider, err := relayerSrcChainConfig.NewProvider(log, t.TempDir(), false, chain.ChainSettings.ChainID)
 	require.NoError(t, err)
+	require.NoError(t, relayerSrcChainProvider.Init(ctx))
 	relayerSrcChainKeyInfo, err := relayerSrcChainProvider.AddKey(relayerKeyName, chain.ChainSettings.CoinType, string(hd.Secp256k1Type))
 	require.NoError(t, err)
 	_, relayerKeyBytes, err := bech32.DecodeAndConvert(relayerSrcChainKeyInfo.Address)
