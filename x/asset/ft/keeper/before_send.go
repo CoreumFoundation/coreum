@@ -47,6 +47,7 @@ func (g groupedByDenomAccountOperations) add(address string, coins sdk.Coins) {
 }
 
 func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	// TODO: Starting from version v0.47 Cosmos SDK accepts single input only, so we may greatly simplify the logic here.
 	groupInputs := make(groupedByDenomAccountOperations)
 	for _, in := range inputs {
 		groupInputs.add(in.Address, in.Coins)
