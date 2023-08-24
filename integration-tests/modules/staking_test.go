@@ -4,7 +4,10 @@ package modules
 
 import (
 	"context"
+	"fmt"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
@@ -97,9 +100,9 @@ func TestStakingProposalParamChange(t *testing.T) {
 	requireT.Equal(targetParams.UnbondingTime, paramsAfterUpgrade.Params.UnbondingTime)
 }
 
-//nolint:dupword //temp nolint
-/*
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
+//
+//nolint:dupword //temp nolint
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	t.Parallel()
 
@@ -246,7 +249,7 @@ func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, validatorStakingAmount.String(), valResp.Validator.Tokens.String())
-} */
+}
 
 // TestValidatorCreationWithLowMinSelfDelegation checks validator can't set the self delegation less than min limit.
 func TestValidatorCreationWithLowMinSelfDelegation(t *testing.T) {
@@ -360,10 +363,8 @@ func changeMinSelfDelegationCustomParam(
 	requireT.Equal(newMinSelfDelegation.String(), customStakingParams.Params.MinSelfDelegation.String())
 }
 
-/*
 func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain integrationtests.CoreumChain, unbondingTime time.Duration) {
 	requireT := require.New(t)
-	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -372,16 +373,33 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain inte
 
 	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
+	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
+	paramsBeforeUpgrade, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	requireT.NoError(err)
+
+	// Since all parameters must be supplied for MsgUpdateParams, we update current staking params and pass it to the proposal
+	targetParams := paramsBeforeUpgrade.Params
+	targetParams.UnbondingTime = unbondingTime
+
+	msgUpdateParam := &stakingtypes.MsgUpdateParams{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Params:    targetParams,
+	}
+
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		[]sdk.Msg{msgUpdateParam},
+		fmt.Sprintf("Change the unbnunbondingdig time to %s", unbondingTime.String()),
+		"Changing unbonding time for the integration test",
+		"Changing unbonding time for the integration test",
+	)
+	requireT.NoError(err)
+
 	// Create proposition to change max the unbonding time value.
 	chain.Governance.ProposeAndVote(ctx, t, proposer,
-		paramproposal.NewParameterChangeProposal(
-			fmt.Sprintf("Change the unbnunbondingdig time to %s", unbondingTime.String()),
-			"Changing unbonding time for the integration test",
-			[]paramproposal.ParamChange{
-				paramproposal.NewParamChange(stakingtypes.ModuleName, string(stakingtypes.KeyUnbondingTime), fmt.Sprintf("\"%d\"", unbondingTime)),
-			},
-		),
-		govtypesv1beta1.OptionYes,
+		proposalMsg,
+		govtypesv1.OptionYes,
 	)
 
 	// Check the proposed change is applied.
@@ -400,4 +418,3 @@ func getBalance(ctx context.Context, t *testing.T, chain integrationtests.Coreum
 
 	return *resp.Balance
 }
-*/
