@@ -5,7 +5,6 @@ package modules
 import (
 	"context"
 	"fmt"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"testing"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
@@ -101,8 +101,6 @@ func TestStakingProposalParamChange(t *testing.T) {
 }
 
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
-//
-//nolint:dupword //temp nolint
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
 	t.Parallel()
 
