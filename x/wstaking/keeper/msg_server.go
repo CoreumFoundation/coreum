@@ -25,7 +25,6 @@ func NewMsgServerImpl(stakingMsgSrv stakingtypes.MsgServer, customParamsKeeper w
 }
 
 // CreateValidator defines wrapped method for creating a new validator.
-// FIXME(v47-validate-wrapping): update the content of the method with updated sdk method.
 func (s MsgServer) CreateValidator(goCtx context.Context, msg *stakingtypes.MsgCreateValidator) (*stakingtypes.MsgCreateValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

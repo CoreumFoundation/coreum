@@ -3,12 +3,14 @@ package integrationtests
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
@@ -45,14 +47,12 @@ type BalancesOptions struct {
 // It panics if unsupported message type specified.
 func (c CoreumChain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64
-	for range msgs {
-		// FIXME(v47-deterministic) use real gas instead of the constant
-		totalGasRequired += 1_000_000
-		/* msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
+	for _, msg := range msgs {
+		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
-		totalGasRequired += msgGas + c.DeterministicGasConfig.FixedGas */
+		totalGasRequired += msgGas + c.DeterministicGasConfig.FixedGas
 	}
 
 	return totalGasRequired
@@ -62,14 +62,12 @@ func (c CoreumChain) GasLimitByMsgs(msgs ...sdk.Msg) uint64 {
 // It panics if unsupported message type specified.
 func (c CoreumChain) GasLimitForMultiMsgTx(msgs ...sdk.Msg) uint64 {
 	var totalGasRequired uint64
-	for range msgs {
-		// FIXME(v47-deterministic) use real gas instead of the constant
-		totalGasRequired += 1_000_000
-		/* msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
+	for _, msg := range msgs {
+		msgGas, exists := c.DeterministicGasConfig.GasRequiredByMessage(msg)
 		if !exists {
 			panic(errors.Errorf("unsuported message type for deterministic gas: %v", reflect.TypeOf(msg).String()))
 		}
-		totalGasRequired += msgGas */
+		totalGasRequired += msgGas
 	}
 
 	return totalGasRequired + c.DeterministicGasConfig.FixedGas
