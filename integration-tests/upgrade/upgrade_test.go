@@ -68,7 +68,7 @@ func runUpgrade(
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
 
-	upgradeHeight := latestBlockRes.Block.Header.Height + blocksToWait
+	upgradeHeight := latestBlockRes.Block.Header.Height + blocksToWait //nolint:staticcheck
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
@@ -122,11 +122,11 @@ func runUpgrade(
 	// Verify that we are before the upgrade
 	infoWaitingBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
-	requireT.Less(infoWaitingBlockRes.Block.Header.Height, upgradeHeight)
+	requireT.Less(infoWaitingBlockRes.Block.Header.Height, upgradeHeight) //nolint:staticcheck
 
-	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
+	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height)) //nolint:staticcheck
 	defer cancel()
-	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.Block.Header.Height)
+	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.Block.Header.Height) //nolint:staticcheck
 	err = retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
@@ -135,10 +135,10 @@ func runUpgrade(
 		if err != nil {
 			return retry.Retryable(err)
 		}
-		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight+1 {
+		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight+1 { //nolint:staticcheck
 			return nil
 		}
-		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height))
+		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height)) //nolint:staticcheck
 	})
 	requireT.NoError(err)
 

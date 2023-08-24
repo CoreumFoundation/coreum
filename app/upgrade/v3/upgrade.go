@@ -42,8 +42,12 @@ import (
 // upgrade v45->v46: https://github.com/cosmos/cosmos-sdk/blob/release/v0.46.x/UPGRADING.md
 // upgrade v46->v47: https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md
 
+// Name defines the upgrade name.
 const Name = "v3"
 
+// New makes an upgrade handler for v3 upgrade.
+//
+//nolint:funlen
 func New(
 	mm *module.Manager,
 	configurator module.Configurator,
@@ -81,7 +85,7 @@ func New(
 					assetnfttypes.ModuleName,
 					customparamstypes.CustomParamsStaking,
 
-					// TODO: What should we do with ibc modules?
+					// We skip ibc module intentionally, because each module inside ibc has its own params.
 					ibccoreexported.ModuleName,
 				}, subspace.Name()) {
 					continue
@@ -89,23 +93,23 @@ func New(
 
 				keyTable, ok := map[string]paramstypes.KeyTable{
 					// cosmos-sdk:
-					authtypes.ModuleName:     authtypes.ParamKeyTable(),
-					banktypes.ModuleName:     banktypes.ParamKeyTable(),
+					authtypes.ModuleName:     authtypes.ParamKeyTable(), //nolint:staticcheck
+					banktypes.ModuleName:     banktypes.ParamKeyTable(), //nolint:staticcheck
 					stakingtypes.ModuleName:  stakingtypes.ParamKeyTable(),
-					distrtypes.ModuleName:    distrtypes.ParamKeyTable(),
-					slashingtypes.ModuleName: slashingtypes.ParamKeyTable(),
-					govtypes.ModuleName:      govv1.ParamKeyTable(),
-					crisistypes.ModuleName:   crisistypes.ParamKeyTable(),
-					minttypes.ModuleName:     minttypes.ParamKeyTable(),
+					distrtypes.ModuleName:    distrtypes.ParamKeyTable(),    //nolint:staticcheck
+					slashingtypes.ModuleName: slashingtypes.ParamKeyTable(), //nolint:staticcheck
+					govtypes.ModuleName:      govv1.ParamKeyTable(),         //nolint:staticcheck
+					crisistypes.ModuleName:   crisistypes.ParamKeyTable(),   //nolint:staticcheck
+					minttypes.ModuleName:     minttypes.ParamKeyTable(),     //nolint:staticcheck
 
 					// ibc:
 					ibctransfertypes.ModuleName: ibctransfertypes.ParamKeyTable(),
 					// TODO: do we use ICA ?
-					//icacontrollertypes.SubModuleName: icacontrollertypes.ParamKeyTable(),
-					//icahosttypes.SubModuleName:       icahosttypes.ParamKeyTable(),
+					// icacontrollertypes.SubModuleName: icacontrollertypes.ParamKeyTable(),
+					// icahosttypes.SubModuleName:       icahosttypes.ParamKeyTable(),
 
 					// wasm:
-					wasmtypes.ModuleName: wasmtypes.ParamKeyTable(),
+					wasmtypes.ModuleName: wasmtypes.ParamKeyTable(), //nolint:staticcheck
 
 					// coreum:
 					// TODO(migration-away-from-x/params): Add migration of params for Coreum modules. Skipping them for now.
