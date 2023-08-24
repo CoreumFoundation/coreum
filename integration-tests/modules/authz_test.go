@@ -67,15 +67,14 @@ func TestAuthz(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, err = client.BroadcastTx(
+	txResult, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(grantMsg)),
 		grantMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.Equal(chain.GasLimitByMsgs(grantMsg), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(grantMsg), uint64(txResult.GasUsed))
 
 	// assert granted
 	gransRes, err := authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
@@ -95,15 +94,14 @@ func TestAuthz(t *testing.T) {
 	requireT.ErrorIs(err, cosmoserrors.ErrInvalidPubKey)
 
 	// try to send using the authz
-	_, err = client.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(grantee),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
 		&execMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.Equal(chain.GasLimitByMsgs(&execMsg), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(&execMsg), uint64(txResult.GasUsed))
 
 	recipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
 		Address: recipient.String(),
@@ -113,15 +111,14 @@ func TestAuthz(t *testing.T) {
 
 	// revoke the grant
 	revokeMsg := authztypes.NewMsgRevoke(granter, grantee, sdk.MsgTypeURL(&banktypes.MsgSend{}))
-	_, err = client.BroadcastTx(
+	txResult, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(granter),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&revokeMsg)),
 		&revokeMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// requireT.Equal(chain.GasLimitByMsgs(&revokeMsg), uint64(txResult.GasUsed))
+	requireT.Equal(chain.GasLimitByMsgs(&revokeMsg), uint64(txResult.GasUsed))
 
 	gransRes, err = authzClient.Grants(ctx, &authztypes.QueryGrantsRequest{
 		Granter: granter.String(),
