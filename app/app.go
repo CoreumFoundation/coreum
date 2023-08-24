@@ -802,6 +802,7 @@ func New(
 			IBCKeeper:              app.IBCKeeper,
 			FeeModelKeeper:         app.FeeModelKeeper,
 			WasmTXCounterStoreKey:  keys[wasmtypes.StoreKey],
+			WasmConfig:             wasmConfig,
 		},
 	)
 	if err != nil {
