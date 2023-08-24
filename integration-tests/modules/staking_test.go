@@ -4,7 +4,6 @@ package modules
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -39,25 +38,29 @@ func TestStakingProposalParamChange(t *testing.T) {
 	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
 	stakingClient := stakingtypes.NewQueryClient(chain.ClientContext)
-	resp, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	paramsBeforeUpgrade, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
 	requireT.NoError(err)
 
 	// Since all parameters must be supplied for MsgUpdateParams, we update current staking params and pass it to the proposal
-	targetMaxValidators := 2 * resp.Params.MaxValidators // Let's increase MaxValidators
-	resp.Params.MaxValidators = targetMaxValidators
+	targetParams := paramsBeforeUpgrade.Params
+	targetParams.HistoricalEntries = 2 * paramsBeforeUpgrade.Params.HistoricalEntries
+	targetParams.MaxEntries = 2 * paramsBeforeUpgrade.Params.MaxEntries
+	targetParams.MaxValidators = 2 * paramsBeforeUpgrade.Params.MaxValidators
+	targetParams.MinCommissionRate = paramsBeforeUpgrade.Params.MinCommissionRate.Add(sdk.NewDecWithPrec(int64(1), int64(2)))
+	targetParams.UnbondingTime = 2 * paramsBeforeUpgrade.Params.UnbondingTime
 
 	msgUpdateParam := &stakingtypes.MsgUpdateParams{
 		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		Params:    resp.Params,
+		Params:    targetParams,
 	}
 
 	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
 		ctx,
 		proposer,
 		[]sdk.Msg{msgUpdateParam},
-		fmt.Sprintf("Propose changing MaxValidators in the staking module to %v", targetMaxValidators),
-		fmt.Sprintf("Propose changing MaxValidators in the staking module to %v", targetMaxValidators),
-		fmt.Sprintf("Propose changing MaxValidators in the staking module to %v", targetMaxValidators),
+		"Change all params in staking module",
+		"Change all params in staking module",
+		"Change all params in staking module",
 	)
 	requireT.NoError(err)
 
@@ -83,9 +86,15 @@ func TestStakingProposalParamChange(t *testing.T) {
 	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// Check the proposed change is applied.
-	resp, err = stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	paramsAfterUpgrade, err := stakingClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	requireT.Equal(targetMaxValidators, resp.Params.MaxValidators)
+
+	requireT.Equal(targetParams.BondDenom, paramsAfterUpgrade.Params.BondDenom)
+	requireT.Equal(targetParams.HistoricalEntries, paramsAfterUpgrade.Params.HistoricalEntries)
+	requireT.Equal(targetParams.MaxEntries, paramsAfterUpgrade.Params.MaxEntries)
+	requireT.Equal(targetParams.MaxValidators, paramsAfterUpgrade.Params.MaxValidators)
+	requireT.Equal(targetParams.MinCommissionRate, paramsAfterUpgrade.Params.MinCommissionRate)
+	requireT.Equal(targetParams.UnbondingTime, paramsAfterUpgrade.Params.UnbondingTime)
 }
 
 //nolint:dupword //temp nolint
