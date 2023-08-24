@@ -7,10 +7,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +19,7 @@ import (
 
 const submitProposalGas = 400_000
 
-// Governance keep the test chain predefined account for the governance operations.
+// Governance keep the test chain predefined account for the governance operations via v1 API only.
 type Governance struct {
 	chainCtx       ChainContext
 	faucet         Faucet
@@ -119,27 +117,6 @@ func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypesv1.M
 	}
 
 	return proposalID, nil
-}
-
-// NewMsgSubmitProposalWithLegacyContent - is a helper which initializes MsgSubmitProposal with govtypesv1beta1.Content.
-func (g Governance) NewMsgSubmitProposalWithLegacyContent(
-	ctx context.Context,
-	proposer sdk.AccAddress,
-	content govtypesv1beta1.Content, // That is the single place where we use govtypesv1beta1 in gov.go. Can we avoid it ?
-) (*govtypesv1.MsgSubmitProposal, error) {
-	msgExecLegacy, err := govtypesv1.NewLegacyContent(content, authtypes.NewModuleAddress(govtypes.ModuleName).String())
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return g.NewMsgSubmitProposal(
-		ctx,
-		proposer,
-		[]sdk.Msg{msgExecLegacy},
-		content.GetDescription(),
-		content.GetTitle(),
-		content.GetTitle(),
-	)
 }
 
 // NewMsgSubmitProposal - is a helper which initializes v1.MsgSubmitProposal with args passed and prefills min deposit.

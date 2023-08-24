@@ -25,13 +25,10 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcclientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
-	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
-
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcclientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	ibccoreexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
@@ -41,7 +38,7 @@ import (
 	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
-// juno reference: https://github.com/CosmosContracts/juno/pull/646/files#diff-8ae5168a16be54c5a00ba9dcf5e54cabc4d053c2f3d77ac700aeef3f3dffd87b
+// References:
 // upgrade v45->v46: https://github.com/cosmos/cosmos-sdk/blob/release/v0.46.x/UPGRADING.md
 // upgrade v46->v47: https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md
 
@@ -78,7 +75,7 @@ func New(
 				subspace := subspace
 
 				if lo.Contains([]string{
-					// TODO(migration-away-from-x/params): Add migration of params for Coreum modules.
+					// TODO(migration-away-from-x/params): Add migration of params for Coreum modules. Skipping them for now.
 					feemodeltypes.ModuleName,
 					assetfttypes.ModuleName,
 					assetnfttypes.ModuleName,
@@ -104,14 +101,14 @@ func New(
 					// ibc:
 					ibctransfertypes.ModuleName: ibctransfertypes.ParamKeyTable(),
 					// TODO: do we use ICA ?
-					icacontrollertypes.SubModuleName: icacontrollertypes.ParamKeyTable(),
-					icahosttypes.SubModuleName:       icahosttypes.ParamKeyTable(),
+					//icacontrollertypes.SubModuleName: icacontrollertypes.ParamKeyTable(),
+					//icahosttypes.SubModuleName:       icahosttypes.ParamKeyTable(),
 
 					// wasm:
 					wasmtypes.ModuleName: wasmtypes.ParamKeyTable(),
 
 					// coreum:
-					// TODO(migration-away-from-x/params): Add migration of params for Coreum modules.
+					// TODO(migration-away-from-x/params): Add migration of params for Coreum modules. Skipping them for now.
 				}[subspace.Name()]
 
 				if !ok {
@@ -125,7 +122,6 @@ func New(
 
 			// Migrate Tendermint consensus parameters from x/params module to a deprecated x/consensus module.
 			// The old params module is required to still be imported in your app.go in order to handle this migration.
-			// TODO: Check what this part means.
 			baseAppLegacySS := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 			baseapp.MigrateParams(ctx, baseAppLegacySS, &consensusParamsKeeper)
 

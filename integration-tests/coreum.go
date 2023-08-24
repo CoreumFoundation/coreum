@@ -31,8 +31,9 @@ type CoreumChain struct {
 func NewCoreumChain(chain Chain, stakerMnemonics []string) CoreumChain {
 	gov := NewGovernance(chain.ChainContext, stakerMnemonics, chain.Faucet)
 	return CoreumChain{
-		Chain:                  chain,
-		Governance:             gov,
+		Chain:      chain,
+		Governance: gov,
+		// Since both Governance & LegacyGovernance share the same stackers, we need to use the same mutex for both.
 		LegacyGovernance:       NewGovernanceLegacy(gov),
 		DeterministicGasConfig: deterministicgas.DefaultConfig(),
 	}

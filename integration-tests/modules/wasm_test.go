@@ -377,7 +377,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
 	// pin smart contract
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposalWithLegacyContent(ctx, proposer, &wasmtypes.PinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
+	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposalV1(ctx, proposer, &wasmtypes.PinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
 		Title:       "Pin smart contract",
 		Description: "Testing smart contract pinning",
 		CodeIDs:     []uint64{codeID},
@@ -403,7 +403,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	gasUsedAfterPinning := incrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1339)
 
 	// unpin smart contract
-	proposalMsg, err = chain.Governance.NewMsgSubmitProposalWithLegacyContent(ctx, proposer, &wasmtypes.UnpinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
+	proposalMsg, err = chain.LegacyGovernance.NewMsgSubmitProposalV1(ctx, proposer, &wasmtypes.UnpinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
 		Title:       "Unpin smart contract",
 		Description: "Testing smart contract unpinning",
 		CodeIDs:     []uint64{codeID},

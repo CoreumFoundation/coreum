@@ -15,16 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev2 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2"
-	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2/v2patch1"
 	appupgradev3 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v3"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 )
-
-type upgradeTest interface {
-	Before(t *testing.T)
-	After(t *testing.T)
-}
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
@@ -36,10 +29,6 @@ func TestUpgrade(t *testing.T) {
 	requireT.NoError(err)
 
 	switch infoRes.ApplicationVersion.Version {
-	case "v1.0.0": // this is for mainnet
-		upgradeV2(t)
-	case "v2.0.0": // this is for testnet
-		upgradeV2patch1(t)
 	case "v2.0.2":
 		upgradeV3(t)
 	default:
@@ -47,34 +36,13 @@ func TestUpgrade(t *testing.T) {
 	}
 }
 
-func upgradeV2(t *testing.T) {
-	tests := []upgradeTest{
-		&nftStoreTest{},
-		&nftFeaturesTest{},
-		&nftWasmDataTest{},
-		&ftV1UpgradeTest{},
-		&ftFeatureMigrationTest{},
-	}
-
-	for _, test := range tests {
-		test.Before(t)
-	}
-
-	runUpgrade(t, "v1.0.0", appupgradev2.Name, 30)
-
-	for _, test := range tests {
-		test.After(t)
-	}
-}
-
-func upgradeV2patch1(t *testing.T) {
-	runUpgrade(t, "v2.0.0", appupgradev2patch1.Name, 30)
-}
-
 func upgradeV3(t *testing.T) {
 	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
 }
 
+// Note that inside this method we use deprecated Block attributed of GetLatestBlockResponse (latestBlockRes.Block)
+// because we interact with older version of SDK before upgrade, and it doesn't have new SdkBlock attribute set.
+// We also use deprecated v1beta1 gov because v1 doesn't exist in cored v2.0.2.
 func runUpgrade(
 	t *testing.T,
 	oldBinaryVersion string,
@@ -100,7 +68,6 @@ func runUpgrade(
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
 
-	// TODO: Explain.
 	upgradeHeight := latestBlockRes.Block.Header.Height + blocksToWait
 
 	// Create new proposer.
@@ -112,7 +79,7 @@ func runUpgrade(
 
 	t.Logf("Creating proposal for upgrading, upgradeName:%s, upgradeHeight:%d", upgradeName, upgradeHeight)
 
-	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposal(
+	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposalV1Beta1(
 		ctx,
 		proposer,
 		upgradetypes.NewSoftwareUpgradeProposal(

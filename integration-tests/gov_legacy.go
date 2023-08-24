@@ -8,7 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/pkg/errors"
@@ -19,10 +21,11 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/testutil/event"
 )
 
-// GovernanceLegacy keep the test chain predefined account for the governance operations using v1beta1 API.
+// GovernanceLegacy keep the test chain predefined account for the governance operations via v1beta1 API.
 // This structure will be removed in the future once we:
-// 1. fully migrate new params (which are stored inside each module instead of params module)
-// 2. get rid of interactions with cored v2 (inside upgrade tests) which uses v1beta1 API.
+// 1. Fully migrate new params (which are stored inside each module instead of params module).
+// 2. Migrate to new proposal types. Mostly initialize by NewMsgSubmitProposalV1 method.
+// 3. Get rid of interactions with cored v2 (inside upgrade tests) which uses v1beta1 API.
 type GovernanceLegacy struct {
 	chainCtx       ChainContext
 	faucet         Faucet
@@ -70,7 +73,7 @@ func (g GovernanceLegacy) UpdateParams(ctx context.Context, t *testing.T, descri
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
 func (g GovernanceLegacy) ProposeAndVote(ctx context.Context, t *testing.T, proposer sdk.AccAddress, content govtypesv1beta1.Content, option govtypesv1beta1.VoteOption) {
 	t.Helper()
-	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, content)
+	proposalMsg, err := g.NewMsgSubmitProposalV1Beta1(ctx, proposer, content)
 	require.NoError(t, err)
 
 	proposalID, err := g.Propose(ctx, t, proposalMsg)
@@ -139,7 +142,7 @@ func (g GovernanceLegacy) NewParamsChangeProposal(
 		updates,
 	)
 
-	proposalMsg, err := g.NewMsgSubmitProposal(
+	proposalMsg, err := g.NewMsgSubmitProposalV1Beta1(
 		ctx,
 		proposer,
 		legacyContent,
@@ -148,14 +151,49 @@ func (g GovernanceLegacy) NewParamsChangeProposal(
 	return proposalMsg
 }
 
-// NewMsgSubmitProposal - is a helper which initializes MsgSubmitProposal with args passed and prefills min deposit.
-func (g GovernanceLegacy) NewMsgSubmitProposal(ctx context.Context, proposer sdk.AccAddress, content govtypesv1beta1.Content) (*govtypesv1beta1.MsgSubmitProposal, error) {
+// NewMsgSubmitProposalV1Beta1 - is a helper which initializes govtypesv1beta1.MsgSubmitProposal with govtypesv1beta1.Content.
+func (g GovernanceLegacy) NewMsgSubmitProposalV1Beta1(
+	ctx context.Context,
+	proposer sdk.AccAddress,
+	content govtypesv1beta1.Content,
+) (*govtypesv1beta1.MsgSubmitProposal, error) {
 	govParams, err := g.queryGovParams(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	msg, err := govtypesv1beta1.NewMsgSubmitProposal(content, govParams.DepositParams.MinDeposit, proposer)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return msg, nil
+}
+
+// NewMsgSubmitProposalV1 - is a helper which initializes govtypesv1.MsgSubmitProposal with govtypesv1beta1.Content.
+func (g GovernanceLegacy) NewMsgSubmitProposalV1(
+	ctx context.Context,
+	proposer sdk.AccAddress,
+	content govtypesv1beta1.Content, // That is the single place where we use govtypesv1beta1 in gov.go. Can we avoid it ?
+) (*govtypesv1.MsgSubmitProposal, error) {
+	msgExecLegacy, err := govtypesv1.NewLegacyContent(content, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	govParams, err := g.queryGovParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	msg, err := govtypesv1.NewMsgSubmitProposal(
+		[]sdk.Msg{msgExecLegacy},
+		govParams.DepositParams.MinDeposit,
+		proposer.String(),
+		content.GetDescription(),
+		content.GetTitle(),
+		content.GetTitle(),
+	)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
