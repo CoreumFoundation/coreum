@@ -306,8 +306,9 @@ func New(
 	legacyAmino := encodingConfig.Amino
 	txConfig := encodingConfig.TxConfig
 	interfaceRegistry := encodingConfig.InterfaceRegistry
-	// Since 0.47 we all clients must register themselves and are not registered automatically.
-	// we need to register localhost client since we use it in integration tests.
+	// Since 0.47 we all ibc clients must be registered explicitly and are not registered automatically.
+	// we need to register localhost client since we use cosmos relayer in our integration tests and it
+	// relies on localhost client to be registered.
 	ibclocalhost.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
