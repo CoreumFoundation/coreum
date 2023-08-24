@@ -127,6 +127,7 @@ import (
 	delaykeeper "github.com/CoreumFoundation/coreum/v2/x/delay/keeper"
 	delaytypes "github.com/CoreumFoundation/coreum/v2/x/delay/types"
 	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
+	deterministicgastypes "github.com/CoreumFoundation/coreum/v2/x/deterministicgas/types"
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel"
 	feemodelkeeper "github.com/CoreumFoundation/coreum/v2/x/feemodel/keeper"
 	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
@@ -308,7 +309,6 @@ func New(
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
-	// bApp.SetRouter(deterministicgastypes.NewDeterministicGasRouter(bApp.Router(), deterministicGasConfig))  // FIXME(v47-deterministic) enable router
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
 	keys := sdk.NewKVStoreKeys(
@@ -755,10 +755,8 @@ func New(
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 
-	// FIXME(v47-deterministic): fix the DeterministicMsgServer and enable it
-	// app.configurator = module.NewConfigurator(app.appCodec,
-	//	deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig), app.GRPCQueryRouter())
-	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+	app.configurator = module.NewConfigurator(app.appCodec,
+		deterministicgastypes.NewDeterministicMsgServer(app.MsgServiceRouter(), deterministicGasConfig), app.GRPCQueryRouter())
 	app.ModuleManager.RegisterServices(app.configurator)
 
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))

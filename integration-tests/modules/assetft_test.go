@@ -1064,8 +1064,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		freezeMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(freezeMsg))
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(freezeMsg))
 
 	fungibleTokenFreezeEvts, err := event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
@@ -1174,8 +1173,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		unfreezeMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
 
 	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
@@ -1241,8 +1239,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		unfreezeMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(unfreezeMsg))
 
 	fungibleTokenFreezeEvts, err = event.FindTypedEvents[*assetfttypes.EventFrozenAmountChanged](res.Events)
 	requireT.NoError(err)
@@ -1974,15 +1971,14 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
 	}
-	_, err = client.BroadcastTx(
+	res, err := client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(whitelistMsg))
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(whitelistMsg))
 
 	// query whitelisted tokens
 	whitelistedBalance, err := ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
@@ -2052,15 +2048,14 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Account: recipient.String(),
 		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(401)),
 	}
-	_, err = client.BroadcastTx(
+	res, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
 	requireT.NoError(err)
-	// FIXME(v47-deterministic) uncomment after deterministic gas fix
-	// assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(whitelistMsg))
+	assertT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(whitelistMsg))
 
 	// query whitelisted tokens
 	whitelistedBalance, err = ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{

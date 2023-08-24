@@ -42,7 +42,6 @@ func NewAppModule(
 }
 
 // RegisterServices registers module services.
-// FIXME(v47-validate-wrapping): validate that we wrap all required methods and update existing.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	stakingKeeperMsgSrv := stakingkeeper.NewMsgServerImpl(am.stakingKeeper)
 	// wrap the staking keeper message server to intersect the messages

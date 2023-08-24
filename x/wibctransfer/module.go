@@ -12,7 +12,6 @@ import (
 )
 
 // AppModuleBasic defines the basic application module used by the wrapped IBC transfer module.
-// FIXME(v47-validate-wrapping): update the content of the method to the sdk current.
 type AppModuleBasic struct {
 	transfer.AppModuleBasic
 }
