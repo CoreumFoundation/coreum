@@ -65,13 +65,34 @@ func New(
 				// Migration of SDK modules away from x/params:
 
 				// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md#xcrisis
-				crisistypes.ModuleName,
+				crisistypes.StoreKey,
 				// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md#xconsensus
-				consensustypes.ModuleName,
+				consensustypes.StoreKey,
 			},
 		},
 		Upgrade: func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 			logger := ctx.Logger().With("upgrade", Name)
+
+			moduleNameKeyTableMap := map[string]paramstypes.KeyTable{
+				// cosmos-sdk:
+				authtypes.ModuleName:     authtypes.ParamKeyTable(), //nolint:staticcheck // don't match
+				banktypes.ModuleName:     banktypes.ParamKeyTable(), //nolint:staticcheck
+				stakingtypes.ModuleName:  stakingtypes.ParamKeyTable(),
+				distrtypes.ModuleName:    distrtypes.ParamKeyTable(),    //nolint:staticcheck
+				slashingtypes.ModuleName: slashingtypes.ParamKeyTable(), //nolint:staticcheck
+				govtypes.ModuleName:      govv1.ParamKeyTable(),         //nolint:staticcheck
+				crisistypes.ModuleName:   crisistypes.ParamKeyTable(),   //nolint:staticcheck
+				minttypes.ModuleName:     minttypes.ParamKeyTable(),     //nolint:staticcheck
+
+				// ibc:
+				ibctransfertypes.ModuleName: ibctransfertypes.ParamKeyTable(),
+
+				// wasm:
+				wasmtypes.ModuleName: wasmtypes.ParamKeyTable(), //nolint:staticcheck
+
+				// coreum:
+				// TODO(migration-away-from-x/params): Add migration of params for Coreum modules. Skipping them for now.
+			}
 
 			// https://github.com/cosmos/cosmos-sdk/pull/12363/files
 			// Set param key table for x/params module migration
@@ -91,26 +112,7 @@ func New(
 					continue
 				}
 
-				keyTable, ok := map[string]paramstypes.KeyTable{
-					// cosmos-sdk:
-					authtypes.ModuleName:     authtypes.ParamKeyTable(), //nolint:staticcheck
-					banktypes.ModuleName:     banktypes.ParamKeyTable(), //nolint:staticcheck
-					stakingtypes.ModuleName:  stakingtypes.ParamKeyTable(),
-					distrtypes.ModuleName:    distrtypes.ParamKeyTable(),    //nolint:staticcheck
-					slashingtypes.ModuleName: slashingtypes.ParamKeyTable(), //nolint:staticcheck
-					govtypes.ModuleName:      govv1.ParamKeyTable(),         //nolint:staticcheck
-					crisistypes.ModuleName:   crisistypes.ParamKeyTable(),   //nolint:staticcheck
-					minttypes.ModuleName:     minttypes.ParamKeyTable(),     //nolint:staticcheck
-
-					// ibc:
-					ibctransfertypes.ModuleName: ibctransfertypes.ParamKeyTable(),
-
-					// wasm:
-					wasmtypes.ModuleName: wasmtypes.ParamKeyTable(), //nolint:staticcheck
-
-					// coreum:
-					// TODO(migration-away-from-x/params): Add migration of params for Coreum modules. Skipping them for now.
-				}[subspace.Name()]
+				keyTable, ok := moduleNameKeyTableMap[subspace.Name()]
 
 				if !ok {
 					return nil, fmt.Errorf("no keyTable defined for subspace: %s", subspace.Name())
@@ -121,7 +123,7 @@ func New(
 				}
 			}
 
-			// Migrate Tendermint consensus parameters from x/params module to a deprecated x/consensus module.
+			// Migrate Tendermint consensus parameters from x/params module to a dedicated x/consensus module.
 			// The old params module is required to still be imported in your app.go in order to handle this migration.
 			baseAppLegacySS := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 			baseapp.MigrateParams(ctx, baseAppLegacySS, &consensusParamsKeeper)
