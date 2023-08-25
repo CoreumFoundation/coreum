@@ -148,15 +148,15 @@ func TestTimedOutTransfer(t *testing.T) {
 	// we must retry. Otherwise, if tokens were returned back to the sender, we might continue the test.
 	err := retry.Do(retryCtx, time.Millisecond, func() error {
 		coreumSender := coreumChain.GenAccount()
-		gaiaRecipient := osmosisChain.GenAccount()
+		osmosisRecipient := osmosisChain.GenAccount()
 
-		sendToGaiaCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
+		sendToOsmosisCoin := coreumChain.NewCoin(sdkmath.NewInt(1000))
 		coreumChain.FundAccountWithOptions(ctx, t, coreumSender, integrationtests.BalancesOptions{
 			Messages: []sdk.Msg{&ibctransfertypes.MsgTransfer{}},
-			Amount:   sendToGaiaCoin.Amount,
+			Amount:   sendToOsmosisCoin.Amount,
 		})
 
-		_, err := coreumChain.ExecuteTimingOutIBCTransfer(ctx, t, coreumSender, sendToGaiaCoin, osmosisChain.ChainContext, gaiaRecipient)
+		_, err := coreumChain.ExecuteTimingOutIBCTransfer(ctx, t, coreumSender, sendToOsmosisCoin, osmosisChain.ChainContext, osmosisRecipient)
 		switch {
 		case err == nil:
 		case strings.Contains(err.Error(), ibcchanneltypes.ErrPacketTimeout.Error()):
@@ -173,7 +173,7 @@ func TestTimedOutTransfer(t *testing.T) {
 			// If this happens it means timeout occurred.
 
 			defer parallelCancel()
-			if err := coreumChain.AwaitForBalance(parallelCtx, t, coreumSender, sendToGaiaCoin); err != nil {
+			if err := coreumChain.AwaitForBalance(parallelCtx, t, coreumSender, sendToOsmosisCoin); err != nil {
 				select {
 				case errCh <- retry.Retryable(err):
 				default:
@@ -186,7 +186,7 @@ func TestTimedOutTransfer(t *testing.T) {
 			// In this goroutine we check if funds were delivered to the other chain.
 			// If this happens it means timeout didn't occur and we must try again.
 
-			if err := osmosisChain.AwaitForBalance(parallelCtx, t, gaiaRecipient, sdk.NewCoin(convertToIBCDenom(osmosisToCoreumChannelID, sendToGaiaCoin.Denom), sendToGaiaCoin.Amount)); err == nil {
+			if err := osmosisChain.AwaitForBalance(parallelCtx, t, osmosisRecipient, sdk.NewCoin(convertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom), sendToOsmosisCoin.Amount)); err == nil {
 				select {
 				case errCh <- retry.Retryable(errors.New("timeout didn't happen")):
 					parallelCancel()
@@ -209,8 +209,8 @@ func TestTimedOutTransfer(t *testing.T) {
 		// funds should not be received on gaia
 		bankClient := banktypes.NewQueryClient(osmosisChain.ClientContext)
 		resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-			Address: osmosisChain.MustConvertToBech32Address(gaiaRecipient),
-			Denom:   convertToIBCDenom(osmosisToCoreumChannelID, sendToGaiaCoin.Denom),
+			Address: osmosisChain.MustConvertToBech32Address(osmosisRecipient),
+			Denom:   convertToIBCDenom(osmosisToCoreumChannelID, sendToOsmosisCoin.Denom),
 		})
 		requireT.NoError(err)
 		requireT.Equal("0", resp.Balance.Amount.String())
