@@ -129,6 +129,6 @@ func TestGovProposalWithDepositAndWeightedVotes(t *testing.T) {
 	// Assert that proposer & depositor deposits were not credited back.
 	proposerBalanceAfterVoting := accBalanceFunc(proposer)
 	depositorBalanceAfterVoting := accBalanceFunc(depositor)
-	requireT.Equal(proposerBalanceBeforeVoting, proposerBalanceAfterVoting)
-	requireT.Equal(depositorBalanceBeforeVoting, depositorBalanceAfterVoting)
+	requireT.True(proposerBalanceBeforeVoting.IsEqual(proposerBalanceAfterVoting))
+	requireT.True(depositorBalanceBeforeVoting.IsEqual(depositorBalanceAfterVoting))
 }
