@@ -104,9 +104,6 @@ func New(
 
 					// ibc:
 					ibctransfertypes.ModuleName: ibctransfertypes.ParamKeyTable(),
-					// TODO: do we use ICA ?
-					// icacontrollertypes.SubModuleName: icacontrollertypes.ParamKeyTable(),
-					// icahosttypes.SubModuleName:       icahosttypes.ParamKeyTable(),
 
 					// wasm:
 					wasmtypes.ModuleName: wasmtypes.ParamKeyTable(), //nolint:staticcheck
