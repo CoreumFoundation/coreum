@@ -160,7 +160,7 @@ func New(
 			govParams.MinInitialDepositRatio = sdk.NewDec(0).Quo(sdk.NewDec(100)).String()
 			govParams.BurnVoteQuorum = false
 			govParams.BurnProposalDepositPrevote = false
-			govParams.BurnVoteVeto = false
+			govParams.BurnVoteVeto = true
 			if err := govKeeper.SetParams(ctx, govParams); err != nil {
 				return nil, err
 			}
