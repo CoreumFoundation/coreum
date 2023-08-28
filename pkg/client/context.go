@@ -190,6 +190,8 @@ func (c Context) WithGRPCClient(grpcClient *grpc.ClientConn) Context {
 	return c
 }
 
+// WithFeePayerAddress returns a copy of the context with an updated fee payer account
+// address.
 func (c Context) WithFeePayerAddress(addr sdk.AccAddress) Context {
 	c.clientCtx = c.clientCtx.WithFeePayerAddress(addr)
 	return c
