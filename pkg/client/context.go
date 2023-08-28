@@ -131,7 +131,6 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation.
-// WithLegacyAmino is deprecated so I skipped it.
 type Context struct {
 	config    ContextConfig
 	clientCtx client.Context
@@ -180,7 +179,7 @@ func (c Context) WithClient(client rpcclient.Client) Context {
 
 // WithRPCClient returns a copy of the context with an updated RPC client
 // instance.
-// TODO: Should we deprecated this one ? Since cosmos context has WithClient
+// Deprecated: It will be removed in the near future! Please use WithClient instead.
 func (c Context) WithRPCClient(client rpcclient.Client) Context {
 	return c.WithClient(client)
 }
