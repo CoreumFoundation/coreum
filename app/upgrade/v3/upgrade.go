@@ -75,7 +75,7 @@ func New(
 
 			moduleNameKeyTableMap := map[string]paramstypes.KeyTable{
 				// cosmos-sdk:
-				authtypes.ModuleName:     authtypes.ParamKeyTable(), //nolint:staticcheck // don't match
+				authtypes.ModuleName:     authtypes.ParamKeyTable(), //nolint:staticcheck
 				banktypes.ModuleName:     banktypes.ParamKeyTable(), //nolint:staticcheck
 				stakingtypes.ModuleName:  stakingtypes.ParamKeyTable(),
 				distrtypes.ModuleName:    distrtypes.ParamKeyTable(),    //nolint:staticcheck
@@ -118,6 +118,7 @@ func New(
 					return nil, fmt.Errorf("no keyTable defined for subspace: %s", subspace.Name())
 				}
 
+				// Reference x/mint inside cosmos-sdk: https://github.com/cosmos/cosmos-sdk/pull/12363/files#diff-eff63269a2122bd0bc1c08f3d029aa99812aa47ce9fd85ef531dc3e04327ffc5L36
 				if !subspace.HasKeyTable() {
 					subspace.WithKeyTable(keyTable)
 				}
