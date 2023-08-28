@@ -131,7 +131,7 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation.
-// FIXME(v47-new-client) check all new features of the client ctx and add them to our wrapper.
+// WithLegacyAmino is deprecated so I skipped it.
 type Context struct {
 	config    ContextConfig
 	clientCtx client.Context
@@ -398,6 +398,26 @@ func (c Context) WithInterfaceRegistry(interfaceRegistry codectypes.InterfaceReg
 // client-side config from the config file.
 func (c Context) WithViper(prefix string) Context {
 	c.clientCtx = c.clientCtx.WithViper(prefix)
+	return c
+}
+
+// WithAux returns the context with updated IsAux field.
+func (c Context) WithAux(isAux bool) Context {
+	c.clientCtx = c.clientCtx.WithAux(isAux)
+	return c
+}
+
+// WithLedgerHasProtobuf returns the context with the provided boolean value, indicating
+// whether the target Ledger application can support Protobuf payloads.
+func (c Context) WithLedgerHasProtobuf(val bool) Context {
+	c.clientCtx = c.clientCtx.WithLedgerHasProtobuf(val)
+	return c
+}
+
+// WithPreprocessTxHook returns the context with the provided preprocessing hook, which
+// enables chains to preprocess the transaction using the builder.
+func (c Context) WithPreprocessTxHook(preprocessFn client.PreprocessTxFn) Context {
+	c.clientCtx = c.clientCtx.WithPreprocessTxHook(preprocessFn)
 	return c
 }
 
