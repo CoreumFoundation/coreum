@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 )
@@ -30,9 +31,13 @@ func TestMultisigAddressGeneration(t *testing.T) {
 	signerKeyInfo2, err := chain.ClientContext.Keyring().KeyByAddress(accAddr2)
 	assert.Nil(t, err)
 
+	signer1PubKey, err := signerKeyInfo1.GetPubKey()
+	require.NoError(t, err)
+	signer2PubKey, err := signerKeyInfo2.GetPubKey()
+	require.NoError(t, err)
 	multisigPublicKey := multisig.NewLegacyAminoPubKey(2, []types.PubKey{
-		signerKeyInfo1.GetPubKey(),
-		signerKeyInfo2.GetPubKey(),
+		signer1PubKey,
+		signer2PubKey,
 	})
 
 	expectedMultisigAddr := "devcore1gst5qagnzl36jx77r5gtcwg6gfcuyc2em2aruy"
