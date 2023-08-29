@@ -23,14 +23,18 @@ import (
 type CoreumChain struct {
 	Chain
 	Governance             Governance
+	LegacyGovernance       GovernanceLegacy
 	DeterministicGasConfig deterministicgas.Config
 }
 
 // NewCoreumChain returns a new instance of the CoreumChain.
 func NewCoreumChain(chain Chain, stakerMnemonics []string) CoreumChain {
+	gov := NewGovernance(chain.ChainContext, stakerMnemonics, chain.Faucet)
 	return CoreumChain{
-		Chain:                  chain,
-		Governance:             NewGovernance(chain.ChainContext, stakerMnemonics, chain.Faucet),
+		Chain:      chain,
+		Governance: gov,
+		// Since both Governance & LegacyGovernance share the same stackers, we need to use the same mutex for both.
+		LegacyGovernance:       NewGovernanceLegacy(gov),
 		DeterministicGasConfig: deterministicgas.DefaultConfig(),
 	}
 }

@@ -7,11 +7,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -22,7 +19,7 @@ import (
 
 const submitProposalGas = 400_000
 
-// Governance keep the test chain predefined account for the governance operations.
+// Governance keep the test chain predefined account for the governance operations via v1 API only.
 type Governance struct {
 	chainCtx       ChainContext
 	faucet         Faucet
@@ -59,56 +56,6 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 
 	minDeposit := govParams.MinDeposit[0]
 	return g.chainCtx.NewCoin(minDeposit.Amount.Add(g.chainCtx.ChainSettings.GasPrice.Mul(sdk.NewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
-}
-
-// LegacyUpdateParams goes through proposal process to update parameters, the legacy way.
-// TODO: remove this function after all the customparams module is removed.
-func (g Governance) LegacyUpdateParams(ctx context.Context, t *testing.T, description string, updates []paramproposal.ParamChange) {
-	t.Helper()
-	// Fund accounts.
-	proposer := g.chainCtx.GenAccount()
-	proposerBalance, err := g.ComputeProposerBalance(ctx)
-	require.NoError(t, err)
-
-	g.faucet.FundAccounts(ctx, t, NewFundedAccount(proposer, proposerBalance))
-
-	proposal := g.NewLegacyParamsChangeProposal(ctx, t, proposer, description, "-", "-", updates)
-
-	g.ProposeAndVote(
-		ctx,
-		t,
-		proposer,
-		proposal,
-		govtypesv1.OptionYes,
-	)
-}
-
-// NewLegacyParamsChangeProposal returns a legacy update parameters proposal.
-// TODO: remove this function after all the customparams module is removed.
-func (g Governance) NewLegacyParamsChangeProposal(
-	ctx context.Context,
-	t *testing.T,
-	proposer sdk.AccAddress,
-	title string,
-	description string,
-	metadata string,
-	updates []paramproposal.ParamChange,
-) *govtypesv1.MsgSubmitProposal {
-	t.Helper()
-
-	legacyContent := paramproposal.NewParameterChangeProposal(
-		title,
-		description,
-		updates,
-	)
-
-	proposalMsg, err := g.NewLegacyMsgSubmitProposal(
-		ctx,
-		proposer,
-		legacyContent,
-	)
-	require.NoError(t, err)
-	return proposalMsg
 }
 
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
@@ -170,27 +117,6 @@ func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypesv1.M
 	}
 
 	return proposalID, nil
-}
-
-// NewLegacyMsgSubmitProposal - is a helper which initializes MsgSubmitProposal with legacy content.
-func (g Governance) NewLegacyMsgSubmitProposal(
-	ctx context.Context,
-	proposer sdk.AccAddress,
-	content govtypesv1beta1.Content,
-) (*govtypesv1.MsgSubmitProposal, error) {
-	msgExecLegacy, err := govtypesv1.NewLegacyContent(content, authtypes.NewModuleAddress(govtypes.ModuleName).String())
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return g.NewMsgSubmitProposal(
-		ctx,
-		proposer,
-		[]sdk.Msg{msgExecLegacy},
-		content.GetDescription(),
-		content.GetTitle(),
-		content.GetTitle(),
-	)
 }
 
 // NewMsgSubmitProposal - is a helper which initializes v1.MsgSubmitProposal with args passed and prefills min deposit.
