@@ -96,7 +96,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origIssueFee := chain.QueryAssetFTParams(ctx, t).IssueFee
 
-	chain.Governance.LegacyUpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
 				assetfttypes.ModuleName,
@@ -134,7 +134,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT.NoError(err)
 
 	// Revert to original issue fee
-	chain.Governance.LegacyUpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
 				assetfttypes.ModuleName,
