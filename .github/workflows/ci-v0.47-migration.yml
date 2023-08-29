@@ -17,9 +17,8 @@ jobs:
           "lint",
           "test",
           "integration tests coreum-modules",
-#          "integration tests coreum-ibc", FIXME(v47-restore CI)
-#          "integration tests coreum-upgrade-v1.0.0",
-#          "integration tests coreum-upgrade-v2.0.0",
+          "integration tests coreum-ibc",
+          "integration tests coreum-upgrade-v2.0.2",
           "integration tests faucet",
         ]
         include:
@@ -41,24 +40,18 @@ jobs:
             wasm-cache: true
             linter-cache: false
             docker-cache: true
-#          - ci_step: "integration tests coreum-ibc" FIXME(v47-restore CI)
-#            command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
-#            go-cache: true
-#            wasm-cache: false
-#            linter-cache: false
-#            docker-cache: true
-#          - ci_step: "integration tests coreum-upgrade-v1.0.0"
-#            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
-#            go-cache: true
-#            wasm-cache: true
-#            linter-cache: false
-#            docker-cache: true
-#          - ci_step: "integration tests coreum-upgrade-v2.0.0"
-#            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v2.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
-#            go-cache: true
-#            wasm-cache: true
-#            linter-cache: false
-#            docker-cache: true
+          - ci_step: "integration tests coreum-ibc"
+            command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
+            go-cache: true
+            wasm-cache: false
+            linter-cache: false
+            docker-cache: true
+          - ci_step: "integration tests coreum-upgrade-v2.0.2" # // FIXME(v47-ibc) fix IBC test & add coreum-ibc to --test-groups
+            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v2.0.2 --test-groups=coreum-upgrade,coreum-modules --timeout-commit 1s"
+            go-cache: true
+            wasm-cache: true
+            linter-cache: false
+            docker-cache: true
           - ci_step: "integration tests faucet"
             command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
             go-cache: true

@@ -88,7 +88,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	// Create invalid proposal MaxGasPrice = InitialGasPrice.
 	feeModelParams := feeModelParamsRes.Params.Model
 	feeModelParams.MaxGasPriceMultiplier = sdk.OneDec()
-	proposalMsg := chain.Governance.NewLegacyParamsChangeProposal(ctx, t, proposer, "Invalid proposal", "-", "-",
+	proposalMsg := chain.LegacyGovernance.NewParamsChangeProposal(ctx, t, proposer, "Invalid proposal", "-", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
 				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
@@ -96,7 +96,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
-	_, err = chain.Governance.Propose(ctx, t, proposalMsg)
+	_, err = chain.LegacyGovernance.Propose(ctx, t, proposalMsg)
 	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
 
 	// Create proposal to change MaxDiscount.
@@ -105,7 +105,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	feeModelParams = feeModelParamsRes.Params.Model
 	feeModelParams.MaxDiscount = targetMaxDiscount
 	requireT.NoError(err)
-	proposalMsg = chain.Governance.NewLegacyParamsChangeProposal(
+	proposalMsg = chain.LegacyGovernance.NewParamsChangeProposal(
 		ctx, t, proposer, "Change MaxDiscount", "-", "-",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(
@@ -114,7 +114,7 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
+	proposalID, err := chain.LegacyGovernance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 	t.Logf("Proposal has been submitted, proposalID:%d", proposalID)
 

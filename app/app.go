@@ -100,6 +100,8 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibclocalhost "github.com/cosmos/ibc-go/v7/modules/light-clients/09-localhost"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cast"
@@ -109,6 +111,7 @@ import (
 	appupgradev1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v1"
 	appupgradev2 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2"
 	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2/v2patch1"
+	appupgradev3 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v3"
 	"github.com/CoreumFoundation/coreum/v2/docs"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
@@ -185,6 +188,7 @@ var (
 		slashing.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 		ibc.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		wibctransfer.AppModuleBasic{},
@@ -303,6 +307,10 @@ func New(
 	legacyAmino := encodingConfig.Amino
 	txConfig := encodingConfig.TxConfig
 	interfaceRegistry := encodingConfig.InterfaceRegistry
+	// Since 0.47 all ibc clients must be registered explicitly and are not registered automatically.
+	// we need to register localhost client since we use cosmos relayer in our integration tests and it
+	// relies on localhost client to be registered.
+	ibclocalhost.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -855,6 +863,16 @@ func New(
 		appupgradev1.New(app.ModuleManager, app.configurator, ChosenNetwork, app.AssetNFTKeeper),
 		appupgradev2.New(app.ModuleManager, app.configurator),
 		appupgradev2patch1.New(app.ModuleManager, app.configurator),
+		appupgradev3.New(
+			app.ModuleManager,
+			app.configurator,
+			app.appCodec,
+			app.ParamsKeeper,
+			app.ConsensusParamsKeeper,
+			app.IBCKeeper.ClientKeeper,
+			app.GovKeeper,
+			*app.StakingKeeper,
+		),
 	}
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
