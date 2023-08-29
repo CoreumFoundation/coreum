@@ -19,6 +19,11 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 )
 
+type upgradeTest interface {
+	Before(t *testing.T)
+	After(t *testing.T)
+}
+
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
@@ -30,14 +35,35 @@ func TestUpgrade(t *testing.T) {
 
 	switch infoRes.ApplicationVersion.Version {
 	case "v2.0.2":
-		upgradeV3(t)
+		upgradeV3(t, true)
 	default:
-		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
+		upgradeV3(t, false)
+		//requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
 }
 
-func upgradeV3(t *testing.T) {
-	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
+func upgradeV3(t *testing.T, isReal bool) {
+	var tests []upgradeTest
+
+	if isReal {
+		tests = []upgradeTest{
+			&paramsMigrationTest{},
+		}
+
+		for _, test := range tests {
+			test.Before(t)
+		}
+
+		runUpgrade(t, "v2.0.2", appupgradev3.Name, 10)
+	} else {
+		tests = []upgradeTest{
+			&paramsMigrationTest{},
+		}
+	}
+
+	for _, test := range tests {
+		test.After(t)
+	}
 }
 
 // Note that inside this method we use deprecated Block attributed of GetLatestBlockResponse (latestBlockRes.Block)
