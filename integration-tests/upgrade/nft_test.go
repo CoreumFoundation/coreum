@@ -1,5 +1,6 @@
 //go:build integrationtests
 
+//nolint:unused
 package upgrade
 
 import (
