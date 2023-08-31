@@ -192,6 +192,7 @@
   
 - [cosmos/msg/v1/msg.proto](#cosmos/msg/v1/msg.proto)
     - [File-level Extensions](#cosmos/msg/v1/msg.proto-extensions)
+    - [File-level Extensions](#cosmos/msg/v1/msg.proto-extensions)
   
 - [cosmwasm/wasm/v1/authz.proto](#cosmwasm/wasm/v1/authz.proto)
     - [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter)
@@ -2748,6 +2749,7 @@ Msg defines the nft Msg service.
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
 | `signer` | string | .google.protobuf.MessageOptions | 11110000 | signer must be used in cosmos messages in order to signal to external clients which fields in a given cosmos message must be filled with signer information (address). The field must be the protobuf name of the message field extended with this MessageOption. The field must either be of string kind, or of message kind in case the signer information is contained within a message inside the cosmos message. |
+| `service` | bool | .google.protobuf.ServiceOptions | 11110000 | service indicates that the service is a Msg service and that requests must be transported via blockchain transactions rather than gRPC. Tooling can use this annotation to distinguish between Msg services and other types of services via reflection. |
 
  <!-- end HasExtensions -->
 
