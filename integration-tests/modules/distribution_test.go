@@ -6,10 +6,13 @@ import (
 	"context"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
@@ -32,7 +35,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	// *** Check the MsgFundCommunityPool ***
 
 	communityPoolFunder := chain.GenAccount()
-	fundAmount := sdk.NewInt(1_000)
+	fundAmount := sdkmath.NewInt(1_000)
 	msgFundCommunityPool := &distributiontypes.MsgFundCommunityPool{
 		Amount:    sdk.NewCoins(chain.NewCoin(fundAmount)),
 		Depositor: communityPoolFunder.String(),
@@ -75,12 +78,19 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 	poolCoin := getCommunityPoolCoin(ctx, requireT, distributionClient)
 
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(ctx, proposer, distributiontypes.NewCommunityPoolSpendProposal(
+	msgPoolSpend := &distributiontypes.MsgCommunityPoolSpend{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Recipient: communityPoolRecipient.String(),
+		Amount:    sdk.NewCoins(poolCoin),
+	}
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
+		ctx,
+		proposer,
+		[]sdk.Msg{msgPoolSpend},
 		"Spend community pool",
 		"Spend community pool",
-		communityPoolRecipient,
-		sdk.NewCoins(poolCoin),
-	))
+		"Spend community pool",
+	)
 	requireT.NoError(err)
 	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
@@ -91,10 +101,10 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	// verify that voting period started
 	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
 
 	// vote yes from all vote accounts
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
@@ -102,7 +112,7 @@ func TestDistributionSpendCommunityPoolProposal(t *testing.T) {
 	// wait for proposal result.
 	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// check that recipient has received the coins
 	communityPoolRecipientBalancesRes, err := bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
@@ -126,7 +136,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 
 	requireT := require.New(t)
 	// the amount of the delegation should be big enough to get at least some reward for the few blocks
-	amountToDelegate := sdk.NewInt(1_000_000_000)
+	amountToDelegate := sdkmath.NewInt(1_000_000_000)
 	chain.FundAccountWithOptions(ctx, t, delegator, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&stakingtypes.MsgDelegate{},
@@ -142,7 +152,7 @@ func TestDistributionWithdrawRewardWithDeterministicGas(t *testing.T) {
 	// *** Create new validator to use it in the test and capture all required balances. ***
 	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	require.NoError(t, err)
-	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdk.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
+	validatorStakingAmount := customStakingParams.Params.MinSelfDelegation.Mul(sdkmath.NewInt(2)) // we multiply not to conflict with the tests which increases the min amount
 	validatorStakerAddress, validatorAddress, deactivateValidator, err := chain.CreateValidator(ctx, t, validatorStakingAmount, validatorStakingAmount)
 	require.NoError(t, err)
 	defer deactivateValidator()

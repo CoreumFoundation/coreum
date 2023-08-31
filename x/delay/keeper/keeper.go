@@ -3,11 +3,13 @@ package keeper
 import (
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/v2/x/delay/types"
@@ -16,7 +18,7 @@ import (
 // Keeper is delay module Keeper.
 type Keeper struct {
 	cdc      codec.BinaryCodec
-	storeKey sdk.StoreKey
+	storeKey storetypes.StoreKey
 	router   types.Router
 	registry codectypes.InterfaceRegistry
 }
@@ -24,7 +26,7 @@ type Keeper struct {
 // NewKeeper returns a new Keeper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	router types.Router,
 	registry codectypes.InterfaceRegistry,
 ) Keeper {
@@ -55,7 +57,7 @@ func (k Keeper) StoreDelayedExecution(ctx sdk.Context, id string, data codec.Pro
 
 	store := ctx.KVStore(k.storeKey)
 	if store.Has(key) {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "delayed item is already stored under the key, id: %s", id)
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "delayed item is already stored under the key, id: %s", id)
 	}
 
 	dataAny, err := codectypes.NewAnyWithValue(data)

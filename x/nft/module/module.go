@@ -3,19 +3,18 @@ package nft
 import (
 	"context"
 	"encoding/json"
-	"math/rand"
 
+	sdkerrors "cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 	"github.com/CoreumFoundation/coreum/v2/x/nft/client/cli"
@@ -25,6 +24,7 @@ import (
 
 var (
 	_ module.AppModule           = AppModule{}
+	_ module.HasGenesis          = AppModule{}
 	_ module.AppModuleBasic      = AppModuleBasic{}
 	_ module.AppModuleSimulation = AppModule{}
 )
@@ -118,11 +118,6 @@ func (AppModule) Name() string {
 // RegisterInvariants does nothing, there are no invariants to enforce.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the staking module.
-func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(nft.RouterKey, nil)
-}
-
 // NewHandler returns the new module handler.
 func (am AppModule) NewHandler() sdk.Handler {
 	return nil
@@ -130,11 +125,6 @@ func (am AppModule) NewHandler() sdk.Handler {
 
 // QuerierRoute returns the route we respond to for abci queries.
 func (AppModule) QuerierRoute() string { return "" }
-
-// LegacyQuerierHandler returns the nft module sdk.Querier.
-func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return nil
-}
 
 // InitGenesis performs genesis initialization for the nft module. It returns
 // no validator updates.
@@ -158,15 +148,6 @@ func (AppModule) ConsensusVersion() uint64 { return 1 }
 // RegisterRESTRoutes registers the asset module's REST service handlers.
 func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 
-// BeginBlock executes all ABCI BeginBlock logic respective to the asset module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
-
-// EndBlock executes all ABCI EndBlock logic respective to the asset module. It
-// returns no validator updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
-}
-
 // ____________________________________________________________________________
 
 // AppModuleSimulation functions
@@ -178,12 +159,8 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 
 // ProposalContents returns all the nft content functions used to
 // simulate governance proposals.
-func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
-	return nil
-}
-
-// RandomizedParams creates randomized nft param changes for the simulator.
-func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
+// FIXME(v47-legacy) try to remove/replace the usage.
+func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
 	return nil
 }
 

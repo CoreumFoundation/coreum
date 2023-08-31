@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
@@ -46,7 +47,7 @@ func (s *TestSuite) SetupTest() {
 	s.app = app
 	s.ctx = ctx
 	s.queryClient = queryClient
-	s.addrs = simapp.AddTestAddrsIncremental(app, ctx, 3, sdk.NewInt(30000000))
+	s.addrs = simapp.AddTestAddrsIncremental(app, ctx, 3, sdkmath.NewInt(30000000))
 	s.testClassID = fmt.Sprintf("%s-%s", "kitty", sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()))
 }
 

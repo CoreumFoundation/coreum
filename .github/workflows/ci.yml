@@ -18,8 +18,7 @@ jobs:
           "test",
           "integration tests coreum-modules",
           "integration tests coreum-ibc",
-          "integration tests coreum-upgrade-v1.0.0",
-          "integration tests coreum-upgrade-v2.0.0",
+          "integration tests coreum-upgrade-v3.0.0",
           "integration tests faucet",
         ]
         include:
@@ -44,17 +43,15 @@ jobs:
           - ci_step: "integration tests coreum-ibc"
             command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
             go-cache: true
-            wasm-cache: false
+            wasm-cache: true 
             linter-cache: false
             docker-cache: true
-          - ci_step: "integration tests coreum-upgrade-v1.0.0"
-            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
-            go-cache: true
-            wasm-cache: true
-            linter-cache: false
-            docker-cache: true
-          - ci_step: "integration tests coreum-upgrade-v2.0.0"
-            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v2.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
+          - ci_step: "integration tests coreum-upgrade-v3.0.0"
+            command: |
+              crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images 
+              crust znet test --cored-version=v2.0.2 --test-groups=coreum-upgrade --timeout-commit 1s
+              docker restart znet-ibc-hermes-gaiad
+              crust znet test --test-groups=coreum-modules,coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true
             linter-cache: false
@@ -80,6 +77,7 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
+          ref: v0.47-migration-v2
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache

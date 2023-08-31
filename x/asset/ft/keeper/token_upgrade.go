@@ -3,9 +3,10 @@ package keeper
 import (
 	"encoding/binary"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
@@ -49,7 +50,7 @@ func (k Keeper) SetPendingVersion(ctx sdk.Context, denom string, version uint32)
 	store := ctx.KVStore(k.storeKey)
 	key := types.CreatePendingTokenUpgradeKey(denom)
 	if store.Has(key) {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "token upgrade is already pending for denom %q", denom)
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "token upgrade is already pending for denom %q", denom)
 	}
 
 	value := make([]byte, binary.MaxVarintLen32)

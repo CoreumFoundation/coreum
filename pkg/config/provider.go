@@ -7,6 +7,7 @@ import (
 	"text/template"
 	"time"
 
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/btcutil/bech32"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -20,8 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 )
@@ -88,12 +87,12 @@ func (dcp DynamicConfigProvider) GetAddressPrefix() string {
 
 // EncodeGenesis returns encoded genesis doc.
 func (dcp DynamicConfigProvider) EncodeGenesis() ([]byte, error) {
-	genesisDoc, err := dcp.genesisDoc()
+	genesisMap, err := dcp.genesisDoc()
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to get genesis doc")
 	}
 
-	bs, err := tmjson.MarshalIndent(genesisDoc, "", "  ")
+	bs, err := json.MarshalIndent(genesisMap, "", "  ")
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to marshal genesis doc")
 	}
@@ -115,13 +114,13 @@ func (dcp DynamicConfigProvider) AppState() (map[string]json.RawMessage, error) 
 		return nil, errors.Wrap(err, "not able get genesis")
 	}
 
-	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to parse genesis json bytes")
+	var genesisMap map[string]json.RawMessage
+	if err := json.Unmarshal(genesisJSON, &genesisMap); err != nil {
+		return nil, errors.Wrap(err, "not able to unmarshal genesis json")
 	}
 
 	var appState map[string]json.RawMessage
-	if err := json.Unmarshal(genesisDoc.AppState, &appState); err != nil {
+	if err := json.Unmarshal(genesisMap["app_state"], &appState); err != nil {
 		return nil, errors.Wrap(err, "not able to parse genesis app state")
 	}
 
@@ -158,15 +157,15 @@ func (dcp DynamicConfigProvider) AppState() (map[string]json.RawMessage, error) 
 }
 
 // GenesisDoc returns the genesis doc of the network.
-func (dcp DynamicConfigProvider) genesisDoc() (*tmtypes.GenesisDoc, error) {
+func (dcp DynamicConfigProvider) genesisDoc() (map[string]interface{}, error) {
 	genesisJSON, err := dcp.genesisByTemplate()
 	if err != nil {
 		return nil, errors.Wrap(err, "not able get genesis")
 	}
 
-	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesisJSON)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to parse genesis json bytes")
+	var genesisMap map[string]interface{}
+	if err := json.Unmarshal(genesisJSON, &genesisMap); err != nil {
+		return nil, errors.Wrap(err, "not able to unmarshal genesis json")
 	}
 
 	appState, err := dcp.AppState()
@@ -174,12 +173,19 @@ func (dcp DynamicConfigProvider) genesisDoc() (*tmtypes.GenesisDoc, error) {
 		return nil, err
 	}
 
-	genesisDoc.AppState, err = json.MarshalIndent(appState, "", "  ")
-	if err != nil {
-		return nil, err
+	// Restructure app state from map[string]json.RawMessage to map[string]interface{}.
+	appStateMap := make(map[string]interface{}, len(appState))
+	for k, v := range appState {
+		mp := make(map[string]interface{})
+
+		if err = json.Unmarshal(v, &mp); err != nil {
+			return nil, errors.Wrapf(err, "not able to unmarshal app state: %s", k)
+		}
+		appStateMap[k] = mp
 	}
 
-	return genesisDoc, nil
+	genesisMap["app_state"] = appStateMap
+	return genesisMap, nil
 }
 
 func (dcp DynamicConfigProvider) clone() DynamicConfigProvider {

@@ -1,5 +1,6 @@
 //go:build integrationtests
 
+//nolint:unused
 package upgrade
 
 import (
@@ -8,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/require"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
@@ -104,7 +106,7 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithoutFeatures(t *testing.T) {
 		Subunit:       "uaaa",
 		Precision:     6,
 		Description:   "AAA Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 	}
 	_, err := client.BroadcastTx(
 		ctx,
@@ -126,7 +128,7 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithFeatures(t *testing.T) {
 		Subunit:       "ubbb",
 		Precision:     6,
 		Description:   "BBB Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_freezing,
@@ -153,7 +155,7 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithFeaturesWASM(t *testing.T) {
 	burnRate := sdk.MustNewDecFromStr("0.0")
 	sendCommissionRate := sdk.MustNewDecFromStr("0.0")
 
-	issuanceAmount := sdk.NewInt(1000)
+	issuanceAmount := sdkmath.NewInt(1000)
 	issuanceReq := issueFTRequest{
 		Symbol:        "symbol",
 		Subunit:       "subunit",
@@ -202,7 +204,7 @@ func (ft *ftV1UpgradeTest) issueV0TokenWithoutFeaturesWASM(t *testing.T) {
 	burnRate := sdk.MustNewDecFromStr("0.0")
 	sendCommissionRate := sdk.MustNewDecFromStr("0.0")
 
-	issuanceAmount := sdk.NewInt(1000)
+	issuanceAmount := sdkmath.NewInt(1000)
 	issuanceReq := issueFTRequest{
 		Symbol:             "symbol",
 		Subunit:            "subunit",
@@ -246,7 +248,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeTokenFromV0ToV1BeforeUpgradingTheApp(t *t
 		Subunit:       "uccc",
 		Precision:     6,
 		Description:   "CCC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 	}
 	_, err := client.BroadcastTx(
 		ctx,
@@ -317,7 +319,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToEnableIBC(t *testing.T) {
 		Subunit:       "ucde",
 		Precision:     6,
 		Description:   "CDE Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_freezing,
@@ -385,7 +387,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV1TokenToDisableIBC(t *testing.T) {
 		Subunit:       "uxyz",
 		Precision:     6,
 		Description:   "XYZ Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features:      []assetfttypes.Feature{assetfttypes.Feature_ibc},
 	}
 	_, err := client.BroadcastTx(
@@ -755,7 +757,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) 
 
 	// setting decision timeout to sth in the past
 	decisionTimeout := time.Now().UTC().Add(-time.Hour)
-	chain.Governance.UpdateParams(ctx, t, "Propose changing TokenUpgradeDecisionTimeout in the assetft module",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing TokenUpgradeDecisionTimeout in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeDecisionTimeout), string(must.Bytes(tmjson.Marshal(decisionTimeout)))),
 		})
@@ -804,7 +806,7 @@ func (ft *ftV1UpgradeTest) tryToUpgradeV0ToV1AfterDecisionTimeout(t *testing.T) 
 
 func (ft *ftV1UpgradeTest) changeGracePeriod(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
-	chain.Governance.UpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing TokenUpgradeGracePeriod in the assetft module",
 		[]paramproposal.ParamChange{
 			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyTokenUpgradeGracePeriod), string(must.Bytes(tmjson.Marshal(gracePeriod)))),
 		})
@@ -833,7 +835,7 @@ func (ft *ftFeatureMigrationTest) Before(t *testing.T) {
 		Subunit:       "uaaa",
 		Precision:     6,
 		Description:   "AAA Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_burning,
@@ -904,7 +906,7 @@ func (ft *ftFeatureMigrationTest) tryCreatingTokenWithInvalidFeature(t *testing.
 		Subunit:       "uaaa",
 		Precision:     6,
 		Description:   "AAA Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_burning,
@@ -942,7 +944,7 @@ func (ft *ftFeatureMigrationTest) tryCreatingTokenWithDuplicatedFeature(t *testi
 		Subunit:       "uaaa",
 		Precision:     6,
 		Description:   "AAA Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_burning,
@@ -980,7 +982,7 @@ func (ft *ftFeatureMigrationTest) createValidToken(t *testing.T) {
 		Subunit:       "uaaa",
 		Precision:     6,
 		Description:   "AAA Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_burning,

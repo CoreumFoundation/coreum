@@ -9,11 +9,11 @@ import (
 	"testing"
 	"unsafe"
 
+	tmtypes "github.com/cometbft/cometbft/types"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"

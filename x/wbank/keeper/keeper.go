@@ -1,12 +1,13 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/wbank/types"
 )
@@ -21,14 +22,14 @@ type BaseKeeperWrapper struct {
 // NewKeeper returns a new BaseKeeperWrapper instance.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey sdk.StoreKey,
+	storeKey storetypes.StoreKey,
 	ak banktypes.AccountKeeper,
-	paramSpace paramtypes.Subspace,
 	blockedAddrs map[string]bool,
 	ftProvider types.FungibleTokenProvider,
+	authority string,
 ) BaseKeeperWrapper {
 	return BaseKeeperWrapper{
-		BaseKeeper: bankkeeper.NewBaseKeeper(cdc, storeKey, ak, paramSpace, blockedAddrs),
+		BaseKeeper: bankkeeper.NewBaseKeeper(cdc, storeKey, ak, blockedAddrs, authority),
 		ak:         ak,
 		ftProvider: ftProvider,
 	}
@@ -41,11 +42,11 @@ func NewKeeper(
 func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
 	senderAddr := k.ak.GetModuleAddress(senderModule)
 	if senderAddr == nil {
-		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", senderModule))
+		panic(sdkerrors.Wrapf(cosmoserrors.ErrUnknownAddress, "module account %s does not exist", senderModule))
 	}
 
 	if k.BlockedAddr(recipientAddr) {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive funds", recipientAddr)
+		return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "%s is not allowed to receive funds", recipientAddr)
 	}
 
 	return k.SendCoins(ctx, senderAddr, recipientAddr, amt)
@@ -57,12 +58,12 @@ func (k BaseKeeperWrapper) SendCoinsFromModuleToAccount(ctx sdk.Context, senderM
 func (k BaseKeeperWrapper) SendCoinsFromModuleToModule(ctx sdk.Context, senderModule, recipientModule string, amt sdk.Coins) error {
 	senderAddr := k.ak.GetModuleAddress(senderModule)
 	if senderAddr == nil {
-		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", senderModule))
+		panic(sdkerrors.Wrapf(cosmoserrors.ErrUnknownAddress, "module account %s does not exist", senderModule))
 	}
 
 	recipientAcc := k.ak.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
-		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", recipientModule))
+		panic(sdkerrors.Wrapf(cosmoserrors.ErrUnknownAddress, "module account %s does not exist", recipientModule))
 	}
 
 	return k.SendCoins(ctx, senderAddr, recipientAcc.GetAddress(), amt)
@@ -74,7 +75,7 @@ func (k BaseKeeperWrapper) SendCoinsFromModuleToModule(ctx sdk.Context, senderMo
 func (k BaseKeeperWrapper) SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error {
 	recipientAcc := k.ak.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {
-		panic(sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "module account %s does not exist", recipientModule))
+		panic(sdkerrors.Wrapf(cosmoserrors.ErrUnknownAddress, "module account %s does not exist", recipientModule))
 	}
 
 	return k.SendCoins(ctx, senderAddr, recipientAcc.GetAddress(), amt)

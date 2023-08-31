@@ -3,6 +3,8 @@ package integrationtests
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -12,13 +14,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	protobufgrpc "github.com/gogo/protobuf/grpc"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
+	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum/v2/app"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 )
 
 // ChainSettings represent common settings for the chains.
@@ -34,18 +36,21 @@ type ChainSettings struct {
 
 // ChainContext is a types used to store the components required for the test chains subcomponents.
 type ChainContext struct {
-	ClientContext client.Context
-	ChainSettings ChainSettings
+	EncodingConfig config.EncodingConfig
+	ClientContext  client.Context
+	ChainSettings  ChainSettings
 }
 
 // NewChainContext returns a new instance if the ChainContext.
 func NewChainContext(
+	encodingConfig config.EncodingConfig,
 	clientCtx client.Context,
 	chainSettings ChainSettings,
 ) ChainContext {
 	return ChainContext{
-		ClientContext: clientCtx,
-		ChainSettings: chainSettings,
+		EncodingConfig: encodingConfig,
+		ClientContext:  clientCtx,
+		ChainSettings:  chainSettings,
 	}
 }
 
@@ -53,7 +58,7 @@ func NewChainContext(
 // private key and stores it in the chains ClientContext Keyring.
 func (c ChainContext) GenAccount() sdk.AccAddress {
 	// Generate and store a new mnemonic using temporary keyring
-	_, mnemonic, err := keyring.NewInMemory().NewMnemonic(
+	_, mnemonic, err := keyring.NewInMemory(c.EncodingConfig.Codec).NewMnemonic(
 		"tmp",
 		keyring.English,
 		sdk.GetConfig().GetFullBIP44Path(),
@@ -91,7 +96,12 @@ func (c ChainContext) ImportMnemonic(mnemonic string) sdk.AccAddress {
 		panic(err)
 	}
 
-	return keyInfo.GetAddress()
+	address, err := keyInfo.GetAddress()
+	if err != nil {
+		panic(err)
+	}
+
+	return address
 }
 
 // TxFactory returns factory with present values for the Chain.
@@ -109,7 +119,7 @@ func (c ChainContext) TxFactory() client.Factory {
 }
 
 // NewCoin helper function to initialize sdk.Coin by passing just amount.
-func (c ChainContext) NewCoin(amount sdk.Int) sdk.Coin {
+func (c ChainContext) NewCoin(amount sdkmath.Int) sdk.Coin {
 	return sdk.NewCoin(c.ChainSettings.Denom, amount)
 }
 
@@ -127,8 +137,12 @@ func (c ChainContext) GenMultisigAccount(signersCount, multisigThreshold int) (*
 		if err != nil {
 			return nil, nil, err
 		}
-		keyNamesSet = append(keyNamesSet, signerKeyInfo.GetName())
-		publicKeySet = append(publicKeySet, signerKeyInfo.GetPubKey())
+		pubKey, err := signerKeyInfo.GetPubKey()
+		if err != nil {
+			return nil, nil, err
+		}
+		keyNamesSet = append(keyNamesSet, signerKeyInfo.Name)
+		publicKeySet = append(publicKeySet, pubKey)
 	}
 
 	// create multisig account
@@ -154,15 +168,19 @@ func (c ChainContext) SignAndBroadcastMultisigTx(
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if keyInfo.GetAlgo() != hd.MultiType {
-		return nil, errors.Errorf("%s is not a multisig account", c.MustConvertToBech32Address(keyInfo.GetAddress()))
+	pubKey, err := keyInfo.GetPubKey()
+	if err != nil {
+		return nil, err
 	}
-	multisigPubKey, ok := keyInfo.GetPubKey().(*sdkmultisig.LegacyAminoPubKey)
+	multisigPubKey, ok := pubKey.(*sdkmultisig.LegacyAminoPubKey)
 	if !ok {
 		return nil, errors.New("public key cannot be converted to multisig public key")
 	}
-
-	multisigAccInfo, err := client.GetAccountInfo(ctx, c.ClientContext, keyInfo.GetAddress())
+	address, err := keyInfo.GetAddress()
+	if err != nil {
+		return nil, errors.New("failed to get address from key")
+	}
+	multisigAccInfo, err := client.GetAccountInfo(ctx, c.ClientContext, address)
 	if err != nil {
 		return nil, err
 	}
@@ -232,23 +250,26 @@ type Chain struct {
 }
 
 // NewChain creates an instance of the new Chain.
-func NewChain(grpcClient protobufgrpc.ClientConn, rpcClient *rpchttp.HTTP, chainSettings ChainSettings, fundingMnemonic string) Chain {
+func NewChain(grpcClient *grpc.ClientConn, rpcClient *rpchttp.HTTP, chainSettings ChainSettings, fundingMnemonic string) Chain {
+	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+
 	clientCtxConfig := client.DefaultContextConfig()
 	clientCtxConfig.GasConfig.GasPriceAdjustment = sdk.NewDec(1)
 	clientCtxConfig.GasConfig.GasAdjustment = 1
 	clientCtx := client.NewContext(clientCtxConfig, app.ModuleBasics).
 		WithChainID(chainSettings.ChainID).
-		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory())).
-		WithBroadcastMode(flags.BroadcastBlock).
+		WithKeyring(newConcurrentSafeKeyring(keyring.NewInMemory(encodingConfig.Codec))).
+		WithBroadcastMode(flags.BroadcastSync).
 		WithGRPCClient(grpcClient).
-		WithRPCClient(rpcClient)
+		WithRPCClient(rpcClient).
+		WithAwaitTx(true)
 
-	chainCtx := NewChainContext(clientCtx, chainSettings)
+	chainCtx := NewChainContext(encodingConfig, clientCtx, chainSettings)
 
 	var faucet Faucet
 	if fundingMnemonic != "" {
 		faucetAddr := chainCtx.ImportMnemonic(fundingMnemonic)
-		faucet = NewFaucet(NewChainContext(clientCtx.WithFromAddress(faucetAddr), chainSettings))
+		faucet = NewFaucet(NewChainContext(encodingConfig, clientCtx.WithFromAddress(faucetAddr), chainSettings))
 	}
 
 	return Chain{

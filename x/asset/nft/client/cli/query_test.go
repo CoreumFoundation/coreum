@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -40,11 +40,8 @@ func TestQueryClassAndClasses(t *testing.T) {
 		types.ClassFeature_disable_sending,
 	)
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClass(), []string{classID, "--output", "json"})
-	requireT.NoError(err)
-
 	var classRes types.QueryClassResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &classRes))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClass(), []string{classID}, &classRes))
 
 	expectedClass := types.Class{
 		Id:          classID,
@@ -64,14 +61,10 @@ func TestQueryClassAndClasses(t *testing.T) {
 	requireT.Equal(expectedClass, classRes.Class)
 
 	// classes
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryClasses(),
-		[]string{fmt.Sprintf("--%s", cli.IssuerFlag), testNetwork.Validators[0].Address.String(), "--output", "json"},
-	)
-	requireT.NoError(err)
-
 	var classesRes types.QueryClassesResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &classesRes))
-
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryClasses(),
+		[]string{fmt.Sprintf("--%s", cli.IssuerFlag), testNetwork.Validators[0].Address.String(), "--output", "json"},
+		&classesRes))
 	requireT.Equal(expectedClass, classesRes.Classes[0])
 }
 
@@ -85,12 +78,14 @@ func TestCmdTxMint(t *testing.T) {
 
 	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args))
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
+	requireT.NoError(err)
 
 	classID := types.BuildClassID(symbol, validator.Address)
 	args = []string{classID, "nft-1", "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
+	requireT.NoError(err)
 }
 
 func TestCmdTxBurn(t *testing.T) {
@@ -103,31 +98,30 @@ func TestCmdTxBurn(t *testing.T) {
 
 	args := []string{symbol, "class name", "class description", "https://my-class-meta.invalid/1", "content-hash"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args))
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
+	requireT.NoError(err)
 
 	classID := types.BuildClassID(symbol, validator.Address)
 	args = []string{classID, "nft-1", "https://my-nft-meta.invalid/1", "9309e7e6e96150afbf181d308fe88343ab1cbec391b7717150a7fb217b4cf0a9"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
+	requireT.NoError(err)
 
 	args = []string{classID, "nft-1"}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxBurn(), args))
 
-	args = []string{classID, "nft-1", "--output", "json"}
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBurnt(), args)
+	_, err = coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxBurn(), args)
 	requireT.NoError(err)
 
 	var resp types.QueryBurntNFTResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
+	args = []string{classID, "nft-1", "--output", "json"}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBurnt(), args, &resp))
+
 	requireT.True(resp.Burnt)
 
 	args = []string{classID, "--output", "json"}
-	buf, err = clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryBurnt(), args)
-	requireT.NoError(err)
-
 	var respList types.QueryBurntNFTsInClassResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &respList))
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryBurnt(), args, &respList))
 	requireT.Len(respList.NftIds, 1)
 }
 
@@ -138,13 +132,9 @@ func TestCmdQueryParams(t *testing.T) {
 
 	ctx := testNetwork.Validators[0].ClientCtx
 
-	buf, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdQueryParams(), []string{"--output", "json"})
-	requireT.NoError(err)
-
 	var resp types.QueryParamsResponse
-	requireT.NoError(ctx.Codec.UnmarshalJSON(buf.Bytes(), &resp))
-
-	expectedMintFee := sdk.Coin{Denom: constant.DenomDev, Amount: sdk.NewInt(0)}
+	requireT.NoError(coreumclitestutil.ExecQueryCmd(ctx, cli.CmdQueryParams(), []string{}, &resp))
+	expectedMintFee := sdk.Coin{Denom: constant.DenomDev, Amount: sdkmath.NewInt(0)}
 	requireT.Equal(expectedMintFee, resp.Params.MintFee)
 }
 
@@ -156,7 +146,8 @@ func mint(
 ) {
 	args := []string{classID, nftID, url, urlHash}
 	args = append(args, txValidator1Args(testNetwork)...)
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxMint(), args))
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxMint(), args)
+	requireT.NoError(err)
 }
 
 func issueClass(
@@ -177,7 +168,8 @@ func issueClass(
 	if royaltyRate != "" {
 		args = append(args, fmt.Sprintf("--%s", cli.RoyaltyRateFlag), royaltyRate)
 	}
-	requireT.NoError(coreumclitestutil.ExecTestCLICmd(ctx, cli.CmdTxIssueClass(), args))
+	_, err := coreumclitestutil.ExecTxCmd(ctx, testNetwork, cli.CmdTxIssueClass(), args)
+	requireT.NoError(err)
 
 	return types.BuildClassID(symbol, validator.Address)
 }

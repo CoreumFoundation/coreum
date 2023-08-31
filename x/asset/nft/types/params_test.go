@@ -3,6 +3,7 @@ package types
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,6 +32,6 @@ func TestParamsValidation(t *testing.T) {
 	assert.Error(t, testParams.ValidateBasic())
 
 	testParams = params
-	testParams.MintFee = sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: sdk.NewInt(-10_000_000)}
+	testParams.MintFee = sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: sdkmath.NewInt(-10_000_000)}
 	assert.Error(t, testParams.ValidateBasic())
 }

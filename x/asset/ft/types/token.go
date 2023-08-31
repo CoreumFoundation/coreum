@@ -5,10 +5,12 @@ import (
 	"regexp"
 	"strings"
 
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	"github.com/gogo/protobuf/proto"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
+	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
@@ -48,7 +50,7 @@ type IssueSettings struct {
 	Subunit            string
 	Precision          uint32
 	Description        string
-	InitialAmount      sdk.Int
+	InitialAmount      sdkmath.Int
 	Features           []Feature
 	BurnRate           sdk.Dec
 	SendCommissionRate sdk.Dec
@@ -157,7 +159,7 @@ func (def Definition) CheckFeatureAllowed(addr sdk.AccAddress, feature Feature) 
 		return sdkerrors.Wrapf(ErrFeatureDisabled, "feature %s is disabled", feature.String())
 	}
 
-	return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
+	return sdkerrors.Wrapf(cosmoserrors.ErrUnauthorized, "address %s is unauthorized to perform %q related operations", addr.String(), feature.String())
 }
 
 // IsFeatureAllowed returns true if feature is allowed for the address.
@@ -234,7 +236,7 @@ func validateRate(rate sdk.Dec) error {
 
 // checks that dec precision is limited to the provided value.
 func isDecPrecisionValid(dec sdk.Dec, prec uint) bool {
-	return dec.Mul(sdk.NewDecFromInt(sdk.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
+	return dec.Mul(sdk.NewDecFromInt(sdkmath.NewInt(int64(math.Pow10(int(prec)))))).IsInteger()
 }
 
 // TokenUpgradeV1Keeper defines methods required to update tokens to V1.

@@ -5,11 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -18,13 +17,13 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/testutil/event"
 )
 
-const submitProposalGas = 200_000
+const submitProposalGas = 400_000
 
-// Governance keep the test chain predefined account for the governance operations.
+// Governance keep the test chain predefined account for the governance operations via v1 API only.
 type Governance struct {
 	chainCtx       ChainContext
 	faucet         Faucet
-	govClient      govtypes.QueryClient
+	govClient      govtypesv1.QueryClient
 	stakerAccounts []sdk.AccAddress
 	muCh           chan struct{}
 }
@@ -40,7 +39,7 @@ func NewGovernance(chainCtx ChainContext, stakerMnemonics []string, faucet Fauce
 		chainCtx:       chainCtx,
 		faucet:         faucet,
 		stakerAccounts: stakerAccounts,
-		govClient:      govtypes.NewQueryClient(chainCtx.ClientContext),
+		govClient:      govtypesv1.NewQueryClient(chainCtx.ClientContext),
 		muCh:           make(chan struct{}, 1),
 	}
 	gov.muCh <- struct{}{}
@@ -55,29 +54,19 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 		return sdk.Coin{}, err
 	}
 
-	minDeposit := govParams.DepositParams.MinDeposit[0]
+	minDeposit := govParams.MinDeposit[0]
 	return g.chainCtx.NewCoin(minDeposit.Amount.Add(g.chainCtx.ChainSettings.GasPrice.Mul(sdk.NewDec(int64(submitProposalGas))).Ceil().RoundInt())), nil
 }
 
-// UpdateParams goes through proposal process to update parameters.
-func (g Governance) UpdateParams(ctx context.Context, t *testing.T, description string, updates []paramproposal.ParamChange) {
-	t.Helper()
-	// Fund accounts.
-	proposer := g.chainCtx.GenAccount()
-	proposerBalance, err := g.ComputeProposerBalance(ctx)
-	require.NoError(t, err)
-
-	g.faucet.FundAccounts(ctx, t, NewFundedAccount(proposer, proposerBalance))
-
-	g.ProposeAndVote(ctx, t, proposer,
-		paramproposal.NewParameterChangeProposal("Updating parameters", description, updates), govtypes.OptionYes)
-}
-
 // ProposeAndVote create a new proposal, votes from all stakers accounts and awaits for the final status.
-func (g Governance) ProposeAndVote(ctx context.Context, t *testing.T, proposer sdk.AccAddress, content govtypes.Content, option govtypes.VoteOption) {
+func (g Governance) ProposeAndVote(
+	ctx context.Context,
+	t *testing.T,
+	proposer sdk.AccAddress,
+	proposalMsg *govtypesv1.MsgSubmitProposal,
+	option govtypesv1.VoteOption,
+) {
 	t.Helper()
-	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, content)
-	require.NoError(t, err)
 
 	proposalID, err := g.Propose(ctx, t, proposalMsg)
 	require.NoError(t, err)
@@ -85,11 +74,11 @@ func (g Governance) ProposeAndVote(ctx context.Context, t *testing.T, proposer s
 	proposal, err := g.GetProposal(ctx, proposalID)
 	require.NoError(t, err)
 
-	if govtypes.StatusVotingPeriod != proposal.Status {
+	if govtypesv1.StatusVotingPeriod != proposal.Status {
 		t.Fatalf("unexpected proposal status after creation: %s", proposal.Status)
 	}
 
-	err = g.VoteAll(ctx, option, proposal.ProposalId)
+	err = g.VoteAll(ctx, option, proposal.Id)
 	require.NoError(t, err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
@@ -97,21 +86,24 @@ func (g Governance) ProposeAndVote(ctx context.Context, t *testing.T, proposer s
 	finalStatus, err := g.WaitForVotingToFinalize(ctx, proposalID)
 	require.NoError(t, err)
 
-	if finalStatus != govtypes.StatusPassed {
-		t.Fatalf("unexpected proposal status after voting: %s, expected: %s", finalStatus, govtypes.StatusPassed)
+	if finalStatus != govtypesv1.StatusPassed {
+		t.Fatalf("unexpected proposal status after voting: %s, expected: %s", finalStatus, govtypesv1.StatusPassed)
 	}
 
 	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 }
 
 // Propose creates a new proposal.
-func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypes.MsgSubmitProposal) (uint64, error) {
+func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypesv1.MsgSubmitProposal) (uint64, error) {
 	SkipUnsafe(t)
-
+	proposer, err := sdk.AccAddressFromBech32(msg.Proposer)
+	if err != nil {
+		return 0, err
+	}
 	txf := g.chainCtx.TxFactory().WithGas(submitProposalGas)
 	result, err := client.BroadcastTx(
 		ctx,
-		g.chainCtx.ClientContext.WithFromAddress(msg.GetProposer()),
+		g.chainCtx.ClientContext.WithFromAddress(proposer),
 		txf,
 		msg,
 	)
@@ -127,14 +119,24 @@ func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypes.Msg
 	return proposalID, nil
 }
 
-// NewMsgSubmitProposal - is a helper which initializes MsgSubmitProposal with args passed and prefills min deposit.
-func (g Governance) NewMsgSubmitProposal(ctx context.Context, proposer sdk.AccAddress, content govtypes.Content) (*govtypes.MsgSubmitProposal, error) {
+// NewMsgSubmitProposal - is a helper which initializes v1.MsgSubmitProposal with args passed and prefills min deposit.
+func (g Governance) NewMsgSubmitProposal(
+	ctx context.Context,
+	proposer sdk.AccAddress,
+	messages []sdk.Msg,
+	metadata string,
+	title string,
+	summary string,
+) (*govtypesv1.MsgSubmitProposal, error) {
 	govParams, err := g.queryGovParams(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	msg, err := govtypes.NewMsgSubmitProposal(content, govParams.DepositParams.MinDeposit, proposer)
+	msg, err := govtypesv1.NewMsgSubmitProposal(
+		messages, govParams.MinDeposit, proposer.String(), metadata, title, summary,
+	)
+
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -143,9 +145,9 @@ func (g Governance) NewMsgSubmitProposal(ctx context.Context, proposer sdk.AccAd
 }
 
 // VoteAll votes for the proposalID from all voting accounts with the provided VoteOption.
-func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, proposalID uint64) error {
+func (g Governance) VoteAll(ctx context.Context, option govtypesv1.VoteOption, proposalID uint64) error {
 	return g.voteAll(ctx, func(voter sdk.AccAddress) sdk.Msg {
-		return &govtypes.MsgVote{
+		return &govtypesv1.MsgVote{
 			ProposalId: proposalID,
 			Voter:      voter.String(),
 			Option:     option,
@@ -154,9 +156,9 @@ func (g Governance) VoteAll(ctx context.Context, option govtypes.VoteOption, pro
 }
 
 // VoteAllWeighted votes for the proposalID from all voting accounts with the provided WeightedVoteOptions.
-func (g Governance) VoteAllWeighted(ctx context.Context, options govtypes.WeightedVoteOptions, proposalID uint64) error {
+func (g Governance) VoteAllWeighted(ctx context.Context, options govtypesv1.WeightedVoteOptions, proposalID uint64) error {
 	return g.voteAll(ctx, func(voter sdk.AccAddress) sdk.Msg {
-		return &govtypes.MsgVoteWeighted{
+		return &govtypesv1.MsgVoteWeighted{
 			ProposalId: proposalID,
 			Voter:      voter.String(),
 			Options:    options,
@@ -182,7 +184,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 			WithSimulateAndExecute(true)
 
 		clientCtx := g.chainCtx.ClientContext.
-			WithBroadcastMode(flags.BroadcastSync)
+			WithAwaitTx(false)
 
 		res, err := client.BroadcastTx(ctx, clientCtx.WithFromAddress(staker), txf, msg)
 		if err != nil {
@@ -204,7 +206,7 @@ func (g Governance) voteAll(ctx context.Context, msgFunc func(sdk.AccAddress) sd
 
 // WaitForVotingToFinalize waits for the proposal status to change to final.
 // Final statuses are: StatusPassed, StatusRejected or StatusFailed.
-func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint64) (govtypes.ProposalStatus, error) {
+func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint64) (govtypesv1.ProposalStatus, error) {
 	proposal, err := g.GetProposal(ctx, proposalID)
 	if err != nil {
 		return proposal.Status, err
@@ -215,8 +217,8 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 	if err != nil {
 		return proposal.Status, errors.WithStack(err)
 	}
-	if blockRes.Block.Header.Time.Before(proposal.VotingEndTime) {
-		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(blockRes.Block.Header.Time))
+	if blockRes.SdkBlock.Header.Time.Before(*proposal.VotingEndTime) {
+		waitCtx, waitCancel := context.WithTimeout(ctx, proposal.VotingEndTime.Sub(blockRes.SdkBlock.Header.Time))
 		defer waitCancel()
 
 		<-waitCtx.Done()
@@ -235,7 +237,7 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 		}
 
 		switch proposal.Status {
-		case govtypes.StatusPassed, govtypes.StatusRejected, govtypes.StatusFailed:
+		case govtypesv1.StatusPassed, govtypesv1.StatusRejected, govtypesv1.StatusFailed:
 			return nil
 		default:
 			return retry.Retryable(errors.Errorf("waiting for one of final statuses but current one is %s", proposal.Status))
@@ -248,44 +250,24 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 }
 
 // GetProposal returns proposal by ID.
-func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (govtypes.Proposal, error) {
-	resp, err := g.govClient.Proposal(ctx, &govtypes.QueryProposalRequest{
+func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (*govtypesv1.Proposal, error) {
+	resp, err := g.govClient.Proposal(ctx, &govtypesv1.QueryProposalRequest{
 		ProposalId: proposalID,
 	})
 	if err != nil {
-		return govtypes.Proposal{}, err
+		return nil, err
 	}
 
 	return resp.Proposal, nil
 }
 
-func (g Governance) queryGovParams(ctx context.Context) (govtypes.Params, error) {
-	govClient := g.govClient
-
-	votingParams, err := govClient.Params(ctx, &govtypes.QueryParamsRequest{
-		ParamsType: govtypes.ParamVoting,
+func (g Governance) queryGovParams(ctx context.Context) (*govtypesv1.Params, error) {
+	govParams, err := g.govClient.Params(ctx, &govtypesv1.QueryParamsRequest{
+		ParamsType: govtypesv1.ParamTallying,
 	})
 	if err != nil {
-		return govtypes.Params{}, errors.WithStack(err)
+		return nil, err
 	}
 
-	depositParams, err := govClient.Params(ctx, &govtypes.QueryParamsRequest{
-		ParamsType: govtypes.ParamDeposit,
-	})
-	if err != nil {
-		return govtypes.Params{}, errors.WithStack(err)
-	}
-
-	taillyParams, err := govClient.Params(ctx, &govtypes.QueryParamsRequest{
-		ParamsType: govtypes.ParamTallying,
-	})
-	if err != nil {
-		return govtypes.Params{}, errors.WithStack(err)
-	}
-
-	return govtypes.Params{
-		VotingParams:  votingParams.VotingParams,
-		DepositParams: depositParams.DepositParams,
-		TallyParams:   taillyParams.TallyParams,
-	}, nil
+	return govParams.Params, nil
 }

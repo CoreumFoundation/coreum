@@ -8,22 +8,16 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	appupgradev2 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2"
-	appupgradev2patch1 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v2/v2patch1"
+	appupgradev3 "github.com/CoreumFoundation/coreum/v2/app/upgrade/v3"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 )
-
-type upgradeTest interface {
-	Before(t *testing.T)
-	After(t *testing.T)
-}
 
 // TestUpgrade that after accepting upgrade proposal cosmovisor starts a new version of cored.
 func TestUpgrade(t *testing.T) {
@@ -35,35 +29,20 @@ func TestUpgrade(t *testing.T) {
 	requireT.NoError(err)
 
 	switch infoRes.ApplicationVersion.Version {
-	case "v1.0.0": // this is for mainnet
-		upgradeV2(t)
-	case "v2.0.0": // this is for testnet
-		runUpgrade(t, "v2.0.0", appupgradev2patch1.Name, 30)
+	case "v2.0.2":
+		upgradeV3(t)
 	default:
-		requireT.Failf("not supported verion: %s", infoRes.ApplicationVersion.Version)
+		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
 }
 
-func upgradeV2(t *testing.T) {
-	tests := []upgradeTest{
-		&nftStoreTest{},
-		&nftFeaturesTest{},
-		&nftWasmDataTest{},
-		&ftV1UpgradeTest{},
-		&ftFeatureMigrationTest{},
-	}
-
-	for _, test := range tests {
-		test.Before(t)
-	}
-
-	runUpgrade(t, "v1.0.0", appupgradev2.Name, 30)
-
-	for _, test := range tests {
-		test.After(t)
-	}
+func upgradeV3(t *testing.T) {
+	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
 }
 
+// Note that inside this method we use deprecated Block attributed of GetLatestBlockResponse (latestBlockRes.Block)
+// because we interact with older version of SDK before upgrade, and it doesn't have new SdkBlock attribute set.
+// We also use deprecated v1beta1 gov because v1 doesn't exist in cored v2.0.2.
 func runUpgrade(
 	t *testing.T,
 	oldBinaryVersion string,
@@ -89,19 +68,18 @@ func runUpgrade(
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
 
-	upgradeHeight := latestBlockRes.Block.Header.Height + blocksToWait
+	upgradeHeight := latestBlockRes.Block.Header.Height + blocksToWait //nolint:staticcheck
 
 	// Create new proposer.
 	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
+	proposerBalance, err := chain.LegacyGovernance.ComputeProposerBalance(ctx)
 	requireT.NoError(err)
 
 	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
 
 	t.Logf("Creating proposal for upgrading, upgradeName:%s, upgradeHeight:%d", upgradeName, upgradeHeight)
 
-	// Create proposal to upgrade chain.
-	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
+	proposalMsg, err := chain.LegacyGovernance.NewMsgSubmitProposalV1Beta1(
 		ctx,
 		proposer,
 		upgradetypes.NewSoftwareUpgradeProposal(
@@ -112,26 +90,27 @@ func runUpgrade(
 				Height: upgradeHeight,
 			},
 		))
+
 	requireT.NoError(err)
-	proposalID, err := chain.Governance.Propose(ctx, t, proposalMsg)
+	proposalID, err := chain.LegacyGovernance.Propose(ctx, t, proposalMsg)
 	requireT.NoError(err)
 	t.Logf("Upgrade proposal has been submitted, proposalID:%d", proposalID)
 
 	// Verify that voting period started.
-	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
+	proposal, err := chain.LegacyGovernance.GetProposal(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusVotingPeriod, proposal.Status)
+	requireT.Equal(govtypesv1beta1.StatusVotingPeriod, proposal.Status)
 
 	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypes.OptionYes, proposal.ProposalId)
+	err = chain.LegacyGovernance.VoteAll(ctx, govtypesv1beta1.OptionYes, proposal.ProposalId)
 	requireT.NoError(err)
 
 	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime: %s", proposal.VotingEndTime)
 
 	// Wait for proposal result.
-	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
+	finalStatus, err := chain.LegacyGovernance.WaitForVotingToFinalize(ctx, proposalID)
 	requireT.NoError(err)
-	requireT.Equal(govtypes.StatusPassed, finalStatus)
+	requireT.Equal(govtypesv1beta1.StatusPassed, finalStatus)
 
 	// Verify that upgrade plan is there waiting to be applied.
 	currentPlan, err = upgradeClient.CurrentPlan(ctx, &upgradetypes.QueryCurrentPlanRequest{})
@@ -143,11 +122,11 @@ func runUpgrade(
 	// Verify that we are before the upgrade
 	infoWaitingBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	requireT.NoError(err)
-	requireT.Less(infoWaitingBlockRes.Block.Header.Height, upgradeHeight)
+	requireT.Less(infoWaitingBlockRes.Block.Header.Height, upgradeHeight) //nolint:staticcheck
 
-	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height))
+	retryCtx, cancel := context.WithTimeout(ctx, 6*time.Second*time.Duration(upgradeHeight-infoWaitingBlockRes.Block.Header.Height)) //nolint:staticcheck
 	defer cancel()
-	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.Block.Header.Height)
+	t.Logf("Waiting for upgrade, upgradeHeight:%d, currentHeight:%d", upgradeHeight, infoWaitingBlockRes.Block.Header.Height) //nolint:staticcheck
 	err = retry.Do(retryCtx, time.Second, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
@@ -156,10 +135,10 @@ func runUpgrade(
 		if err != nil {
 			return retry.Retryable(err)
 		}
-		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight+1 {
+		if infoAfterBlockRes.Block.Header.Height >= upgradeHeight+1 { //nolint:staticcheck
 			return nil
 		}
-		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height))
+		return retry.Retryable(errors.Errorf("waiting for upgraded block %d, current block: %d", upgradeHeight, infoAfterBlockRes.Block.Header.Height)) //nolint:staticcheck
 	})
 	requireT.NoError(err)
 

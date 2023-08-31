@@ -6,18 +6,21 @@ import (
 	"testing"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v4/modules/core/03-connection/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	"github.com/cosmos/ibc-go/v4/modules/core/exported"
-	ibctmlightclienttypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	ibcchanneltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibctmlightclienttypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	cosmosrelayer "github.com/cosmos/relayer/v2/relayer"
 	cosmosrelayercosmoschain "github.com/cosmos/relayer/v2/relayer/chains/cosmos"
 	"github.com/pkg/errors"
@@ -91,6 +94,14 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 	tmQueryClient := tmservice.NewServiceClient(recipientChainContext.ClientContext)
 	latestBlockRes, err := tmQueryClient.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
 	require.NoError(t, err)
+	var headerTime time.Time
+	if latestBlockRes.SdkBlock != nil {
+		headerTime = latestBlockRes.GetSdkBlock().GetHeader().Time
+	} else {
+		// TODO: remove this "if condition" once all the connected chains have migrated to cosmos sdk v0.47.
+		// Block is deprecated in favor of SdkBlock.
+		headerTime = latestBlockRes.GetBlock().GetHeader().Time
+	}
 
 	ibcSend := ibctransfertypes.MsgTransfer{
 		SourcePort:       ibctransfertypes.PortID,
@@ -98,7 +109,7 @@ func (c ChainContext) ExecuteTimingOutIBCTransfer(
 		Token:            coin,
 		Sender:           sender,
 		Receiver:         receiver,
-		TimeoutTimestamp: uint64(latestBlockRes.Block.Header.Time.Add(-5 * time.Second).UnixNano()),
+		TimeoutTimestamp: uint64(headerTime.Add(-5 * time.Second).UnixNano()),
 	}
 
 	return c.BroadcastTxWithSigner(
@@ -135,13 +146,13 @@ func (c ChainContext) AwaitForBalance(
 		}
 
 		if balancesRes.Balances.AmountOf(expectedBalance.Denom).String() != expectedBalance.Amount.String() {
-			return retry.Retryable(errors.Errorf("%s balance is still not equal to expected, all balances: %s", expectedBalance.Denom, balancesRes.Balances.String()))
+			return retry.Retryable(errors.Errorf("balance of %s is not as expected, all balances: %s", expectedBalance.String(), balancesRes.Balances.String()))
 		}
 
 		return nil
 	})
 	if err == nil {
-		t.Logf("Received expected balance of %s.", expectedBalance.Denom)
+		t.Logf("Received expected balance of %s.", expectedBalance.String())
 	}
 
 	return err
@@ -221,7 +232,7 @@ func (c ChainContext) GetLatestConsensusHeight(ctx context.Context, portID, chan
 
 	clientHeight, ok := clientState.GetLatestHeight().(ibcclienttypes.Height)
 	if !ok {
-		return ibcclienttypes.Height{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidHeight, "invalid height type. expected type: %T, got: %T",
+		return ibcclienttypes.Height{}, sdkerrors.Wrapf(cosmoserrors.ErrInvalidHeight, "invalid height type. expected type: %T, got: %T",
 			ibcclienttypes.Height{}, clientHeight)
 	}
 
@@ -294,6 +305,8 @@ func CreateIBCChannelsAndConnect(
 		channelOrderString, channelVersion,
 		false,
 		"",
+		// FIXME(v47-ibc) validate that the config is valid
+		fmt.Sprintf("%s-%s", srcChain.ChainSettings.ChainID, dstChain.ChainSettings.ChainID),
 	))
 }
 
@@ -324,14 +337,15 @@ func setupRelayerChain(
 
 	relayerSrcChainProvider, err := relayerSrcChainConfig.NewProvider(log, t.TempDir(), false, chain.ChainSettings.ChainID)
 	require.NoError(t, err)
-	relayerSrcChainKeyInfo, err := relayerSrcChainProvider.AddKey(relayerKeyName, chain.ChainSettings.CoinType)
+	require.NoError(t, relayerSrcChainProvider.Init(ctx))
+	relayerSrcChainKeyInfo, err := relayerSrcChainProvider.AddKey(relayerKeyName, chain.ChainSettings.CoinType, string(hd.Secp256k1Type))
 	require.NoError(t, err)
 	_, relayerKeyBytes, err := bech32.DecodeAndConvert(relayerSrcChainKeyInfo.Address)
 	require.NoError(t, err)
 
 	chain.Faucet.FundAccounts(ctx, t, FundedAccount{
 		Address: relayerKeyBytes,
-		Amount:  chain.NewCoin(sdk.NewInt(2000000)),
+		Amount:  chain.NewCoin(sdkmath.NewInt(2000000)),
 	})
 
 	relayerChain := cosmosrelayer.NewChain(log, relayerSrcChainProvider, false)

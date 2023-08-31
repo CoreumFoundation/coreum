@@ -3,8 +3,8 @@ package v1
 import (
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"

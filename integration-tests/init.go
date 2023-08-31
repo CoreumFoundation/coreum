@@ -10,14 +10,15 @@ import (
 
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	protobufgrpc "github.com/gogo/protobuf/grpc"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum/v2/app"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
@@ -107,10 +108,7 @@ func init() {
 
 	// ********** Coreum **********
 
-	coreumGRPCClient, err := grpc.Dial(coreumGRPCAddress, grpc.WithInsecure())
-	if err != nil {
-		panic(errors.WithStack(err))
-	}
+	coreumGRPCClient := dialGRPCClient(coreumGRPCAddress)
 	coreumSettings := queryCommonSettings(queryCtx, coreumGRPCClient)
 
 	coreumClientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
@@ -126,14 +124,14 @@ func init() {
 
 	config.SetSDKConfig(coreumSettings.AddressPrefix, constant.CoinType)
 
-	coreumRPClient, err := sdkclient.NewClientFromNode(coreumRPCAddress)
+	coreumRPCClient, err := sdkclient.NewClientFromNode(coreumRPCAddress)
 	if err != nil {
 		panic(errors.WithStack(err))
 	}
 
 	chains.Coreum = NewCoreumChain(NewChain(
 		coreumGRPCClient,
-		coreumRPClient,
+		coreumRPCClient,
 		coreumSettings,
 		coreumFundingMnemonic), coreumStakerMnemonics)
 }
@@ -156,11 +154,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 		defer queryCtxCancel()
 		// ********** Gaia **********
 
-		gaiaGRPClient, err := grpc.Dial(gaiaGRPCAddress, grpc.WithInsecure())
-		if err != nil {
-			panic(errors.WithStack(err))
-		}
-
+		gaiaGRPClient := dialGRPCClient(gaiaGRPCAddress)
 		gaiaSettings := queryCommonSettings(queryCtx, gaiaGRPClient)
 		gaiaSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		gaiaSettings.GasAdjustment = 1.5
@@ -180,11 +174,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 
 		// ********** Osmosis **********
 
-		osmosisGRPClient, err := grpc.Dial(osmosisGRPCAddress, grpc.WithInsecure())
-		if err != nil {
-			panic(errors.WithStack(err))
-		}
-
+		osmosisGRPClient := dialGRPCClient(osmosisGRPCAddress)
 		osmosisChainSettings := queryCommonSettings(queryCtx, osmosisGRPClient)
 		osmosisChainSettings.GasPrice = sdk.MustNewDecFromStr("0.01")
 		osmosisChainSettings.GasAdjustment = 1.5
@@ -206,7 +196,7 @@ func NewChainsTestingContext(t *testing.T) (context.Context, Chains) {
 	return testCtx, chains
 }
 
-func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn) ChainSettings {
+func queryCommonSettings(ctx context.Context, grpcClient *grpc.ClientConn) ChainSettings {
 	clientCtx := client.NewContext(getTestContextConfig(), app.ModuleBasics).
 		WithGRPCClient(grpcClient)
 
@@ -219,7 +209,7 @@ func queryCommonSettings(ctx context.Context, grpcClient protobufgrpc.ClientConn
 
 	paramsRes, err := stakingtypes.NewQueryClient(clientCtx).Params(ctx, &stakingtypes.QueryParamsRequest{})
 	if err != nil {
-		panic(fmt.Sprintf("can't get staking params, err: %s", err))
+		panic(errors.Errorf("can't get staking params, err: %s", err))
 	}
 
 	denom := paramsRes.Params.BondDenom
@@ -260,4 +250,23 @@ func getTestContextConfig() client.ContextConfig {
 	cfg.TimeoutConfig.TxStatusPollInterval = 100 * time.Millisecond
 
 	return cfg
+}
+
+func dialGRPCClient(url string) *grpc.ClientConn {
+	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		panic("failed to cast codec to codec.GRPCCodecProvider)")
+	}
+
+	grpClient, err := grpc.Dial(
+		url,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		panic(errors.WithStack(err))
+	}
+
+	return grpClient
 }

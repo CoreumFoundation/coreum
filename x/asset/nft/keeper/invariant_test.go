@@ -3,10 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
 	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/keeper"

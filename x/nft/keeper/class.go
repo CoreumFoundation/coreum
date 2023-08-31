@@ -1,8 +1,8 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )

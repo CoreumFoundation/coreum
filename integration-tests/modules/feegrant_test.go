@@ -5,9 +5,10 @@ package modules
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	codetypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	"github.com/stretchr/testify/require"
@@ -34,7 +35,7 @@ func TestFeeGrant(t *testing.T) {
 		},
 	})
 	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
-		Amount: sdk.NewInt(1),
+		Amount: sdkmath.NewInt(1),
 	})
 	basicAllowance, err := codetypes.NewAnyWithValue(&feegrant.BasicAllowance{
 		SpendLimit: nil, // empty means no limit
@@ -56,11 +57,10 @@ func TestFeeGrant(t *testing.T) {
 	)
 	requireT.NoError(err)
 	requireT.EqualValues(res.GasUsed, chain.GasLimitByMsgs(grantMsg))
-
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: grantee.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -88,7 +88,7 @@ func TestFeeGrant(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: grantee.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(chain.NewCoin(sdk.NewInt(1))),
+		Amount:      sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -98,5 +98,5 @@ func TestFeeGrant(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	requireT.True(sdkerrors.ErrUnauthorized.Is(err))
+	requireT.True(cosmoserrors.ErrNotFound.Is(err))
 }

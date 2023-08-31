@@ -3,10 +3,10 @@ package event
 import (
 	"strconv"
 
+	tmtypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
-	tmtypes "github.com/tendermint/tendermint/abci/types"
 )
 
 // FindTypedEvents finds events in the list of events, and marshals them to the event type.

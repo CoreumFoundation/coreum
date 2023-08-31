@@ -3,6 +3,7 @@ package keeper
 import (
 	"sort"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -24,7 +25,7 @@ func (k Keeper) BeforeInputOutputCoins(ctx sdk.Context, inputs []banktypes.Input
 	return k.applyFeatures(ctx, inputs, outputs)
 }
 
-type accountOperationMap map[string]sdk.Int
+type accountOperationMap map[string]sdkmath.Int
 
 type groupedByDenomAccountOperations map[string]accountOperationMap
 
@@ -32,11 +33,11 @@ func (g groupedByDenomAccountOperations) add(address string, coins sdk.Coins) {
 	for _, coin := range coins {
 		accountBalances, ok := g[coin.Denom]
 		if !ok {
-			accountBalances = make(map[string]sdk.Int)
+			accountBalances = make(map[string]sdkmath.Int)
 		}
 		oldAmount, ok := accountBalances[address]
 		if !ok {
-			oldAmount = sdk.ZeroInt()
+			oldAmount = sdkmath.ZeroInt()
 		}
 
 		oldAmount = oldAmount.Add(coin.Amount)
@@ -46,6 +47,7 @@ func (g groupedByDenomAccountOperations) add(address string, coins sdk.Coins) {
 }
 
 func (k Keeper) applyFeatures(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error {
+	// TODO: Starting from version v0.47 Cosmos SDK accepts single input only, so we may greatly simplify the logic here.
 	groupInputs := make(groupedByDenomAccountOperations)
 	for _, in := range inputs {
 		groupInputs.add(in.Address, in.Coins)
@@ -70,7 +72,7 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 
 		burnShares := k.CalculateRateShares(ctx, def.BurnRate, def.Issuer, inOps, outOps)
 
-		if err := iterateMapDeterministic(burnShares, func(account string, amount sdk.Int) error {
+		if err := iterateMapDeterministic(burnShares, func(account string, amount sdkmath.Int) error {
 			return k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
 		}); err != nil {
 			return err
@@ -79,27 +81,27 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 		commissionShares := k.CalculateRateShares(ctx, def.SendCommissionRate, def.Issuer, inOps, outOps)
 		issuer := sdk.MustAccAddressFromBech32(def.Issuer)
 
-		if err := iterateMapDeterministic(commissionShares, func(account string, amount sdk.Int) error {
+		if err := iterateMapDeterministic(commissionShares, func(account string, amount sdkmath.Int) error {
 			coins := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
 			return k.bankKeeper.SendCoins(ctx, sdk.MustAccAddressFromBech32(account), issuer, coins)
 		}); err != nil {
 			return err
 		}
 
-		if err := iterateMapDeterministic(inOps, func(account string, amount sdk.Int) error {
+		if err := iterateMapDeterministic(inOps, func(account string, amount sdkmath.Int) error {
 			return k.isCoinSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
 		}); err != nil {
 			return err
 		}
 
-		return iterateMapDeterministic(outOps, func(account string, amount sdk.Int) error {
+		return iterateMapDeterministic(outOps, func(account string, amount sdkmath.Int) error {
 			return k.isCoinReceivable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
 		})
 	})
 }
 
-func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
-	sum := sdk.ZeroInt()
+func nonIssuerSum(ops accountOperationMap, issuer string) sdkmath.Int {
+	sum := sdkmath.ZeroInt()
 	for account, amount := range ops {
 		if account != issuer {
 			sum = sum.Add(amount)
@@ -109,7 +111,7 @@ func nonIssuerSum(ops accountOperationMap, issuer string) sdk.Int {
 }
 
 // CalculateRateShares calculates how the burn or commission share amount should be split between different parties.
-func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdk.Int {
+func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdkmath.Int {
 	// We decided that rates should not be charged on incoming IBC transfers.
 	// According to our current protocol, it cannot be done because sender pays the rates, meaning that escrow address
 	// would be charged leading to breaking the IBC mechanics.
@@ -130,7 +132,6 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
 		return nil
 	}
-
 	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
 	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
 
@@ -175,7 +176,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 		if account == issuer {
 			continue
 		}
-		// in order to reduce precision errors, we first multiply all sdk.Ints, and then multiply sdk.Decs, and then divide
+		// in order to reduce precision errors, we first multiply all sdkmath.Ints, and then multiply sdk.Decs, and then divide
 		finalShare := rate.MulInt(minNonIssuer.Mul(amount)).QuoInt(inputSumNonIssuer).Ceil().RoundInt()
 		shares[account] = finalShare
 	}

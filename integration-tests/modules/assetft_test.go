@@ -7,14 +7,16 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
@@ -30,7 +32,7 @@ func TestAssetFTQueryParams(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	issueFee := chain.QueryAssetFTParams(ctx, t).IssueFee
 
-	assert.True(t, issueFee.Amount.GT(sdk.ZeroInt()))
+	assert.True(t, issueFee.Amount.GT(sdkmath.ZeroInt()))
 	assert.Equal(t, chain.ChainSettings.Denom, issueFee.Denom)
 }
 
@@ -56,7 +58,7 @@ func TestAssetFTIssue(t *testing.T) {
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features:      []assetfttypes.Feature{},
 	}
 
@@ -82,7 +84,7 @@ func TestAssetFTIssue(t *testing.T) {
 		Denom:   chain.ChainSettings.Denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(chain.NewCoin(sdk.ZeroInt()).String(), resp.Balance.String())
+	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
 }
 
 // TestAssetFTIssueFeeProposal tests proposal upgrading issue fee.
@@ -94,9 +96,13 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT := require.New(t)
 	origIssueFee := chain.QueryAssetFTParams(ctx, t).IssueFee
 
-	chain.Governance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origIssueFee.Denom, sdk.ZeroInt()))))),
+			paramproposal.NewParamChange(
+				assetfttypes.ModuleName,
+				string(assetfttypes.KeyIssueFee),
+				string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origIssueFee.Denom, sdkmath.ZeroInt())))),
+			),
 		})
 
 	issuer := chain.GenAccount()
@@ -114,7 +120,7 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features:      []assetfttypes.Feature{},
 	}
 
@@ -128,9 +134,13 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	requireT.NoError(err)
 
 	// Revert to original issue fee
-	chain.Governance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
+	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing IssueFee in the assetft module",
 		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetfttypes.ModuleName, string(assetfttypes.KeyIssueFee), string(must.Bytes(tmjson.Marshal(origIssueFee)))),
+			paramproposal.NewParamChange(
+				assetfttypes.ModuleName,
+				string(assetfttypes.KeyIssueFee),
+				string(must.Bytes(tmjson.Marshal(origIssueFee))),
+			),
 		})
 }
 
@@ -166,7 +176,7 @@ func TestAssetIssueAndQueryTokens(t *testing.T) {
 		Subunit:            "wsatoshi",
 		Precision:          8,
 		Description:        "Wrapped BTC",
-		InitialAmount:      sdk.NewInt(777),
+		InitialAmount:      sdkmath.NewInt(777),
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
 	}
@@ -242,7 +252,7 @@ func TestBalanceQuery(t *testing.T) {
 		Subunit:            "wsatoshi",
 		Precision:          8,
 		Description:        "Wrapped BTC",
-		InitialAmount:      sdk.NewInt(200),
+		InitialAmount:      sdkmath.NewInt(200),
 		BurnRate:           sdk.NewDec(0),
 		SendCommissionRate: sdk.NewDec(0),
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing, assetfttypes.Feature_whitelisting},
@@ -370,7 +380,7 @@ func TestAssetFTMint(t *testing.T) {
 		Subunit:       "uabcnotmintable",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_burning,
 			assetfttypes.Feature_freezing,
@@ -394,7 +404,7 @@ func TestAssetFTMint(t *testing.T) {
 		Sender: issuer.String(),
 		Coin: sdk.Coin{
 			Denom:  unmintableDenom,
-			Amount: sdk.NewInt(1000),
+			Amount: sdkmath.NewInt(1000),
 		},
 	}
 
@@ -413,7 +423,7 @@ func TestAssetFTMint(t *testing.T) {
 		Subunit:       "uabcmintable",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features:      []assetfttypes.Feature{assetfttypes.Feature_minting},
 	}
 
@@ -432,7 +442,7 @@ func TestAssetFTMint(t *testing.T) {
 	// try to pass non-issuer signature to msg
 	mintMsg = &assetfttypes.MsgMint{
 		Sender: randomAddress.String(),
-		Coin:   sdk.NewCoin(mintableDenom, sdk.NewInt(1000)),
+		Coin:   sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -441,12 +451,12 @@ func TestAssetFTMint(t *testing.T) {
 		mintMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
 
 	// mint tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
-	mintCoin := sdk.NewCoin(mintableDenom, sdk.NewInt(1600))
+	mintCoin := sdk.NewCoin(mintableDenom, sdkmath.NewInt(1600))
 	mintMsg = &assetfttypes.MsgMint{
 		Sender: issuer.String(),
 		Coin:   mintCoin,
@@ -461,7 +471,7 @@ func TestAssetFTMint(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: mintableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(mintCoin.Add(sdk.NewCoin(mintableDenom, sdk.NewInt(1000))).String(), balance.GetBalance().String())
+	assertT.EqualValues(mintCoin.Add(sdk.NewCoin(mintableDenom, sdkmath.NewInt(1000))).String(), balance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: mintableDenom})
 	requireT.NoError(err)
@@ -506,7 +516,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Subunit:       "uabcnotburnable",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_minting,
 			assetfttypes.Feature_freezing,
@@ -530,7 +540,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Sender: issuer.String(),
 		Coin: sdk.Coin{
 			Denom:  unburnable,
-			Amount: sdk.NewInt(900),
+			Amount: sdkmath.NewInt(900),
 		},
 	}
 
@@ -546,7 +556,7 @@ func TestAssetFTBurn(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(unburnable, sdk.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(unburnable, sdkmath.NewInt(100))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -562,7 +572,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Sender: recipient.String(),
 		Coin: sdk.Coin{
 			Denom:  unburnable,
-			Amount: sdk.NewInt(1000),
+			Amount: sdkmath.NewInt(1000),
 		},
 	}
 
@@ -581,7 +591,7 @@ func TestAssetFTBurn(t *testing.T) {
 		Subunit:       "uabcburnable",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features:      []assetfttypes.Feature{assetfttypes.Feature_burning},
 	}
 
@@ -601,7 +611,7 @@ func TestAssetFTBurn(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdk.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(burnableDenom, sdkmath.NewInt(100))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -615,7 +625,7 @@ func TestAssetFTBurn(t *testing.T) {
 	// try to pass non-issuer signature to msg
 	burnMsg = &assetfttypes.MsgBurn{
 		Sender: recipient.String(),
-		Coin:   sdk.NewCoin(burnableDenom, sdk.NewInt(100)),
+		Coin:   sdk.NewCoin(burnableDenom, sdkmath.NewInt(100)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -628,7 +638,7 @@ func TestAssetFTBurn(t *testing.T) {
 	// burn tokens and check balance and total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(burnableDenom, sdk.NewInt(600))
+	burnCoin := sdk.NewCoin(burnableDenom, sdkmath.NewInt(600))
 
 	burnMsg = &assetfttypes.MsgBurn{
 		Sender: issuer.String(),
@@ -644,7 +654,7 @@ func TestAssetFTBurn(t *testing.T) {
 
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: burnableDenom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdk.NewInt(300)).String(), balance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(burnableDenom, sdkmath.NewInt(300)).String(), balance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: burnableDenom})
 	requireT.NoError(err)
@@ -688,7 +698,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 		Symbol:             "ABC",
 		Subunit:            "abc",
 		Precision:          6,
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{},
 		BurnRate:           sdk.MustNewDecFromStr("0.10"),
@@ -711,7 +721,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient1.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -730,7 +740,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -750,7 +760,7 @@ func TestAssetFTBurnRate(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient2.String(),
 		ToAddress:   issuer.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -770,11 +780,11 @@ func TestAssetFTBurnRate(t *testing.T) {
 	// (burn must apply to one of outputs, deducted from recipient 1)
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
-			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200)))},
+			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(200)))},
 		},
 		Outputs: []banktypes.Output{
-			{Address: issuer.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100)))},
-			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100)))},
+			{Address: issuer.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100)))},
+			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100)))},
 		},
 	}
 
@@ -835,7 +845,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 		Symbol:             "ABC",
 		Subunit:            "abc",
 		Precision:          6,
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{},
 		BurnRate:           sdk.NewDec(0),
@@ -858,7 +868,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient1.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -877,7 +887,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient1.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -897,7 +907,7 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient2.String(),
 		ToAddress:   issuer.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -917,11 +927,11 @@ func TestAssetFTSendCommissionRate(t *testing.T) {
 	// (send commission rate must apply to one of transfers)
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs: []banktypes.Input{
-			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200)))},
+			{Address: recipient1.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(200)))},
 		},
 		Outputs: []banktypes.Output{
-			{Address: issuer.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100)))},
-			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100)))},
+			{Address: issuer.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100)))},
+			{Address: recipient2.String(), Coins: sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100)))},
 		},
 	}
 
@@ -996,7 +1006,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 		},
@@ -1006,7 +1016,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdk.NewInt(1000)),
+			sdk.NewCoin(assetfttypes.BuildDenom(msg.Subunit, issuer), sdkmath.NewInt(1000)),
 		),
 	}
 
@@ -1030,7 +1040,7 @@ func TestAssetFTFreeze(t *testing.T) {
 	freezeMsg := &assetfttypes.MsgFreeze{
 		Sender:  randomAddress.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1039,13 +1049,13 @@ func TestAssetFTFreeze(t *testing.T) {
 		freezeMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
 
 	// freeze 400 tokens
 	freezeMsg = &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
 	}
 	res, err = client.BroadcastTx(
 		ctx,
@@ -1061,8 +1071,8 @@ func TestAssetFTFreeze(t *testing.T) {
 	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
-		PreviousAmount: sdk.NewInt(0),
-		CurrentAmount:  sdk.NewInt(400),
+		PreviousAmount: sdkmath.NewInt(0),
+		CurrentAmount:  sdkmath.NewInt(400),
 	}, fungibleTokenFreezeEvts[0])
 
 	// query frozen tokens
@@ -1071,17 +1081,17 @@ func TestAssetFTFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(400)), frozenBalance.Balance)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), frozenBalance.Balance)
 
 	frozenBalances, err := ftClient.FrozenBalances(ctx, &assetfttypes.QueryFrozenBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))), frozenBalances.Balances)
+	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), frozenBalances.Balances)
 
 	// try to send more than available (650) (600 is available)
 	recipient2 := chain.GenAccount()
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(650)))
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(650)))
 	// send
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
@@ -1095,7 +1105,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 	// multi-send
 	multiSendMsg := &banktypes.MsgMultiSend{
 		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
@@ -1108,10 +1118,10 @@ func TestAssetFTFreeze(t *testing.T) {
 		multiSendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// try to send available tokens (300 + 300)
-	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(300)))
+	coinsToSend = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(300)))
 	// send
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
@@ -1130,7 +1140,7 @@ func TestAssetFTFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(700)).String(), balance1.GetBalance().String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(700)).String(), balance1.GetBalance().String())
 	// multi-send
 	multiSendMsg = &banktypes.MsgMultiSend{
 		Inputs:  []banktypes.Input{{Address: recipient.String(), Coins: coinsToSend}},
@@ -1148,13 +1158,13 @@ func TestAssetFTFreeze(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(400)).String(), balance1.GetBalance().String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)).String(), balance1.GetBalance().String())
 
 	// unfreeze 200 tokens and try to send 250 tokens
 	unfreezeMsg := &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
 	}
 	res, err = client.BroadcastTx(
 		ctx,
@@ -1170,14 +1180,14 @@ func TestAssetFTFreeze(t *testing.T) {
 	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
-		PreviousAmount: sdk.NewInt(400),
-		CurrentAmount:  sdk.NewInt(200),
+		PreviousAmount: sdkmath.NewInt(400),
+		CurrentAmount:  sdkmath.NewInt(200),
 	}, fungibleTokenFreezeEvts[0])
 
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(250))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(250))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1186,13 +1196,13 @@ func TestAssetFTFreeze(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// send available tokens (200)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   recipient2.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(200))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1206,7 +1216,7 @@ func TestAssetFTFreeze(t *testing.T) {
 	unfreezeMsg = &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1214,13 +1224,13 @@ func TestAssetFTFreeze(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(unfreezeMsg)),
 		unfreezeMsg,
 	)
-	requireT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	requireT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 
 	// unfreeze 200 tokens and observer current frozen amount is zero
 	unfreezeMsg = &assetfttypes.MsgUnfreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
 	}
 	res, err = client.BroadcastTx(
 		ctx,
@@ -1236,8 +1246,8 @@ func TestAssetFTFreeze(t *testing.T) {
 	assertT.EqualValues(&assetfttypes.EventFrozenAmountChanged{
 		Account:        recipient.String(),
 		Denom:          denom,
-		PreviousAmount: sdk.NewInt(200),
-		CurrentAmount:  sdk.NewInt(0),
+		PreviousAmount: sdkmath.NewInt(200),
+		CurrentAmount:  sdkmath.NewInt(0),
 	}, fungibleTokenFreezeEvts[0])
 }
 
@@ -1266,7 +1276,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 		Subunit:       "uabcnotfreezable",
 		Description:   "ABC Description",
 		Precision:     1,
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features:      []assetfttypes.Feature{},
 	}
 
@@ -1286,7 +1296,7 @@ func TestAssetFTFreezeUnfreezable(t *testing.T) {
 	freezeMsg := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(unfreezableDenom, sdk.NewInt(1000)),
+		Coin:    sdk.NewCoin(unfreezableDenom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1320,7 +1330,7 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 		Subunit:       "uabc",
 		Precision:     1,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 		},
@@ -1339,7 +1349,7 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 	freezeMsg := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: issuer.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1347,7 +1357,7 @@ func TestAssetFTFreezeIssuerAccount(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(freezeMsg)),
 		freezeMsg,
 	)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 // TestAssetFTGloballyFreeze checks global freeze functionality of fungible tokens.
@@ -1385,7 +1395,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 		Subunit:       "freeze",
 		Precision:     6,
 		Description:   "FREEZE Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 		},
@@ -1416,7 +1426,7 @@ func TestAssetFTGloballyFreeze(t *testing.T) {
 	requireT.NoError(err)
 
 	// Try to send Token.
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(50)))
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(50)))
 	// send
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
@@ -1546,7 +1556,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 		Subunit:            "uabc",
 		Precision:          6,
 		Description:        "ABC Description",
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.3"),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
@@ -1557,14 +1567,14 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom, sdk.NewInt(1000)),
+			sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 		),
 	}
 
 	msgFreeze := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(650)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(650)),
 	}
 
 	msgList := []sdk.Msg{
@@ -1581,7 +1591,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 
 	// try to send more than available (300 + 60) (1000 - 650(frozen) = 350 is available)
 	recipient2 := chain.GenAccount()
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(300)))
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(300)))
 	// send
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
@@ -1595,7 +1605,7 @@ func TestAssetCommissionRateExceedFreeze(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 }
 
 // TestSendCoreTokenWithRestrictedToken checks tx will fail if try to send core token
@@ -1622,7 +1632,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 		Messages: []sdk.Msg{
 			&banktypes.MsgSend{},
 		},
-		Amount: sdk.NewInt(1000),
+		Amount: sdkmath.NewInt(1000),
 	})
 
 	// Issue the new fungible token
@@ -1632,7 +1642,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 		},
@@ -1642,14 +1652,14 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom, sdk.NewInt(1000)),
+			sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 		),
 	}
 
 	msgFreeze := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(800)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(800)),
 	}
 
 	msgList := []sdk.Msg{
@@ -1667,8 +1677,8 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 	// try to send core token and minted token with freezing violation
 	recipient2 := chain.GenAccount()
 	coinsToSend := sdk.NewCoins(
-		sdk.NewCoin(denom, sdk.NewInt(210)),
-		chain.NewCoin(sdk.NewInt(1000)),
+		sdk.NewCoin(denom, sdkmath.NewInt(210)),
+		chain.NewCoin(sdkmath.NewInt(1000)),
 	)
 
 	sendMsg := &banktypes.MsgSend{
@@ -1683,7 +1693,7 @@ func TestSendCoreTokenWithRestrictedToken(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 }
 
 // TestNotEnoughBalanceForBurnRate checks tx will fail if there is not enough balance to cover burn rate.
@@ -1719,7 +1729,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 		Subunit:       "uabc",
 		Precision:     6,
 		Description:   "ABC Description",
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		BurnRate:      sdk.MustNewDecFromStr("0.1"),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
@@ -1730,7 +1740,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom, sdk.NewInt(1000)),
+			sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 		),
 	}
 
@@ -1748,7 +1758,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 
 	// try to send, it should fail (920 + 92 = 1012 > 1000)
 	recipient2 := chain.GenAccount()
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(920)))
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(920)))
 
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
@@ -1762,7 +1772,7 @@ func TestNotEnoughBalanceForBurnRate(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 }
 
 // TestNotEnoughBalanceForCommissionRate checks tx will fail if there is not enough balance to cover commission rate.
@@ -1798,7 +1808,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 		Subunit:            "uabc",
 		Precision:          6,
 		Description:        "ABC Description",
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		SendCommissionRate: sdk.MustNewDecFromStr("0.1"),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
@@ -1809,7 +1819,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
 		Amount: sdk.NewCoins(
-			sdk.NewCoin(denom, sdk.NewInt(1000)),
+			sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 		),
 	}
 
@@ -1827,7 +1837,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 
 	// try to send, it should fail (920 + 92 = 1012 > 1000)
 	recipient2 := chain.GenAccount()
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(920)))
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(920)))
 
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: recipient.String(),
@@ -1841,7 +1851,7 @@ func TestNotEnoughBalanceForCommissionRate(t *testing.T) {
 		sendMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 }
 
 // TestAssetFTWhitelist checks whitelist functionality of fungible tokens.
@@ -1889,7 +1899,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	})
 
 	// Issue the new fungible token
-	amount := sdk.NewInt(20000)
+	amount := sdkmath.NewInt(20000)
 	subunit := "uabc"
 	denom := assetfttypes.BuildDenom(subunit, issuer)
 	msg := &assetfttypes.MsgIssue{
@@ -1916,7 +1926,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  nonIssuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -1924,10 +1934,10 @@ func TestAssetFTWhitelist(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(whitelistMsg)),
 		whitelistMsg,
 	)
-	assertT.True(sdkerrors.ErrUnauthorized.Is(err))
+	assertT.True(cosmoserrors.ErrUnauthorized.Is(err))
 
 	// try to send to recipient before it is whitelisted (balance 0, whitelist limit 0)
-	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
+	coinsToSend := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
 	// send
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
@@ -1959,7 +1969,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(400)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(400)),
 	}
 	res, err := client.BroadcastTx(
 		ctx,
@@ -1976,19 +1986,19 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(400)), whitelistedBalance.Balance)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(400)), whitelistedBalance.Balance)
 
 	whitelistedBalances, err := ftClient.WhitelistedBalances(ctx, &assetfttypes.QueryWhitelistedBalancesRequest{
 		Account: recipient.String(),
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))), whitelistedBalances.Balances)
+	requireT.EqualValues(sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))), whitelistedBalances.Balances)
 
 	// try to receive more than whitelisted (600) (possible 400)
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(600))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(600))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2002,7 +2012,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(400))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(400))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2016,13 +2026,13 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(400)).String(), balance.GetBalance().String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(400)).String(), balance.GetBalance().String())
 
 	// try to send one more
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2036,7 +2046,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(401)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(401)),
 	}
 	res, err = client.BroadcastTx(
 		ctx,
@@ -2053,12 +2063,12 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(401)), whitelistedBalance.Balance)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(401)), whitelistedBalance.Balance)
 
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(1))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(1))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2073,7 +2083,7 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(401)).String(), balance.GetBalance().String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(401)).String(), balance.GetBalance().String())
 
 	// Verify that issuer has no whitelisted balance
 	whitelistedBalance, err = ftClient.WhitelistedBalance(ctx, &assetfttypes.QueryWhitelistedBalanceRequest{
@@ -2081,13 +2091,13 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.ZeroInt()), whitelistedBalance.Balance)
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.ZeroInt()), whitelistedBalance.Balance)
 
 	// Send something to issuer, it should succeed despite the fact that issuer is not whitelisted
 	sendMsg = &banktypes.MsgSend{
 		FromAddress: recipient.String(),
 		ToAddress:   issuer.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2102,13 +2112,13 @@ func TestAssetFTWhitelist(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(19609)).String(), balance.GetBalance().String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(19609)).String(), balance.GetBalance().String())
 
 	// Set whitelisted balance to 0 for recipient
 	whitelistMsg = &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.ZeroInt()),
+		Coin:    sdk.NewCoin(denom, sdkmath.ZeroInt()),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2154,7 +2164,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	// Issue an unwhitelistable fungible token
 	subunit := "uabcnotwhitelistable"
 	unwhitelistableDenom := assetfttypes.BuildDenom(subunit, issuer)
-	amount := sdk.NewInt(1000)
+	amount := sdkmath.NewInt(1000)
 	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCNotWhitelistable",
@@ -2178,7 +2188,7 @@ func TestAssetFTWhitelistUnwhitelistable(t *testing.T) {
 	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(unwhitelistableDenom, sdk.NewInt(1000)),
+		Coin:    sdk.NewCoin(unwhitelistableDenom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2208,7 +2218,7 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	// Issue an whitelistable fungible token
 	subunit := "uabcwhitelistable"
 	denom := assetfttypes.BuildDenom(subunit, issuer)
-	amount := sdk.NewInt(1000)
+	amount := sdkmath.NewInt(1000)
 	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "ABCWhitelistable",
@@ -2234,7 +2244,7 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: issuer.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2243,7 +2253,7 @@ func TestAssetFTWhitelistIssuerAccount(t *testing.T) {
 		whitelistMsg,
 	)
 
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 }
 
 // TestBareToken checks non of the features will work if the flags are not set.
@@ -2275,7 +2285,7 @@ func TestBareToken(t *testing.T) {
 	})
 
 	// Issue a bare token
-	amount := sdk.NewInt(1000)
+	amount := sdkmath.NewInt(1000)
 	msg := &assetfttypes.MsgIssue{
 		Issuer:        issuer.String(),
 		Symbol:        "baretoken",
@@ -2297,7 +2307,7 @@ func TestBareToken(t *testing.T) {
 	// try to mint
 	mintMsg := &assetfttypes.MsgMint{
 		Sender: issuer.String(),
-		Coin:   sdk.NewCoin(denom, sdk.NewInt(1000)),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2310,7 +2320,7 @@ func TestBareToken(t *testing.T) {
 	// try to burn from issuer account (must succeed)
 	burnMsg := &assetfttypes.MsgBurn{
 		Sender: issuer.String(),
-		Coin:   sdk.NewCoin(denom, sdk.NewInt(10)),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(10)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2324,7 +2334,7 @@ func TestBareToken(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2336,7 +2346,7 @@ func TestBareToken(t *testing.T) {
 
 	burnMsg = &assetfttypes.MsgBurn{
 		Sender: recipient.String(),
-		Coin:   sdk.NewCoin(denom, sdk.NewInt(10)),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(10)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2350,7 +2360,7 @@ func TestBareToken(t *testing.T) {
 	whitelistMsg := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2364,7 +2374,7 @@ func TestBareToken(t *testing.T) {
 	freezeMsg := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(1000)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(1000)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2418,7 +2428,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		Symbol:        "symbol",
 		Subunit:       "subunit",
 		Precision:     1,
-		InitialAmount: sdk.NewInt(1000),
+		InitialAmount: sdkmath.NewInt(1000),
 		Features: []assetfttypes.Feature{
 			assetfttypes.Feature_freezing,
 			assetfttypes.Feature_whitelisting,
@@ -2429,7 +2439,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgFreeze{})),
-		time.Now().Add(time.Minute),
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 
@@ -2437,7 +2447,7 @@ func TestAuthzWithAssetFT(t *testing.T) {
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgSetWhitelistedLimit{})),
-		time.Now().Add(time.Minute),
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 
@@ -2461,13 +2471,13 @@ func TestAuthzWithAssetFT(t *testing.T) {
 	msgFreeze := &assetfttypes.MsgFreeze{
 		Sender:  granter.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(240)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(240)),
 	}
 
 	msgWhitelist := &assetfttypes.MsgSetWhitelistedLimit{
 		Sender:  granter.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(921)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(921)),
 	}
 
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgFreeze, msgWhitelist})
@@ -2524,7 +2534,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 		Symbol:             "ABC",
 		Subunit:            "abc",
 		Precision:          6,
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_minting},
 		BurnRate:           sdk.MustNewDecFromStr("0.10"),
@@ -2543,7 +2553,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 
 	// mint tokens
 	requireT.NoError(err)
-	mintCoin := sdk.NewCoin(denom, sdk.NewInt(500))
+	mintCoin := sdk.NewCoin(denom, sdkmath.NewInt(500))
 	mintMsg := &assetfttypes.MsgMint{
 		Sender: issuer.String(),
 		Coin:   mintCoin,
@@ -2559,7 +2569,7 @@ func TestAssetFT_RatesAreNotApplied_OnMinting(t *testing.T) {
 	// verify balance of token was not affected by either burn rate or send commission rate
 	balance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: issuer.String(), Denom: denom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(1500)).String(), balance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(1500)).String(), balance.GetBalance().String())
 }
 
 // TestAssetFTBurnRate_OnBurning verifies that both burn rate and send commission rate are not applied when a token is burnt.
@@ -2596,7 +2606,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 		Symbol:             "ABC",
 		Subunit:            "abc",
 		Precision:          6,
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning},
 		BurnRate:           sdk.MustNewDecFromStr("0.20"),
@@ -2617,7 +2627,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(200))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(200))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -2631,7 +2641,7 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	// recipient burns tokens. Then check recipient and issuer balance, as well as total supply
 	oldSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
-	burnCoin := sdk.NewCoin(denom, sdk.NewInt(100))
+	burnCoin := sdk.NewCoin(denom, sdkmath.NewInt(100))
 
 	burnMsg := &assetfttypes.MsgBurn{
 		Sender: recipient.String(),
@@ -2650,9 +2660,9 @@ func TestAssetFTBurnRate_SendCommissionRate_OnBurning(t *testing.T) {
 	recipientBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom})
 	requireT.NoError(err)
 	// verify issuer balance after burning was not affected by the send commission rate
-	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(800)).String(), issuerBalance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(800)).String(), issuerBalance.GetBalance().String())
 	// verify recipient balance after burning was not affected by the burn rate
-	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(100)).String(), recipientBalance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(100)).String(), recipientBalance.GetBalance().String())
 
 	newSupply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
@@ -2696,7 +2706,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 		Symbol:             "ABC",
 		Subunit:            "abc",
 		Precision:          6,
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning, assetfttypes.Feature_freezing},
 		BurnRate:           sdk.NewDec(0),
@@ -2717,7 +2727,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	sendMsg := &banktypes.MsgSend{
 		FromAddress: issuer.String(),
 		ToAddress:   recipient.String(),
-		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(550))),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(550))),
 	}
 
 	_, err = client.BroadcastTx(
@@ -2732,7 +2742,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	freezeMsg := &assetfttypes.MsgFreeze{
 		Sender:  issuer.String(),
 		Account: recipient.String(),
-		Coin:    sdk.NewCoin(denom, sdk.NewInt(300)),
+		Coin:    sdk.NewCoin(denom, sdkmath.NewInt(300)),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
@@ -2743,7 +2753,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	requireT.NoError(err)
 
 	// recipient burns tokens within allowed unfrozen limit
-	burnCoin := sdk.NewCoin(denom, sdk.NewInt(200))
+	burnCoin := sdk.NewCoin(denom, sdkmath.NewInt(200))
 
 	burnMsg := &assetfttypes.MsgBurn{
 		Sender: recipient.String(),
@@ -2760,7 +2770,7 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 	recipientBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom})
 	requireT.NoError(err)
 	// verify recipient balance after burning
-	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(350)).String(), recipientBalance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(350)).String(), recipientBalance.GetBalance().String())
 
 	// recipient tries to burn more token than allowed (left from unfrozen balance). Tx should fail
 	_, err = client.BroadcastTx(
@@ -2770,11 +2780,11 @@ func TestAssetFTFreezeAndBurn(t *testing.T) {
 		burnMsg,
 	)
 	requireT.Error(err)
-	assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+	assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 	// verify recipient balance did not change
 	recipientBalance, err = bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: recipient.String(), Denom: denom})
 	requireT.NoError(err)
-	assertT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(350)).String(), recipientBalance.GetBalance().String())
+	assertT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(350)).String(), recipientBalance.GetBalance().String())
 }
 
 // TestAssetFTFreeze_WithRates verifies freezing with both burn and send commission rates applied
@@ -2828,7 +2838,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 				Symbol:             "ABC",
 				Subunit:            "abc",
 				Precision:          6,
-				InitialAmount:      sdk.NewInt(1000),
+				InitialAmount:      sdkmath.NewInt(1000),
 				Description:        "ABC Description",
 				Features:           []assetfttypes.Feature{assetfttypes.Feature_freezing},
 				BurnRate:           tc.burnRate,           // set burn rate
@@ -2849,7 +2859,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			sendMsg := &banktypes.MsgSend{
 				FromAddress: issuer.String(),
 				ToAddress:   recipient1.String(),
-				Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(500))),
+				Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(500))),
 			}
 
 			_, err = client.BroadcastTx(
@@ -2864,7 +2874,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			freezeMsg := &assetfttypes.MsgFreeze{
 				Sender:  issuer.String(),
 				Account: recipient1.String(),
-				Coin:    sdk.NewCoin(denom, sdk.NewInt(200)),
+				Coin:    sdk.NewCoin(denom, sdkmath.NewInt(200)),
 			}
 			_, err = client.BroadcastTx(
 				ctx,
@@ -2878,7 +2888,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			sendMsg = &banktypes.MsgSend{
 				FromAddress: recipient1.String(),
 				ToAddress:   recipient2.String(),
-				Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
+				Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
 			}
 
 			_, err = client.BroadcastTx(
@@ -2900,7 +2910,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 			sendMsg = &banktypes.MsgSend{
 				FromAddress: recipient1.String(),
 				ToAddress:   recipient2.String(),
-				Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))),
+				Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(100))),
 			}
 
 			_, err = client.BroadcastTx(
@@ -2910,7 +2920,7 @@ func TestAssetFTFreeze_WithRates(t *testing.T) {
 				sendMsg,
 			)
 			requireT.Error(err)
-			assertT.True(sdkerrors.ErrInsufficientFunds.Is(err))
+			assertT.True(cosmoserrors.ErrInsufficientFunds.Is(err))
 			// verify balances did not change
 			assertCoinDistribution(ctx, chain.ClientContext, t, denom, map[*sdk.AccAddress]int64{
 				&issuer:     int64(tc.expectedCoinDistribution[0]),
@@ -2950,7 +2960,7 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 		Symbol:             "ABC",
 		Subunit:            "abc",
 		Precision:          6,
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning, assetfttypes.Feature_freezing},
 		BurnRate:           sdk.NewDec(0),
@@ -2969,7 +2979,7 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 
 	burnMsg := &assetfttypes.MsgBurn{
 		Sender: multisigAddress.String(),
-		Coin:   sdk.NewCoin(denom, sdk.NewInt(300)),
+		Coin:   sdk.NewCoin(denom, sdkmath.NewInt(300)),
 	}
 	_, err = chain.SignAndBroadcastMultisigTx(
 		ctx,
@@ -2984,7 +2994,7 @@ func TestAssetFTAminoMultisig(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(700)).String(), balanceRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(700)).String(), balanceRes.Balance.String())
 }
 
 // TestAssetFTAminoMultisigWithAuthz tests that assetnf module works seamlessly with amino multisig and authz.
@@ -3012,7 +3022,7 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 		multisigGranterAddress,
 		multisigGranteeAddress,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&assetfttypes.MsgIssue{})),
-		time.Now().Add(time.Minute),
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 
@@ -3037,7 +3047,7 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 		Symbol:             "ABC",
 		Subunit:            "abc",
 		Precision:          6,
-		InitialAmount:      sdk.NewInt(1000),
+		InitialAmount:      sdkmath.NewInt(1000),
 		Description:        "ABC Description",
 		Features:           []assetfttypes.Feature{assetfttypes.Feature_burning, assetfttypes.Feature_freezing},
 		BurnRate:           sdk.NewDec(0),
@@ -3066,7 +3076,7 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 		Denom:   denom,
 	})
 	requireT.NoError(err)
-	requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(1000)).String(), balanceRes.Balance.String())
+	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), balanceRes.Balance.String())
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
@@ -3078,10 +3088,10 @@ func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *te
 		total += expectedBalance
 		getBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{Address: acc.String(), Denom: denom})
 		requireT.NoError(err)
-		requireT.Equal(sdk.NewCoin(denom, sdk.NewInt(expectedBalance)).String(), getBalance.Balance.String())
+		requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(expectedBalance)).String(), getBalance.Balance.String())
 	}
 
 	supply, err := bankClient.SupplyOf(ctx, &banktypes.QuerySupplyOfRequest{Denom: denom})
 	requireT.NoError(err)
-	requireT.EqualValues(sdk.NewCoin(denom, sdk.NewInt(total)).String(), supply.Amount.String())
+	requireT.EqualValues(sdk.NewCoin(denom, sdkmath.NewInt(total)).String(), supply.Amount.String())
 }

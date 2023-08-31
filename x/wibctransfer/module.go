@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/wibctransfer/keeper"
 )
@@ -39,5 +39,9 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	m := ibctransferkeeper.NewMigrator(am.keeper.Keeper)
 	if err := cfg.RegisterMigration(ibctransfertypes.ModuleName, 1, m.MigrateTraces); err != nil {
 		panic(fmt.Sprintf("failed to migrate transfer app from version 1 to 2: %v", err))
+	}
+
+	if err := cfg.RegisterMigration(ibctransfertypes.ModuleName, 2, m.MigrateTotalEscrowForDenom); err != nil {
+		panic(fmt.Sprintf("failed to migrate transfer app from version 2 to 3: %v", err))
 	}
 }

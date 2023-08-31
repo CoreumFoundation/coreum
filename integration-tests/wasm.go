@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
+	sdkerrors "cosmossdk.io/errors"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"

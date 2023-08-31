@@ -2,10 +2,10 @@ package wibctransfer
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	"github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
 )

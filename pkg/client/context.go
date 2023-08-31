@@ -13,30 +13,70 @@ import (
 	"strconv"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	protobufgrpc "github.com/gogo/protobuf/grpc"
-	gogoproto "github.com/gogo/protobuf/proto"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/encoding"
-	"google.golang.org/grpc/encoding/proto"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 )
 
-var protoCodec = encoding.GetCodec(proto.Name)
+// fallBackCodec is used by Context in case Codec is not set.
+// it can process every gRPC type, except the ones which contain
+// interfaces in their types.
+var fallBackCodec = codec.NewProtoCodec(failingInterfaceRegistry{})
+
+var _ codectypes.InterfaceRegistry = failingInterfaceRegistry{}
+
+// failingInterfaceRegistry is used by the fallback codec
+// in case Context's Codec is not set.
+type failingInterfaceRegistry struct{}
+
+// errCodecNotSet is returned by failingInterfaceRegistry in case there is an attempt to decode
+// or encode a type which contains an interface field.
+var errCodecNotSet = errors.New("client: cannot encode or decode type which requires the application specific codec")
+
+func (f failingInterfaceRegistry) UnpackAny(_ *codectypes.Any, iface interface{}) error {
+	return errCodecNotSet
+}
+
+func (f failingInterfaceRegistry) Resolve(_ string) (gogoproto.Message, error) {
+	return nil, errCodecNotSet
+}
+
+func (f failingInterfaceRegistry) RegisterInterface(_ string, _ interface{}, _ ...gogoproto.Message) {
+	panic("cannot be called")
+}
+
+func (f failingInterfaceRegistry) RegisterImplementations(_ interface{}, _ ...gogoproto.Message) {
+	panic("cannot be called")
+}
+
+func (f failingInterfaceRegistry) ListAllInterfaces() []string {
+	panic("cannot be called")
+}
+
+func (f failingInterfaceRegistry) ListImplementations(_ string) []string {
+	panic("cannot be called")
+}
+
+func (f failingInterfaceRegistry) EnsureRegistered(_ interface{}) error {
+	panic("cannot be called")
+}
 
 // ContextConfig stores context config.
 type ContextConfig struct {
@@ -92,14 +132,9 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation.
 type Context struct {
-	config     ContextConfig
-	clientCtx  client.Context
-	grpcClient protobufgrpc.ClientConn
-}
-
-// SDKContext returns original sdk client context required by some functions.
-func (c Context) SDKContext() client.Context {
-	return c.clientCtx
+	config    ContextConfig
+	clientCtx client.Context
+	awaitTx   bool
 }
 
 // ChainID returns chain ID.
@@ -135,16 +170,30 @@ func (c Context) WithGasPriceAdjustment(adj sdk.Dec) Context {
 	return c
 }
 
-// WithRPCClient returns a copy of the context with an updated RPC client
+// WithClient returns a copy of the context with an updated RPC client
 // instance.
-func (c Context) WithRPCClient(client rpcclient.Client) Context {
+func (c Context) WithClient(client rpcclient.Client) Context {
 	c.clientCtx = c.clientCtx.WithClient(client)
 	return c
 }
 
-// WithGRPCClient returns a copy of the context with an updated GRPCClient client.
-func (c Context) WithGRPCClient(grpcClient protobufgrpc.ClientConn) Context {
-	c.grpcClient = grpcClient
+// WithRPCClient returns a copy of the context with an updated RPC client
+// instance.
+// Deprecated: It will be removed in the near future! Please use WithClient instead.
+func (c Context) WithRPCClient(client rpcclient.Client) Context {
+	return c.WithClient(client)
+}
+
+// WithGRPCClient returns a copy of the context with an updated GRPC client instance.
+func (c Context) WithGRPCClient(grpcClient *grpc.ClientConn) Context {
+	c.clientCtx = c.clientCtx.WithGRPCClient(grpcClient)
+	return c
+}
+
+// WithFeePayerAddress returns a copy of the context with an updated fee payer account
+// address.
+func (c Context) WithFeePayerAddress(addr sdk.AccAddress) Context {
+	c.clientCtx = c.clientCtx.WithFeePayerAddress(addr)
 	return c
 }
 
@@ -179,19 +228,6 @@ func (c Context) WithFeeGranterAddress(addr sdk.AccAddress) Context {
 	return c
 }
 
-// NewStream implements the grpc ClientConn.NewStream method.
-func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	if c.RPCClient() != nil {
-		return nil, errors.New("streaming rpc not supported")
-	}
-
-	if c.GRPCClient() != nil {
-		return c.grpcClient.NewStream(ctx, desc, method, opts...)
-	}
-
-	return nil, errors.New("neither RPC nor GRPC client is set")
-}
-
 // FeeGranterAddress returns the fee granter address from the context.
 func (c Context) FeeGranterAddress() sdk.AccAddress {
 	return c.clientCtx.GetFeeGranterAddress()
@@ -213,13 +249,13 @@ func (c Context) BroadcastMode() string {
 }
 
 // RPCClient returns RPC client.
-func (c Context) RPCClient() rpcclient.Client {
+func (c Context) RPCClient() client.TendermintRPC {
 	return c.clientCtx.Client
 }
 
 // GRPCClient returns GRPCClient client.
-func (c Context) GRPCClient() protobufgrpc.ClientConn {
-	return c.grpcClient
+func (c Context) GRPCClient() *grpc.ClientConn {
+	return c.clientCtx.GRPCClient
 }
 
 // InterfaceRegistry returns interface registry of SDK context.
@@ -366,6 +402,37 @@ func (c Context) WithViper(prefix string) Context {
 	return c
 }
 
+// WithAux returns the context with updated IsAux field.
+func (c Context) WithAux(isAux bool) Context {
+	c.clientCtx = c.clientCtx.WithAux(isAux)
+	return c
+}
+
+// WithLedgerHasProtobuf returns the context with the provided boolean value, indicating
+// whether the target Ledger application can support Protobuf payloads.
+func (c Context) WithLedgerHasProtobuf(val bool) Context {
+	c.clientCtx = c.clientCtx.WithLedgerHasProtobuf(val)
+	return c
+}
+
+// WithPreprocessTxHook returns the context with the provided preprocessing hook, which
+// enables chains to preprocess the transaction using the builder.
+func (c Context) WithPreprocessTxHook(preprocessFn client.PreprocessTxFn) Context {
+	c.clientCtx = c.clientCtx.WithPreprocessTxHook(preprocessFn)
+	return c
+}
+
+// WithAwaitTx set the flag that the  client should wait for the tx after the tx execution.
+func (c Context) WithAwaitTx(value bool) Context {
+	c.awaitTx = value
+	return c
+}
+
+// GetAwaitTx returns awaitTx flag.
+func (c Context) GetAwaitTx() bool {
+	return c.awaitTx
+}
+
 // PrintString prints the raw string to ctx.Output if it's defined, otherwise to os.Stdout.
 func (c Context) PrintString(str string) error {
 	return c.clientCtx.PrintBytes([]byte(str))
@@ -384,6 +451,19 @@ func (c Context) PrintProto(toPrint gogoproto.Message) error {
 	return c.clientCtx.PrintProto(toPrint)
 }
 
+// NewStream implements the grpc ClientConn.NewStream method.
+func (c Context) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	if c.GRPCClient() != nil {
+		return c.GRPCClient().NewStream(ctx, desc, method, opts...)
+	}
+
+	if c.RPCClient() != nil {
+		return nil, errors.New("streaming rpc not supported")
+	}
+
+	return nil, errors.New("neither RPC nor GRPC client is set")
+}
+
 // Invoke invokes GRPC method.
 func (c Context) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
 	if c.GRPCClient() != nil {
@@ -399,10 +479,10 @@ func (c Context) Invoke(ctx context.Context, method string, req, reply interface
 
 func (c Context) invokeRPC(ctx context.Context, method string, req, reply interface{}, opts []grpc.CallOption) error {
 	if reflect.ValueOf(req).IsNil() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request cannot be nil")
+		return sdkerrors.Wrap(cosmoserrors.ErrInvalidRequest, "request cannot be nil")
 	}
 
-	reqBz, err := protoCodec.Marshal(req)
+	reqBz, err := c.gRPCCodec().Marshal(req)
 	if err != nil {
 		return err
 	}
@@ -418,7 +498,7 @@ func (c Context) invokeRPC(ctx context.Context, method string, req, reply interf
 		}
 		if height < 0 {
 			return sdkerrors.Wrapf(
-				sdkerrors.ErrInvalidRequest,
+				cosmoserrors.ErrInvalidRequest,
 				"client.Context.Invoke: height (%d) from %q must be >= 0", height, grpctypes.GRPCBlockHeightHeader)
 		}
 	}
@@ -434,7 +514,7 @@ func (c Context) invokeRPC(ctx context.Context, method string, req, reply interf
 		return err
 	}
 
-	err = protoCodec.Unmarshal(res.Value, reply)
+	err = c.gRPCCodec().Unmarshal(res.Value, reply)
 	if err != nil {
 		return err
 	}
@@ -486,13 +566,28 @@ func (c Context) queryABCI(ctx context.Context, req abci.RequestQuery) (abci.Res
 
 func sdkErrorToGRPCError(resp abci.ResponseQuery) error {
 	switch resp.Code {
-	case sdkerrors.ErrInvalidRequest.ABCICode():
+	case cosmoserrors.ErrInvalidRequest.ABCICode():
 		return status.Error(codes.InvalidArgument, resp.Log)
-	case sdkerrors.ErrUnauthorized.ABCICode():
+	case cosmoserrors.ErrUnauthorized.ABCICode():
 		return status.Error(codes.Unauthenticated, resp.Log)
-	case sdkerrors.ErrKeyNotFound.ABCICode():
+	case cosmoserrors.ErrKeyNotFound.ABCICode():
 		return status.Error(codes.NotFound, resp.Log)
 	default:
 		return status.Error(codes.Unknown, resp.Log)
 	}
+}
+
+// gRPCCodec checks if Context's Codec is codec.GRPCCodecProvider
+// otherwise it returns fallBackCodec.
+func (c Context) gRPCCodec() encoding.Codec {
+	if c.clientCtx.Codec == nil {
+		return fallBackCodec.GRPCCodec()
+	}
+
+	pc, ok := c.clientCtx.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		return fallBackCodec.GRPCCodec()
+	}
+
+	return pc.GRPCCodec()
 }

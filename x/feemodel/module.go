@@ -3,9 +3,9 @@ package feemodel
 import (
 	"context"
 	"encoding/json"
-	"math/rand"
 
 	"github.com/armon/go-metrics"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -16,7 +16,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/client/cli"
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/keeper"
@@ -25,8 +24,10 @@ import (
 
 var (
 	_ module.AppModule           = AppModule{}
-	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.HasGenesis          = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
+	_ module.EndBlockAppModule   = AppModule{}
+	_ module.AppModuleBasic      = AppModuleBasic{}
 )
 
 // Keeper defines an interface of keeper required by fee module.
@@ -72,8 +73,10 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the fee module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	//nolint:errcheck // Welcome to Cosmos SDK
-	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+	err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetTxCmd returns the root tx command for the fee module.
@@ -114,17 +117,6 @@ func (AppModule) Name() string { return types.ModuleName }
 // RegisterInvariants registers the fee module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the fee module.
-func (am AppModule) Route() sdk.Route { return sdk.Route{} }
-
-// QuerierRoute returns the fee module's querier route name.
-func (AppModule) QuerierRoute() string { return types.RouterKey }
-
-// LegacyQuerierHandler returns the fee module sdk.Querier.
-func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
-	return nil
-}
-
 // InitGenesis performs genesis initialization for the fee module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
@@ -147,9 +139,6 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
-
-// BeginBlock performs a no-op.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock returns the end blocker for the fee module. It returns no validator
 // updates.
@@ -182,12 +171,8 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
-	return nil
-}
-
-// RandomizedParams creates randomized fee param changes for the simulator.
-func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
+// FIXME(v47-legacy) try to remove/replace the usage.
+func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent { //nolint:staticcheck // we need to keep backward compatibility
 	return nil
 }
 

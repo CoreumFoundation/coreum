@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -152,8 +153,8 @@ func generateRandomizedParams() (params Params, shortEMA, longEMA int64) {
 
 	return Params{
 		Model: ModelParams{
-			InitialGasPrice:         sdk.NewIntFromUint64(initialGasPrice).ToDec(),
-			MaxGasPriceMultiplier:   sdk.NewIntFromUint64(maxGasPriceMultiplier).ToDec(),
+			InitialGasPrice:         sdk.NewDecFromInt(sdkmath.NewIntFromUint64(initialGasPrice)),
+			MaxGasPriceMultiplier:   sdk.NewDecFromInt(sdkmath.NewIntFromUint64(maxGasPriceMultiplier)),
 			MaxDiscount:             sdk.MustNewDecFromStr(strconv.FormatFloat(maxDiscount, 'f', 4, 64)),
 			EscalationStartFraction: sdk.MustNewDecFromStr(strconv.FormatFloat(escalationStartFraction, 'f', 4, 64)),
 			MaxBlockGas:             maxBlockGas,

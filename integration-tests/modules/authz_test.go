@@ -6,10 +6,12 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
@@ -31,7 +33,7 @@ func TestAuthz(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 
-	totalAmountToSend := sdk.NewInt(2_000)
+	totalAmountToSend := sdkmath.NewInt(2_000)
 	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{
 			&authztypes.MsgGrant{},
@@ -45,7 +47,7 @@ func TestAuthz(t *testing.T) {
 		FromAddress: granter.String(),
 		ToAddress:   recipient.String(),
 		// send a half to have 2 messages in the Exec
-		Amount: sdk.NewCoins(chain.NewCoin(sdk.NewInt(1_000))),
+		Amount: sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(1_000))),
 	}
 	execMsg := authztypes.NewMsgExec(grantee, []sdk.Msg{msgBankSend, msgBankSend})
 	chain.FundAccountWithOptions(ctx, t, grantee, integrationtests.BalancesOptions{
@@ -61,7 +63,7 @@ func TestAuthz(t *testing.T) {
 		granter,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
-		time.Now().Add(time.Minute),
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 
@@ -89,7 +91,7 @@ func TestAuthz(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(msgBankSend)),
 		msgBankSend,
 	)
-	requireT.ErrorIs(err, sdkerrors.ErrInvalidPubKey)
+	requireT.ErrorIs(err, cosmoserrors.ErrInvalidPubKey)
 
 	// try to send using the authz
 	txResult, err = client.BroadcastTx(
@@ -132,7 +134,7 @@ func TestAuthz(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
 		&execMsg,
 	)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	requireT.ErrorIs(err, authztypes.ErrNoAuthorizationFound)
 }
 
 // TestAuthZWithMultisig tests that the cosmos-sdk multisig accounts works with authz as grantee.
@@ -152,7 +154,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 	granter := chain.GenAccount()
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
-	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
+	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(amountToSendFromMultisigAccount)))
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
@@ -161,13 +163,13 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 		granter,
 		multisigAddress,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
-		time.Now().Add(time.Minute),
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 
 	chain.FundAccountWithOptions(ctx, t, granter, integrationtests.BalancesOptions{
 		Messages: []sdk.Msg{grantMsg},
-		Amount:   sdk.NewInt(amountToSendFromMultisigAccount),
+		Amount:   sdkmath.NewInt(amountToSendFromMultisigAccount),
 	})
 
 	_, err = client.BroadcastTx(
@@ -197,7 +199,7 @@ func TestAuthZWithMultisigGrantee(t *testing.T) {
 		chain.TxFactory().WithGas(chain.GasLimitByMsgs(&execMsg)),
 		&execMsg,
 		signer1KeyName)
-	requireT.ErrorIs(err, sdkerrors.ErrUnauthorized)
+	requireT.ErrorIs(err, cosmoserrors.ErrUnauthorized)
 	t.Log("Partially signed tx executed with expected error")
 
 	// sign and submit with the min threshold
@@ -234,7 +236,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 	grantee := chain.GenAccount()
 	recipient := chain.GenAccount()
 	amountToSendFromMultisigAccount := int64(1000)
-	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdk.NewInt(amountToSendFromMultisigAccount)))
+	coinsToSendToRecipient := sdk.NewCoins(chain.NewCoin(sdkmath.NewInt(amountToSendFromMultisigAccount)))
 
 	bankClient := banktypes.NewQueryClient(chain.ClientContext)
 
@@ -243,7 +245,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 		multisigAddress,
 		grantee,
 		authztypes.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})),
-		time.Now().Add(time.Minute),
+		lo.ToPtr(time.Now().Add(time.Minute)),
 	)
 	require.NoError(t, err)
 
@@ -251,7 +253,7 @@ func TestAuthZWithMultisigGranter(t *testing.T) {
 		Messages: []sdk.Msg{
 			grantMsg,
 		},
-		Amount: sdk.NewInt(amountToSendFromMultisigAccount),
+		Amount: sdkmath.NewInt(amountToSendFromMultisigAccount),
 	})
 
 	txRes, err := chain.SignAndBroadcastMultisigTx(

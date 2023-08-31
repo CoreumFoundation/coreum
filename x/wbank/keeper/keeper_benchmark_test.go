@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
@@ -23,7 +25,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 	chainConfig, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	require.NoError(b, err)
 	singleCoinDenom := chainConfig.Denom()
-	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000)))
+	coins := sdk.NewCoins(sdk.NewCoin(singleCoinDenom, sdkmath.NewInt(1_000_000_000)))
 	err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
 	assert.NoError(b, err)
 
@@ -32,7 +34,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 		denoms := make([]string, numberOfDenoms)
 		for i := 0; i < numberOfDenoms; i++ {
 			denoms[i] = fmt.Sprintf("test-denom-%d", i)
-			coins := sdk.NewCoins(sdk.NewCoin(denoms[i], sdk.NewInt(1_000_000_000)))
+			coins := sdk.NewCoins(sdk.NewCoin(denoms[i], sdkmath.NewInt(1_000_000_000)))
 			err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
 			assert.NoError(b, err)
 		}
@@ -43,7 +45,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 			addresses[i] = address
 
 			denom := denoms[b.N%len(denoms)]
-			amount := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
+			amount := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
 			err = bankKeeper.SendCoinsFromModuleToAccount(sdkContext, minttypes.ModuleName, address, amount)
 			assert.NoError(b, err)
 		}
@@ -53,7 +55,7 @@ func Benchmark100KDenomBankSend(b *testing.B) {
 			fromAddress := addresses[i]
 			toAddress := addresses[(i+1)%len(addresses)]
 			denom := denoms[b.N%len(denoms)]
-			amount := sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10)))
+			amount := sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(10)))
 			err = bankKeeper.SendCoins(sdkContext, fromAddress, toAddress, amount)
 			assert.NoError(b, err)
 		}
@@ -77,7 +79,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	chainConfig, err := config.NetworkConfigByChainID(constant.ChainIDDev)
 	require.NoError(b, err)
 	singleCoinDenom := chainConfig.Denom()
-	coin := sdk.NewCoin(singleCoinDenom, sdk.NewInt(1_000_000_000))
+	coin := sdk.NewCoin(singleCoinDenom, sdkmath.NewInt(1_000_000_000))
 	coins := sdk.NewCoins(coin)
 	err = bankKeeper.MintCoins(sdkContext, minttypes.ModuleName, coins)
 	assert.NoError(b, err)
@@ -90,7 +92,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 	})
 
 	var denoms []string
-	mintValue := sdk.NewInt(1_000_000_000)
+	mintValue := sdkmath.NewInt(1_000_000_000)
 	for i := 0; i < 100_000; i++ {
 		denom := fmt.Sprintf("test-denom-%d", i)
 		denoms = append(denoms, denom)
@@ -109,7 +111,7 @@ func Benchmark100KDenomBankGetSupply(b *testing.B) {
 }
 
 func createSimApp(b *testing.B) *simapp.App {
-	db, err := sdk.NewLevelDB("simulation", b.TempDir())
+	db, err := dbm.NewDB("simulation", dbm.GoLevelDBBackend, b.TempDir())
 	require.NoError(b, err)
 
 	b.Cleanup(func() {

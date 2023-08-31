@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
@@ -24,7 +26,7 @@ type balanceStore struct {
 }
 
 func (s balanceStore) Balance(denom string) sdk.Coin {
-	balance := sdk.NewCoin(denom, sdk.ZeroInt())
+	balance := sdk.NewCoin(denom, sdkmath.ZeroInt())
 	if bz := s.store.Get([]byte(denom)); bz != nil {
 		s.cdc.MustUnmarshal(bz, &balance)
 	}
@@ -67,7 +69,7 @@ func (s balanceStore) IterateAllBalances(cb func(sdk.AccAddress, sdk.Coin) bool)
 	for ; iterator.Valid(); iterator.Next() {
 		address, err := types.AddressFromBalancesStore(iterator.Key())
 		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address in the balances store saved with key: %s", string(iterator.Key()))
+			return sdkerrors.Wrapf(cosmoserrors.ErrInvalidAddress, "invalid address in the balances store saved with key: %s", string(iterator.Key()))
 		}
 
 		var balance sdk.Coin

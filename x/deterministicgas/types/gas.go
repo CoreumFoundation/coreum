@@ -6,8 +6,8 @@ import (
 
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/grpc"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/grpc"
+	"github.com/cosmos/gogoproto/proto"
 	googlegrpc "google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
@@ -17,35 +17,6 @@ const (
 	fuseGasMultiplier    = 10
 	expectedMaxGasFactor = 5
 )
-
-// NewDeterministicGasRouter returns wrapped router charging deterministic amount of gas for defined message types.
-func NewDeterministicGasRouter(baseRouter sdk.Router, deterministicGasConfig deterministicgas.Config) sdk.Router {
-	return &deterministicGasRouter{
-		baseRouter:             baseRouter,
-		deterministicGasConfig: deterministicGasConfig,
-	}
-}
-
-type deterministicGasRouter struct {
-	baseRouter             sdk.Router
-	deterministicGasConfig deterministicgas.Config
-}
-
-func (r *deterministicGasRouter) AddRoute(route sdk.Route) sdk.Router {
-	r.baseRouter.AddRoute(sdk.NewRoute(route.Path(), r.handler(route.Handler())))
-	return r
-}
-
-func (r *deterministicGasRouter) Route(ctx sdk.Context, path string) sdk.Handler {
-	return r.baseRouter.Route(ctx, path)
-}
-
-func (r *deterministicGasRouter) handler(baseHandler sdk.Handler) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		ctx, _, _ = ctxForDeterministicGas(ctx, msg, r.deterministicGasConfig)
-		return baseHandler(ctx, msg)
-	}
-}
 
 // NewDeterministicMsgServer returns wrapped message server charging deterministic amount of gas for defined message types.
 func NewDeterministicMsgServer(baseServer grpc.Server, deterministicGasConfig deterministicgas.Config) grpc.Server {
