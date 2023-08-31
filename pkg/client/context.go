@@ -131,7 +131,6 @@ func NewContext(contextConfig ContextConfig, modules module.BasicManager) Contex
 
 // Context exposes the functionality of SDK context in a way where we may intercept GRPC-related method (Invoke)
 // to provide better implementation.
-// FIXME(v47-new-client) check all new features of the client ctx and add them to our wrapper.
 type Context struct {
 	config    ContextConfig
 	clientCtx client.Context
@@ -171,16 +170,30 @@ func (c Context) WithGasPriceAdjustment(adj sdk.Dec) Context {
 	return c
 }
 
-// WithRPCClient returns a copy of the context with an updated RPC client
+// WithClient returns a copy of the context with an updated RPC client
 // instance.
-func (c Context) WithRPCClient(client rpcclient.Client) Context {
+func (c Context) WithClient(client rpcclient.Client) Context {
 	c.clientCtx = c.clientCtx.WithClient(client)
 	return c
+}
+
+// WithRPCClient returns a copy of the context with an updated RPC client
+// instance.
+// Deprecated: It will be removed in the near future! Please use WithClient instead.
+func (c Context) WithRPCClient(client rpcclient.Client) Context {
+	return c.WithClient(client)
 }
 
 // WithGRPCClient returns a copy of the context with an updated GRPC client instance.
 func (c Context) WithGRPCClient(grpcClient *grpc.ClientConn) Context {
 	c.clientCtx = c.clientCtx.WithGRPCClient(grpcClient)
+	return c
+}
+
+// WithFeePayerAddress returns a copy of the context with an updated fee payer account
+// address.
+func (c Context) WithFeePayerAddress(addr sdk.AccAddress) Context {
+	c.clientCtx = c.clientCtx.WithFeePayerAddress(addr)
 	return c
 }
 
@@ -386,6 +399,26 @@ func (c Context) WithInterfaceRegistry(interfaceRegistry codectypes.InterfaceReg
 // client-side config from the config file.
 func (c Context) WithViper(prefix string) Context {
 	c.clientCtx = c.clientCtx.WithViper(prefix)
+	return c
+}
+
+// WithAux returns the context with updated IsAux field.
+func (c Context) WithAux(isAux bool) Context {
+	c.clientCtx = c.clientCtx.WithAux(isAux)
+	return c
+}
+
+// WithLedgerHasProtobuf returns the context with the provided boolean value, indicating
+// whether the target Ledger application can support Protobuf payloads.
+func (c Context) WithLedgerHasProtobuf(val bool) Context {
+	c.clientCtx = c.clientCtx.WithLedgerHasProtobuf(val)
+	return c
+}
+
+// WithPreprocessTxHook returns the context with the provided preprocessing hook, which
+// enables chains to preprocess the transaction using the builder.
+func (c Context) WithPreprocessTxHook(preprocessFn client.PreprocessTxFn) Context {
+	c.clientCtx = c.clientCtx.WithPreprocessTxHook(preprocessFn)
 	return c
 }
 
