@@ -34,6 +34,7 @@ type Keeper struct {
 	storeKey      storetypes.StoreKey
 	bankKeeper    types.BankKeeper
 	delayKeeper   types.DelayKeeper
+	wasmKeeper    types.WASMKeeper
 }
 
 // NewKeeper creates a new instance of the Keeper.
@@ -43,6 +44,7 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
 	delayKeeper types.DelayKeeper,
+	wasmKeeper types.WASMKeeper,
 ) Keeper {
 	return Keeper{
 		cdc:           cdc,
@@ -50,6 +52,7 @@ func NewKeeper(
 		storeKey:      storeKey,
 		bankKeeper:    bankKeeper,
 		delayKeeper:   delayKeeper,
+		wasmKeeper:    wasmKeeper,
 	}
 }
 

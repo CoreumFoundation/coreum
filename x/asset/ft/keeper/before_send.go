@@ -4,8 +4,10 @@ import (
 	"sort"
 
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 	wibctransfertypes "github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
@@ -70,7 +72,10 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 
 		outOps := outputs[denom]
 
-		burnShares := k.CalculateRateShares(ctx, def.BurnRate, def.Issuer, inOps, outOps)
+		burnShares, err := k.CalculateRateShares(ctx, def.BurnRate, def.Issuer, inOps, outOps)
+		if err != nil {
+			return err
+		}
 
 		if err := iterateMapDeterministic(burnShares, func(account string, amount sdkmath.Int) error {
 			return k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
@@ -78,7 +83,10 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 			return err
 		}
 
-		commissionShares := k.CalculateRateShares(ctx, def.SendCommissionRate, def.Issuer, inOps, outOps)
+		commissionShares, err := k.CalculateRateShares(ctx, def.SendCommissionRate, def.Issuer, inOps, outOps)
+		if err != nil {
+			return err
+		}
 		issuer := sdk.MustAccAddressFromBech32(def.Issuer)
 
 		if err := iterateMapDeterministic(commissionShares, func(account string, amount sdkmath.Int) error {
@@ -100,23 +108,13 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 	})
 }
 
-func nonIssuerSum(ops accountOperationMap, issuer string) sdkmath.Int {
-	sum := sdkmath.ZeroInt()
-	for account, amount := range ops {
-		if account != issuer {
-			sum = sum.Add(amount)
-		}
-	}
-	return sum
-}
-
 // CalculateRateShares calculates how the burn or commission share amount should be split between different parties.
-func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) map[string]sdkmath.Int {
+func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string, inOps, outOps accountOperationMap) (map[string]sdkmath.Int, error) {
 	// We decided that rates should not be charged on incoming IBC transfers.
 	// According to our current protocol, it cannot be done because sender pays the rates, meaning that escrow address
 	// would be charged leading to breaking the IBC mechanics.
 	if wibctransfertypes.IsPurposeIn(ctx) {
-		return nil
+		return nil, nil
 	}
 
 	// Context is marked with ACK purpose in two cases:
@@ -125,12 +123,12 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// This function is called only in the negative case, when the IBC transfer must be rolled back and funds
 	// must be sent back to the sender. In this case we should not charge the rates.
 	if wibctransfertypes.IsPurposeAck(ctx) {
-		return nil
+		return nil, nil
 	}
 
 	// Same thing as above just in case of IBC timeout.
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
-		return nil
+		return nil, nil
 	}
 	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
 	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
@@ -155,33 +153,53 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// Here is the final formula we use to calculate adjusted burn/commission amount for multisend txs:
 	// amount * rate * min(non_issuer_inputs_sum, non_issuer_outputs_sum) / non_issuer_inputs_sum
 	if rate.IsNil() || !rate.IsPositive() {
-		return nil
+		return nil, nil
 	}
 
-	inputSumNonIssuer := nonIssuerSum(inOps, issuer)
-	outputSumNonIssuer := nonIssuerSum(outOps, issuer)
-
-	minNonIssuer := inputSumNonIssuer
-	if outputSumNonIssuer.LT(minNonIssuer) {
-		minNonIssuer = outputSumNonIssuer
-	}
-
-	if !minNonIssuer.IsPositive() {
-		return nil
-	}
-
-	shares := make(accountOperationMap, 0)
+	taxableInputSum := sdkmath.ZeroInt()
+	shares := accountOperationMap{}
 	for account, amount := range inOps {
+		if account == issuer {
+			continue
+		}
+		acc, err := sdk.AccAddressFromBech32(account)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		if len(acc) == wasmtypes.ContractAddrLen && k.wasmKeeper.HasContractInfo(ctx, acc) {
+			continue
+		}
+		taxableInputSum = taxableInputSum.Add(amount)
+		shares[account] = amount
+	}
+
+	taxableOutputSum := sdkmath.ZeroInt()
+	for account, amount := range outOps {
+		if account != issuer {
+			taxableOutputSum = taxableOutputSum.Add(amount)
+		}
+	}
+
+	taxableSum := taxableInputSum
+	if taxableOutputSum.LT(taxableInputSum) {
+		taxableSum = taxableOutputSum
+	}
+
+	if !taxableSum.IsPositive() {
+		return nil, nil
+	}
+
+	for account, amount := range shares {
 		// if sender is issuer or IBC escrow
 		if account == issuer {
 			continue
 		}
 		// in order to reduce precision errors, we first multiply all sdkmath.Ints, and then multiply sdk.Decs, and then divide
-		finalShare := rate.MulInt(minNonIssuer.Mul(amount)).QuoInt(inputSumNonIssuer).Ceil().RoundInt()
+		finalShare := rate.MulInt(taxableSum.Mul(amount)).QuoInt(taxableInputSum).Ceil().RoundInt()
 		shares[account] = finalShare
 	}
 
-	return shares
+	return shares, nil
 }
 
 func sortedKeys[V any](m map[string]V) []string {

@@ -35,7 +35,7 @@ func TestCalculateRateShares(t *testing.T) {
 	}
 	issuer := genAccount()
 	dummyAddress := genAccount()
-	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, nil)
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, nil, nil)
 	pow10 := func(ex int64) sdkmath.Int {
 		return sdkmath.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
 	}

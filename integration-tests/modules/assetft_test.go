@@ -4,10 +4,13 @@ package modules
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -20,6 +23,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v2/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 	"github.com/CoreumFoundation/coreum/v2/testutil/event"
 	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
@@ -3077,6 +3081,254 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), balanceRes.Balance.String())
+}
+
+// TestAssetFTSendCommissionAndBurnRateWithSmartContract verifies that burn rate and send commission is correctly
+// accounted when funds are sent from/to smart contract.
+func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
+
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integrationtests.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
+
+	clientCtx := chain.ClientContext
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Issue a fungible token with burn rate and send commission rate
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:             issuer.String(),
+		Symbol:             "ABC",
+		Subunit:            "abc",
+		Precision:          6,
+		InitialAmount:      sdkmath.NewInt(1000),
+		Description:        "ABC Description",
+		Features:           []assetfttypes.Feature{},
+		BurnRate:           sdk.MustNewDecFromStr("0.10"),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.20"),
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	// send half of the amount to the second account
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   admin.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(500))),
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
+	)
+	requireT.NoError(err)
+
+	// deploy smart contract and send ft tokens to it, burn rate and send commission should not apply,
+	// because tokens are sent by the issuer.
+	initialPayload, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		issuer,
+		moduleswasm.BankSendWASM,
+		integrationtests.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Amount:     sdk.NewInt64Coin(denom, 100),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	// verify amounts
+	bankClient := banktypes.NewQueryClient(clientCtx)
+
+	balance, err := bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: issuer.String(),
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 400).String(), balance.Balance.String())
+
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: contractAddr,
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 100).String(), balance.Balance.String())
+
+	// send additional coins to contract directly
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+	}
+
+	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(issuer), txf, sendMsg)
+	requireT.NoError(err)
+
+	// verify amounts
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: issuer.String(),
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 300).String(), balance.Balance.String())
+
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: contractAddr,
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 200).String(), balance.Balance.String())
+
+	// send to smart contract from the second address, burn rate and send commission should apply
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 300)),
+	}
+
+	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, sendMsg)
+	requireT.NoError(err)
+
+	// verify amounts
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: issuer.String(),
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 360).String(), balance.Balance.String())
+
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: admin.String(),
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	// burn and send fees were deducted
+	requireT.Equal(sdk.NewInt64Coin(denom, 110).String(), balance.Balance.String())
+
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: contractAddr,
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 500).String(), balance.Balance.String())
+
+	// send from the smart contract to issuer, fees should not apply
+	wasmBankSend := &wasmtypes.MsgExecuteContract{
+		Sender:   issuer.String(),
+		Contract: contractAddr,
+		Msg: must.Bytes(json.Marshal(map[bankMethod]bankWithdrawRequest{
+			withdraw: {
+				Amount:    "100",
+				Denom:     denom,
+				Recipient: issuer.String(),
+			},
+		})),
+		Funds: sdk.Coins{},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		txf.WithGasAdjustment(1.5),
+		wasmBankSend,
+	)
+	requireT.NoError(err)
+
+	// verify amounts
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: issuer.String(),
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 460).String(), balance.Balance.String())
+
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: contractAddr,
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 400).String(), balance.Balance.String())
+
+	// send from the smart contract to another account, fees should not apply again
+	wasmBankSend = &wasmtypes.MsgExecuteContract{
+		Sender:   issuer.String(),
+		Contract: contractAddr,
+		Msg: must.Bytes(json.Marshal(map[bankMethod]bankWithdrawRequest{
+			withdraw: {
+				Amount:    "100",
+				Denom:     denom,
+				Recipient: admin.String(),
+			},
+		})),
+		Funds: sdk.Coins{},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		txf.WithGasAdjustment(1.5),
+		wasmBankSend,
+	)
+	requireT.NoError(err)
+
+	// verify amounts
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: admin.String(),
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 210).String(), balance.Balance.String())
+
+	fmt.Println(contractAddr)
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: contractAddr,
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 300).String(), balance.Balance.String())
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
