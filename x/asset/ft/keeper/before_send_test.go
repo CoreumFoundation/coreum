@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
@@ -327,7 +328,8 @@ func TestCalculateRateShares(t *testing.T) {
 				ctx = wibctransfertypes.WithPurpose(ctx, tc.ibcDirection)
 			}
 
-			shares := assetFTKeeper.CalculateRateShares(ctx, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
+			shares, err := assetFTKeeper.CalculateRateShares(ctx, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
+			require.NoError(t, err)
 			for account, share := range shares {
 				assertT.EqualValues(tc.shares[account].String(), share.String())
 			}
