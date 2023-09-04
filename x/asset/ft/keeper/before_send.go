@@ -114,7 +114,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// According to our current protocol, it cannot be done because sender pays the rates, meaning that escrow address
 	// would be charged leading to breaking the IBC mechanics.
 	if wibctransfertypes.IsPurposeIn(ctx) {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	// Context is marked with ACK purpose in two cases:
@@ -123,12 +123,12 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// This function is called only in the negative case, when the IBC transfer must be rolled back and funds
 	// must be sent back to the sender. In this case we should not charge the rates.
 	if wibctransfertypes.IsPurposeAck(ctx) {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	// Same thing as above just in case of IBC timeout.
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
 	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
@@ -153,7 +153,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	// Here is the final formula we use to calculate adjusted burn/commission amount for multisend txs:
 	// amount * rate * min(non_issuer_inputs_sum, non_issuer_outputs_sum) / non_issuer_inputs_sum
 	if rate.IsNil() || !rate.IsPositive() {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	taxableInputSum := sdkmath.ZeroInt()
@@ -186,7 +186,7 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	}
 
 	if !taxableSum.IsPositive() {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	for account, amount := range shares {
