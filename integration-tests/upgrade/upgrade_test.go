@@ -37,29 +37,22 @@ func TestUpgrade(t *testing.T) {
 	case "v2.0.2":
 		upgradeV3(t, true)
 	default:
-		upgradeV3(t, false)
-		//requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
+		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
 }
 
-func upgradeV3(t *testing.T, isReal bool) {
+func upgradeV3(t *testing.T) {
 	var tests []upgradeTest
 
-	if isReal {
-		tests = []upgradeTest{
-			&paramsMigrationTest{},
-		}
-
-		for _, test := range tests {
-			test.Before(t)
-		}
-
-		runUpgrade(t, "v2.0.2", appupgradev3.Name, 10)
-	} else {
-		tests = []upgradeTest{
-			&paramsMigrationTest{},
-		}
+	tests = []upgradeTest{
+		&paramsMigrationTest{},
 	}
+
+	for _, test := range tests {
+		test.Before(t)
+	}
+
+	runUpgrade(t, "v2.0.2", appupgradev3.Name, 10)
 
 	for _, test := range tests {
 		test.After(t)

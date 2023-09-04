@@ -29,14 +29,8 @@ import (
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 )
 
-type crisisParams struct {
-	Denom  string `json:"denom"`
-	Amount string `json:"amount"`
-}
-
 type paramsMigrationTest struct {
 	consensusParamsBeforeMigration   tmtypes.ConsensusParams
-	crisisParamsBeforeMigration      crisisParams
 	authParamsBeforeMigration        authtypes.Params
 	bankParamsBeforeMigration        banktypes.Params
 	stakingParamsBeforeMigration     stakingtypes.Params
