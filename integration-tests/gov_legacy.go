@@ -318,6 +318,7 @@ func (g GovernanceLegacy) GetProposal(ctx context.Context, proposalID uint64) (g
 	return resp.Proposal, nil
 }
 
+// QueryGovParams returns all governance params.
 func (g GovernanceLegacy) QueryGovParams(ctx context.Context) (govtypesv1beta1.Params, error) {
 	govClient := g.govClient
 

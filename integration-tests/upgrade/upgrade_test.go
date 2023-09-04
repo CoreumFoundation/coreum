@@ -35,7 +35,7 @@ func TestUpgrade(t *testing.T) {
 
 	switch infoRes.ApplicationVersion.Version {
 	case "v2.0.2":
-		upgradeV3(t, true)
+		upgradeV3(t)
 	default:
 		requireT.Failf("not supported version: %s", infoRes.ApplicationVersion.Version)
 	}
@@ -52,7 +52,7 @@ func upgradeV3(t *testing.T) {
 		test.Before(t)
 	}
 
-	runUpgrade(t, "v2.0.2", appupgradev3.Name, 10)
+	runUpgrade(t, "v2.0.2", appupgradev3.Name, 30)
 
 	for _, test := range tests {
 		test.After(t)

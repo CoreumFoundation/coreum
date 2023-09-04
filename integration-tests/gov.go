@@ -261,6 +261,7 @@ func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (*govtyp
 	return resp.Proposal, nil
 }
 
+// QueryGovParams returns all governance params.
 func (g Governance) QueryGovParams(ctx context.Context) (*govtypesv1.Params, error) {
 	govParams, err := g.govClient.Params(ctx, &govtypesv1.QueryParamsRequest{
 		ParamsType: govtypesv1.ParamTallying, // strange decision by cosmos. Even though it always returns all params (inside Params field) ParamsType is still required (probably legacy from v45).
