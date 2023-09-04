@@ -250,6 +250,6 @@ func queryConsensusParams(ctx context.Context, t *testing.T, chain integrationte
 		Validator: &tmtypes.ValidatorParams{
 			PubKeyTypes: validatorParams.PubKeyTypes,
 		},
-		Version: nil, // not present in both v45 and v47.
+		Version: nil, // not present neither in v45 nor v47.
 	}
 }
