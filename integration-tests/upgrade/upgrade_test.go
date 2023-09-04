@@ -42,9 +42,7 @@ func TestUpgrade(t *testing.T) {
 }
 
 func upgradeV3(t *testing.T) {
-	var tests []upgradeTest
-
-	tests = []upgradeTest{
+	tests := []upgradeTest{
 		&paramsMigrationTest{},
 	}
 

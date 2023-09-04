@@ -55,7 +55,7 @@ func (pmt *paramsMigrationTest) Before(t *testing.T) {
 	// crisis is skipped since it doesn't expose query in neither v45 nor v47.
 
 	// consensus params are queried directly from the x/params module because the query is not implemented in v45.
-	pmt.consensusParamsBeforeMigration = queryConsensusParams(t, ctx, chain)
+	pmt.consensusParamsBeforeMigration = queryConsensusParams(ctx, t, chain)
 
 	// gov
 	govParams, err := chain.LegacyGovernance.QueryGovParams(ctx)
@@ -159,13 +159,13 @@ func (pmt *paramsMigrationTest) After(t *testing.T) {
 	// distribution
 	distrResp, err := distrtypes.NewQueryClient(chain.ClientContext).Params(ctx, &distrtypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	assertT.False(pmt.distrParamsBeforeMigration.BaseProposerReward.IsZero())  // Present in v45.
-	assertT.False(pmt.distrParamsBeforeMigration.BonusProposerReward.IsZero()) // Present in v45.
-	assertT.True(distrResp.Params.BaseProposerReward.IsZero())                 // Deprecated field in v47.
-	assertT.True(distrResp.Params.BonusProposerReward.IsZero())                // Deprecated field in v47.
+	assertT.False(pmt.distrParamsBeforeMigration.BaseProposerReward.IsZero())  //nolint:staticcheck
+	assertT.False(pmt.distrParamsBeforeMigration.BonusProposerReward.IsZero()) //nolint:staticcheck
+	assertT.True(distrResp.Params.BaseProposerReward.IsZero())                 //nolint:staticcheck
+	assertT.True(distrResp.Params.BonusProposerReward.IsZero())                //nolint:staticcheck
 	// Override the deprecated fields to compare the rest of the params.
-	pmt.distrParamsBeforeMigration.BaseProposerReward = sdk.ZeroDec()
-	pmt.distrParamsBeforeMigration.BonusProposerReward = sdk.ZeroDec()
+	pmt.distrParamsBeforeMigration.BaseProposerReward = sdk.ZeroDec()  //nolint:staticcheck
+	pmt.distrParamsBeforeMigration.BonusProposerReward = sdk.ZeroDec() //nolint:staticcheck
 	assertT.Equal(pmt.distrParamsBeforeMigration, distrResp.Params)
 
 	// slashing
@@ -189,7 +189,7 @@ func (pmt *paramsMigrationTest) After(t *testing.T) {
 	assertT.Equal(pmt.wasmParamsBeforeMigration, wasmResp.Params)
 }
 
-func querySubspaceParamsValue(t *testing.T, ctx context.Context, chain integrationtests.CoreumChain, subspace string, key string) string {
+func querySubspaceParamsValue(ctx context.Context, t *testing.T, chain integrationtests.CoreumChain, subspace string, key string) string {
 	res, err := paramstypesproposal.NewQueryClient(chain.ClientContext).Params(
 		ctx,
 		&paramstypesproposal.QueryParamsRequest{Subspace: subspace, Key: key},
@@ -198,19 +198,21 @@ func querySubspaceParamsValue(t *testing.T, ctx context.Context, chain integrati
 	return res.Param.Value
 }
 
-func queryConsensusParams(t *testing.T, ctx context.Context, chain integrationtests.CoreumChain) tmtypes.ConsensusParams {
+func queryConsensusParams(ctx context.Context, t *testing.T, chain integrationtests.CoreumChain) tmtypes.ConsensusParams {
 	requireT := require.New(t)
 
-	blockParamsJSONStr := querySubspaceParamsValue(t, ctx, chain, "baseapp", "BlockParams")
-	evidenceParamsJSONStr := querySubspaceParamsValue(t, ctx, chain, "baseapp", "EvidenceParams")
-	validatorParamsJSONStr := querySubspaceParamsValue(t, ctx, chain, "baseapp", "ValidatorParams")
+	blockParamsJSONStr := querySubspaceParamsValue(ctx, t, chain, "baseapp", "BlockParams")
+	evidenceParamsJSONStr := querySubspaceParamsValue(ctx, t, chain, "baseapp", "EvidenceParams")
+	validatorParamsJSONStr := querySubspaceParamsValue(ctx, t, chain, "baseapp", "ValidatorParams")
 
+	//nolint:tagliatelle
 	blockParams := struct {
 		MaxBytes string `json:"max_bytes"`
 		MaxGas   string `json:"max_gas"`
 	}{}
 	requireT.NoError(json.Unmarshal([]byte(blockParamsJSONStr), &blockParams))
 
+	//nolint:tagliatelle
 	evidenceParams := struct {
 		MaxAgeNumBlocks string `json:"max_age_num_blocks"`
 		MaxAgeDuration  string `json:"max_age_duration"`
@@ -218,6 +220,7 @@ func queryConsensusParams(t *testing.T, ctx context.Context, chain integrationte
 	}{}
 	requireT.NoError(json.Unmarshal([]byte(evidenceParamsJSONStr), &evidenceParams))
 
+	//nolint:tagliatelle
 	validatorParams := struct {
 		PubKeyTypes []string `json:"pub_key_types"`
 	}{}
