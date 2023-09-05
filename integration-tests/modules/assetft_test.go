@@ -5,7 +5,6 @@ package modules
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -3144,7 +3143,7 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	// because tokens are sent by the issuer.
 	initialPayload, err := json.Marshal(struct{}{})
 	requireT.NoError(err)
-	contractAddr, _, err := chain.Wasm.DeployAndInstantiateWASMContract(
+	contractAddr, contractCodeID, err := chain.Wasm.DeployAndInstantiateWASMContract(
 		ctx,
 		txf,
 		issuer,
@@ -3320,7 +3319,6 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	requireT.NotNil(balance.Balance)
 	requireT.Equal(sdk.NewInt64Coin(denom, 210).String(), balance.Balance.String())
 
-	fmt.Println(contractAddr)
 	balance, err = bankClient.Balance(ctx,
 		&banktypes.QueryBalanceRequest{
 			Address: contractAddr,
@@ -3329,6 +3327,42 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	requireT.NoError(err)
 	requireT.NotNil(balance.Balance)
 	requireT.Equal(sdk.NewInt64Coin(denom, 300).String(), balance.Balance.String())
+
+	// instantiate contract again using non-issuer account, fees should apply.
+	initialPayload, err = json.Marshal(struct{}{})
+	requireT.NoError(err)
+	contractAddr, err = chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		integrationtests.InstantiateConfig{
+			CodeID:     contractCodeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Amount:     sdk.NewInt64Coin(denom, 100),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+
+	// verify amounts
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: admin.String(),
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 80).String(), balance.Balance.String())
+
+	balance, err = bankClient.Balance(ctx,
+		&banktypes.QueryBalanceRequest{
+			Address: contractAddr,
+			Denom:   denom,
+		})
+	requireT.NoError(err)
+	requireT.NotNil(balance.Balance)
+	requireT.Equal(sdk.NewInt64Coin(denom, 100).String(), balance.Balance.String())
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
