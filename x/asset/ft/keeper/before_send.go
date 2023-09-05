@@ -192,10 +192,6 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	}
 
 	for account, amount := range shares {
-		// if sender is issuer or IBC escrow
-		if account == issuer {
-			continue
-		}
 		// in order to reduce precision errors, we first multiply all sdkmath.Ints, and then multiply sdk.Decs, and then divide
 		finalShare := rate.MulInt(taxableSum.Mul(amount)).QuoInt(taxableInputSum).Ceil().RoundInt()
 		shares[account] = finalShare
