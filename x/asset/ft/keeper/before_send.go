@@ -130,8 +130,10 @@ func (k Keeper) CalculateRateShares(ctx sdk.Context, rate sdk.Dec, issuer string
 	if wibctransfertypes.IsPurposeTimeout(ctx) {
 		return nil, nil //nolint:nilnil
 	}
-	// Since burning & send commission are not applied when sending to/from token issuer we can't simply apply original burn rate or send commission rate when bank multisend with issuer in inputs or outputs.
-	// To recalculate new adjusted amount we split whole "commission" between all non-issuer senders proportionally to amount they send.
+	// Since burning & send commissions are not applied when sending to/from token issuer or from any smart contract,
+	// we can't simply apply original burn rate or send commission rates when bank multisend contains issuer or smart contract in
+	// inputs or issuer in outputs. To recalculate new adjusted amount we split whole "commission" between all non-issuer
+	// and non-smart-contract senders proportionally to amount they send.
 
 	// Examples
 	// burn_rate: 10%

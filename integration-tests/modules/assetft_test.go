@@ -3156,27 +3156,14 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
+	contract1 := sdk.MustAccAddressFromBech32(contractAddr)
 
 	// verify amounts
-	bankClient := banktypes.NewQueryClient(clientCtx)
-
-	balance, err := bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: issuer.String(),
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 400).String(), balance.Balance.String())
-
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: contractAddr,
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 100).String(), balance.Balance.String())
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    400,
+		&admin:     500,
+		&contract1: 100,
+	})
 
 	// send additional coins to contract directly
 	sendMsg = &banktypes.MsgSend{
@@ -3189,23 +3176,11 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	requireT.NoError(err)
 
 	// verify amounts
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: issuer.String(),
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 300).String(), balance.Balance.String())
-
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: contractAddr,
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 200).String(), balance.Balance.String())
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    300,
+		&admin:     500,
+		&contract1: 200,
+	})
 
 	// send to smart contract from the second address, burn rate and send commission should apply
 	sendMsg = &banktypes.MsgSend{
@@ -3218,33 +3193,11 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	requireT.NoError(err)
 
 	// verify amounts
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: issuer.String(),
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 360).String(), balance.Balance.String())
-
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: admin.String(),
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	// burn and send fees were deducted
-	requireT.Equal(sdk.NewInt64Coin(denom, 110).String(), balance.Balance.String())
-
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: contractAddr,
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 500).String(), balance.Balance.String())
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    360,
+		&admin:     110,
+		&contract1: 500,
+	})
 
 	// send from the smart contract to issuer, fees should not apply
 	wasmBankSend := &wasmtypes.MsgExecuteContract{
@@ -3269,23 +3222,11 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	requireT.NoError(err)
 
 	// verify amounts
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: issuer.String(),
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 460).String(), balance.Balance.String())
-
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: contractAddr,
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 400).String(), balance.Balance.String())
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    460,
+		&admin:     110,
+		&contract1: 400,
+	})
 
 	// send from the smart contract to another account, fees should not apply again
 	wasmBankSend = &wasmtypes.MsgExecuteContract{
@@ -3310,23 +3251,11 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	requireT.NoError(err)
 
 	// verify amounts
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: admin.String(),
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 210).String(), balance.Balance.String())
-
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: contractAddr,
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 300).String(), balance.Balance.String())
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    460,
+		&admin:     210,
+		&contract1: 300,
+	})
 
 	// instantiate contract again using non-issuer account, fees should apply.
 	initialPayload, err = json.Marshal(struct{}{})
@@ -3344,28 +3273,53 @@ func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 		},
 	)
 	requireT.NoError(err)
+	contract2 := sdk.MustAccAddressFromBech32(contractAddr)
 
 	// verify amounts
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: admin.String(),
-			Denom:   denom,
-		})
-	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 80).String(), balance.Balance.String())
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    480,
+		&admin:     80,
+		&contract1: 300,
+		&contract2: 100,
+	})
 
-	balance, err = bankClient.Balance(ctx,
-		&banktypes.QueryBalanceRequest{
-			Address: contractAddr,
-			Denom:   denom,
-		})
+	// send from one contract to another, fees should not apply
+	wasmBankSend = &wasmtypes.MsgExecuteContract{
+		Sender:   issuer.String(),
+		Contract: contract1.String(),
+		Msg: must.Bytes(json.Marshal(map[bankMethod]bankWithdrawRequest{
+			withdraw: {
+				Amount:    "100",
+				Denom:     denom,
+				Recipient: contractAddr,
+			},
+		})),
+		Funds: sdk.Coins{},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		txf.WithGasAdjustment(1.5),
+		wasmBankSend,
+	)
 	requireT.NoError(err)
-	requireT.NotNil(balance.Balance)
-	requireT.Equal(sdk.NewInt64Coin(denom, 100).String(), balance.Balance.String())
+
+	// verify amounts
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    480,
+		&admin:     80,
+		&contract1: 200,
+		&contract2: 200,
+	})
 }
 
-func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
+func assertCoinDistribution(
+	ctx context.Context,
+	clientCtx client.Context,
+	t *testing.T, denom string,
+	dist map[*sdk.AccAddress]int64,
+) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	requireT := require.New(t)
 
