@@ -336,6 +336,25 @@ If IBC feature is disabled token can never leave the Coreum chain.
     <td></td>
   </tr>
   <tr>
+    <td>Send from smart contract</td>
+    <td>➕</td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
     <td>Receive</td>
     <td>➕</td>
     <td>➕</td>
