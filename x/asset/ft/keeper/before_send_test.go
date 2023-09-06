@@ -29,11 +29,11 @@ func TestMain(m *testing.M) {
 }
 
 type wasmKeeperMock struct {
-	constracts map[string]struct{}
+	contracts map[string]struct{}
 }
 
 func (k wasmKeeperMock) HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
-	_, exists := k.constracts[contractAddress.String()]
+	_, exists := k.contracts[contractAddress.String()]
 	return exists
 }
 
@@ -48,12 +48,12 @@ func TestCalculateRateShares(t *testing.T) {
 	}
 
 	wasmKeeper := wasmKeeperMock{
-		constracts: map[string]struct{}{},
+		contracts: map[string]struct{}{},
 	}
 	for i := byte(0); i < 2; i++ {
 		addr := sdk.AccAddress(bytes.Repeat([]byte{i}, wasmtypes.ContractAddrLen)).String()
 		smartContracts = append(smartContracts, sdk.AccAddress(bytes.Repeat([]byte{i}, wasmtypes.ContractAddrLen)).String())
-		wasmKeeper.constracts[addr] = struct{}{}
+		wasmKeeper.contracts[addr] = struct{}{}
 	}
 
 	issuer := genAccount()
