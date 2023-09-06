@@ -103,7 +103,6 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibclocalhost "github.com/cosmos/ibc-go/v7/modules/light-clients/09-localhost"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cast"
 
 	"github.com/CoreumFoundation/coreum/v2/app/openapi"
@@ -563,9 +562,14 @@ func New(
 			app.NFTKeeper,
 		)),
 	}
-	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
-		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
-	}
+
+	// FIXME (wasmd-1575): This is commented out temporarily because it causes panics in telemetry server due to buggy
+	// initialization of wasm vm in version v0.41 of wasmd.
+	// Bug has been already fixed here: https://github.com/CosmWasm/wasmd/pull/1575
+	// and will be released in v0.42.
+	// if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+	// 	wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	// }
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
