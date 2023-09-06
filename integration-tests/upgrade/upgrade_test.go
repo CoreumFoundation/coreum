@@ -43,7 +43,8 @@ func TestUpgrade(t *testing.T) {
 
 func upgradeV3(t *testing.T) {
 	tests := []upgradeTest{
-		&paramsMigrationTest{},
+		//&paramsMigrationTest{},
+		&wasmMigrationTest{},
 	}
 
 	for _, test := range tests {
