@@ -77,7 +77,6 @@ jobs:
         with:
           repository: CoreumFoundation/crust
           path: crust
-          ref: v0.47-migration-v2
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache

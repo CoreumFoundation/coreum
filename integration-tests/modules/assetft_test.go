@@ -87,6 +87,72 @@ func TestAssetFTIssue(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
 }
 
+// TestAssetFTIssueInvalidFeatures tests issue functionality of fungible tokens with invalid features.
+func TestAssetFTIssueInvalidFeatures(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgIssue{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_ibc,
+			100,
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_burning,
+		},
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.ErrorContains(err, "non-existing feature provided")
+
+	issueMsg = &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_ibc,
+			assetfttypes.Feature_whitelisting,
+			assetfttypes.Feature_ibc,
+		},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.ErrorContains(err, "duplicated features in the features list")
+}
+
 // TestAssetFTIssueFeeProposal tests proposal upgrading issue fee.
 func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// This test can't be run together with other tests because it affects balances due to unexpected issue fee.
@@ -3077,6 +3143,68 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 	})
 	requireT.NoError(err)
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), balanceRes.Balance.String())
+}
+
+func TestMsgUpgradeTokenV1IsNotAllowed(t *testing.T) {
+	t.Parallel()
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+
+	requireT := require.New(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetfttypes.MsgIssue{},
+			&assetfttypes.MsgUpgradeTokenV1{},
+		},
+		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
+	})
+
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer.String(),
+		Symbol:        "ABC",
+		Subunit:       "uabc",
+		Precision:     6,
+		Description:   "ABC Description",
+		InitialAmount: sdkmath.NewInt(1000),
+		Features: []assetfttypes.Feature{
+			assetfttypes.Feature_minting,
+			assetfttypes.Feature_freezing,
+		},
+	}
+
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+
+	requireT.NoError(err)
+
+	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
+
+	upgradeMsg := &assetfttypes.MsgUpgradeTokenV1{
+		Sender:     issuer.String(),
+		Denom:      denom,
+		IbcEnabled: true,
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
+		upgradeMsg,
+	)
+	requireT.ErrorContains(err, "it is no longer possible to upgrade the token")
+
+	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
+	resp, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
+		Denom: denom,
+	})
+	requireT.NoError(err)
+	requireT.EqualValues(1, resp.Token.Version)
+	requireT.ElementsMatch(issueMsg.Features, resp.Token.Features)
 }
 
 func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
