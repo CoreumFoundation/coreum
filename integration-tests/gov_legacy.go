@@ -47,7 +47,7 @@ func NewGovernanceLegacy(gov Governance) GovernanceLegacy {
 
 // ComputeProposerBalance computes the balance required for the proposer.
 func (g GovernanceLegacy) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error) {
-	govParams, err := g.queryGovParams(ctx)
+	govParams, err := g.QueryGovParams(ctx)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
@@ -157,7 +157,7 @@ func (g GovernanceLegacy) NewMsgSubmitProposalV1Beta1(
 	proposer sdk.AccAddress,
 	content govtypesv1beta1.Content,
 ) (*govtypesv1beta1.MsgSubmitProposal, error) {
-	govParams, err := g.queryGovParams(ctx)
+	govParams, err := g.QueryGovParams(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (g GovernanceLegacy) NewMsgSubmitProposalV1(
 		return nil, errors.WithStack(err)
 	}
 
-	govParams, err := g.queryGovParams(ctx)
+	govParams, err := g.QueryGovParams(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +318,8 @@ func (g GovernanceLegacy) GetProposal(ctx context.Context, proposalID uint64) (g
 	return resp.Proposal, nil
 }
 
-func (g GovernanceLegacy) queryGovParams(ctx context.Context) (govtypesv1beta1.Params, error) {
+// QueryGovParams returns all governance params.
+func (g GovernanceLegacy) QueryGovParams(ctx context.Context) (govtypesv1beta1.Params, error) {
 	govClient := g.govClient
 
 	votingParams, err := govClient.Params(ctx, &govtypesv1beta1.QueryParamsRequest{
