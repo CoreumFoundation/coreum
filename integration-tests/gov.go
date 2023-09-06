@@ -49,7 +49,7 @@ func NewGovernance(chainCtx ChainContext, stakerMnemonics []string, faucet Fauce
 
 // ComputeProposerBalance computes the balance required for the proposer.
 func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error) {
-	govParams, err := g.queryGovParams(ctx)
+	govParams, err := g.QueryGovParams(ctx)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
@@ -128,7 +128,7 @@ func (g Governance) NewMsgSubmitProposal(
 	title string,
 	summary string,
 ) (*govtypesv1.MsgSubmitProposal, error) {
-	govParams, err := g.queryGovParams(ctx)
+	govParams, err := g.QueryGovParams(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -261,9 +261,10 @@ func (g Governance) GetProposal(ctx context.Context, proposalID uint64) (*govtyp
 	return resp.Proposal, nil
 }
 
-func (g Governance) queryGovParams(ctx context.Context) (*govtypesv1.Params, error) {
+// QueryGovParams returns all governance params.
+func (g Governance) QueryGovParams(ctx context.Context) (*govtypesv1.Params, error) {
 	govParams, err := g.govClient.Params(ctx, &govtypesv1.QueryParamsRequest{
-		ParamsType: govtypesv1.ParamTallying,
+		ParamsType: govtypesv1.ParamTallying, // strange decision by cosmos. Even though it always returns all params (inside Params field) ParamsType is still required (probably legacy from v45).
 	})
 	if err != nil {
 		return nil, err
