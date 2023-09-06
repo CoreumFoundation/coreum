@@ -194,6 +194,69 @@ func TestAssetNFTIssueClass(t *testing.T) {
 	requireT.Equal(expectedClass, assetNftClassesRes.Classes[0])
 }
 
+// TestAssetNFTIssueClassInvalidFeatures tests non-fungible token class creation with invalid features.
+func TestAssetNFTIssueClassInvalidFeatures(t *testing.T) {
+	requireT := require.New(t)
+
+	ctx, chain := integrationtests.NewCoreumTestingContext(t)
+	issuer := chain.GenAccount()
+
+	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
+		Messages: []sdk.Msg{
+			&assetnfttypes.MsgIssueClass{},
+			&assetnfttypes.MsgIssueClass{},
+		},
+	})
+
+	issueMsg := &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		RoyaltyRate: sdk.ZeroDec(),
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+			assetnfttypes.ClassFeature_burning,
+		},
+	}
+	_, err := client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "duplicated features in the class features list")
+
+	issueMsg = &assetnfttypes.MsgIssueClass{
+		Issuer:      issuer.String(),
+		Symbol:      "symbol",
+		Name:        "name",
+		Description: "description",
+		URI:         "https://my-class-meta.invalid/1",
+		URIHash:     "content-hash",
+		RoyaltyRate: sdk.ZeroDec(),
+		Features: []assetnfttypes.ClassFeature{
+			assetnfttypes.ClassFeature_burning,
+			100,
+			assetnfttypes.ClassFeature_freezing,
+			assetnfttypes.ClassFeature_whitelisting,
+			assetnfttypes.ClassFeature_disable_sending,
+		},
+	}
+	_, err = client.BroadcastTx(
+		ctx,
+		chain.ClientContext.WithFromAddress(issuer),
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(issueMsg)),
+		issueMsg,
+	)
+	requireT.ErrorContains(err, "non-existing class feature provided")
+}
+
 // TestAssetNFTMint tests non-fungible token minting.
 func TestAssetNFTMint(t *testing.T) {
 	t.Parallel()
