@@ -3,6 +3,7 @@ package keeper
 import (
 	"sort"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -78,7 +79,11 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 		}
 
 		if err := iterateMapDeterministic(burnShares, func(account string, amount sdkmath.Int) error {
-			return k.burnIfSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
+			accountAddr, err := sdk.AccAddressFromBech32(account)
+			if err != nil {
+				return sdkerrors.Wrapf(err, "invalid address %s", account)
+			}
+			return k.burnIfSpendable(ctx, accountAddr, def, amount)
 		}); err != nil {
 			return err
 		}
@@ -87,23 +92,39 @@ func (k Keeper) applyRules(ctx sdk.Context, inputs, outputs groupedByDenomAccoun
 		if err != nil {
 			return err
 		}
-		issuer := sdk.MustAccAddressFromBech32(def.Issuer)
+
+		issuer, err := sdk.AccAddressFromBech32(def.Issuer)
+		if err != nil {
+			return sdkerrors.Wrapf(err, "invalid address %s", def.Issuer)
+		}
 
 		if err := iterateMapDeterministic(commissionShares, func(account string, amount sdkmath.Int) error {
+			accountAddr, err := sdk.AccAddressFromBech32(account)
+			if err != nil {
+				return sdkerrors.Wrapf(err, "invalid address %s", account)
+			}
 			coins := sdk.NewCoins(sdk.NewCoin(def.Denom, amount))
-			return k.bankKeeper.SendCoins(ctx, sdk.MustAccAddressFromBech32(account), issuer, coins)
+			return k.bankKeeper.SendCoins(ctx, accountAddr, issuer, coins)
 		}); err != nil {
 			return err
 		}
 
 		if err := iterateMapDeterministic(inOps, func(account string, amount sdkmath.Int) error {
-			return k.isCoinSpendable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
+			accountAddr, err := sdk.AccAddressFromBech32(account)
+			if err != nil {
+				return sdkerrors.Wrapf(err, "invalid address %s", account)
+			}
+			return k.isCoinSpendable(ctx, accountAddr, def, amount)
 		}); err != nil {
 			return err
 		}
 
 		return iterateMapDeterministic(outOps, func(account string, amount sdkmath.Int) error {
-			return k.isCoinReceivable(ctx, sdk.MustAccAddressFromBech32(account), def, amount)
+			accountAddr, err := sdk.AccAddressFromBech32(account)
+			if err != nil {
+				return sdkerrors.Wrapf(err, "invalid address %s", account)
+			}
+			return k.isCoinReceivable(ctx, accountAddr, def, amount)
 		})
 	})
 }
