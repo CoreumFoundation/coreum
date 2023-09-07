@@ -21,12 +21,14 @@ func TestMigrateParams(t *testing.T) {
 	blockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	ctx := testApp.NewContext(false, tmproto.Header{}).WithBlockTime(blockTime)
 
-	keeper := testApp.AssetFTKeeper
 	paramsKeeper := testApp.ParamsKeeper
 
 	requireT.NoError(v1.MigrateParams(ctx, paramsKeeper))
 
-	params := keeper.GetParams(ctx)
+	sp, ok := paramsKeeper.GetSubspace(types.ModuleName)
+	requireT.True(ok)
+	var params types.Params
+	sp.GetParamSet(ctx, &params)
 
 	assertT.Equal("0stake", params.IssueFee.String())
 	assertT.Equal(blockTime.Add(v1.InitialTokenUpgradeDecisionPeriod), params.TokenUpgradeDecisionTimeout)

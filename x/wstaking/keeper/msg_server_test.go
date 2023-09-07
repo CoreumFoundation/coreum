@@ -20,9 +20,9 @@ func Test_WrappedMsgCreateValidatorHandler(t *testing.T) {
 	// set min delegation param to 10k
 	ctx := simApp.BeginNextBlock(time.Time{})
 	minSelfDelegation := sdkmath.NewInt(10_000)
-	simApp.CustomParamsKeeper.SetStakingParams(ctx, customparamstypes.StakingParams{
+	require.NoError(t, simApp.CustomParamsKeeper.SetStakingParams(ctx, customparamstypes.StakingParams{
 		MinSelfDelegation: minSelfDelegation,
-	})
+	}))
 	simApp.EndBlockAndCommit(ctx)
 
 	// create new account

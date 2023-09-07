@@ -19,6 +19,10 @@ import (
 	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
+func TestGovernanceParams(t *testing.T) {
+	t.FailNow()
+}
+
 // TestFeeModelQueryingMinGasPrice check that it's possible to query current minimum gas price required by the network.
 func TestFeeModelQueryingMinGasPrice(t *testing.T) {
 	t.Parallel()

@@ -6,6 +6,7 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
 )
@@ -13,6 +14,8 @@ import (
 var _ types.MsgServer = MsgServer{}
 
 // MsgKeeper defines subscope of keeper methods required by msg service.
+//
+//nolint:interfacebloat // we need all this methods and cannot break down the interface
 type MsgKeeper interface {
 	Issue(ctx sdk.Context, settings types.IssueSettings) (string, error)
 	Mint(ctx sdk.Context, sender sdk.AccAddress, coin sdk.Coin) error
@@ -23,6 +26,8 @@ type MsgKeeper interface {
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
+	SetParams(ctx sdk.Context, params types.Params) error
+	GetAuthority() string
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -196,6 +201,20 @@ func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgUpgradeT
 
 	err = ms.keeper.AddDelayedTokenUpgradeV1(ctx, sender, req.Denom, req.IbcEnabled)
 	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
+	if ms.keeper.GetAuthority() != req.Authority {
+		return nil, sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.keeper.GetAuthority(), req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ms.keeper.SetParams(ctx, req.Params); err != nil {
 		return nil, err
 	}
 

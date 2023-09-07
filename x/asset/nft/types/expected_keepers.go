@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
@@ -29,4 +30,9 @@ type BankKeeper interface {
 // WasmKeeper represents the expected method from the wasm keeper.
 type WasmKeeper interface {
 	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
+}
+
+// ParamsKeeper specifies expected methods of params keeper.
+type ParamsKeeper interface {
+	GetSubspace(s string) (paramstypes.Subspace, bool)
 }
