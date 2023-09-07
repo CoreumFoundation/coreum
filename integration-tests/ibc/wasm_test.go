@@ -234,7 +234,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 	requireT.NotEmpty(osmosisIBCPort)
 	t.Logf("Osmisis contrac IBC port:%s", osmosisIBCPort)
 
-	integrationtests.CreateIBCChannelsAndConnect(
+	closerFunc := integrationtests.CreateIBCChannelsAndConnect(
 		ctx,
 		t,
 		coreumChain.Chain,
@@ -244,6 +244,7 @@ func TestIBCCallFromSmartContract(t *testing.T) {
 		channelIBCVersion,
 		ibcchanneltypes.UNORDERED,
 	)
+	defer closerFunc()
 
 	coreumToOsmosisChannelID := coreumChain.AwaitForIBCChannelID(ctx, t, coreumIBCPort, osmosisChain.ChainSettings.ChainID)
 	osmosisToCoreumChannelID := osmosisChain.AwaitForIBCChannelID(ctx, t, osmosisIBCPort, coreumChain.ChainSettings.ChainID)
