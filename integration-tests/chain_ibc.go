@@ -273,7 +273,7 @@ func CreateIBCChannelsAndConnect(
 	dstChainPort string,
 	channelVersion string,
 	channelOrder ibcchanneltypes.Order,
-) {
+) func() {
 	t.Helper()
 
 	log := zaptest.NewLogger(t)
@@ -296,6 +296,7 @@ func CreateIBCChannelsAndConnect(
 		t.Fatalf("Unsupported chennel order type:%d", channelOrder)
 	}
 
+	pathName := fmt.Sprintf("%s-%s", srcChain.ChainSettings.ChainID, dstChain.ChainSettings.ChainID)
 	require.NoError(t, relayerSrcChain.CreateOpenChannels(
 		ctx,
 		relayerDstChain,
@@ -305,9 +306,12 @@ func CreateIBCChannelsAndConnect(
 		channelOrderString, channelVersion,
 		false,
 		"",
-		// FIXME(v47-ibc) validate that the config is valid
-		fmt.Sprintf("%s-%s", srcChain.ChainSettings.ChainID, dstChain.ChainSettings.ChainID),
+		pathName,
 	))
+	closerFunc := func() {
+		require.NoError(t, relayerSrcChain.CloseChannel(ctx, relayerDstChain, 5, 5*time.Second, srcChain.ChainSettings.ChainID, srcChainPort, "", pathName))
+	}
+	return closerFunc
 }
 
 func setupRelayerChain(
