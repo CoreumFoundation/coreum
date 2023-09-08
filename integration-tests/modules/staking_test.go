@@ -395,7 +395,7 @@ func setUnbondingTimeViaGovernance(ctx context.Context, t *testing.T, chain inte
 	requireT.NoError(err)
 
 	// Create proposition to change max the unbonding time value.
-	chain.Governance.ProposeAndVote(ctx, t, proposer,
+	chain.Governance.ProposeAndVote(ctx, t,
 		proposalMsg,
 		govtypesv1.OptionYes,
 	)
