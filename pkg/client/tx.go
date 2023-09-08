@@ -312,7 +312,7 @@ func AwaitNextBlocks(
 		if res.SdkBlock != nil {
 			currentHeight = res.SdkBlock.Header.Height
 		} else {
-			currentHeight = res.Block.Header.Height
+			currentHeight = res.Block.Header.Height //nolint:staticcheck // Yes, we know that this is deprecated
 		}
 
 		if heightToStart == 0 {
