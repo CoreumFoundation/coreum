@@ -396,6 +396,8 @@ func New(
 		// for the assetft we use the clear bank keeper without the assets integration to prevent cycling calls.
 		originalBankKeeper,
 		app.DelayKeeper,
+		// pointer is used here because there is cycle in keeper dependencies: AssetFTKeeper -> WasmKeeper -> BankKeeper -> AssetFTKeeper
+		&app.WasmKeeper,
 	)
 
 	err := delayRouter.RegisterHandler(&assetfttypes.DelayedTokenUpgradeV1{}, assetfttypes.NewTokenUpgradeV1Handler(app.AssetFTKeeper))

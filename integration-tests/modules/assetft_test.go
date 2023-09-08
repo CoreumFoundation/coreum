@@ -4,10 +4,12 @@ package modules
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -20,6 +22,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	moduleswasm "github.com/CoreumFoundation/coreum/v2/integration-tests/contracts/modules"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 	"github.com/CoreumFoundation/coreum/v2/testutil/event"
 	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
@@ -3145,33 +3148,37 @@ func TestAssetFTAminoMultisigWithAuthz(t *testing.T) {
 	requireT.Equal(sdk.NewCoin(denom, sdkmath.NewInt(1000)).String(), balanceRes.Balance.String())
 }
 
-func TestMsgUpgradeTokenV1IsNotAllowed(t *testing.T) {
+// TestAssetFTSendCommissionAndBurnRateWithSmartContract verifies that burn rate and send commission is correctly
+// accounted when funds are sent from/to smart contract.
+func TestAssetFTSendCommissionAndBurnRateWithSmartContract(t *testing.T) {
 	t.Parallel()
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	requireT := require.New(t)
 	issuer := chain.GenAccount()
+	admin := chain.GenAccount()
 
-	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
-		Messages: []sdk.Msg{
-			&assetfttypes.MsgIssue{},
-			&assetfttypes.MsgUpgradeTokenV1{},
-		},
-		Amount: chain.QueryAssetFTParams(ctx, t).IssueFee.Amount,
-	})
+	requireT := require.New(t)
+	chain.Faucet.FundAccounts(ctx, t,
+		integrationtests.NewFundedAccount(issuer, chain.NewCoin(sdkmath.NewInt(5000000000))),
+		integrationtests.NewFundedAccount(admin, chain.NewCoin(sdkmath.NewInt(5000000000))),
+	)
 
+	clientCtx := chain.ClientContext
+	txf := chain.TxFactory().
+		WithSimulateAndExecute(true)
+
+	// Issue a fungible token with burn rate and send commission rate
 	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        issuer.String(),
-		Symbol:        "ABC",
-		Subunit:       "uabc",
-		Precision:     6,
-		Description:   "ABC Description",
-		InitialAmount: sdkmath.NewInt(1000),
-		Features: []assetfttypes.Feature{
-			assetfttypes.Feature_minting,
-			assetfttypes.Feature_freezing,
-		},
+		Issuer:             issuer.String(),
+		Symbol:             "ABC",
+		Subunit:            "abc",
+		Precision:          6,
+		InitialAmount:      sdkmath.NewInt(1000),
+		Description:        "ABC Description",
+		Features:           []assetfttypes.Feature{},
+		BurnRate:           sdk.MustNewDecFromStr("0.10"),
+		SendCommissionRate: sdk.MustNewDecFromStr("0.20"),
 	}
 
 	_, err := client.BroadcastTx(
@@ -3182,32 +3189,203 @@ func TestMsgUpgradeTokenV1IsNotAllowed(t *testing.T) {
 	)
 
 	requireT.NoError(err)
-
 	denom := assetfttypes.BuildDenom(issueMsg.Subunit, issuer)
 
-	upgradeMsg := &assetfttypes.MsgUpgradeTokenV1{
-		Sender:     issuer.String(),
-		Denom:      denom,
-		IbcEnabled: true,
+	// send half of the amount to the second account
+	sendMsg := &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   admin.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, sdkmath.NewInt(500))),
 	}
 	_, err = client.BroadcastTx(
 		ctx,
 		chain.ClientContext.WithFromAddress(issuer),
-		chain.TxFactory().WithGas(chain.GasLimitByMsgs(upgradeMsg)),
-		upgradeMsg,
+		chain.TxFactory().WithGas(chain.GasLimitByMsgs(sendMsg)),
+		sendMsg,
 	)
-	requireT.ErrorContains(err, "it is no longer possible to upgrade the token")
-
-	ftClient := assetfttypes.NewQueryClient(chain.ClientContext)
-	resp, err := ftClient.Token(ctx, &assetfttypes.QueryTokenRequest{
-		Denom: denom,
-	})
 	requireT.NoError(err)
-	requireT.EqualValues(1, resp.Token.Version)
-	requireT.ElementsMatch(issueMsg.Features, resp.Token.Features)
+
+	// deploy smart contract and send ft tokens to it, burn rate and send commission should not apply,
+	// because tokens are sent by the issuer.
+	initialPayload, err := json.Marshal(struct{}{})
+	requireT.NoError(err)
+	contractAddr, contractCodeID, err := chain.Wasm.DeployAndInstantiateWASMContract(
+		ctx,
+		txf,
+		issuer,
+		moduleswasm.BankSendWASM,
+		integrationtests.InstantiateConfig{
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Amount:     sdk.NewInt64Coin(denom, 100),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+	contract1 := sdk.MustAccAddressFromBech32(contractAddr)
+
+	// verify amounts
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    400,
+		&admin:     500,
+		&contract1: 100,
+	})
+
+	// send additional coins to contract directly
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: issuer.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 100)),
+	}
+
+	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(issuer), txf, sendMsg)
+	requireT.NoError(err)
+
+	// verify amounts
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    300,
+		&admin:     500,
+		&contract1: 200,
+	})
+
+	// send to smart contract from the second address, burn rate and send commission should apply
+	sendMsg = &banktypes.MsgSend{
+		FromAddress: admin.String(),
+		ToAddress:   contractAddr,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(denom, 300)),
+	}
+
+	_, err = client.BroadcastTx(ctx, clientCtx.WithFromAddress(admin), txf, sendMsg)
+	requireT.NoError(err)
+
+	// verify amounts
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    360,
+		&admin:     110,
+		&contract1: 500,
+	})
+
+	// send from the smart contract to issuer, fees should not apply
+	wasmBankSend := &wasmtypes.MsgExecuteContract{
+		Sender:   issuer.String(),
+		Contract: contractAddr,
+		Msg: must.Bytes(json.Marshal(map[bankMethod]bankWithdrawRequest{
+			withdraw: {
+				Amount:    "100",
+				Denom:     denom,
+				Recipient: issuer.String(),
+			},
+		})),
+		Funds: sdk.Coins{},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		txf.WithGasAdjustment(1.5),
+		wasmBankSend,
+	)
+	requireT.NoError(err)
+
+	// verify amounts
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    460,
+		&admin:     110,
+		&contract1: 400,
+	})
+
+	// send from the smart contract to another account, fees should not apply again
+	wasmBankSend = &wasmtypes.MsgExecuteContract{
+		Sender:   issuer.String(),
+		Contract: contractAddr,
+		Msg: must.Bytes(json.Marshal(map[bankMethod]bankWithdrawRequest{
+			withdraw: {
+				Amount:    "100",
+				Denom:     denom,
+				Recipient: admin.String(),
+			},
+		})),
+		Funds: sdk.Coins{},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		txf.WithGasAdjustment(1.5),
+		wasmBankSend,
+	)
+	requireT.NoError(err)
+
+	// verify amounts
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    460,
+		&admin:     210,
+		&contract1: 300,
+	})
+
+	// instantiate contract again using non-issuer account, fees should apply.
+	initialPayload, err = json.Marshal(struct{}{})
+	requireT.NoError(err)
+	contractAddr, err = chain.Wasm.InstantiateWASMContract(
+		ctx,
+		txf,
+		admin,
+		integrationtests.InstantiateConfig{
+			CodeID:     contractCodeID,
+			AccessType: wasmtypes.AccessTypeUnspecified,
+			Payload:    initialPayload,
+			Amount:     sdk.NewInt64Coin(denom, 100),
+			Label:      "bank_send",
+		},
+	)
+	requireT.NoError(err)
+	contract2 := sdk.MustAccAddressFromBech32(contractAddr)
+
+	// verify amounts
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    480,
+		&admin:     80,
+		&contract1: 300,
+		&contract2: 100,
+	})
+
+	// send from one contract to another, fees should not apply
+	wasmBankSend = &wasmtypes.MsgExecuteContract{
+		Sender:   issuer.String(),
+		Contract: contract1.String(),
+		Msg: must.Bytes(json.Marshal(map[bankMethod]bankWithdrawRequest{
+			withdraw: {
+				Amount:    "100",
+				Denom:     denom,
+				Recipient: contractAddr,
+			},
+		})),
+		Funds: sdk.Coins{},
+	}
+
+	_, err = client.BroadcastTx(
+		ctx,
+		clientCtx.WithFromAddress(issuer),
+		txf.WithGasAdjustment(1.5),
+		wasmBankSend,
+	)
+	requireT.NoError(err)
+
+	// verify amounts
+	assertCoinDistribution(ctx, clientCtx, t, denom, map[*sdk.AccAddress]int64{
+		&issuer:    480,
+		&admin:     80,
+		&contract1: 200,
+		&contract2: 200,
+	})
 }
 
-func assertCoinDistribution(ctx context.Context, clientCtx client.Context, t *testing.T, denom string, dist map[*sdk.AccAddress]int64) {
+func assertCoinDistribution(
+	ctx context.Context,
+	clientCtx client.Context,
+	t *testing.T, denom string,
+	dist map[*sdk.AccAddress]int64,
+) {
 	bankClient := banktypes.NewQueryClient(clientCtx)
 	requireT := require.New(t)
 
