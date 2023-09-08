@@ -1,14 +1,17 @@
 package keeper_test
 
 import (
+	"bytes"
 	"math/big"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
@@ -25,17 +28,37 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+type wasmKeeperMock struct {
+	contracts map[string]struct{}
+}
+
+func (k wasmKeeperMock) HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
+	_, exists := k.contracts[contractAddress.String()]
+	return exists
+}
+
 func TestCalculateRateShares(t *testing.T) {
 	genAccount := func() string {
 		return sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
 	}
 	var accounts []string
+	var smartContracts []string
 	for i := 0; i < 11; i++ {
 		accounts = append(accounts, genAccount())
 	}
+
+	wasmKeeper := wasmKeeperMock{
+		contracts: map[string]struct{}{},
+	}
+	for i := byte(0); i < 2; i++ {
+		addr := sdk.AccAddress(bytes.Repeat([]byte{i}, wasmtypes.ContractAddrLen)).String()
+		smartContracts = append(smartContracts, sdk.AccAddress(bytes.Repeat([]byte{i}, wasmtypes.ContractAddrLen)).String())
+		wasmKeeper.contracts[addr] = struct{}{}
+	}
+
 	issuer := genAccount()
 	dummyAddress := genAccount()
-	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, nil)
+	assetFTKeeper := assetftkeeper.NewKeeper(nil, nil, nil, nil, nil, wasmKeeper)
 	pow10 := func(ex int64) sdkmath.Int {
 		return sdkmath.NewIntFromBigInt(big.NewInt(0).Exp(big.NewInt(10), big.NewInt(ex), nil))
 	}
@@ -315,6 +338,93 @@ func TestCalculateRateShares(t *testing.T) {
 			ibcDirection: wibctransfertypes.PurposeIn,
 			shares:       map[string]sdkmath.Int{},
 		},
+		{
+			name: "smart_contract_to_recipient",
+			rate: "0.5",
+			senders: map[string]sdkmath.Int{
+				smartContracts[0]: sdkmath.NewInt(10),
+			},
+			receivers: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
+			},
+			shares: map[string]sdkmath.Int{},
+		},
+		{
+			name: "smart_contract_and_issuer_to_recipient",
+			rate: "0.5",
+			senders: map[string]sdkmath.Int{
+				issuer:            sdkmath.NewInt(5),
+				smartContracts[0]: sdkmath.NewInt(5),
+			},
+			receivers: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
+			},
+			shares: map[string]sdkmath.Int{},
+		},
+		{
+			name: "smart_contract_and_issuer_to_smart_contract",
+			rate: "0.5",
+			senders: map[string]sdkmath.Int{
+				issuer:            sdkmath.NewInt(5),
+				smartContracts[0]: sdkmath.NewInt(5),
+			},
+			receivers: map[string]sdkmath.Int{
+				smartContracts[1]: sdkmath.NewInt(10),
+			},
+			shares: map[string]sdkmath.Int{},
+		},
+		{
+			name: "issuer_to_smart_contract",
+			rate: "0.5",
+			senders: map[string]sdkmath.Int{
+				issuer: sdkmath.NewInt(10),
+			},
+			receivers: map[string]sdkmath.Int{
+				smartContracts[0]: sdkmath.NewInt(10),
+			},
+			shares: map[string]sdkmath.Int{},
+		},
+		{
+			name: "sender_to_smart_contract",
+			rate: "0.5",
+			senders: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
+			},
+			receivers: map[string]sdkmath.Int{
+				smartContracts[0]: sdkmath.NewInt(10),
+			},
+			shares: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(5),
+			},
+		},
+		{
+			name: "sender_to_smart_contract_and_issuer",
+			rate: "0.5",
+			senders: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
+			},
+			receivers: map[string]sdkmath.Int{
+				smartContracts[0]: sdkmath.NewInt(5),
+				issuer:            sdkmath.NewInt(5),
+			},
+			shares: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(3),
+			},
+		},
+		{
+			name: "sender_to_smart_contracts",
+			rate: "0.5",
+			senders: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(10),
+			},
+			receivers: map[string]sdkmath.Int{
+				smartContracts[0]: sdkmath.NewInt(5),
+				smartContracts[1]: sdkmath.NewInt(5),
+			},
+			shares: map[string]sdkmath.Int{
+				dummyAddress: sdkmath.NewInt(5),
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -327,7 +437,8 @@ func TestCalculateRateShares(t *testing.T) {
 				ctx = wibctransfertypes.WithPurpose(ctx, tc.ibcDirection)
 			}
 
-			shares := assetFTKeeper.CalculateRateShares(ctx, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
+			shares, err := assetFTKeeper.CalculateRateShares(ctx, sdk.MustNewDecFromStr(tc.rate), issuer, tc.senders, tc.receivers)
+			require.NoError(t, err)
 			for account, share := range shares {
 				assertT.EqualValues(tc.shares[account].String(), share.String())
 			}

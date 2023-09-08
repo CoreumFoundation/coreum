@@ -48,10 +48,14 @@ The issuer has the option to provide `BurnRate` when issuing a new token. This v
 
 If IBC feature is enabled for the token then the burn rate is applied to outgoing IBC transfers.
 
+Burn rate is never applied if smart contract is the sender.
+
 #### Send Commission Rate
 Exactly same as the Burn Rate, but the calculated value will be transferred to the issuer's account addressed instead of being burnt.
 
 If IBC feature is enabled for the token then the send commission rate is applied to outgoing IBC transfers.
+
+Send commission rate is never applied if smart contract is the sender.
 
 #### Issuance Fee
 Whenever a user wants to issue a fungible token, they have to pay some extra money as issuance fee, which is calculated on top of tx execution fee and will be burnt. The amount of the issuance fee is controlled by governance.
@@ -314,6 +318,25 @@ If IBC feature is disabled token can never leave the Coreum chain.
   </tr>
   <tr>
     <td>Send to issuer</td>
+    <td>➕</td>
+    <td>➕</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Send from smart contract</td>
     <td>➕</td>
     <td>➕</td>
     <td></td>

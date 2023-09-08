@@ -25,3 +25,8 @@ type BankKeeper interface {
 type DelayKeeper interface {
 	DelayExecution(ctx sdk.Context, id string, data codec.ProtoMarshaler, delay time.Duration) error
 }
+
+// WASMKeeper defines methods required from the WASM keeper.
+type WASMKeeper interface {
+	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
+}
