@@ -92,6 +92,31 @@ func (g Governance) ProposeAndVote(
 	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 }
 
+// ProposalFromMsgAndVote create a new proposal from list of sdk.Msg, votes from all stakers accounts and awaits for the final status.
+func (g Governance) ProposalFromMsgAndVote(
+	ctx context.Context,
+	t *testing.T,
+	proposer sdk.AccAddress,
+	msgs []sdk.Msg,
+	metadata, title, summary string,
+	option govtypesv1.VoteOption,
+) {
+	t.Helper()
+
+	if len(proposer) == 0 {
+		proposer = g.chainCtx.GenAccount()
+	}
+
+	proposerBalance, err := g.ComputeProposerBalance(ctx)
+	require.NoError(t, err)
+	g.faucet.FundAccounts(ctx, t, NewFundedAccount(proposer, proposerBalance))
+
+	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, msgs, metadata, title, summary)
+	require.NoError(t, err)
+
+	g.ProposeAndVote(ctx, t, proposer, proposalMsg, option)
+}
+
 // Propose creates a new proposal.
 func (g Governance) Propose(ctx context.Context, t *testing.T, msg *govtypesv1.MsgSubmitProposal) (uint64, error) {
 	SkipUnsafe(t)
