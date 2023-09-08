@@ -62,7 +62,6 @@ func (g Governance) ComputeProposerBalance(ctx context.Context) (sdk.Coin, error
 func (g Governance) ProposeAndVote(
 	ctx context.Context,
 	t *testing.T,
-	proposer sdk.AccAddress,
 	proposalMsg *govtypesv1.MsgSubmitProposal,
 	option govtypesv1.VoteOption,
 ) {
