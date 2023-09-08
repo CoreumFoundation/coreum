@@ -5,6 +5,8 @@ import (
 	"time"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,10 +25,16 @@ func TestMigrateParams(t *testing.T) {
 
 	paramsKeeper := testApp.ParamsKeeper
 
-	requireT.NoError(v1.MigrateParams(ctx, paramsKeeper))
-
 	sp, ok := paramsKeeper.GetSubspace(types.ModuleName)
 	requireT.True(ok)
+	// set KeyTable if it has not already been set
+	if !sp.HasKeyTable() {
+		sp.WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&types.Params{}))
+	}
+	sp.Set(ctx, types.KeyIssueFee, sdk.NewCoin("stake", sdk.ZeroInt()))
+
+	requireT.NoError(v1.MigrateParams(ctx, paramsKeeper))
+
 	var params types.Params
 	sp.GetParamSet(ctx, &params)
 

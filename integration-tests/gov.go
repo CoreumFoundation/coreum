@@ -114,7 +114,7 @@ func (g Governance) ProposalFromMsgAndVote(
 	proposalMsg, err := g.NewMsgSubmitProposal(ctx, proposer, msgs, metadata, title, summary)
 	require.NoError(t, err)
 
-	g.ProposeAndVote(ctx, t, proposer, proposalMsg, option)
+	g.ProposeAndVote(ctx, t, proposalMsg, option)
 }
 
 // Propose creates a new proposal.

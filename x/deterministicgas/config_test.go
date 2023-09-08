@@ -45,6 +45,18 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 
 	// WASM messages will be added here
 	nondeterministicMsgURLs := []deterministicgas.MsgURL{
+		// asset ft
+		"/coreum.asset.ft.v1.MsgUpdateParams",
+
+		// asset nft
+		"/coreum.asset.nft.v1.MsgUpdateParams",
+
+		// feemodel
+		"/coreum.feemodel.v1.MsgUpdateParams",
+
+		// customparams
+		"/coreum.customparams.v1.MsgUpdateStakingParams",
+
 		// auth
 		"/cosmos.auth.v1beta1.MsgUpdateParams",
 
@@ -178,7 +190,7 @@ func TestDeterministicGas_DeterministicMessages(t *testing.T) {
 	// To make sure we do not increase/decrease deterministic types accidentally
 	// we assert length to be equal to exact number, so each change requires
 	// explicit adjustment of tests.
-	assert.Equal(t, 56, len(nondeterministicMsgs))
+	assert.Equal(t, 60, len(nondeterministicMsgs))
 	assert.Equal(t, 44, len(deterministicMsgs))
 
 	for _, sdkMsg := range deterministicMsgs {

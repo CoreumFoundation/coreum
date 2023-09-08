@@ -6,6 +6,7 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -30,6 +31,11 @@ func TestMigrateParams(t *testing.T) {
 	paramsKeeper := testApp.ParamsKeeper
 	sp, ok := paramsKeeper.GetSubspace(types.ModuleName)
 	requireT.True(ok)
+	// set KeyTable if it has not already been set
+	if !sp.HasKeyTable() {
+		sp.WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&types.Params{}))
+	}
+
 	sp.SetParamSet(ctx, &testParams)
 
 	requireT.NoError(v2.MigrateParams(ctx, keeper, paramsKeeper))

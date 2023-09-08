@@ -27,6 +27,10 @@ func TestMigrateParams(t *testing.T) {
 	paramsKeeper := testApp.ParamsKeeper
 	sp, ok := paramsKeeper.GetSubspace(types.CustomParamsStaking)
 	requireT.True(ok)
+	// set KeyTable if it has not already been set
+	if !sp.HasKeyTable() {
+		sp = sp.WithKeyTable(types.StakingParamKeyTable())
+	}
 	sp.SetParamSet(ctx, &testParams)
 
 	requireT.NoError(v1.MigrateParams(ctx, keeper, paramsKeeper))
