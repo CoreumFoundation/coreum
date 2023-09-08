@@ -45,19 +45,6 @@ const (
 	withdraw bankMethod = "withdraw"
 )
 
-// simple state models
-
-type simpleState struct {
-	Count int `json:"count"`
-}
-
-type simpleStateMethod string
-
-const (
-	simpleGetCount  simpleStateMethod = "get_count"
-	simpleIncrement simpleStateMethod = "increment"
-)
-
 // authz models
 
 type authz struct {
@@ -340,7 +327,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	)
 
 	// instantiateWASMContract the contract and set the initial counter state.
-	initialPayload, err := json.Marshal(simpleState{
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
 		Count: 1337,
 	})
 	requireT.NoError(err)
@@ -362,16 +349,16 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 	requireT.NoError(err)
 
 	// get the current counter state
-	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
+	getCountPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleGetCount)
 	requireT.NoError(err)
 	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
-	var response simpleState
+	var response moduleswasm.SimpleState
 	requireT.NoError(json.Unmarshal(queryOut, &response))
 	requireT.Equal(1337, response.Count)
 
 	// execute contract to increment the count
-	gasUsedBeforePinning := incrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1338)
+	gasUsedBeforePinning := moduleswasm.IncrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1338)
 
 	// verify that smart contract is not pinned
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
@@ -400,7 +387,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	requireT.True(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
-	gasUsedAfterPinning := incrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1339)
+	gasUsedAfterPinning := moduleswasm.IncrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1339)
 
 	// unpin smart contract
 	proposalMsg, err = chain.LegacyGovernance.NewMsgSubmitProposalV1(ctx, proposer, &wasmtypes.UnpinCodesProposal{ //nolint:staticcheck // we need to keep backward compatibility
@@ -424,7 +411,7 @@ func TestWASMPinningAndUnpinningSmartContractUsingGovernance(t *testing.T) {
 
 	requireT.False(chain.Wasm.IsWASMContractPinned(ctx, codeID))
 
-	gasUsedAfterUnpinning := incrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1340)
+	gasUsedAfterUnpinning := moduleswasm.IncrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1340)
 
 	t.Logf("Gas saved on pinned contract, gasBeforePinning:%d, gasAfterPinning:%d", gasUsedBeforePinning, gasUsedAfterPinning)
 
@@ -452,7 +439,7 @@ func TestWASMContractUpgrade(t *testing.T) {
 	)
 
 	// instantiateWASMContract the contract and set the initial counter state.
-	initialPayload, err := json.Marshal(simpleState{
+	initialPayload, err := json.Marshal(moduleswasm.SimpleState{
 		Count: 787,
 	})
 	requireT.NoError(err)
@@ -475,11 +462,11 @@ func TestWASMContractUpgrade(t *testing.T) {
 	requireT.NoError(err)
 
 	// get the current counter state before migration.
-	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
+	getCountPayload, err := moduleswasm.MethodToEmptyBodyPayload(moduleswasm.SimpleGetCount)
 	requireT.NoError(err)
 	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, getCountPayload)
 	requireT.NoError(err)
-	var response simpleState
+	var response moduleswasm.SimpleState
 	requireT.NoError(json.Unmarshal(queryOut, &response))
 	requireT.Equal(787, response.Count)
 
@@ -494,7 +481,7 @@ func TestWASMContractUpgrade(t *testing.T) {
 	)
 	requireT.NoError(err)
 	// prepare migration payload.
-	migrationPayload, err := json.Marshal(simpleState{
+	migrationPayload, err := json.Marshal(moduleswasm.SimpleState{
 		Count: 999,
 	})
 	requireT.NoError(err)
@@ -510,7 +497,7 @@ func TestWASMContractUpgrade(t *testing.T) {
 	requireT.NoError(json.Unmarshal(queryOut, &response))
 	requireT.Equal(999, response.Count)
 	// check that the contract works after the migration.
-	_ = incrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1000)
+	_ = moduleswasm.IncrementSimpleStateAndVerify(ctx, txf, admin, chain, contractAddr, requireT, 1000)
 
 	contractInfoRes, err := wasmClient.ContractInfo(ctx, &wasmtypes.QueryContractInfoRequest{
 		Address: contractAddr,
@@ -1704,40 +1691,6 @@ func TestWASMBankSendContractWithMultipleFundsAttached(t *testing.T) {
 	waitCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	t.Cleanup(cancel)
 	requireT.NoError(client.AwaitNextBlocks(waitCtx, chain.ClientContext, 2))
-}
-
-func methodToEmptyBodyPayload(methodName simpleStateMethod) (json.RawMessage, error) {
-	return json.Marshal(map[simpleStateMethod]struct{}{
-		methodName: {},
-	})
-}
-
-func incrementSimpleStateAndVerify(
-	ctx context.Context,
-	txf client.Factory,
-	fromAddress sdk.AccAddress,
-	chain integrationtests.CoreumChain,
-	contractAddr string,
-	requireT *require.Assertions,
-	expectedValue int,
-) int64 {
-	// execute contract to increment the count
-	incrementPayload, err := methodToEmptyBodyPayload(simpleIncrement)
-	requireT.NoError(err)
-	gasUsed, err := chain.Wasm.ExecuteWASMContract(ctx, txf, fromAddress, contractAddr, incrementPayload, sdk.Coin{})
-	requireT.NoError(err)
-
-	// check the update count
-	getCountPayload, err := methodToEmptyBodyPayload(simpleGetCount)
-	requireT.NoError(err)
-	queryOut, err := chain.Wasm.QueryWASMContract(ctx, contractAddr, getCountPayload)
-	requireT.NoError(err)
-
-	var response simpleState
-	requireT.NoError(json.Unmarshal(queryOut, &response))
-	requireT.Equal(expectedValue, response.Count)
-
-	return gasUsed
 }
 
 func randStringWithLength(n int) string {
