@@ -246,6 +246,15 @@ func (g Governance) WaitForVotingToFinalize(ctx context.Context, proposalID uint
 	if err != nil {
 		return proposal.Status, err
 	}
+
+	// Proposals are executed in the end blocker of the gov module. We have observed that despite the executing the transaction,
+	// query might still return the old value. So, we wait for an additional block before returning.
+	if proposal.Status == govtypesv1.StatusPassed {
+		if err := client.AwaitNextBlocks(ctx, g.chainCtx.ClientContext, 1); err != nil {
+			return proposal.Status, err
+		}
+	}
+
 	return proposal.Status, nil
 }
 
