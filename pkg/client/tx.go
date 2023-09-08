@@ -308,7 +308,13 @@ func AwaitNextBlocks(
 			return retry.Retryable(errors.WithStack(err))
 		}
 
-		currentHeight := res.SdkBlock.Header.Height
+		var currentHeight int64
+		if res.SdkBlock != nil {
+			currentHeight = res.SdkBlock.Header.Height
+		} else {
+			currentHeight = res.Block.Header.Height
+		}
+
 		if heightToStart == 0 {
 			heightToStart = currentHeight
 		}
