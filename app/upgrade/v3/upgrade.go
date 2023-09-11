@@ -31,11 +31,11 @@ import (
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v2/app/upgrade"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
-	customparamstypes "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
+	"github.com/CoreumFoundation/coreum/v3/app/upgrade"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types"
+	customparamstypes "github.com/CoreumFoundation/coreum/v3/x/customparams/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
 // References:

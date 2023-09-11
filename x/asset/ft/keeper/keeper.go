@@ -16,9 +16,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/CoreumFoundation/coreum/v2/x/asset"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v3/x/asset"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
 
 // ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.

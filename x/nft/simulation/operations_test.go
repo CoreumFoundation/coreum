@@ -14,9 +14,9 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v2/x/nft"
-	"github.com/CoreumFoundation/coreum/v2/x/nft/simulation"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/x/nft/simulation"
 )
 
 type SimTestSuite struct {

@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/coreum/v2/testutil/event"
-	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/testutil/event"
+	assetfttypes "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
 )
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default

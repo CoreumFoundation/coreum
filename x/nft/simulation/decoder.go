@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v2/x/nft"
-	"github.com/CoreumFoundation/coreum/v2/x/nft/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/nft"
+	"github.com/CoreumFoundation/coreum/v3/x/nft/keeper"
 )
 
 // NewDecodeStore returns a decoder function closure that umarshals the KVPair's
