@@ -455,11 +455,11 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	newParams.MintFee.Amount = sdk.OneInt()
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
-		[]sdk.Msg{&assetnfttypes.MsgUpdateParams{
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetnfttypes.MsgUpdateParams{
 			Params:    newParams,
 			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		}},
-		"-", "-", "-", govtypesv1.OptionYes,
+		},
 	)
 
 	issuer := chain.GenAccount()
@@ -520,11 +520,11 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	// Revert to original mint fee
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
-		[]sdk.Msg{&assetnfttypes.MsgUpdateParams{
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetnfttypes.MsgUpdateParams{
 			Params:    origParams,
 			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		}},
-		"-", "-", "-", govtypesv1.OptionYes,
+		},
 	)
 }
 

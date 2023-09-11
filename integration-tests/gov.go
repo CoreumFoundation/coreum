@@ -92,14 +92,14 @@ func (g Governance) ProposeAndVote(
 	t.Logf("Proposal has been submitted, proposalID: %d", proposalID)
 }
 
-// ProposalFromMsgAndVote create a new proposal from list of sdk.Msg, votes from all stakers accounts and awaits for the final status.
+// ProposalFromMsgAndVote creates a new proposal from list of sdk.Msg, votes from all staker accounts and awaits for the final status.
 func (g Governance) ProposalFromMsgAndVote(
 	ctx context.Context,
 	t *testing.T,
 	proposer sdk.AccAddress,
-	msgs []sdk.Msg,
 	metadata, title, summary string,
 	option govtypesv1.VoteOption,
+	msgs ...sdk.Msg,
 ) {
 	t.Helper()
 

@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
-// RegisterInterfaces registers the asset module tx interfaces.
+// RegisterInterfaces registers the module's tx interfaces.
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgUpdateStakingParams{},

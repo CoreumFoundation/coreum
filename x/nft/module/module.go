@@ -145,7 +145,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
-// RegisterRESTRoutes registers the asset module's REST service handlers.
+// RegisterRESTRoutes registers the module's REST service handlers.
 func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 
 // ____________________________________________________________________________

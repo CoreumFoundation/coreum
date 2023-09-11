@@ -110,11 +110,11 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 	requireT.NoError(err)
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
-		[]sdk.Msg{&feemodeltypes.MsgUpdateParams{
+		"-", "-", "-", govtypesv1.OptionYes,
+		&feemodeltypes.MsgUpdateParams{
 			Params:    newParams,
 			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		}},
-		"-", "-", "-", govtypesv1.OptionYes,
+		},
 	)
 
 	// Check the proposed change is applied.

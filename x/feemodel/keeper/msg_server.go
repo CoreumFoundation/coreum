@@ -18,7 +18,7 @@ type MsgKeeper interface {
 	GetAuthority() string
 }
 
-// MsgServer serves grpc tx requests for assets module.
+// MsgServer serves grpc tx requests for the module.
 type MsgServer struct {
 	keeper MsgKeeper
 }

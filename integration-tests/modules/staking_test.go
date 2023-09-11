@@ -342,11 +342,11 @@ func changeMinSelfDelegationCustomParam(
 
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
-		[]sdk.Msg{&customparamstypes.MsgUpdateStakingParams{
+		"-", "-", "-", govtypesv1.OptionYes,
+		&customparamstypes.MsgUpdateStakingParams{
 			StakingParams: customStakingParams.Params,
 			Authority:     authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		}},
-		"-", "-", "-", govtypesv1.OptionYes,
+		},
 	)
 
 	// check the proposed change is applied

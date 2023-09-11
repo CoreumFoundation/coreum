@@ -29,8 +29,7 @@ service Msg {
   rpc AddToWhitelist(MsgAddToWhitelist) returns (EmptyResponse);
   // RemoveFromWhitelist removes an account from whitelisted list of the NFT
   rpc RemoveFromWhitelist(MsgRemoveFromWhitelist) returns (EmptyResponse);
-  // UpdateParams is a governance operation that the mint fee. 
-  // mint fee is the amount that will be burnt everytime a new NFT is minted. 
+  // UpdateParams is a governance operation that sets the parameters of the module.
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
 }
 

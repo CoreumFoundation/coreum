@@ -169,11 +169,11 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	newParams.IssueFee.Amount = sdk.ZeroInt()
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
-		[]sdk.Msg{&assetfttypes.MsgUpdateParams{
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateParams{
 			Params:    newParams,
 			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		}},
-		"-", "-", "-", govtypesv1.OptionYes,
+		},
 	)
 
 	issuer := chain.GenAccount()
@@ -206,11 +206,11 @@ func TestAssetFTIssueFeeProposal(t *testing.T) {
 	// Revert to original issue fee
 	chain.Governance.ProposalFromMsgAndVote(
 		ctx, t, nil,
-		[]sdk.Msg{&assetfttypes.MsgUpdateParams{
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetfttypes.MsgUpdateParams{
 			Params:    origParams,
 			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		}},
-		"-", "-", "-", govtypesv1.OptionYes,
+		},
 	)
 }
 
