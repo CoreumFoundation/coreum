@@ -12,7 +12,7 @@ import (
 
 // Type of messages for amino.
 const (
-	TypeMsgUpdateMinSelfDelegation = "set-min-self-delegation"
+	TypeMsgUpdateMinSelfDelegation = "update-staking-params"
 )
 
 var (
@@ -58,7 +58,7 @@ func (m MsgUpdateStakingParams) Route() string {
 
 // Type returns message type for LegacyMsg.
 func (m MsgUpdateStakingParams) Type() string {
-	return TypeMsgUpdateMinSelfDelegation
+	return TypeMsgUpdateStakingParams
 }
 
 var (
