@@ -491,8 +491,7 @@ type MsgClient interface {
 	AddToWhitelist(ctx context.Context, in *MsgAddToWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// RemoveFromWhitelist removes an account from whitelisted list of the NFT
 	RemoveFromWhitelist(ctx context.Context, in *MsgRemoveFromWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
-	// UpdateParams is a governance operation that the mint fee.
-	// mint fee is the amount that will be burnt everytime a new NFT is minted.
+	// UpdateParams is a governance operation that sets the parameters of the module.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
@@ -592,8 +591,7 @@ type MsgServer interface {
 	AddToWhitelist(context.Context, *MsgAddToWhitelist) (*EmptyResponse, error)
 	// RemoveFromWhitelist removes an account from whitelisted list of the NFT
 	RemoveFromWhitelist(context.Context, *MsgRemoveFromWhitelist) (*EmptyResponse, error)
-	// UpdateParams is a governance operation that the mint fee.
-	// mint fee is the amount that will be burnt everytime a new NFT is minted.
+	// UpdateParams is a governance operation that sets the parameters of the module.
 	UpdateParams(context.Context, *MsgUpdateParams) (*EmptyResponse, error)
 }
 

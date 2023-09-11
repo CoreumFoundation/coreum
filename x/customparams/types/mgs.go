@@ -12,7 +12,7 @@ import (
 
 // Type of messages for amino.
 const (
-	TypeMsgUpdateMinSelfDelegation = "update-staking-params"
+	TypeMsgUpdateStakingParams = "update-staking-params"
 )
 
 var (
