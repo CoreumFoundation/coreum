@@ -439,10 +439,8 @@ func (m MsgUpgradeTokenV1) Type() string {
 
 // ValidateBasic checks that message fields are valid.
 func (m MsgUpdateParams) ValidateBasic() error {
-	if len(m.Authority) > 0 {
-		if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-			return cosmoserrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", err)
-		}
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return cosmoserrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", err)
 	}
 
 	return m.Params.ValidateBasic()
