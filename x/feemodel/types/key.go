@@ -13,9 +13,3 @@ const (
 	// RouterKey defines the module's message routing key.
 	RouterKey = ModuleName
 )
-
-// Store key prefixes.
-var (
-	// ParamsKey defines the key to store parameters of the module, set via governance.
-	ParamsKey = []byte{0x01}
-)

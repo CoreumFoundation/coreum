@@ -68,14 +68,14 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	if err != nil {
 		return err
 	}
-	store.Set(types.ParamsKey, bz)
+	store.Set(paramsKey, bz)
 	return nil
 }
 
 // GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.ParamsKey)
+	bz := store.Get(paramsKey)
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
