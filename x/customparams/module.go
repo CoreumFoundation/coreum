@@ -16,8 +16,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum/v2/x/customparams/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v3/x/customparams/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
 var (

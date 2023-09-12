@@ -13,11 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	assetftkeeper "github.com/CoreumFoundation/coreum/v2/x/asset/ft/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
-	wibctransfertypes "github.com/CoreumFoundation/coreum/v2/x/wibctransfer/types"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	assetftkeeper "github.com/CoreumFoundation/coreum/v3/x/asset/ft/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/asset/ft/types"
+	wibctransfertypes "github.com/CoreumFoundation/coreum/v3/x/wibctransfer/types"
 )
 
 func TestMain(m *testing.M) {

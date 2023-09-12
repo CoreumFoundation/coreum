@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v3/x/feemodel/types"
 )
 
 // TestFeeModelQueryingMinGasPrice check that it's possible to query current minimum gas price required by the network.

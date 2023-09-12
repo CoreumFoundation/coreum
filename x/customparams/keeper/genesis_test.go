@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum/v2/testutil/simapp"
-	"github.com/CoreumFoundation/coreum/v2/x/customparams/types"
+	"github.com/CoreumFoundation/coreum/v3/testutil/simapp"
+	"github.com/CoreumFoundation/coreum/v3/x/customparams/types"
 )
 
 func TestKeeper_InitAndExportGenesis(t *testing.T) {

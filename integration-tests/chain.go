@@ -18,9 +18,9 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
-	"github.com/CoreumFoundation/coreum/v2/app"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v3/app"
+	"github.com/CoreumFoundation/coreum/v3/pkg/client"
+	"github.com/CoreumFoundation/coreum/v3/pkg/config"
 )
 
 // ChainSettings represent common settings for the chains.

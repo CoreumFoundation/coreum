@@ -15,10 +15,10 @@ import (
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	authkeeper "github.com/CoreumFoundation/coreum/v2/x/auth/keeper"
-	"github.com/CoreumFoundation/coreum/v2/x/deterministicgas"
-	deterministicgasante "github.com/CoreumFoundation/coreum/v2/x/deterministicgas/ante"
-	feemodelante "github.com/CoreumFoundation/coreum/v2/x/feemodel/ante"
+	authkeeper "github.com/CoreumFoundation/coreum/v3/x/auth/keeper"
+	"github.com/CoreumFoundation/coreum/v3/x/deterministicgas"
+	deterministicgasante "github.com/CoreumFoundation/coreum/v3/x/deterministicgas/ante"
+	feemodelante "github.com/CoreumFoundation/coreum/v3/x/feemodel/ante"
 )
 
 // HandlerOptions are the options required for constructing a default SDK AnteHandler.

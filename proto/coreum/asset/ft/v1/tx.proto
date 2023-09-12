@@ -10,7 +10,7 @@ import "gogoproto/gogo.proto";
 import "coreum/asset/ft/v1/params.proto";
 import "coreum/asset/ft/v1/token.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/ft/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the Msg service.

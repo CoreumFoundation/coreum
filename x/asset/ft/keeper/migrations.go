@@ -3,8 +3,8 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v1 "github.com/CoreumFoundation/coreum/v2/x/asset/ft/legacy/v1"
-	v2 "github.com/CoreumFoundation/coreum/v2/x/asset/ft/legacy/v2"
+	v1 "github.com/CoreumFoundation/coreum/v3/x/asset/ft/legacy/v1"
+	v2 "github.com/CoreumFoundation/coreum/v3/x/asset/ft/legacy/v2"
 )
 
 // Migrator is a struct for handling in-place store migrations.

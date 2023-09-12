@@ -8,7 +8,7 @@ import "coreum/asset/nft/v1/nft.proto";
 import "coreum/asset/nft/v1/params.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 
-option go_package = "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types";
+option go_package = "github.com/CoreumFoundation/coreum/v3/x/asset/nft/types";
 
 // Query defines the gRPC querier service.
 service Query {
