@@ -59,6 +59,7 @@
     - [MsgMint](#coreum.asset.ft.v1.MsgMint)
     - [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit)
     - [MsgUnfreeze](#coreum.asset.ft.v1.MsgUnfreeze)
+    - [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams)
     - [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1)
   
     - [Msg](#coreum.asset.ft.v1.Msg)
@@ -114,6 +115,7 @@
     - [MsgMint](#coreum.asset.nft.v1.MsgMint)
     - [MsgRemoveFromWhitelist](#coreum.asset.nft.v1.MsgRemoveFromWhitelist)
     - [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze)
+    - [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams)
   
     - [Msg](#coreum.asset.nft.v1.Msg)
   
@@ -131,6 +133,12 @@
     - [QueryStakingParamsResponse](#coreum.customparams.v1.QueryStakingParamsResponse)
   
     - [Query](#coreum.customparams.v1.Query)
+  
+- [coreum/customparams/v1/tx.proto](#coreum/customparams/v1/tx.proto)
+    - [EmptyResponse](#coreum.customparams.v1.EmptyResponse)
+    - [MsgUpdateStakingParams](#coreum.customparams.v1.MsgUpdateStakingParams)
+  
+    - [Msg](#coreum.customparams.v1.Msg)
   
 - [coreum/delay/v1/genesis.proto](#coreum/delay/v1/genesis.proto)
     - [DelayedItem](#coreum.delay.v1.DelayedItem)
@@ -152,6 +160,12 @@
     - [QueryRecommendedGasPriceResponse](#coreum.feemodel.v1.QueryRecommendedGasPriceResponse)
   
     - [Query](#coreum.feemodel.v1.Query)
+  
+- [coreum/feemodel/v1/tx.proto](#coreum/feemodel/v1/tx.proto)
+    - [EmptyResponse](#coreum.feemodel.v1.EmptyResponse)
+    - [MsgUpdateParams](#coreum.feemodel.v1.MsgUpdateParams)
+  
+    - [Msg](#coreum.feemodel.v1.Msg)
   
 - [coreum/nft/v1beta1/event.proto](#coreum/nft/v1beta1/event.proto)
     - [EventBurn](#coreum.nft.v1beta1.EventBurn)
@@ -1070,6 +1084,22 @@ MsgIssue defines message to issue new fungible token.
 
 
 
+<a name="coreum.asset.ft.v1.MsgUpdateParams"></a>
+
+### MsgUpdateParams
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  |  |
+| `params` | [Params](#coreum.asset.ft.v1.Params) |  |  |
+
+
+
+
+
+
 <a name="coreum.asset.ft.v1.MsgUpgradeTokenV1"></a>
 
 ### MsgUpgradeTokenV1
@@ -1109,6 +1139,7 @@ Msg defines the Msg service.
 | `GloballyUnfreeze` | [MsgGloballyUnfreeze](#coreum.asset.ft.v1.MsgGloballyUnfreeze) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | GloballyUnfreeze unfreezes fungible token and unblocks basic operations on it. This operation is idempotent so global unfreezing of non-frozen token does nothing. | |
 | `SetWhitelistedLimit` | [MsgSetWhitelistedLimit](#coreum.asset.ft.v1.MsgSetWhitelistedLimit) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | SetWhitelistedLimit sets the limit of how many tokens a specific account may hold. | |
 | `UpgradeTokenV1` | [MsgUpgradeTokenV1](#coreum.asset.ft.v1.MsgUpgradeTokenV1) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | TokenUpgradeV1 upgrades token to version V1. | |
+| `UpdateParams` | [MsgUpdateParams](#coreum.asset.ft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.ft.v1.EmptyResponse) | UpdateParams is a governance operation to modify the parameters of the module. NOTE: all parameters must be provided. | |
 
  <!-- end services -->
 
@@ -1833,6 +1864,22 @@ MsgMint defines message for the Mint method.
 
 
 
+
+<a name="coreum.asset.nft.v1.MsgUpdateParams"></a>
+
+### MsgUpdateParams
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  |  |
+| `params` | [Params](#coreum.asset.nft.v1.Params) |  |  |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -1854,6 +1901,7 @@ Msg defines the Msg service.
 | `Unfreeze` | [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | Unfreeze removes the freeze effect already put on an NFT | |
 | `AddToWhitelist` | [MsgAddToWhitelist](#coreum.asset.nft.v1.MsgAddToWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | AddToWhitelist sets the account as whitelisted to hold the NFT | |
 | `RemoveFromWhitelist` | [MsgRemoveFromWhitelist](#coreum.asset.nft.v1.MsgRemoveFromWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | RemoveFromWhitelist removes an account from whitelisted list of the NFT | |
+| `UpdateParams` | [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | UpdateParams is a governance operation that sets the parameters of the module. NOTE: all parameters must be provided. | |
 
  <!-- end services -->
 
@@ -1998,6 +2046,58 @@ Query defines the gRPC querier service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `StakingParams` | [QueryStakingParamsRequest](#coreum.customparams.v1.QueryStakingParamsRequest) | [QueryStakingParamsResponse](#coreum.customparams.v1.QueryStakingParamsResponse) | StakingParams queries the staking parameters of the module. | GET|/coreum/customparams/v1/stakingparams|
+
+ <!-- end services -->
+
+
+
+<a name="coreum/customparams/v1/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/customparams/v1/tx.proto
+
+
+
+<a name="coreum.customparams.v1.EmptyResponse"></a>
+
+### EmptyResponse
+
+
+
+
+
+
+
+<a name="coreum.customparams.v1.MsgUpdateStakingParams"></a>
+
+### MsgUpdateStakingParams
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  |  |
+| `staking_params` | [StakingParams](#coreum.customparams.v1.StakingParams) |  | staking_params holds the parameters related to the staking module. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="coreum.customparams.v1.Msg"></a>
+
+### Msg
+Msg defines the Msg service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `UpdateStakingParams` | [MsgUpdateStakingParams](#coreum.customparams.v1.MsgUpdateStakingParams) | [EmptyResponse](#coreum.customparams.v1.EmptyResponse) | UpdateStakingParams is a governance operation that sets the staking parameter. NOTE: all parameters must be provided. | |
 
  <!-- end services -->
 
@@ -2248,6 +2348,58 @@ Query defines the gRPC querier service.
 | `MinGasPrice` | [QueryMinGasPriceRequest](#coreum.feemodel.v1.QueryMinGasPriceRequest) | [QueryMinGasPriceResponse](#coreum.feemodel.v1.QueryMinGasPriceResponse) | MinGasPrice queries the current minimum gas price required by the network. | GET|/coreum/feemodel/v1/min_gas_price|
 | `RecommendedGasPrice` | [QueryRecommendedGasPriceRequest](#coreum.feemodel.v1.QueryRecommendedGasPriceRequest) | [QueryRecommendedGasPriceResponse](#coreum.feemodel.v1.QueryRecommendedGasPriceResponse) | RecommendedGasPrice queries the recommended gas price for the next n blocks. | GET|/coreum/feemodel/v1/recommended_gas_price|
 | `Params` | [QueryParamsRequest](#coreum.feemodel.v1.QueryParamsRequest) | [QueryParamsResponse](#coreum.feemodel.v1.QueryParamsResponse) | Params queries the parameters of x/feemodel module. | GET|/coreum/feemodel/v1/params|
+
+ <!-- end services -->
+
+
+
+<a name="coreum/feemodel/v1/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## coreum/feemodel/v1/tx.proto
+
+
+
+<a name="coreum.feemodel.v1.EmptyResponse"></a>
+
+### EmptyResponse
+
+
+
+
+
+
+
+<a name="coreum.feemodel.v1.MsgUpdateParams"></a>
+
+### MsgUpdateParams
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  |  |
+| `params` | [Params](#coreum.feemodel.v1.Params) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="coreum.feemodel.v1.Msg"></a>
+
+### Msg
+Msg defines the Msg service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `UpdateParams` | [MsgUpdateParams](#coreum.feemodel.v1.MsgUpdateParams) | [EmptyResponse](#coreum.feemodel.v1.EmptyResponse) | UpdateParams is a governance operation which allows fee models params to be modified. NOTE: All parmas must be provided. | |
 
  <!-- end services -->
 

@@ -29,7 +29,7 @@ func TestTokenUpgradeV1(t *testing.T) {
 
 	params := ftKeeper.GetParams(ctxSDK)
 	params.TokenUpgradeDecisionTimeout = time.Date(2023, 2, 13, 1, 2, 3, 0, time.UTC)
-	ftKeeper.SetParams(ctxSDK, params)
+	requireT.NoError(ftKeeper.SetParams(ctxSDK, params))
 
 	issuer1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	issuer2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())

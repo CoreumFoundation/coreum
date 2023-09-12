@@ -24,6 +24,10 @@ func MigrateParams(ctx sdk.Context, paramsKeeper ParamsKeeper) error {
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidState, "params subspace does not exist")
 	}
+	// set KeyTable if it has not already been set
+	if !ftSubspace.HasKeyTable() {
+		ftSubspace.WithKeyTable(paramstypes.NewKeyTable().RegisterParamSet(&types.Params{}))
+	}
 
 	ftSubspace.Set(ctx, types.KeyTokenUpgradeDecisionTimeout, ctx.BlockTime().Add(InitialTokenUpgradeDecisionPeriod))
 	ftSubspace.Set(ctx, types.KeyTokenUpgradeGracePeriod, types.DefaultTokenUpgradeGracePeriod)

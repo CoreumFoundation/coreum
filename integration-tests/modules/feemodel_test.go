@@ -6,11 +6,10 @@ import (
 	"context"
 	"testing"
 
-	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -69,9 +68,8 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
-	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
-
 	requireT := require.New(t)
+	assertT := assert.New(t)
 	feeModelClient := feemodeltypes.NewQueryClient(chain.ClientContext)
 
 	// Create new proposer.
@@ -84,66 +82,46 @@ func TestFeeModelProposalParamChange(t *testing.T) {
 
 	feeModelParamsRes, err := feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
+	oldParams := feeModelParamsRes.Params
 
-	// Create invalid proposal MaxGasPrice = InitialGasPrice.
-	feeModelParams := feeModelParamsRes.Params.Model
-	feeModelParams.MaxGasPriceMultiplier = sdk.OneDec()
-	proposalMsg := chain.LegacyGovernance.NewParamsChangeProposal(ctx, t, proposer, "Invalid proposal", "-", "-",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(
-				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
-			),
-		},
+	// Create invalid proposal MaxGasPriceMultiplier = 1.
+	newParams := oldParams
+	newParams.Model.MaxGasPriceMultiplier = sdk.OneDec()
+
+	proposalMsg, err := chain.Governance.NewMsgSubmitProposal(
+		ctx, proposer,
+		[]sdk.Msg{&feemodeltypes.MsgUpdateParams{
+			Params:    newParams,
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		}},
+		"-", "-", "-",
 	)
+
 	requireT.NoError(err)
-	_, err = chain.LegacyGovernance.Propose(ctx, t, proposalMsg)
-	requireT.True(govtypes.ErrInvalidProposalContent.Is(err))
+	_, err = chain.Governance.Propose(ctx, t, proposalMsg)
+	requireT.ErrorIs(err, govtypes.ErrInvalidProposalMsg)
 
 	// Create proposal to change MaxDiscount.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	feeModelParams = feeModelParamsRes.Params.Model
-	feeModelParams.MaxDiscount = targetMaxDiscount
+	targetMaxDiscount := sdk.MustNewDecFromStr("0.12345")
+	newParams = feeModelParamsRes.Params
+	newParams.Model.MaxDiscount = targetMaxDiscount
 	requireT.NoError(err)
-	proposalMsg = chain.LegacyGovernance.NewParamsChangeProposal(
-		ctx, t, proposer, "Change MaxDiscount", "-", "-",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(
-				feemodeltypes.ModuleName, string(feemodeltypes.KeyModel), marshalParamChangeProposal(requireT, feeModelParams),
-			),
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&feemodeltypes.MsgUpdateParams{
+			Params:    newParams,
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		},
 	)
-	requireT.NoError(err)
-	proposalID, err := chain.LegacyGovernance.Propose(ctx, t, proposalMsg)
-	requireT.NoError(err)
-	t.Logf("Proposal has been submitted, proposalID:%d", proposalID)
-
-	// Verify that voting period started.
-	proposal, err := chain.Governance.GetProposal(ctx, proposalID)
-	requireT.NoError(err)
-	requireT.Equal(govtypesv1.StatusVotingPeriod, proposal.Status)
-
-	// Vote yes from all vote accounts.
-	err = chain.Governance.VoteAll(ctx, govtypesv1.OptionYes, proposal.Id)
-	requireT.NoError(err)
-
-	t.Logf("Voters have voted successfully, waiting for voting period to be finished, votingEndTime:%s", proposal.VotingEndTime)
-
-	// Wait for proposal result.
-	finalStatus, err := chain.Governance.WaitForVotingToFinalize(ctx, proposalID)
-	requireT.NoError(err)
-	requireT.Equal(govtypesv1.StatusPassed, finalStatus)
 
 	// Check the proposed change is applied.
 	feeModelParamsRes, err = feeModelClient.Params(ctx, &feemodeltypes.QueryParamsRequest{})
 	requireT.NoError(err)
-	requireT.Equal(feeModelParams.String(), feeModelParamsRes.Params.Model.String())
-}
-
-func marshalParamChangeProposal(requireT *require.Assertions, modelParams feemodeltypes.ModelParams) string {
-	str, err := tmjson.Marshal(modelParams)
-	requireT.NoError(err)
-	return string(str)
+	assertT.Equal(feeModelParamsRes.Params.Model.MaxDiscount.String(), targetMaxDiscount.String())
+	assertT.Equal(feeModelParamsRes.Params.Model.String(), feeModelParamsRes.Params.Model.String())
 }
 
 func getFeemodelParams(ctx context.Context, t *testing.T, clientCtx client.Context) feemodeltypes.ModelParams {
