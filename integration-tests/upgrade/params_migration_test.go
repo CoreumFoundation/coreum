@@ -27,9 +27,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
+	assetfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
+	assetnfttypes "github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
+	customparams "github.com/CoreumFoundation/coreum/v2/x/customparams/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
 type paramsMigrationTest struct {
+	assetftParamsBeforeMigration     assetfttypes.Params
+	assetnftParamsBeforeMigration    assetnfttypes.Params
+	feemodelParamsBeforeMigration    feemodeltypes.Params
+	customparamsStaking              customparams.StakingParams
 	consensusParamsBeforeMigration   tmtypes.ConsensusParams
 	authParamsBeforeMigration        authtypes.Params
 	bankParamsBeforeMigration        banktypes.Params
@@ -46,11 +54,25 @@ func (pmt *paramsMigrationTest) Before(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 
-	// TODO(migration-away-from-x/params)
 	// assetft
+	assetftResp, err := assetfttypes.NewQueryClient(chain.ClientContext).Params(ctx, &assetfttypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	pmt.assetftParamsBeforeMigration = assetftResp.Params
+
 	// assetnft
+	assetnftResp, err := assetnfttypes.NewQueryClient(chain.ClientContext).Params(ctx, &assetnfttypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	pmt.assetnftParamsBeforeMigration = assetnftResp.Params
+
 	// feemodel
+	feemodelResp, err := feemodeltypes.NewQueryClient(chain.ClientContext).Params(ctx, &feemodeltypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	pmt.feemodelParamsBeforeMigration = feemodelResp.Params
+
 	// customparams
+	customparamsStakingResp, err := customparams.NewQueryClient(chain.ClientContext).StakingParams(ctx, &customparams.QueryStakingParamsRequest{})
+	requireT.NoError(err)
+	pmt.customparamsStaking = customparamsStakingResp.Params
 
 	// crisis is skipped since it doesn't expose query in neither v45 nor v47.
 
@@ -107,11 +129,26 @@ func (pmt *paramsMigrationTest) After(t *testing.T) {
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
 	assertT := assert.New(t)
-	// TODO(migration-away-from-x/params)
 	// assetft
+	assetftResp, err := assetfttypes.NewQueryClient(chain.ClientContext).Params(ctx, &assetfttypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	assertT.Equal(pmt.assetftParamsBeforeMigration, assetftResp.Params)
+
 	// assetnft
+	assetnftResp, err := assetnfttypes.NewQueryClient(chain.ClientContext).Params(ctx, &assetnfttypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	assertT.Equal(pmt.assetnftParamsBeforeMigration, assetnftResp.Params)
+
 	// feemodel
+	feemodelResp, err := feemodeltypes.NewQueryClient(chain.ClientContext).Params(ctx, &feemodeltypes.QueryParamsRequest{})
+	requireT.NoError(err)
+	assertT.Equal(pmt.feemodelParamsBeforeMigration, feemodelResp.Params)
+
 	// customparams
+	customparamsStakingResp, err := customparams.NewQueryClient(chain.ClientContext).StakingParams(ctx, &customparams.QueryStakingParamsRequest{})
+	requireT.NoError(err)
+	assertT.Equal(pmt.customparamsStaking.MinSelfDelegation.String(), customparamsStakingResp.Params.MinSelfDelegation.String())
+	assertT.Equal(pmt.customparamsStaking, customparamsStakingResp.Params)
 
 	// crisis is skipped since it doesn't expose query in neither v45 nor v47.
 

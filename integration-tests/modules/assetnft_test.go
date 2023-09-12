@@ -8,20 +8,20 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	tmjson "github.com/cometbft/cometbft/libs/json"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 	"github.com/CoreumFoundation/coreum/v2/testutil/event"
@@ -450,12 +450,17 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 	requireT := require.New(t)
-	origMintFee := chain.QueryAssetNFTParams(ctx, t).MintFee
-
-	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing MintFee in the assetnft module",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(sdk.NewCoin(origMintFee.Denom, sdk.OneInt()))))),
-		})
+	origParams := chain.QueryAssetNFTParams(ctx, t)
+	newParams := origParams
+	newParams.MintFee.Amount = sdk.OneInt()
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetnfttypes.MsgUpdateParams{
+			Params:    newParams,
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		},
+	)
 
 	issuer := chain.GenAccount()
 	chain.FundAccountWithOptions(ctx, t, issuer, integrationtests.BalancesOptions{
@@ -513,10 +518,14 @@ func TestAssetNFTMintFeeProposal(t *testing.T) {
 	requireT.Equal(chain.NewCoin(sdkmath.ZeroInt()).String(), resp.Balance.String())
 
 	// Revert to original mint fee
-	chain.LegacyGovernance.UpdateParams(ctx, t, "Propose changing MintFee in the assetnft module",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(assetnfttypes.ModuleName, string(assetnfttypes.KeyMintFee), string(must.Bytes(tmjson.Marshal(origMintFee)))),
-		})
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&assetnfttypes.MsgUpdateParams{
+			Params:    origParams,
+			Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		},
+	)
 }
 
 // TestAssetNFTBurn tests non-fungible token burning.
