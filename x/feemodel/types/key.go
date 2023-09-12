@@ -17,5 +17,5 @@ const (
 // Store key prefixes.
 var (
 	// ParamsKey defines the key to store parameters of the module, set via governance.
-	ParamsKey = []byte{0x30}
+	ParamsKey = []byte{0x01}
 )

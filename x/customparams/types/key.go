@@ -17,5 +17,5 @@ const (
 // Store key prefixes.
 var (
 	// StakingParamsKey defines the key to store parameters of the module, set via governance.
-	StakingParamsKey = []byte{0x30}
+	StakingParamsKey = []byte{0x01}
 )
