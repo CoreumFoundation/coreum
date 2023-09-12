@@ -31,6 +31,8 @@ var (
 	NFTWhitelistingKeyPrefix = []byte{0x03}
 	// NFTBurningKeyPrefix defines the key prefix to track burnt NFTs.
 	NFTBurningKeyPrefix = []byte{0x04}
+	// ParamsKey defines the key to store parameters of the module, set via governance.
+	ParamsKey = []byte{0x05}
 )
 
 // CreateClassKey constructs the key for the non-fungible token class.

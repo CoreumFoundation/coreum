@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -11,36 +10,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/keeper"
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
-
-func newParamSubspaceMock() *paramSubspaceMock {
-	return &paramSubspaceMock{
-		params: map[string][]byte{},
-	}
-}
-
-type paramSubspaceMock struct {
-	params map[string][]byte
-}
-
-func (psm *paramSubspaceMock) GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet) {
-	for _, pair := range ps.ParamSetPairs() {
-		must.OK(json.Unmarshal(psm.params[string(pair.Key)], pair.Value))
-	}
-}
-
-func (psm *paramSubspaceMock) SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet) {
-	for _, pair := range ps.ParamSetPairs() {
-		psm.params[string(pair.Key)] = must.Bytes(json.Marshal(pair.Value))
-	}
-}
 
 func setup() (sdk.Context, keeper.Keeper) {
 	key := sdk.NewKVStoreKey(types.StoreKey)
@@ -52,8 +30,8 @@ func setup() (sdk.Context, keeper.Keeper) {
 	cms.MountStoreWithDB(tKey, storetypes.StoreTypeTransient, db)
 	must.OK(cms.LoadLatestVersion())
 	ctx := sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())
-
-	return ctx, keeper.NewKeeper(newParamSubspaceMock(), key, tKey)
+	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	return ctx, keeper.NewKeeper(key, tKey, encodingConfig.Codec, "")
 }
 
 func TestTrackGas(t *testing.T) {
@@ -104,7 +82,7 @@ func TestParams(t *testing.T) {
 	ctx, keeper := setup()
 
 	defParams := types.DefaultParams()
-	keeper.SetParams(ctx, defParams)
+	require.NoError(t, keeper.SetParams(ctx, defParams))
 	params := keeper.GetParams(ctx)
 
 	assert.Equal(t, defParams.Model.InitialGasPrice.String(), params.Model.InitialGasPrice.String())
@@ -129,7 +107,7 @@ func TestEstimateGasPriceInFuture(t *testing.T) {
 			LongEmaBlockLength:      1000,
 		},
 	}
-	keeper.SetParams(ctx, defParams)
+	require.NoError(t, keeper.SetParams(ctx, defParams))
 
 	testCases := []struct {
 		name        string

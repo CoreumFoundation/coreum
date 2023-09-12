@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
@@ -20,48 +20,59 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/x/nft"
 )
 
-// ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
-type ParamSubspace interface {
-	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
-	SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
-}
-
 // Keeper is the asset module non-fungible token nftKeeper.
 type Keeper struct {
-	cdc           codec.BinaryCodec
-	paramSubspace ParamSubspace
-	storeKey      storetypes.StoreKey
-	nftKeeper     types.NFTKeeper
-	bankKeeper    types.BankKeeper
+	cdc        codec.BinaryCodec
+	storeKey   storetypes.StoreKey
+	nftKeeper  types.NFTKeeper
+	bankKeeper types.BankKeeper
+	authority  string
 }
 
 // NewKeeper creates a new instance of the Keeper.
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	paramSubspace ParamSubspace,
 	storeKey storetypes.StoreKey,
 	nftKeeper types.NFTKeeper,
 	bankKeeper types.BankKeeper,
+	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:           cdc,
-		paramSubspace: paramSubspace,
-		storeKey:      storeKey,
-		nftKeeper:     nftKeeper,
-		bankKeeper:    bankKeeper,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		nftKeeper:  nftKeeper,
+		bankKeeper: bankKeeper,
+		authority:  authority,
 	}
 }
 
-// GetParams gets the parameters of the model.
+// GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.ParamsKey)
 	var params types.Params
-	k.paramSubspace.GetParamSet(ctx, &params)
+	k.cdc.MustUnmarshal(bz, &params)
 	return params
 }
 
-// SetParams sets the parameters of the model.
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	k.paramSubspace.SetParamSet(ctx, &params)
+// SetParams sets the parameters of the module.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	store := ctx.KVStore(k.storeKey)
+	bz, err := k.cdc.Marshal(&params)
+	if err != nil {
+		return err
+	}
+	store.Set(types.ParamsKey, bz)
+	return nil
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	if k.authority != authority {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 // GetClass reruns the Class.

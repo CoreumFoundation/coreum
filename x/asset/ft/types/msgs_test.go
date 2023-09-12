@@ -572,7 +572,7 @@ func TestAmino(t *testing.T) {
 				Account: address,
 				Coin:    coin,
 			},
-			wantAminoJSON: `{"type":"assetft/MsgUnMsgSetWhitelistedLimitfreeze","value":{"account":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
+			wantAminoJSON: `{"type":"assetft/MsgSetWhitelistedLimit","value":{"account":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5","coin":{"amount":"1","denom":"my-denom"},"sender":"devcore172rc5sz2uclpsy3vvx3y79ah5dk450z5ruq2r5"}}`,
 		},
 		{
 			name: types.TypeMsgUpgradeTokenV1,

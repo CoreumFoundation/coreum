@@ -3,37 +3,35 @@ package keeper
 import (
 	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
 
-// ParamSubspace represents a subscope of methods exposed by param module to store and retrieve parameters.
-type ParamSubspace interface {
-	GetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
-	SetParamSet(ctx sdk.Context, ps paramtypes.ParamSet)
-}
-
 // Keeper is a fee model keeper.
 type Keeper struct {
-	paramSubspace     ParamSubspace
 	storeKey          storetypes.StoreKey
 	transientStoreKey storetypes.StoreKey
+	cdc               codec.BinaryCodec
+	authority         string
 }
 
 // NewKeeper returns a new keeper object providing storage options required by fee model.
 func NewKeeper(
-	paramSubspace ParamSubspace,
 	storeKey storetypes.StoreKey,
 	transientStoreKey storetypes.StoreKey,
+	cdc codec.BinaryCodec,
+	authority string,
 ) Keeper {
 	return Keeper{
-		paramSubspace:     paramSubspace,
 		storeKey:          storeKey,
 		transientStoreKey: transientStoreKey,
+		cdc:               cdc,
+		authority:         authority,
 	}
 }
 
@@ -63,16 +61,33 @@ func (k Keeper) TrackGas(ctx sdk.Context, gas int64) {
 	tStore.Set(gasTrackingKey, bz)
 }
 
-// SetParams sets the parameters of the model.
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
-	k.paramSubspace.SetParamSet(ctx, &params)
+// SetParams sets the parameters of the module.
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	store := ctx.KVStore(k.storeKey)
+	bz, err := k.cdc.Marshal(&params)
+	if err != nil {
+		return err
+	}
+	store.Set(paramsKey, bz)
+	return nil
 }
 
-// GetParams gets the parameters of the model.
+// GetParams gets the parameters of the module.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(paramsKey)
 	var params types.Params
-	k.paramSubspace.GetParamSet(ctx, &params)
+	k.cdc.MustUnmarshal(bz, &params)
 	return params
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	if k.authority != authority {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 // GetShortEMAGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block.
