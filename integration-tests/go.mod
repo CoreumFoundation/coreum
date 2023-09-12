@@ -28,7 +28,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-go/v7 v7.2.0
 	github.com/cosmos/ics23/go v0.10.0 // indirect
-	github.com/cosmos/relayer/v2 v2.3.0-rc4.0.20230801170623-213822104748
+	github.com/cosmos/relayer/v2 v2.4.1
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0 // indirect

@@ -31,9 +31,11 @@ var (
 )
 
 // Keeper defines an interface of keeper required by fee module.
+//
+//nolint:interfacebloat // the interface exposes all the method, breaking it down is not helpful.
 type Keeper interface {
 	TrackedGas(ctx sdk.Context) int64
-	SetParams(ctx sdk.Context, params types.Params)
+	SetParams(ctx sdk.Context, params types.Params) error
 	GetParams(ctx sdk.Context) types.Params
 	GetShortEMAGas(ctx sdk.Context) int64
 	SetShortEMAGas(ctx sdk.Context, emaGas int64)
@@ -42,6 +44,7 @@ type Keeper interface {
 	GetMinGasPrice(ctx sdk.Context) sdk.DecCoin
 	SetMinGasPrice(ctx sdk.Context, minGasPrice sdk.DecCoin)
 	CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) (sdk.DecCoin, sdk.DecCoin, error)
+	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
 
 // AppModuleBasic defines the basic application module used by the fee module.
@@ -51,7 +54,9 @@ type AppModuleBasic struct{}
 func (AppModuleBasic) Name() string { return types.ModuleName }
 
 // RegisterLegacyAminoCodec registers the fee module's types on the LegacyAmino codec.
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterLegacyAminoCodec(cdc)
+}
 
 // DefaultGenesis returns default genesis state as raw bytes for the fee
 // module.
@@ -90,24 +95,34 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 }
 
 // RegisterInterfaces registers interfaces and implementations of the fee module.
-func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {}
+func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
+}
 
 // AppModule implements an application module for the fee module.
 type AppModule struct {
 	AppModuleBasic
 
-	keeper Keeper
+	keeper       Keeper
+	paramsKeeper types.ParamsKeeper
 }
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
+
+	m := keeper.NewMigrator(am.keeper, am.paramsKeeper)
+	if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
+		panic(errors.Errorf("can't register module %s migrations, err: %s", types.ModuleName, err))
+	}
 }
 
 // NewAppModule creates a new AppModule object.
-func NewAppModule(keeper Keeper) AppModule {
+func NewAppModule(keeper Keeper, paramsKeeper types.ParamsKeeper) AppModule {
 	return AppModule{
-		keeper: keeper,
+		keeper:       keeper,
+		paramsKeeper: paramsKeeper,
 	}
 }
 
@@ -123,7 +138,9 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 	genesis := &types.GenesisState{}
 	cdc.MustUnmarshalJSON(data, genesis)
 
-	am.keeper.SetParams(ctx, genesis.Params)
+	if err := am.keeper.SetParams(ctx, genesis.Params); err != nil {
+		panic(err)
+	}
 	am.keeper.SetMinGasPrice(ctx, genesis.MinGasPrice)
 	return []abci.ValidatorUpdate{}
 }
@@ -138,7 +155,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // EndBlock returns the end blocker for the fee module. It returns no validator
 // updates.

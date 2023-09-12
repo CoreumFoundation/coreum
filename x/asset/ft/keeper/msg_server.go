@@ -23,6 +23,7 @@ type MsgKeeper interface {
 	GloballyUnfreeze(ctx sdk.Context, sender sdk.AccAddress, denom string) error
 	SetWhitelistedBalance(ctx sdk.Context, sender, addr sdk.AccAddress, coin sdk.Coin) error
 	AddDelayedTokenUpgradeV1(ctx sdk.Context, sender sdk.AccAddress, denom string, ibcEnabled bool) error
+	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -196,6 +197,15 @@ func (ms MsgServer) UpgradeTokenV1(goCtx context.Context, req *types.MsgUpgradeT
 
 	err = ms.keeper.AddDelayedTokenUpgradeV1(ctx, sender, req.Denom, req.IbcEnabled)
 	if err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
+	if err := ms.keeper.UpdateParams(sdk.UnwrapSDKContext(goCtx), req.Authority, req.Params); err != nil {
 		return nil, err
 	}
 

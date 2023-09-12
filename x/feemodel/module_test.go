@@ -30,8 +30,9 @@ func (k *keeperMock) TrackedGas(ctx sdk.Context) int64 {
 	return 1
 }
 
-func (k *keeperMock) SetParams(ctx sdk.Context, params types.Params) {
+func (k *keeperMock) SetParams(ctx sdk.Context, params types.Params) error {
 	k.state.Params = params
+	return nil
 }
 
 func (k *keeperMock) GetParams(ctx sdk.Context) types.Params {
@@ -62,6 +63,10 @@ func (k *keeperMock) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uin
 	return sdk.NewDecCoin("", sdkmath.ZeroInt()), sdk.NewDecCoin("", sdkmath.ZeroInt()), nil
 }
 
+func (k *keeperMock) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	return nil
+}
+
 func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Codec) {
 	genesisState := types.GenesisState{
 		Params: types.Params{
@@ -79,7 +84,7 @@ func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Cod
 	}
 	cdc := config.NewEncodingConfig(module.NewBasicManager()).Codec
 	keeper := newKeeperMock(genesisState)
-	module := feemodel.NewAppModule(keeper)
+	module := feemodel.NewAppModule(keeper, nil)
 
 	return module, keeper, genesisState, cdc
 }

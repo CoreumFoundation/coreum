@@ -99,9 +99,10 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper     keeper.Keeper
-	nftKeeper  types.NFTKeeper
-	wasmKeeper types.WasmKeeper
+	keeper       keeper.Keeper
+	nftKeeper    types.NFTKeeper
+	wasmKeeper   types.WasmKeeper
+	paramsKeeper types.ParamsKeeper
 }
 
 // NewAppModule returns the new instance of the AppModule.
@@ -110,12 +111,14 @@ func NewAppModule(
 	keeper keeper.Keeper,
 	nftKeeper types.NFTKeeper,
 	wasmKeeper types.WasmKeeper,
+	paramsKeeper types.ParamsKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
 		nftKeeper:      nftKeeper,
 		wasmKeeper:     wasmKeeper,
+		paramsKeeper:   paramsKeeper,
 	}
 }
 
@@ -133,9 +136,11 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServer(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryService(am.keeper))
 
-	m := keeper.NewMigrator(am.keeper, am.nftKeeper, am.wasmKeeper)
-	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
-	if err != nil {
+	m := keeper.NewMigrator(am.keeper, am.nftKeeper, am.wasmKeeper, am.paramsKeeper)
+	if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
+		panic(errors.Errorf("can't register module %s migrations, err: %s", types.ModuleName, err))
+	}
+	if err := cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3); err != nil {
 		panic(errors.Errorf("can't register module %s migrations, err: %s", types.ModuleName, err))
 	}
 }
@@ -163,7 +168,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 2 }
+func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 // AppModuleSimulation functions
 

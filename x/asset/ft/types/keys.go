@@ -39,6 +39,8 @@ var (
 	PendingTokenUpgradeKeyPrefix = []byte{0x06}
 	// TokenUpgradeStatusesKeyPrefix defines the key prefix for the fungible token upgrade statuses.
 	TokenUpgradeStatusesKeyPrefix = []byte{0x07}
+	// ParamsKey defines the key to store parameters of the module, set via governance.
+	ParamsKey = []byte{0x08}
 )
 
 // CreateTokenKey creates the key for the fungible token.

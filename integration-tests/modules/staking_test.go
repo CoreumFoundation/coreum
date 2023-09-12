@@ -9,13 +9,11 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	tmjson "github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -337,26 +335,22 @@ func changeMinSelfDelegationCustomParam(
 	newMinSelfDelegation sdkmath.Int,
 ) {
 	requireT := require.New(t)
-	// create new proposer
-	proposer := chain.GenAccount()
-	proposerBalance, err := chain.Governance.ComputeProposerBalance(ctx)
-	requireT.NoError(err)
 
-	chain.Faucet.FundAccounts(ctx, t, integrationtests.NewFundedAccount(proposer, proposerBalance))
-
-	marshalledMinSelfDelegation, err := tmjson.Marshal(newMinSelfDelegation)
+	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	requireT.NoError(err)
-	// apply proposal
-	chain.LegacyGovernance.UpdateParams(ctx, t, "Custom staking params change proposal",
-		[]paramproposal.ParamChange{
-			paramproposal.NewParamChange(
-				customparamstypes.CustomParamsStaking, string(customparamstypes.ParamStoreKeyMinSelfDelegation), string(marshalledMinSelfDelegation),
-			),
+	customStakingParams.Params.MinSelfDelegation = newMinSelfDelegation
+
+	chain.Governance.ProposalFromMsgAndVote(
+		ctx, t, nil,
+		"-", "-", "-", govtypesv1.OptionYes,
+		&customparamstypes.MsgUpdateStakingParams{
+			StakingParams: customStakingParams.Params,
+			Authority:     authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		},
 	)
 
 	// check the proposed change is applied
-	customStakingParams, err := customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
+	customStakingParams, err = customParamsClient.StakingParams(ctx, &customparamstypes.QueryStakingParamsRequest{})
 	requireT.NoError(err)
 	requireT.Equal(newMinSelfDelegation.String(), customStakingParams.Params.MinSelfDelegation.String())
 }

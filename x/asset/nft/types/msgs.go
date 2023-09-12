@@ -21,6 +21,7 @@ const (
 	TypeMsgUnfreeze            = "unfreeze"
 	TypeMsgAddToWhitelist      = "whitelist"
 	TypeMsgRemoveFromWhitelist = "remove-from-whitelist"
+	TypeMsgUpdateParams        = "update-params"
 )
 
 var (
@@ -38,6 +39,8 @@ var (
 	_ legacytx.LegacyMsg = &MsgAddToWhitelist{}
 	_ sdk.Msg            = &MsgRemoveFromWhitelist{}
 	_ legacytx.LegacyMsg = &MsgRemoveFromWhitelist{}
+	_ sdk.Msg            = &MsgUpdateParams{}
+	_ legacytx.LegacyMsg = &MsgUpdateParams{}
 )
 
 // Constraints.
@@ -58,6 +61,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUnfreeze{}, fmt.Sprintf("%s/MsgUnfreeze", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgAddToWhitelist{}, fmt.Sprintf("%s/MsgAddToWhitelist", ModuleName), nil)
 	cdc.RegisterConcrete(&MsgRemoveFromWhitelist{}, fmt.Sprintf("%s/MsgRemoveFromWhitelist", ModuleName), nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, fmt.Sprintf("%s/MsgUpdateParams", ModuleName), nil)
 }
 
 // ValidateBasic checks that message fields are valid.
@@ -376,6 +380,36 @@ func (m MsgRemoveFromWhitelist) Route() string {
 // Type returns message type for LegacyMsg.
 func (m MsgRemoveFromWhitelist) Type() string {
 	return TypeMsgRemoveFromWhitelist
+}
+
+// ValidateBasic checks that message fields are valid.
+func (m MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return cosmoserrors.ErrInvalidAddress.Wrapf("invalid authority address: %s", err)
+	}
+
+	return m.Params.ValidateBasic()
+}
+
+// GetSigners returns the required signers of this message type.
+func (m MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	addr, _ := sdk.AccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes returns sign bytes for LegacyMsg.
+func (m MsgUpdateParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(moduleAminoCdc.MustMarshalJSON(&m))
+}
+
+// Route returns message route for LegacyMsg.
+func (m MsgUpdateParams) Route() string {
+	return RouterKey
+}
+
+// Type returns message type for LegacyMsg.
+func (m MsgUpdateParams) Type() string {
+	return TypeMsgUpdateParams
 }
 
 var (

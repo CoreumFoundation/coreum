@@ -31,7 +31,9 @@ func New(mm *module.Manager, configurator module.Configurator, chosenNetwork con
 
 			params := assetNFTKeeper.GetParams(ctx)
 			params.MintFee = sdk.NewInt64Coin(chosenNetwork.Denom(), 0)
-			assetNFTKeeper.SetParams(ctx, params)
+			if err := assetNFTKeeper.SetParams(ctx, params); err != nil {
+				return nil, err
+			}
 
 			return afterVM, nil
 		},

@@ -20,6 +20,7 @@ type MsgKeeper interface {
 	Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
 	AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
 	RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
+	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -165,6 +166,15 @@ func (ms MsgServer) RemoveFromWhitelist(ctx context.Context, req *types.MsgRemov
 	}
 
 	if err := ms.keeper.RemoveFromWhitelist(sdk.UnwrapSDKContext(ctx), req.ClassID, req.ID, sender, account); err != nil {
+		return nil, err
+	}
+
+	return &types.EmptyResponse{}, nil
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
+	if err := ms.keeper.UpdateParams(sdk.UnwrapSDKContext(goCtx), req.Authority, req.Params); err != nil {
 		return nil, err
 	}
 
