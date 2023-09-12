@@ -14,6 +14,7 @@ import (
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset"
 	"github.com/CoreumFoundation/coreum/v2/x/asset/ft/types"
@@ -69,9 +70,13 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	return nil
 }
 
-// GetAuthority returns the assetft module's authority.
-func (k Keeper) GetAuthority() string {
-	return k.authority
+// UpdateParams is a governance operation that sets parameters of the module.
+func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	if k.authority != authority {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 // GetTokens returns all fungible tokens.

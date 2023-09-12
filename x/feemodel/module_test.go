@@ -63,8 +63,8 @@ func (k *keeperMock) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uin
 	return sdk.NewDecCoin("", sdkmath.ZeroInt()), sdk.NewDecCoin("", sdkmath.ZeroInt()), nil
 }
 
-func (k *keeperMock) GetAuthority() string {
-	return ""
+func (k *keeperMock) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	return nil
 }
 
 func setup() (feemodel.AppModule, feemodel.Keeper, types.GenesisState, codec.Codec) {

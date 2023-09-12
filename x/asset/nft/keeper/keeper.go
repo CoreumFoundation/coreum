@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/pkg/errors"
 
@@ -65,9 +66,13 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	return nil
 }
 
-// GetAuthority returns the module's authority.
-func (k Keeper) GetAuthority() string {
-	return k.authority
+// UpdateParams is a governance operation that sets parameters of the module.
+func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	if k.authority != authority {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 // GetClass reruns the Class.

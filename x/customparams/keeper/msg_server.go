@@ -3,9 +3,7 @@ package keeper
 import (
 	"context"
 
-	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/customparams/types"
 )
@@ -14,8 +12,7 @@ var _ types.MsgServer = MsgServer{}
 
 // MsgKeeper defines an interface of keeper required by fee module.
 type MsgKeeper interface {
-	SetStakingParams(ctx sdk.Context, params types.StakingParams) error
-	GetAuthority() string
+	UpdateStakingParams(ctx sdk.Context, authority string, params types.StakingParams) error
 }
 
 // MsgServer serves grpc tx requests for the module.
@@ -32,12 +29,7 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 
 // UpdateStakingParams is a governance operation that sets staking parameters.
 func (m MsgServer) UpdateStakingParams(ctx context.Context, req *types.MsgUpdateStakingParams) (*types.EmptyResponse, error) {
-	if m.keeper.GetAuthority() != req.Authority {
-		return nil, sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", m.keeper.GetAuthority(), req.Authority)
-	}
-
-	err := m.keeper.SetStakingParams(sdk.UnwrapSDKContext(ctx), req.StakingParams)
-	if err != nil {
+	if err := m.keeper.UpdateStakingParams(sdk.UnwrapSDKContext(ctx), req.Authority, req.StakingParams); err != nil {
 		return nil, err
 	}
 

@@ -7,6 +7,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
@@ -78,6 +79,15 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
+}
+
+// UpdateParams is a governance operation that sets parameters of the module.
+func (k Keeper) UpdateParams(ctx sdk.Context, authority string, params types.Params) error {
+	if k.authority != authority {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+
+	return k.SetParams(ctx, params)
 }
 
 // GetShortEMAGas retrieves average gas used by previous blocks, used as a representation of smoothed gas used by latest block.
@@ -212,9 +222,4 @@ func (k Keeper) CalculateEdgeGasPriceAfterBlocks(ctx sdk.Context, after uint32) 
 	return sdk.NewDecCoinFromDec(denom, lowMinGasPrice),
 		sdk.NewDecCoinFromDec(denom, highMinGasPrice),
 		nil
-}
-
-// GetAuthority returns the modules's authority.
-func (k Keeper) GetAuthority() string {
-	return k.authority
 }

@@ -1,9 +1,11 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/customparams/types"
 )
@@ -48,7 +50,11 @@ func (k Keeper) SetStakingParams(ctx sdk.Context, params types.StakingParams) er
 	return nil
 }
 
-// GetAuthority return the module's authority.
-func (k Keeper) GetAuthority() string {
-	return k.authority
+// UpdateStakingParams is a governance operation that sets the staking parameters of the module.
+func (k Keeper) UpdateStakingParams(ctx sdk.Context, authority string, params types.StakingParams) error {
+	if k.authority != authority {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, authority)
+	}
+
+	return k.SetStakingParams(ctx, params)
 }

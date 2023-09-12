@@ -5,7 +5,6 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/asset/nft/types"
 )
@@ -21,8 +20,7 @@ type MsgKeeper interface {
 	Unfreeze(ctx sdk.Context, sender sdk.AccAddress, classID, nftID string) error
 	AddToWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
 	RemoveFromWhitelist(ctx sdk.Context, classID, nftID string, sender, account sdk.AccAddress) error
-	SetParams(ctx sdk.Context, params types.Params) error
-	GetAuthority() string
+	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
 
 // MsgServer serves grpc tx requests for assets module.
@@ -175,13 +173,8 @@ func (ms MsgServer) RemoveFromWhitelist(ctx context.Context, req *types.MsgRemov
 }
 
 // UpdateParams is a governance operation that sets parameters of the module.
-func (ms MsgServer) UpdateParams(ctx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
-	if ms.keeper.GetAuthority() != req.Authority {
-		return nil, sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.keeper.GetAuthority(), req.Authority)
-	}
-
-	err := ms.keeper.SetParams(sdk.UnwrapSDKContext(ctx), req.Params)
-	if err != nil {
+func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
+	if err := ms.keeper.UpdateParams(sdk.UnwrapSDKContext(goCtx), req.Authority, req.Params); err != nil {
 		return nil, err
 	}
 

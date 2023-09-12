@@ -3,9 +3,7 @@ package keeper
 import (
 	"context"
 
-	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/CoreumFoundation/coreum/v2/x/feemodel/types"
 )
@@ -14,8 +12,7 @@ var _ types.MsgServer = MsgServer{}
 
 // MsgKeeper defines an interface of keeper required by fee module.
 type MsgKeeper interface {
-	SetParams(ctx sdk.Context, params types.Params) error
-	GetAuthority() string
+	UpdateParams(ctx sdk.Context, authority string, params types.Params) error
 }
 
 // MsgServer serves grpc tx requests for the module.
@@ -31,13 +28,8 @@ func NewMsgServer(keeper MsgKeeper) MsgServer {
 }
 
 // UpdateParams is a governance operation that sets parameters of the module.
-func (m MsgServer) UpdateParams(ctx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
-	if m.keeper.GetAuthority() != req.Authority {
-		return nil, sdkerrors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", m.keeper.GetAuthority(), req.Authority)
-	}
-
-	err := m.keeper.SetParams(sdk.UnwrapSDKContext(ctx), req.Params)
-	if err != nil {
+func (ms MsgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.EmptyResponse, error) {
+	if err := ms.keeper.UpdateParams(sdk.UnwrapSDKContext(goCtx), req.Authority, req.Params); err != nil {
 		return nil, err
 	}
 
