@@ -1901,7 +1901,7 @@ Msg defines the Msg service.
 | `Unfreeze` | [MsgUnfreeze](#coreum.asset.nft.v1.MsgUnfreeze) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | Unfreeze removes the freeze effect already put on an NFT | |
 | `AddToWhitelist` | [MsgAddToWhitelist](#coreum.asset.nft.v1.MsgAddToWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | AddToWhitelist sets the account as whitelisted to hold the NFT | |
 | `RemoveFromWhitelist` | [MsgRemoveFromWhitelist](#coreum.asset.nft.v1.MsgRemoveFromWhitelist) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | RemoveFromWhitelist removes an account from whitelisted list of the NFT | |
-| `UpdateParams` | [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | UpdateParams is a governance operation that sets the parameters of the module. | |
+| `UpdateParams` | [MsgUpdateParams](#coreum.asset.nft.v1.MsgUpdateParams) | [EmptyResponse](#coreum.asset.nft.v1.EmptyResponse) | UpdateParams is a governance operation that sets the parameters of the module. NOTE: all parameters must be provided. | |
 
  <!-- end services -->
 
@@ -2097,7 +2097,7 @@ Msg defines the Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `UpdateStakingParams` | [MsgUpdateStakingParams](#coreum.customparams.v1.MsgUpdateStakingParams) | [EmptyResponse](#coreum.customparams.v1.EmptyResponse) | UpdateStakingParams is a governance operation that sets the staking parameter. | |
+| `UpdateStakingParams` | [MsgUpdateStakingParams](#coreum.customparams.v1.MsgUpdateStakingParams) | [EmptyResponse](#coreum.customparams.v1.EmptyResponse) | UpdateStakingParams is a governance operation that sets the staking parameter. NOTE: all parameters must be provided. | |
 
  <!-- end services -->
 

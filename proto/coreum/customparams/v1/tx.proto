@@ -13,6 +13,7 @@ option (gogoproto.goproto_getters_all) = false;
 // Msg defines the Msg service.
 service Msg {
   // UpdateStakingParams is a governance operation that sets the staking parameter.
+  // NOTE: all parameters must be provided. 
   rpc UpdateStakingParams(MsgUpdateStakingParams) returns (EmptyResponse);
 }
 

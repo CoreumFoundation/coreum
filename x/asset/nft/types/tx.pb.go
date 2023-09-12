@@ -492,6 +492,7 @@ type MsgClient interface {
 	// RemoveFromWhitelist removes an account from whitelisted list of the NFT
 	RemoveFromWhitelist(ctx context.Context, in *MsgRemoveFromWhitelist, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// UpdateParams is a governance operation that sets the parameters of the module.
+	// NOTE: all parameters must be provided.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
@@ -592,6 +593,7 @@ type MsgServer interface {
 	// RemoveFromWhitelist removes an account from whitelisted list of the NFT
 	RemoveFromWhitelist(context.Context, *MsgRemoveFromWhitelist) (*EmptyResponse, error)
 	// UpdateParams is a governance operation that sets the parameters of the module.
+	// NOTE: all parameters must be provided.
 	UpdateParams(context.Context, *MsgUpdateParams) (*EmptyResponse, error)
 }
 

@@ -154,6 +154,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	// UpdateStakingParams is a governance operation that sets the staking parameter.
+	// NOTE: all parameters must be provided.
 	UpdateStakingParams(ctx context.Context, in *MsgUpdateStakingParams, opts ...grpc.CallOption) (*EmptyResponse, error)
 }
 
@@ -177,6 +178,7 @@ func (c *msgClient) UpdateStakingParams(ctx context.Context, in *MsgUpdateStakin
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// UpdateStakingParams is a governance operation that sets the staking parameter.
+	// NOTE: all parameters must be provided.
 	UpdateStakingParams(context.Context, *MsgUpdateStakingParams) (*EmptyResponse, error)
 }
 

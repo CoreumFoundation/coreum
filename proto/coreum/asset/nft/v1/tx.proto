@@ -30,6 +30,7 @@ service Msg {
   // RemoveFromWhitelist removes an account from whitelisted list of the NFT
   rpc RemoveFromWhitelist(MsgRemoveFromWhitelist) returns (EmptyResponse);
   // UpdateParams is a governance operation that sets the parameters of the module.
+  // NOTE: all parameters must be provided. 
   rpc UpdateParams(MsgUpdateParams) returns (EmptyResponse);
 }
 
