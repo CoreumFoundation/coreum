@@ -13,7 +13,7 @@
   "paths": {
     "/coreum/asset/ft/v1/accounts/{account}/balances/frozen": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesFrozenBalances",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesFrozenBalances",
         "parameters": [
           {
             "name": "account",
@@ -83,7 +83,7 @@
     },
     "/coreum/asset/ft/v1/accounts/{account}/balances/frozen/{denom}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesFrozenBalance",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesFrozenBalance",
         "parameters": [
           {
             "name": "account",
@@ -122,7 +122,7 @@
     },
     "/coreum/asset/ft/v1/accounts/{account}/balances/summary/{denom}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesBalance",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesBalance",
         "parameters": [
           {
             "name": "account",
@@ -161,7 +161,7 @@
     },
     "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesWhitelistedBalances",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesWhitelistedBalances",
         "parameters": [
           {
             "name": "account",
@@ -231,7 +231,7 @@
     },
     "/coreum/asset/ft/v1/accounts/{account}/balances/whitelisted/{denom}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesWhitelistedBalance",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesWhitelistedBalance",
         "parameters": [
           {
             "name": "account",
@@ -270,7 +270,7 @@
     },
     "/coreum/asset/ft/v1/params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesParams",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -293,7 +293,7 @@
     },
     "/coreum/asset/ft/v1/tokens": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesTokens",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesTokens",
         "parameters": [
           {
             "name": "pagination.key",
@@ -362,7 +362,7 @@
     },
     "/coreum/asset/ft/v1/tokens/{denom}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesToken",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesToken",
         "parameters": [
           {
             "name": "denom",
@@ -393,7 +393,7 @@
     },
     "/coreum/asset/ft/v1/tokens/{denom}/upgrade-statuses": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetFtTypesTokenUpgradeStatuses",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetFtTypesTokenUpgradeStatuses",
         "parameters": [
           {
             "name": "denom",
@@ -424,7 +424,7 @@
     },
     "/coreum/asset/nft/v1/classes": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetNftTypesClasses",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesClasses",
         "parameters": [
           {
             "name": "pagination.key",
@@ -493,7 +493,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/burnt": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetNftTypesBurntNFTsInClass",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesBurntNFTsInClass",
         "parameters": [
           {
             "name": "class_id",
@@ -562,7 +562,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/burnt/{nft_id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetNftTypesBurntNFT",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesBurntNFT",
         "parameters": [
           {
             "name": "class_id",
@@ -599,7 +599,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/frozen": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetNftTypesFrozen",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesFrozen",
         "parameters": [
           {
             "name": "class_id",
@@ -636,7 +636,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetNftTypesWhitelistedAccountsForNFT",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesWhitelistedAccountsForNFT",
         "parameters": [
           {
             "name": "class_id",
@@ -711,7 +711,7 @@
     },
     "/coreum/asset/nft/v1/classes/{class_id}/nfts/{id}/whitelisted/{account}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetNftTypesWhitelisted",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesWhitelisted",
         "parameters": [
           {
             "name": "class_id",
@@ -754,7 +754,7 @@
     },
     "/coreum/asset/nft/v1/classes/{id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetNftTypesClass",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesClass",
         "parameters": [
           {
             "name": "id",
@@ -786,7 +786,7 @@
     },
     "/coreum/asset/nft/v1/params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XAssetNftTypesParams",
+        "operationId": "GithubComCoreumFoundationCoreumV3XAssetNftTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -809,7 +809,7 @@
     },
     "/coreum/customparams/v1/stakingparams": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XCustomparamsTypesStakingParams",
+        "operationId": "GithubComCoreumFoundationCoreumV3XCustomparamsTypesStakingParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -832,7 +832,7 @@
     },
     "/coreum/feemodel/v1/min_gas_price": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XFeemodelTypesMinGasPrice",
+        "operationId": "GithubComCoreumFoundationCoreumV3XFeemodelTypesMinGasPrice",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -855,7 +855,7 @@
     },
     "/coreum/feemodel/v1/params": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XFeemodelTypesParams",
+        "operationId": "GithubComCoreumFoundationCoreumV3XFeemodelTypesParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -878,7 +878,7 @@
     },
     "/coreum/feemodel/v1/recommended_gas_price": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XFeemodelTypesRecommendedGasPrice",
+        "operationId": "GithubComCoreumFoundationCoreumV3XFeemodelTypesRecommendedGasPrice",
         "parameters": [
           {
             "name": "after_blocks",
@@ -910,7 +910,7 @@
     },
     "/coreum/nft/v1beta1/balance/{owner}/{class_id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XNftBalance",
+        "operationId": "GithubComCoreumFoundationCoreumV3XNftBalance",
         "parameters": [
           {
             "name": "owner",
@@ -947,7 +947,7 @@
     },
     "/coreum/nft/v1beta1/classes": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XNftClasses",
+        "operationId": "GithubComCoreumFoundationCoreumV3XNftClasses",
         "parameters": [
           {
             "name": "pagination.key",
@@ -1010,7 +1010,7 @@
     },
     "/coreum/nft/v1beta1/classes/{class_id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XNftClass",
+        "operationId": "GithubComCoreumFoundationCoreumV3XNftClass",
         "parameters": [
           {
             "name": "class_id",
@@ -1041,7 +1041,7 @@
     },
     "/coreum/nft/v1beta1/nfts": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XNftNFTs",
+        "operationId": "GithubComCoreumFoundationCoreumV3XNftNFTs",
         "parameters": [
           {
             "name": "class_id",
@@ -1116,7 +1116,7 @@
     },
     "/coreum/nft/v1beta1/nfts/{class_id}/{id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XNftNFT",
+        "operationId": "GithubComCoreumFoundationCoreumV3XNftNFT",
         "parameters": [
           {
             "name": "class_id",
@@ -1153,7 +1153,7 @@
     },
     "/coreum/nft/v1beta1/owner/{class_id}/{id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XNftOwner",
+        "operationId": "GithubComCoreumFoundationCoreumV3XNftOwner",
         "parameters": [
           {
             "name": "class_id",
@@ -1190,7 +1190,7 @@
     },
     "/coreum/nft/v1beta1/supply/{class_id}": {
       "get": {
-        "operationId": "GithubComCoreumFoundationCoreumV2XNftSupply",
+        "operationId": "GithubComCoreumFoundationCoreumV3XNftSupply",
         "parameters": [
           {
             "name": "class_id",
