@@ -100,7 +100,7 @@ func TestStakingProposalParamChange(t *testing.T) {
 
 // TestStakingValidatorCRUDAndStaking checks validator creation, delegation and undelegation operations work correctly.
 func TestStakingValidatorCRUDAndStaking(t *testing.T) {
-	t.Parallel()
+	// This test cannot be run in parallel because it modifies staking params, affecting other tests.
 
 	ctx, chain := integrationtests.NewCoreumTestingContext(t)
 
