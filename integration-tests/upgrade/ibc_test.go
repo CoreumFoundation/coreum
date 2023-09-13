@@ -10,8 +10,8 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
-	integrationtests "github.com/CoreumFoundation/coreum/v2/integration-tests"
-	integrationtestsibc "github.com/CoreumFoundation/coreum/v2/integration-tests/ibc"
+	integrationtests "github.com/CoreumFoundation/coreum/v3/integration-tests"
+	integrationtestsibc "github.com/CoreumFoundation/coreum/v3/integration-tests/ibc"
 )
 
 type ibcUpgradeTest struct {
